@@ -1,0 +1,20 @@
+#ifndef JZNODE_EVENT_H_
+#define JZNODE_EVENT_H_
+
+#include "JZNode.h"
+
+class JZNodeEvent : public JZNode
+{
+public:
+    JZNodeEvent();
+    ~JZNodeEvent();
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
+
+    int m_eventType;
+    QVariantList m_params;
+};
+
+#endif

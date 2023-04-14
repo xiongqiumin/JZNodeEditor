@@ -1,0 +1,55 @@
+指令按空格划分.
+
+SET src dst
++ src param1 param2
+- src param1 param2
+* src param1 param2
+/ src param1 param2
+% src param1 param2
+CALL function param list
+JUMP xxx
+COMPARE cond addr1 addr2
+PULL_STACK
+POP_STACK
+
+分支
+if(cond){ xxx }else if{ xxx }else{ xxx }
+
+
+switch(cond) case{ xxx } default:{xxx}
+
+
+循环
+for
+SET xxx
+COMPARE cond body end
+body
+
+增加计数
+set xxx
+end:
+
+while
+COMPARE cond body end
+body:
+xxx
+jmp compare
+end
+
+do while
+body:
+xxx
+COMPARE cond body end
+end
+
+函数 function()
+PULL_STACK
+SET in xxx
+SET in xxx
+SET in xxx
+do some thinng ...
+SET out xxx
+SET out xxx
+SET out xxx
+POP_STACK
+JUMP PC+1
