@@ -21,6 +21,7 @@ INCLUDEPATH += ./ \
     ./3rd/qtpropertybrowser
 
 SOURCES += \
+    $$files(./*.cpp) \
     $$files(./project/*.cpp) \
     $$files(./script/*.cpp) \
     $$files(./editor/*.cpp) \
@@ -29,9 +30,11 @@ SOURCES += \
     $$files(./editor/device/*.cpp) \    
     $$files(./editor/driver/*.cpp) \
     $$files(./3rd/qtpropertybrowser/*.cpp) \
+    $$files(./3rd/jznet/*.cpp) \
     $$files(./tests/*.cpp)
 
 HEADERS += \
+    $$files(./*.h) \
     $$files(./project/*.h) \
     $$files(./script/*.h) \
     $$files(./editor/*.h) \
@@ -40,6 +43,7 @@ HEADERS += \
     $$files(./editor/device/*.h) \    
     $$files(./editor/driver/*.h) \    
     $$files(./3rd/qtpropertybrowser/*.h) \
+    $$files(./3rd/jznet/*.h) \
     $$files(./tests/*.h)
 
 FORMS += 

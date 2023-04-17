@@ -1,8 +1,4 @@
 #include "JZExpression.h"
-#include <QVector>
-#include <QRegularExpression>
-#include <QMap>
-#include <QStack>
  
 using namespace std;
  

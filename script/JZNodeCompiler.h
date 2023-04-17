@@ -4,14 +4,7 @@
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeExpression.h"
-
-enum
-{
-    Build_none,
-    Build_flow,
-    Build_paramBinding,
-    Build_function,    
-};
+#include "JZScriptFile.h"
 
 class GraphNode
 {
@@ -42,17 +35,42 @@ public:
 };
 typedef QSharedPointer<Graph> GraphPtr;
 
+struct NodeInfo
+{        
+    struct Jump
+    {            
+        int pc;
+    };        
+
+    int start;
+    int end;
+    QList<Jump> jmpList;     
+};
+
+struct ScriptInfo
+{    
+    QList<GraphPtr> graphs;         
+    QMap<JZNode*,Graph*> nodeGraph;
+    QMap<int,NodeInfo> nodeInfo;
+    QList<JZEventHandle> events;
+
+    QList<JZNodeIR> statmentList;
+};
+
+
 class JZNodeCompiler
 {
 public:
+    static int paramId(int nodeId,int propId);
+    static int paramId(const JZNodeGemo &gemo);    
+    static QString paramName(int id);
+    static JZNodeGemo paramGemo(int id);    
+
     JZNodeCompiler();
     ~JZNodeCompiler();
-
-    bool build(JZProject *project,JZNodeProgram &result);    
-    const QList<Graph*> &graphs() const;        
-
-    int paramId(int nodeId,int propId);
-    int paramId(const JZNodeGemo &gemo);    
+     
+    bool build(JZScriptFile *file);
+    ScriptInfo result();    
 
     int allocReg();
     void freeReg(int id);
@@ -62,37 +80,19 @@ public:
 
     QString error();
 
-protected:
-    struct NodeInfo
-    {        
-        struct Jump
-        {            
-            int pc;
-        };        
-
-        int start;
-        int end;
-        QList<Jump> jmpList;     
-    };
-    
+protected:            
     bool genGraphs();
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
-    
     bool buildGraph(Graph *graph);
     bool addFlowEvent();
     bool addParamChangedEvent();
-    
-    JZNodeProgram m_program;
-    JZProject *m_project;        
-
-    QList<GraphPtr> m_graphs;     
+                
+    /* build info*/        
+    ScriptInfo m_info;
+    JZScriptFile *m_script; 
     Graph *m_currentGraph;   
-    QMap<JZNode*,Graph*> m_nodeGraph;        
-
-    QMap<int,NodeInfo> m_nodeInfo;
     NodeInfo *m_currentNodeInfo;
-    int m_buildType;
 
     QString m_error;
     int m_regId;

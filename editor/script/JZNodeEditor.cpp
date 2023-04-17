@@ -1,10 +1,21 @@
 #include "JZNodeEditor.h"
 #include <QVBoxLayout>
 #include <QSplitter>
+#include <QShortcut>
 
 JZNodeEditor::JZNodeEditor()
 {
     init();
+    
+    auto cutF5 = new QShortcut(QKeySequence("F5"),this);
+    auto cutF9 = new QShortcut(QKeySequence("F9"),this);
+    auto cutF10 = new QShortcut(QKeySequence("F10"),this);
+    auto cutF11 = new QShortcut(QKeySequence("F11"),this);
+
+    connect(cutF5,&QShortcut::activated,this,&JZNodeView::onRun);
+    connect(cutF9,&QShortcut::activated,this,&JZNodeView::onBreakPoint);
+    connect(cutF10,&QShortcut::activated,this,&JZNodeView::onStepOver);
+    connect(cutF11,&QShortcut::activated,this,&JZNodeView::onStepIn);
 }
 
 JZNodeEditor::~JZNodeEditor()
@@ -39,6 +50,27 @@ void JZNodeEditor::init()
 }
 
 void JZNodeEditor::open(JZProjectItem *item)
+{
+    JZScriptFile *file = dynamic_cast<JZScriptFile*>(item);
+    m_view->setFile(file);
+}
+
+void JZNodeEditor::onRun()
+{
+        
+}
+
+void JZNodeEditor::onBreakPoint()
+{
+    
+}
+
+void JZNodeEditor::onStepOver()
+{
+    
+}
+
+void JZNodeEditor::onStepIn()
 {
 
 }

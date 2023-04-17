@@ -3,9 +3,15 @@
 
 #include "JZProjectItem.h"
 
-class JZNodeUiFile : public JZProjectItem
+//JZUiFile
+class JZUiFile : public JZProjectItem
 {
-public:    
+public:
+    JZUiFile(bool dir);
+    virtual ~JZUiFile();
+
+    virtual void saveToStream(QDataStream &s);
+    virtual void loadFromStream(QDataStream &s);
 };
 
 

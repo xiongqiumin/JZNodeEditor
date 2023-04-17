@@ -1,4 +1,5 @@
 #include "JZNodeProgram.h"
+#include "JZNodeCompiler.h"
 
 //JZEventHandle
 JZEventHandle::JZEventHandle()
@@ -23,41 +24,18 @@ JZNodeProgram::~JZNodeProgram()
 {
 }
 
-int JZNodeProgram::paramId(int nodeId,int propId)
-{
-    return nodeId * 100 + propId;
-}
-
-int JZNodeProgram::paramId(const JZNodeGemo &gemo)
-{
-    return paramId(gemo.nodeId,gemo.propId);
-}
-
-QString JZNodeProgram::paramName(int id)
-{    
-    if(id < Reg_Start)
-        return QString().asprintf("Node%d.%d",id/100,id%100);
-    else if(id == Reg_Cmp)
-        return "Reg_Cmp";
-    else
-        return QString().asprintf("Reg%d",id - Reg_User);
-}
-
-JZNodeGemo JZNodeProgram::paramGemo(int id)
-{
-    if(id < Reg_Start)
-        return JZNodeGemo(id/100,id%100);
-    else
-        return JZNodeGemo();
-}
-
 const QList<JZEventHandle> &JZNodeProgram::eventHandleList() const
 {
     return m_events;
 }
 
-QString JZNodeProgram::dump()
+QString JZNodeProgram::paramName(int id)
 {
+    return JZNodeCompiler::paramName(id);
+}
+
+QString JZNodeProgram::dump()
+{    
     QString content;
     
     for(int i = 0; i < opList.size(); i++)

@@ -25,6 +25,11 @@ bool JZNodeGemo::operator==(const JZNodeGemo &other) const
 }
 
 // JZNodeConnect
+JZNodeConnect::JZNodeConnect()
+{
+    id = -1;
+}
+
 QDataStream &operator<<(QDataStream &s, const JZNodeConnect &param)
 {
     s << param.id;

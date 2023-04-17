@@ -8,6 +8,7 @@
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeDebugServer.h"
 
 class RunnerEnv
 {
@@ -42,64 +43,36 @@ public:
     QList<RunnerEnv> m_env;
 };
 
-enum
-{
-    Runner_stoped,
-    Runner_running,
-    Runner_paused,
-};
-
 class JZNodeRuntimeError{
 public:
     QString message;
 };
 
-class JZNodeEngine : public QObject
+//JZNodeEngine
+class JZNodeVM;
+class JZNodeEngine
 {
-    Q_OBJECT
-
 public:
     JZNodeEngine();
-    ~JZNodeEngine();
+    ~JZNodeEngine();  
 
     void setProgram(JZNodeProgram *program);
     JZNodeProgram *program();
-    void initProgram();
+    void initProgram();    
 
     QVariant getVariable(int id);
-    void setVariable(int id, const QVariant &value);    
-
-    bool start();
-    bool stop();
-    bool pause();
-    bool resume();    
-    bool isRunning();
+    void setVariable(int id, const QVariant &value);
+     
     bool call(QString name,QVariantList &in,QVariantList &out);    
 
-signals:
-    void sigStateChanged(int status);
-    void sigValueChanged(int id, QVariant param);
-    void sigRuntimeError(JZNodeRuntimeError error);
-
-protected slots:    
-
-protected:
-    enum{
-        cmd_none,
-        cmd_stop,
-        cmd_pause,
-        cmd_resume,
-    };    
-    virtual void customEvent(QEvent *event);    
-
-    void notify(int name, QVariant data);    
-    
+protected:            
+    void notify(int id, const QVariant &data);       
     void run();     
+
     const FunctionDefine *function(QString name);   
     void callFunction(const FunctionDefine *func);
     void callCFunction(const FunctionDefine *func);        
-    bool setCommand(int cmd);
-    void setState(int state);
+    bool setCommand(int cmd);    
     QVariant dealExpr(int op,QVariant &a,QVariant &b);    
     void pushStack(const FunctionDefine *define);
     void popStack();
@@ -107,16 +80,102 @@ protected:
     int m_pc;
     int m_state;
     int m_command;
-    QWidget *m_window;    
+    JZNodeVM *m_vm;
         
     Stack m_stack;
     QMap<int,QVariant> m_global;            
     QMap<int,QVariant> m_regCall;
-    QVariantList m_outList;
-    
-    JZNodeProgram *m_program;      
-    JZNodeRuntimeError m_error;
-    bool m_autoRun;    
+    QVariantList m_outList;              
 };
+
+//JZNodeVM
+class BreakPoint
+{
+public:
+    enum{
+        Node,
+        DataWatch,
+    };
+
+    int id;
+};
+
+class JZNodeDebugServer
+{
+public:
+
+};
+
+class JZNodeDebugClient
+{
+public:
+
+};
+
+class JZNodeVM : public QObject
+{
+    Q_OBJECT
+
+public:
+    JZNodeVM();
+    ~JZNodeVM();
+
+    QWidget *mainWindow();
+    
+    bool load(QString path);    
+
+    bool start();
+    bool stop();
+    bool pause();
+    bool resume();       
+
+    void addBreakPoint(BreakPoint pt);
+    void removeBreakPoint(BreakPoint pt);
+
+    QVariant getVariable(int id);
+    void setVariable(int id, const QVariant &value);    
+
+    void onStep(int pc);
+    void onValueNotify(int id,QVariant &value);
+
+signals:
+    void sigStateChanged(int status);
+    void sigRuntimeError(JZNodeRuntimeError );
+
+protected:    
+    void onIntValueChanged(int value);
+    void onStringValueChanged(const QString &value);
+    void onDoubleValueChanged(double value);
+    void onButtonClicked();    
+    
+protected:    
+    enum{
+        cmd_none,
+        cmd_stop,
+        cmd_pause,
+        cmd_resume,
+    };
+
+    enum
+    {
+        Runner_stoped,
+        Runner_running,
+        Runner_paused,
+    };
+
+    virtual void customEvent(QEvent *event);    
+    void setState(int state);
+    void createWindow();
+    bool busy();    
+    JZNodeEngine m_engine;
+    JZNodeProgram m_program;
+
+    QList<BreakPoint> m_breakPoints;
+    QMutex m_mutex;
+    QThread m_thread;    
+    JZNodeDebugServer m_debugServer;
+};
+
+
 
 #endif

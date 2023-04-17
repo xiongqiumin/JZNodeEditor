@@ -11,23 +11,27 @@ public:
     JZProject();
     ~JZProject();
 
-    void clear();
-    void addFile(QString dir,JZProjectItem *item);
-    void removeFile(QString path);        
+    bool open(QString filepath);
+    bool save();    
+    QString filename();
+    
+    int addItem(QString dir,JZProjectItem *item);
+    void removeItem(QString path);
+    int renameItem(JZProjectItem *item,QString newname);
+    JZProjectItem *getItem(QString path);
+    QList<JZProjectItem*> items();
     JZProjectItem *root();
 
 protected:
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
     void sort();
-    void makeTree();
-    JZProjectItem *getItem(QString path);
-
-    int m_nodeId;
-    QMap<int, JZNodePtr> m_nodes;
-    QList<JZNodeConnect> m_connects;
-    QList<JZProjectItemPtr> m_files;
-    JZProjectItem m_root;
+    void makeTree();    
+    void clear();
+        
+    QList<JZProjectItemPtr> m_items;
+    JZProjectRoot m_root;
+    QString m_filepath;
 };
 
 #endif

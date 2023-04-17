@@ -3,11 +3,12 @@
 
 #include <QMainWindow>
 #include <QSplitter>
-#include <QStackWidget>
-#include "ui_mainwindow.h"
+#include <QStackedWidget>
+#include <QTextEdit>
 #include "JZProjectTree.h"
 #include "JZEditor.h"
 #include "JZNodeEngine.h"
+#include "JZNodeDebugClient.h"
 
 class MainWindow : public QMainWindow
 {
@@ -27,15 +28,19 @@ protected slots:
     void onActionSaveAllTriggered();          
 
     void onFileOpened(QString filepath);
-
+    void onSetValue(int id, QVariant value);
+    void onDispValue(int id, QVariant value);
+    
 private:
     void initUi();
-    
+    void resizeEvent(QResizeEvent *event);
+
     JZNodeEngine m_nodeEngine;
     JZProject m_project;
     JZProjectTree *m_projectTree;
     JZEditor *m_editor;  
-    QStackWidget *m_editorStack;
+    QStackedWidget *m_editorStack;
     QTextEdit *m_log;
+    JZNodeDebugClient m_debuger;
 };
 #endif // MAINWINDOW_H

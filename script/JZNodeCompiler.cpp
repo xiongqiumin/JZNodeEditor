@@ -1,5 +1,6 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeValue.h"
+#include <QVector>
 
 // GraphNode
 GraphNode::GraphNode()
@@ -88,14 +89,58 @@ bool Graph::toposort()
 }
 
 // JZNodeCompiler
-JZNodeCompiler::JZNodeCompiler()
+int JZNodeCompiler::paramId(int nodeId,int propId)
 {
-    m_project = nullptr;
-    m_buildType = Build_none;    
+    return nodeId * 100 + propId;
+}
+
+int JZNodeCompiler::paramId(const JZNodeGemo &gemo)
+{
+    return paramId(gemo.nodeId,gemo.propId);
+}
+
+QString JZNodeCompiler::paramName(int id)
+{    
+    if(id < Reg_Start)
+        return QString().asprintf("Node%d.%d",id/100,id%100);
+    else if(id == Reg_Cmp)
+        return "Reg_Cmp";
+    else
+        return QString().asprintf("Reg%d",id - Reg_User);
+}
+
+JZNodeGemo JZNodeCompiler::paramGemo(int id)
+{
+    if(id < Reg_Start)
+        return JZNodeGemo(id/100,id%100);
+    else
+        return JZNodeGemo();
+}
+
+JZNodeCompiler::JZNodeCompiler()
+{    
 }
 
 JZNodeCompiler::~JZNodeCompiler()
 {
+}
+
+bool JZNodeCompiler::build(JZScriptFile *script)
+{    
+    m_script = script;    
+    genGraphs();
+    for(int i = 0; i < m_info.graphs.size(); i++)
+    {
+        auto graph = m_info.graphs[i].data();
+        if(!buildGraph(graph))
+            return false;
+    } 
+    return true;
+}
+
+ScriptInfo JZNodeCompiler::result()
+{
+    return m_info;
 }
 
 QString JZNodeCompiler::error()
@@ -103,53 +148,43 @@ QString JZNodeCompiler::error()
     return m_error;
 }
 
-int JZNodeCompiler::paramId(int nodeId,int propId)
-{
-    return m_program.paramId(nodeId,propId);
-}
-
-int JZNodeCompiler::paramId(const JZNodeGemo &gemo)
-{
-    return m_program.paramId(gemo);
-}
-
 void JZNodeCompiler::connectGraph(Graph *graph,JZNode *node)
 {
-    auto it = m_nodeGraph.find(node);
-    if(it != m_nodeGraph.end())
+    auto it = m_info.nodeGraph.find(node);
+    if(it != m_info.nodeGraph.end())
         return;
 
-    m_nodeGraph[node] = graph;
-    auto lines = m_project->connectList();
+    m_info.nodeGraph[node] = graph;
+    auto lines = m_script->connectList();
     for (int i = 0; i < lines.size(); i++)
     {        
         auto &line = lines[i];
         if(line.from.nodeId == node->id())
-            connectGraph(graph,m_project->getNode(line.to.nodeId));
+            connectGraph(graph,m_script->getNode(line.to.nodeId));
         if(line.to.nodeId == node->id())
-            connectGraph(graph,m_project->getNode(line.from.nodeId));
+            connectGraph(graph,m_script->getNode(line.from.nodeId));
     }
 }
 
 Graph *JZNodeCompiler::getGraph(JZNode *node)
 {
-    auto it = m_nodeGraph.find(node);
-    if(it != m_nodeGraph.end())    
+    auto it = m_info.nodeGraph.find(node);
+    if(it != m_info.nodeGraph.end())    
         return it.value();
 
     GraphPtr graph = GraphPtr(new Graph());
-    m_graphs.push_back(graph);    
+    m_info.graphs.push_back(graph);    
     connectGraph(graph.data(),node);
     return graph.data();
 }
 
 bool JZNodeCompiler::genGraphs()
 {        
-    m_graphs.clear();
-    auto node_list = m_project->nodeList();
+    m_info.graphs.clear();
+    auto node_list = m_script->nodeList();
     for (int i = 0; i < node_list.size(); i++)
     {
-        JZNode *node = m_project->getNode(node_list[i]);        
+        JZNode *node = m_script->getNode(node_list[i]);        
         Graph *graph = getGraph(node);
         
         GraphNode *graph_node = new GraphNode();        
@@ -157,10 +192,10 @@ bool JZNodeCompiler::genGraphs()
         graph->m_nodes.insert(node->id(), GraphNodePtr(graph_node));
     }
 
-    auto lines = m_project->connectList();
+    auto lines = m_script->connectList();
     for (int i = 0; i < lines.size(); i++)
     {        
-        JZNode *node = m_project->getNode(lines[i].from.nodeId);
+        JZNode *node = m_script->getNode(lines[i].from.nodeId);
         Graph *graph = getGraph(node);
 
         auto from = graph->m_nodes[lines[i].from.nodeId];
@@ -175,9 +210,9 @@ bool JZNodeCompiler::genGraphs()
         to->paramIn[to_prop_id].push_back(lines[i].from);        
     }
 
-    for(int i = 0; i < m_graphs.size(); i++)    
+    for(int i = 0; i < m_info.graphs.size(); i++)    
     {
-        Graph *graph = m_graphs[i].data();  
+        Graph *graph = m_info.graphs[i].data();  
         if(!graph->check())
         {
             m_error += graph->error;
@@ -186,7 +221,7 @@ bool JZNodeCompiler::genGraphs()
     }
 
     return true;
-}
+}    
 
 bool JZNodeCompiler::buildGraph(Graph *graph)
 {    
@@ -198,11 +233,11 @@ bool JZNodeCompiler::buildGraph(Graph *graph)
         GraphNode *graph = graph_list[graph_idx];
         JZNode *node = graph->node;
 
-        m_nodeInfo[node->id()] = NodeInfo();
-        m_currentNodeInfo = &m_nodeInfo[node->id()];
+        m_info.nodeInfo[node->id()] = NodeInfo();
+        m_currentNodeInfo = &m_info.nodeInfo[node->id()];
         m_regId = Reg_User;
 
-        int start = m_program.opList.size();
+        int start = m_info.statmentList.size();
         QString error;
         if(!node->compiler(this,error))
             return false;
@@ -217,8 +252,8 @@ bool JZNodeCompiler::buildGraph(Graph *graph)
             {
                 for(int out_idx = 0; out_idx < out_list.size(); out_idx++)
                 {
-                    int from_id = m_program.paramId(node->id(),it_out.key());
-                    int to_id = m_program.paramId(out_list[out_idx]);
+                    int from_id = paramId(node->id(),it_out.key());
+                    int to_id = paramId(out_list[out_idx]);
 
                     JZNodeIR op;
                     op.type = OP_set;
@@ -234,23 +269,24 @@ bool JZNodeCompiler::buildGraph(Graph *graph)
 
         //set jump flow                        
         m_currentNodeInfo->start = start;
-        m_currentNodeInfo->end = m_program.opList.size() - 1;
-        m_program.opList[start].memo = node->name();
+        m_currentNodeInfo->end = m_info.statmentList.size() - 1;
+        m_info.statmentList[start].memo = node->name();
         
     }    
     
-    if(m_buildType == Build_flow)
+    int buildType = m_script->itemType();
+    if(buildType == ProjectItem_scriptFlow)
         addFlowEvent();
-    else if(m_buildType == Build_paramBinding)
+    else if(buildType == ProjectItem_scriptParam)
         addParamChangedEvent();
-    else if(m_buildType == Build_function)
+    else if(buildType == ProjectItem_scriptFunction)
     {
         int return_pc = addStatement(JZNodeIR(OP_return));
         for(int i = 0; i < 1000; i++){
-            if(m_program.opList[i].type == OP_return){
+            if(m_info.statmentList[i].type == OP_return){
                 JZNodeIR jmp(OP_jmp);
                 jmp.params << return_pc;
-                m_program.opList[i] = jmp;
+                m_info.statmentList[i] = jmp;
             }
         }
     }
@@ -269,9 +305,9 @@ bool JZNodeCompiler::addFlowEvent()
 
         JZEventHandle handle;
         handle.type = node->m_eventType;
-        handle.pc = m_nodeInfo[node->id()].start;
+        handle.pc = m_info.nodeInfo[node->id()].start;
         handle.params << node->m_params;
-        m_program.m_events.push_back(handle);            
+        m_info.events.push_back(handle);            
     }        
 
     return true;
@@ -285,19 +321,19 @@ bool JZNodeCompiler::addParamChangedEvent()
         GraphNode *graph_node = graph_list[node_idx];
         JZNode *node = graph_node->node;
 
-        NodeInfo &info = m_nodeInfo[node->id()];
+        NodeInfo &info = m_info.nodeInfo[node->id()];
         Q_ASSERT(info.jmpList.size() == 1);
         int pc = info.jmpList[0].pc;
         if(node_idx != graph_list.size() - 1)
         {
             int next_node = m_currentGraph->topolist[node_idx + 1]->node->id();
             JZNodeIR jmp(OP_jmp);
-            jmp.params << QString::number(m_nodeInfo[next_node].start);
-            m_program.opList[pc] = jmp;
+            jmp.params << QString::number(m_info.nodeInfo[next_node].start);
+            m_info.statmentList[pc] = jmp;
         }
         else
         {
-            m_program.opList[pc] = JZNodeIR(OP_return);
+            m_info.statmentList[pc] = JZNodeIR(OP_return);
         }
 
         // add param changed handle function
@@ -308,20 +344,20 @@ bool JZNodeCompiler::addParamChangedEvent()
             //对每一个变化的参数重新计算节点的全部输出, 会有些冗余
             for(int out_idx = 0; out_idx < outList.size(); out_idx++)
             {
-                int param_id = m_program.paramId(node->id(),outList[out_idx]);
+                int param_id = paramId(node->id(),outList[out_idx]);
 
                 FunctionDefine define;
-                define.name = "EventHandle" + QString::number(m_program.m_events.size());
+                define.name = "EventHandle" + QString::number(m_info.events.size());
 
                 JZNodeIR jmp(OP_jmp);
-                jmp.params << m_nodeInfo[node->id()].start;
+                jmp.params << m_info.nodeInfo[node->id()].start;
                 addStatement(jmp);                                
 
                 JZEventHandle handle;
                 handle.type = Event_paramChanged;                
                 handle.params << QString::number(param_id);
                 handle.function = define;
-                m_program.m_events.push_back(handle);
+                m_info.events.push_back(handle);
             }
         }
     }
@@ -329,38 +365,10 @@ bool JZNodeCompiler::addParamChangedEvent()
     return true;
 }
 
-bool JZNodeCompiler::build(JZProject *project,JZNodeProgram &result)
-{
-    m_error.clear();    
-    m_project = project;    
-    m_program = JZNodeProgram();
-
-    m_buildType = Build_paramBinding;
-    genGraphs();
-    for(int i = 0; i < m_graphs.size(); i++)
-    {
-        auto graph = m_graphs[i].data();
-        if(!buildGraph(graph))
-            return false;
-    }    
-        
-    result = m_program;
-    return true;
-}
-
-const QList<Graph*> &JZNodeCompiler::graphs() const
-{
-    QList<Graph*> list;
-    for(int i = 0; i < m_graphs.size(); i++)         
-        list.push_back(m_graphs[i].data());
-    
-    return list;    
-}
-
 int JZNodeCompiler::addStatement(const JZNodeIR &ir)
 {
-    m_program.opList.push_back(ir);
-    return m_program.opList.size() - 1;
+    m_info.statmentList.push_back(ir);
+    return m_info.statmentList.size() - 1;
 }
 
 void JZNodeCompiler::addJumpNode(int idx)

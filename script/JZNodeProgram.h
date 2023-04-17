@@ -1,6 +1,7 @@
 #ifndef JZNODE_PROGRAM_H_
 #define JZNODE_PROGRAM_H_
 
+#include <QThread>
 #include "JZNode.h"
 #include "JZNodeEvent.h"
 #include "JZEvent.h"
@@ -13,7 +14,7 @@ enum{
     Reg_Jump = Reg_Start,
     Reg_Cmp,
     Reg_User,
-    Reg_Call = 0x2000000,
+    Reg_Call = 0x2000000,   //函数传递参数
 };
 
 class JZEventHandle
@@ -29,28 +30,24 @@ public:
     FunctionDefine function;
 };
 
-class JZNodeCompiler;
-class JZNodeProgram
+class JZNodeBuilder;
+class JZNodeProgram 
 {
 public:
     JZNodeProgram();
     ~JZNodeProgram();
 
-    QString dump();
+    QString dump();        
+    const QList<JZEventHandle> &eventHandleList() const;
 
     QList<JZNodeIR> opList;
-    const QList<JZEventHandle> &eventHandleList() const;
     
-    QString paramName(int id);
-    JZNodeGemo paramGemo(int id);
-    int paramId(int nodeId,int propId);
-    int paramId(const JZNodeGemo &gemo);
-
 protected:
-    friend JZNodeCompiler;
-    
+    friend JZNodeBuilder;    
+    QString paramName(int id);
+
     QList<JZEventHandle> m_events;
-    QStringList m_opNames;
+    QStringList m_opNames;        
 };
 
 #endif

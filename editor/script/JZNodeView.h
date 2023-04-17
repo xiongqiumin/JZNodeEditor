@@ -30,9 +30,14 @@ public:
     virtual void redo() override;
     virtual void undo() override;
     virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *command);
 
     int command;
-    QVariantList params;        
+    int itemId;
+    QVariant oldValue;
+    QVariant newValue;   
+    QPointF oldPos;
+    QPointF newPos; 
 protected:
     JZNodeView *m_view;
 };
@@ -45,14 +50,15 @@ public:
     JZNodeView(QWidget *widget = nullptr);
     virtual ~JZNodeView();
 
-    JZProject *project();
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
+    void setFile(JZScriptFile *file);
 
     /* node */
     JZNode *getNode(int id);
     JZNodeGraphItem *createNode(JZNodePtr node);
     JZNodeGraphItem *insertNode(JZNodePtr node);
-    void removeNode(int id);
+    void moveNode(int id,QPointF pos);
+    void removeNode(int id);    
 
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
@@ -68,16 +74,13 @@ public:
     void endLine(JZNodeGemo to);
     void cancelLine();
 
-    QVariant itemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsItemChange change, const QVariant &value);
+    QVariant onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsItemChange change, const QVariant &value);
 
     void clear();
     void redo();
     void undo();    
     void copy();
-    void paste();
-
-    void save(QString path);
-    void load(QString path);
+    void paste();    
 
     void updateNodeLayout();
     int paramId(int nodeId,int propId);
@@ -85,8 +88,6 @@ public:
 protected slots:
     void onContextMenu(const QPoint &pos);
     void onPropUpdate(int nodeId);
-    void onSetValue(int id, QVariant value);
-    void onDispValue(int id, QVariant value);
     void onTimer();
 
     void onCopy();
@@ -117,20 +118,18 @@ protected:
 
     void foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType = -1);
     void foreachLine(std::function<void(JZNodeLineItem *)> func);    
-    void run();
-    void autoRun();
+    void run();    
     void stopRun();
     void copyItem(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);    
+    void initGraph();
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;
     JZNodeLineItem *m_selLine;
     bool m_loadFlag;
     JZNodePropertyEditor *m_propEditor;
-
-    QUndoStack m_commandStack;    
-    bool m_autoRun;
+    QUndoStack m_commandStack;        
 
     double m_scale;
     QPoint m_downPoint;    

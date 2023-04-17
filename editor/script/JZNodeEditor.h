@@ -4,14 +4,23 @@
 #include "JZNodeView.h"
 #include "JZNodePanel.h"
 #include "JZNodePropertyEditor.h"
+#include "JZEditor.h"
 
-class JZNodeEditor{
-
+class JZNodeEditor : public JZEditor
+{
+    Q_OBJECT
+    
 public:
     JZNodeEditor();
     ~JZNodeEditor();
 
     void open(JZProjectItem *item);
+
+protected slots:
+    void onRun();
+    void onBreakPoint();
+    void onStepOver();
+    void onStepIn();
 
 protected:
     void init();    

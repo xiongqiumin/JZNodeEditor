@@ -41,5 +41,5 @@ QVariant JZNodeBaseItem::itemChange(GraphicsItemChange change, const QVariant &v
     if (!edit)
         return QGraphicsItem::itemChange(change, value);
 
-    return edit->itemChange(this, change, value);
+    return edit->onItemChange(this, change, value);
 }

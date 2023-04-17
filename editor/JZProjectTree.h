@@ -17,17 +17,28 @@ public:
 
 protected slots:
     void onContextMenu(QPoint pos);
+
+    void onItemChanged(QTreeWidgetItem *item);
+    void onItemClicked(QTreeWidgetItem *item);
     void onItemDoubleClicked(QTreeWidgetItem *item);
+    void onItemRename();
+    void onCurrentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
 
 signals:
     void sigFileOpened(QString file);
 
 protected:
     void init();
-    void addItem(QTreeWidgetItem *item,JZProjectItem *item);
+    void addItem(QTreeWidgetItem *view_item,JZProjectItem *item);
+    JZProjectItem *getItem(QTreeWidgetItem *view_item);
+    void cancelEdit();
 
     JZProject *m_project;   
     QTreeWidget *m_tree; 
+
+    QTreeWidgetItem *m_editItem;
+    JZProjectItem *m_editProjectItem;
+    bool isEditNew;
 };
 
 

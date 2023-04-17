@@ -58,10 +58,14 @@ struct JZNodeGemo
 class JZNodeConnect
 {
 public:
+    JZNodeConnect();
+    
     int id;
     JZNodeGemo from;
     JZNodeGemo to;
 };
+QDataStream &operator<<(QDataStream &s, const JZNodeConnect &param);
+QDataStream &operator>>(QDataStream &s, JZNodeConnect &param);
 JZNodeConnect parseLine(const QByteArray &buffer);
 QByteArray formatLine(const JZNodeConnect &line);
 

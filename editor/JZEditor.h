@@ -6,7 +6,7 @@
 
 class JZEditor : public QWidget
 {
-    Q_WIDGET
+    Q_OBJECT
 
 public:
     JZEditor();

@@ -1,6 +1,18 @@
 #include "JZScriptFile.h"
+#include "JZNodeFactory.h"
 
 //JZScriptFile
+JZScriptFile::JZScriptFile(int type,bool dir)
+    :JZProjectItem(type,dir)
+{
+    clear();
+}
+
+JZScriptFile::~JZScriptFile()
+{
+
+}
+
 void JZScriptFile::clear()
 {
     m_nodeId = 0;
@@ -20,11 +32,13 @@ void JZScriptFile::insertNode(JZNodePtr node)
 {
     Q_ASSERT(node->id() != -1 && getNode(node->id()) == nullptr);
     m_nodes.insert(node->id(), node);
+    m_nodesPos.insert(node->id(), QPointF());
 }
 
 void JZScriptFile::removeNode(int id)
 {
     m_nodes.remove(id);
+    m_nodesPos.remove(id);
 }
 
 JZNodePin *JZScriptFile::getPin(const JZNodeGemo &gemo)
@@ -42,6 +56,19 @@ JZNode *JZScriptFile::getNode(int id)
         return it->data();
     else
         return nullptr;
+}
+
+void JZScriptFile::setNodePos(int id,QPointF pos)
+{
+    m_nodesPos[id] = pos;        
+}
+
+QPointF JZScriptFile::getNodePos(int id)
+{
+    auto it = m_nodesPos.find(id);
+    if(it != m_nodesPos.end())
+        return it.value();
+    return QPointF();
 }
 
 QList<int> JZScriptFile::nodeList()
@@ -118,6 +145,8 @@ QList<JZNodeConnect> JZScriptFile::connectList()
 
 void JZScriptFile::saveToStream(QDataStream &s)
 {
+    JZProjectItem::saveToStream(s);
+
     s << m_nodeId;
     int size = m_nodes.size();
     s << size;
@@ -128,11 +157,14 @@ void JZScriptFile::saveToStream(QDataStream &s)
         it->data()->saveToStream(s);
         it++;
     }
-    s << m_connects;
+    s << m_nodesPos;
+    s << m_connects;    
 }
 
 void JZScriptFile::loadFromStream(QDataStream &s)
 {
+    JZProjectItem::loadFromStream(s);
+
     s >> m_nodeId;
     int size = 0;
     s >> size;
@@ -142,7 +174,8 @@ void JZScriptFile::loadFromStream(QDataStream &s)
         s >> type;
         JZNode *node = JZNodeFactory::instance()->createNode(type);
         node->loadFromStream(s);
-        m_nodes.insert(node->id(), JZNodePtr(node));
+        m_nodes.insert(node->id(), JZNodePtr(node));        
     }
+    s >> m_nodesPos;
     s >> m_connects;
 }

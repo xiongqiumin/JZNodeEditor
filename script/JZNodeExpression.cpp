@@ -155,7 +155,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *compiler,QString &error)
 {
     JZExpression exp;
     if(!exp.parse(expression,error))
-        return error;
+        return false;
     
     for(int i = 0; i < exp.inList.size(); i++)
     {
