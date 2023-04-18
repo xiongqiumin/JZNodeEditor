@@ -37,9 +37,11 @@ public:
     JZNodeProgram();
     ~JZNodeProgram();
 
+    bool load(QString file);
     QString dump();        
     const QList<JZEventHandle> &eventHandleList() const;
 
+    int getPc(int nodeId);
     QList<JZNodeIR> opList;
     
 protected:

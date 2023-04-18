@@ -5,10 +5,10 @@
 #include <QMap>
 #include <QMutex>
 #include <QThread>
+#include <QSemaphore>
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodeDebugServer.h"
 
 class RunnerEnv
 {
@@ -48,8 +48,17 @@ public:
     QString message;
 };
 
-//JZNodeEngine
+class BreakPoint
+{
+public: 
+    BreakPoint();
+
+    int pc;
+    bool once;
+};
+
 class JZNodeVM;
+//JZNodeEngine
 class JZNodeEngine
 {
 public:
@@ -58,7 +67,17 @@ public:
 
     void setProgram(JZNodeProgram *program);
     JZNodeProgram *program();
-    void initProgram();    
+    void init();    
+
+    void addBreakPoint(BreakPoint pt);
+    void removeBreakPoint(BreakPoint pt);    
+    void pause();
+    void resume();
+    void stepIn(int nodeId);
+    void stepOver(int nodeId);
+    void stepOut(int nodeId);
+
+    void setVm(JZNodeVM *vm);
 
     QVariant getVariable(int id);
     void setVariable(int id, const QVariant &value);
@@ -77,105 +96,20 @@ protected:
     void pushStack(const FunctionDefine *define);
     void popStack();
 
-    int m_pc;
-    int m_state;
-    int m_command;
+    int m_pc;    
     JZNodeVM *m_vm;
+    JZNodeProgram *m_program;
         
     Stack m_stack;
     QMap<int,QVariant> m_global;            
     QMap<int,QVariant> m_regCall;
-    QVariantList m_outList;              
-};
-
-//JZNodeVM
-class BreakPoint
-{
-public:
-    enum{
-        Node,
-        DataWatch,
-    };
-
-    int id;
-};
-
-class JZNodeDebugServer
-{
-public:
-
-};
-
-class JZNodeDebugClient
-{
-public:
-
-};
-
-class JZNodeVM : public QObject
-{
-    Q_OBJECT
-
-public:
-    JZNodeVM();
-    ~JZNodeVM();
-
-    QWidget *mainWindow();
-    
-    bool load(QString path);    
-
-    bool start();
-    bool stop();
-    bool pause();
-    bool resume();       
-
-    void addBreakPoint(BreakPoint pt);
-    void removeBreakPoint(BreakPoint pt);
-
-    QVariant getVariable(int id);
-    void setVariable(int id, const QVariant &value);    
-
-    void onStep(int pc);
-    void onValueNotify(int id,QVariant &value);
-
-signals:
-    void sigStateChanged(int status);
-    void sigRuntimeError(JZNodeRuntimeError );
-
-protected:    
-    void onIntValueChanged(int value);
-    void onStringValueChanged(const QString &value);
-    void onDoubleValueChanged(double value);
-    void onButtonClicked();    
-    
-protected:    
-    enum{
-        cmd_none,
-        cmd_stop,
-        cmd_pause,
-        cmd_resume,
-    };
-
-    enum
-    {
-        Runner_stoped,
-        Runner_running,
-        Runner_paused,
-    };
-
-    virtual void customEvent(QEvent *event);    
-    void setState(int state);
-    void createWindow();
-    bool busy();    
-    JZNodeEngine m_engine;
-    JZNodeProgram m_program;
-
+    QVariantList m_outList;
     QList<BreakPoint> m_breakPoints;
-    QMutex m_mutex;
-    QThread m_thread;    
-    JZNodeDebugServer m_debugServer;
+    bool m_needPause;
+    bool m_pause;     
+    QMutex m_mutex;    
+    QSemaphore m_waitCond;
 };
-
 
 
 #endif

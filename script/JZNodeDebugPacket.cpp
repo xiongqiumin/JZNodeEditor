@@ -8,14 +8,18 @@ JZNodeDebugPacket::~JZNodeDebugPacket()
 {
 }
 
-QDataStream &operator<<(QDataStream &s, const JZNodeDebugPacket &param)
+int JZNodeDebugPacket::type() const
+{
+    return NetPack_debugPacket;
+}
+
+void JZNodeDebugPacket::saveToStream(QDataStream &s) const
+{
+    
+}
+
+void JZNodeDebugPacket::loadFromStream(QDataStream &s)
 {
 
 }
-
-QDataStream &operator>>(QDataStream &s, JZNodeDebugPacket &param)
-{
-
-}
-
 

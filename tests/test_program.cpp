@@ -12,6 +12,7 @@ void testProjectSave()
 
 void testBuild()
 {
+/*
     JZNodeValue *v = new JZNodeValue();
     JZNodeAdd *add = new JZNodeAdd();
 
@@ -32,7 +33,7 @@ void testBuild()
         qDebug().noquote() << program.dump();        
 
         JZNodeEngine runner;
-        runner.setProgram(&program);                        
-        runner.start();
-    }    
+        runner.setProgram(&program);                                
+    }   
+*/    
 }

@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,6 +18,7 @@ INCLUDEPATH += ./ \
     ./editor/ui \
     ./editor/device \    
     ./editor/driver \
+    ./3rd/jznet \
     ./3rd/qtpropertybrowser
 
 SOURCES += \

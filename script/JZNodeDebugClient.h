@@ -2,7 +2,7 @@
 #define JZNODE_DEBUG_CLIENT_H_
 
 #include <QObject>
-#include <QTcpClient>
+#include "JZNetClient.h"
 #include "JZNodeDebugPacket.h"
 
 class JZNodeDebugClient : public QObject
@@ -13,9 +13,19 @@ public:
     JZNodeDebugClient();
     ~JZNodeDebugClient();
 
+    bool pause();
+    bool resume();
+    bool stop();
+
+protected slots:    
+    void onConnect();
+	void onDisConnect();
+	void onNetPackRecv(JZNetPackPtr ptr);    
+
 protected:
-    bool waitPacket(int id,JZNodeDebugPacket &recv);
-    void sendPacket(JZNodeDebugPacket packet);
+    bool send();
+
+    JZNetClient m_client;
 };
 
 

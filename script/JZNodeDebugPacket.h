@@ -1,20 +1,19 @@
 #ifndef JZNODE_DEBUG_PACKET_H_
 #define JZNODE_DEBUG_PACKET_H_
 
+#include "JZNetPack.h"
 
-#include <QDataStream>
+const int NetPack_debugPacket = NetPack_user;
 
-class JZNodeDebugPacket
+class JZNodeDebugPacket : public JZNetPack 
 {
 public:
     JZNodeDebugPacket();
     ~JZNodeDebugPacket();
 
-protected:
-    friend QDataStream &operator<<(QDataStream &s, const JZNodeDebugPacket &param);
-    friend QDataStream &operator>>(QDataStream &s, JZNodeDebugPacket &param);    
+    virtual int type() const;
+	virtual void saveToStream(QDataStream &s) const;
+	virtual void loadFromStream(QDataStream &s);    
 };
-QDataStream &operator<<(QDataStream &s, const JZNodeDebugPacket &param);
-QDataStream &operator>>(QDataStream &s, JZNodeDebugPacket &param);
 
 #endif

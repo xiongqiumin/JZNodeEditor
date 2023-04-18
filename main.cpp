@@ -1,18 +1,15 @@
 #include <QApplication>
 #include <QEventLoop>
 #include "mainwindow.h"
-#include "JZNodeFunctionManager.h"
-#include "JZNodeCompiler.h"
-#include "JZNodeEngine.h"
-#include "JZNodeFactory.h"
+#include "JZNodeInit.h"
+#include "JZNodeVM.h"
 #include <QMessageBox>
 
 extern void testBuild();
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    JZNodeFactory::instance()->init();
-    JZNodeFunctionManager::instance()->init();    
+    JZNodeInit();    
 
     if(argc == 1)
     {
@@ -28,11 +25,8 @@ int main(int argc, char *argv[])
     else
     {
         JZNodeVM vm;
-        if(vm.load(argv[1]))
-        {
-            QMessageBox::information(this,"","应用启动失败");
-            return 1;
-        }
-        return vm.exec();            
+        if(!vm.load(argv[1]))
+            return 1;                    
+        return a.exec();            
     }            
 }

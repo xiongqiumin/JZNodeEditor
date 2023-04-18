@@ -35,8 +35,8 @@ public:
     QList<JZProjectItem *> items();    
     int indexOfItem(JZProjectItem *);
 
-    virtual void saveToStream(QDataStream &s) = 0;
-    virtual void loadFromStream(QDataStream &s) = 0;
+    virtual void saveToStream(QDataStream &s);
+    virtual void loadFromStream(QDataStream &s);
 
     void sort();
     
@@ -57,9 +57,6 @@ class JZProjectRoot : public JZProjectItem
 public:
     JZProjectRoot();
     virtual ~JZProjectRoot();
-
-    virtual void saveToStream(QDataStream &s);
-    virtual void loadFromStream(QDataStream &s);
 };
 
 //JZProjectItemFactory

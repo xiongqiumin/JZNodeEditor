@@ -5,23 +5,25 @@
 #include <QDataStream>
 #include <QMap>
 #include <QVariant>
+#include <QSharedPointer>
 using namespace std;
 
 enum{
 	NetPack_none,
 	NetPack_variant,
 	NetPack_byteArray,
+	NetPack_user = 0x100,
 };
 
-class NetPack
+class JZNetPack
 {
 public:
-	NetPack();
-	virtual ~NetPack();
+	JZNetPack();
+	virtual ~JZNetPack();
 	
-    virtual int type() const = 0 ;
-	virtual void saveToStream(QDataStream &s) const;
-	virtual void loadFromStream(QDataStream &s);
+    virtual int type() const = 0;
+	virtual void saveToStream(QDataStream &s) const = 0;
+	virtual void loadFromStream(QDataStream &s) = 0;
 
 	int seq();
 	void setSeq(int seq);
@@ -29,9 +31,10 @@ public:
 private:
 	int m_seq;	
 };
+typedef QSharedPointer<JZNetPack> JZNetPackPtr;
 
 //NetPackVariant
-class NetPackVariant : public NetPack
+class NetPackVariant : public JZNetPack
 {
 public:
 	NetPackVariant();
@@ -45,7 +48,7 @@ public:
 };
 
 //NetPackByteArray
-class NetPackByteArray : public NetPack
+class NetPackByteArray : public JZNetPack
 {
 public:
 	NetPackByteArray();
@@ -58,22 +61,22 @@ public:
 	QByteArray buffer;	
 };
 
-//NetPackManager
-typedef NetPack *(*CreatePackFunc)();
-class NetPackManager
+//JZNetPackManager
+typedef JZNetPack *(*CreatePackFunc)();
+class JZNetPackManager
 {
 public:
-	static NetPackManager *instance();
-	NetPackManager();
+	static JZNetPackManager *instance();
+	JZNetPackManager();
 
 	void init();	
 	void registPack(int type,CreatePackFunc func);
-	NetPack *createPack(int id);
+	JZNetPack *createPack(int id);
 
 protected:
 	QMap<int, CreatePackFunc> m_packFactory;	
 };
 template<class T> 
-NetPack *createNetPackFunc(){ return new T();}
+JZNetPack *createNetPackFunc(){ return new T();}
 
 #endif

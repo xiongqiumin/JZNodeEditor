@@ -1,17 +1,18 @@
-﻿#include "netClient.h"
-#include <QTcpServer>
+﻿#include <QTcpServer>
 #include <QTcpSocket>
-#include <netDataManager.h>
 #include <QTimer>
+#include <QThread>
+#include <QElapsedTimer>
+#include "JZNetClient.h"
+#include "JZNetDataManager.h"
 
-NetClient::NetClient(QObject * parent) 
+JZNetClient::JZNetClient(QObject * parent) 
 	: QObject(parent)	
 {
 	tcpSocket = new QTcpSocket();
-	mWaitTime = 30000;
 
 	mUser = 1;
-    mWaitData = false;
+    m_waitRecv = false;
     mUserDisconnect = false;
 
 	//建立连接    
@@ -21,13 +22,13 @@ NetClient::NetClient(QObject * parent)
     connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SIGNAL(sigError()));
 }
 
-NetClient::~NetClient()
+JZNetClient::~JZNetClient()
 {	
 	disconnectFromHost();	
 	delete tcpSocket;
 }
 
-void NetClient::disconnectFromHost()
+void JZNetClient::disconnectFromHost()
 {
 	//从服务器断开
 	if(isConnect())
@@ -42,14 +43,14 @@ void NetClient::disconnectFromHost()
 	}
 }
 
-bool NetClient::connectToHost(QString host,int port)
+bool JZNetClient::connectToHost(QString host,int port)
 {
 	//连接服务器
 	tcpSocket->connectToHost(host, port);	
     mUserDisconnect = false;
 	
 	//等待连接成功
-	bool ret = tcpSocket->waitForConnected(mWaitTime);
+	bool ret = tcpSocket->waitForConnected();
 	if(ret)
 	{
 		//创建新的网络会话
@@ -58,32 +59,26 @@ bool NetClient::connectToHost(QString host,int port)
 	return ret;
 }
 
-void NetClient::connectToHostAsync(QString host, int port)
+void JZNetClient::connectToHostAsync(QString host, int port)
 {
     //连接异步服务器
     tcpSocket->abort();
     tcpSocket->connectToHost(host, port);
 }
 
-bool NetClient::isConnect()
+bool JZNetClient::isConnect()
 {
 	//判断连接状态
     return tcpSocket->state() == QTcpSocket::ConnectedState;
 }
 
-QTcpSocket *NetClient::clientSocket()
-{
-	//原始指针
-	return tcpSocket;
-}
-
-void NetClient::onConnected()
+void JZNetClient::onConnected()
 {
     m_dataManager.newSession(mUser, tcpSocket);
     emit sigConnect();
 }
 
-void NetClient::onDisConnected()
+void JZNetClient::onDisConnected()
 {	
 	//发送连接断开信号
     if(!mUserDisconnect)
@@ -95,44 +90,46 @@ void NetClient::onDisConnected()
     mUserDisconnect = false;
 }
 
-void NetClient::onReadyRead()
+void JZNetClient::onReadyRead()
 {		
 	//是否正在等待数据
-    if(mWaitData)
+    if(m_waitRecv)
         return;
 
     dispatchPack();	
 }
 
-void NetClient::dispatchPack()
+void JZNetClient::dispatchPack()
 {
     //接收数据包
     m_dataManager.recvPack(mUser);
     while (true)
     {
-        NetPackPtr pack = m_dataManager.takePack(mUser);
+        JZNetPackPtr pack = m_dataManager.takePack(mUser);
         if (pack)
         {
-            emit newDataRecv(pack);
+            emit sigNetPackRecv(pack);
         }
         else
             break;
     }
 }
 
-bool NetClient::sendPack(const NetPack &pack)
+bool JZNetClient::sendPack(JZNetPackPtr pack)
 {	
 	//发送数据包
-	return m_dataManager.sendPack(mUser, pack,true);
+	return m_dataManager.sendPack(mUser, pack);
 }
 
-NetPackPtr NetClient::waitPack(int type, int param)
+JZNetPackPtr JZNetClient::waitPack(int type, int param,int timeout)
 {
-	NetPackPtr pack;
+	JZNetPackPtr pack;
         
+	QElapsedTimer t;
+	t.start();
 	//等待数据包
-    mWaitData = true;    
-    while(tcpSocket->waitForReadyRead(mWaitTime))
+    m_waitRecv = true;    
+    while(timeout == -1 || t.elapsed() <= timeout)
     {	    
         m_dataManager.recvPack(mUser);
 		if(type == 0)
@@ -143,25 +140,26 @@ NetPackPtr NetClient::waitPack(int type, int param)
 			pack = m_dataManager.takePackBySeq(mUser, param);
         if(pack)
             break;
-    }
-    mWaitData = false; 
-    
-    QTimer::singleShot(0, [this]{ dispatchPack();});
 
+		QThread::msleep(10);
+    }
+    m_waitRecv = false; 
+    
+    QTimer::singleShot(0, this, [this]{ dispatchPack();});
 	return pack;
 }
 
-NetPackPtr NetClient::waitPackAny()
+JZNetPackPtr JZNetClient::waitPackAny(int timeout)
 {
-	return waitPack(0, 0);
+	return waitPack(0, 0, timeout);
 }
 
-NetPackPtr NetClient::waitPackByType(int type)
+JZNetPackPtr JZNetClient::waitPackByType(int type,int timeout)
 {
-	return waitPack(1, type);
+	return waitPack(1, type, timeout);
 }
 
-NetPackPtr NetClient::waitPackBySeq(int seq)
+JZNetPackPtr JZNetClient::waitPackBySeq(int seq,int timeout)
 {
-	return waitPack(2, seq);
+	return waitPack(2, seq, timeout);
 }

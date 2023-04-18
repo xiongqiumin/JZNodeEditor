@@ -21,7 +21,7 @@ const QList<Graph*> &JZNodeBuilder::graphs(QString filename) const
     
     return result;    
 }
-
+/*
 bool JZNodeCompiler::build(JZProject *project,JZNodeProgram &result)
 {
     m_error.clear();    
@@ -46,8 +46,8 @@ bool JZNodeCompiler::build(JZProject *project,JZNodeProgram &result)
     result = m_program;
     return true;
 }
-
-bool JZNodeCompiler::link()
+*/
+bool JZNodeBuilder::link()
 {
     return true;
 }

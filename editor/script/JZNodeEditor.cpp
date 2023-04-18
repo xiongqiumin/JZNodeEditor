@@ -12,10 +12,10 @@ JZNodeEditor::JZNodeEditor()
     auto cutF10 = new QShortcut(QKeySequence("F10"),this);
     auto cutF11 = new QShortcut(QKeySequence("F11"),this);
 
-    connect(cutF5,&QShortcut::activated,this,&JZNodeView::onRun);
-    connect(cutF9,&QShortcut::activated,this,&JZNodeView::onBreakPoint);
-    connect(cutF10,&QShortcut::activated,this,&JZNodeView::onStepOver);
-    connect(cutF11,&QShortcut::activated,this,&JZNodeView::onStepIn);
+    connect(cutF5,&QShortcut::activated,this,&JZNodeEditor::onRun);
+    connect(cutF9,&QShortcut::activated,this,&JZNodeEditor::onBreakPoint);
+    connect(cutF10,&QShortcut::activated,this,&JZNodeEditor::onStepOver);
+    connect(cutF11,&QShortcut::activated,this,&JZNodeEditor::onStepIn);
 }
 
 JZNodeEditor::~JZNodeEditor()

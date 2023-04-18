@@ -24,9 +24,19 @@ JZNodeProgram::~JZNodeProgram()
 {
 }
 
+bool JZNodeProgram::load(QString file)
+{
+    return false;
+}
+
 const QList<JZEventHandle> &JZNodeProgram::eventHandleList() const
 {
     return m_events;
+}
+
+int JZNodeProgram::getPc(int nodeId)
+{
+    return 0;
 }
 
 QString JZNodeProgram::paramName(int id)

@@ -1,9 +1,8 @@
-﻿#include "netServer.h"
-#include <QTcpServer>
+﻿#include <QTcpServer>
 #include <QTcpSocket>
-#include "NetDataManager.h"
+#include "JZNetServer.h"
 
-NetServer::NetServer(QObject * parent) 
+JZNetServer::JZNetServer(QObject * parent) 
 	: QObject(parent)
 	, tcpServer(NULL)
 {
@@ -14,13 +13,13 @@ NetServer::NetServer(QObject * parent)
 	connect(tcpServer, SIGNAL(newConnection()), this, SLOT(onNewConnect()));
 }
 
-NetServer::~NetServer() 
+JZNetServer::~JZNetServer() 
 {	
 	stopServer();	
 	delete tcpServer;
 }
 
-bool NetServer::startServer(int port)
+bool JZNetServer::startServer(int port)
 {	
 	//启动监听
 	if (!tcpServer->listen(QHostAddress::AnyIPv4, port)) {		
@@ -30,7 +29,7 @@ bool NetServer::startServer(int port)
 	return true;
 }
 
-void NetServer::stopServer()
+void JZNetServer::stopServer()
 {
 	//停止监听
 	if(tcpServer->isListening())
@@ -47,40 +46,26 @@ void NetServer::stopServer()
 	}
 }
 
-bool NetServer::isOpen()
+bool JZNetServer::isOpen()
 {
 	//是否正在监听
 	return tcpServer->isListening();
 }
 
-void NetServer::closeConnect(int netId)
+void JZNetServer::closeConnect(int netId)
 {
 	//断开连接
     QTcpSocket *socket = m_tcpClients[netId];
     socket->disconnectFromHost();
 }
 
-NetInfo NetServer::netInfo(int netId)
-{
-	//获取原始指针
-	QTcpSocket *socket = m_tcpClients[netId];
-	QHostAddress addr(socket->peerAddress().toIPv4Address());
-
-	//设置网络信息
-	NetInfo info;
-	info.ip = addr.toString();	 
-	info.port = socket->peerPort();
-
-	return info;
-}
-
-bool NetServer::sendPack(int netId, const NetPack &pack)
+bool JZNetServer::sendPack(int netId, JZNetPackPtr pack)
 {
 	//发送数据包给指定客户
 	return m_dataManager.sendPack(netId, pack);
 }
 
-bool NetServer::sendPackExclude(int netId, const NetPack &pack)
+bool JZNetServer::sendPackExclude(int netId, JZNetPackPtr pack)
 {
 	//发送数据包,排除指定客户
 	bool ret = true;
@@ -94,7 +79,7 @@ bool NetServer::sendPackExclude(int netId, const NetPack &pack)
 	return ret;
 }
 
-bool NetServer::sendPackToAll(const NetPack &pack)
+bool JZNetServer::sendPackToAll(JZNetPackPtr pack)
 {
 	//发送数据包给所有
 	bool ret = true;
@@ -107,7 +92,7 @@ bool NetServer::sendPackToAll(const NetPack &pack)
 	return ret;
 }
 
-void NetServer::onNewConnect()
+void JZNetServer::onNewConnect()
 {	
 	//获取新连接
 	QTcpSocket *socket = tcpServer->nextPendingConnection();    
@@ -122,21 +107,21 @@ void NetServer::onNewConnect()
 	m_tcpClients[netId] = socket;	
 
 	//发送新连接
-	emit newConnect(netId);
+	emit sigNewConnect(netId);
 }
 
-void NetServer::onDisconnected()
+void JZNetServer::onDisconnected()
 {	
 	//发送连接断开
 	QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
 	int netId = m_tcpClients.key(socket);
-	emit disConnect(netId);
+	emit sigDisConnect(netId);
 	
 	//关闭
 	closeSocket(netId);		
 }
 
-void NetServer::onReadyRead()
+void JZNetServer::onReadyRead()
 {	
 	QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());	
 
@@ -145,15 +130,15 @@ void NetServer::onReadyRead()
 	m_dataManager.recvPack(netId);	 
 	while(true)
 	{
-		NetPackPtr pack = m_dataManager.takePack(netId);
+		JZNetPackPtr pack = m_dataManager.takePack(netId);
 		if (pack)           
-			emit newDataRecv(netId, pack);		        
+			emit sigNetPackRecv(netId, pack);		        
 		else
 			break;
 	}	
 }
 
-void NetServer::closeSocket(int netId)
+void JZNetServer::closeSocket(int netId)
 {
 	//移除会话
 	QTcpSocket *socket = m_tcpClients[netId];	

@@ -3,35 +3,33 @@
 
 #include <QObject>
 #include <QMap>
-#include "netDataManager.h"
+#include "JZNetDataManager.h"
 
 class QTcpSocket;
 class QTcpServer;
 
-class NetClient : public QObject {
+class JZNetClient : public QObject {
 	Q_OBJECT
 
 public:
-	NetClient(QObject * parent = NULL);
-	~NetClient();
+	JZNetClient(QObject * parent = NULL);
+	~JZNetClient();
 
 	bool connectToHost(QString host, int port);
     void connectToHostAsync(QString host, int port);
 	void disconnectFromHost();
     bool isConnect();
 	
-	QTcpSocket *clientSocket();
-
-	bool sendPack(NetPackPtr pack);
-	bool waitPackAny(NetPackPtr &pack,int timeout = -1);	
-	bool waitPackByType(int type,NetPackPtr &pack,int timeout = -1);
-	bool waitPackBySeq(int seq,NetPackPtr &pack,int timeout = -1);
+	bool sendPack(JZNetPackPtr pack);
+	JZNetPackPtr waitPackAny(int timeout = -1);	
+	JZNetPackPtr waitPackByType(int type,int timeout = -1);
+	JZNetPackPtr waitPackBySeq(int seq,int timeout = -1);
 
 signals:
     void sigConnect();
 	void sigDisConnect();
     void sigError();
-	void sigNetPackRecv(NetPackPtr pack);    
+	void sigNetPackRecv(JZNetPackPtr pack);    
 
 private slots:	     
     void onConnected();
@@ -39,16 +37,15 @@ private slots:
     void onReadyRead();
 
 private:		
-	NetPackPtr waitPack(int type,int param);
+	JZNetPackPtr waitPack(int type,int param,int timeout);
     void dispatchPack();
 
 	QTcpSocket *tcpSocket;
-	int mUser;
-	int mWaitTime;
-    bool mWaitData;
+	int mUser;	
+    bool m_waitRecv;
     bool mUserDisconnect;
 
-	NetDataManager m_dataManager;
+	JZNetDataManager m_dataManager;
 };
 
 #endif

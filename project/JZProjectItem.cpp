@@ -12,6 +12,16 @@ JZProjectItem::~JZProjectItem()
 {
 }
 
+void JZProjectItem::saveToStream(QDataStream &s)
+{
+    
+}
+
+void JZProjectItem::loadFromStream(QDataStream &s)
+{
+
+}
+
 bool JZProjectItem::isFolder()
 {
     return m_folder;        
@@ -107,16 +117,6 @@ JZProjectRoot::JZProjectRoot()
 }
 
 JZProjectRoot::~JZProjectRoot()
-{
-
-}
-
-void JZProjectRoot::saveToStream(QDataStream &s)
-{
-    
-}
-
-void JZProjectRoot::loadFromStream(QDataStream &s)
 {
 
 }

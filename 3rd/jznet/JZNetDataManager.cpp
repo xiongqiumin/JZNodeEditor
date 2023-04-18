@@ -1,37 +1,31 @@
-﻿#include "NetDataManager.h"
+﻿#include "JZNetDataManager.h"
 #include <QDataStream>
-#include "netPack.h"
-#include "netPackDefine.h"
-#include "LogManager.h"
 
-//NetDataManager
-NetDataManager::NetDataManager()
+//JZNetDataManager
+JZNetDataManager::JZNetDataManager()
 {    
     mRecvSize = 1024 * 1024;
     mRecvBuffer = new char[mRecvSize];
-
-	packHead.resize(8);
-	packHead.fill((char)0xff);
-		
-	packTail.append(0x5A);	
+	packHead = 0xAA;		
+	packTail = 0x55;	
 }
 
-NetDataManager::~NetDataManager() 
+JZNetDataManager::~JZNetDataManager() 
 {
 	delete []mRecvBuffer;
 }
 
-void NetDataManager::newSession(int sessionId, QTcpSocket *socket)
+void JZNetDataManager::newSession(int sessionId, QTcpSocket *socket)
 {	
 	m_sessionInfo[sessionId].socket = socket;	
 }
 
-void NetDataManager::endSession(int sessionId)
+void JZNetDataManager::endSession(int sessionId)
 {	
 	m_sessionInfo.remove(sessionId);	
 }
 
-void NetDataManager::recvPack(int sessionId)
+void JZNetDataManager::recvPack(int sessionId)
 {	
 	QTcpSocket *socket = m_sessionInfo[sessionId].socket;
 	while(true)
@@ -49,39 +43,45 @@ void NetDataManager::recvPack(int sessionId)
 			break;
         }
 	}
-
 	parsePack(sessionId);
 }
 
-void NetDataManager::recvData(int sessionId, QByteArray data)
+void JZNetDataManager::recvData(int sessionId, QByteArray data)
 {
 	m_sessionInfo[sessionId].buffer.append(data);
 	parsePack(sessionId);
 }
 
-QByteArray NetDataManager::packData(const NetPack &pack)
+QByteArray JZNetDataManager::packData(const JZNetPackPtr &pack)
 {	
 	QByteArray send_buffer;	
-	QDataStream s(&send_buffer,QDataStream::WriteOnly);	
+	QDataStream s(&send_buffer,QIODevice::WriteOnly);		
 
-	pack.pack(data_buffer);		
-	pack.info.Pack(head_buffer);	
-	
-    send_buffer.append(packHead);	
-	send_buffer.append(head_buffer);
-	send_buffer.append(data_buffer);	
+	int tmp = 0;
+	s.writeRawData((char*)&packHead,sizeof(packHead));
+	s.writeRawData((char*)&tmp,sizeof(int));
+	s.writeRawData((char*)&tmp,sizeof(int));
+	pack->saveToStream(s);
+	s.writeRawData((char*)&packTail,sizeof(packTail));
 
-	uchar chkSum = CaculateSum((uchar*)send_buffer.data() + 8,send_buffer.length() - 8);
-	send_buffer.append(chkSum);
-    send_buffer.append(packTail);
+	int *ptr = (int*)(send_buffer.data() + 1);	
+	*ptr = send_buffer.size() - 8 - 2;
+
+	ptr = (int*)(send_buffer.data() + 1 + 4);	
+	*ptr = pack->type();
+
+	ptr = (int*)(send_buffer.data() + 1 + 8);	
+	*ptr = pack->seq();
 
 	return send_buffer;
 }
 
-bool NetDataManager::sendPack(int sessionId, const NetPack &pack,bool sync)
+bool JZNetDataManager::sendPack(int sessionId, JZNetPackPtr pack)
 {		
-	QByteArray send_buffer = packData(pack);
+	if(pack->seq() == -1)
+		pack->setSeq(m_packSeq++);
 
+	QByteArray send_buffer = packData(pack);
 	QTcpSocket *socket = m_sessionInfo[sessionId].socket;
 	Q_ASSERT(socket);
     
@@ -93,10 +93,10 @@ bool NetDataManager::sendPack(int sessionId, const NetPack &pack,bool sync)
 	return ret;
 }
 
-NetPackPtr NetDataManager::takePack(int sessionId,int type,int param)
+JZNetPackPtr JZNetDataManager::takePack(int sessionId,int type,int param)
 {	
-	NetPackPtr pack;
-	QVector<NetPackPtr> &pack_list = m_sessionInfo[sessionId].packList;
+	JZNetPackPtr pack;
+	QVector<JZNetPackPtr> &pack_list = m_sessionInfo[sessionId].packList;
 	if (pack_list.size() > 0)
 	{
         if(type == 0) //取第一个
@@ -121,90 +121,65 @@ NetPackPtr NetDataManager::takePack(int sessionId,int type,int param)
 	return pack;
 }
 
-NetPackPtr NetDataManager::takePack(int sessionId)
+JZNetPackPtr JZNetDataManager::takePack(int sessionId)
 {
 	return takePack(sessionId, 0, 0);
 }
 
-NetPackPtr NetDataManager::takePackByType(int sessionId, int type)
+JZNetPackPtr JZNetDataManager::takePackByType(int sessionId, int type)
 {
 	return takePack(sessionId, 1, type);
 }
 
-NetPackPtr NetDataManager::takePackBySeq(int sessionId, int seq)
+JZNetPackPtr JZNetDataManager::takePackBySeq(int sessionId, int seq)
 {
 	return takePack(sessionId, 2, seq);
 }
 
-void NetDataManager::parsePack(int sessionId)
+void JZNetDataManager::parsePack(int sessionId)
 {
-	QByteArray &buffer = m_sessionInfo[sessionId].buffer;
-	PackInfo head;	
-	QByteArray pack_buffer;
-	QByteArray tail_buffer;	
-		
-	int CHECK_SIZE = 1;
-
-	int head_size = 8;
-    int min_pack_head = 6;
-	int tail_size = 2;  //tail + chk
-
-	int min_pack_len = packHead.length() + min_pack_head + packTail.length();
+	QByteArray &buffer = m_sessionInfo[sessionId].buffer;	
+	
+    int min_pack_head = 12; //len type seq	
+	int min_pack_len = 1 + min_pack_head + 1;		
 	int buffer_start = 0;
 	while (buffer.length() - buffer_start >= min_pack_len)
 	{
 		int start = buffer.indexOf(packHead, buffer_start);
 		int end = 0;
-		int headOffset = 0;
 		if (start < 0)
 		{			
 			buffer_start = buffer.length(); //全是无用数据，清除
 			break;
 		}
-
-		//接收数据不全
-		start += packHead.length();	
-		headOffset = start;
-		if (!head.UnPack(buffer, start))
-			return;
-
-		int pack_info_len = head.IsRecvPack() ? 7 : 6;
-		start += pack_info_len;
+		start += 1;
+		if (start + min_pack_head + 1 >= buffer.length())
+			break;
 		
-		int bodySize = head.Length - 8 - 2 - pack_info_len;
-		if (bodySize < 0)
+		int body_size = *((int*)(buffer.data() + start));
+		int pack_type = *((int*)(buffer.data() + start + 4));
+		start += 8;
+		if (buffer.length() > start + body_size + 1)
+			break;
+		
+		char tail = *((int*)(buffer.data() + start + body_size));
+		if(tail != packTail)		
 		{			
-			buffer_start = buffer.length(); //全是无用数据，清除
+			buffer_start = start + body_size;  //结尾不对,跳过这个数据包
 			break;
 		}
+		
+		QByteArray pack_buffer = buffer.mid(start, body_size);
+		QDataStream s(&pack_buffer,QIODevice::ReadOnly);
 
-		//接收数据不全
-		if (start + bodySize + packTail.length() > buffer.length())
-		{
-			Q_ASSERT(0); //upack 的时候已经检查了
-			break;
-		}
-
-		end = start + bodySize;
-		uchar chk = buffer[end]; 				
-		tail_buffer = buffer.mid(end, packTail.length());
-		if (tail_buffer != packTail)
-		{			
-			buffer_start = buffer.length(); //全是无用数据，清除
-			break;
-		}
-		pack_buffer = buffer.mid(start, bodySize);
-
-		NetPack *pack = NetPackManager::instance()->createPack(NETPACK_VARIANT);
-		pack->info = head;
-		if (pack->unPack(pack_buffer))
-			m_sessionInfo[sessionId].packList.push_back(NetPackPtr(pack));
-		else
-			delete pack;
-		start += bodySize + CHECK_SIZE + packTail.length();
+		JZNetPack *pack = JZNetPackManager::instance()->createPack(pack_type);
+		pack->loadFromStream(s);
+		m_sessionInfo[sessionId].packList.push_back(JZNetPackPtr(pack));
+		start += body_size + 1;
 
 		//下一次读起始
 		buffer_start = start;
 	}
-	buffer = buffer.mid(buffer_start);
+	if(buffer_start != 0)
+		buffer = buffer.mid(buffer_start);
 }

@@ -1,46 +1,50 @@
-﻿#pragma once
+﻿#ifndef JZNET_MANAGER_H_
+#define JZNET_MANAGER_H_
+
 #include <QObject>
 #include <QMap>
 #include <QByteArray>
 #include <QVector>
 #include <QTcpSocket>
 #include <QSharedPointer>
-#include "netPack.h"
+#include "JZNetPack.h"
 
-class NetDataManager
+class JZNetDataManager
 {
 public:	
-	NetDataManager();
-	~NetDataManager();
+	JZNetDataManager();
+	~JZNetDataManager();
 
 	void newSession(int sessionId, QTcpSocket*);
 	void endSession(int sessionId);
 	
-	bool sendPack(int sessionId, NetPackPtr pack);
+	bool sendPack(int sessionId, JZNetPackPtr pack);
 	void recvPack(int sessionId);		
 	void recvData(int sessionId, QByteArray data);
 
 	void parsePack(int sessionId);
-	NetPackPtr takePack(int sessionId);
-	NetPackPtr takePackByType(int sessionId, int type);
-	NetPackPtr takePackBySeq(int sessionId, int seq);
+	JZNetPackPtr takePack(int sessionId);
+	JZNetPackPtr takePackByType(int sessionId, int type);
+	JZNetPackPtr takePackBySeq(int sessionId, int seq);
 
-private:	
-	QByteArray packData(const NetPackPtr &pack);
-	NetPackPtr takePack(int sessionId,int type,int param);	
+private:		
+	QByteArray packData(const JZNetPackPtr &pack);
+	JZNetPackPtr takePack(int sessionId,int type,int param);	
 
 	struct SessionInfo
 	{
 		QTcpSocket *socket;
-		QVector<NetPackPtr> packList;
+		QVector<JZNetPackPtr> packList;
 		QByteArray buffer;		
 	};	
 		
 	QMap<int, SessionInfo> m_sessionInfo;
 	
-    QByteArray packHead;
-    QByteArray packTail;
-
+    char packHead;
+    char packTail;
     char *mRecvBuffer;
     int mRecvSize;
+	int m_packSeq;
 };
+
+#endif

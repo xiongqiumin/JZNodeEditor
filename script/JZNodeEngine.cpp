@@ -3,6 +3,7 @@
 #include "JZEvent.h"
 #include <QPushButton>
 #include <QApplication>
+#include "JZNodeVM.h"
 
 //RunnerEnv
 RunnerEnv::RunnerEnv()
@@ -69,19 +70,26 @@ void Stack::setVariable(int level,int id, const QVariant &value)
     m_stack[level][id] = value;
 }
 
+//BreakPoint
+BreakPoint::BreakPoint()
+{
+
+}
+
 // JZNodeEngine
 JZNodeEngine::JZNodeEngine()
-{
-    m_command = cmd_none;
-    m_program = nullptr;    
-    m_window = nullptr;        
-    m_state = Runner_stoped;
+{    
+    m_program = nullptr;         
     m_pc = -1;
 }
 
 JZNodeEngine::~JZNodeEngine()
+{    
+}
+
+void JZNodeEngine::setVm(JZNodeVM *vm)
 {
-    stop();
+    m_vm = vm;
 }
 
 void JZNodeEngine::setProgram(JZNodeProgram *program)
@@ -93,6 +101,10 @@ JZNodeProgram *JZNodeEngine::program()
 {
     return m_program;
 }
+
+void JZNodeEngine::init()
+{
+}   
 
 void JZNodeEngine::pushStack(const FunctionDefine *func)
 {
@@ -150,14 +162,65 @@ void JZNodeEngine::setVariable(int id, const QVariant &value)
         m_stack.setVariable(id, value);            
 }
 
-void JZNodeEngine::notify(int id, const QVariant &data);
+void JZNodeEngine::notify(int id, const QVariant &data)
 {
 
 }
 
-void JZNodeEngine::initProgram()
+void JZNodeEngine::addBreakPoint(BreakPoint pt)
 {
-}   
+    QMutexLocker lock(&m_mutex);
+    m_breakPoints.push_back(pt);
+}
+
+void JZNodeEngine::removeBreakPoint(BreakPoint pt)
+{
+    QMutexLocker lock(&m_mutex);
+    int idx = 0;
+    m_breakPoints.removeAt(idx);
+}
+
+void JZNodeEngine::pause()
+{
+    QMutexLocker lock(&m_mutex);
+    if(m_pause)
+        return;
+    
+    m_needPause = true;
+}
+
+void JZNodeEngine::resume()
+{
+    QMutexLocker lock(&m_mutex);
+    if(!m_pause)
+        return;
+        
+    m_waitCond.release();
+}
+
+void JZNodeEngine::stepIn(int nodeId)
+{
+    QMutexLocker lock(&m_mutex);
+    BreakPoint pt;
+    addBreakPoint(pt);
+    resume();
+}
+
+void JZNodeEngine::stepOver(int nodeId)
+{
+    QMutexLocker lock(&m_mutex);    
+    BreakPoint pt;
+    addBreakPoint(pt);
+    resume();
+}
+
+void JZNodeEngine::stepOut(int nodeId)
+{
+    QMutexLocker lock(&m_mutex);
+    BreakPoint pt;
+    addBreakPoint(pt);
+    resume();
+}
 
 void JZNodeEngine::callCFunction(const FunctionDefine *func)
 {    
@@ -217,8 +280,33 @@ void JZNodeEngine::run()
 {
     auto &op_list = m_program->opList;
     while (m_pc < op_list.size())
-    {        
-        m_vm->onStep(m_pc);
+    {                   
+        bool wait = false;    
+        {
+            QMutexLocker lock(&m_mutex);
+            if(m_needPause)
+            {
+                m_needPause = false;
+                wait = true;                
+            }
+            else
+            {
+                for(int i = 0; i < m_breakPoints.size(); i++)
+                {
+                    auto pt = m_breakPoints[i];
+                    if(pt.once)                    
+                        m_breakPoints.removeAt(i);                    
+                    wait = true;
+                    break;
+                }
+            }
+            m_pause = true;
+        }
+        if(wait)
+        {                       
+            m_waitCond.acquire();
+            m_pause = false;
+        }
 
         try
         {
@@ -269,15 +357,13 @@ void JZNodeEngine::run()
                 int dst = op.params[0].toInt();
                 int src = op.params[1].toInt();
                 QVariant tmp = getVariable(src);
-                setVariable(dst,tmp);
-                notify(dst,data);
+                setVariable(dst,tmp);                
                 break;
             }
             case OP_setValue:
             {
                 int dst = op.params[0].toInt();            
-                setVariable(dst,op.params[1]);
-                notify(dst,data);
+                setVariable(dst,op.params[1]);                
                 break;
             }
             case OP_get:
@@ -309,172 +395,7 @@ void JZNodeEngine::run()
         }
         catch(const std::exception& e)
         {
-            JZNodeRuntimeError error;
-            onRuntimeError(error); 
+
         }            
     }            
-}
-
-//JZNodeVM
-JZNodeVM::JZNodeVM()
-{
-    moveToThread(&m_thread);
-    m_thread.start();
-}
-
-JZNodeVM::~JZNodeVM()
-{
-    m_thread.quit();
-    m_thread.wait();
-}
-
-bool JZNodeVM::start()
-{        
-    QMutexLocker lock(&m_mutex);
-    if(m_state != Runner_stoped)
-        return false;
-
-    m_state = Runner_running;
-    sigStateChanged(Runner_running);    
-    return true;
-}
-
-bool JZNodeVM::stop()
-{    
-    QMutexLocker lock(&m_mutex);
-    if(m_state != Runner_stoped)
-        return false;
-
-    m_state = Runner_stoped;
-    sigStateChanged(Runner_stoped);
-    return true;
-}
-
-bool JZNodeVM::pause()
-{
-    QMutexLocker lock(&m_mutex);
-    if(m_state != Runner_stoped)
-        return false;
-
-    m_state = Runner_paused;
-    sigStateChanged(Runner_paused);
-    return true;
-}
-
-bool JZNodeVM::resume()
-{
-    QMutexLocker lock(&m_mutex);
-    if(m_state != Runner_paused)
-        return false;
-
-    m_state = Runner_running;
-    sigStateChanged(Runner_running);
-    return true;
-}
-
-bool JZNodeVM::isRunning()
-{
-    QMutexLocker lock(&m_mutex);
-    return (m_state == Runner_running);
-}
-
-void JZNodeVM::customEvent(QEvent *event)
-{
-    if(m_state != Runner_running)
-        return;
-
-    JZEvent *e = (JZEvent *)event;
-    auto &list = m_program->eventHandleList();
-    for(int i = 0; i < list.size(); i++)
-    {
-        const JZEventHandle &handle = list[i];
-        if(handle.match(e))
-        {
-            QVariantList in,out;
-            auto func = handle.function;
-            auto inList = func.paramIn;
-            for (int i = 0; i < inList.size(); i++) 
-            {
-                //int id = m_program->paramId(func->n)  
-                //setVariable(Reg_User + 1,paramIn[i]);    
-            }                             
-            call(func.name,in,out);
-        }            
-    }
-}
-
-void JZNodeVM::setState(int state)
-{    
-    if(m_state == state)
-        return;
-
-    m_state = state;
-    sigStateChanged(m_state);
-}
-
-void JZNodeVM::addBreakPoint(BreakPoint pt)
-{
-    QMutexLocker lock(&m_mutex);
-    m_breakPoints.push_back(pt);
-}
-
-void JZNodeVM::removeBreakPoint(BreakPoint pt)
-{
-    QMutexLocker lock(&m_mutex);
-}
-
-QVariant JZNodeVM::getVariable(int id)
-{
-    return m_engine.getVariable(id);
-}
-
-void JZNodeVM::setVariable(int id, const QVariant &value)
-{    
-    return m_engine.setVariable(id,value);
-}
-
-void JZNodeVM::createWindow()
-{
-    QList<QPushButton*> btn_list;
-    for(int i = 0; i < btn_list.size(); i++)
-    {
-        connect(btn_list[i],&QPushButton::clicked,this,JZNodeVM::onButtonClicked);
-    }
-}
-
-void JZNodeVM::onStep(int pc)
-{
-    if(m_state == Runner_paused)
-        return;
-        
-    setState(Runner_paused);
-}
-
-void JZNodeVM::onValueNotify(int id,QVariant &value)
-{
-
-}
-
-void JZNodeVM::onIntValueChanged(int value)
-{
-    JZEvent *event = new JZEvent();
-    qApp->postEvent(event);
-}
-
-void JZNodeVM::onStringValueChanged(const QString &value)
-{
-    JZEvent *event = new JZEvent();
-    qApp->postEvent(event);
-}
-
-void JZNodeVM::onDoubleValueChanged(double value)
-{ 
-    JZEvent *event = new JZEvent();
-    qApp->postEvent(event);
-}
-
-void JZNodeVM::onButtonClicked()
-{    
-    JZEvent *event = new JZEvent();
-    qApp->postEvent(event);    
 }

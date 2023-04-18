@@ -3,7 +3,8 @@
 
 #include <QThread>
 #include <QTcpServer>
-#include "JZNodeDebugPacket.h"
+#include "JZNetServer.h"
+#include "JZNodeEngine.h"
 
 class JZNodeDebugServer : public QThread
 {
@@ -13,18 +14,19 @@ public:
     JZNodeDebugServer();
     ~JZNodeDebugServer();
 
-    int start();
-    void stop();
+    void setEngine(JZNodeEngine *eng);
+    bool waitAttach();
 
 protected slots:
+    void onNewConnect(int netId);
+	void onDisConnect(int netId);
+	void onNetPackRecv(int netId,JZNetPackPtr ptr);
 
-protected:
-    void onConnect();
-	void onDisConnect();
-	void onNetError();
-	void onDataRecv(NetPackPtr ptr);    
+protected:        
 
-    QTcpServer *m_server;
+    JZNetServer m_server;
+    int m_netId;
+    JZNodeEngine *m_engine;
 };
 
 

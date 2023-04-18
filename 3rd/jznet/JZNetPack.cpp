@@ -1,26 +1,23 @@
-#include "netPack.h"
-#include "PackDefine.h"
+#include "JZNetPack.h"
 
-//
-NetPack::NetPack()	
+//JZNetPack
+JZNetPack::JZNetPack()	
 {		
-	
+	m_seq == -1;
 }
 
-NetPack::~NetPack()
+JZNetPack::~JZNetPack()
 {
 }
 
-void NetPack::saveToStream(QDataStream &s) const
+int JZNetPack::seq()
 {
-	s << m_seq;
-	return true;
+	return m_seq;
 }
 
-void NetPack::loadFromStream(QDataStream &s)
+void JZNetPack::setSeq(int seq)
 {
-	s >> m_seq;
-	return true;
+	m_seq = seq;
 }
 
 //NetPackVariant
@@ -29,7 +26,7 @@ NetPackVariant::NetPackVariant()
 
 }
 
-~NetPackVariant::NetPackVariant()
+NetPackVariant::~NetPackVariant()
 {
 
 }
@@ -41,12 +38,12 @@ int NetPackVariant::type() const
 
 void NetPackVariant::saveToStream(QDataStream &s) const
 {
-	s << values;
+	s << params;
 }
 
 void NetPackVariant::loadFromStream(QDataStream &s)
 {
-	s >> values;
+	s >> params;
 }
 
 //NetPackByteArray
@@ -75,40 +72,34 @@ void NetPackByteArray::loadFromStream(QDataStream &s)
 	s >> buffer;
 }
 
-//NetPackManager
-NetPackManager::NetPackManager()
+//JZNetPackManager
+JZNetPackManager *JZNetPackManager::instance()
 {
-	mPackSeq = 1;
-}
-
-NetPackManager *NetPackManager::instance()
-{
-	static NetPackManager inst;
+	static JZNetPackManager inst;
 	return &inst;
 }
 
-int NetPackManager::genSeq()
-{
-	return mPackSeq++;
+JZNetPackManager::JZNetPackManager()
+{	
 }
 
-NetPack *NetPackManager::createPack(int id)
+JZNetPack *JZNetPackManager::createPack(int id)
 {
-	if (mPackFactory.contains(id))
-		return mPackFactory[id]();
+	if (m_packFactory.contains(id))
+		return m_packFactory[id]();
 
 	Q_ASSERT(0);
-	return NULL;
+	return nullptr;
 }
 
-void NetPackManager::init()
+void JZNetPackManager::init()
 {
 	registPack(NetPack_variant,createNetPackFunc<NetPackByteArray>);
 	registPack(NetPack_byteArray,createNetPackFunc<NetPackByteArray>);
 }
 
-void NetPackManager::registPack(int type,CreatePackFunc func)
+void JZNetPackManager::registPack(int type,CreatePackFunc func)
 {
-	Q_ASSERT(!m_packFactory.contians(type));
+	Q_ASSERT(!m_packFactory.contains(type));
 	m_packFactory.insert(type,func);
 }

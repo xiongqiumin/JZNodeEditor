@@ -1,36 +1,36 @@
-﻿#pragma once
+﻿#ifndef JZNET_SERVER_H_
+#define JZNET_SERVER_H_
+
 #include <QObject>
 #include <QMap>
-#include "netDataManager.h"
-#include "NetInfo.h"
+#include "JZNetDataManager.h"
 
 class QTcpSocket;
 class QTcpServer;
 class NetUser;
 class NetPack;
 
-class NetServer : public QObject {
+class JZNetServer : public QObject {
 	Q_OBJECT
 
 public:
-	NetServer(QObject * parent = NULL);
-	~NetServer();
+	JZNetServer(QObject * parent = NULL);
+	~JZNetServer();
 		
 	bool startServer(int port);
 	void stopServer();
 	bool isOpen();	
 
-	NetInfo netInfo(int netId);	
     void closeConnect(int netId);	
 
-	bool sendPack(int netId,NetPackPtr pack);	
-	bool sendPackExclude(int netId, NetPackPtr pack);
-	bool sendPackToAll(NetPackPtr pack);
+	bool sendPack(int netId,JZNetPackPtr pack);	
+	bool sendPackExclude(int netId, JZNetPackPtr pack);
+	bool sendPackToAll(JZNetPackPtr pack);
 
 signals:		
-	void onNewConnect(int netId);	
-	void onDisConnect(int netId);	
-	void onNetPackRecv(int netId,NetPackPtr ptr);
+	void sigNewConnect(int netId);	
+	void sigDisConnect(int netId);	
+	void sigNetPackRecv(int netId,JZNetPackPtr ptr);
 
 private slots:
 	void onNewConnect();
@@ -44,5 +44,7 @@ private:
 	QMap<int, QTcpSocket*> m_tcpClients;
 
 	int m_netId;
-	NetDataManager m_dataManager;
+	JZNetDataManager m_dataManager;
 };
+
+#endif
