@@ -12,19 +12,52 @@ JZNodeDebugClient::~JZNodeDebugClient()
 
 }
 
-bool JZNodeDebugClient::pause()
+void JZNodeDebugClient::addBreakPoint(QString file,int nodeId)
 {
-    return true;
+    QVariantMap params,result;
+    sendCommand(Cmd_addBreakPoint,params,result);
 }
 
-bool JZNodeDebugClient::resume()
+void JZNodeDebugClient::removeBreakPoint(QString file,int nodeId)
 {
-    return true;
+    QVariantMap params,result;
+    sendCommand(Cmd_removeBreakPoint,params,result);
 }
 
-bool JZNodeDebugClient::stop()
+void JZNodeDebugClient::clearBreakPoint()
 {
-    return true;
+    QVariantMap params,result;
+    sendCommand(Cmd_clearBreakPoint,params,result);
+}
+
+void JZNodeDebugClient::pause()
+{
+    QVariantMap params,result;
+    sendCommand(Cmd_pause,params,result);
+}
+
+void JZNodeDebugClient::resume()
+{
+    QVariantMap params,result;
+    sendCommand(Cmd_resume,params,result);
+}
+
+void JZNodeDebugClient::stepIn()
+{
+    QVariantMap params,result;
+    sendCommand(Cmd_stepIn,params,result);
+}
+
+void JZNodeDebugClient::stepOver()
+{
+    QVariantMap params,result;
+    sendCommand(Cmd_stepOver,params,result);
+}
+
+void JZNodeDebugClient::stepOut()
+{
+    QVariantMap params,result;
+    sendCommand(Cmd_stepOut,params,result);
 }
 
 void JZNodeDebugClient::onConnect()
@@ -34,10 +67,30 @@ void JZNodeDebugClient::onConnect()
 	
 void JZNodeDebugClient::onDisConnect()
 {
-
+    emit sigDisConnect();
 }
 	
 void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
 {
+    JZNodeDebugPacket *packet = new JZNodeDebugPacket();
+    if(packet->cmd == Cmd_breakTrigger)
+    {
 
+    }
+}
+
+bool JZNodeDebugClient::sendCommand(int command,QVariantMap &params,QVariantMap &result)
+{
+    JZNodeDebugPacket *packet = new JZNodeDebugPacket();
+    packet->cmd = command;
+    packet->params = params;
+    if(!m_client.sendPack(JZNetPackPtr(packet)))
+        return false;
+
+    JZNetPackPtr ret;    
+    if(!(ret = m_client.waitPackBySeq(packet->seq(),30 * 1000)))
+        return false;
+
+    JZNodeDebugPacket *recv = (JZNodeDebugPacket *)ret.data();
+    return true;
 }

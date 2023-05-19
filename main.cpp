@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     else
     {
         JZNodeVM vm;
-        if(!vm.load(argv[1]))
+        if(!vm.init(argv[1]))
             return 1;                    
         return a.exec();            
     }            

@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QLabel>
+#include "JZNodeEditor.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,6 +26,7 @@ void MainWindow::initUi()
 {    
     m_log = new QTextEdit();
     m_projectTree = new JZProjectTree();    
+    connect(m_projectTree,&JZProjectTree::sigFileOpened,this,&MainWindow::onFileOpened);
 
     QWidget *widget = new QWidget();
     QVBoxLayout *center = new QVBoxLayout();     
@@ -44,8 +46,11 @@ void MainWindow::initUi()
     center->addWidget(splitterMain);    
 
     //left
+    JZNodeEditor *node_editor = new JZNodeEditor();
     m_editorStack = new QStackedWidget();
     m_editorStack->addWidget(new QLabel("empty"));
+    m_editorStack->addWidget(node_editor);
+    m_editorList << node_editor;
 
     QSplitter *splitterLeft = new QSplitter(Qt::Vertical);
     splitterLeft->addWidget(m_editorStack);    
@@ -91,7 +96,13 @@ void MainWindow::onActionOpenTriggered()
 
 void MainWindow::onActionSaveTriggered()    
 {
+    if(m_project.filename().isEmpty())
+    {
+        onActionSaveAsTriggered();
+        return;   
+    }
 
+    m_project.save();
 }
 
 void MainWindow::onActionSaveAsTriggered()
@@ -100,6 +111,7 @@ void MainWindow::onActionSaveAsTriggered()
     if(filepath.isEmpty())
         return;
 
+    m_project.saveAs(filepath);
 }
 
 void MainWindow::onActionSaveAllTriggered()
@@ -110,32 +122,14 @@ void MainWindow::onActionSaveAllTriggered()
 void MainWindow::onFileOpened(QString filepath)
 {
     JZProjectItem *item = m_project.getItem(filepath);
-    //m_editor->setFile(item);
-}
-
-void MainWindow::onSetValue(int id, QVariant value)
-{
-/*
-    if(m_vm.isRunning())
+    if(item->itemType() == ProjectItem_scriptFlow)
     {
-        m_vm.setVariable(id,value);
-
-        JZEvent *event = new JZEvent();
-        event->setEventType(Event_paramChanged);
-        event->params << QString::number(id);
-        qApp->sendEvent(&m_vm,event);
+        m_editor = m_editorList[0];
     }
-*/
-}
 
-void MainWindow::onDispValue(int id, QVariant value)
-{
-/*
-    auto gemo = m_program.paramGemo(id);
-    if(!gemo.isNull())
+    if(m_editor)
     {
-        auto item = getNodeItem(gemo.nodeId);
-        item->widget()->setVariable(id,value);
+        m_editor->open(item);
+        m_editorStack->setCurrentWidget(m_editor);
     }
-*/
 }

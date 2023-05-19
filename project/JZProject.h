@@ -13,7 +13,14 @@ public:
 
     bool open(QString filepath);
     bool save();    
+    bool saveAs(QString filepath);
     QString filename();
+
+    void addVariable(QString name,QVariant value);
+    void removeVariable(QString name);
+    void setVariable(QString name,QVariant value);
+    QVariant getVariable(QString name);
+    QStringList variableList();
     
     int addItem(QString dir,JZProjectItem *item);
     void removeItem(QString path);
@@ -32,6 +39,7 @@ protected:
     QList<JZProjectItemPtr> m_items;
     JZProjectRoot m_root;
     QString m_filepath;
+    QMap<QString,QVariant> m_variables;
 };
 
 #endif

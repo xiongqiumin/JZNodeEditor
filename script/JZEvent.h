@@ -6,7 +6,19 @@
 
 enum{
     Event_none,
+    Event_programStart,
     Event_paramChanged,
+    
+    /* widget */
+    Event_buttonClicked,
+    Event_valueChanged,
+    Event_comboxSelectChanged,
+
+    /* widget item */    
+    Event_itemSelected,
+    Event_itemClicked,
+    Event_itemDoubleClicked,
+    Event_itemChanged,
 };
 
 class JZEvent: public QEvent

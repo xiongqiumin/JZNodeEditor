@@ -4,18 +4,23 @@
 #include "JZNode.h"
 
 //JZNodeValue
-class JZNodeValue : public JZNode
+class JZNodeLiteral : public JZNode
 {
 public:
-    JZNodeValue();
-    ~JZNodeValue();        
+    JZNodeLiteral();
+    ~JZNodeLiteral();        
 
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-protected:            
+    QVariant literal() const;
+    void setLiteral(QVariant value);
+
+protected:
+    int m_out;
+    QVariant m_value;
 };
 
 //JZNodePrint
@@ -33,34 +38,43 @@ public:
 protected:
 };
 
-//JZNodeSet
-class JZNodeSet : public JZNode
+//JZNodeParam
+class JZNodeParam : public JZNode
 {
 public:
-    JZNodeSet();
-    ~JZNodeSet();
+    JZNodeParam();
+    ~JZNodeParam();        
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+    QString paramId() const;
+    void setParamId(QString paramId);
+
+protected:
+    int m_out;
+    QString m_param;
+};
+
+//JZNodeSetParam
+class JZNodeSetParam : public JZNode
+{
+public:
+    JZNodeSetParam();
+    ~JZNodeSetParam();
 
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-protected:
+    QString paramId() const;
+    void setParamId(QString paramId);
+
+protected:    
+    QString m_param;
 };
 
-//JZNodeGet
-class JZNodeGet : public JZNode
-{
-public:
-    JZNodeGet();
-    ~JZNodeGet();
-
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
-
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
-protected:
-};
 
 #endif

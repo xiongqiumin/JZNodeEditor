@@ -123,6 +123,7 @@ protected:
     void copyItem(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);    
     void initGraph();
+    bool canConnect(JZNodeGemo from,JZNodeGemo to);
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;

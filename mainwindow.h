@@ -27,9 +27,7 @@ protected slots:
     void onActionSaveAsTriggered();
     void onActionSaveAllTriggered();          
 
-    void onFileOpened(QString filepath);
-    void onSetValue(int id, QVariant value);
-    void onDispValue(int id, QVariant value);
+    void onFileOpened(QString filepath);    
     
 private:
     void initUi();
@@ -42,5 +40,7 @@ private:
     QStackedWidget *m_editorStack;
     QTextEdit *m_log;
     JZNodeDebugClient m_debuger;
+
+    QVector<JZEditor *> m_editorList;
 };
 #endif // MAINWINDOW_H

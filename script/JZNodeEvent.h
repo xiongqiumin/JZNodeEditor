@@ -13,6 +13,9 @@ public:
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
 
+    void setEventType(int eventType);
+    int eventType() const;
+
     int m_eventType;
     QVariantList m_params;
 };

@@ -4,13 +4,11 @@ JZNodePin::JZNodePin()
 {
     m_id = INVALID_ID;
     m_flag = Prop_none;
-    m_dataType = Type_none;
 }
 
 JZNodePin::JZNodePin(QString name, int dataType, int flag)
 {
     m_name = name;
-    m_dataType = dataType;
     m_flag = flag;
 }
 
@@ -48,31 +46,63 @@ int JZNodePin::flag() const
     return m_flag;
 }
 
-void JZNodePin::setDataType(int type)
+bool JZNodePin::isInput() const
+{
+    return (m_flag & Prop_in);
+}
+
+bool JZNodePin::isOutput() const
+{
+    return (m_flag & Prop_out);
+}
+
+bool JZNodePin::isParam() const
+{
+    return (m_flag & Prop_param);
+}
+
+bool JZNodePin::isFlow() const
+{
+    return (m_flag & Prop_flow);
+}
+
+bool JZNodePin::isSubFlow() const
+{
+    return (m_flag & Prop_subFlow);
+}
+
+bool JZNodePin::isEditable() const
+{
+    return (m_flag & Prop_edit);
+}
+
+void JZNodePin::setDataType(QList<int> type)
 {
     m_dataType = type;
 }
 
-int JZNodePin::dataType() const
+QList<int> JZNodePin::dataType() const
 {
     return m_dataType;
 }
 
-void JZNodePin::setDefaultValue(QVariant value)
+QVariant JZNodePin::value() const
 {
-    m_default = value;
+    return m_value;
 }
 
-QVariant JZNodePin::defaultValue() const
+void JZNodePin::setValue(QVariant value)
 {
-    return m_default;
+    m_value = value;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodePin &param)
 {
     s << param.m_id;
     s << param.m_name;
-    s << param.m_flag;
+    s << param.m_flag;    
+    s << param.m_dataType;
+    s << param.m_value;
     return s;
 }
 
@@ -80,6 +110,8 @@ QDataStream &operator>>(QDataStream &s, JZNodePin &param)
 {
     s >> param.m_id;
     s >> param.m_name;
-    s >> param.m_flag;
+    s >> param.m_flag;    
+    s >> param.m_dataType;
+    s >> param.m_value;
     return s;
 }

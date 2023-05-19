@@ -38,7 +38,6 @@ protected:
 
 class JZNodeGraphItem : public JZNodeBaseItem
 {
-
 public:
     JZNodeGraphItem(JZNode *node);
     ~JZNodeGraphItem();
@@ -48,21 +47,26 @@ public:
     void setValue(int prop,QVariant value);
 
     JZNode *node();
-    QRectF propRect(int prop, int type);
+    JZNodePin *propAt(QPointF pos);
+    QRectF propRect(int prop);
+
     DispWidget *widget();
 
 protected:
+    enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };
+
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
     virtual void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+    void drawProp(QPainter *painter,int propId);
+    void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
 
-    QSize m_size;
-    QStringList m_in;
-    QStringList m_out;
+    QSize m_size;    
     JZNode *m_node;
     DispWidget *m_dispWidget;
     QGraphicsProxyWidget *m_proxy;
+    QMap<int,QRectF> m_propRects;
 };
 
 #endif

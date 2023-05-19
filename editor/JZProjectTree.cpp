@@ -55,8 +55,8 @@ void JZProjectTree::init()
 
 void JZProjectTree::addItem(QTreeWidgetItem *view_item,JZProjectItem *item)
 {
-    auto list = item->items();
-    for(int i = 0; i < item->items().size(); i++)
+    auto list = item->childs();
+    for(int i = 0; i < list.size(); i++)
     {   
         JZProjectItem *sub_item = list[i];
         QTreeWidgetItem *sub_view = new QTreeWidgetItem();

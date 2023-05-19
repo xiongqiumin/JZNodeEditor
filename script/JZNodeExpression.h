@@ -11,10 +11,20 @@ public:
     JZNodeOperator();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
 
 protected:
     int m_op;    
     int m_in1,m_in2,m_out;
+};
+
+//JZNodeOperatorCalc
+class JZNodeOperatorCalc: public JZNodeOperator
+{
+public:
+    JZNodeOperatorCalc();    
+
+    virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
 };
 
 //JZNodeAdd
@@ -51,12 +61,12 @@ class JZNodeMod: public JZNodeOperator
 public:
     JZNodeMod();
 };
-    
+
 //JZNodeEQ
 class JZNodeEQ: public JZNodeOperator
 {
 public:
-    JZNodeEQ();
+    JZNodeEQ();    
 };
 
 //JZNodeNE
@@ -107,12 +117,26 @@ class JZNodeOr: public JZNodeOperator
 public:
     JZNodeOr();
 };
-    
-//JZNodeXor
-class JZNodeXor: public JZNodeOperator
+
+//JZNodeBitAnd
+class JZNodeBitAnd: public JZNodeOperator
 {
 public:
-    JZNodeXor();
+    JZNodeBitAnd();
+};
+
+//JZNodeBitAnd
+class JZNodeBitOr: public JZNodeOperator
+{
+public:
+    JZNodeBitOr();
+};
+    
+//JZNodeBitXor
+class JZNodeBitXor: public JZNodeOperator
+{
+public:
+    JZNodeBitXor();
 };
 
 //JZNodeExpression

@@ -8,9 +8,11 @@
 
 enum
 {
-    Node_none,
-    Node_value,        
-    Node_function,    
+    Node_none,    
+    Node_param,
+    Node_setParam,
+    Node_literal,
+    Node_function,        
     Node_event,
     Node_add,
     Node_sub,
@@ -25,20 +27,20 @@ enum
     Node_gt,  // >
     Node_and,
     Node_or,
-    Node_xor,    
+    Node_bitand,
+    Node_bitor,    
+    Node_bitxor,
     Node_expr,
     Node_for,
     Node_while,
     Node_branch,
-    Node_if,        
-    Node_switch,
+    Node_if,                
+    Node_parallel,    
+    Node_view,        
+    Node_print,
+    Node_switch,        
     Node_return,
     Node_exit,
-    Node_parallel,    
-    Node_view,
-    Node_get,
-    Node_set,
-    Node_print,
 };
 
 //JZNodeGemo
@@ -77,33 +79,60 @@ public:
     JZNode();
     virtual ~JZNode();
 
-    QString name();
+    QString name() const;
     void setName(QString name);
 
-    int id();
+    int id() const;
     void setId(int id);
-    int type();
+    int type() const;
 
-    int addFlow(const JZNodePin &prop);
-    int addProp(const JZNodePin &prop);
+    bool isFlowNode() const;    
+
+    int addProp(const JZNodePin &prop);         
     void removeProp(int id);
     JZNodePin *prop(int id);
+    JZNodePin *prop(QString name);
     int indexOfProp(int id) const;
+    int indexOfPropByName(QString name) const;
     int indexOfPropByType(int id, int type) const;
     QVector<int> propInList(int flag) const;
     QVector<int> propOutList(int flag) const;
-    QVector<int> propListByType(int flag) const;
-    const QList<JZNodePin> &propList() const;
-    int propCount(int flag);
+    QVector<int> propListByType(int flag) const;    
+    QVector<int> propList() const;
+    int propCount(int flag) const;
+              
+    int addParamIn(QString name,int extFlag = 0);    
+    int paramIn(int index);
+    int paramInCount();
+    QVector<int> paramInList();
+    int addParamOut(QString name,int extFlag = 0);
+    int paramOut(int index);
+    int paramOutCount();
+    QVector<int> paramOutList();
+    
+    int addFlowIn();    
+    int flowIn();
+    int addFlowOut(QString name = QString());
+    int flowOut(int index = 0);
+    QVector<int> flowOutList();
+    int flowOutCount();
+
+    int addSubFlowOut(QString name);
+    int addSubFlow(const JZNodePin &prop);
+    int subFlowOut(int index);
+    QVector<int> subFlowList();
+    int subFlowCount();
+    
+    void setPropValue(int prop,QVariant value);
+    virtual QList<int> propType(int idx);
+    virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
 
     virtual void expandNode();
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);    
 
-protected:
-    int addPropInternal(const JZNodePin &prop);
-
+protected:     
     int m_id;
     int m_type;
     QString m_name;
@@ -117,28 +146,26 @@ public:
 
 };
 
-class JZNodeInput : public JZNode
+class JZNodeContinue : public JZNode
 {
 public:
-    JZNodeInput();    
+    JZNodeContinue();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-protected:    
-    int m_in;
-    int m_paramIdx;
+protected:
+    int m_flowIn;
 };
 
-class JZNodeOutput : public JZNode
+class JZNodeBreak : public JZNode
 {
 public:
-    JZNodeOutput();    
+    JZNodeBreak();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-protected:    
-    int m_out;
-    int m_paramIdx;
+protected:
+    int m_flowIn;    
 };
 
 class JZNodeReturn : public JZNode
@@ -147,6 +174,9 @@ public:
     JZNodeReturn();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+protected:
+    int m_flowIn;    
 };
 
 class JZNodeExit : public JZNode
@@ -155,42 +185,93 @@ public:
     JZNodeExit();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+protected:
+    
+};
+
+class JZNodeSequence : public JZNode
+{
+public:
+    JZNodeSequence();
+
+    int addOutSubFlow();
+    void removeOutSubFlow(int id);
+
+protected:
+    int m_flowIn;    
+    QList<int> m_flowOut;
+    int m_flowComplete;
 };
 
 class JZNodeParallel : public JZNode
 {
 public:
     JZNodeParallel();
+
+    void addOutPin();
+
+protected:
+    int m_flowIn;    
+    QList<int> m_flowOut;
+    int m_flowComplete;    
 };
 
-class JZNodeParallelEnd: public JZNode
-{
-public:
-    JZNodeParallelEnd();
-};
 
 class JZNodeFor: public JZNode
 {
 public:
     JZNodeFor();
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+protected:
+    int m_indexStart;
+    int m_indexEnd;
+    int m_indexOut;
+
+    int m_flowBody;    
+    int m_flowIn;        
+    int m_flowComplete;    
 };
 
 class JZNodeWhile: public JZNode
 {
 public:
     JZNodeWhile();
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    int cond() const;
+
+protected:
+    int m_cond;    
 };
 
 class JZNodeIf : public JZNode
 {
 public:
     JZNodeIf();
+
+    void addCondPin();
+    void addElsePin();
+
+protected:
+    QList<int> m_cond;    
+    QList<int> m_flowCond;
+    int m_flowElse;
 };
 
 class JZNodeBranch : public JZNode
 {
 public:
     JZNodeBranch();
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+protected:
+    int m_cond;    
+    int m_flowIn; 
+    int m_flowOut; 
 };
 
 class JZNodeFunction : public JZNode
@@ -202,6 +283,9 @@ public:
 
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
+
+    void setFunction(QString funcName,bool flowFunction);
+    QString function() const;
 
     QString functionName;
 };

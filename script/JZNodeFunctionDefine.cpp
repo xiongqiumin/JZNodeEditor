@@ -1,10 +1,21 @@
 #include "JZNodeFunctionDefine.h"
 
+//CFunction
+CFunction::CFunction()
+{
+
+}
+
+CFunction::~CFunction()
+{
+
+}
+
 //FunctionDefine
 FunctionDefine::FunctionDefine()
 {
     isCFunction = false;
     addr = 0;
-    pointer = nullptr;
-    functionType = Func_none;
+    script = nullptr;       
+    cfunc = nullptr;
 }

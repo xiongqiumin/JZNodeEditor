@@ -10,17 +10,20 @@ public:
     JZNodeBuilder();
     ~JZNodeBuilder();
 
-    bool build(JZProject *project,JZNodeProgram &result);   
+    bool build(JZProject *project,JZNodeProgram *program);
     const QList<Graph*> &graphs(QString filename) const;
+    QString error() const;
 
 protected:
+    bool buildItem(JZProjectItem *item);
     bool buildScriptFile(JZScriptFile *script);    
-    bool link();
+    bool link();    
 
-    JZNodeProgram m_program;    
+    JZNodeProgram *m_program;    
     JZProject *m_project;
 
-    QMap<QString,ScriptInfo> m_scripts;
+    QMap<QString,JZNodeScriptPtr> m_scripts;    
+    QString m_error;
 };
 
 

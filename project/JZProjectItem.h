@@ -31,9 +31,9 @@ public:
     
     void addItem(JZProjectItem *child);
     void removeItem(JZProjectItem *child);
-    JZProjectItem *getItem(QString name);
-    QList<JZProjectItem *> items();    
-    int indexOfItem(JZProjectItem *);
+    JZProjectItem *getItem(QString name);     
+    int indexOfItem(JZProjectItem *);   
+    QList<JZProjectItem *> childs();
 
     virtual void saveToStream(QDataStream &s);
     virtual void loadFromStream(QDataStream &s);

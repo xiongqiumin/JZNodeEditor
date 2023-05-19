@@ -332,7 +332,7 @@ void JZNodeView::startLine(JZNodeGemo from)
         return;
 
     JZNodeGraphItem *node_from = getNodeItem(from.nodeId);
-    auto pt = node_from->mapToScene(node_from->propRect(from.propId, Prop_out).center());
+    auto pt = node_from->mapToScene(node_from->propRect(from.propId).center());
 
     m_selLine = new JZNodeLineItem(from);
     m_selLine->setEndPoint(pt);
@@ -589,6 +589,26 @@ void JZNodeView::removeItem(QGraphicsItem *item)
     }
 }
 
+bool JZNodeView::canConnect(JZNodeGemo from,JZNodeGemo to)
+{
+    JZNode *node_from = getNode(from.nodeId);
+    JZNode *node_to = getNode(to.nodeId);
+    if(node_from == node_to)
+        return true;    
+
+    auto lines = m_file->getConnectId(to.nodeId, to.propId, Prop_in);
+    if(lines.size() != 0)
+        return false;
+
+    QList<int> form_type = node_from->propType(from.nodeId);
+    QList<int> in_type = node_to->propType(to.propId);
+    bool ok = JZNodeType::canConvert(form_type,in_type);
+    if(!ok)
+        return false;
+
+    return true;
+}
+
 void JZNodeView::onContextMenu(const QPoint &pos)
 {
     QMenu menu(this);
@@ -642,7 +662,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
     JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateNode);
     cmd->itemId = -1;
     cmd->newValue = data;
-    cmd->newValue = mapToScene(event->pos());
+    cmd->newPos = mapToScene(event->pos());
     m_commandStack.push(cmd);
 
     event->accept();
@@ -714,26 +734,14 @@ void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
         auto item = this->itemAt(event->pos());
         if (item && item->type() == Item_node)
         {
-            JZNodeGraphItem *node_item = (JZNodeGraphItem *)item;
-            if (node_item->id() != m_selLine->startTraget().nodeId)
+            JZNodeGraphItem *node_item = (JZNodeGraphItem *)item;     
+            auto pos = node_item->mapFromScene(mapToScene(event->pos()));
+            auto prop = node_item->propAt(pos);
+            if(prop)
             {
-                auto node = node_item->node();
-                auto list = node->propList();
-                for (int i = 0; i < list.size(); i++)
-                {
-                    if (list[i].flag() & Prop_in)
-                    {
-                        auto pos = node_item->mapFromScene(mapToScene(event->pos()));
-                        auto rc = node_item->propRect(list[i].id(), Prop_in);
-                        if (rc.contains(pos))
-                        {
-                            auto lines = m_file->getConnectId(node->id(), list[i].id(), Prop_in);
-                            if (lines.size() == 0)
-                                gemo = JZNodeGemo(node->id(), list[i].id());
-                            break;
-                        }
-                    }
-                }
+                JZNodeGemo to(node_item->id(), prop->id());
+                if(canConnect(m_selLine->startTraget(),to))
+                    gemo = to;            
             }
         }
         if (gemo.nodeId != INVALID_ID)

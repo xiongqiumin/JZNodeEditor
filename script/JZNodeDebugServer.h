@@ -4,8 +4,8 @@
 #include <QThread>
 #include <QTcpServer>
 #include "JZNetServer.h"
-#include "JZNodeEngine.h"
 
+class JZNodeEngine;
 class JZNodeDebugServer : public QThread
 {
     Q_OBJECT
@@ -23,9 +23,8 @@ protected slots:
 	void onNetPackRecv(int netId,JZNetPackPtr ptr);
 
 protected:        
-
     JZNetServer m_server;
-    int m_netId;
+    int m_client;
     JZNodeEngine *m_engine;
 };
 

@@ -6,58 +6,11 @@
 #include "JZNodeExpression.h"
 #include "JZScriptFile.h"
 
-class GraphNode
-{
-public:
-    GraphNode();
-
-    JZNode *node;
-    QList<JZNodeGemo> next;
-
-    QMap<int,QList<JZNodeGemo>> paramIn;  //输入位置
-    QMap<int,QList<JZNodeGemo>> paramOut; //输出位置
-};
-typedef QSharedPointer<GraphNode> GraphNodePtr;
-
-class Graph
-{
-public:
-    Graph();
-    ~Graph();
-
-    bool check();
-    bool toposort(); //拓扑排序
-    void clear();
-
-    QList<GraphNode*> topolist;
-    QMap<int, GraphNodePtr> m_nodes;
-    QString error;
-};
-typedef QSharedPointer<Graph> GraphPtr;
-
-struct NodeInfo
-{        
-    struct Jump
-    {            
-        int pc;
-    };        
-
-    int start;
-    int end;
-    QList<Jump> jmpList;     
-};
-
-struct ScriptInfo
-{    
-    QList<GraphPtr> graphs;         
-    QMap<JZNode*,Graph*> nodeGraph;
-    QMap<int,NodeInfo> nodeInfo;
-    QList<JZEventHandle> events;
-
-    QList<JZNodeIR> statmentList;
-};
-
-
+/*
+    节点数据传递规则:
+    依赖 flow 节点, 被依赖节点计算后主动推送
+    依赖 data 节点, 节点计算前主动获取.
+*/
 class JZNodeCompiler
 {
 public:
@@ -69,33 +22,50 @@ public:
     JZNodeCompiler();
     ~JZNodeCompiler();
      
-    bool build(JZScriptFile *file);
-    ScriptInfo result();    
+    bool build(JZScriptFile *file,JZNodeScript *result);    
 
-    int allocReg();
-    void freeReg(int id);
-    void copyVariable(int src,int dst);
-    int addStatement(const JZNodeIR &ir);
-    void addJumpNode(int idx);
+    int allocStack();
+    void freeStack(int id);    
 
-    QString error();
+    void addFlowInput(int nodeId);
+    void addFlowOutput(int nodeId);
+    void addDataInput(int nodeId);
+
+    int addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op);
+    int addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op);
+    int addSetVariable(JZNodeIRParam dst,JZNodeIRParam src);
+    int addStatement(JZNodeIRPtr ir);    
+    int addJumpNode(int prop);
+    int addJumpSubNode(int prop);
+    int addContinue();
+    int addBreak();
+    int addReturn();
+    void setBreakContinue(QList<int> breakPc,QList<int> continuePC);    
+    void replaceStatement(int pc,JZNodeIRPtr ir);
+    NodeInfo *currentNodeInfo();
+    int currentPc();
+
+    QString error();    
 
 protected:            
     bool genGraphs();
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
-    bool buildGraph(Graph *graph);
-    bool addFlowEvent();
-    bool addParamChangedEvent();
+    bool buildDataFlow(const QList<GraphNode*> &list);
+    bool bulidControlFlow(Graph *graph);    
+    bool buildParamBinding(Graph *graph);
+    void replaceSubNode(int id,int parentId,int flow_index);    
                 
     /* build info*/        
-    ScriptInfo m_info;
-    JZScriptFile *m_script; 
-    Graph *m_currentGraph;   
+    JZNodeScript *m_script;
+    JZScriptFile *m_scriptFile;     
+    Graph *m_currentGraph;       
     NodeInfo *m_currentNodeInfo;
-
+    QMap<JZNode*,Graph*> m_nodeGraph;
+    QMap<int,NodeInfo> m_nodeInfo;
+    
     QString m_error;
-    int m_regId;
+    int m_stackId;
 };
 
 #endif

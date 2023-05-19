@@ -1,13 +1,267 @@
 #include "JZNodeIR.h"
 
+//JZNodeIRParam
+bool JZNodeIRParam::isLiteral() const
+{
+    return type == Literal;
+}
+
+bool JZNodeIRParam::isId() const
+{
+    return type == Id;
+}
+
+bool JZNodeIRParam::isRef() const
+{
+    return type == Reference;
+}
+
+int JZNodeIRParam::id() const
+{
+    Q_ASSERT(type == Id);
+    return value.toInt();
+}
+
+QString JZNodeIRParam::ref() const
+{
+    Q_ASSERT(type == Reference);
+    return value.toString();
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param)
+{
+    s << param.type;
+    s << param.value;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param)
+{
+    s >> param.type;
+    s >> param.value;
+    return s;
+}
+
+JZNodeIRParam irRef(QString id)
+{
+    JZNodeIRParam param;
+    param.type = JZNodeIRParam::Reference;
+    param.value = id;
+    return param;        
+}
+
+JZNodeIRParam irId(int id)
+{
+    JZNodeIRParam param;
+    param.type = JZNodeIRParam::Id;
+    param.value = id;
+    return param;
+}
+
+JZNodeIRParam irLiteral(QVariant value)
+{
+    JZNodeIRParam param;
+    param.type = JZNodeIRParam::Literal;
+    param.value = value;
+    return param;
+}
+
+//JZNodeIR
+JZNodeIR *createNodeIR(int type)
+{
+    switch (type)
+    {
+    case OP_nodeId:
+        return new JZNodeIRNodeId();
+    case OP_nop:
+    case OP_return:
+    case OP_exit:
+        return new JZNodeIR(type);
+    case OP_add:
+    case OP_sub:
+    case OP_mul:
+    case OP_div:
+    case OP_mod:
+    case OP_eq:
+    case OP_ne:
+    case OP_le:
+    case OP_ge:
+    case OP_lt:
+    case OP_gt:
+    case OP_and:
+    case OP_or:
+    case OP_bitand:
+    case OP_bitor:
+    case OP_bitxor:
+        return new JZNodeIRExpr(type);
+    case OP_set:    
+        return new JZNodeIRSet();
+    case OP_get:    
+        break;
+    case OP_jmp:
+    case OP_je:
+    case OP_jne:
+        return new JZNodeIRJmp(type);
+    case OP_call:       
+        return new JZNodeIRCall();    
+    default:
+        break;
+    }
+
+    Q_ASSERT(0);
+    return nullptr;
+}
+
 JZNodeIR::JZNodeIR()
 {
     type = OP_none;
+    pc = -1;
     source = -1;
 }
 
 JZNodeIR::JZNodeIR(int t)
 {
     type = t;
+    pc = -1;
     source = -1;    
+}
+
+JZNodeIR::~JZNodeIR()
+{
+
+}
+
+void JZNodeIR::saveToStream(QDataStream &s) const
+{
+    s << type;    
+    s << pc;
+    s << source;
+    s << memo;
+}
+
+void JZNodeIR::loadFromStream(QDataStream &s)
+{
+    s >> type;    
+    s >> pc;
+    s >> source;
+    s >> memo;
+}
+
+//JZNodeIRNodeId
+JZNodeIRNodeId::JZNodeIRNodeId()    
+{
+    type = OP_nodeId;
+    id = -1;
+}
+
+JZNodeIRNodeId::~JZNodeIRNodeId()
+{
+    
+}
+
+void JZNodeIRNodeId::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << id;
+}
+
+void JZNodeIRNodeId::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> id;
+}
+
+//JZNodeIRExpr
+JZNodeIRExpr::JZNodeIRExpr(int type)
+    :JZNodeIR(type)
+{    
+}
+
+JZNodeIRExpr::~JZNodeIRExpr()
+{
+    
+}
+
+void JZNodeIRExpr::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << dst << src1 << src2;
+}
+
+void JZNodeIRExpr::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> dst >> src1 >> src2;
+}
+
+//JZNodeIRSet
+JZNodeIRSet::JZNodeIRSet()    
+{
+    type = OP_set;
+}
+
+JZNodeIRSet::~JZNodeIRSet()
+{
+    
+}
+
+void JZNodeIRSet::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << src << dst;
+}
+
+void JZNodeIRSet::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> src >> dst;
+}
+
+//JZNodeIRJmp
+JZNodeIRJmp::JZNodeIRJmp(int type)
+    :JZNodeIR(type)
+{
+    Q_ASSERT(type == OP_je || type == OP_jne || type == OP_jmp);
+    type = OP_call;
+    jmpPc = -1;
+}
+
+JZNodeIRJmp::~JZNodeIRJmp()
+{
+    
+}
+
+void JZNodeIRJmp::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << jmpPc;
+}
+
+void JZNodeIRJmp::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> jmpPc;
+}
+
+//JZNodeIRCall
+JZNodeIRCall::JZNodeIRCall()
+{
+    type = OP_call;
+}
+
+JZNodeIRCall::~JZNodeIRCall()
+{
+    
+}
+
+void JZNodeIRCall::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << function << paramIn << paramOut;
+}
+
+void JZNodeIRCall::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> function >> paramIn >> paramOut;
 }

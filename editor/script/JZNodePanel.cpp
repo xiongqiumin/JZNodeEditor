@@ -64,12 +64,12 @@ JZNodePanel::~JZNodePanel()
 
 void JZNodePanel::initVariable()
 {
-    JZNodeValue source;
-    source.setName("数据源");
+    JZNodeLiteral source;
+    source.setName("数据");
 
     auto item_var = m_tree->topLevelItem(0);
     QTreeWidgetItem *sub = new QTreeWidgetItem();
-    sub->setText(0, "数据源");
+    sub->setText(0, "数据");
     sub->setFlags(sub->flags() | Qt::ItemIsDragEnabled);
     sub->setData(0, Qt::UserRole, formatNode(&source));
 
@@ -118,7 +118,11 @@ void JZNodePanel::initFunction()
         sub->setText(0, funcs[i]->name);
         sub->setFlags(sub->flags() | Qt::ItemIsDragEnabled);
 
-        //sub->setData(0, Qt::UserRole, formatNode(funcs[i]));
+        JZNodeFunction node_func;
+        node_func.setName(funcs[i]->name);
+        node_func.setFunction(funcs[i]->name,false);
+
+        sub->setData(0, Qt::UserRole, formatNode(&node_func));
         item_func->addChild(sub);
     }
 }

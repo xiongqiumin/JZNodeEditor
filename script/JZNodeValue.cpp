@@ -1,48 +1,92 @@
 
 #include "JZNodeValue.h"
+#include "JZNodeCompiler.h"
 
-JZNodeValue::JZNodeValue()
+//JZNodeParam
+JZNodeParam::JZNodeParam()
 {
-    m_type = Node_value;
-
-    JZNodePin out;
-    out.setName("out");
-    out.setFlag(Prop_out | Prop_edit | Prop_disp | Prop_param);
-    
-    addProp(out);
+    m_type = Node_param;
+    m_out = addParamOut("out");
 }
 
-JZNodeValue::~JZNodeValue()
+JZNodeParam::~JZNodeParam()
 {
 }
 
-bool JZNodeValue::compiler(JZNodeCompiler *compiler,QString &error)
-{   
-    JZNodeIR ir(OP_set);
-    ir.params << prop(0)->defaultValue().toString();
+QString JZNodeParam::paramId() const
+{
+    return m_param;
+}
+
+void JZNodeParam::setParamId(QString paramId)
+{
+    m_param = paramId;
+}
+
+bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
+{       
+    int out_id = c->paramId(m_id,paramOut(0));
+    c->addSetVariable(irId(out_id),irRef(m_param));
     return true;
 }
 
-void JZNodeValue::saveToStream(QDataStream &s) const
+void JZNodeParam::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);    
+    s << m_out << m_param;
 }
 
-void JZNodeValue::loadFromStream(QDataStream &s)
+void JZNodeParam::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);    
+    s >> m_out >> m_param;
+}
+
+//JZNodeLiteral
+JZNodeLiteral::JZNodeLiteral()
+{
+    m_type = Node_literal;
+    m_out = addParamOut("out");
+}
+
+JZNodeLiteral::~JZNodeLiteral()
+{
+}
+
+QVariant JZNodeLiteral::literal() const
+{
+    return m_value;
+}
+
+void JZNodeLiteral::setLiteral(QVariant value)
+{
+    m_value = value;
+}
+
+bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
+{   
+    int id = c->paramId(m_id,m_out);
+    c->addSetVariable(irId(id),irLiteral(m_value));
+    return true;
+}
+
+void JZNodeLiteral::saveToStream(QDataStream &s) const
+{
+    JZNode::saveToStream(s);    
+    s << m_out << m_value;
+}
+
+void JZNodeLiteral::loadFromStream(QDataStream &s)
+{
+    JZNode::loadFromStream(s);    
+    s >> m_out >> m_value;
 }
 
 //JZNodePrint
 JZNodePrint::JZNodePrint()
 {
-    m_type = Node_print;
-
-    JZNodePin in;
-    in.setName("in");
-    in.setFlag(Prop_in | Prop_disp | Prop_param);
-
-    addProp(in);
+    m_type = Node_print;    
+    addParamIn("in");
 }
 
 JZNodePrint::~JZNodePrint()
@@ -64,77 +108,47 @@ bool JZNodePrint::compiler(JZNodeCompiler *compiler,QString &error)
     return true;
 }
 
-
-//JZNodeSet
-JZNodeSet::JZNodeSet()
+//JZNodeSetParam
+JZNodeSetParam::JZNodeSetParam()
 {
-    m_type = Node_set;
+    m_type = Node_setParam;
 
-    JZNodePin name;
-    name.setName("name");
-    name.setFlag(Prop_in | Prop_disp | Prop_param);
-
-    JZNodePin value;
-    value.setName("value");
-    value.setFlag(Prop_in | Prop_disp | Prop_param);
-
-    addProp(name);
-    addProp(value);
+    addFlowIn();    
+    addFlowOut();
+    addParamIn("value");
+    addParamOut("value");
 }
 
-JZNodeSet::~JZNodeSet()
+JZNodeSetParam::~JZNodeSetParam()
 {
 }
 
-void JZNodeSet::saveToStream(QDataStream &s) const
+QString JZNodeSetParam::paramId() const
+{
+    return m_param;
+}
+
+void JZNodeSetParam::setParamId(QString paramId)
+{
+    m_param = paramId;
+}
+
+void JZNodeSetParam::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
 }
 
-void JZNodeSet::loadFromStream(QDataStream &s)
+void JZNodeSetParam::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
 }
 
-
-bool JZNodeSet::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
 {
-    return true;
-}
+    c->addFlowInput(m_id);
 
-//JZNodeGet
-JZNodeGet::JZNodeGet()
-{
-    m_type = Node_get;
-
-    JZNodePin name;
-    name.setName("name");
-    name.setFlag(Prop_in | Prop_disp);
-
-    JZNodePin value;
-    value.setName("value");
-    value.setFlag(Prop_out | Prop_disp);
-
-    addProp(name);
-    addProp(value);
-}
-
-JZNodeGet::~JZNodeGet()
-{
-}
-
-void JZNodeGet::saveToStream(QDataStream &s) const
-{
-    JZNode::saveToStream(s);
-}
-
-void JZNodeGet::loadFromStream(QDataStream &s)
-{
-    JZNode::loadFromStream(s);
-}
-
-
-bool JZNodeGet::compiler(JZNodeCompiler *compiler,QString &error)
-{
+    int id = c->paramId(m_id,paramIn(0));
+    c->addSetVariable(irRef(m_param),irId(id));
+    c->addJumpNode(flowOut());
     return true;
 }

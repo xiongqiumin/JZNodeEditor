@@ -99,7 +99,7 @@ JZProjectItem *JZProjectItem::getItem(QString name)
     return nullptr;
 }
 
-QList<JZProjectItem *> JZProjectItem::items()
+QList<JZProjectItem *> JZProjectItem::childs()
 {
     return m_childs;
 }

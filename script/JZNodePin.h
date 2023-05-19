@@ -14,7 +14,7 @@ enum
     Prop_out = 0x2,    
     Prop_param = 0x4,
     Prop_flow = 0x8,
-    Prop_sub  = 0x10,   //子程序
+    Prop_subFlow  = 0x10,   //子程序
     Prop_disp = 0x20,
     Prop_edit = 0x40,
 
@@ -37,11 +37,18 @@ public:
     void setFlag(int dir);
     int flag() const;
 
-    void setDataType(int type);
-    int dataType() const;
+    bool isInput() const;
+    bool isOutput() const;
+    bool isParam() const;
+    bool isFlow() const;
+    bool isSubFlow() const;
+    bool isEditable() const;
 
-    void setDefaultValue(QVariant value);
-    QVariant defaultValue() const;
+    void setDataType(QList<int> type);
+    QList<int> dataType() const;    
+
+    QVariant value() const;
+    void setValue(QVariant value);
 
 protected:
     friend QDataStream &operator<<(QDataStream &s, const JZNodePin &param);
@@ -49,9 +56,9 @@ protected:
 
     int m_id;
     QString m_name;
-    int m_flag;
-    int m_dataType;
-    QVariant m_default;
+    int m_flag;    
+    QList<int> m_dataType;
+    QVariant m_value;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodePin &param);
 QDataStream &operator>>(QDataStream &s, JZNodePin &param);

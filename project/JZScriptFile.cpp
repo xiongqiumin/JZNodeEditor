@@ -81,7 +81,8 @@ int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
     auto pin_from = getPin(from);
     auto pin_to = getPin(to);
     Q_ASSERT(pin_from && pin_to);    
-    Q_ASSERT((pin_from->flag() & Prop_flow) == (pin_to->flag() & Prop_flow));
+    Q_ASSERT(((pin_from->isFlow() || pin_from->isSubFlow()) && pin_to->isFlow()) 
+        || (pin_from->isParam() && pin_to->isParam()));
 
     JZNodeConnect connect;
     connect.id = m_nodeId++;
@@ -89,6 +90,16 @@ int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
     connect.to = to;
     m_connects.push_back(connect);
     return connect.id;
+}
+
+bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to)
+{
+    JZNodePin *pin_from = getPin(from);
+    JZNodePin *pin_to = getPin(to);
+    if(!JZNodeType::canConvert(pin_from->dataType(),pin_to->dataType()))
+        return false;
+
+    return true;
 }
 
 void JZScriptFile::insertConnect(const JZNodeConnect &connect)

@@ -21,6 +21,7 @@ public:
     QPointF getNodePos(int id); 
     QList<int> nodeList();    
 
+    bool canConnect(JZNodeGemo from, JZNodeGemo to);
     int addConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);
     void removeConnect(int id);

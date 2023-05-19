@@ -12,32 +12,27 @@ class JZNodeVM : public QObject
 public:
     JZNodeVM();
     ~JZNodeVM();
+    
+    bool init(QString path);    
 
-    QWidget *mainWindow();
-    bool load(QString path);       
-    int exec();
+    void addBreakPoint(int nodeId);
+    void removeBreakPoint(int id);
 
-    void addBreakPoint(BreakPoint pt);
-    void removeBreakPoint(BreakPoint pt);
+    QVariant getVariable(QString name);
+    void setVariable(QString name, const QVariant &value);        
 
-    QVariant getVariable(int id);
-    void setVariable(int id, const QVariant &value);    
-
-    void onValueNotify(int id,QVariant &value);
-
-signals:
-    void sigRuntimeError(JZNodeRuntimeError error);
-
-protected:    
+protected slots:
     void onIntValueChanged(int value);
     void onStringValueChanged(const QString &value);
     void onDoubleValueChanged(double value);
     void onButtonClicked();    
+    void onComboxSelectChanged(int index);
+    void onValueNotify(int id,QVariant &value);
 
-protected slots:    
+protected:
     virtual void customEvent(QEvent *event);        
     void createWindow();
-    bool busy();    
+    void dealEvent(JZEvent *event);
 
     QWidget *m_window;
     JZNodeEngine m_engine;

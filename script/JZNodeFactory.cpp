@@ -1,6 +1,7 @@
 #include "JZNodeFactory.h"
 #include "JZNodeValue.h"
 #include "JZNodeExpression.h"
+#include "JZNodeEvent.h"
 
 template<class T> 
 JZNode *createFunc(){ return new T();}
@@ -37,13 +38,16 @@ JZNode *JZNodeFactory::createNode(int type)
 
 void JZNodeFactory::init()
 {
-    //registNode(Node_event,createFunc<JZNodeEvent>);
-    registNode(Node_value,createFunc<JZNodeValue>);
-    registNode(Node_print,createFunc<JZNodePrint>);
-    registNode(Node_set,createFunc<JZNodeSet>);
-    registNode(Node_get,createFunc<JZNodeGet>);
+    registNode(Node_event,createFunc<JZNodeEvent>);  
+    registNode(Node_print,createFunc<JZNodePrint>);  
+    registNode(Node_literal,createFunc<JZNodeLiteral>);    
+    registNode(Node_param,createFunc<JZNodeParam>);
+    registNode(Node_setParam,createFunc<JZNodeSetParam>);    
     
-    //registNode(Node_branch,createFunc<JZNodeBranch>);
+    registNode(Node_function,createFunc<JZNodeFunction>);
+    registNode(Node_while,createFunc<JZNodeWhile>);
+    registNode(Node_for,createFunc<JZNodeFor>);
+    registNode(Node_branch,createFunc<JZNodeBranch>);
     //registNode(Node_switch,createFunc<JZNodeSwitch>);
     //registNode(Node_if,createFunc<JZNodeIf>);
 
@@ -60,7 +64,9 @@ void JZNodeFactory::init()
     registNode(Node_gt,createFunc<JZNodeGT>);
     registNode(Node_and,createFunc<JZNodeAnd>);
     registNode(Node_or,createFunc<JZNodeOr>);
-    registNode(Node_xor,createFunc<JZNodeXor>);
+    registNode(Node_bitand,createFunc<JZNodeBitAnd>);
+    registNode(Node_bitor,createFunc<JZNodeBitOr>);
+    registNode(Node_bitxor,createFunc<JZNodeBitXor>);
 }
 
 //parseNode

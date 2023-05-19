@@ -1,5 +1,5 @@
-#ifndef JZNODE_RUNNER_H_
-#define JZNODE_RUNNER_H_
+#ifndef JZNODE_ENGINE_H_
+#define JZNODE_ENGINE_H_
 
 #include <QObject>
 #include <QMap>
@@ -48,16 +48,45 @@ public:
     QString message;
 };
 
+class JZNodeRuntimeInfo
+{
+public:
+    JZNodeRuntimeInfo();
+    
+    enum{
+        Running,
+        Paused,
+    };
+
+    int status;
+    QString file;
+    int nodeId;
+    int pc;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeInfo &param);
+QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param);
+
 class BreakPoint
 {
 public: 
-    BreakPoint();
+    enum{
+        none,
+        nodeEnter,
+        nodeExit,     //step over
+        stackEqual,   //step in/out     
+    };
 
-    int pc;
-    bool once;
+    BreakPoint();
+    void clear();
+
+    int id;
+    int type;
+    QString file;
+    int nodeId;
+    int stack; 
+    int pcStart,pcEnd;   
 };
 
-class JZNodeVM;
 //JZNodeEngine
 class JZNodeEngine
 {
@@ -66,47 +95,68 @@ public:
     ~JZNodeEngine();  
 
     void setProgram(JZNodeProgram *program);
-    JZNodeProgram *program();
+    JZNodeProgram *program();    
     void init();    
 
-    void addBreakPoint(BreakPoint pt);
-    void removeBreakPoint(BreakPoint pt);    
+    JZNodeRuntimeInfo runtimeInfo();
+
+    void addBreakPoint(QString filepath,int nodeId);
+    void removeBreakPoint(int id);
+    void clearBreakPoint();    
     void pause();
-    void resume();
-    void stepIn(int nodeId);
-    void stepOver(int nodeId);
-    void stepOut(int nodeId);
+    void resume();    
+    void stop();
+    void stepIn();
+    void stepOver();
+    void stepOut();    
 
-    void setVm(JZNodeVM *vm);
+    QVariant getVariable(QString name);
+    void setVariable(QString name, const QVariant &value);
 
-    QVariant getVariable(int id);
-    void setVariable(int id, const QVariant &value);
+    QVariant getReg(int id);
+    void setReg(int id, const QVariant &value);
      
-    bool call(QString name,QVariantList &in,QVariantList &out);    
+    bool call(QString function,QVariantList &in,QVariantList &out);    
+    bool call(const FunctionDefine *func,QVariantList &in,QVariantList &out);
 
-protected:            
+protected:
+    enum{
+        Status_none,
+        Status_running,
+        Status_pause,
+        Status_stop,
+    };
     void notify(int id, const QVariant &data);       
-    void run();     
+    bool run();     
 
-    const FunctionDefine *function(QString name);   
-    void callFunction(const FunctionDefine *func);
+    const FunctionDefine *function(QString name);       
     void callCFunction(const FunctionDefine *func);        
     bool setCommand(int cmd);    
-    QVariant dealExpr(int op,QVariant &a,QVariant &b);    
+    QVariant dealExpr(QVariant &a,QVariant &b,int op);    
     void pushStack(const FunctionDefine *define);
     void popStack();
+    int indexOfBreakPoint(int id);   
+    void waitStatus(int status);
+    
+    QVariant getParam(const JZNodeIRParam &param);
+    void setParam(const JZNodeIRParam &param,const QVariant &value);
 
-    int m_pc;    
-    JZNodeVM *m_vm;
-    JZNodeProgram *m_program;
+    int m_pc;            
+    JZNodeProgram *m_program;    
+    JZNodeScript *m_script;
+    QWidget *m_window;    
         
-    Stack m_stack;
-    QMap<int,QVariant> m_global;            
-    QMap<int,QVariant> m_regCall;
-    QVariantList m_outList;
     QList<BreakPoint> m_breakPoints;
-    bool m_needPause;
-    bool m_pause;     
+    BreakPoint m_breakStep;
+    int m_breadPointId;
+
+    Stack m_stack;
+    QMap<QString,QVariant> m_global;            
+    QMap<int,QVariant> m_regs;
+    QVariantList m_outList;    
+    int m_nodeId;    
+    int m_statusCommand;
+    int m_status;     
     QMutex m_mutex;    
     QSemaphore m_waitCond;
 };

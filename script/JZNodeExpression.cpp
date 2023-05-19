@@ -4,32 +4,51 @@
 
 JZNodeOperator::JZNodeOperator()
 {
-    JZNodePin in1,in2,out;
-    in1.setName("in1");
-    in1.setFlag(Prop_in | Prop_param );
-    
-    in2.setName("in2");
-    in2.setFlag(Prop_in | Prop_param);
-
-    out.setName("out");
-    out.setFlag(Prop_out | Prop_param);
-
-    m_in1 = addProp(in1);
-    m_in2 = addProp(in2);
-    m_out = addProp(out);
+    m_in1 = addParamIn("in1",Prop_edit);
+    m_in2 = addParamIn("in2",Prop_edit);
+    m_out = addParamOut("out");
 }
 
 bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
 {
+    c->addDataInput(m_id);
     int r1 = c->paramId(m_id,m_in1);
     int r2 = c->paramId(m_id,m_in2);
-    int r3 = c->paramId(m_id,m_out);
-        
-    JZNodeIR ir(m_op);
-    ir.params << QString::number(r3) << QString::number(r1) << QString::number(r2);
-    c->addStatement(ir);    
-
+    int r3 = c->paramId(m_id,m_out);            
+    c->addExpr(irId(r3),irId(r1),irId(r2),m_op);
     return true;
+}
+
+QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
+{
+    QMap<int,int> result;
+    switch (m_type)
+    {
+        case OP_add:
+        case OP_sub:
+        case OP_mul:
+        case OP_div:
+        case OP_mod:
+            result[m_out] = JZNodeType::calcExprType(inType[m_in1],inType[m_in2]);
+            break;
+        case OP_eq:
+        case OP_ne:
+        case OP_le:
+        case OP_ge:
+        case OP_lt:
+        case OP_gt:
+        case OP_and:
+        case OP_or:
+        case OP_bitand:
+        case OP_bitor:
+        case OP_bitxor:
+            result[m_out] = Type_int;
+            break;
+        default:
+            Q_ASSERT(0);
+            break;
+    }
+    return result;
 }
 
 //JZNodeAdd
@@ -135,15 +154,30 @@ JZNodeOr::JZNodeOr()
     m_type = Node_or;
     m_op = OP_or;
 }
-    
-//JZNodeXor
-JZNodeXor::JZNodeXor()
+
+//JZNodeBitAnd
+JZNodeBitAnd::JZNodeBitAnd()
 {
-    m_name = "xor";
-    m_type = Node_xor;
-    m_op = OP_xor;
+    m_name = "bit and";
+    m_type = Node_bitand;
+    m_op = OP_bitand;
 }
 
+//JZNodeBitOr
+JZNodeBitOr::JZNodeBitOr()
+{
+    m_name = "bit or";
+    m_type = Node_bitor;
+    m_op = OP_bitor;
+}
+
+//JZNodeBitXor
+JZNodeBitXor::JZNodeBitXor()
+{
+    m_name = "bit xor";
+    m_type = Node_bitxor;
+    m_op = OP_bitxor;
+}
 
 //JZNodeExpression
 JZNodeExpression::JZNodeExpression()
@@ -158,15 +192,13 @@ bool JZNodeExpression::compiler(JZNodeCompiler *compiler,QString &error)
         return false;
     
     for(int i = 0; i < exp.inList.size(); i++)
-    {
-        JZNodePin pin;
-        addProp(pin);
+    {     
+        addParamIn(exp.inList[i]);
     }
     
     for(int i = 0; i < exp.outList.size(); i++)
     {
-        JZNodePin pin;
-        addProp(pin);
+        addParamOut(exp.inList[i]);
     }
 
     return true;

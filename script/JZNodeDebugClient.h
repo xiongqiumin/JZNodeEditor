@@ -13,17 +13,26 @@ public:
     JZNodeDebugClient();
     ~JZNodeDebugClient();
 
-    bool pause();
-    bool resume();
-    bool stop();
+    void addBreakPoint(QString file,int nodeId);    
+    void removeBreakPoint(QString file,int nodeId);    
+    void clearBreakPoint();    
+    void pause();       
+    void resume();       
+    void stepIn();
+    void stepOver();
+    void stepOut();
+
+signals:
+    void sigDisConnect();   
+    void sigBreakTrigger(); 
 
 protected slots:    
     void onConnect();
 	void onDisConnect();
 	void onNetPackRecv(JZNetPackPtr ptr);    
 
-protected:
-    bool send();
+protected:    
+    bool sendCommand(int command,QVariantMap &params,QVariantMap &result);
 
     JZNetClient m_client;
 };

@@ -26,7 +26,7 @@ JZProject::JZProject()
     JZScriptFile *param_page = new JZScriptFile(ProjectItem_scriptParam,false);
     data_page->setName("变量");
     ui_page->setName("界面");
-    ui_page->setName("联动");
+    param_page->setName("联动");
     flow_page->setName("流程");
 
     addItem("./变量定义",data_page);
@@ -54,6 +54,12 @@ bool JZProject::open(QString filepath)
 
 bool JZProject::save()
 {
+    return saveAs(m_filepath);    
+}
+
+bool JZProject::saveAs(QString filepath)
+{   
+    m_filepath = filepath;
     QFile file(m_filepath);
     if(!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
@@ -93,10 +99,12 @@ void JZProject::sort()
 }
 
 int JZProject::addItem(QString dir,JZProjectItem *item)
-{
-    m_items.push_back(JZProjectItemPtr(item));
-
+{    
     auto parent = getItem(dir);
+    if(!parent)
+        return -1;    
+
+    m_items.push_back(JZProjectItemPtr(item));
     parent->addItem(item);
     item->parent()->sort();
     return item->parent()->indexOfItem(item);
@@ -140,12 +148,15 @@ JZProjectItem *JZProject::getItem(QString path)
     if(path == "." || path == "./")
         return &m_root;
 
-    Q_ASSERT(path.startsWith("./"));
+    if(!path.startsWith("./"))
+        path += "./";        
     QStringList path_list = path.split("/",Qt::KeepEmptyParts);
     JZProjectItem *folder = &m_root;
     for(int i = 1; i < path_list.size(); i++)
     {        
         folder = folder->getItem(path_list[i]);
+        if(!folder)
+            return nullptr;
     }
     return folder;
 }
@@ -156,4 +167,29 @@ void JZProject::makeTree()
         JZProjectItem *dir = getItem(m_items[i]->path());
         dir->addItem(m_items[i].data());
     }
+}
+
+void JZProject::addVariable(QString name,QVariant value)
+{
+    m_variables[name] = value;
+}
+
+void JZProject::removeVariable(QString name)
+{
+    m_variables.remove(name);
+}
+
+void JZProject::setVariable(QString name,QVariant value)
+{
+    m_variables[name] = value;
+}
+
+QVariant JZProject::getVariable(QString name)
+{
+    return m_variables[name];
+}
+
+QStringList JZProject::variableList()
+{
+    return m_variables.keys();
 }

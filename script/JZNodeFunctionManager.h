@@ -17,13 +17,15 @@ public:
     QList<const FunctionDefine*> functionList();
     const FunctionDefine *function(QString name);
     void registFunction(const FunctionDefine &define);
-    void callCFunction(const FunctionDefine *define, const QVariantList &paramIn, QVariantList &paramOut);
+    void registCFunction(QString name,CFunction *func);
     
 protected:
     JZNodeFunctionManager();
     ~JZNodeFunctionManager();       
-        
+    int idToType(QString id);
+    
     QMap<QString, FunctionDefine> m_funcMap;
+    QVector<CFunction *> m_cfuncs;
 };
 
 #endif
