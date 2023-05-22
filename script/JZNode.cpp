@@ -90,6 +90,9 @@ bool JZNode::isFlowNode() const
 
 int JZNode::addProp(const JZNodePin &prop)
 {
+    Q_ASSERT(prop.isInput() || prop.isOutput());
+    Q_ASSERT(prop.isFlow() || prop.isParam() || prop.isSubFlow());
+
     int max_id = 0;
     for (int i = 0; i < m_propList.size(); i++)
         max_id = qMax(max_id, m_propList[i].id() + 1);
@@ -238,6 +241,11 @@ int JZNode::paramIn(int index)
         return -1;
 }
 
+JZNodeGemo JZNode::paramInGemo(int index)
+{
+    return JZNodeGemo(m_id,paramIn(index));
+}
+
 int JZNode::paramInCount()
 {
     return propInList(Prop_param).size();
@@ -255,6 +263,11 @@ int JZNode::paramOut(int index)
         return list[index];
     else
         return -1;
+}
+
+JZNodeGemo JZNode::paramOutGemo(int index)
+{
+    return JZNodeGemo(m_id,paramOut(index));
 }
 
 int JZNode::paramOutCount()
@@ -276,6 +289,11 @@ int JZNode::flowIn()
         return -1;
 }
 
+JZNodeGemo JZNode::flowInGemo()
+{
+    return JZNodeGemo(m_id,flowIn());
+}
+
 int JZNode::flowOut(int index)
 {
     auto list = propOutList(Prop_flow);
@@ -283,6 +301,11 @@ int JZNode::flowOut(int index)
         return list[index];
     else
         return -1;
+}
+
+JZNodeGemo JZNode::flowOutGemo(int index)
+{
+    return JZNodeGemo(m_id,flowOut(index));
 }
 
 QVector<int> JZNode::flowOutList()
@@ -302,6 +325,11 @@ int JZNode::subFlowOut(int index)
         return list[index];
     else
         return -1;
+}
+
+JZNodeGemo JZNode::subFlowOutGemo(int index)
+{
+    return JZNodeGemo(m_id,subFlowOut(index));
 }
 
 QVector<int> JZNode::subFlowList()
@@ -433,12 +461,12 @@ JZNodeSequence::JZNodeSequence()
     addFlowOut("continue");
 }
 
-int JZNodeSequence::addOutSubFlow()
+int JZNodeSequence::addSequeue()
 {
     return addSubFlowOut("Seqeue " + QString::number(subFlowCount() + 1));
 }
 
-void JZNodeSequence::removeOutSubFlow(int id)
+void JZNodeSequence::removeSequeue(int id)
 {
     removeProp(id);
     auto list = subFlowList();
@@ -449,6 +477,22 @@ void JZNodeSequence::removeOutSubFlow(int id)
     }
 }
 
+bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
+{
+    QList<int> breakList;
+    QList<int> continueList;
+    auto list = subFlowList();
+    for(int i = 0; i < list.size(); i++)
+    {
+        int pc = c->addJumpSubNode(list[i]);
+        continueList << pc;
+        breakList << -1;
+    }
+    continueList.pop_front();
+    continueList << c->addJumpNode(flowOut());
+    c->setBreakContinue({breakList},{continueList});
+    return true;
+}
 
 // JZNodeParallel
 JZNodeParallel::JZNodeParallel()
@@ -566,69 +610,4 @@ bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
     jmp_true->jmpPc = c->addJumpNode(flowOut(0));
     jmp_false->jmpPc = c->addJumpNode(flowOut(1));    
     return true;
-}
-
-// JZNodeFunction
-JZNodeFunction::JZNodeFunction()
-{
-    m_type = Node_function;
-}
-
-bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
-{
-    if(isFlowNode())
-        c->addFlowInput(m_id);
-    else
-        c->addDataInput(m_id);
-
-    QVector<int> in_list = propInList(Prop_param);
-    QVector<int> out_list = propOutList(Prop_param);
-    for(int i = 0; i < in_list.size(); i++)
-    {
-        int id = c->paramId(m_id,in_list[i]);
-        c->addSetVariable(irId(id),irId(Reg_Call+i));
-    }
-
-    JZNodeIRCall *call = new JZNodeIRCall();
-    call->function = functionName;
-    c->addStatement(JZNodeIRPtr(call));
-
-    for(int i = 0; i < out_list.size(); i++)
-    {
-        int id = c->paramId(m_id,out_list[i]);
-        c->addSetVariable(irId(Reg_Call+i),irId(id));
-    }
-
-    return true;
-}
-
-void JZNodeFunction::saveToStream(QDataStream &s) const
-{
-    JZNode::saveToStream(s);
-    s << functionName;    
-}
-
-void JZNodeFunction::loadFromStream(QDataStream &s)
-{
-    JZNode::loadFromStream(s);
-    s >> functionName;    
-}
-
-void JZNodeFunction::setFunction(QString funcName,bool flowFunction)
-{
-    FunctionDefine *define;
-    if(flowFunction)
-    {
-        addFlowIn();
-        addFlowOut();
-    }
-    for(int i = 0; i < define->paramIn.size(); i++)
-        addProp(define->paramIn[i]);
-    for(int i = 0; i < define->paramOut.size(); i++)
-        addProp(define->paramOut[i]);
-}
-
-QString JZNodeFunction::function() const
-{
-    return functionName;
 }

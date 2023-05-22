@@ -17,14 +17,6 @@ public:
     DispWidget();
     ~DispWidget();
 
-    void setItem(JZNodeGraphItem *item);
-    JZNodeGraphItem *item();
-
-    void addVariable(const JZNodePin &prop);
-    void setVariable(int id, QVariant value);
-    QVariant getVariable(int id);
-    void clear();    
-
 signals:
     void sigValueChanged(int id, QVariant value);
 
@@ -32,8 +24,7 @@ protected slots:
     void onValueChanged();
 
 protected:
-    QMap<int, QWidget*> m_widgets;
-    JZNodeGraphItem *m_item;
+    QWidget* m_widget;
 };
 
 class JZNodeGraphItem : public JZNodeBaseItem
@@ -64,7 +55,7 @@ protected:
 
     QSize m_size;    
     JZNode *m_node;
-    DispWidget *m_dispWidget;
+    QList<DispWidget*> m_dispWidget;
     QGraphicsProxyWidget *m_proxy;
     QMap<int,QRectF> m_propRects;
 };

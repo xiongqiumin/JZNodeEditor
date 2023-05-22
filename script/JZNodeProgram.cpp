@@ -306,6 +306,20 @@ QList<JZEventHandle*> JZNodeProgram::matchEvent(JZEvent *e) const
     return result;
 }
 
+QList<JZEventHandle*> JZNodeProgram::eventList() const
+{
+    QList<JZEventHandle*> result;
+    auto it = m_scripts.begin();
+    while(it != m_scripts.end())
+    {
+        QList<JZEventHandle> &handle_list = it.value()->events;
+        for(int i = 0; i < handle_list.size(); i++)
+            result.push_back(&handle_list[i]);
+        it++;
+    }
+    return result;
+}
+
 QMap<QString,QVariant> JZNodeProgram::variables()
 {
     return m_variables;

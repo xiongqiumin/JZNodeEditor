@@ -43,11 +43,13 @@ class JZNodeIRParam
 {
 public:
     enum{
+        None,
         Id,
         Literal,
         Reference,
     };    
-        
+
+    JZNodeIRParam();
     bool isLiteral() const;
     bool isRef() const;
     bool isId() const;

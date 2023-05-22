@@ -80,7 +80,7 @@ int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
 {
     auto pin_from = getPin(from);
     auto pin_to = getPin(to);
-    Q_ASSERT(pin_from && pin_to);    
+    Q_ASSERT(pin_from && pin_to && pin_from->isOutput() && pin_to->isInput());
     Q_ASSERT(((pin_from->isFlow() || pin_from->isSubFlow()) && pin_to->isFlow()) 
         || (pin_from->isParam() && pin_to->isParam()));
 

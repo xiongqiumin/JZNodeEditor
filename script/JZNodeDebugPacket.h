@@ -9,14 +9,17 @@ enum{
     Cmd_none,
     Cmd_addBreakPoint,
     Cmd_removeBreakPoint,       
-    Cmd_clearBreakPoint,
-    Cmd_heart,
+    Cmd_clearBreakPoint,    
     Cmd_pause,
     Cmd_resume,    
+    Cmd_stop,
     Cmd_stepIn,
     Cmd_stepOver,
     Cmd_stepOut, 
     Cmd_breakTrigger,
+    Cmd_runtimeInfo,
+    Cmd_getVariable,
+    Cmd_setVariable,
 };
 
 
@@ -31,7 +34,25 @@ public:
 	virtual void loadFromStream(QDataStream &s);    
 
     int cmd;
-    QVariantMap params;
+    QVariantList params;
 };
+
+template<class T>
+QByteArray netDataPack(const T &param)
+{
+    QByteArray buffer;
+    QDataStream s(&buffer,QIODevice::WriteOnly);
+    s << param;
+    return buffer;
+}
+
+template<class T>
+T netDataUnPack(const QByteArray &buffer)
+{
+    T param;
+    QDataStream s(buffer);
+    s >> param;
+    return param;
+}
 
 #endif

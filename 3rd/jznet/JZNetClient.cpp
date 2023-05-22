@@ -11,9 +11,9 @@ JZNetClient::JZNetClient(QObject * parent)
 {
 	tcpSocket = new QTcpSocket();
 
-	mUser = 1;
+    m_net = 1;
     m_waitRecv = false;
-    mUserDisconnect = false;
+    m_userDisconnect = false;
 
 	//建立连接    
     connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
@@ -33,7 +33,7 @@ void JZNetClient::disconnectFromHost()
 	//从服务器断开
 	if(isConnect())
 	{
-        mUserDisconnect = true;
+        m_userDisconnect = true;
 		tcpSocket->disconnectFromHost();
 		if(tcpSocket->state() != QAbstractSocket::UnconnectedState)
 		{
@@ -47,14 +47,14 @@ bool JZNetClient::connectToHost(QString host,int port)
 {
 	//连接服务器
 	tcpSocket->connectToHost(host, port);	
-    mUserDisconnect = false;
+    m_userDisconnect = false;
 	
 	//等待连接成功
 	bool ret = tcpSocket->waitForConnected();
 	if(ret)
 	{
 		//创建新的网络会话
-		m_dataManager.newSession(mUser,tcpSocket);
+        m_dataManager.newSession(m_net,tcpSocket);
 	}
 	return ret;
 }
@@ -74,20 +74,20 @@ bool JZNetClient::isConnect()
 
 void JZNetClient::onConnected()
 {
-    m_dataManager.newSession(mUser, tcpSocket);
+    m_dataManager.newSession(m_net, tcpSocket);
     emit sigConnect();
 }
 
 void JZNetClient::onDisConnected()
 {	
 	//发送连接断开信号
-    if(!mUserDisconnect)
+    if(!m_userDisconnect)
 	    emit sigDisConnect();
 	
 	//结束会话
-	m_dataManager.endSession(mUser);
-	mUser = 0;
-    mUserDisconnect = false;
+    m_dataManager.endSession(m_net);
+    m_net = 0;
+    m_userDisconnect = false;
 }
 
 void JZNetClient::onReadyRead()
@@ -102,10 +102,10 @@ void JZNetClient::onReadyRead()
 void JZNetClient::dispatchPack()
 {
     //接收数据包
-    m_dataManager.recvPack(mUser);
+    m_dataManager.recvPack(m_net);
     while (true)
     {
-        JZNetPackPtr pack = m_dataManager.takePack(mUser);
+        JZNetPackPtr pack = m_dataManager.takePack(m_net);
         if (pack)
         {
             emit sigNetPackRecv(pack);
@@ -115,10 +115,10 @@ void JZNetClient::dispatchPack()
     }
 }
 
-bool JZNetClient::sendPack(JZNetPackPtr pack)
+bool JZNetClient::sendPack(JZNetPack *pack)
 {	
 	//发送数据包
-	return m_dataManager.sendPack(mUser, pack);
+    return m_dataManager.sendPack(m_net, pack);
 }
 
 JZNetPackPtr JZNetClient::waitPack(int type, int param,int timeout)
@@ -128,20 +128,19 @@ JZNetPackPtr JZNetClient::waitPack(int type, int param,int timeout)
 	QElapsedTimer t;
 	t.start();
 	//等待数据包
-    m_waitRecv = true;    
+    m_waitRecv = true;               
     while(timeout == -1 || t.elapsed() <= timeout)
     {	    
-        m_dataManager.recvPack(mUser);
+        m_dataManager.socket(m_net)->waitForReadyRead(10);
+        m_dataManager.recvPack(m_net);
 		if(type == 0)
-			pack = m_dataManager.takePack(mUser);
+            pack = m_dataManager.takePack(m_net);
 		else if(type == 1)
-			pack = m_dataManager.takePackByType(mUser, param);
+            pack = m_dataManager.takePackByType(m_net, param);
 		else 
-			pack = m_dataManager.takePackBySeq(mUser, param);
+            pack = m_dataManager.takePackBySeq(m_net, param);
         if(pack)
             break;
-
-		QThread::msleep(10);
     }
     m_waitRecv = false; 
     

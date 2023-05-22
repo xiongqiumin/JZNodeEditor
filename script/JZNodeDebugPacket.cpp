@@ -3,6 +3,7 @@
 
 JZNodeDebugPacket::JZNodeDebugPacket()
 {
+    cmd = Cmd_none;
 }
 
 JZNodeDebugPacket::~JZNodeDebugPacket()

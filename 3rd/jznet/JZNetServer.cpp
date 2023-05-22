@@ -6,7 +6,7 @@ JZNetServer::JZNetServer(QObject * parent)
 	: QObject(parent)
 	, tcpServer(NULL)
 {
-	tcpServer = new QTcpServer();
+    tcpServer = new QTcpServer(this);
 	m_netId = 1;
 
 	//连接信号
@@ -59,13 +59,13 @@ void JZNetServer::closeConnect(int netId)
     socket->disconnectFromHost();
 }
 
-bool JZNetServer::sendPack(int netId, JZNetPackPtr pack)
+bool JZNetServer::sendPack(int netId, JZNetPack *pack)
 {
 	//发送数据包给指定客户
 	return m_dataManager.sendPack(netId, pack);
 }
 
-bool JZNetServer::sendPackExclude(int netId, JZNetPackPtr pack)
+bool JZNetServer::sendPackExclude(int netId, JZNetPack *pack)
 {
 	//发送数据包,排除指定客户
 	bool ret = true;
@@ -79,7 +79,7 @@ bool JZNetServer::sendPackExclude(int netId, JZNetPackPtr pack)
 	return ret;
 }
 
-bool JZNetServer::sendPackToAll(JZNetPackPtr pack)
+bool JZNetServer::sendPackToAll(JZNetPack *pack)
 {
 	//发送数据包给所有
 	bool ret = true;

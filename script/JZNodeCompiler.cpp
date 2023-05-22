@@ -601,6 +601,7 @@ int JZNodeCompiler::addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op)
 
 int JZNodeCompiler::addSetVariable(JZNodeIRParam dst,JZNodeIRParam src)
 {
+    Q_ASSERT(src.type != JZNodeIRParam::None && dst.type != JZNodeIRParam::None);
     Q_ASSERT(dst.type != JZNodeIRParam::Literal);
 
     JZNodeIRSet *op = new JZNodeIRSet();

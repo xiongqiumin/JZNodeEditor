@@ -7,8 +7,9 @@
 #include <QTextEdit>
 #include "JZProjectTree.h"
 #include "JZEditor.h"
-#include "JZNodeEngine.h"
+#include "JZNodeBuilder.h"
 #include "JZNodeDebugClient.h"
+#include "JZNodeProgram.h"
 
 class MainWindow : public QMainWindow
 {
@@ -19,28 +20,48 @@ public:
     ~MainWindow();
 
 protected slots:    
+    void onActionNewProject();
     void onActionOpenProject();
+    void onActionCloseProject();
     void onActionSaveProject();
+    void onActionSaveAsProject();
 
-    void onActionOpenTriggered();
-    void onActionSaveTriggered();
-    void onActionSaveAsTriggered();
-    void onActionSaveAllTriggered();          
+    void onActionUndo();
+    void onActionRedo();
+    void onActionDel();
+    void onActionCut();
+    void onActionCopy();
+    void onActionPaste();
+
+    void onActionBuild();
+
+    void onActionRun();
+    void onActionBreakPoint();
+    void onActionStepOver();
+    void onActionStepIn();
+    void onActionStepOut();
 
     void onFileOpened(QString filepath);    
+    void onFileClosed(QString filepath);
     
 private:
-    void initUi();
     void resizeEvent(QResizeEvent *event);
+    JZEditor *createEditor(int type);
 
-    JZNodeEngine m_nodeEngine;
+    void initMenu();
+    void initUi();        
+    void switchEditor(JZEditor *editor);
+
+    JZNodeBuilder m_builder;
     JZProject m_project;
+    JZNodeProgram m_program;
+
     JZProjectTree *m_projectTree;
     JZEditor *m_editor;  
     QStackedWidget *m_editorStack;
     QTextEdit *m_log;
     JZNodeDebugClient m_debuger;
 
-    QVector<JZEditor *> m_editorList;
+    QMap<QString,JZEditor *> m_editors;
 };
 #endif // MAINWINDOW_H

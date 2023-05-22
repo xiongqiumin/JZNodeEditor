@@ -78,33 +78,20 @@ public:
 
     void clear();
     void redo();
-    void undo();    
+    void undo();
+    void remove();
+    void cut();
     void copy();
-    void paste();    
+    void paste();
 
-    void updateNodeLayout();
-    int paramId(int nodeId,int propId);
+    void updateNodeLayout();    
 
 protected slots:
     void onContextMenu(const QPoint &pos);
     void onPropUpdate(int nodeId);
     void onTimer();
 
-    void onCopy();
-    void onPaste();
-    void onRedo();
-    void onUndo();
-
-protected:
-    struct CopyData
-    {
-        bool isEmpty();
-
-        QList<QByteArray> nodes;
-        QList<QPointF> nodesPos;
-        QList<JZNodeConnect> lines;                
-    };    
-
+protected:      
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
@@ -118,8 +105,6 @@ protected:
 
     void foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType = -1);
     void foreachLine(std::function<void(JZNodeLineItem *)> func);    
-    void run();    
-    void stopRun();
     void copyItem(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);    
     void initGraph();
@@ -134,8 +119,7 @@ protected:
 
     double m_scale;
     QPoint m_downPoint;    
-    bool m_isMove;  
-    CopyData m_copyData;      
+    bool m_isMove;          
 };
 
 #endif

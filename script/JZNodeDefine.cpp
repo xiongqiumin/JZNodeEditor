@@ -4,6 +4,7 @@
 #include "JZNodeExpression.h"
 #include "JZNodeValue.h"
 #include "JZNodeIR.h"
+#include "JZNodeFunction.h"
 
 static const char *magic = "12345678";
 

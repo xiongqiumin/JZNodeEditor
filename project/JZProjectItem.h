@@ -15,7 +15,7 @@ class JZProjectItem
 {    
 public:
     JZProjectItem(int itemType,bool folder);
-    virtual ~JZProjectItem();
+    virtual ~JZProjectItem();       
 
     QString name();
     void setName(QString name);
@@ -34,13 +34,16 @@ public:
     JZProjectItem *getItem(QString name);     
     int indexOfItem(JZProjectItem *);   
     QList<JZProjectItem *> childs();
+    void removeChlids();
 
     virtual void saveToStream(QDataStream &s);
     virtual void loadFromStream(QDataStream &s);
 
     void sort();
     
-protected:        
+protected:
+    Q_DISABLE_COPY(JZProjectItem)
+
     JZProjectItem *m_parent;
     QList<JZProjectItem*> m_childs;
     

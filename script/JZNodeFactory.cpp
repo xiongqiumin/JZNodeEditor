@@ -1,7 +1,4 @@
 #include "JZNodeFactory.h"
-#include "JZNodeValue.h"
-#include "JZNodeExpression.h"
-#include "JZNodeEvent.h"
 
 template<class T> 
 JZNode *createFunc(){ return new T();}
@@ -42,7 +39,8 @@ void JZNodeFactory::init()
     registNode(Node_print,createFunc<JZNodePrint>);  
     registNode(Node_literal,createFunc<JZNodeLiteral>);    
     registNode(Node_param,createFunc<JZNodeParam>);
-    registNode(Node_setParam,createFunc<JZNodeSetParam>);    
+    registNode(Node_setParam,createFunc<JZNodeSetParam>);
+    registNode(Node_setParamData,createFunc<JZNodeSetParamData>);
     
     registNode(Node_function,createFunc<JZNodeFunction>);
     registNode(Node_while,createFunc<JZNodeWhile>);

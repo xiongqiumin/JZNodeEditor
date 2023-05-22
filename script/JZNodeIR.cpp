@@ -1,6 +1,11 @@
 #include "JZNodeIR.h"
 
 //JZNodeIRParam
+JZNodeIRParam::JZNodeIRParam()
+{
+    type = None;
+}
+
 bool JZNodeIRParam::isLiteral() const
 {
     return type == Literal;

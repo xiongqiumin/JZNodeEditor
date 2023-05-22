@@ -1,8 +1,12 @@
 #ifndef JZNODE_FACTORY_H_
 #define JZNODE_FACTORY_H_
 
-#include "JZNode.h"
 #include <QMap>
+#include "JZNode.h"
+#include "JZNodeValue.h"
+#include "JZNodeExpression.h"
+#include "JZNodeEvent.h"
+#include "JZNodeFunction.h"
 
 typedef JZNode *(*JZNodeCreateFunc)();
 class JZNodeFactory

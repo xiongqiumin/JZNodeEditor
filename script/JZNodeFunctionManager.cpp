@@ -92,12 +92,14 @@ void JZNodeFunctionManager::registCFunction(QString name,CFunction *func)
     for(int i = 0; i < func->args.size(); i++)
     {
         JZNodePin prop;
+        prop.setFlag(Prop_param | Prop_in);
         prop.setDataType({idToType(func->args[i])});
         define.paramIn.push_back(prop);
     }    
     if(func->result != typeid(void).name())
     {
         JZNodePin prop_out;
+        prop_out.setFlag(Prop_param | Prop_out);
         prop_out.setDataType({idToType(func->result)});
         define.paramOut.push_back(prop_out);    
     }

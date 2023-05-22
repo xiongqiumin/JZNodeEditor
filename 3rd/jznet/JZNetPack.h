@@ -25,7 +25,7 @@ public:
 	virtual void saveToStream(QDataStream &s) const = 0;
 	virtual void loadFromStream(QDataStream &s) = 0;
 
-	int seq();
+    int seq() const;
 	void setSeq(int seq);
 
 private:
@@ -33,12 +33,12 @@ private:
 };
 typedef QSharedPointer<JZNetPack> JZNetPackPtr;
 
-//NetPackVariant
-class NetPackVariant : public JZNetPack
+//JZNetPackVariant
+class JZNetPackVariant : public JZNetPack
 {
 public:
-	NetPackVariant();
-	virtual ~NetPackVariant();
+    JZNetPackVariant();
+    virtual ~JZNetPackVariant();
 		
     virtual int type() const;
 	virtual void saveToStream(QDataStream &s) const;
@@ -47,12 +47,12 @@ public:
 	QVariantMap params;	
 };
 
-//NetPackByteArray
-class NetPackByteArray : public JZNetPack
+//JZNetPackByteArray
+class JZNetPackByteArray : public JZNetPack
 {
 public:
-	NetPackByteArray();
-	virtual ~NetPackByteArray();
+    JZNetPackByteArray();
+    virtual ~JZNetPackByteArray();
 		
     virtual int type() const;
 	virtual void saveToStream(QDataStream &s) const;

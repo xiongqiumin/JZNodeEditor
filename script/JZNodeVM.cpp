@@ -20,7 +20,7 @@ JZNodeVM::~JZNodeVM()
 bool JZNodeVM::init(QString path)
 {
     if(m_debug)     
-        m_debugServer.waitAttach();
+        m_debugServer.waitForAttach();
     
     m_engine.setProgram(&m_program);    
     if(!m_program.load(path))

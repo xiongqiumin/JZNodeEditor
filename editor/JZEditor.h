@@ -2,6 +2,7 @@
 #define JZ_EDITOR_H_
 
 #include <QWidget>
+#include <QMenuBar>
 #include "JZProjectItem.h"
 
 class JZEditor : public QWidget
@@ -10,21 +11,21 @@ class JZEditor : public QWidget
 
 public:
     JZEditor();
-    ~JZEditor();
+    virtual ~JZEditor();
     
     virtual void open(JZProjectItem *item) = 0;
-    void close();
+    virtual void close() = 0;
+    virtual void save() = 0;
 
-    bool isModified();
+    virtual bool isModified() = 0;
+    virtual void updateMenuBar(QMenuBar *menubar);
 
-    void save();
-    void saveAs();
-    void load();
-
-    void undo();
-    void redo();
-    void copy();
-    void paste();
+    virtual void undo();
+    virtual void redo();
+    virtual void remove();
+    virtual void cut();
+    virtual void copy();
+    virtual void paste();
 
 protected:
 

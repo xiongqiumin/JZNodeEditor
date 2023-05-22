@@ -46,11 +46,14 @@ void JZProjectTree::setProject(JZProject *project)
 void JZProjectTree::init()
 {
     m_tree->clear();
+    if(!m_project)
+        return;
 
     QTreeWidgetItem *root = new QTreeWidgetItem();
-    root->setText(0,m_project->filename());
+    root->setText(0,m_project->name());
     m_tree->addTopLevelItem(root);
     addItem(root,m_project->root());
+    m_tree->expandAll();
 }
 
 void JZProjectTree::addItem(QTreeWidgetItem *view_item,JZProjectItem *item)

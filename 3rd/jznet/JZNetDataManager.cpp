@@ -8,6 +8,7 @@ JZNetDataManager::JZNetDataManager()
     mRecvBuffer = new char[mRecvSize];
 	packHead = 0xAA;		
 	packTail = 0x55;	
+    m_packSeq = 0;
 }
 
 JZNetDataManager::~JZNetDataManager() 
@@ -23,6 +24,11 @@ void JZNetDataManager::newSession(int sessionId, QTcpSocket *socket)
 void JZNetDataManager::endSession(int sessionId)
 {	
 	m_sessionInfo.remove(sessionId);	
+}
+
+QTcpSocket *JZNetDataManager::socket(int sessionId)
+{
+    return m_sessionInfo[sessionId].socket;
 }
 
 void JZNetDataManager::recvPack(int sessionId)
@@ -52,31 +58,28 @@ void JZNetDataManager::recvData(int sessionId, QByteArray data)
 	parsePack(sessionId);
 }
 
-QByteArray JZNetDataManager::packData(const JZNetPackPtr &pack)
+QByteArray JZNetDataManager::packData(const JZNetPack *pack)
 {	
 	QByteArray send_buffer;	
 	QDataStream s(&send_buffer,QIODevice::WriteOnly);		
 
 	int tmp = 0;
+    int seq = pack->seq();
+    int type = pack->type();
 	s.writeRawData((char*)&packHead,sizeof(packHead));
-	s.writeRawData((char*)&tmp,sizeof(int));
-	s.writeRawData((char*)&tmp,sizeof(int));
+    s.writeRawData((char*)&seq,sizeof(int));
+    s.writeRawData((char*)&type,sizeof(int));
+    s.writeRawData((char*)&tmp,sizeof(int));
 	pack->saveToStream(s);
 	s.writeRawData((char*)&packTail,sizeof(packTail));
 
-	int *ptr = (int*)(send_buffer.data() + 1);	
-	*ptr = send_buffer.size() - 8 - 2;
-
-	ptr = (int*)(send_buffer.data() + 1 + 4);	
-	*ptr = pack->type();
-
-	ptr = (int*)(send_buffer.data() + 1 + 8);	
-	*ptr = pack->seq();
+    int *ptr = (int*)(send_buffer.data() + 1 + 8);
+    *ptr = send_buffer.size() - 12 - 2;
 
 	return send_buffer;
 }
 
-bool JZNetDataManager::sendPack(int sessionId, JZNetPackPtr pack)
+bool JZNetDataManager::sendPack(int sessionId, JZNetPack *pack)
 {		
 	if(pack->seq() == -1)
 		pack->setSeq(m_packSeq++);
@@ -84,13 +87,14 @@ bool JZNetDataManager::sendPack(int sessionId, JZNetPackPtr pack)
 	QByteArray send_buffer = packData(pack);
 	QTcpSocket *socket = m_sessionInfo[sessionId].socket;
 	Q_ASSERT(socket);
-    
-    bool ret = true;
-
+        
     const char *ptr = send_buffer.data();
     int size = send_buffer.size();    
-    socket->write(ptr,size);        		
-	return ret;
+    int write_size = socket->write(ptr,size);    
+    if(write_size == size)
+        return socket->waitForBytesWritten();
+    else
+        return false;
 }
 
 JZNetPackPtr JZNetDataManager::takePack(int sessionId,int type,int param)
@@ -108,12 +112,13 @@ JZNetPackPtr JZNetDataManager::takePack(int sessionId,int type,int param)
         {
             for(int i = 0; i < pack_list.size(); i++)
             {
-                if((type == 1 && pack_list[i]->type() == param))
+                if((type == 1 && pack_list[i]->type() == param)
+                   || (type == 2 && pack_list[i]->seq() == param))
                 {
                     pack = pack_list[i];
                     pack_list.remove(i);
                     break;
-                }
+                }                
             }
         }
 	}
@@ -140,32 +145,32 @@ void JZNetDataManager::parsePack(int sessionId)
 {
 	QByteArray &buffer = m_sessionInfo[sessionId].buffer;	
 	
-    int min_pack_head = 12; //len type seq	
+    int min_pack_head = 12; //seq type len
 	int min_pack_len = 1 + min_pack_head + 1;		
 	int buffer_start = 0;
 	while (buffer.length() - buffer_start >= min_pack_len)
 	{
-		int start = buffer.indexOf(packHead, buffer_start);
-		int end = 0;
+		int start = buffer.indexOf(packHead, buffer_start);		
 		if (start < 0)
 		{			
 			buffer_start = buffer.length(); //全是无用数据，清除
 			break;
 		}
-		start += 1;
-		if (start + min_pack_head + 1 >= buffer.length())
+        start += 1;
+        if (buffer.length() < start + min_pack_head + 1)
 			break;
 		
-		int body_size = *((int*)(buffer.data() + start));
-		int pack_type = *((int*)(buffer.data() + start + 4));
-		start += 8;
-		if (buffer.length() > start + body_size + 1)
+        int pack_seq = *((int*)(buffer.data() + start));
+        int pack_type = *((int*)(buffer.data() + start + 4));
+        int body_size = *((int*)(buffer.data() + start + 8));
+        start += 12;
+        if (buffer.length() < start + body_size + 1)
 			break;
 		
 		char tail = *((int*)(buffer.data() + start + body_size));
 		if(tail != packTail)		
 		{			
-			buffer_start = start + body_size;  //结尾不对,跳过这个数据包
+            buffer_start = start + body_size + 1;  //结尾不对,跳过这个数据包
 			break;
 		}
 		
@@ -173,6 +178,7 @@ void JZNetDataManager::parsePack(int sessionId)
 		QDataStream s(&pack_buffer,QIODevice::ReadOnly);
 
 		JZNetPack *pack = JZNetPackManager::instance()->createPack(pack_type);
+        pack->setSeq(pack_seq);
 		pack->loadFromStream(s);
 		m_sessionInfo[sessionId].packList.push_back(JZNetPackPtr(pack));
 		start += body_size + 1;

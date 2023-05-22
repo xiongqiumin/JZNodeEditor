@@ -20,7 +20,7 @@ public:
 	void disconnectFromHost();
     bool isConnect();
 	
-	bool sendPack(JZNetPackPtr pack);
+    bool sendPack(JZNetPack *pack);
 	JZNetPackPtr waitPackAny(int timeout = -1);	
 	JZNetPackPtr waitPackByType(int type,int timeout = -1);
 	JZNetPackPtr waitPackBySeq(int seq,int timeout = -1);
@@ -41,9 +41,9 @@ private:
     void dispatchPack();
 
 	QTcpSocket *tcpSocket;
-	int mUser;	
+    int m_net;
     bool m_waitRecv;
-    bool mUserDisconnect;
+    bool m_userDisconnect;
 
 	JZNetDataManager m_dataManager;
 };

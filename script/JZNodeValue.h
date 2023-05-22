@@ -10,8 +10,8 @@ public:
     JZNodeLiteral();
     ~JZNodeLiteral();        
 
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
@@ -30,8 +30,8 @@ public:
     JZNodePrint();
     ~JZNodePrint();
 
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
@@ -45,8 +45,8 @@ public:
     JZNodeParam();
     ~JZNodeParam();        
 
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
     QString paramId() const;
@@ -64,8 +64,8 @@ public:
     JZNodeSetParam();
     ~JZNodeSetParam();
 
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
@@ -76,5 +76,24 @@ protected:
     QString m_param;
 };
 
+
+//JZNodeSetParamData
+class JZNodeSetParamData : public JZNode
+{
+public:
+    JZNodeSetParamData();
+    ~JZNodeSetParamData();
+
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+    QString paramId() const;
+    void setParamId(QString paramId);
+
+protected:
+    QString m_param;
+};
 
 #endif

@@ -120,7 +120,7 @@ void JZNodePanel::initFunction()
 
         JZNodeFunction node_func;
         node_func.setName(funcs[i]->name);
-        node_func.setFunction(funcs[i]->name,false);
+        node_func.setFunction(funcs[i],false);
 
         sub->setData(0, Qt::UserRole, formatNode(&node_func));
         item_func->addChild(sub);

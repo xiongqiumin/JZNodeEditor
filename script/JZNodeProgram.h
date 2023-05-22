@@ -125,6 +125,7 @@ public:
     FunctionDefine *function(QString name);
     QMap<QString,QVariant> variables();
     QList<JZEventHandle*> matchEvent(JZEvent *e) const;       
+    QList<JZEventHandle*> eventList() const;
     QString dump();            
     
 protected:

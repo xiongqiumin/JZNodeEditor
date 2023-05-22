@@ -14,8 +14,14 @@ public:
     JZNodeDebugServer();
     ~JZNodeDebugServer();
 
+    bool startServer(int port);
+    void stopServer();
+
     void setEngine(JZNodeEngine *eng);
-    bool waitAttach();
+    bool waitForAttach();
+
+signals:
+    void sigStop();
 
 protected slots:
     void onNewConnect(int netId);

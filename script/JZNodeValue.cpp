@@ -115,7 +115,7 @@ JZNodeSetParam::JZNodeSetParam()
 
     addFlowIn();    
     addFlowOut();
-    addParamIn("value");
+    addParamIn("value",Prop_edit);
     addParamOut("value");
 }
 
@@ -150,5 +150,45 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
     int id = c->paramId(m_id,paramIn(0));
     c->addSetVariable(irRef(m_param),irId(id));
     c->addJumpNode(flowOut());
+    return true;
+}
+
+//JZNodeSetParamData
+JZNodeSetParamData::JZNodeSetParamData()
+{
+    m_type = Node_setParamData;
+    addParamIn("value");
+}
+
+JZNodeSetParamData::~JZNodeSetParamData()
+{
+}
+
+QString JZNodeSetParamData::paramId() const
+{
+    return m_param;
+}
+
+void JZNodeSetParamData::setParamId(QString paramId)
+{
+    m_param = paramId;
+}
+
+void JZNodeSetParamData::saveToStream(QDataStream &s) const
+{
+    JZNode::saveToStream(s);
+}
+
+void JZNodeSetParamData::loadFromStream(QDataStream &s)
+{
+    JZNode::loadFromStream(s);
+}
+
+bool JZNodeSetParamData::compiler(JZNodeCompiler *c,QString &error)
+{
+    c->addDataInput(m_id);
+
+    int id = c->paramId(m_id,paramIn(0));
+    c->addSetVariable(irRef(m_param),irId(id));
     return true;
 }

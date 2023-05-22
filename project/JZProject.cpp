@@ -6,13 +6,27 @@
 
 // JZProject
 JZProject::JZProject()    
+{    
+    init();
+}
+
+JZProject::~JZProject()
 {
-    JZScriptFile *ui = new JZScriptFile(ProjectItem_ui,true); 
-    JZScriptFile *data = new JZScriptFile(ProjectItem_param,true);        
-    JZScriptFile *script_flow = new JZScriptFile(ProjectItem_scriptFlow,true);        
+}
+
+void JZProject::init()
+{
+    m_items.clear();
+    m_root.removeChlids();
+    m_filepath.clear();
+    m_variables.clear();
+
+    JZScriptFile *ui = new JZScriptFile(ProjectItem_ui,true);
+    JZScriptFile *data = new JZScriptFile(ProjectItem_param,true);
+    JZScriptFile *script_flow = new JZScriptFile(ProjectItem_scriptFlow,true);
     JZScriptFile *script_param = new JZScriptFile(ProjectItem_scriptParam,true);
     data->setName("变量定义");
-    ui->setName("用户界面");    
+    ui->setName("用户界面");
     script_param->setName("数据联动");
     script_flow->setName("程序流程");
     addItem("./",ui);
@@ -21,7 +35,7 @@ JZProject::JZProject()
     addItem("./",script_flow);
 
     JZScriptFile *data_page = new JZScriptFile(ProjectItem_param,false);
-    JZScriptFile *ui_page = new JZScriptFile(ProjectItem_ui,false);    
+    JZScriptFile *ui_page = new JZScriptFile(ProjectItem_ui,false);
     JZScriptFile *flow_page = new JZScriptFile(ProjectItem_scriptFlow,false);
     JZScriptFile *param_page = new JZScriptFile(ProjectItem_scriptParam,false);
     data_page->setName("变量");
@@ -31,12 +45,8 @@ JZProject::JZProject()
 
     addItem("./变量定义",data_page);
     addItem("./用户界面",ui_page);
-    addItem("./数据联动",param_page);    
+    addItem("./数据联动",param_page);
     addItem("./程序流程",flow_page);
-}
-
-JZProject::~JZProject()
-{
 }
 
 bool JZProject::open(QString filepath)
@@ -49,17 +59,19 @@ bool JZProject::open(QString filepath)
     for(int i = 0; i < m_items.size(); i++)
         m_items[i]->loadFromStream(s);
     file.close();    
+
     return true;
 }
 
 bool JZProject::save()
-{
+{    
     return saveAs(m_filepath);    
 }
 
 bool JZProject::saveAs(QString filepath)
 {   
-    m_filepath = filepath;
+    m_filepath = filepath;    
+
     QFile file(m_filepath);
     if(!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
@@ -74,16 +86,13 @@ bool JZProject::saveAs(QString filepath)
     return true;
 }
 
-QString JZProject::filename()
+QString JZProject::name()
 {
+    if(m_filepath.isEmpty())
+        return "untitled";
+
     QFileInfo info(m_filepath);
     return info.baseName();
-}
-
-void JZProject::clear()
-{
-    m_root = JZProjectRoot();
-    m_items.clear();
 }
 
 JZProjectItem *JZProject::root()
@@ -192,4 +201,14 @@ QVariant JZProject::getVariable(QString name)
 QStringList JZProject::variableList()
 {
     return m_variables.keys();
+}
+
+void JZProject::saveToStream(QDataStream &s)
+{
+
+}
+
+void JZProject::loadFromStream(QDataStream &s)
+{
+    makeTree();
 }

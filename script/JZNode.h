@@ -11,6 +11,7 @@ enum
     Node_none,    
     Node_param,
     Node_setParam,
+    Node_setParamData,
     Node_literal,
     Node_function,        
     Node_event,
@@ -103,23 +104,28 @@ public:
               
     int addParamIn(QString name,int extFlag = 0);    
     int paramIn(int index);
-    int paramInCount();
+    JZNodeGemo paramInGemo(int index);
+    int paramInCount();    
     QVector<int> paramInList();
     int addParamOut(QString name,int extFlag = 0);
     int paramOut(int index);
+    JZNodeGemo paramOutGemo(int index);
     int paramOutCount();
     QVector<int> paramOutList();
     
     int addFlowIn();    
     int flowIn();
+    JZNodeGemo flowInGemo();
     int addFlowOut(QString name = QString());
     int flowOut(int index = 0);
+    JZNodeGemo flowOutGemo(int index);
     QVector<int> flowOutList();
-    int flowOutCount();
+    int flowOutCount();    
 
     int addSubFlowOut(QString name);
     int addSubFlow(const JZNodePin &prop);
     int subFlowOut(int index);
+    JZNodeGemo subFlowOutGemo(int index);
     QVector<int> subFlowList();
     int subFlowCount();
     
@@ -195,8 +201,10 @@ class JZNodeSequence : public JZNode
 public:
     JZNodeSequence();
 
-    int addOutSubFlow();
-    void removeOutSubFlow(int id);
+    int addSequeue();
+    void removeSequeue(int id);
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
     int m_flowIn;    
@@ -272,22 +280,6 @@ protected:
     int m_cond;    
     int m_flowIn; 
     int m_flowOut; 
-};
-
-class JZNodeFunction : public JZNode
-{
-public:
-    JZNodeFunction();
-
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
-
-    void setFunction(QString funcName,bool flowFunction);
-    QString function() const;
-
-    QString functionName;
 };
 
 #endif

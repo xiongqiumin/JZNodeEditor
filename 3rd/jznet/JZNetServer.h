@@ -23,9 +23,9 @@ public:
 
     void closeConnect(int netId);	
 
-	bool sendPack(int netId,JZNetPackPtr pack);	
-	bool sendPackExclude(int netId, JZNetPackPtr pack);
-	bool sendPackToAll(JZNetPackPtr pack);
+    bool sendPack(int netId,JZNetPack *pack);
+    bool sendPackExclude(int netId, JZNetPack *pack);
+    bool sendPackToAll(JZNetPack *pack);
 
 signals:		
 	void sigNewConnect(int netId);	

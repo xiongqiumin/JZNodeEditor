@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <cmath>
 #include <QApplication>
+#include <QClipboard>
+#include <QMimeData>
 #include "JZNodeFactory.h"
 #include "JZNodeValue.h"
 #include "JZNodeCompiler.h"
@@ -118,9 +120,44 @@ bool JZNodeViewCommand::mergeWith(const QUndoCommand *command)
 }
 
 //CopyData
-bool JZNodeView::CopyData::isEmpty()
+struct CopyData
+{
+    CopyData();
+    bool isEmpty();
+
+    QList<QByteArray> nodes;
+    QList<QPointF> nodesPos;
+    QList<JZNodeConnect> lines;
+};
+
+CopyData::CopyData()
+{
+
+}
+
+bool CopyData::isEmpty()
 {
     return nodes.isEmpty();
+}
+
+QByteArray pack(const CopyData &param)
+{
+    QByteArray buffer;
+    QDataStream s(&buffer,QIODevice::WriteOnly);
+    s << param.nodes;
+    s << param.nodesPos;
+    s << param.lines;  
+    return buffer;
+}
+
+CopyData unpack(const QByteArray &buffer)
+{
+    CopyData param;
+    QDataStream s(buffer);
+    s >> param.nodes;
+    s >> param.nodesPos;
+    s >> param.lines;  
+    return param;
 }
 
 //JZNodeView
@@ -151,11 +188,6 @@ JZNodeView::JZNodeView(QWidget *widget)
     auto cutPaste = new QShortcut(QKeySequence("Ctrl+v"),this);
     auto cutRedo = new QShortcut(QKeySequence("Ctrl+y"),this);
     auto cutUndo = new QShortcut(QKeySequence("Ctrl+z"),this);
-
-    connect(cutCopy,&QShortcut::activated,this,&JZNodeView::onCopy);
-    connect(cutPaste,&QShortcut::activated,this,&JZNodeView::onPaste);
-    connect(cutRedo,&QShortcut::activated,this,&JZNodeView::onRedo);
-    connect(cutUndo,&QShortcut::activated,this,&JZNodeView::onUndo);
 }
 
 JZNodeView::~JZNodeView()
@@ -474,26 +506,72 @@ void JZNodeView::undo()
     m_commandStack.undo();
 }
 
-void JZNodeView::copy()
+void JZNodeView::remove()
 {
 
+}
+
+void JZNodeView::cut()
+{
+
+}
+
+void JZNodeView::copy()
+{
+    auto items = m_scene->selectedItems();
+    copyItem(items);
 }
 
 void JZNodeView::paste()
 {
+    const QClipboard *clipboard = QApplication::clipboard();
+    const QMimeData *mimeData = clipboard->mimeData();
+    if(!mimeData->hasFormat("jznode_copy_data"))
+        return;
 
-}
+    CopyData copyData = unpack(mimeData->data("jznode_copy_data"));    
+    m_commandStack.beginMacro("paste");
+    QMap<int,int> nodeIdMap;
+    for(int i = 0; i < copyData.nodesPos.size(); i++)
+    {
+        JZNode *node = parseNode(copyData.nodes[i]);
+        int old_id = node->id();
+        node->setId(-1);
 
-int JZNodeView::paramId(int nodeId,int propId)
-{
-    return 0;//return m_file->paramId(nodeId,propId);
+        JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateNode);
+        cmd->itemId << -1;
+        cmd->newValue = formatNode(node);
+        cmd->newPos = copyData.nodesPos[i];
+        m_commandStack.push(cmd);
+
+        nodeIdMap[old_id] = cmd->itemId;
+    }
+
+    //保留原有节点间线段关系
+    for(int i = 0; i < copyData.lines.size(); i++)
+    {
+        JZNodeConnect line = copyData.lines[i];
+        line.id = -1;
+        line.from.nodeId = nodeIdMap[line.from.nodeId];
+        line.to.nodeId = nodeIdMap[line.to.nodeId];
+
+        JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateLine);
+        cmd->itemId = -1;
+        cmd->newValue = formatLine(line);
+        m_commandStack.push(cmd);
+    }
+    m_commandStack.endMacro();
 }
 
 void JZNodeView::updateNodeLayout()
 {
-/*
+    JZNodeCompiler compiler;
+    JZNodeScript result;
+    if(!compiler.build(m_file,&result))
+        return;
+
     int y = 0;
-    auto graph_list = compilper.graphs();
+    auto graph_list = result.graphs;
     for(int i = 0; i < graph_list.size(); i++)
     {
         auto graph = graph_list[i];
@@ -550,7 +628,6 @@ void JZNodeView::updateNodeLayout()
     }
     m_scene->setSceneRect(m_scene->itemsBoundingRect());
     fitInView(rect());
-*/        
 }
 
 void JZNodeView::removeItem(QGraphicsItem *item)
@@ -599,12 +676,13 @@ bool JZNodeView::canConnect(JZNodeGemo from,JZNodeGemo to)
     auto lines = m_file->getConnectId(to.nodeId, to.propId, Prop_in);
     if(lines.size() != 0)
         return false;
-
+/*
     QList<int> form_type = node_from->propType(from.nodeId);
     QList<int> in_type = node_to->propType(to.propId);
     bool ok = JZNodeType::canConvert(form_type,in_type);
     if(!ok)
         return false;
+*/
 
     return true;
 }
@@ -619,6 +697,8 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QAction *actDel = nullptr;
     if (item)
     {
+        m_scene->clearSelection();
+        item->setSelected(true);
         if (item->type() == Item_node)
         {
             actCpy = menu.addAction("复制节点");
@@ -767,7 +847,7 @@ void JZNodeView::onPropUpdate(int id)
 
 void JZNodeView::copyItem(QList<QGraphicsItem*> items)
 {
-    m_copyData = CopyData();
+    CopyData copydata;
     for(int i = 0; i < items.size(); i++)
     {
         auto item = items[i];
@@ -775,68 +855,19 @@ void JZNodeView::copyItem(QList<QGraphicsItem*> items)
         {
             JZNodeGraphItem *node = (JZNodeGraphItem*)item;
             QByteArray data = formatNode(node->node());
-            m_copyData.nodes.append(data);
-            m_copyData.nodesPos.append(item->pos());
+            copydata.nodes.append(data);
+            copydata.nodesPos.append(item->pos());
         }
         else if(item->type() == Item_line)
         {
             JZNodeLineItem *line = (JZNodeLineItem*)item;
             JZNodeConnect connect = *m_file->getConnect(line->id());
-            m_copyData.lines << connect;
+            copydata.lines << connect;
         }
     }
-}
-
-void JZNodeView::onCopy()
-{
-    auto items = m_scene->selectedItems();
-    copyItem(items);
-}
-
-void JZNodeView::onPaste()
-{
-    if(m_copyData.nodes.size() == 0)
-        return;
-
-    m_commandStack.beginMacro("paste");
-    QMap<int,int> nodeIdMap;
-    for(int i = 0; i < m_copyData.nodesPos.size(); i++)
-    {
-        JZNode *node = parseNode(m_copyData.nodes[i]);
-        int old_id = node->id();
-        node->setId(-1);
-
-        JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateNode);
-        cmd->itemId << -1;
-        cmd->newValue = formatNode(node);
-        cmd->newPos = m_copyData.nodesPos[i];
-        m_commandStack.push(cmd);
-
-        nodeIdMap[old_id] = cmd->itemId;
-    }
-
-    //保留原有节点间线段关系
-    for(int i = 0; i < m_copyData.lines.size(); i++)
-    {
-        JZNodeConnect line = m_copyData.lines[i];
-        line.id = -1;
-        line.from.nodeId = nodeIdMap[line.from.nodeId];
-        line.to.nodeId = nodeIdMap[line.to.nodeId];
-
-        JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateLine);
-        cmd->itemId = -1;
-        cmd->newValue = formatLine(line);
-        m_commandStack.push(cmd);
-    }
-    m_commandStack.endMacro();
-}
-
-void JZNodeView::onRedo()
-{
-    redo();
-}
-
-void JZNodeView::onUndo()
-{
-    undo();
+    
+    QMimeData *mimeData = new QMimeData();
+    mimeData->setData("jznode_copy_data",pack(copydata));
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setMimeData(mimeData);
 }

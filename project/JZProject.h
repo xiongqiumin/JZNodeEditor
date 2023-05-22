@@ -11,10 +11,11 @@ public:
     JZProject();
     ~JZProject();
 
+    void init();
     bool open(QString filepath);
     bool save();    
     bool saveAs(QString filepath);
-    QString filename();
+    QString name();
 
     void addVariable(QString name,QVariant value);
     void removeVariable(QString name);
@@ -30,11 +31,12 @@ public:
     JZProjectItem *root();
 
 protected:
+    Q_DISABLE_COPY(JZProject)
+
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
     void sort();
-    void makeTree();    
-    void clear();
+    void makeTree();        
         
     QList<JZProjectItemPtr> m_items;
     JZProjectRoot m_root;

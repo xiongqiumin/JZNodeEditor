@@ -14,6 +14,7 @@ public:
     ~JZProjectTree();
 
     void setProject(JZProject *project);
+    void init();
 
 protected slots:
     void onContextMenu(QPoint pos);
@@ -27,8 +28,7 @@ protected slots:
 signals:
     void sigFileOpened(QString file);
 
-protected:
-    void init();
+protected:    
     void addItem(QTreeWidgetItem *view_item,JZProjectItem *item);
     JZProjectItem *getItem(QTreeWidgetItem *view_item);
     void cancelEdit();

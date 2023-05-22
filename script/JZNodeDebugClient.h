@@ -4,6 +4,7 @@
 #include <QObject>
 #include "JZNetClient.h"
 #include "JZNodeDebugPacket.h"
+#include "JZNodeEngine.h"
 
 class JZNodeDebugClient : public QObject
 {
@@ -13,16 +14,24 @@ public:
     JZNodeDebugClient();
     ~JZNodeDebugClient();
 
-    void addBreakPoint(QString file,int nodeId);    
-    void removeBreakPoint(QString file,int nodeId);    
+    bool connectToServer(QString ip,int port);
+    void disconnectFromServer();
+
+    JZNodeRuntimeInfo runtimeInfo();
+    int addBreakPoint(QString file,int nodeId);
+    void removeBreakPoint(int id);    
     void clearBreakPoint();    
+    QVariant getVariable(QString name);
+    void setVariable(QString name,QVariant value);
     void pause();       
-    void resume();       
+    void resume();
+    void stop();
     void stepIn();
     void stepOver();
-    void stepOut();
+    void stepOut();    
 
 signals:
+    void sigNetError();
     void sigDisConnect();   
     void sigBreakTrigger(); 
 
@@ -32,7 +41,7 @@ protected slots:
 	void onNetPackRecv(JZNetPackPtr ptr);    
 
 protected:    
-    bool sendCommand(int command,QVariantMap &params,QVariantMap &result);
+    bool sendCommand(int command,QVariantList &params,QVariantList &result);
 
     JZNetClient m_client;
 };

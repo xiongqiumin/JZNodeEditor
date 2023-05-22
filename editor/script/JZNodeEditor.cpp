@@ -5,17 +5,7 @@
 
 JZNodeEditor::JZNodeEditor()
 {
-    init();
-    
-    auto cutF5 = new QShortcut(QKeySequence("F5"),this);
-    auto cutF9 = new QShortcut(QKeySequence("F9"),this);
-    auto cutF10 = new QShortcut(QKeySequence("F10"),this);
-    auto cutF11 = new QShortcut(QKeySequence("F11"),this);
-
-    connect(cutF5,&QShortcut::activated,this,&JZNodeEditor::onRun);
-    connect(cutF9,&QShortcut::activated,this,&JZNodeEditor::onBreakPoint);
-    connect(cutF10,&QShortcut::activated,this,&JZNodeEditor::onStepOver);
-    connect(cutF11,&QShortcut::activated,this,&JZNodeEditor::onStepIn);
+    init();       
 }
 
 JZNodeEditor::~JZNodeEditor()
@@ -43,34 +33,70 @@ void JZNodeEditor::init()
     splitter->setStretchFactor(0,1);
     splitter->setStretchFactor(1,3);
     splitter->setStretchFactor(2,1);
+    splitter->setSizes({100,300,100});
     l->addWidget(splitter);
     
-    m_nodeProp->setMaximumWidth(200);
+    //m_nodeProp->setMaximumWidth(200);
     m_view->setPropertyEditor(m_nodeProp);
 }
 
 void JZNodeEditor::open(JZProjectItem *item)
 {
-    JZScriptFile *file = dynamic_cast<JZScriptFile*>(item);
+    JZScriptFile* file = dynamic_cast<JZScriptFile*>(item);
     m_view->setFile(file);
 }
 
-void JZNodeEditor::onRun()
+void JZNodeEditor::close()
 {
-        
+
 }
 
-void JZNodeEditor::onBreakPoint()
+void JZNodeEditor::save()
 {
-    
+
 }
 
-void JZNodeEditor::onStepOver()
+void JZNodeEditor::updateMenuBar(QMenuBar *menubar)
 {
-    
+
 }
 
-void JZNodeEditor::onStepIn()
+bool JZNodeEditor::isModified()
 {
+    return true;
+}
 
+void JZNodeEditor::undo()
+{
+    m_view->undo();
+}
+
+void JZNodeEditor::redo()
+{
+    m_view->redo();
+}
+
+void JZNodeEditor::remove()
+{
+    m_view->remove();
+}
+
+void JZNodeEditor::cut()
+{
+    m_view->cut();
+}
+
+void JZNodeEditor::copy()
+{
+    m_view->copy();
+}
+
+void JZNodeEditor::paste()
+{
+    m_view->paste();
+}
+
+void JZNodeEditor::updateNodeLayout()
+{
+    m_view->updateNodeLayout();
 }

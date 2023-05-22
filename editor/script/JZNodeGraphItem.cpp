@@ -11,78 +11,18 @@
 
 DispWidget::DispWidget()
 {
-    QFormLayout *layout = new QFormLayout();
-    layout->setContentsMargins(0, 0, 0, 0);
-    this->setLayout(layout);
-    this->setMaximumWidth(90);       
 
-    m_item = nullptr;
 }
 
 DispWidget::~DispWidget()
 {
 }
 
-void DispWidget::setItem(JZNodeGraphItem *item)
-{
-    m_item = item;
-}
-
-JZNodeGraphItem *DispWidget::item()
-{
-    return m_item;
-}
-
-void DispWidget::clear()
-{
-    QFormLayout *l = (QFormLayout *)layout();
-    if(l){
-        delete l;
-    }
-
-    l = new QFormLayout();
-    l->setContentsMargins(0, 0, 0, 0);
-    this->setLayout(l);
-    m_widgets.clear();
-}
-
-void DispWidget::addVariable(const JZNodePin &prop)
-{
-    QFormLayout *l = (QFormLayout *)layout();
-    QLineEdit *line = new QLineEdit();
-    l->addRow(new QLabel(prop.name()), line);
-    connect(line, &QLineEdit::editingFinished, this, &DispWidget::onValueChanged);
-
-    int param_id = m_item->editor()->paramId(m_item->id(),prop.id());
-    m_widgets[param_id] = line;
-
-    update();
-}
-
-QVariant DispWidget::getVariable(int id)
-{
-    if(!m_widgets.contains(id))
-        return QVariant();
-
-    auto widget = m_widgets[id];
-    return ((QLineEdit *)widget)->text();
-}
-
-void DispWidget::setVariable(int id, QVariant value)
-{
-    if(!m_widgets.contains(id))
-        return;
-
-    auto widget = m_widgets[id];
-    ((QLineEdit *)widget)->setText(value.toString());
-}
-
 void DispWidget::onValueChanged()
 {
-    QLineEdit *widget = (QLineEdit *)sender();
-    int id = m_widgets.key(widget);
-    QVariant value = widget->text();
-    sigValueChanged(id, value);
+    QLineEdit *widget = (QLineEdit *)sender();    
+    QVariant value;
+    sigValueChanged(0, value);
 }
 
 // JZNodeGraphItem
@@ -97,10 +37,6 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);    
 
     m_proxy = new QGraphicsProxyWidget(this);
-    m_dispWidget = new DispWidget();
-    m_dispWidget->setItem(this);
-    m_proxy->setWidget(m_dispWidget);
-    m_proxy->setVisible(false);
 }
 
 JZNodeGraphItem::~JZNodeGraphItem()
@@ -108,8 +44,7 @@ JZNodeGraphItem::~JZNodeGraphItem()
 }
 
 void JZNodeGraphItem::setValue(int prop,QVariant value)
-{
-    m_dispWidget->setVariable(prop,value);
+{    
     update();
 }
 
@@ -123,10 +58,10 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
 {
     QRectF rc = boundingRect();
     QRectF title_rc = QRectF(rc.left(), rc.top(), rc.width(), 20);
-    painter->fillRect(rc, QColor(20,20,20));
+    painter->fillRect(rc, QColor(192,192,192));
 
-    QString title = m_node->name() + "(" + QString::number(m_node->id()) + ")";
-    painter->fillRect(title_rc, QColor(192,192,192));
+    QString title = m_node->name();
+    painter->fillRect(title_rc, QColor(220,220,220));
     painter->drawText(title_rc, title, QTextOption(Qt::AlignVCenter | Qt::AlignHCenter));
 
     auto in_list = m_node->propList();
@@ -159,11 +94,6 @@ JZNodePin *JZNodeGraphItem::propAt(QPointF pos)
 QRectF JZNodeGraphItem::propRect(int prop)
 {
     return m_propRects[prop];
-}
-
-DispWidget *JZNodeGraphItem::widget()
-{
-    return m_dispWidget;
 }
 
 void JZNodeGraphItem::updateNode()

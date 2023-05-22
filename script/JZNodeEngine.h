@@ -10,6 +10,13 @@
 #include "JZNodeProgram.h"
 #include "JZNodeFunctionManager.h"
 
+enum{
+    Status_none,
+    Status_running,
+    Status_pause,
+    Status_stop,
+};
+
 class RunnerEnv
 {
 public:
@@ -54,6 +61,7 @@ public:
     JZNodeRuntimeInfo();
     
     enum{
+        None,
         Running,
         Paused,
     };
@@ -100,7 +108,7 @@ public:
 
     JZNodeRuntimeInfo runtimeInfo();
 
-    void addBreakPoint(QString filepath,int nodeId);
+    int addBreakPoint(QString filepath,int nodeId);
     void removeBreakPoint(int id);
     void clearBreakPoint();    
     void pause();
@@ -120,12 +128,6 @@ public:
     bool call(const FunctionDefine *func,QVariantList &in,QVariantList &out);
 
 protected:
-    enum{
-        Status_none,
-        Status_running,
-        Status_pause,
-        Status_stop,
-    };
     void notify(int id, const QVariant &data);       
     bool run();     
 
@@ -140,6 +142,7 @@ protected:
     
     QVariant getParam(const JZNodeIRParam &param);
     void setParam(const JZNodeIRParam &param,const QVariant &value);
+    int nodeIdByPc(int pc);
 
     int m_pc;            
     JZNodeProgram *m_program;    
@@ -147,14 +150,13 @@ protected:
     QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
-    BreakPoint m_breakStep;
-    int m_breadPointId;
+    BreakPoint m_breakStep;    
+    int m_breaknodeId;      // 断点中断位置的nodeid
 
     Stack m_stack;
     QMap<QString,QVariant> m_global;            
     QMap<int,QVariant> m_regs;
-    QVariantList m_outList;    
-    int m_nodeId;    
+    QVariantList m_outList;            
     int m_statusCommand;
     int m_status;     
     QMutex m_mutex;    

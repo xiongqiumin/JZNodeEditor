@@ -104,6 +104,11 @@ QList<JZProjectItem *> JZProjectItem::childs()
     return m_childs;
 }
 
+void JZProjectItem::removeChlids()
+{
+    m_childs.clear();
+}
+
 int JZProjectItem::indexOfItem(JZProjectItem *item)
 {
     return m_childs.indexOf(item);

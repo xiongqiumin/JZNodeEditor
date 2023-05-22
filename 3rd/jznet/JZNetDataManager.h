@@ -18,7 +18,7 @@ public:
 	void newSession(int sessionId, QTcpSocket*);
 	void endSession(int sessionId);
 	
-	bool sendPack(int sessionId, JZNetPackPtr pack);
+    bool sendPack(int sessionId, JZNetPack *pack);
 	void recvPack(int sessionId);		
 	void recvData(int sessionId, QByteArray data);
 
@@ -27,8 +27,10 @@ public:
 	JZNetPackPtr takePackByType(int sessionId, int type);
 	JZNetPackPtr takePackBySeq(int sessionId, int seq);
 
+    QTcpSocket *socket(int sessionId);
+
 private:		
-	QByteArray packData(const JZNetPackPtr &pack);
+    QByteArray packData(const JZNetPack *pack);
 	JZNetPackPtr takePack(int sessionId,int type,int param);	
 
 	struct SessionInfo
