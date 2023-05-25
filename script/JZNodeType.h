@@ -27,6 +27,7 @@ public:
     static int calcExprType(int type1,int type2);
     static bool canConvert(int type1,int type2);
     static bool canConvert(QList<int> type1,QList<int> type2);
+    static bool match(const QVariant &v,QString type_id);
 };
 
 #endif

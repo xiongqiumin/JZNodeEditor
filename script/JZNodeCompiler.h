@@ -41,6 +41,7 @@ public:
     int addContinue();
     int addBreak();
     int addReturn();
+    void addCall(JZNodeIRParam function,QList<JZNodeIRParam> paramIn,QList<JZNodeIRParam> paramOut);
     void setBreakContinue(QList<int> breakPc,QList<int> continuePC);    
     void replaceStatement(int pc,JZNodeIRPtr ir);
 

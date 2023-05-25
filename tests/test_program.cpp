@@ -34,18 +34,25 @@ public:
         }
     }
 
-    bool run(bool async = false)
-    {        
+    bool init()
+    {
         JZNodeBuilder builder;
         if(!builder.build(&project,&program))
         {
             qDebug().noquote() << "build failed: " << builder.error();
             return false;
         }
-        
-        qDebug().noquote() << program.dump();                
-        engine.setProgram(&program);         
-        engine.init();    
+
+        qDebug().noquote() << program.dump();
+        engine.setProgram(&program);
+        engine.init();
+        return true;
+    }
+
+    bool run(bool async = false)
+    {        
+        if(!init())
+            return false;
 
         if(async)
         {
@@ -304,7 +311,62 @@ void testFor()
 
 void testForEach()
 {
+    /*
+        for(int i = 0; i < list.size(); i++)
+        {
+            sum = sum + i;
+        }
+    */
+    ScriptTest test;
+    JZScriptFile *script = test.scriptFlow;
+    JZProject *project = &test.project;
+    JZNodeEngine *engine = &test.engine;
 
+    JZNodeEvent *node_start = new JZNodeEvent();
+    JZNodeForEach *node_for = new JZNodeForEach();
+    JZNodeParam *node_param = new JZNodeParam();
+    JZNodeParam *node_sum = new JZNodeParam();
+    JZNodeAdd *node_add = new JZNodeAdd();
+    JZNodeSetParam *node_set = new JZNodeSetParam();
+    node_param->setParamId("a",true);
+    node_sum->setParamId("sum",true);
+    node_set->setParamId("sum",true);
+
+    int start_id = script->addNode(JZNodePtr(node_start));
+    int for_id = script->addNode(JZNodePtr(node_for));
+    script->addNode(JZNodePtr(node_param));
+    script->addNode(JZNodePtr(node_sum));
+    script->addNode(JZNodePtr(node_add));
+    script->addNode(JZNodePtr(node_set));
+
+    //start
+    node_start->setEventType(Event_programStart);
+    script->addConnect(JZNodeGemo(start_id,node_start->flowOut()),JZNodeGemo(for_id,node_for->flowIn()));
+
+    script->addConnect(node_param->paramOutGemo(0),node_for->paramInGemo(0));
+
+    // sum = sum + i
+    script->addConnect(node_sum->paramOutGemo(0),node_add->paramInGemo(0));
+    script->addConnect(node_for->paramOutGemo(0),node_add->paramInGemo(1));
+
+    script->addConnect(node_add->paramOutGemo(0),node_set->paramInGemo(0));
+    script->addConnect(node_for->subFlowOutGemo(0),node_set->flowInGemo());
+
+    project->addVariable("sum",0);
+    project->addClassVariable("a","list");
+    if(!test.init())
+        return;
+
+    QVariantList out;
+    QVariant list = engine->getVariable("a");
+    qDebug() << list;
+    for(int i = 0; i < 10; i++)
+        engine->call("list.push_back",{list,i+1},out);
+
+    test.call();
+
+    QVariant sum = engine->getVariable("sum");
+    qDebug() << sum;
 }
 
 void testWhileLoop()
@@ -673,15 +735,15 @@ void testCClass()
 
 void testBuild()
 {
-    //testParamBinding();
-    //testWhileLoop();
-    //testFor();
-    //testForEach();
-    //testSequeue();
-    //testExpr();
-    //testFunction();
-    //testClass();
+    testParamBinding();
+    testWhileLoop();
+    testFor();
+    testClass();
     testCClass();
+    testSequeue();
+    testExpr();
+    testFunction();
+    testForEach();
     //testBreakPoint();
     //testDebugServer();
 }

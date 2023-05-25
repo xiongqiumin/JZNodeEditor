@@ -145,14 +145,16 @@ protected:
     int indexOfBreakPoint(int id);   
     void waitStatus(int status);
     
+    QString variableToString(const QVariant &v);
     QVariant getParam(const JZNodeIRParam &param);
-    void setParam(const JZNodeIRParam &param,const QVariant &value);    
+    void setParam(const JZNodeIRParam &param,const QVariant &value);        
+
     bool isObject(const QVariant &v);
     JZNodeObject *getObject(QString name);
     JZNodeObject *getObject(QStringList list);
     QVariant getObjectProperty(QString name);
     void setObjectProperty(QString name, const QVariant &value);
-    int nodeIdByPc(int pc);    
+    int nodeIdByPc(int pc);        
 
     int m_pc;            
     JZNodeProgram *m_program;    

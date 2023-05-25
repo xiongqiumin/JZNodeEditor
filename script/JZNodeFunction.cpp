@@ -77,7 +77,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     }
 
     JZNodeIRCall *call = new JZNodeIRCall();
-    call->function = m_functionName;
+    call->function = irLiteral(m_functionName);
     c->addStatement(JZNodeIRPtr(call));
 
     for(int i = 0; i < out_list.size(); i++)

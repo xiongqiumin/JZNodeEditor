@@ -504,6 +504,19 @@ int JZNodeCompiler::addReturn()
     return addStatement(JZNodeIRPtr(ret));
 }
 
+void JZNodeCompiler::addCall(JZNodeIRParam function,QList<JZNodeIRParam> paramIn,QList<JZNodeIRParam> paramOut)
+{
+    for(int i = 0; i < paramIn.size(); i++)
+        addSetVariable(irId(Reg_Call+i),paramIn[i]);
+
+    JZNodeIRCall *call = new JZNodeIRCall();
+    call->function = function;
+    addStatement(JZNodeIRPtr(call));
+
+    for(int i = 0; i < paramOut.size(); i++)
+        addSetVariable(paramOut[i],irId(Reg_Call+i));
+}
+
 int JZNodeCompiler::allocStack()
 {
     Q_ASSERT(m_stackId < Reg_Start - 1);

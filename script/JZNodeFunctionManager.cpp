@@ -33,7 +33,7 @@ int JZNodeFunctionManager::idToType(QString id)
 }
 
 void JZNodeFunctionManager::init()
-{    
+{
     registCFunction("exp",jzbind::createFuncion((double (*)(double))(exp)));
     registCFunction("log",jzbind::createFuncion((double (*)(double))(log)));
     registCFunction("log10",jzbind::createFuncion((double (*)(double))(log10)));

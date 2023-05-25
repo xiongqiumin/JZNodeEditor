@@ -375,7 +375,7 @@ QString JZNodeProgram::dump()
                 case OP_call:
                 {
                     JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
-                    line += "CALL " + ir_call->function;
+                    line += "CALL " + paramName(ir_call->function);
                     break;
                 }
                 case OP_return:

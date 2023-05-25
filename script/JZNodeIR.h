@@ -144,7 +144,7 @@ public:
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);   
 
-    QString function;
+    JZNodeIRParam function;
     QList<JZNodeIRParam> paramIn;
     QList<JZNodeIRParam> paramOut;
 };

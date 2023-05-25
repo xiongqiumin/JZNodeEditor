@@ -50,6 +50,9 @@ T getValue(QVariant v,std::false_type)
     }
 }
 
+template<>
+QVariant getValue<QVariant>(QVariant v,std::false_type);
+
 template<class T>
 remove_cvr_t<T> getValue(QVariant v)
 {
@@ -70,6 +73,9 @@ QVariant getReturn(T value)
         return value;
     }
 }
+
+template<>
+QVariant getReturn(QVariant value);
 
 template <typename F> struct strip_function_object {
     // If you are encountering an
@@ -98,7 +104,9 @@ public:
     CFunctionImpl(Func f)
         :func(f)
     {
-
+    }
+    ~CFunctionImpl()
+    {
     }
 
     virtual void call(const QVariantList &in,QVariantList &out)
@@ -139,7 +147,7 @@ void getFunctionParam(QStringList &)
 template <class type,typename T,typename... Args>
 void getFunctionParam(QStringList &list)
 {
-    list.push_back(typeid(T).name());
+    list.push_back(typeid(typename std::remove_pointer<T>::type).name());
     if((sizeof ... (Args)) > 0 )
         getFunctionParam<type,Args...>(list);
 }

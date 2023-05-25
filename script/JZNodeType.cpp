@@ -1,5 +1,6 @@
 #include "JZNodeType.h"
 #include <QVariant>
+#include "JZNodeObject.h"
 
 bool JZNodeType::isNumber(int type)
 {
@@ -45,4 +46,22 @@ bool JZNodeType::canConvert(QList<int> type1,QList<int> type2)
         }
     }
     return false;
+}
+
+bool JZNodeType::match(const QVariant &v,QString type_id)
+{
+    if(type_id == typeid(QVariant).name())
+        return true;
+
+    if(v.userType() == qMetaTypeId<JZNodeObjectPtr>())
+    {
+        //JZNodeObjectPtr *ptr = (JZNodeObjectPtr *)v.data_ptr().data.ptr;
+        JZNodeObjectPtr ptr = v.value<JZNodeObjectPtr>();
+        QString id = JZNodeObjectManager::instance()->getTypeid(ptr.data()->className());
+        return !id.isEmpty() && id == type_id;
+    }
+    else
+    {
+        return true;
+    }
 }

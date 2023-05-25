@@ -255,6 +255,20 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
     return true;
 }
 
+QString JZNodeEngine::variableToString(const QVariant &v)
+{
+    if(isObject(v))
+    {
+        JZNodeObjectPtr obj = v.value<JZNodeObjectPtr>();
+        if(obj->isString())
+            return *((QString*)obj->cobj);
+        else
+            return QString();
+    }
+    else
+        return v.toString();
+}
+
 QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
 {       
     if(param.isLiteral())    
@@ -535,9 +549,21 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
 {    
     QVariantList paramIn, paramOut;
     // get input
-    auto inList = func->paramIn;
-    for (int i = 0; i < inList.size(); i++)    
+    auto &inList = func->paramIn;
+    for (int i = 0; i < inList.size(); i++)
+    {
         paramIn.push_back(getReg(Reg_Call + i));
+        if(paramIn[i].type() == QVariant::String)
+        {
+            JZNodeObjectPtr ptr = JZNodeObjectManager::instance()->createString(paramIn[i].toString());
+            paramIn[i] = QVariant::fromValue(ptr);
+        }
+    }
+    for (int i = 0; i < inList.size(); i++)
+    {
+        bool ret = JZNodeType::match(paramIn[i],func->cfunc->args[i]);
+        Q_ASSERT(ret);
+    }
 
     // call function
     pushStack(func);
@@ -545,13 +571,13 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
     popStack();
 
     // set output
-    auto outList = func->paramOut;
-    for (int i = 0; i < inList.size(); i++)    
+    auto &outList = func->paramOut;
+    for (int i = 0; i < outList.size(); i++)
         setReg(Reg_Call + i,paramOut[i]);
 }
 
 void JZNodeEngine::callCFunction(const FunctionDefine *func,const QVariantList &in,QVariantList &out)
-{
+{    
     func->cfunc->call(in,out);
 }
 
@@ -749,8 +775,10 @@ bool JZNodeEngine::run()
             }
             case OP_call:
             {            
-                JZNodeIRCall *ir_call = (JZNodeIRCall*)op;                
-                auto func = function(ir_call->function);
+                JZNodeIRCall *ir_call = (JZNodeIRCall*)op;
+                QString function_name = variableToString(getParam(ir_call->function));
+                auto func = function(function_name);
+                Q_ASSERT(func);
                 if(func->isCFunction)            
                     callCFunction(func);            
                 else            

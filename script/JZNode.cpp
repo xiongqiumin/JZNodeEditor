@@ -575,6 +575,7 @@ JZNodeForEach::JZNodeForEach()
     m_type = Node_foreach;
 
     addFlowIn();
+    addParamIn("");
     addSubFlowOut("loop body");
     addFlowOut("complete");
 
@@ -587,13 +588,59 @@ JZNodeForEach::~JZNodeForEach()
 
 }
 
-bool JZNodeForEach::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 {
-    //call begin iteator
-    //call end it
+    int id_list = c->paramId(m_id,paramIn(0));
+
+    JZNodeIRParam list = irId(id_list);
+    JZNodeIRParam className = irId(c->allocStack());
+    JZNodeIRParam it = irId(c->allocStack());
+    JZNodeIRParam itName = irId(c->allocStack());
+    JZNodeIRParam itBeginFunc = irId(c->allocStack());
+    JZNodeIRParam itNextFunc = irId(c->allocStack());
+    JZNodeIRParam itEndFunc = irId(c->allocStack());
+    JZNodeIRParam itIsEnd = irId(c->allocStack());
+    JZNodeIRParam itKeyFunc = irId(c->allocStack());
+    JZNodeIRParam itValueFunc = irId(c->allocStack());
+    JZNodeIRParam itKey = irId(c->paramId(m_id,paramOut(0)));
+    JZNodeIRParam itValue = irId(c->paramId(m_id,paramOut(1)));
+    c->addFlowInput(m_id);
+
+    c->addCall(irLiteral("typename"),{list},{className});
+    c->addCall(irLiteral("string.append"),{className,irLiteral(".iterator")},{itBeginFunc});
+
+    //it = list.first
+    c->addCall(itBeginFunc,{list},{it});
+
+    c->addCall(irLiteral("typename"),{it},{itName});
+    c->addCall(irLiteral("string.append"),{itName,irLiteral(".next")},{itNextFunc});
+    c->addCall(irLiteral("string.append"),{itName,irLiteral(".atEnd")},{itEndFunc});
+    c->addCall(irLiteral("string.append"),{itName,irLiteral(".key")},{itKeyFunc});
+    c->addCall(irLiteral("string.append"),{itName,irLiteral(".value")},{itValueFunc});
+
     //while(it != it.end()
-    // call body
-    //it++
+    int startPc = c->currentPc() + 1;
+    c->addCall(itEndFunc,{it},{itIsEnd});
+    c->addCompare(itIsEnd,irLiteral(true),OP_eq);
+    JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
+    c->addStatement(JZNodeIRPtr(jmp_true));
+
+    c->addCall(itKeyFunc,{it},{itKey});
+    c->addCall(itValueFunc,{it},{itValue});
+
+    c->addFlowOutput(m_id);
+    c->addJumpSubNode(subFlowOut(0));
+
+    // it++
+    int continuePc = c->currentPc() + 1;
+    c->addCall(itNextFunc,{it},{});
+    JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
+    jmp->jmpPc = startPc;
+    c->addStatement(JZNodeIRPtr(jmp));
+
+    int breakPc = c->addJumpNode(flowOut());
+    jmp_true->jmpPc = breakPc;
+    c->setBreakContinue({breakPc},{continuePc});
 
     return true;
 }

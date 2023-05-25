@@ -24,7 +24,7 @@ public:
     JZNodeObjectDefine *super;
     QMap<QString,QVariant> params;
     QMap<QString,FunctionDefine> functions;   
-    CBaseFunction cMeta;
+    CBaseFunction cMeta;    
 };
 
 class JZNodeObjectDelcare
@@ -40,6 +40,7 @@ public:
     ~JZNodeObject();
     
     bool isCObject() const;
+    bool isString() const;
     const QString &className() const;
 
     QVariant param(QString name) const;
@@ -49,6 +50,9 @@ public:
     JZNodeObjectDefine *define;  
     QMap<QString,QVariant> params;
     void *cobj;
+
+protected:
+    Q_DISABLE_COPY(JZNodeObject);
 };
 typedef QSharedPointer<JZNodeObject> JZNodeObjectPtr;
 Q_DECLARE_METATYPE(JZNodeObjectDelcare)
@@ -64,12 +68,15 @@ public:
     ~JZNodeObjectManager(); 
 
     void init();
+    JZNodeObjectDefine *meta(QString name);
+    QString getTypeid(QString name);
+
     void regist(JZNodeObjectDefine define,QString super = QString());
     void registCClass(JZNodeObjectDefine define,QString type_id,QString super = QString());
-    void unregist(QString name);
-    JZNodeObjectDefine *meta(QString name);
+    void unregist(QString name);           
     
     JZNodeObjectPtr create(QString name);
+    JZNodeObjectPtr createString(QString text);
     JZNodeObjectPtr createCClass(QString type_id);
     JZNodeObjectPtr clone(JZNodeObjectPtr other);       
 
