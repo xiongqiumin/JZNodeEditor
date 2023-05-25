@@ -29,7 +29,7 @@ QString JZNodeBuilder::error() const
 
 bool JZNodeBuilder::buildItem(JZProjectItem *item)
 {
-    QVector<int> script_types = {ProjectItem_scriptFlow,ProjectItem_scriptParam};
+    QVector<int> script_types = {ProjectItem_scriptFlow,ProjectItem_scriptParam,ProjectItem_scriptFunction};
     if(item->isFolder())
     {
         QList<JZProjectItem*> item_list = item->childs();
@@ -74,12 +74,8 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
         m_program->m_variables[name] = m_project->getVariable(name);
     }
 
-    QList<JZProjectItem*> file_list = project->items();
-    for(int i = 0; i < file_list.size(); i++)
-    {   
-        if(!buildItem(file_list[i]))
-            return false;
-    }
+    if(!buildItem(m_project->root()))
+        return false;    
 
     if(!link())
         return false;

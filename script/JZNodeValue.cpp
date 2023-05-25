@@ -18,15 +18,19 @@ QString JZNodeParam::paramId() const
     return m_param;
 }
 
-void JZNodeParam::setParamId(QString paramId)
+void JZNodeParam::setParamId(QString paramId,bool global)
 {
     m_param = paramId;
+    m_local = !global;
 }
 
 bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
 {       
     int out_id = c->paramId(m_id,paramOut(0));
-    c->addSetVariable(irId(out_id),irRef(m_param));
+    JZNodeIRParam ref = irRef(m_param);
+    if(m_local)
+        ref = c->localVariable(ref);
+    c->addSetVariable(irId(out_id),ref);
     return true;
 }
 
@@ -55,38 +59,36 @@ JZNodeLiteral::~JZNodeLiteral()
 
 QVariant JZNodeLiteral::literal() const
 {
-    return m_value;
+    return propValue(m_out);
 }
 
 void JZNodeLiteral::setLiteral(QVariant value)
 {
-    m_value = value;
+    setPropValue(m_out,value);
 }
 
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 {   
     int id = c->paramId(m_id,m_out);
-    c->addSetVariable(irId(id),irLiteral(m_value));
+    c->addSetVariable(irId(id),irLiteral(literal()));
     return true;
 }
 
 void JZNodeLiteral::saveToStream(QDataStream &s) const
 {
-    JZNode::saveToStream(s);    
-    s << m_out << m_value;
+    JZNode::saveToStream(s);        
 }
 
 void JZNodeLiteral::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);    
-    s >> m_out >> m_value;
 }
 
 //JZNodePrint
 JZNodePrint::JZNodePrint()
 {
     m_type = Node_print;    
-    addParamIn("in");
+    addParamIn("");
 }
 
 JZNodePrint::~JZNodePrint()
@@ -128,9 +130,10 @@ QString JZNodeSetParam::paramId() const
     return m_param;
 }
 
-void JZNodeSetParam::setParamId(QString paramId)
+void JZNodeSetParam::setParamId(QString paramId,bool global)
 {
     m_param = paramId;
+    m_local = !global;
 }
 
 void JZNodeSetParam::saveToStream(QDataStream &s) const
@@ -146,9 +149,12 @@ void JZNodeSetParam::loadFromStream(QDataStream &s)
 bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
 {
     c->addFlowInput(m_id);
-
     int id = c->paramId(m_id,paramIn(0));
-    c->addSetVariable(irRef(m_param),irId(id));
+    JZNodeIRParam ref = irRef(m_param);
+    if(m_local)
+        ref = c->localVariable(ref);
+
+    c->addSetVariable(ref,irId(id));    
     c->addJumpNode(flowOut());
     return true;
 }

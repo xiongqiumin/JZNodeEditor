@@ -1,5 +1,6 @@
 #include "JZNodeFunctionManager.h"
 #include "math.h"
+#include "JZNodeBind.h"
 
 //JZNodeFunctionManager
 JZNodeFunctionManager *JZNodeFunctionManager::instance()
@@ -32,27 +33,27 @@ int JZNodeFunctionManager::idToType(QString id)
 }
 
 void JZNodeFunctionManager::init()
-{
-    registCFunction("exp",createFuncion((double (*)(double))(exp)));
-    registCFunction("log",createFuncion((double (*)(double))(log)));
-    registCFunction("log10",createFuncion((double (*)(double))(log10)));
-    registCFunction("pow",createFuncion((double (*)(double,double))(pow)));
-    registCFunction("sqrt",createFuncion((double (*)(double))(sqrt)));
-    registCFunction("ceil",createFuncion((double (*)(double))(ceil)));
-    registCFunction("floor",createFuncion((double (*)(double))(floor)));
-    registCFunction("round",createFuncion((double (*)(double))(round)));
-    registCFunction("fmod",createFuncion((double (*)(double,double))(fmod)));
+{    
+    registCFunction("exp",jzbind::createFuncion((double (*)(double))(exp)));
+    registCFunction("log",jzbind::createFuncion((double (*)(double))(log)));
+    registCFunction("log10",jzbind::createFuncion((double (*)(double))(log10)));
+    registCFunction("pow",jzbind::createFuncion((double (*)(double,double))(pow)));
+    registCFunction("sqrt",jzbind::createFuncion((double (*)(double))(sqrt)));
+    registCFunction("ceil",jzbind::createFuncion((double (*)(double))(ceil)));
+    registCFunction("floor",jzbind::createFuncion((double (*)(double))(floor)));
+    registCFunction("round",jzbind::createFuncion((double (*)(double))(round)));
+    registCFunction("fmod",jzbind::createFuncion((double (*)(double,double))(fmod)));
 
-    registCFunction("sin",createFuncion((double (*)(double))(sin)));
-    registCFunction("cos",createFuncion((double (*)(double))(cos)));
-    registCFunction("tan",createFuncion((double (*)(double))(tan)));
-    registCFunction("sinh",createFuncion((double (*)(double))(sinh)));
-    registCFunction("cosh",createFuncion((double (*)(double))(cosh)));
-    registCFunction("tanh",createFuncion((double (*)(double))(tanh)));
-    registCFunction("asin",createFuncion((double (*)(double))(asin)));
-    registCFunction("acos",createFuncion((double (*)(double))(acos)));
-    registCFunction("atan",createFuncion((double (*)(double))(atan)));
-    registCFunction("atan2",createFuncion((double (*)(double,double))(atan2)));
+    registCFunction("sin",jzbind::createFuncion((double (*)(double))(sin)));
+    registCFunction("cos",jzbind::createFuncion((double (*)(double))(cos)));
+    registCFunction("tan",jzbind::createFuncion((double (*)(double))(tan)));
+    registCFunction("sinh",jzbind::createFuncion((double (*)(double))(sinh)));
+    registCFunction("cosh",jzbind::createFuncion((double (*)(double))(cosh)));
+    registCFunction("tanh",jzbind::createFuncion((double (*)(double))(tanh)));
+    registCFunction("asin",jzbind::createFuncion((double (*)(double))(asin)));
+    registCFunction("acos",jzbind::createFuncion((double (*)(double))(acos)));
+    registCFunction("atan",jzbind::createFuncion((double (*)(double))(atan)));
+    registCFunction("atan2",jzbind::createFuncion((double (*)(double,double))(atan2)));
 }
 
 const FunctionDefine *JZNodeFunctionManager::function(QString funcName)

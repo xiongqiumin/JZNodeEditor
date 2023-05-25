@@ -6,7 +6,7 @@
 
 enum
 {
-    Item_none = QGraphicsItem::UserType + 1,
+    Item_none = QGraphicsItem::UserType,
     Item_node,
     Item_line,
 };

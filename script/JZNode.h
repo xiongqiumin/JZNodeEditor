@@ -13,6 +13,7 @@ enum
     Node_setParam,
     Node_setParamData,
     Node_literal,
+    Node_functionStart,
     Node_function,        
     Node_event,
     Node_add,
@@ -33,6 +34,7 @@ enum
     Node_bitxor,
     Node_expr,
     Node_for,
+    Node_foreach,
     Node_while,
     Node_branch,
     Node_if,                
@@ -92,6 +94,7 @@ public:
     int addProp(const JZNodePin &prop);         
     void removeProp(int id);
     JZNodePin *prop(int id);
+    const JZNodePin *prop(int id) const;
     JZNodePin *prop(QString name);
     int indexOfProp(int id) const;
     int indexOfPropByName(QString name) const;
@@ -118,7 +121,7 @@ public:
     JZNodeGemo flowInGemo();
     int addFlowOut(QString name = QString());
     int flowOut(int index = 0);
-    JZNodeGemo flowOutGemo(int index);
+    JZNodeGemo flowOutGemo(int index = 0);
     QVector<int> flowOutList();
     int flowOutCount();    
 
@@ -129,6 +132,7 @@ public:
     QVector<int> subFlowList();
     int subFlowCount();
     
+    QVariant propValue(int prop) const;
     void setPropValue(int prop,QVariant value);
     virtual QList<int> propType(int idx);
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
@@ -179,10 +183,9 @@ class JZNodeReturn : public JZNode
 public:
     JZNodeReturn();
 
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
-protected:
-    int m_flowIn;    
+protected:     
 };
 
 class JZNodeExit : public JZNode
@@ -241,6 +244,17 @@ protected:
     int m_flowBody;    
     int m_flowIn;        
     int m_flowComplete;    
+};
+
+class JZNodeForEach: public JZNode
+{
+public:
+    JZNodeForEach();
+    ~JZNodeForEach();
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+protected:
 };
 
 class JZNodeWhile: public JZNode

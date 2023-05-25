@@ -134,7 +134,23 @@ JZNodeProgram *JZNodeEngine::program()
 
 void JZNodeEngine::init()
 {
-    m_global = m_program->variables();   
+    // init variable
+    auto inst = JZNodeObjectManager::instance();
+    auto program_params = m_program->variables();
+    auto it = program_params.begin();
+    while(it != program_params.end() )
+    {
+        if((int)it.value().userType() == qMetaTypeId<JZNodeObjectDelcare>())
+        {
+            JZNodeObjectDelcare delcare = it.value().value<JZNodeObjectDelcare>();            
+            m_global[it.key()] = QVariant::fromValue(inst->create(delcare.className));
+        }
+        else
+            m_global[it.key()] = it.value();
+        it++;
+    }
+
+    // init event change
     auto list = m_program->eventList();
     for(int i = 0; i < list.size(); i++)
     {
@@ -186,6 +202,12 @@ void JZNodeEngine::pushStack(const FunctionDefine *func)
     m_stack.env().func = func;
     m_pc = func->addr;
     m_script = func->script;
+
+    if(!func->isCFunction)
+    {
+        for(int i = 0; i < func->paramIn.size(); i++)
+            m_stack.setVariable(Stack_User + i,m_regs[Reg_Call + i]);
+    }
 }
 
 void JZNodeEngine::popStack()
@@ -203,18 +225,21 @@ void JZNodeEngine::popStack()
     }
 }
 
-bool JZNodeEngine::call(QString name,QVariantList &in,QVariantList &out)
+bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList &out)
 {    
     auto *func = function(name);
+    Q_ASSERT(func);
     return call(func,in,out);
 }
 
-bool JZNodeEngine::call(const FunctionDefine *func,QVariantList &in,QVariantList &out)
+bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVariantList &out)
 {
+    Q_ASSERT(func->paramIn.size() == in.size());
+
     m_status = Status_running;
     if(func->isCFunction)
     {
-        func->cfunc->call(in,out);
+        callCFunction(func,in,out);
     }
     else
     {
@@ -222,8 +247,10 @@ bool JZNodeEngine::call(const FunctionDefine *func,QVariantList &in,QVariantList
             setReg(Reg_Call + i,in[i]);
         pushStack(func);        
         if(!run())
-            return false;            
-        out = m_outList;
+            return false;
+        out.clear();
+        for (int i = 0; i < func->paramOut.size(); i++)
+            out.push_back(getReg(Reg_Call + i));
     }           
     return true;
 }
@@ -233,7 +260,13 @@ QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
     if(param.isLiteral())    
         return param.value;
     else if(param.isRef())
-        return getVariable(param.ref());
+    {
+        QString name = param.ref();
+        if(name.contains("."))
+            return getObjectProperty(name);
+        else        
+            return getVariable(name);
+    }
     else
         return getReg(param.id());
 }
@@ -243,21 +276,90 @@ void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
     if(param.isId())    
         return setReg(param.id(),value);
     else if(param.isRef())
-        return setVariable(param.ref(),value);
+    {   
+        QString name = param.ref();
+        if(name.contains("."))
+            return setObjectProperty(name,value);
+        else
+            return setVariable(name,value);
+    }
     else
     {
         Q_ASSERT(0);
     }        
 }
 
+bool JZNodeEngine::isObject(const QVariant &v)
+{
+    return (int)v.userType() == qMetaTypeId<JZNodeObjectPtr>();
+}
+
+JZNodeObject *JZNodeEngine::getObject(QString name)
+{
+    QStringList list = name.split(".");
+    return getObject(list);
+}
+
+JZNodeObject *JZNodeEngine::getObject(QStringList list)
+{
+    JZNodeObject *obj;
+    if(list[0].startsWith("#"))
+        obj = m_stack.getVariable(list[0].mid(1).toInt()).value<JZNodeObjectPtr>().data();
+    else
+        obj = m_global[list[0]].value<JZNodeObjectPtr>().data();
+    Q_ASSERT(obj);
+    for(int i = 1; i < list.size() - 1; i++)
+    {
+        obj = obj->param(list[i]).value<JZNodeObjectPtr>().data();
+    }
+    return obj;
+}
+
+QVariant JZNodeEngine::getObjectProperty(QString name)
+{
+    QStringList list = name.split(".");
+    JZNodeObject *obj = getObject(list);
+    return obj->param(list.back());
+}
+
+void JZNodeEngine::setObjectProperty(QString name, const QVariant &value)
+{
+    QStringList list = name.split(".");
+    JZNodeObject *obj = getObject(list);
+    obj->setParam(list.back(),value);
+}   
+
 QVariant JZNodeEngine::getVariable(QString name)
 {
-    return m_global[name];
+    if(name.contains("."))
+        return getObjectProperty(name);
+    else
+        return m_global[name];
+        
 }
 
 void JZNodeEngine::setVariable(QString name, const QVariant &value)
 {
-    m_global[name] = value;
+    if(name.contains("."))
+        return setObjectProperty(name,value);
+    else
+    {
+        QVariant &dst = m_global[name];
+        if(isObject(dst))
+        {
+            JZNodeObjectPtr obj = dst.value<JZNodeObjectPtr>();
+            if(obj->className() == "string")
+            {
+                *((QString*)obj->cobj) = value.toString();
+            }
+            else
+            {
+                Q_ASSERT(0);
+            }
+        }
+        else
+            dst = value;
+    }
 }
 
 QVariant JZNodeEngine::getReg(int id)
@@ -439,13 +541,18 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
 
     // call function
     pushStack(func);
-    func->cfunc->call(paramIn,paramOut);
+    callCFunction(func,paramIn,paramOut);
     popStack();
 
     // set output
     auto outList = func->paramOut;
     for (int i = 0; i < inList.size(); i++)    
         setReg(Reg_Call + i,paramOut[i]);
+}
+
+void JZNodeEngine::callCFunction(const FunctionDefine *func,const QVariantList &in,QVariantList &out)
+{
+    func->cfunc->call(in,out);
 }
 
 const FunctionDefine *JZNodeEngine::function(QString name)
@@ -643,7 +750,7 @@ bool JZNodeEngine::run()
             case OP_call:
             {            
                 JZNodeIRCall *ir_call = (JZNodeIRCall*)op;                
-                auto func = JZNodeFunctionManager::instance()->function(ir_call->function);
+                auto func = function(ir_call->function);
                 if(func->isCFunction)            
                     callCFunction(func);            
                 else            
@@ -653,10 +760,9 @@ bool JZNodeEngine::run()
             case OP_return:
             {               
                 popStack();
-                if(m_stack.size() != 0)
-                    continue;
-                else
+                if(m_stack.size() == 0)
                     goto RunEnd;
+                break;
             }
             case OP_exit:
                 goto RunEnd;
@@ -668,8 +774,8 @@ bool JZNodeEngine::run()
         }
         catch(const std::exception& e)
         {
-
-        }            
+            goto RunEnd;
+        }
     }
 
 RunEnd:

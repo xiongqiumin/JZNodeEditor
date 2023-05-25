@@ -7,7 +7,7 @@ enum{
     ProjectItem_ui,
     ProjectItem_param,
     ProjectItem_scriptParam,
-    ProjectItem_scriptFlow,
+    ProjectItem_scriptFlow,    
     ProjectItem_scriptFunction,
 };
 
@@ -29,8 +29,8 @@ public:
     bool isFolder();
     JZProjectItem *parent();
     
-    void addItem(JZProjectItem *child);
-    void removeItem(JZProjectItem *child);
+    void addItem(QSharedPointer<JZProjectItem> child);
+    void removeItem(int index);
     JZProjectItem *getItem(QString name);     
     int indexOfItem(JZProjectItem *);   
     QList<JZProjectItem *> childs();
@@ -45,7 +45,7 @@ protected:
     Q_DISABLE_COPY(JZProjectItem)
 
     JZProjectItem *m_parent;
-    QList<JZProjectItem*> m_childs;
+    QList<QSharedPointer<JZProjectItem>> m_childs;
     
     int m_itemType;
     int m_subType;

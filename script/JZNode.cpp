@@ -158,6 +158,15 @@ JZNodePin *JZNode::prop(int id)
         return nullptr;
 }
 
+const JZNodePin *JZNode::prop(int id) const
+{
+    int index = indexOfProp(id);
+    if (index >= 0)
+        return &m_propList[index];
+    else
+        return nullptr;
+}
+
 JZNodePin *JZNode::prop(QString name)
 {
     int index = indexOfPropByName(name);
@@ -342,9 +351,20 @@ int JZNode::subFlowCount()
     return propOutList(Prop_subFlow).size();
 }
 
+QVariant JZNode::propValue(int id) const
+{
+    auto pin = prop(id);
+    Q_ASSERT(pin);
+
+    return pin->value();
+}
+
 void JZNode::setPropValue(int id,QVariant value)
 {    
-    prop(id)->setValue(value);
+    auto pin = prop(id);
+    Q_ASSERT(pin);
+
+    pin->setValue(value);
 }
 
 QVector<int> JZNode::propList() const
@@ -432,13 +452,21 @@ bool JZNodeBreak::compiler(JZNodeCompiler *compiler,QString &error)
 
 //JZNodeReturn
 JZNodeReturn::JZNodeReturn()
-{    
-    m_flowIn = addFlowIn();
+{        
+    addFlowIn();
 }
 
-bool JZNodeReturn::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodeReturn::compiler(JZNodeCompiler *c,QString &error)
 {   
-    JZNodeIR ir(Node_return);    
+    c->addFlowInput(m_id);
+
+    auto inList = paramInList();
+    for(int i = 0; i < inList.size(); i++)
+    {
+        int id = c->paramId(m_id,inList[i]);
+        c->addSetVariable(irId(Reg_Call+i),irId(id));
+    }
+    c->addReturn();
     return true;
 }
 
@@ -537,6 +565,35 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     int breakPc = c->addJumpNode(flowOut());
     jmp_true->jmpPc = breakPc;
     c->setBreakContinue({breakPc},{continuePc});    
+
+    return true;
+}
+
+//JZNodeForEach
+JZNodeForEach::JZNodeForEach()
+{
+    m_type = Node_foreach;
+
+    addFlowIn();
+    addSubFlowOut("loop body");
+    addFlowOut("complete");
+
+    addParamOut("key");
+    addParamOut("value");
+}
+
+JZNodeForEach::~JZNodeForEach()
+{
+
+}
+
+bool JZNodeForEach::compiler(JZNodeCompiler *compiler,QString &error)
+{
+    //call begin iteator
+    //call end it
+    //while(it != it.end()
+    // call body
+    //it++
 
     return true;
 }

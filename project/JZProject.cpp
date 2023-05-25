@@ -15,8 +15,7 @@ JZProject::~JZProject()
 }
 
 void JZProject::init()
-{
-    m_items.clear();
+{    
     m_root.removeChlids();
     m_filepath.clear();
     m_variables.clear();
@@ -55,9 +54,7 @@ bool JZProject::open(QString filepath)
     if(!file.open(QFile::ReadOnly))
         return false;
 
-    QDataStream s(&file);    
-    for(int i = 0; i < m_items.size(); i++)
-        m_items[i]->loadFromStream(s);
+    QDataStream s(&file);        
     file.close();    
 
     return true;
@@ -76,12 +73,7 @@ bool JZProject::saveAs(QString filepath)
     if(!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
 
-    QDataStream s(&file);
-    for(int i = 0; i < m_items.size(); i++)
-    {
-        s << m_items[i]->itemType();
-        m_items[i]->saveToStream(s);
-    }
+    QDataStream s(&file);    
     file.close();    
     return true;
 }
@@ -100,21 +92,13 @@ JZProjectItem *JZProject::root()
     return &m_root;
 }
 
-void JZProject::sort()
-{
-   /* std::sort(m_items.begin(),m_items.end()[]{
-        return < 
-    });*/
-}
-
 int JZProject::addItem(QString dir,JZProjectItem *item)
 {    
     auto parent = getItem(dir);
     if(!parent)
         return -1;    
-
-    m_items.push_back(JZProjectItemPtr(item));
-    parent->addItem(item);
+    
+    parent->addItem(JZProjectItemPtr(item));
     item->parent()->sort();
     return item->parent()->indexOfItem(item);
 }
@@ -123,16 +107,8 @@ void JZProject::removeItem(QString filepath)
 {
     JZProjectItem *item = getItem(filepath);
     auto parent = item->parent();
-    parent->removeItem(item);
-
-    for(int i = 0; i < m_items.size(); i++)
-    {
-        if(m_items[i].data() == item)
-        {
-            m_items.removeAt(i);
-            break;
-        }
-    }
+    int index = parent->indexOfItem(item);
+    parent->removeItem(index);
 }
 
 int JZProject::renameItem(JZProjectItem *item,QString newname)
@@ -140,16 +116,6 @@ int JZProject::renameItem(JZProjectItem *item,QString newname)
     item->setName(newname);
     item->parent()->sort();
     return item->parent()->indexOfItem(item);
-}
-
-QList<JZProjectItem*> JZProject::items()
-{
-    QList<JZProjectItem*> list;
-    for(int i = 0; i < m_items.size(); i++)
-    {
-        list.push_back(m_items[i].data());
-    }
-    return list;
 }
 
 JZProjectItem *JZProject::getItem(QString path)
@@ -170,12 +136,14 @@ JZProjectItem *JZProject::getItem(QString path)
     return folder;
 }
 
-void JZProject::makeTree()
+void JZProject::registObject(JZNodeObjectDefine def,QString super)
 {
-    for(int i = 0; i < m_items.size(); i++){
-        JZProjectItem *dir = getItem(m_items[i]->path());
-        dir->addItem(m_items[i].data());
-    }
+    JZNodeObjectManager::instance()->regist(def,super);
+}
+
+void JZProject::unregistObject(QString name)
+{
+
 }
 
 void JZProject::addVariable(QString name,QVariant value)
@@ -198,6 +166,18 @@ QVariant JZProject::getVariable(QString name)
     return m_variables[name];
 }
 
+void JZProject::addClassVariable(QString name,QString className)
+{
+    JZNodeObjectDelcare delcare;
+    delcare.className = className;
+    m_variables[name] = QVariant::fromValue(delcare);
+}
+
+QString JZProject::getClassVariable(QString name)
+{
+    return m_variables[name].value<JZNodeObjectDelcare>().className;
+}
+
 QStringList JZProject::variableList()
 {
     return m_variables.keys();
@@ -209,6 +189,5 @@ void JZProject::saveToStream(QDataStream &s)
 }
 
 void JZProject::loadFromStream(QDataStream &s)
-{
-    makeTree();
+{    
 }

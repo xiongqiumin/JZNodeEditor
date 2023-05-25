@@ -1,6 +1,25 @@
 #include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
 
+
+JZNodeFunctionStart::JZNodeFunctionStart()
+{
+    m_type = Node_functionStart;
+    addFlowOut();   
+}
+
+JZNodeFunctionStart::~JZNodeFunctionStart()
+{
+    
+}
+
+bool JZNodeFunctionStart::compiler(JZNodeCompiler *c,QString &error)
+{
+    c->addFlowOutput(0);
+    return true;
+}
+
+//JZNodeFunction
 JZNodeFunction::JZNodeFunction()
 {
     m_type = Node_function;
@@ -54,7 +73,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     for(int i = 0; i < in_list.size(); i++)
     {
         int id = c->paramId(m_id,in_list[i]);
-        c->addSetVariable(irId(id),irId(Reg_Call+i));
+        c->addSetVariable(irId(Reg_Call+i),irId(id));
     }
 
     JZNodeIRCall *call = new JZNodeIRCall();
@@ -64,7 +83,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     for(int i = 0; i < out_list.size(); i++)
     {
         int id = c->paramId(m_id,out_list[i]);
-        c->addSetVariable(irId(Reg_Call+i),irId(id));
+        c->addSetVariable(irId(id),irId(Reg_Call+i));
     }
 
     if(isFlowNode())

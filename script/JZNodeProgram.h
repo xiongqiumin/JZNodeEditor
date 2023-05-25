@@ -10,11 +10,11 @@
 
 enum{    
     Stack_Node = 0,
-    Stack_User = 0x1000000,    
+    Stack_User = 1000000,    
 
-    Reg_Start = 0x2000000,
+    Reg_Start = 2000000,
     Reg_Cmp = Reg_Start,
-    Reg_Call,   //函数传递参数
+    Reg_Call,               //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User
 };
 
 class GraphNode
@@ -101,6 +101,7 @@ public:
     QList<JZNodeIRPtr> statmentList;
     QList<FunctionDefine> functionList;
     QMap<int,NodeInfo> nodeInfo;
+    QMap<QString,int> localVariable;
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);

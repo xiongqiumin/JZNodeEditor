@@ -4,6 +4,18 @@
 #include "JZNode.h"
 #include "JZNodeFunctionDefine.h"
 
+class JZNodeFunctionStart : public JZNode
+{
+public:    
+    JZNodeFunctionStart();
+    virtual ~JZNodeFunctionStart();
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
+
+protected:
+    
+};
+
 class JZNodeFunction : public JZNode
 {
 public:

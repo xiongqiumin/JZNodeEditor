@@ -32,6 +32,8 @@ QString JZNodeCompiler::paramName(int id)
         return QString().asprintf("Stack%d",id - Stack_User);
     else if(id == Reg_Cmp)
         return "Reg_Cmp";    
+    else if(id >= Reg_Call)
+        return "Reg_Call" + QString::number(id - Reg_Call);
 
     return QString();        
 }
@@ -50,7 +52,7 @@ JZNodeCompiler::JZNodeCompiler()
     m_scriptFile = nullptr;
     m_currentGraph = nullptr;
     m_currentNodeInfo = nullptr;
-    m_stackId = 0;
+    m_stackId = Stack_User;
 }
 
 JZNodeCompiler::~JZNodeCompiler()
@@ -65,18 +67,45 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
     m_nodeGraph.clear();
     if(!genGraphs())
         return false;
-
-    bool buildRet = true;
-    for(int i = 0; i < m_script->graphs.size(); i++)
-    {
-        auto graph = m_script->graphs[i].data();
-        int buildType = m_scriptFile->itemType();
     
+    bool buildRet = true;
+    for(int graph_idx = 0; graph_idx < m_script->graphs.size(); graph_idx++)
+    {
+        auto graph = m_script->graphs[graph_idx].data();
+        int buildType = m_scriptFile->itemType();
+
+        m_stackId = Stack_User;    
         bool ret = false;
         if(buildType == ProjectItem_scriptFlow)
+        {
             ret = bulidControlFlow(graph);
+            if(ret)
+                addEventHandle(graph->topolist);
+        }
         else if(buildType == ProjectItem_scriptParam)
-            ret = buildParamBinding(graph);     
+            ret = buildParamBinding(graph);
+        else if(buildType == ProjectItem_scriptFunction)
+        {
+            JZNode *start_node = graph->topolist[0]->node;
+            if(start_node->type() != Node_functionStart)
+                continue;
+
+            m_script->localVariable.clear();
+            FunctionDefine define = scriptFile->function();
+            for(int i = 0; i < define.paramIn.size(); i++)
+            {
+                QString name = define.paramIn[i].name();
+                m_script->localVariable[name] = (Stack_User + i);
+            }
+            m_stackId = Stack_User + define.paramIn.size();
+            ret = bulidControlFlow(graph);
+            if(ret)
+            {                
+                define.addr = m_nodeInfo[start_node->id()].start;
+                define.script = m_script;
+                m_script->functionList.push_back(define);
+            }
+        }
 
         buildRet = (buildRet && ret);
     } 
@@ -88,6 +117,21 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
 QString JZNodeCompiler::error()
 {
     return m_error;
+}
+
+JZNodeIRParam JZNodeCompiler::localVariable(JZNodeIRParam param)
+{
+    QString name = param.ref();
+    if(!param.ref().contains("."))
+    {
+        Q_ASSERT(m_script->localVariable.contains(name));
+        return irId(m_script->localVariable[name]);
+    }
+    
+    QStringList list = name.split(".");
+    Q_ASSERT(m_script->localVariable.contains(list[0]));
+    list[0] = QString::number(m_script->localVariable[list[0]]);
+    return irRef(list.join("."));
 }
 
 void JZNodeCompiler::connectGraph(Graph *graph,JZNode *node)
@@ -165,6 +209,30 @@ bool JZNodeCompiler::genGraphs()
     return true;
 }    
 
+void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
+{
+    // add event
+    for(int node_idx = 0; node_idx < graph_list.size(); node_idx++)
+    {
+        JZNode *node = graph_list[node_idx]->node;
+        if(node->type() == Node_event)
+        {
+            JZNodeEvent *node_event = (JZNodeEvent *)graph_list[node_idx]->node;
+            QString func_name = "on_node_" + QString::number(node->id()) + "_event_" + QString::number(node_event->id());
+            FunctionDefine define;
+            define.name = func_name;
+            define.addr = m_nodeInfo[node->id()].start;
+            define.script = m_script;
+
+            JZEventHandle handle;
+            handle.type = node_event->eventType();
+            handle.function = define;
+            handle.params << node_event->m_params;
+            m_script->events.push_back(handle);            
+        }
+    }
+}
+
 bool JZNodeCompiler::bulidControlFlow(Graph *graph)
 {    
     m_currentGraph = graph;    
@@ -180,8 +248,7 @@ bool JZNodeCompiler::bulidControlFlow(Graph *graph)
 
         m_nodeInfo[node->id()] = NodeInfo();
         m_currentNodeInfo = &m_nodeInfo[node->id()];
-        m_currentNodeInfo->node = node;
-        m_stackId = Stack_User;
+        m_currentNodeInfo->node = node;        
 
         int start = m_script->statmentList.size();
         QString error;
@@ -247,31 +314,7 @@ bool JZNodeCompiler::bulidControlFlow(Graph *graph)
                 replaceStatement(pc,JZNodeIRPtr(ir_return));
             }
         }          
-    }
-
-    // add event
-    for(int node_idx = 0; node_idx < graph_list.size(); node_idx++)
-    {
-        JZNode *node = graph_list[node_idx]->node;
-        if(node->type() == Node_event)
-        {
-            JZNodeEvent *node_event = (JZNodeEvent *)graph_list[node_idx]->node;
-            QString func_name = "on_node_" + QString::number(node->id()) + "_event_" + QString::number(node_event->id());
-            if(!m_script->function(func_name))
-            {
-                FunctionDefine define;
-                define.name = func_name;
-                define.addr = m_nodeInfo[node->id()].start;
-                define.script = m_script;
-
-                JZEventHandle handle;
-                handle.type = node_event->eventType();
-                handle.function = define;
-                handle.params << node_event->m_params;
-                m_script->events.push_back(handle);
-            }
-        }
-    }
+    }    
 
     return true;
 }
@@ -286,7 +329,6 @@ bool JZNodeCompiler::buildDataFlow(const QList<GraphNode*> &graph_list)
         Q_ASSERT(!node->isFlowNode());
 
         m_nodeInfo[node->id()] = NodeInfo();        
-        m_stackId = Stack_User;
 
         int start = m_script->statmentList.size();
         QString error;
@@ -464,12 +506,12 @@ int JZNodeCompiler::addReturn()
 
 int JZNodeCompiler::allocStack()
 {
+    Q_ASSERT(m_stackId < Reg_Start - 1);
     return m_stackId++;
 }
 
 void JZNodeCompiler::freeStack(int id)
 {
-
 }
 
 void JZNodeCompiler::addDataInput(int nodeId)
@@ -604,7 +646,7 @@ int JZNodeCompiler::addSetVariable(JZNodeIRParam dst,JZNodeIRParam src)
     Q_ASSERT(src.type != JZNodeIRParam::None && dst.type != JZNodeIRParam::None);
     Q_ASSERT(dst.type != JZNodeIRParam::Literal);
 
-    JZNodeIRSet *op = new JZNodeIRSet();
+    JZNodeIRSet *op = new JZNodeIRSet();    
     op->dst = dst;
     op->src = src;
     return addStatement(JZNodeIRPtr(op));

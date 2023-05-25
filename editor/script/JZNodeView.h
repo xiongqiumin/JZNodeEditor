@@ -12,6 +12,7 @@
 #include "JZScriptFile.h"
 #include <QShortcut>
 #include <QUndoStack>
+#include <QGraphicsRectItem>
 
 class JZNodeView;
 class JZNodeViewCommand : public QUndoCommand
@@ -105,7 +106,8 @@ protected:
 
     void foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType = -1);
     void foreachLine(std::function<void(JZNodeLineItem *)> func);    
-    void copyItem(QList<QGraphicsItem*> item);
+    void copyItems(QList<QGraphicsItem*> item);
+    void removeItems(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);    
     void initGraph();
     bool canConnect(JZNodeGemo from,JZNodeGemo to);
@@ -113,6 +115,7 @@ protected:
     JZNodeScene *m_scene;
     JZScriptFile *m_file;
     JZNodeLineItem *m_selLine;
+    QGraphicsRectItem *m_selArea;
     bool m_loadFlag;
     JZNodePropertyEditor *m_propEditor;
     QUndoStack m_commandStack;        
@@ -120,6 +123,7 @@ protected:
     double m_scale;
     QPoint m_downPoint;    
     bool m_isMove;          
+    bool m_isSelect;
 };
 
 #endif

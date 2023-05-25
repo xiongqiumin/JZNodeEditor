@@ -22,15 +22,16 @@ public:
     JZNodeCompiler();
     ~JZNodeCompiler();
      
-    bool build(JZScriptFile *file,JZNodeScript *result);    
+    bool build(JZScriptFile *file,JZNodeScript *result);        
 
     int allocStack();
-    void freeStack(int id);    
+    void freeStack(int id);
 
     void addFlowInput(int nodeId);
     void addFlowOutput(int nodeId);
     void addDataInput(int nodeId);
 
+    JZNodeIRParam localVariable(JZNodeIRParam param);
     int addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addSetVariable(JZNodeIRParam dst,JZNodeIRParam src);
@@ -42,6 +43,7 @@ public:
     int addReturn();
     void setBreakContinue(QList<int> breakPc,QList<int> continuePC);    
     void replaceStatement(int pc,JZNodeIRPtr ir);
+
     NodeInfo *currentNodeInfo();
     int currentPc();
 
@@ -54,7 +56,8 @@ protected:
     bool buildDataFlow(const QList<GraphNode*> &list);
     bool bulidControlFlow(Graph *graph);    
     bool buildParamBinding(Graph *graph);
-    void replaceSubNode(int id,int parentId,int flow_index);    
+    void replaceSubNode(int id,int parentId,int flow_index);   
+    void addEventHandle(const QList<GraphNode*> &list);    
                 
     /* build info*/        
     JZNodeScript *m_script;

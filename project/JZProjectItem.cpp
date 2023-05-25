@@ -29,7 +29,9 @@ bool JZProjectItem::isFolder()
 
 void JZProjectItem::sort()
 {
-    std::sort(m_childs.begin(),m_childs.end(),[](const JZProjectItem *i1,const JZProjectItem *i2){
+    std::sort(m_childs.begin(),m_childs.end(),[](const JZProjectItemPtr &i1_ptr,const JZProjectItemPtr &i2_ptr){
+        auto i1 = i1_ptr.data();
+        auto i2 = i2_ptr.data();
         if(i1->m_folder != i2->m_folder)
             return (int)i1->m_folder > (int)i2->m_folder;
         return i1->m_name < i2->m_name;
@@ -77,16 +79,16 @@ JZProjectItem *JZProjectItem::parent()
     return m_parent;
 }
 
-void JZProjectItem::addItem(JZProjectItem *child)
+void JZProjectItem::addItem(JZProjectItemPtr child)
 {
+    Q_ASSERT(child->parent() == nullptr);
     child->m_parent = this;
     m_childs.push_back(child);
 }
 
-void JZProjectItem::removeItem(JZProjectItem *child)
+void JZProjectItem::removeItem(int index)
 {
-    if(m_childs.removeOne(child))
-        child->m_parent = nullptr;
+    m_childs.removeAt(index);
 }
 
 JZProjectItem *JZProjectItem::getItem(QString name)
@@ -94,14 +96,17 @@ JZProjectItem *JZProjectItem::getItem(QString name)
     for(int i = 0; i < m_childs.size(); i++)
     {
         if(m_childs[i]->name() == name)
-            return m_childs[i];
+            return m_childs[i].data();
     }
     return nullptr;
 }
 
 QList<JZProjectItem *> JZProjectItem::childs()
 {
-    return m_childs;
+    QList<JZProjectItem *> result;
+    for(int i = 0; i < m_childs.size(); i++)
+        result.push_back(m_childs[i].data());
+    return result;
 }
 
 void JZProjectItem::removeChlids()
@@ -111,7 +116,12 @@ void JZProjectItem::removeChlids()
 
 int JZProjectItem::indexOfItem(JZProjectItem *item)
 {
-    return m_childs.indexOf(item);
+    for(int i = 0; i < m_childs.size(); i++)
+    {
+        if(m_childs[i].data() == item)
+            return i;
+    }
+    return -1;
 }
 
 //JZProjectRoot

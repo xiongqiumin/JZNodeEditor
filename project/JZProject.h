@@ -4,6 +4,7 @@
 #include "JZNode.h"
 #include <QMap>
 #include "JZProjectItem.h"
+#include "JZNodeObject.h"
 
 class JZProject
 {
@@ -17,28 +18,31 @@ public:
     bool saveAs(QString filepath);
     QString name();
 
-    void addVariable(QString name,QVariant value);
+    void registObject(JZNodeObjectDefine def,QString super = QString());    
+    void unregistObject(QString name);    
+
+    void addVariable(QString name,QVariant value);        
     void removeVariable(QString name);
     void setVariable(QString name,QVariant value);
+
+    void addClassVariable(QString name,QString className);
+    QString getClassVariable(QString name);
+
     QVariant getVariable(QString name);
     QStringList variableList();
     
     int addItem(QString dir,JZProjectItem *item);
     void removeItem(QString path);
     int renameItem(JZProjectItem *item,QString newname);
-    JZProjectItem *getItem(QString path);
-    QList<JZProjectItem*> items();
+    JZProjectItem *getItem(QString path);    
     JZProjectItem *root();
 
 protected:
     Q_DISABLE_COPY(JZProject)
 
     void saveToStream(QDataStream &s);
-    void loadFromStream(QDataStream &s);
-    void sort();
-    void makeTree();        
-        
-    QList<JZProjectItemPtr> m_items;
+    void loadFromStream(QDataStream &s);            
+            
     JZProjectRoot m_root;
     QString m_filepath;
     QMap<QString,QVariant> m_variables;

@@ -19,8 +19,7 @@ public:
     void setLiteral(QVariant value);
 
 protected:
-    int m_out;
-    QVariant m_value;
+    int m_out;    
 };
 
 //JZNodePrint
@@ -50,11 +49,12 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
     QString paramId() const;
-    void setParamId(QString paramId);
+    void setParamId(QString paramId,bool global);
 
 protected:
     int m_out;
     QString m_param;
+    bool m_local;
 };
 
 //JZNodeSetParam
@@ -70,10 +70,11 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
     QString paramId() const;
-    void setParamId(QString paramId);
+    void setParamId(QString paramId,bool global);
 
 protected:    
     QString m_param;
+    bool m_local;
 };
 
 

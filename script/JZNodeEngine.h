@@ -6,9 +6,11 @@
 #include <QMutex>
 #include <QThread>
 #include <QSemaphore>
+#include <QException>
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeObject.h"
 
 enum{
     Status_none,
@@ -50,9 +52,11 @@ public:
     QList<RunnerEnv> m_env;
 };
 
-class JZNodeRuntimeError{
+class JZNodeRuntimeError
+{
 public:
-    QString message;
+    JZNodeScript *script;
+    int pc;
 };
 
 class JZNodeRuntimeInfo
@@ -119,20 +123,21 @@ public:
     void stepOut();    
 
     QVariant getVariable(QString name);
-    void setVariable(QString name, const QVariant &value);
+    void setVariable(QString name, const QVariant &value);    
 
     QVariant getReg(int id);
     void setReg(int id, const QVariant &value);
      
-    bool call(QString function,QVariantList &in,QVariantList &out);    
-    bool call(const FunctionDefine *func,QVariantList &in,QVariantList &out);
+    bool call(const QString &function,const QVariantList &in,QVariantList &out);    
+    bool call(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
 
 protected:
     void notify(int id, const QVariant &data);       
     bool run();     
 
     const FunctionDefine *function(QString name);       
-    void callCFunction(const FunctionDefine *func);        
+    void callCFunction(const FunctionDefine *func);
+    void callCFunction(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
     bool setCommand(int cmd);    
     QVariant dealExpr(QVariant &a,QVariant &b,int op);    
     void pushStack(const FunctionDefine *define);
@@ -141,8 +146,13 @@ protected:
     void waitStatus(int status);
     
     QVariant getParam(const JZNodeIRParam &param);
-    void setParam(const JZNodeIRParam &param,const QVariant &value);
-    int nodeIdByPc(int pc);
+    void setParam(const JZNodeIRParam &param,const QVariant &value);    
+    bool isObject(const QVariant &v);
+    JZNodeObject *getObject(QString name);
+    JZNodeObject *getObject(QStringList list);
+    QVariant getObjectProperty(QString name);
+    void setObjectProperty(QString name, const QVariant &value);
+    int nodeIdByPc(int pc);    
 
     int m_pc;            
     JZNodeProgram *m_program;    
@@ -155,8 +165,7 @@ protected:
 
     Stack m_stack;
     QMap<QString,QVariant> m_global;            
-    QMap<int,QVariant> m_regs;
-    QVariantList m_outList;            
+    QMap<int,QVariant> m_regs;           
     int m_statusCommand;
     int m_status;     
     QMutex m_mutex;    

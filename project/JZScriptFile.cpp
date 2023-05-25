@@ -20,6 +20,16 @@ void JZScriptFile::clear()
     m_connects.clear();
 }
 
+const FunctionDefine &JZScriptFile::function()
+{
+    return m_function;
+}
+
+void JZScriptFile::setFunction(FunctionDefine def)
+{
+    m_function = def;
+}
+
 int JZScriptFile::addNode(JZNodePtr node)
 {
     Q_ASSERT(node->id() == -1);
@@ -189,4 +199,31 @@ void JZScriptFile::loadFromStream(QDataStream &s)
     }
     s >> m_nodesPos;
     s >> m_connects;
+}
+
+//JZScriptFunctionFile
+JZScriptFunctionFile::JZScriptFunctionFile()
+    :JZProjectItem(ProjectItem_scriptFunction,true)
+{
+
+}
+    
+JZScriptFunctionFile::~JZScriptFunctionFile()
+{
+
+}
+
+void JZScriptFunctionFile::addFunction(QString name,QStringList in,QStringList out)
+{
+    FunctionDefine define;
+    define.name = name;
+    for(int i = 0; i < in.size(); i++)
+        define.paramIn.push_back(JZNodePin(in[i],Type_any, Prop_param | Prop_in));
+    for(int i = 0; i < out.size(); i++)
+        define.paramOut.push_back(JZNodePin(out[i],Type_any, Prop_param | Prop_out));
+
+    JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction,false);
+    file->setName(name);
+    file->setFunction(define);
+    addItem(JZProjectItemPtr(file));
 }

@@ -3,6 +3,7 @@
 
 #include "JZNode.h"
 #include "JZProjectItem.h"
+#include "JZNodeFunctionDefine.h"
 
 class JZScriptFile : public JZProjectItem
 {
@@ -11,6 +12,8 @@ public:
     virtual ~JZScriptFile();
 
     void clear();
+    const FunctionDefine &function();
+    void setFunction(FunctionDefine def);
 
     int addNode(JZNodePtr node);
     void insertNode(JZNodePtr node);
@@ -38,14 +41,33 @@ protected:
     QMap<int, JZNodePtr> m_nodes;    
     QMap<int, QPointF> m_nodesPos;   
     QList<JZNodeConnect> m_connects;    
+    FunctionDefine m_function;
 };
 
 
+class JZScriptFunctionFile : public JZProjectItem
+{
+public:
+    JZScriptFunctionFile();
+    virtual ~JZScriptFunctionFile();
 
+    void addFunction(QString name,QStringList in,QStringList out);
+public:
 
+};
 
+class JZScriptClassFile : public JZProjectItem
+{
+public:
+    JZScriptClassFile();
+    virtual ~JZScriptClassFile();
 
+    void addFunction(QStringList in,QStringList out);
+    void addParam();
+    void removeParam();
 
-
+public:
+    
+};
 
 #endif

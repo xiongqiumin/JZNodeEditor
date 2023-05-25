@@ -74,18 +74,21 @@ void MainWindow::initMenu()
 
     QMenu *menu_debug = menubar->addMenu("调试");
     auto actRun = menu_debug->addAction("运行");
-    auto actStep = menu_debug->addAction("单步");
+    auto actStepOver = menu_debug->addAction("单步");
     auto actStepIn = menu_debug->addAction("单步进入");
-    auto actStepOver = menu_debug->addAction("单步跳出");
+    auto actStepOut = menu_debug->addAction("单步跳出");
+    auto actBreakPoint = menu_debug->addAction("断点");
     actRun->setShortcut(QKeySequence("F5"));
-    actRun->setShortcut(QKeySequence("F0"));
-    actRun->setShortcut(QKeySequence("F11"));
-    actRun->setShortcut(QKeySequence("Shift+F11"));
+    actStepOver->setShortcut(QKeySequence("F0"));
+    actStepIn->setShortcut(QKeySequence("F11"));
+    actStepOut->setShortcut(QKeySequence("Shift+F11"));
+    actBreakPoint->setShortcut(QKeySequence("F9"));
 
     connect(actRun,&QAction::triggered,this,&MainWindow::onActionRun);
-    connect(actStep,&QAction::triggered,this,&MainWindow::onActionStepIn);
-    connect(actStepIn,&QAction::triggered,this,&MainWindow::onActionStepOut);
     connect(actStepOver,&QAction::triggered,this,&MainWindow::onActionStepOver);
+    connect(actStepIn,&QAction::triggered,this,&MainWindow::onActionStepIn);
+    connect(actStepOut,&QAction::triggered,this,&MainWindow::onActionStepOut);
+    connect(actBreakPoint,&QAction::triggered,this,&MainWindow::onActionBreakPoint);
 
     QMenu *menu_help = menubar->addMenu("帮助");
     menu_help->addAction("帮助");

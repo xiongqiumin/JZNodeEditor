@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();    
 
+    argc = 2;
     if(argc == 1)
     {
         MainWindow w;

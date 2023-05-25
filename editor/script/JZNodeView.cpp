@@ -165,12 +165,14 @@ JZNodeView::JZNodeView(QWidget *widget)
     : QGraphicsView(widget)
 {
     m_selLine = nullptr;
+    m_selArea = nullptr;
     m_propEditor = nullptr;
-    m_loadFlag = false;
-    m_scene = new JZNodeScene();    
+    m_loadFlag = false;    
     m_file = nullptr;
     m_isMove = false;
+    m_isSelect = false;
 
+    m_scene = new JZNodeScene();    
     setScene(m_scene);
     setAcceptDrops(true);
 
@@ -182,12 +184,7 @@ JZNodeView::JZNodeView(QWidget *widget)
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &JZNodeView::customContextMenuRequested, this, &JZNodeView::onContextMenu);
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-
-    auto cutCopy = new QShortcut(QKeySequence("Ctrl+c"),this);
-    auto cutPaste = new QShortcut(QKeySequence("Ctrl+v"),this);
-    auto cutRedo = new QShortcut(QKeySequence("Ctrl+y"),this);
-    auto cutUndo = new QShortcut(QKeySequence("Ctrl+z"),this);
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);    
 }
 
 JZNodeView::~JZNodeView()
@@ -508,18 +505,21 @@ void JZNodeView::undo()
 
 void JZNodeView::remove()
 {
-
+    auto items = m_scene->selectedItems();
+    removeItems(items);
 }
 
 void JZNodeView::cut()
 {
-
+    auto items = m_scene->selectedItems();
+    copyItems(items);
+    removeItems(items);
 }
 
 void JZNodeView::copy()
 {
     auto items = m_scene->selectedItems();
-    copyItem(items);
+    copyItems(items);
 }
 
 void JZNodeView::paste()
@@ -631,7 +631,9 @@ void JZNodeView::updateNodeLayout()
 }
 
 void JZNodeView::removeItem(QGraphicsItem *item)
-{
+{    
+    Q_ASSERT(item->type() > Item_none);
+        
     auto item_id = ((JZNodeBaseItem *)item)->id();
     if (item->type() == Item_node)
     {
@@ -692,13 +694,20 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QMenu menu(this);
 
     auto item = itemAt(pos);
-    QAction *actAdd = menu.addAction("添加节点");
+    QAction *actAdd = nullptr;
     QAction *actCpy = nullptr;
     QAction *actDel = nullptr;
-    if (item)
+    if (!item)
     {
-        m_scene->clearSelection();
-        item->setSelected(true);
+        menu.addAction("添加节点");
+    }
+    else
+    {
+        if(!item->isSelected())
+        {
+            m_scene->clearSelection();
+            item->setSelected(true);
+        }
         if (item->type() == Item_node)
         {
             actCpy = menu.addAction("复制节点");
@@ -790,6 +799,15 @@ void JZNodeView::mouseMoveEvent(QMouseEvent *event)
 
         m_downPoint = event->pos();
     }
+    else if(m_isSelect)
+    {
+        if(!m_selArea)
+        {
+            m_selArea = m_scene->addRect(QRectF(),QPen(),QBrush());            
+            m_selArea->setZValue(100);
+        }
+        m_selArea->setRect(QRectF(mapToScene(m_downPoint),mapToScene(event->pos())));
+    }
 }
 
 void JZNodeView::mousePressEvent(QMouseEvent *event)
@@ -801,7 +819,10 @@ void JZNodeView::mousePressEvent(QMouseEvent *event)
     }
     if(!itemAt(event->pos())){
         m_downPoint = event->pos();
-        m_isMove = true;
+        if(event->modifiers() & Qt::SHIFT)
+            m_isSelect = true;
+        else
+            m_isMove = true;
     }
     QGraphicsView::mousePressEvent(event);
 }
@@ -834,6 +855,15 @@ void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
     if(m_isMove){
         m_isMove = false;
     }
+    if(m_selArea){
+        m_scene->clearSelection();
+        QPainterPath path;
+        path.addRect(m_selArea->rect());
+        m_scene->setSelectionArea(path);
+        m_scene->removeItem(m_selArea);
+        delete m_selArea;
+        m_selArea = nullptr;
+    }
 }
 
 void JZNodeView::onTimer()
@@ -845,7 +875,7 @@ void JZNodeView::onPropUpdate(int id)
     getNodeItem(id)->updateNode();
 }
 
-void JZNodeView::copyItem(QList<QGraphicsItem*> items)
+void JZNodeView::copyItems(QList<QGraphicsItem*> items)
 {
     CopyData copydata;
     for(int i = 0; i < items.size(); i++)
@@ -870,4 +900,14 @@ void JZNodeView::copyItem(QList<QGraphicsItem*> items)
     mimeData->setData("jznode_copy_data",pack(copydata));
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setMimeData(mimeData);
+}
+
+void JZNodeView::removeItems(QList<QGraphicsItem*> items)
+{
+    m_commandStack.beginMacro("remove");
+    for(int i = 0; i < items.size(); i++)
+    {        
+        removeItem(items[i]);
+    }
+    m_commandStack.endMacro();
 }
