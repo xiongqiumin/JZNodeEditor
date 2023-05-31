@@ -5,6 +5,7 @@
 #include "JZNodeProgram.h"
 #include "JZNodeExpression.h"
 #include "JZScriptFile.h"
+#include "JZProject.h"
 
 /*
     节点数据传递规则:
@@ -21,16 +22,15 @@ public:
 
     JZNodeCompiler();
     ~JZNodeCompiler();
-     
-    bool build(JZScriptFile *file,JZNodeScript *result);        
+
+    bool build(JZScriptFile *file,JZNodeScript *result);
 
     int allocStack();
     void freeStack(int id);
 
-    void addFlowInput(int nodeId);
-    void addFlowOutput(int nodeId);
-    void addDataInput(int nodeId);
-
+    bool addFlowInput(int nodeId);
+    bool addDataInput(int nodeId);
+    void addFlowOutput(int nodeId);        
     JZNodeIRParam localVariable(JZNodeIRParam param);
     int addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op);
@@ -47,6 +47,7 @@ public:
 
     NodeInfo *currentNodeInfo();
     int currentPc();
+    const FunctionDefine *function(QString name);
 
     QString error();    
 
@@ -57,14 +58,19 @@ protected:
     bool buildDataFlow(const QList<GraphNode*> &list);
     bool bulidControlFlow(Graph *graph);    
     bool buildParamBinding(Graph *graph);
+    void buildWatchInfo(Graph *graph);
     void replaceSubNode(int id,int parentId,int flow_index);   
-    void addEventHandle(const QList<GraphNode*> &list);    
+    void addEventHandle(const QList<GraphNode*> &list);      
+    QString nodeName(JZNode *node);
+    QString pinName(JZNodePin *prop);
                 
     /* build info*/        
     JZNodeScript *m_script;
     JZScriptFile *m_scriptFile;     
+    JZProject *m_project;
     Graph *m_currentGraph;       
     NodeInfo *m_currentNodeInfo;
+    JZNode* m_currentNode;
     QMap<JZNode*,Graph*> m_nodeGraph;
     QMap<int,NodeInfo> m_nodeInfo;
     

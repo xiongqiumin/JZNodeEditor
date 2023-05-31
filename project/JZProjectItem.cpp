@@ -1,25 +1,37 @@
 #include "JZProjectItem.h"
 #include "JZScriptFile.h"
 
-JZProjectItem::JZProjectItem(int itemType,bool folder)
+JZProjectItem::JZProjectItem(int itemType)
 {
     m_parent = nullptr;
-    m_itemType = itemType;
-    m_folder = folder;
+    m_project = nullptr;
+    m_itemType = itemType;    
 }
 
 JZProjectItem::~JZProjectItem()
 {
 }
 
+void JZProjectItem::setProject(JZProject *project)
+{
+    m_project = project;
+}
+
+JZProject *JZProjectItem::project() const
+{
+    return m_project;
+}
+
 void JZProjectItem::saveToStream(QDataStream &s)
 {
-    
+    s << m_name;
+    s << m_folder;
 }
 
 void JZProjectItem::loadFromStream(QDataStream &s)
 {
-
+    s >> m_name;
+    s >> m_folder;
 }
 
 bool JZProjectItem::isFolder()
@@ -124,22 +136,24 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
     return -1;
 }
 
-//JZProjectRoot
-JZProjectRoot::JZProjectRoot()
-    :JZProjectItem(ProjectItem_root,true)
+//JZProjectItemFolder
+JZProjectItemFolder::JZProjectItemFolder()
+    :JZProjectItem(ProjectItem_folder)
 {
-    m_name = ".";
+    m_folder = true;
 }
 
-JZProjectRoot::~JZProjectRoot()
+JZProjectItemFolder::~JZProjectItemFolder()
 {
 
 }
 
-JZProjectItem *JZProjectItemFactory::create(int itemType,bool folder)
+JZProjectItem *JZProjectItemFactory::create(int itemType)
 {
-    if(itemType >= ProjectItem_scriptParam && itemType <= ProjectItem_scriptFlow)
-        return new JZScriptFile(itemType,folder);
+    if(itemType == ProjectItem_folder)
+        return new JZProjectItem(ProjectItem_folder);
+    else if(itemType >= ProjectItem_scriptParam && itemType <= ProjectItem_scriptFlow)
+        return new JZScriptFile(itemType);
 
     Q_ASSERT(0);
     return nullptr;

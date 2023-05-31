@@ -2,14 +2,26 @@
 #include "JZNodeValue.h"
 #include <QVector>
 #include <QSet>
+#include "JZNodeFunctionManager.h"
 
 //NodeInfo
 NodeInfo::NodeInfo()
 {
-    node = nullptr;
+    node_id = -1;
+    node_type = Node_none;
     start = -1;
     end = -1;    
     parentId = -1;
+}
+
+QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
+{
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, NodeInfo &param)
+{
+    return s;
 }
 
 // JZNodeCompiler
@@ -52,6 +64,7 @@ JZNodeCompiler::JZNodeCompiler()
     m_scriptFile = nullptr;
     m_currentGraph = nullptr;
     m_currentNodeInfo = nullptr;
+    m_currentNode = nullptr;
     m_stackId = Stack_User;
 }
 
@@ -62,12 +75,14 @@ JZNodeCompiler::~JZNodeCompiler()
 bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
 {    
     m_scriptFile = scriptFile;    
+    m_project = scriptFile->project();
     m_script = result;
-    m_script->clear();
+    m_script->clear();    
     m_nodeGraph.clear();
     if(!genGraphs())
         return false;
     
+    m_script->file = scriptFile->itemPath();
     bool buildRet = true;
     for(int graph_idx = 0; graph_idx < m_script->graphs.size(); graph_idx++)
     {
@@ -102,16 +117,32 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
             if(ret)
             {                
                 define.addr = m_nodeInfo[start_node->id()].start;
-                define.script = m_script;
+                define.script = m_script->file;
                 m_script->functionList.push_back(define);
             }
         }
-
+        buildWatchInfo(graph);
         buildRet = (buildRet && ret);
-    } 
-    m_script->file = scriptFile->path();
+    }                
     m_script->nodeInfo = m_nodeInfo; 
     return buildRet;
+}
+
+QString JZNodeCompiler::nodeName(JZNode *node)
+{
+    QString name = "node(";
+    if(!node->name().isEmpty())
+        name += "name=" + node->name() + ",";
+    name += "id=" + QString::number(node->id()) + ")";
+    return name;
+}
+
+QString JZNodeCompiler::pinName(JZNodePin *prop)
+{
+    if(!prop->name().isEmpty())
+        return prop->name();
+    else
+        return "pin" + QString::number(prop->id());
 }
 
 QString JZNodeCompiler::error()
@@ -222,7 +253,7 @@ void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
             FunctionDefine define;
             define.name = func_name;
             define.addr = m_nodeInfo[node->id()].start;
-            define.script = m_script;
+            define.script = m_script->file;
 
             JZEventHandle handle;
             handle.type = node_event->eventType();
@@ -248,7 +279,9 @@ bool JZNodeCompiler::bulidControlFlow(Graph *graph)
 
         m_nodeInfo[node->id()] = NodeInfo();
         m_currentNodeInfo = &m_nodeInfo[node->id()];
-        m_currentNodeInfo->node = node;        
+        m_currentNodeInfo->node_id = node->id();
+        m_currentNodeInfo->node_type = node->type();
+        m_currentNode = node;
 
         int start = m_script->statmentList.size();
         QString error;
@@ -256,7 +289,10 @@ bool JZNodeCompiler::bulidControlFlow(Graph *graph)
         node_ir->id = node->id();
         addStatement(JZNodeIRPtr(node_ir));        
         if(!node->compiler(this,error))
+        {
+            m_error += error;
             return false;        
+        }
 
         m_currentNodeInfo->start = start;
         m_currentNodeInfo->end = m_script->statmentList.size();
@@ -321,6 +357,9 @@ bool JZNodeCompiler::bulidControlFlow(Graph *graph)
 
 bool JZNodeCompiler::buildDataFlow(const QList<GraphNode*> &graph_list)
 {   
+    if(graph_list.size() == 0)
+        return true;
+
     //build node
     for (int graph_idx = 0; graph_idx < graph_list.size(); graph_idx++)
     {
@@ -336,8 +375,11 @@ bool JZNodeCompiler::buildDataFlow(const QList<GraphNode*> &graph_list)
         node_ir->id = node->id();
         addStatement(JZNodeIRPtr(node_ir));
         if(!node->compiler(this,error))
-            return false;                       
-    }      
+        {
+            m_error += error;
+            return false;
+        }
+    }          
     return true;
 }
 
@@ -363,7 +405,7 @@ bool JZNodeCompiler::buildParamBinding(Graph *graph)
                 FunctionDefine define;
                 define.name = func_name;
                 define.addr = start;
-                define.script = m_script;
+                define.script = m_script->file;
 
                 JZEventHandle handle;
                 handle.type = Event_paramChanged;
@@ -374,6 +416,34 @@ bool JZNodeCompiler::buildParamBinding(Graph *graph)
         }
     }
     return true;
+}
+
+void JZNodeCompiler::buildWatchInfo(Graph *graph)
+{
+    auto graph_list = m_currentGraph->topolist;
+    for(int node_idx = 0; node_idx < graph_list.size(); node_idx++)
+    {
+       auto node = graph_list[node_idx];
+       auto it = node->paramOut.begin();
+       while(it != node->paramOut.end())
+       {
+           auto pin = graph_list[node_idx]->node->prop(it.key());
+           if(pin->isParam())
+           {
+                auto &out_list = it.value();
+                for(int i = 0; i < out_list.size(); i++)
+                {
+                    auto node = m_scriptFile->getNode(out_list[i].nodeId);
+                    if(node->type() == Node_print)
+                    {
+                        m_script->watchList.push_back(JZNodeIRParam());
+                    }
+
+                }
+           }
+           it++;
+       }
+    }
 }
 
 void JZNodeCompiler::replaceSubNode(int id,int parent_id,int flow_index)
@@ -440,6 +510,14 @@ int JZNodeCompiler::currentPc()
     return (m_script->statmentList.size() - 1);
 }
 
+const FunctionDefine *JZNodeCompiler::function(QString name)
+{
+    const FunctionDefine *func = m_project->function(name);
+    if(func)
+        return func;
+    return JZNodeFunctionManager::instance()->function(name);
+}
+
 void JZNodeCompiler::replaceStatement(int pc,JZNodeIRPtr ir)
 {
     Q_ASSERT(ir->pc == -1 && pc < m_script->statmentList.size());
@@ -448,9 +526,9 @@ void JZNodeCompiler::replaceStatement(int pc,JZNodeIRPtr ir)
 }
 
 int JZNodeCompiler::addJumpNode(int prop)
-{   
-    Q_ASSERT(m_currentNodeInfo->node->prop(prop) && m_currentNodeInfo->node->prop(prop)->isFlow()
-             && m_currentNodeInfo->node->prop(prop)->isOutput() );
+{       
+    Q_ASSERT(m_currentNode->prop(prop) && m_currentNode->prop(prop)->isFlow()
+             && m_currentNode->prop(prop)->isOutput() );
      
     NodeInfo::Jump info;    
     JZNodeIR *jmp = new JZNodeIR(OP_none);
@@ -463,7 +541,7 @@ int JZNodeCompiler::addJumpNode(int prop)
 
 int JZNodeCompiler::addJumpSubNode(int prop)
 {
-    Q_ASSERT(m_currentNodeInfo->node->prop(prop) && m_currentNodeInfo->node->prop(prop)->isSubFlow());
+    Q_ASSERT(m_currentNode->prop(prop) && m_currentNode->prop(prop)->isSubFlow());
 
     NodeInfo::Jump info;    
     JZNodeIR *jmp = new JZNodeIR(OP_nop);
@@ -527,7 +605,7 @@ void JZNodeCompiler::freeStack(int id)
 {
 }
 
-void JZNodeCompiler::addDataInput(int nodeId)
+bool JZNodeCompiler::addDataInput(int nodeId)
 {
     GraphNode* in_node = m_currentGraph->graphNode(nodeId);
     auto in_list = in_node->node->paramInList();
@@ -556,12 +634,18 @@ void JZNodeCompiler::addDataInput(int nodeId)
             Q_ASSERT(prop->isEditable());
 
             int to_id = paramId(in_node->node->id(),in_prop);
+            if(!prop->value().isValid())
+            {
+                m_error += nodeName(in_node->node) + "->" + pinName(prop) + " not set";
+                return false;
+            }
             addSetVariable(irId(to_id),irLiteral(prop->value()));
         }
-    }
+    }    
+    return true;
 }
 
-void JZNodeCompiler::addFlowInput(int nodeId)
+bool JZNodeCompiler::addFlowInput(int nodeId)
 {
     Q_ASSERT(m_currentGraph->graphNode(nodeId)->node->isFlowNode());
 
@@ -613,8 +697,12 @@ void JZNodeCompiler::addFlowInput(int nodeId)
         if(graphs.contains(node))
             graph_list.push_back(node);
     }
-    buildDataFlow(graph_list);    
-    addDataInput(nodeId);
+    if(!buildDataFlow(graph_list))
+        return false;
+    if(!addDataInput(nodeId))
+        return false;
+    
+    return true;
 }
 
 void JZNodeCompiler::addFlowOutput(int nodeId)

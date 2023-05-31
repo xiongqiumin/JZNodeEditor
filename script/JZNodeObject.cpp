@@ -1,6 +1,11 @@
 #include "JZNodeObject.h"
 #include <QMetaObject>
 #include "JZNodeBind.h"
+#include <QWidget>
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QCheckBox>
+#include <QPushButton>
 
 QString JNodeTypeName(const QVariant &v)
 {
@@ -13,6 +18,11 @@ QString JNodeTypeName(const QVariant &v)
     }
     else
         return "unknown";
+}
+
+void JZNodeDisp(const QVariant &v)
+{
+
 }
 
 //JZNodeListIterator
@@ -134,6 +144,7 @@ JZNodeObjectManager::~JZNodeObjectManager()
 void JZNodeObjectManager::init()
 {
     JZNodeFunctionManager::instance()->registCFunction("typename",jzbind::createFuncion(JNodeTypeName));
+    JZNodeFunctionManager::instance()->registCFunction("print",jzbind::createFuncion(JZNodeDisp));
 
     //list
     jzbind::ClassBind<JZNodeListIterator> cls_list_it("listIterator");
@@ -224,6 +235,38 @@ void JZNodeObjectManager::init()
         return ret.replace(before,after);
     });
     cls_str.regist();
+
+    initWidgets();
+}
+
+void JZNodeObjectManager::initWidgets()
+{
+/*
+    //widget
+    jzbind::ClassBind<QWidget> cls_widget("widget");
+    cls_widget.def("next",&QWidget::setVisible);
+    cls_widget.regist();
+
+    //lineedit
+    jzbind::ClassBind<QLineEdit> cls_lineEdit("lineEdit","widget");
+    cls_lineEdit.def("next",&QLineEdit::text);
+    cls_lineEdit.def("atEnd",&QLineEdit::setText);;
+    cls_lineEdit.regist();
+
+    //abs_button
+    jzbind::ClassBind<QAbstractButton> cls_abs_button("abstractButton","widget");
+    cls_abs_button.def("next",&QAbstractButton::text);
+    cls_abs_button.def("atEnd",&QAbstractButton::setText);
+    cls_abs_button.regist();
+
+    //button
+    jzbind::ClassBind<QWidget> cls_button("button","abstractButton");
+    cls_button.regist();
+
+    //button
+    jzbind::ClassBind<QWidget> cls_radio_button("radioButton","abstractButton");
+    cls_button.regist();
+*/
 }
 
 void JZNodeObjectManager::regist(JZNodeObjectDefine define,QString super)

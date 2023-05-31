@@ -18,8 +18,11 @@ void JZNodeEditor::init()
     m_view = new JZNodeView();
     m_nodePanel = new JZNodePanel();
     m_nodeProp = new JZNodePropertyEditor();
-        
-    QVBoxLayout *l = new QVBoxLayout();    
+    connect(m_view,&JZNodeView::redoAvailable,this,&JZNodeEditor::redoAvailable);
+    connect(m_view,&JZNodeView::undoAvailable,this,&JZNodeEditor::undoAvailable);
+
+    QVBoxLayout *l = new QVBoxLayout();
+    l->setContentsMargins(0,0,0,0);
     this->setLayout(l);    
     
     QSplitter *splitter = new QSplitter(Qt::Horizontal);    
@@ -30,10 +33,10 @@ void JZNodeEditor::init()
     splitter->setCollapsible(0,false);
     splitter->setCollapsible(1,false);
     splitter->setCollapsible(2,false);
-    splitter->setStretchFactor(0,1);
-    splitter->setStretchFactor(1,3);
-    splitter->setStretchFactor(2,1);
-    splitter->setSizes({100,300,100});
+    splitter->setStretchFactor(0,0);
+    splitter->setStretchFactor(1,1);
+    splitter->setStretchFactor(2,0);
+    splitter->setSizes({150,300,150});
     l->addWidget(splitter);
     
     //m_nodeProp->setMaximumWidth(200);
@@ -43,7 +46,8 @@ void JZNodeEditor::init()
 void JZNodeEditor::open(JZProjectItem *item)
 {
     JZScriptFile* file = dynamic_cast<JZScriptFile*>(item);
-    m_view->setFile(file);
+    m_view->setFile(file);    
+    m_nodePanel->init(file->itemType());
 }
 
 void JZNodeEditor::close()
@@ -94,6 +98,11 @@ void JZNodeEditor::copy()
 void JZNodeEditor::paste()
 {
     m_view->paste();
+}
+
+void JZNodeEditor::selectAll()
+{
+    m_view->selectAll();
 }
 
 void JZNodeEditor::updateNodeLayout()

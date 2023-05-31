@@ -83,6 +83,7 @@ public:
 protected:
     void create(JZNodeObjectDefine *define,JZNodeObject *obj);
     void copy(JZNodeObject *src,JZNodeObject *dst);
+    void initWidgets();
 
     QMap<QString,JZNodeObjectDefine*> m_metas;        
     QMap<QString,QString> m_typeidMetas;

@@ -164,6 +164,22 @@ bool JZEventHandle::match(JZEvent *event) const
     return false;
 }
 
+QDataStream &operator<<(QDataStream &s, const JZEventHandle &param)
+{
+    s << param.type;
+    s << param.params;
+    s << param.function;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZEventHandle &param)
+{
+    s >> param.type;
+    s >> param.params;
+    s >> param.function;
+    return s;
+}
+
 //JZNodeScript
 JZNodeScript::JZNodeScript()
 {
@@ -191,34 +207,46 @@ FunctionDefine *JZNodeScript::function(QString name)
 }
 
 void JZNodeScript::saveToStream(QDataStream &s)
-{          
+{
+    s << file;
+    s << events;
     s << statmentList.size();
     for(int i = 0; i < statmentList.size(); i++)
     {
         s << statmentList[i]->type;
-        statmentList[i]->saveToStream(s);        
+        statmentList[i]->saveToStream(s);
     }
+    s << functionList;
+    s << nodeInfo;
+    s << localVariable;
+    s << watchList;
 }
 
 void JZNodeScript::loadFromStream(QDataStream &s)
 {
-    int op_size;
-    s >> op_size;
-    for(int i = 0; i < statmentList.size(); i++)
+    s >> file;
+    s >> events;
+    int stmt_size = 0;
+    s >> stmt_size;
+    for(int i = 0; i < stmt_size; i++)
     {
-        int type;  
+        int type;
         s >> type;
         JZNodeIR *ir = createNodeIR(type);
         ir->loadFromStream(s);
-        statmentList.push_back(JZNodeIRPtr(ir));   
-    }       
+        statmentList.push_back(JZNodeIRPtr(ir));
+    }
+    s >> functionList;
+    s >> nodeInfo;
+    s >> localVariable;
+    s >> watchList;
 }
 
 
 //JZNodeProgram
 JZNodeProgram::JZNodeProgram()
 {
-    m_opNames = QStringList{"+","-","*","%","%","==","!=",">",">=","<","<=","&&","||","^"};
+    m_opNames = QStringList{"+","-","*","/","%","==","!=",">",">=","<","<=","&&","||","|","&","^"};
 }
 
 JZNodeProgram::~JZNodeProgram()
@@ -287,6 +315,14 @@ FunctionDefine *JZNodeProgram::function(QString name)
         it++;
     }
     return nullptr;
+}
+
+JZNodeScript *JZNodeProgram::script(QString name)
+{
+    if(!m_scripts.contains(name))
+        return nullptr;
+
+    return m_scripts[name].data();
 }
 
 QList<JZEventHandle*> JZNodeProgram::matchEvent(JZEvent *e) const

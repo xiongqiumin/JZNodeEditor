@@ -23,7 +23,8 @@ public:
         RemoveNode,
         MoveNode,
         CreateLine,
-        RemoveLine,            
+        RemoveLine,
+        PropertyChange,
     };
 
     JZNodeViewCommand(JZNodeView *view,int type);
@@ -39,7 +40,12 @@ public:
     QVariant newValue;   
     QPointF oldPos;
     QPointF newPos; 
+
 protected:
+    void setItemPos(JZNodeGraphItem *item,QPointF pos);
+    QVariant saveItem(JZNodeGraphItem *item);
+    void loadItem(JZNodeGraphItem *item,const QVariant &value);
+
     JZNodeView *m_view;
 };
 
@@ -56,10 +62,13 @@ public:
 
     /* node */
     JZNode *getNode(int id);
+    JZNodePin *getPin(JZNodeGemo gemo);
     JZNodeGraphItem *createNode(JZNodePtr node);
     JZNodeGraphItem *insertNode(JZNodePtr node);
     void moveNode(int id,QPointF pos);
     void removeNode(int id);    
+    void addPin(int id,JZNodePin pin);
+    void removePin(int id,int prop_id);
 
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
@@ -84,8 +93,14 @@ public:
     void cut();
     void copy();
     void paste();
+    void selectAll();
 
     void updateNodeLayout();    
+    void setMoveUndo(bool flag);
+
+signals:
+    void redoAvailable(bool available);
+    void undoAvailable(bool available);
 
 protected slots:
     void onContextMenu(const QPoint &pos);
@@ -97,6 +112,8 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
+
+    virtual void keyReleaseEvent(QKeyEvent *event) override;
 
     virtual void dragEnterEvent(QDragEnterEvent *event) override;
     virtual void dragMoveEvent(QDragMoveEvent *event) override;
@@ -111,6 +128,7 @@ protected:
     void removeItem(QGraphicsItem *item);    
     void initGraph();
     bool canConnect(JZNodeGemo from,JZNodeGemo to);
+    void cancelSelect();
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;
@@ -119,11 +137,10 @@ protected:
     bool m_loadFlag;
     JZNodePropertyEditor *m_propEditor;
     QUndoStack m_commandStack;        
+    bool m_moveUndo;
 
-    double m_scale;
     QPoint m_downPoint;    
-    bool m_isMove;          
-    bool m_isSelect;
+    bool m_isMove;              
 };
 
 #endif

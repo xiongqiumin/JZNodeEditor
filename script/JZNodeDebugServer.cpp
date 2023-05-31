@@ -11,6 +11,7 @@ JZNodeDebugServer::JZNodeDebugServer()
     connect(&m_server,&JZNetServer::sigNewConnect,this,&JZNodeDebugServer::onNewConnect);
 	connect(&m_server,&JZNetServer::sigDisConnect,this,&JZNodeDebugServer::onDisConnect);
 	connect(&m_server,&JZNetServer::sigNetPackRecv,this,&JZNodeDebugServer::onNetPackRecv);
+    connect(this,&JZNodeDebugServer::sigStop,this,&JZNodeDebugServer::onStop);
 }
 
 JZNodeDebugServer::~JZNodeDebugServer()
@@ -29,11 +30,27 @@ bool JZNodeDebugServer::startServer(int port)
 }
 
 void JZNodeDebugServer::stopServer()
+{    
+    emit sigStop(QPrivateSignal());
+    wait();
+} 
+
+void JZNodeDebugServer::onStop()
 {
     m_server.stopServer();
-    QThread::quit();
-    QThread::wait();
-} 
+    quit();
+}
+
+void JZNodeDebugServer::log(QString log)
+{
+    if(m_client == -1)
+        return;
+
+    JZNodeDebugPacket result_pack;
+    result_pack.cmd = Cmd_log;
+    result_pack.params << log;
+    m_server.sendPack(m_client,&result_pack);
+}
 
 bool JZNodeDebugServer::waitForAttach()
 {
@@ -84,11 +101,8 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         m_engine->resume();
     else if(cmd == Cmd_stepIn)
         m_engine->stepIn();
-    else if(cmd == Cmd_stop)
-    {
-        m_engine->stop();
-        emit sigStop();
-    }
+    else if(cmd == Cmd_stop)    
+        m_engine->stop();     
     else if(cmd == Cmd_stepOver)
         m_engine->stepOver();
     else if(cmd == Cmd_stepOut)                                       
@@ -101,6 +115,7 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         m_engine->setVariable(params[0].toString(),params[1]);
 
     JZNodeDebugPacket result_pack;
+    result_pack.cmd = cmd;
     result_pack.setSeq(packet->seq());
     result_pack.params = result;
     m_server.sendPack(netId,&result_pack);

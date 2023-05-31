@@ -65,6 +65,7 @@ void JZNodeFactory::init()
     registNode(Node_bitand,createFunc<JZNodeBitAnd>);
     registNode(Node_bitor,createFunc<JZNodeBitOr>);
     registNode(Node_bitxor,createFunc<JZNodeBitXor>);
+    registNode(Node_expr,createFunc<JZNodeExpression>);
 }
 
 //parseNode

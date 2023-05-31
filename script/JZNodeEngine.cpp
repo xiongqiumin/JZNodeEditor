@@ -201,7 +201,8 @@ void JZNodeEngine::pushStack(const FunctionDefine *func)
     m_stack.env().pc = func->addr;
     m_stack.env().func = func;
     m_pc = func->addr;
-    m_script = func->script;
+    m_script = getScript(func->script);
+    Q_ASSERT(m_script);
 
     if(!func->isCFunction)
     {
@@ -216,7 +217,8 @@ void JZNodeEngine::popStack()
     if(m_stack.size() > 0)
     {
         m_pc = m_stack.env().pc;
-        m_script = m_stack.env().func->script;
+        m_script = getScript(m_stack.env().func->script);
+        Q_ASSERT(m_script);
     }
     else
     {
@@ -288,19 +290,22 @@ QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
 void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
 {
     if(param.isId())    
-        return setReg(param.id(),value);
+        setReg(param.id(),value);
     else if(param.isRef())
     {   
         QString name = param.ref();
         if(name.contains("."))
-            return setObjectProperty(name,value);
+            setObjectProperty(name,value);
         else
-            return setVariable(name,value);
+            setVariable(name,value);
     }
     else
     {
         Q_ASSERT(0);
     }        
+
+    if(isWatch())
+        emit sigParamChanged();
 }
 
 bool JZNodeEngine::isObject(const QVariant &v)
@@ -392,9 +397,24 @@ void JZNodeEngine::setReg(int id, const QVariant &value)
         m_stack.setVariable(id, value);            
 }
 
-void JZNodeEngine::notify(int id, const QVariant &data)
+JZNodeScript *JZNodeEngine::getScript(QString path)
+{
+    return m_program->script(path);
+}
+
+bool JZNodeEngine::isWatch()
+{
+    return false;
+}
+
+void JZNodeEngine::addWatch()
 {
 
+}
+
+void JZNodeEngine::clearWatch()
+{
+    m_watchParam.clear();
 }
 
 int JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
@@ -506,7 +526,7 @@ void JZNodeEngine::stepIn()
         return;
 
     auto info = m_script->nodeInfo[m_breaknodeId];
-    if(info.node->type() == Node_function)
+    if(info.node_type == Node_function)
     {
         m_breakStep.type = BreakPoint::stackEqual;
         m_breakStep.stack = m_stack.size() + 1;
@@ -602,7 +622,7 @@ QVariant JZNodeEngine::dealExpr(QVariant &a,QVariant &b,int op)
     case OP_div:
         return a.toInt() / b.toInt();
     case OP_mod:
-        return a.toInt() / b.toInt();
+        return a.toInt() % b.toInt();
     case OP_eq:
         return a.toInt() == b.toInt();
     case OP_ne:

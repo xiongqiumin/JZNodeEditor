@@ -34,16 +34,20 @@ public:
     int addItem(QString dir,JZProjectItem *item);
     void removeItem(QString path);
     int renameItem(JZProjectItem *item,QString newname);
+    QList<JZProjectItem *> itemList(QString path,int type);
     JZProjectItem *getItem(QString path);    
     JZProjectItem *root();
+
+    const FunctionDefine *function(QString name);
 
 protected:
     Q_DISABLE_COPY(JZProject)
 
     void saveToStream(QDataStream &s);
-    void loadFromStream(QDataStream &s);            
+    void loadFromStream(QDataStream &s);
+    void itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list);
             
-    JZProjectRoot m_root;
+    JZProjectItemFolder m_root;
     QString m_filepath;
     QMap<QString,QVariant> m_variables;
 };

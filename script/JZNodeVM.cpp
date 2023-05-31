@@ -5,23 +5,33 @@
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QComboBox>
+#include <QMainWindow>
+#include <QMessageBox>
 
 //JZNodeVM
 JZNodeVM::JZNodeVM()
 {    
     m_debug = false;
     m_debugServer.setEngine(&m_engine);
+    m_window = nullptr;
 }
 
 JZNodeVM::~JZNodeVM()
 {
+    m_debugServer.stopServer();
+    if(m_window)
+        delete m_window;
 }
 
-bool JZNodeVM::init(QString path)
+bool JZNodeVM::init(QString path,bool debug)
 {
+    m_debug = debug;
     if(m_debug)     
+    {
+        m_debugServer.startServer(19888);
         m_debugServer.waitForAttach();
-    
+    }
+
     m_engine.setProgram(&m_program);    
     if(!m_program.load(path))
         return false;
@@ -43,11 +53,23 @@ void JZNodeVM::customEvent(QEvent *event)
 
 void JZNodeVM::createWindow()
 {
+    m_window = new QWidget();
+    m_window->show();
+
+    QLineEdit *line = new QLineEdit();
+    line->setGeometry(30,30,120,30);
+
+    QPushButton *btn = new QPushButton(m_window);
+    btn->setText("click me");
+    btn->setGeometry(30,30,120,60);
+
     QList<QComboBox*> combo_list;
     QList<QLineEdit*> line_edit;
     QList<QSpinBox*> spin_list;
     QList<QDoubleSpinBox*> double_spin_list;
     QList<QPushButton*> btn_list;
+    line_edit << line;
+    btn_list << btn;
 
     for(int i = 0; i < combo_list.size(); i++)
     {        
@@ -123,12 +145,8 @@ void JZNodeVM::dealEvent(JZEvent *event)
     }
 }
 
-void JZNodeVM::addBreakPoint(int nodeId)
+void JZNodeVM::quit()
 {
-        
-}
-
-void JZNodeVM::removeBreakPoint(int id)
-{
-
+    m_engine.stop();
+    qApp->exit();
 }

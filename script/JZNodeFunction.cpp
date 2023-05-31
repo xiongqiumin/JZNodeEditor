@@ -63,11 +63,14 @@ QString JZNodeFunction::function() const
 
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
 {
+    bool input_ret = false;
     if(isFlowNode())
-        c->addFlowInput(m_id);
+        input_ret = c->addFlowInput(m_id);
     else
-        c->addDataInput(m_id);
-
+        input_ret = c->addDataInput(m_id);
+    if(!input_ret)        
+        return false;
+        
     QVector<int> in_list = propInList(Prop_param);
     QVector<int> out_list = propOutList(Prop_param);
     for(int i = 0; i < in_list.size(); i++)

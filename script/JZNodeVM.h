@@ -13,13 +13,8 @@ public:
     JZNodeVM();
     ~JZNodeVM();
     
-    bool init(QString path);    
-
-    void addBreakPoint(int nodeId);
-    void removeBreakPoint(int id);
-
-    QVariant getVariable(QString name);
-    void setVariable(QString name, const QVariant &value);        
+    bool init(QString path,bool debug);
+    void quit();
 
 protected slots:
     void onIntValueChanged(int value);

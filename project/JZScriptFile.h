@@ -8,7 +8,7 @@
 class JZScriptFile : public JZProjectItem
 {
 public:    
-    JZScriptFile(int type,bool dir);
+    JZScriptFile(int type);
     virtual ~JZScriptFile();
 
     void clear();
@@ -26,11 +26,12 @@ public:
 
     bool canConnect(JZNodeGemo from, JZNodeGemo to);
     int addConnect(JZNodeGemo from, JZNodeGemo to);
+    bool hasConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);
     void removeConnect(int id);
-    void removeConnectByNode(int node_id, int prop_id, int type);
+    void removeConnectByNode(int node_id, int prop_id);
     JZNodeConnect *getConnect(int id);
-    QList<int> getConnectId(int node_id, int propId = -1, int flag = Prop_All);
+    QList<int> getConnectId(int node_id, int propId = -1); // propId = -1 得到节点所有连线
     QList<JZNodeConnect> connectList();
 
     void saveToStream(QDataStream &s);

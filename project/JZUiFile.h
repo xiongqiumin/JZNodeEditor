@@ -7,7 +7,7 @@
 class JZUiFile : public JZProjectItem
 {
 public:
-    JZUiFile(bool dir);
+    JZUiFile();
     virtual ~JZUiFile();
 
     virtual void saveToStream(QDataStream &s);

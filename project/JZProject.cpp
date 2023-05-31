@@ -20,10 +20,11 @@ void JZProject::init()
     m_filepath.clear();
     m_variables.clear();
 
-    JZScriptFile *ui = new JZScriptFile(ProjectItem_ui,true);
-    JZScriptFile *data = new JZScriptFile(ProjectItem_param,true);
-    JZScriptFile *script_flow = new JZScriptFile(ProjectItem_scriptFlow,true);
-    JZScriptFile *script_param = new JZScriptFile(ProjectItem_scriptParam,true);
+    m_root.setName(".");
+    JZScriptFile *ui = new JZScriptFile(ProjectItem_folder);
+    JZScriptFile *data = new JZScriptFile(ProjectItem_folder);
+    JZScriptFile *script_flow = new JZScriptFile(ProjectItem_folder);
+    JZScriptFile *script_param = new JZScriptFile(ProjectItem_folder);
     data->setName("变量定义");
     ui->setName("用户界面");
     script_param->setName("数据联动");
@@ -33,14 +34,14 @@ void JZProject::init()
     addItem("./",script_param);
     addItem("./",script_flow);
 
-    JZScriptFile *data_page = new JZScriptFile(ProjectItem_param,false);
-    JZScriptFile *ui_page = new JZScriptFile(ProjectItem_ui,false);
-    JZScriptFile *flow_page = new JZScriptFile(ProjectItem_scriptFlow,false);
-    JZScriptFile *param_page = new JZScriptFile(ProjectItem_scriptParam,false);
+    JZScriptFile *data_page = new JZScriptFile(ProjectItem_param);
+    JZScriptFile *ui_page = new JZScriptFile(ProjectItem_ui);
+    JZScriptFile *flow_page = new JZScriptFile(ProjectItem_scriptFlow);
+    JZScriptFile *param_page = new JZScriptFile(ProjectItem_scriptParam);
     data_page->setName("变量");
-    ui_page->setName("界面");
+    ui_page->setName("mainwindow.ui");
     param_page->setName("联动");
-    flow_page->setName("流程");
+    flow_page->setName("main.jz");
 
     addItem("./变量定义",data_page);
     addItem("./用户界面",ui_page);
@@ -98,6 +99,8 @@ int JZProject::addItem(QString dir,JZProjectItem *item)
     if(!parent)
         return -1;    
     
+    Q_ASSERT(!item->project());
+    item->setProject(this);
     parent->addItem(JZProjectItemPtr(item));
     item->parent()->sort();
     return item->parent()->indexOfItem(item);
@@ -181,6 +184,40 @@ QString JZProject::getClassVariable(QString name)
 QStringList JZProject::variableList()
 {
     return m_variables.keys();
+}
+
+QList<JZProjectItem *> JZProject::itemList(QString path,int type)
+{
+    QList<JZProjectItem *> list;
+    itemList(getItem(path),type,list);
+    return list;
+}
+
+void JZProject::itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list)
+{
+    if(item->isFolder())
+    {
+        auto chlid = item->childs();
+        for(int i = 0; i < chlid.size(); i++)
+            itemList(chlid[i],type,list);
+    }
+    else
+    {
+        if(item->itemType() == type)
+            list << item;
+    }
+}
+
+const FunctionDefine *JZProject::function(QString name)
+{
+    auto list = itemList("./",ProjectItem_scriptFunction);
+    for(int i = 0; i < list.size(); i++)
+    {
+        JZScriptFile *file = (JZScriptFile*)list[i];
+        if(file->function().name == name)
+            return &file->function();
+    }
+    return nullptr;
 }
 
 void JZProject::saveToStream(QDataStream &s)

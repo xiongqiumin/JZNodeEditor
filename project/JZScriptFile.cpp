@@ -2,8 +2,8 @@
 #include "JZNodeFactory.h"
 
 //JZScriptFile
-JZScriptFile::JZScriptFile(int type,bool dir)
-    :JZProjectItem(type,dir)
+JZScriptFile::JZScriptFile(int type)
+    :JZProjectItem(type)
 {
     clear();
 }
@@ -86,6 +86,16 @@ QList<int> JZScriptFile::nodeList()
     return m_nodes.keys();
 }
 
+bool JZScriptFile::hasConnect(JZNodeGemo from, JZNodeGemo to)
+{
+    for (int i = 0; i < m_connects.size(); i++)
+    {
+        if (m_connects[i].from == from && m_connects[i].to == to)
+            return true;
+    }
+    return false;
+}
+
 int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
 {
     auto pin_from = getPin(from);
@@ -104,10 +114,36 @@ int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
 
 bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to)
 {
+    JZNode *node_from = getNode(from.nodeId);
+    JZNode *node_to = getNode(to.nodeId);
+    if(node_from == node_to)
+        return false;
+
     JZNodePin *pin_from = getPin(from);
     JZNodePin *pin_to = getPin(to);
-    if(!JZNodeType::canConvert(pin_from->dataType(),pin_to->dataType()))
+    if((pin_from->isFlow() || pin_from->isSubFlow()) != pin_to->isFlow())
         return false;
+    if(!(pin_from->isOutput() && pin_to->isInput()))
+        return false;
+    if(hasConnect(from,to))
+        return false;
+
+    auto out_lines = getConnectId(from.nodeId, from.propId);
+    auto in_lines = getConnectId(to.nodeId, to.propId);
+    if((pin_from->isFlow() || pin_from->isSubFlow()) && out_lines.size() != 0) //流程节点只能出一条
+        return false;
+    if(pin_from->isSubFlow() && in_lines.size() != 0)    //子节点只能连接未连接的节点
+        return false;
+    if(!node_from->isFlowNode() && in_lines.size() > 0)  //输入点只能连接一个计算
+        return false;
+
+/*
+    QList<int> form_type = node_from->propType(from.nodeId);
+    QList<int> in_type = node_to->propType(to.propId);
+    bool ok = JZNodeType::canConvert(form_type,in_type);
+    if(!ok)
+        return false;
+*/
 
     return true;
 }
@@ -130,20 +166,22 @@ void JZScriptFile::removeConnect(int id)
     }
 }
 
-void JZScriptFile::removeConnectByNode(int node_id, int prop_id, int type)
+void JZScriptFile::removeConnectByNode(int node_id, int prop_id)
 {
-    auto list = getConnectId(node_id, prop_id, type);
+    auto list = getConnectId(node_id, prop_id);
     for (int i = 0; i < list.size(); i++)
         removeConnect(list[i]);
 }
 
-QList<int> JZScriptFile::getConnectId(int id, int propId, int flag)
+QList<int> JZScriptFile::getConnectId(int id, int propId)
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
     {
         auto &c = m_connects[i];
-        if ((propId == -1 && (c.from.nodeId == id || c.to.nodeId == id)) || (c.from.nodeId == id && c.from.propId == propId && (flag & Prop_out)) || (c.to.nodeId == id && c.to.propId == propId && (flag & Prop_in)))
+        if ((propId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
+                || (c.from.nodeId == id && c.from.propId == propId)
+                || (c.to.nodeId == id && c.to.propId == propId))
             list.push_back(c.id);
     }
     return list;
@@ -203,7 +241,7 @@ void JZScriptFile::loadFromStream(QDataStream &s)
 
 //JZScriptFunctionFile
 JZScriptFunctionFile::JZScriptFunctionFile()
-    :JZProjectItem(ProjectItem_scriptFunction,true)
+    :JZProjectItem(ProjectItem_scriptFunction)
 {
 
 }
@@ -222,7 +260,7 @@ void JZScriptFunctionFile::addFunction(QString name,QStringList in,QStringList o
     for(int i = 0; i < out.size(); i++)
         define.paramOut.push_back(JZNodePin(out[i],Type_any, Prop_param | Prop_out));
 
-    JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction,false);
+    JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
     file->setName(name);
     file->setFunction(define);
     addItem(JZProjectItemPtr(file));

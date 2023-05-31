@@ -100,11 +100,13 @@ public:
 };
 
 //JZNodeEngine
-class JZNodeEngine
+class JZNodeEngine : public QObject
 {
+    Q_OBJECT
+
 public:
     JZNodeEngine();
-    ~JZNodeEngine();  
+    virtual ~JZNodeEngine();
 
     void setProgram(JZNodeProgram *program);
     JZNodeProgram *program();    
@@ -112,9 +114,13 @@ public:
 
     JZNodeRuntimeInfo runtimeInfo();
 
+    void addWatch();
+    void clearWatch();
+
     int addBreakPoint(QString filepath,int nodeId);
     void removeBreakPoint(int id);
     void clearBreakPoint();    
+
     void pause();
     void resume();    
     void stop();
@@ -131,8 +137,10 @@ public:
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
 
-protected:
-    void notify(int id, const QVariant &data);       
+signals:
+    void sigParamChanged();
+
+protected:          
     bool run();     
 
     const FunctionDefine *function(QString name);       
@@ -155,6 +163,8 @@ protected:
     QVariant getObjectProperty(QString name);
     void setObjectProperty(QString name, const QVariant &value);
     int nodeIdByPc(int pc);        
+    JZNodeScript *getScript(QString path);
+    bool isWatch();
 
     int m_pc;            
     JZNodeProgram *m_program;    
@@ -164,6 +174,8 @@ protected:
     QList<BreakPoint> m_breakPoints;
     BreakPoint m_breakStep;    
     int m_breaknodeId;      // 断点中断位置的nodeid
+
+    QList<int> m_watchParam;
 
     Stack m_stack;
     QMap<QString,QVariant> m_global;            

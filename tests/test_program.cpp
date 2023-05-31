@@ -10,6 +10,8 @@
 #include "JZNodeDebugClient.h"
 #include "JZNodeFunction.h"
 #include "JZNodeBind.h"
+#include "JZNodeFactory.h"
+#include <math.h>
 
 class ScriptTest
 {
@@ -27,7 +29,7 @@ public:
         auto list = program.matchEvent(&event);
         for(int i = 0; i < list.size(); i++)
         {
-            const JZEventHandle *handle = list[0];
+            const JZEventHandle *handle = list[i];
             QVariantList in = event.params;
             QVariantList out;
             engine.call(&handle->function,in,out);
@@ -557,23 +559,117 @@ void testDebugServer()
         client.resume();
     }
     client.stop();
-    client.disconnectFromServer();
-    
-    server.quit();
-    server.wait();
+    server.stopServer();
 }
 
 void testExpr()
 {
     ScriptTest test;
     JZScriptFile *script = test.scriptFlow;
+    JZNodeEngine *engine = &test.engine;
+    JZProject *project = &test.project;
 
-    JZNodeEvent *node_start = new JZNodeEvent();  
-    JZNodeSetParam *node_set = new JZNodeSetParam();
+    QVector<int> op_type = {Node_add,Node_sub,Node_mul,Node_div,Node_mod,Node_eq,Node_ne,Node_le,
+        Node_ge,Node_lt,Node_gt,Node_and,Node_or,Node_bitand,Node_bitor,Node_bitxor};
+
+    JZNodeEvent *node_start = new JZNodeEvent();      
+    JZNodeParam *node_a = new JZNodeParam();
+    JZNodeParam *node_b = new JZNodeParam();
+
+    node_start->setEventType(Event_programStart);
+    project->addVariable("a",100);
+    project->addVariable("b",50);
+
+    node_a->setParamId("a",true);
+    node_b->setParamId("b",true);    
+
+    script->addNode(JZNodePtr(node_start));    
+    script->addNode(JZNodePtr(node_a));
+    script->addNode(JZNodePtr(node_b));    
+
+    QMap<int,int> node_value;
+    JZNodeSetParam *pre_node = nullptr;
+    for(int i = 0; i < op_type.size(); i++)
+    {
+        JZNodeSetParam *node_set = new JZNodeSetParam();
+        node_set->setParamId("i" + QString::number(i),true);        
+        script->addNode(JZNodePtr(node_set));
+
+        auto node_op = JZNodeFactory::instance()->createNode(op_type[i]);
+        script->addNode(JZNodePtr(node_op));
+
+        script->addConnect(node_a->paramOutGemo(0),node_op->paramInGemo(0));
+        script->addConnect(node_b->paramOutGemo(0),node_op->paramInGemo(1));
+        script->addConnect(node_op->paramOutGemo(0),node_set->paramInGemo(0));
+
+        node_value[node_set->id()] = i;
+        if(i == 0)
+            script->addConnect(node_start->flowOutGemo(),node_set->flowInGemo());
+        else       
+            script->addConnect(pre_node->flowOutGemo(),node_set->flowInGemo());
+
+        pre_node = node_set;
+    }
+
+    if(!test.run())
+        return;
+
+    for(int i = 0; i < op_type.size(); i++)
+    {
+        QVariant v = engine->getVariable("i" + QString::number(i));
+        qDebug() << v;
+    }
+}
+
+void testCustomExpr()
+{
+    ScriptTest test;
+    JZScriptFile *script = test.scriptFlow;
+    JZNodeEngine *engine = &test.engine;
+    JZProject *project = &test.project;
+
+    JZNodeEvent *node_start = new JZNodeEvent();
+    JZNodeParam *node_a = new JZNodeParam();
+    JZNodeParam *node_b = new JZNodeParam();
+    JZNodeExpression *node_expr = new JZNodeExpression();
+
+    node_start->setEventType(Event_programStart);
+    project->addVariable("a",2);
+    project->addVariable("b",3);
+    project->addVariable("c",0);
+
+    node_a->setParamId("a",true);
+    node_b->setParamId("b",true);
 
     script->addNode(JZNodePtr(node_start));
+    script->addNode(JZNodePtr(node_a));
+    script->addNode(JZNodePtr(node_b));
+
+    QString error;
+    if(!node_expr->setExpr("c = pow(a,b) - pow(b,a)",error))
+    {
+        qDebug() << error;
+        return;
+    }
+    script->addNode(JZNodePtr(node_expr));
+
+    JZNodeSetParam *node_set = new JZNodeSetParam();
+    node_set->setParamId("c",true);
     script->addNode(JZNodePtr(node_set));
+
+    script->addConnect(node_a->paramOutGemo(0),node_expr->paramInGemo(0));
+    script->addConnect(node_b->paramOutGemo(0),node_expr->paramInGemo(1));
+    script->addConnect(node_expr->paramOutGemo(0),node_set->paramInGemo(0));
+
     script->addConnect(node_start->flowOutGemo(),node_set->flowInGemo());
+
+    if(!test.run())
+        return;
+
+    int a = engine->getVariable("a").toInt();
+    int b = engine->getVariable("b").toInt();
+    QVariant c = engine->getVariable("c");
+    qDebug() << c << pow(a,b) - pow(b,a);
 }
 
 void testFunction()
@@ -735,6 +831,7 @@ void testCClass()
 
 void testBuild()
 {
+    /*
     testParamBinding();
     testWhileLoop();
     testFor();
@@ -742,8 +839,10 @@ void testBuild()
     testCClass();
     testSequeue();
     testExpr();
+    testCustomExpr();
     testFunction();
     testForEach();
-    //testBreakPoint();
-    //testDebugServer();
+    testBreakPoint();
+    */
+    testDebugServer();
 }

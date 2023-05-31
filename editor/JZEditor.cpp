@@ -42,3 +42,8 @@ void JZEditor::paste()
 {
 
 }
+
+void JZEditor::selectAll()
+{
+
+}

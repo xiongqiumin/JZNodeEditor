@@ -16,17 +16,19 @@ public:
 
     bool startServer(int port);
     void stopServer();
+    void log(QString log);
 
     void setEngine(JZNodeEngine *eng);
     bool waitForAttach();
 
 signals:
-    void sigStop();
+    void sigStop(QPrivateSignal);
 
 protected slots:
     void onNewConnect(int netId);
 	void onDisConnect(int netId);
 	void onNetPackRecv(int netId,JZNetPackPtr ptr);
+    void onStop();
 
 protected:        
     JZNetServer m_server;

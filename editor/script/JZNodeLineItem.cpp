@@ -1,3 +1,4 @@
+#include <QGraphicsSceneMouseEvent>
 #include <QDebug>
 #include "JZNodeLineItem.h"
 #include "JZNodeView.h"
@@ -8,6 +9,7 @@ JZNodeLineItem::JZNodeLineItem(JZNodeGemo from)
     m_type = Item_line;
     m_from = from;
     m_drag = false;
+    setFlag(QGraphicsItem::ItemIsSelectable);
     setZValue(1);
 }
 
@@ -79,5 +81,19 @@ void JZNodeLineItem::setEndTraget(JZNodeGemo to)
 
 void JZNodeLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget)
 {    
+    if(isSelected())
+    {
+        painter->setPen(Qt::yellow);
+    }
     painter->drawLine(m_startPoint, m_endPoint);
+}
+
+void JZNodeLineItem::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent)
+{
+    QPointF pos = mouseEvent->scenePos();
+    if((m_startPoint - pos).manhattanLength() < 20 || (m_endPoint - pos).manhattanLength() < 20){
+        mouseEvent->ignore();
+        return;
+    }
+    JZNodeBaseItem::mousePressEvent(mouseEvent);
 }

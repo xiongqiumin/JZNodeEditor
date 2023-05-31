@@ -64,6 +64,9 @@ public:
     QVariantList params;
     FunctionDefine function;
 };
+QDataStream &operator<<(QDataStream &s, const JZEventHandle &param);
+QDataStream &operator>>(QDataStream &s, JZEventHandle &param);
+
 
 struct NodeInfo
 {        
@@ -75,7 +78,8 @@ struct NodeInfo
         int pc;
     };        
 
-    JZNode *node;
+    int node_id;
+    int node_type;
     int start;
     int end;
     QList<int> continuePc;
@@ -86,6 +90,8 @@ struct NodeInfo
     QList<int> continueList;    
     QList<int> breakList;    
 };
+QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
+QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 
 //JZNodeScript
 class JZNodeScript
@@ -102,6 +108,7 @@ public:
     QList<FunctionDefine> functionList;
     QMap<int,NodeInfo> nodeInfo;
     QMap<QString,int> localVariable;
+    QList<JZNodeIRParam> watchList;
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
@@ -124,6 +131,8 @@ public:
     void clear();
 
     FunctionDefine *function(QString name);
+    JZNodeScript *script(QString name);
+
     QMap<QString,QVariant> variables();
     QList<JZEventHandle*> matchEvent(JZEvent *e) const;       
     QList<JZEventHandle*> eventList() const;

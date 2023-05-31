@@ -23,6 +23,7 @@ public:
 
 protected:
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget);    
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
 
     JZNodeGemo m_from;
     JZNodeGemo m_to;

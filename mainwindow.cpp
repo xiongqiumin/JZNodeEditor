@@ -8,21 +8,30 @@
 #include <QFileDialog>
 #include <QLabel>
 #include <QMenuBar>
-#include "JZNodeEditor.h"
+#include <QCoreApplication>
+#include <QMessageBox>
 #include "JZNodeEditor.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
     m_editor = nullptr;
+    m_actRun = m_actStepOver = m_actStepIn = m_actStepOut = m_actBreakPoint = nullptr;
+
+    connect(&m_debuger,&JZNodeDebugClient::sigLog,this,&MainWindow::onDebugLog);
+    connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onDebugFinish);
 
     initMenu();
     initUi(); 
+    updateMenuAction();
+
     resize(800, 600);    
 }
 
 MainWindow::~MainWindow()
 {
+    for(auto edit : m_editors)
+        edit->disconnect();
 }
 
 void MainWindow::initMenu()
@@ -50,12 +59,15 @@ void MainWindow::initMenu()
     auto actCut = menu_edit->addAction("剪切");
     auto actCopy = menu_edit->addAction("复制");
     auto actPaste = menu_edit->addAction("粘贴");
+    menu_edit->addSeparator();
+    auto actSelectAll = menu_edit->addAction("全选");
     actUndo->setShortcut(QKeySequence("Ctrl+Z"));
     actRedo->setShortcut(QKeySequence("Ctrl+Y"));
     actDel->setShortcut(QKeySequence("Ctrl+D"));
     actCut->setShortcut(QKeySequence("Ctrl+X"));
     actCopy->setShortcut(QKeySequence("Ctrl+C"));
     actPaste->setShortcut(QKeySequence("Ctrl+V"));
+    actSelectAll->setShortcut(QKeySequence("Ctrl+A"));
 
     connect(actUndo,&QAction::triggered,this,&MainWindow::onActionUndo);
     connect(actRedo,&QAction::triggered,this,&MainWindow::onActionRedo);
@@ -63,6 +75,7 @@ void MainWindow::initMenu()
     connect(actCut,&QAction::triggered,this,&MainWindow::onActionCut);
     connect(actCopy,&QAction::triggered,this,&MainWindow::onActionCopy);
     connect(actPaste,&QAction::triggered,this,&MainWindow::onActionPaste);
+    connect(actSelectAll,&QAction::triggered,this,&MainWindow::onActionSelectAll);
 
     QMenu *menu_view = menubar->addMenu("视图");
     menu_view->addAction("显示窗口");
@@ -72,28 +85,30 @@ void MainWindow::initMenu()
     auto actBuild = menu_build->addAction("编译");
     connect(actBuild,&QAction::triggered,this,&MainWindow::onActionBuild);
 
-    QMenu *menu_debug = menubar->addMenu("调试");
-    auto actRun = menu_debug->addAction("运行");
-    auto actStepOver = menu_debug->addAction("单步");
-    auto actStepIn = menu_debug->addAction("单步进入");
-    auto actStepOut = menu_debug->addAction("单步跳出");
-    auto actBreakPoint = menu_debug->addAction("断点");
-    actRun->setShortcut(QKeySequence("F5"));
-    actStepOver->setShortcut(QKeySequence("F0"));
-    actStepIn->setShortcut(QKeySequence("F11"));
-    actStepOut->setShortcut(QKeySequence("Shift+F11"));
-    actBreakPoint->setShortcut(QKeySequence("F9"));
+    QMenu *menu_debug = menubar->addMenu("调试");    
+    m_actRun = menu_debug->addAction("开始调试");
+    m_actStepOver = menu_debug->addAction("单步");
+    m_actStepIn = menu_debug->addAction("单步进入");
+    m_actStepOut = menu_debug->addAction("单步跳出");
+    m_actBreakPoint = menu_debug->addAction("断点");
+    m_actRun->setShortcut(QKeySequence("F5"));
+    m_actStepOver->setShortcut(QKeySequence("F0"));
+    m_actStepIn->setShortcut(QKeySequence("F11"));
+    m_actStepOut->setShortcut(QKeySequence("Shift+F11"));
+    m_actBreakPoint->setShortcut(QKeySequence("F9"));
 
-    connect(actRun,&QAction::triggered,this,&MainWindow::onActionRun);
-    connect(actStepOver,&QAction::triggered,this,&MainWindow::onActionStepOver);
-    connect(actStepIn,&QAction::triggered,this,&MainWindow::onActionStepIn);
-    connect(actStepOut,&QAction::triggered,this,&MainWindow::onActionStepOut);
-    connect(actBreakPoint,&QAction::triggered,this,&MainWindow::onActionBreakPoint);
+    connect(m_actRun,&QAction::triggered,this,&MainWindow::onActionRun);
+    connect(m_actStepOver,&QAction::triggered,this,&MainWindow::onActionStepOver);
+    connect(m_actStepIn,&QAction::triggered,this,&MainWindow::onActionStepIn);
+    connect(m_actStepOut,&QAction::triggered,this,&MainWindow::onActionStepOut);
+    connect(m_actBreakPoint,&QAction::triggered,this,&MainWindow::onActionBreakPoint);
 
     QMenu *menu_help = menubar->addMenu("帮助");
     menu_help->addAction("帮助");
     menu_help->addSeparator();
-    menu_help->addAction("检查更新");
+    menu_help->addAction("检查更新");       
+
+    m_menuList << menu_file << menu_edit << menu_view << menu_build << menu_debug << menu_help;
 }
 
 void MainWindow::initUi()
@@ -114,6 +129,7 @@ void MainWindow::initUi()
 
     //main
     QSplitter *splitterMain = new QSplitter(Qt::Horizontal);
+    splitterMain->setObjectName("splitterMain");
     splitterMain->addWidget(m_projectTree);
     splitterMain->addWidget(widget_left);
 
@@ -132,13 +148,14 @@ void MainWindow::initUi()
 
     splitterMain->setCollapsible(0,false);
     splitterMain->setCollapsible(1,false);
-    splitterMain->setStretchFactor(0,1);
-    splitterMain->setStretchFactor(1,3);
+    splitterMain->setStretchFactor(0,0);
+    splitterMain->setStretchFactor(1,1);
+    splitterMain->setSizes({150,600});
 
     splitterLeft->setCollapsible(0,false);
     splitterLeft->setCollapsible(1,false);
-    splitterLeft->setStretchFactor(0,3);
-    splitterLeft->setStretchFactor(1,1);
+    splitterLeft->setStretchFactor(0,1);
+    splitterLeft->setStretchFactor(1,0);
 
     setCentralWidget(widget);
 }
@@ -146,6 +163,20 @@ void MainWindow::initUi()
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
+}
+
+void MainWindow::updateMenuAction()
+{
+    QMenu *menu_edit = m_menuList[1];
+    auto edit_act_list = menu_edit->actions();
+    edit_act_list[0]->setEnabled(false);
+    edit_act_list[1]->setEnabled(false);
+    edit_act_list[2]->setEnabled(false);
+    edit_act_list[3]->setEnabled(false);
+    edit_act_list[4]->setEnabled(false);
+
+    QMenu *menu_debug = m_menuList[4];
+    auto debug_act_list = menu_debug->actions();
 }
 
 void MainWindow::onActionNewProject()
@@ -219,15 +250,33 @@ void MainWindow::onActionPaste()
         m_editor->paste();
 }
 
+void MainWindow::onActionSelectAll()
+{
+    if(m_editor)
+    {
+        m_editor->selectAll();        
+    }
+}
+
 void MainWindow::onActionBuild()
 {
-    if(!m_builder.build(&m_project,&m_program))
-        m_log->append("编译失败");
+    build();
 }
 
 void MainWindow::onActionRun()
-{
+{    
+    start(false);
+}
 
+void MainWindow::onActionPause()
+{
+    m_debuger.pause();
+    m_debuger.resume();
+}
+
+void MainWindow::onActionStop()
+{
+    m_debuger.stop();
 }
 
 void MainWindow::onActionBreakPoint()
@@ -250,6 +299,16 @@ void MainWindow::onActionStepOut()
     m_debuger.stepOut();
 }
 
+void MainWindow::onRedoAvailable(bool flag)
+{
+    m_menuList[1]->actions()[1]->setEnabled(flag);
+}
+
+void MainWindow::onUndoAvailable(bool flag)
+{
+    m_menuList[1]->actions()[0]->setEnabled(flag);
+}
+
 JZEditor *MainWindow::createEditor(int type)
 {
     if(type == ProjectItem_scriptFlow ||type == ProjectItem_scriptParam)
@@ -267,6 +326,8 @@ void MainWindow::onFileOpened(QString filepath)
         if(!editor)
             return;
 
+        connect(editor,&JZEditor::redoAvailable,this,&MainWindow::onRedoAvailable);
+        connect(editor,&JZEditor::undoAvailable,this,&MainWindow::onUndoAvailable);
         m_editorStack->addWidget(editor);
         m_editors[file] = editor;
     }
@@ -303,4 +364,73 @@ void MainWindow::onFileClosed(QString filepath)
         else
             switchEditor(nullptr);
     }
+}
+
+bool MainWindow::build()
+{
+    if(!m_builder.build(&m_project,&m_program))
+    {
+        m_log->append("编译失败");
+        return false;
+    }
+
+    return true;
+}
+
+void MainWindow::start(bool startPause)
+{
+    if(!build())
+        return;
+
+    QString app = qApp->applicationFilePath();
+    QString app_dir = qApp->applicationDirPath();
+
+    if(!m_builder.build(&m_project,&m_program))
+    {
+        m_log->append("build failed");
+        return;
+    }
+
+    QString build_path = app_dir + "/build";
+    QString build_exe = build_path + "/" + m_project.name() + ".program";
+    QDir dir;
+    if(!dir.exists(build_path))
+        dir.mkdir(build_path);
+    if(!m_program.save(build_exe))
+    {
+        m_log->append("generate program failed");
+        return;
+    }
+
+    QStringList params;
+    params << "--run" << build_exe << "--debug";
+    if(startPause)
+        params << "--start-pause";
+    m_process.start(app,params);
+    if(!m_process.waitForStarted())
+    {
+        QMessageBox::information(this,"","start failed");
+        return;
+    }
+
+    QThread::msleep(500);
+    if(!m_debuger.connectToServer("127.0.0.1",19888))
+    {
+        QMessageBox::information(this,"","can't connect to process");
+        return;
+    }
+    m_log->append("conenct to server");
+}
+
+void MainWindow::onDebugLog(QString log)
+{
+    m_log->append(log);
+}
+
+void MainWindow::onDebugFinish(int code,QProcess::ExitStatus status)
+{
+    if(status == QProcess::CrashExit)
+        m_log->append("process crash ");
+    else
+        m_log->append("process finish, exit code " + QString::number(code));
 }

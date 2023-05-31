@@ -11,8 +11,7 @@ JZProjectTree::JZProjectTree()
     QVBoxLayout *l = new QVBoxLayout();
     l->setContentsMargins(0,0,0,0);
     setLayout(l);
-    
-    isEditNew = false;
+
     m_tree = new QTreeWidget();
     m_editItem = nullptr;
     m_tree->setHeaderHidden(true);
@@ -82,18 +81,9 @@ void JZProjectTree::cancelEdit()
     if(m_editItem)
     {
         m_editItem->setFlags(m_editItem->flags() & ~Qt::ItemIsEditable);
-        if(isEditNew)
-        {
-            delete m_editProjectItem;
-            delete m_editItem;
-        }
-        else
-        {
-            m_editItem->setText(0,m_editProjectItem->name());
-        }
+        m_editItem->setText(0,m_editProjectItem->name());
         m_editProjectItem = nullptr;
-        m_editItem = nullptr;
-        isEditNew = false;
+        m_editItem = nullptr;        
     }
     m_tree->blockSignals(false);
 }
@@ -121,10 +111,7 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     {
         m_editProjectItem->setName(name);
         int new_idx = -1;
-        if(isEditNew)
-            new_idx = m_project->addItem(p->itemPath(),m_editProjectItem);
-        else
-            new_idx = m_project->renameItem(m_editProjectItem,name);
+        m_project->renameItem(m_editProjectItem,name);
         item->setData(0,Qt::UserRole,m_editProjectItem->itemPath());
 
         int old_idx = item_parent->indexOfChild(item);
@@ -140,21 +127,12 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     else
     {
         QMessageBox::information(this,"",name_error);
-        if(isEditNew)
-        {
-            delete m_editProjectItem;
-            delete m_editItem;
-        }
-        else
-        {
-            m_editItem->setText(0,m_editProjectItem->name());
-        }
+        m_editItem->setText(0,m_editProjectItem->name());
     }
     m_tree->blockSignals(false);
 
     m_editProjectItem = nullptr;
-    m_editItem = nullptr;
-    isEditNew = false;
+    m_editItem = nullptr;    
 }
 
 void JZProjectTree::onItemClicked(QTreeWidgetItem *view_item)
@@ -177,8 +155,7 @@ void JZProjectTree::onItemRename()
 
     view_item->setFlags(view_item->flags() | Qt::ItemIsEditable);
     m_editItem = view_item;
-    m_editProjectItem = getItem(view_item);
-    isEditNew = false;
+    m_editProjectItem = getItem(view_item);    
     m_tree->editItem(view_item);
 }
 
@@ -218,16 +195,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
     if(act == actCreate || act == actCreateFolder)
     {
-        QTreeWidgetItem *new_tree_item = new QTreeWidgetItem();
-        new_tree_item->setFlags(new_tree_item->flags() | Qt::ItemIsEditable);
-        view_item->addChild(new_tree_item);
-        if(!view_item->isExpanded())
-            m_tree->expandItem(view_item);
 
-        isEditNew = true;
-        m_editItem = new_tree_item;
-        m_tree->editItem(new_tree_item);
-        m_editProjectItem = JZProjectItemFactory::create(item->itemType(), act == actCreateFolder);
     }
     else if(act == actRemove)
     {

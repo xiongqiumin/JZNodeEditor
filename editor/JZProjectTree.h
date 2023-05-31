@@ -37,8 +37,7 @@ protected:
     QTreeWidget *m_tree; 
 
     QTreeWidgetItem *m_editItem;
-    JZProjectItem *m_editProjectItem;
-    bool isEditNew;
+    JZProjectItem *m_editProjectItem;    
 };
 
 

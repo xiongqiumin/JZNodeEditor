@@ -4,6 +4,7 @@
 
 enum{    
     ProjectItem_root,
+    ProjectItem_folder,
     ProjectItem_ui,
     ProjectItem_param,
     ProjectItem_scriptParam,
@@ -11,11 +12,15 @@ enum{
     ProjectItem_scriptFunction,
 };
 
+class JZProject;
 class JZProjectItem
 {    
 public:
-    JZProjectItem(int itemType,bool folder);
-    virtual ~JZProjectItem();       
+    JZProjectItem(int itemType);
+    virtual ~JZProjectItem();
+
+    void setProject(JZProject *project);
+    JZProject *project() const;
 
     QString name();
     void setName(QString name);
@@ -47,26 +52,26 @@ protected:
     JZProjectItem *m_parent;
     QList<QSharedPointer<JZProjectItem>> m_childs;
     
-    int m_itemType;
-    int m_subType;
+    int m_itemType;    
     QString m_name;    
     bool m_folder;
+    JZProject *m_project;
 };
 typedef QSharedPointer<JZProjectItem> JZProjectItemPtr;
 
-//JZProjectRoot
-class JZProjectRoot : public JZProjectItem
+//JZProjectItemFolder
+class JZProjectItemFolder : public JZProjectItem
 {
 public:
-    JZProjectRoot();
-    virtual ~JZProjectRoot();
+    JZProjectItemFolder();
+    virtual ~JZProjectItemFolder();
 };
 
 //JZProjectItemFactory
 class JZProjectItemFactory
 {
 public:
-    static JZProjectItem *create(int itemType,bool folder);
+    static JZProjectItem *create(int itemType);
     static QString itemTypeName(int itemType);
 };
 

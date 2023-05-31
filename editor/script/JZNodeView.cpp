@@ -15,6 +15,8 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
+#include <QPolygon>
+#include <QInputDialog>
 #include "JZNodeFactory.h"
 #include "JZNodeValue.h"
 #include "JZNodeCompiler.h"
@@ -34,6 +36,29 @@ int JZNodeViewCommand::id() const
     return -1;
 }
 
+void JZNodeViewCommand::setItemPos(JZNodeGraphItem *item,QPointF pos)
+{
+    m_view->setMoveUndo(false);
+    item->setPos(pos);
+    m_view->setMoveUndo(true);
+}
+
+QVariant JZNodeViewCommand::saveItem(JZNodeGraphItem *item)
+{
+    QByteArray buffer;
+    QDataStream s(&buffer,QIODevice::WriteOnly);
+    m_view->getNode(itemId)->saveToStream(s);
+    return buffer;
+}
+
+void JZNodeViewCommand::loadItem(JZNodeGraphItem *item,const QVariant &value)
+{
+    QByteArray buffer = value.toByteArray();
+    QDataStream s(&buffer,QIODevice::ReadOnly);
+    item->node()->loadFromStream(s);
+    item->updateNode();
+}
+
 void JZNodeViewCommand::undo()
 {
     if(command == CreateNode)
@@ -45,11 +70,12 @@ void JZNodeViewCommand::undo()
         auto node = parseNode(oldValue.toByteArray());
         node->setId(itemId);
         auto item = m_view->insertNode(JZNodePtr(node));
-        item->setPos(oldPos);
+        setItemPos(item,oldPos);
     }
     else if(command == MoveNode)
     {        
-        m_view->getNodeItem(itemId)->setPos(oldPos);
+        auto item = m_view->getNodeItem(itemId);
+        setItemPos(item,oldPos);
     }
     else if(command == CreateLine)
     {        
@@ -60,6 +86,11 @@ void JZNodeViewCommand::undo()
         auto line = parseLine(oldValue.toByteArray());
         line.id = itemId;
         m_view->insertLine(line);
+    }
+    else if(command == PropertyChange)
+    {
+        auto item = m_view->getNodeItem(itemId);
+        loadItem(item,oldValue);
     }
 }
 
@@ -79,7 +110,7 @@ void JZNodeViewCommand::redo()
             node->setId(itemId);
             item = m_view->insertNode(JZNodePtr(node));
         }
-        item->setPos(newPos);
+        setItemPos(item,newPos);
     }
     else if(command == RemoveNode)
     {
@@ -87,7 +118,8 @@ void JZNodeViewCommand::redo()
     }
     else if(command == MoveNode)
     {        
-        m_view->getNodeItem(itemId)->setPos(newPos);
+        auto item = m_view->getNodeItem(itemId);
+        setItemPos(item,newPos);
     }
     else if(command == CreateLine)
     {
@@ -106,6 +138,14 @@ void JZNodeViewCommand::redo()
     else if(command == RemoveLine)
     {
         m_view->removeLine(itemId);
+    }
+    else if(command == PropertyChange)
+    {
+        auto item = m_view->getNodeItem(itemId);
+        if(newValue.isNull())
+            newValue = formatNode(item->node());
+        else
+            loadItem(item,newValue);
     }
 }
 
@@ -169,8 +209,10 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_propEditor = nullptr;
     m_loadFlag = false;    
     m_file = nullptr;
-    m_isMove = false;
-    m_isSelect = false;
+    m_isMove = false;    
+    m_moveUndo = false;
+    connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
+    connect(&m_commandStack,&QUndoStack::canUndoChanged,this,&JZNodeView::undoAvailable);
 
     m_scene = new JZNodeScene();    
     setScene(m_scene);
@@ -185,6 +227,8 @@ JZNodeView::JZNodeView(QWidget *widget)
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &JZNodeView::customContextMenuRequested, this, &JZNodeView::onContextMenu);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);    
+
+    m_scene->setSceneRect(QRect(0,0,1000,1000));
 }
 
 JZNodeView::~JZNodeView()
@@ -259,8 +303,13 @@ JZNode *JZNodeView::getNode(int id)
     return m_file->getNode(id);
 }
 
-JZNodeGraphItem *JZNodeView::createNode(JZNodePtr node)
+JZNodePin *JZNodeView::getPin(JZNodeGemo gemo)
 {
+    return m_file->getPin(gemo);
+}
+
+JZNodeGraphItem *JZNodeView::createNode(JZNodePtr node)
+{        
     int id = m_file->addNode(node);
     return createNodeItem(id);
 }
@@ -283,10 +332,23 @@ void JZNodeView::removeNode(int id)
     if (!item)
         return;
 
+    if(m_propEditor->node() == item->node())
+        m_propEditor->setNode(nullptr);
+
     Q_ASSERT(m_file->getConnectId(id).size() == 0);
     m_scene->removeItem(item);
     delete item;
-    m_file->removeNode(id);
+    m_file->removeNode(id);        
+}
+
+void JZNodeView::addPin(int id,JZNodePin pin)
+{
+
+}
+
+void JZNodeView::removePin(int id,int prop_id)
+{
+
 }
 
 JZNodeGraphItem *JZNodeView::createNodeItem(int id)
@@ -405,6 +467,20 @@ void JZNodeView::cancelLine()
     m_selLine = nullptr;
 }
 
+void JZNodeView::cancelSelect()
+{
+    if(!m_selArea)
+        return;
+
+    m_scene->clearSelection();
+    QPainterPath path;
+    path.addRect(m_selArea->rect());
+    m_scene->setSelectionArea(path);
+    m_scene->removeItem(m_selArea);
+    delete m_selArea;
+    m_selArea = nullptr;
+}
+
 void JZNodeView::foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType)
 {
     auto items = m_scene->items();
@@ -443,11 +519,14 @@ QVariant JZNodeView::onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsI
             for (int i = 0; i < lineId.size(); i++)
                 getLineItem(lineId[i])->updateNode();
 
-            JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::MoveNode);
-            cmd->itemId = node_id;
-            cmd->oldPos = m_file->getNodePos(node_id);
-            cmd->newPos = item->pos();
-            m_commandStack.push(cmd);
+            if(m_moveUndo)
+            {
+                JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::MoveNode);
+                cmd->itemId = node_id;
+                cmd->oldPos = m_file->getNodePos(node_id);
+                cmd->newPos = item->pos();
+                m_commandStack.push(cmd);
+            }
         }
     }
     else if (change == QGraphicsItem::ItemSelectedHasChanged)
@@ -455,8 +534,15 @@ QVariant JZNodeView::onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsI
         auto list = m_scene->selectedItems();
         if(list.size() > 0)
         {
-            auto node = ((JZNodeGraphItem *)list[0])->node();
-            m_propEditor->setNode(node);
+            for(int i = 0; i < list.size(); i++)
+            {
+                if(list[i]->type() == Item_node)
+                {
+                    auto node = ((JZNodeGraphItem *)list[i])->node();
+                    m_propEditor->setNode(node);
+                    break;
+                }
+            }
         }
         else
         {
@@ -490,17 +576,18 @@ void JZNodeView::clear()
 {
     m_scene->clear();
     m_file->clear();
+    m_commandStack.clear();
     m_scene->setSceneRect(QRect(0,0,1000,1000));
 }
 
 void JZNodeView::redo()
 {
-    m_commandStack.redo();
+    m_commandStack.redo();    
 }
 
 void JZNodeView::undo()
 {
-    m_commandStack.undo();
+    m_commandStack.undo();    
 }
 
 void JZNodeView::remove()
@@ -532,6 +619,20 @@ void JZNodeView::paste()
     CopyData copyData = unpack(mimeData->data("jznode_copy_data"));    
     m_commandStack.beginMacro("paste");
     QMap<int,int> nodeIdMap;
+    QPolygonF ploy;
+    for(int i = 0; i < copyData.nodesPos.size(); i++)
+        ploy << copyData.nodesPos[i];
+    QPointF topLeft = ploy.boundingRect().topLeft();
+    for(int i = 0; i < copyData.nodesPos.size(); i++)
+        copyData.nodesPos[i] -= topLeft;
+
+    QPoint cur_pos = mapFromGlobal(QCursor::pos());
+    QPointF offset;
+    if(this->rect().contains(cur_pos))
+        offset = mapToScene(cur_pos);
+    else
+        offset = mapToScene(0,0);
+
     for(int i = 0; i < copyData.nodesPos.size(); i++)
     {
         JZNode *node = parseNode(copyData.nodes[i]);
@@ -539,9 +640,9 @@ void JZNodeView::paste()
         node->setId(-1);
 
         JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateNode);
-        cmd->itemId << -1;
+        cmd->itemId = -1;
         cmd->newValue = formatNode(node);
-        cmd->newPos = copyData.nodesPos[i];
+        cmd->newPos = copyData.nodesPos[i] + offset;
         m_commandStack.push(cmd);
 
         nodeIdMap[old_id] = cmd->itemId;
@@ -561,6 +662,23 @@ void JZNodeView::paste()
         m_commandStack.push(cmd);
     }
     m_commandStack.endMacro();
+}
+
+void JZNodeView::selectAll()
+{
+    setFocus();
+    m_scene->clearSelection();
+    auto items = m_scene->items();
+    for (int i = 0; i < items.size(); i++)
+    {
+        if (items[i]->type() == Item_node || items[i]->type() == Item_line)
+            items[i]->setSelected(true);
+    }
+}
+
+void JZNodeView::setMoveUndo(bool flag)
+{
+    m_moveUndo = flag;
 }
 
 void JZNodeView::updateNodeLayout()
@@ -631,7 +749,7 @@ void JZNodeView::updateNodeLayout()
 }
 
 void JZNodeView::removeItem(QGraphicsItem *item)
-{    
+{        
     Q_ASSERT(item->type() > Item_none);
         
     auto item_id = ((JZNodeBaseItem *)item)->id();
@@ -670,23 +788,7 @@ void JZNodeView::removeItem(QGraphicsItem *item)
 
 bool JZNodeView::canConnect(JZNodeGemo from,JZNodeGemo to)
 {
-    JZNode *node_from = getNode(from.nodeId);
-    JZNode *node_to = getNode(to.nodeId);
-    if(node_from == node_to)
-        return true;    
-
-    auto lines = m_file->getConnectId(to.nodeId, to.propId, Prop_in);
-    if(lines.size() != 0)
-        return false;
-/*
-    QList<int> form_type = node_from->propType(from.nodeId);
-    QList<int> in_type = node_to->propType(to.propId);
-    bool ok = JZNodeType::canConvert(form_type,in_type);
-    if(!ok)
-        return false;
-*/
-
-    return true;
+    return m_file->canConnect(from,to);
 }
 
 void JZNodeView::onContextMenu(const QPoint &pos)
@@ -748,6 +850,24 @@ void JZNodeView::dragMoveEvent(QDragMoveEvent *event)
 void JZNodeView::dropEvent(QDropEvent *event)
 {
     QByteArray data = event->mimeData()->data("node_data");
+    QDataStream s(&data,QIODevice::ReadOnly);
+    int node_type;
+    s >> node_type;
+    if(node_type == Node_expr)
+    {
+        QString text = QInputDialog::getText(this,"请输入表达式","");
+        if(text.isEmpty())
+            return;
+
+        JZNodePtr node = JZNodePtr(parseNode(data));
+        QString error;
+        JZNodeExpression *expr = dynamic_cast<JZNodeExpression *>(node.data());
+        if(!expr->setExpr(text,error))
+            return;
+
+        data = formatNode(node.data());
+    }
+
     JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateNode);
     cmd->itemId = -1;
     cmd->newValue = data;
@@ -762,7 +882,11 @@ void JZNodeView::wheelEvent(QWheelEvent *event)
     double scale = this->transform().m11();
     if(event->angleDelta().y() > 0)//鼠标滚轮向前滚动
     {
+        if(scale >= 4)
+            return;
+
         scale*=1.1;//每次放大10%
+        scale = qMin(scale,4.0);
     }
     else
     {
@@ -799,13 +923,8 @@ void JZNodeView::mouseMoveEvent(QMouseEvent *event)
 
         m_downPoint = event->pos();
     }
-    else if(m_isSelect)
-    {
-        if(!m_selArea)
-        {
-            m_selArea = m_scene->addRect(QRectF(),QPen(),QBrush());            
-            m_selArea->setZValue(100);
-        }
+    else if(m_selArea)
+    {        
         m_selArea->setRect(QRectF(mapToScene(m_downPoint),mapToScene(event->pos())));
     }
 }
@@ -820,7 +939,11 @@ void JZNodeView::mousePressEvent(QMouseEvent *event)
     if(!itemAt(event->pos())){
         m_downPoint = event->pos();
         if(event->modifiers() & Qt::SHIFT)
-            m_isSelect = true;
+        {
+            Q_ASSERT(!m_selArea);
+            m_selArea = m_scene->addRect(QRectF(),QPen(),QBrush());
+            m_selArea->setZValue(100);
+        }
         else
             m_isMove = true;
     }
@@ -829,6 +952,8 @@ void JZNodeView::mousePressEvent(QMouseEvent *event)
 
 void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
 {
+    if(m_isMove)
+        m_isMove = false;    
     if (m_selLine)
     {
         JZNodeGemo gemo;
@@ -849,21 +974,22 @@ void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
             endLine(gemo);
         else
             cancelLine();
-    }
+    }        
+    if(m_selArea)
+        cancelSelect();
     QGraphicsView::mouseReleaseEvent(event);
+}
 
-    if(m_isMove){
-        m_isMove = false;
+void JZNodeView::keyReleaseEvent(QKeyEvent *event)
+{
+    if(event->key() == Qt::Key_Delete)
+        remove();
+    else if(event->key() == Qt::Key_Escape){
+        cancelLine();
+        cancelSelect();
     }
-    if(m_selArea){
-        m_scene->clearSelection();
-        QPainterPath path;
-        path.addRect(m_selArea->rect());
-        m_scene->setSelectionArea(path);
-        m_scene->removeItem(m_selArea);
-        delete m_selArea;
-        m_selArea = nullptr;
-    }
+
+    QGraphicsView::keyReleaseEvent(event);
 }
 
 void JZNodeView::onTimer()
@@ -905,6 +1031,10 @@ void JZNodeView::copyItems(QList<QGraphicsItem*> items)
 void JZNodeView::removeItems(QList<QGraphicsItem*> items)
 {
     m_commandStack.beginMacro("remove");
+    std::sort(items.begin(),items.end(),[](const QGraphicsItem *i1,const QGraphicsItem *i2)->bool{
+            return i1->type() < i2->type();
+        });
+
     for(int i = 0; i < items.size(); i++)
     {        
         removeItem(items[i]);

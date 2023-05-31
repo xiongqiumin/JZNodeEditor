@@ -37,10 +37,12 @@ public:
     
     //for node
     int addr;
-    JZNodeScript *script;
+    QString script;
 
     //for c    
     CFunction *cfunc;    
 };
+QDataStream &operator<<(QDataStream &s, const FunctionDefine &param);
+QDataStream &operator>>(QDataStream &s, FunctionDefine &param);
 
 #endif

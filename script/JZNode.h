@@ -14,8 +14,7 @@ enum
     Node_setParamData,
     Node_literal,
     Node_functionStart,
-    Node_function,        
-    Node_event,
+    Node_function,            
     Node_add,
     Node_sub,
     Node_mul,
@@ -44,6 +43,9 @@ enum
     Node_switch,        
     Node_return,
     Node_exit,
+    Node_event,
+    Node_paramChangedEvent,
+    Node_timeEvent,
 };
 
 //JZNodeGemo

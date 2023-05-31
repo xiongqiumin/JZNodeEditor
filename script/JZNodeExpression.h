@@ -8,7 +8,7 @@
 class JZNodeOperator: public JZNode
 {
 public:
-    JZNodeOperator();
+    JZNodeOperator(int node_type,int op_type);
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
@@ -145,8 +145,15 @@ class JZNodeExpression: public JZNode
 public:
     JZNodeExpression();
 
+    bool setExpr(QString expr,QString &error);
+    QString expr();
+
+protected:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    QString expression;
+
+    QString m_expression;
+    QStringList m_exprList;
+    QMap<QString,int> m_opMap;
 };
 
 #endif

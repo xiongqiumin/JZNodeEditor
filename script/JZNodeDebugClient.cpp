@@ -125,6 +125,8 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
     JZNodeDebugPacket *packet = new JZNodeDebugPacket();
     if(packet->cmd == Cmd_breakTrigger)
         emit sigBreakTrigger();
+    else if(packet->cmd == Cmd_log)
+        emit sigLog(packet->params[0].toString());
 }
 
 bool JZNodeDebugClient::sendCommand(int command,QVariantList &params,QVariantList &result)

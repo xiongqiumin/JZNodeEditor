@@ -106,6 +106,7 @@ int JZNode::addProp(const JZNodePin &prop)
 int JZNode::addParamIn(QString name,int extFlag)
 {
     JZNodePin pin;
+    pin.setName(name);
     pin.setFlag(Prop_in | Prop_param | extFlag);
     return addProp(pin);        
 }
@@ -113,6 +114,7 @@ int JZNode::addParamIn(QString name,int extFlag)
 int JZNode::addParamOut(QString name,int extFlag)
 {
     JZNodePin pin;
+    pin.setName(name);
     pin.setFlag(Prop_out | Prop_param | extFlag);
     return addProp(pin);
 }
@@ -458,7 +460,8 @@ JZNodeReturn::JZNodeReturn()
 
 bool JZNodeReturn::compiler(JZNodeCompiler *c,QString &error)
 {   
-    c->addFlowInput(m_id);
+    if(!c->addFlowInput(m_id))
+        return false;     
 
     auto inList = paramInList();
     for(int i = 0; i < inList.size(); i++)
@@ -543,11 +546,12 @@ JZNodeFor::JZNodeFor()
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 {
+    if(!c->addFlowInput(m_id))
+        return false;
+
     int id_start = c->paramId(m_id,m_indexStart);   
     int id_index = c->paramId(m_id,m_indexOut);             
-    int id_end = c->paramId(m_id,m_indexEnd);
-
-    c->addFlowInput(m_id);        
+    int id_end = c->paramId(m_id,m_indexEnd);     
     c->addSetVariable(irId(id_index),irId(id_start));
 
     int startPc = c->currentPc() + 1;
@@ -590,8 +594,10 @@ JZNodeForEach::~JZNodeForEach()
 
 bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 {
-    int id_list = c->paramId(m_id,paramIn(0));
+    if(!c->addFlowInput(m_id))
+        return false;
 
+    int id_list = c->paramId(m_id,paramIn(0));
     JZNodeIRParam list = irId(id_list);
     JZNodeIRParam className = irId(c->allocStack());
     JZNodeIRParam it = irId(c->allocStack());
@@ -603,8 +609,7 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
     JZNodeIRParam itKeyFunc = irId(c->allocStack());
     JZNodeIRParam itValueFunc = irId(c->allocStack());
     JZNodeIRParam itKey = irId(c->paramId(m_id,paramOut(0)));
-    JZNodeIRParam itValue = irId(c->paramId(m_id,paramOut(1)));
-    c->addFlowInput(m_id);
+    JZNodeIRParam itValue = irId(c->paramId(m_id,paramOut(1)));    
 
     c->addCall(irLiteral("typename"),{list},{className});
     c->addCall(irLiteral("string.append"),{className,irLiteral(".iterator")},{itBeginFunc});
@@ -663,9 +668,10 @@ int JZNodeWhile::cond() const
 
 bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
 {
-    int continuePc = c->currentPc();
+    int continuePc = c->currentPc();    
+    if(!c->addFlowInput(m_id))
+        return false;
 
-    c->addFlowInput(m_id);
     int id = c->paramId(m_id,m_cond);                
     c->addCompare(irId(id),irLiteral(true),OP_eq);
 
@@ -701,7 +707,8 @@ JZNodeBranch::JZNodeBranch()
 
 bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->addFlowInput(m_id);
+    if(!c->addFlowInput(m_id))
+        return false;
 
     int id = c->paramId(m_id,m_cond);            
     c->addCompare(irId(id),irLiteral(true),OP_eq);

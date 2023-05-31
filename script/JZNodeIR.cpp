@@ -57,6 +57,7 @@ JZNodeIRParam irRef(QString id)
 
 JZNodeIRParam irId(int id)
 {
+    Q_ASSERT(id >= 0);    
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Id;
     param.value = id;

@@ -20,6 +20,7 @@ enum{
     Cmd_runtimeInfo,
     Cmd_getVariable,
     Cmd_setVariable,
+    Cmd_log,
 };
 
 

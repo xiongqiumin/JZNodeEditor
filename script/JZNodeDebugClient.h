@@ -34,6 +34,7 @@ signals:
     void sigNetError();
     void sigDisConnect();   
     void sigBreakTrigger(); 
+    void sigLog(QString log);
 
 protected slots:    
     void onConnect();

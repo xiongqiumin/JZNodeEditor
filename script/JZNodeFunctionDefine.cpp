@@ -19,3 +19,25 @@ FunctionDefine::FunctionDefine()
     script = nullptr;       
     cfunc = nullptr;
 }
+
+QDataStream &operator<<(QDataStream &s, const FunctionDefine &param)
+{
+    s << param.isCFunction;
+    s << param.name;
+    s << param.paramIn;
+    s << param.paramOut;
+    s << param.addr;
+    s << param.script;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, FunctionDefine &param)
+{
+    s >> param.isCFunction;
+    s >> param.name;
+    s >> param.paramIn;
+    s >> param.paramOut;
+    s >> param.addr;
+    s >> param.script;
+    return s;
+}

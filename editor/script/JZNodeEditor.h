@@ -28,6 +28,7 @@ public:
     virtual void cut() override;
     virtual void copy() override;
     virtual void paste() override;
+    virtual void selectAll() override;
 
     void updateNodeLayout();
 

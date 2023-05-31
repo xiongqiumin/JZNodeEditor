@@ -1,9 +1,15 @@
 #include "JZNodeExpression.h"
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
+#include "JZExpression.h"
 
-JZNodeOperator::JZNodeOperator()
+JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {
+    Q_ASSERT(node_type >= Node_add && node_type <= Node_bitxor);
+    Q_ASSERT(op_type >= OP_add && op_type <= OP_bitxor);
+
+    m_type = node_type;
+    m_op = op_type;
     m_in1 = addParamIn("in1",Prop_edit);
     m_in2 = addParamIn("in2",Prop_edit);
     m_out = addParamOut("out");
@@ -11,7 +17,9 @@ JZNodeOperator::JZNodeOperator()
 
 bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->addDataInput(m_id);
+    if(!c->addDataInput(m_id))
+        return false;
+        
     int r1 = c->paramId(m_id,m_in1);
     int r2 = c->paramId(m_id,m_in2);
     int r3 = c->paramId(m_id,m_out);            
@@ -22,13 +30,13 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
 QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
 {
     QMap<int,int> result;
-    switch (m_type)
+    switch (m_op)
     {
         case OP_add:
         case OP_sub:
         case OP_mul:
         case OP_div:
-        case OP_mod:
+        case OP_mod:        
             result[m_out] = JZNodeType::calcExprType(inType[m_in1],inType[m_in2]);
             break;
         case OP_eq:
@@ -53,152 +61,224 @@ QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
 
 //JZNodeAdd
 JZNodeAdd::JZNodeAdd()
+    :JZNodeOperator(Node_add,OP_add)
 {
-    m_name = "+";
-    m_type = Node_add;
-    m_op = OP_add;
+    m_name = "+";    
 }
 
 //JZNodeSub
 JZNodeSub::JZNodeSub()
+    :JZNodeOperator(Node_sub,OP_sub)
 {
-    m_name = "-";
-    m_type = Node_sub;
-    m_op = OP_sub;
+    m_name = "-";    
 }
     
 //JZNodeMul
 JZNodeMul::JZNodeMul()
+    :JZNodeOperator(Node_mul,OP_mul)
 {
     m_name = "*";
-    m_type = Node_mul;
-    m_op = OP_mul;
 }
 
 //JZNodeDiv
 JZNodeDiv::JZNodeDiv()
+    :JZNodeOperator(Node_div,OP_div)
 {
     m_name = "/";
-    m_type = Node_div;
-    m_op = OP_div;
 }
 
 //JZNodeMod
 JZNodeMod::JZNodeMod()
+    :JZNodeOperator(Node_mod,OP_mod)
 {
     m_name = "%";
-    m_type = Node_mod;
-    m_op = OP_mod;
 }
     
 //JZNodeEQ
 JZNodeEQ::JZNodeEQ()
+    :JZNodeOperator(Node_eq,OP_eq)
 {
     m_name = "==";
-    m_type = Node_eq;
-    m_op = OP_eq;
 }
 
 //JZNodeNE
 JZNodeNE::JZNodeNE()
+    :JZNodeOperator(Node_ne,OP_ne)
 {
     m_name = "!=";
-    m_type = Node_ne;
-    m_op = OP_ne;
 }
 
 //JZNodeLE
 JZNodeLE::JZNodeLE()
+    :JZNodeOperator(Node_le,OP_le)
 {
     m_name = "<=";
-    m_type = Node_le;
-    m_op = OP_le;
 }
 
 //JZNodeGE
 JZNodeGE::JZNodeGE()
+    :JZNodeOperator(Node_ge,OP_ge)
 {
     m_name = ">=";
-    m_type = Node_ge;
-    m_op = OP_ge;
 }
 
 //JZNodeLT
 JZNodeLT::JZNodeLT()
+    :JZNodeOperator(Node_lt,OP_lt)
 {
     m_name = "<";
-    m_type = Node_lt;
-    m_op = OP_lt;
 }
 
 //JZNodeGT
 JZNodeGT::JZNodeGT()
+    :JZNodeOperator(Node_gt,OP_gt)
 {
     m_name = ">";
-    m_type = Node_gt;
-    m_op = OP_gt;
 }
 
 //JZNodeAnd
 JZNodeAnd::JZNodeAnd()
+    :JZNodeOperator(Node_and,OP_and)
 {
     m_name = "and";
-    m_type = Node_and;
-    m_op = OP_and;
 }
 
 //JZNodeOr
 JZNodeOr::JZNodeOr()
+    :JZNodeOperator(Node_or,OP_or)
 {
-    m_name = "or";
-    m_type = Node_or;
-    m_op = OP_or;
+    m_name = "or";;
 }
 
 //JZNodeBitAnd
 JZNodeBitAnd::JZNodeBitAnd()
+    :JZNodeOperator(Node_bitand,OP_bitand)
 {
     m_name = "bit and";
-    m_type = Node_bitand;
-    m_op = OP_bitand;
 }
 
 //JZNodeBitOr
 JZNodeBitOr::JZNodeBitOr()
+    :JZNodeOperator(Node_bitor,OP_bitor)
 {
     m_name = "bit or";
-    m_type = Node_bitor;
-    m_op = OP_bitor;
 }
 
 //JZNodeBitXor
 JZNodeBitXor::JZNodeBitXor()
+    :JZNodeOperator(Node_bitxor,OP_bitxor)
 {
     m_name = "bit xor";
-    m_type = Node_bitxor;
-    m_op = OP_bitxor;
 }
 
 //JZNodeExpression
 JZNodeExpression::JZNodeExpression()
 {
+    m_type = Node_expr;
+    m_name = "expr";
 
+    m_opMap["+"] = OP_add;
+    m_opMap["-"] = OP_sub;
+    m_opMap["*"] = OP_mul;
+    m_opMap["/"] = OP_div;
+    m_opMap["%"] = OP_mod;
 }
 
-bool JZNodeExpression::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodeExpression::setExpr(QString expr,QString &error)
 {
-    JZExpression exp;
-    if(!exp.parse(expression,error))
-        return false;
-    
-    for(int i = 0; i < exp.inList.size(); i++)
-    {     
-        addParamIn(exp.inList[i]);
-    }
-    
-    for(int i = 0; i < exp.outList.size(); i++)
+    m_propList.clear();
+    m_exprList.clear();
+    m_expression = expr;
+    JZExpression parser;   
+    if(!parser.parse(expr))
     {
-        addParamOut(exp.inList[i]);
+        error = parser.error();
+        return false;
+    }
+
+    m_exprList = parser.opList();
+    for(int i = 0; i < parser.inList.size(); i++)
+    {     
+        addParamIn(parser.inList[i]);
+    }    
+    for(int i = 0; i < parser.outList.size(); i++)
+    {
+        addParamOut(parser.outList[i]);
+    }
+
+    return true;
+}
+
+QString JZNodeExpression::expr()
+{
+    return m_expression;
+}
+
+bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
+{            
+    QMap<int,int> reg_map;    
+    auto toIr = [this,c,&reg_map](QString name)->JZNodeIRParam{
+        JZNodeIRParam parma;        
+        int id = -1;
+        if(name.startsWith("#Reg"))
+        {
+            int reg_index = name.mid(4).toInt();
+            if(!reg_map.contains(reg_index))
+                reg_map[reg_index] = c->allocStack();
+            id = reg_map[reg_index];                
+        }
+        else
+        {
+            auto pin = prop(name);
+            Q_ASSERT(pin);
+            id = c->paramId(m_id,pin->id());
+        }
+        return irId(id);
+    };
+
+    c->addDataInput(m_id);
+    for(int op = 0; op < m_exprList.size(); op++)
+    {
+        QStringList strs = m_exprList[op].split(" ");
+        if(strs[2].startsWith("@")) //func
+        {
+            int s = strs[2].indexOf("(");
+
+            QString function = strs[2].mid(1,s - 1);
+            QStringList params = strs[2].mid(s + 1,strs[2].size()-1 - (s + 1)).split(",");
+            const FunctionDefine *define = c->function(function);
+            if(!define)
+            {
+                error = "no such function " + function;
+                return false;
+            }
+            if(define->paramIn.size() != params.size())
+            {
+                error = QString("Function %0 pamram error, expert %1 give %2.").arg(function,
+                    QString::number(define->paramIn.size()),QString::number(params.size()));
+                return false;
+            }
+            if(define->paramOut.size() != 1)
+            {
+                error = QString("Function %0 return error").arg(function);
+                return false;
+            }
+
+            QList<JZNodeIRParam> paramIn;            
+            for(int i = 0; i < params.size(); i++)
+                paramIn << toIr(params[i]);
+                
+            QList<JZNodeIRParam> paramOut;            
+            paramOut << toIr(strs[0]);
+            c->addCall(irLiteral(function),paramIn,paramOut);
+        }
+        else
+        {
+            if(strs.size() == 5)
+                c->addExpr(toIr(strs[0]),toIr(strs[2]),toIr(strs[4]),m_opMap[strs[3]]);
+            else
+                c->addSetVariable(toIr(strs[0]),toIr(strs[2]));
+        }
     }
 
     return true;

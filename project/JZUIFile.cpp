@@ -1,7 +1,7 @@
 #include "JZUiFile.h"
 
-JZUiFile::JZUiFile(bool dir)
-    :JZProjectItem(ProjectItem_ui,dir)
+JZUiFile::JZUiFile()
+    :JZProjectItem(ProjectItem_ui)
 {
     
 }

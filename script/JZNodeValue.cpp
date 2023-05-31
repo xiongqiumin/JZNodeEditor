@@ -114,6 +114,7 @@ bool JZNodePrint::compiler(JZNodeCompiler *compiler,QString &error)
 JZNodeSetParam::JZNodeSetParam()
 {
     m_type = Node_setParam;
+    m_name = "set";
 
     addFlowIn();    
     addFlowOut();
@@ -148,7 +149,9 @@ void JZNodeSetParam::loadFromStream(QDataStream &s)
 
 bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->addFlowInput(m_id);
+    if(!c->addFlowInput(m_id))
+        return false;
+
     int id = c->paramId(m_id,paramIn(0));
     JZNodeIRParam ref = irRef(m_param);
     if(m_local)
@@ -192,7 +195,8 @@ void JZNodeSetParamData::loadFromStream(QDataStream &s)
 
 bool JZNodeSetParamData::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->addDataInput(m_id);
+    if(!c->addDataInput(m_id))
+        return false;
 
     int id = c->paramId(m_id,paramIn(0));
     c->addSetVariable(irRef(m_param),irId(id));

@@ -26,6 +26,11 @@ public:
     virtual void cut();
     virtual void copy();
     virtual void paste();
+    virtual void selectAll();
+
+signals:
+    void redoAvailable(bool available);
+    void undoAvailable(bool available);
 
 protected:
 

@@ -20,4 +20,10 @@ public:
     QVariantList m_params;
 };
 
+class JZNodeClickEvent : public JZNodeEvent
+{
+public:
+
+};
+
 #endif
