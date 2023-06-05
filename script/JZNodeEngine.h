@@ -112,7 +112,7 @@ public:
     JZNodeProgram *program();    
     void init();    
 
-    JZNodeRuntimeInfo runtimeInfo();
+    JZNodeRuntimeInfo runtimeInfo();    
 
     void addWatch();
     void clearWatch();
@@ -127,6 +127,9 @@ public:
     void stepIn();
     void stepOver();
     void stepOut();    
+
+    QVariant getThis();
+    void setThis(QVariant var);
 
     QVariant getVariable(QString name);
     void setVariable(QString name, const QVariant &value);    
@@ -164,6 +167,7 @@ protected:
     void setObjectProperty(QString name, const QVariant &value);
     int nodeIdByPc(int pc);        
     JZNodeScript *getScript(QString path);
+    JZNodeScript *getObjectScript(QString objName);
     bool isWatch();
 
     int m_pc;            
@@ -179,7 +183,9 @@ protected:
 
     Stack m_stack;
     QMap<QString,QVariant> m_global;            
-    QMap<int,QVariant> m_regs;           
+    QMap<int,QVariant> m_regs;        
+    QVariant m_this;
+           
     int m_statusCommand;
     int m_status;     
     QMutex m_mutex;    

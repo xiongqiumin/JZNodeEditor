@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();    
 
-    if(0)
+    if(1)
     {
         testBuild();
         return 0;

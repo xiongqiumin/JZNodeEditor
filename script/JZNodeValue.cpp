@@ -4,7 +4,7 @@
 
 //JZNodeParam
 JZNodeParam::JZNodeParam()
-{
+{    
     m_type = Node_param;
     m_out = addParamOut("out");
 }
@@ -44,6 +44,36 @@ void JZNodeParam::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);    
     s >> m_out >> m_param;
+}
+
+//JZNodeThis
+JZNodeThis::JZNodeThis()
+{
+    m_name = "this";
+    m_type = Node_this;
+    addParamOut("out");
+}
+
+JZNodeThis::~JZNodeThis()
+{
+    
+}
+
+void JZNodeThis::saveToStream(QDataStream &s) const
+{
+    JZNode::saveToStream(s); 
+}
+
+void JZNodeThis::loadFromStream(QDataStream &s)
+{
+    JZNode::loadFromStream(s);  
+}
+
+bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
+{
+    int out_id = c->paramId(m_id,paramOut(0));
+    c->addSetVariable(irId(out_id),irThis());
+    return true;
 }
 
 //JZNodeLiteral

@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     updateMenuAction();
 
     resize(800, 600);    
+    onActionOpenProject();
 }
 
 MainWindow::~MainWindow()
@@ -187,10 +188,14 @@ void MainWindow::onActionNewProject()
 
 void MainWindow::onActionOpenProject()
 {
+/*
     QString filepath = QFileDialog::getOpenFileName(this,"","","*.jzproject");
     if(filepath.isEmpty())
         return;
-
+*/
+    QString filepath = "test.prj";
+    if(!QFile::exists(filepath))
+        m_project.saveAs(filepath);
     if(m_project.open(filepath))
         m_projectTree->setProject(&m_project);
 }

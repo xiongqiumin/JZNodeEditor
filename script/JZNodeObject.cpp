@@ -6,6 +6,7 @@
 #include <QRadioButton>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QApplication>
 
 QString JNodeTypeName(const QVariant &v)
 {
@@ -68,16 +69,24 @@ FunctionDefine *JZNodeObjectDefine::function(QString name)
 
 //JZNodeObject
 JZNodeObject::JZNodeObject(JZNodeObjectDefine *def)
-{
+{    
     define = def;
-    if(define->isCObject)
-        cobj = define->cMeta.create();
+    cowner = false;
 }
 
 JZNodeObject::~JZNodeObject()
 {
-    if(define->isCObject)
+    if(cowner && define->isCObject)
         define->cMeta.destory(cobj);
+}
+
+void JZNodeObject::createCObj()
+{
+    if(define->isCObject)
+    {
+        cobj = define->cMeta.create();
+        cowner = true;
+    }
 }
 
 bool JZNodeObject::isCObject() const
@@ -132,6 +141,7 @@ JZNodeObjectManager *JZNodeObjectManager::instance()
 
 JZNodeObjectManager::JZNodeObjectManager()
 {        
+    m_objectId = 0;
 }
 
 JZNodeObjectManager::~JZNodeObjectManager()
@@ -142,9 +152,9 @@ JZNodeObjectManager::~JZNodeObjectManager()
 }
 
 void JZNodeObjectManager::init()
-{
+{  
     JZNodeFunctionManager::instance()->registCFunction("typename",jzbind::createFuncion(JNodeTypeName));
-    JZNodeFunctionManager::instance()->registCFunction("print",jzbind::createFuncion(JZNodeDisp));
+    JZNodeFunctionManager::instance()->registCFunction("print",jzbind::createFuncion(JZNodeDisp));    
 
     //list
     jzbind::ClassBind<JZNodeListIterator> cls_list_it("listIterator");
@@ -240,23 +250,24 @@ void JZNodeObjectManager::init()
 }
 
 void JZNodeObjectManager::initWidgets()
-{
-/*
+{/*
     //widget
-    jzbind::ClassBind<QWidget> cls_widget("widget");
-    cls_widget.def("next",&QWidget::setVisible);
+    jzbind::ClassBind<QWidget> cls_widget("widget","");
+    cls_widget.def("setVisible",&QWidget::setVisible);
+    cls_widget.def("show",&QWidget::show);
+    cls_widget.def("hide",&QWidget::hide);
     cls_widget.regist();
 
     //lineedit
     jzbind::ClassBind<QLineEdit> cls_lineEdit("lineEdit","widget");
-    cls_lineEdit.def("next",&QLineEdit::text);
-    cls_lineEdit.def("atEnd",&QLineEdit::setText);;
+    cls_lineEdit.def("text",&QLineEdit::text);
+    cls_lineEdit.def("setText",&QLineEdit::setText);;
     cls_lineEdit.regist();
 
     //abs_button
     jzbind::ClassBind<QAbstractButton> cls_abs_button("abstractButton","widget");
-    cls_abs_button.def("next",&QAbstractButton::text);
-    cls_abs_button.def("atEnd",&QAbstractButton::setText);
+    cls_abs_button.def("text",&QAbstractButton::text);
+    cls_abs_button.def("setText",&QAbstractButton::setText);
     cls_abs_button.regist();
 
     //button
@@ -275,6 +286,7 @@ void JZNodeObjectManager::regist(JZNodeObjectDefine define,QString super)
 
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = define;
+    def->id = m_objectId++;
     if(!super.isEmpty())
     {
         def->super = meta(super);
@@ -354,12 +366,23 @@ JZNodeObjectPtr JZNodeObjectManager::create(QString name)
     JZNodeObject *obj = new JZNodeObject(def);
     if(!def->isCObject)
         create(def,obj);
+    else
+        obj->createCObj();
     return JZNodeObjectPtr(obj);
 }
 
-JZNodeObjectPtr JZNodeObjectManager::createCClass(QString type_id)
+JZNodeObjectPtr JZNodeObjectManager::createCClass(QString type_id,bool init)
 {
-    return create(m_typeidMetas[type_id]);
+    if(!m_typeidMetas.contains(type_id))
+        return nullptr;
+
+    JZNodeObjectDefine *def = meta(m_typeidMetas[type_id]);
+    Q_ASSERT(def);
+
+    JZNodeObject *obj = new JZNodeObject(def);
+    if(init)
+        obj->createCObj();
+    return JZNodeObjectPtr(obj);
 }
 
 JZNodeObjectPtr JZNodeObjectManager::createString(QString text)

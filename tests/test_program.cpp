@@ -11,6 +11,8 @@
 #include "JZNodeFunction.h"
 #include "JZNodeBind.h"
 #include "JZNodeFactory.h"
+#include "JZNodeObject.h"
+#include "JZNodeBind.h"
 #include <math.h>
 
 class ScriptTest
@@ -18,8 +20,9 @@ class ScriptTest
 public:    
     ScriptTest()
     {        
-        scriptFlow = (JZScriptFile*)project.getItem("./程序流程/流程");
+        scriptFlow = (JZScriptFile*)project.getItem(project.mainScript());
         scriptParam = (JZScriptFile*)project.getItem("./数据联动/联动");
+        Q_ASSERT(scriptFlow && scriptParam);
     }        
 
     void call()
@@ -686,6 +689,7 @@ void testFunction()
     ScriptTest test;
 
     JZScriptFunctionFile *file = new JZScriptFunctionFile();
+    file->setName("fab_library");
     test.project.addItem("./",file);
 
     file->addFunction("fab",{"n"},{""});
@@ -799,6 +803,45 @@ void testClass()
     qDebug() << value;       
 }
 
+QString *jjjxxx(){
+    return new QString("hello");
+}
+
+void testBind()
+{
+    auto add = [](int a,int b,int c)->int{ return a + b + c; };
+    auto str_left = [](QString *inst,int size)->QString{
+        return inst->left(size);
+    };
+
+    auto str = JZObjectCreate<QString>(true);
+    QVariantList out;
+
+    auto impl_add = jzbind::createFuncion(add);
+    impl_add->call({100,200,35},out);
+
+    auto impl_left = jzbind::createFuncion(str_left);
+    impl_left->call({QVariant::fromValue(str),100},out);
+
+    CFunction *impl_left_in;
+    {
+        auto str_left_in = [](QString *inst,int size)->QString{
+            return inst->left(size);
+        };
+        impl_left_in = jzbind::createFuncion(str_left_in);
+    }
+    impl_left_in->call({QVariant::fromValue(str),100},out);
+
+    auto impl_left_2 = jzbind::createFuncion(&QString::left);
+    impl_left_2->call({QVariant::fromValue(str),100},out);
+    impl_left_2->call({QVariant::fromValue(str),100},out);
+    impl_left_2->call({QVariant::fromValue(str),100},out);
+
+    impl_left_in->call({QVariant::fromValue(str),100},out);
+    impl_left_in->call({QVariant::fromValue(str),100},out);
+
+}
+
 void testCClass()
 {
     ScriptTest test;
@@ -830,8 +873,8 @@ void testCClass()
 }
 
 void testBuild()
-{
-    /*
+{    
+    testBind();
     testParamBinding();
     testWhileLoop();
     testFor();
@@ -842,7 +885,6 @@ void testBuild()
     testCustomExpr();
     testFunction();
     testForEach();
-    testBreakPoint();
-    */
-    testDebugServer();
+    testBreakPoint();    
+    testDebugServer();   
 }

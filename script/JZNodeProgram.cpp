@@ -325,17 +325,34 @@ JZNodeScript *JZNodeProgram::script(QString name)
     return m_scripts[name].data();
 }
 
-QList<JZEventHandle*> JZNodeProgram::matchEvent(JZEvent *e) const
+JZNodeScript *JZNodeProgram::objectScript(QString name)
 {
+    if(!m_objectScripts.contains(name))
+        return nullptr;
+
+    QString path = m_objectScripts[name];
+    return script(path);
+}
+
+QList<JZEventHandle*> JZNodeProgram::matchEvent(JZEvent *e,JZNodeObject *obj) const
+{
+    QString className;
+    if(obj)
+        className = obj->define->className;
+
     QList<JZEventHandle*> result;
     auto it = m_scripts.begin();
     while(it != m_scripts.end())
     {
-        QList<JZEventHandle> &handle_list = it.value()->events;
-        for(int i = 0; i < handle_list.size(); i++)
+        JZNodeScript *script = it.value().data();
+        if(script->className == className)
         {
-            if(handle_list[i].match(e))
-                result.push_back(&handle_list[i]);
+            QList<JZEventHandle> &handle_list = script->events;
+            for(int i = 0; i < handle_list.size(); i++)
+            {               
+                if(handle_list[i].match(e))
+                    result.push_back(&handle_list[i]);
+            }
         }
         it++;
     }

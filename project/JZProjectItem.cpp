@@ -6,6 +6,7 @@ JZProjectItem::JZProjectItem(int itemType)
     m_parent = nullptr;
     m_project = nullptr;
     m_itemType = itemType;    
+    m_folder = false;
 }
 
 JZProjectItem::~JZProjectItem()
@@ -26,12 +27,28 @@ void JZProjectItem::saveToStream(QDataStream &s)
 {
     s << m_name;
     s << m_folder;
+    s << m_childs.size();
+    for(int i = 0; i < m_childs.size(); i++)
+    {
+        s << m_childs[i]->itemType();
+        m_childs[i]->saveToStream(s);
+    }
 }
 
 void JZProjectItem::loadFromStream(QDataStream &s)
 {
     s >> m_name;
     s >> m_folder;
+    int size = 0;
+    s >> size;
+    for(int i = 0; i < size; i++)
+    {
+        int type;
+        s >> type;
+        auto ptr = JZProjectItemFactory::create(type);
+        ptr->loadFromStream(s);
+        m_childs.push_back(JZProjectItemPtr(ptr));
+    }
 }
 
 bool JZProjectItem::isFolder()

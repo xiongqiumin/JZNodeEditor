@@ -47,12 +47,14 @@ public:
         Id,
         Literal,
         Reference,
+        This,
     };    
 
     JZNodeIRParam();
     bool isLiteral() const;
     bool isRef() const;
     bool isId() const;
+    bool isThis() const;
 
     int id() const;
     QString ref() const;
@@ -65,6 +67,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param);
 JZNodeIRParam irRef(QString id);
 JZNodeIRParam irId(int id);
 JZNodeIRParam irLiteral(QVariant value);
+JZNodeIRParam irThis();
 
 class JZNodeIR
 {

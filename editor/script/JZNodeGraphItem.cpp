@@ -185,7 +185,7 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
     */
     QColor color;
     IconType type;
-    if(pin->isFlow())
+    if(pin->isFlow() || pin->isSubFlow())
     {
         color = QColor(255, 255, 255);
         type = IconType::Flow;

@@ -10,7 +10,7 @@ QVariant getValue<QVariant>(QVariant v,std::false_type)
 }
 
 template<>
-QVariant getReturn(QVariant value)
+QVariant getReturn(QVariant value,bool isRef)
 {
     return value;
 }

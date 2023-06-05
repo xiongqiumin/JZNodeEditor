@@ -57,6 +57,18 @@ protected:
     bool m_local;
 };
 
+//JZNodeParamThis
+class JZNodeThis : public JZNode
+{
+public:
+    JZNodeThis();
+    ~JZNodeThis();
+
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+};
+
 //JZNodeSetParam
 class JZNodeSetParam : public JZNode
 {

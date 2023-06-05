@@ -10,6 +10,7 @@ enum
 {
     Node_none,    
     Node_param,
+    Node_this,
     Node_setParam,
     Node_setParamData,
     Node_literal,
@@ -36,11 +37,14 @@ enum
     Node_foreach,
     Node_while,
     Node_branch,
+    Node_sequence,
     Node_if,                
     Node_parallel,    
     Node_view,        
     Node_print,
-    Node_switch,        
+    Node_switch,
+    Node_break,
+    Node_continue,
     Node_return,
     Node_exit,
     Node_event,
@@ -283,6 +287,12 @@ protected:
     QList<int> m_cond;    
     QList<int> m_flowCond;
     int m_flowElse;
+};
+
+class JZNodeSwitch : public JZNode
+{
+public:
+    JZNodeSwitch();
 };
 
 class JZNodeBranch : public JZNode

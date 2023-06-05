@@ -21,10 +21,10 @@ void JZProject::init()
     m_variables.clear();
 
     m_root.setName(".");
-    JZScriptFile *ui = new JZScriptFile(ProjectItem_folder);
-    JZScriptFile *data = new JZScriptFile(ProjectItem_folder);
-    JZScriptFile *script_flow = new JZScriptFile(ProjectItem_folder);
-    JZScriptFile *script_param = new JZScriptFile(ProjectItem_folder);
+    JZProjectItemFolder *ui = new JZProjectItemFolder();
+    JZProjectItemFolder *data = new JZProjectItemFolder();
+    JZProjectItemFolder *script_flow = new JZProjectItemFolder();
+    JZProjectItemFolder *script_param = new JZProjectItemFolder();
     data->setName("变量定义");
     ui->setName("用户界面");
     script_param->setName("数据联动");
@@ -55,7 +55,8 @@ bool JZProject::open(QString filepath)
     if(!file.open(QFile::ReadOnly))
         return false;
 
-    QDataStream s(&file);        
+    QDataStream s(&file);
+    m_root.loadFromStream(s);
     file.close();    
 
     return true;
@@ -75,6 +76,7 @@ bool JZProject::saveAs(QString filepath)
         return false;
 
     QDataStream s(&file);    
+    m_root.saveToStream(s);
     file.close();    
     return true;
 }
@@ -86,6 +88,11 @@ QString JZProject::name()
 
     QFileInfo info(m_filepath);
     return info.baseName();
+}
+
+QString JZProject::mainScript()
+{
+    return "./程序流程/main.jz";
 }
 
 JZProjectItem *JZProject::root()

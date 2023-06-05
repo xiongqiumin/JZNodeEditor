@@ -15,6 +15,9 @@ public:
     const FunctionDefine &function();
     void setFunction(FunctionDefine def);
 
+    void setBindClass(QString bindClass);
+    QString bindClass();
+
     int addNode(JZNodePtr node);
     void insertNode(JZNodePtr node);
     void removeNode(int id);
@@ -42,7 +45,8 @@ protected:
     QMap<int, JZNodePtr> m_nodes;    
     QMap<int, QPointF> m_nodesPos;   
     QList<JZNodeConnect> m_connects;    
-    FunctionDefine m_function;
+    QString m_bindClass;
+    FunctionDefine m_function;    
 };
 
 

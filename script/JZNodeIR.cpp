@@ -21,6 +21,11 @@ bool JZNodeIRParam::isRef() const
     return type == Reference;
 }
 
+bool JZNodeIRParam::isThis() const
+{
+    return type == This;
+}
+
 int JZNodeIRParam::id() const
 {
     Q_ASSERT(type == Id);
@@ -69,6 +74,13 @@ JZNodeIRParam irLiteral(QVariant value)
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Literal;
     param.value = value;
+    return param;
+}
+
+JZNodeIRParam irThis()
+{
+    JZNodeIRParam param;
+    param.type = JZNodeIRParam::This;
     return param;
 }
 

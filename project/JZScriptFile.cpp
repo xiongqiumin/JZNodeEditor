@@ -16,8 +16,19 @@ JZScriptFile::~JZScriptFile()
 void JZScriptFile::clear()
 {
     m_nodeId = 0;
+    m_bindClass.clear();
     m_nodes.clear();
     m_connects.clear();
+}
+
+void JZScriptFile::setBindClass(QString bindClass)
+{
+    m_bindClass = bindClass;        
+}
+
+QString JZScriptFile::bindClass()
+{
+    return m_bindClass;
 }
 
 const FunctionDefine &JZScriptFile::function()
@@ -218,6 +229,8 @@ void JZScriptFile::saveToStream(QDataStream &s)
     }
     s << m_nodesPos;
     s << m_connects;    
+    s << m_function;
+    s << m_bindClass;
 }
 
 void JZScriptFile::loadFromStream(QDataStream &s)
@@ -237,13 +250,15 @@ void JZScriptFile::loadFromStream(QDataStream &s)
     }
     s >> m_nodesPos;
     s >> m_connects;
+    s >> m_function;
+    s >> m_bindClass;
 }
 
 //JZScriptFunctionFile
 JZScriptFunctionFile::JZScriptFunctionFile()
-    :JZProjectItem(ProjectItem_scriptFunction)
+    :JZProjectItem(ProjectItem_folder)
 {
-
+    m_folder = true;
 }
     
 JZScriptFunctionFile::~JZScriptFunctionFile()

@@ -19,8 +19,9 @@ public:
     JZNodeObjectDefine();
     FunctionDefine *function(QString function);
     
-    QString className;
-    bool isCObject;    
+    int id;
+    QString className;    
+    bool isCObject;        
     JZNodeObjectDefine *super;
     QMap<QString,QVariant> params;
     QMap<QString,FunctionDefine> functions;   
@@ -35,10 +36,12 @@ public:
 
 class JZNodeObject
 {
-public:
+public:    
     JZNodeObject(JZNodeObjectDefine *def);
     ~JZNodeObject();
     
+    void createCObj();
+
     bool isCObject() const;
     bool isString() const;
     const QString &className() const;
@@ -50,6 +53,7 @@ public:
     JZNodeObjectDefine *define;  
     QMap<QString,QVariant> params;
     void *cobj;
+    bool cowner;
 
 protected:
     Q_DISABLE_COPY(JZNodeObject);
@@ -77,7 +81,7 @@ public:
     
     JZNodeObjectPtr create(QString name);
     JZNodeObjectPtr createString(QString text);
-    JZNodeObjectPtr createCClass(QString type_id);
+    JZNodeObjectPtr createCClass(QString type_id,bool init);
     JZNodeObjectPtr clone(JZNodeObjectPtr other);       
 
 protected:
@@ -87,6 +91,36 @@ protected:
 
     QMap<QString,JZNodeObjectDefine*> m_metas;        
     QMap<QString,QString> m_typeidMetas;
+    int m_objectId;
 };
+
+template<class T>
+const JZNodeObjectDefine *JZObjectDefine()
+{
+    return JZNodeObjectManager::instance()->meta(typeid(T).name());
+}
+
+template<class T>
+int JZObjectId()
+{
+    const JZNodeObjectDefine *def = JZObjectDefine<T>();
+    if(def)
+        return def->id;
+    else
+        return -1;        
+}
+
+template<class T>
+JZNodeObjectPtr JZObjectCreate(bool init)
+{
+    return JZNodeObjectManager::instance()->createCClass(typeid(T).name(),init);
+}
+
+template<class T>
+T *JZObjectValue(JZNodeObjectPtr ptr)
+{
+    Q_ASSERT(JZNodeObjectManager::instance()->getTypeid(ptr->define->className) == typeid(T).name());
+    return (T*)ptr->cobj;
+}
 
 #endif

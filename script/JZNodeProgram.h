@@ -7,6 +7,7 @@
 #include "JZEvent.h"
 #include "JZNodeIR.h"
 #include "JZNodeFunctionDefine.h"
+#include "JZNodeObject.h"
 
 enum{    
     Stack_Node = 0,
@@ -102,6 +103,7 @@ public:
     FunctionDefine *function(QString name);
 
     QString file;
+    QString className;
     QList<GraphPtr> graphs;                     
     QList<JZEventHandle> events;
     QList<JZNodeIRPtr> statmentList;
@@ -132,9 +134,10 @@ public:
 
     FunctionDefine *function(QString name);
     JZNodeScript *script(QString name);
+    JZNodeScript *objectScript(QString name);
 
     QMap<QString,QVariant> variables();
-    QList<JZEventHandle*> matchEvent(JZEvent *e) const;       
+    QList<JZEventHandle*> matchEvent(JZEvent *e,JZNodeObject *obj = nullptr) const;       
     QList<JZEventHandle*> eventList() const;
     QString dump();            
     
@@ -146,7 +149,8 @@ protected:
 
     QStringList m_opNames;
     QMap<QString,JZNodeScriptPtr> m_scripts; 
-    QMap<QString,QVariant> m_variables; 
+    QMap<QString,QVariant> m_variables;
+    QMap<QString,QString> m_objectScripts;
 };
 
 #endif

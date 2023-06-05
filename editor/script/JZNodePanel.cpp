@@ -66,6 +66,23 @@ void JZNodePanel::init(int fileType)
     m_tree->expandAll();
 }
 
+void JZNodePanel::addViriable(QString name)
+{
+    JZNodeParam node_get;
+    JZNodeSetParam node_set;
+    //node_get.setParamId(name);
+    //node_set.setParamId(name);
+
+    createItem(&node_get);
+    createItem(&node_set);
+}
+
+void JZNodePanel::addWidget(QString name)
+{
+    //QString name = widget->objectName();
+    //Q_ASSERT(name.isEmpty());
+}
+
 QTreeWidgetItem *JZNodePanel::createFolder(QString name)
 {
     QTreeWidgetItem *item = new QTreeWidgetItem();
@@ -175,5 +192,20 @@ void JZNodePanel::initExpression(QTreeWidgetItem *root)
 
 void JZNodePanel::initFunction(QTreeWidgetItem *root)
 {
-
+    JZNodeFor node_for;
+    JZNodeWhile node_while;
+    JZNodeSequence node_seq;
+    JZNodeBranch node_branch;
+    JZNodeForEach node_each;
+    JZNodeBreak node_break;
+    JZNodeContinue node_continue;
+    JZNodeExit node_exit;
+    root->addChild(createItem(&node_for));
+    root->addChild(createItem(&node_while));
+    root->addChild(createItem(&node_seq));
+    root->addChild(createItem(&node_branch));
+    root->addChild(createItem(&node_each));
+    root->addChild(createItem(&node_break));
+    root->addChild(createItem(&node_continue));
+    root->addChild(createItem(&node_exit));
 }

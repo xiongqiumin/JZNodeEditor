@@ -430,6 +430,8 @@ void JZNode::loadFromStream(QDataStream &s)
 //JZNodeContinue
 JZNodeContinue::JZNodeContinue()
 {
+    m_name = "continue";
+    m_type = Node_continue;
     addFlowIn(); 
 }
 
@@ -442,6 +444,8 @@ bool JZNodeContinue::compiler(JZNodeCompiler *compiler,QString &error)
 //JZNodeBreak
 JZNodeBreak::JZNodeBreak()
 {
+    m_name = "break";
+    m_type = Node_break;
     addFlowIn();
 }
 
@@ -455,6 +459,8 @@ bool JZNodeBreak::compiler(JZNodeCompiler *compiler,QString &error)
 //JZNodeReturn
 JZNodeReturn::JZNodeReturn()
 {        
+    m_name = "return";
+    m_type = Node_return;
     addFlowIn();
 }
 
@@ -476,6 +482,8 @@ bool JZNodeReturn::compiler(JZNodeCompiler *c,QString &error)
 //JZNodeExit
 JZNodeExit::JZNodeExit()
 {    
+    m_name = "exit";
+    m_type = Node_exit;
     addFlowIn();
 }
 
@@ -488,6 +496,8 @@ bool JZNodeExit::compiler(JZNodeCompiler *compiler,QString &error)
 //JZNodeSequence
 JZNodeSequence::JZNodeSequence()
 {
+    m_name = "sequence";
+    m_type = Node_sequence;
     addFlowIn();
     addFlowOut("continue");
 }
@@ -533,6 +543,7 @@ JZNodeParallel::JZNodeParallel()
 //JZNodeFor
 JZNodeFor::JZNodeFor()
 {
+    m_name = "for";
     m_type = Node_for;
 
     addFlowIn();
@@ -576,6 +587,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 //JZNodeForEach
 JZNodeForEach::JZNodeForEach()
 {
+    m_name = "foreach";
     m_type = Node_foreach;
 
     addFlowIn();
@@ -653,6 +665,7 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 //JZNodeWhile
 JZNodeWhile::JZNodeWhile()
 {
+    m_name = "while";
     m_type = Node_while;
     addFlowIn();
     addSubFlowOut("loop body");
@@ -691,12 +704,19 @@ bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
 //JZNodeIf
 JZNodeIf::JZNodeIf()
 {
+    m_name = "if";
+}
 
+//JZNodeSwitch
+JZNodeSwitch::JZNodeSwitch()
+{
+    m_name = "switch";
 }
 
 //JZNodeBranch
 JZNodeBranch::JZNodeBranch()
 {
+    m_name = "branch";
     m_type = Node_branch;
     addFlowIn();
     addFlowOut("true");

@@ -197,15 +197,15 @@ void JZNodeEngine::pushStack(const FunctionDefine *func)
     if(m_stack.size() > 0)        
         m_stack.env().pc = m_pc;
         
-    m_stack.push();
-    m_stack.env().pc = func->addr;
-    m_stack.env().func = func;
-    m_pc = func->addr;
-    m_script = getScript(func->script);
-    Q_ASSERT(m_script);
-
+    m_stack.push();    
+    m_stack.env().func = func;    
     if(!func->isCFunction)
     {
+        m_stack.env().pc = func->addr;
+        m_pc = func->addr;
+        m_script = getScript(func->script);
+        Q_ASSERT(m_script);
+
         for(int i = 0; i < func->paramIn.size(); i++)
             m_stack.setVariable(Stack_User + i,m_regs[Reg_Call + i]);
     }
@@ -283,6 +283,8 @@ QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
         else        
             return getVariable(name);
     }
+    else if(param.isThis())
+        return m_this;
     else
         return getReg(param.id());
 }
@@ -339,6 +341,16 @@ QVariant JZNodeEngine::getObjectProperty(QString name)
     QStringList list = name.split(".");
     JZNodeObject *obj = getObject(list);
     return obj->param(list.back());
+}
+
+QVariant JZNodeEngine::getThis()
+{
+    return m_this;
+}
+
+void JZNodeEngine::setThis(QVariant var)
+{
+    m_this = var;
 }
 
 void JZNodeEngine::setObjectProperty(QString name, const QVariant &value)
@@ -400,6 +412,11 @@ void JZNodeEngine::setReg(int id, const QVariant &value)
 JZNodeScript *JZNodeEngine::getScript(QString path)
 {
     return m_program->script(path);
+}
+
+JZNodeScript *JZNodeEngine::getObjectScript(QString objName)
+{
+    return m_program->objectScript(objName);
 }
 
 bool JZNodeEngine::isWatch()

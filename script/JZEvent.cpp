@@ -4,8 +4,7 @@ int JZEvent::Event = registerEventType(JZEvent::Event);
 
 JZEvent::JZEvent()
     :QEvent((QEvent::Type)JZEvent::Event)
-{
-
+{    
 }
 
 int JZEvent::eventType()

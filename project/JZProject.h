@@ -17,6 +17,7 @@ public:
     bool save();    
     bool saveAs(QString filepath);
     QString name();
+    QString mainScript();
 
     void registObject(JZNodeObjectDefine def,QString super = QString());    
     void unregistObject(QString name);    

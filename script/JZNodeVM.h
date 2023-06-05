@@ -33,7 +33,9 @@ protected:
     JZNodeEngine m_engine;
     JZNodeProgram m_program;
     JZNodeDebugServer m_debugServer;   
-    bool m_debug;        
+    bool m_debug;
+    QMap<JZNodeObject*,JZNodeScript*> m_objectScripts;
+    QMap<QObject*,JZNodeObject*> m_objects;    
 };
 
 

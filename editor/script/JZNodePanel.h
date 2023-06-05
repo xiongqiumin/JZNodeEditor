@@ -23,6 +23,8 @@ public:
     ~JZNodePanel();    
 
     void init(int fileType);
+    void addViriable(QString name);
+    void addWidget(QString name);
 
 protected slots:
 

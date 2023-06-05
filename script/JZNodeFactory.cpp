@@ -45,7 +45,13 @@ void JZNodeFactory::init()
     registNode(Node_function,createFunc<JZNodeFunction>);
     registNode(Node_while,createFunc<JZNodeWhile>);
     registNode(Node_for,createFunc<JZNodeFor>);
+    registNode(Node_foreach,createFunc<JZNodeForEach>);
+    registNode(Node_sequence,createFunc<JZNodeSequence>);
     registNode(Node_branch,createFunc<JZNodeBranch>);
+    registNode(Node_break,createFunc<JZNodeBreak>);
+    registNode(Node_continue,createFunc<JZNodeContinue>);
+    registNode(Node_return,createFunc<JZNodeReturn>);
+    registNode(Node_exit,createFunc<JZNodeExit>);
     //registNode(Node_switch,createFunc<JZNodeSwitch>);
     //registNode(Node_if,createFunc<JZNodeIf>);
 

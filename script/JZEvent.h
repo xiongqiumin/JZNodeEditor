@@ -29,10 +29,10 @@ public:
 
     int eventType();
     void setEventType(int type);
-
+    
     QVariantList params;
 
-protected:
+protected:    
     int m_eventType;    
 };
 

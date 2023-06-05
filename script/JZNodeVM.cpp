@@ -94,8 +94,7 @@ void JZNodeVM::createWindow()
 }
 
 void JZNodeVM::onValueNotify(int id,QVariant &value)
-{
-
+{        
 }
 
 void JZNodeVM::onIntValueChanged(int value)
@@ -106,7 +105,7 @@ void JZNodeVM::onIntValueChanged(int value)
 }
 
 void JZNodeVM::onStringValueChanged(const QString &value)
-{
+{    
     JZEvent *event = new JZEvent();
     event->setEventType(Event_valueChanged);
     qApp->postEvent(this,event);
@@ -140,7 +139,7 @@ void JZNodeVM::dealEvent(JZEvent *event)
     {
         const JZEventHandle *handle = list[i];              
         QVariantList in = event->params;
-        QVariantList out;        
+        QVariantList out;           
         m_engine.call(&handle->function,in,out);
     }
 }
