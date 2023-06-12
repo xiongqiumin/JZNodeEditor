@@ -13,13 +13,16 @@ public:
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
 
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
+
+    int dataType();
+    void setDataType(int type);
 
     QVariant literal() const;
-    void setLiteral(QVariant value);
+    void setLiteral(QVariant value);    
 
 protected:
-    int m_out;    
+    int m_out;        
 };
 
 //JZNodePrint
@@ -35,6 +38,21 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
+};
+
+//JZNodeCreate
+class JZNodeCreate : public JZNode
+{
+public:
+    JZNodeCreate();
+    ~JZNodeCreate();
+
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+
+    void setClassName(QString name);
 };
 
 //JZNodeParam

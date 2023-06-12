@@ -5,9 +5,11 @@
 enum{    
     ProjectItem_root,
     ProjectItem_folder,
+    ProjectItem_class,
+    ProjectItem_library,
     ProjectItem_ui,
-    ProjectItem_param,
-    ProjectItem_scriptParam,
+    ProjectItem_param,    
+    ProjectItem_scriptParamBinding,
     ProjectItem_scriptFlow,    
     ProjectItem_scriptFunction,
 };
@@ -31,13 +33,13 @@ public:
     int itemType();
     void setItemType(int type);
 
-    bool isFolder();
     JZProjectItem *parent();
     
     void addItem(QSharedPointer<JZProjectItem> child);
     void removeItem(int index);
     JZProjectItem *getItem(QString name);     
-    int indexOfItem(JZProjectItem *);   
+    bool hasItem(QString name);
+    int indexOfItem(JZProjectItem *item);
     QList<JZProjectItem *> childs();
     void removeChlids();
 
@@ -45,17 +47,20 @@ public:
     virtual void loadFromStream(QDataStream &s);
 
     void sort();
+    QList<JZProjectItem *> itemList(int type);
     
 protected:
     Q_DISABLE_COPY(JZProjectItem)
+
+    void itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list);
 
     JZProjectItem *m_parent;
     QList<QSharedPointer<JZProjectItem>> m_childs;
     
     int m_itemType;    
     QString m_name;    
-    bool m_folder;
     JZProject *m_project;
+    int m_pri;
 };
 typedef QSharedPointer<JZProjectItem> JZProjectItemPtr;
 

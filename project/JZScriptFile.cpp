@@ -1,11 +1,21 @@
 #include "JZScriptFile.h"
 #include "JZNodeFactory.h"
+#include "JZNodeFunction.h"
+#include "JZNodeFunctionManager.h"
+#include "JZUiFile.h"
 
 //JZScriptFile
 JZScriptFile::JZScriptFile(int type)
     :JZProjectItem(type)
 {
     clear();
+    m_pri = 10;
+
+    if(type == ProjectItem_scriptFunction)
+    {
+        JZNodeFunctionStart *node_start = new JZNodeFunctionStart();
+        addNode(JZNodePtr(node_start));
+    }
 }
 
 JZScriptFile::~JZScriptFile()
@@ -39,6 +49,7 @@ const FunctionDefine &JZScriptFile::function()
 void JZScriptFile::setFunction(FunctionDefine def)
 {
     m_function = def;
+    m_function.script = itemPath();
 }
 
 int JZScriptFile::addNode(JZNodePtr node)
@@ -85,11 +96,8 @@ void JZScriptFile::setNodePos(int id,QPointF pos)
 }
 
 QPointF JZScriptFile::getNodePos(int id)
-{
-    auto it = m_nodesPos.find(id);
-    if(it != m_nodesPos.end())
-        return it.value();
-    return QPointF();
+{    
+    return m_nodesPos.value(id,QPointF());
 }
 
 QList<int> JZScriptFile::nodeList()
@@ -123,8 +131,8 @@ int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
     return connect.id;
 }
 
-bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to)
-{
+bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
+{    
     JZNode *node_from = getNode(from.nodeId);
     JZNode *node_to = getNode(to.nodeId);
     if(node_from == node_to)
@@ -132,29 +140,58 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to)
 
     JZNodePin *pin_from = getPin(from);
     JZNodePin *pin_to = getPin(to);
-    if((pin_from->isFlow() || pin_from->isSubFlow()) != pin_to->isFlow())
+    if(!(pin_from->isOutput() && pin_to->isInput())){
+        error = "只能连接输入节点";
         return false;
-    if(!(pin_from->isOutput() && pin_to->isInput()))
-        return false;
+    }
     if(hasConnect(from,to))
+    {
+        error = "连接已存在";
         return false;
+    }
+    if((pin_from->isFlow() || pin_from->isSubFlow()) != pin_to->isFlow())
+    {
+        if(pin_from->isFlow())
+            error = "流程节点只能连接流程";
+        else
+            error = "数据节点只能连接数据";
+        return false;
+    }
 
     auto out_lines = getConnectId(from.nodeId, from.propId);
     auto in_lines = getConnectId(to.nodeId, to.propId);
-    if((pin_from->isFlow() || pin_from->isSubFlow()) && out_lines.size() != 0) //流程节点只能出一条
+    if((pin_from->isFlow() || pin_from->isSubFlow()) && out_lines.size() != 0)
+    {
+        error = "已有流程节点连接";
         return false;
-    if(pin_from->isSubFlow() && in_lines.size() != 0)    //子节点只能连接未连接的节点
+    }
+    if(pin_from->isSubFlow() && in_lines.size() != 0)
+    {
+        error = "子过程只能连接未连接的节点";
         return false;
-    if(!node_from->isFlowNode() && in_lines.size() > 0)  //输入点只能连接一个计算
+    }
+    if(!node_to->isFlowNode() && in_lines.size() > 0)  //输入点只能连接一个计算
+    {
+        error = "已有输入,只能连接一个输入";
         return false;
+    }
 
-/*
-    QList<int> form_type = node_from->propType(from.nodeId);
-    QList<int> in_type = node_to->propType(to.propId);
-    bool ok = JZNodeType::canConvert(form_type,in_type);
-    if(!ok)
-        return false;
-*/
+    //检测数据类型
+    if(!pin_from->isFlow())
+    {
+        QList<int> form_type = node_from->propType(from.propId);
+        QList<int> in_type = node_to->propType(to.propId);
+        bool ok = JZNodeType::canConvert(form_type,in_type);
+        if(!ok)
+        {
+            QStringList inTypes;
+            for(int i = 0; i < in_type.size(); i++)
+                inTypes << JZNodeType::idToName(in_type[i]);
+
+            error = "数据类型不匹配,需要" + inTypes.join(",");
+            return false;
+        }
+    }
 
     return true;
 }
@@ -254,29 +291,101 @@ void JZScriptFile::loadFromStream(QDataStream &s)
     s >> m_bindClass;
 }
 
-//JZScriptFunctionFile
-JZScriptFunctionFile::JZScriptFunctionFile()
-    :JZProjectItem(ProjectItem_folder)
+//JZScriptLibraryFile
+JZScriptLibraryFile::JZScriptLibraryFile()
+    :JZProjectItem(ProjectItem_library)
 {
-    m_folder = true;
 }
     
-JZScriptFunctionFile::~JZScriptFunctionFile()
+JZScriptLibraryFile::~JZScriptLibraryFile()
 {
 
 }
 
-void JZScriptFunctionFile::addFunction(QString name,QStringList in,QStringList out)
+void JZScriptLibraryFile::addFunction(QString name,QStringList in,QStringList out)
 {
     FunctionDefine define;
     define.name = name;
     for(int i = 0; i < in.size(); i++)
-        define.paramIn.push_back(JZNodePin(in[i],Type_any, Prop_param | Prop_in));
+    {
+        FunctionParam param;
+        param.name = in[i];
+        define.paramIn.push_back(param);
+    }
     for(int i = 0; i < out.size(); i++)
-        define.paramOut.push_back(JZNodePin(out[i],Type_any, Prop_param | Prop_out));
+    {
+        FunctionParam param;
+        param.name = out[i];
+        define.paramOut.push_back(param);
+    }
 
     JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
     file->setName(name);
     file->setFunction(define);
     addItem(JZProjectItemPtr(file));
+}
+
+//JZScriptClassFile
+JZScriptClassFile::JZScriptClassFile()
+    :JZProjectItem(ProjectItem_class)
+{
+
+}
+
+JZScriptClassFile::~JZScriptClassFile()
+{
+
+}
+
+void JZScriptClassFile::init(QString className,QString super)
+{
+    m_define.className = className;
+    m_define.superName = super;
+    m_define.id = JZNodeObjectManager::instance()->regist(m_define);
+}
+
+void JZScriptClassFile::unint()
+{
+    JZNodeObjectManager::instance()->unregist(m_define.id);
+}
+
+bool JZScriptClassFile::addMemberVariable(QString name,int dataType,const QVariant &v)
+{    
+    m_define.addParam(JZParamDefine(name,dataType,v));
+    JZNodeObjectManager::instance()->replace(m_define);
+    return true;
+}
+
+void JZScriptClassFile::removeMemberVariable(QString name)
+{
+    m_define.removeParam(name);
+    JZNodeObjectManager::instance()->replace(m_define);
+}
+
+bool JZScriptClassFile::addMemberFunction(FunctionDefine func)
+{
+    m_define.addFunction(func);
+    JZNodeObjectManager::instance()->replace(m_define);
+    return true;
+}
+
+void JZScriptClassFile::removeMemberFunction(QString func)
+{
+    m_define.removeFunction(func);
+    JZNodeObjectManager::instance()->replace(m_define);
+}
+
+JZNodeObjectDefine JZScriptClassFile::objectDefine()
+{    
+    JZNodeObjectDefine define = m_define;
+    for(int i = 0; i < m_childs.size(); i++)
+    {
+        auto item = m_childs[i].data();
+        if(item->itemType() == ProjectItem_ui)
+        {
+            auto ui_item = dynamic_cast<JZUiFile*>(item);
+            ui_item->getWidgetMembers(define.params);
+        }
+    }
+    return define;
 }

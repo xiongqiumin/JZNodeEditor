@@ -81,10 +81,14 @@ void JZNodeLineItem::setEndTraget(JZNodeGemo to)
 
 void JZNodeLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget)
 {    
+    QColor c = Qt::black;
+    auto pen_style = Qt::SolidLine;
     if(isSelected())
-    {
-        painter->setPen(Qt::yellow);
-    }
+        c = Qt::yellow;
+    if(m_to.nodeId == -1)
+        pen_style = Qt::DashLine;
+
+    painter->setPen(QPen(QBrush(c),1,pen_style));
     painter->drawLine(m_startPoint, m_endPoint);
 }
 

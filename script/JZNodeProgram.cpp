@@ -2,6 +2,90 @@
 #include "JZNodeCompiler.h"
 #include <QFile>
 
+//TopoTool
+TopoTool::TopoTool()
+{
+
+}
+
+void TopoTool::addDepend(int id,QStringList in,QStringList out)
+{
+    TopoNode node;
+    node.id = id;
+    node.in = in;
+    node.out = out;
+    m_list.push_back(node);
+}
+
+bool TopoTool::toposort(QList<int> &result)
+{
+    QMap<QString,QList<int>> inList;
+    for(int i = 0; i < m_list.size(); i++)
+    {
+        auto &node = m_list[i];
+        for(int in_idx = 0; in_idx < node.in.size(); in_idx++)
+            inList[node.in[in_idx]] << i;
+    }
+
+    QMap<int, int> nodeMap;
+    for(int i = 0; i < m_list.size(); i++)
+        nodeMap[i] = 0;
+
+    for(int i = 0; i < m_list.size(); i++)
+    {
+        auto &node = m_list[i];
+        node.next.clear();
+
+        for(int out_idx = 0; out_idx < node.out.size(); out_idx++)
+        {
+            auto it = inList.find(node.out[out_idx]);
+            if(it == inList.end())
+                continue;
+
+            auto &next = it.value();
+            for (int j = 0; j < next.size(); j++)
+                nodeMap[next[j]]++;
+
+            node.next << next;
+        }
+    }
+
+    while (true)
+    {
+        QList<TopoNode*> tmp;
+        auto it = nodeMap.begin();
+        while (it != nodeMap.end())
+        {
+            if (it.value() == 0)
+            {
+                auto &cur_node = m_list[it.key()];
+                auto &next = cur_node.next;
+                for (int i = 0; i < next.size(); i++)
+                    nodeMap[next[i]]--;
+
+                tmp.push_back(&cur_node);
+                it = nodeMap.erase(it);
+            }
+            else
+                it++;
+        }
+        if (tmp.size() == 0)
+        {
+            if (nodeMap.size() != 0)
+            {
+                return false;
+            }
+            break;
+        }
+        std::sort(tmp.begin(), tmp.end(), [](const TopoNode *n1, const TopoNode *n2)
+                  { return n1->id < n2->id; });
+        for(int i = 0; i < tmp.size(); i++)
+            result.push_back(tmp[i]->id);
+    }
+
+    return true;
+}
+
 // GraphNode
 GraphNode::GraphNode()
 {
@@ -156,18 +240,11 @@ JZEventHandle::JZEventHandle()
 {    
 }
 
-bool JZEventHandle::match(JZEvent *event) const
-{
-    if(event->eventType() == type && event->params == params)
-        return true;
-
-    return false;
-}
 
 QDataStream &operator<<(QDataStream &s, const JZEventHandle &param)
 {
     s << param.type;
-    s << param.params;
+    s << param.sender;
     s << param.function;
     return s;
 }
@@ -175,7 +252,7 @@ QDataStream &operator<<(QDataStream &s, const JZEventHandle &param)
 QDataStream &operator>>(QDataStream &s, JZEventHandle &param)
 {
     s >> param.type;
-    s >> param.params;
+    s >> param.sender;
     s >> param.function;
     return s;
 }
@@ -255,7 +332,11 @@ JZNodeProgram::~JZNodeProgram()
 
 void JZNodeProgram::clear()
 {
-    m_scripts.clear();
+    m_scripts.clear();    
+    m_variables.clear();
+    m_functionDefines.clear();
+    m_objectDefines.clear();
+    m_objectScripts.clear();
 }
 
 bool JZNodeProgram::load(QString filepath)
@@ -280,7 +361,10 @@ bool JZNodeProgram::load(QString filepath)
         script->loadFromStream(s);
         m_scripts[path] = JZNodeScriptPtr(script);       
     }
-
+    s >> m_variables;
+    s >> m_functionDefines;
+    s >> m_objectDefines;
+    s >> m_objectScripts;
     return true;
 }
     
@@ -299,20 +383,20 @@ bool JZNodeProgram::save(QString filepath)
         s << it.key();
         it.value()->saveToStream(s);
         it++;
-    }    
+    }        
+    s << m_variables;
+    s << m_functionDefines;
+    s << m_objectDefines;
+    s << m_objectScripts;
     return true;
 }
 
 FunctionDefine *JZNodeProgram::function(QString name)
 {    
-    auto it = m_scripts.begin();
-    while(it != m_scripts.end())
+    for(int i = 0; i < m_functionDefines.size(); i++)
     {
-        auto func = it.value()->function(name);
-        if(func)
-            return func;
-
-        it++;
+        if(m_functionDefines[i].name == name)
+            return &m_functionDefines[i];
     }
     return nullptr;
 }
@@ -325,6 +409,21 @@ JZNodeScript *JZNodeProgram::script(QString name)
     return m_scripts[name].data();
 }
 
+QList<JZNodeScript*> JZNodeProgram::scriptList()
+{
+    QList<JZNodeScript*> list;
+    auto it = m_scripts.begin();
+    while(it != m_scripts.end())
+    {
+        if(it.value()->className.isEmpty())
+        {
+            list << it.value().data();
+        }
+        it++;
+    }
+    return list;
+}
+
 JZNodeScript *JZNodeProgram::objectScript(QString name)
 {
     if(!m_objectScripts.contains(name))
@@ -334,46 +433,29 @@ JZNodeScript *JZNodeProgram::objectScript(QString name)
     return script(path);
 }
 
-QList<JZEventHandle*> JZNodeProgram::matchEvent(JZEvent *e,JZNodeObject *obj) const
-{
-    QString className;
-    if(obj)
-        className = obj->define->className;
-
-    QList<JZEventHandle*> result;
-    auto it = m_scripts.begin();
-    while(it != m_scripts.end())
-    {
-        JZNodeScript *script = it.value().data();
-        if(script->className == className)
-        {
-            QList<JZEventHandle> &handle_list = script->events;
-            for(int i = 0; i < handle_list.size(); i++)
-            {               
-                if(handle_list[i].match(e))
-                    result.push_back(&handle_list[i]);
-            }
-        }
-        it++;
-    }
-    return result;
-}
-
 QList<JZEventHandle*> JZNodeProgram::eventList() const
 {
     QList<JZEventHandle*> result;
     auto it = m_scripts.begin();
     while(it != m_scripts.end())
     {
-        QList<JZEventHandle> &handle_list = it.value()->events;
-        for(int i = 0; i < handle_list.size(); i++)
-            result.push_back(&handle_list[i]);
+        if(it.value()->className.isEmpty())
+        {
+            QList<JZEventHandle> &handle_list = it.value()->events;
+            for(int i = 0; i < handle_list.size(); i++)
+                result.push_back(&handle_list[i]);
+        }
         it++;
     }
     return result;
 }
 
-QMap<QString,QVariant> JZNodeProgram::variables()
+QList<JZNodeObjectDefine> JZNodeProgram::objectDefines()
+{
+    return m_objectDefines;
+}
+
+QMap<QString,JZParamDefine> JZNodeProgram::variables()
 {
     return m_variables;
 }

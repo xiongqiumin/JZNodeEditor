@@ -3,6 +3,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeDebugPacket.h"
 #include "JZNodeObject.h"
+#include "JZNodeEngine.h"
 
 void JZNodeInit()
 {
@@ -11,7 +12,7 @@ void JZNodeInit()
     JZNodeObjectManager::instance()->init();
 
     JZNetPackManager::instance()->init();
-    JZNetPackManager::instance()->registPack(NetPack_debugPacket,createNetPackFunc<JZNodeDebugPacket>);
+    JZNetPackManager::instance()->registPack(NetPack_debugPacket,createNetPackFunc<JZNodeDebugPacket>);    
 
-    QMetaType::registerDebugStreamOperator<JZNodeObjectPtr>();
+    qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
 }

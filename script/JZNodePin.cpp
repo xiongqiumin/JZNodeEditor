@@ -1,5 +1,34 @@
 #include "JZNodePin.h"
 
+JZParamDefine::JZParamDefine()
+{
+
+}
+
+JZParamDefine::JZParamDefine(QString name,int dataType,const QVariant &v)
+{
+    this->name = name;
+    this->dataType = dataType;
+    this->value = v;
+}
+
+QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
+{
+    s << param.name;
+    s << param.dataType;
+    s << param.value;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZParamDefine &param)
+{
+    s >> param.name;
+    s >> param.dataType;
+    s >> param.value;
+    return s;
+}
+
+//JZNodePin
 JZNodePin::JZNodePin()
 {
     m_id = INVALID_ID;
@@ -74,6 +103,16 @@ bool JZNodePin::isSubFlow() const
 bool JZNodePin::isEditable() const
 {
     return (m_flag & Prop_edit);
+}
+
+bool JZNodePin::isDispName() const
+{
+    return (m_flag & Prop_dispName);
+}
+
+bool JZNodePin::isDispValue() const
+{
+    return (m_flag & Prop_dispValue);
 }
 
 void JZNodePin::setDataType(QList<int> type)

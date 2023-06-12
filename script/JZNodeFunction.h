@@ -27,7 +27,7 @@ public:
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
 
-    void setFunction(const FunctionDefine *define,bool flowFunction);
+    void setFunction(const FunctionDefine *define);
     QString function() const;
 
 protected:

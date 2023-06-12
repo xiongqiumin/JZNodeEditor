@@ -177,6 +177,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actRename = nullptr;
     QAction *actCreate = nullptr;
     QAction *actCreateFolder = nullptr;
+/*
     if(item->isFolder())
     {
         QString name = JZProjectItemFactory::itemTypeName(item->itemType());
@@ -188,7 +189,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         actRemove = menu.addAction("删除");
         actRename = menu.addAction("重命名");
     }
-
+*/    
     QAction *act = menu.exec(m_tree->mapToGlobal(pos));
     if(!act)
         return;

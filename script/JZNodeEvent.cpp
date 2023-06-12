@@ -1,5 +1,6 @@
 #include "JZNodeEvent.h"
 #include "JZEvent.h"
+#include "JZNodeCompiler.h"
 
 // JZNodeEvent
 JZNodeEvent::JZNodeEvent()
@@ -35,7 +36,9 @@ int JZNodeEvent::eventType() const
     return m_eventType;
 }
 
-bool JZNodeEvent::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodeEvent::compiler(JZNodeCompiler *c,QString &error)
 {
+    c->addFlowOutput(m_id);
+    c->addJumpNode(flowOut());
     return true;
 }

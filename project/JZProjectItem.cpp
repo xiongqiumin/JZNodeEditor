@@ -1,12 +1,14 @@
 #include "JZProjectItem.h"
 #include "JZScriptFile.h"
+#include "JZUiFile.h"
+#include "JZParamFile.h"
 
 JZProjectItem::JZProjectItem(int itemType)
 {
     m_parent = nullptr;
     m_project = nullptr;
     m_itemType = itemType;    
-    m_folder = false;
+    m_pri = 0;
 }
 
 JZProjectItem::~JZProjectItem()
@@ -25,8 +27,7 @@ JZProject *JZProjectItem::project() const
 
 void JZProjectItem::saveToStream(QDataStream &s)
 {
-    s << m_name;
-    s << m_folder;
+    s << m_name;    
     s << m_childs.size();
     for(int i = 0; i < m_childs.size(); i++)
     {
@@ -38,7 +39,6 @@ void JZProjectItem::saveToStream(QDataStream &s)
 void JZProjectItem::loadFromStream(QDataStream &s)
 {
     s >> m_name;
-    s >> m_folder;
     int size = 0;
     s >> size;
     for(int i = 0; i < size; i++)
@@ -51,18 +51,13 @@ void JZProjectItem::loadFromStream(QDataStream &s)
     }
 }
 
-bool JZProjectItem::isFolder()
-{
-    return m_folder;        
-}
-
 void JZProjectItem::sort()
 {
     std::sort(m_childs.begin(),m_childs.end(),[](const JZProjectItemPtr &i1_ptr,const JZProjectItemPtr &i2_ptr){
         auto i1 = i1_ptr.data();
         auto i2 = i2_ptr.data();
-        if(i1->m_folder != i2->m_folder)
-            return (int)i1->m_folder > (int)i2->m_folder;
+        if(i1->m_pri != i2->m_pri)
+            return i1->m_pri < i2->m_pri;
         return i1->m_name < i2->m_name;
     });
 }
@@ -130,6 +125,11 @@ JZProjectItem *JZProjectItem::getItem(QString name)
     return nullptr;
 }
 
+bool JZProjectItem::hasItem(QString name)
+{
+    return getItem(name) != nullptr;
+}
+
 QList<JZProjectItem *> JZProjectItem::childs()
 {
     QList<JZProjectItem *> result;
@@ -153,11 +153,39 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
     return -1;
 }
 
+QList<JZProjectItem *> JZProjectItem::itemList(int type)
+{
+    QList<JZProjectItem *> result;
+    if(this->itemType() == type)
+        result << this;
+
+    auto chlid = this->childs();
+    for(int i = 0; i < chlid.size(); i++)
+        itemList(chlid[i],type,result);
+        
+    return result;
+}
+
+void JZProjectItem::itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list)
+{
+    if(item->itemType() == ProjectItem_folder)
+    {
+        auto chlid = item->childs();
+        for(int i = 0; i < chlid.size(); i++)
+            itemList(chlid[i],type,list);
+    }
+    else
+    {
+        if(item->itemType() == type)
+            list << item;
+    }
+}
+
+
 //JZProjectItemFolder
 JZProjectItemFolder::JZProjectItemFolder()
     :JZProjectItem(ProjectItem_folder)
 {
-    m_folder = true;
 }
 
 JZProjectItemFolder::~JZProjectItemFolder()
@@ -169,7 +197,15 @@ JZProjectItem *JZProjectItemFactory::create(int itemType)
 {
     if(itemType == ProjectItem_folder)
         return new JZProjectItem(ProjectItem_folder);
-    else if(itemType >= ProjectItem_scriptParam && itemType <= ProjectItem_scriptFlow)
+    else if(itemType == ProjectItem_ui)
+        return new JZUiFile();
+    else if(itemType == ProjectItem_class)
+        return new JZScriptClassFile();
+    else if(itemType == ProjectItem_library)
+        return new JZScriptLibraryFile();
+    else if(itemType == ProjectItem_param)
+        return new JZScriptParamDefineFile();
+    else if(itemType >= ProjectItem_scriptParamBinding && itemType <= ProjectItem_scriptFlow)
         return new JZScriptFile(itemType);
 
     Q_ASSERT(0);
@@ -178,7 +214,7 @@ JZProjectItem *JZProjectItemFactory::create(int itemType)
 
 QString JZProjectItemFactory::itemTypeName(int itemType)
 {
-    if(itemType == ProjectItem_scriptParam)
+    if(itemType == ProjectItem_scriptParamBinding)
         return "变量绑定";
     else if(itemType == ProjectItem_scriptFlow)
         return "流程";

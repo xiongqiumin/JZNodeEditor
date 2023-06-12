@@ -23,6 +23,8 @@ public:
     void clearBreakPoint();    
     QVariant getVariable(QString name);
     void setVariable(QString name,QVariant value);
+
+    void detach();
     void pause();       
     void resume();
     void stop();
@@ -33,7 +35,9 @@ public:
 signals:
     void sigNetError();
     void sigDisConnect();   
-    void sigBreakTrigger(); 
+    void sigBreakTrigger();
+
+    void sigRuntimeError(JZNodeRuntimeError error);
     void sigLog(QString log);
 
 protected slots:    

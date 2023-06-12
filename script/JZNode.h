@@ -10,6 +10,7 @@ enum
 {
     Node_none,    
     Node_param,
+    Node_create,
     Node_this,
     Node_setParam,
     Node_setParamData,
@@ -140,15 +141,22 @@ public:
     
     QVariant propValue(int prop) const;
     void setPropValue(int prop,QVariant value);
-    virtual QList<int> propType(int idx);
+    QString propName(int id);
+    void setPropName(int id,QString name);
+
+    virtual QList<int> propType(int id);
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
 
-    virtual void expandNode();
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);    
 
 protected:     
+    void setTypeInt(int id);
+    void setTypeNumber(int id);
+    void setTypeBool(int id);
+    void setTypeString(int id);
+
     int m_id;
     int m_type;
     QString m_name;

@@ -8,6 +8,11 @@ JZEditor::~JZEditor()
 {
 }
 
+bool JZEditor::isModified()
+{
+    return false;
+}
+
 void JZEditor::updateMenuBar(QMenuBar *menubar)
 {
 

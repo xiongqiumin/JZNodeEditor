@@ -369,6 +369,22 @@ void JZNode::setPropValue(int id,QVariant value)
     pin->setValue(value);
 }
 
+QString JZNode::propName(int id)
+{
+    auto pin = prop(id);
+    Q_ASSERT(pin);
+
+    return pin->name();
+}
+
+void JZNode::setPropName(int id,QString name)
+{
+    auto pin = prop(id);
+    Q_ASSERT(pin);
+
+    pin->setName(name);
+}
+
 QVector<int> JZNode::propList() const
 {
     QVector<int> result;
@@ -398,20 +414,46 @@ void JZNode::setId(int id)
     m_id = id;
 }
 
-void JZNode::expandNode()
+QList<int> JZNode::propType(int id)
 {
-    
-}
-
-QList<int> JZNode::propType(int idx)
-{
-    return QList<int>();
+    return prop(id)->dataType();
 }
 
 QMap<int,int> JZNode::calcPropOutType(const QMap<int,int> &inType)
 {
-    return QMap<int,int>();
+    QMap<int,int> types;
+    auto list = paramOutList();
+    for(int i = 0; i < list.size(); i++)
+    {
+        auto pin = prop(list[i]);
+        int dataType = Type_none;
+        if(pin->dataType().size() > 0)
+            dataType = pin->dataType().front();
+        types[list[i]] = dataType;
+    }
+    return types;
 }
+
+void JZNode::setTypeInt(int id)
+{
+    prop(id)->setDataType({Type_int,Type_int64});
+}
+
+void JZNode::setTypeNumber(int id)
+{
+    prop(id)->setDataType({Type_bool,Type_int,Type_int64,Type_double});
+}
+
+void JZNode::setTypeBool(int id)
+{
+    prop(id)->setDataType({Type_bool});
+}
+
+void JZNode::setTypeString(int id)
+{
+    prop(id)->setDataType({Type_string});
+}
+
 
 void JZNode::saveToStream(QDataStream &s) const
 {

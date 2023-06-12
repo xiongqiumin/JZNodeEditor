@@ -23,6 +23,7 @@ public:
     JZNodeCompiler();
     ~JZNodeCompiler();
 
+    bool genGraphs(JZScriptFile *file,JZNodeScript *result);
     bool build(JZScriptFile *file,JZNodeScript *result);
 
     int allocStack();
@@ -52,7 +53,9 @@ public:
     QString error();    
 
 protected:            
+    void init(JZScriptFile *file,JZNodeScript *result);
     bool genGraphs();
+    bool checkGraphs();
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
     bool buildDataFlow(const QList<GraphNode*> &list);

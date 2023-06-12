@@ -5,6 +5,11 @@
 #include <QApplication>
 #include "JZNodeVM.h"
 
+void JZObjectValueChanged(const QString &name)
+{
+    g_engine->objectChanged(name);
+}
+
 //RunnerEnv
 RunnerEnv::RunnerEnv()
 {
@@ -70,6 +75,23 @@ void Stack::setVariable(int level,int id, const QVariant &value)
     m_stack[level][id] = value;
 }
 
+//JZNodeRuntimeError
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeError &param)
+{
+    s << param.info;
+    s << param.script;
+    s << param.pc;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param)
+{
+    s >> param.info;
+    s >> param.script;
+    s >> param.pc;
+    return s;
+}
+
 //JZNodeRuntimeInfo
 JZNodeRuntimeInfo::JZNodeRuntimeInfo()
 {
@@ -108,6 +130,7 @@ void BreakPoint::clear()
 }
 
 // JZNodeEngine
+JZNodeEngine *g_engine = nullptr;
 JZNodeEngine::JZNodeEngine()
 {    
     m_program = nullptr;
@@ -134,29 +157,56 @@ JZNodeProgram *JZNodeEngine::program()
 
 void JZNodeEngine::init()
 {
-    // init variable
-    auto inst = JZNodeObjectManager::instance();
+    JZNodeFunctionManager::instance()->clearUserReigst();
+    JZNodeObjectManager::instance()->clearUserReigst();
+
+    // regist type
+    auto define_list = m_program->objectDefines();    
+    for(int i = 0; i < define_list.size(); i++)
+        JZNodeObjectManager::instance()->regist(define_list[i]);
+
+    // init variable    
     auto program_params = m_program->variables();
     auto it = program_params.begin();
     while(it != program_params.end() )
-    {
-        if((int)it.value().userType() == qMetaTypeId<JZNodeObjectDelcare>())
-        {
-            JZNodeObjectDelcare delcare = it.value().value<JZNodeObjectDelcare>();            
-            m_global[it.key()] = QVariant::fromValue(inst->create(delcare.className));
+    {        
+        if(it.value().dataType < Type_object)
+        {            
+            if(it.value().value.isNull())
+                m_global[it.key()] = QVariant(JZNodeType::toVariantType(it.value().dataType));
+            else
+                m_global[it.key()] = it.value().value;
         }
-        else
-            m_global[it.key()] = it.value();
         it++;
     }
 
-    // init event change
-    auto list = m_program->eventList();
-    for(int i = 0; i < list.size(); i++)
+    // connect events
+    auto script_list = m_program->scriptList();
+    for(int i = 0; i < script_list.size(); i++)
+        connectScript(nullptr,script_list[i]);
+
+    // add watch
+    for(int i = 0; i < m_paramChangeHandle.size(); i++)
+    {
+        auto &handle = m_paramChangeHandle[i];
+        int index = handle.name.lastIndexOf(".");
+        if(index != -1)
+        {
+            QString objName = handle.name.left(index);
+            QString paramName = handle.name.mid(index+1);
+            auto obj = getObject(objName);
+            if(obj)
+                obj->addWatch(paramName);
+        }
+    }
+
+    // init value
+    for(int i = 0; i < m_paramChangeHandle.size(); i++)
     {
         QVariantList in,out;
-        if(list[i]->type == Event_paramChanged)
-            call(&list[i]->function,in,out);
+        auto &handle = m_paramChangeHandle[i];
+        setThis(QVariant::fromValue(handle.env));
+        call(handle.define,in,out);
     }
 }   
 
@@ -227,6 +277,26 @@ void JZNodeEngine::popStack()
     }
 }
 
+void JZNodeEngine::dealEvent(JZEvent *event)
+{
+    JZNodeObject *obj = nullptr;
+    auto it = m_connects.find(obj);
+    if(it == m_connects.end())
+        return;
+
+    auto &list = it.value();
+    for(int i = 0; i < list.size(); i++)
+    {
+        auto &connect = list[i];
+        if(connect.eventType == event->eventType())
+        {
+            QVariantList out;
+            setThis(QVariant::fromValue(connect.receiver));
+            call(connect.define,event->params,out);
+        }
+    }
+}
+
 bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList &out)
 {    
     auto *func = function(name);
@@ -237,31 +307,33 @@ bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList 
 bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVariantList &out)
 {
     Q_ASSERT(func->paramIn.size() == in.size());
-
-    m_status = Status_running;
-    if(func->isCFunction)
+    g_engine = this;
+    m_status = Status_running;               
+    for (int i = 0; i < in.size(); i++)
     {
-        callCFunction(func,in,out);
+        Q_ASSERT(JZNodeType::canConvert(JZNodeType::variantId(in[i]),func->paramIn[i].dataType));
+        setReg(Reg_Call + i,in[i]);
     }
+
+    if(func->isCFunction)
+        callCFunction(func);
     else
     {
-        for (int i = 0; i < in.size(); i++)    
-            setReg(Reg_Call + i,in[i]);
-        pushStack(func);        
+        pushStack(func);
         if(!run())
             return false;
-        out.clear();
-        for (int i = 0; i < func->paramOut.size(); i++)
-            out.push_back(getReg(Reg_Call + i));
-    }           
+    }
+    out.clear();
+    for (int i = 0; i < func->paramOut.size(); i++)
+        out.push_back(getReg(Reg_Call + i));
     return true;
 }
 
 QString JZNodeEngine::variableToString(const QVariant &v)
 {
-    if(isObject(v))
+    if(isJZObject(v))
     {
-        JZNodeObjectPtr obj = v.value<JZNodeObjectPtr>();
+        JZNodeObject *obj = toJZObject(v);
         if(obj->isString())
             return *((QString*)obj->cobj);
         else
@@ -276,13 +348,7 @@ QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
     if(param.isLiteral())    
         return param.value;
     else if(param.isRef())
-    {
-        QString name = param.ref();
-        if(name.contains("."))
-            return getObjectProperty(name);
-        else        
-            return getVariable(name);
-    }
+        return getVariable(param.ref());
     else if(param.isThis())
         return m_this;
     else
@@ -294,13 +360,7 @@ void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
     if(param.isId())    
         setReg(param.id(),value);
     else if(param.isRef())
-    {   
-        QString name = param.ref();
-        if(name.contains("."))
-            setObjectProperty(name,value);
-        else
-            setVariable(name,value);
-    }
+        setVariable(param.ref(),value);
     else
     {
         Q_ASSERT(0);
@@ -310,60 +370,24 @@ void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
         emit sigParamChanged();
 }
 
-bool JZNodeEngine::isObject(const QVariant &v)
-{
-    return (int)v.userType() == qMetaTypeId<JZNodeObjectPtr>();
-}
-
-JZNodeObject *JZNodeEngine::getObject(QString name)
-{
-    QStringList list = name.split(".");
-    return getObject(list);
-}
-
-JZNodeObject *JZNodeEngine::getObject(QStringList list)
-{
-    JZNodeObject *obj;
-    if(list[0].startsWith("#"))
-        obj = m_stack.getVariable(list[0].mid(1).toInt()).value<JZNodeObjectPtr>().data();
-    else
-        obj = m_global[list[0]].value<JZNodeObjectPtr>().data();
-    Q_ASSERT(obj);
-    for(int i = 1; i < list.size() - 1; i++)
-    {
-        obj = obj->param(list[i]).value<JZNodeObjectPtr>().data();
-    }
-    return obj;
-}
-
-QVariant JZNodeEngine::getObjectProperty(QString name)
-{
-    QStringList list = name.split(".");
-    JZNodeObject *obj = getObject(list);
-    return obj->param(list.back());
-}
-
 QVariant JZNodeEngine::getThis()
 {
     return m_this;
 }
 
-void JZNodeEngine::setThis(QVariant var)
+void JZNodeEngine::setThis(QVariant v)
 {
-    m_this = var;
+    m_this = v;
 }
-
-void JZNodeEngine::setObjectProperty(QString name, const QVariant &value)
-{
-    QStringList list = name.split(".");
-    JZNodeObject *obj = getObject(list);
-    obj->setParam(list.back(),value);
-}   
 
 QVariant JZNodeEngine::getVariable(QString name)
 {
     if(name.contains("."))
-        return getObjectProperty(name);
+    {
+        QStringList list = name.split(".");
+        auto v = m_global[list[0]];
+        return toJZObject(v)->param(list.mid(1).join("."));
+    }
     else
         return m_global[name];
         
@@ -372,24 +396,32 @@ QVariant JZNodeEngine::getVariable(QString name)
 void JZNodeEngine::setVariable(QString name, const QVariant &value)
 {
     if(name.contains("."))
-        return setObjectProperty(name,value);
+    {
+        QStringList list = name.split(".");
+        auto v = m_global[list[0]];
+        return toJZObject(v)->setParam(list.mid(1).join("."),value);
+    }
     else
     {
-        QVariant &dst = m_global[name];
-        if(isObject(dst))
+        m_global[name] = value;
+        objectChanged(name);
+    }    
+
+    if(isJZObject(value))
+        connectSelf(toJZObject(value));
+}
+
+void JZNodeEngine::objectChanged(const QString &name)
+{
+    QVariantList in,out;
+    for(int i = 0; i < m_paramChangeHandle.size(); i++)
+    {
+        auto &handle = m_paramChangeHandle[i];
+        if(name == handle.name || (name.startsWith(handle.name) && name[handle.name.size()] == "."))
         {
-            JZNodeObjectPtr obj = dst.value<JZNodeObjectPtr>();
-            if(obj->className() == "string")
-            {
-                *((QString*)obj->cobj) = value.toString();
-            }
-            else
-            {
-                Q_ASSERT(0);
-            }
+            setThis(QVariant::fromValue(handle.env));
+            call(handle.define,in,out);
         }
-        else
-            dst = value;
     }
 }
 
@@ -417,6 +449,107 @@ JZNodeScript *JZNodeEngine::getScript(QString path)
 JZNodeScript *JZNodeEngine::getObjectScript(QString objName)
 {
     return m_program->objectScript(objName);
+}
+
+void JZNodeEngine::connectScript(QString objName,JZNodeObject *obj,JZNodeScript *script)
+{
+    for(int event_idx = 0; event_idx < script->events.size(); event_idx++)
+    {
+        auto &handle = script->events[event_idx];                
+        if(handle.type == Event_paramChanged)
+        {
+            if(!handle.sender.startsWith(objName))
+                continue;
+
+            ParamChangeHandle change;
+            QString param_name = handle.function.name.mid(3); /* on_{name}_changed */
+            param_name.chop(8);
+            if(obj)
+                change.name = obj->fullName() + "." + param_name;
+            else
+                change.name = param_name;
+            change.env = obj;
+            change.define = &handle.function;
+            m_paramChangeHandle.push_back(change);
+        }
+        else
+        {
+            if(handle.sender != objName)
+                continue;
+
+            JZObjectConnect connect;
+            connect.sender = obj;
+            connect.receiver = obj;
+            connect.define = &handle.function;
+            connect.eventType = handle.type;            
+
+            if(handle.sender.isEmpty())
+            {
+                m_connects[sender].push_back(connect);
+            }
+            else
+            {
+                QVariant v;
+                if(obj)
+                    v = obj->param(handle.sender);
+                else
+                    v = getVariable(handle.sender);
+
+                sender = toJZObject(v);
+                m_connects[sender].push_back(connect);
+
+                //connect childs
+                auto it = obj->params.begin();
+                while(it != obj->params.end())
+                {
+                    if(isJZObject(it.value()))
+                    {
+                        auto sub_obj = toJZObject(it.value());
+                        connectScript(objName + "." + it.key(),sub_obj,script);
+                    }
+                    it++;
+                }
+            }                                  
+        }
+    }
+}
+
+void JZNodeEngine::connectSelf(JZNodeObject *obj)
+{
+    JZNodeScript *script = getObjectScript(obj->className());
+    connectScript("this",obj,script);
+
+    auto it = obj->params.begin();
+    while(it != obj->params.end())
+    {              
+        if(isJZObject(it.value()))
+        {
+            auto sub_obj = toJZObject(it.value());
+            connectSelf(sub_obj);
+        }
+        it++;
+    }
+}
+
+void JZNodeEngine::connectQObject(QObject *qobj)
+{
+    auto child_list = qobj->children();
+    for(int i = 0; i < child_list.size(); i++)
+        connectQObject(child_list[i]);
+}
+
+JZNodeObject* JZNodeEngine::getObject(QString name)
+{
+    QStringList list = name.split(".");
+    JZNodeObject *obj = toJZObject(m_global[name]);
+    for(int i = 1; i < list.size(); i++)
+        obj = toJZObject(obj->params[list[i]]);
+    return obj;
+}
+
+void JZNodeEngine::disconnectObject(JZNodeObject *obj)
+{
+
 }
 
 bool JZNodeEngine::isWatch()
@@ -480,18 +613,9 @@ void JZNodeEngine::waitStatus(int status)
     {   
         {
             QMutexLocker locker(&m_mutex);
-            if(status == Status_pause)
-            {
-                if(m_status == Status_pause || m_status == Status_none)
-                    return;
-            }
-            else
-            {
-                if(m_status == Status_none)
-                    return;
-            }
+            if(m_status == status || m_status == Status_none)
+                    return;            
         }
-
         QThread::msleep(10);
     }
 }
@@ -520,7 +644,7 @@ void JZNodeEngine::resume()
         return;
     
     m_waitCond.release();   
-    //这里不能wait,存在启动后马上返回或者程序结束的情况 
+    waitStatus(Status_running);
 }
 
 void JZNodeEngine::stop()
@@ -555,6 +679,7 @@ void JZNodeEngine::stepIn()
         return;
     }
     m_waitCond.release();
+    waitStatus(Status_running);
 }
 
 void JZNodeEngine::stepOver()
@@ -569,6 +694,7 @@ void JZNodeEngine::stepOver()
     m_breakStep.pcStart = info.start;
     m_breakStep.pcEnd = info.end;
     m_waitCond.release();
+    waitStatus(Status_running);
 }
 
 void JZNodeEngine::stepOut()
@@ -580,6 +706,7 @@ void JZNodeEngine::stepOut()
     m_breakStep.type = BreakPoint::stackEqual;
     m_breakStep.stack = m_stack.size() - 1;
     m_waitCond.release();
+    waitStatus(Status_running);
 }
 
 void JZNodeEngine::callCFunction(const FunctionDefine *func)
@@ -590,32 +717,21 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
     for (int i = 0; i < inList.size(); i++)
     {
         paramIn.push_back(getReg(Reg_Call + i));
-        if(paramIn[i].type() == QVariant::String)
-        {
-            JZNodeObjectPtr ptr = JZNodeObjectManager::instance()->createString(paramIn[i].toString());
-            paramIn[i] = QVariant::fromValue(ptr);
-        }
-    }
-    for (int i = 0; i < inList.size(); i++)
-    {
-        bool ret = JZNodeType::match(paramIn[i],func->cfunc->args[i]);
-        Q_ASSERT(ret);
+        int inType = JZNodeType::variantId(paramIn.back());
+        bool ret = JZNodeType::canConvert(inType,func->paramIn[i].dataType);
+        if(!ret)
+            throw std::runtime_error("type node match");
     }
 
     // call function
     pushStack(func);
-    callCFunction(func,paramIn,paramOut);
+    func->cfunc->call(paramIn,paramOut);
     popStack();
 
     // set output
     auto &outList = func->paramOut;
     for (int i = 0; i < outList.size(); i++)
         setReg(Reg_Call + i,paramOut[i]);
-}
-
-void JZNodeEngine::callCFunction(const FunctionDefine *func,const QVariantList &in,QVariantList &out)
-{    
-    func->cfunc->call(in,out);
 }
 
 const FunctionDefine *JZNodeEngine::function(QString name)
@@ -774,8 +890,8 @@ bool JZNodeEngine::run()
             case OP_bitand:
             case OP_bitor:
             case OP_bitxor:
-            {
-                JZNodeIRExpr *ir_expr = (JZNodeIRExpr*)op;
+            {                
+                JZNodeIRExpr *ir_expr =  dynamic_cast<JZNodeIRExpr*>(op);
                 QVariant a,b,c;
                 a = getParam(ir_expr->src1);
                 b = getParam(ir_expr->src2);
@@ -839,6 +955,11 @@ bool JZNodeEngine::run()
         }
         catch(const std::exception& e)
         {
+            JZNodeRuntimeError error;
+            error.info = e.what();
+            error.script = m_script->file;
+            error.pc = m_pc;
+            emit sigRuntimeError(error);
             goto RunEnd;
         }
     }

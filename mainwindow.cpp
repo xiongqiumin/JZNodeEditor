@@ -11,14 +11,19 @@
 #include <QCoreApplication>
 #include <QMessageBox>
 #include "JZNodeEditor.h"
+#include "JZUiEditor.h"
+#include "JZParamEditor.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
     m_editor = nullptr;
-    m_actRun = m_actStepOver = m_actStepIn = m_actStepOut = m_actBreakPoint = nullptr;
+    m_actRun = m_actDetach = m_actPause = m_actResume = m_actStop = nullptr;
+    m_actStepOver = m_actStepIn = m_actStepOut = m_actBreakPoint = nullptr;
 
     connect(&m_debuger,&JZNodeDebugClient::sigLog,this,&MainWindow::onDebugLog);
+    connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
+
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onDebugFinish);
 
     initMenu();
@@ -26,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     updateMenuAction();
 
     resize(800, 600);    
-    onActionOpenProject();
+    //onActionOpenProject();
 }
 
 MainWindow::~MainWindow()
@@ -88,6 +93,12 @@ void MainWindow::initMenu()
 
     QMenu *menu_debug = menubar->addMenu("调试");    
     m_actRun = menu_debug->addAction("开始调试");
+    m_actDetach = menu_debug->addAction("脱离调试器");
+    m_actPause = menu_debug->addAction("中断");
+    m_actResume = menu_debug->addAction("继续");
+    m_actStop = menu_debug->addAction("停止调试");
+
+    menu_debug->addSeparator();
     m_actStepOver = menu_debug->addAction("单步");
     m_actStepIn = menu_debug->addAction("单步进入");
     m_actStepOut = menu_debug->addAction("单步跳出");
@@ -96,9 +107,14 @@ void MainWindow::initMenu()
     m_actStepOver->setShortcut(QKeySequence("F0"));
     m_actStepIn->setShortcut(QKeySequence("F11"));
     m_actStepOut->setShortcut(QKeySequence("Shift+F11"));
-    m_actBreakPoint->setShortcut(QKeySequence("F9"));
+    m_actBreakPoint->setShortcut(QKeySequence("F9"));       
 
     connect(m_actRun,&QAction::triggered,this,&MainWindow::onActionRun);
+    connect(m_actDetach,&QAction::triggered,this,&MainWindow::onActionDetach);
+    connect(m_actPause,&QAction::triggered,this,&MainWindow::onActionPause);
+    connect(m_actResume,&QAction::triggered,this,&MainWindow::onActionResume);
+    connect(m_actStop,&QAction::triggered,this,&MainWindow::onActionStop);
+
     connect(m_actStepOver,&QAction::triggered,this,&MainWindow::onActionStepOver);
     connect(m_actStepIn,&QAction::triggered,this,&MainWindow::onActionStepIn);
     connect(m_actStepOut,&QAction::triggered,this,&MainWindow::onActionStepOut);
@@ -182,17 +198,19 @@ void MainWindow::updateMenuAction()
 
 void MainWindow::onActionNewProject()
 {
-    m_project.init();
+    closeAll();
+    m_project.initUi();
     m_projectTree->setProject(&m_project);
 }
 
 void MainWindow::onActionOpenProject()
-{
+{    
 /*
     QString filepath = QFileDialog::getOpenFileName(this,"","","*.jzproject");
     if(filepath.isEmpty())
         return;
 */
+    closeAll();
     QString filepath = "test.prj";
     if(!QFile::exists(filepath))
         m_project.saveAs(filepath);
@@ -273,15 +291,24 @@ void MainWindow::onActionRun()
     start(false);
 }
 
+void MainWindow::onActionDetach()
+{
+    m_debuger.detach();
+}
+
 void MainWindow::onActionPause()
 {
-    m_debuger.pause();
+    m_debuger.pause();    
+}
+
+void MainWindow::onActionResume()
+{
     m_debuger.resume();
 }
 
 void MainWindow::onActionStop()
-{
-    m_debuger.stop();
+{    
+    m_process.kill();
 }
 
 void MainWindow::onActionBreakPoint()
@@ -316,8 +343,12 @@ void MainWindow::onUndoAvailable(bool flag)
 
 JZEditor *MainWindow::createEditor(int type)
 {
-    if(type == ProjectItem_scriptFlow ||type == ProjectItem_scriptParam)
+    if(type == ProjectItem_scriptFlow ||type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
         return new JZNodeEditor();
+    else if(type == ProjectItem_param)
+        return new JZParamEditor();
+    else if(type == ProjectItem_ui)
+        return new JZUiEditor();
 
     return nullptr;
 }
@@ -325,7 +356,7 @@ JZEditor *MainWindow::createEditor(int type)
 void MainWindow::onFileOpened(QString filepath)
 {
     JZProjectItem *item = m_project.getItem(filepath);
-    QString file = item->path();
+    QString file = item->itemPath();
     if(!m_editors.contains(file)){
         JZEditor *editor = createEditor(item->itemType());
         if(!editor)
@@ -334,9 +365,9 @@ void MainWindow::onFileOpened(QString filepath)
         connect(editor,&JZEditor::redoAvailable,this,&MainWindow::onRedoAvailable);
         connect(editor,&JZEditor::undoAvailable,this,&MainWindow::onUndoAvailable);
         m_editorStack->addWidget(editor);
-        m_editors[file] = editor;
-    }
-    m_editors[file]->open(item);
+        m_editors[file] = editor;        
+        m_editors[file]->open(item);
+    }    
     switchEditor(m_editors[file]);
 }
 
@@ -375,11 +406,23 @@ bool MainWindow::build()
 {
     if(!m_builder.build(&m_project,&m_program))
     {
+        m_log->append(m_builder.error());
         m_log->append("编译失败");
         return false;
     }
 
     return true;
+}
+
+void MainWindow::saveToFile(QString filepath,QString text)
+{
+    QFile file(filepath);
+    if(file.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        QTextStream s(&file);
+        s << text;
+        file.close();
+    }
 }
 
 void MainWindow::start(bool startPause)
@@ -397,7 +440,7 @@ void MainWindow::start(bool startPause)
     }
 
     QString build_path = app_dir + "/build";
-    QString build_exe = build_path + "/" + m_project.name() + ".program";
+    QString build_exe = build_path + "/" + m_project.name() + ".program";    
     QDir dir;
     if(!dir.exists(build_path))
         dir.mkdir(build_path);
@@ -406,11 +449,14 @@ void MainWindow::start(bool startPause)
         m_log->append("generate program failed");
         return;
     }
+    saveToFile(build_path + "/" + m_project.name() + ".jsm",m_program.dump());
 
     QStringList params;
     params << "--run" << build_exe << "--debug";
     if(startPause)
         params << "--start-pause";
+
+    m_log->append("start program");
     m_process.start(app,params);
     if(!m_process.waitForStarted())
     {
@@ -432,10 +478,30 @@ void MainWindow::onDebugLog(QString log)
     m_log->append(log);
 }
 
+void MainWindow::onRuntimeError(JZNodeRuntimeError error)
+{
+    m_log->append("Runtime error:");
+    m_log->append(error.info);
+}
+
 void MainWindow::onDebugFinish(int code,QProcess::ExitStatus status)
 {
     if(status == QProcess::CrashExit)
         m_log->append("process crash ");
     else
         m_log->append("process finish, exit code " + QString::number(code));
+}
+
+void MainWindow::closeAll()
+{
+    auto it = m_editors.begin();
+    while(it != m_editors.end())
+    {
+        it.value()->close();
+        m_editorStack->removeWidget(it.value());
+        delete it.value();
+        it++;
+    }
+    m_editors.clear();
+    switchEditor(nullptr);
 }

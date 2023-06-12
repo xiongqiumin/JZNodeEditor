@@ -14,12 +14,27 @@ enum
     Prop_out = 0x2,    
     Prop_param = 0x4,
     Prop_flow = 0x8,
-    Prop_subFlow  = 0x10,   //子程序
-    Prop_disp = 0x20,
-    Prop_edit = 0x40,
+    Prop_subFlow  = 0x10,   //子程序    
+    Prop_edit = 0x20,
+    Prop_editName = 0x40,
+    Prop_dispName = 0x80,
+    Prop_dispValue = 0100,
 
     Prop_All = 0xFFFFFFFF,
 };
+
+class JZParamDefine
+{
+public:
+    JZParamDefine();
+    JZParamDefine(QString name,int dataType,const QVariant &v = QVariant());
+
+    QString name;
+    int dataType;
+    QVariant value;
+};
+QDataStream &operator<<(QDataStream &s, const JZParamDefine &param);
+QDataStream &operator>>(QDataStream &s, JZParamDefine &param);
 
 class JZNodePin
 {
@@ -43,6 +58,8 @@ public:
     bool isFlow() const;
     bool isSubFlow() const;
     bool isEditable() const;
+    bool isDispName() const;
+    bool isDispValue() const;
 
     void setDataType(QList<int> type);
     QList<int> dataType() const;    
@@ -55,8 +72,8 @@ protected:
     friend QDataStream &operator>>(QDataStream &s, JZNodePin &param);
 
     int m_id;
-    QString m_name;
-    int m_flag;    
+    int m_flag;
+    QString m_name;    
     QList<int> m_dataType;
     QVariant m_value;
 };

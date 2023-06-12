@@ -74,6 +74,12 @@ void JZNodeDebugClient::setVariable(QString name,QVariant value)
     sendCommand(Cmd_setVariable,params,result);
 }
 
+void JZNodeDebugClient::detach()
+{
+    QVariantList params,result;
+    sendCommand(Cmd_detach,params,result);
+}
+
 void JZNodeDebugClient::pause()
 {
     QVariantList params,result;
@@ -127,6 +133,8 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
         emit sigBreakTrigger();
     else if(packet->cmd == Cmd_log)
         emit sigLog(packet->params[0].toString());
+    else if(packet->cmd == Cmd_runtimeError)
+        emit sigRuntimeError(netDataUnPack<JZNodeRuntimeError>(packet->params[0].toByteArray()));
 }
 
 bool JZNodeDebugClient::sendCommand(int command,QVariantList &params,QVariantList &result)

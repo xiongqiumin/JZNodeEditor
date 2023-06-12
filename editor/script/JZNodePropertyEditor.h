@@ -6,6 +6,7 @@
 #include "qttreepropertybrowser.h"
 #include "qtvariantproperty.h"
 
+
 class JZNodePropertyEditor : public QWidget
 {
     Q_OBJECT
@@ -15,19 +16,29 @@ public:
     ~JZNodePropertyEditor();
 
     JZNode *node();
-    void setNode(JZNode *node);
+    void setNode(JZNode *node);    
+    void setPropName(int prop_id,const QString &name);
+    void setPropValue(int prop_id,const QVariant &value);
+    void setPropEditable(int prop_id,bool editable);
 
 signals:
-    void sigPropUpdate(int nodeId);
+    void sigPropNameChanged(int nodeId,int propId,const QString &name);
+    void sigPropChanged(int nodeId,int propId,const QVariant &value);
 
 protected slots:
-    void onPropUpdate();
+    void onValueChanged(QtProperty *prop, const QVariant &value);
 
 protected:
+    void addPropList(QString name,QVector<int> list);
+    QtVariantProperty *createPropName(JZNodePin *pin);
+    QtVariantProperty *createProp(JZNodePin *pin);
+
     JZNode *m_node;
     QtTreePropertyBrowser *m_tree;
     QtVariantPropertyManager *m_propManager;
     QtVariantEditorFactory *m_propEditor;
+    QMap<int,QtVariantProperty*> m_propMap;
+    QMap<int,QtVariantProperty*> m_propNameMap;
 };
 
 #endif

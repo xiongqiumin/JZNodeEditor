@@ -17,7 +17,7 @@ public:
     virtual void close() = 0;
     virtual void save() = 0;
 
-    virtual bool isModified() = 0;
+    virtual bool isModified();
     virtual void updateMenuBar(QMenuBar *menubar);
 
     virtual void undo();

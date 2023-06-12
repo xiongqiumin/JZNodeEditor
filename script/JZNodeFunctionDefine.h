@@ -4,16 +4,6 @@
 #include "JZNode.h"
 
 class JZNodeScript;
-
-class FunctionParam
-{
-public:
-    QString name;
-
-    QStringList input;
-    QString output;
-};
-
 class CFunction
 {
 public:
@@ -25,15 +15,23 @@ public:
     QString result;
 };
 
+class FunctionParam
+{
+public:
+    QString name;
+    int dataType;
+};
+
 class FunctionDefine
 {
 public:
     FunctionDefine();    
-    
+        
     bool isCFunction;
+    bool isFlowFunction;
     QString name;
-    QList<JZNodePin> paramIn;
-    QList<JZNodePin> paramOut;    
+    QList<FunctionParam> paramIn;
+    QList<FunctionParam> paramOut;
     
     //for node
     int addr;

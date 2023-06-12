@@ -4,6 +4,7 @@
 #include "JZNode.h"
 #include "JZProjectItem.h"
 #include "JZNodeFunctionDefine.h"
+#include "JZNodeObject.h"
 
 class JZScriptFile : public JZProjectItem
 {
@@ -25,9 +26,9 @@ public:
     JZNodePin *getPin(const JZNodeGemo &gemo);
     void setNodePos(int id,QPointF pos);
     QPointF getNodePos(int id); 
-    QList<int> nodeList();    
+    QList<int> nodeList();        
 
-    bool canConnect(JZNodeGemo from, JZNodeGemo to);
+    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error);
     int addConnect(JZNodeGemo from, JZNodeGemo to);
     bool hasConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);
@@ -49,12 +50,11 @@ protected:
     FunctionDefine m_function;    
 };
 
-
-class JZScriptFunctionFile : public JZProjectItem
+class JZScriptLibraryFile : public JZProjectItem
 {
 public:
-    JZScriptFunctionFile();
-    virtual ~JZScriptFunctionFile();
+    JZScriptLibraryFile();
+    virtual ~JZScriptLibraryFile();
 
     void addFunction(QString name,QStringList in,QStringList out);
 public:
@@ -65,14 +65,18 @@ class JZScriptClassFile : public JZProjectItem
 {
 public:
     JZScriptClassFile();
-    virtual ~JZScriptClassFile();
+    virtual ~JZScriptClassFile();    
 
-    void addFunction(QStringList in,QStringList out);
-    void addParam();
-    void removeParam();
+    void init(QString className,QString super = QString());
+    void unint();
+    bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
+    void removeMemberVariable(QString name);
+    bool addMemberFunction(FunctionDefine func);
+    void removeMemberFunction(QString func);
+    JZNodeObjectDefine objectDefine();
 
-public:
-    
+protected:
+    JZNodeObjectDefine m_define;
 };
 
 #endif

@@ -1,7 +1,6 @@
 #include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
 
-
 JZNodeFunctionStart::JZNodeFunctionStart()
 {
     m_type = Node_functionStart;
@@ -15,7 +14,8 @@ JZNodeFunctionStart::~JZNodeFunctionStart()
 
 bool JZNodeFunctionStart::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->addFlowOutput(0);
+    c->addFlowOutput(m_id);
+    c->addJumpNode(flowOut());
     return true;
 }
 
@@ -42,18 +42,31 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
     s >> m_functionName;
 }
 
-void JZNodeFunction::setFunction(const FunctionDefine *define,bool flowFunction)
+void JZNodeFunction::setFunction(const FunctionDefine *define)
 {
-    if(flowFunction)
+    if(define->isFlowFunction)
     {
         addFlowIn();
         addFlowOut();
     }
     for(int i = 0; i < define->paramIn.size(); i++)
-        addProp(define->paramIn[i]);
+    {
+        JZNodePin pin;
+        pin.setName(define->paramIn[i].name);
+        pin.setFlag(Prop_param | Prop_in);
+        pin.setDataType({define->paramIn[i].dataType});
+        addProp(pin);
+    }
     for(int i = 0; i < define->paramOut.size(); i++)
-        addProp(define->paramOut[i]);
+    {
+        JZNodePin pin;
+        pin.setName(define->paramOut[i].name);
+        pin.setFlag(Prop_param | Prop_out);
+        pin.setDataType({define->paramOut[i].dataType});
+        addProp(pin);
+    }
     m_functionName = define->name;
+    setName(define->name);
 }
 
 QString JZNodeFunction::function() const

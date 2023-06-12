@@ -43,11 +43,25 @@ void JZNodeEditor::init()
     m_view->setPropertyEditor(m_nodeProp);
 }
 
+bool JZNodeEditor::isFirstShow(JZScriptFile* file)
+{
+    auto list = file->nodeList();
+    for(int i = 0; i < list.size(); i++)
+    {
+        if(!file->getNodePos(list[i]).isNull())
+            return false;
+    }
+    return true;
+}
+
 void JZNodeEditor::open(JZProjectItem *item)
 {
     JZScriptFile* file = dynamic_cast<JZScriptFile*>(item);
     m_view->setFile(file);    
     m_nodePanel->init(file->itemType());
+
+    if(isFirstShow(file))
+        m_view->updateNodeLayout();
 }
 
 void JZNodeEditor::close()

@@ -16,18 +16,11 @@ public:
     bool init(QString path,bool debug);
     void quit();
 
-protected slots:
-    void onIntValueChanged(int value);
-    void onStringValueChanged(const QString &value);
-    void onDoubleValueChanged(double value);
-    void onButtonClicked();    
-    void onComboxSelectChanged(int index);
-    void onValueNotify(int id,QVariant &value);
+protected slots:    
+    void onRuntimeError(JZNodeRuntimeError error);
 
 protected:
-    virtual void customEvent(QEvent *event);        
-    void createWindow();
-    void dealEvent(JZEvent *event);
+    virtual void customEvent(QEvent *event);                
 
     QWidget *m_window;
     JZNodeEngine m_engine;

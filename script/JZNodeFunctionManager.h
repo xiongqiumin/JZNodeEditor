@@ -13,19 +13,23 @@ public:
 
     void init();        
     void loadLibrary(QString filename);
+    void setUserRegist(bool flag);
 
     QList<const FunctionDefine*> functionList();
     const FunctionDefine *function(QString name);
     void registFunction(const FunctionDefine &define);
-    void registCFunction(QString name,CFunction *func);
-    
+    void replaceFunction(const FunctionDefine &define);
+    void registCFunction(QString name,bool isFlow,CFunction *func);
+    void clearUserReigst();
+
 protected:
     JZNodeFunctionManager();
-    ~JZNodeFunctionManager();       
-    int idToType(QString id);
+    ~JZNodeFunctionManager();           
     
     QMap<QString, FunctionDefine> m_funcMap;
     QVector<CFunction *> m_cfuncs;
+    bool m_userRegist;
+    QStringList m_userFuncs;
 };
 
 #endif

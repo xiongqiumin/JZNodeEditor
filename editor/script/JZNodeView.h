@@ -13,6 +13,7 @@
 #include <QShortcut>
 #include <QUndoStack>
 #include <QGraphicsRectItem>
+#include "JZNodeProgram.h"
 
 class JZNodeView;
 class JZNodeViewCommand : public QUndoCommand
@@ -24,7 +25,8 @@ public:
         MoveNode,
         CreateLine,
         RemoveLine,
-        PropertyChange,
+        PropertyNameChange,
+        PropertyValueChange,
     };
 
     JZNodeViewCommand(JZNodeView *view,int type);
@@ -36,6 +38,7 @@ public:
 
     int command;
     int itemId;
+    int propId;
     QVariant oldValue;
     QVariant newValue;   
     QPointF oldPos;
@@ -69,6 +72,10 @@ public:
     void removeNode(int id);    
     void addPin(int id,JZNodePin pin);
     void removePin(int id,int prop_id);
+
+    void setPinName(int id,int prop_id,const QString &value);
+    void setPinValue(int id,int prop_id,const QVariant &value);
+    bool isPropEditable(int id,int prop_id);
 
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
@@ -104,7 +111,8 @@ signals:
 
 protected slots:
     void onContextMenu(const QPoint &pos);
-    void onPropUpdate(int nodeId);
+    void onPropNameUpdate(int nodeId,int propId,const QString &value);
+    void onPropUpdate(int nodeId,int propId,const QVariant &value);
     void onTimer();
 
 protected:      
@@ -121,19 +129,27 @@ protected:
 
     virtual void drawBackground(QPainter* painter, const QRectF& r) override;
 
+    JZNodeGraphItem *nodeItemAt(QPoint pos);
     void foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType = -1);
     void foreachLine(std::function<void(JZNodeLineItem *)> func);    
     void copyItems(QList<QGraphicsItem*> item);
     void removeItems(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);    
-    void initGraph();
-    bool canConnect(JZNodeGemo from,JZNodeGemo to);
+    void initGraph();    
     void cancelSelect();
+    void createTip(QPointF pos,QString text);
+    void clearTip();        
+    int nodeDepth(GraphNode *node,Graph *graph);
+    void setDepth(GraphNode *node,int depth,Graph *graph,QMap<GraphNode*,int> &result);
+    void setSelectNode(int id);
+    void updatePropEditable(const JZNodeGemo &gemo);
 
     JZNodeScene *m_scene;
-    JZScriptFile *m_file;
+    JZScriptFile *m_file;    
     JZNodeLineItem *m_selLine;
     QGraphicsRectItem *m_selArea;
+    QGraphicsTextItem *m_tip;
+
     bool m_loadFlag;
     JZNodePropertyEditor *m_propEditor;
     QUndoStack m_commandStack;        

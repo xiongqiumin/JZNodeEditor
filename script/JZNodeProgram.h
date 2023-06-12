@@ -18,6 +18,27 @@ enum{
     Reg_Call,               //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User
 };
 
+//TopoTool
+class TopoTool
+{
+public:
+    TopoTool();
+
+    void addDepend(int id,QStringList in,QStringList out);
+    bool toposort(QList<int> &list);
+
+protected:
+    class TopoNode
+    {
+    public:
+        int id;
+        QStringList in;
+        QStringList out;
+        QList<int> next;
+    };
+    QList<TopoNode> m_list;
+};
+
 class GraphNode
 {
 public:
@@ -32,6 +53,7 @@ public:
 };
 typedef QSharedPointer<GraphNode> GraphNodePtr;
 
+//Graph
 class Graph
 {
 public:
@@ -59,10 +81,8 @@ class JZEventHandle
 public:
     JZEventHandle();
     
-    bool match(JZEvent *event) const;
-
     int type;        
-    QVariantList params;
+    QString sender;
     FunctionDefine function;
 };
 QDataStream &operator<<(QDataStream &s, const JZEventHandle &param);
@@ -134,11 +154,12 @@ public:
 
     FunctionDefine *function(QString name);
     JZNodeScript *script(QString name);
-    JZNodeScript *objectScript(QString name);
-
-    QMap<QString,QVariant> variables();
-    QList<JZEventHandle*> matchEvent(JZEvent *e,JZNodeObject *obj = nullptr) const;       
+    QList<JZNodeScript*> scriptList();
+    JZNodeScript *objectScript(QString className);    
     QList<JZEventHandle*> eventList() const;
+
+    QList<JZNodeObjectDefine> objectDefines();
+    QMap<QString,JZParamDefine> variables();    
     QString dump();            
     
 protected:
@@ -149,7 +170,9 @@ protected:
 
     QStringList m_opNames;
     QMap<QString,JZNodeScriptPtr> m_scripts; 
-    QMap<QString,QVariant> m_variables;
+    QMap<QString,JZParamDefine> m_variables;
+    QList<FunctionDefine> m_functionDefines;
+    QList<JZNodeObjectDefine> m_objectDefines;
     QMap<QString,QString> m_objectScripts;
 };
 

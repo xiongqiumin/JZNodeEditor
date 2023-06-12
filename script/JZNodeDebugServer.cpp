@@ -11,7 +11,7 @@ JZNodeDebugServer::JZNodeDebugServer()
     connect(&m_server,&JZNetServer::sigNewConnect,this,&JZNodeDebugServer::onNewConnect);
 	connect(&m_server,&JZNetServer::sigDisConnect,this,&JZNodeDebugServer::onDisConnect);
 	connect(&m_server,&JZNetServer::sigNetPackRecv,this,&JZNodeDebugServer::onNetPackRecv);
-    connect(this,&JZNodeDebugServer::sigStop,this,&JZNodeDebugServer::onStop);
+    connect(this,&JZNodeDebugServer::sigStop,this,&JZNodeDebugServer::onStop);    
 }
 
 JZNodeDebugServer::~JZNodeDebugServer()
@@ -66,6 +66,7 @@ bool JZNodeDebugServer::waitForAttach()
 void JZNodeDebugServer::setEngine(JZNodeEngine *eng)
 {
     m_engine = eng;
+    connect(m_engine,&JZNodeEngine::sigRuntimeError,this,&JZNodeDebugServer::onRuntimeError);
 }
 
 void JZNodeDebugServer::onNewConnect(int netId)
@@ -119,4 +120,15 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     result_pack.setSeq(packet->seq());
     result_pack.params = result;
     m_server.sendPack(netId,&result_pack);
+}
+
+void JZNodeDebugServer::onRuntimeError(JZNodeRuntimeError error)
+{
+    if(m_client == -1)
+        return;
+
+    JZNodeDebugPacket result_pack;
+    result_pack.cmd = Cmd_runtimeError;
+    result_pack.params << netDataPack(error);
+    m_server.sendPack(m_client,&result_pack);
 }

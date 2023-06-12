@@ -12,10 +12,40 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();    
 
-    if(1)
+    if(0)
     {
         testBuild();
         return 0;
+    }
+    if(0)
+    {
+        QString program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/test.prj";
+        program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/build/untitled.program";
+/*
+        JZProject project;
+        project.initUi();
+
+        JZNodeBuilder builder;
+        JZNodeProgram program;
+        if(!builder.build(&project,&program))
+        {
+            qDebug() << builder.error();
+            return 1;
+        }
+        qDebug().noquote() << program.dump();
+        if(!program.save(program_path))
+        {
+            qDebug() << "save failed";
+            return false;
+        }
+*/
+        JZNodeVM vm;
+        if(!vm.init(program_path,false))
+        {
+            QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed");
+            return 1;
+        }
+        return a.exec();
     }
 
     if(argc == 1)

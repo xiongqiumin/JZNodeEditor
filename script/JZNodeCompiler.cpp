@@ -72,14 +72,29 @@ JZNodeCompiler::~JZNodeCompiler()
 {
 }
 
-bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
-{    
-    m_scriptFile = scriptFile;    
+void JZNodeCompiler::init(JZScriptFile *scriptFile,JZNodeScript *result)
+{
+    m_scriptFile = scriptFile;
     m_project = scriptFile->project();
     m_script = result;
-    m_script->clear();    
+    m_script->clear();
     m_nodeGraph.clear();
+}
+
+bool JZNodeCompiler::genGraphs(JZScriptFile *scriptFile,JZNodeScript *result)
+{
+    init(scriptFile,result);
     if(!genGraphs())
+        return false;
+
+    return true;
+}
+
+bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
+{        
+    if(!genGraphs(scriptFile,result))
+        return false;
+    if(!checkGraphs())
         return false;
     
     m_script->file = scriptFile->itemPath();
@@ -97,7 +112,7 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
             if(ret)
                 addEventHandle(graph->topolist);
         }
-        else if(buildType == ProjectItem_scriptParam)
+        else if(buildType == ProjectItem_scriptParamBinding)
             ret = buildParamBinding(graph);
         else if(buildType == ProjectItem_scriptFunction)
         {
@@ -109,7 +124,7 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
             FunctionDefine define = scriptFile->function();
             for(int i = 0; i < define.paramIn.size(); i++)
             {
-                QString name = define.paramIn[i].name();
+                QString name = define.paramIn[i].name;
                 m_script->localVariable[name] = (Stack_User + i);
             }
             m_stackId = Stack_User + define.paramIn.size();
@@ -230,13 +245,26 @@ bool JZNodeCompiler::genGraphs()
     for(int i = 0; i < m_script->graphs.size(); i++)    
     {
         Graph *graph = m_script->graphs[i].data();        
+        if(!graph->toposort())
+        {
+            m_error += graph->error;
+            return false;
+        }
+    }
+    return true;
+}
+
+bool JZNodeCompiler::checkGraphs()
+{
+    for(int i = 0; i < m_script->graphs.size(); i++)
+    {
+        Graph *graph = m_script->graphs[i].data();
         if(!graph->check())
         {
             m_error += graph->error;
             return false;
         }
     }
-
     return true;
 }    
 
@@ -258,7 +286,6 @@ void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
             JZEventHandle handle;
             handle.type = node_event->eventType();
             handle.function = define;
-            handle.params << node_event->m_params;
             m_script->events.push_back(handle);            
         }
     }
@@ -400,19 +427,17 @@ bool JZNodeCompiler::buildParamBinding(Graph *graph)
             JZNodeParam *node_param = (JZNodeParam*)node;
             QString param_name = node_param->paramId();
             QString func_name = "on_" + param_name + "_changed";
-            if(!m_script->function(func_name))
-            {
-                FunctionDefine define;
-                define.name = func_name;
-                define.addr = start;
-                define.script = m_script->file;
 
-                JZEventHandle handle;
-                handle.type = Event_paramChanged;
-                handle.params << node_param->paramId();
-                handle.function = define;
-                m_script->events.push_back(handle);
-            }
+            FunctionDefine define;
+            define.name = func_name;
+            define.addr = start;
+            define.script = m_script->file;
+
+            JZEventHandle handle;
+            handle.type = Event_paramChanged;
+            handle.sender = node_param->paramId();
+            handle.function = define;
+            m_script->events.push_back(handle);
         }
     }
     return true;
@@ -708,6 +733,7 @@ bool JZNodeCompiler::addFlowInput(int nodeId)
 void JZNodeCompiler::addFlowOutput(int nodeId)
 {
     auto graph = m_currentGraph->graphNode(nodeId);
+    Q_ASSERT(graph);
     auto node = graph->node;
     //set out put
     auto it_out = graph->paramOut.begin();

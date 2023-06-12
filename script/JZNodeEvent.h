@@ -17,7 +17,7 @@ public:
     int eventType() const;
 
     int m_eventType;
-    QVariantList m_params;
+    QString m_sender;
 };
 
 class JZNodeClickEvent : public JZNodeEvent

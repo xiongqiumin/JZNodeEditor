@@ -39,8 +39,11 @@ protected slots:
     void onActionBuild();
 
     void onActionRun();
+    void onActionDetach();
     void onActionPause();
+    void onActionResume();
     void onActionStop();
+
     void onActionBreakPoint();
     void onActionStepOver();
     void onActionStepIn();
@@ -51,7 +54,9 @@ protected slots:
 
     void onFileOpened(QString filepath);    
     void onFileClosed(QString filepath);
+
     void onDebugLog(QString log);
+    void onRuntimeError(JZNodeRuntimeError error);
     void onDebugFinish(int code,QProcess::ExitStatus status);
 
 private:
@@ -64,6 +69,8 @@ private:
     bool build();
     void start(bool startPause);
     void updateMenuAction();
+    void saveToFile(QString file,QString text);
+    void closeAll();
 
     JZNodeBuilder m_builder;
     JZProject m_project;
@@ -79,6 +86,7 @@ private:
     JZNodeDebugClient m_debuger;
     QProcess m_process;
 
-    QAction *m_actRun,*m_actStepOver,*m_actStepIn,*m_actStepOut,*m_actBreakPoint;
+    QAction *m_actRun,*m_actDetach,*m_actPause,*m_actResume,*m_actStop,*m_actStepOver,*m_actStepIn,*m_actStepOut,*m_actBreakPoint;
+
 };
 #endif // MAINWINDOW_H

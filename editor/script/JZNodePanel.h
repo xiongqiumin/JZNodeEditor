@@ -31,8 +31,9 @@ protected slots:
 protected:
     void initEvent(QTreeWidgetItem *root);
     void initVariable(QTreeWidgetItem *root);
-    void initFunction(QTreeWidgetItem *root);
+    void initProcess(QTreeWidgetItem *root);
     void initExpression(QTreeWidgetItem *root);
+    void initFunction(QTreeWidgetItem *root,bool flow);
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createItem(JZNode *node);
 

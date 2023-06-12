@@ -37,6 +37,7 @@ protected slots:
 
 protected:
     void init();    
+    bool isFirstShow(JZScriptFile* file);
 
     JZNodeView *m_view;    
     JZNodePanel *m_nodePanel;

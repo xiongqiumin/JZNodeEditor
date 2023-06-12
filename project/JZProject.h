@@ -3,8 +3,10 @@
 
 #include "JZNode.h"
 #include <QMap>
-#include "JZProjectItem.h"
 #include "JZNodeObject.h"
+#include "JZProjectItem.h"
+#include "JZParamFile.h"
+#include "JZScriptFile.h"
 
 class JZProject
 {
@@ -12,23 +14,30 @@ public:
     JZProject();
     ~JZProject();
 
-    void init();
+    void initUi();
+    void initConsole();
+
     bool open(QString filepath);
     bool save();    
     bool saveAs(QString filepath);
     QString name();
     QString mainScript();
 
-    void registObject(JZNodeObjectDefine def,QString super = QString());    
-    void unregistObject(QString name);    
+    JZScriptFile *addFunction(const FunctionDefine &func);
+    void removeFunction(QString name);
+    JZScriptFile *getFunction(QString name);
 
-    void addVariable(QString name,QVariant value);        
-    void removeVariable(QString name);
-    void setVariable(QString name,QVariant value);
+    JZScriptLibraryFile *addLibrary(QString name);
+    void removeLibrary(QString name);
+    JZScriptLibraryFile *getLibrary(QString libraryName);
 
-    void addClassVariable(QString name,QString className);
-    QString getClassVariable(QString name);
+    JZScriptClassFile *addClass(QString def,QString super = QString());
+    JZScriptClassFile *addUiClass(QString def);
+    void removeClass(QString name);
+    JZScriptClassFile *getClass(QString className);
 
+    JZParamDefine *getVariableInfo(QString name);
+    void setVariable(QString name,const QVariant &value);    
     QVariant getVariable(QString name);
     QStringList variableList();
     
@@ -47,10 +56,10 @@ protected:
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
     void itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list);
+    void init();
             
     JZProjectItemFolder m_root;
-    QString m_filepath;
-    QMap<QString,QVariant> m_variables;
+    QString m_filepath;        
 };
 
 #endif

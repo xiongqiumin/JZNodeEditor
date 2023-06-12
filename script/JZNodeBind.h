@@ -73,21 +73,24 @@ using function_signature_t = conditional_t<
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
 template<class T> void copyClass(void *src,void *dst){ *((T*)src) = *((T*)dst); }
-inline void copyClassAssert(void *,void *){ Q_ASSERT(0); }
+
+void *createClassAssert();
+void destoryClassAssert(void *);
+void copyClassAssert(void *,void *);
 
 template<class T>
 T getValue(QVariant v,std::true_type)
 {
-    JZNodeObjectPtr obj = v.value<JZNodeObjectPtr>();
+    JZNodeObject *obj = toJZObject(v);
     return (T)obj->cobj;
 }
 
 template<class T>
 T getValue(QVariant v,std::false_type)
 {    
-    if(std::is_class<T>())
+    if(v.type() == QVariant::UserType)
     {
-        JZNodeObjectPtr obj = v.value<JZNodeObjectPtr>();
+        JZNodeObject *obj = toJZObject(v);
         T *cobj = (T*)(obj->cobj);
         return *cobj;
     }
@@ -125,8 +128,7 @@ void getFunctionParam(QStringList &list)
 template<class T>
 QVariant getReturn(T value,bool isRef,std::true_type)
 {
-    JZNodeObjectPtr obj = JZObjectCreate<T>(false);
-    obj->cobj = value;
+    JZNodeObjectPtr obj = JZObjectRefrence<T>(value);    
     if(!isRef)
         obj->cowner = true;
     return QVariant::fromValue(obj);
@@ -137,7 +139,7 @@ QVariant getReturn(T value,bool,std::false_type)
 {
     if(std::is_class<T>())
     {
-        JZNodeObjectPtr obj = JZObjectCreate<T>(true);
+        JZNodeObjectPtr obj = JZObjectCreate<T>();
         *((T*)obj->cobj) = value;
         return QVariant::fromValue(obj);
     }
@@ -155,6 +157,9 @@ QVariant getReturn(T value,bool isRef)
 
 template<>
 QVariant getReturn(QVariant value,bool);
+
+template<>
+QVariant getReturn(QString value,bool);
 
 template<typename Func,typename Return, typename... Args>
 class CFunctionImpl : public CFunction
@@ -266,57 +271,103 @@ public:
     ClassBind(QString name,QString super = QString())
     {
         m_define.className = name;
-        m_define.isCObject = true;
-        m_define.cMeta.create = &createClass<Class>;
-        m_define.cMeta.destory = &destoryClass<Class>;
+        m_define.superName = super;
+        m_define.isCObject = true;        
+        initCreate(std::is_abstract<Class>());
         initCopy(std::is_copy_constructible<Class>());
         m_super = super;
+    }
+
+    void initCreate(std::false_type)
+    {
+        m_define.cMeta.create = &createClass<Class>;
+        m_define.cMeta.destory = &destoryClass<Class>;
+        m_define.cMeta.isAbstract = false;
+    }
+
+    void initCreate(std::true_type)
+    {
+        m_define.cMeta.create = createClassAssert;
+        m_define.cMeta.destory = destoryClassAssert;
+        m_define.cMeta.isAbstract = true;
     }
 
     void initCopy(std::true_type)
     {
         m_define.cMeta.copy = &copyClass<Class>;
+        m_define.cMeta.isCopyable = true;
     }
 
     void initCopy(std::false_type)
     {
         m_define.cMeta.copy = &copyClassAssert;
+        m_define.cMeta.isCopyable = false;
     }
 
     template<typename Return, typename... Args,typename... Extra>
-    void def(QString name,Return (Class::*f)(Args...),Extra ...extra)
+    void def(QString name,bool isflow,Return (Class::*f)(Args...),Extra ...extra)
     {
         auto impl = createFuncion(f,extra...);
-        registFunction(name,impl);
+        registFunction(name,isflow,impl);
     }
 
     template<typename Return, typename... Args,typename... Extra>
-    void def(QString name,Return (Class::*f)(Args...) const,Extra ...extra)
+    void def(QString name,bool isflow,Return (Class::*f)(Args...) const,Extra ...extra)
     {
         auto impl = createFuncion(f,extra...);
-        registFunction(name,impl);
+        registFunction(name,isflow,impl);
     }
 
     template <typename Func,typename... Extra>
-    void def(QString name,Func f,Extra ...extra)
+    void def(QString name,bool isflow,Func f,Extra ...extra)
     {
         auto impl = createFuncion(f,extra...);
-        registFunction(name,impl);
+        registFunction(name,isflow,impl);
     }       
 
-    void regist()
+    void regist(int typeId = -1)
     {
-        JZNodeObjectManager::instance()->registCClass(m_define,typeid(Class).name(),m_super);
+        m_define.id = typeId;
+        JZNodeObjectManager::instance()->registCClass(m_define,typeid(Class).name());
+        for(int i = 0; i < m_functions.size(); i++)
+        {
+            auto &f = m_functions[i];
+            JZNodeFunctionManager::instance()->registCFunction(m_define.className + "." + f.name,f.isFlow,f.func);
+        }
+        declareCClass(std::is_base_of<QObject,Class>());
     }
 
 protected:
-    void registFunction(QString name,CFunction *func)
+    struct FunctionInfo{
+        QString name;
+        bool isFlow;
+        CFunction *func;
+    };
+
+    void registFunction(QString name,bool isflow,CFunction *func)
     {
-        JZNodeFunctionManager::instance()->registCFunction(m_define.className + "." + name,func);
+        FunctionInfo f;
+        f.name = name;
+        f.isFlow = isflow;
+        f.func = func;
+        m_functions.push_back(f);
+    }
+
+    void declareCClass(std::true_type)
+    {
+        int id = JZNodeObjectManager::instance()->getClassIdByTypeid(typeid(Class).name());
+        QString className = Class::staticMetaObject.className();
+        JZNodeObjectManager::instance()->declareCClass(className,id);
+    }
+
+    void declareCClass(std::false_type)
+    {
+
     }
 
     QString m_super;
     JZNodeObjectDefine m_define;
+    QList<FunctionInfo> m_functions;
 };
 
 

@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QTcpServer>
 #include "JZNetServer.h"
+#include "JZNodeEngine.h"
 
 class JZNodeEngine;
 class JZNodeDebugServer : public QThread
@@ -29,6 +30,7 @@ protected slots:
 	void onDisConnect(int netId);
 	void onNetPackRecv(int netId,JZNetPackPtr ptr);
     void onStop();
+    void onRuntimeError(JZNodeRuntimeError error);
 
 protected:        
     JZNetServer m_server;

@@ -3,6 +3,7 @@
 
 #include <QEvent>
 #include <QVariantList>
+#include "JZNodeFunctionDefine.h"
 
 enum{
     Event_none,

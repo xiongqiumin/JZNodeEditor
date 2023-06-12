@@ -54,10 +54,14 @@ public:
 
 class JZNodeRuntimeError
 {
-public:
-    JZNodeScript *script;
+public:    
+    QString info;
+    QString script;
     int pc;
 };
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeError &param);
+QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
+
 
 class JZNodeRuntimeInfo
 {
@@ -126,7 +130,7 @@ public:
     void stop();
     void stepIn();
     void stepOver();
-    void stepOut();    
+    void stepOut();        
 
     QVariant getThis();
     void setThis(QVariant var);
@@ -137,18 +141,38 @@ public:
     QVariant getReg(int id);
     void setReg(int id, const QVariant &value);
      
+    void dealEvent(JZEvent *event);
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
 
+    void objectChanged(const QString &name);
+
 signals:
     void sigParamChanged();
+    void sigRuntimeError(JZNodeRuntimeError error);
 
-protected:          
-    bool run();     
+protected:
+    class JZObjectConnect
+    {
+    public:        
+        JZNodeObject *sender;
+        JZNodeObject *receiver;
+        int eventType;
+        FunctionDefine *handle;
+    };
+
+    class ParamChangeHandle
+    {
+    public:
+        QString name;
+        JZNodeObject *env;
+        FunctionDefine *define;
+    };
+
+    bool run();         
 
     const FunctionDefine *function(QString name);       
-    void callCFunction(const FunctionDefine *func);
-    void callCFunction(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
+    void callCFunction(const FunctionDefine *func);    
     bool setCommand(int cmd);    
     QVariant dealExpr(QVariant &a,QVariant &b,int op);    
     void pushStack(const FunctionDefine *define);
@@ -159,16 +183,16 @@ protected:
     QString variableToString(const QVariant &v);
     QVariant getParam(const JZNodeIRParam &param);
     void setParam(const JZNodeIRParam &param,const QVariant &value);        
-
-    bool isObject(const QVariant &v);
-    JZNodeObject *getObject(QString name);
-    JZNodeObject *getObject(QStringList list);
-    QVariant getObjectProperty(QString name);
-    void setObjectProperty(QString name, const QVariant &value);
+        
     int nodeIdByPc(int pc);        
     JZNodeScript *getScript(QString path);
     JZNodeScript *getObjectScript(QString objName);
-    bool isWatch();
+    void connectScript(QString objName,JZNodeObject *obj,JZNodeScript *script);
+    void connectSelf(JZNodeObject *obj);
+    void connectQObject(QObject *obj);
+    void disconnectObject(JZNodeObject *obj);
+    JZNodeObject *getObject(QString name);
+    bool isWatch();        
 
     int m_pc;            
     JZNodeProgram *m_program;    
@@ -190,7 +214,10 @@ protected:
     int m_status;     
     QMutex m_mutex;    
     QSemaphore m_waitCond;
-};
 
+    QMap<JZNodeObject*,QList<JZObjectConnect>> m_connects;
+    QList<ParamChangeHandle> m_paramChangeHandle;
+};
+extern JZNodeEngine *g_engine;
 
 #endif
