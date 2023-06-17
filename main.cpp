@@ -19,26 +19,38 @@ int main(int argc, char *argv[])
     }
     if(0)
     {
-        QString program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/test.prj";
-        program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/build/untitled.program";
-/*
-        JZProject project;
-        project.initUi();
+        QString program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/build/untitled.program";
 
-        JZNodeBuilder builder;
-        JZNodeProgram program;
-        if(!builder.build(&project,&program))
+        bool build_project = true;
+        if(build_project)
         {
-            qDebug() << builder.error();
-            return 1;
+            JZProject project;
+            project.initUi();
+
+            auto script = (JZScriptFile*)project.getItem(project.mainScript());
+
+            auto meta = JZNodeObjectManager::instance()->meta("AbstractButton");
+            JZNodeSingleEvent *event = new JZNodeSingleEvent();
+            event->setSingle(meta->className,meta->single("clicked"));
+            event->setVariable("mainwindow.btn");
+
+            script->addNode(JZNodePtr(event));
+
+            JZNodeBuilder builder;
+            JZNodeProgram program;
+            if(!builder.build(&project,&program))
+            {
+                qDebug() << builder.error();
+                return 1;
+            }
+            qDebug().noquote() << program.dump();
+            if(!program.save(program_path))
+            {
+                qDebug() << "save failed";
+                return false;
+            }
         }
-        qDebug().noquote() << program.dump();
-        if(!program.save(program_path))
-        {
-            qDebug() << "save failed";
-            return false;
-        }
-*/
+
         JZNodeVM vm;
         if(!vm.init(program_path,false))
         {

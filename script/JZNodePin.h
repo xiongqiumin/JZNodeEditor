@@ -18,7 +18,7 @@ enum
     Prop_edit = 0x20,
     Prop_editName = 0x40,
     Prop_dispName = 0x80,
-    Prop_dispValue = 0100,
+    Prop_dispValue = 0x100,
 
     Prop_All = 0xFFFFFFFF,
 };
@@ -31,6 +31,7 @@ public:
 
     QString name;
     int dataType;
+    bool cref;
     QVariant value;
 };
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param);

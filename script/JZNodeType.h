@@ -14,6 +14,10 @@ enum
     Type_string,
 
     Type_object = 1000,    
+    Type_list,
+    Type_map,
+
+    Type_objectRegistId = 2000,
     Type_userObject = 10000,
 };
 

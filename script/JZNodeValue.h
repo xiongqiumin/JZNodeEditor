@@ -22,7 +22,7 @@ public:
     void setLiteral(QVariant value);    
 
 protected:
-    int m_out;        
+
 };
 
 //JZNodePrint
@@ -66,13 +66,11 @@ public:
     virtual void loadFromStream(QDataStream &s) override;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-    QString paramId() const;
-    void setParamId(QString paramId,bool global);
+    virtual void setVariable(const QString &name) override;
+    virtual QString variable() const override;
 
 protected:
-    int m_out;
-    QString m_param;
-    bool m_local;
+
 };
 
 //JZNodeParamThis
@@ -99,12 +97,11 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-    QString paramId() const;
-    void setParamId(QString paramId,bool global);
+    virtual void setVariable(const QString &name) override;
+    virtual QString variable() const override;
 
-protected:    
-    QString m_param;
-    bool m_local;
+protected:        
+
 };
 
 
@@ -117,14 +114,12 @@ public:
 
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
-    QString paramId() const;
-    void setParamId(QString paramId);
+    virtual void setVariable(const QString &name) override;
+    virtual QString variable() const override;
 
 protected:
-    QString m_param;
+
 };
 
 #endif

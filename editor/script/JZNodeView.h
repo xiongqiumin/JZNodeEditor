@@ -25,8 +25,7 @@ public:
         MoveNode,
         CreateLine,
         RemoveLine,
-        PropertyNameChange,
-        PropertyValueChange,
+        PropertyChange,
     };
 
     JZNodeViewCommand(JZNodeView *view,int type);
@@ -38,7 +37,6 @@ public:
 
     int command;
     int itemId;
-    int propId;
     QVariant oldValue;
     QVariant newValue;   
     QPointF oldPos;
@@ -62,6 +60,7 @@ public:
 
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
     void setFile(JZScriptFile *file);
+    void syncNodePos();
 
     /* node */
     JZNode *getNode(int id);
@@ -73,9 +72,9 @@ public:
     void addPin(int id,JZNodePin pin);
     void removePin(int id,int prop_id);
 
-    void setPinName(int id,int prop_id,const QString &value);
-    void setPinValue(int id,int prop_id,const QVariant &value);
-    bool isPropEditable(int id,int prop_id);
+    void setNode(int id,const QByteArray &buffer);
+    void updateNode(int id);
+    bool isPropEditable(int id,int propId);
 
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
@@ -143,6 +142,9 @@ protected:
     void setDepth(GraphNode *node,int depth,Graph *graph,QMap<GraphNode*,int> &result);
     void setSelectNode(int id);
     void updatePropEditable(const JZNodeGemo &gemo);
+
+    void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
+    void addPropChangedCommand(int id,const QByteArray &oldValue);
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;    

@@ -257,6 +257,46 @@ QDataStream &operator>>(QDataStream &s, JZEventHandle &param)
     return s;
 }
 
+//JZParamChangeHandle
+JZParamChangeHandle::JZParamChangeHandle()
+{
+
+}
+
+QDataStream &operator<<(QDataStream &s, const JZParamChangeHandle &param)
+{
+    s << param.paramName;
+    s << param.function;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param)
+{
+    s >> param.paramName;
+    s >> param.function;
+    return s;
+}
+
+//NodeInfo
+NodeInfo::NodeInfo()
+{
+    node_id = -1;
+    node_type = Node_none;
+    start = -1;
+    end = -1;    
+    parentId = -1;
+}
+
+QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
+{
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, NodeInfo &param)
+{
+    return s;
+}
+
 //JZNodeScript
 JZNodeScript::JZNodeScript()
 {
@@ -285,24 +325,26 @@ FunctionDefine *JZNodeScript::function(QString name)
 
 void JZNodeScript::saveToStream(QDataStream &s)
 {
-    s << file;
-    s << events;
+    s << file;    
+    s << className;
     s << statmentList.size();
     for(int i = 0; i < statmentList.size(); i++)
     {
         s << statmentList[i]->type;
         statmentList[i]->saveToStream(s);
-    }
+    }    
     s << functionList;
     s << nodeInfo;
-    s << localVariable;
-    s << watchList;
+    s << localVariable;    
+    s << events;
+    s << paramChanges;
+    s << watchList;    
 }
 
 void JZNodeScript::loadFromStream(QDataStream &s)
 {
     s >> file;
-    s >> events;
+    s >> className;
     int stmt_size = 0;
     s >> stmt_size;
     for(int i = 0; i < stmt_size; i++)
@@ -315,8 +357,10 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     }
     s >> functionList;
     s >> nodeInfo;
-    s >> localVariable;
-    s >> watchList;
+    s >> localVariable;    
+    s >> events;
+    s >> paramChanges;
+    s >> watchList;    
 }
 
 
@@ -335,8 +379,7 @@ void JZNodeProgram::clear()
     m_scripts.clear();    
     m_variables.clear();
     m_functionDefines.clear();
-    m_objectDefines.clear();
-    m_objectScripts.clear();
+    m_objectDefines.clear();    
 }
 
 bool JZNodeProgram::load(QString filepath)
@@ -363,8 +406,7 @@ bool JZNodeProgram::load(QString filepath)
     }
     s >> m_variables;
     s >> m_functionDefines;
-    s >> m_objectDefines;
-    s >> m_objectScripts;
+    s >> m_objectDefines;    
     return true;
 }
     
@@ -386,8 +428,7 @@ bool JZNodeProgram::save(QString filepath)
     }        
     s << m_variables;
     s << m_functionDefines;
-    s << m_objectDefines;
-    s << m_objectScripts;
+    s << m_objectDefines;    
     return true;
 }
 
@@ -426,10 +467,7 @@ QList<JZNodeScript*> JZNodeProgram::scriptList()
 
 JZNodeScript *JZNodeProgram::objectScript(QString name)
 {
-    if(!m_objectScripts.contains(name))
-        return nullptr;
-
-    QString path = m_objectScripts[name];
+    QString path = "./" + name + "/事件";
     return script(path);
 }
 
@@ -476,8 +514,9 @@ QString JZNodeProgram::dump()
     auto it = m_scripts.begin();
     while(it != m_scripts.end())
     {
+        JZNodeScript *script = it.value().data();
         content += "// Script " + it.key() + "\n";
-        auto &opList = it.value()->statmentList;
+        auto &opList = script->statmentList;
         for(int i = 0; i < opList.size(); i++)
         {
             //deal op
@@ -568,6 +607,17 @@ QString JZNodeProgram::dump()
             }
             content += line + "\n";
         }
+
+        for(int i = 0; i < script->events.size(); i++)
+        {
+            if(i == 0)
+                content += "event handles:\n";
+
+            auto &event = script->events[i];
+            QString line = event.function.name + " addr: " + event.function.addr;
+            content += line + "\n";
+        }
+
         it++;
     }    
     return content;

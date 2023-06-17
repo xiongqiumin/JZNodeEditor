@@ -2,14 +2,16 @@
 
 JZParamDefine::JZParamDefine()
 {
-
+    dataType = Type_none;
+    cref = false;
 }
 
 JZParamDefine::JZParamDefine(QString name,int dataType,const QVariant &v)
 {
     this->name = name;
     this->dataType = dataType;
-    this->value = v;
+    this->value = v;    
+    this->cref = false;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
@@ -17,6 +19,7 @@ QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
     s << param.name;
     s << param.dataType;
     s << param.value;
+    s << param.cref;
     return s;
 }
 
@@ -25,6 +28,7 @@ QDataStream &operator>>(QDataStream &s, JZParamDefine &param)
     s >> param.name;
     s >> param.dataType;
     s >> param.value;
+    s >> param.cref;
     return s;
 }
 

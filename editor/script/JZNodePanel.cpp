@@ -8,15 +8,26 @@
 #include "JZNodeValue.h"
 #include "JZNodeFactory.h"
 #include "JZProjectItem.h"
+#include "JZNodeObject.h"
+#include "JZProject.h"
+#include "JZScriptFile.h"
+
+enum{
+    TreeItem_type = Qt::UserRole,
+    TreeItem_value,
+};
 
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
 {
     Q_ASSERT(items.size() == 1);
     auto item = items[0];
+    if(item->data(0,TreeItem_type).isNull())
+        return nullptr;
 
     QMimeData *mimeData = new QMimeData();
-    mimeData->setData("node_data", item->data(0, Qt::UserRole).toByteArray());
+    QString name = item->data(0, TreeItem_type).toString();
+    mimeData->setData(name, item->data(0, TreeItem_value).toByteArray());
     return mimeData;
 }
 
@@ -25,6 +36,7 @@ JZNodePanel::JZNodePanel(QWidget *widget)
     : QWidget(widget)
 {
     m_fileType = 0;
+    m_file = nullptr;
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0,0,0,0);
@@ -42,16 +54,26 @@ JZNodePanel::~JZNodePanel()
 {
 }
 
-void JZNodePanel::init(int fileType)
+void JZNodePanel::setFile(JZScriptFile *file)
 {
-    m_fileType = fileType;
+    m_file = file;
+    m_fileType = m_file->itemType();
+    init();
+}
+
+void JZNodePanel::init()
+{
     m_tree->clear();
 
-    if(m_fileType != ProjectItem_scriptParamBinding)
-    {
-        QTreeWidgetItem *itemEvent = createFolder("事件");
-        m_tree->addTopLevelItem(itemEvent);
-        initEvent(itemEvent);
+
+    QTreeWidgetItem *itemParam = createFolder("全局变量");
+    m_tree->addTopLevelItem(itemParam);
+    initProjectParam(itemParam);
+
+    if(getClassFile()){
+        QTreeWidgetItem *itemClassParam = createFolder("成员变量");
+        m_tree->addTopLevelItem(itemClassParam);
+        initClassParam(itemClassParam);
     }
 
     QTreeWidgetItem *itemData = createFolder("数据");
@@ -64,28 +86,11 @@ void JZNodePanel::init(int fileType)
 
     if(m_fileType != ProjectItem_scriptParamBinding)
     {
-        QTreeWidgetItem *itemProcess = createFolder("过程");
+        QTreeWidgetItem *itemProcess = createFolder("类");
         m_tree->addTopLevelItem(itemProcess);
         initProcess(itemProcess);
     }
     m_tree->expandAll();
-}
-
-void JZNodePanel::addViriable(QString name)
-{
-    JZNodeParam node_get;
-    JZNodeSetParam node_set;
-    //node_get.setParamId(name);
-    //node_set.setParamId(name);
-
-    createItem(&node_get);
-    createItem(&node_set);
-}
-
-void JZNodePanel::addWidget(QString name)
-{
-    //QString name = widget->objectName();
-    //Q_ASSERT(name.isEmpty());
 }
 
 QTreeWidgetItem *JZNodePanel::createFolder(QString name)
@@ -96,24 +101,84 @@ QTreeWidgetItem *JZNodePanel::createFolder(QString name)
     return item;
 }
 
-QTreeWidgetItem *JZNodePanel::createItem(JZNode *node)
+QTreeWidgetItem *JZNodePanel::createNode(JZNode *node)
 {
     QTreeWidgetItem *item = new QTreeWidgetItem();
     item->setText(0, node->name());
     item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
-    item->setData(0, Qt::UserRole, formatNode(node));
+    item->setData(0, TreeItem_type, "node_data");
+    item->setData(0, TreeItem_value, formatNode(node));
     return item;
+}
+
+QTreeWidgetItem *JZNodePanel::createParam(QString name,int dataType)
+{
+    QTreeWidgetItem *item = new QTreeWidgetItem();
+    item->setText(0, name);
+    item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
+    item->setData(0,TreeItem_type,"node_param");
+    item->setData(0,TreeItem_value,name);
+    if(JZNodeType::isObject(dataType))
+    {
+        auto def = JZNodeObjectManager::instance()->meta(dataType);
+        auto list = def->paramList();
+        for(int i = 0; i < list.size(); i++)
+        {
+            auto sub_def = def->param(list[i]);
+            QTreeWidgetItem *sub_item = createParam(list[i],sub_def->dataType);
+            item->addChild(sub_item);
+        }
+    }
+
+    return item;
+}
+
+JZScriptClassFile *JZNodePanel::getClassFile()
+{
+    auto parent = m_file->parent();
+    while(parent)
+    {
+        if(parent->itemType() == ProjectItem_class)
+            return (JZScriptClassFile*)parent;
+
+        parent = parent->parent();
+    }
+    return nullptr;
+}
+
+void JZNodePanel::initClassParam(QTreeWidgetItem *root)
+{
+    JZScriptClassFile *class_file = (JZScriptClassFile*)getClassFile();
+    auto def = class_file->objectDefine();
+    auto list = def.paramList();
+    for(int i = 0; i < list.size(); i++)
+    {
+        auto info = &def.params[list[i]];
+        QTreeWidgetItem *item = createParam(list[i],info->dataType);
+        root->addChild(item);
+    }
+}
+
+void JZNodePanel::initProjectParam(QTreeWidgetItem *root)
+{
+    auto project = m_file->project();
+    auto list = project->variableList();
+    for(int i = 0; i < list.size(); i++)
+    {
+        auto info = project->getVariableInfo(list[i]);
+        QTreeWidgetItem *item = createParam(list[i],info->dataType);
+        root->addChild(item);
+    }
 }
 
 void JZNodePanel::initEvent(QTreeWidgetItem *root)
 {    
-    QTreeWidgetItem *itemWidget = createFolder("控件事件");
-    root->addChild(itemWidget);
-/*
-    JZNodeEvent event;
-    event.setEventType();
-    itemWidget->add
-*/
+    QTreeWidgetItem *item_event = createFolder("事件");
+
+    JZNodeParamChangedEvent event;
+    item_event->addChild(createNode(&event));
+
+    root->addChild(item_event);
 }
 
 void JZNodePanel::initVariable(QTreeWidgetItem *root)
@@ -135,24 +200,24 @@ void JZNodePanel::initVariable(QTreeWidgetItem *root)
     node_double.setLiteral(0.0);
     node_int.setDataType(Type_double);
 
-    root->addChild(createItem(&node_int));
-    //root->addChild(createItem(&node_int64));
-    root->addChild(createItem(&node_string));
-    root->addChild(createItem(&node_double));
+    root->addChild(createNode(&node_int));
+    //root->addChild(createNode(&node_int64));
+    root->addChild(createNode(&node_string));
+    root->addChild(createNode(&node_double));
 
     JZNodeParam get;
     JZNodeSetParam set;
     JZNodeSetParamData set_data;
     JZNodeCreate create;
-    root->addChild(createItem(&get));
+    root->addChild(createNode(&get));
     if(m_fileType == ProjectItem_scriptParamBinding)
     {
-        root->addChild(createItem(&set_data));
+        root->addChild(createNode(&set_data));
     }
     else
     {
-        root->addChild(createItem(&set));
-        root->addChild(createItem(&create));
+        root->addChild(createNode(&set));
+        root->addChild(createNode(&create));
     }
 }
 
@@ -162,12 +227,9 @@ void JZNodePanel::initExpression(QTreeWidgetItem *root)
     QTreeWidgetItem *item_op = createFolder("算子");
 
     for (int i = Node_add; i <= Node_expr; i++)
-    {
-        QTreeWidgetItem *sub = new QTreeWidgetItem();
+    {   
         auto node = JZNodeFactory::instance()->createNode(i);
-        sub->setText(0, node->name());
-        sub->setFlags(sub->flags() | Qt::ItemIsDragEnabled);
-        sub->setData(0, Qt::UserRole, formatNode(node));
+        QTreeWidgetItem *sub = createNode(node);
         item_op->addChild(sub);
         delete node;
     }
@@ -217,23 +279,20 @@ void JZNodePanel::initFunction(QTreeWidgetItem *root,bool flow)
             item_class = itemMap[class_name];
         }
 
-        QTreeWidgetItem *sub = new QTreeWidgetItem();
-        sub->setText(0, short_name);
-        sub->setFlags(sub->flags() | Qt::ItemIsDragEnabled);
-
         JZNodeFunction node_func;
         node_func.setName(function);
         node_func.setFunction(funcs[i]);
 
-        sub->setData(0, Qt::UserRole, formatNode(&node_func));
-        item_class->addChild(sub);
+        auto function_node = createNode(&node_func);
+        function_node->setText(0, short_name);
+        item_class->addChild(function_node);
     }
 }
 
 void JZNodePanel::initProcess(QTreeWidgetItem *root)
 {
     QTreeWidgetItem *item_process = new QTreeWidgetItem();
-    item_process->setText(0,"基本过程");
+    item_process->setText(0,"基本过程");    
 
     JZNodeFor node_for;
     JZNodeWhile node_while;
@@ -243,18 +302,82 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     JZNodeBreak node_break;
     JZNodeContinue node_continue;
     JZNodeExit node_exit;
-    item_process->addChild(createItem(&node_for));
-    item_process->addChild(createItem(&node_while));
-    item_process->addChild(createItem(&node_seq));
-    item_process->addChild(createItem(&node_branch));
-    item_process->addChild(createItem(&node_each));
-    item_process->addChild(createItem(&node_break));
-    item_process->addChild(createItem(&node_continue));
-    item_process->addChild(createItem(&node_exit));
+    item_process->addChild(createNode(&node_for));
+    item_process->addChild(createNode(&node_while));
+    item_process->addChild(createNode(&node_seq));
+    item_process->addChild(createNode(&node_branch));
+    item_process->addChild(createNode(&node_each));
+    item_process->addChild(createNode(&node_break));
+    item_process->addChild(createNode(&node_continue));
+    item_process->addChild(createNode(&node_exit));
 
-    QTreeWidgetItem *item_func = createFolder("函数");
-    initFunction(item_func,true);
+    QTreeWidgetItem *item_class = createFolder("类");
+    item_class->addChild(createClass("widget"));
+    item_class->addChild(createClass("LineEdit"));
+    item_class->addChild(createClass("PushButton"));
 
     root->addChild(item_process);
-    root->addChild(item_func);
+    initEvent(root);
+    root->addChild(item_class);
+}
+
+QTreeWidgetItem *JZNodePanel::createClass(QString className)
+{
+    QTreeWidgetItem *item_class = new QTreeWidgetItem();
+    item_class->setText(0,className);
+
+    QTreeWidgetItem *item_func = nullptr;
+    QTreeWidgetItem *item_single = nullptr;
+
+    auto meta = JZNodeObjectManager::instance()->meta(className);
+    Q_ASSERT(meta);
+    auto funcs = JZNodeFunctionManager::instance()->functionList();
+    for (int i = 0; i < funcs.size(); i++)
+    {
+        int index = -1;
+        if((index = funcs[i]->name.indexOf(".")) == -1)
+            continue;
+
+        QString func_class = funcs[i]->name.left(index);
+        QString short_name = funcs[i]->name.mid(index + 1);
+        if(meta->isInherits(func_class))
+        {
+            QTreeWidgetItem *sub = new QTreeWidgetItem();
+            sub->setData(0, TreeItem_type, "node_data");
+            sub->setText(0, short_name);
+            if(meta->single(short_name))
+            {
+                JZNodeSingleEvent node_event;
+                node_event.setName(funcs[i]->name);
+                node_event.setSingle(func_class,meta->single(short_name));
+
+                if(item_single == nullptr)
+                {
+                    item_single = new QTreeWidgetItem();
+                    item_single->setText(0, "事件");
+                }
+                sub->setData(0, TreeItem_value, formatNode(&node_event));
+                item_single->addChild(sub);
+            }
+
+            JZNodeFunction node_func;
+            node_func.setName(funcs[i]->name);
+            node_func.setFunction(funcs[i]);
+
+            if(item_func == nullptr)
+            {
+                item_func = new QTreeWidgetItem();
+                item_func->setText(0, "function");
+            }
+            sub->setData(0, TreeItem_value, formatNode(&node_func));
+            item_func->addChild(sub);
+        }
+    }
+
+    if(item_single)
+        item_class->addChild(item_single);
+    if(item_func)
+        item_class->addChild(item_func);
+
+    return item_class;
 }

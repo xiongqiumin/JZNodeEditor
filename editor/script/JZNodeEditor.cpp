@@ -58,7 +58,7 @@ void JZNodeEditor::open(JZProjectItem *item)
 {
     JZScriptFile* file = dynamic_cast<JZScriptFile*>(item);
     m_view->setFile(file);    
-    m_nodePanel->init(file->itemType());
+    m_nodePanel->setFile(file);
 
     if(isFirstShow(file))
         m_view->updateNodeLayout();
@@ -71,7 +71,7 @@ void JZNodeEditor::close()
 
 void JZNodeEditor::save()
 {
-
+    m_view->syncNodePos();
 }
 
 void JZNodeEditor::updateMenuBar(QMenuBar *menubar)

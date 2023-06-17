@@ -54,8 +54,8 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
 JZNodeLiteral::JZNodeLiteral()
 {
     m_type = Node_literal;
-    m_out = addParamOut("out", Prop_dispValue);
-    prop(m_out)->setDataType({Type_none});
+    addParamOut("out", Prop_dispValue);
+    prop(paramOut(0))->setDataType({Type_none});
 }
 
 JZNodeLiteral::~JZNodeLiteral()
@@ -64,27 +64,27 @@ JZNodeLiteral::~JZNodeLiteral()
 
 int JZNodeLiteral::dataType()
 {
-    return prop(m_out)->dataType()[0];
+    return prop(paramOut(0))->dataType()[0];
 }
 
 void JZNodeLiteral::setDataType(int type)
 {
-    prop(m_out)->setDataType({type});
+    prop(paramOut(0))->setDataType({type});
 }
 
 QVariant JZNodeLiteral::literal() const
 {
-    return propValue(m_out);
+    return propValue(paramOut(0));
 }
 
 void JZNodeLiteral::setLiteral(QVariant value)
 {
-    setPropValue(m_out,value);
+    setPropValue(paramOut(0),value);
 }
 
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 {   
-    int id = c->paramId(m_id,m_out);
+    int id = c->paramId(m_id,paramOut(0));
     c->addSetVariable(irId(id),irLiteral(literal()));
     return true;
 }
@@ -130,32 +130,29 @@ JZNodeParam::JZNodeParam()
 {
     m_name = "get";
     m_type = Node_param;
-    m_out = addParamOut("",Prop_dispName | Prop_editName);
+    m_flag = Node_propVariable;
+    addParamOut("name",Prop_dispValue | Prop_edit);
 }
 
 JZNodeParam::~JZNodeParam()
 {
 }
 
-QString JZNodeParam::paramId() const
+QString JZNodeParam::variable() const
 {
-    return m_param;
+    return propName(paramIn(0));
 }
 
-void JZNodeParam::setParamId(QString paramId,bool global)
+void JZNodeParam::setVariable(const QString &name)
 {
-    setName(paramId);
-    setPropName(paramOut(0),paramId);
-    m_param = paramId;
-    m_local = !global;
+    setName(name);
+    setPropName(paramOut(0),name);
 }
 
 bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
 {
     int out_id = c->paramId(m_id,paramOut(0));
-    JZNodeIRParam ref = irRef(m_param);
-    if(m_local)
-        ref = c->localVariable(ref);
+    JZNodeIRParam ref = irRef(variable());
     c->addSetVariable(irId(out_id),ref);
     return true;
 }
@@ -163,13 +160,11 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
 void JZNodeParam::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
-    s << m_out << m_param;
 }
 
 void JZNodeParam::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
-    s >> m_out >> m_param;
 }
 
 //JZNodeThis
@@ -207,10 +202,11 @@ JZNodeSetParam::JZNodeSetParam()
 {
     m_type = Node_setParam;
     m_name = "set";
+    m_flag = Node_propVariable;
 
     addFlowIn();    
     addFlowOut();
-    addParamIn("",Prop_dispName | Prop_dispValue | Prop_edit);
+    addParamIn("",Prop_dispName | Prop_editName | Prop_edit | Prop_dispValue);
     addParamOut("");
 }
 
@@ -218,17 +214,16 @@ JZNodeSetParam::~JZNodeSetParam()
 {
 }
 
-QString JZNodeSetParam::paramId() const
+QString JZNodeSetParam::variable() const
 {
-    return m_param;
+    return propName(paramIn(0));
 }
 
-void JZNodeSetParam::setParamId(QString paramId,bool global)
+void JZNodeSetParam::setVariable(const QString &name)
 {
-    setPropName(paramIn(0),paramId);
-    m_param = paramId;
-    m_local = !global;
+    setPropName(paramIn(0),name);
 }
+
 
 void JZNodeSetParam::saveToStream(QDataStream &s) const
 {
@@ -247,10 +242,8 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
 
     int id = c->paramId(m_id,paramIn(0));
     int m_out = c->paramId(m_id,paramOut(0));
-    JZNodeIRParam ref = irRef(m_param);
-    if(m_local)
-        ref = c->localVariable(ref);
 
+    JZNodeIRParam ref = irRef(variable());
     c->addSetVariable(ref,irId(id));
     c->addSetVariable(irId(m_out),irId(id));
     c->addFlowOutput(m_id);
@@ -263,6 +256,7 @@ JZNodeSetParamData::JZNodeSetParamData()
 {
     m_name = "set";
     m_type = Node_setParamData;
+    m_flag = Node_propVariable;
     addParamIn("",Prop_dispName | Prop_dispValue | Prop_edit);
 }
 
@@ -270,15 +264,15 @@ JZNodeSetParamData::~JZNodeSetParamData()
 {
 }
 
-QString JZNodeSetParamData::paramId() const
+
+QString JZNodeSetParamData::variable() const
 {
-    return m_param;
+    return propName(paramIn(0));
 }
 
-void JZNodeSetParamData::setParamId(QString paramId)
+void JZNodeSetParamData::setVariable(const QString &name)
 {
-    m_param = paramId;
-    setPropName(paramIn(0),paramId);
+    setPropName(paramIn(0),name);
 }
 
 void JZNodeSetParamData::saveToStream(QDataStream &s) const
@@ -296,7 +290,8 @@ bool JZNodeSetParamData::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addDataInput(m_id))
         return false;
 
+    QString param_name = variable();
     int id = c->paramId(m_id,paramIn(0));
-    c->addSetVariable(irRef(m_param),irId(id));
+    c->addSetVariable(irRef(param_name),irId(id));
     return true;
 }

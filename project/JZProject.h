@@ -20,8 +20,10 @@ public:
     bool open(QString filepath);
     bool save();    
     bool saveAs(QString filepath);
+    void saveItem(JZProjectItem *item);
+
     QString name();
-    QString mainScript();
+    QString mainScript();       
 
     JZScriptFile *addFunction(const FunctionDefine &func);
     void removeFunction(QString name);
@@ -57,7 +59,9 @@ protected:
     void loadFromStream(QDataStream &s);
     void itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list);
     void init();
+    QString dir(const QString &filepath);
             
+    QMap<QString,QByteArray> m_itemBuffer;
     JZProjectItemFolder m_root;
     QString m_filepath;        
 };

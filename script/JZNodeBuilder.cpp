@@ -68,8 +68,9 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
         JZScriptClassFile *script = dynamic_cast<JZScriptClassFile*>(class_list[i]);
         if(!buildClassFile(script))
             return false;
-
-        m_program->m_objectDefines << script->objectDefine();
+        
+        auto define = script->objectDefine();
+        m_program->m_objectDefines << define;        
     }
 
     auto function_list = root->itemList(ProjectItem_scriptFunction);
@@ -128,6 +129,13 @@ bool JZNodeBuilder::buildLibraryFile(JZScriptLibraryFile *script)
 
 bool JZNodeBuilder::buildClassFile(JZScriptClassFile *script)
 {
+    auto flowList = script->itemList(ProjectItem_scriptFlow);
+    Q_ASSERT(flowList.size() == 1);
+
+    JZScriptFile *flow_script = dynamic_cast<JZScriptFile*>(flowList[0]);
+    if(!buildScriptFile(flow_script))
+        return false;
+
     auto funcList = script->itemList(ProjectItem_scriptFunction);
     for(int i = 0; i < funcList.size(); i++)
     {

@@ -76,7 +76,8 @@ public:
 class JZProjectItemFactory
 {
 public:
-    static JZProjectItem *create(int itemType);
+    static JZProjectItem *load(const QByteArray &buffer);
+    static QByteArray save(JZProjectItem *item);
     static QString itemTypeName(int itemType);
 };
 

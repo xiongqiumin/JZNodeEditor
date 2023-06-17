@@ -88,7 +88,19 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZEventHandle &param);
 QDataStream &operator>>(QDataStream &s, JZEventHandle &param);
 
+//JZEventHandle
+class JZParamChangeHandle
+{
+public:
+    JZParamChangeHandle();
 
+    QString paramName;
+    FunctionDefine function;
+};
+QDataStream &operator<<(QDataStream &s, const JZParamChangeHandle &param);
+QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param);
+
+//NodeInfo
 struct NodeInfo
 {        
     NodeInfo();
@@ -126,6 +138,7 @@ public:
     QString className;
     QList<GraphPtr> graphs;                     
     QList<JZEventHandle> events;
+    QList<JZParamChangeHandle> paramChanges;
     QList<JZNodeIRPtr> statmentList;
     QList<FunctionDefine> functionList;
     QMap<int,NodeInfo> nodeInfo;
@@ -172,8 +185,7 @@ protected:
     QMap<QString,JZNodeScriptPtr> m_scripts; 
     QMap<QString,JZParamDefine> m_variables;
     QList<FunctionDefine> m_functionDefines;
-    QList<JZNodeObjectDefine> m_objectDefines;
-    QMap<QString,QString> m_objectScripts;
+    QList<JZNodeObjectDefine> m_objectDefines;    
 };
 
 #endif

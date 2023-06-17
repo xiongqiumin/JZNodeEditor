@@ -23,7 +23,7 @@ void JZParamEditor::open(JZProjectItem *item)
 {
     m_table->clearContents();
 
-    JZScriptParamDefineFile *file = dynamic_cast<JZScriptParamDefineFile*>(item);
+    JZParamFile *file = dynamic_cast<JZParamFile*>(item);
     QStringList list = file->variableList();
     m_table->setRowCount(list.size());
     for(int i = 0; i < list.size(); i++)

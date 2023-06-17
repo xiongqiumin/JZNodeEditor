@@ -71,6 +71,7 @@ QByteArray formatLine(const JZNodeConnect &line)
 JZNode::JZNode()
 {
     m_id = INVALID_ID;
+    m_flag = Node_propNone;
     m_type = Node_none;
 }
 
@@ -81,6 +82,16 @@ JZNode::~JZNode()
 int JZNode::type() const
 {
     return m_type;
+}
+
+void JZNode::setFlag(int flag)
+{
+    m_flag = flag;
+}
+
+int JZNode::flag() const
+{
+    return m_flag;
 }
 
 bool JZNode::isFlowNode() const
@@ -243,7 +254,7 @@ int JZNode::propCount(int flag) const
     return count;
 }
 
-int JZNode::paramIn(int index)
+int JZNode::paramIn(int index) const
 {
     auto list = propInList(Prop_param);
     if(index < list.size())
@@ -252,22 +263,22 @@ int JZNode::paramIn(int index)
         return -1;
 }
 
-JZNodeGemo JZNode::paramInGemo(int index)
+JZNodeGemo JZNode::paramInGemo(int index) const
 {
     return JZNodeGemo(m_id,paramIn(index));
 }
 
-int JZNode::paramInCount()
+int JZNode::paramInCount() const
 {
     return propInList(Prop_param).size();
 }
 
-QVector<int> JZNode::paramInList()
+QVector<int> JZNode::paramInList() const
 {
     return propInList(Prop_param);
 }
 
-int JZNode::paramOut(int index)
+int JZNode::paramOut(int index) const
 {
     auto list = propOutList(Prop_param);
     if(index < list.size())
@@ -276,22 +287,22 @@ int JZNode::paramOut(int index)
         return -1;
 }
 
-JZNodeGemo JZNode::paramOutGemo(int index)
+JZNodeGemo JZNode::paramOutGemo(int index) const
 {
     return JZNodeGemo(m_id,paramOut(index));
 }
 
-int JZNode::paramOutCount()
+int JZNode::paramOutCount() const
 {
     return propOutList(Prop_param).size();
 }
 
-QVector<int> JZNode::paramOutList()
+QVector<int> JZNode::paramOutList() const
 {
     return propOutList(Prop_param);
 }
 
-int JZNode::flowIn()
+int JZNode::flowIn() const
 {
     auto list = propInList(Prop_flow);
     if(list.size() != 0)
@@ -300,12 +311,12 @@ int JZNode::flowIn()
         return -1;
 }
 
-JZNodeGemo JZNode::flowInGemo()
+JZNodeGemo JZNode::flowInGemo() const
 {
     return JZNodeGemo(m_id,flowIn());
 }
 
-int JZNode::flowOut(int index)
+int JZNode::flowOut(int index) const
 {
     auto list = propOutList(Prop_flow);
     if(index < list.size())
@@ -314,22 +325,22 @@ int JZNode::flowOut(int index)
         return -1;
 }
 
-JZNodeGemo JZNode::flowOutGemo(int index)
+JZNodeGemo JZNode::flowOutGemo(int index) const
 {
     return JZNodeGemo(m_id,flowOut(index));
 }
 
-QVector<int> JZNode::flowOutList()
+QVector<int> JZNode::flowOutList() const
 {
     return propOutList(Prop_flow);
 }
 
-int JZNode::flowOutCount()
+int JZNode::flowOutCount() const
 {
     return propOutList(Prop_flow).size();
 }
 
-int JZNode::subFlowOut(int index)
+int JZNode::subFlowOut(int index) const
 {
     auto list = propOutList(Prop_subFlow);
     if(index < list.size())
@@ -338,17 +349,17 @@ int JZNode::subFlowOut(int index)
         return -1;
 }
 
-JZNodeGemo JZNode::subFlowOutGemo(int index)
+JZNodeGemo JZNode::subFlowOutGemo(int index) const
 {
     return JZNodeGemo(m_id,subFlowOut(index));
 }
 
-QVector<int> JZNode::subFlowList()
+QVector<int> JZNode::subFlowList() const
 {
     return propOutList(Prop_subFlow);
 }
 
-int JZNode::subFlowCount()
+int JZNode::subFlowCount() const
 {
     return propOutList(Prop_subFlow).size();
 }
@@ -369,7 +380,7 @@ void JZNode::setPropValue(int id,QVariant value)
     pin->setValue(value);
 }
 
-QString JZNode::propName(int id)
+QString JZNode::propName(int id) const
 {
     auto pin = prop(id);
     Q_ASSERT(pin);
@@ -404,6 +415,26 @@ void JZNode::setName(QString name)
     m_name = name;
 }
 
+bool JZNode::canRemove()
+{
+    return !(m_flag & Node_propNoRemove);
+}
+
+bool JZNode::hasVariable()
+{
+    return (m_flag & Node_propVariable);
+}
+
+void JZNode::setVariable(const QString &)
+{
+
+}
+
+QString JZNode::variable() const
+{
+    return QString();
+}
+
 int JZNode::id() const
 {
     return m_id;
@@ -432,6 +463,11 @@ QMap<int,int> JZNode::calcPropOutType(const QMap<int,int> &inType)
         types[list[i]] = dataType;
     }
     return types;
+}
+
+void JZNode::setTypeAny(int id)
+{
+    prop(id)->setDataType({Type_any});
 }
 
 void JZNode::setTypeInt(int id)
@@ -592,9 +628,12 @@ JZNodeFor::JZNodeFor()
     addSubFlowOut("loop body");    
     addFlowOut("complete");
 
-    m_indexStart = addParamIn("First index",Prop_edit);
-    m_indexEnd = addParamIn("Last index",Prop_edit);
-    m_indexOut = addParamOut("index");
+    int id_start = addParamIn("First index",Prop_edit | Prop_dispName | Prop_dispValue);
+    int id_end = addParamIn("Last index",Prop_edit | Prop_dispName | Prop_dispValue);
+    int id_index = addParamOut("index");
+    setTypeInt(id_start);
+    setTypeInt(id_index);
+    setTypeInt(id_end);
 }
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
@@ -602,9 +641,13 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addFlowInput(m_id))
         return false;
 
-    int id_start = c->paramId(m_id,m_indexStart);   
-    int id_index = c->paramId(m_id,m_indexOut);             
-    int id_end = c->paramId(m_id,m_indexEnd);     
+    int indexStart = paramIn(0);
+    int indexEnd = paramIn(1);
+    int indexOut = paramOut(0);
+
+    int id_start = c->paramId(m_id,indexStart);
+    int id_end = c->paramId(m_id,indexEnd);
+    int id_index = c->paramId(m_id,indexOut);
     c->addSetVariable(irId(id_index),irId(id_start));
 
     int startPc = c->currentPc() + 1;
@@ -633,12 +676,15 @@ JZNodeForEach::JZNodeForEach()
     m_type = Node_foreach;
 
     addFlowIn();
-    addParamIn("");
+    int in = addParamIn("");
     addSubFlowOut("loop body");
     addFlowOut("complete");
 
-    addParamOut("key");
-    addParamOut("value");
+    int out1 = addParamOut("key");
+    int out2 = addParamOut("value");
+    prop(in)->setDataType({Type_list,Type_map});
+    setTypeString(out1);
+    setTypeAny(out2);
 }
 
 JZNodeForEach::~JZNodeForEach()
@@ -713,13 +759,10 @@ JZNodeWhile::JZNodeWhile()
     addSubFlowOut("loop body");
     addFlowOut("complete");
     
-    m_cond = addParamIn("cond");    
+    int cond = addParamIn("cond");
+    setTypeBool(cond);
 }
 
-int JZNodeWhile::cond() const
-{
-    return m_cond;
-}
 
 bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
 {
@@ -727,7 +770,8 @@ bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addFlowInput(m_id))
         return false;
 
-    int id = c->paramId(m_id,m_cond);                
+    int cond = paramIn(0);
+    int id = c->paramId(m_id,cond);
     c->addCompare(irId(id),irLiteral(true),OP_eq);
 
     JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
@@ -764,15 +808,17 @@ JZNodeBranch::JZNodeBranch()
     addFlowOut("true");
     addFlowOut("false");
     
-    m_cond = addParamIn("cond");    
+    addParamIn("cond");
+
 }
 
 bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
 {
+    int cond = paramIn(0);
     if(!c->addFlowInput(m_id))
         return false;
 
-    int id = c->paramId(m_id,m_cond);            
+    int id = c->paramId(m_id,cond);
     c->addCompare(irId(id),irLiteral(true),OP_eq);
 
     JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);

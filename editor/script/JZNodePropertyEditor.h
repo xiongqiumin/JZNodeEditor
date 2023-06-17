@@ -16,7 +16,10 @@ public:
     ~JZNodePropertyEditor();
 
     JZNode *node();
-    void setNode(JZNode *node);    
+
+    void setNode(JZNode *node);
+    void updateNode();
+
     void setPropName(int prop_id,const QString &name);
     void setPropValue(int prop_id,const QVariant &value);
     void setPropEditable(int prop_id,bool editable);

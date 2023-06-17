@@ -8,6 +8,7 @@
 enum{
     Event_none,
     Event_programStart,
+    Event_libraryLoad,
     Event_paramChanged,
     
     /* widget */
@@ -22,19 +23,16 @@ enum{
     Event_itemChanged,
 };
 
+class JZNodeObject;
 class JZEvent: public QEvent
 {
 public:
     static int Event;
     JZEvent();
 
-    int eventType();
-    void setEventType(int type);
-    
-    QVariantList params;
-
-protected:    
-    int m_eventType;    
+    int eventType;
+    JZNodeObject *sender;
+    QVariantList params;    
 };
 
 

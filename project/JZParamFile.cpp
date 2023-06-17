@@ -2,18 +2,18 @@
 #include "JZNodeType.h"
 
 //JZScriptParamFile
-JZScriptParamDefineFile::JZScriptParamDefineFile()
+JZParamFile::JZParamFile()
     :JZProjectItem(ProjectItem_param)
 {
 
 }
 
-JZScriptParamDefineFile::~JZScriptParamDefineFile()
+JZParamFile::~JZParamFile()
 {
 
 }
 
-void JZScriptParamDefineFile::addVariable(QString name,int type,QVariant v)
+void JZParamFile::addVariable(QString name,int type,QVariant v)
 {
     Q_ASSERT(type != Type_none);
 
@@ -24,19 +24,24 @@ void JZScriptParamDefineFile::addVariable(QString name,int type,QVariant v)
     m_variables[name] = info;
 }
 
-void JZScriptParamDefineFile::removeVariable(QString name)
+void JZParamFile::removeVariable(QString name)
 {
     m_variables.remove(name);
 }
 
-JZParamDefine *JZScriptParamDefineFile::getVariable(QString name)
+QMap<QString,JZParamDefine> JZParamFile::variables()
+{
+    return m_variables;
+}
+
+JZParamDefine *JZParamFile::getVariable(QString name)
 {
     if(m_variables.contains(name))
         return &m_variables[name];
     return nullptr;
 }
 
-QStringList JZScriptParamDefineFile::variableList()
+QStringList JZParamFile::variableList()
 {
     QStringList list;
     auto it = m_variables.begin();

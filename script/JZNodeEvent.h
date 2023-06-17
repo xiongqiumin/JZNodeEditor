@@ -2,27 +2,61 @@
 #define JZNODE_EVENT_H_
 
 #include "JZNode.h"
+#include "JZEvent.h"
 
+//JZNodeEvent
 class JZNodeEvent : public JZNode
 {
 public:
     JZNodeEvent();
-    ~JZNodeEvent();
+    virtual ~JZNodeEvent();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error);
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
 
     void setEventType(int eventType);
-    int eventType() const;
+    int eventType() const;    
 
+    virtual QList<FunctionParam> params();
+
+protected:    
     int m_eventType;
-    QString m_sender;
+    QList<FunctionParam> m_params;
 };
 
-class JZNodeClickEvent : public JZNodeEvent
+//JZNodeSingleEvent
+class JZNodeSingleEvent : public JZNodeEvent
 {
 public:
+    JZNodeSingleEvent();
+    virtual ~JZNodeSingleEvent();
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
+    virtual QList<FunctionParam> params() override;
+
+    virtual void setVariable(const QString &name);
+    virtual QString variable() const;
+
+    void setSingle(QString className,const SingleDefine *single);
+    QString single();
+
+protected:
+    QString m_className;
+    QString m_single;
+};
+
+//JZNodeParamChangedEvent
+class JZNodeParamChangedEvent : public JZNodeEvent
+{
+public:
+    JZNodeParamChangedEvent();
+    virtual ~JZNodeParamChangedEvent();
+
+    virtual void setVariable(const QString &name);
+    virtual QString variable() const;
 
 };
 

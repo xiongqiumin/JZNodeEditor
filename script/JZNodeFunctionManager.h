@@ -19,8 +19,12 @@ public:
     const FunctionDefine *function(QString name);
     void registFunction(const FunctionDefine &define);
     void replaceFunction(const FunctionDefine &define);
-    void registCFunction(QString name,bool isFlow,CFunction *func);
-    void clearUserReigst();
+    void registCFunction(QString name,bool isFlow,CFunction *func);    
+    void unregistFunction(QString name);
+
+    void clearUserReigst();    
+    void registCSingle(CSingle *single);
+    void unregistCSingle(CSingle *single);
 
 protected:
     JZNodeFunctionManager();
@@ -28,6 +32,7 @@ protected:
     
     QMap<QString, FunctionDefine> m_funcMap;
     QVector<CFunction *> m_cfuncs;
+    QVector<CSingle *> m_csingles;
     bool m_userRegist;
     QStringList m_userFuncs;
 };

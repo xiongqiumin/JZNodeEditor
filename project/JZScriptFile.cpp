@@ -3,6 +3,7 @@
 #include "JZNodeFunction.h"
 #include "JZNodeFunctionManager.h"
 #include "JZUiFile.h"
+#include "JZParamFile.h"
 
 //JZScriptFile
 JZScriptFile::JZScriptFile(int type)
@@ -329,7 +330,7 @@ void JZScriptLibraryFile::addFunction(QString name,QStringList in,QStringList ou
 JZScriptClassFile::JZScriptClassFile()
     :JZProjectItem(ProjectItem_class)
 {
-
+    m_classId = -1;
 }
 
 JZScriptClassFile::~JZScriptClassFile()
@@ -337,51 +338,95 @@ JZScriptClassFile::~JZScriptClassFile()
 
 }
 
+void JZScriptClassFile::saveToStream(QDataStream &s)
+{
+    JZProjectItem::saveToStream(s);
+    s << m_className;
+    s << m_super;
+    s << m_classId;
+}
+
+void JZScriptClassFile::loadFromStream(QDataStream &s)
+{
+    JZProjectItem::loadFromStream(s);
+    s >> m_className;
+    s >> m_super;
+    s >> m_classId;
+}
+
 void JZScriptClassFile::init(QString className,QString super)
 {
-    m_define.className = className;
-    m_define.superName = super;
-    m_define.id = JZNodeObjectManager::instance()->regist(m_define);
+    m_className = className;
+    m_super = super;
+    m_classId = JZNodeObjectManager::instance()->regist(objectDefine());
 }
 
 void JZScriptClassFile::unint()
 {
-    JZNodeObjectManager::instance()->unregist(m_define.id);
+    JZNodeObjectManager::instance()->unregist(m_classId);
+}
+
+void JZScriptClassFile::reinit()
+{
+    JZNodeObjectManager::instance()->replace(objectDefine());
 }
 
 bool JZScriptClassFile::addMemberVariable(QString name,int dataType,const QVariant &v)
 {    
-    m_define.addParam(JZParamDefine(name,dataType,v));
-    JZNodeObjectManager::instance()->replace(m_define);
+    getParamFile()->addVariable(name,dataType,v);
+    JZNodeObjectManager::instance()->replace(objectDefine());
     return true;
 }
 
 void JZScriptClassFile::removeMemberVariable(QString name)
 {
-    m_define.removeParam(name);
-    JZNodeObjectManager::instance()->replace(m_define);
+    getParamFile()->removeVariable(name);
+    JZNodeObjectManager::instance()->replace(objectDefine());
 }
 
 bool JZScriptClassFile::addMemberFunction(FunctionDefine func)
 {
-    m_define.addFunction(func);
-    JZNodeObjectManager::instance()->replace(m_define);
+    JZNodeObjectManager::instance()->replace(objectDefine());
     return true;
 }
 
 void JZScriptClassFile::removeMemberFunction(QString func)
 {
-    m_define.removeFunction(func);
-    JZNodeObjectManager::instance()->replace(m_define);
+    JZNodeObjectManager::instance()->replace(objectDefine());
+}
+
+JZParamFile *JZScriptClassFile::getParamFile()
+{
+    for(int i = 0; i < m_childs.size(); i++)
+    {
+        auto item = m_childs[i].data();
+        if(item->itemType() == ProjectItem_param)
+            return dynamic_cast<JZParamFile*>(item);
+    }
+    Q_ASSERT(0);
+    return nullptr;
 }
 
 JZNodeObjectDefine JZScriptClassFile::objectDefine()
 {    
-    JZNodeObjectDefine define = m_define;
+    JZNodeObjectDefine define;
+    define.className = m_className;
+    define.superName = m_super;
+    define.id = m_classId;
     for(int i = 0; i < m_childs.size(); i++)
     {
         auto item = m_childs[i].data();
-        if(item->itemType() == ProjectItem_ui)
+        if(item->itemType() == ProjectItem_param)
+        {
+            auto param_item = dynamic_cast<JZParamFile*>(item);
+            define.params = param_item->variables();
+        }
+        else if(item->itemType() == ProjectItem_scriptFunction)
+        {
+            auto function_item = dynamic_cast<JZScriptFile*>(item);
+            define.addFunction(function_item->function());
+        }
+        else if(item->itemType() == ProjectItem_ui)
         {
             auto ui_item = dynamic_cast<JZUiFile*>(item);
             ui_item->getWidgetMembers(define.params);

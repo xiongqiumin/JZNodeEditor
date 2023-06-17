@@ -224,8 +224,10 @@ void MainWindow::onActionCloseProject()
 }
 
 void MainWindow::onActionSaveProject()
-{
-
+{    
+    QString filepath = "test.prj";
+    saveAll();
+    m_project.saveAs(filepath);
 }
 
 void MainWindow::onActionSaveAsProject()
@@ -234,6 +236,7 @@ void MainWindow::onActionSaveAsProject()
     if(filepath.isEmpty())
         return;
 
+    saveAll();
     m_project.saveAs(filepath);
 }
 
@@ -343,14 +346,17 @@ void MainWindow::onUndoAvailable(bool flag)
 
 JZEditor *MainWindow::createEditor(int type)
 {
+    JZEditor *editor = nullptr;
     if(type == ProjectItem_scriptFlow ||type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
-        return new JZNodeEditor();
+        editor = new JZNodeEditor();
     else if(type == ProjectItem_param)
-        return new JZParamEditor();
+        editor = new JZParamEditor();
     else if(type == ProjectItem_ui)
-        return new JZUiEditor();
+        editor = new JZUiEditor();
 
-    return nullptr;
+    if(editor)
+        editor->setProject(&m_project);
+    return editor;
 }
 
 void MainWindow::onFileOpened(QString filepath)
@@ -365,8 +371,10 @@ void MainWindow::onFileOpened(QString filepath)
         connect(editor,&JZEditor::redoAvailable,this,&MainWindow::onRedoAvailable);
         connect(editor,&JZEditor::undoAvailable,this,&MainWindow::onUndoAvailable);
         m_editorStack->addWidget(editor);
-        m_editors[file] = editor;        
-        m_editors[file]->open(item);
+
+        editor->setFile(item);
+        editor->open(item);
+        m_editors[file] = editor;                
     }    
     switchEditor(m_editors[file]);
 }
@@ -490,6 +498,17 @@ void MainWindow::onDebugFinish(int code,QProcess::ExitStatus status)
         m_log->append("process crash ");
     else
         m_log->append("process finish, exit code " + QString::number(code));
+}
+
+void MainWindow::saveAll()
+{
+    auto it = m_editors.begin();
+    while(it != m_editors.end())
+    {
+        it.value()->save();
+        m_project.saveItem(it.value()->file());
+        it++;
+    }
 }
 
 void MainWindow::closeAll()

@@ -72,7 +72,8 @@ void JZProjectTree::addItem(QTreeWidgetItem *view_item,JZProjectItem *item)
 
 JZProjectItem *JZProjectTree::getItem(QTreeWidgetItem *view_item)
 {
-    return m_project->getItem(view_item->data(0,Qt::UserRole).toString());
+    QString path = view_item->data(0,Qt::UserRole).toString();
+    return m_project->getItem(path);
 }
 
 void JZProjectTree::cancelEdit()

@@ -16,9 +16,8 @@ JZNodeFunctionManager::JZNodeFunctionManager()
 
 JZNodeFunctionManager::~JZNodeFunctionManager()
 {
-    for(int i = 0; i < m_cfuncs.size(); i++)
-        delete m_cfuncs[i];
-    m_cfuncs.clear();
+    qDeleteAll(m_cfuncs);
+    qDeleteAll(m_csingles);
 }
 
 void JZNodeFunctionManager::init()
@@ -51,7 +50,7 @@ const FunctionDefine *JZNodeFunctionManager::function(QString funcName)
     if (it != m_funcMap.end())
         return &it.value();
     else
-        return nullptr;
+        return nullptr;    
 }
 
 void JZNodeFunctionManager::loadLibrary(QString filename)
@@ -106,6 +105,20 @@ void JZNodeFunctionManager::registCFunction(QString name,bool isFlow,CFunction *
     registFunction(define);
 }
 
+void JZNodeFunctionManager::unregistFunction(QString name)
+{
+    auto it = m_funcMap.find(name);
+    if(it == m_funcMap.end())
+        return;
+
+    if(it->isCFunction)
+    {
+        m_cfuncs.removeAll(it->cfunc);
+        delete it->cfunc;
+    }
+    m_funcMap.erase(it);
+}
+
 void JZNodeFunctionManager::clearUserReigst()
 {
     for(int i = 0; i < m_userFuncs.size(); i++)
@@ -123,4 +136,14 @@ void JZNodeFunctionManager::registFunction(const FunctionDefine &define)
 void JZNodeFunctionManager::replaceFunction(const FunctionDefine &define)
 {
     m_funcMap[define.name] = define;
+}
+
+void JZNodeFunctionManager::registCSingle(CSingle *single)
+{
+    m_csingles.push_back(single);
+}
+
+void JZNodeFunctionManager::unregistCSingle(CSingle *single)
+{
+    m_csingles.removeAll(single);
 }

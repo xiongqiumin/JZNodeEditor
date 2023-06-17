@@ -3,7 +3,7 @@
 
 #include "JZNode.h"
 
-class JZNodeScript;
+class JZNodeObject;
 class CFunction
 {
 public:
@@ -13,6 +13,9 @@ public:
 
     QStringList args;
     QString result;
+
+protected:
+    Q_DISABLE_COPY(CFunction);
 };
 
 class FunctionParam
@@ -42,5 +45,31 @@ public:
 };
 QDataStream &operator<<(QDataStream &s, const FunctionDefine &param);
 QDataStream &operator>>(QDataStream &s, FunctionDefine &param);
+
+//single
+class CSingle
+{
+public:
+    CSingle();
+    virtual ~CSingle();
+    virtual void connect(JZNodeObject *obj,int type) = 0;
+
+protected:
+    Q_DISABLE_COPY(CSingle);
+};
+
+class SingleDefine
+{
+public:
+    SingleDefine();
+
+    QString name;
+    int eventType;
+
+    bool isCSingle;
+    CSingle *csingle;
+};
+QDataStream &operator<<(QDataStream &s, const SingleDefine &param);
+QDataStream &operator>>(QDataStream &s, SingleDefine &param);
 
 #endif

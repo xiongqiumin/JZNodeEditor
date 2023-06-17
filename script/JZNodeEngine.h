@@ -145,7 +145,7 @@ public:
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
 
-    void objectChanged(const QString &name);
+    void objectChanged(JZNodeObject *sender,const QString &name);
 
 signals:
     void sigParamChanged();
@@ -155,18 +155,22 @@ protected:
     class JZObjectConnect
     {
     public:        
+        JZObjectConnect();
+
+        int eventType;
         JZNodeObject *sender;
         JZNodeObject *receiver;
-        int eventType;
         FunctionDefine *handle;
     };
 
-    class ParamChangeHandle
+    class ParamChangeEvent
     {
     public:
-        QString name;
-        JZNodeObject *env;
-        FunctionDefine *define;
+        ParamChangeEvent();
+
+        QString name;        
+        JZNodeObject *receiver;
+        FunctionDefine *handle;
     };
 
     bool run();         
@@ -187,10 +191,9 @@ protected:
     int nodeIdByPc(int pc);        
     JZNodeScript *getScript(QString path);
     JZNodeScript *getObjectScript(QString objName);
-    void connectScript(QString objName,JZNodeObject *obj,JZNodeScript *script);
-    void connectSelf(JZNodeObject *obj);
-    void connectQObject(QObject *obj);
-    void disconnectObject(JZNodeObject *obj);
+    void connectParamChanged(JZNodeObject *obj,JZNodeScript *script);
+    void connectScript(QString sender,JZNodeObject *obj,JZNodeScript *script);
+    void connectObject(QString objName,JZNodeObject *obj);
     JZNodeObject *getObject(QString name);
     bool isWatch();        
 
@@ -216,7 +219,7 @@ protected:
     QSemaphore m_waitCond;
 
     QMap<JZNodeObject*,QList<JZObjectConnect>> m_connects;
-    QList<ParamChangeHandle> m_paramChangeHandle;
+    QList<ParamChangeEvent> m_paramChangeHandle;
 };
 extern JZNodeEngine *g_engine;
 

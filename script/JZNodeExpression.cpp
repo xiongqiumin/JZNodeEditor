@@ -10,11 +10,11 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 
     m_type = node_type;
     m_op = op_type;
-    m_in1 = addParamIn("in1",Prop_edit | Prop_dispValue);
-    m_in2 = addParamIn("in2",Prop_edit | Prop_dispValue);
-    m_out = addParamOut("out");
-    setPropValue(m_in1,0);
-    setPropValue(m_in2,0);
+    int in1 = addParamIn("in1",Prop_edit | Prop_dispValue);
+    int in2 = addParamIn("in2",Prop_edit | Prop_dispValue);
+    addParamOut("out");
+    setPropValue(in1,0);
+    setPropValue(in2,0);
 }
 
 bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
@@ -22,15 +22,23 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addDataInput(m_id))
         return false;
         
-    int r1 = c->paramId(m_id,m_in1);
-    int r2 = c->paramId(m_id,m_in2);
-    int r3 = c->paramId(m_id,m_out);            
+    int in1 = paramIn(0);
+    int in2 = paramIn(1);
+    int out = paramOut(0);
+
+    int r1 = c->paramId(m_id,in1);
+    int r2 = c->paramId(m_id,in2);
+    int r3 = c->paramId(m_id,out);
     c->addExpr(irId(r3),irId(r1),irId(r2),m_op);
     return true;
 }
 
 QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
 {
+    int in1 = paramIn(0);
+    int in2 = paramIn(1);
+    int out = paramOut(0);
+
     QMap<int,int> result;
     switch (m_op)
     {
@@ -39,7 +47,7 @@ QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
         case OP_mul:
         case OP_div:
         case OP_mod:        
-            result[m_out] = JZNodeType::calcExprType(inType[m_in1],inType[m_in2]);
+            result[out] = JZNodeType::calcExprType(inType[in1],inType[in2]);
             break;
         case OP_eq:
         case OP_ne:
@@ -52,7 +60,7 @@ QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
         case OP_bitand:
         case OP_bitor:
         case OP_bitxor:
-            result[m_out] = Type_bool;
+            result[out] = Type_bool;
             break;
         default:
             Q_ASSERT(0);
@@ -66,9 +74,9 @@ JZNodeAdd::JZNodeAdd()
     :JZNodeOperator(Node_add,OP_add)
 {
     m_name = "+";        
-    setTypeNumber(m_in1);
-    setTypeNumber(m_in2);
-    setTypeNumber(m_out);
+    setTypeNumber(paramIn(0));
+    setTypeNumber(paramIn(1));
+    setTypeNumber(paramOut(0));
 }
 
 //JZNodeSub
@@ -76,9 +84,9 @@ JZNodeSub::JZNodeSub()
     :JZNodeOperator(Node_sub,OP_sub)
 {
     m_name = "-";    
-    setTypeNumber(m_in1);
-    setTypeNumber(m_in2);
-    setTypeNumber(m_out);
+    setTypeNumber(paramIn(0));
+    setTypeNumber(paramIn(1));
+    setTypeNumber(paramOut(0));
 }
     
 //JZNodeMul
@@ -86,9 +94,9 @@ JZNodeMul::JZNodeMul()
     :JZNodeOperator(Node_mul,OP_mul)
 {
     m_name = "*";
-    setTypeNumber(m_in1);
-    setTypeNumber(m_in2);
-    setTypeNumber(m_out);
+    setTypeNumber(paramIn(0));
+    setTypeNumber(paramIn(1));
+    setTypeNumber(paramOut(0));
 }
 
 //JZNodeDiv
@@ -96,9 +104,9 @@ JZNodeDiv::JZNodeDiv()
     :JZNodeOperator(Node_div,OP_div)
 {
     m_name = "/";
-    setTypeNumber(m_in1);
-    setTypeNumber(m_in2);
-    setTypeNumber(m_out);
+    setTypeNumber(paramIn(0));
+    setTypeNumber(paramIn(1));
+    setTypeNumber(paramOut(0));
 }
 
 //JZNodeMod
@@ -106,9 +114,9 @@ JZNodeMod::JZNodeMod()
     :JZNodeOperator(Node_mod,OP_mod)
 {
     m_name = "%";
-    setTypeNumber(m_in1);
-    setTypeNumber(m_in2);
-    setTypeNumber(m_out);
+    setTypeNumber(paramIn(0));
+    setTypeNumber(paramIn(1));
+    setTypeNumber(paramOut(0));
 }
     
 //JZNodeEQ
@@ -116,9 +124,9 @@ JZNodeEQ::JZNodeEQ()
     :JZNodeOperator(Node_eq,OP_eq)
 {
     m_name = "==";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeAny(paramIn(0));
+    setTypeAny(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeNE
@@ -126,9 +134,9 @@ JZNodeNE::JZNodeNE()
     :JZNodeOperator(Node_ne,OP_ne)
 {
     m_name = "!=";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeAny(paramIn(0));
+    setTypeAny(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeLE
@@ -136,9 +144,9 @@ JZNodeLE::JZNodeLE()
     :JZNodeOperator(Node_le,OP_le)
 {
     m_name = "<=";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeAny(paramIn(0));
+    setTypeAny(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeGE
@@ -146,9 +154,9 @@ JZNodeGE::JZNodeGE()
     :JZNodeOperator(Node_ge,OP_ge)
 {
     m_name = ">=";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeAny(paramIn(0));
+    setTypeAny(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeLT
@@ -156,9 +164,9 @@ JZNodeLT::JZNodeLT()
     :JZNodeOperator(Node_lt,OP_lt)
 {
     m_name = "<";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeAny(paramIn(0));
+    setTypeAny(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeGT
@@ -166,9 +174,9 @@ JZNodeGT::JZNodeGT()
     :JZNodeOperator(Node_gt,OP_gt)
 {
     m_name = ">";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeAny(paramIn(0));
+    setTypeAny(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeAnd
@@ -176,9 +184,9 @@ JZNodeAnd::JZNodeAnd()
     :JZNodeOperator(Node_and,OP_and)
 {
     m_name = "and";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeBool(paramIn(0));
+    setTypeBool(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeOr
@@ -186,9 +194,9 @@ JZNodeOr::JZNodeOr()
     :JZNodeOperator(Node_or,OP_or)
 {
     m_name = "or";
-    prop(m_in1)->setDataType({Type_any});
-    prop(m_in2)->setDataType({Type_any});
-    setTypeBool(m_out);
+    setTypeBool(paramIn(0));
+    setTypeBool(paramIn(1));
+    setTypeBool(paramOut(0));
 }
 
 //JZNodeBitAnd
@@ -196,9 +204,9 @@ JZNodeBitAnd::JZNodeBitAnd()
     :JZNodeOperator(Node_bitand,OP_bitand)
 {
     m_name = "bit and";
-    setTypeInt(m_in1);
-    setTypeInt(m_in2);
-    setTypeBool(m_out);
+    setTypeInt(paramIn(0));
+    setTypeInt(paramIn(1));
+    setTypeInt(paramOut(0));
 }
 
 //JZNodeBitOr
@@ -206,9 +214,9 @@ JZNodeBitOr::JZNodeBitOr()
     :JZNodeOperator(Node_bitor,OP_bitor)
 {
     m_name = "bit or";
-    setTypeInt(m_in1);
-    setTypeInt(m_in2);
-    setTypeBool(m_out);
+    setTypeInt(paramIn(0));
+    setTypeInt(paramIn(1));
+    setTypeInt(paramOut(0));
 }
 
 //JZNodeBitXor
@@ -216,9 +224,9 @@ JZNodeBitXor::JZNodeBitXor()
     :JZNodeOperator(Node_bitxor,OP_bitxor)
 {
     m_name = "bit xor";
-    setTypeInt(m_in1);
-    setTypeInt(m_in2);
-    setTypeBool(m_out);
+    setTypeInt(paramIn(0));
+    setTypeInt(paramIn(1));
+    setTypeInt(paramOut(0));
 }
 
 //JZNodeExpression

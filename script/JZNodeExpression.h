@@ -15,7 +15,6 @@ public:
 
 protected:
     int m_op;    
-    int m_in1,m_in2,m_out;
 };
 
 //JZNodeAdd

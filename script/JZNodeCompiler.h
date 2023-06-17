@@ -29,6 +29,8 @@ public:
     int allocStack();
     void freeStack(int id);
 
+    bool checkVariable(QString sender,QString className,QString error);
+
     bool addFlowInput(int nodeId);
     bool addDataInput(int nodeId);
     void addFlowOutput(int nodeId);        

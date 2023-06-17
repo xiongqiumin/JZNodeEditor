@@ -21,8 +21,8 @@ QDataStream &operator<<(QDataStream &s, const FunctionParam &param)
 
 QDataStream &operator>>(QDataStream &s, FunctionParam &param)
 {
-    s << param.name;
-    s << param.dataType;
+    s >> param.name;
+    s >> param.dataType;
     return s;
 }
 

@@ -1,9 +1,10 @@
 #ifndef JZNODE_OBJECT_H_
 #define JZNODE_OBJECT_H_
 
-#include "JZNodeFunctionDefine.h"
+#include "JZEvent.h"
 #include <QMap>
 #include <QWidget>
+#include "JZNodeFunctionDefine.h"
 
 class CMeta
 {
@@ -24,17 +25,29 @@ public:
 
     void addParam(JZParamDefine def);
     void removeParam(QString name);
-    void addFunction(FunctionDefine def);
-    void removeFunction(QString function);
+    QStringList paramList();
+    JZParamDefine *param(QString name);
 
-    FunctionDefine *function(QString function);    
+    void addFunction(FunctionDefine def);
+    void removeFunction(QString function);    
+    void addSingle(FunctionDefine def);
+    void removeSingle(QString function);
+
+    QString fullname() const;
+    const FunctionDefine *function(QString function);
+    const SingleDefine *single(QString function);
+    JZNodeObjectDefine *super();    
+    bool isInherits(int type) const;
+    bool isInherits(const QString &name) const;
     bool isCopyable() const;
 
     int id;
+    QString nameSpace;
     QString className;            
     QString superName;
     QMap<QString,JZParamDefine> params;
-    QMap<QString,FunctionDefine> functions;
+    QStringList functions;
+    QList<SingleDefine> singles;
     bool isCObject;
     CMeta cMeta;
 };
@@ -47,29 +60,33 @@ public:
     JZNodeObject(JZNodeObjectDefine *def);
     ~JZNodeObject();
     
+    bool isInherits(int type) const;
+    bool isInherits(const QString &name) const;
     bool isCopyable() const;
     bool isCObject() const;
     bool isString() const;
-    const QString &className() const;
-    const QString fullName() const;
+    const QString &className() const;    
 
-    QVariant param(QString name) const;
+    bool hasParam(QString name) const;
+    QVariant param(QString name) const;    
     void setParam(QString name,QVariant value);
-    FunctionDefine *function(QString function);           
+    QVariant *paramRef(QString name);
+    const FunctionDefine *function(QString function);
 
-    void setCObject(void *cobj,bool owner);
-    void addWatch(QString name);
+    void setCObject(void *cobj,bool owner);    
+    void updateCRefs();
+    void connectSingles(int type);
 
     JZNodeObjectDefine *define;
-    QString name;
-    JZNodeObject *parent;
-    QMap<QString,QVariant> params;
-    QStringList watchList;
+    QString name;    
+    QMap<QString,QVariant> params;    
     void *cobj;
     bool cowner;
 
 protected:
     Q_DISABLE_COPY(JZNodeObject);    
+
+    bool getParamRef(const QString &name,QVariant* &ref,QString &error);
 };
 typedef QSharedPointer<JZNodeObject> JZNodeObjectPtr;
 Q_DECLARE_METATYPE(JZNodeObject*)
@@ -78,9 +95,9 @@ Q_DECLARE_METATYPE(JZNodeObjectPtr)
 bool isJZObjectDelcare(const QVariant &v);
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
-void JZObjectValueChanged(const QString &name);
 int JZClassId(const QString &name);
 QString JZClassName(int id);
+void JZObjectEvent(JZEvent *event);
 
 class JZNodeObjectManager
 {
@@ -90,6 +107,7 @@ public:
     ~JZNodeObjectManager(); 
 
     void init();
+    JZNodeObjectDefine *meta(QString className);
     JZNodeObjectDefine *meta(int type_id);
     QString getClassName(int type_id);
     int getClassId(QString class_name);
@@ -130,7 +148,7 @@ JZNodeObjectPtr JZObjectCreate()
 }
 
 template<class T>
-JZNodeObjectPtr JZObjectRefrence(void *ptr)
+JZNodeObjectPtr JZObjectRefrence(T *ptr)
 {
     return JZNodeObjectManager::instance()->createCClassRefrence(typeid(T).name(),ptr);
 }

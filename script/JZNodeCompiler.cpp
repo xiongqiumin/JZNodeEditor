@@ -4,26 +4,6 @@
 #include <QSet>
 #include "JZNodeFunctionManager.h"
 
-//NodeInfo
-NodeInfo::NodeInfo()
-{
-    node_id = -1;
-    node_type = Node_none;
-    start = -1;
-    end = -1;    
-    parentId = -1;
-}
-
-QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
-{
-    return s;
-}
-
-QDataStream &operator>>(QDataStream &s, NodeInfo &param)
-{
-    return s;
-}
-
 // JZNodeCompiler
 int JZNodeCompiler::paramId(int nodeId,int propId)
 {
@@ -277,15 +257,17 @@ void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
         if(node->type() == Node_event)
         {
             JZNodeEvent *node_event = (JZNodeEvent *)graph_list[node_idx]->node;
-            QString func_name = "on_node_" + QString::number(node->id()) + "_event_" + QString::number(node_event->id());
+            QString func_name = "on_event_" + node_event->name() + "_node" + QString::number(node->id());
             FunctionDefine define;
             define.name = func_name;
+            define.paramIn = node_event->params();
             define.addr = m_nodeInfo[node->id()].start;
             define.script = m_script->file;
 
             JZEventHandle handle;
             handle.type = node_event->eventType();
             handle.function = define;
+            handle.sender = node_event->variable();
             m_script->events.push_back(handle);            
         }
     }
@@ -425,7 +407,7 @@ bool JZNodeCompiler::buildParamBinding(Graph *graph)
         if(node->type() == Node_param)
         {
             JZNodeParam *node_param = (JZNodeParam*)node;
-            QString param_name = node_param->paramId();
+            QString param_name = node_param->variable();
             QString func_name = "on_" + param_name + "_changed";
 
             FunctionDefine define;
@@ -435,7 +417,7 @@ bool JZNodeCompiler::buildParamBinding(Graph *graph)
 
             JZEventHandle handle;
             handle.type = Event_paramChanged;
-            handle.sender = node_param->paramId();
+            handle.sender = param_name;
             handle.function = define;
             m_script->events.push_back(handle);
         }
@@ -628,6 +610,11 @@ int JZNodeCompiler::allocStack()
 
 void JZNodeCompiler::freeStack(int id)
 {
+}
+
+bool JZNodeCompiler::checkVariable(QString sender,QString className,QString error)
+{
+    return true;
 }
 
 bool JZNodeCompiler::addDataInput(int nodeId)

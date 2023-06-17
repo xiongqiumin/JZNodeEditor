@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTreeWidget>
 #include "JZNode.h"
+#include "JZScriptFile.h"
 
 class JZNodeTreeWidget : public QTreeWidget
 {
@@ -14,6 +15,7 @@ protected:
     QMimeData *mimeData(const QList<QTreeWidgetItem *> items) const;
 };
 
+class JZScriptFile;
 class JZNodePanel : public QWidget
 {
     Q_OBJECT
@@ -22,23 +24,28 @@ public:
     JZNodePanel(QWidget *widget = nullptr);
     ~JZNodePanel();    
 
-    void init(int fileType);
-    void addViriable(QString name);
-    void addWidget(QString name);
+    void setFile(JZScriptFile *file);
 
 protected slots:
 
 protected:
+    void init();
     void initEvent(QTreeWidgetItem *root);
+    void initClassParam(QTreeWidgetItem *root);
+    void initProjectParam(QTreeWidgetItem *root);
     void initVariable(QTreeWidgetItem *root);
     void initProcess(QTreeWidgetItem *root);
     void initExpression(QTreeWidgetItem *root);
-    void initFunction(QTreeWidgetItem *root,bool flow);
+    void initFunction(QTreeWidgetItem *root,bool flow);    
     QTreeWidgetItem *createFolder(QString name);
-    QTreeWidgetItem *createItem(JZNode *node);
+    QTreeWidgetItem *createNode(JZNode *node);
+    QTreeWidgetItem *createParam(QString name,int dataType);
+    QTreeWidgetItem *createClass(QString className);
+    JZScriptClassFile *getClassFile();
 
     JZNodeTreeWidget *m_tree;
     int m_fileType;
+    JZScriptFile *m_file;
 };
 
 #endif

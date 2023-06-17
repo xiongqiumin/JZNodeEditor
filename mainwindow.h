@@ -70,6 +70,7 @@ private:
     void start(bool startPause);
     void updateMenuAction();
     void saveToFile(QString file,QString text);
+    void saveAll();
     void closeAll();
 
     JZNodeBuilder m_builder;

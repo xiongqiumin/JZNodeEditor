@@ -61,14 +61,20 @@ public:
 
 };
 
+class JZParamFile;
 class JZScriptClassFile : public JZProjectItem
 {
 public:
     JZScriptClassFile();
     virtual ~JZScriptClassFile();    
 
+    virtual void saveToStream(QDataStream &s);
+    virtual void loadFromStream(QDataStream &s);
+
     void init(QString className,QString super = QString());
     void unint();
+    void reinit();
+
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
     void removeMemberVariable(QString name);
     bool addMemberFunction(FunctionDefine func);
@@ -76,7 +82,10 @@ public:
     JZNodeObjectDefine objectDefine();
 
 protected:
-    JZNodeObjectDefine m_define;
+    JZParamFile *getParamFile();
+    QString m_className;
+    QString m_super;
+    int m_classId;
 };
 
 #endif

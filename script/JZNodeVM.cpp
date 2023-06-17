@@ -41,7 +41,7 @@ bool JZNodeVM::init(QString path,bool debug)
     m_engine.init();    
 
     JZEvent event;
-    event.setEventType(Event_programStart);
+    event.eventType = Event_programStart;
     m_engine.dealEvent(&event);
     return true;
 }

@@ -4,6 +4,7 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
 #include "JZNodeFunctionManager.h"
+#include "JZEvent.h"
 
 namespace jzbind
 {
@@ -264,6 +265,42 @@ CFunction *createFuncion(Return (Class::*f)(Args...) const,Extra... extra)
     return createFuncionImpl<decltype(func),Extra...>(func,extra...);
 }
 
+//signle
+template<class type>
+void createEvent(JZEvent &)
+{
+    return;
+}
+
+template <class type,typename T,typename... Args>
+void createEvent(JZEvent &event,const T &v,Args... args)
+{
+    event.params.push_back(getReturn(v,true));
+    if((sizeof ... (Args)) > 0 )
+        createEvent<type,Args...>(event,args...);
+}
+
+template<typename Class, typename... Args>
+class CSingleImpl : public CSingle
+{
+public:
+    virtual void connect(JZNodeObject *obj,int eventType)
+    {
+        Class *cobj = (Class*)obj->cobj;
+        cobj->connect(cobj,single,[obj,eventType](Args... args){
+           JZEvent event;
+           event.sender = obj;
+           event.eventType = eventType;
+           event.params.push_back(QVariant::fromValue(event.sender));
+           createEvent<int,Args...>(event,args...);
+           JZObjectEvent(&event);
+        });
+    }
+
+    void (Class::*single)(Args...);    
+};
+
+
 template<class Class>
 class ClassBind
 {
@@ -325,6 +362,22 @@ public:
         registFunction(name,isflow,impl);
     }       
 
+    template<typename... Args>
+    void defSingle(QString name,int eventType,void (Class::*f)(Args...))
+    {
+        registFunction(name,true,createFuncion(f));
+
+        SingleDefine single;
+        single.name = name;
+        single.eventType = eventType;
+
+        auto *impl = new CSingleImpl<Class,Args...>();        
+        impl->single = f;
+        single.isCSingle = true;
+        single.csingle = impl;        
+        m_define.singles.push_back(single);
+    }
+
     void regist(int typeId = -1)
     {
         m_define.id = typeId;
@@ -334,6 +387,10 @@ public:
             auto &f = m_functions[i];
             JZNodeFunctionManager::instance()->registCFunction(m_define.className + "." + f.name,f.isFlow,f.func);
         }
+        for(int i = 0; i < m_define.singles.size(); i++)
+        {
+            JZNodeFunctionManager::instance()->registCSingle(m_define.singles[i].csingle);
+        }
         declareCClass(std::is_base_of<QObject,Class>());
     }
 
@@ -342,7 +399,7 @@ protected:
         QString name;
         bool isFlow;
         CFunction *func;
-    };
+    };       
 
     void registFunction(QString name,bool isflow,CFunction *func)
     {
@@ -350,6 +407,7 @@ protected:
         f.name = name;
         f.isFlow = isflow;
         f.func = func;
+        m_define.functions.push_back(name);
         m_functions.push_back(f);
     }
 

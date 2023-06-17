@@ -6,16 +6,18 @@
 #include <QMap>
 #include <QVariant>
 
-class JZScriptParamDefineFile : public JZProjectItem
+class JZParamFile : public JZProjectItem
 {
 public:
-    JZScriptParamDefineFile();
-    virtual ~JZScriptParamDefineFile();
+    JZParamFile();
+    virtual ~JZParamFile();
 
     void addVariable(QString name,int type,QVariant = QVariant());
     void removeVariable(QString name);
+
     JZParamDefine *getVariable(QString name);
     QStringList variableList();
+    QMap<QString,JZParamDefine> variables();
 
 protected:
     QMap<QString,JZParamDefine> m_variables;

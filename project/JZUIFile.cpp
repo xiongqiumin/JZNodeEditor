@@ -36,6 +36,7 @@ void JZUiFile::getWidgetMembers(QMap<QString,JZParamDefine> &params)
             JZParamDefine def;
             def.name = name;
             def.dataType = type;
+            def.cref = true;
             params[name] = def;
         }
     }

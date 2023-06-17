@@ -129,6 +129,11 @@ void JZNodePropertyEditor::addPropList(QString name,QVector<int> list)
 void JZNodePropertyEditor::setNode(JZNode *node)
 {
     m_node = node;
+    updateNode();
+}
+
+void JZNodePropertyEditor::updateNode()
+{
     m_tree->clear();
     m_propManager->clear();
     m_propMap.clear();
@@ -144,9 +149,9 @@ void JZNodePropertyEditor::setNode(JZNode *node)
 
     m_propManager->blockSignals(true);
 
-    auto in_list = node->propInList(Prop_param);
+    auto in_list = m_node->propInList(Prop_param);
     addPropList("输入",in_list);
-    auto out_list = node->propOutList(Prop_param);
+    auto out_list = m_node->propOutList(Prop_param);
     addPropList("输出",out_list);
 
     m_propManager->blockSignals(false);

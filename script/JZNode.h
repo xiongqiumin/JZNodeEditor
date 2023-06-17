@@ -49,8 +49,16 @@ enum
     Node_return,
     Node_exit,
     Node_event,
+    Node_singleEvent,
     Node_paramChangedEvent,
     Node_timeEvent,
+};
+
+enum
+{
+    Node_propNone = 0,
+    Node_propNoRemove = 0x1,
+    Node_propVariable = 0x2,
 };
 
 //JZNodeGemo
@@ -96,6 +104,9 @@ public:
     void setId(int id);
     int type() const;
 
+    void setFlag(int flag);
+    int flag() const;
+
     bool isFlowNode() const;    
 
     int addProp(const JZNodePin &prop);         
@@ -113,36 +124,42 @@ public:
     int propCount(int flag) const;
               
     int addParamIn(QString name,int extFlag = 0);    
-    int paramIn(int index);
-    JZNodeGemo paramInGemo(int index);
-    int paramInCount();    
-    QVector<int> paramInList();
+    int paramIn(int index) const;
+    JZNodeGemo paramInGemo(int index) const;
+    int paramInCount() const;
+    QVector<int> paramInList() const;
     int addParamOut(QString name,int extFlag = 0);
-    int paramOut(int index);
-    JZNodeGemo paramOutGemo(int index);
-    int paramOutCount();
-    QVector<int> paramOutList();
+    int paramOut(int index) const;
+    JZNodeGemo paramOutGemo(int index) const;
+    int paramOutCount() const;
+    QVector<int> paramOutList() const;
     
     int addFlowIn();    
-    int flowIn();
-    JZNodeGemo flowInGemo();
+    int flowIn() const;
+    JZNodeGemo flowInGemo() const;
     int addFlowOut(QString name = QString());
-    int flowOut(int index = 0);
-    JZNodeGemo flowOutGemo(int index = 0);
-    QVector<int> flowOutList();
-    int flowOutCount();    
+    int flowOut(int index = 0) const;
+    JZNodeGemo flowOutGemo(int index = 0) const;
+    QVector<int> flowOutList() const;
+    int flowOutCount() const;
 
     int addSubFlowOut(QString name);
     int addSubFlow(const JZNodePin &prop);
-    int subFlowOut(int index);
-    JZNodeGemo subFlowOutGemo(int index);
-    QVector<int> subFlowList();
-    int subFlowCount();
+    int subFlowOut(int index) const;
+    JZNodeGemo subFlowOutGemo(int index) const;
+    QVector<int> subFlowList() const;
+    int subFlowCount() const;
     
     QVariant propValue(int prop) const;
     void setPropValue(int prop,QVariant value);
-    QString propName(int id);
+    QString propName(int id) const;
     void setPropName(int id,QString name);
+
+    bool canRemove();
+
+    bool hasVariable();
+    virtual void setVariable(const QString &name);
+    virtual QString variable() const;
 
     virtual QList<int> propType(int id);
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
@@ -152,6 +169,7 @@ public:
     virtual void loadFromStream(QDataStream &s);    
 
 protected:     
+    void setTypeAny(int id);
     void setTypeInt(int id);
     void setTypeNumber(int id);
     void setTypeBool(int id);
@@ -159,6 +177,7 @@ protected:
 
     int m_id;
     int m_type;
+    int m_flag;
     QString m_name;
     QList<JZNodePin> m_propList;
 };
@@ -178,7 +197,6 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
-    int m_flowIn;
 };
 
 class JZNodeBreak : public JZNode
@@ -188,8 +206,7 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-protected:
-    int m_flowIn;    
+protected:   
 };
 
 class JZNodeReturn : public JZNode
@@ -224,9 +241,6 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
-    int m_flowIn;    
-    QList<int> m_flowOut;
-    int m_flowComplete;
 };
 
 class JZNodeParallel : public JZNode
@@ -236,10 +250,7 @@ public:
 
     void addOutPin();
 
-protected:
-    int m_flowIn;    
-    QList<int> m_flowOut;
-    int m_flowComplete;    
+protected:   
 };
 
 
@@ -251,13 +262,6 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
-    int m_indexStart;
-    int m_indexEnd;
-    int m_indexOut;
-
-    int m_flowBody;    
-    int m_flowIn;        
-    int m_flowComplete;    
 };
 
 class JZNodeForEach: public JZNode
@@ -277,10 +281,9 @@ public:
     JZNodeWhile();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    int cond() const;
 
 protected:
-    int m_cond;    
+
 };
 
 class JZNodeIf : public JZNode
@@ -292,9 +295,6 @@ public:
     void addElsePin();
 
 protected:
-    QList<int> m_cond;    
-    QList<int> m_flowCond;
-    int m_flowElse;
 };
 
 class JZNodeSwitch : public JZNode
@@ -311,9 +311,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
-    int m_cond;    
-    int m_flowIn; 
-    int m_flowOut; 
+
 };
 
 #endif

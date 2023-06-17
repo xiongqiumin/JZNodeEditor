@@ -23,7 +23,7 @@ public:
     {        
         project.initConsole();
         scriptFlow = (JZScriptFile*)project.getItem(project.mainScript());
-        paramDef = (JZScriptParamDefineFile*)project.getItem("./param.def");
+        paramDef = (JZParamFile*)project.getItem("./param.def");
 
         scriptParam = new JZScriptFile(ProjectItem_scriptParamBinding);
         scriptParam->setName("param.jz");
@@ -34,7 +34,7 @@ public:
     void call()
     {
         JZEvent event;
-        event.setEventType(Event_programStart);
+        event.eventType = Event_programStart;
         engine.dealEvent(&event);
     }
 
@@ -110,7 +110,7 @@ public:
         for(int i = 0; i < 100; i++)
         {
             JZNodeSetParam *node_set = new JZNodeSetParam();
-            node_set->setParamId("i",true);
+            node_set->setVariable("i");
             node_set->setPropValue(node_set->paramIn(0),i);
             script->addNode(JZNodePtr(node_set));
 
@@ -136,7 +136,7 @@ public:
     JZProject project;
     JZScriptFile *scriptFlow;
     JZScriptFile *scriptParam;
-    JZScriptParamDefineFile *paramDef;
+    JZParamFile *paramDef;
 
     JZNodeProgram program;
     JZNodeEngine engine;
@@ -158,7 +158,7 @@ void testParamBinding()
     JZScriptFile *script = test.scriptParam;
     JZProject *project = &test.project;
     JZNodeEngine *engine = &test.engine;
-    JZScriptParamDefineFile *paramDefine = test.paramDef;
+    JZParamFile *paramDefine = test.paramDef;
     paramDefine->addVariable("a",Type_int,10);
     paramDefine->addVariable("b",Type_int,20);
 
@@ -172,9 +172,9 @@ void testParamBinding()
     script->addNode(JZNodePtr(node_c));
     script->addNode(JZNodePtr(node_add));
 
-    node_a->setParamId("a",true);
-    node_b->setParamId("b",true);
-    node_c->setParamId("c");
+    node_a->setVariable("a");
+    node_b->setVariable("b");
+    node_c->setVariable("c");
     script->addConnect(node_a->paramOutGemo(0),node_add->paramInGemo(0));
     script->addConnect(node_b->paramOutGemo(0),node_add->paramInGemo(1));
 
@@ -227,7 +227,7 @@ void testSequeue()
     for(int i = 0; i < 4; i++)
     {
         JZNodeSetParam *node_set = new JZNodeSetParam();
-        node_set->setParamId(QString('a' + i),true);        
+        node_set->setVariable(QString('a' + i));
 
         JZNodeAdd *node_add = new JZNodeAdd();
         node_add->setPropValue(node_add->paramIn(0),i+1);
@@ -277,7 +277,7 @@ void testFor()
     int set_id = script->addNode(JZNodePtr(node_set));
 
     test.paramDef->addVariable("i",Type_int);
-    node_set->setParamId("i",true);
+    node_set->setVariable("i");
 
     //start
     node_start->setEventType(Event_programStart);
@@ -316,7 +316,7 @@ void testForEach()
     JZScriptFile *script = test.scriptFlow;
     JZProject *project = &test.project;
     JZNodeEngine *engine = &test.engine;
-    JZScriptParamDefineFile *paramDef = test.paramDef;
+    JZParamFile *paramDef = test.paramDef;
     paramDef->addVariable("sum",Type_int,0);
     paramDef->addVariable("a",JZNodeObjectManager::instance()->getClassId("list"));
 
@@ -326,12 +326,12 @@ void testForEach()
     JZNodeParam *node_sum = new JZNodeParam();
     JZNodeAdd *node_add = new JZNodeAdd();
     JZNodeSetParam *node_set = new JZNodeSetParam();
-    node_param->setParamId("a",true);
-    node_sum->setParamId("sum",true);
-    node_set->setParamId("sum",true);
+    node_param->setVariable("a");
+    node_sum->setVariable("sum");
+    node_set->setVariable("sum");
 
     JZNodeSetParam *node_int_a = new JZNodeSetParam();
-    node_int_a->setParamId("a",true);
+    node_int_a->setVariable("a");
 
     JZNodeCreate *node_create = new JZNodeCreate();
     node_create->setClassName("list");
@@ -405,8 +405,8 @@ void testWhileLoop()
     int value10_id = script->addNode(JZNodePtr(node_value10));
 
     //test.project.addVariable("i",1);
-    node_param->setParamId("i",true);
-    node_set->setParamId("i",true);
+    node_param->setVariable("i");
+    node_set->setVariable("i");
 
     node_value->setLiteral(1);
     node_value10->setLiteral(10);
@@ -573,7 +573,7 @@ void testExpr()
     JZScriptFile *script = test.scriptFlow;
     JZNodeEngine *engine = &test.engine;
     JZProject *project = &test.project;
-    JZScriptParamDefineFile *paramDef = test.paramDef;
+    JZParamFile *paramDef = test.paramDef;
 
     QVector<int> op_type = {Node_add,Node_sub,Node_mul,Node_div,Node_mod,Node_eq,Node_ne,Node_le,
         Node_ge,Node_lt,Node_gt,Node_and,Node_or,Node_bitand,Node_bitor,Node_bitxor};
@@ -586,8 +586,8 @@ void testExpr()
     paramDef->addVariable("a",Type_int,100);
     paramDef->addVariable("b",Type_int,50);
 
-    node_a->setParamId("a",true);
-    node_b->setParamId("b",true);    
+    node_a->setVariable("a");
+    node_b->setVariable("b");
 
     script->addNode(JZNodePtr(node_start));    
     script->addNode(JZNodePtr(node_a));
@@ -598,7 +598,7 @@ void testExpr()
     for(int i = 0; i < op_type.size(); i++)
     {
         JZNodeSetParam *node_set = new JZNodeSetParam();
-        node_set->setParamId("i" + QString::number(i),true);        
+        node_set->setVariable("i" + QString::number(i));
         script->addNode(JZNodePtr(node_set));
 
         auto node_op = JZNodeFactory::instance()->createNode(op_type[i]);
@@ -633,7 +633,7 @@ void testCustomExpr()
     JZScriptFile *script = test.scriptFlow;
     JZNodeEngine *engine = &test.engine;
     JZProject *project = &test.project;
-    JZScriptParamDefineFile *paramDef = test.paramDef;
+    JZParamFile *paramDef = test.paramDef;
 
     JZNodeEvent *node_start = new JZNodeEvent();
     JZNodeParam *node_a = new JZNodeParam();
@@ -645,8 +645,8 @@ void testCustomExpr()
     paramDef->addVariable("b",Type_int,3);
     paramDef->addVariable("c",Type_int,0);
 
-    node_a->setParamId("a",true);
-    node_b->setParamId("b",true);
+    node_a->setVariable("a");
+    node_b->setVariable("b");
 
     script->addNode(JZNodePtr(node_start));
     script->addNode(JZNodePtr(node_a));
@@ -661,7 +661,7 @@ void testCustomExpr()
     script->addNode(JZNodePtr(node_expr));
 
     JZNodeSetParam *node_set = new JZNodeSetParam();
-    node_set->setParamId("c",true);
+    node_set->setVariable("c");
     script->addNode(JZNodePtr(node_set));
 
     script->addConnect(node_a->paramOutGemo(0),node_expr->paramInGemo(0));
@@ -719,7 +719,7 @@ void testFunction()
     JZNodeSub *sub2 = new JZNodeSub();
 
     JZNodeParam *n = new JZNodeParam();
-    n->setParamId("n",false);
+    n->setVariable("n");
 
     JZNodeReturn *ret1 = new JZNodeReturn();
     JZNodeReturn *ret2 = new JZNodeReturn();    
@@ -776,7 +776,7 @@ void testClass()
     JZScriptFile *script = test.scriptFlow;
     JZProject *project = &test.project;    
     JZNodeEngine *engine = &test.engine;
-    JZScriptParamDefineFile *paramDef = test.paramDef;
+    JZParamFile *paramDef = test.paramDef;
 
     auto classBase = project->addClass("ClassBase");
     project->addClass("ClassA","ClassBase");
@@ -834,7 +834,7 @@ void testCClass()
     ScriptTest test;
     JZProject *project = &test.project;
     JZNodeEngine *engine = &test.engine;    
-    JZScriptParamDefineFile *paramDef = test.paramDef;
+    JZParamFile *paramDef = test.paramDef;
 
     paramDef->addVariable("a",Type_string);
     paramDef->addVariable("b",Type_string);
