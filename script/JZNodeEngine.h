@@ -95,12 +95,10 @@ public:
     BreakPoint();
     void clear();
 
-    int id;
     int type;
     QString file;
     int nodeId;
-    int stack; 
-    int pcStart,pcEnd;   
+    int stack;     
 };
 
 //JZNodeEngine
@@ -121,8 +119,8 @@ public:
     void addWatch();
     void clearWatch();
 
-    int addBreakPoint(QString filepath,int nodeId);
-    void removeBreakPoint(int id);
+    void addBreakPoint(QString filepath,int nodeId);
+    void removeBreakPoint(QString filepath,int nodeId);
     void clearBreakPoint();    
 
     void pause();
@@ -135,6 +133,7 @@ public:
     QVariant getThis();
     void setThis(QVariant var);
 
+    QVariant *getVariableRef(QString name);
     QVariant getVariable(QString name);
     void setVariable(QString name, const QVariant &value);    
 
@@ -181,7 +180,7 @@ protected:
     QVariant dealExpr(QVariant &a,QVariant &b,int op);    
     void pushStack(const FunctionDefine *define);
     void popStack();
-    int indexOfBreakPoint(int id);   
+    int indexOfBreakPoint(QString filepath,int nodeId);
     void waitStatus(int status);
     
     QString variableToString(const QVariant &v);
@@ -191,11 +190,20 @@ protected:
     int nodeIdByPc(int pc);        
     JZNodeScript *getScript(QString path);
     JZNodeScript *getObjectScript(QString objName);
+    /*
+     1. 赋值变量时作为 sender 连接所有
+     2. 赋值变量时作为 this.xxx 连接父类
+     3. CreateObject 连接自身 this 部分
+     */
     void connectParamChanged(JZNodeObject *obj,JZNodeScript *script);
-    void connectScript(QString sender,JZNodeObject *obj,JZNodeScript *script);
-    void connectObject(QString objName,JZNodeObject *obj);
+    void connectScript(QString sender,JZNodeObject *recv,JZNodeScript *script);
+    void connectRecv(QString objName,JZNodeObject *obj,JZNodeObject *recv);                        //obj连接到 recv及子孙
+    void connectSender(QString objName,JZNodeObject *obj);                                         //obj及子孙 连接到全部
+    void connectSelf(JZNodeObject *obj);
+    void connectParent(JZNodeObject *obj,QString name,JZNodeObject* parent,JZNodeScript *script);  //obj及子孙连接到 parent
     JZNodeObject *getObject(QString name);
     bool isWatch();        
+    bool splitMember(const QString &fullName,QString &objName,QString &memberName);
 
     int m_pc;            
     JZNodeProgram *m_program;    

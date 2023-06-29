@@ -81,7 +81,7 @@ public:
 
     int type;    
     int pc;
-    int source;
+    int nodeId;
     QString memo;
 };
 typedef QSharedPointer<JZNodeIR> JZNodeIRPtr;

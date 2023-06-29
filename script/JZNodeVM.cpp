@@ -7,6 +7,7 @@
 #include <QComboBox>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QTimer>
 
 //JZNodeVM
 JZNodeVM::JZNodeVM()
@@ -60,5 +61,7 @@ void JZNodeVM::quit()
 void JZNodeVM::onRuntimeError(JZNodeRuntimeError error)
 {
     QMessageBox::information(nullptr,"",error.info);
-    quit();
+    QTimer::singleShot(0,[]{
+       qApp->quit();
+    });
 }

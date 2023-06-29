@@ -13,6 +13,18 @@ JZParamFile::~JZParamFile()
 
 }
 
+void JZParamFile::saveToStream(QDataStream &s)
+{
+    JZProjectItem::saveToStream(s);
+    s << m_variables;
+}
+
+void JZParamFile::loadFromStream(QDataStream &s)
+{
+    JZProjectItem::loadFromStream(s);
+    s >> m_variables;
+}
+
 void JZParamFile::addVariable(QString name,int type,QVariant v)
 {
     Q_ASSERT(type != Type_none);

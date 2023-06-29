@@ -3,6 +3,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QShortcut>
+#include "JZNodeNewDialog.h"
 
 JZProjectTree::JZProjectTree()
 {
@@ -73,7 +74,9 @@ void JZProjectTree::addItem(QTreeWidgetItem *view_item,JZProjectItem *item)
 JZProjectItem *JZProjectTree::getItem(QTreeWidgetItem *view_item)
 {
     QString path = view_item->data(0,Qt::UserRole).toString();
-    return m_project->getItem(path);
+    auto item = m_project->getItem(path);
+    Q_ASSERT(item);
+    return item;
 }
 
 void JZProjectTree::cancelEdit()
@@ -178,24 +181,30 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actRename = nullptr;
     QAction *actCreate = nullptr;
     QAction *actCreateFolder = nullptr;
-/*
-    if(item->isFolder())
+
+    if(item->itemType() == ProjectItem_folder
+            || item->itemType() == ProjectItem_class
+            || item->itemType() == ProjectItem_library)
     {
         QString name = JZProjectItemFactory::itemTypeName(item->itemType());
         actCreate = menu.addAction("新建" + name);
-        actCreateFolder = menu.addAction("新建文件夹");
+        actCreateFolder = menu.addAction("新建筛选器");
     }
     if(view_item->parent())
     {
         actRemove = menu.addAction("删除");
         actRename = menu.addAction("重命名");
     }
-*/    
+
     QAction *act = menu.exec(m_tree->mapToGlobal(pos));
     if(!act)
         return;
 
-    if(act == actCreate || act == actCreateFolder)
+    if(act == actCreate)
+    {
+
+    }
+    else if(act == actCreateFolder)
     {
 
     }
@@ -208,4 +217,12 @@ void JZProjectTree::onContextMenu(QPoint pos)
     {
         onItemRename();
     }
+}
+
+
+void JZProjectTree::newItem()
+{
+    JZNodeNewDialog dialog(this);
+    if(dialog.exec() != QDialog::Accepted)
+        return;
 }

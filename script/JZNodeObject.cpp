@@ -173,14 +173,28 @@ QStringList JZNodeObjectDefine::paramList()
 
 JZParamDefine *JZNodeObjectDefine::param(QString name)
 {
-    auto def = this;
-    while(def)
-    {
-        auto it = def->params.find(name);
-        if(it != def->params.end())
-            return &it.value();
+    QStringList list = name.split(".");
 
-        def = def->super();
+    auto def = this;
+    for(int i = 0; i < list.size(); i++)
+    {
+        while(def)
+        {
+            auto it = def->params.find(list[i]);
+            if(it != def->params.end())
+            {
+                if(i == list.size() - 1)
+                    return &it.value();
+                else
+                {
+                    def = JZNodeObjectManager::instance()->meta(it->dataType);
+                    break;
+                }
+            }
+            def = def->super();
+        }
+        if(!def)
+            break;
     }
     return nullptr;
 }
@@ -647,6 +661,7 @@ void JZNodeObjectManager::initWidgets()
     cls_widget.def("setVisible",true,&QWidget::setVisible);
     cls_widget.def("show",true,&QWidget::show);
     cls_widget.def("hide",true,&QWidget::hide);
+    cls_widget.def("close",true,&QWidget::close);
     cls_widget.regist();
 
     //lineedit

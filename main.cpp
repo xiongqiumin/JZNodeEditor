@@ -17,22 +17,22 @@ int main(int argc, char *argv[])
         testBuild();
         return 0;
     }
-    if(0)
+    if(1)
     {
         QString program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/build/untitled.program";
 
-        bool build_project = true;
+        bool build_project = false;
         if(build_project)
         {
             JZProject project;
             project.initUi();
 
-            auto script = (JZScriptFile*)project.getItem(project.mainScript());
+            auto script = (JZScriptFile*)project.getItem("./mainwindow/事件");
 
             auto meta = JZNodeObjectManager::instance()->meta("AbstractButton");
             JZNodeSingleEvent *event = new JZNodeSingleEvent();
             event->setSingle(meta->className,meta->single("clicked"));
-            event->setVariable("mainwindow.btn");
+            event->setVariable("this.btn");
 
             script->addNode(JZNodePtr(event));
 

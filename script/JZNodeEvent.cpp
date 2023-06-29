@@ -54,23 +54,12 @@ bool JZNodeEvent::compiler(JZNodeCompiler *c,QString &error)
 JZNodeSingleEvent::JZNodeSingleEvent()
 {
     m_type = Node_singleEvent;
-    m_flag = Node_propVariable;
-    addParamIn("",Prop_dispName | Prop_dispValue | Prop_edit);
+    addParamIn("",Prop_dispName | Prop_dispValue | Prop_editValue);
 }
 
 JZNodeSingleEvent::~JZNodeSingleEvent()
 {
 
-}
-
-void JZNodeSingleEvent::setVariable(const QString &sender)
-{
-    setPropValue(paramIn(0),sender);
-}
-
-QString JZNodeSingleEvent::variable() const
-{
-    return propValue(paramIn(0)).toString();
 }
 
 QList<FunctionParam> JZNodeSingleEvent::params()
@@ -83,15 +72,12 @@ QList<FunctionParam> JZNodeSingleEvent::params()
 void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
 {
     auto inst = JZNodeFunctionManager::instance();
-    QString function = single->name;
     m_single = single->name;
-    if(!className.isEmpty())
-    {
-        m_className = className;
-        addParamIn(m_className,Prop_dispName | Prop_dispValue | Prop_edit);
-        function = className + "." + function;
-    }
+    m_className = className;
+
+    QString function = className + "." + single->name;
     setName(function);
+    setPropName(paramIn(0),className);
 
     const FunctionDefine *func = inst->function(function);
     for(int i = 0; i < func->paramIn.size(); i++)
@@ -110,10 +96,25 @@ QString JZNodeSingleEvent::single()
     return m_single;
 }
 
+void JZNodeSingleEvent::setVariable(const QString &name)
+{
+    setPropValue(paramIn(0),name);
+}
+
+QString JZNodeSingleEvent::variable() const
+{
+    return propValue(paramIn(0)).toString();
+}
+
+void JZNodeSingleEvent::drag(const QVariant &value)
+{
+    setVariable(value.toString());
+}
+
 bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 {
     QString sender = propValue(paramIn(0)).toString();
-    if(!c->checkVariable(sender,m_className,error))
+    if(!c->checkVariableType(sender,m_className,error))
         return false;
 
     auto list = paramOutList();
@@ -148,7 +149,7 @@ JZNodeParamChangedEvent::JZNodeParamChangedEvent()
     m_type = Node_paramChangedEvent;
     m_eventType = Event_paramChanged;
 
-    addParamIn("", Prop_dispValue | Prop_edit);
+    addParamIn("", Prop_dispValue | Prop_editValue);
 }
 
 JZNodeParamChangedEvent::~JZNodeParamChangedEvent()

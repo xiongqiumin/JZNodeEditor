@@ -10,9 +10,6 @@ public:
     JZNodeLiteral();
     ~JZNodeLiteral();        
 
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
-
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
     int dataType();
@@ -32,12 +29,9 @@ public:
     JZNodePrint();
     ~JZNodePrint();
 
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
-
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;   
 protected:
+
 };
 
 //JZNodeCreate
@@ -47,30 +41,11 @@ public:
     JZNodeCreate();
     ~JZNodeCreate();
 
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
-
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual void pinChanged(int id) override;
 
-    void setClassName(QString name);
-};
-
-//JZNodeParam
-class JZNodeParam : public JZNode
-{
-public:
-    JZNodeParam();
-    ~JZNodeParam();        
-
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
-    virtual void setVariable(const QString &name) override;
-    virtual QString variable() const override;
-
-protected:
-
+    void setClassName(const QString &name);
+    QString className() const;
 };
 
 //JZNodeParamThis
@@ -80,9 +55,26 @@ public:
     JZNodeThis();
     ~JZNodeThis();
 
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual void fileInitialized() override;
+};
+
+//JZNodeParam
+class JZNodeParam : public JZNode
+{
+public:
+    JZNodeParam();
+    ~JZNodeParam();        
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual void pinChanged(int id) override;
+
+    void setVariable(const QString &name);
+    QString variable() const;
+    virtual void drag(const QVariant &value) override;
+
+protected:
+
 };
 
 //JZNodeSetParam
@@ -92,33 +84,33 @@ public:
     JZNodeSetParam();
     ~JZNodeSetParam();
 
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
-
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
-    virtual void setVariable(const QString &name) override;
-    virtual QString variable() const override;
+    virtual void pinChanged(int id) override;
+    
+    void setVariable(const QString &name);
+    QString variable() const;
+    virtual void drag(const QVariant &value) override;
 
 protected:        
 
 };
 
 
-//JZNodeSetParamData
-class JZNodeSetParamData : public JZNode
+//JZNodeSetParamDataFlow
+class JZNodeSetParamDataFlow : public JZNode
 {
 public:
-    JZNodeSetParamData();
-    ~JZNodeSetParamData();
+    JZNodeSetParamDataFlow();
+    ~JZNodeSetParamDataFlow();
 
-    virtual void saveToStream(QDataStream &s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void setVariable(const QString &name) override;
-    virtual QString variable() const override;
+    virtual void pinChanged(int id) override;
+    
+    void setVariable(const QString &name);
+    QString variable() const;
+    virtual void drag(const QVariant &value) override;
 
-protected:
+protected:    
 
 };
 

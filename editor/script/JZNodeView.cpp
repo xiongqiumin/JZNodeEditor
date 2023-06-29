@@ -20,6 +20,7 @@
 #include "JZNodeFactory.h"
 #include "JZNodeValue.h"
 #include "JZNodeCompiler.h"
+#include "JZProject.h"
 
 JZNodeViewCommand::JZNodeViewCommand(JZNodeView *view,int type)
 {
@@ -143,6 +144,7 @@ void JZNodeViewCommand::redo()
         if(newValue.isNull())
         {
             newValue = formatNode(m_view->getNode(itemId));
+            m_view->updateNode(itemId);
         }
         else
         {
@@ -202,18 +204,24 @@ CopyData unpack(const QByteArray &buffer)
     return param;
 }
 
+//BreakPointTriggerResult
+BreakPointTriggerResult::BreakPointTriggerResult()
+{
+    type = none;
+    nodeId = 0;
+}
+
 //JZNodeView
 JZNodeView::JZNodeView(QWidget *widget)
     : QGraphicsView(widget)
 {
-    m_selLine = nullptr;
-    m_selArea = nullptr;
+    m_selLine = nullptr;    
     m_tip = nullptr;    
     m_propEditor = nullptr;
     m_loadFlag = false;    
-    m_file = nullptr;
-    m_isMove = false;    
+    m_file = nullptr;    
     m_moveUndo = false;
+    m_propEditFlag = false;
 
     connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
     connect(&m_commandStack,&QUndoStack::canUndoChanged,this,&JZNodeView::undoAvailable);
@@ -222,17 +230,20 @@ JZNodeView::JZNodeView(QWidget *widget)
     setScene(m_scene);
     setAcceptDrops(true);
 
-    QTimer *timer = new QTimer();
-    connect(timer,&QTimer::timeout,this,&JZNodeView::onTimer);
-    //timer->start(2000);
-
-    setWindowFlags(Qt::BypassGraphicsProxyWidget);
+    m_compilerTimer = new QTimer();
+    connect(m_compilerTimer,&QTimer::timeout,this,&JZNodeView::onAutoCompiler);
+    //m_compilerTimer->setSingleShot(true);    
+    //setWindowFlags(Qt::BypassGraphicsProxyWidget);
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &JZNodeView::customContextMenuRequested, this, &JZNodeView::onContextMenu);
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);    
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);        
 
-    m_scene->setSceneRect(QRect(0,0,1000,1000));
+    setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+
+    setRenderHint(QPainter::Antialiasing);
+    setDragMode(QGraphicsView::ScrollHandDrag);
+    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 }
 
 JZNodeView::~JZNodeView()
@@ -301,9 +312,34 @@ void JZNodeView::setFile(JZScriptFile *file)
 {
     m_file = file;
     initGraph();
+    m_compilerTimer->start(1000);
 }
 
-void JZNodeView::syncNodePos()
+int JZNodeView::getVariableType(const QString &name)
+{
+    if(name == "this" || name.startsWith("this."))
+    {
+        JZScriptClassFile *classFile = m_file->getClassFile();
+        if(!classFile)
+            return Type_none;
+
+        auto def = JZNodeObjectManager::instance()->meta(classFile->className());
+        if(name == "this")
+            return def->id;
+        else
+        {
+            auto info = def->param(name.mid(5));
+            return info? info->dataType : Type_none;
+        }
+    }
+    else
+    {
+        auto info = m_file->project()->getVariableInfo(name);
+        return info? info->dataType : Type_none;
+    }
+}
+
+void JZNodeView::saveNodePos()
 {
     foreachNode([this](JZNodeGraphItem *node){
             m_file->setNodePos(node->id(),node->pos());
@@ -376,7 +412,7 @@ bool JZNodeView::isPropEditable(int id,int prop_id)
     if(!getNode(id)->prop(prop_id)->isDispValue())
         return false;
 
-    QList<int> lines = m_file->getConnectId(id,prop_id);
+    QList<int> lines = m_file->getConnectInput(id,prop_id);
     return lines.size() == 0;
 }
 
@@ -402,14 +438,16 @@ JZNodeGraphItem *JZNodeView::getNodeItem(int id)
 
 void JZNodeView::updateNode(int id)
 {
-
     getNodeItem(id)->updateNode();
     auto lineId = m_file->getConnectId(id);
     for (int i = 0; i < lineId.size(); i++)
         getLineItem(lineId[i])->updateNode();
 
     if(getNode(id) == m_propEditor->node())
-        m_propEditor->updateNode();
+    {
+        if(!m_propEditFlag)
+            m_propEditor->updateNode();
+    }
 }
 
 void JZNodeView::updatePropEditable(const JZNodeGemo &gemo)
@@ -418,21 +456,22 @@ void JZNodeView::updatePropEditable(const JZNodeGemo &gemo)
     if(!node)
         return;
 
+    getNodeItem(gemo.nodeId)->updateNode();
     if(gemo.nodeId == node->id())
         m_propEditor->setPropEditable(gemo.propId,isPropEditable(gemo.nodeId,gemo.propId));
 }
 
 JZNodeLineItem *JZNodeView::createLine(JZNodeGemo from, JZNodeGemo to)
 {
-    int id = m_file->addConnect(from, to);
-    updatePropEditable(from);
-    updatePropEditable(to);
+    int id = m_file->addConnect(from, to);    
+    updatePropEditable(to);    
     return createLineItem(id);
 }
 
 JZNodeLineItem *JZNodeView::insertLine(const JZNodeConnect &connect)
 {
     m_file->insertConnect(connect);
+    updatePropEditable(connect.to);
     return createLineItem(connect.id);
 }
 
@@ -442,9 +481,7 @@ void JZNodeView::removeLine(int id)
     if (!item)
         return;
 
-    JZNodeGemo from = item->startTraget();
-    JZNodeGemo to = item->endTraget();
-    updatePropEditable(from);
+    JZNodeGemo to = item->endTraget();    
     updatePropEditable(to);
 
     m_scene->removeItem(item);
@@ -486,6 +523,7 @@ void JZNodeView::startLine(JZNodeGemo from)
     m_selLine = new JZNodeLineItem(from);
     m_selLine->setEndPoint(pt);
     m_scene->addItem(m_selLine);
+    m_selLine->grabMouse();
     m_selLine->updateNode();
 }
 
@@ -512,6 +550,7 @@ void JZNodeView::cancelLine()
     if (!m_selLine)
         return;
 
+    m_selLine->ungrabMouse();
     if (m_selLine->endTraget().nodeId != INVALID_ID)
     {
         m_selLine->setDrag(false);
@@ -525,13 +564,14 @@ void JZNodeView::cancelLine()
     m_selLine = nullptr;
 }
 
-void JZNodeView::createTip(QPointF pos,QString text)
+void JZNodeView::addTip(QRectF tipArea,QString text)
 {
     if(!m_tip)
         m_tip = m_scene->addText("");
 
+    m_tipArea = tipArea;
     m_tip->setHtml("<div style='background-color:#FFFFFF;'>" + text + "</div>");
-    m_tip->setPos(pos);
+    m_tip->setPos(tipArea.topRight());
     m_tip->setZValue(10);
 }
 
@@ -543,20 +583,6 @@ void JZNodeView::clearTip()
         delete m_tip;
         m_tip = nullptr;
     }
-}
-
-void JZNodeView::cancelSelect()
-{
-    if(!m_selArea)
-        return;
-
-    m_scene->clearSelection();
-    QPainterPath path;
-    path.addRect(m_selArea->rect());
-    m_scene->setSelectionArea(path);
-    m_scene->removeItem(m_selArea);
-    delete m_selArea;
-    m_selArea = nullptr;
 }
 
 JZNodeGraphItem *JZNodeView::nodeItemAt(QPoint pos)
@@ -664,8 +690,7 @@ void JZNodeView::clear()
 {
     m_scene->clear();
     m_file->clear();
-    m_commandStack.clear();
-    m_scene->setSceneRect(QRect(0,0,1000,1000));
+    m_commandStack.clear();    
 }
 
 void JZNodeView::redo()
@@ -776,7 +801,7 @@ void JZNodeView::setSelectNode(int id)
         auto node = getNode(id);
         m_propEditor->setNode(node);
 
-        auto list = node->propListByType(Prop_param);
+        auto list = node->paramInList();
         for(int i = 0; i < list.size(); i++)
             m_propEditor->setPropEditable(list[i],isPropEditable(id,list[i]));
     }
@@ -885,21 +910,42 @@ void JZNodeView::updateNodeLayout()
             max_h = qMax(max_h,cur_y);
         }
         y = max_h + 20;
-    }
-    QRectF scene_rc = m_scene->itemsBoundingRect();
-    if(scene_rc.width() < 1000)
+    }    
+}
+
+BreakPointTriggerResult JZNodeView::breakPointTrigger()
+{
+    BreakPointTriggerResult ret;
+
+    auto items = m_scene->selectedItems();
+    for(int i = 0; i < items.size(); i++)
     {
-        int w = (1000 - scene_rc.width())/2;
-        scene_rc.adjust(-w,0,w,0);
-    }
-    if(scene_rc.height() < 600)
-    {
-        int h = (600 - scene_rc.height())/2;
-        scene_rc.adjust(0,-1,0,h);
+        if(items[i]->type() == Item_node)
+        {                        
+            auto node_item = (JZNodeGraphItem*)items[i];
+            int node_id = node_item->id();
+            auto project = m_file->project();
+            QString filepath = m_file->itemPath();
+
+            ret.filename = filepath;
+            ret.nodeId = node_item->id();
+            if(project->hasBreakPoint(filepath,node_id))
+            {
+                ret.type = BreakPointTriggerResult::remove;
+                project->removeBreakPoint(filepath,node_id);
+                node_item->setBreakPoint(false);
+            }
+            else
+            {
+                ret.type = BreakPointTriggerResult::add;
+                project->addBreakPoint(filepath,node_id);
+                node_item->setBreakPoint(true);
+            }
+            break;
+        }
     }
 
-    m_scene->setSceneRect(scene_rc);
-    fitInView(rect(),Qt::KeepAspectRatio);
+    return ret;
 }
 
 void JZNodeView::removeItem(QGraphicsItem *item)
@@ -978,7 +1024,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         return;
 
     if (ret == actAdd)
-    {
+    {       
     }
     else if(ret == actCpy)
     {
@@ -1050,22 +1096,19 @@ void JZNodeView::dropEvent(QDropEvent *event)
     }
     else if(event->mimeData()->hasFormat("node_param"))
     {
-        QString param = QString::fromUtf8(event->mimeData()->data("node_param"));
+        QString param_name = QString::fromUtf8(event->mimeData()->data("node_param"));
         JZNodeGraphItem *node_item = nodeItemAt(event->pos());
         if(!node_item)
         {
             JZNodeParam node_param;
-            node_param.setVariable(param);
+            node_param.setVariable(param_name);
 
-            addCreateNodeCommand(formatNode(&node_param),event->pos());
+            addCreateNodeCommand(formatNode(&node_param),mapToScene(event->pos()));
         }
-        else if(node_item->node()->flag())
+        else if(node_item->node()->canDragVariable())
         {
             QByteArray old = formatNode(node_item->node());
-
-            node_item->node()->setVariable(param);
-            updateNode(node_item->id());
-
+            node_item->node()->drag(param_name);
             addPropChangedCommand(node_item->id(),old);
         }
         event->accept();
@@ -1102,28 +1145,23 @@ void JZNodeView::wheelEvent(QWheelEvent *event)
     event->accept();
 }
 
+void JZNodeView::mousePressEvent(QMouseEvent *event)
+{
+    QGraphicsView::mousePressEvent(event);
+    viewport()->setCursor(QCursor());
+    if (event->button() == Qt::LeftButton)
+        m_downPoint = mapToScene(event->pos());
+}
+
 void JZNodeView::mouseMoveEvent(QMouseEvent *event)
 {
+    QGraphicsView::mouseMoveEvent(event);
+    viewport()->setCursor(QCursor());
+
     if (m_selLine)
     {
         m_selLine->setEndPoint(mapToScene(event->pos()));
-    }
-    QGraphicsView::mouseMoveEvent(event);
 
-    if(m_isMove)
-    {
-        QPointF gap = mapToScene(event->pos()) - mapToScene(m_downPoint);
-        QPointF old_center = mapToScene(viewport()->rect().width()/2,viewport()->rect().height()/2);
-        centerOn(old_center - gap);
-
-        m_downPoint = event->pos();
-    }
-    else if(m_selArea)
-    {        
-        m_selArea->setRect(QRectF(mapToScene(m_downPoint),mapToScene(event->pos())));
-    }
-    else if (m_selLine)
-    {
         JZNodeGraphItem *node_item = nodeItemAt(event->pos());
         if(node_item && m_selLine->startTraget().nodeId != node_item->id())
         {
@@ -1135,39 +1173,38 @@ void JZNodeView::mouseMoveEvent(QMouseEvent *event)
                 JZNodeGemo to(node_item->id(), prop->id());
                 QString error;
                 if(!m_file->canConnect(m_selLine->startTraget(),to,error))
-                    createTip(mapToScene(event->pos() + QPoint(10,0)),"无法连接: " + error);
+                {
+                    auto rc = node_item->propRect(prop->id());
+                    rc = node_item->mapToScene(rc).boundingRect();
+                    addTip(rc,"无法连接: " + error);
+                }
             }
             else
                 clearTip();
         }
     }
-}
-
-void JZNodeView::mousePressEvent(QMouseEvent *event)
-{
-    if (m_selLine)
+    else if(m_tip)
     {
-        event->ignore();
-        return;
+        if(!m_tipArea.contains(mapToScene(event->pos())))
+            clearTip();
     }
-    if(!itemAt(event->pos())){
-        m_downPoint = event->pos();
-        if(event->modifiers() & Qt::SHIFT)
-        {
-            Q_ASSERT(!m_selArea);
-            m_selArea = m_scene->addRect(QRectF(),QPen(),QBrush());
-            m_selArea->setZValue(100);
-        }
-        else
-            m_isMove = true;
+
+    if (scene()->mouseGrabberItem() == nullptr && event->buttons() == Qt::LeftButton)
+    {
+      // Make sure shift is not being pressed
+      if ((event->modifiers() & Qt::ShiftModifier) == 0)
+      {
+        QPointF difference = m_downPoint - mapToScene(event->pos());
+        setSceneRect(sceneRect().translated(difference.x(), difference.y()));
+      }
     }
-    QGraphicsView::mousePressEvent(event);
 }
 
 void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
 {
-    if(m_isMove)
-        m_isMove = false;    
+    QGraphicsView::mouseReleaseEvent(event);
+    viewport()->setCursor(QCursor());
+
     if (m_selLine)
     {
         JZNodeGemo gemo;
@@ -1190,25 +1227,27 @@ void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
             cancelLine();
         clearTip();
     }        
-    if(m_selArea)
-        cancelSelect();
-    QGraphicsView::mouseReleaseEvent(event);
 }
 
-void JZNodeView::keyReleaseEvent(QKeyEvent *event)
+void JZNodeView::keyPressEvent(QKeyEvent *event)
 {
-    if(event->key() == Qt::Key_Delete)
-        remove();
-    else if(event->key() == Qt::Key_Escape){
-        cancelLine();
-        cancelSelect();
-    }
+    if(event->key() == Qt::Key_Shift)
+        setDragMode(QGraphicsView::RubberBandDrag);
 
     QGraphicsView::keyReleaseEvent(event);
 }
 
-void JZNodeView::onTimer()
+void JZNodeView::keyReleaseEvent(QKeyEvent *event)
 {
+    if(event->key() == Qt::Key_Shift)
+        setDragMode(QGraphicsView::ScrollHandDrag);
+    else if(event->key() == Qt::Key_Delete)
+        remove();
+    else if(event->key() == Qt::Key_Escape){
+        cancelLine();        
+    }
+
+    QGraphicsView::keyReleaseEvent(event);
 }
 
 void JZNodeView::onPropNameUpdate(int id,int propId,const QString &value)
@@ -1217,12 +1256,12 @@ void JZNodeView::onPropNameUpdate(int id,int propId,const QString &value)
     if(oldValue == value)
         return;
 
+    m_propEditFlag = true;
     auto node = getNode(id);
     auto old = formatNode(node);
-    node->setPropName(propId,value);
-    updateNode(id);
-
+    node->setPropName(propId,value);    
     addPropChangedCommand(node->id(),old);
+    m_propEditFlag = false;
 }
 
 void JZNodeView::onPropUpdate(int id,int propId,const QVariant &value)
@@ -1231,12 +1270,12 @@ void JZNodeView::onPropUpdate(int id,int propId,const QVariant &value)
     if(oldValue == value)
         return;
 
+    m_propEditFlag = true;
     auto node = getNode(id);
     auto old = formatNode(node);
-    node->setPropValue(propId,value);
-    updateNode(id);
-
+    node->setPropValue(propId,value);    
     addPropChangedCommand(node->id(),old);
+    m_propEditFlag = false;
 }
 
 void JZNodeView::copyItems(QList<QGraphicsItem*> items)
@@ -1278,4 +1317,30 @@ void JZNodeView::removeItems(QList<QGraphicsItem*> items)
         removeItem(items[i]);
     }
     m_commandStack.endMacro();
+}
+
+void JZNodeView::autoCompiler()
+{
+    m_compilerTimer->start(1000);
+}
+
+void JZNodeView::onAutoCompiler()
+{    
+    foreachNode([](JZNodeGraphItem *node){
+        node->clearError();
+    });
+
+
+    JZNodeCompiler compiler;
+    JZNodeScript result;
+    if(!compiler.build(m_file,&result))
+    {
+        auto it = result.nodeInfo.begin();
+        while(it != result.nodeInfo.end())
+        {
+            if(!it->error.isEmpty())
+                getNodeItem(it.key())->setError(it->error);
+            it++;
+        }
+    }
 }

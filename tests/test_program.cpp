@@ -162,7 +162,7 @@ void testParamBinding()
     paramDefine->addVariable("a",Type_int,10);
     paramDefine->addVariable("b",Type_int,20);
 
-    JZNodeSetParamData *node_c = new JZNodeSetParamData();
+    JZNodeSetParamDataFlow *node_c = new JZNodeSetParamDataFlow();
     JZNodeAdd *node_add = new JZNodeAdd();
     JZNodeParam *node_a = new JZNodeParam();
     JZNodeParam *node_b = new JZNodeParam();
@@ -468,7 +468,7 @@ void testBreakPoint()
     for(int i = 0; i < 20; i++)
     {
         int node_id = node_value.keys()[rand()%100];
-        int pt_id = engine->addBreakPoint(script->path(),node_id);
+        engine->addBreakPoint(script->path(),node_id);
         QThread::msleep(100);
 
         auto info = engine->runtimeInfo();
@@ -488,7 +488,7 @@ void testBreakPoint()
                 qDebug() << "after stepover Error:" << value << node_value[info.nodeId];
         }
 
-        engine->removeBreakPoint(pt_id);
+        engine->removeBreakPoint(script->path(),node_id);
         engine->resume();
     }
     test.stop();
@@ -540,7 +540,7 @@ void testDebugServer()
     for(int i = 0; i < 20; i++)
     {
         int node_id = node_value.keys()[rand()%100];
-        int pt_id = client.addBreakPoint(script->path(),node_id);
+        client.addBreakPoint(script->path(),node_id);
         QThread::msleep(100);
 
         auto info = client.runtimeInfo();
@@ -560,7 +560,7 @@ void testDebugServer()
                 qDebug() << "after stepover Error:" << value << node_value[info.nodeId];
         }
 
-        client.removeBreakPoint(pt_id);
+        client.removeBreakPoint(script->path(),node_id);
         client.resume();
     }
     client.stop();
@@ -723,8 +723,8 @@ void testFunction()
 
     JZNodeReturn *ret1 = new JZNodeReturn();
     JZNodeReturn *ret2 = new JZNodeReturn();    
-    ret1->addParamIn("n",Prop_edit);
-    ret2->addParamIn("n",Prop_edit);
+    ret1->addParamIn("n",Prop_editValue);
+    ret2->addParamIn("n",Prop_editValue);
 
     script->addNode(JZNodePtr(node_branch));
     script->addNode(JZNodePtr(node_ge));

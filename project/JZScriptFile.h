@@ -6,6 +6,7 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
 
+class JZScriptClassFile;
 class JZScriptFile : public JZProjectItem
 {
 public:    
@@ -18,15 +19,17 @@ public:
 
     void setBindClass(QString bindClass);
     QString bindClass();
+    JZScriptClassFile *getClassFile();
 
     int addNode(JZNodePtr node);
     void insertNode(JZNodePtr node);
     void removeNode(int id);
     JZNode *getNode(int id);
-    JZNodePin *getPin(const JZNodeGemo &gemo);
-    void setNodePos(int id,QPointF pos);
-    QPointF getNodePos(int id); 
+    JZNodePin *getPin(const JZNodeGemo &gemo);    
     QList<int> nodeList();        
+
+    void setNodePos(int id,QPointF pos);
+    QPointF getNodePos(int id);
 
     bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error);
     int addConnect(JZNodeGemo from, JZNodeGemo to);
@@ -35,19 +38,24 @@ public:
     void removeConnect(int id);
     void removeConnectByNode(int node_id, int prop_id);
     JZNodeConnect *getConnect(int id);
-    QList<int> getConnectId(int node_id, int propId = -1); // propId = -1 得到节点所有连线
+    QList<int> getConnectId(int node_id, int propId = -1);    // propId = -1 得到节点所有连线
+    QList<int> getConnectOut(int node_id, int propId = -1);
+    QList<int> getConnectInput(int node_id, int propId = -1);
     QList<JZNodeConnect> connectList();
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
 
+    JZParamDefine *getVariableInfo(const QString &name);
+
 protected:
     int m_nodeId;
-    QMap<int, JZNodePtr> m_nodes;    
-    QMap<int, QPointF> m_nodesPos;   
+    QMap<int, JZNodePtr> m_nodes;        
     QList<JZNodeConnect> m_connects;    
     QString m_bindClass;
     FunctionDefine m_function;    
+
+    QMap<int, QPointF> m_nodesPos;
 };
 
 class JZScriptLibraryFile : public JZProjectItem
@@ -74,6 +82,8 @@ public:
     void init(QString className,QString super = QString());
     void unint();
     void reinit();
+
+    QString className() const;
 
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
     void removeMemberVariable(QString name);

@@ -17,11 +17,14 @@ public:
 
     virtual QRectF boundingRect() const override;
     virtual void updateNode() override;
-    void setValue(int prop,QVariant value);
 
     JZNode *node();
     JZNodePin *propAt(QPointF pos);
-    QRectF propRect(int prop);    
+    QRectF propRect(int prop);
+
+    void setBreakPoint(bool flag);
+    void setError(QString error);
+    void clearError();
 
 protected:
     enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };    
@@ -44,10 +47,15 @@ protected:
     void drawProp(QPainter *painter,int propId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
     PropGemo calcGemo(int x,int y,int prop);
+    void updateErrorGemo();
 
     QSize m_size;    
     JZNode *m_node;    
     QMap<int,PropGemo> m_propRects;
+    QRectF m_errorRect;
+
+    bool m_breakPoint;
+    QString m_error;
 };
 
 #endif

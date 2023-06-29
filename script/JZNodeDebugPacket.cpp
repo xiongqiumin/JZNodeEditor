@@ -1,6 +1,7 @@
 #include "JZNodeDebugPacket.h"
 #include <QDataStream>
 
+//JZNodeDebugPacket
 JZNodeDebugPacket::JZNodeDebugPacket()
 {
     cmd = Cmd_none;
@@ -23,4 +24,21 @@ void JZNodeDebugPacket::saveToStream(QDataStream &s) const
 void JZNodeDebugPacket::loadFromStream(QDataStream &s)
 {
     s >> cmd >> params;
+}
+
+//DebugInfo
+JZNodeDebugInfo::JZNodeDebugInfo()
+{
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param)
+{
+    s << param.breakPoints;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param)
+{
+    s >> param.breakPoints;
+    return s;
 }

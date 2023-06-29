@@ -12,6 +12,11 @@ JZNodeDebugClient::~JZNodeDebugClient()
 
 }
 
+bool JZNodeDebugClient::isConnect()
+{
+    return m_client.isConnect();
+}
+
 bool JZNodeDebugClient::connectToServer(QString ip,int port)
 {
     return m_client.connectToHost(ip,port);
@@ -43,10 +48,10 @@ int JZNodeDebugClient::addBreakPoint(QString file,int nodeId)
     return id;
 }
 
-void JZNodeDebugClient::removeBreakPoint(int id)
+void JZNodeDebugClient::removeBreakPoint(QString file,int nodeId)
 {
     QVariantList params,result;
-    params << id;
+    params << file << nodeId;
     sendCommand(Cmd_removeBreakPoint,params,result);
 }
 

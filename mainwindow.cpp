@@ -46,16 +46,24 @@ void MainWindow::initMenu()
     this->setMenuBar(menubar);
 
     QMenu *menu_file = menubar->addMenu("文件");
-    auto actNew = menu_file->addAction("新建");
-    auto actOpen = menu_file->addAction("打开");
-    auto actClose = menu_file->addAction("关闭");
-    auto actSave = menu_file->addAction("保存");
-    auto actSaveAs = menu_file->addAction("另存为");
+    auto actNew = menu_file->addAction("新建工程");
+    auto actOpen = menu_file->addAction("打开工程");
+    auto actClose = menu_file->addAction("关闭工程");
+    auto actSave = menu_file->addAction("保存工程");
+    auto actSaveAs = menu_file->addAction("工程另存为");
     connect(actNew,&QAction::triggered,this,&MainWindow::onActionNewProject);
     connect(actOpen,&QAction::triggered,this,&MainWindow::onActionOpenProject);
     connect(actClose,&QAction::triggered,this,&MainWindow::onActionCloseProject);
     connect(actSave,&QAction::triggered,this,&MainWindow::onActionSaveProject);
     connect(actSaveAs,&QAction::triggered,this,&MainWindow::onActionSaveAsProject);
+    menu_file->addSeparator();
+
+    auto actNewFile = menu_file->addAction("新建文件");
+    auto actSaveFile = menu_file->addAction("保存文件");
+    auto actCloseFile = menu_file->addAction("关闭文件");
+    connect(actNewFile,&QAction::triggered,this,&MainWindow::onActionNewFile);
+    connect(actSaveFile,&QAction::triggered,this,&MainWindow::onActionSaveFile);
+    connect(actCloseFile,&QAction::triggered,this,&MainWindow::onActionCloseFile);
 
     QMenu *menu_edit = menubar->addMenu("编辑");
     auto actUndo = menu_edit->addAction("撤销");
@@ -211,7 +219,7 @@ void MainWindow::onActionOpenProject()
         return;
 */
     closeAll();
-    QString filepath = "test.prj";
+    QString filepath = "untitled.prj";
     if(!QFile::exists(filepath))
         m_project.saveAs(filepath);
     if(m_project.open(filepath))
@@ -225,7 +233,7 @@ void MainWindow::onActionCloseProject()
 
 void MainWindow::onActionSaveProject()
 {    
-    QString filepath = "test.prj";
+    QString filepath = "untitled.prj";
     saveAll();
     m_project.saveAs(filepath);
 }
@@ -238,6 +246,27 @@ void MainWindow::onActionSaveAsProject()
 
     saveAll();
     m_project.saveAs(filepath);
+}
+
+void MainWindow::onActionNewFile()
+{
+
+}
+
+void MainWindow::onActionSaveFile()
+{
+    if(!m_editor)
+        return;
+
+    m_editor->save();
+}
+
+void MainWindow::onActionCloseFile()
+{
+    if(!m_editor)
+        return;
+
+    closeEditor(m_editor);
 }
 
 void MainWindow::onActionUndo()
@@ -316,7 +345,18 @@ void MainWindow::onActionStop()
 
 void MainWindow::onActionBreakPoint()
 {
-
+    if(m_editor && m_editor->type() == Editor_script)
+    {
+        JZNodeEditor *node_editor = (JZNodeEditor*)m_editor;
+        auto ret = node_editor->breakPointTrigger();
+        if(m_debuger.isConnect())
+        {
+            if(ret.type == BreakPointTriggerResult::add)
+                m_debuger.addBreakPoint(ret.filename,ret.nodeId);
+            else if(ret.type == BreakPointTriggerResult::remove)
+                m_debuger.removeBreakPoint(ret.filename,ret.nodeId);
+        }
+    }
 }
 
 void MainWindow::onActionStepOver()
@@ -391,23 +431,28 @@ void MainWindow::switchEditor(JZEditor *editor)
         m_editorStack->setCurrentIndex(0);
 }
 
+void MainWindow::closeEditor(JZEditor *editor)
+{
+    editor->close();
+    m_editorStack->removeWidget(editor);
+    m_editors.remove(editor->filePath());
+    if(m_editor == editor)
+    {
+        if(m_editors.size() > 0)
+            switchEditor(m_editors.first());
+        else
+            switchEditor(nullptr);
+    }
+    delete editor;
+}
+
 void MainWindow::onFileClosed(QString filepath)
 {
     if(!m_editors.contains(filepath))
         return;
 
     auto editor = m_editors[filepath];
-    editor->close();
-    m_editorStack->removeWidget(editor);
-    delete editor;
-    m_editors.remove(filepath);
-    if(m_editor == editor)
-    {
-        if(m_editors.size() == 0)
-            switchEditor(m_editors.first());
-        else
-            switchEditor(nullptr);
-    }
+    closeEditor(editor);
 }
 
 bool MainWindow::build()

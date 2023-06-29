@@ -29,6 +29,7 @@ signals:
     void sigFileOpened(QString file);
 
 protected:    
+    void newItem();
     void addItem(QTreeWidgetItem *view_item,JZProjectItem *item);
     JZProjectItem *getItem(QTreeWidgetItem *view_item);
     void cancelEdit();

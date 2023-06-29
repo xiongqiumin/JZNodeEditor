@@ -51,11 +51,17 @@ JZProject::~JZProject()
 {
 }
 
-void JZProject::init()
-{    
-    m_filepath.clear();    
+void JZProject::clear()
+{
+    m_itemBuffer.clear();
+    m_filepath.clear();
     m_root.removeChlids();
     m_root.setName(".");
+}
+
+void JZProject::init()
+{    
+    clear();
 
     JZScriptFile *flow_page = new JZScriptFile(ProjectItem_scriptFlow);    
     flow_page->setName("main.jz");    
@@ -83,21 +89,18 @@ void JZProject::initUi()
     auto param_def = (JZParamFile *)getItem("./param.def");
     param_def->addVariable("mainwindow",JZClassId("mainwindow"));
 
-    JZNodeSetParam *set_param = new JZNodeSetParam();
-    set_param->setVariable("mainwindow");
-
-    JZNodeCreate *create = new JZNodeCreate();
-    create->setClassName("mainwindow");
-
+    JZNodeSetParam *set_param = new JZNodeSetParam();    
+    JZNodeCreate *create = new JZNodeCreate();    
     JZNodeFunction *func_show = new JZNodeFunction();
-    func_show->setFunction(func_inst->function("widget.show"));
-
-    JZNode *start = main_script->getNode(0);
-
     main_script->addNode(JZNodePtr(create));
     main_script->addNode(JZNodePtr(set_param));
     main_script->addNode(JZNodePtr(func_show));
 
+    set_param->setVariable("mainwindow");
+    create->setClassName("mainwindow");
+    func_show->setFunction(func_inst->function("widget.show"));
+
+    JZNode *start = main_script->getNode(0);   
     main_script->addConnect(start->flowOutGemo(),create->flowInGemo());
 
     main_script->addConnect(create->flowOutGemo(),set_param->flowInGemo());
@@ -112,17 +115,34 @@ void JZProject::initConsole()
     init();
 }
 
+void JZProject::registType()
+{
+    JZNodeFunctionManager::instance()->clearUserReigst();
+    JZNodeObjectManager::instance()->clearUserReigst();
+
+    // regist type
+    QList<JZProjectItem *> class_list = itemList("./",ProjectItem_class);
+
+    for(int i = 0; i < class_list.size(); i++)
+    {
+        JZScriptClassFile *class_file = dynamic_cast<JZScriptClassFile*>(class_list[i]);
+        auto obj_def = class_file->objectDefine();
+        JZNodeObjectManager::instance()->regist(obj_def);
+    }
+}
+
 bool JZProject::open(QString filepath)
 {
     QFile file(filepath);
     if(!file.open(QFile::ReadOnly))
         return false;
 
-    m_root.removeChlids();
+    clear();
     QDataStream s(&file);
     loadFromStream(s);
-
     file.close();
+
+    registType();
     return true;
 }
 
@@ -382,13 +402,30 @@ void JZProject::removeClass(QString name)
 
 JZParamDefine *JZProject::getVariableInfo(QString name)
 {
+    int index = name.indexOf(".");
+    QString base_name = name;
+    QString member_name;
+    if(index != -1)
+    {
+        base_name = name.left(index);
+        member_name = name.mid(index + 1);
+    }
+
     QList<JZProjectItem*> list = itemList("./",ProjectItem_param);
     for(int i = 0; i < list.size(); i++)
     {
         JZParamFile *file = dynamic_cast<JZParamFile*>(list[i]);
-        JZParamDefine *def = file->getVariable(name);
+        JZParamDefine *def = file->getVariable(base_name);
         if(def)
-            return def;
+        {
+            if(member_name.isEmpty())
+                return def;
+            else
+            {
+                auto meta = JZNodeObjectManager::instance()->meta(def->dataType);
+                return meta->param(member_name);
+            }
+        }
     }
     return nullptr;
 }
@@ -421,7 +458,9 @@ QStringList JZProject::variableList()
 
 QList<JZProjectItem *> JZProject::itemList(QString path,int type)
 {    
-    return getItem(path)->itemList(type);    
+    auto item = getItem(path);
+    Q_ASSERT(item);
+    return item->itemList(type);
 }
 
 const FunctionDefine *JZProject::function(QString name)
@@ -442,9 +481,43 @@ QString JZProject::dir(const QString &filepath)
     return filepath.left(index);
 }
 
+bool JZProject::hasBreakPoint(QString file,int id)
+{
+    auto it = m_breakPoints.find(file);
+    if(it == m_breakPoints.end())
+        return false;
+
+    return it->contains(id);
+}
+
+void JZProject::addBreakPoint(QString file,int id)
+{
+    if(hasBreakPoint(file,id))
+        return;
+
+    m_breakPoints[file].push_back(id);
+}
+
+void JZProject::removeBreakPoint(QString file,int id)
+{
+    auto it = m_breakPoints.find(file);
+    if(it == m_breakPoints.end())
+        return;
+
+    it->removeAll(id);
+    if(it->size() == 0)
+        m_breakPoints.erase(it);
+}
+
+QVector<int> JZProject::breakPoints(QString file)
+{
+    return m_breakPoints.value(file,QVector<int>());
+}
+
 void JZProject::saveToStream(QDataStream &s)
 {
     s << m_itemBuffer;
+    s << m_breakPoints;
 }
 
 void JZProject::loadFromStream(QDataStream &s)
@@ -465,4 +538,5 @@ void JZProject::loadFromStream(QDataStream &s)
         addItem(dir(it_item.key()),it_item.value());
         it_item++;
     }
+    s >> m_breakPoints;
 }

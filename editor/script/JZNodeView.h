@@ -16,6 +16,7 @@
 #include "JZNodeProgram.h"
 
 class JZNodeView;
+class JZProject;
 class JZNodeViewCommand : public QUndoCommand
 {
 public:
@@ -50,6 +51,22 @@ protected:
     JZNodeView *m_view;
 };
 
+class BreakPointTriggerResult
+{
+public:
+    enum{
+        none,
+        add,
+        remove,
+    };
+
+    BreakPointTriggerResult();
+
+    int type;
+    QString filename;
+    int nodeId;
+};
+
 class JZNodeView : public QGraphicsView
 {
     Q_OBJECT
@@ -60,7 +77,7 @@ public:
 
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
     void setFile(JZScriptFile *file);
-    void syncNodePos();
+    void saveNodePos();
 
     /* node */
     JZNode *getNode(int id);
@@ -90,6 +107,9 @@ public:
     void endLine(JZNodeGemo to);
     void cancelLine();
 
+    void addTip(QRectF tipArea,QString tip);
+    void clearTip();
+
     QVariant onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsItemChange change, const QVariant &value);
 
     void clear();
@@ -102,7 +122,7 @@ public:
     void selectAll();
 
     void updateNodeLayout();    
-    void setMoveUndo(bool flag);
+    BreakPointTriggerResult breakPointTrigger();
 
 signals:
     void redoAvailable(bool available);
@@ -112,14 +132,17 @@ protected slots:
     void onContextMenu(const QPoint &pos);
     void onPropNameUpdate(int nodeId,int propId,const QString &value);
     void onPropUpdate(int nodeId,int propId,const QVariant &value);
-    void onTimer();
+    void onAutoCompiler();
 
-protected:      
+protected:
+    friend JZNodeViewCommand;
+
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
 
+    virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void keyReleaseEvent(QKeyEvent *event) override;
 
     virtual void dragEnterEvent(QDragEnterEvent *event) override;
@@ -134,10 +157,7 @@ protected:
     void copyItems(QList<QGraphicsItem*> item);
     void removeItems(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);    
-    void initGraph();    
-    void cancelSelect();
-    void createTip(QPointF pos,QString text);
-    void clearTip();        
+    void initGraph();        
     int nodeDepth(GraphNode *node,Graph *graph);
     void setDepth(GraphNode *node,int depth,Graph *graph,QMap<GraphNode*,int> &result);
     void setSelectNode(int id);
@@ -145,20 +165,24 @@ protected:
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
+    int getVariableType(const QString &param_name);    
+    void setMoveUndo(bool flag);    
+    void autoCompiler();
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;    
-    JZNodeLineItem *m_selLine;
-    QGraphicsRectItem *m_selArea;
+    JZNodeLineItem *m_selLine;    
     QGraphicsTextItem *m_tip;
+    QRectF m_tipArea;
 
     bool m_loadFlag;
     JZNodePropertyEditor *m_propEditor;
     QUndoStack m_commandStack;        
     bool m_moveUndo;
+    bool m_propEditFlag;
 
-    QPoint m_downPoint;    
-    bool m_isMove;              
+    QPointF m_downPoint;
+    QTimer *m_compilerTimer;  
 };
 
 #endif

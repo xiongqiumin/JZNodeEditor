@@ -134,14 +134,14 @@ JZNodeIR::JZNodeIR()
 {
     type = OP_none;
     pc = -1;
-    source = -1;
+    nodeId = -1;
 }
 
 JZNodeIR::JZNodeIR(int t)
 {
     type = t;
     pc = -1;
-    source = -1;    
+    nodeId = -1;
 }
 
 JZNodeIR::~JZNodeIR()
@@ -153,7 +153,7 @@ void JZNodeIR::saveToStream(QDataStream &s) const
 {
     s << type;    
     s << pc;
-    s << source;
+    s << nodeId;
     s << memo;
 }
 
@@ -161,7 +161,7 @@ void JZNodeIR::loadFromStream(QDataStream &s)
 {
     s >> type;    
     s >> pc;
-    s >> source;
+    s >> nodeId;
     s >> memo;
 }
 

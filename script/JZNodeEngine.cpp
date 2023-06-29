@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QApplication>
 #include "JZNodeVM.h"
+#include <math.h>
 
 void JZObjectEvent(JZEvent *event)
 {
@@ -119,14 +120,11 @@ BreakPoint::BreakPoint()
 }
 
 void BreakPoint::clear()
-{
-    id = -1;
+{    
     type = BreakPoint::none;
     file.clear();
     nodeId = -1;
-    stack = -1;
-    pcStart = -1;
-    pcEnd = -1;
+    stack = -1;    
 }
 
 //JZObjectConnect
@@ -388,50 +386,87 @@ void JZNodeEngine::setThis(QVariant v)
     m_this = v;
 }
 
-QVariant JZNodeEngine::getVariable(QString name)
+bool JZNodeEngine::splitMember(const QString &fullName,QString &objName,QString &memberName)
 {
-    if(name.contains("."))
+    int index = -1;
+    if((index = fullName.indexOf(".")) >= 0)
     {
-        QStringList list = name.split(".");
-        auto v = m_global[list[0]];
-        return toJZObject(v)->param(list.mid(1).join("."));
+        objName = fullName.left(index);
+        memberName = fullName.mid(index+1);
+        return true;
+    }
+    return false;
+}
+
+QVariant *JZNodeEngine::getVariableRef(QString name)
+{
+    QString obj_name,param_name;
+    if(splitMember(name,obj_name,param_name))
+    {
+        JZNodeObject *obj = nullptr;
+        if(obj_name == "this")
+        {
+            obj = toJZObject(m_this);
+        }
+        else
+        {
+            auto it = m_global.find(obj_name);
+            if(it == m_global.end())
+                return nullptr;
+            obj = toJZObject(it.value());
+        }
+        Q_ASSERT(obj);
+        return obj->paramRef(param_name);
     }
     else
-        return m_global[name];
+    {
+        if(name == "this")
+        {
+            Q_ASSERT(m_this.isValid());
+            return &m_this;
+        }
+
+        auto it = m_global.find(name);
+        if(it != m_global.end())
+            return &it.value();
+        else
+            return nullptr;
+    }
+}
+
+QVariant JZNodeEngine::getVariable(QString name)
+{    
+    QVariant *ref = getVariableRef(name);
+    if(!ref)
+        throw std::runtime_error("no such variable " + name.toStdString());
+
+    return *ref;
         
 }
 
 void JZNodeEngine::setVariable(QString name, const QVariant &value)
 {
-    QStringList list = name.split(".");
-    if(list.size() > 1)
-    {        
-        auto v = m_global[list[0]];
-        toJZObject(v)->setParam(list.mid(1).join("."),value);
-    }
-    else
-    {
-        m_global[name] = value;
-        objectChanged(nullptr, name);
-    }    
+    QVariant *ref = getVariableRef(name);
+    if(!ref)
+        throw std::runtime_error("no such variable " + name.toStdString());
+
+    *ref = value;
+    objectChanged(nullptr, name);
 
     //connect
-    if(isJZObject(value))    
-        connectObject(name,toJZObject(value));
-
-    //notify changed
-    QString class_name;
-    for(int i = list.size() - 2; i >= 0; i--)
+    if(isJZObject(value))
     {
-        if(class_name.isEmpty())
-            class_name = list[i];
-        else
-            class_name = list[i] + "." + class_name;
-
-        QString param_name = list[i+1];
-        objectChanged(getObject(class_name), param_name);
+        auto obj = toJZObject(value);
+        QStringList list = name.split(".");
+        JZNodeObject *parent = getObject(list[0]);
+        for(int i = 0; i < list.size() - 1; i++)
+        {
+            auto script = getObjectScript(parent->className());
+            connectParent(obj,name,parent,script);
+            parent = toJZObject(parent->param(list[i+1]));
+        }
+        connectSender(name,obj);
     }
-    objectChanged(nullptr, name);
 }
 
 void JZNodeEngine::objectChanged(JZNodeObject *sender,const QString &name)
@@ -489,16 +524,20 @@ void JZNodeEngine::connectParamChanged(JZNodeObject *obj,JZNodeScript *script)
 
 void JZNodeEngine::connectScript(QString objName,JZNodeObject *obj,JZNodeScript *script)
 {
+    qDebug() << objName << "recv:" << obj << "script:" << script->file;
     auto getParamObject = [this,obj](const QString &name)->JZNodeObject*
-    {        
-        if(name == "this")
-            return obj;
-
+    {                
         if(!obj)
             return getObject(name);
         else
         {
-            QVariant *v = obj->paramRef(name);
+            if(name == "this")
+                return obj;
+            if(!name.startsWith("this."))
+                return nullptr;
+
+            QString param_name = name.mid(5);
+            QVariant *v = obj->paramRef(param_name);
             if(v)
                 return toJZObject(*v);
             else
@@ -506,13 +545,11 @@ void JZNodeEngine::connectScript(QString objName,JZNodeObject *obj,JZNodeScript 
         }
     };
 
-    QString objNamePre = objName + ".";
     for(int event_idx = 0; event_idx < script->events.size(); event_idx++)
     {
         auto &handle = script->events[event_idx];                
-        if((objName.isEmpty() && handle.sender.isEmpty())
-                || (objName == "this" && handle.sender == "this")
-                || (handle.sender.startsWith(objNamePre)))
+        if((objName.isEmpty() && handle.sender.isEmpty())                
+                || (handle.sender == objName))
         {            
             JZObjectConnect connect;
             if(!handle.sender.isEmpty())
@@ -535,43 +572,74 @@ void JZNodeEngine::connectScript(QString objName,JZNodeObject *obj,JZNodeScript 
     }
 }
 
+void JZNodeEngine::connectRecv(QString objName,JZNodeObject *obj,JZNodeObject *recv)
+{
+    auto script = getObjectScript(recv->className());
+    if(script)
+        connectScript(objName,recv,script);
 
-void JZNodeEngine::connectObject(QString objName,JZNodeObject *obj)
+    auto it = recv->params.begin();
+    while(it != recv->params.end())
+    {
+        if(isJZObject(it.value()))
+        {
+            JZNodeObject *sub = toJZObject(it.value());
+            connectRecv(objName,obj,sub);
+        }
+        it++;
+    }
+}
+
+
+void JZNodeEngine::connectSender(QString objName,JZNodeObject *obj)
 {       
-    //global
+    //global as send
     auto script_list = m_program->scriptList();
     for(int i = 0; i < script_list.size(); i++)
         connectScript(objName,nullptr,script_list[i]);
 
-    //up
-    QStringList list = objName.split(".");
-    for(int i = 0; i < list.size() - 1; i++)
+    auto it = m_global.begin();
+    while(it != m_global.end())
     {
-        QString className = list.mid(0,i+1).join(".");
-        QString paramName = list.mid(i+1).join(".");
-        auto parent_obj = getObject(className);
-        JZNodeScript *parent_script = getObjectScript(parent_obj->className());
-        if(parent_script)
-            connectScript(paramName,parent_obj,parent_script);
-    }
-
-    //cur
-    JZNodeScript *script = getObjectScript(obj->className());
-    if(script)    
-    {
-        connectScript("this",obj,script);
-        connectParamChanged(obj,script);
-    }
-
-    //down
-    auto it = obj->define->params.begin();
-    while(it != obj->define->params.end())
-    {
-        if(it.value().cref)
+        if(isJZObject(it.value()))
         {
-            QString subName = it.key();
-            auto sub_obj = toJZObject(obj->params[subName]);
-            connectObject(objName + "." + subName,sub_obj);
+            JZNodeObject *recv = toJZObject(it.value());
+            connectRecv(objName,obj,recv);
+        }
+        it++;
+    }
+
+    //connect child
+    it = obj->params.begin();
+    while(it != obj->params.end())
+    {
+        if(isJZObject(it.value()))
+        {
+            JZNodeObject *sub = toJZObject(it.value());
+            connectSender(objName + "." + it.key(),sub);
+        }
+        it++;
+    }
+}
+
+void JZNodeEngine::connectSelf(JZNodeObject *obj)
+{
+    auto script = getObjectScript(obj->className());
+    if(script)
+        connectParent(obj,"this",obj,script);
+}
+
+void JZNodeEngine::connectParent(JZNodeObject *obj,QString name,JZNodeObject* parent,JZNodeScript *script)
+{
+    connectScript(name,parent,script);
+
+    auto it = obj->params.begin();
+    while(it != obj->params.end())
+    {
+        if(isJZObject(it.value()))
+        {
+            auto sub_obj = toJZObject(it.value());
+            connectParent(sub_obj,name + "." + it.key(), parent,script);
         }
         it++;
     }
@@ -613,41 +681,37 @@ void JZNodeEngine::clearWatch()
     m_watchParam.clear();
 }
 
-int JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
+void JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
 {
-    QMutexLocker lock(&m_mutex);
-    int max_id = 0;
+    QMutexLocker lock(&m_mutex);    
     for(int i = 0; i < m_breakPoints.size(); i++)
-    {
-        max_id = qMax(max_id,m_breakPoints[i].id + 1);
+    {        
         if(m_breakPoints[i].file == filepath && m_breakPoints[i].nodeId == nodeId)
-            return m_breakPoints[i].id;
+            return;
     }
 
-    BreakPoint pt;
-    pt.id = max_id;
+    BreakPoint pt;    
     pt.type = BreakPoint::nodeEnter;
     pt.file = filepath;
     pt.nodeId = nodeId;
-    m_breakPoints.push_back(pt);
-    return pt.id;
+    m_breakPoints.push_back(pt);    
 }
 
-void JZNodeEngine::removeBreakPoint(int id)
+void JZNodeEngine::removeBreakPoint(QString filepath,int nodeId)
 {
     QMutexLocker lock(&m_mutex);
-    int idx = indexOfBreakPoint(id);
+    int idx = indexOfBreakPoint(filepath,nodeId);
     if(idx == -1)
         return;
     
     m_breakPoints.removeAt(idx);
 }
 
-int JZNodeEngine::indexOfBreakPoint(int id)
+int JZNodeEngine::indexOfBreakPoint(QString filepath,int nodeId)
 {
     for(int i = 0; i < m_breakPoints.size(); i++)
     {
-        if(m_breakPoints[i].id == id)
+        if(m_breakPoints[i].file == filepath && m_breakPoints[i].nodeId == nodeId)
             return i;
     }
     return -1;
@@ -734,11 +798,9 @@ void JZNodeEngine::stepOver()
     if(m_status != Status_pause)
         return;
 
-    auto &info = m_script->nodeInfo[m_breaknodeId];
     m_breakStep.type = BreakPoint::nodeExit;   
-    m_breakStep.file = m_script->file;     
-    m_breakStep.pcStart = info.start;
-    m_breakStep.pcEnd = info.end;
+    m_breakStep.file = m_script->file;
+    m_breakStep.nodeId = m_breaknodeId;
     m_waitCond.release();
     waitStatus(Status_running);
 }
@@ -778,6 +840,12 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
     auto &outList = func->paramOut;
     for (int i = 0; i < outList.size(); i++)
         setReg(Reg_Call + i,paramOut[i]);
+
+    if(func->name == "createObject")
+    {
+        auto obj = toJZObject(paramOut[0]);
+        connectSelf(obj);
+    }
 }
 
 const FunctionDefine *JZNodeEngine::function(QString name)
@@ -790,44 +858,116 @@ const FunctionDefine *JZNodeEngine::function(QString name)
 
 QVariant JZNodeEngine::dealExpr(QVariant &a,QVariant &b,int op)
 {   
-    switch (op)
+    int dataType1 = JZNodeType::variantId(a);
+    int dataType2 = JZNodeType::variantId(b);
+    if(dataType1 == Type_string && dataType2 == Type_string)
     {
-    case OP_add:
-        return a.toInt() + b.toInt();
-    case OP_sub:
-        return a.toInt() - b.toInt();
-    case OP_mul:
-        return a.toInt() * b.toInt();
-    case OP_div:
-        return a.toInt() / b.toInt();
-    case OP_mod:
-        return a.toInt() % b.toInt();
-    case OP_eq:
-        return a.toInt() == b.toInt();
-    case OP_ne:
-        return a.toInt() != b.toInt();
-    case OP_le:
-        return a.toInt() <= b.toInt();
-    case OP_ge:
-        return a.toInt() >= b.toInt();
-    case OP_lt:
-        return a.toInt() < b.toInt();
-    case OP_gt:
-        return a.toInt() > b.toInt();
-    case OP_and:
-        return a.toInt() && b.toInt();
-    case OP_or:
-        return a.toInt() || b.toInt();
-    case OP_bitand:
-        return a.toInt() & b.toInt();
-    case OP_bitor:
-        return a.toInt() | b.toInt();
-    case OP_bitxor:
-        return a.toInt() ^ b.toInt();
-    default:
-        Q_ASSERT(0);
-        break;
+        QString str_a = a.toString();
+        QString str_b = b.toString();
+
+        switch (op)
+        {
+            case OP_eq:
+                return str_a == str_b;
+            case OP_ne:
+                return str_a != str_b;
+            case OP_le:
+                return str_a <= str_b;
+            case OP_ge:
+                return str_a >= str_b;
+            case OP_lt:
+                return str_a < str_b;
+            case OP_gt:
+                return str_a > str_b;
+            default:
+                throw std::runtime_error("un support operator");
+                break;
+        }
     }
+    else if((dataType1 == Type_bool && dataType2 == Type_bool)
+            || (dataType1 == Type_int && dataType2 == Type_bool)
+            || (dataType1 == Type_bool && dataType2 == Type_int)
+            || (dataType1 == Type_int && dataType2 == Type_int))
+    {
+        switch (op)
+        {
+        case OP_add:
+            return a.toInt() + b.toInt();
+        case OP_sub:
+            return a.toInt() - b.toInt();
+        case OP_mul:
+            return a.toInt() * b.toInt();
+        case OP_div:
+            return a.toInt() / b.toInt();
+        case OP_mod:
+            return a.toInt() % b.toInt();
+        case OP_eq:
+            return a.toInt() == b.toInt();
+        case OP_ne:
+            return a.toInt() != b.toInt();
+        case OP_le:
+            return a.toInt() <= b.toInt();
+        case OP_ge:
+            return a.toInt() >= b.toInt();
+        case OP_lt:
+            return a.toInt() < b.toInt();
+        case OP_gt:
+            return a.toInt() > b.toInt();
+        case OP_and:
+            return a.toInt() && b.toInt();
+        case OP_or:
+            return a.toInt() || b.toInt();
+        case OP_bitand:
+            return a.toInt() & b.toInt();
+        case OP_bitor:
+            return a.toInt() | b.toInt();
+        case OP_bitxor:
+            return a.toInt() ^ b.toInt();
+        default:
+            throw std::runtime_error("un support operator");
+            break;
+        }
+    }
+    else if(JZNodeType::isNumber(dataType1) && JZNodeType::isNumber(dataType2))
+    {
+        switch (op)
+        {
+        case OP_add:
+            return a.toDouble() + b.toDouble();
+        case OP_sub:
+            return a.toDouble() - b.toDouble();
+        case OP_mul:
+            return a.toDouble() * b.toDouble();
+        case OP_div:
+            return a.toDouble() / b.toDouble();
+        case OP_mod:
+            return fmod(a.toDouble(),b.toDouble());
+        case OP_eq:
+            return a.toDouble() == b.toDouble();
+        case OP_ne:
+            return a.toDouble() != b.toDouble();
+        case OP_le:
+            return a.toDouble() <= b.toDouble();
+        case OP_ge:
+            return a.toDouble() >= b.toDouble();
+        case OP_lt:
+            return a.toDouble() < b.toDouble();
+        case OP_gt:
+            return a.toDouble() > b.toDouble();
+        case OP_and:
+            return a.toDouble() && b.toDouble();
+        case OP_or:
+            return a.toDouble() || b.toDouble();
+        default:
+            throw std::runtime_error("un support operator");
+            break;
+        }
+    }
+    else
+    {
+        throw std::runtime_error("un support operator");
+    }
+
     return QVariant();
 }
 
@@ -847,16 +987,15 @@ bool JZNodeEngine::run()
                 m_statusCommand = Status_none;
                 wait = true;
             }
-            else if(op_list[m_pc]->type == OP_nodeId)
-            {
-                JZNodeIRNodeId *ir_node = (JZNodeIRNodeId *)op_list[m_pc].data();
-                int node_id = ir_node->id;
+            else
+            {                
+                int node_id = op_list[m_pc]->nodeId;
                 int stack = m_stack.size();
                 auto breakTriggred = [](BreakPoint &pt,const QString &filepath,int pc,int node_id,int stack)->bool
                 {                    
                     if(pt.type == BreakPoint::nodeEnter && pt.file == filepath && node_id == pt.nodeId)
                         return true;
-                    else if(pt.type == BreakPoint::nodeExit && (pt.file != filepath || pc < pt.pcStart || pc >= pt.pcEnd))
+                    else if(pt.type == BreakPoint::nodeExit && (pt.file != filepath || node_id == pt.nodeId))
                         return true;
                     else if(pt.type == BreakPoint::stackEqual && stack == pt.stack)
                         return true;        
@@ -978,8 +1117,8 @@ bool JZNodeEngine::run()
                 QString function_name = variableToString(getParam(ir_call->function));
                 auto func = function(function_name);
                 Q_ASSERT(func);
-                if(func->isCFunction)            
-                    callCFunction(func);            
+                if(func->isCFunction)
+                    callCFunction(func);
                 else            
                     pushStack(func);
                 break;

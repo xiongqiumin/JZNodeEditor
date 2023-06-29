@@ -71,6 +71,7 @@ QByteArray formatLine(const JZNodeConnect &line)
 JZNode::JZNode()
 {
     m_id = INVALID_ID;
+    m_file = nullptr;
     m_flag = Node_propNone;
     m_type = Node_none;
 }
@@ -130,26 +131,26 @@ int JZNode::addParamOut(QString name,int extFlag)
     return addProp(pin);
 }
 
-int JZNode::addFlowIn()
+int JZNode::addFlowIn(int extFlag)
 {
     JZNodePin pin;
-    pin.setFlag(Prop_in | Prop_flow);
+    pin.setFlag(Prop_in | Prop_flow | extFlag);
     return addProp(pin);
 }
 
-int JZNode::addFlowOut(QString name)
+int JZNode::addFlowOut(QString name,int extFlag)
 {
     JZNodePin pin;
     pin.setName(name);
-    pin.setFlag(Prop_out | Prop_flow);
+    pin.setFlag(Prop_out | Prop_flow | extFlag);
     return addProp(pin);
 }
 
-int JZNode::addSubFlowOut(QString name)
+int JZNode::addSubFlowOut(QString name,int extFlag)
 {
     JZNodePin pin;
     pin.setName(name);
-    pin.setFlag(Prop_out | Prop_subFlow);
+    pin.setFlag(Prop_out | Prop_subFlow | extFlag);
     return addProp(pin);
 }
 
@@ -373,11 +374,15 @@ QVariant JZNode::propValue(int id) const
 }
 
 void JZNode::setPropValue(int id,QVariant value)
-{    
+{        
     auto pin = prop(id);
     Q_ASSERT(pin);
 
     pin->setValue(value);
+    if(m_file)
+        pinChanged(id);
+    else
+        m_notifyList << id;
 }
 
 QString JZNode::propName(int id) const
@@ -394,6 +399,10 @@ void JZNode::setPropName(int id,QString name)
     Q_ASSERT(pin);
 
     pin->setName(name);
+    if(m_file)
+        pinChanged(id);
+    else
+        m_notifyList << id;
 }
 
 QVector<int> JZNode::propList() const
@@ -403,6 +412,22 @@ QVector<int> JZNode::propList() const
         result.push_back(m_propList[i].id());
 
     return result;
+}
+
+JZScriptFile *JZNode::file() const
+{
+    return m_file;
+}
+
+void JZNode::setFile(JZScriptFile *file)
+{
+    m_file = file;
+    fileInitialized();
+
+    //delay notify
+    for(int i = 0; i < m_notifyList.size(); i++)
+        pinChanged(m_notifyList[i]);
+    m_notifyList.clear();
 }
 
 QString JZNode::name() const
@@ -420,19 +445,9 @@ bool JZNode::canRemove()
     return !(m_flag & Node_propNoRemove);
 }
 
-bool JZNode::hasVariable()
+bool JZNode::canDragVariable()
 {
-    return (m_flag & Node_propVariable);
-}
-
-void JZNode::setVariable(const QString &)
-{
-
-}
-
-QString JZNode::variable() const
-{
-    return QString();
+    return !(m_flag & Node_propDragVariable);
 }
 
 int JZNode::id() const
@@ -465,44 +480,77 @@ QMap<int,int> JZNode::calcPropOutType(const QMap<int,int> &inType)
     return types;
 }
 
-void JZNode::setTypeAny(int id)
+void JZNode::setPinTypeAny(int id)
 {
     prop(id)->setDataType({Type_any});
 }
 
-void JZNode::setTypeInt(int id)
+void JZNode::setPinTypeInt(int id)
 {
     prop(id)->setDataType({Type_int,Type_int64});
 }
 
-void JZNode::setTypeNumber(int id)
+void JZNode::setPinTypeNumber(int id)
 {
     prop(id)->setDataType({Type_bool,Type_int,Type_int64,Type_double});
 }
 
-void JZNode::setTypeBool(int id)
+void JZNode::setPinTypeBool(int id)
 {
     prop(id)->setDataType({Type_bool});
 }
 
-void JZNode::setTypeString(int id)
+void JZNode::setPinTypeString(int id)
 {
     prop(id)->setDataType({Type_string});
 }
 
+void JZNode::setPinType(int id,const QList<int> &type)
+{
+    prop(id)->setDataType(type);
+}
+
+void JZNode::drag(const QVariant &v)
+{
+    Q_UNUSED(v);
+}
+
+void JZNode::fileInitialized()
+{
+
+}
+
+void JZNode::pinLinked(int id)
+{
+    Q_UNUSED(id);
+}
+
+void JZNode::pinUnlinked(int id)
+{
+    Q_UNUSED(id);
+}
+
+void JZNode::pinChanged(int id)
+{
+    Q_UNUSED(id);
+}
 
 void JZNode::saveToStream(QDataStream &s) const
 {
     s << m_id;
     s << m_name;
+    s << m_flag;    
     s << m_propList;
+    s << m_notifyList;
 }
 
 void JZNode::loadFromStream(QDataStream &s)
 {
     s >> m_id;
     s >> m_name;
+    s >> m_flag;
     s >> m_propList;
+    s >> m_notifyList;
 }
 
 //JZNodeContinue
@@ -544,7 +592,7 @@ JZNodeReturn::JZNodeReturn()
 
 bool JZNodeReturn::compiler(JZNodeCompiler *c,QString &error)
 {   
-    if(!c->addFlowInput(m_id))
+    if(!c->addFlowInput(m_id,error))
         return false;     
 
     auto inList = paramInList();
@@ -628,17 +676,17 @@ JZNodeFor::JZNodeFor()
     addSubFlowOut("loop body");    
     addFlowOut("complete");
 
-    int id_start = addParamIn("First index",Prop_edit | Prop_dispName | Prop_dispValue);
-    int id_end = addParamIn("Last index",Prop_edit | Prop_dispName | Prop_dispValue);
+    int id_start = addParamIn("First index",Prop_editValue | Prop_dispName | Prop_dispValue);
+    int id_end = addParamIn("Last index",Prop_editValue | Prop_dispName | Prop_dispValue);
     int id_index = addParamOut("index");
-    setTypeInt(id_start);
-    setTypeInt(id_index);
-    setTypeInt(id_end);
+    setPinTypeInt(id_start);
+    setPinTypeInt(id_index);
+    setPinTypeInt(id_end);
 }
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 {
-    if(!c->addFlowInput(m_id))
+    if(!c->addFlowInput(m_id,error))
         return false;
 
     int indexStart = paramIn(0);
@@ -683,8 +731,8 @@ JZNodeForEach::JZNodeForEach()
     int out1 = addParamOut("key");
     int out2 = addParamOut("value");
     prop(in)->setDataType({Type_list,Type_map});
-    setTypeString(out1);
-    setTypeAny(out2);
+    setPinTypeString(out1);
+    setPinTypeAny(out2);
 }
 
 JZNodeForEach::~JZNodeForEach()
@@ -694,7 +742,7 @@ JZNodeForEach::~JZNodeForEach()
 
 bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 {
-    if(!c->addFlowInput(m_id))
+    if(!c->addFlowInput(m_id,error))
         return false;
 
     int id_list = c->paramId(m_id,paramIn(0));
@@ -760,14 +808,14 @@ JZNodeWhile::JZNodeWhile()
     addFlowOut("complete");
     
     int cond = addParamIn("cond");
-    setTypeBool(cond);
+    setPinTypeBool(cond);
 }
 
 
 bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
 {
     int continuePc = c->currentPc();    
-    if(!c->addFlowInput(m_id))
+    if(!c->addFlowInput(m_id,error))
         return false;
 
     int cond = paramIn(0);
@@ -805,17 +853,17 @@ JZNodeBranch::JZNodeBranch()
     m_name = "branch";
     m_type = Node_branch;
     addFlowIn();
-    addFlowOut("true");
-    addFlowOut("false");
+    addFlowOut("true",Prop_dispName);
+    addFlowOut("false",Prop_dispName);
     
-    addParamIn("cond");
-
+    int cond = addParamIn("cond",Prop_dispName);
+    setPinTypeBool(cond);
 }
 
 bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
 {
     int cond = paramIn(0);
-    if(!c->addFlowInput(m_id))
+    if(!c->addFlowInput(m_id,error))
         return false;
 
     int id = c->paramId(m_id,cond);

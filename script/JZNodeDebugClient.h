@@ -16,10 +16,11 @@ public:
 
     bool connectToServer(QString ip,int port);
     void disconnectFromServer();
+    bool isConnect();
 
     JZNodeRuntimeInfo runtimeInfo();
     int addBreakPoint(QString file,int nodeId);
-    void removeBreakPoint(int id);    
+    void removeBreakPoint(QString file,int nodeId);
     void clearBreakPoint();    
     QVariant getVariable(QString name);
     void setVariable(QString name,QVariant value);

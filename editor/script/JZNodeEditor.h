@@ -31,6 +31,7 @@ public:
     virtual void selectAll() override;
 
     void updateNodeLayout();
+    BreakPointTriggerResult breakPointTrigger();
 
 protected slots:
 

@@ -106,7 +106,7 @@ bool JZNodePin::isSubFlow() const
 
 bool JZNodePin::isEditable() const
 {
-    return (m_flag & Prop_edit);
+    return (m_flag & Prop_editValue);
 }
 
 bool JZNodePin::isDispName() const
@@ -117,6 +117,11 @@ bool JZNodePin::isDispName() const
 bool JZNodePin::isDispValue() const
 {
     return (m_flag & Prop_dispValue);
+}
+
+bool JZNodePin::isLiteral() const
+{
+    return (m_flag & Prop_literal);
 }
 
 void JZNodePin::setDataType(QList<int> type)

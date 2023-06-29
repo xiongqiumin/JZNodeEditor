@@ -104,24 +104,12 @@ QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param);
 struct NodeInfo
 {        
     NodeInfo();
-
-    struct Jump
-    {            
-        int prop;
-        int pc;
-    };        
-
+    
     int node_id;
     int node_type;
     int start;
     int end;
-    QList<int> continuePc;
-    QList<int> breakPc;
-    int parentId;
-    QList<Jump> jmpList;
-    QList<Jump> jmpSubList;    
-    QList<int> continueList;    
-    QList<int> breakList;    
+    QString error;
 };
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeInfo &param);

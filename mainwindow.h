@@ -26,7 +26,10 @@ protected slots:
     void onActionOpenProject();
     void onActionCloseProject();
     void onActionSaveProject();
-    void onActionSaveAsProject();
+    void onActionSaveAsProject();    
+    void onActionNewFile();
+    void onActionSaveFile();
+    void onActionCloseFile();
 
     void onActionUndo();
     void onActionRedo();
@@ -62,6 +65,7 @@ protected slots:
 private:
     void resizeEvent(QResizeEvent *event);
     JZEditor *createEditor(int type);
+    void closeEditor(JZEditor *editor);
 
     void initMenu();
     void initUi();        
@@ -77,17 +81,16 @@ private:
     JZProject m_project;
     JZNodeProgram m_program;
 
+    QTextEdit *m_log;
     JZProjectTree *m_projectTree;
-    JZEditor *m_editor;  
-    QStackedWidget *m_editorStack;
-    QTextEdit *m_log;    
-    QMap<QString,JZEditor *> m_editors;
     QList<QMenu*> m_menuList;
-
-    JZNodeDebugClient m_debuger;
-    QProcess m_process;
-
     QAction *m_actRun,*m_actDetach,*m_actPause,*m_actResume,*m_actStop,*m_actStepOver,*m_actStepIn,*m_actStepOut,*m_actBreakPoint;
 
+    JZEditor *m_editor;  
+    QStackedWidget *m_editorStack;       
+    QMap<QString,JZEditor *> m_editors;    
+
+    JZNodeDebugClient m_debuger;
+    QProcess m_process;   
 };
 #endif // MAINWINDOW_H

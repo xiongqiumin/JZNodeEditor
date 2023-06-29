@@ -12,6 +12,9 @@ public:
     JZParamFile();
     virtual ~JZParamFile();
 
+    virtual void saveToStream(QDataStream &s);
+    virtual void loadFromStream(QDataStream &s);
+
     void addVariable(QString name,int type,QVariant = QVariant());
     void removeVariable(QString name);
 

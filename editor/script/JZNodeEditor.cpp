@@ -6,6 +6,7 @@
 JZNodeEditor::JZNodeEditor()
 {
     init();       
+    m_type = Editor_script;
 }
 
 JZNodeEditor::~JZNodeEditor()
@@ -61,7 +62,9 @@ void JZNodeEditor::open(JZProjectItem *item)
     m_nodePanel->setFile(file);
 
     if(isFirstShow(file))
-        m_view->updateNodeLayout();
+        m_view->updateNodeLayout();    
+
+    m_view->setSceneRect(m_view->rect());
 }
 
 void JZNodeEditor::close()
@@ -71,7 +74,7 @@ void JZNodeEditor::close()
 
 void JZNodeEditor::save()
 {
-    m_view->syncNodePos();
+    m_view->saveNodePos();
 }
 
 void JZNodeEditor::updateMenuBar(QMenuBar *menubar)
@@ -122,4 +125,9 @@ void JZNodeEditor::selectAll()
 void JZNodeEditor::updateNodeLayout()
 {
     m_view->updateNodeLayout();
+}
+
+BreakPointTriggerResult JZNodeEditor::breakPointTrigger()
+{
+    return m_view->breakPointTrigger();
 }

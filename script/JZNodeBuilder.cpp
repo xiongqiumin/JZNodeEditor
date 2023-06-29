@@ -111,7 +111,11 @@ bool JZNodeBuilder::buildScriptFile(JZScriptFile *scriptFile)
     if(!m_scripts.contains(path))    
         m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
     
+    auto classFile = scriptFile->getClassFile();
     JZNodeScript *script = m_scripts[path].data();
+    if(classFile)
+        script->className = classFile->className();
+
     JZNodeCompiler compiler;
     if(!compiler.build(scriptFile,script))
     {
@@ -127,16 +131,16 @@ bool JZNodeBuilder::buildLibraryFile(JZScriptLibraryFile *script)
     return true;
 }
 
-bool JZNodeBuilder::buildClassFile(JZScriptClassFile *script)
+bool JZNodeBuilder::buildClassFile(JZScriptClassFile *classFile)
 {
-    auto flowList = script->itemList(ProjectItem_scriptFlow);
+    auto flowList = classFile->itemList(ProjectItem_scriptFlow);
     Q_ASSERT(flowList.size() == 1);
 
     JZScriptFile *flow_script = dynamic_cast<JZScriptFile*>(flowList[0]);
     if(!buildScriptFile(flow_script))
         return false;
 
-    auto funcList = script->itemList(ProjectItem_scriptFunction);
+    auto funcList = classFile->itemList(ProjectItem_scriptFunction);
     for(int i = 0; i < funcList.size(); i++)
     {
         JZScriptFile *script = dynamic_cast<JZScriptFile*>(funcList[i]);

@@ -102,6 +102,11 @@ bool JZNodeType::isObject(int type)
     return type >= Type_object;
 }
 
+int JZNodeType::isInherits(int type1,int type2)
+{
+    return JZNodeObjectManager::instance()->isInherits(type1,type2);
+}
+
 int JZNodeType::calcExprType(int type1,int type2)
 {       
     if(type1 == type2)

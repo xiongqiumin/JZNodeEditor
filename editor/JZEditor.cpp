@@ -4,10 +4,16 @@ JZEditor::JZEditor()
 {
     m_file = nullptr;
     m_project = nullptr;
+    m_type = Editor_none;
 }
 
 JZEditor::~JZEditor()
 {
+}
+
+int JZEditor::type()
+{
+    return m_type;
 }
 
 void JZEditor::setProject(JZProject *project)
@@ -28,6 +34,11 @@ void JZEditor::setFile(JZProjectItem *file)
 JZProjectItem *JZEditor::file()
 {
     return m_file;
+}
+
+QString JZEditor::filePath()
+{
+    return m_file->itemPath();
 }
 
 void JZEditor::updateMenuBar(QMenuBar *menubar)

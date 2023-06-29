@@ -29,10 +29,11 @@ public:
     static int nameToId(QString name);
     static int typeidToId(QString name);
     static int variantId(const QVariant &v);
-    static QVariant::Type toVariantType(int id);    
+    static QVariant::Type toVariantType(int id);        
     
     static bool isObject(int type);
     static bool isNumber(int type);
+    static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
     static bool canConvert(int type1,int type2);
     static bool canConvert(QList<int> type1,QList<int> type2);

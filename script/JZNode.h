@@ -58,7 +58,7 @@ enum
 {
     Node_propNone = 0,
     Node_propNoRemove = 0x1,
-    Node_propVariable = 0x2,
+    Node_propDragVariable = 0x2,
 };
 
 //JZNodeGemo
@@ -90,12 +90,15 @@ JZNodeConnect parseLine(const QByteArray &buffer);
 QByteArray formatLine(const JZNodeConnect &line);
 
 class JZNodeCompiler;
-class JZNodeGraphItem;
+class JZScriptFile;
 class JZNode
 {
 public:
     JZNode();
     virtual ~JZNode();
+
+    JZScriptFile *file() const;
+    void setFile(JZScriptFile *file);
 
     QString name() const;
     void setName(QString name);
@@ -134,17 +137,16 @@ public:
     int paramOutCount() const;
     QVector<int> paramOutList() const;
     
-    int addFlowIn();    
+    int addFlowIn(int extFlag = 0);
     int flowIn() const;
     JZNodeGemo flowInGemo() const;
-    int addFlowOut(QString name = QString());
+    int addFlowOut(QString name = QString(),int extFlag = 0);
     int flowOut(int index = 0) const;
     JZNodeGemo flowOutGemo(int index = 0) const;
     QVector<int> flowOutList() const;
     int flowOutCount() const;
 
-    int addSubFlowOut(QString name);
-    int addSubFlow(const JZNodePin &prop);
+    int addSubFlowOut(QString name,int extFlag = 0);
     int subFlowOut(int index) const;
     JZNodeGemo subFlowOutGemo(int index) const;
     QVector<int> subFlowList() const;
@@ -156,10 +158,7 @@ public:
     void setPropName(int id,QString name);
 
     bool canRemove();
-
-    bool hasVariable();
-    virtual void setVariable(const QString &name);
-    virtual QString variable() const;
+    bool canDragVariable();
 
     virtual QList<int> propType(int id);
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
@@ -167,28 +166,34 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);    
+    virtual void drag(const QVariant &value);
 
 protected:     
-    void setTypeAny(int id);
-    void setTypeInt(int id);
-    void setTypeNumber(int id);
-    void setTypeBool(int id);
-    void setTypeString(int id);
+    friend JZScriptFile;
+
+    void setPinTypeAny(int id);
+    void setPinTypeInt(int id);
+    void setPinTypeNumber(int id);
+    void setPinTypeBool(int id);
+    void setPinTypeString(int id);
+    void setPinType(int id,const QList<int> &type);
+
+    virtual void fileInitialized();
+    virtual void pinLinked(int id);
+    virtual void pinUnlinked(int id);
+    virtual void pinChanged(int id);
 
     int m_id;
     int m_type;
     int m_flag;
-    QString m_name;
+    QString m_name;    
     QList<JZNodePin> m_propList;
+    JZScriptFile *m_file;
+    QVector<int> m_notifyList;
 };
 typedef QSharedPointer<JZNode> JZNodePtr;
 
-class JZStatementNode : public JZNode
-{
-public:
-
-};
-
+//JZNodeContinue
 class JZNodeContinue : public JZNode
 {
 public:
@@ -199,6 +204,7 @@ public:
 protected:
 };
 
+//JZNodeBreak
 class JZNodeBreak : public JZNode
 {
 public:
@@ -209,6 +215,7 @@ public:
 protected:   
 };
 
+//JZNodeReturn
 class JZNodeReturn : public JZNode
 {
 public:
@@ -219,6 +226,7 @@ public:
 protected:     
 };
 
+//JZNodeExit
 class JZNodeExit : public JZNode
 {
 public:
@@ -230,6 +238,7 @@ protected:
     
 };
 
+//JZNodeSequence
 class JZNodeSequence : public JZNode
 {
 public:
@@ -243,6 +252,7 @@ public:
 protected:
 };
 
+//JZNodeParallel
 class JZNodeParallel : public JZNode
 {
 public:
@@ -253,7 +263,7 @@ public:
 protected:   
 };
 
-
+//JZNodeFor
 class JZNodeFor: public JZNode
 {
 public:
@@ -264,6 +274,7 @@ public:
 protected:
 };
 
+//JZNodeForEach
 class JZNodeForEach: public JZNode
 {
 public:
@@ -275,6 +286,7 @@ public:
 protected:
 };
 
+//JZNodeWhile
 class JZNodeWhile: public JZNode
 {
 public:
@@ -286,6 +298,7 @@ protected:
 
 };
 
+//JZNodeIf
 class JZNodeIf : public JZNode
 {
 public:
@@ -297,12 +310,15 @@ public:
 protected:
 };
 
+//JZNodeSwitch
 class JZNodeSwitch : public JZNode
 {
 public:
     JZNodeSwitch();
 };
 
+
+//JZNodeBranch
 class JZNodeBranch : public JZNode
 {
 public:

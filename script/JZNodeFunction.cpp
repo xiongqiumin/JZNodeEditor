@@ -53,7 +53,7 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
     {
         JZNodePin pin;
         pin.setName(define->paramIn[i].name);
-        pin.setFlag(Prop_param | Prop_in);
+        pin.setFlag(Prop_param | Prop_in | Prop_dispName);
         pin.setDataType({define->paramIn[i].dataType});
         addProp(pin);
     }
@@ -61,7 +61,7 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
     {
         JZNodePin pin;
         pin.setName(define->paramOut[i].name);
-        pin.setFlag(Prop_param | Prop_out);
+        pin.setFlag(Prop_param | Prop_out | Prop_dispName);
         pin.setDataType({define->paramOut[i].dataType});
         addProp(pin);
     }
@@ -78,9 +78,9 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
 {
     bool input_ret = false;
     if(isFlowNode())
-        input_ret = c->addFlowInput(m_id);
+        input_ret = c->addFlowInput(m_id,error);
     else
-        input_ret = c->addDataInput(m_id);
+        input_ret = c->addDataInput(m_id,error);
     if(!input_ret)        
         return false;
         

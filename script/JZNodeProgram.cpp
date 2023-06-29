@@ -145,7 +145,7 @@ bool Graph::check()
     //排序          
     if (!toposort())    
         return false;
-
+/*
     //计算节点类型传递
     for (GraphNodePtr v : m_nodes)
     { 
@@ -182,7 +182,7 @@ bool Graph::check()
             }
         }
     }
-
+*/
     return error.isEmpty();
 }
 
@@ -240,7 +240,6 @@ JZEventHandle::JZEventHandle()
 {    
 }
 
-
 QDataStream &operator<<(QDataStream &s, const JZEventHandle &param)
 {
     s << param.type;
@@ -277,23 +276,25 @@ QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param)
     return s;
 }
 
+
 //NodeInfo
 NodeInfo::NodeInfo()
 {
     node_id = -1;
     node_type = Node_none;
-    start = -1;
-    end = -1;    
-    parentId = -1;
 }
 
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
 {
+    s << param.node_id;
+    s << param.node_type;
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, NodeInfo &param)
 {
+    s >> param.node_id;
+    s >> param.node_type;
     return s;
 }
 
@@ -504,6 +505,8 @@ QString JZNodeProgram::paramName(JZNodeIRParam param)
         return "$" + param.value.toString();
     else if(param.type == JZNodeIRParam::Reference)
         return param.ref();
+    else if(param.type == JZNodeIRParam::This)
+        return "this";
     else
         return JZNodeCompiler::paramName(param.id());
 }
@@ -614,7 +617,7 @@ QString JZNodeProgram::dump()
                 content += "event handles:\n";
 
             auto &event = script->events[i];
-            QString line = event.function.name + " addr: " + event.function.addr;
+            QString line = event.function.name + " addr: " + QString::number(event.function.addr);
             content += line + "\n";
         }
 

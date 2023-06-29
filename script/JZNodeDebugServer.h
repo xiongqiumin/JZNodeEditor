@@ -36,6 +36,7 @@ protected:
     JZNetServer m_server;
     int m_client;
     JZNodeEngine *m_engine;
+    bool m_init;
 };
 
 

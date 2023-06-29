@@ -8,6 +8,7 @@
 #include "JZParamFile.h"
 #include "JZScriptFile.h"
 
+//JZProject
 class JZProject
 {
 public:
@@ -50,6 +51,11 @@ public:
     JZProjectItem *getItem(QString path);    
     JZProjectItem *root();
 
+    bool hasBreakPoint(QString file,int id);
+    void addBreakPoint(QString file,int id);
+    void removeBreakPoint(QString file,int id);
+    QVector<int> breakPoints(QString file);
+
     const FunctionDefine *function(QString name);
 
 protected:
@@ -58,12 +64,15 @@ protected:
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
     void itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list);
-    void init();
+    void init();    
+    void clear();
+    void registType();
     QString dir(const QString &filepath);
             
     QMap<QString,QByteArray> m_itemBuffer;
-    JZProjectItemFolder m_root;
-    QString m_filepath;        
+    JZProjectItemFolder m_root;    
+    QMap<QString,QVector<int>> m_breakPoints;
+    QString m_filepath;
 };
 
 #endif

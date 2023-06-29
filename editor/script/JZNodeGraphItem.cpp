@@ -25,6 +25,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     m_type = Item_node;
     m_node = node;
     m_id = node->id();
+    m_breakPoint = false;
 
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
@@ -34,11 +35,6 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 
 JZNodeGraphItem::~JZNodeGraphItem()
 {
-}
-
-void JZNodeGraphItem::setValue(int prop,QVariant value)
-{    
-    update();
 }
 
 QRectF JZNodeGraphItem::boundingRect() const
@@ -70,6 +66,17 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
     {
         painter->setPen(QPen(QColor(128,128,128),1));
         painter->drawRect(rc.adjusted(0,0,-1,-1));
+    }
+
+    if(m_breakPoint)
+    {
+        QRect bt_rc = QRect(5,5,15,15);
+        painter->fillRect(bt_rc,Qt::green);
+    }
+
+    if(!m_error.isEmpty())
+    {
+        painter->fillRect(m_errorRect,Qt::red);
     }
 }
 
@@ -174,6 +181,7 @@ void JZNodeGraphItem::updateNode()
             info.valueRect.moveRight(last.left() - 5);
     }
     m_size = QSize(w, qMax(h,50));    
+    updateErrorGemo();
 }
 
 void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
@@ -187,14 +195,13 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
     for (int i = 0; i < list.size(); i++)
     {
         if(propRect(list[i]).contains(event->pos()))
-        {
-            event->ignore();
+        {            
             if (m_node->prop(list[i])->isOutput())
             {
                 JZNodeGemo gemo(m_node->id(), list[i]);
                 editor()->startLine(gemo);
-            }
-            return;
+                break;
+            }            
         }
     }
     return JZNodeBaseItem::mousePressEvent(event);
@@ -213,6 +220,11 @@ void JZNodeGraphItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 
 void JZNodeGraphItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 {
+    if(!m_error.isEmpty() && m_errorRect.contains(event->pos()))
+    {
+        auto rc = mapToScene(m_errorRect).boundingRect();
+        editor()->addTip(rc,m_error);
+    }
     event->accept();
 }
 
@@ -220,6 +232,33 @@ void JZNodeGraphItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
     setZValue(0);
     event->accept();
+}
+
+void JZNodeGraphItem::setBreakPoint(bool flag)
+{
+    m_breakPoint = flag;
+    update();
+}
+
+void JZNodeGraphItem::updateErrorGemo()
+{
+    m_errorRect = QRectF();
+    if(!m_error.isEmpty())
+        m_errorRect = QRect(m_size.width() - 15 - 5,5,15,15);
+}
+
+void JZNodeGraphItem::setError(QString error)
+{
+    m_error = error;
+    updateErrorGemo();
+    update();
+}
+
+void JZNodeGraphItem::clearError()
+{
+    m_error.clear();
+    updateErrorGemo();
+    update();
 }
 
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)

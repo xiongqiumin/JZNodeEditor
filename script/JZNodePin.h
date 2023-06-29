@@ -15,10 +15,11 @@ enum
     Prop_param = 0x4,
     Prop_flow = 0x8,
     Prop_subFlow  = 0x10,   //子程序    
-    Prop_edit = 0x20,
-    Prop_editName = 0x40,
-    Prop_dispName = 0x80,
-    Prop_dispValue = 0x100,
+    Prop_dispName = 0x20,
+    Prop_editName = 0x40,    
+    Prop_dispValue = 0x80,
+    Prop_editValue = 0x100,
+    Prop_literal = 0x200,
 
     Prop_All = 0xFFFFFFFF,
 };
@@ -61,6 +62,7 @@ public:
     bool isEditable() const;
     bool isDispName() const;
     bool isDispValue() const;
+    bool isLiteral() const;
 
     void setDataType(QList<int> type);
     QList<int> dataType() const;    

@@ -37,11 +37,12 @@ public:
     virtual void loadFromStream(QDataStream &s) override;
     virtual QList<FunctionParam> params() override;
 
-    virtual void setVariable(const QString &name);
-    virtual QString variable() const;
-
     void setSingle(QString className,const SingleDefine *single);
     QString single();
+
+    void setVariable(const QString &name);
+    QString variable() const;
+    virtual void drag(const QVariant &value) override;
 
 protected:
     QString m_className;

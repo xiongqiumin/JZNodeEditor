@@ -2,11 +2,13 @@
 #define JZNODE_DEBUG_PACKET_H_
 
 #include "JZNetPack.h"
+#include "JZProject.h"
 
 const int NetPack_debugPacket = NetPack_user;
 
 enum{
     Cmd_none,
+    Cmd_init,
     Cmd_addBreakPoint,
     Cmd_removeBreakPoint,       
     Cmd_clearBreakPoint,    
@@ -57,5 +59,17 @@ T netDataUnPack(const QByteArray &buffer)
     s >> param;
     return param;
 }
+
+//JZNodeDebugInfo
+class JZNodeDebugInfo
+{
+public:
+    JZNodeDebugInfo();
+
+    QMap<QString,QVector<int>> breakPoints;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param);
+QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param);
+
 
 #endif

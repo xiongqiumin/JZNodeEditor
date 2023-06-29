@@ -39,13 +39,13 @@ protected:
     void initFunction(QTreeWidgetItem *root,bool flow);    
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
-    QTreeWidgetItem *createParam(QString name,int dataType);
-    QTreeWidgetItem *createClass(QString className);
-    JZScriptClassFile *getClassFile();
+    QTreeWidgetItem *createParam(QString name,int dataType,QString preName);
+    QTreeWidgetItem *createClass(QString className);    
 
     JZNodeTreeWidget *m_tree;
     int m_fileType;
     JZScriptFile *m_file;
+    JZScriptClassFile *m_classFile;
 };
 
 #endif

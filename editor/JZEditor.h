@@ -5,6 +5,13 @@
 #include <QMenuBar>
 #include "JZProjectItem.h"
 
+enum{
+    Editor_none,
+    Editor_script,
+    Editor_ui,
+    Editor_param,
+};
+
 class JZProject;
 class JZEditor : public QWidget
 {
@@ -14,10 +21,12 @@ public:
     JZEditor();
     virtual ~JZEditor();
 
+    int type();
     void setProject(JZProject *project);
 
     void setFile(JZProjectItem *file);
     JZProjectItem *file();
+    QString filePath();
 
     virtual void open(JZProjectItem *item) = 0;
     virtual void close() = 0;
@@ -41,6 +50,7 @@ signals:
 protected:
     JZProjectItem *m_file;
     JZProject *m_project;
+    int m_type;
 };
 
 

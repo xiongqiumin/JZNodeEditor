@@ -6,6 +6,7 @@ JZNodeDebugServer::JZNodeDebugServer()
 {
     m_client = -1;
     m_engine = nullptr;    
+    m_init = false;
     this->moveToThread(this);
 
     connect(&m_server,&JZNetServer::sigNewConnect,this,&JZNodeDebugServer::onNewConnect);
@@ -90,10 +91,23 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     QVariantList &params = packet->params;
     QVariantList result;
     
-    if(cmd == Cmd_addBreakPoint)    
-        result << m_engine->addBreakPoint(params[0].toString(),params[1].toInt());
+    if(cmd == Cmd_init)
+    {
+        auto env = netDataUnPack<JZNodeDebugInfo>(params[0].toByteArray());
+        auto it = env.breakPoints.begin();
+        while(it != env.breakPoints.end())
+        {
+            auto filepath = it.key();
+            auto list = it.value();
+            for(int i = 0; i < list.size(); i++)
+                m_engine->addBreakPoint(filepath,list[i]);
+            it++;
+        }
+    }
+    else if(cmd == Cmd_addBreakPoint)
+        m_engine->addBreakPoint(params[0].toString(),params[1].toInt());
     else if(cmd == Cmd_removeBreakPoint)    
-        m_engine->removeBreakPoint(params[0].toInt());    
+        m_engine->removeBreakPoint(params[0].toString(),params[1].toInt());
     else if(cmd == Cmd_clearBreakPoint)
         m_engine->clearBreakPoint();
     else if(cmd == Cmd_pause)

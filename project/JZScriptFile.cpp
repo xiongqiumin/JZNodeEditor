@@ -4,6 +4,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZUiFile.h"
 #include "JZParamFile.h"
+#include "JZProject.h"
 
 //JZScriptFile
 JZScriptFile::JZScriptFile(int type)
@@ -32,6 +33,19 @@ void JZScriptFile::clear()
     m_connects.clear();
 }
 
+JZScriptClassFile *JZScriptFile::getClassFile()
+{
+    auto parent = this->parent();
+    while(parent)
+    {
+        if(parent->itemType() == ProjectItem_class)
+            return (JZScriptClassFile*)parent;
+
+        parent = parent->parent();
+    }
+    return nullptr;
+}
+
 void JZScriptFile::setBindClass(QString bindClass)
 {
     m_bindClass = bindClass;        
@@ -56,7 +70,8 @@ void JZScriptFile::setFunction(FunctionDefine def)
 int JZScriptFile::addNode(JZNodePtr node)
 {
     Q_ASSERT(node->id() == -1);
-    node->setId(m_nodeId++);        
+    node->setId(m_nodeId++);
+    node->setFile(this);
     m_nodes.insert(node->id(), node);
     return node->id();
 }
@@ -64,6 +79,7 @@ int JZScriptFile::addNode(JZNodePtr node)
 void JZScriptFile::insertNode(JZNodePtr node)
 {
     Q_ASSERT(node->id() != -1 && getNode(node->id()) == nullptr);
+    node->setFile(this);
     m_nodes.insert(node->id(), node);
     m_nodesPos.insert(node->id(), QPointF());
 }
@@ -116,22 +132,6 @@ bool JZScriptFile::hasConnect(JZNodeGemo from, JZNodeGemo to)
     return false;
 }
 
-int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
-{
-    auto pin_from = getPin(from);
-    auto pin_to = getPin(to);
-    Q_ASSERT(pin_from && pin_to && pin_from->isOutput() && pin_to->isInput());
-    Q_ASSERT(((pin_from->isFlow() || pin_from->isSubFlow()) && pin_to->isFlow()) 
-        || (pin_from->isParam() && pin_to->isParam()));
-
-    JZNodeConnect connect;
-    connect.id = m_nodeId++;
-    connect.from = from;
-    connect.to = to;
-    m_connects.push_back(connect);
-    return connect.id;
-}
-
 bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
 {    
     JZNode *node_from = getNode(from.nodeId);
@@ -176,7 +176,11 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         error = "已有输入,只能连接一个输入";
         return false;
     }
-
+    if(pin_to->isLiteral() && node_from->type() != Node_literal)
+    {
+        error = "只能连接常量";
+        return false;
+    }
     //检测数据类型
     if(!pin_from->isFlow())
     {
@@ -197,19 +201,45 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
     return true;
 }
 
+int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
+{
+    auto pin_from = getPin(from);
+    auto pin_to = getPin(to);
+    Q_ASSERT(pin_from && pin_to && pin_from->isOutput() && pin_to->isInput());
+    Q_ASSERT(((pin_from->isFlow() || pin_from->isSubFlow()) && pin_to->isFlow()) 
+        || (pin_from->isParam() && pin_to->isParam()));
+
+    JZNodeConnect connect;
+    connect.id = m_nodeId++;
+    connect.from = from;
+    connect.to = to;
+    m_connects.push_back(connect);
+
+    JZNode *node_to = getNode(to.nodeId);
+    node_to->pinLinked(to.propId);
+    return connect.id;
+}
+
 void JZScriptFile::insertConnect(const JZNodeConnect &connect)
 {
     Q_ASSERT(connect.id != -1 && getConnect(connect.id) == nullptr);
     m_connects.push_back(connect);
+
+    JZNode *to = getNode(connect.to.nodeId);
+    to->pinLinked(connect.to.propId);
 }
 
 void JZScriptFile::removeConnect(int id)
 {
     for (int i = 0; i < m_connects.size(); i++)
     {
-        if (m_connects[i].id == id)
-        {
+        auto &line = m_connects[i];
+        if (line.id == id)
+        {            
             m_connects.removeAt(i);
+
+            JZNode *to = getNode(line.to.nodeId);
+            to->pinUnlinked(line.to.propId);
             return;
         }
     }
@@ -236,6 +266,32 @@ QList<int> JZScriptFile::getConnectId(int id, int propId)
     return list;
 }
 
+QList<int> JZScriptFile::getConnectOut(int id, int propId)
+{
+    QList<int> list;
+    for (int i = 0; i < m_connects.size(); i++)
+    {
+        auto &c = m_connects[i];
+        if ((propId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
+                || (c.from.nodeId == id && c.from.propId == propId))
+            list.push_back(c.id);
+    }
+    return list;
+}
+
+QList<int> JZScriptFile::getConnectInput(int id, int propId)
+{
+    QList<int> list;
+    for (int i = 0; i < m_connects.size(); i++)
+    {
+        auto &c = m_connects[i];
+        if ((propId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
+                || (c.to.nodeId == id && c.to.propId == propId))
+            list.push_back(c.id);
+    }
+    return list;
+}
+
 JZNodeConnect *JZScriptFile::getConnect(int id)
 {
     for (int i = 0; i < m_connects.size(); i++)
@@ -251,6 +307,20 @@ QList<JZNodeConnect> JZScriptFile::connectList()
     return m_connects;
 }
 
+JZParamDefine *JZScriptFile::getVariableInfo(const QString &name)
+{
+    if(name.startsWith("this."))
+    {
+        auto def = JZNodeObjectManager::instance()->meta(m_bindClass);
+        Q_ASSERT(def);
+
+        QString param_name = name.mid(5);
+        return def->param(param_name);
+    }
+    else
+        return m_project->getVariableInfo(name);
+}
+
 void JZScriptFile::saveToStream(QDataStream &s)
 {
     JZProjectItem::saveToStream(s);
@@ -264,11 +334,11 @@ void JZScriptFile::saveToStream(QDataStream &s)
         s << it->data()->type();
         it->data()->saveToStream(s);
         it++;
-    }
-    s << m_nodesPos;
-    s << m_connects;    
-    s << m_function;
+    }    
+    s << m_connects;
     s << m_bindClass;
+    s << m_function;    
+    s << m_nodesPos;
 }
 
 void JZScriptFile::loadFromStream(QDataStream &s)
@@ -285,11 +355,11 @@ void JZScriptFile::loadFromStream(QDataStream &s)
         JZNode *node = JZNodeFactory::instance()->createNode(type);
         node->loadFromStream(s);
         m_nodes.insert(node->id(), JZNodePtr(node));        
-    }
-    s >> m_nodesPos;
+    }    
     s >> m_connects;
-    s >> m_function;
     s >> m_bindClass;
+    s >> m_function;    
+    s >> m_nodesPos;
 }
 
 //JZScriptLibraryFile
@@ -336,6 +406,11 @@ JZScriptClassFile::JZScriptClassFile()
 JZScriptClassFile::~JZScriptClassFile()
 {
 
+}
+
+QString JZScriptClassFile::className() const
+{
+    return m_className;
 }
 
 void JZScriptClassFile::saveToStream(QDataStream &s)
@@ -434,3 +509,4 @@ JZNodeObjectDefine JZScriptClassFile::objectDefine()
     }
     return define;
 }
+

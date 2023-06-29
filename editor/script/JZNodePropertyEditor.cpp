@@ -104,21 +104,21 @@ void JZNodePropertyEditor::addPropList(QString name,QVector<int> list)
     for(int i = 0; i < list.size(); i++)
     {
         auto pin = m_node->prop(list[i]);
-        if((pin->flag() & Prop_editName) || (pin->flag() & Prop_dispValue))
+        if(prop_group == nullptr)
+            prop_group = m_propManager->addProperty(m_propManager->groupTypeId(),name);
+        
+        if(pin->flag() & Prop_editName)
         {
-            if(prop_group == nullptr)
-               prop_group = m_propManager->addProperty(m_propManager->groupTypeId(),name );
+            auto prop_name = createPropName(pin);
+            prop_group->addSubProperty(prop_name);
 
-            if(pin->flag() & Prop_editName)
-            {
-                auto prop_name = createPropName(pin);
-                prop_group->addSubProperty(prop_name);
-            }
-            else
-            {
-                auto prop = createProp(pin);
-                prop_group->addSubProperty(prop);
-            }
+            auto prop_value = createProp(pin);
+            prop_group->addSubProperty(prop_value);
+        }
+        else
+        {
+            auto prop = createProp(pin);
+            prop_group->addSubProperty(prop);
         }
     }
 
