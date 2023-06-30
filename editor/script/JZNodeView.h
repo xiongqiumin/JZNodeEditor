@@ -86,10 +86,9 @@ public:
     JZNodeGraphItem *insertNode(JZNodePtr node);
     void moveNode(int id,QPointF pos);
     void removeNode(int id);    
-    void addPin(int id,JZNodePin pin);
-    void removePin(int id,int prop_id);
 
     void setNode(int id,const QByteArray &buffer);
+    void pinClicked(int nodeId,int pinId);
     void updateNode(int id);
     bool isPropEditable(int id,int propId);
 
@@ -168,6 +167,7 @@ protected:
     int getVariableType(const QString &param_name);    
     void setMoveUndo(bool flag);    
     void autoCompiler();
+    QString getExpr();
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;    

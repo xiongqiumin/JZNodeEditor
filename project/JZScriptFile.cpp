@@ -191,7 +191,7 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         {
             QStringList inTypes;
             for(int i = 0; i < in_type.size(); i++)
-                inTypes << JZNodeType::idToName(in_type[i]);
+                inTypes << JZNodeType::typeToName(in_type[i]);
 
             error = "数据类型不匹配,需要" + inTypes.join(",");
             return false;

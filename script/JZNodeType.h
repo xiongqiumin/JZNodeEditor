@@ -25,11 +25,12 @@ class JZNodeType
 {
 public:
     static void init();
-    static QString idToName(int id);
-    static int nameToId(QString name);
-    static int typeidToId(QString name);
-    static int variantId(const QVariant &v);
-    static QVariant::Type toVariantType(int id);        
+    static QString typeToName(int id);
+    static int nameToType(QString name);
+    static int variantType(const QVariant &v);
+    static QVariant::Type typeToQMeta(int id);
+    static int typeidToType(QString name);
+
     
     static bool isObject(int type);
     static bool isNumber(int type);

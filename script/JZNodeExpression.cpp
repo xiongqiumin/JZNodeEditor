@@ -10,11 +10,24 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 
     m_type = node_type;
     m_op = op_type;
-    int in1 = addParamIn("in1",Prop_editValue | Prop_dispValue);
-    int in2 = addParamIn("in2",Prop_editValue | Prop_dispValue);
+    int in1 = addParamIn("",Prop_editValue | Prop_dispValue);
+    int in2 = addParamIn("",Prop_editValue | Prop_dispValue);
+    prop(in1)->setValue(0);
+    prop(in2)->setValue(0);
     addParamOut("out");
-    setPropValue(in1,0);
-    setPropValue(in2,0);
+
+    JZNodePin btn;
+    btn.setName("Add input");
+    btn.setFlag(Prop_button | Prop_in | Prop_dispName);
+    addProp(btn);
+}
+
+bool JZNodeOperator::pinClicked(int id)
+{
+    Q_UNUSED(id);
+    int in = addParamIn("",Prop_editValue | Prop_dispValue);
+    prop(in)->setValue(0);
+    return true;
 }
 
 bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
@@ -22,14 +35,23 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addDataInput(m_id,error))
         return false;
         
-    int in1 = paramIn(0);
-    int in2 = paramIn(1);
-    int out = paramOut(0);
+    auto input_list = paramInList();
+    for(int i = 0; i < input_list.size(); i++)
+    {
+        int in1 = 0;
+        if(i == 0)
+            in1 = paramIn(i);
+        else
+            in1 = paramOut(0);
 
-    int r1 = c->paramId(m_id,in1);
-    int r2 = c->paramId(m_id,in2);
-    int r3 = c->paramId(m_id,out);
-    c->addExpr(irId(r3),irId(r1),irId(r2),m_op);
+        int in2 = paramIn(i+1);
+        int out = paramOut(0);
+
+        int r1 = c->paramId(m_id,in1);
+        int r2 = c->paramId(m_id,in2);
+        int r3 = c->paramId(m_id,out);
+        c->addExpr(irId(r3),irId(r1),irId(r2),m_op);
+    }
     return true;
 }
 

@@ -56,6 +56,9 @@ protected:
 
     bool m_breakPoint;
     QString m_error;
+
+    bool m_pinButtonOn;
+    QRectF m_pinButtonRect;
 };
 
 #endif

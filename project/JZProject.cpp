@@ -63,9 +63,9 @@ void JZProject::init()
 {    
     clear();
 
-    JZScriptFile *flow_page = new JZScriptFile(ProjectItem_scriptFlow);    
-    flow_page->setName("main.jz");    
-    addItem("",flow_page);
+    JZScriptFile *main_flow = new JZScriptFile(ProjectItem_scriptFlow);
+    main_flow->setName("main.jz");
+    addItem("",main_flow);
 
     JZParamFile *param_page = new JZParamFile();
     param_page->setName("param.def");
@@ -75,7 +75,9 @@ void JZProject::init()
     start->setEventType(Event_programStart);
     start->setName("startProgram");
     start->setFlag(Node_propNoRemove);
-    flow_page->addNode(JZNodePtr(start));
+    main_flow->addNode(JZNodePtr(start));
+
+    saveItem(main_flow);
 }
 
 void JZProject::initUi()

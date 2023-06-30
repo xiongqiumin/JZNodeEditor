@@ -26,6 +26,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     m_node = node;
     m_id = node->id();
     m_breakPoint = false;
+    m_pinButtonOn = false;
 
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
@@ -131,10 +132,10 @@ void JZNodeGraphItem::updateNode()
     auto cmp = [this](int i,int j)->bool{
         auto pin1 = m_node->prop(i);
         auto pin2 = m_node->prop(j);
-        int flag1 = pin1->flag() & (Prop_param | Prop_flow |Prop_subFlow);
-        int flag2 = pin1->flag() & (Prop_param | Prop_flow |Prop_subFlow);
-        if(flag1 == flag2)
-            return flag1 > flag2;
+        int flag1 = pin1->pri();
+        int flag2 = pin2->pri();
+        if(flag1 != flag2)
+            return flag1 < flag2;
         else
             return pin1->id() < pin2->id();
     };
@@ -186,22 +187,26 @@ void JZNodeGraphItem::updateNode()
 
 void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
+    if(m_pinButtonOn && !m_pinButtonRect.contains(event->pos()))
+        m_pinButtonOn = false;
     return JZNodeBaseItem::mouseMoveEvent(event);
 }
 
 void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     auto list = m_node->propList();
-    for (int i = 0; i < list.size(); i++)
+    auto pin = propAt(event->pos());
+    if (pin)
     {
-        if(propRect(list[i]).contains(event->pos()))
-        {            
-            if (m_node->prop(list[i])->isOutput())
-            {
-                JZNodeGemo gemo(m_node->id(), list[i]);
-                editor()->startLine(gemo);
-                break;
-            }            
+        if(pin->isButton())
+        {
+            m_pinButtonRect = propRect(pin->id());
+            m_pinButtonOn = true;
+        }
+        else if(pin->isOutput())
+        {
+            JZNodeGemo gemo(m_node->id(), pin->id());
+            editor()->startLine(gemo);
         }
     }
     return JZNodeBaseItem::mousePressEvent(event);
@@ -209,6 +214,12 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
+    if(m_pinButtonOn && m_pinButtonRect.contains(event->pos()))
+    {
+        auto pin = propAt(event->pos());
+        editor()->pinClicked(m_id,pin->id());
+    }
+    m_pinButtonOn = false;
     return JZNodeBaseItem::mouseReleaseEvent(event);
 }
 
@@ -283,11 +294,16 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
         color = QColor(255, 255, 255);
         type = IconType::Flow;
     }
-    else
+    else if(pin->isParam())
     {
         color = QColor(220,  48,  48);
         type = IconType::Circle;
     }
+    else
+    {
+        type = IconType::Diamond;
+    }
+
     QColor innerColor = QColor(40,40,40,80);
     drawIcon(painter,info.iconRect,type,false,color,innerColor);
 

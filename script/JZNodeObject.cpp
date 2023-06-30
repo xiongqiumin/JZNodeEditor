@@ -63,6 +63,26 @@ QVariant CreateJZObject(QString name)
     return QVariant::fromValue(ptr);
 }
 
+QString toString(const QVariant &v)
+{
+    return v.toString();
+}
+
+bool toBool(const QVariant &v)
+{
+    return v.toBool();
+}
+
+int toInt(const QVariant &v)
+{
+    return v.toInt();
+}
+
+double toDouble(const QVariant &v)
+{
+    return v.toDouble();
+}
+
 //JZNodeListIterator
 class JZNodeListIterator
 {
@@ -551,6 +571,11 @@ void JZNodeObjectManager::initFunctions()
     JZNodeFunctionManager::instance()->registCFunction("createObject",true,jzbind::createFuncion(CreateJZObject));    
     JZNodeFunctionManager::instance()->registCFunction("typename",false,jzbind::createFuncion(JObjectTypename));
     JZNodeFunctionManager::instance()->registCFunction("print",true,jzbind::createFuncion(JZNodeDisp));
+
+    JZNodeFunctionManager::instance()->registCFunction("toString",true,jzbind::createFuncion(toString));
+    JZNodeFunctionManager::instance()->registCFunction("toBool",true,jzbind::createFuncion(toBool));
+    JZNodeFunctionManager::instance()->registCFunction("toInt",true,jzbind::createFuncion(toInt));
+    JZNodeFunctionManager::instance()->registCFunction("toDouble",true,jzbind::createFuncion(toDouble));
 }
 
 void JZNodeObjectManager::initCore()

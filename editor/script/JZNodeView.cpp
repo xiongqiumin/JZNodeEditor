@@ -397,15 +397,14 @@ void JZNodeView::setNode(int id,const QByteArray &buffer)
     updateNode(id);
 }
 
-void JZNodeView::addPin(int id,JZNodePin pin)
+void JZNodeView::pinClicked(int nodeId,int pinId)
 {
-
+    auto node = getNode(nodeId);
+    QByteArray oldValue = formatNode(node);
+    if(node->pinClicked(pinId))
+        addPropChangedCommand(nodeId,oldValue);
 }
 
-void JZNodeView::removePin(int id,int prop_id)
-{
-
-}
 
 bool JZNodeView::isPropEditable(int id,int prop_id)
 {
@@ -1079,7 +1078,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
         s >> node_type;
         if(node_type == Node_expr)
         {
-            QString text = QInputDialog::getText(this,"请输入表达式","");
+            QString text = getExpr();
             if(text.isEmpty())
                 return;
 
@@ -1343,4 +1342,10 @@ void JZNodeView::onAutoCompiler()
             it++;
         }
     }
+}
+
+QString JZNodeView::getExpr()
+{
+    QString text = QInputDialog::getText(this,"请输入表达式","");
+    return text;
 }

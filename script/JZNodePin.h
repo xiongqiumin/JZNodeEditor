@@ -14,12 +14,13 @@ enum
     Prop_out = 0x2,    
     Prop_param = 0x4,
     Prop_flow = 0x8,
-    Prop_subFlow  = 0x10,   //子程序    
-    Prop_dispName = 0x20,
-    Prop_editName = 0x40,    
-    Prop_dispValue = 0x80,
-    Prop_editValue = 0x100,
-    Prop_literal = 0x200,
+    Prop_subFlow  = 0x10,   //子程序
+    Prop_button = 0x20,
+    Prop_dispName = 0x40,
+    Prop_editName = 0x80,
+    Prop_dispValue = 0x100,
+    Prop_editValue = 0x200,
+    Prop_literal = 0x400,
 
     Prop_All = 0xFFFFFFFF,
 };
@@ -53,12 +54,16 @@ public:
 
     void setFlag(int dir);
     int flag() const;
+    int pri() const; // 显示优先级
 
     bool isInput() const;
     bool isOutput() const;
+
     bool isParam() const;
     bool isFlow() const;
     bool isSubFlow() const;
+    bool isButton() const;
+
     bool isEditable() const;
     bool isDispName() const;
     bool isDispValue() const;
@@ -70,6 +75,9 @@ public:
     QVariant value() const;
     void setValue(QVariant value);
 
+    void addAction(QString action);
+    QStringList actionList();
+
 protected:
     friend QDataStream &operator<<(QDataStream &s, const JZNodePin &param);
     friend QDataStream &operator>>(QDataStream &s, JZNodePin &param);
@@ -79,6 +87,7 @@ protected:
     QString m_name;    
     QList<int> m_dataType;
     QVariant m_value;
+    QStringList m_actionList;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodePin &param);
 QDataStream &operator>>(QDataStream &s, JZNodePin &param);

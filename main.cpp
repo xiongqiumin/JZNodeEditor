@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
         testBuild();
         return 0;
     }
-    if(1)
+    if(0)
     {
         QString program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/build/untitled.program";
 

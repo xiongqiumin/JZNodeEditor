@@ -27,6 +27,7 @@ public:
     void setFile(JZScriptFile *file);
 
 protected slots:
+    void onSearch();
 
 protected:
     void init();
@@ -40,12 +41,14 @@ protected:
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
     QTreeWidgetItem *createParam(QString name,int dataType,QString preName);
-    QTreeWidgetItem *createClass(QString className);    
+    QTreeWidgetItem *createClass(QString className);
+    bool filterItem(QTreeWidgetItem *root,QString name);
 
     JZNodeTreeWidget *m_tree;
     int m_fileType;
     JZScriptFile *m_file;
     JZScriptClassFile *m_classFile;
+    QLineEdit *m_lineSearch;
 };
 
 #endif

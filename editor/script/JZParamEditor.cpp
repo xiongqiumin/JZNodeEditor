@@ -30,7 +30,7 @@ void JZParamEditor::open(JZProjectItem *item)
     {
         auto info = file->getVariable(list[i]);
         QTableWidgetItem *itemName = new QTableWidgetItem(info->name);
-        QTableWidgetItem *itemType = new QTableWidgetItem(JZNodeType::idToName(info->dataType));
+        QTableWidgetItem *itemType = new QTableWidgetItem(JZNodeType::typeToName(info->dataType));
         m_table->setItem(i,0,itemName);
         m_table->setItem(i,1,itemType);
     }

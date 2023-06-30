@@ -168,6 +168,9 @@ public:
     virtual void loadFromStream(QDataStream &s);    
     virtual void drag(const QVariant &value);
 
+    virtual bool pinClicked(int id);    //返回属性是否变化
+    virtual bool pinAction(int id);
+
 protected:     
     friend JZScriptFile;
 
@@ -244,12 +247,14 @@ class JZNodeSequence : public JZNode
 public:
     JZNodeSequence();
 
-    int addSequeue();
-    void removeSequeue(int id);
-
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual bool pinClicked(int id);
+
+    int addSequeue();
+    void removeSequeue(int id);    
 
 protected:
+
 };
 
 //JZNodeParallel

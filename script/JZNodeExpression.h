@@ -10,8 +10,9 @@ class JZNodeOperator: public JZNode
 public:
     JZNodeOperator(int node_type,int op_type);
 
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType) override;
+    virtual bool pinClicked(int id) override;
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
+    virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType) override;    
 
 protected:
     int m_op;    

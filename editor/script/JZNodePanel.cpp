@@ -4,6 +4,7 @@
 #include <QDrag>
 #include <QMimeData>
 #include <QDebug>
+#include <QLineEdit>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeValue.h"
 #include "JZNodeFactory.h"
@@ -41,6 +42,11 @@ JZNodePanel::JZNodePanel(QWidget *widget)
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0,0,0,0);
+    layout->setSpacing(1);
+
+    m_lineSearch = new QLineEdit();
+    layout->addWidget(m_lineSearch);
+    connect(m_lineSearch,&QLineEdit::returnPressed,this,&JZNodePanel::onSearch);
 
     m_tree = new JZNodeTreeWidget();
     m_tree->setColumnCount(1);
@@ -175,10 +181,14 @@ void JZNodePanel::initEvent(QTreeWidgetItem *root)
 
 void JZNodePanel::initVariable(QTreeWidgetItem *root)
 {
-    JZNodeLiteral node_int,node_int64,node_string,node_double;
+    JZNodeLiteral node_int,node_bool,node_int64,node_string,node_double;
     node_int.setName("整数");
     node_int.setLiteral(0);
     node_int.setDataType(Type_int);
+
+    node_bool.setName("Bool");
+    node_bool.setLiteral(false);
+    node_bool.setDataType(Type_bool);
 
     node_string.setName("字符串");
     node_string.setLiteral("");
@@ -191,6 +201,7 @@ void JZNodePanel::initVariable(QTreeWidgetItem *root)
     root->addChild(createNode(&node_int));    
     root->addChild(createNode(&node_string));
     root->addChild(createNode(&node_double));
+    root->addChild(createNode(&node_bool));
 
     JZNodeParam get;
     JZNodeSetParam set;
@@ -291,20 +302,21 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     JZNodeWhile node_while;
     JZNodeSequence node_seq;
     JZNodeBranch node_branch;
-    JZNodeForEach node_each;
+    JZNodeForEach node_foreach;
     JZNodeBreak node_break;
     JZNodeContinue node_continue;
     JZNodeExit node_exit;
-    item_process->addChild(createNode(&node_for));
-    item_process->addChild(createNode(&node_while));
     item_process->addChild(createNode(&node_seq));
     item_process->addChild(createNode(&node_branch));
-    item_process->addChild(createNode(&node_each));
+    item_process->addChild(createNode(&node_while));
+    item_process->addChild(createNode(&node_for));
+    item_process->addChild(createNode(&node_foreach));
     item_process->addChild(createNode(&node_break));
     item_process->addChild(createNode(&node_continue));
     item_process->addChild(createNode(&node_exit));
 
     QTreeWidgetItem *item_class = createFolder("类");
+    item_class->addChild(createClass("list"));
     item_class->addChild(createClass("widget"));
     item_class->addChild(createClass("LineEdit"));
     item_class->addChild(createClass("PushButton"));
@@ -378,4 +390,30 @@ QTreeWidgetItem *JZNodePanel::createClass(QString className)
         item_class->addChild(item_func);
 
     return item_class;
+}
+
+bool JZNodePanel::filterItem(QTreeWidgetItem *item,QString name)
+{
+    bool show = false;
+    int count = item->childCount();
+    if(count == 0)
+    {
+        show = item->text(0).contains(name);
+    }
+    else
+    {
+        for(int i = 0; i < count; i++)
+        {
+            if(filterItem(item->child(i),name))
+                show = true;
+        }
+    }
+    item->setHidden(!show);
+    return show;
+}
+
+void JZNodePanel::onSearch()
+{
+    QString name = m_lineSearch->text();
+    filterItem(m_tree->invisibleRootItem(),name);
 }

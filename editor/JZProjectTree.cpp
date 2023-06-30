@@ -3,6 +3,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QShortcut>
+#include <QLineEdit>
 #include "JZNodeNewDialog.h"
 
 JZProjectTree::JZProjectTree()

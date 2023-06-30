@@ -103,7 +103,7 @@ bool JZNode::isFlowNode() const
 int JZNode::addProp(const JZNodePin &prop)
 {
     Q_ASSERT(prop.isInput() || prop.isOutput());
-    Q_ASSERT(prop.isFlow() || prop.isParam() || prop.isSubFlow());
+    Q_ASSERT(prop.isFlow() || prop.isParam() || prop.isSubFlow() || prop.isButton());
 
     int max_id = 0;
     for (int i = 0; i < m_propList.size(); i++)
@@ -515,6 +515,18 @@ void JZNode::drag(const QVariant &v)
     Q_UNUSED(v);
 }
 
+bool JZNode::pinClicked(int id)
+{
+    Q_UNUSED(id);
+    return false;
+}
+
+bool JZNode::pinAction(int id)
+{
+    Q_UNUSED(id);
+    return false;
+}
+
 void JZNode::fileInitialized()
 {
 
@@ -625,12 +637,19 @@ JZNodeSequence::JZNodeSequence()
     m_name = "sequence";
     m_type = Node_sequence;
     addFlowIn();
-    addFlowOut("continue");
+    addFlowOut("complete",Prop_dispName);
+
+    addSequeue();
+
+    JZNodePin btn;
+    btn.setName("Add pin");
+    btn.setFlag(Prop_button | Prop_out | Prop_dispName);
+    addProp(btn);           
 }
 
 int JZNodeSequence::addSequeue()
 {
-    return addSubFlowOut("Seqeue " + QString::number(subFlowCount() + 1));
+    return addSubFlowOut("Seqeue " + QString::number(subFlowCount() + 1),Prop_dispName);
 }
 
 void JZNodeSequence::removeSequeue(int id)
@@ -648,6 +667,8 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
 {
     QList<int> breakList;
     QList<int> continueList;
+
+    //设置continue, 最后一个是跳出
     auto list = subFlowList();
     for(int i = 0; i < list.size(); i++)
     {
@@ -657,7 +678,14 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
     }
     continueList.pop_front();
     continueList << c->addJumpNode(flowOut());
+
     c->setBreakContinue({breakList},{continueList});
+    return true;
+}
+
+bool JZNodeSequence::pinClicked(int id)
+{
+    addSequeue();
     return true;
 }
 
@@ -673,8 +701,8 @@ JZNodeFor::JZNodeFor()
     m_type = Node_for;
 
     addFlowIn();
-    addSubFlowOut("loop body");    
-    addFlowOut("complete");
+    addSubFlowOut("loop body",Prop_dispName);
+    addFlowOut("complete",Prop_dispName);
 
     int id_start = addParamIn("First index",Prop_editValue | Prop_dispName | Prop_dispValue);
     int id_end = addParamIn("Last index",Prop_editValue | Prop_dispName | Prop_dispValue);

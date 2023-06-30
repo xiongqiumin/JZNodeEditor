@@ -79,6 +79,18 @@ int JZNodePin::flag() const
     return m_flag;
 }
 
+int JZNodePin::pri() const
+{
+    if(m_flag & Prop_subFlow)
+        return 0;
+    else if(m_flag & Prop_flow)
+        return 1;
+    else if(m_flag & Prop_button)
+        return 3;
+
+    return 2;
+}
+
 bool JZNodePin::isInput() const
 {
     return (m_flag & Prop_in);
@@ -102,6 +114,11 @@ bool JZNodePin::isFlow() const
 bool JZNodePin::isSubFlow() const
 {
     return (m_flag & Prop_subFlow);
+}
+
+bool JZNodePin::isButton() const
+{
+    return (m_flag & Prop_button);
 }
 
 bool JZNodePin::isEditable() const
@@ -142,6 +159,16 @@ QVariant JZNodePin::value() const
 void JZNodePin::setValue(QVariant value)
 {
     m_value = value;
+}
+
+void JZNodePin::addAction(QString action)
+{
+    m_actionList.push_back(action);
+}
+
+QStringList JZNodePin::actionList()
+{
+    return m_actionList;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodePin &param)

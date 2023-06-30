@@ -23,10 +23,10 @@ protected slots:
     void onItemClicked(QTreeWidgetItem *item);
     void onItemDoubleClicked(QTreeWidgetItem *item);
     void onItemRename();
-    void onCurrentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void onCurrentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);    
 
 signals:
-    void sigFileOpened(QString file);
+    void sigFileOpened(QString file);  
 
 protected:    
     void newItem();

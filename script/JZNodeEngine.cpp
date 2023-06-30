@@ -187,7 +187,7 @@ void JZNodeEngine::init()
         if(it.value().dataType < Type_object)
         {            
             if(it.value().value.isNull())
-                m_global[it.key()] = QVariant(JZNodeType::toVariantType(it.value().dataType));
+                m_global[it.key()] = QVariant(JZNodeType::typeToQMeta(it.value().dataType));
             else
                 m_global[it.key()] = it.value().value;
         }
@@ -317,7 +317,7 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
     m_status = Status_running;               
     for (int i = 0; i < in.size(); i++)
     {
-        Q_ASSERT(JZNodeType::canConvert(JZNodeType::variantId(in[i]),func->paramIn[i].dataType));
+        Q_ASSERT(JZNodeType::canConvert(JZNodeType::variantType(in[i]),func->paramIn[i].dataType));
         setReg(Reg_Call + i,in[i]);
     }
 
@@ -566,7 +566,11 @@ void JZNodeEngine::connectScript(QString objName,JZNodeObject *obj,JZNodeScript 
             }
             connect.receiver = obj;
             connect.handle = &handle.function;
-            connect.eventType = handle.type;                                    
+            connect.eventType = handle.type;
+
+            QString recv_name = obj? obj->className() : "none";
+            qDebug() << "event:" << handle.function.name << "sender " << objName << ",recv" << recv_name;
+
             m_connects[connect.sender].push_back(connect);
         }
     }
@@ -825,7 +829,7 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
     for (int i = 0; i < inList.size(); i++)
     {
         paramIn.push_back(getReg(Reg_Call + i));
-        int inType = JZNodeType::variantId(paramIn.back());
+        int inType = JZNodeType::variantType(paramIn.back());
         bool ret = JZNodeType::canConvert(inType,func->paramIn[i].dataType);
         if(!ret)
             throw std::runtime_error("type node match");
@@ -858,8 +862,8 @@ const FunctionDefine *JZNodeEngine::function(QString name)
 
 QVariant JZNodeEngine::dealExpr(QVariant &a,QVariant &b,int op)
 {   
-    int dataType1 = JZNodeType::variantId(a);
-    int dataType2 = JZNodeType::variantId(b);
+    int dataType1 = JZNodeType::variantType(a);
+    int dataType2 = JZNodeType::variantType(b);
     if(dataType1 == Type_string && dataType2 == Type_string)
     {
         QString str_a = a.toString();

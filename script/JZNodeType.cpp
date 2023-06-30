@@ -15,7 +15,7 @@ void JZNodeType::init()
      typeMap["string"] = Type_string;
 }
 
-QString JZNodeType::idToName(int id)
+QString JZNodeType::typeToName(int id)
 {
     if(id < Type_object)
         return typeMap.key(id,QString());
@@ -23,7 +23,15 @@ QString JZNodeType::idToName(int id)
         return JZNodeObjectManager::instance()->getClassName(id);
 }
 
-int JZNodeType::typeidToId(QString name)
+int JZNodeType::nameToType(QString name)
+{
+    if(typeMap.contains(name))
+        return typeMap.value(name,Type_none);
+
+    return JZNodeObjectManager::instance()->getClassId(name);
+}
+
+int JZNodeType::typeidToType(QString name)
 {
     if(name == typeid(QVariant).name())
         return Type_any;
@@ -41,7 +49,7 @@ int JZNodeType::typeidToId(QString name)
         return JZNodeObjectManager::instance()->getClassIdByTypeid(name);
 }
 
-QVariant::Type JZNodeType::toVariantType(int type)
+QVariant::Type JZNodeType::typeToQMeta(int type)
 {
     if(type == Type_bool)
         return QVariant::Bool;
@@ -58,7 +66,7 @@ QVariant::Type JZNodeType::toVariantType(int type)
     return QVariant::Invalid;
 }
 
-int JZNodeType::variantId(const QVariant &v)
+int JZNodeType::variantType(const QVariant &v)
 {
     if(v.type() == QVariant::Bool)
         return Type_bool;
@@ -81,13 +89,6 @@ int JZNodeType::variantId(const QVariant &v)
     return Type_none;
 }
 
-int JZNodeType::nameToId(QString name)
-{
-    if(typeMap.contains(name))
-        return typeMap.value(name,Type_none);
-
-    return JZNodeObjectManager::instance()->getClassId(name);
-}
 
 bool JZNodeType::isNumber(int type)
 {
@@ -127,6 +128,8 @@ bool JZNodeType::canConvert(int type1,int type2)
     if(type1 == type2 || type1 == Type_any || type2 == Type_any)
         return true;
     if(isNumber(type1) && isNumber(type2))
+        return true;
+    if(isNumber(type1) && type2 == Type_bool)
         return true;
 
     if(type1 >= Type_object && type2 >= Type_object)
