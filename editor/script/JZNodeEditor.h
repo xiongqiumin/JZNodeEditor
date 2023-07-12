@@ -1,4 +1,4 @@
-#ifndef JZNODE_EDITOR_H_
+﻿#ifndef JZNODE_EDITOR_H_
 #define JZNODE_EDITOR_H_
 
 #include "JZNodeView.h"

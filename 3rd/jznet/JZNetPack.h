@@ -1,4 +1,4 @@
-#ifndef JZNET_PACK_H_
+﻿#ifndef JZNET_PACK_H_
 #define JZNET_PACK_H_
 
 #include <QByteArray>

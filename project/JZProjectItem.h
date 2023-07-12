@@ -1,4 +1,4 @@
-#ifndef JZPROJECT_ITEM_FILE_H_
+﻿#ifndef JZPROJECT_ITEM_FILE_H_
 #define JZPROJECT_ITEM_FILE_H_
 #include <QSharedPointer>
 

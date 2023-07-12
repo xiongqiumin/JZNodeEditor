@@ -1,4 +1,4 @@
-#ifndef JZPARAM_EDITOR_H_
+﻿#ifndef JZPARAM_EDITOR_H_
 #define JZPARAM_EDITOR_H_
 
 #include "JZEditor.h"

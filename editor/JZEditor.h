@@ -1,4 +1,4 @@
-#ifndef JZ_EDITOR_H_
+﻿#ifndef JZ_EDITOR_H_
 #define JZ_EDITOR_H_
 
 #include <QWidget>

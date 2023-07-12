@@ -1,4 +1,4 @@
-#include "JZNodeObject.h"
+﻿#include "JZNodeObject.h"
 #include <QMetaObject>
 #include "JZNodeBind.h"
 #include <QWidget>

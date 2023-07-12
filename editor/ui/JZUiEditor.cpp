@@ -1,4 +1,4 @@
-#include "JZUiEditor.h"
+﻿#include "JZUiEditor.h"
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QShortcut>

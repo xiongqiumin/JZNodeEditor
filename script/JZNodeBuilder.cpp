@@ -1,4 +1,4 @@
-#include "JZNodeBuilder.h"
+﻿#include "JZNodeBuilder.h"
 #include "JZParamFile.h"
 #include "JZUiFile.h"
 
@@ -12,7 +12,7 @@ JZNodeBuilder::~JZNodeBuilder()
 
 }
 
-const QList<Graph*> &JZNodeBuilder::graphs(QString filename) const
+QList<Graph*> JZNodeBuilder::graphs(QString filename) const
 {
     Q_ASSERT(m_scripts.contains(filename));
     auto &graph_list = m_scripts[filename]->graphs;

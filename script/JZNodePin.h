@@ -1,4 +1,4 @@
-#ifndef JZNODE_PIN_H_
+﻿#ifndef JZNODE_PIN_H_
 #define JZNODE_PIN_H_
 
 #include <QVariant>

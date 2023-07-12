@@ -1,4 +1,4 @@
-#ifndef JZNODE_FUNCTION_MANAGER_H_
+﻿#ifndef JZNODE_FUNCTION_MANAGER_H_
 #define JZNODE_FUNCTION_MANAGER_H_
 
 #include <QMap>

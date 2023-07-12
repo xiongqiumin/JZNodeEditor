@@ -1,4 +1,4 @@
-#include "JZNodeEvent.h"
+﻿#include "JZNodeEvent.h"
 #include "JZEvent.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"

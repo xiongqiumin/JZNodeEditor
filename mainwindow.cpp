@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include <QDebug>
 #include <QFile>
 #include <QElapsedTimer>

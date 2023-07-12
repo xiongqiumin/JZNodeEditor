@@ -1,4 +1,4 @@
-#include "JZEditor.h"
+﻿#include "JZEditor.h"
 
 JZEditor::JZEditor()
 {

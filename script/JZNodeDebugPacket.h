@@ -1,4 +1,4 @@
-#ifndef JZNODE_DEBUG_PACKET_H_
+﻿#ifndef JZNODE_DEBUG_PACKET_H_
 #define JZNODE_DEBUG_PACKET_H_
 
 #include "JZNetPack.h"

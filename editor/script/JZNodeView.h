@@ -1,4 +1,4 @@
-#ifndef JZNODE_VIEW_H_
+﻿#ifndef JZNODE_VIEW_H_
 #define JZNODE_VIEW_H_
 
 #include <QGraphicsView>

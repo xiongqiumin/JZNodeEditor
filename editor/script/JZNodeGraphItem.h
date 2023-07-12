@@ -1,4 +1,4 @@
-#ifndef JZNODE_ITEM_H_
+﻿#ifndef JZNODE_ITEM_H_
 #define JZNODE_ITEM_H_
 
 #include <QGraphicsItem>

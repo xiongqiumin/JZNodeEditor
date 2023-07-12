@@ -1,0 +1,235 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B12702AD-ABFB-343A-A199-8E24837244A3}</ProjectGuid>
+    <Keyword>QtVS_v301</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(QtMsBuild)'=='' or !Exists('$(QtMsBuild)\qt.targets')">
+    <QtMsBuild>$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
+    <Import Project="$(QtMsBuild)\qt_defaults.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="QtSettings">
+    <QtInstall>Qt5.15.2_64</QtInstall>
+    <QtModules>core;gui;widgets;network</QtModules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="QtSettings">
+    <QtInstall>Qt5.6.2</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+  </PropertyGroup>
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
+    <Import Project="$(QtMsBuild)\qt.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <AdditionalIncludeDirectories>3rd\jznet;3rd\qtpropertybrowser;editor;editor\ui;editor\script;project;script;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="editor\JZEditor.cpp" />
+    <ClCompile Include="editor\JZProjectTree.cpp" />
+    <ClCompile Include="editor\script\JZNodeBaseItem.cpp" />
+    <ClCompile Include="editor\script\JZNodeEditor.cpp" />
+    <ClCompile Include="editor\script\JZNodeGraphItem.cpp" />
+    <ClCompile Include="editor\script\JZNodeLineItem.cpp" />
+    <ClCompile Include="editor\script\JZNodeNewDialog.cpp" />
+    <ClCompile Include="editor\script\JZNodePanel.cpp" />
+    <ClCompile Include="editor\script\JZNodePropertyEditor.cpp" />
+    <ClCompile Include="editor\script\JZNodeScene.cpp" />
+    <ClCompile Include="editor\script\JZNodeView.cpp" />
+    <ClCompile Include="editor\script\JZParamEditor.cpp" />
+    <ClCompile Include="editor\ui\JZUiEditor.cpp" />
+    <ClCompile Include="project\JZParamFile.cpp" />
+    <ClCompile Include="project\JZProject.cpp" />
+    <ClCompile Include="project\JZProjectItem.cpp" />
+    <ClCompile Include="project\JZScriptFile.cpp" />
+    <ClCompile Include="project\JZUIFile.cpp" />
+    <ClCompile Include="script\JZEvent.cpp" />
+    <ClCompile Include="script\JZExpression.cpp" />
+    <ClCompile Include="script\JZNode.cpp" />
+    <ClCompile Include="script\JZNodeBind.cpp" />
+    <ClCompile Include="script\JZNodeBuilder.cpp" />
+    <ClCompile Include="script\JZNodeCompiler.cpp" />
+    <ClCompile Include="script\JZNodeDebugClient.cpp" />
+    <ClCompile Include="script\JZNodeDebugPacket.cpp" />
+    <ClCompile Include="script\JZNodeDebugServer.cpp" />
+    <ClCompile Include="script\JZNodeDefine.cpp" />
+    <ClCompile Include="script\JZNodeEngine.cpp" />
+    <ClCompile Include="script\JZNodeEvent.cpp" />
+    <ClCompile Include="script\JZNodeExpression.cpp" />
+    <ClCompile Include="script\JZNodeFactory.cpp" />
+    <ClCompile Include="script\JZNodeFunction.cpp" />
+    <ClCompile Include="script\JZNodeFunctionDefine.cpp" />
+    <ClCompile Include="script\JZNodeFunctionManager.cpp" />
+    <ClCompile Include="script\JZNodeInit.cpp" />
+    <ClCompile Include="script\JZNodeIR.cpp" />
+    <ClCompile Include="script\JZNodeMeta.cpp" />
+    <ClCompile Include="script\JZNodeObject.cpp" />
+    <ClCompile Include="script\JZNodePin.cpp" />
+    <ClCompile Include="script\JZNodeProgram.cpp" />
+    <ClCompile Include="script\JZNodeType.cpp" />
+    <ClCompile Include="script\JZNodeValue.cpp" />
+    <ClCompile Include="script\JZNodeVM.cpp" />
+    <ClCompile Include="tests\test_program.cpp" />
+    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.cpp">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
+    </QtMoc>
+    <ClCompile Include="3rd\jznet\JZNetClient.cpp" />
+    <ClCompile Include="3rd\jznet\JZNetDataManager.cpp" />
+    <ClCompile Include="3rd\jznet\JZNetPack.cpp" />
+    <ClCompile Include="3rd\jznet\JZNetServer.cpp" />
+    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowser.cpp" />
+    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowserutils.cpp" />
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.cpp">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.cpp">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
+    </QtMoc>
+    <ClCompile Include="3rd\qtpropertybrowser\qtvariantproperty.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mainwindow.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="mainwindow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="3rd\jznet\JZNetDataManager.h" />
+    <ClInclude Include="3rd\jznet\JZNetPack.h" />
+    <QtMoc Include="script\JZNodeVM.h" />
+    <QtMoc Include="3rd\qtpropertybrowser\qtvariantproperty.h">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.h">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowser.h">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.h">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowserutils_p.h">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">output</DynamicSource>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.h">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
+    </QtMoc>
+    <ClInclude Include="editor\script\JZNodeBaseItem.h" />
+    <ClInclude Include="editor\script\JZNodeGraphItem.h" />
+    <ClInclude Include="editor\script\JZNodeLineItem.h" />
+    <QtMoc Include="editor\ui\JZUiEditor.h" />
+    <QtMoc Include="editor\script\JZParamEditor.h" />
+    <QtMoc Include="editor\script\JZNodeView.h" />
+    <QtMoc Include="editor\script\JZNodeScene.h" />
+    <QtMoc Include="editor\script\JZNodePropertyEditor.h" />
+    <QtMoc Include="editor\script\JZNodePanel.h" />
+    <QtMoc Include="editor\script\JZNodeNewDialog.h" />
+    <QtMoc Include="editor\script\JZNodeEditor.h" />
+    <QtMoc Include="editor\JZProjectTree.h" />
+    <QtMoc Include="editor\JZEditor.h" />
+    <QtMoc Include="3rd\jznet\JZNetServer.h" />
+    <QtMoc Include="3rd\jznet\JZNetClient.h" />
+    <ClInclude Include="project\JZParamFile.h" />
+    <ClInclude Include="project\JZProject.h" />
+    <ClInclude Include="project\JZProjectItem.h" />
+    <ClInclude Include="project\JZScriptFile.h" />
+    <ClInclude Include="project\JZUiFile.h" />
+    <ClInclude Include="script\JZEvent.h" />
+    <ClInclude Include="script\JZExpression.h" />
+    <ClInclude Include="script\JZNode.h" />
+    <ClInclude Include="script\JZNodeBind.h" />
+    <ClInclude Include="script\JZNodeBuilder.h" />
+    <ClInclude Include="script\JZNodeCompiler.h" />
+    <ClInclude Include="script\JZNodeDebugPacket.h" />
+    <ClInclude Include="script\JZNodeDefine.h" />
+    <ClInclude Include="script\JZNodeEvent.h" />
+    <ClInclude Include="script\JZNodeExpression.h" />
+    <ClInclude Include="script\JZNodeFactory.h" />
+    <ClInclude Include="script\JZNodeFunction.h" />
+    <ClInclude Include="script\JZNodeFunctionDefine.h" />
+    <ClInclude Include="script\JZNodeFunctionManager.h" />
+    <ClInclude Include="script\JZNodeInit.h" />
+    <ClInclude Include="script\JZNodeIR.h" />
+    <ClInclude Include="script\JZNodeMeta.h" />
+    <ClInclude Include="script\JZNodePin.h" />
+    <ClInclude Include="script\JZNodeProgram.h" />
+    <ClInclude Include="script\JZNodeType.h" />
+    <QtMoc Include="script\JZNodeObject.h" />
+    <QtMoc Include="script\JZNodeEngine.h" />
+    <QtMoc Include="script\JZNodeDebugServer.h" />
+    <QtMoc Include="script\JZNodeDebugClient.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
+    <Import Project="$(QtMsBuild)\qt.targets" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

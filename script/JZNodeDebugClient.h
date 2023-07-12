@@ -1,4 +1,4 @@
-#ifndef JZNODE_DEBUG_CLIENT_H_
+﻿#ifndef JZNODE_DEBUG_CLIENT_H_
 #define JZNODE_DEBUG_CLIENT_H_
 
 #include <QObject>

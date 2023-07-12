@@ -1,4 +1,4 @@
-#include "JZEvent.h"
+﻿#include "JZEvent.h"
 
 int JZEvent::Event = registerEventType(JZEvent::Event);
 

@@ -1,4 +1,4 @@
-#ifndef JZNODE_NEW_DIALOG_H_
+﻿#ifndef JZNODE_NEW_DIALOG_H_
 #define JZNODE_NEW_DIALOG_H_
 
 #include <QDialog>

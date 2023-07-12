@@ -1,4 +1,4 @@
-#include <QApplication>
+﻿#include <QApplication>
 #include <QEventLoop>
 #include "mainwindow.h"
 #include "JZNodeInit.h"

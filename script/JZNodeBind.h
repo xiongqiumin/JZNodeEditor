@@ -1,4 +1,4 @@
-#ifndef JZNODE_BIND_H_
+﻿#ifndef JZNODE_BIND_H_
 #define JZNODE_BIND_H_
 
 #include "JZNodeFunctionDefine.h"

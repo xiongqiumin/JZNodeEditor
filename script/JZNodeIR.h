@@ -1,4 +1,4 @@
-#ifndef JZNODE_IR_H_
+﻿#ifndef JZNODE_IR_H_
 #define JZNODE_IR_H_
 
 #include <QStringList>

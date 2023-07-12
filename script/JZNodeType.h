@@ -1,4 +1,4 @@
-#ifndef JZNODE_TYPE_H_
+﻿#ifndef JZNODE_TYPE_H_
 #define JZNODE_TYPE_H_
 
 #include <QVariant>

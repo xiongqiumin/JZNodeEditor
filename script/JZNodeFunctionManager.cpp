@@ -1,4 +1,4 @@
-#include "JZNodeFunctionManager.h"
+﻿#include "JZNodeFunctionManager.h"
 #include "math.h"
 #include "JZNodeBind.h"
 

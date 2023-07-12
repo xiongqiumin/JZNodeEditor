@@ -1,4 +1,4 @@
-#include "JZParamEditor.h"
+﻿#include "JZParamEditor.h"
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QShortcut>

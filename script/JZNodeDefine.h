@@ -1,4 +1,4 @@
-#ifndef JZNODE_DEFINE_H_
+﻿#ifndef JZNODE_DEFINE_H_
 #define JZNODE_DEFINE_H_
 
 #include <QByteArray>

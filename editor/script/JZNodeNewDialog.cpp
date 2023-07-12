@@ -1,4 +1,4 @@
-#include "JZNodeNewDialog.h"
+﻿#include "JZNodeNewDialog.h"
 
 JZNodeNewDialog::JZNodeNewDialog(QWidget *p)
     :QDialog(p)

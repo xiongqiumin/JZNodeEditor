@@ -1,4 +1,4 @@
-#ifndef JZNODE_INIT_H_
+﻿#ifndef JZNODE_INIT_H_
 #define JZNODE_INIT_H_
 
 void JZNodeInit();

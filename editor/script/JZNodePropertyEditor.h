@@ -1,4 +1,4 @@
-#ifndef JZNODE_PROPERTY_EDITOR_H_
+﻿#ifndef JZNODE_PROPERTY_EDITOR_H_
 #define JZNODE_PROPERTY_EDITOR_H_
 
 #include <QWidget>

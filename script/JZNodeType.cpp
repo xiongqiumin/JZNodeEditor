@@ -1,4 +1,4 @@
-#include "JZNodeType.h"
+﻿#include "JZNodeType.h"
 #include <QVariant>
 #include "JZNodeObject.h"
 #include <QMap>

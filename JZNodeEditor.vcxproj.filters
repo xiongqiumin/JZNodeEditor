@@ -1,0 +1,420 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Source Files\tests">
+      <UniqueIdentifier>{5f5d9679-9a0f-413e-89e6-93b7ff016827}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\script">
+      <UniqueIdentifier>{298b8ceb-bb1a-480e-b574-72e6e8e61321}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project">
+      <UniqueIdentifier>{1c6c1ec4-018b-486a-b808-f32f62624166}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\editor">
+      <UniqueIdentifier>{73632d1b-c4e8-4246-9bc5-c6c5167e0c68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rd">
+      <UniqueIdentifier>{0f58cf63-a37e-45a3-b5b8-a72a183c5ab2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rd\qtpropertybrowser">
+      <UniqueIdentifier>{c30fc961-5d0a-4cbd-a7d8-8425d4e58d5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rd\jznet">
+      <UniqueIdentifier>{a2216d2c-506f-41d9-b793-502bece920f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\editor\ui">
+      <UniqueIdentifier>{617ce582-627d-4477-b334-c8854c62745d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\editor\script">
+      <UniqueIdentifier>{19adea3c-6268-4712-9845-84491bd3a63c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\editor">
+      <UniqueIdentifier>{12426bc9-aa4e-4b45-9042-86973e53850c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\script">
+      <UniqueIdentifier>{d076785e-b940-4943-b989-ba8409057d3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\tests">
+      <UniqueIdentifier>{6d5f946d-acae-43d7-9479-9ff1791a6822}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\project">
+      <UniqueIdentifier>{3e67ca44-e463-4e09-b386-8f8e1a1dbf19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rd">
+      <UniqueIdentifier>{5e505082-2461-453b-bd72-2d5e55e7669f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rd\jznet">
+      <UniqueIdentifier>{92ebd816-2213-4124-9cc7-5976d1720738}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rd\qtpropertybrowser">
+      <UniqueIdentifier>{83693c4e-fa9f-4aeb-92cc-eb34b7057216}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\editor\ui">
+      <UniqueIdentifier>{cf7993a2-d5f4-4ad7-aacb-e17f4d33de84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\editor\script">
+      <UniqueIdentifier>{fbafa3ed-a405-4fb0-b2f0-1dd4915af446}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mainwindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowser.cpp">
+      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowserutils.cpp">
+      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\qtpropertybrowser\qtvariantproperty.cpp">
+      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jznet\JZNetClient.cpp">
+      <Filter>Source Files\3rd\jznet</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jznet\JZNetDataManager.cpp">
+      <Filter>Source Files\3rd\jznet</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jznet\JZNetPack.cpp">
+      <Filter>Source Files\3rd\jznet</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jznet\JZNetServer.cpp">
+      <Filter>Source Files\3rd\jznet</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZParamFile.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZProject.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZProjectItem.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZScriptFile.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZUIFile.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZEvent.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZExpression.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNode.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeBind.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeBuilder.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeCompiler.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeDebugClient.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeDebugPacket.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeDebugServer.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeDefine.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeEngine.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeEvent.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeExpression.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeFactory.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeFunction.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeFunctionDefine.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeFunctionManager.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeInit.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeIR.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeMeta.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeObject.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodePin.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeProgram.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeType.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeValue.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeVM.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_program.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\ui\JZUiEditor.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeBaseItem.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeEditor.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeGraphItem.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeLineItem.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeNewDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodePanel.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodePropertyEditor.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeScene.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeView.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZParamEditor.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\JZEditor.cpp">
+      <Filter>Source Files\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\JZProjectTree.cpp">
+      <Filter>Source Files\editor</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="mainwindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.cpp">
+      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.cpp">
+      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.cpp">
+      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="script\JZNodeDebugClient.h">
+      <Filter>Header Files\script</Filter>
+    </QtMoc>
+    <QtMoc Include="script\JZNodeDebugServer.h">
+      <Filter>Header Files\script</Filter>
+    </QtMoc>
+    <QtMoc Include="script\JZNodeEngine.h">
+      <Filter>Header Files\script</Filter>
+    </QtMoc>
+    <QtMoc Include="script\JZNodeObject.h">
+      <Filter>Header Files\script</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jznet\JZNetClient.h">
+      <Filter>Header Files\3rd\jznet</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jznet\JZNetServer.h">
+      <Filter>Header Files\3rd\jznet</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\JZEditor.h">
+      <Filter>Header Files\editor</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\JZProjectTree.h">
+      <Filter>Header Files\editor</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeEditor.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeNewDialog.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodePanel.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodePropertyEditor.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeScene.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeView.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZParamEditor.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\JZUiEditor.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtvariantproperty.h">
+      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.h">
+      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowser.h">
+      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.h">
+      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowserutils_p.h">
+      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.h">
+      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
+    </QtMoc>
+    <QtMoc Include="script\JZNodeVM.h">
+      <Filter>Header Files\script</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="script\JZEvent.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZExpression.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNode.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeBind.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeBuilder.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeCompiler.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeDebugPacket.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeDefine.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeEvent.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeExpression.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeFactory.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeFunction.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeFunctionDefine.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeFunctionManager.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeInit.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeIR.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeMeta.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodePin.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeProgram.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeType.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZParamFile.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZProject.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZProjectItem.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZScriptFile.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZUiFile.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jznet\JZNetDataManager.h">
+      <Filter>Header Files\3rd\jznet</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jznet\JZNetPack.h">
+      <Filter>Header Files\3rd\jznet</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZNodeBaseItem.h">
+      <Filter>Header Files\editor\script</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZNodeGraphItem.h">
+      <Filter>Header Files\editor\script</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZNodeLineItem.h">
+      <Filter>Header Files\editor\script</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

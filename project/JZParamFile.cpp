@@ -1,4 +1,4 @@
-#include "JZParamFile.h"
+﻿#include "JZParamFile.h"
 #include "JZNodeType.h"
 
 //JZScriptParamFile

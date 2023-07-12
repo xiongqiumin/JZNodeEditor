@@ -1,4 +1,4 @@
-#include "JZNodeDebugPacket.h"
+﻿#include "JZNodeDebugPacket.h"
 #include <QDataStream>
 
 //JZNodeDebugPacket

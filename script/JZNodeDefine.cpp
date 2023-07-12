@@ -1,4 +1,4 @@
-#include "JZNodeDefine.h"
+﻿#include "JZNodeDefine.h"
 #include <QDataStream>
 #include "JZNode.h"
 #include "JZNodeExpression.h"

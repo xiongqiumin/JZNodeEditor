@@ -1,4 +1,4 @@
-#ifndef JZ_NODE_BUILDER_H_
+﻿#ifndef JZ_NODE_BUILDER_H_
 #define JZ_NODE_BUILDER_H_
 
 #include "JZNodeCompiler.h"
@@ -11,7 +11,7 @@ public:
     ~JZNodeBuilder();
 
     bool build(JZProject *project,JZNodeProgram *program);
-    const QList<Graph*> &graphs(QString filename) const;
+    QList<Graph*> graphs(QString filename) const;
     QString error() const;
 
 protected:    

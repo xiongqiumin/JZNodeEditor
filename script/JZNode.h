@@ -1,4 +1,4 @@
-#ifndef JZNODE_H_
+﻿#ifndef JZNODE_H_
 #define JZNODE_H_
 
 #include <QDataStream>

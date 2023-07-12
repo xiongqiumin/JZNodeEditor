@@ -1,4 +1,4 @@
-#ifndef JZNODE_FACTORY_H_
+﻿#ifndef JZNODE_FACTORY_H_
 #define JZNODE_FACTORY_H_
 
 #include <QMap>

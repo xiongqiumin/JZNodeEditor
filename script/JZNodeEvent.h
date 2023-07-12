@@ -1,4 +1,4 @@
-#ifndef JZNODE_EVENT_H_
+﻿#ifndef JZNODE_EVENT_H_
 #define JZNODE_EVENT_H_
 
 #include "JZNode.h"

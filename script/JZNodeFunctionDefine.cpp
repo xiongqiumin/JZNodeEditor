@@ -1,4 +1,4 @@
-#include "JZNodeFunctionDefine.h"
+﻿#include "JZNodeFunctionDefine.h"
 
 //CFunction
 CFunction::CFunction()

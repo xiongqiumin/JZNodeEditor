@@ -1,4 +1,4 @@
-#include "JZScriptFile.h"
+﻿#include "JZScriptFile.h"
 #include "JZNodeFactory.h"
 #include "JZNodeFunction.h"
 #include "JZNodeFunctionManager.h"

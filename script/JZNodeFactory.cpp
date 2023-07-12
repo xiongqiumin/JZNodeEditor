@@ -1,4 +1,4 @@
-#include "JZNodeFactory.h"
+﻿#include "JZNodeFactory.h"
 
 template<class T> 
 JZNode *createFunc(){ return new T();}

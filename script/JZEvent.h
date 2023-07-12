@@ -1,4 +1,4 @@
-#ifndef JZEVENT_H_
+﻿#ifndef JZEVENT_H_
 #define JZEVENT_H_
 
 #include <QEvent>

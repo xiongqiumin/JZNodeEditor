@@ -1,4 +1,4 @@
-#include <QPainter>
+﻿#include <QPainter>
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
 #include <QGraphicsProxyWidget>

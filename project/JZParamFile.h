@@ -1,4 +1,4 @@
-#ifndef JZSCRIPT_PARAM_DEFINE_FILE_H_
+﻿#ifndef JZSCRIPT_PARAM_DEFINE_FILE_H_
 #define JZSCRIPT_PARAM_DEFINE_FILE_H_
 
 #include "JZProjectItem.h"

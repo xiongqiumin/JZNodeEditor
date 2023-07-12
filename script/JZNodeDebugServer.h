@@ -1,4 +1,4 @@
-#ifndef JZNODE_DEBUG_SERVER_H_
+﻿#ifndef JZNODE_DEBUG_SERVER_H_
 #define JZNODE_DEBUG_SERVER_H_
 
 #include <QThread>

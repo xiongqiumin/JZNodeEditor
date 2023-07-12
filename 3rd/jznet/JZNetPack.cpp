@@ -1,4 +1,4 @@
-#include "JZNetPack.h"
+﻿#include "JZNetPack.h"
 
 //JZNetPack
 JZNetPack::JZNetPack()	

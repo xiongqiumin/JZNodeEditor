@@ -1,4 +1,4 @@
-#ifndef JZNODE_LINE_H_
+﻿#ifndef JZNODE_LINE_H_
 #define JZNODE_LINE_H_
 
 #include "JZNodeBaseItem.h"

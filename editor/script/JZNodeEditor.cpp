@@ -1,4 +1,4 @@
-#include "JZNodeEditor.h"
+﻿#include "JZNodeEditor.h"
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QShortcut>

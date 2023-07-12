@@ -1,4 +1,4 @@
-#include "JZNodePropertyEditor.h"
+﻿#include "JZNodePropertyEditor.h"
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QLabel>

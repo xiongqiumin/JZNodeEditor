@@ -1,4 +1,4 @@
-#ifndef JZUI_EDITOR_H_
+﻿#ifndef JZUI_EDITOR_H_
 #define JZUI_EDITOR_H_
 
 #include "JZEditor.h"

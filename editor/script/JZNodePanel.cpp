@@ -1,4 +1,4 @@
-#include "JZNodePanel.h"
+﻿#include "JZNodePanel.h"
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QDrag>

@@ -1,4 +1,4 @@
-#include "JZNodeFunction.h"
+﻿#include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
 
 JZNodeFunctionStart::JZNodeFunctionStart()

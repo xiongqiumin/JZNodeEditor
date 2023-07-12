@@ -1,4 +1,4 @@
-#ifndef JZNODE_PANEL_H_
+﻿#ifndef JZNODE_PANEL_H_
 #define JZNODE_PANEL_H_
 
 #include <QWidget>

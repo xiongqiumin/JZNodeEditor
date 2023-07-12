@@ -1,4 +1,4 @@
-#ifndef JZNODE_PROGRAM_H_
+﻿#ifndef JZNODE_PROGRAM_H_
 #define JZNODE_PROGRAM_H_
 
 #include <QThread>

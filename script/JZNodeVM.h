@@ -1,4 +1,4 @@
-#ifndef JZNODE_VM_H_
+﻿#ifndef JZNODE_VM_H_
 #define JZNODE_VM_H_
 
 #include "JZNodeEngine.h"

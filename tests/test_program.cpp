@@ -1,4 +1,4 @@
-#include <QEventLoop>
+﻿#include <QEventLoop>
 #include <QDebug>
 #include "JZProject.h"
 #include "JZNodeCompiler.h"
