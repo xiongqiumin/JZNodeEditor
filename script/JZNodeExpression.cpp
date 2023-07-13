@@ -36,7 +36,7 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
         return false;
         
     auto input_list = paramInList();
-    for(int i = 0; i < input_list.size(); i++)
+    for(int i = 0; i < input_list.size() - 1; i++)
     {
         int in1 = 0;
         if(i == 0)

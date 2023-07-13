@@ -236,10 +236,11 @@ void JZScriptFile::removeConnect(int id)
         auto &line = m_connects[i];
         if (line.id == id)
         {            
-            m_connects.removeAt(i);
-
             JZNode *to = getNode(line.to.nodeId);
-            to->pinUnlinked(line.to.propId);
+            int pin_id = line.to.propId;
+
+            m_connects.removeAt(i);            
+            to->pinUnlinked(pin_id);
             return;
         }
     }

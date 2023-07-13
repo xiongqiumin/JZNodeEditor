@@ -9,6 +9,8 @@
 extern void testBuild();
 int main(int argc, char *argv[])
 {
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
     QApplication a(argc, argv);
     JZNodeInit();    
 
@@ -18,8 +20,8 @@ int main(int argc, char *argv[])
         return 0;
     }
     if(0)
-    {
-        QString program_path = "C:/work/xiong/build-JZNodeEditor-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/build/untitled.program";
+    {        
+        QString program_path = qApp->applicationDirPath() + "/build/untitled.program";
 
         bool build_project = false;
         if(build_project)
@@ -52,7 +54,7 @@ int main(int argc, char *argv[])
         }
 
         JZNodeVM vm;
-        if(!vm.init(program_path,false))
+        if(!vm.init(program_path,true))
         {
             QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed");
             return 1;

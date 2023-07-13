@@ -1,6 +1,7 @@
 ﻿#include "JZNodeDebugServer.h"
 #include "JZNodeDebugPacket.h"
 #include "JZNodeEngine.h"
+#include <QApplication>
 
 JZNodeDebugServer::JZNodeDebugServer()
 {
@@ -39,6 +40,7 @@ void JZNodeDebugServer::stopServer()
 void JZNodeDebugServer::onStop()
 {
     m_server.stopServer();
+    m_server.moveToThread(qApp->thread());
     quit();
 }
 

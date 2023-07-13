@@ -21,8 +21,7 @@ protected slots:
 
 protected:
     virtual void customEvent(QEvent *event);                
-
-    QWidget *m_window;
+    
     JZNodeEngine m_engine;
     JZNodeProgram m_program;
     JZNodeDebugServer m_debugServer;   

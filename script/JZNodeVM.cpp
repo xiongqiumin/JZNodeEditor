@@ -14,16 +14,13 @@ JZNodeVM::JZNodeVM()
 {    
     m_debug = false;
     m_debugServer.setEngine(&m_engine);
-    m_window = nullptr;       
-
+    
     connect(&m_engine,&JZNodeEngine::sigRuntimeError,this,&JZNodeVM::onRuntimeError);
 }
 
 JZNodeVM::~JZNodeVM()
 {
     m_debugServer.stopServer();
-    if(m_window)
-        delete m_window;
 }
 
 bool JZNodeVM::init(QString path,bool debug)
