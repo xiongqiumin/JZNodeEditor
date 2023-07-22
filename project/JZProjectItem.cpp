@@ -2,6 +2,7 @@
 #include "JZScriptFile.h"
 #include "JZUiFile.h"
 #include "JZParamFile.h"
+#include "JZProject.h"
 
 JZProjectItem::JZProjectItem(int itemType)
 {
@@ -23,6 +24,18 @@ void JZProjectItem::setProject(JZProject *project)
 JZProject *JZProjectItem::project() const
 {
     return m_project;
+}
+
+void JZProjectItem::save()
+{
+    if(m_project)
+        m_project->saveItem(this);
+}
+
+void JZProjectItem::load()
+{
+    if(m_project)
+        m_project->loadItem(this);
 }
 
 void JZProjectItem::saveToStream(QDataStream &s)
@@ -140,31 +153,15 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
 QList<JZProjectItem *> JZProjectItem::itemList(int type)
 {
     QList<JZProjectItem *> result;
-    if(this->itemType() == type)
+    if(this->itemType() == type || this->itemType() == ProjectItem_any)
         result << this;
 
     auto chlid = this->childs();
     for(int i = 0; i < chlid.size(); i++)
-        itemList(chlid[i],type,result);
+        result << chlid[i]->itemList(type);
         
     return result;
 }
-
-void JZProjectItem::itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list)
-{
-    if(item->itemType() == ProjectItem_folder)
-    {
-        auto chlid = item->childs();
-        for(int i = 0; i < chlid.size(); i++)
-            itemList(chlid[i],type,list);
-    }
-    else
-    {
-        if(item->itemType() == type)
-            list << item;
-    }
-}
-
 
 //JZProjectItemFolder
 JZProjectItemFolder::JZProjectItemFolder()

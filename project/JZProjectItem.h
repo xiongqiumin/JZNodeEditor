@@ -12,6 +12,9 @@ enum{
     ProjectItem_scriptParamBinding,
     ProjectItem_scriptFlow,    
     ProjectItem_scriptFunction,
+
+
+    ProjectItem_any = 0xFFFF,
 };
 
 class JZProject;
@@ -43,6 +46,8 @@ public:
     QList<JZProjectItem *> childs();
     void removeChlids();
 
+    void save();  //保存到project缓存
+    void load();  //从project缓存加载
     virtual void saveToStream(QDataStream &s);
     virtual void loadFromStream(QDataStream &s);
 
@@ -51,8 +56,6 @@ public:
     
 protected:
     Q_DISABLE_COPY(JZProjectItem)
-
-    void itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list);
 
     JZProjectItem *m_parent;
     QList<QSharedPointer<JZProjectItem>> m_childs;

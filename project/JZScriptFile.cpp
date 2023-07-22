@@ -152,10 +152,10 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
     }
     if((pin_from->isFlow() || pin_from->isSubFlow()) != pin_to->isFlow())
     {
-        if(pin_from->isFlow())
-            error = "流程节点只能连接流程";
-        else
+        if(pin_from->isParam())
             error = "数据节点只能连接数据";
+        else
+            error = "流程节点只能连接流程";
         return false;
     }
 
@@ -182,7 +182,7 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         return false;
     }
     //检测数据类型
-    if(!pin_from->isFlow())
+    if(pin_from->isParam())
     {
         QList<int> form_type = node_from->propType(from.propId);
         QList<int> in_type = node_to->propType(to.propId);

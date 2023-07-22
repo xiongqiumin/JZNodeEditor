@@ -130,7 +130,7 @@ public:
     QList<JZNodeIRPtr> statmentList;
     QList<FunctionDefine> functionList;
     QMap<int,NodeInfo> nodeInfo;
-    QMap<QString,int> localVariable;
+    QList<JZParamDefine> localVariable;
     QList<JZNodeIRParam> watchList;
 
     void saveToStream(QDataStream &s);

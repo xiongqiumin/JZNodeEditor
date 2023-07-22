@@ -24,9 +24,10 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 
 bool JZNodeOperator::pinClicked(int id)
 {
-    Q_UNUSED(id);
+    Q_UNUSED(id);        
     int in = addParamIn("",Prop_editValue | Prop_dispValue);
     prop(in)->setValue(0);
+    prop(in)->setDataType(prop(paramIn(0))->dataType());
     return true;
 }
 

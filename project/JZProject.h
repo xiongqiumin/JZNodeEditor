@@ -16,12 +16,11 @@ public:
     ~JZProject();
 
     void initUi();
-    void initConsole();
+    void initConsole();       
 
     bool open(QString filepath);
     bool save();    
-    bool saveAs(QString filepath);
-    void saveItem(JZProjectItem *item);
+    bool saveAs(QString filepath);    
 
     QString name();
     QString mainScript();       
@@ -46,9 +45,12 @@ public:
     
     int addItem(QString dir,JZProjectItem *item);
     void removeItem(QString path);
+    JZProjectItem *getItem(QString path);
+    void saveItem(JZProjectItem *item);
+    void loadItem(JZProjectItem *item);
+    void saveAllItem();
     int renameItem(JZProjectItem *item,QString newname);
-    QList<JZProjectItem *> itemList(QString path,int type);
-    JZProjectItem *getItem(QString path);    
+    QList<JZProjectItem *> itemList(QString path,int type);    
     JZProjectItem *root();
 
     bool hasBreakPoint(QString file,int id);
@@ -69,8 +71,8 @@ protected:
     void registType();
     QString dir(const QString &filepath);
             
-    QMap<QString,QByteArray> m_itemBuffer;
-    JZProjectItemFolder m_root;    
+    JZProjectItemFolder m_root;
+    QMap<QString,QByteArray> m_itemBuffer;    
     QMap<QString,QVector<int>> m_breakPoints;
     QString m_filepath;
 };

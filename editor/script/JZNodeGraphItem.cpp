@@ -28,6 +28,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     m_breakPoint = false;
     m_pinButtonOn = false;
 
+    setOpacity(0.9);
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);

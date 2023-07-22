@@ -5,8 +5,8 @@
 #include <QMap>
 #include <QMutex>
 #include <QThread>
-#include <QSemaphore>
 #include <QException>
+#include <QWaitCondition>
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeFunctionManager.h"
@@ -35,11 +35,16 @@ public:
     ~Stack();
 
     void clear();
-    int size();
+    int size() const;
+    bool isEmpty() const;
 
     RunnerEnv &env();
     void pop();
     void push();
+
+    QVariant *getVariableRef(QString name);
+    QVariant getVariable(const QString &name);
+    void setVariable(const QString &name, const QVariant &value);
 
     QVariant getVariable(int id);
     void setVariable(int id, const QVariant &value);
@@ -48,7 +53,12 @@ public:
     void setVariable(int level,int id, const QVariant &value);
 
 public:
-    QList<QMap<int,QVariant>> m_stack;    
+    struct StackVariant{
+        QVariantMap locals;
+        QMap<int,QVariant> stacks;
+    };
+
+    QList<StackVariant> m_stack;    
     QList<RunnerEnv> m_env;
 };
 
@@ -151,6 +161,13 @@ signals:
     void sigRuntimeError(JZNodeRuntimeError error);
 
 protected:
+    enum{
+        Command_none,
+        Command_pause,
+        Command_resume,
+        Command_stop,
+    };
+
     class JZObjectConnect
     {
     public:        
@@ -172,6 +189,8 @@ protected:
         FunctionDefine *handle;
     };
 
+    void clear();
+    bool checkPauseStop();  //return is stop
     bool run();         
 
     const FunctionDefine *function(QString name);       
@@ -181,7 +200,7 @@ protected:
     void pushStack(const FunctionDefine *define);
     void popStack();
     int indexOfBreakPoint(QString filepath,int nodeId);
-    void waitStatus(int status);
+    void waitCommand();
     
     QString variableToString(const QVariant &v);
     QVariant getParam(const JZNodeIRParam &param);
@@ -224,7 +243,7 @@ protected:
     int m_statusCommand;
     int m_status;     
     QMutex m_mutex;    
-    QSemaphore m_waitCond;
+    QWaitCondition m_waitCond;
 
     QMap<JZNodeObject*,QList<JZObjectConnect>> m_connects;
     QList<ParamChangeEvent> m_paramChangeHandle;

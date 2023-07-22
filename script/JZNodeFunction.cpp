@@ -14,6 +14,7 @@ JZNodeFunctionStart::~JZNodeFunctionStart()
 
 bool JZNodeFunctionStart::compiler(JZNodeCompiler *c,QString &error)
 {
+    c->addFunctionStart();
     c->addFlowOutput(m_id);
     c->addJumpNode(flowOut());
     return true;

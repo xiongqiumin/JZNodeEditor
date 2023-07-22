@@ -124,13 +124,8 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
                 continue;
 
             m_script->localVariable.clear();
-            FunctionDefine define = scriptFile->function();
-            for(int i = 0; i < define.paramIn.size(); i++)
-            {
-                QString name = define.paramIn[i].name;
-                m_script->localVariable[name] = (Stack_User + i);
-            }
-            m_stackId = Stack_User + define.paramIn.size();
+            FunctionDefine define = scriptFile->function();            
+            m_stackId = Stack_User;
             ret = bulidControlFlow(graph);
             if(ret)
             {                
@@ -224,21 +219,6 @@ void JZNodeCompiler::popCompilerNode()
 QString JZNodeCompiler::error()
 {
     return m_error;
-}
-
-JZNodeIRParam JZNodeCompiler::localVariable(JZNodeIRParam param)
-{
-    QString name = param.ref();
-    if(!param.ref().contains("."))
-    {
-        Q_ASSERT(m_script->localVariable.contains(name));
-        return irId(m_script->localVariable[name]);
-    }
-    
-    QStringList list = name.split(".");
-    Q_ASSERT(m_script->localVariable.contains(list[0]));
-    list[0] = QString::number(m_script->localVariable[list[0]]);
-    return irRef(list.join("."));
 }
 
 void JZNodeCompiler::connectGraph(Graph *graph,JZNode *node)
@@ -839,6 +819,25 @@ void JZNodeCompiler::addFlowOutput(int nodeId)
             }
         }
         it_out++;
+    }
+}
+
+void JZNodeCompiler::addFunctionStart()
+{
+    auto define = m_scriptFile->function();
+    for(int i = 0; i < define.paramIn.size(); i++)
+    {
+        JZNodeIRAlloc *alloc = new JZNodeIRAlloc();
+        alloc->allocType = JZNodeIRAlloc::Stack;
+        alloc->name = define.paramIn[i].name;
+        alloc->dataType = define.paramIn[i].dataType;
+        alloc->value = QVariant();
+        addStatement(JZNodeIRPtr(alloc));
+    }
+
+    for(int i = 0; i < define.paramIn.size(); i++)
+    {
+        addSetVariable(irRef(define.paramIn[i].name),irId(Reg_Call + i));
     }
 }
 

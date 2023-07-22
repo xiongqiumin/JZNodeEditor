@@ -35,7 +35,7 @@ public:
     bool addFlowInput(int nodeId,QString &error);
     bool addDataInput(int nodeId,QString &error);
     void addFlowOutput(int nodeId);        
-    JZNodeIRParam localVariable(JZNodeIRParam param);
+    void addFunctionStart();
     int addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addSetVariable(JZNodeIRParam dst,JZNodeIRParam src);

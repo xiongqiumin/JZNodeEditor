@@ -19,7 +19,7 @@ public:
     bool isConnect();
 
     JZNodeRuntimeInfo runtimeInfo();
-    int addBreakPoint(QString file,int nodeId);
+    void addBreakPoint(QString file,int nodeId);
     void removeBreakPoint(QString file,int nodeId);
     void clearBreakPoint();    
     QVariant getVariable(QString name);

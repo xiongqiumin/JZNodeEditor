@@ -6,7 +6,7 @@
 #include <QMessageBox>
 #include <QCommandLineParser>
 
-extern void testBuild();
+extern void test_script();
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     if(0)
     {
-        testBuild();
+        test_script();
         return 0;
     }
     if(0)

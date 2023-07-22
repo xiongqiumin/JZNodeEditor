@@ -37,15 +37,11 @@ JZNodeRuntimeInfo JZNodeDebugClient::runtimeInfo()
     return info;
 }
 
-int JZNodeDebugClient::addBreakPoint(QString file,int nodeId)
+void JZNodeDebugClient::addBreakPoint(QString file,int nodeId)
 {
-    int id = -1;
     QVariantList params,result;
     params << file << nodeId;
-    if(sendCommand(Cmd_addBreakPoint,params,result))
-        id = result[0].toInt();
-
-    return id;
+    sendCommand(Cmd_addBreakPoint,params,result);
 }
 
 void JZNodeDebugClient::removeBreakPoint(QString file,int nodeId)

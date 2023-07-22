@@ -538,6 +538,15 @@ QString JZNodeProgram::dump()
                     line += "NOP";
                     break;
                 }
+                case OP_alloc:
+                {
+                    JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
+                    if(ir_alloc->allocType == JZNodeIRAlloc::Heap)
+                        line += "Heap " + ir_alloc->name;
+                    else
+                        line += "Stack " + ir_alloc->name;
+                    break;
+                }
                 case OP_set:
                 {
                     JZNodeIRSet *ir_set = (JZNodeIRSet*)op;

@@ -10,7 +10,7 @@ JZNodeLineItem::JZNodeLineItem(JZNodeGemo from)
     m_from = from;
     m_drag = false;
     setFlag(QGraphicsItem::ItemIsSelectable);
-    setZValue(1);
+    setZValue(-1);
 }
 
 JZNodeLineItem::~JZNodeLineItem()

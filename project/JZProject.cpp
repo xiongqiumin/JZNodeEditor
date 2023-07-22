@@ -110,6 +110,9 @@ void JZProject::initUi()
 
     main_script->addConnect(set_param->flowOutGemo(0),func_show->flowInGemo());
     main_script->addConnect(set_param->paramOutGemo(0),func_show->paramInGemo(0));
+
+    saveItem(param_def);
+    saveItem(main_script);
 }
 
 void JZProject::initConsole()
@@ -167,9 +170,28 @@ bool JZProject::saveAs(QString filepath)
     return true;
 }
 
+void JZProject::saveAllItem()
+{
+    QList<JZProjectItem*> list = itemList("./",ProjectItem_any);
+    for(int i = 0; i < list.size(); i++)
+        saveItem(list[i]);
+}
+
 void JZProject::saveItem(JZProjectItem *item)
 {
+    if(item->itemPath() == ".")
+        return;
+
     m_itemBuffer[item->itemPath()] = JZProjectItemFactory::save(item);
+}
+
+void JZProject::loadItem(JZProjectItem *item)
+{
+    QByteArray &buffer = m_itemBuffer[item->itemPath()];
+    QDataStream s(buffer);
+    int itemType;
+    s >> itemType;
+    item->loadFromStream(s);
 }
 
 QString JZProject::name()
@@ -289,7 +311,7 @@ JZScriptFile *JZProject::addFunction(const FunctionDefine &define)
 
     JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
     file->setName(define.name);
-    m_root.addItem(JZProjectItemPtr(file));
+    addItem("./",file);
     file->setFunction(define);
     return file;
 }

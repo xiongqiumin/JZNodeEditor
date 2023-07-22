@@ -11,12 +11,22 @@ enum
 {
     OP_none,
     OP_nodeId,
-    OP_nop,
+    OP_nop,        
+    OP_alloc,
+    OP_set,    
+    OP_get,    
+    OP_getRef,
+    OP_jmp,
+    OP_je,
+    OP_jne,  
+    OP_call,     
+    OP_return, 
+    OP_exit,    
     OP_add,
     OP_sub,
     OP_mul,
     OP_div,
-    OP_mod,    
+    OP_mod,
     OP_eq,  // ==
     OP_ne,  // !=
     OP_le,  // <=
@@ -28,15 +38,6 @@ enum
     OP_bitand,
     OP_bitor,
     OP_bitxor,
-    OP_set,    
-    OP_get,    
-    OP_getRef,
-    OP_jmp,
-    OP_je,
-    OP_jne,  
-    OP_call,     
-    OP_return, 
-    OP_exit,    
 };
 
 class JZNodeIRParam
@@ -97,6 +98,27 @@ public:
     virtual void loadFromStream(QDataStream &s);     
 
     int id;   
+};
+
+class JZNodeIRAlloc : public JZNodeIR
+{
+public:
+    enum{
+        None,
+        Heap,
+        Stack,
+    };
+
+    JZNodeIRAlloc();
+    virtual ~JZNodeIRAlloc();
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
+
+    QString name;
+    int dataType;
+    QVariant value;
+    int allocType;
 };
 
 class JZNodeIRExpr : public JZNodeIR

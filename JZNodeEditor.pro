@@ -1,4 +1,4 @@
-QT       += core gui network uitools
+QT       += core gui network uitools testlib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

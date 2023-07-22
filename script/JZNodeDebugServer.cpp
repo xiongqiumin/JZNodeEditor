@@ -17,8 +17,8 @@ JZNodeDebugServer::JZNodeDebugServer()
 }
 
 JZNodeDebugServer::~JZNodeDebugServer()
-{
-    
+{    
+    stopServer();
 }
 
 bool JZNodeDebugServer::startServer(int port)
@@ -32,7 +32,10 @@ bool JZNodeDebugServer::startServer(int port)
 }
 
 void JZNodeDebugServer::stopServer()
-{    
+{
+    if(!isRunning())
+        return;
+
     emit sigStop(QPrivateSignal());
     wait();
 } 

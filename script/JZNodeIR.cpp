@@ -1,4 +1,5 @@
 ﻿#include "JZNodeIR.h"
+#include "JZNodeType.h"
 
 //JZNodeIRParam
 JZNodeIRParam::JZNodeIRParam()
@@ -95,6 +96,8 @@ JZNodeIR *createNodeIR(int type)
     case OP_return:
     case OP_exit:
         return new JZNodeIR(type);
+    case OP_alloc:
+        return new JZNodeIRAlloc();
     case OP_add:
     case OP_sub:
     case OP_mul:
@@ -188,6 +191,35 @@ void JZNodeIRNodeId::loadFromStream(QDataStream &s)
     JZNodeIR::loadFromStream(s);
     s >> id;
 }
+
+//JZNodeIRAlloc
+JZNodeIRAlloc::JZNodeIRAlloc()
+{
+    type = OP_alloc;
+    dataType = Type_none;
+    allocType = None;
+}
+
+JZNodeIRAlloc::~JZNodeIRAlloc()
+{
+
+}
+
+void JZNodeIRAlloc::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << name << dataType << allocType;
+}
+
+void JZNodeIRAlloc::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> name >> dataType >> allocType;
+}
+
+QString name;
+int dataType;
+int allocType;
 
 //JZNodeIRExpr
 JZNodeIRExpr::JZNodeIRExpr(int type)
