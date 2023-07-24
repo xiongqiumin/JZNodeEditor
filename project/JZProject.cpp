@@ -42,6 +42,21 @@ QByteArray ProjectMagic()
     return result;
 }
 
+
+QDataStream &operator<<(QDataStream &s, const JZProject::ItemInfo &param)
+{
+    s << param.buffer;
+    s << param.breakPoints;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZProject::ItemInfo &param)
+{
+    s >> param.buffer;
+    s >> param.breakPoints;
+    return s;
+}
+
 // JZProject
 JZProject::JZProject()    
 {        
@@ -51,12 +66,18 @@ JZProject::~JZProject()
 {
 }
 
+bool JZProject::isVaild()
+{
+    return !m_filepath.isEmpty();
+}
+
 void JZProject::clear()
 {
     m_itemBuffer.clear();
     m_filepath.clear();
     m_root.removeChlids();
     m_root.setName(".");
+    m_filepath.clear();
 }
 
 void JZProject::init()
@@ -94,9 +115,10 @@ void JZProject::initUi()
     JZNodeSetParam *set_param = new JZNodeSetParam();    
     JZNodeCreate *create = new JZNodeCreate();    
     JZNodeFunction *func_show = new JZNodeFunction();
-    main_script->addNode(JZNodePtr(create));
-    main_script->addNode(JZNodePtr(set_param));
-    main_script->addNode(JZNodePtr(func_show));
+    int node_start = main_script->nodeList()[0];
+    int node_create = main_script->addNode(JZNodePtr(create));
+    int node_set = main_script->addNode(JZNodePtr(set_param));
+    int node_show = main_script->addNode(JZNodePtr(func_show));
 
     set_param->setVariable("mainwindow");
     create->setClassName("mainwindow");
@@ -110,6 +132,11 @@ void JZProject::initUi()
 
     main_script->addConnect(set_param->flowOutGemo(0),func_show->flowInGemo());
     main_script->addConnect(set_param->paramOutGemo(0),func_show->paramInGemo(0));
+
+    main_script->setNodePos(node_start, QPointF(0, 0));
+    main_script->setNodePos(node_create, QPointF(150, 0));
+    main_script->setNodePos(node_set, QPointF(480, 0));
+    main_script->setNodePos(node_show, QPointF(730, 0));
 
     saveItem(param_def);
     saveItem(main_script);
@@ -143,12 +170,18 @@ bool JZProject::open(QString filepath)
         return false;
 
     clear();
+    m_filepath = filepath;
     QDataStream s(&file);
     loadFromStream(s);
     file.close();
 
-    registType();
+    registType();    
     return true;
+}
+
+void JZProject::close()
+{
+    clear();    
 }
 
 bool JZProject::save()
@@ -177,17 +210,24 @@ void JZProject::saveAllItem()
         saveItem(list[i]);
 }
 
+void JZProject::saveItem(QString path)
+{
+    auto item = getItem(path);
+    Q_ASSERT(item);
+    saveItem(item);
+}
+
 void JZProject::saveItem(JZProjectItem *item)
 {
     if(item->itemPath() == ".")
         return;
 
-    m_itemBuffer[item->itemPath()] = JZProjectItemFactory::save(item);
+    m_itemBuffer[item->itemPath()].buffer = JZProjectItemFactory::save(item);
 }
 
 void JZProject::loadItem(JZProjectItem *item)
 {
-    QByteArray &buffer = m_itemBuffer[item->itemPath()];
+    QByteArray &buffer = m_itemBuffer[item->itemPath()].buffer;
     QDataStream s(buffer);
     int itemType;
     s >> itemType;
@@ -195,12 +235,20 @@ void JZProject::loadItem(JZProjectItem *item)
 }
 
 QString JZProject::name()
-{
-    if(m_filepath.isEmpty())
-        return "untitled";
-
+{    
     QFileInfo info(m_filepath);
     return info.baseName();
+}
+
+QString JZProject::filePath()
+{
+    return m_filepath;
+}
+
+QString JZProject::path()
+{
+    QFileInfo info(m_filepath);
+    return info.path();
 }
 
 QString JZProject::mainScript()
@@ -225,7 +273,7 @@ int JZProject::addItem(QString dir,JZProjectItem *item)
     parent->addItem(JZProjectItemPtr(item));
     item->parent()->sort();
 
-    m_itemBuffer[item->itemPath()] = JZProjectItemFactory::save(item);
+    m_itemBuffer[item->itemPath()].buffer = JZProjectItemFactory::save(item);
     return item->parent()->indexOfItem(item);
 }
 
@@ -245,7 +293,7 @@ void JZProject::removeItem(QString filepath)
             it = m_itemBuffer.erase(it);
         else
             it++;
-    }
+    }    
 }
 
 int JZProject::renameItem(JZProjectItem *item,QString newname)
@@ -276,13 +324,12 @@ int JZProject::renameItem(JZProjectItem *item,QString newname)
         }
         it++;
     }
-
     for(int i = 0; i < renameList.size(); i++)
     {
         auto &p = renameList[i];
         m_itemBuffer[p.first] = m_itemBuffer[p.second];
         m_itemBuffer.remove(p.second);
-    }
+    }    
 
     return item->parent()->indexOfItem(item);
 }
@@ -507,11 +554,11 @@ QString JZProject::dir(const QString &filepath)
 
 bool JZProject::hasBreakPoint(QString file,int id)
 {
-    auto it = m_breakPoints.find(file);
-    if(it == m_breakPoints.end())
+    auto it = m_itemBuffer.find(file);
+    if(it == m_itemBuffer.end())
         return false;
 
-    return it->contains(id);
+    return it->breakPoints.contains(id);
 }
 
 void JZProject::addBreakPoint(QString file,int id)
@@ -519,29 +566,33 @@ void JZProject::addBreakPoint(QString file,int id)
     if(hasBreakPoint(file,id))
         return;
 
-    m_breakPoints[file].push_back(id);
+    m_itemBuffer[file].breakPoints.push_back(id);
 }
 
 void JZProject::removeBreakPoint(QString file,int id)
 {
-    auto it = m_breakPoints.find(file);
-    if(it == m_breakPoints.end())
+    auto it = m_itemBuffer.find(file);
+    if(it == m_itemBuffer.end())
         return;
 
-    it->removeAll(id);
-    if(it->size() == 0)
-        m_breakPoints.erase(it);
+    it->breakPoints.removeAll(id);
 }
 
-QVector<int> JZProject::breakPoints(QString file)
+QMap<QString, QVector<int>> JZProject::breakPoints()
 {
-    return m_breakPoints.value(file,QVector<int>());
+    QMap<QString, QVector<int>> breakPoints;
+    auto it = m_itemBuffer.begin();
+    while (it != m_itemBuffer.end())
+    {
+        breakPoints.insert(it.key(), it->breakPoints);
+        it++;
+    }
+    return breakPoints;
 }
 
 void JZProject::saveToStream(QDataStream &s)
 {
     s << m_itemBuffer;
-    s << m_breakPoints;
 }
 
 void JZProject::loadFromStream(QDataStream &s)
@@ -552,7 +603,7 @@ void JZProject::loadFromStream(QDataStream &s)
     auto it = m_itemBuffer.begin();
     while(it != m_itemBuffer.end())
     {
-        itemMap[it.key()] = JZProjectItemFactory::load(it.value());
+        itemMap[it.key()] = JZProjectItemFactory::load(it->buffer);
         it++;
     }
 
@@ -562,5 +613,4 @@ void JZProject::loadFromStream(QDataStream &s)
         addItem(dir(it_item.key()),it_item.value());
         it_item++;
     }
-    s >> m_breakPoints;
 }

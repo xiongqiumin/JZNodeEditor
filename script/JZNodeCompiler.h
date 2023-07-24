@@ -26,26 +26,29 @@ public:
     bool genGraphs(JZScriptFile *file,JZNodeScript *result);
     bool build(JZScriptFile *file,JZNodeScript *result);
 
+    bool checkVariableExist(QString var, QString &error);
+    bool checkVariableType(QString var, QString className, QString &error);
+
     int allocStack();
     void freeStack(int id);
-
-    bool checkVariableExist(QString var,QString &error);
-    bool checkVariableType(QString var,QString className,QString &error);
+    void allocLocalVariable(QString var); //如果有需要申请本地变量
+    void allocFunctionVariable();    
 
     bool addFlowInput(int nodeId,QString &error);
     bool addDataInput(int nodeId,QString &error);
-    void addFlowOutput(int nodeId);        
-    void addFunctionStart();
+    void addFlowOutput(int nodeId);            
     int addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addSetVariable(JZNodeIRParam dst,JZNodeIRParam src);
     int addStatement(JZNodeIRPtr ir);    
-    int addJumpNode(int prop);
-    int addJumpSubNode(int prop);
+    int addJumpNode(int prop);      //设置下一个flow,应当在执行完操作后增加
+    int addJumpSubNode(int prop);   //设置下一个sub flow
     int addContinue();
     int addBreak();
     int addReturn();
     void addCall(JZNodeIRParam function,QList<JZNodeIRParam> paramIn,QList<JZNodeIRParam> paramOut);
+    void addAllocLocal(JZParamDefine *def);
+
     void setBreakContinue(QList<int> breakPc,QList<int> continuePC);    
     void replaceStatement(int pc,JZNodeIRPtr ir);
     

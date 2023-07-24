@@ -19,6 +19,7 @@ JZNodeLineItem::~JZNodeLineItem()
 
 void JZNodeLineItem::setDrag(bool flag)
 {
+    setZValue(-1);
     prepareGeometryChange();
     m_drag = flag;
 }    

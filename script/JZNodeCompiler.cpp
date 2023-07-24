@@ -87,9 +87,10 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
         return false;
     if(!checkGraphs())
         return false;
-
+    
     m_script->file = scriptFile->itemPath();
     m_script->nodeInfo.clear();
+    m_script->localVariable.clear();
 
     auto node_list = m_scriptFile->nodeList();
     for (int i = 0; i < node_list.size(); i++)
@@ -122,8 +123,7 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
             JZNode *start_node = graph->topolist[0]->node;
             if(start_node->type() != Node_functionStart)
                 continue;
-
-            m_script->localVariable.clear();
+            
             FunctionDefine define = scriptFile->function();            
             m_stackId = Stack_User;
             ret = bulidControlFlow(graph);
@@ -144,8 +144,7 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
         NodeInfo info;
         info.node_id = it->node_id;
         info.node_type = it->node_type;
-        info.start = it->start;
-        info.end = it->end;
+        info.isFlow = scriptFile->getNode(info.node_id)->isFlowNode();
         info.error = it->error;
         m_script->nodeInfo[it.key()] = info;
 
@@ -482,31 +481,7 @@ bool JZNodeCompiler::buildParamBinding(Graph *graph)
 }
 
 void JZNodeCompiler::buildWatchInfo(Graph *graph)
-{
-    auto graph_list = m_currentGraph->topolist;
-    for(int node_idx = 0; node_idx < graph_list.size(); node_idx++)
-    {
-       auto node = graph_list[node_idx];
-       auto it = node->paramOut.begin();
-       while(it != node->paramOut.end())
-       {
-           auto pin = graph_list[node_idx]->node->prop(it.key());
-           if(pin->isParam())
-           {
-                auto &out_list = it.value();
-                for(int i = 0; i < out_list.size(); i++)
-                {
-                    auto node = m_scriptFile->getNode(out_list[i].nodeId);
-                    if(node->type() == Node_print)
-                    {
-                        m_script->watchList.push_back(JZNodeIRParam());
-                    }
-
-                }
-           }
-           it++;
-       }
-    }
+{    
 }
 
 void JZNodeCompiler::replaceSubNode(int id,int parent_id,int flow_index)
@@ -561,8 +536,7 @@ void JZNodeCompiler::replaceSubNode(int id,int parent_id,int flow_index)
 int JZNodeCompiler::addStatement(JZNodeIRPtr ir)
 {   
     Q_ASSERT(ir->pc == -1);
-    ir->pc = m_script->statmentList.size();
-    ir->nodeId = m_currentNode->id();
+    ir->pc = m_script->statmentList.size();    
     m_script->statmentList.push_back(ir);
     return ir->pc;
 }
@@ -822,17 +796,42 @@ void JZNodeCompiler::addFlowOutput(int nodeId)
     }
 }
 
-void JZNodeCompiler::addFunctionStart()
+void JZNodeCompiler::addAllocLocal(JZParamDefine *def)
+{
+    JZNodeIRAlloc *alloc = new JZNodeIRAlloc();
+    alloc->allocType = JZNodeIRAlloc::Stack;
+    alloc->name = def->name;
+    alloc->dataType = def->dataType;
+    if (def->value.isValid())
+        alloc->value = def->value;
+    else if (JZNodeType::isBaseType(def->dataType))
+        alloc->value = QVariant(JZNodeType::typeToQMeta(def->dataType));
+    addStatement(JZNodeIRPtr(alloc));
+}
+
+void JZNodeCompiler::allocLocalVariable(QString var)
+{
+    auto info = m_scriptFile->localVariableInfo(var);
+    if (!info)
+        return;
+
+    for (int i = 0; i < m_script->localVariable.size(); i++)
+    {
+        if (m_script->localVariable[i].name == var)
+            return;
+    }
+
+    addAllocLocal(info);
+    m_script->localVariable.push_back(*info);
+}
+
+void JZNodeCompiler::allocFunctionVariable()
 {
     auto define = m_scriptFile->function();
     for(int i = 0; i < define.paramIn.size(); i++)
     {
-        JZNodeIRAlloc *alloc = new JZNodeIRAlloc();
-        alloc->allocType = JZNodeIRAlloc::Stack;
-        alloc->name = define.paramIn[i].name;
-        alloc->dataType = define.paramIn[i].dataType;
-        alloc->value = QVariant();
-        addStatement(JZNodeIRPtr(alloc));
+        addAllocLocal(&define.paramIn[i]);
+        m_script->localVariable.push_back(define.paramIn[i]);
     }
 
     for(int i = 0; i < define.paramIn.size(); i++)

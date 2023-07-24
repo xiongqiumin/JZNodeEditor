@@ -53,7 +53,8 @@ QString JZClassName(int id)
 
 void JZNodeDisp(const QVariant &v)
 {
-    qDebug() << v;
+    QString str = JZNodeType::toString(v);
+    JZScriptLog(str);    
 }
 
 QVariant CreateJZObject(QString name)
@@ -572,10 +573,10 @@ void JZNodeObjectManager::initFunctions()
     JZNodeFunctionManager::instance()->registCFunction("typename",false,jzbind::createFuncion(JObjectTypename));
     JZNodeFunctionManager::instance()->registCFunction("print",true,jzbind::createFuncion(JZNodeDisp));
 
-    JZNodeFunctionManager::instance()->registCFunction("toString",true,jzbind::createFuncion(toString));
-    JZNodeFunctionManager::instance()->registCFunction("toBool",true,jzbind::createFuncion(toBool));
-    JZNodeFunctionManager::instance()->registCFunction("toInt",true,jzbind::createFuncion(toInt));
-    JZNodeFunctionManager::instance()->registCFunction("toDouble",true,jzbind::createFuncion(toDouble));
+    JZNodeFunctionManager::instance()->registCFunction("toString", false,jzbind::createFuncion(toString));
+    JZNodeFunctionManager::instance()->registCFunction("toBool", false,jzbind::createFuncion(toBool));
+    JZNodeFunctionManager::instance()->registCFunction("toInt", false,jzbind::createFuncion(toInt));
+    JZNodeFunctionManager::instance()->registCFunction("toDouble", false,jzbind::createFuncion(toDouble));
 }
 
 void JZNodeObjectManager::initCore()

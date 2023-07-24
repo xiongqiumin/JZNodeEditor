@@ -98,6 +98,7 @@ JZNodeObject* toJZObject(const QVariant &v);
 int JZClassId(const QString &name);
 QString JZClassName(int id);
 void JZObjectEvent(JZEvent *event);
+void JZScriptLog(const QString &name);
 
 class JZNodeObjectManager
 {

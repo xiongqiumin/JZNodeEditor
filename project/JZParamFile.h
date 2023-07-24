@@ -17,10 +17,12 @@ public:
 
     void addVariable(QString name,int type,QVariant = QVariant());
     void removeVariable(QString name);
+    void renameVariable(QString oldName,QString newName);
+    void setVariableType(QString name,int dataType);
 
     JZParamDefine *getVariable(QString name);
     QStringList variableList();
-    QMap<QString,JZParamDefine> variables();
+    const QMap<QString,JZParamDefine> &variables();
 
 protected:
     QMap<QString,JZParamDefine> m_variables;

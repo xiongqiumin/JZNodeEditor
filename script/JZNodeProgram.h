@@ -107,8 +107,7 @@ struct NodeInfo
     
     int node_id;
     int node_type;
-    int start;
-    int end;
+    bool isFlow;   
     QString error;
 };
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
@@ -160,8 +159,9 @@ public:
     QList<JZEventHandle*> eventList() const;
 
     QList<JZNodeObjectDefine> objectDefines();
-    QMap<QString,JZParamDefine> variables();    
-    QString dump();            
+    QMap<QString,JZParamDefine> variables();        
+    QString dump();   
+    QString error();
     
 protected:
     Q_DISABLE_COPY(JZNodeProgram);
@@ -173,7 +173,8 @@ protected:
     QMap<QString,JZNodeScriptPtr> m_scripts; 
     QMap<QString,JZParamDefine> m_variables;
     QList<FunctionDefine> m_functionDefines;
-    QList<JZNodeObjectDefine> m_objectDefines;    
+    QList<JZNodeObjectDefine> m_objectDefines;        
+    QString m_error;
 };
 
 #endif

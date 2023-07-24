@@ -13,7 +13,7 @@ public:
     JZNodeVM();
     ~JZNodeVM();
     
-    bool init(QString path,bool debug);
+    bool init(QString path,bool debug,QString &error);
     void quit();
 
 protected slots:    

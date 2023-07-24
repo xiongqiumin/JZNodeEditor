@@ -1,4 +1,4 @@
-#ifndef TEST_SCRIPT_H_
+﻿#ifndef TEST_SCRIPT_H_
 #define TEST_SCRIPT_H_
 
 #include <QObject>

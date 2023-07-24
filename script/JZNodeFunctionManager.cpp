@@ -86,7 +86,7 @@ void JZNodeFunctionManager::registCFunction(QString name,bool isFlow,CFunction *
 
     for(int i = 0; i < func->args.size(); i++)
     {
-        FunctionParam prop;
+        JZParamDefine prop;
         prop.name = "input" + QString::number(i);
         prop.dataType = JZNodeType::typeidToType(func->args[i]);
         Q_ASSERT(prop.dataType != Type_none);
@@ -95,7 +95,7 @@ void JZNodeFunctionManager::registCFunction(QString name,bool isFlow,CFunction *
     }    
     if(func->result != typeid(void).name())
     {
-        FunctionParam prop;
+        JZParamDefine prop;
         prop.name = "output";
         prop.dataType = JZNodeType::typeidToType(func->result);
         Q_ASSERT(prop.dataType != Type_none);

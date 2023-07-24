@@ -11,21 +11,6 @@ CFunction::~CFunction()
 
 }
 
-//FunctionParam
-QDataStream &operator<<(QDataStream &s, const FunctionParam &param)
-{
-    s << param.name;
-    s << param.dataType;
-    return s;
-}
-
-QDataStream &operator>>(QDataStream &s, FunctionParam &param)
-{
-    s >> param.name;
-    s >> param.dataType;
-    return s;
-}
-
 //FunctionDefine
 FunctionDefine::FunctionDefine()
 {

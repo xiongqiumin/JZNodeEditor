@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     if(0)
     {        
         QString program_path = qApp->applicationDirPath() + "/build/untitled.program";
+        program_path = "C:/Users/xiong/Desktop/JZNodeEditor/x64/Debug/project/project/build/project.program";
 
         bool build_project = false;
         if(build_project)
@@ -54,9 +55,10 @@ int main(int argc, char *argv[])
         }
 
         JZNodeVM vm;
-        if(!vm.init(program_path,true))
+        QString error;
+        if(!vm.init(program_path,false, error))
         {
-            QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed");
+            QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed\n" + error);
             return 1;
         }
         return a.exec();
@@ -65,7 +67,7 @@ int main(int argc, char *argv[])
     if(argc == 1)
     {
         MainWindow w;
-        w.show();
+        w.showMaximized();
         return a.exec();
     }
     else
@@ -85,12 +87,13 @@ int main(int argc, char *argv[])
         parser.addOption(pauseOption);
         parser.process(a);        
 
+        QString error;
         QString program_path = parser.value(runOption);
         bool debug = parser.isSet(debugOption);
-        JZNodeVM vm;
-        if(!vm.init(program_path,debug))
+        JZNodeVM vm;        
+        if(!vm.init(program_path,debug, error))
         {
-            QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed");
+            QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed.\n" + error);
             return 1;
         }
 

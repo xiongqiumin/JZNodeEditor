@@ -81,8 +81,7 @@ public:
     virtual void loadFromStream(QDataStream &s);    
 
     int type;    
-    int pc;
-    int nodeId;
+    int pc;    
     QString memo;
 };
 typedef QSharedPointer<JZNodeIR> JZNodeIRPtr;
@@ -115,10 +114,10 @@ public:
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
 
+    int allocType;
     QString name;
     int dataType;
-    QVariant value;
-    int allocType;
+    QVariant value;    
 };
 
 class JZNodeIRExpr : public JZNodeIR

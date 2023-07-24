@@ -15,14 +15,20 @@ public:
     JZProject();
     ~JZProject();
 
+    bool isVaild();
+
     void initUi();
     void initConsole();       
 
     bool open(QString filepath);
+    void close();
+
     bool save();    
     bool saveAs(QString filepath);    
 
     QString name();
+    QString filePath();
+    QString path();
     QString mainScript();       
 
     JZScriptFile *addFunction(const FunctionDefine &func);
@@ -46,6 +52,7 @@ public:
     int addItem(QString dir,JZProjectItem *item);
     void removeItem(QString path);
     JZProjectItem *getItem(QString path);
+    void saveItem(QString path);
     void saveItem(JZProjectItem *item);
     void loadItem(JZProjectItem *item);
     void saveAllItem();
@@ -56,12 +63,20 @@ public:
     bool hasBreakPoint(QString file,int id);
     void addBreakPoint(QString file,int id);
     void removeBreakPoint(QString file,int id);
-    QVector<int> breakPoints(QString file);
+    QMap<QString, QVector<int>> breakPoints();
 
     const FunctionDefine *function(QString name);
 
 protected:
     Q_DISABLE_COPY(JZProject)
+
+    struct ItemInfo
+    {        
+        QByteArray buffer;
+        QVector<int> breakPoints;
+    };
+    friend QDataStream &operator<<(QDataStream &s, const ItemInfo &param);
+    friend QDataStream &operator >> (QDataStream &s, ItemInfo &param);
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
@@ -72,8 +87,7 @@ protected:
     QString dir(const QString &filepath);
             
     JZProjectItemFolder m_root;
-    QMap<QString,QByteArray> m_itemBuffer;    
-    QMap<QString,QVector<int>> m_breakPoints;
+    QMap<QString,ItemInfo> m_itemBuffer;
     QString m_filepath;
 };
 

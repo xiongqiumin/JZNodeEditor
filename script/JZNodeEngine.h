@@ -107,11 +107,12 @@ public:
 
     int type;
     QString file;
-    int nodeId;
+    int nodeId;    
     int stack;     
 };
 
 //JZNodeEngine
+class JZNodeDebugServer;
 class JZNodeEngine : public QObject
 {
     Q_OBJECT
@@ -120,9 +121,11 @@ public:
     JZNodeEngine();
     virtual ~JZNodeEngine();
 
+    void init();
+
     void setProgram(JZNodeProgram *program);
-    JZNodeProgram *program();    
-    void init();    
+    JZNodeProgram *program();        
+    void setDebugger(JZNodeDebugServer *debug);    
 
     JZNodeRuntimeInfo runtimeInfo();    
 
@@ -154,11 +157,15 @@ public:
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
 
-    void objectChanged(JZNodeObject *sender,const QString &name);
+    void objectChanged(JZNodeObject *sender,const QString &name);    
+
+    void print(const QString &log);
 
 signals:
     void sigParamChanged();
     void sigRuntimeError(JZNodeRuntimeError error);
+    void sigLog(const QString &log);
+    void sigStatusChanged(int status);
 
 protected:
     enum{
@@ -192,11 +199,15 @@ protected:
     void clear();
     bool checkPauseStop();  //return is stop
     bool run();         
+    void updateStatus(int status);
 
     const FunctionDefine *function(QString name);       
     void callCFunction(const FunctionDefine *func);    
     bool setCommand(int cmd);    
-    QVariant dealExpr(QVariant &a,QVariant &b,int op);    
+    QVariant dealExpr(const QVariant &a, const QVariant &b,int op);
+    QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
+    QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);
+
     void pushStack(const FunctionDefine *define);
     void popStack();
     int indexOfBreakPoint(QString filepath,int nodeId);
@@ -230,8 +241,7 @@ protected:
     QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
-    BreakPoint m_breakStep;    
-    int m_breaknodeId;      // 断点中断位置的nodeid
+    BreakPoint m_breakStep;        
 
     QList<int> m_watchParam;
 
@@ -247,6 +257,7 @@ protected:
 
     QMap<JZNodeObject*,QList<JZObjectConnect>> m_connects;
     QList<ParamChangeEvent> m_paramChangeHandle;
+    JZNodeDebugServer *m_debug;
 };
 extern JZNodeEngine *g_engine;
 

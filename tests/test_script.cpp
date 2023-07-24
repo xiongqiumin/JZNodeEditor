@@ -701,7 +701,7 @@ void ScriptTest::testFunction()
         }
     */    
 
-    FunctionParam inParam,outParam;
+    JZParamDefine inParam,outParam;
     inParam.name = "n";
     inParam.dataType = Type_int;
     outParam.name = "result";

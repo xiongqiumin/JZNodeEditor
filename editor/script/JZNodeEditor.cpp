@@ -6,7 +6,7 @@
 JZNodeEditor::JZNodeEditor()
 {
     init();       
-    m_type = Editor_script;
+    m_type = Editor_script;    
 }
 
 JZNodeEditor::~JZNodeEditor()
@@ -21,6 +21,7 @@ void JZNodeEditor::init()
     m_nodeProp = new JZNodePropertyEditor();
     connect(m_view,&JZNodeView::redoAvailable,this,&JZNodeEditor::redoAvailable);
     connect(m_view,&JZNodeView::undoAvailable,this,&JZNodeEditor::undoAvailable);
+    connect(m_view,&JZNodeView::modifyChanged,this,&JZNodeEditor::modifyChanged);
 
     QVBoxLayout *l = new QVBoxLayout();
     l->setContentsMargins(0,0,0,0);
@@ -42,17 +43,7 @@ void JZNodeEditor::init()
     
     //m_nodeProp->setMaximumWidth(200);
     m_view->setPropertyEditor(m_nodeProp);
-}
-
-bool JZNodeEditor::isFirstShow(JZScriptFile* file)
-{
-    auto list = file->nodeList();
-    for(int i = 0; i < list.size(); i++)
-    {
-        if(!file->getNodePos(list[i]).isNull())
-            return false;
-    }
-    return true;
+    m_nodePanel->setPropertyEditor(m_nodeProp);
 }
 
 void JZNodeEditor::open(JZProjectItem *item)
@@ -60,10 +51,6 @@ void JZNodeEditor::open(JZProjectItem *item)
     JZScriptFile* file = dynamic_cast<JZScriptFile*>(item);
     m_view->setFile(file);    
     m_nodePanel->setFile(file);
-
-    if(isFirstShow(file))
-        m_view->updateNodeLayout();    
-
     m_view->setSceneRect(m_view->rect());
 }
 
@@ -73,8 +60,8 @@ void JZNodeEditor::close()
 }
 
 void JZNodeEditor::save()
-{
-    m_view->saveNodePos();
+{    
+    m_view->save();
 }
 
 void JZNodeEditor::updateMenuBar(QMenuBar *menubar)
@@ -84,7 +71,7 @@ void JZNodeEditor::updateMenuBar(QMenuBar *menubar)
 
 bool JZNodeEditor::isModified()
 {
-    return true;
+    return m_view->isModified();
 }
 
 void JZNodeEditor::undo()
@@ -130,4 +117,19 @@ void JZNodeEditor::updateNodeLayout()
 BreakPointTriggerResult JZNodeEditor::breakPointTrigger()
 {
     return m_view->breakPointTrigger();
+}
+
+void JZNodeEditor::setRuntimeStatus(int status)
+{
+    m_view->setRuntimeStatus(status);
+}
+
+int JZNodeEditor::runtimeNode()
+{
+    return m_view->runtimeNode();
+}
+
+void JZNodeEditor::setRuntimeNode(int nodeId)
+{
+    m_view->setRuntimeNode(nodeId);
 }

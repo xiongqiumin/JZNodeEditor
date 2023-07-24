@@ -17,14 +17,16 @@ public:
     bool connectToServer(QString ip,int port);
     void disconnectFromServer();
     bool isConnect();
+    int status();
 
+    void init(const JZNodeDebugInfo &info);
     JZNodeRuntimeInfo runtimeInfo();
     void addBreakPoint(QString file,int nodeId);
     void removeBreakPoint(QString file,int nodeId);
     void clearBreakPoint();    
     QVariant getVariable(QString name);
     void setVariable(QString name,QVariant value);
-
+    
     void detach();
     void pause();       
     void resume();
@@ -35,9 +37,11 @@ public:
 
 signals:
     void sigNetError();
-    void sigDisConnect();   
-    void sigBreakTrigger();
+    void sigConnect();
+    void sigDisConnect();       
 
+    void sigRuntimeStatus(int stauts);
+    void sigRuntimeInfo(JZNodeRuntimeInfo info);
     void sigRuntimeError(JZNodeRuntimeError error);
     void sigLog(QString log);
 
@@ -48,8 +52,10 @@ protected slots:
 
 protected:    
     bool sendCommand(int command,QVariantList &params,QVariantList &result);
+    void setStatus(int status);
 
     JZNetClient m_client;
+    int m_status;
 };
 
 

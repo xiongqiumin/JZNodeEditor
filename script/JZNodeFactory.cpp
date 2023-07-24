@@ -36,6 +36,7 @@ JZNode *JZNodeFactory::createNode(int type)
 void JZNodeFactory::init()
 {    
     registNode(Node_print,createFunc<JZNodePrint>);  
+
     registNode(Node_literal,createFunc<JZNodeLiteral>);    
     registNode(Node_create,createFunc<JZNodeCreate>);
     registNode(Node_this,createFunc<JZNodeThis>);

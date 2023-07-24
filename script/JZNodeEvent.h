@@ -18,11 +18,11 @@ public:
     void setEventType(int eventType);
     int eventType() const;    
 
-    virtual QList<FunctionParam> params();
+    virtual QList<JZParamDefine> params();
 
 protected:    
     int m_eventType;
-    QList<FunctionParam> m_params;
+    QList<JZParamDefine> m_params;
 };
 
 //JZNodeSingleEvent
@@ -35,7 +35,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error);
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-    virtual QList<FunctionParam> params() override;
+    virtual QList<JZParamDefine> params() override;
 
     void setSingle(QString className,const SingleDefine *single);
     QString single();

@@ -24,9 +24,8 @@ public:
     int type();
     void setProject(JZProject *project);
 
-    void setFile(JZProjectItem *file);
-    JZProjectItem *file();
-    QString filePath();
+    void setItem(JZProjectItem *item);
+    JZProjectItem *item();
 
     virtual void open(JZProjectItem *item) = 0;
     virtual void close() = 0;
@@ -46,9 +45,10 @@ public:
 signals:
     void redoAvailable(bool available);
     void undoAvailable(bool available);
+    void modifyChanged(bool changed);
 
 protected:
-    JZProjectItem *m_file;
+    JZProjectItem *m_item;
     JZProject *m_project;
     int m_type;
 };

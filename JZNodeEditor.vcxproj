@@ -50,7 +50,7 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="QtSettings">
     <QtInstall>Qt5.15.2_64</QtInstall>
-    <QtModules>core;gui;widgets;network</QtModules>
+    <QtModules>core;gui;widgets;network;testlib</QtModules>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="QtSettings">
     <QtInstall>Qt5.6.2</QtInstall>
@@ -72,6 +72,7 @@
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>C:\Qt5.15\5.15.2\msvc2015_64\lib\qtmaind.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -90,18 +91,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="editor\JZEditor.cpp" />
+    <ClCompile Include="editor\JZNewClassDialog.cpp" />
+    <ClCompile Include="editor\JZNewProjectDialog.cpp" />
     <ClCompile Include="editor\JZProjectTree.cpp" />
     <ClCompile Include="editor\script\JZNodeBaseItem.cpp" />
     <ClCompile Include="editor\script\JZNodeEditor.cpp" />
+    <ClCompile Include="editor\script\JZNodeFuctionEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeGraphItem.cpp" />
     <ClCompile Include="editor\script\JZNodeLineItem.cpp" />
-    <ClCompile Include="editor\script\JZNodeNewDialog.cpp" />
     <ClCompile Include="editor\script\JZNodePanel.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeScene.cpp" />
+    <ClCompile Include="editor\script\JZNodeTypeDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeView.cpp" />
     <ClCompile Include="editor\script\JZParamEditor.cpp" />
     <ClCompile Include="editor\ui\JZUiEditor.cpp" />
+    <ClCompile Include="LogWidget.cpp" />
     <ClCompile Include="project\JZParamFile.cpp" />
     <ClCompile Include="project\JZProject.cpp" />
     <ClCompile Include="project\JZProjectItem.cpp" />
@@ -133,7 +138,7 @@
     <ClCompile Include="script\JZNodeType.cpp" />
     <ClCompile Include="script\JZNodeValue.cpp" />
     <ClCompile Include="script\JZNodeVM.cpp" />
-    <ClCompile Include="tests\test_program.cpp" />
+    <ClCompile Include="tests\test_script.cpp" />
     <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.cpp">
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
       <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
@@ -162,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="3rd\jznet\JZNetDataManager.h" />
     <ClInclude Include="3rd\jznet\JZNetPack.h" />
+    <QtMoc Include="tests\test_script.h" />
     <QtMoc Include="script\JZNodeVM.h" />
     <QtMoc Include="3rd\qtpropertybrowser\qtvariantproperty.h">
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
@@ -181,7 +187,10 @@
     <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.h">
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
     </QtMoc>
+    <QtMoc Include="editor\JZNewClassDialog.h" />
+    <QtMoc Include="editor\JZNewProjectDialog.h" />
     <ClInclude Include="editor\script\JZNodeBaseItem.h" />
+    <QtMoc Include="editor\script\JZNodeFuctionEditDialog.h" />
     <ClInclude Include="editor\script\JZNodeGraphItem.h" />
     <ClInclude Include="editor\script\JZNodeLineItem.h" />
     <QtMoc Include="editor\ui\JZUiEditor.h" />
@@ -190,12 +199,14 @@
     <QtMoc Include="editor\script\JZNodeScene.h" />
     <QtMoc Include="editor\script\JZNodePropertyEditor.h" />
     <QtMoc Include="editor\script\JZNodePanel.h" />
-    <QtMoc Include="editor\script\JZNodeNewDialog.h" />
     <QtMoc Include="editor\script\JZNodeEditor.h" />
     <QtMoc Include="editor\JZProjectTree.h" />
     <QtMoc Include="editor\JZEditor.h" />
     <QtMoc Include="3rd\jznet\JZNetServer.h" />
     <QtMoc Include="3rd\jznet\JZNetClient.h" />
+    <QtMoc Include="LogWidget.h" />
+    <QtMoc Include="editor\script\JZNodeTypeDialog.h" />
+    <ClInclude Include="editor\UiCommon.h" />
     <ClInclude Include="project\JZParamFile.h" />
     <ClInclude Include="project\JZProject.h" />
     <ClInclude Include="project\JZProjectItem.h" />
@@ -225,6 +236,13 @@
     <QtMoc Include="script\JZNodeEngine.h" />
     <QtMoc Include="script\JZNodeDebugServer.h" />
     <QtMoc Include="script\JZNodeDebugClient.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="editor\JZNewClassDialog.ui" />
+    <QtUic Include="editor\JZNewProjectDialog.ui" />
+    <QtUic Include="editor\script\JZNodeFuctionEditDialog.ui" />
+    <QtUic Include="editor\script\JZNodeTypeDialog.ui" />
+    <QtUic Include="editor\script\JZParamEditor.ui" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

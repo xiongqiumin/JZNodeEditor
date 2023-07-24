@@ -27,7 +27,7 @@ void JZParamFile::loadFromStream(QDataStream &s)
 
 void JZParamFile::addVariable(QString name,int type,QVariant v)
 {
-    Q_ASSERT(type != Type_none);
+    Q_ASSERT(!getVariable(name) && type != Type_none);
 
     JZParamDefine info;
     info.name = name;
@@ -41,7 +41,22 @@ void JZParamFile::removeVariable(QString name)
     m_variables.remove(name);
 }
 
-QMap<QString,JZParamDefine> JZParamFile::variables()
+void JZParamFile::renameVariable(QString oldName, QString newName)
+{
+    Q_ASSERT(m_variables.contains(oldName));
+    auto def = m_variables[oldName];
+    def.name = newName;
+    m_variables.remove(oldName);
+    m_variables[newName] = def;
+}
+
+void JZParamFile::setVariableType(QString name, int dataType)
+{
+    Q_ASSERT(m_variables.contains(name));
+    m_variables[name].dataType = dataType;
+}
+
+const QMap<QString,JZParamDefine> &JZParamFile::variables()
 {
     return m_variables;
 }

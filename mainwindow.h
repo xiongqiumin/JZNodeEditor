@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QSplitter>
 #include <QStackedWidget>
+#include <QTabWidget>
 #include <QTextEdit>
 #include <QProcess>
 #include "JZProjectTree.h"
@@ -12,6 +13,16 @@
 #include "JZNodeBuilder.h"
 #include "JZNodeDebugClient.h"
 #include "JZNodeProgram.h"
+#include "LogWidget.h"
+
+class Setting
+{
+public:
+    Setting();
+    void addRecentProject(QString file);
+
+    QStringList recentFile;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -24,12 +35,14 @@ public:
 protected slots:    
     void onActionNewProject();
     void onActionOpenProject();
-    void onActionCloseProject();
-    void onActionSaveProject();
-    void onActionSaveAsProject();    
+    void onActionCloseProject();     
+    void onActionRecentProject();
+
     void onActionNewFile();
     void onActionSaveFile();
     void onActionCloseFile();
+    void onActionSaveAllFile();
+    void onActionCloseAllFile();
 
     void onActionUndo();
     void onActionRedo();
@@ -52,20 +65,48 @@ protected slots:
     void onActionStepIn();
     void onActionStepOut();    
 
+    void onModifyChanged(bool flag);
     void onRedoAvailable(bool flag);
     void onUndoAvailable(bool flag);
 
     void onFileOpened(QString filepath);    
     void onFileClosed(QString filepath);
+    void onEditorClose(int index);
 
-    void onDebugLog(QString log);
+    void onRuntimeLog(QString log);
+    void onRuntimeInfo(JZNodeRuntimeInfo error);
     void onRuntimeError(JZNodeRuntimeError error);
+    void onRuntimeStatus(int staus);
+
     void onDebugFinish(int code,QProcess::ExitStatus status);
 
 private:
-    void resizeEvent(QResizeEvent *event);
+    struct ActionStatus{
+        enum {
+            ProjectVaild,
+            FileOpen,
+            FileIsModify,
+            FileIsScript,
+            ProcessIsEmpty,
+            ProcessIsVaild,
+            ProcessIsRunning,
+            ProcessIsPause,  
+            Count,
+        };
+        ActionStatus(QAction *act, QVector<int> flag);
+
+        QVector<int> flags;
+        QAction *action;
+    };
+
+    virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void closeEvent(QCloseEvent *event) override;
+
+    void loadSetting();
+    void saveSetting();
     JZEditor *createEditor(int type);
     void closeEditor(JZEditor *editor);
+    void updateActionStatus();    
 
     void initMenu();
     void initUi();        
@@ -75,22 +116,26 @@ private:
     void updateMenuAction();
     void saveToFile(QString file,QString text);
     void saveAll();
-    void closeAll();
+    bool closeAll();
 
     JZNodeBuilder m_builder;
     JZProject m_project;
     JZNodeProgram m_program;
 
-    QTextEdit *m_log;
+    LogWidget *m_log;
     JZProjectTree *m_projectTree;
     QList<QMenu*> m_menuList;
-    QAction *m_actRun,*m_actDetach,*m_actPause,*m_actResume,*m_actStop,*m_actStepOver,*m_actStepIn,*m_actStepOut,*m_actBreakPoint;
+        
+    QList<ActionStatus> m_actionStatus;
+    QAction *m_actCloseFile, *m_actSaveFile;
 
     JZEditor *m_editor;  
-    QStackedWidget *m_editorStack;       
-    QMap<QString,JZEditor *> m_editors;    
+    QTabWidget *m_editorStack;
+    QMap<QString,JZEditor *> m_editors;
+    Setting m_setting;
 
     JZNodeDebugClient m_debuger;
     QProcess m_process;   
+    bool m_processVaild;
 };
 #endif // MAINWINDOW_H

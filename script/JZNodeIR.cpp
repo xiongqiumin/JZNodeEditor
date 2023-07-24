@@ -137,14 +137,12 @@ JZNodeIR::JZNodeIR()
 {
     type = OP_none;
     pc = -1;
-    nodeId = -1;
 }
 
 JZNodeIR::JZNodeIR(int t)
 {
     type = t;
-    pc = -1;
-    nodeId = -1;
+    pc = -1;    
 }
 
 JZNodeIR::~JZNodeIR()
@@ -155,16 +153,14 @@ JZNodeIR::~JZNodeIR()
 void JZNodeIR::saveToStream(QDataStream &s) const
 {
     s << type;    
-    s << pc;
-    s << nodeId;
+    s << pc;    
     s << memo;
 }
 
 void JZNodeIR::loadFromStream(QDataStream &s)
 {
     s >> type;    
-    s >> pc;
-    s >> nodeId;
+    s >> pc;    
     s >> memo;
 }
 
@@ -208,13 +204,13 @@ JZNodeIRAlloc::~JZNodeIRAlloc()
 void JZNodeIRAlloc::saveToStream(QDataStream &s) const
 {
     JZNodeIR::saveToStream(s);
-    s << name << dataType << allocType;
+    s << allocType << name << dataType << value;
 }
 
 void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
-    s >> name >> dataType >> allocType;
+    s >> allocType >> name >> dataType >> value;
 }
 
 QString name;

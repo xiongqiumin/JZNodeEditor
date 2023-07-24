@@ -4,7 +4,8 @@
 #include <QMessageBox>
 #include <QShortcut>
 #include <QLineEdit>
-#include "JZNodeNewDialog.h"
+#include "JZNewClassDialog.h"
+#include "JZNodeFuctionEditDialog.h"
 
 JZProjectTree::JZProjectTree()
 {
@@ -42,6 +43,12 @@ void JZProjectTree::setProject(JZProject *project)
 {
     m_project = project;
     init();
+}
+
+void JZProjectTree::clear()
+{
+    m_project = nullptr;
+    m_tree->clear();
 }
 
 void JZProjectTree::init()
@@ -220,10 +227,16 @@ void JZProjectTree::onContextMenu(QPoint pos)
     }
 }
 
-
-void JZProjectTree::newItem()
+void JZProjectTree::newFunctionItem()
 {
-    JZNodeNewDialog dialog(this);
+    JZNodeFuctionEditDialog dialog(this);    
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+}
+
+void JZProjectTree::newClassItem()
+{
+    JZNewClassDialog dialog(this);
     if(dialog.exec() != QDialog::Accepted)
         return;
 }

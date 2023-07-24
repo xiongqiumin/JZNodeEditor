@@ -1,5 +1,4 @@
-﻿
-#include "JZNodeValue.h"
+﻿#include "JZNodeValue.h"
 #include "JZNodeCompiler.h"
 #include "JZProject.h"
 
@@ -15,7 +14,7 @@ JZNodeLiteral::~JZNodeLiteral()
 {
 }
 
-int JZNodeLiteral::dataType()
+int JZNodeLiteral::dataType() const
 {
     return prop(paramOut(0))->dataType()[0];
 }
@@ -27,7 +26,10 @@ void JZNodeLiteral::setDataType(int type)
 
 QVariant JZNodeLiteral::literal() const
 {
-    return propValue(paramOut(0));
+    auto pin = prop(paramOut(0));
+    QVariant v = pin->value();
+    v.convert(JZNodeType::typeToQMeta(pin->dataType()[0]));
+    return v;
 }
 
 void JZNodeLiteral::setLiteral(QVariant value)
@@ -100,16 +102,29 @@ void JZNodeCreate::pinChanged(int id)
 //JZNodePrint
 JZNodePrint::JZNodePrint()
 {
-    m_type = Node_print;    
-    addParamIn("");
+    m_type = Node_print;
+    m_name = "Print";
+
+    addFlowIn();
+    addFlowOut();
+    int in = addParamIn("");
+    setPinTypeAny(in);
 }
 
 JZNodePrint::~JZNodePrint()
 {
 }
 
-bool JZNodePrint::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodePrint::compiler(JZNodeCompiler *c,QString &error)
 {
+    if (!c->addFlowInput(m_id, error))
+        return false;
+    
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    c->addCall(irLiteral("print"), in, out);    
+    c->addJumpNode(flowOut());
+
     return true;
 }
 
@@ -154,9 +169,14 @@ JZNodeParam::~JZNodeParam()
 }
 
 bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
-{
+{    
+    QString name = variable();
+    if (!c->checkVariableExist(name, error))
+        return false;
+
+    c->allocLocalVariable(name);
     int out_id = c->paramId(m_id,paramOut(0));
-    JZNodeIRParam ref = irRef(variable());
+    JZNodeIRParam ref = irRef(name);
     c->addSetVariable(irId(out_id),ref);
     return true;
 }
@@ -231,13 +251,17 @@ void JZNodeSetParam::pinChanged(int id)
 
 bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
 {
+    QString name = variable();
+    if (!c->checkVariableExist(name, error))
+        return false;
     if(!c->addFlowInput(m_id,error))
         return false;
-
+        
     int id = c->paramId(m_id,paramIn(0));
     int m_out = c->paramId(m_id,paramOut(0));
 
-    JZNodeIRParam ref = irRef(variable());
+    c->allocLocalVariable(name);
+    JZNodeIRParam ref = irRef(name);
     c->addSetVariable(ref,irId(id));
     c->addSetVariable(irId(m_out),irId(id));
     c->addFlowOutput(m_id);
@@ -285,11 +309,14 @@ void JZNodeSetParamDataFlow::pinChanged(int id)
 
 bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
 {
+    QString name = variable();
+    if (!c->checkVariableExist(name, error))
+        return false;
     if(!c->addDataInput(m_id,error))
         return false;
 
-    QString param_name = variable();
+    c->allocLocalVariable(name);
     int id = c->paramId(m_id,paramIn(0));
-    c->addSetVariable(irRef(param_name),irId(id));
+    c->addSetVariable(irRef(name),irId(id));
     return true;
 }

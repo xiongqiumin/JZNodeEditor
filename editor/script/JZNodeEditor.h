@@ -33,12 +33,15 @@ public:
     void updateNodeLayout();
     BreakPointTriggerResult breakPointTrigger();
 
+    void setRuntimeStatus(int staus);
+    int runtimeNode();
+    void setRuntimeNode(int nodeId);
+
 protected slots:
 
 
 protected:
-    void init();    
-    bool isFirstShow(JZScriptFile* file);
+    void init();
 
     JZNodeView *m_view;    
     JZNodePanel *m_nodePanel;

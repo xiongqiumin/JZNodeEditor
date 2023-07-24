@@ -319,7 +319,83 @@ JZParamDefine *JZScriptFile::getVariableInfo(const QString &name)
         return def->param(param_name);
     }
     else
+    {
+        auto def = localVariableInfo(name);
+        if (def)
+            return def;
         return m_project->getVariableInfo(name);
+    }
+}
+
+JZParamDefine *JZScriptFile::localVariableInfo(const QString &name)
+{
+    if (m_itemType == ProjectItem_scriptFunction)
+    {
+        for (int i = 0; i < m_function.paramIn.size(); i++)
+        {
+            if (m_function.paramIn[i].name == name)
+                return &m_function.paramIn[i];
+        }
+        for (int i = 0; i < m_function.paramOut.size(); i++)
+        {
+            if (m_function.paramOut[i].name == name)
+                return &m_function.paramOut[i];
+        }
+    }
+
+    auto it = m_variables.find(name);
+    if (it != m_variables.end())
+        return &it.value();
+
+    return nullptr;
+}
+
+void JZScriptFile::removeLocalVariable(QString name)
+{
+    m_variables.remove(name);
+}
+
+void JZScriptFile::renameLocalVariable(QString oldName, QString newName)
+{
+    Q_ASSERT(m_variables.contains(oldName));
+    auto def = m_variables[oldName];
+    def.name = newName;
+    m_variables.remove(oldName);
+    m_variables[newName] = def;
+}
+
+void JZScriptFile::setLocalVariableType(QString name, int type)
+{
+    Q_ASSERT(m_variables.contains(name));
+    m_variables[name].dataType = type;
+}
+
+void JZScriptFile::addLocalVariable(QString name, int type, QVariant v)
+{
+    Q_ASSERT(!localVariableInfo(name) && type != Type_none);
+
+    JZParamDefine info;
+    info.name = name;
+    info.dataType = type;
+    info.value = v;
+    m_variables[name] = info;
+}
+
+QStringList JZScriptFile::localVariableList()
+{
+    if (m_itemType == ProjectItem_scriptFunction)
+    {
+        QStringList list;
+        for (int i = 0; i < m_function.paramIn.size(); i++)
+            list << m_function.paramIn[i].name;        
+        for (int i = 0; i < m_function.paramOut.size(); i++)
+            list << m_function.paramOut[i].name;
+
+        list << m_variables.keys();
+        return list;
+    }
+    else
+        return m_variables.keys();
 }
 
 void JZScriptFile::saveToStream(QDataStream &s)
@@ -338,7 +414,8 @@ void JZScriptFile::saveToStream(QDataStream &s)
     }    
     s << m_connects;
     s << m_bindClass;
-    s << m_function;    
+    s << m_function;
+    s << m_variables;
     s << m_nodesPos;
 }
 
@@ -360,6 +437,7 @@ void JZScriptFile::loadFromStream(QDataStream &s)
     s >> m_connects;
     s >> m_bindClass;
     s >> m_function;    
+    s >> m_variables;
     s >> m_nodesPos;
 }
 
@@ -380,13 +458,13 @@ void JZScriptLibraryFile::addFunction(QString name,QStringList in,QStringList ou
     define.name = name;
     for(int i = 0; i < in.size(); i++)
     {
-        FunctionParam param;
+        JZParamDefine param;
         param.name = in[i];
         define.paramIn.push_back(param);
     }
     for(int i = 0; i < out.size(); i++)
     {
-        FunctionParam param;
+        JZParamDefine param;
         param.name = out[i];
         define.paramOut.push_back(param);
     }

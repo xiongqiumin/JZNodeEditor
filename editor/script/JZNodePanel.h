@@ -5,6 +5,7 @@
 #include <QTreeWidget>
 #include "JZNode.h"
 #include "JZScriptFile.h"
+#include "JZNodePropertyEditor.h"
 
 class JZNodeTreeWidget : public QTreeWidget
 {
@@ -24,23 +25,30 @@ public:
     JZNodePanel(QWidget *widget = nullptr);
     ~JZNodePanel();    
 
-    void setFile(JZScriptFile *file);
+    void setFile(JZScriptFile *file);    
+    void setPropertyEditor(JZNodePropertyEditor *propEditor);    
 
 protected slots:
     void onSearch();
+    void onTreeItemClicked(QTreeWidgetItem *current,int col);
+    void onAddScriptParam();
+    void onPropUpdate(int prop_id, const QVariant &value);
 
 protected:
     void init();
     void initEvent(QTreeWidgetItem *root);
     void initClassParam(QTreeWidgetItem *root);
     void initProjectParam(QTreeWidgetItem *root);
+    void initScriptParam(QTreeWidgetItem *root);
+
     void initVariable(QTreeWidgetItem *root);
     void initProcess(QTreeWidgetItem *root);
     void initExpression(QTreeWidgetItem *root);
+    void initConvert(QTreeWidgetItem *root);
     void initFunction(QTreeWidgetItem *root,bool flow);    
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
-    QTreeWidgetItem *createParam(QString name,int dataType,QString preName);
+    QTreeWidgetItem *createParam(QString name,int dataType,QString preName = QString());
     QTreeWidgetItem *createClass(QString className);
     bool filterItem(QTreeWidgetItem *root,QString name);
 
@@ -49,6 +57,9 @@ protected:
     JZScriptFile *m_file;
     JZScriptClassFile *m_classFile;
     QLineEdit *m_lineSearch;
+    JZNodePropertyEditor *m_propEditor;    
+
+    QTreeWidgetItem *m_itemLocalVariable;
 };
 
 #endif

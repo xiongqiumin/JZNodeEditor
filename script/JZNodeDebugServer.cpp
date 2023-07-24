@@ -58,21 +58,28 @@ void JZNodeDebugServer::log(QString log)
     m_server.sendPack(m_client,&result_pack);
 }
 
+void JZNodeDebugServer::setEngine(JZNodeEngine *eng)
+{
+    m_engine = eng;
+    connect(m_engine,&JZNodeEngine::sigRuntimeError,this,&JZNodeDebugServer::onRuntimeError);
+    connect(m_engine,&JZNodeEngine::sigLog, this, &JZNodeDebugServer::onLog);
+    connect(m_engine,&JZNodeEngine::sigStatusChanged, this, &JZNodeDebugServer::onStatusChanged);
+}
+
 bool JZNodeDebugServer::waitForAttach()
 {
-    while(true)
+    while (true)
     {
-        if(m_client != -1)
+        if (m_init)
             break;
         QThread::msleep(50);
     }
     return true;
 }
 
-void JZNodeDebugServer::setEngine(JZNodeEngine *eng)
+JZNodeDebugInfo JZNodeDebugServer::debugInfo()
 {
-    m_engine = eng;
-    connect(m_engine,&JZNodeEngine::sigRuntimeError,this,&JZNodeDebugServer::onRuntimeError);
+    return m_debugInfo;
 }
 
 void JZNodeDebugServer::onNewConnect(int netId)
@@ -98,16 +105,8 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     
     if(cmd == Cmd_init)
     {
-        auto env = netDataUnPack<JZNodeDebugInfo>(params[0].toByteArray());
-        auto it = env.breakPoints.begin();
-        while(it != env.breakPoints.end())
-        {
-            auto filepath = it.key();
-            auto list = it.value();
-            for(int i = 0; i < list.size(); i++)
-                m_engine->addBreakPoint(filepath,list[i]);
-            it++;
-        }
+        m_debugInfo = netDataUnPack<JZNodeDebugInfo>(params[0].toByteArray());        
+        m_init = true;
     }
     else if(cmd == Cmd_addBreakPoint)
         m_engine->addBreakPoint(params[0].toString(),params[1].toInt());
@@ -150,4 +149,17 @@ void JZNodeDebugServer::onRuntimeError(JZNodeRuntimeError error)
     result_pack.cmd = Cmd_runtimeError;
     result_pack.params << netDataPack(error);
     m_server.sendPack(m_client,&result_pack);
+}
+
+void JZNodeDebugServer::onLog(const QString &text)
+{
+    log(text);
+}
+
+void JZNodeDebugServer::onStatusChanged(int status)
+{    
+    JZNodeDebugPacket result_pack;
+    result_pack.cmd = Cmd_runtimeStatus;    
+    result_pack.params << status;
+    m_server.sendPack(m_client, &result_pack);
 }

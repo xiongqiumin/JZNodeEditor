@@ -3,12 +3,18 @@
 #include "JZEvent.h"
 #include <QPushButton>
 #include <QApplication>
-#include "JZNodeVM.h"
 #include <math.h>
+#include "JZNodeVM.h"
 
 void JZObjectEvent(JZEvent *event)
 {
     g_engine->dealEvent(event);
+}
+
+void JZScriptLog(const QString &log)
+{
+    g_engine->print(log);
+    qDebug() << log;
 }
 
 //RunnerEnv
@@ -152,7 +158,7 @@ void BreakPoint::clear()
     type = BreakPoint::none;
     file.clear();
     nodeId = -1;
-    stack = -1;    
+    stack = -1;        
 }
 
 //JZObjectConnect
@@ -176,9 +182,9 @@ JZNodeEngine *g_engine = nullptr;
 JZNodeEngine::JZNodeEngine()
 {    
     m_program = nullptr;
+    m_debug = nullptr;
     m_script = nullptr;
-    m_pc = -1;
-    m_breaknodeId = -1;
+    m_pc = -1;    
     m_status = Status_none;
     m_statusCommand = Command_none;
 }
@@ -197,14 +203,18 @@ JZNodeProgram *JZNodeEngine::program()
     return m_program;
 }
 
+void JZNodeEngine::setDebugger(JZNodeDebugServer *debug)
+{
+    m_debug = debug;
+}
+
 void JZNodeEngine::clear()
 {
     JZNodeFunctionManager::instance()->clearUserReigst();
     JZNodeObjectManager::instance()->clearUserReigst();
 
     m_breakPoints.clear();
-    m_breakStep.clear();
-    m_breaknodeId = -1;      // 断点中断位置的nodeid
+    m_breakStep.clear();    
 
     m_watchParam.clear();
 
@@ -269,7 +279,7 @@ void JZNodeEngine::init()
 int JZNodeEngine::nodeIdByPc(int m_pc)
 {
     auto &op_list = m_script->statmentList;
-    for(int i = m_pc; i >=0 ; i--)
+    for(int i = m_pc; i >= 0 ; i--)
     {
         if(op_list[i]->type == OP_nodeId)
         {
@@ -289,10 +299,7 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
     if(m_script)
     {
         info.file = m_script->file;
-        if(m_breaknodeId != -1)
-            info.nodeId = m_breaknodeId;
-        else
-            info.nodeId = nodeIdByPc(m_pc);
+        info.nodeId = nodeIdByPc(m_pc);
         info.pc = m_pc;
     }
     return info;
@@ -364,7 +371,7 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
 {
     Q_ASSERT(func->paramIn.size() == in.size());
     g_engine = this;
-    m_status = Status_running;               
+    updateStatus(Status_running);
     for (int i = 0; i < in.size(); i++)
     {
         Q_ASSERT(JZNodeType::canConvert(JZNodeType::variantType(in[i]),func->paramIn[i].dataType));
@@ -382,7 +389,7 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
             pushStack(func);
             if(!run())
             {
-                m_status = Status_none;
+                updateStatus(Status_none);
                 return false;
             }
         }
@@ -395,7 +402,7 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
         error.pc = m_pc;
         emit sigRuntimeError(error);
 
-        m_status = Status_none;
+        updateStatus(Status_none);
         m_statusCommand = Command_none;
         return false;
     }
@@ -404,7 +411,7 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
     for (int i = 0; i < func->paramOut.size(); i++)
         out.push_back(getReg(Reg_Call + i));    
 
-    m_status = Status_none;
+    updateStatus(Status_none);
     m_statusCommand = Command_none;
     return true;
 }
@@ -554,6 +561,11 @@ void JZNodeEngine::objectChanged(JZNodeObject *sender,const QString &name)
             call(handle.handle,in,out);
         }
     }
+}
+
+void JZNodeEngine::print(const QString &log)
+{
+    emit sigLog(log);
 }
 
 QVariant JZNodeEngine::getReg(int id)
@@ -766,11 +778,12 @@ void JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
         if(m_breakPoints[i].file == filepath && m_breakPoints[i].nodeId == nodeId)
             return;
     }
+    auto script = m_program->script(filepath);
 
     BreakPoint pt;    
     pt.type = BreakPoint::nodeEnter;
     pt.file = filepath;
-    pt.nodeId = nodeId;
+    pt.nodeId = nodeId;    
     m_breakPoints.push_back(pt);    
 }
 
@@ -855,7 +868,8 @@ void JZNodeEngine::stepIn()
     if(m_status != Status_pause)
         return;
 
-    auto info = m_script->nodeInfo[m_breaknodeId];
+    int node_id = nodeIdByPc(m_pc);
+    auto info = m_script->nodeInfo[node_id];
     if(info.node_type == Node_function)
     {
         m_breakStep.type = BreakPoint::stackEqual;
@@ -879,9 +893,10 @@ void JZNodeEngine::stepOver()
     if(m_status != Status_pause)
         return;
 
+    int node_id = nodeIdByPc(m_pc);
     m_breakStep.type = BreakPoint::nodeExit;   
     m_breakStep.file = m_script->file;
-    m_breakStep.nodeId = m_breaknodeId;
+    m_breakStep.nodeId = node_id;    
 
     m_statusCommand = Command_resume;
     lock.unlock();
@@ -943,7 +958,86 @@ const FunctionDefine *JZNodeEngine::function(QString name)
     return JZNodeFunctionManager::instance()->function(name);
 }
 
-QVariant JZNodeEngine::dealExpr(QVariant &a,QVariant &b,int op)
+QVariant JZNodeEngine::dealExprInt(const QVariant &va, const QVariant &vb, int op)
+{
+    int a = va.toInt();
+    int b = vb.toInt();
+    switch (op)
+    {
+    case OP_add:
+        return a + b;
+    case OP_sub:
+        return a - b;
+    case OP_mul:
+        return a * b;
+    case OP_div:
+        return a / b;
+    case OP_mod:
+        return a % b;
+    case OP_eq:
+        return a == b;
+    case OP_ne:
+        return a != b;
+    case OP_le:
+        return a <= b;
+    case OP_ge:
+        return a >= b;
+    case OP_lt:
+        return a < b;
+    case OP_gt:
+        return a > b;
+    case OP_and:
+        return a && b;
+    case OP_or:
+        return a || b;
+    case OP_bitand:
+        return a & b;
+    case OP_bitor:
+        return a | b;
+    case OP_bitxor:
+        return a ^ b;
+    default:
+        throw std::runtime_error("un support operator");
+        break;
+    }
+}
+
+QVariant JZNodeEngine::dealExprDouble(const QVariant &va, const QVariant &vb, int op)
+{
+    double a = va.toDouble();
+    double b = vb.toDouble();
+    switch (op)
+    {
+    case OP_add:
+        return a + b;
+    case OP_sub:
+        return a - b;
+    case OP_mul:
+        return a * b;
+    case OP_div:
+        return a / b;
+    case OP_mod:
+        return fmod(a, b);
+    case OP_eq:
+        return a == b;
+    case OP_ne:
+        return a != b;
+    case OP_le:
+        return a <= b;
+    case OP_ge:
+        return a >= b;
+    case OP_lt:
+        return a < b;
+    case OP_gt:
+        return a > b;
+    default:
+        throw std::runtime_error("un support operator");
+        break;
+    }
+    return 0;
+}
+
+QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
 {   
     int dataType1 = JZNodeType::variantType(a);
     int dataType2 = JZNodeType::variantType(b);
@@ -976,79 +1070,11 @@ QVariant JZNodeEngine::dealExpr(QVariant &a,QVariant &b,int op)
             || (dataType1 == Type_bool && dataType2 == Type_int)
             || (dataType1 == Type_int && dataType2 == Type_int))
     {
-        switch (op)
-        {
-        case OP_add:
-            return a.toInt() + b.toInt();
-        case OP_sub:
-            return a.toInt() - b.toInt();
-        case OP_mul:
-            return a.toInt() * b.toInt();
-        case OP_div:
-            return a.toInt() / b.toInt();
-        case OP_mod:
-            return a.toInt() % b.toInt();
-        case OP_eq:
-            return a.toInt() == b.toInt();
-        case OP_ne:
-            return a.toInt() != b.toInt();
-        case OP_le:
-            return a.toInt() <= b.toInt();
-        case OP_ge:
-            return a.toInt() >= b.toInt();
-        case OP_lt:
-            return a.toInt() < b.toInt();
-        case OP_gt:
-            return a.toInt() > b.toInt();
-        case OP_and:
-            return a.toInt() && b.toInt();
-        case OP_or:
-            return a.toInt() || b.toInt();
-        case OP_bitand:
-            return a.toInt() & b.toInt();
-        case OP_bitor:
-            return a.toInt() | b.toInt();
-        case OP_bitxor:
-            return a.toInt() ^ b.toInt();
-        default:
-            throw std::runtime_error("un support operator");
-            break;
-        }
+        return dealExprInt(a, b, op);        
     }
     else if(JZNodeType::isNumber(dataType1) && JZNodeType::isNumber(dataType2))
     {
-        switch (op)
-        {
-        case OP_add:
-            return a.toDouble() + b.toDouble();
-        case OP_sub:
-            return a.toDouble() - b.toDouble();
-        case OP_mul:
-            return a.toDouble() * b.toDouble();
-        case OP_div:
-            return a.toDouble() / b.toDouble();
-        case OP_mod:
-            return fmod(a.toDouble(),b.toDouble());
-        case OP_eq:
-            return a.toDouble() == b.toDouble();
-        case OP_ne:
-            return a.toDouble() != b.toDouble();
-        case OP_le:
-            return a.toDouble() <= b.toDouble();
-        case OP_ge:
-            return a.toDouble() >= b.toDouble();
-        case OP_lt:
-            return a.toDouble() < b.toDouble();
-        case OP_gt:
-            return a.toDouble() > b.toDouble();
-        case OP_and:
-            return a.toDouble() && b.toDouble();
-        case OP_or:
-            return a.toDouble() || b.toDouble();
-        default:
-            throw std::runtime_error("un support operator");
-            break;
-        }
+        return dealExprDouble(a, b,op);
     }
     else
     {
@@ -1067,7 +1093,7 @@ bool JZNodeEngine::checkPauseStop()
     if(m_statusCommand == Command_stop)
     {
         m_statusCommand = Command_none;
-        m_status = Status_none;
+        updateStatus(Status_none);
         m_mutex.unlock();
         return true;
     }
@@ -1076,23 +1102,31 @@ bool JZNodeEngine::checkPauseStop()
         m_statusCommand = Command_none;
         wait = true;
     }
-    else
+    else if(op_list[m_pc]->type == OP_nodeId)
     {
-        int node_id = op_list[m_pc]->nodeId;
+        JZNodeIRNodeId *ir_node = dynamic_cast<JZNodeIRNodeId*>(op_list[m_pc].data());
+        int node_id = ir_node->id;
         int stack = m_stack.size();
-        auto breakTriggred = [](BreakPoint &pt,const QString &filepath,int pc,int node_id,int stack)->bool
+        auto breakTriggred = [this](BreakPoint &pt,const QString &filepath,int stack,int node_id,bool node_flow)->bool
         {
             if(pt.type == BreakPoint::nodeEnter && pt.file == filepath && node_id == pt.nodeId)
                 return true;
-            else if(pt.type == BreakPoint::nodeExit && (pt.file != filepath || node_id == pt.nodeId))
-                return true;
+            else if (pt.type == BreakPoint::nodeExit)
+            {
+                bool pre_node_flow = m_script->nodeInfo[pt.nodeId].isFlow;
+                if (pt.file != filepath)
+                    return true;
+                else if (node_id != pt.nodeId && (!pre_node_flow || (pre_node_flow && node_flow)))
+                    return true;
+            }
             else if(pt.type == BreakPoint::stackEqual && stack == pt.stack)
                 return true;
 
             return false;
         };
 
-        if(breakTriggred(m_breakStep,m_script->file,m_pc,node_id,stack))
+        bool node_flow = m_script->nodeInfo[node_id].isFlow;
+        if(breakTriggred(m_breakStep,m_script->file, stack,node_id, node_flow))
         {
             m_breakStep.clear();
             wait = true;
@@ -1102,36 +1136,30 @@ bool JZNodeEngine::checkPauseStop()
             for(int i = 0; i < m_breakPoints.size(); i++)
             {
                 auto pt = m_breakPoints[i];
-                if(breakTriggred(pt,m_script->file,m_pc,node_id,stack))
+                if(breakTriggred(pt,m_script->file, stack,node_id, node_flow))
                 {
                     wait = true;
                     break;
                 }
             }
-        }
-        if(wait)
-            m_breaknodeId = node_id;
+        }        
     }
     if(wait)
-    {
-        m_status = Status_pause;
-        m_statusCommand = Command_none;
-        if(m_breaknodeId == -1)
-            m_breaknodeId = nodeIdByPc(m_pc);
-
+    {        
+        m_statusCommand = Command_none;        
+        updateStatus(Status_pause);
         m_waitCond.wait(&m_mutex);
         if(m_statusCommand == Status_stop)
         {
             m_statusCommand = Command_none;
-            m_status = Status_none;
+            updateStatus(Status_none);
             m_mutex.unlock();
             return true;
         }
         else
         {
             m_statusCommand = Command_none;
-            m_status = Status_running;
-            m_breaknodeId = -1;
+            updateStatus(Status_running);            
             m_mutex.unlock();
         }
     }
@@ -1140,6 +1168,15 @@ bool JZNodeEngine::checkPauseStop()
         m_mutex.unlock();
     }
     return false;
+}
+
+void JZNodeEngine::updateStatus(int status)
+{
+    if (m_status != status)
+    {
+        m_status = status;
+        sigStatusChanged(m_status);
+    }
 }
 
 bool JZNodeEngine::run()

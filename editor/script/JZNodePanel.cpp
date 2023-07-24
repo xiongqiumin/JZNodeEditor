@@ -4,6 +4,7 @@
 #include <QDrag>
 #include <QMimeData>
 #include <QDebug>
+#include <QLabel>
 #include <QLineEdit>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeValue.h"
@@ -39,6 +40,7 @@ JZNodePanel::JZNodePanel(QWidget *widget)
     m_fileType = 0;
     m_file = nullptr;
     m_classFile = nullptr;
+    m_propEditor = nullptr;
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0,0,0,0);
@@ -52,6 +54,8 @@ JZNodePanel::JZNodePanel(QWidget *widget)
     m_tree->setColumnCount(1);
     m_tree->setHeaderHidden(true);
     m_tree->setDragEnabled(true);   
+
+    connect(m_tree, &QTreeWidget::itemClicked, this, &JZNodePanel::onTreeItemClicked);
 
     layout->addWidget(m_tree);
     setLayout(layout);
@@ -69,6 +73,12 @@ void JZNodePanel::setFile(JZScriptFile *file)
     init();
 }
 
+void JZNodePanel::setPropertyEditor(JZNodePropertyEditor *propEditor)
+{
+    m_propEditor = propEditor;
+    connect(m_propEditor, &JZNodePropertyEditor::sigPropChanged, this, &JZNodePanel::onPropUpdate);
+}
+
 void JZNodePanel::init()
 {
     m_tree->clear();
@@ -84,9 +94,17 @@ void JZNodePanel::init()
         initClassParam(itemClassParam);
     }
 
+    QTreeWidgetItem *itemLocalParam = createFolder("局部变量");
+    m_tree->addTopLevelItem(itemLocalParam);    
+    initScriptParam(itemLocalParam);
+
     QTreeWidgetItem *itemData = createFolder("数据");
     m_tree->addTopLevelItem(itemData);
     initVariable(itemData);
+
+    QTreeWidgetItem *itemConvert = createFolder("类型转换");
+    m_tree->addTopLevelItem(itemConvert);
+    initConvert(itemConvert);
 
     QTreeWidgetItem *itemExpr = createFolder("计算");
     m_tree->addTopLevelItem(itemExpr);
@@ -169,6 +187,33 @@ void JZNodePanel::initProjectParam(QTreeWidgetItem *root)
     }
 }
 
+void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
+{
+    QPushButton *btn = new QPushButton("+");
+    btn->setMaximumWidth(24);
+    connect(btn, &QPushButton::clicked, this, &JZNodePanel::onAddScriptParam);
+
+    QWidget *w = new QWidget();
+    QHBoxLayout *l = new QHBoxLayout();
+    l->setContentsMargins(0, 0, 0, 0);    
+    l->addWidget(new QLabel(root->text(0)));
+    l->addStretch();
+    l->addWidget(btn);
+    w->setLayout(l);
+    root->setText(0, "");
+    m_itemLocalVariable = root;
+
+    auto list = m_file->localVariableList();
+    m_tree->setItemWidget(root, 0, w);
+
+    for (int i = 0; i < list.size(); i++)
+    {
+        auto info = m_file->localVariableInfo(list[i]);
+        QTreeWidgetItem *item = createParam(list[i], info->dataType, "");        
+        root->addChild(item);
+    }
+}
+
 void JZNodePanel::initEvent(QTreeWidgetItem *root)
 {    
     QTreeWidgetItem *item_event = createFolder("事件");
@@ -181,7 +226,7 @@ void JZNodePanel::initEvent(QTreeWidgetItem *root)
 
 void JZNodePanel::initVariable(QTreeWidgetItem *root)
 {
-    JZNodeLiteral node_int,node_bool,node_int64,node_string,node_double;
+    JZNodeLiteral node_int,node_bool,node_string,node_double;
     node_int.setName("整数");
     node_int.setLiteral(0);
     node_int.setDataType(Type_int);
@@ -223,8 +268,30 @@ void JZNodePanel::initVariable(QTreeWidgetItem *root)
         JZNodeThis node_this;
         root->addChild(createNode(&node_this));
     }
+
+    JZNodePrint print;
+    root->addChild(createNode(&print));
 }
 
+void JZNodePanel::initConvert(QTreeWidgetItem *root)
+{
+    QStringList funcList = { "toInt","toString","toDouble","toBool" };
+
+    for (int i = 0; i < funcList.size(); i++)
+    {
+        QString function = funcList[i];
+        auto func_ptr = JZNodeFunctionManager::instance()->function(function);
+        
+        JZNodeFunction node_func;
+        node_func.setName(function);
+        node_func.setFunction(func_ptr);
+
+        auto function_node = createNode(&node_func);
+        function_node->setText(0, function);
+        root->addChild(function_node);
+    }
+    
+}
 
 void JZNodePanel::initExpression(QTreeWidgetItem *root)
 {    
@@ -416,4 +483,53 @@ void JZNodePanel::onSearch()
 {
     QString name = m_lineSearch->text();
     filterItem(m_tree->invisibleRootItem(),name);
+}
+
+void JZNodePanel::onTreeItemClicked(QTreeWidgetItem *item, int column)
+{    
+    if (item->parent() != m_itemLocalVariable)
+    {
+        m_propEditor->setParamDefine(nullptr);
+        return;
+    }
+
+    auto info = m_file->localVariableInfo(item->text(0));
+    m_propEditor->setParamDefine(info);    
+}
+
+void JZNodePanel::onPropUpdate(int prop_id, const QVariant &value)
+{
+    auto item = m_tree->currentItem();
+    Q_ASSERT(item);
+
+    if (prop_id == PropEditor_varName)
+    {
+        QString oldName = item->text(0);
+        item->setText(0, value.toString());
+
+        item->setData(0, TreeItem_value, value.toString());
+        m_file->renameLocalVariable(oldName, value.toString());
+    }
+    else if (prop_id == PropEditor_varType)
+    {
+        m_file->setLocalVariableType(item->text(0), value.toInt());
+    }
+}
+
+void JZNodePanel::onAddScriptParam()
+{
+    QString name;
+    auto list = m_file->localVariableList();
+    int i = 0;
+    while(true)
+    {
+        name = "新建变量" + QString::number(i+1);
+        if (!list.contains(name))
+            break;
+        i++;
+    }
+    m_file->addLocalVariable(name, Type_int);
+
+    QTreeWidgetItem *item = createParam(name, Type_int);
+    m_itemLocalVariable->addChild(item);
 }

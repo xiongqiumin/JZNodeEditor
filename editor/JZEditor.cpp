@@ -2,7 +2,7 @@
 
 JZEditor::JZEditor()
 {
-    m_file = nullptr;
+    m_item = nullptr;
     m_project = nullptr;
     m_type = Editor_none;
 }
@@ -21,24 +21,19 @@ void JZEditor::setProject(JZProject *project)
     m_project = project;
 }
 
+void JZEditor::setItem(JZProjectItem *item)
+{
+    m_item = item;
+}
+
+JZProjectItem *JZEditor::item()
+{
+    return m_item;
+}
+
 bool JZEditor::isModified()
 {
     return false;
-}
-
-void JZEditor::setFile(JZProjectItem *file)
-{
-    m_file = file;
-}
-
-JZProjectItem *JZEditor::file()
-{
-    return m_file;
-}
-
-QString JZEditor::filePath()
-{
-    return m_file->itemPath();
 }
 
 void JZEditor::updateMenuBar(QMenuBar *menubar)

@@ -32,9 +32,9 @@ public:
     JZParamDefine(QString name,int dataType,const QVariant &v = QVariant());
 
     QString name;
-    int dataType;
-    bool cref;
+    int dataType;    
     QVariant value;
+    bool cref;         //从c++侧引用
 };
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param);
 QDataStream &operator>>(QDataStream &s, JZParamDefine &param);

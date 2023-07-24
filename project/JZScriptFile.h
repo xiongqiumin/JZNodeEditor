@@ -48,12 +48,20 @@ public:
 
     JZParamDefine *getVariableInfo(const QString &name);
 
+    JZParamDefine *localVariableInfo(const QString &name);
+    void addLocalVariable(QString name, int type, QVariant v = QVariant());
+    void removeLocalVariable(QString name);
+    void renameLocalVariable(QString oldName, QString newName);
+    void setLocalVariableType(QString name,int type);
+    QStringList localVariableList();
+
 protected:
     int m_nodeId;
     QMap<int, JZNodePtr> m_nodes;        
     QList<JZNodeConnect> m_connects;    
     QString m_bindClass;
-    FunctionDefine m_function;    
+    FunctionDefine m_function;
+    QMap<QString, JZParamDefine> m_variables;
 
     QMap<int, QPointF> m_nodesPos;
 };

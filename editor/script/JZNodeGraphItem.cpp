@@ -59,7 +59,12 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
     for (int i = 0; i < in_list.size(); i++)
         drawProp(painter,in_list[i]);   
 
-    if(isSelected())
+    if (editor()->runtimeNode() == m_id)
+    {
+        painter->setPen(QPen(Qt::green, 4));
+        painter->drawRect(rc);
+    }
+    else if(isSelected())
     {
         painter->setPen(QPen(Qt::yellow,4));
         painter->drawRect(rc);

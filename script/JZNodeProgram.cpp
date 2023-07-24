@@ -282,12 +282,14 @@ NodeInfo::NodeInfo()
 {
     node_id = -1;
     node_type = Node_none;
+    isFlow = false;
 }
 
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
 {
     s << param.node_id;
     s << param.node_type;
+    s << param.isFlow;
     return s;
 }
 
@@ -295,6 +297,7 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
 {
     s >> param.node_id;
     s >> param.node_type;
+    s >> param.isFlow;
     return s;
 }
 
@@ -311,6 +314,7 @@ void JZNodeScript::clear()
     events.clear();
     statmentList.clear();
     functionList.clear();
+    localVariable.clear();
     nodeInfo.clear();
 }
 
@@ -383,18 +387,29 @@ void JZNodeProgram::clear()
     m_objectDefines.clear();    
 }
 
+QString JZNodeProgram::error()
+{
+    return m_error;
+}
+
 bool JZNodeProgram::load(QString filepath)
 {   
     QFile file(filepath);
-    if(!file.open(QFile::ReadOnly))
+    if (!file.open(QFile::ReadOnly))
+    {
+        m_error = "open file failed";
         return false;
+    }
 
     QByteArray magic;
     QDataStream s(&file);
     int script_size;
     s >> magic;
     if(magic != NodeMagic())
+    {
+        m_error = "version not support";
         return false;
+    }
         
     s >> script_size;
     for(int i = 0; i < script_size; i++)
@@ -407,7 +422,7 @@ bool JZNodeProgram::load(QString filepath)
     }
     s >> m_variables;
     s >> m_functionDefines;
-    s >> m_objectDefines;    
+    s >> m_objectDefines;        
     return true;
 }
     
@@ -429,7 +444,7 @@ bool JZNodeProgram::save(QString filepath)
     }        
     s << m_variables;
     s << m_functionDefines;
-    s << m_objectDefines;    
+    s << m_objectDefines;        
     return true;
 }
 
@@ -541,10 +556,8 @@ QString JZNodeProgram::dump()
                 case OP_alloc:
                 {
                     JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
-                    if(ir_alloc->allocType == JZNodeIRAlloc::Heap)
-                        line += "Heap " + ir_alloc->name;
-                    else
-                        line += "Stack " + ir_alloc->name;
+                    QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "HeapAlloc" : "StackAlloc";
+                    line += alloc + " " + ir_alloc->name + " = " + ir_alloc->value.toString();                    
                     break;
                 }
                 case OP_set:

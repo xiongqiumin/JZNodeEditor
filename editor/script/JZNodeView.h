@@ -77,7 +77,7 @@ public:
 
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
     void setFile(JZScriptFile *file);
-    void saveNodePos();
+    bool isModified();
 
     /* node */
     JZNode *getNode(int id);
@@ -112,6 +112,8 @@ public:
     QVariant onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsItemChange change, const QVariant &value);
 
     void clear();
+
+    void save();
     void redo();
     void undo();
     void remove();
@@ -123,15 +125,21 @@ public:
     void updateNodeLayout();    
     BreakPointTriggerResult breakPointTrigger();
 
+    void setRuntimeStatus(int staus);
+    int runtimeNode();
+    void setRuntimeNode(int nodeId);
+
 signals:
     void redoAvailable(bool available);
     void undoAvailable(bool available);
+    void modifyChanged(bool modify);
 
 protected slots:
     void onContextMenu(const QPoint &pos);
     void onPropNameUpdate(int nodeId,int propId,const QString &value);
     void onPropUpdate(int nodeId,int propId,const QVariant &value);
     void onAutoCompiler();
+    void onCleanChanged(bool modify);
 
 protected:
     friend JZNodeViewCommand;
@@ -161,13 +169,15 @@ protected:
     void setDepth(GraphNode *node,int depth,Graph *graph,QMap<GraphNode*,int> &result);
     void setSelectNode(int id);
     void updatePropEditable(const JZNodeGemo &gemo);
+    void saveNodePos();
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
     int getVariableType(const QString &param_name);    
-    void setMoveUndo(bool flag);    
+    void setRecordMove(bool flag);
     void autoCompiler();
     QString getExpr();
+    int getSelect(QStringList list);
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;    
@@ -178,11 +188,14 @@ protected:
     bool m_loadFlag;
     JZNodePropertyEditor *m_propEditor;
     QUndoStack m_commandStack;        
-    bool m_moveUndo;
+    bool m_recordMove;
     bool m_propEditFlag;
 
     QPointF m_downPoint;
     QTimer *m_compilerTimer;  
+
+    bool m_runningMode;
+    int m_runNode;
 };
 
 #endif

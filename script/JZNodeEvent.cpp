@@ -39,9 +39,9 @@ int JZNodeEvent::eventType() const
     return m_eventType;
 }
 
-QList<FunctionParam> JZNodeEvent::params()
+QList<JZParamDefine> JZNodeEvent::params()
 {
-    return QList<FunctionParam>();
+    return QList<JZParamDefine>();
 }
 
 bool JZNodeEvent::compiler(JZNodeCompiler *c,QString &error)
@@ -62,7 +62,7 @@ JZNodeSingleEvent::~JZNodeSingleEvent()
 
 }
 
-QList<FunctionParam> JZNodeSingleEvent::params()
+QList<JZParamDefine> JZNodeSingleEvent::params()
 {
     auto def = JZNodeObjectManager::instance()->meta(m_className);
     auto sig_func = def->function(single());

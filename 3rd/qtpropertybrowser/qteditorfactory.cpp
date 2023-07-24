@@ -1004,10 +1004,14 @@ QWidget *QtLineEditFactory::createEditor(QtStringPropertyManager *manager,
         QValidator *validator = new QRegExpValidator(regExp, editor);
         editor->setValidator(validator);
     }
-    editor->setText(manager->value(property));
-
+    editor->setText(manager->value(property));    
+    connect(editor, &QLineEdit::editingFinished, this, [this, editor] {
+        d_ptr->slotSetValue(editor->text());
+    });
+    /*
     connect(editor, SIGNAL(textEdited(QString)),
                 this, SLOT(slotSetValue(QString)));
+    */
     connect(editor, SIGNAL(destroyed(QObject*)),
                 this, SLOT(slotEditorDestroyed(QObject*)));
     return editor;

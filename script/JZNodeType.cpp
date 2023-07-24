@@ -98,6 +98,11 @@ bool JZNodeType::isNumber(int type)
     return false;
 }
 
+bool JZNodeType::isBaseType(int type)
+{
+    return (type >= Type_none && type <= Type_string);
+}
+
 bool JZNodeType::isObject(int type)
 {
     return type >= Type_object;
@@ -152,4 +157,9 @@ bool JZNodeType::canConvert(QList<int> type1,QList<int> type2)
         }
     }
     return false;
+}
+
+QString JZNodeType::toString(const QVariant &v)
+{
+    return v.toString();
 }

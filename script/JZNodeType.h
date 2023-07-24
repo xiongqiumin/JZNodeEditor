@@ -5,13 +5,13 @@
 
 enum
 {
-    Type_none = -1,
-    Type_any,    
+    Type_none = -1,    
     Type_bool,
     Type_int,
     Type_int64,
     Type_double,
     Type_string,
+    Type_any,
 
     Type_object = 1000,    
     Type_list,
@@ -30,14 +30,15 @@ public:
     static int variantType(const QVariant &v);
     static QVariant::Type typeToQMeta(int id);
     static int typeidToType(QString name);
-
     
+    static bool isBaseType(int id);    
     static bool isObject(int type);
     static bool isNumber(int type);
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
     static bool canConvert(int type1,int type2);
     static bool canConvert(QList<int> type1,QList<int> type2);
+    static QString toString(const QVariant &v);
 };
 
 #endif

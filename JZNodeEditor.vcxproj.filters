@@ -199,9 +199,6 @@
     <ClCompile Include="script\JZNodeVM.cpp">
       <Filter>Source Files\script</Filter>
     </ClCompile>
-    <ClCompile Include="tests\test_program.cpp">
-      <Filter>Source Files\tests</Filter>
-    </ClCompile>
     <ClCompile Include="editor\ui\JZUiEditor.cpp">
       <Filter>Source Files\editor\ui</Filter>
     </ClCompile>
@@ -215,9 +212,6 @@
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
     <ClCompile Include="editor\script\JZNodeLineItem.cpp">
-      <Filter>Source Files\editor\script</Filter>
-    </ClCompile>
-    <ClCompile Include="editor\script\JZNodeNewDialog.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
     <ClCompile Include="editor\script\JZNodePanel.cpp">
@@ -240,6 +234,24 @@
     </ClCompile>
     <ClCompile Include="editor\JZProjectTree.cpp">
       <Filter>Source Files\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_script.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="LogWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeFuctionEditDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\JZNewProjectDialog.cpp">
+      <Filter>Source Files\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\JZNewClassDialog.cpp">
+      <Filter>Source Files\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeTypeDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -282,9 +294,6 @@
     <QtMoc Include="editor\script\JZNodeEditor.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
-    <QtMoc Include="editor\script\JZNodeNewDialog.h">
-      <Filter>Header Files\editor\script</Filter>
-    </QtMoc>
     <QtMoc Include="editor\script\JZNodePanel.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
@@ -323,6 +332,24 @@
     </QtMoc>
     <QtMoc Include="script\JZNodeVM.h">
       <Filter>Header Files\script</Filter>
+    </QtMoc>
+    <QtMoc Include="tests\test_script.h">
+      <Filter>Header Files\tests</Filter>
+    </QtMoc>
+    <QtMoc Include="LogWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeFuctionEditDialog.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\JZNewProjectDialog.h">
+      <Filter>Header Files\editor</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\JZNewClassDialog.h">
+      <Filter>Header Files\editor</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeTypeDialog.h">
+      <Filter>Header Files\editor\script</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -416,5 +443,25 @@
     <ClInclude Include="editor\script\JZNodeLineItem.h">
       <Filter>Header Files\editor\script</Filter>
     </ClInclude>
+    <ClInclude Include="editor\UiCommon.h">
+      <Filter>Header Files\editor</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="editor\script\JZParamEditor.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="editor\JZNewProjectDialog.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="editor\script\JZNodeFuctionEditDialog.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="editor\JZNewClassDialog.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="editor\script\JZNodeTypeDialog.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
   </ItemGroup>
 </Project>

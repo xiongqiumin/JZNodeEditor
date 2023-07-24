@@ -12,7 +12,7 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
-    int dataType();
+    int dataType() const;
     void setDataType(int type);
 
     QVariant literal() const;

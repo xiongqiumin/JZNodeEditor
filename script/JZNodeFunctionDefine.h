@@ -18,13 +18,6 @@ protected:
     Q_DISABLE_COPY(CFunction);
 };
 
-class FunctionParam
-{
-public:
-    QString name;
-    int dataType;
-};
-
 class FunctionDefine
 {
 public:
@@ -33,8 +26,8 @@ public:
     bool isCFunction;
     bool isFlowFunction;
     QString name;
-    QList<FunctionParam> paramIn;
-    QList<FunctionParam> paramOut;
+    QList<JZParamDefine> paramIn;
+    QList<JZParamDefine> paramOut;
     
     //for node
     int addr;

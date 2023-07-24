@@ -153,9 +153,10 @@ bool JZNodeBuilder::buildClassFile(JZScriptClassFile *classFile)
 
 bool JZNodeBuilder::link()
 {       
-    std::sort(m_program->m_objectDefines.begin(),m_program->m_objectDefines.end(),[](const JZNodeObjectDefine &d1,const JZNodeObjectDefine &d2)->bool{
-        return d1.id < d2.id;
-    });
+    std::sort(m_program->m_objectDefines.begin(),m_program->m_objectDefines.end(),
+        [](const JZNodeObjectDefine &d1,const JZNodeObjectDefine &d2)->bool{
+            return d1.id < d2.id;
+        });
 
     m_program->m_scripts = m_scripts;            
     return true;
