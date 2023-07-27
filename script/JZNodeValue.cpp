@@ -28,7 +28,11 @@ QVariant JZNodeLiteral::literal() const
 {
     auto pin = prop(paramOut(0));
     QVariant v = pin->value();
-    v.convert(JZNodeType::typeToQMeta(pin->dataType()[0]));
+    int dataType = pin->dataType()[0];
+    if (dataType == Type_nullptr)
+        v = QVariant::fromValue(JZObjectNull());
+    else
+        v.convert(JZNodeType::typeToQMeta(dataType));
     return v;
 }
 
@@ -76,6 +80,18 @@ QString JZNodeCreate::className() const
 
 bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
 {
+    if(className().isEmpty())
+    {
+        error = "没有设置类型";
+        return false;
+    }
+
+    int type = JZNodeObjectManager::instance()->getClassId(className());
+    if (type == Type_none) 
+    {
+        error = "没有此类型:" + className();
+        return false;
+    }
     if(!c->addFlowInput(m_id,error))
         return false;
 
@@ -150,7 +166,10 @@ bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
 
 void JZNodeThis::fileInitialized()
 {
-    QString className = m_file->bindClass();
+    auto class_file = m_file->project()->getClassFile(m_file);
+    Q_ASSERT(class_file);
+
+    QString className = class_file->className();
     int data_type = JZNodeObjectManager::instance()->getClassId(className);
     Q_ASSERT(data_type != Type_none);
     setPinType(paramOut(0),{data_type});
@@ -200,7 +219,7 @@ void JZNodeParam::pinChanged(int id)
 {
     if(id == paramOut(0))
     {
-        auto def = m_file->getVariableInfo(variable());
+        auto def = JZNodeCompiler::getVariableInfo(m_file, variable());
         int dataType = def? def->dataType : Type_none;
         setPinType(id,{dataType});
     }
@@ -242,7 +261,7 @@ void JZNodeSetParam::pinChanged(int id)
 {
     if(id == paramIn(0))
     {
-        auto def = m_file->getVariableInfo(variable());
+        auto def = JZNodeCompiler::getVariableInfo(m_file, variable());
         int dataType = def? def->dataType : Type_none;
         setPinType(id,{dataType});
         setPinType(paramOut(0),{dataType});
@@ -301,7 +320,7 @@ void JZNodeSetParamDataFlow::pinChanged(int id)
 {
     if(id == paramIn(0))
     {
-        auto def = m_file->getVariableInfo(variable());
+        auto def = JZNodeCompiler::getVariableInfo(m_file,variable());
         int dataType = def? def->dataType : Type_none;
         setPinType(id,{dataType});
     }

@@ -253,6 +253,9 @@
     <ClCompile Include="editor\script\JZNodeTypeDialog.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
+    <ClCompile Include="UiCommon.cpp">
+      <Filter>Source Files\editor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -463,5 +466,10 @@
     <QtUic Include="editor\script\JZNodeTypeDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="JZNodeEditor.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
   </ItemGroup>
 </Project>

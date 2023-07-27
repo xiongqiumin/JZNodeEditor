@@ -602,6 +602,19 @@ JZNodeReturn::JZNodeReturn()
     addFlowIn();
 }
 
+void JZNodeReturn::setFunction(FunctionDefine def)
+{
+    auto inList = paramInList();
+    for (int i = 0; i < inList.size(); i++)
+        removeProp(inList[i]);
+
+    for (int i = 0; i < def.paramOut.size(); i++)
+    {
+        int in = addParamIn(def.paramOut[i].name);
+        setPinType(in, { def.paramOut[i].dataType });
+    }
+}
+
 bool JZNodeReturn::compiler(JZNodeCompiler *c,QString &error)
 {   
     if(!c->addFlowInput(m_id,error))
@@ -753,11 +766,11 @@ JZNodeForEach::JZNodeForEach()
 
     addFlowIn();
     int in = addParamIn("");
-    addSubFlowOut("loop body");
-    addFlowOut("complete");
+    addSubFlowOut("loop body", Prop_dispName);
+    addFlowOut("complete", Prop_dispName);
 
-    int out1 = addParamOut("key");
-    int out2 = addParamOut("value");
+    int out1 = addParamOut("key",Prop_dispName);
+    int out2 = addParamOut("value",Prop_dispName);
     prop(in)->setDataType({Type_list,Type_map});
     setPinTypeString(out1);
     setPinTypeAny(out2);

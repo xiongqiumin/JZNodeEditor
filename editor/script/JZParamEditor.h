@@ -46,7 +46,7 @@ class JZParamEditor : public JZEditor
 public:
     JZParamEditor();
     ~JZParamEditor();
-
+    
     virtual void open(JZProjectItem *item) override;
     virtual void close() override;
     virtual void save() override;
@@ -71,8 +71,9 @@ protected:
     void renameParam(QString oldName, QString newName);
     void setParamType(QString newName, int newType);
     int rowIndex(QString name);
+    int rowIndex(QComboBox *box);
 
-    JZParamFile *m_file;
+    JZParamFile *m_file;    
     QTableWidget *m_table;
     Ui::JZParamEditor *ui;
 

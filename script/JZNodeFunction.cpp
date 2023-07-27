@@ -3,6 +3,7 @@
 
 JZNodeFunctionStart::JZNodeFunctionStart()
 {
+    m_name = "Start";
     m_type = Node_functionStart;
     addFlowOut();   
 }

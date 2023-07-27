@@ -5,11 +5,14 @@
 #include <QVariantList>
 #include "JZNodeFunctionDefine.h"
 
-enum{
+enum {
     Event_none,
+    Event_idlePause,
     Event_programStart,
     Event_libraryLoad,
     Event_paramChanged,
+
+    Event_timeout,
     
     /* widget */
     Event_buttonClicked,

@@ -36,7 +36,12 @@ bool JZEditor::isModified()
     return false;
 }
 
-void JZEditor::updateMenuBar(QMenuBar *menubar)
+void JZEditor::addMenuBar(QMenuBar *menubar)
+{
+
+}
+
+void JZEditor::removeMenuBar(QMenuBar *menubar)
 {
 
 }
@@ -74,4 +79,16 @@ void JZEditor::paste()
 void JZEditor::selectAll()
 {
 
+}
+
+JZScriptClassFile *JZEditor::getClassFile(JZProjectItem *item)
+{    
+    while (item)
+    {
+        if (item->itemType() == ProjectItem_class)
+            return (JZScriptClassFile*)item;
+
+        item = item->parent();
+    }
+    return nullptr;
 }

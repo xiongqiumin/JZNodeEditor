@@ -13,6 +13,7 @@ void JZNodeType::init()
      typeMap["int64"]  = Type_int64;
      typeMap["double"] = Type_double;
      typeMap["string"] = Type_string;
+     typeMap["nullptr"] = Type_nullptr;
 }
 
 QString JZNodeType::typeToName(int id)
@@ -51,15 +52,15 @@ int JZNodeType::typeidToType(QString name)
 
 QVariant::Type JZNodeType::typeToQMeta(int type)
 {
-    if(type == Type_bool)
+    if (type == Type_bool)
         return QVariant::Bool;
-    else if(type == Type_int)
+    else if (type == Type_int)
         return QVariant::Int;
-    else if(type == Type_int64)
+    else if (type == Type_int64)
         return QVariant::LongLong;
-    else if(type == Type_double)
+    else if (type == Type_double)
         return QVariant::Double;
-    else if(type == Type_string)
+    else if (type == Type_string)
         return QVariant::String;
 
     Q_ASSERT(0);
@@ -80,7 +81,9 @@ int JZNodeType::variantType(const QVariant &v)
         return Type_string;
     else if(v.type() == QVariant::UserType)
     {
-        if(isJZObject(v))
+        if(v.userType() == qMetaTypeId<JZObjectNull>())
+            return Type_nullptr;
+        else if(isJZObject(v))
         {
             auto obj = toJZObject(v);
             return obj->define->id;
@@ -105,7 +108,7 @@ bool JZNodeType::isBaseType(int type)
 
 bool JZNodeType::isObject(int type)
 {
-    return type >= Type_object;
+    return (type == Type_nullptr || type >= Type_object);
 }
 
 int JZNodeType::isInherits(int type1,int type2)
@@ -136,7 +139,8 @@ bool JZNodeType::canConvert(int type1,int type2)
         return true;
     if(isNumber(type1) && type2 == Type_bool)
         return true;
-
+    if (type1 == Type_nullptr && type2 >= Type_object)
+        return true;
     if(type1 >= Type_object && type2 >= Type_object)
     {
         auto inst = JZNodeObjectManager::instance();        
@@ -162,4 +166,59 @@ bool JZNodeType::canConvert(QList<int> type1,QList<int> type2)
 QString JZNodeType::toString(const QVariant &v)
 {
     return v.toString();
+}
+
+//JZParamDefine
+JZParamDefine::JZParamDefine()
+{
+    dataType = Type_none;
+    cref = false;
+}
+
+JZParamDefine::JZParamDefine(QString name, int dataType, const QVariant &v)
+{
+    this->name = name;
+    this->dataType = dataType;
+    this->value = v;
+    this->cref = false;
+}
+
+QVariant JZParamDefine::initialValue() const
+{
+    if (dataType < Type_object)
+    {        
+        QVariant::Type q_type = JZNodeType::typeToQMeta(dataType);
+        if (value.isNull()) 
+            return QVariant(q_type);
+        else
+        {
+            QVariant v = value;
+            if(v.convert(q_type))
+                return v;
+            else
+                return QVariant(q_type);
+        }        
+    }
+    else
+    {
+        return QVariant::fromValue(JZObjectNull());
+    }
+}
+
+QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
+{
+    s << param.name;
+    s << param.dataType;
+    s << param.value;
+    s << param.cref;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZParamDefine &param)
+{
+    s >> param.name;
+    s >> param.dataType;
+    s >> param.value;
+    s >> param.cref;
+    return s;
 }

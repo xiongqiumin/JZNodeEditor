@@ -31,7 +31,9 @@ public:
     QString path();
     QString mainScript();       
 
-    JZScriptFile *addFunction(const FunctionDefine &func);
+    JZProjectItemFolder *addFolder(QString path,QString name);
+
+    JZScriptFile *addFunction(QString path,const FunctionDefine &func);
     void removeFunction(QString name);
     JZScriptFile *getFunction(QString name);
 
@@ -39,15 +41,14 @@ public:
     void removeLibrary(QString name);
     JZScriptLibraryFile *getLibrary(QString libraryName);
 
-    JZScriptClassFile *addClass(QString def,QString super = QString());
-    JZScriptClassFile *addUiClass(QString def);
+    JZScriptClassFile *addClass(QString path,QString def,QString super = QString());
+    JZScriptClassFile *addUiClass(QString path,QString def);
     void removeClass(QString name);
     JZScriptClassFile *getClass(QString className);
+    JZScriptClassFile *getClassFile(JZProjectItem *item);
 
-    JZParamDefine *getVariableInfo(QString name);
-    void setVariable(QString name,const QVariant &value);    
-    QVariant getVariable(QString name);
-    QStringList variableList();
+    JZParamDefine *globalVariableInfo(QString name);      
+    QStringList globalVariableList();
     
     int addItem(QString dir,JZProjectItem *item);
     void removeItem(QString path);
@@ -57,7 +58,7 @@ public:
     void loadItem(JZProjectItem *item);
     void saveAllItem();
     int renameItem(JZProjectItem *item,QString newname);
-    QList<JZProjectItem *> itemList(QString path,int type);    
+    QList<JZProjectItem *> itemList(QString path,int type);
     JZProjectItem *root();
 
     bool hasBreakPoint(QString file,int id);
@@ -77,10 +78,11 @@ protected:
     };
     friend QDataStream &operator<<(QDataStream &s, const ItemInfo &param);
     friend QDataStream &operator >> (QDataStream &s, ItemInfo &param);
+    QList<JZProjectItem *> paramDefineList();
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
-    void itemList(JZProjectItem *item,int type,QList<JZProjectItem *> &list);
+    QString domain(JZProjectItem *item);
     void init();    
     void clear();
     void registType();

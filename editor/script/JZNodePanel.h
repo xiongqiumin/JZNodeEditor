@@ -36,24 +36,29 @@ protected slots:
 
 protected:
     void init();
-    void initEvent(QTreeWidgetItem *root);
+    void initData();
+    void initBasicFlow();
+    void initEvent();
+    void initFunction();
+    void initClass();
+    
+    void initConstParam(QTreeWidgetItem *root);
     void initClassParam(QTreeWidgetItem *root);
     void initProjectParam(QTreeWidgetItem *root);
-    void initScriptParam(QTreeWidgetItem *root);
-
-    void initVariable(QTreeWidgetItem *root);
+    void initScriptParam(QTreeWidgetItem *root);    
+        
     void initProcess(QTreeWidgetItem *root);
     void initExpression(QTreeWidgetItem *root);
     void initConvert(QTreeWidgetItem *root);
-    void initFunction(QTreeWidgetItem *root,bool flow);    
+
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
-    QTreeWidgetItem *createParam(QString name,int dataType,QString preName = QString());
-    QTreeWidgetItem *createClass(QString className);
+    QTreeWidgetItem *createParam(QString name,int dataType,QString preName = QString());    
+    QTreeWidgetItem *createClassEvent(QString name);
+
     bool filterItem(QTreeWidgetItem *root,QString name);
 
-    JZNodeTreeWidget *m_tree;
-    int m_fileType;
+    JZNodeTreeWidget *m_tree;    
     JZScriptFile *m_file;
     JZScriptClassFile *m_classFile;
     QLineEdit *m_lineSearch;

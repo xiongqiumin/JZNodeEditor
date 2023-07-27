@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "JZProject.h"
 #include <QTreeWidget>
+#include "UiCommon.h"
 
 class JZProjectTree : public QWidget
 {
@@ -30,11 +31,15 @@ signals:
     void sigFileOpened(QString file);  
 
 protected:    
-    void newFunctionItem();
-    void newClassItem();
-    void addItem(QTreeWidgetItem *view_item,JZProjectItem *item);
-    JZProjectItem *getItem(QTreeWidgetItem *view_item);
+    void addItem(QTreeWidgetItem *parent, JZProjectItem *item);
+    void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);
+    QTreeWidgetItem *getItem(QString path);
+    JZProjectItem *getFile(QTreeWidgetItem *view_item);
+
+    QString getClass(JZProjectItem *item);
     void cancelEdit();
+    QString filepath(QTreeWidgetItem *item);
+    void renameItem(QTreeWidgetItem *item);    
 
     JZProject *m_project;   
     QTreeWidget *m_tree; 

@@ -153,7 +153,7 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
 QList<JZProjectItem *> JZProjectItem::itemList(int type)
 {
     QList<JZProjectItem *> result;
-    if(this->itemType() == type || this->itemType() == ProjectItem_any)
+    if(this->itemType() == type || type == ProjectItem_any)
         result << this;
 
     auto chlid = this->childs();

@@ -65,27 +65,38 @@ JZNodeSingleEvent::~JZNodeSingleEvent()
 QList<JZParamDefine> JZNodeSingleEvent::params()
 {
     auto def = JZNodeObjectManager::instance()->meta(m_className);
-    auto sig_func = def->function(single());
-    return sig_func->paramIn;
+    auto sig_func = def->single(m_single);
+    QList<JZParamDefine> result = sig_func->paramOut;
+
+    JZParamDefine sender;
+    sender.name = "sender";
+    sender.dataType = def->id;
+    result.insert(0, sender);
+    return result;
 }
 
 void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
 {
-    auto inst = JZNodeFunctionManager::instance();
+    auto def = JZNodeObjectManager::instance()->meta(className);
     m_single = single->name;
     m_className = className;
 
     QString function = className + "." + single->name;
     setName(function);
     setPropName(paramIn(0),className);
+   
+    JZNodePin sender;
+    sender.setName("sender");
+    sender.setFlag(Prop_param | Prop_out);
+    sender.setDataType({ def->id });
+    addProp(sender);
 
-    const FunctionDefine *func = inst->function(function);
-    for(int i = 0; i < func->paramIn.size(); i++)
+    for(int i = 0; i < single->paramOut.size(); i++)
     {
         JZNodePin pin;
-        pin.setName(func->paramIn[i].name);
+        pin.setName(single->paramOut[i].name);
         pin.setFlag(Prop_param | Prop_out);
-        pin.setDataType({func->paramIn[i].dataType});
+        pin.setDataType({single->paramOut[i].dataType});
         addProp(pin);
     }
     m_eventType = single->eventType;

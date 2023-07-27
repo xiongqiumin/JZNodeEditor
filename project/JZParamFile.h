@@ -25,6 +25,8 @@ public:
     const QMap<QString,JZParamDefine> &variables();
 
 protected:
+    void reinitClass();
+
     QMap<QString,JZParamDefine> m_variables;
 };
 

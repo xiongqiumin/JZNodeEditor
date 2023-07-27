@@ -16,7 +16,7 @@ enum{
     Status_none,
     Status_running,
     Status_pause,
-    Status_stop,
+    Status_idlePause,
 };
 
 class RunnerEnv
@@ -76,13 +76,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
 class JZNodeRuntimeInfo
 {
 public:
-    JZNodeRuntimeInfo();
-    
-    enum{
-        None,
-        Running,
-        Paused,
-    };
+    JZNodeRuntimeInfo();   
 
     int status;
     QString file;
@@ -147,6 +141,7 @@ public:
     void setThis(QVariant var);
 
     QVariant *getVariableRef(QString name);
+    JZNodeObject *getObject(QString name);
     QVariant getVariable(QString name);
     void setVariable(QString name, const QVariant &value);    
 
@@ -174,6 +169,26 @@ protected:
         Command_resume,
         Command_stop,
     };
+    
+
+    class ConnectInfo
+    {
+    public:
+        QString sender;        
+        int eventType;
+        QString recv;
+        FunctionDefine *handle;
+    };
+
+    class ConnectCache
+    {
+    public:
+        QString sender;
+        JZNodeObject *parentObject;
+        int eventType;
+        JZNodeObject *recvObject;
+        FunctionDefine *handle;
+    };
 
     class JZObjectConnect
     {
@@ -196,14 +211,14 @@ protected:
         FunctionDefine *handle;
     };
 
+    virtual void customEvent(QEvent *event) override;
     void clear();
     bool checkPauseStop();  //return is stop
     bool run();         
     void updateStatus(int status);
 
     const FunctionDefine *function(QString name);       
-    void callCFunction(const FunctionDefine *func);    
-    bool setCommand(int cmd);    
+    void callCFunction(const FunctionDefine *func);        
     QVariant dealExpr(const QVariant &a, const QVariant &b,int op);
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);
@@ -226,12 +241,11 @@ protected:
      3. CreateObject 连接自身 this 部分
      */
     void connectParamChanged(JZNodeObject *obj,JZNodeScript *script);
-    void connectScript(QString sender,JZNodeObject *recv,JZNodeScript *script);
-    void connectRecv(QString objName,JZNodeObject *obj,JZNodeObject *recv);                        //obj连接到 recv及子孙
-    void connectSender(QString objName,JZNodeObject *obj);                                         //obj及子孙 连接到全部
-    void connectSelf(JZNodeObject *obj);
-    void connectParent(JZNodeObject *obj,QString name,JZNodeObject* parent,JZNodeScript *script);  //obj及子孙连接到 parent
-    JZNodeObject *getObject(QString name);
+    void connectClassEvent(JZNodeObject *obj);
+    void connectVariableEvent(QString name,JZNodeObject *obj);
+    void connectVariableThis(QString name, JZNodeObject *obj, JZNodeObject *recv);
+    void connectObject(JZObjectConnect connect);
+    
     bool isWatch();        
     bool splitMember(const QString &fullName,QString &objName,QString &memberName);
 
@@ -250,12 +264,15 @@ protected:
     QMap<int,QVariant> m_regs;        
     QVariant m_this;
            
+    FunctionDefine m_idleFunc;
     int m_statusCommand;
     int m_status;     
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
 
+    QList<ConnectInfo> m_connectInfo;
     QMap<JZNodeObject*,QList<JZObjectConnect>> m_connects;
+    QList<ConnectCache> m_connectCache;
     QList<ParamChangeEvent> m_paramChangeHandle;
     JZNodeDebugServer *m_debug;
 };

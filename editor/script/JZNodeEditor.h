@@ -19,7 +19,9 @@ public:
     virtual void close() override;
     virtual void save() override;
 
-    virtual void updateMenuBar(QMenuBar *menubar);
+    virtual void addMenuBar(QMenuBar *menubar) override;
+    virtual void removeMenuBar(QMenuBar *menubar) override;
+
     virtual bool isModified() override;
 
     virtual void undo() override;
@@ -29,16 +31,17 @@ public:
     virtual void copy() override;
     virtual void paste() override;
     virtual void selectAll() override;
-
-    void updateNodeLayout();
+    
     BreakPointTriggerResult breakPointTrigger();
+    void ensureNodeVisible(int nodeId);
 
     void setRuntimeStatus(int staus);
     int runtimeNode();
     void setRuntimeNode(int nodeId);
 
 protected slots:
-
+    void onActionLayout();
+    void onActionFitInView();
 
 protected:
     void init();
@@ -47,6 +50,7 @@ protected:
     JZNodePanel *m_nodePanel;
     JZNodePropertyEditor *m_nodeProp;
     JZNodeCompiler *m_compiler;
+    QList<QAction*> m_actionList;
 };
 
 #endif

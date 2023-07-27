@@ -17,10 +17,6 @@ public:
     const FunctionDefine &function();
     void setFunction(FunctionDefine def);
 
-    void setBindClass(QString bindClass);
-    QString bindClass();
-    JZScriptClassFile *getClassFile();
-
     int addNode(JZNodePtr node);
     void insertNode(JZNodePtr node);
     void removeNode(int id);
@@ -44,9 +40,7 @@ public:
     QList<JZNodeConnect> connectList();
 
     void saveToStream(QDataStream &s);
-    void loadFromStream(QDataStream &s);
-
-    JZParamDefine *getVariableInfo(const QString &name);
+    void loadFromStream(QDataStream &s);    
 
     JZParamDefine *localVariableInfo(const QString &name);
     void addLocalVariable(QString name, int type, QVariant v = QVariant());
@@ -59,7 +53,6 @@ protected:
     int m_nodeId;
     QMap<int, JZNodePtr> m_nodes;        
     QList<JZNodeConnect> m_connects;    
-    QString m_bindClass;
     FunctionDefine m_function;
     QMap<QString, JZParamDefine> m_variables;
 
@@ -88,10 +81,11 @@ public:
     virtual void loadFromStream(QDataStream &s);
 
     void init(QString className,QString super = QString());
-    void unint();
+    void uninit();
     void reinit();
 
     QString className() const;
+    int classType() const;
 
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
     void removeMemberVariable(QString name);
@@ -99,7 +93,7 @@ public:
     void removeMemberFunction(QString func);
     JZNodeObjectDefine objectDefine();
 
-protected:
+protected:   
     JZParamFile *getParamFile();
     QString m_className;
     QString m_super;

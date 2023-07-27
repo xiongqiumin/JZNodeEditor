@@ -130,7 +130,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param)
 //JZNodeRuntimeInfo
 JZNodeRuntimeInfo::JZNodeRuntimeInfo()
 {
-    status = None;
+    status = Status_none;
     nodeId = -1;
     pc = -1;
 }
@@ -222,6 +222,7 @@ void JZNodeEngine::clear()
     m_global.clear();
     m_regs.clear();
     m_this.clear();
+    m_connectInfo.clear();
 
     m_statusCommand = Status_none;
     m_status = Status_none;
@@ -253,18 +254,37 @@ void JZNodeEngine::init()
         }
         else
         {
-            m_global[it.key()] = QVariant();
+            m_global[it.key()] = QVariant::fromValue(JZObjectNull());
         }
         it++;
     }        
 
     // connect events
     auto script_list = m_program->scriptList();
-    for(int i = 0; i < script_list.size(); i++)
+    for (int script_index = 0; script_index < script_list.size(); script_index++)
     {
-        connectScript("",nullptr,script_list[i]);
-        connectParamChanged(nullptr,script_list[i]);
-    }
+        auto &script = script_list[script_index];
+        QList<JZEventHandle> &events = script->events;
+        for (int event_index = 0; event_index < events.size(); event_index++)
+        {            
+            auto &event = events[event_index];
+            if (event.type == Event_programStart)
+            {
+                JZObjectConnect connect;
+                connect.eventType = event.type;
+                connect.handle = &event.function;
+                m_connects[nullptr].push_back(connect);
+                continue;
+            }
+
+            ConnectInfo info;            
+            info.sender = event.sender;
+            info.eventType = event.type;
+            info.recv = script->className;
+            info.handle = &event.function;
+            m_connectInfo.push_back(info);
+        }
+    }    
 
     // init value
     for(int i = 0; i < m_paramChangeHandle.size(); i++)
@@ -340,6 +360,19 @@ void JZNodeEngine::popStack()
     }
 }
 
+void JZNodeEngine::customEvent(QEvent *qevent)
+{
+    if (qevent->type() == JZEvent::Event)
+    {
+        JZEvent *event = (JZEvent*)qevent;
+        if (event->eventType == Event_idlePause)
+        {
+            QVariantList in, out;
+            call(&m_idleFunc, in, out);
+        }
+    }
+}
+
 void JZNodeEngine::dealEvent(JZEvent *event)
 {
     JZNodeObject *obj = event->sender;
@@ -369,9 +402,27 @@ bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList 
 
 bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVariantList &out)
 {
+    while (true)
+    {
+        m_mutex.lock();
+        if (m_status == Status_none)
+        {
+            updateStatus(Status_running);
+            m_mutex.unlock();
+            break;
+        }
+        else
+        {
+            Q_ASSERT(m_status == Status_idlePause);
+            m_mutex.unlock();
+        }
+        QThread::msleep(10);
+    }
+    if (func == &m_idleFunc)
+        return true;
+        
     Q_ASSERT(func->paramIn.size() == in.size());
-    g_engine = this;
-    updateStatus(Status_running);
+    g_engine = this;    
     for (int i = 0; i < in.size(); i++)
     {
         Q_ASSERT(JZNodeType::canConvert(JZNodeType::variantType(in[i]),func->paramIn[i].dataType));
@@ -509,7 +560,8 @@ QVariant *JZNodeEngine::getVariableRef(QString name)
     else
     {
         JZNodeObject *obj = toJZObject(*ref);
-        Q_ASSERT(obj);
+        if (!obj)
+            return nullptr;
         return obj->paramRef(param_name);
     }
 }
@@ -537,16 +589,115 @@ void JZNodeEngine::setVariable(QString name, const QVariant &value)
     if(isJZObject(value))
     {
         auto obj = toJZObject(value);
-        QStringList list = name.split(".");
-        JZNodeObject *parent = getObject(list[0]);
-        for(int i = 0; i < list.size() - 1; i++)
-        {
-            auto script = getObjectScript(parent->className());
-            connectParent(obj,name,parent,script);
-            parent = toJZObject(parent->param(list[i+1]));
-        }
-        connectSender(name,obj);
+        connectVariableEvent(name, obj);
     }
+}
+
+void JZNodeEngine::connectClassEvent(JZNodeObject *obj)
+{
+    QVariant back = m_this;
+    m_this = QVariant::fromValue(obj);
+
+    QString className = obj->className();
+    for (int i = 0; i < m_connectInfo.size(); i++)
+    {
+        auto &info = m_connectInfo[i];
+        if (info.recv == className)
+        {
+            if (info.eventType == Event_paramChanged)
+                continue;
+
+            auto ref = getVariableRef(info.sender);                        
+            if (ref && isJZObject(*ref))
+            {                
+                JZNodeObject *sender = toJZObject(*ref);
+                JZObjectConnect connect;
+                connect.sender = sender;
+                connect.eventType = info.eventType;
+                connect.receiver = obj;
+                connect.handle = info.handle;
+                m_connects[obj].push_back(connect);
+            }
+            else
+            {
+                ConnectCache cache;
+                cache.sender = info.sender;
+                if (info.sender.startsWith("this."))
+                    cache.parentObject = obj;
+                cache.eventType = info.eventType;
+                cache.recvObject = obj;
+                cache.handle = info.handle;
+                m_connectCache.push_back(cache);
+            }                                   
+        }
+    }
+    m_this = back;
+}
+
+void JZNodeEngine::connectVariableEvent(QString name, JZNodeObject *obj)
+{
+    QStringList list = name.split(".");
+    for (int i = list.size() - 1; i >= 1; i--)
+    {
+        QStringList tmp = list.mid(i);
+        QStringList parent_list = list.mid(0,i);
+        QString parent_name = parent_list.join(".");
+        tmp.insert(0, "this");
+        QString this_name = tmp.join(".");
+
+        JZNodeObject *recv = toJZObject(getVariable(parent_name));
+        connectVariableThis(this_name, obj, recv);
+    }
+        
+    for (int i = 0; i < m_connectCache.size(); i++)
+    {
+        auto &cache = m_connectCache[i];
+        JZNodeObject *sender = nullptr;
+        if (cache.sender == name)
+            sender = obj;
+        else if (cache.sender.startsWith(name + "."))
+        {
+            QString param_name = cache.sender.mid(name.size() + 1);
+            QVariant *v = obj->paramRef(param_name);
+            sender = toJZObject(*v);
+        }
+
+        if(sender)
+        { 
+            JZObjectConnect connect;
+            connect.sender = sender;
+            connect.eventType = cache.eventType;
+            connect.receiver = cache.recvObject;
+            connect.handle = cache.handle;
+            connectObject(connect);
+        }
+    }
+}
+
+void JZNodeEngine::connectVariableThis(QString name, JZNodeObject *obj, JZNodeObject *recv)
+{
+    for (int i = 0; i < m_connectInfo.size(); i++)
+    {
+        auto &info = m_connectInfo[i];
+        if (name == info.sender)
+        {
+            JZObjectConnect connect;
+            connect.sender = obj;
+            connect.eventType = info.eventType;
+            connect.receiver = recv;
+            connect.handle = info.handle;
+            connectObject(connect);
+        }
+    }
+}
+
+void JZNodeEngine::connectObject(JZObjectConnect connect)
+{
+    qDebug() << "sender:" << connect.sender << "recv:" << connect.receiver << "event:" << connect.handle->name;
+    m_connects[connect.sender].push_back(connect);
+
+    if (connect.sender->isInherits("object"))     
+        connect.sender->connectSingles(connect.eventType);    
 }
 
 void JZNodeEngine::objectChanged(JZNodeObject *sender,const QString &name)
@@ -607,152 +758,14 @@ void JZNodeEngine::connectParamChanged(JZNodeObject *obj,JZNodeScript *script)
     }
 }
 
-void JZNodeEngine::connectScript(QString objName,JZNodeObject *obj,JZNodeScript *script)
-{
-    qDebug() << objName << "recv:" << obj << "script:" << script->file;
-    auto getParamObject = [this,obj](const QString &name)->JZNodeObject*
-    {                
-        if(!obj)
-            return getObject(name);
-        else
-        {
-            if(name == "this")
-                return obj;
-            if(!name.startsWith("this."))
-                return nullptr;
 
-            QString param_name = name.mid(5);
-            QVariant *v = obj->paramRef(param_name);
-            if(v)
-                return toJZObject(*v);
-            else
-                return nullptr;
-        }
-    };
-
-    for(int event_idx = 0; event_idx < script->events.size(); event_idx++)
-    {
-        auto &handle = script->events[event_idx];                
-        if((objName.isEmpty() && handle.sender.isEmpty())                
-                || (handle.sender == objName))
-        {            
-            JZObjectConnect connect;
-            if(!handle.sender.isEmpty())
-            {
-                connect.sender = getParamObject(handle.sender);
-                if(!connect.sender)
-                    continue;
-                if(connect.sender->isInherits("object"))
-                    connect.sender->connectSingles(handle.type);
-            }
-            else
-            {
-                connect.sender = nullptr;
-            }
-            connect.receiver = obj;
-            connect.handle = &handle.function;
-            connect.eventType = handle.type;
-
-            QString recv_name = obj? obj->className() : "none";
-            qDebug() << "event:" << handle.function.name << "sender " << objName << ",recv" << recv_name;
-
-            m_connects[connect.sender].push_back(connect);
-        }
-    }
-}
-
-void JZNodeEngine::connectRecv(QString objName,JZNodeObject *obj,JZNodeObject *recv)
-{
-    auto script = getObjectScript(recv->className());
-    if(script)
-        connectScript(objName,recv,script);
-
-    auto it = recv->params.begin();
-    while(it != recv->params.end())
-    {
-        if(isJZObject(it.value()))
-        {
-            JZNodeObject *sub = toJZObject(it.value());
-            connectRecv(objName,obj,sub);
-        }
-        it++;
-    }
-}
-
-
-void JZNodeEngine::connectSender(QString objName,JZNodeObject *obj)
-{       
-    //global as send
-    auto script_list = m_program->scriptList();
-    for(int i = 0; i < script_list.size(); i++)
-        connectScript(objName,nullptr,script_list[i]);
-
-    auto it = m_global.begin();
-    while(it != m_global.end())
-    {
-        if(isJZObject(it.value()))
-        {
-            JZNodeObject *recv = toJZObject(it.value());
-            connectRecv(objName,obj,recv);
-        }
-        it++;
-    }
-
-    //connect child
-    it = obj->params.begin();
-    while(it != obj->params.end())
-    {
-        if(isJZObject(it.value()))
-        {
-            JZNodeObject *sub = toJZObject(it.value());
-            connectSender(objName + "." + it.key(),sub);
-        }
-        it++;
-    }
-}
-
-void JZNodeEngine::connectSelf(JZNodeObject *obj)
-{
-    auto script = getObjectScript(obj->className());
-    if(script)
-        connectParent(obj,"this",obj,script);
-}
-
-void JZNodeEngine::connectParent(JZNodeObject *obj,QString name,JZNodeObject* parent,JZNodeScript *script)
-{
-    connectScript(name,parent,script);
-
-    auto it = obj->params.begin();
-    while(it != obj->params.end())
-    {
-        if(isJZObject(it.value()))
-        {
-            auto sub_obj = toJZObject(it.value());
-            connectParent(sub_obj,name + "." + it.key(), parent,script);
-        }
-        it++;
-    }
-}
 
 JZNodeObject* JZNodeEngine::getObject(QString name)
 {    
-    QStringList list = name.split(".");
-    auto it = m_global.find(list[0]);
-    if(it == m_global.end())
+    auto ref = getVariableRef(name);
+    if (!ref)
         return nullptr;
-    if(!isJZObject(it.value()))
-        return nullptr;
-
-    JZNodeObject *obj = toJZObject(it.value());
-    if(list.size() == 1)
-        return obj;
-
-    QString param_name = name.mid(list[0].size() + 1);
-    auto ref = obj->paramRef(param_name);
-    if(ref)
-        return toJZObject(*ref);
-    else
-        return nullptr;
+    return toJZObject(*ref);
 }
 
 bool JZNodeEngine::isWatch()
@@ -829,7 +842,16 @@ void JZNodeEngine::clearBreakPoint()
 void JZNodeEngine::pause()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status != Status_running)    
+    if (m_status == Status_none) 
+    {
+        updateStatus(Status_idlePause);
+
+        JZEvent *event = new JZEvent();
+        event->eventType = Event_idlePause;
+        qApp->postEvent(this, event);
+        return;
+    }
+    else if(m_status != Status_running)    
         return;    
     
     m_statusCommand = Command_pause;
@@ -840,7 +862,12 @@ void JZNodeEngine::pause()
 void JZNodeEngine::resume()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status != Status_pause)    
+    if (m_status == Status_idlePause)
+    {
+        updateStatus(Status_none);
+        return;
+    }
+    else if(m_status != Status_pause)    
         return;    
     
     m_statusCommand = Command_resume;
@@ -865,7 +892,12 @@ void JZNodeEngine::stop()
 void JZNodeEngine::stepIn()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status != Status_pause)
+    if (m_status == Status_idlePause)
+    {
+        updateStatus(Status_none);
+        return;
+    }
+    else if(m_status != Status_pause)
         return;
 
     int node_id = nodeIdByPc(m_pc);
@@ -889,8 +921,13 @@ void JZNodeEngine::stepIn()
 
 void JZNodeEngine::stepOver()
 {
-    QMutexLocker lock(&m_mutex);    
-    if(m_status != Status_pause)
+    QMutexLocker lock(&m_mutex);  
+    if (m_status == Status_idlePause)
+    {
+        updateStatus(Status_none);
+        return;
+    }
+    else if(m_status != Status_pause)
         return;
 
     int node_id = nodeIdByPc(m_pc);
@@ -907,7 +944,12 @@ void JZNodeEngine::stepOver()
 void JZNodeEngine::stepOut()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status != Status_pause)
+    if (m_status == Status_idlePause)
+    {
+        updateStatus(Status_none);
+        return;
+    }
+    else if (m_status != Status_pause)
         return;
 
     m_breakStep.type = BreakPoint::stackEqual;
@@ -946,7 +988,7 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
     if(func->name == "createObject")
     {
         auto obj = toJZObject(paramOut[0]);
-        connectSelf(obj);
+        connectClassEvent(obj);
     }
 }
 
@@ -1078,7 +1120,21 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
     }
     else
     {
-        throw std::runtime_error("un support operator");
+        if (op == OP_eq || op == OP_ne)
+        {
+            if (JZNodeType::isObject(dataType1) && JZNodeType::isObject(dataType2))
+            {
+                bool ret = (toJZObject(a) == toJZObject(b));
+                if (op == OP_eq)
+                    return ret;
+                else
+                    return !ret;
+            }
+            else
+                throw std::runtime_error("un support operator");
+        }
+        else
+            throw std::runtime_error("un support operator");
     }
 
     return QVariant();
@@ -1149,7 +1205,7 @@ bool JZNodeEngine::checkPauseStop()
         m_statusCommand = Command_none;        
         updateStatus(Status_pause);
         m_waitCond.wait(&m_mutex);
-        if(m_statusCommand == Status_stop)
+        if(m_statusCommand == Command_stop)
         {
             m_statusCommand = Command_none;
             updateStatus(Status_none);

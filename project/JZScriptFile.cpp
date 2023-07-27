@@ -27,33 +27,9 @@ JZScriptFile::~JZScriptFile()
 
 void JZScriptFile::clear()
 {
-    m_nodeId = 0;
-    m_bindClass.clear();
+    m_nodeId = 0;    
     m_nodes.clear();
     m_connects.clear();
-}
-
-JZScriptClassFile *JZScriptFile::getClassFile()
-{
-    auto parent = this->parent();
-    while(parent)
-    {
-        if(parent->itemType() == ProjectItem_class)
-            return (JZScriptClassFile*)parent;
-
-        parent = parent->parent();
-    }
-    return nullptr;
-}
-
-void JZScriptFile::setBindClass(QString bindClass)
-{
-    m_bindClass = bindClass;        
-}
-
-QString JZScriptFile::bindClass()
-{
-    return m_bindClass;
 }
 
 const FunctionDefine &JZScriptFile::function()
@@ -308,25 +284,6 @@ QList<JZNodeConnect> JZScriptFile::connectList()
     return m_connects;
 }
 
-JZParamDefine *JZScriptFile::getVariableInfo(const QString &name)
-{
-    if(name.startsWith("this."))
-    {
-        auto def = JZNodeObjectManager::instance()->meta(m_bindClass);
-        Q_ASSERT(def);
-
-        QString param_name = name.mid(5);
-        return def->param(param_name);
-    }
-    else
-    {
-        auto def = localVariableInfo(name);
-        if (def)
-            return def;
-        return m_project->getVariableInfo(name);
-    }
-}
-
 JZParamDefine *JZScriptFile::localVariableInfo(const QString &name)
 {
     if (m_itemType == ProjectItem_scriptFunction)
@@ -335,12 +292,7 @@ JZParamDefine *JZScriptFile::localVariableInfo(const QString &name)
         {
             if (m_function.paramIn[i].name == name)
                 return &m_function.paramIn[i];
-        }
-        for (int i = 0; i < m_function.paramOut.size(); i++)
-        {
-            if (m_function.paramOut[i].name == name)
-                return &m_function.paramOut[i];
-        }
+        }        
     }
 
     auto it = m_variables.find(name);
@@ -387,9 +339,7 @@ QStringList JZScriptFile::localVariableList()
     {
         QStringList list;
         for (int i = 0; i < m_function.paramIn.size(); i++)
-            list << m_function.paramIn[i].name;        
-        for (int i = 0; i < m_function.paramOut.size(); i++)
-            list << m_function.paramOut[i].name;
+            list << m_function.paramIn[i].name;                
 
         list << m_variables.keys();
         return list;
@@ -412,8 +362,7 @@ void JZScriptFile::saveToStream(QDataStream &s)
         it->data()->saveToStream(s);
         it++;
     }    
-    s << m_connects;
-    s << m_bindClass;
+    s << m_connects;    
     s << m_function;
     s << m_variables;
     s << m_nodesPos;
@@ -434,8 +383,7 @@ void JZScriptFile::loadFromStream(QDataStream &s)
         node->loadFromStream(s);
         m_nodes.insert(node->id(), JZNodePtr(node));        
     }    
-    s >> m_connects;
-    s >> m_bindClass;
+    s >> m_connects;    
     s >> m_function;    
     s >> m_variables;
     s >> m_nodesPos;
@@ -492,6 +440,11 @@ QString JZScriptClassFile::className() const
     return m_className;
 }
 
+int JZScriptClassFile::classType() const
+{
+    return JZNodeObjectManager::instance()->getClassId(m_className);
+}
+
 void JZScriptClassFile::saveToStream(QDataStream &s)
 {
     JZProjectItem::saveToStream(s);
@@ -515,7 +468,7 @@ void JZScriptClassFile::init(QString className,QString super)
     m_classId = JZNodeObjectManager::instance()->regist(objectDefine());
 }
 
-void JZScriptClassFile::unint()
+void JZScriptClassFile::uninit()
 {
     JZNodeObjectManager::instance()->unregist(m_classId);
 }

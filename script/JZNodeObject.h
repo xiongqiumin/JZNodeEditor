@@ -54,6 +54,15 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param);
 QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param);
 
+class JZObjectNull
+{
+public:
+
+};
+QDataStream &operator<<(QDataStream &s, const JZObjectNull &param);
+QDataStream &operator>>(QDataStream &s, JZObjectNull &param);
+Q_DECLARE_METATYPE(JZObjectNull)
+
 class JZNodeObject
 {
 public:    
@@ -112,8 +121,10 @@ public:
     JZNodeObjectDefine *meta(int type_id);
     QString getClassName(int type_id);
     int getClassId(QString class_name);
+    bool isInherits(QString class_name, QString super_name);
     bool isInherits(int class_name,int super_name);
-    
+    QStringList getClassList();
+
     int getClassIdByTypeid(QString name);
     int getClassIdByCClassName(QString name);
 
@@ -122,7 +133,7 @@ public:
     void registCClass(JZNodeObjectDefine define,QString type_id);
     void unregist(int id);
     void declareCClass(QString name,int id);
-    void clearUserReigst();
+    void clearUserReigst();    
 
     JZNodeObjectPtr create(int type_id);
     JZNodeObjectPtr createCClass(QString ctype_id);
@@ -133,6 +144,7 @@ protected:
     void create(JZNodeObjectDefine *define,JZNodeObject *obj);
     void copy(JZNodeObject *src,JZNodeObject *dst);
     void initCore();
+    void initObjects();
     void initWidgets();
     void initFunctions();
 

@@ -46,11 +46,11 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
             it++;
     }
     
-    auto list = m_project->variableList();
+    auto list = m_project->globalVariableList();
     for(int i = 0; i < list.size(); i++)
     {
         QString name = list[i];
-        m_program->m_variables[name] = *m_project->getVariableInfo(name);
+        m_program->m_variables[name] = *m_project->globalVariableInfo(name);
     }
 
     auto root = m_project->root();
@@ -111,7 +111,7 @@ bool JZNodeBuilder::buildScriptFile(JZScriptFile *scriptFile)
     if(!m_scripts.contains(path))    
         m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
     
-    auto classFile = scriptFile->getClassFile();
+    auto classFile = m_project->getClassFile(scriptFile);
     JZNodeScript *script = m_scripts[path].data();
     if(classFile)
         script->className = classFile->className();

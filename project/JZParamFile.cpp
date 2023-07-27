@@ -1,5 +1,6 @@
 ﻿#include "JZParamFile.h"
 #include "JZNodeType.h"
+#include "JZProject.h"
 
 //JZScriptParamFile
 JZParamFile::JZParamFile()
@@ -34,11 +35,13 @@ void JZParamFile::addVariable(QString name,int type,QVariant v)
     info.dataType = type;
     info.value = v;
     m_variables[name] = info;
+    reinitClass();
 }
 
 void JZParamFile::removeVariable(QString name)
 {
     m_variables.remove(name);
+    reinitClass();
 }
 
 void JZParamFile::renameVariable(QString oldName, QString newName)
@@ -48,12 +51,21 @@ void JZParamFile::renameVariable(QString oldName, QString newName)
     def.name = newName;
     m_variables.remove(oldName);
     m_variables[newName] = def;
+    reinitClass();
 }
 
 void JZParamFile::setVariableType(QString name, int dataType)
 {
     Q_ASSERT(m_variables.contains(name));
     m_variables[name].dataType = dataType;
+    reinitClass();
+}
+
+void JZParamFile::reinitClass()
+{
+    auto class_file = m_project->getClassFile(this);
+    if (class_file)
+        class_file->reinit();
 }
 
 const QMap<QString,JZParamDefine> &JZParamFile::variables()

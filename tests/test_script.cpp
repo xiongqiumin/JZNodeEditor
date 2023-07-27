@@ -711,7 +711,7 @@ void ScriptTest::testFunction()
     fab.name = "fab";
     fab.paramIn.push_back(inParam);
     fab.paramOut.push_back(outParam);
-    JZScriptFile *script = m_project.addFunction(fab);
+    JZScriptFile *script = m_project.addFunction("./",fab);
 
     JZNode *node_start = script->getNode(0);
     JZNodeBranch *node_branch = new JZNodeBranch();    
@@ -786,7 +786,7 @@ void ScriptTest::testClass()
     JZProject *project = &m_project;
     JZParamFile *paramDef = m_paramDef;
 
-    auto classBase = project->addClass("ClassBase");
+    auto classBase = project->addClass("./", "ClassBase");
     project->addClass("ClassA","ClassBase");
     project->addClass("ClassB","ClassBase");
 

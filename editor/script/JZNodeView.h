@@ -123,6 +123,8 @@ public:
     void selectAll();
 
     void updateNodeLayout();    
+    void fitNodeView();
+    void ensureNodeVisible(int id);
     BreakPointTriggerResult breakPointTrigger();
 
     void setRuntimeStatus(int staus);

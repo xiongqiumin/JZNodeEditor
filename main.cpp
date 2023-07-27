@@ -19,10 +19,11 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
-    if(0)
+    if(1)
     {        
-        QString program_path = qApp->applicationDirPath() + "/build/untitled.program";
-        program_path = "C:/Users/xiong/Desktop/JZNodeEditor/x64/Debug/project/project/build/project.program";
+        QString project_name = "project324c";
+        QString program_path = "C:/Users/xiong/Desktop/JZNodeEditor/x64/Debug/project/" + project_name 
+            +  "/build/" +  project_name + ".program";
 
         bool build_project = false;
         if(build_project)

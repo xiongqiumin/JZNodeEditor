@@ -327,26 +327,8 @@ bool JZNodeView::isModified()
 
 int JZNodeView::getVariableType(const QString &name)
 {
-    if(name == "this" || name.startsWith("this."))
-    {
-        JZScriptClassFile *classFile = m_file->getClassFile();
-        if(!classFile)
-            return Type_none;
-
-        auto def = JZNodeObjectManager::instance()->meta(classFile->className());
-        if(name == "this")
-            return def->id;
-        else
-        {
-            auto info = def->param(name.mid(5));
-            return info? info->dataType : Type_none;
-        }
-    }
-    else
-    {
-        auto info = m_file->project()->getVariableInfo(name);
-        return info? info->dataType : Type_none;
-    }
+    auto info = JZNodeCompiler::getVariableInfo(m_file, name);
+    return info? info->dataType : Type_none;    
 }
 
 void JZNodeView::saveNodePos()
@@ -872,7 +854,7 @@ void JZNodeView::updateNodeLayout()
 {
     JZNodeCompiler compiler;
     JZNodeScript result;
-    if(!compiler.build(m_file,&result))
+    if(!compiler.genGraphs(m_file,&result))
         return;   
 
     QMap<int,QPointF> itemPos;
@@ -934,6 +916,20 @@ void JZNodeView::updateNodeLayout()
         }
         y = max_h + 20;
     }    
+    fitNodeView();
+}
+
+void JZNodeView::fitNodeView()
+{
+    this->setSceneRect(QRectF());
+    this->fitInView(m_scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+    qDebug() << this->sceneRect() << m_scene->sceneRect();
+}
+
+void JZNodeView::ensureNodeVisible(int id)
+{
+    this->setSceneRect(QRectF());
+    this->centerOn(getNodeItem(id));
 }
 
 BreakPointTriggerResult JZNodeView::breakPointTrigger()

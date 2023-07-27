@@ -16,4 +16,5 @@ void JZNodeInit()
     JZNetPackManager::instance()->registPack(NetPack_debugPacket,createNetPackFunc<JZNodeDebugPacket>);    
 
     qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
+    qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");
 }

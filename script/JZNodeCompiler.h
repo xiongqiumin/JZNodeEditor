@@ -25,7 +25,9 @@ public:
 
     bool genGraphs(JZScriptFile *file,JZNodeScript *result);
     bool build(JZScriptFile *file,JZNodeScript *result);
-
+    
+    static JZParamDefine *getVariableInfo(JZScriptFile *file, const QString &name);
+    JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(QString var, QString &error);
     bool checkVariableType(QString var, QString className, QString &error);
 
@@ -47,7 +49,7 @@ public:
     int addBreak();
     int addReturn();
     void addCall(JZNodeIRParam function,QList<JZNodeIRParam> paramIn,QList<JZNodeIRParam> paramOut);
-    void addAllocLocal(JZParamDefine *def);
+    void addAllocLocal(JZParamDefine *def);    
 
     void setBreakContinue(QList<int> breakPc,QList<int> continuePC);    
     void replaceStatement(int pc,JZNodeIRPtr ir);

@@ -72,12 +72,12 @@ protected slots:
     void onFileOpened(QString filepath);    
     void onFileClosed(QString filepath);
     void onEditorClose(int index);
+    void onNodeClicked(QString file, int nodeId);
 
     void onRuntimeLog(QString log);
     void onRuntimeInfo(JZNodeRuntimeInfo error);
     void onRuntimeError(JZNodeRuntimeError error);
-    void onRuntimeStatus(int staus);
-
+    void onRuntimeStatus(int staus);    
     void onDebugFinish(int code,QProcess::ExitStatus status);
 
 private:
@@ -89,8 +89,8 @@ private:
             FileIsScript,
             ProcessIsEmpty,
             ProcessIsVaild,
-            ProcessIsRunning,
-            ProcessIsPause,  
+            ProcessCanPause,
+            ProcessCanResume,  
             Count,
         };
         ActionStatus(QAction *act, QVector<int> flag);
@@ -105,6 +105,7 @@ private:
     void loadSetting();
     void saveSetting();
     JZEditor *createEditor(int type);
+    bool openEditor(QString filepath);
     void closeEditor(JZEditor *editor);
     void updateActionStatus();    
 
@@ -112,8 +113,7 @@ private:
     void initUi();        
     void switchEditor(JZEditor *editor);    
     bool build();
-    void start(bool startPause);
-    void updateMenuAction();
+    void start(bool startPause);    
     void saveToFile(QString file,QString text);
     void saveAll();
     bool closeAll();

@@ -1,5 +1,5 @@
-﻿#ifndef JZNODE_NEW_DIALOG_H_
-#define JZNODE_NEW_DIALOG_H_
+﻿#ifndef JZNODE_NEW_TYPE_DIALOG_H_
+#define JZNODE_NEW_TYPE_DIALOG_H_
 
 #include <QDialog>
 #include "UiCommon.h"
@@ -7,6 +7,18 @@
 
 namespace Ui { class JZNodeTypeDialog; }
 
+class TypeEditHelp
+{
+public:
+    TypeEditHelp();
+    void init(int dataType);
+
+    int index;
+    QVector<int> types;
+    QStringList typeNames;
+};
+
+//JZNodeTypeDialog
 class JZNodeTypeDialog : public QDialog
 {
     Q_OBJECT
@@ -25,34 +37,5 @@ protected:
     int m_dataType;
     Ui::JZNodeTypeDialog *ui;
 };
-
-class TypeEditHelp
-{
-public:
-    TypeEditHelp();
-    void init(int dataType);
-
-    int index;
-    QVector<int> types;
-    QStringList typeNames;
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif

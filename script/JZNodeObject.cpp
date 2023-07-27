@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QApplication>
 #include <QDebug>
+#include <QTimer>
 
 TestWindow::TestWindow()
 {
@@ -144,6 +145,7 @@ QDataStream &operator<<(QDataStream &s, const SingleDefine &param)
     Q_ASSERT(!param.isCSingle);
     s << param.name;
     s << param.eventType;
+    s << param.paramOut;
     return s;
 }
 
@@ -151,6 +153,7 @@ QDataStream &operator>>(QDataStream &s, SingleDefine &param)
 {
     s >> param.name;
     s >> param.eventType;
+    s >> param.paramOut;
     return s;
 }
 
@@ -334,6 +337,16 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
     return s;
 }
 
+//JZObjectNull
+QDataStream &operator<<(QDataStream &s, const JZObjectNull &param)
+{
+    return s;
+}
+QDataStream &operator >> (QDataStream &s, JZObjectNull &param)
+{
+    return s;
+}
+
 //JZNodeObject
 JZNodeObject::JZNodeObject(JZNodeObjectDefine *def)
 {    
@@ -468,7 +481,6 @@ void JZNodeObject::updateCRefs()
             }
             it++;
         }
-
         def = JZNodeObjectManager::instance()->meta(def->superName);
     }
 }
@@ -515,7 +527,8 @@ QDebug operator<<(QDebug dbg, const JZNodeObjectPtr &obj)
 bool isJZObject(const QVariant &v)
 {
     return (v.userType() == qMetaTypeId<JZNodeObjectPtr>()
-            || v.userType() == qMetaTypeId<JZNodeObject*>());
+            || v.userType() == qMetaTypeId<JZNodeObject*>()
+            || v.userType() == qMetaTypeId<JZObjectNull>());
 }
 
 JZNodeObject* toJZObject(const QVariant &v)
@@ -528,6 +541,10 @@ JZNodeObject* toJZObject(const QVariant &v)
     else if(v.userType() == qMetaTypeId<JZNodeObject*>())
     {
         return v.value<JZNodeObject*>();
+    }
+    else if (v.userType() == qMetaTypeId<JZObjectNull>())
+    {
+        return nullptr;
     }
     else
     {        
@@ -558,6 +575,7 @@ void JZNodeObjectManager::init()
     QMetaType::registerDebugStreamOperator<JZNodeObjectPtr>();           
 
     initCore();
+    initObjects();
     initWidgets();
     initFunctions();
 
@@ -678,6 +696,16 @@ void JZNodeObjectManager::initCore()
     });
     cls_map.def("size",false,&QVariantMap::size);
     cls_map.regist(Type_map);
+}
+
+void JZNodeObjectManager::initObjects()
+{
+    jzbind::ClassBind<QTimer> cls_timer("timer", "object");
+    cls_timer.def("start",true, QOverload<int>::of(&QTimer::start));
+    cls_timer.def("stop",true, &QTimer::stop);
+    cls_timer.def("isActive", false, &QTimer::isActive);
+    cls_timer.defPrivateSingle("timeout", Event_timeout, &QTimer::timeout);
+    cls_timer.regist();
 }
 
 void JZNodeObjectManager::initWidgets()
@@ -811,6 +839,13 @@ int JZNodeObjectManager::getClassId(QString class_name)
     return Type_none;
 }
 
+bool JZNodeObjectManager::isInherits(QString class_name, QString super_name)
+{
+    int class_type = getClassId(class_name);
+    int super_type = getClassId(super_name);    
+    return isInherits(class_type, super_type);
+}
+
 bool JZNodeObjectManager::isInherits(int class_name,int super_name)
 {
     if(class_name == super_name)
@@ -828,6 +863,19 @@ bool JZNodeObjectManager::isInherits(int class_name,int super_name)
         def = meta(super_id);
     }
     return false;
+}
+
+QStringList JZNodeObjectManager::getClassList()
+{
+    QStringList list;
+
+    auto it = m_metas.begin();
+    while (it != m_metas.end())
+    {
+        list << (it.value()->className);
+        it++;
+    }
+    return list;
 }
 
 QString JZNodeObjectManager::getClassName(int type_id)
@@ -882,12 +930,12 @@ void JZNodeObjectManager::create(JZNodeObjectDefine *def,JZNodeObject *obj)
     {
         if((int)it.value().dataType < Type_object)
         {
-            obj->params[it.key()] = it.value().value;
+            obj->params[it.key()] = it.value().initialValue();
         }
         else
         {
             if(!it.value().cref)
-                obj->params[it.key()] = QVariant();
+                obj->params[it.key()] = QVariant::fromValue(JZObjectNull());
         }
         it++;
     }

@@ -5,6 +5,7 @@
 #include <QSharedPointer>
 #include "JZNodePin.h"
 #include "JZNodeIR.h"
+#include "JZNodeFunctionDefine.h"
 
 enum
 {
@@ -224,6 +225,7 @@ class JZNodeReturn : public JZNode
 public:
     JZNodeReturn();
 
+    void setFunction(FunctionDefine def);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
 protected:     

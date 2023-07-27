@@ -4,12 +4,22 @@
 #include <QWidget>
 #include <QMenuBar>
 #include "JZProjectItem.h"
+#include "JZScriptFile.h"
 
 enum{
     Editor_none,
     Editor_script,
     Editor_ui,
     Editor_param,
+};
+
+enum {
+    Menu_File,
+    Menu_Edit,
+    Menu_View,
+    Menu_Compiler,
+    Menu_Debug,
+    Menu_Help,
 };
 
 class JZProject;
@@ -27,13 +37,14 @@ public:
     void setItem(JZProjectItem *item);
     JZProjectItem *item();
 
+    virtual void addMenuBar(QMenuBar *menubar);
+    virtual void removeMenuBar(QMenuBar *menubar);
+
     virtual void open(JZProjectItem *item) = 0;
     virtual void close() = 0;
     virtual void save() = 0;
 
-    virtual bool isModified();
-    virtual void updateMenuBar(QMenuBar *menubar);
-
+    virtual bool isModified();    
     virtual void undo();
     virtual void redo();
     virtual void remove();
@@ -48,6 +59,8 @@ signals:
     void modifyChanged(bool changed);
 
 protected:
+    JZScriptClassFile *getClassFile(JZProjectItem *item);
+
     JZProjectItem *m_item;
     JZProject *m_project;
     int m_type;

@@ -472,10 +472,7 @@ QList<JZNodeScript*> JZNodeProgram::scriptList()
     auto it = m_scripts.begin();
     while(it != m_scripts.end())
     {
-        if(it.value()->className.isEmpty())
-        {
-            list << it.value().data();
-        }
+        list << it.value().data();        
         it++;
     }
     return list;

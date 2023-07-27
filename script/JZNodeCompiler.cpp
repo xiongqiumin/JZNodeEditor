@@ -312,15 +312,16 @@ bool JZNodeCompiler::checkBuildResult()
 {
     bool ok = true;
 
-    auto it = m_nodeInfo.begin();
-    while(it != m_nodeInfo.end())
+    for(int i = 0; i < m_currentGraph->topolist.size(); i++)    
     {
-        if(!it->error.isEmpty())
+        int id = m_currentGraph->topolist[i]->node->id();
+        auto &nodeInfo = m_nodeInfo[id];
+        if(!nodeInfo.error.isEmpty())
         {
-            m_error += "node" + QString::number(it->node_id) + ": " + it->error + "\n";
+            QString name = m_currentGraph->topolist[i]->node->name();
+            m_error += name + "(node" + QString::number(nodeInfo.node_id) + "): " + nodeInfo.error + "\n";
             ok = false;
-        }
-        it++;
+        }        
     }
     return ok;
 }
@@ -641,6 +642,54 @@ void JZNodeCompiler::freeStack(int id)
 {
 }
 
+JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptFile *file,const QString &name)
+{
+    auto project = file->project();
+    if (name.startsWith("this."))
+    {
+        JZScriptClassFile *class_file = project->getClassFile(file);
+        auto def = JZNodeObjectManager::instance()->meta(class_file->className());
+        Q_ASSERT(def);
+
+        QString param_name = name.mid(5);
+        return def->param(param_name);
+    }
+    else
+    {
+        int gap = name.indexOf(".");
+        QString base_name;
+        QString param_name;
+        if (gap == -1) 
+        {
+            base_name = name;
+        }
+        else
+        {
+            base_name = name.left(gap);
+            param_name = name.mid(gap + 1);
+        }
+
+        auto def = file->localVariableInfo(base_name);
+        if (!def)
+            def = project->globalVariableInfo(base_name);
+        if (!def)
+            return nullptr;
+
+        if (param_name.isEmpty())
+            return def;
+        else
+        {
+            auto obj_def = JZNodeObjectManager::instance()->meta(def->dataType);
+            return obj_def->param(param_name);
+        }            
+    }
+}
+
+JZParamDefine *JZNodeCompiler::getVariableInfo(const QString &name)
+{
+    return getVariableInfo(m_scriptFile, name);
+}
+
 bool JZNodeCompiler::checkVariableExist(QString name,QString &error)
 {
     if(name.isEmpty())
@@ -649,7 +698,7 @@ bool JZNodeCompiler::checkVariableExist(QString name,QString &error)
         return false;
     }
 
-    auto info = m_scriptFile->getVariableInfo(name);
+    auto info = getVariableInfo(name);
     if(!info)
     {
         error = "no sunch element " + name;
@@ -663,7 +712,7 @@ bool JZNodeCompiler::checkVariableType(QString name,QString className,QString &e
     if(!checkVariableExist(name,error))
         return false;
 
-    auto info = m_scriptFile->getVariableInfo(name);
+    auto info = getVariableInfo(name);
     int needType = JZNodeObjectManager::instance()->getClassId(className);
     if(!JZNodeType::isInherits(info->dataType,needType))
     {

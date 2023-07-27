@@ -75,6 +75,7 @@ JZParamEditor::JZParamEditor()
 
     m_table->setColumnCount(4);
     m_table->setHorizontalHeaderLabels({"名称","类型","绑定控件","方向"});
+    m_table->setSelectionBehavior(QTableWidget::SelectRows);
     
     connect(m_table, &QTableWidget::itemChanged, this, &JZParamEditor::onItemChanged);
     connect(&m_commandStack, &QUndoStack::cleanChanged, this, &JZParamEditor::onCleanChanged);
@@ -97,7 +98,8 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
     help.init(def->dataType);
 
     QComboBox *box = new QComboBox();
-    box->addItems(help.typeNames);
+    for (int i = 0; i < help.typeNames.size(); i++)
+        box->addItem(help.typeNames[i], help.types[i]);
     box->setCurrentIndex(help.index);
     connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
     m_table->setCellWidget(row, 1, box);
@@ -187,11 +189,21 @@ void JZParamEditor::addSetTypeCommand(QString name, int newType)
     m_commandStack.push(cmd);
 }
 
+int JZParamEditor::rowIndex(QComboBox *box)
+{
+    for (int i = 0; i < m_table->rowCount(); i++)
+    {
+        if (m_table->cellWidget(i,1) == box)
+            return i;
+    }
+    return -1;
+}
+
 int JZParamEditor::rowIndex(QString name)
 {
     for (int i = 0; i < m_table->rowCount(); i++)
     {
-        if (m_table->item(i, 0)->text() == name)
+        if (m_table->item(i, 0)->data(Qt::UserRole).toString() == name)
             return i;
     }
     return -1;
@@ -202,36 +214,56 @@ void JZParamEditor::addParam(QString name, int dataType)
     int row = m_table->rowCount();
     m_table->setRowCount(row + 1);
     m_file->addVariable(name, dataType);
+
+    m_table->blockSignals(true);
     updateItem(row, m_file->getVariable(name));
+    m_table->blockSignals(false);
 }
 
 void JZParamEditor::removeParam(QString name)
 {
     m_file->removeVariable(name);
-    int row = rowIndex(name);
+    int row = rowIndex(name);    
     m_table->removeRow(row);
 }
 
 void JZParamEditor::renameParam(QString oldName, QString newName)
 {
+    m_file->renameVariable(oldName, newName);
+
+    m_table->blockSignals(true);
     int row = rowIndex(oldName);
     m_table->item(row, 0)->setText(newName);
+    m_table->item(row, 0)->setData(Qt::UserRole, newName);
+    m_table->blockSignals(false);
 }
 
 void JZParamEditor::setParamType(QString name, int dataType)
 {
+    m_file->setVariableType(name, dataType);
+
     auto def = m_file->getVariable(name);
     int row = rowIndex(name);
+    m_table->blockSignals(true);
     updateItem(row, def);
+    m_table->blockSignals(false);
 }
 
 void JZParamEditor::on_btnAdd_clicked()
 {        
+    JZScriptClassFile *class_file = getClassFile(m_file);
+
+    QStringList namelist;    
+    if (class_file)
+        namelist = m_file->variableList();
+    else
+        namelist = m_project->globalVariableList();
+    
     QString name;    
     for(int i = 0;;i++)
     {
         name = "新参数" + QString::number(i + 1);
-        if (!m_project->getVariableInfo(name))
+        if (!namelist.contains(name))
             break;                
     }
     int dataType = Type_int;
@@ -257,12 +289,11 @@ void JZParamEditor::onTypeChanged(int index)
     }
 
     JZNodeTypeDialog dialog(this);
-    if (dialog.exec() != QDialog::Accepted)
-    {
+    if (dialog.exec() != QDialog::Accepted)    
         return;
-    }
-
-    QString name;
-    int dataType;
+    
+    int row = rowIndex(box);
+    QString name = m_table->item(row,0)->text();
+    int dataType = dialog.dataType();
     addSetTypeCommand(name, dataType);
 }

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QTextEdit>
+#include <QTabWidget>
 #include "UiCommon.h"
 
 enum {
@@ -20,8 +21,17 @@ public:
 
     void addLog(int type, const QString &log);
 
+signals:
+    void sigNodeClicked(QString file,int id);
+
+protected slots:
+    void onLogContextMenu(QPoint pos);
+
 protected:
+    virtual void mousePressEvent(QMouseEvent *event) override;
+
     QList<QTextEdit*> m_logs;
+    QTabWidget *m_tabWidget;
 };
 
 

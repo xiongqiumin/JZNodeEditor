@@ -106,7 +106,7 @@ void JZProject::initUi()
     auto func_inst = JZNodeFunctionManager::instance();
 
     init();        
-    addUiClass("mainwindow");    
+    addUiClass("./","mainwindow");
 
     auto main_script = (JZScriptFile *)getItem("./main.jz");
     auto param_def = (JZParamFile *)getItem("./param.def");
@@ -352,20 +352,30 @@ JZProjectItem *JZProject::getItem(QString path)
     return folder;
 }
 
-JZScriptFile *JZProject::addFunction(const FunctionDefine &define)
+JZProjectItemFolder *JZProject::addFolder(QString path, QString name)
+{
+    JZProjectItemFolder *folder = new JZProjectItemFolder();
+    folder->setName(name);
+    addItem(path, folder);
+    return folder;
+}
+
+JZScriptFile *JZProject::addFunction(QString path, const FunctionDefine &define)
 {
     Q_ASSERT(!define.name.isEmpty());
 
     JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
     file->setName(define.name);
-    addItem("./",file);
+    addItem(path,file);
     file->setFunction(define);
     return file;
 }
 
 void JZProject::removeFunction(QString name)
 {
-    removeItem(name);
+    auto func = getFunction(name);
+    if(func)
+        removeItem(func->itemPath());
 }
 
 JZScriptFile *JZProject::getFunction(QString name)
@@ -405,7 +415,7 @@ JZScriptLibraryFile *JZProject::getLibrary(QString name)
     return dynamic_cast<JZScriptLibraryFile*>(item);
 }
 
-JZScriptClassFile *JZProject::addClass(QString name,QString super)
+JZScriptClassFile *JZProject::addClass(QString path,QString name,QString super)
 {    
     QString flow = name + ".jz";
 
@@ -414,12 +424,11 @@ JZScriptClassFile *JZProject::addClass(QString name,QString super)
 
     JZParamFile *data_page = new JZParamFile();
     JZScriptFile *script_flow = new JZScriptFile(ProjectItem_scriptFlow);
-    JZScriptLibraryFile *script_function = new JZScriptLibraryFile();
+    JZProjectItemFolder *script_function = new JZProjectItemFolder();
     class_file->setName(name);
     data_page->setName("变量");
     script_flow->setName("事件");
-    script_flow->setBindClass(name);
-    script_function->setName("函数");
+    script_function->setName("成员函数");
 
     addItem("./",class_file);
     addItem(class_file->itemPath(),data_page);
@@ -429,9 +438,9 @@ JZScriptClassFile *JZProject::addClass(QString name,QString super)
     return class_file;
 }
 
-JZScriptClassFile *JZProject::addUiClass(QString name)
+JZScriptClassFile *JZProject::addUiClass(QString path, QString name)
 {
-    JZScriptClassFile *file = addClass(name,"JZMainWindow");
+    JZScriptClassFile *file = addClass(path, name,"JZMainWindow");
     if(!file)
         return nullptr;
 
@@ -465,60 +474,41 @@ JZScriptClassFile *JZProject::getClass(QString name)
     return nullptr;
 }
 
-void JZProject::removeClass(QString name)
-{
-    getClass(name)->unint();
-    removeItem(name);    
-}
-
-JZParamDefine *JZProject::getVariableInfo(QString name)
-{
-    int index = name.indexOf(".");
-    QString base_name = name;
-    QString member_name;
-    if(index != -1)
+JZScriptClassFile *JZProject::getClassFile(JZProjectItem *item)
+{    
+    while (item)
     {
-        base_name = name.left(index);
-        member_name = name.mid(index + 1);
-    }
+        if (item->itemType() == ProjectItem_class)
+            return (JZScriptClassFile*)item;
 
-    QList<JZProjectItem*> list = itemList("./",ProjectItem_param);
-    for(int i = 0; i < list.size(); i++)
-    {
-        JZParamFile *file = dynamic_cast<JZParamFile*>(list[i]);
-        JZParamDefine *def = file->getVariable(base_name);
-        if(def)
-        {
-            if(member_name.isEmpty())
-                return def;
-            else
-            {
-                auto meta = JZNodeObjectManager::instance()->meta(def->dataType);
-                return meta->param(member_name);
-            }
-        }
+        item = item->parent();
     }
     return nullptr;
 }
 
-void JZProject::setVariable(QString name,const QVariant &value)
+void JZProject::removeClass(QString name)
 {
-    JZParamDefine *def = getVariableInfo(name);
-    Q_ASSERT(def);
-    def->value = value;
+    getClass(name)->uninit();
+    removeItem(name);    
 }
 
-QVariant JZProject::getVariable(QString name)
-{
-    JZParamDefine *def = getVariableInfo(name);
-    Q_ASSERT(def);
-    return def->value;
+JZParamDefine *JZProject::globalVariableInfo(QString name)
+{   
+    QList<JZProjectItem*> list = paramDefineList();
+    for(int i = 0; i < list.size(); i++)
+    {        
+        JZParamFile *file = dynamic_cast<JZParamFile*>(list[i]);
+        JZParamDefine *def = file->getVariable(name);
+        if (def)
+            return def;
+    }
+    return nullptr;
 }
 
-QStringList JZProject::variableList()
+QStringList JZProject::globalVariableList()
 {    
     QStringList result;
-    QList<JZProjectItem*> list = itemList("./",ProjectItem_param);
+    QList<JZProjectItem*> list = paramDefineList();
     for(int i = 0; i < list.size(); i++)
     {
         JZParamFile *file = dynamic_cast<JZParamFile*>(list[i]);
@@ -532,6 +522,18 @@ QList<JZProjectItem *> JZProject::itemList(QString path,int type)
     auto item = getItem(path);
     Q_ASSERT(item);
     return item->itemList(type);
+}
+
+QList<JZProjectItem *> JZProject::paramDefineList()
+{
+    QList<JZProjectItem *> result;
+    QList<JZProjectItem *> tmp = itemList("./", ProjectItem_param);
+    for (int i = 0; i < tmp.size(); i++)
+    {
+        if (domain(tmp[i]).isEmpty())
+            result.push_back(tmp[i]);
+    }
+    return result;
 }
 
 const FunctionDefine *JZProject::function(QString name)
@@ -613,4 +615,20 @@ void JZProject::loadFromStream(QDataStream &s)
         addItem(dir(it_item.key()),it_item.value());
         it_item++;
     }
+}
+
+QString JZProject::domain(JZProjectItem *item)
+{
+    QString result;
+    while(item)
+    {
+        if (item->itemType() == ProjectItem_class)
+        {
+            if (!result.isEmpty())
+                result += "::";
+            result = item->name() + result;
+        }
+        item = item->parent();
+    }
+    return result;
 }

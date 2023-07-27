@@ -283,7 +283,7 @@ void createEvent(JZEvent &event,const T &v,Args... args)
 template<typename Class, typename... Args>
 class CSingleImpl : public CSingle
 {
-public:
+public:    
     virtual void connect(JZNodeObject *obj,int eventType)
     {
         Class *cobj = (Class*)obj->cobj;
@@ -294,12 +294,31 @@ public:
            event.params.push_back(QVariant::fromValue(event.sender));
            createEvent<int,Args...>(event,args...);
            JZObjectEvent(&event);
-        });
+        });        
     }
 
     void (Class::*single)(Args...);    
 };
 
+template<typename Class,typename PrivateSingle,typename... Args>
+class CPrivateSingleImpl : public CSingle
+{
+public:    
+    virtual void connect(JZNodeObject *obj, int eventType)
+    {
+        Class *cobj = (Class*)obj->cobj;
+        cobj->connect(cobj, single, [obj, eventType](Args... args) {
+            JZEvent event;
+            event.sender = obj;
+            event.eventType = eventType;
+            event.params.push_back(QVariant::fromValue(event.sender));
+            createEvent<int, Args...>(event, args...);
+            JZObjectEvent(&event);
+        });
+    }
+
+    void (Class::*single)(PrivateSingle, Args...);
+};
 
 template<class Class>
 class ClassBind
@@ -375,6 +394,42 @@ public:
         impl->single = f;
         single.isCSingle = true;
         single.csingle = impl;        
+        
+        QStringList args;
+        getFunctionParam<int, Args...>(args);
+        for (int i = 0; i < args.size(); i++)
+        {
+            JZParamDefine def;
+            def.name = "output" + QString::number(i);
+            def.dataType = JZNodeType::typeidToType(args[i]);
+            single.paramOut.push_back(def);
+        }
+
+        m_define.singles.push_back(single);
+    }
+
+    template<typename... Args>
+    void defPrivateSingle(QString name, int eventType, void (Class::*f)(Args...))
+    {        
+        SingleDefine single;
+        single.name = name;
+        single.eventType = eventType;
+
+        auto *impl = new CPrivateSingleImpl<Class, Args...>();
+        impl->single = f;
+        single.isCSingle = true;
+        single.csingle = impl;
+      
+        QStringList args;
+        getFunctionParam<int, Args...>(args);
+        for (int i = 1; i < args.size(); i++)
+        {
+            JZParamDefine def;
+            def.name = "output" + QString::number(i);
+            def.dataType = JZNodeType::typeidToType(args[i]);
+            single.paramOut.push_back(def);
+        }
+
         m_define.singles.push_back(single);
     }
 

@@ -54,18 +54,18 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
     m_editor = nullptr;
-    m_processVaild = false;
+    m_processVaild = false;    
+
     connect(&m_debuger,&JZNodeDebugClient::sigLog,this,&MainWindow::onRuntimeLog);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeInfo,this,&MainWindow::onRuntimeInfo);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
-    connect(&m_debuger,&JZNodeDebugClient::sigRuntimeStatus, this, &MainWindow::onRuntimeStatus);
+    connect(&m_debuger,&JZNodeDebugClient::sigRuntimeStatus, this, &MainWindow::onRuntimeStatus);    
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onDebugFinish);
 
     loadSetting();
     initMenu();
-    initUi(); 
-    updateMenuAction();
+    initUi();     
     updateActionStatus();    
 }
 
@@ -214,12 +214,12 @@ void MainWindow::initMenu()
 
     m_actionStatus << ActionStatus(actRun, { as::ProjectVaild, as::ProcessIsEmpty })
         << ActionStatus(actDetach, { as::ProcessIsVaild })
-        << ActionStatus(actPause, { as::ProcessIsRunning })
-        << ActionStatus(actResume, { as::ProcessIsPause })
+        << ActionStatus(actPause, { as::ProcessCanPause })
+        << ActionStatus(actResume, { as::ProcessCanResume })
         << ActionStatus(actStop, { as::ProcessIsVaild })
-        << ActionStatus(actStepOver, { as::ProcessIsPause })
-        << ActionStatus(actStepIn, { as::ProcessIsPause })
-        << ActionStatus(actStepOut, { as::ProcessIsPause })
+        << ActionStatus(actStepOver, { as::ProcessCanResume })
+        << ActionStatus(actStepIn, { as::ProcessCanResume })
+        << ActionStatus(actStepOut, { as::ProcessCanResume })
         << ActionStatus(actBreakPoint, { as::FileIsScript });
 
     QMenu *menu_help = menubar->addMenu("帮助");
@@ -233,6 +233,8 @@ void MainWindow::initMenu()
 void MainWindow::initUi()
 {    
     m_log = new LogWidget();
+    connect(m_log, &LogWidget::sigNodeClicked, this, &MainWindow::onNodeClicked);
+
     m_projectTree = new JZProjectTree();    
     connect(m_projectTree,&JZProjectTree::sigFileOpened,this,&MainWindow::onFileOpened);
 
@@ -295,33 +297,21 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void MainWindow::updateMenuAction()
-{
-    QMenu *menu_edit = m_menuList[1];
-    auto edit_act_list = menu_edit->actions();
-    edit_act_list[0]->setEnabled(false);
-    edit_act_list[1]->setEnabled(false);
-    edit_act_list[2]->setEnabled(false);
-    edit_act_list[3]->setEnabled(false);
-    edit_act_list[4]->setEnabled(false);
-
-    QMenu *menu_debug = m_menuList[4];
-    auto debug_act_list = menu_debug->actions();
-}
-
 void MainWindow::updateActionStatus()
 {
+    int status = m_debuger.status();
+
     bool isProject = m_project.isVaild();
     bool isEditor = (m_editor != nullptr);
     bool isEditorModify = (m_editor && m_editor->isModified());    
     bool isEditorScript = (m_editor && m_editor->type() == Editor_script);
     bool isProcess = m_processVaild;
-    bool isRunning = (m_debuger.status() == Status_running);
-    bool isPause = (m_debuger.status() == Status_pause);    
+    bool canPause = isProcess && (status  == Status_running || status == Status_none);
+    bool canResume = (status == Status_pause || status == Status_idlePause);    
 
     QVector<bool> cond;
     cond << isProject << isEditor << isEditorModify << isEditorScript
-        << !isProcess << isProcess << isRunning << isPause;
+        << !isProcess << isProcess << canPause << canResume;
     
     Q_ASSERT(cond.size() == ActionStatus::Count);
     for (int i = 0; i < m_actionStatus.size(); i++)
@@ -602,35 +592,46 @@ JZEditor *MainWindow::createEditor(int type)
 
 void MainWindow::onFileOpened(QString filepath)
 {
-    JZProjectItem *item = m_project.getItem(filepath);
-    QString file = item->itemPath();
-    if(!m_editors.contains(file)){
-        JZEditor *editor = createEditor(item->itemType());
-        if(!editor)
-            return;
-
-        connect(editor,&JZEditor::redoAvailable,this,&MainWindow::onRedoAvailable);
-        connect(editor,&JZEditor::undoAvailable,this,&MainWindow::onUndoAvailable);
-        connect(editor,&JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);        
-        m_editorStack->addTab(editor, filepath);
-        editor->setItem(item);
-        editor->open(item);
-        m_editors[file] = editor;                
-    }    
-    switchEditor(m_editors[file]);
+    openEditor(filepath);    
 }
 
 void MainWindow::switchEditor(JZEditor *editor)
 {
+    if(m_editor)
+        m_editor->removeMenuBar(this->menuBar());
+
     m_editor = editor;
     if(editor != nullptr)
-    {
+    {        
+        QMenu *menu;        
+
         m_editorStack->setCurrentWidget(m_editor);
-        m_editor->updateMenuBar(this->menuBar());
+        m_editor->addMenuBar(this->menuBar());
     }
     else
         m_editorStack->setCurrentIndex(0);
     updateActionStatus();
+}
+
+bool MainWindow::openEditor(QString filepath)
+{
+    JZProjectItem *item = m_project.getItem(filepath);
+    QString file = item->itemPath();
+    if (!m_editors.contains(file)) {
+        JZEditor *editor = createEditor(item->itemType());
+        if (!editor)
+            return false;
+
+        connect(editor, &JZEditor::redoAvailable, this, &MainWindow::onRedoAvailable);
+        connect(editor, &JZEditor::undoAvailable, this, &MainWindow::onUndoAvailable);
+        connect(editor, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);
+        m_editorStack->addTab(editor, filepath);
+        editor->setItem(item);
+        editor->open(item);
+        m_editors[file] = editor;
+    }
+    switchEditor(m_editors[file]);
+    return true;
 }
 
 void MainWindow::closeEditor(JZEditor *editor)
@@ -661,7 +662,7 @@ void MainWindow::closeEditor(JZEditor *editor)
         else
             switchEditor(nullptr);
     }
-    editor->deleteLater();
+    delete editor;
 }
 
 void MainWindow::onFileClosed(QString filepath)
@@ -677,6 +678,15 @@ void MainWindow::onEditorClose(int index)
 {
     JZEditor *editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
     closeEditor(editor);
+}
+
+void MainWindow::onNodeClicked(QString file, int nodeId)
+{
+    if(openEditor(file))
+    {
+        JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
+        editor->ensureNodeVisible(nodeId);
+    }
 }
 
 bool MainWindow::build()
@@ -751,6 +761,7 @@ void MainWindow::start(bool startPause)
 
 void MainWindow::onRuntimeStatus(int status)
 {
+    m_log->addLog(Log_Runtime, QString("status:") + QString::number(status));
     auto it = m_editors.begin();
     while (it != m_editors.end())
     {
@@ -770,9 +781,11 @@ void MainWindow::onRuntimeLog(QString log)
 
 void MainWindow::onRuntimeInfo(JZNodeRuntimeInfo info)
 {    
-    onFileOpened(info.file);
-    JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
-    editor->setRuntimeNode(info.nodeId);
+    if (openEditor(info.file))
+    {
+        JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
+        editor->setRuntimeNode(info.nodeId);        
+    }
     updateActionStatus();
 }
 
@@ -826,6 +839,10 @@ bool MainWindow::closeAll()
                 }
                 else if (ret == QMessageBox::Cancel)
                     return false;
+                else if (ret == QMessageBox::YesToAll)
+                    saveToAll = true;
+                else if (ret == QMessageBox::NoToAll)
+                    noToAll = true;
             }
             else if (saveToAll)
                 editor->save();
@@ -834,10 +851,11 @@ bool MainWindow::closeAll()
 
         int index = m_editorStack->indexOf(editor);
         m_editorStack->removeTab(index);
-        editor->deleteLater();
+        if (editor == m_editor)
+            switchEditor(nullptr);
+        delete editor;
         it++;
     }
-    m_editors.clear();
-    switchEditor(nullptr);
+    m_editors.clear();    
     return true;
 }

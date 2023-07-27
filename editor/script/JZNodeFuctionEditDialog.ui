@@ -52,7 +52,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit"/>
+          <widget class="QLineEdit" name="lineName"/>
          </item>
          <item>
           <widget class="QLabel" name="label_4">
@@ -62,7 +62,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="checkBox">
+          <widget class="QCheckBox" name="boxFlow">
            <property name="text">
             <string>是</string>
            </property>
@@ -80,6 +80,16 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReset">
+           <property name="text">
+            <string>重置</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -135,28 +145,28 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_7">
+             <widget class="QPushButton" name="btnInUp">
               <property name="text">
                <string>上移</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_6">
+             <widget class="QPushButton" name="btnInDown">
               <property name="text">
                <string>下移</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_5">
+             <widget class="QPushButton" name="btnInAdd">
               <property name="text">
                <string>新增</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_8">
+             <widget class="QPushButton" name="btnInRemove">
               <property name="text">
                <string>删除</string>
               </property>
@@ -166,7 +176,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QTableWidget" name="tableWidget_2"/>
+          <widget class="QTableWidget" name="tableIn"/>
          </item>
         </layout>
        </widget>
@@ -222,28 +232,28 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_3">
+             <widget class="QPushButton" name="btnOutUp">
               <property name="text">
                <string>上移</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_2">
+             <widget class="QPushButton" name="btnOutDown">
               <property name="text">
                <string>下移</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton">
+             <widget class="QPushButton" name="btnOutAdd">
               <property name="text">
                <string>新增</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_4">
+             <widget class="QPushButton" name="btnOutRemove">
               <property name="text">
                <string>删除</string>
               </property>
@@ -253,7 +263,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QTableWidget" name="tableWidget"/>
+          <widget class="QTableWidget" name="tableOut"/>
          </item>
         </layout>
        </widget>
@@ -288,16 +298,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnReset">
-        <property name="text">
-         <string>重置</string>
-        </property>
-        <property name="autoDefault">
-         <bool>false</bool>
-        </property>
-       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btnOk">

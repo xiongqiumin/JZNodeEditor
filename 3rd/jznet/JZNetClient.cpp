@@ -144,7 +144,10 @@ JZNetPackPtr JZNetClient::waitPack(int type, int param,int timeout)
     }
     m_waitRecv = false; 
     
-    QTimer::singleShot(0, this, [this]{ dispatchPack();});
+    QTimer::singleShot(0, this, [this]{ 
+        if(m_net) 
+            dispatchPack();
+    });
 	return pack;
 }
 

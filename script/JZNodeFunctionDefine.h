@@ -1,7 +1,7 @@
 ﻿#ifndef JZNODE_FUNCTION_DEFINE_H_
 #define JZNODE_FUNCTION_DEFINE_H_
 
-#include "JZNode.h"
+#include "JZNodeType.h"
 
 class JZNodeObject;
 class CFunction
@@ -56,8 +56,9 @@ class SingleDefine
 public:
     SingleDefine();
 
-    QString name;
     int eventType;
+    QString name;
+    QList<JZParamDefine> paramOut;
 
     bool isCSingle;
     CSingle *csingle;

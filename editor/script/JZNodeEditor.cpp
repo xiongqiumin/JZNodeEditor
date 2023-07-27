@@ -2,6 +2,7 @@
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QShortcut>
+#include <QDebug>
 
 JZNodeEditor::JZNodeEditor()
 {
@@ -64,9 +65,25 @@ void JZNodeEditor::save()
     m_view->save();
 }
 
-void JZNodeEditor::updateMenuBar(QMenuBar *menubar)
+void JZNodeEditor::addMenuBar(QMenuBar *menubar)
 {
+    QMenu *menu = menubar->actions()[Menu_View]->menu();
+    m_actionList << menu->addSeparator();
+    m_actionList << menu->addAction("自动布局");
+    m_actionList << menu->addAction("显示全部");
+    connect(m_actionList[1], &QAction::triggered, this, &JZNodeEditor::onActionLayout);
+    connect(m_actionList[2], &QAction::triggered, this, &JZNodeEditor::onActionFitInView);
+}
 
+void JZNodeEditor::removeMenuBar(QMenuBar *menubar)
+{
+    QMenu *menu = menubar->actions()[Menu_View]->menu();
+    for (int i = 0; i < m_actionList.size(); i++)
+    {
+        menu->removeAction(m_actionList[i]);
+        delete m_actionList[i];
+    }
+    m_actionList.clear();
 }
 
 bool JZNodeEditor::isModified()
@@ -109,9 +126,20 @@ void JZNodeEditor::selectAll()
     m_view->selectAll();
 }
 
-void JZNodeEditor::updateNodeLayout()
+
+void JZNodeEditor::onActionLayout()
 {
     m_view->updateNodeLayout();
+}
+
+void JZNodeEditor::onActionFitInView()
+{
+    m_view->fitNodeView();
+}
+
+void JZNodeEditor::ensureNodeVisible(int nodeId)
+{
+    m_view->ensureNodeVisible(nodeId);
 }
 
 BreakPointTriggerResult JZNodeEditor::breakPointTrigger()
