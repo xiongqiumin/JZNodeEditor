@@ -77,6 +77,12 @@
     <Filter Include="Header Files\editor\script">
       <UniqueIdentifier>{fbafa3ed-a405-4fb0-b2f0-1dd4915af446}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\sample">
+      <UniqueIdentifier>{f0ddc67e-dbed-4364-8b5d-a46b31547004}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\sample">
+      <UniqueIdentifier>{2a17b5eb-c101-4d45-8aed-24d777480a0d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -256,6 +262,30 @@
     <ClCompile Include="UiCommon.cpp">
       <Filter>Source Files\editor</Filter>
     </ClCompile>
+    <ClCompile Include="editor\ui\JZDesinger.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\ui\JZDesignerEditor.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\ui\JZDesignerFormWindow.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\ui\formresizer.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\ui\sizehandlerect.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\ui\JZNodeIntegration.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeUiLoader.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="sample\Russian.cpp">
+      <Filter>Source Files\sample</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -277,9 +307,6 @@
       <Filter>Header Files\script</Filter>
     </QtMoc>
     <QtMoc Include="script\JZNodeEngine.h">
-      <Filter>Header Files\script</Filter>
-    </QtMoc>
-    <QtMoc Include="script\JZNodeObject.h">
       <Filter>Header Files\script</Filter>
     </QtMoc>
     <QtMoc Include="3rd\jznet\JZNetClient.h">
@@ -353,6 +380,27 @@
     </QtMoc>
     <QtMoc Include="editor\script\JZNodeTypeDialog.h">
       <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\JZDesinger.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\JZDesignerEditor.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\JZDesignerFormWindow.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\formresizer.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\sizehandlerect.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\JZNodeIntegration.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="script\JZNodeUiLoader.h">
+      <Filter>Header Files\script</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -448,6 +496,15 @@
     </ClInclude>
     <ClInclude Include="editor\UiCommon.h">
       <Filter>Header Files\editor</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeObject.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="sample\Russian.h">
+      <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeWidgetWrapper.h">
+      <Filter>Header Files\script</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

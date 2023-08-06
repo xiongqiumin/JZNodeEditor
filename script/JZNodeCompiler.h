@@ -37,8 +37,12 @@ public:
     void allocFunctionVariable();    
 
     bool addFlowInput(int nodeId,QString &error);
+    bool addFlowInput(int nodeId,int prop_id,QString &error);
     bool addDataInput(int nodeId,QString &error);
+    bool addDataInput(int nodeId,int prop_id,QString &error);
     void addFlowOutput(int nodeId);            
+
+    int addNop();
     int addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op);
     int addSetVariable(JZNodeIRParam dst,JZNodeIRParam src);
@@ -111,6 +115,7 @@ protected:
     NodeCompilerInfo *m_currentNodeInfo;
     JZNode* m_currentNode;
     QList<int> m_compilerNodes;
+    QString m_className;
 
     QMap<JZNode*,Graph*> m_nodeGraph;
     QMap<int,NodeCompilerInfo> m_nodeInfo;

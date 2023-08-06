@@ -70,6 +70,7 @@ void JZNodeCompiler::init(JZScriptFile *scriptFile,JZNodeScript *result)
     m_script->clear();
     m_nodeGraph.clear();
     m_nodeInfo.clear();
+    m_className.clear();
 }
 
 bool JZNodeCompiler::genGraphs(JZScriptFile *scriptFile,JZNodeScript *result)
@@ -87,6 +88,10 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
         return false;
     if(!checkGraphs())
         return false;
+
+    JZScriptClassFile *class_file = m_project->getClassFile(scriptFile);
+    if (class_file)
+        m_className = class_file->name();
     
     m_script->file = scriptFile->itemPath();
     m_script->nodeInfo.clear();
@@ -128,10 +133,12 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
             m_stackId = Stack_User;
             ret = bulidControlFlow(graph);
             if(ret)
-            {                
-                define.addr = m_nodeInfo[start_node->id()].start;
-                define.script = m_script->file;
+            {           
+                JZFunction runtime;
+                runtime.addr = m_nodeInfo[start_node->id()].start;
+                runtime.file = m_script->file;
                 m_script->functionList.push_back(define);
+                m_script->runtimeInfo[define.fullName()] = runtime;
             }
         }
         buildWatchInfo(graph);
@@ -176,6 +183,7 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
 
     JZNodeIRNodeId *node_ir = new JZNodeIRNodeId();
     node_ir->id = node->id();
+    node_ir->memo = node->name();
     addStatement(JZNodeIRPtr(node_ir));
 
     QString error;
@@ -338,16 +346,20 @@ void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
             QString func_name = "on_event_" + node_event->name() + "_node" + QString::number(node->id());
             FunctionDefine define;
             define.name = func_name;
+            define.className = m_className;
             define.paramIn = node_event->params();
-            define.addr = m_nodeInfo[node->id()].start;
-            define.script = m_script->file;
+
+            JZFunction runtime;
+            runtime.addr = m_nodeInfo[node->id()].start;
+            runtime.file = m_script->file;
 
             JZEventHandle handle;
             handle.type = node_event->eventType();
             handle.function = define;           
             if(node_event->type() == Node_singleEvent)
                 handle.sender = ((JZNodeSingleEvent*)node_event)->variable();
-            m_script->events.push_back(handle);            
+            m_script->events.push_back(handle);        
+            m_script->runtimeInfo[define.fullName()] = runtime;
         }
     }
 }
@@ -467,15 +479,19 @@ bool JZNodeCompiler::buildParamBinding(Graph *graph)
             QString func_name = "on_" + param_name + "_changed";
 
             FunctionDefine define;
-            define.name = func_name;
-            define.addr = start;
-            define.script = m_script->file;
+            define.name = func_name;            
+            define.className = m_className;
+
+            JZFunction runtime;
+            runtime.addr = start;
+            runtime.file = m_script->file;
 
             JZEventHandle handle;
             handle.type = Event_paramChanged;
             handle.sender = param_name;
             handle.function = define;
             m_script->events.push_back(handle);
+            m_script->runtimeInfo[define.fullName()] = runtime;
         }
     }
     return true;
@@ -722,48 +738,57 @@ bool JZNodeCompiler::checkVariableType(QString name,QString className,QString &e
     return true;    
 }
 
-bool JZNodeCompiler::addDataInput(int nodeId,QString &error)
+bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
 {
     GraphNode* in_node = m_currentGraph->graphNode(nodeId);
     auto in_list = in_node->node->paramInList();
-    for(int prop_idx = 0; prop_idx < in_list.size(); prop_idx++)
+    for (int prop_idx = 0; prop_idx < in_list.size(); prop_idx++)
     {
         int in_prop = in_list[prop_idx];
-        if(in_node->paramIn.contains(in_prop))
+        if (prop_id != -1 && in_prop != prop_id)
+            continue;
+
+        if (in_node->paramIn.contains(in_prop))
         {
             QList<JZNodeGemo> &gemo_list = in_node->paramIn[in_prop];
             Q_ASSERT(gemo_list.size() > 0);
-            for(int i = 0; i < gemo_list.size(); i++)
+            for (int i = 0; i < gemo_list.size(); i++)
             {
                 GraphNode *from_node = m_currentGraph->graphNode(gemo_list[i].nodeId);
-                if(from_node->node->isFlowNode())
+                if (from_node->node->isFlowNode())
                     break;
 
                 Q_ASSERT(gemo_list.size() == 1);
                 int from_id = paramId(gemo_list[i]);
-                int to_id = paramId(in_node->node->id(),in_prop);
-                addSetVariable(irId(to_id),irId(from_id));
+                int to_id = paramId(in_node->node->id(), in_prop);
+                addSetVariable(irId(to_id), irId(from_id));
             }
         }
         else
         {
-            auto prop = in_node->node->prop(in_prop);            
-            if(!prop->value().isValid())
+            auto prop = in_node->node->prop(in_prop);
+            if (!prop->value().isValid())
             {
                 error = pinName(prop) + " not set";
                 return false;
             }
 
-            int to_id = paramId(in_node->node->id(),in_prop);
-            addSetVariable(irId(to_id),irLiteral(prop->value()));
+            int to_id = paramId(in_node->node->id(), in_prop);
+            addSetVariable(irId(to_id), irLiteral(JZNodeType::matchValue(prop->value(),prop->dataType())));
         }
-    }    
+    }
     return true;
 }
 
-bool JZNodeCompiler::addFlowInput(int nodeId,QString &error)
+bool JZNodeCompiler::addDataInput(int nodeId,QString &error)
 {
-    Q_ASSERT(m_currentGraph->graphNode(nodeId)->node->isFlowNode());
+    return addDataInput(nodeId, -1, error);    
+}
+
+bool JZNodeCompiler::addFlowInput(int nodeId, int prop_id, QString &error)
+{    
+    Q_ASSERT(m_currentGraph->graphNode(nodeId)->node->isFlowNode() || m_currentGraph->graphNode(nodeId)->node->type() == Node_and
+        || m_currentGraph->graphNode(nodeId)->node->type() == Node_or);
 
     QList<GraphNode*> graph_list;
     QSet<GraphNode*> graphs;
@@ -771,33 +796,51 @@ bool JZNodeCompiler::addFlowInput(int nodeId,QString &error)
     //广度遍历所有节点
     QList<GraphNode*> in_list;
     in_list << m_currentGraph->graphNode(nodeId);
-    
-    while(in_list.size() > 0)
+
+    while (in_list.size() > 0)
     {
         QList<GraphNode*> next_list;
-        for(int node_idx = 0; node_idx < in_list.size(); node_idx++)
+        for (int node_idx = 0; node_idx < in_list.size(); node_idx++)
         {
             auto in_node = in_list[node_idx];
             auto it = in_node->paramIn.begin();
-            while(it != in_node->paramIn.end())
+
+            //对每个节点遍历输入
+            while (it != in_node->paramIn.end())
             {
-                if(!in_node->node->prop(it.key())->isParam())
+                if (!in_node->node->prop(it.key())->isParam())
+                {
+                    it++;
+                    continue;
+                }
+                // 对第一个输入进行过滤
+                if (in_node->node->id() == nodeId && prop_id != -1 && it.key() != prop_id)
                 {
                     it++;
                     continue;
                 }
 
                 QList<JZNodeGemo> &gemo_list = it.value();
-                for(int i = 0; i < gemo_list.size(); i++)
+                for (int i = 0; i < gemo_list.size(); i++)
                 {
                     GraphNode *from_node = m_currentGraph->graphNode(gemo_list[i].nodeId);
-                    if(from_node->node->isFlowNode())
+                    if (from_node->node->isFlowNode())
+                    {
+                        auto n = from_node->node;
+                        JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(n);
+                        if (!node_event && m_scriptFile->getConnectId(n->id(), n->flowIn()).size() == 0)
+                        {
+                            error += n->name() + "(" + QString::number(n->id()) + ")" + "没有连接输入流程";
+                            return false;
+                        }
                         continue;
+                    }
 
-                    if(!graphs.contains(from_node))
+                    if (!graphs.contains(from_node))
                     {
                         graphs << from_node;
-                        next_list << from_node;
+                        if(from_node->node->type() != Node_and && from_node->node->type() != Node_or)
+                            next_list << from_node;
                     }
                 }
                 it++;
@@ -806,19 +849,24 @@ bool JZNodeCompiler::addFlowInput(int nodeId,QString &error)
         in_list = next_list;
     }
 
-    //要计算的节点
-    for(int i = 0; i < m_currentGraph->topolist.size(); i++)
+    //要计算的节点，从topolist 获取保证计算顺序
+    for (int i = 0; i < m_currentGraph->topolist.size(); i++)
     {
         auto node = m_currentGraph->topolist[i];
-        if(graphs.contains(node))
+        if (graphs.contains(node))
             graph_list.push_back(node);
     }
-    if(!buildDataFlow(graph_list))
+    if (!buildDataFlow(graph_list))
         return false;
-    if(!addDataInput(nodeId,error))
+    if (!addDataInput(nodeId, error))
         return false;
-    
+
     return true;
+}
+
+bool JZNodeCompiler::addFlowInput(int nodeId,QString &error)
+{
+    return addFlowInput(nodeId, -1, error);    
 }
 
 void JZNodeCompiler::addFlowOutput(int nodeId)
@@ -879,14 +927,24 @@ void JZNodeCompiler::allocFunctionVariable()
     auto define = m_scriptFile->function();
     for(int i = 0; i < define.paramIn.size(); i++)
     {
-        addAllocLocal(&define.paramIn[i]);
-        m_script->localVariable.push_back(define.paramIn[i]);
-    }
+        if (i == 0 && !define.className.isEmpty())
+        {
+            addSetVariable(irRef("this"), irId(Reg_Call + i));
+        }
+        else
+        {
+            addAllocLocal(&define.paramIn[i]);            
+            addSetVariable(irRef(define.paramIn[i].name), irId(Reg_Call + i));
 
-    for(int i = 0; i < define.paramIn.size(); i++)
-    {
-        addSetVariable(irRef(define.paramIn[i].name),irId(Reg_Call + i));
+            m_script->localVariable.push_back(define.paramIn[i]);
+        }
     }
+}
+
+int JZNodeCompiler::addNop()
+{
+    JZNodeIR *nop = new JZNodeIR(OP_nop);
+    return addStatement(JZNodeIRPtr(nop));
 }
 
 int JZNodeCompiler::addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op)

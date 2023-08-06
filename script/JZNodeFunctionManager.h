@@ -14,25 +14,20 @@ public:
     void init();        
     void loadLibrary(QString filename);
     void setUserRegist(bool flag);
+    void clearUserReigst(); 
 
     QList<const FunctionDefine*> functionList();
     const FunctionDefine *function(QString name);
     void registFunction(const FunctionDefine &define);
     void replaceFunction(const FunctionDefine &define);
-    void registCFunction(QString name,bool isFlow,CFunction *func);    
-    void unregistFunction(QString name);
-
-    void clearUserReigst();    
-    void registCSingle(CSingle *single);
-    void unregistCSingle(CSingle *single);
+    void registCFunction(QString name,bool isFlow, QSharedPointer<CFunction> func);
+    void unregistFunction(QString name);       
 
 protected:
     JZNodeFunctionManager();
     ~JZNodeFunctionManager();           
     
     QMap<QString, FunctionDefine> m_funcMap;
-    QVector<CFunction *> m_cfuncs;
-    QVector<CSingle *> m_csingles;
     bool m_userRegist;
     QStringList m_userFuncs;
 };

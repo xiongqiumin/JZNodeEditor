@@ -2,6 +2,7 @@
 #define JZNODE_FUNCTION_DEFINE_H_
 
 #include "JZNodeType.h"
+#include <QSharedPointer>
 
 class JZNodeObject;
 class CFunction
@@ -22,19 +23,18 @@ class FunctionDefine
 {
 public:
     FunctionDefine();    
-        
-    bool isCFunction;
-    bool isFlowFunction;
+
+    QString fullName() const;
+            
     QString name;
+    QString className;
+    bool isFlowFunction;    
     QList<JZParamDefine> paramIn;
-    QList<JZParamDefine> paramOut;
-    
-    //for node
-    int addr;
-    QString script;
+    QList<JZParamDefine> paramOut;       
 
     //for c    
-    CFunction *cfunc;    
+    bool isCFunction;
+    QSharedPointer<CFunction> cfunc;
 };
 QDataStream &operator<<(QDataStream &s, const FunctionDefine &param);
 QDataStream &operator>>(QDataStream &s, FunctionDefine &param);
@@ -65,5 +65,18 @@ public:
 };
 QDataStream &operator<<(QDataStream &s, const SingleDefine &param);
 QDataStream &operator>>(QDataStream &s, SingleDefine &param);
+
+//event
+class EventDefine
+{
+public:
+    EventDefine();
+
+    int eventType;
+    QString name;
+    QList<JZParamDefine> paramOut;
+};
+QDataStream &operator<<(QDataStream &s, const EventDefine &param);
+QDataStream &operator>>(QDataStream &s, EventDefine &param);
 
 #endif

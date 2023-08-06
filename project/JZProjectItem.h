@@ -13,11 +13,11 @@ enum{
     ProjectItem_scriptFlow,    
     ProjectItem_scriptFunction,
 
-
     ProjectItem_any = 0xFFFF,
 };
 
 class JZProject;
+class JZScriptClassFile;
 class JZProjectItem
 {    
 public:

@@ -9,25 +9,14 @@
 #include <QApplication>
 #include <QDebug>
 #include <QTimer>
-
-TestWindow::TestWindow()
-{
-    QLineEdit *line = new QLineEdit(this);
-    line->setGeometry(30,30,120,30);
-    line->setObjectName("line");
-
-    QPushButton *btn = new QPushButton(this);
-    btn->setText("click me");
-    btn->setGeometry(30,80,120,60);
-    btn->setObjectName("btn");
-
-    resize(400,300);
-}
-
-TestWindow::~TestWindow()
-{
-
-}
+#include <QResizeEvent>
+#include <QMouseEvent>
+#include <QPaintEvent>
+#include <QShowEvent>
+#include <QKeyEvent>
+#include <QPainter>
+#include <QMessageBox>
+#include "JZNodeUiLoader.h"
 
 QString JObjectTypename(const QVariant &v)
 {
@@ -120,6 +109,7 @@ CMeta::CMeta()
     create = nullptr;
     copy = nullptr;
     destory = nullptr;
+    addEventFilter = nullptr;
 }
 
 
@@ -162,6 +152,7 @@ JZNodeObjectDefine::JZNodeObjectDefine()
 {
     id = -1;
     isCObject = false;
+    isUiWidget = false;    
 }
 
 QString JZNodeObjectDefine::fullname() const
@@ -226,14 +217,24 @@ JZParamDefine *JZNodeObjectDefine::param(QString name)
 void JZNodeObjectDefine::addFunction(FunctionDefine def)
 {
     Q_ASSERT(!def.name.contains(".") && !def.name.contains("::"));
-    functions.push_back(def.name);
-    JZNodeFunctionManager::instance()->registFunction(def);
+    functions.push_back(def);    
 }
 
 void JZNodeObjectDefine::removeFunction(QString function)
 {
-    functions.removeAll(function);
-    JZNodeFunctionManager::instance()->unregistFunction(function);
+    int index = indexOfFunction(function);
+    if(index != -1)
+        functions.removeAt(index);
+}
+
+int JZNodeObjectDefine::indexOfFunction(QString function)
+{
+    for (int i = 0; i < functions.size(); i++)
+    {
+        if (functions[i].name == function)
+            return i;
+    }
+    return -1;
 }
 
 void JZNodeObjectDefine::addSingle(FunctionDefine def)
@@ -248,14 +249,29 @@ void JZNodeObjectDefine::removeSingle(QString function)
 
 const FunctionDefine *JZNodeObjectDefine::function(QString name)
 {
-    if(functions.contains(name))
-        return JZNodeFunctionManager::instance()->function(fullname() + "." + name);
+    int index = indexOfFunction(name);
+    if(index >= 0)
+        return &functions[index];
 
     auto def = super();
     if(def)
         return def->function(name);
     else
         return nullptr;
+}
+
+QStringList JZNodeObjectDefine::JZNodeObjectDefine::singleList()
+{
+    QSet<QString> set;
+    auto def = this;
+    while(def)
+    {
+        for (int i = 0; i < def->singles.size(); i++)        
+            set << def->singles[i].name;
+
+        def = def->super();
+    }
+    return set.toList();
 }
 
 const SingleDefine *JZNodeObjectDefine::single(QString function)
@@ -269,6 +285,35 @@ const SingleDefine *JZNodeObjectDefine::single(QString function)
     auto def = super();
     if(def)
         return def->single(function);
+    else
+        return nullptr;
+}
+
+QStringList JZNodeObjectDefine::eventList()
+{
+    QSet<QString> set;
+    auto def = this;
+    while (def)
+    {
+        for (int i = 0; i < def->events.size(); i++)
+            set << def->events[i].name;
+
+        def = def->super();
+    }
+    return set.toList();
+}
+
+const EventDefine *JZNodeObjectDefine::event(QString function)
+{
+    for (int i = 0; i < events.size(); i++)
+    {
+        if (events[i].name == function)
+            return &events[i];
+    }
+
+    auto def = super();
+    if (def)
+        return def->event(function);
     else
         return nullptr;
 }
@@ -319,9 +364,15 @@ QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param)
     s << param.nameSpace;
     s << param.className;
     s << param.superName;
+
     s << param.params;
     s << param.functions;
+    s << param.singles;
+    s << param.events;
+
     s << param.isCObject;
+    s << param.isUiWidget;
+    s << param.widgteXml;
     return s;
 }
 
@@ -331,9 +382,15 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
     s >> param.nameSpace;
     s >> param.className;
     s >> param.superName;
+
     s >> param.params;
     s >> param.functions;
+    s >> param.singles;
+    s >> param.events;
+    
     s >> param.isCObject;
+    s >> param.isUiWidget;
+    s >> param.widgteXml;
     return s;
 }
 
@@ -459,10 +516,9 @@ const FunctionDefine *JZNodeObject::function(QString name)
     return define->function(name);
 }
 
-void JZNodeObject::updateCRefs()
+void JZNodeObject::updateWidgetParam()
 {
-    if(!isInherits("widget"))
-        return;
+    Q_ASSERT(isInherits("Widget"));
 
     QObject *obj = (QObject*)cobj;
     auto inst = JZNodeObjectManager::instance();
@@ -487,7 +543,7 @@ void JZNodeObject::updateCRefs()
 
 void JZNodeObject::connectSingles(int type)
 {
-    Q_ASSERT(isInherits("object"));
+    Q_ASSERT(isInherits("Object"));
 
     auto def = define;
     while(def)
@@ -495,8 +551,11 @@ void JZNodeObject::connectSingles(int type)
         for(int i = 0; i < def->singles.size(); i++)
         {
             auto &s = def->singles[i];
-            if(s.isCSingle && s.eventType == type)
-                s.csingle->connect(this,s.eventType);
+            if (s.isCSingle && s.eventType == type)
+            {
+                s.csingle->connect(this, s.eventType);
+                return;
+            }
         }
         def = JZNodeObjectManager::instance()->meta(def->superName);
     }
@@ -562,7 +621,8 @@ JZNodeObjectManager *JZNodeObjectManager::instance()
 
 JZNodeObjectManager::JZNodeObjectManager()
 {        
-    m_objectId = Type_objectRegistId;
+    m_objectId = Type_internalObject;
+    m_enumId = Type_enum;
 }
 
 JZNodeObjectManager::~JZNodeObjectManager()
@@ -574,13 +634,12 @@ void JZNodeObjectManager::init()
 {  
     QMetaType::registerDebugStreamOperator<JZNodeObjectPtr>();           
 
+    initBase();
+    initEvent();
     initCore();
     initObjects();
     initWidgets();
-    initFunctions();
-
-    jzbind::ClassBind<TestWindow> cls_window("JZMainWindow","widget");
-    cls_window.regist();
+    initFunctions();    
 
     m_objectId = Type_userObject;
 }
@@ -597,13 +656,46 @@ void JZNodeObjectManager::initFunctions()
     JZNodeFunctionManager::instance()->registCFunction("toDouble", false,jzbind::createFuncion(toDouble));
 }
 
+void JZNodeObjectManager::initBase()
+{
+    jzbind::ClassBind<QPoint> cls_pt("Point");
+    cls_pt.regist();
+
+    jzbind::ClassBind<QPointF> cls_ptf("PointF");
+    cls_ptf.regist();
+
+    jzbind::ClassBind<QRect> cls_rect("Rect");
+    cls_rect.def("create", false, [](int x, int y, int w,int h)->QRect {
+        return QRect(x, y, w, h);
+    });
+    cls_rect.regist();
+
+    jzbind::ClassBind<QRectF> cls_rectf("RectF");
+    cls_rectf.regist();
+
+    jzbind::ClassBind<QColor> cls_color("Color");
+    cls_color.def("create", false, [](int r,int g,int b)->QColor{
+            return QColor(r, g, b);
+        });
+    cls_color.regist();
+
+    jzbind::ClassDelcare<QString>("string", Type_string);
+}
+
 void JZNodeObjectManager::initCore()
 {    
     auto funcInst = JZNodeFunctionManager::instance();
-    jzbind::ClassBind<QObject> cls_object("object");
-    cls_object.regist();
+    jzbind::ClassBind<QObject> cls_object("Object");
+    cls_object.regist(Type_object);
 
-    //string
+    //stringlist
+    jzbind::ClassBind<QStringList> cls_string_list("StringList");
+    cls_string_list.def("join", false, [](const QStringList &list, const QString &sep)->QString {
+        return list.join(sep);
+    });
+    cls_string_list.regist();
+
+    //string 全部只读
     funcInst->registCFunction("string.append",false,jzbind::createFuncion([](const QString &a,const QString &b)->QString{
         return a + b;
     }));
@@ -619,17 +711,17 @@ void JZNodeObjectManager::initCore()
     funcInst->registCFunction("string.replace",false,jzbind::createFuncion([](const QString &in,const QString &before,const QString &after)->QString{
         QString ret = in;
         return ret.replace(before,after);
-    }));
+    }));  
 
     //list
-    jzbind::ClassBind<JZNodeListIterator> cls_list_it("listIterator");
+    jzbind::ClassBind<JZNodeListIterator> cls_list_it("ListIterator");
     cls_list_it.def("next",true,&JZNodeListIterator::next);
     cls_list_it.def("atEnd",true,&JZNodeListIterator::atEnd);
     cls_list_it.def("key",true,&JZNodeListIterator::key);
     cls_list_it.def("value",true,&JZNodeListIterator::value);
     cls_list_it.regist();
 
-    jzbind::ClassBind<QVariantList> cls_list("list");
+    jzbind::ClassBind<QVariantList> cls_list("List");
     cls_list.def("iterator",true,[](QVariantList *list)->QVariant{
         JZNodeObjectPtr it_ptr = JZObjectCreate<JZNodeListIterator>();
         auto list_it = (JZNodeListIterator*)it_ptr->cobj;
@@ -637,15 +729,29 @@ void JZNodeObjectManager::initCore()
         list_it->list = list;
         return QVariant::fromValue(it_ptr);
     });
+    cls_list.def("resize", true, [](QVariantList *list, int size) {
+        while (list->size() > size) {
+            list->pop_back();
+        }
+        while (list->size() < size) {
+            list->push_back(QVariant());
+        }
+    });
     cls_list.def("set",true,[](QVariantList *list,int index,const QVariant &value)
     {
-        if(index < 0 || index >= list->size())
-            throw std::runtime_error("index out of range");
+        if (index < 0 || index >= list->size())
+        {
+            QString error = QString::asprintf("index %d out of range %d",index,list->size());
+            throw std::runtime_error(qPrintable(error));
+        }
         (*list)[index] = value;
     });
     cls_list.def("get",false,[](QVariantList *list,int index)->QVariant{
-        if(index < 0 || index >= list->size())
-            throw std::runtime_error("index out of range");
+        if (index < 0 || index >= list->size())
+        {
+            QString error = QString::asprintf("index %d out of range %d", index, list->size());
+            throw std::runtime_error(qPrintable(error));
+        }
         return list->at(index);
     });
     cls_list.def("push_front",true,&QVariantList::push_front);
@@ -668,17 +774,18 @@ void JZNodeObjectManager::initCore()
             list->push_back(QVariant());
     });
     cls_list.def("size",false,&QVariantList::size);
+    cls_list.def("clear",true,&QVariantList::clear);
     cls_list.regist(Type_list);
 
     //map
-    jzbind::ClassBind<JZNodeMapIterator> map_it("mapIterator");
+    jzbind::ClassBind<JZNodeMapIterator> map_it("MapIterator");
     map_it.def("next",true,&JZNodeListIterator::next);
     map_it.def("atEnd",true,&JZNodeListIterator::atEnd);
     map_it.def("key",true,&JZNodeListIterator::key);
     map_it.def("value",true,&JZNodeListIterator::value);
     map_it.regist();
 
-    jzbind::ClassBind<QVariantMap> cls_map("map");
+    jzbind::ClassBind<QVariantMap> cls_map("Map");
     cls_map.def("iterator",true,[](QVariantMap *map)->QVariant{
         JZNodeObjectPtr it_ptr = JZObjectCreate<JZNodeMapIterator>();
         auto map_it = (JZNodeMapIterator*)it_ptr->cobj;
@@ -689,43 +796,81 @@ void JZNodeObjectManager::initCore()
     cls_map.def("set",true,[](QVariantMap *map,const QString &key,const QVariant &value){ map->insert(key,value); });
     cls_map.def("get",false,[](QVariantMap *map,const QString &key)->QVariant{
         auto it = map->find(key);
-        if(it == map->end())
-            throw std::runtime_error("no such element");
+        if (it == map->end())
+        {
+            QString error = "no such element, key = " + key;
+            throw std::runtime_error(qPrintable(error));
+        }
 
         return it.value();
     });
-    cls_map.def("size",false,&QVariantMap::size);
+    cls_map.def("size",false,&QVariantMap::size);    
+    cls_map.def("clear",true, &QVariantMap::clear);
     cls_map.regist(Type_map);
+}
+
+
+void JZNodeObjectManager::initEvent()
+{
+    jzbind::registEnum<Qt::KeyboardModifiers>(QString("KeypadModifier"));
+
+    jzbind::ClassBind<QEvent> cls_event("Event");
+    cls_event.regist();
+
+    jzbind::ClassBind<QResizeEvent> cls_resize_event("ResizeEvent");
+    cls_resize_event.regist();
+
+    jzbind::ClassBind<QShowEvent> cls_show_event("ShowEvent");
+    cls_show_event.regist();
+
+    jzbind::ClassBind<QPaintEvent> cls_paint_event("PaintEvent");    
+    cls_paint_event.regist();
+
+    jzbind::ClassBind<QCloseEvent> cls_close_event("CloseEvent");
+    cls_close_event.regist();
+
+    jzbind::ClassBind<QKeyEvent> cls_key_event("KeyEvent");
+    cls_key_event.def("key", false, &QKeyEvent::key);
+    cls_key_event.def("modifiers", false, &QKeyEvent::modifiers);
+    cls_key_event.regist();
+
+    jzbind::ClassBind<QMouseEvent> cls_mouse_event("MouseEvent");
+    cls_mouse_event.def("pos", false, &QMouseEvent::pos);
+    cls_mouse_event.def("x", false, &QMouseEvent::x);
+    cls_mouse_event.def("y", false, &QMouseEvent::y);
+    cls_mouse_event.regist();
 }
 
 void JZNodeObjectManager::initObjects()
 {
-    jzbind::ClassBind<QTimer> cls_timer("timer", "object");
+    jzbind::ClassBind<QTimer> cls_timer("Timer", "Object");
     cls_timer.def("start",true, QOverload<int>::of(&QTimer::start));
     cls_timer.def("stop",true, &QTimer::stop);
     cls_timer.def("isActive", false, &QTimer::isActive);
     cls_timer.defPrivateSingle("timeout", Event_timeout, &QTimer::timeout);
-    cls_timer.regist();
+    cls_timer.regist(Type_timer);
 }
 
 void JZNodeObjectManager::initWidgets()
 {
     //widget
-    jzbind::ClassBind<QWidget> cls_widget("widget","object");
+    jzbind::ClassBind<QWidget> cls_widget("Widget","Object");
     cls_widget.def("setVisible",true,&QWidget::setVisible);
     cls_widget.def("show",true,&QWidget::show);
     cls_widget.def("hide",true,&QWidget::hide);
     cls_widget.def("close",true,&QWidget::close);
+    cls_widget.def("rect", false, &QWidget::rect);
+    cls_widget.def("update",true, QOverload<>::of(&QWidget::update));
     cls_widget.regist();
 
     //lineedit
-    jzbind::ClassBind<QLineEdit> cls_lineEdit("LineEdit","widget");
+    jzbind::ClassBind<QLineEdit> cls_lineEdit("LineEdit","Widget");
     cls_lineEdit.def("text",false,&QLineEdit::text);
     cls_lineEdit.def("setText",true,&QLineEdit::setText);;
     cls_lineEdit.regist();
 
     //abs_button
-    jzbind::ClassBind<QAbstractButton> cls_abs_button("AbstractButton","widget");
+    jzbind::ClassBind<QAbstractButton> cls_abs_button("AbstractButton","Widget");
     cls_abs_button.def("text",false,&QAbstractButton::text);
     cls_abs_button.def("setText",true,&QAbstractButton::setText);
     cls_abs_button.defSingle("clicked",Event_buttonClicked,&QAbstractButton::clicked);
@@ -738,6 +883,25 @@ void JZNodeObjectManager::initWidgets()
     //button
     jzbind::ClassBind<QCheckBox> cls_check_box("RadioButton","AbstractButton");
     cls_check_box.regist();
+
+    //painter
+    jzbind::ClassBind<QPainter> cls_painter("Painter");
+    cls_painter.def("create", true, [](QWidget *w)->QPainter*{ return new QPainter(w);}, false);
+    cls_painter.def("drawRect",true, QOverload<const QRect&>::of(&QPainter::drawRect));
+    cls_painter.def("fillRect",true, QOverload<const QRect&,const QColor&>::of(&QPainter::fillRect));
+    cls_painter.regist();
+
+    JZNodeFunctionManager::instance()->registCFunction("MessageBox.information", true, jzbind::createFuncion([](QWidget *w,QString text){
+            QMessageBox::information(w, "", text);
+        }));    
+}
+
+int JZNodeObjectManager::delcare(QString name, QString c_typeid, int id)
+{    
+    JZNodeObjectDefine def;
+    def.className = name;
+    def.id = id;
+    return registCClass(def, c_typeid);    
 }
 
 int JZNodeObjectManager::regist(JZNodeObjectDefine info)
@@ -761,23 +925,23 @@ int JZNodeObjectManager::regist(JZNodeObjectDefine info)
 
 void JZNodeObjectManager::replace(JZNodeObjectDefine define)
 {
-    if(m_metas.contains(define.id))
-    {
-        auto def = m_metas[define.id].data();
-        int oldId = def->id;
-        *def = define;
-        def->id = oldId;
-    }
-    else
-    {
-        regist(define);
-    }
+    if (m_metas.contains(define.id))
+        unregist(define.id);
+    
+    regist(define);        
 }
 
-void JZNodeObjectManager::registCClass(JZNodeObjectDefine define,QString type_id)
+int JZNodeObjectManager::registCClass(JZNodeObjectDefine define,QString ctype_id)
 {
     int id = regist(define);
-    m_typeidMetas[type_id] = id;
+    m_typeidMetas[ctype_id] = id;
+    return id;
+}
+
+void JZNodeObjectManager::registEnum(QString enumName, QString ctype_id)
+{
+    int id = m_enumId++;
+    m_typeidMetas[ctype_id] = id;
 }
 
 void JZNodeObjectManager::unregist(int name)
@@ -785,9 +949,9 @@ void JZNodeObjectManager::unregist(int name)
     m_metas.remove(name);
 }
 
-void JZNodeObjectManager::declareCClass(QString name,int id)
+void JZNodeObjectManager::declareQObject(int id,QString name)
 {
-    m_cClassId[name] = id;
+    m_qobjectId[name] = id;
 }
 
 void JZNodeObjectManager::clearUserReigst()
@@ -821,9 +985,9 @@ int JZNodeObjectManager::getClassIdByTypeid(QString name)
     return m_typeidMetas.value(name,Type_none);
 }
 
-int JZNodeObjectManager::getClassIdByCClassName(QString name)
+int JZNodeObjectManager::getClassIdByQObject(QString name)
 {
-    return m_cClassId.value(name,Type_none);
+    return m_qobjectId.value(name,Type_none);
 }
 
 int JZNodeObjectManager::getClassId(QString class_name)
@@ -914,16 +1078,27 @@ void JZNodeObjectManager::copy(JZNodeObject *dst,JZNodeObject *src)
 
 void JZNodeObjectManager::create(JZNodeObjectDefine *def,JZNodeObject *obj)
 {
-    if(def->isCObject)
+    if (def->isCObject)
     {
-        obj->cobj = def->cMeta.create();
+        obj->cobj = def->cMeta.create();            
         obj->cowner = true;
-        obj->updateCRefs();
         return;
-    }
+    }        
 
-    if(!def->superName.isEmpty())
-        create(meta(getClassId(def->superName)),obj);
+    if (def->isUiWidget)
+    {
+        JZNodeUiLoader loader;
+        obj->cobj = loader.create(def->widgteXml);
+        if (!obj->cobj)
+            throw std::runtime_error(qPrintable(loader.errorString()));
+        obj->cowner = true;
+        obj->updateWidgetParam();
+    }
+    else
+    {
+        if (!def->superName.isEmpty())
+            create(def->super(), obj);
+    }
 
     auto it = def->params.begin();
     while(it != def->params.end() )
@@ -965,7 +1140,7 @@ JZNodeObjectPtr JZNodeObjectManager::createCClassRefrence(QString type_id,void *
         return nullptr;
 
     auto def = meta(m_typeidMetas[type_id]);
-    JZNodeObject *obj = new JZNodeObject(def);  
+    JZNodeObject *obj = new JZNodeObject(def);
     obj->setCObject(ptr,false);
     return JZNodeObjectPtr(obj);
 }

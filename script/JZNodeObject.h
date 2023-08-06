@@ -16,6 +16,22 @@ public:
     void* (*create)();
     void (*copy)(void *,void *);
     void (*destory)(void *);
+    void (*addEventFilter)(void*,int);
+};
+
+class JZZNodeEnumDefine
+{
+public:
+    QString name;
+    QStringList enums;
+};
+
+
+class JZZNodeFlagDefine
+{
+public:
+    QString name;
+    QStringList enums;
 };
 
 class JZNodeObjectDefine
@@ -30,12 +46,21 @@ public:
 
     void addFunction(FunctionDefine def);
     void removeFunction(QString function);    
+    int indexOfFunction(QString function);
+
     void addSingle(FunctionDefine def);
     void removeSingle(QString function);
 
     QString fullname() const;
+
     const FunctionDefine *function(QString function);
+    
+    QStringList singleList();
     const SingleDefine *single(QString function);
+    
+    QStringList eventList();
+    const EventDefine *event(QString function);
+    
     JZNodeObjectDefine *super();    
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
@@ -46,9 +71,12 @@ public:
     QString className;            
     QString superName;
     QMap<QString,JZParamDefine> params;
-    QStringList functions;
+    QList<FunctionDefine> functions;
     QList<SingleDefine> singles;
-    bool isCObject;
+    QList<EventDefine> events;
+    bool isCObject;    
+    bool isUiWidget;
+    QString widgteXml;
     CMeta cMeta;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param);
@@ -83,7 +111,7 @@ public:
     const FunctionDefine *function(QString function);
 
     void setCObject(void *cobj,bool owner);    
-    void updateCRefs();
+    void updateWidgetParam();
     void connectSingles(int type);
 
     JZNodeObjectDefine *define;
@@ -126,15 +154,18 @@ public:
     QStringList getClassList();
 
     int getClassIdByTypeid(QString name);
-    int getClassIdByCClassName(QString name);
+    
+    int getClassIdByQObject(QString name);
+    void declareQObject(int id,QString name);
 
+    int delcare(QString name, QString type_id, int id = -1);
     int regist(JZNodeObjectDefine define);
     void replace(JZNodeObjectDefine define);
-    void registCClass(JZNodeObjectDefine define,QString type_id);
-    void unregist(int id);
-    void declareCClass(QString name,int id);
+    int registCClass(JZNodeObjectDefine define,QString type_id);
+    void registEnum(QString enumName, QString ctype_id);
+    void unregist(int id);    
     void clearUserReigst();    
-
+    
     JZNodeObjectPtr create(int type_id);
     JZNodeObjectPtr createCClass(QString ctype_id);
     JZNodeObjectPtr createCClassRefrence(QString ctype_id,void *cobj);
@@ -143,15 +174,18 @@ public:
 protected:
     void create(JZNodeObjectDefine *define,JZNodeObject *obj);
     void copy(JZNodeObject *src,JZNodeObject *dst);
+    void initBase();
     void initCore();
-    void initObjects();
+    void initEvent();
+    void initObjects();    
     void initWidgets();
     void initFunctions();
 
     QMap<int,QSharedPointer<JZNodeObjectDefine>> m_metas;
     QMap<QString,int> m_typeidMetas;
-    QMap<QString,int> m_cClassId;
+    QMap<QString,int> m_qobjectId;
     int m_objectId;
+    int m_enumId;
 };
 
 template<class T>
@@ -161,18 +195,11 @@ JZNodeObjectPtr JZObjectCreate()
 }
 
 template<class T>
-JZNodeObjectPtr JZObjectRefrence(T *ptr)
+JZNodeObjectPtr JZObjectRefrence(T ptr)
 {
-    return JZNodeObjectManager::instance()->createCClassRefrence(typeid(T).name(),ptr);
+    static_assert(std::is_pointer<T>(), "only support class pointer");
+    QString c_typeid = typeid(std::remove_pointer_t<T>).name();
+    return JZNodeObjectManager::instance()->createCClassRefrence(c_typeid,ptr);
 }
-
-class TestWindow : public QWidget
-{
-    Q_OBJECT
-
-public:
-    TestWindow();
-    ~TestWindow();
-};
 
 #endif

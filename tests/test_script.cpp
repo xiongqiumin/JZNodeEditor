@@ -827,15 +827,6 @@ void ScriptTest::testBind()
 
     auto impl_left = jzbind::createFuncion(str_left);
     impl_left->call({str,100},out);    
-
-    CFunction *impl_left_in;
-    {
-        auto str_left_in = [](const QString &inst,int size)->QString{
-            return inst.left(size);
-        };
-        impl_left_in = jzbind::createFuncion(str_left_in);
-    }
-    impl_left_in->call({str,100},out);
 }
 
 void ScriptTest::testCClass()

@@ -6,7 +6,7 @@
 
 enum
 {
-    Type_none = -1,    
+    Type_none = -1,
     Type_bool,
     Type_int,
     Type_int64,
@@ -15,12 +15,16 @@ enum
     Type_nullptr,
     Type_any,
 
-    Type_object = 1000,    
+    Type_enum = 1000,
+    Type_flag = 2000,
+
+    Type_object = 5000,    
     Type_list,
     Type_map,
+    Type_timer,
 
-    Type_objectRegistId = 2000,
-    Type_userObject = 10000,
+    Type_internalObject = 8000, // 内部注册起始
+    Type_userObject = 10000,    // 用户注册起始
 };
 
 class JZNodeType
@@ -41,6 +45,9 @@ public:
     static bool canConvert(int type1,int type2);
     static bool canConvert(QList<int> type1,QList<int> type2);
     static QString toString(const QVariant &v);
+    static QString opName(int op);
+    
+    static QVariant matchValue(const QVariant &v, QList<int> type);
 };
 
 class JZParamDefine

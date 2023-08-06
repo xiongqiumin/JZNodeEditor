@@ -13,9 +13,9 @@ enum{
     Stack_Node = 0,
     Stack_User = 1000000,    
 
-    Reg_Start = 2000000,
-    Reg_Cmp = Reg_Start,
-    Reg_Call,               //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User
+    Reg_Start = 2000000,    
+    Reg_Call = Reg_Start,               //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User
+    Reg_Cmp = 2500000,
 };
 
 //TopoTool
@@ -113,6 +113,16 @@ struct NodeInfo
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 
+//JZFunction
+class JZFunction
+{
+public:
+    QString file;
+    int addr;
+};
+QDataStream &operator<<(QDataStream &s, const JZFunction &param);
+QDataStream &operator >> (QDataStream &s, JZFunction &param);
+
 //JZNodeScript
 class JZNodeScript
 {    
@@ -123,14 +133,17 @@ public:
 
     QString file;
     QString className;
-    QList<GraphPtr> graphs;                     
-    QList<JZEventHandle> events;
-    QList<JZParamChangeHandle> paramChanges;
+    QList<GraphPtr> graphs;     
+    QMap<int, NodeInfo> nodeInfo;
     QList<JZNodeIRPtr> statmentList;
-    QList<FunctionDefine> functionList;
-    QMap<int,NodeInfo> nodeInfo;
     QList<JZParamDefine> localVariable;
+
+    QList<JZParamChangeHandle> paramChanges;    
+    QList<JZEventHandle> events;
+    QList<FunctionDefine> functionList;        
     QList<JZNodeIRParam> watchList;
+
+    QMap<QString, JZFunction> runtimeInfo;
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
@@ -153,7 +166,10 @@ public:
     void clear();
 
     FunctionDefine *function(QString name);
-    JZNodeScript *script(QString name);
+    JZNodeScript *script(QString path);
+    JZNodeScript *functionScript(QString function);
+    int functionAddr(QString function);
+
     QList<JZNodeScript*> scriptList();
     JZNodeScript *objectScript(QString className);    
     QList<JZEventHandle*> eventList() const;
@@ -171,8 +187,7 @@ protected:
 
     QStringList m_opNames;
     QMap<QString,JZNodeScriptPtr> m_scripts; 
-    QMap<QString,JZParamDefine> m_variables;
-    QList<FunctionDefine> m_functionDefines;
+    QMap<QString,JZParamDefine> m_variables;        
     QList<JZNodeObjectDefine> m_objectDefines;        
     QString m_error;
 };

@@ -51,6 +51,7 @@ enum
     Node_exit,
     Node_event,
     Node_singleEvent,
+    Node_qtEvent,
     Node_paramChangedEvent,
     Node_timeEvent,
 };
@@ -132,6 +133,8 @@ public:
     JZNodeGemo paramInGemo(int index) const;
     int paramInCount() const;
     QVector<int> paramInList() const;
+    void setParamInValue(int index, const QVariant &value);
+
     int addParamOut(QString name,int extFlag = 0);
     int paramOut(int index) const;
     JZNodeGemo paramOutGemo(int index) const;
@@ -225,7 +228,7 @@ class JZNodeReturn : public JZNode
 public:
     JZNodeReturn();
 
-    void setFunction(FunctionDefine def);
+    void setFunction(const FunctionDefine *def);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
 protected:     
@@ -277,6 +280,8 @@ public:
     JZNodeFor();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    void setRange(int start, int end);
+    void setRange(int start, int end, int step);
 
 protected:
 };
@@ -311,10 +316,11 @@ class JZNodeIf : public JZNode
 public:
     JZNodeIf();
 
-    void addCondPin();
+    void addCondPin();    
     void addElsePin();
 
 protected:
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 };
 
 //JZNodeSwitch

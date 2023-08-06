@@ -165,6 +165,12 @@ QTreeWidgetItem * JZNodePanel::createClassEvent(QString className)
 
 void JZNodePanel::initData()
 {
+    if (m_classFile) {
+        QTreeWidgetItem *itemClass = createFolder("类");        
+        m_tree->addTopLevelItem(itemClass);
+        initClass(itemClass);
+    }
+
     QTreeWidgetItem *itemDataFolder = createFolder("数据");
     m_tree->addTopLevelItem(itemDataFolder);
 
@@ -175,16 +181,6 @@ void JZNodePanel::initData()
     QTreeWidgetItem *itemParam = createFolder("全局变量");
     itemDataFolder->addChild(itemParam);
     initProjectParam(itemParam);
-
-    if (m_classFile) {
-        QTreeWidgetItem *itemClassParam = createFolder("成员变量");        
-        itemDataFolder->addChild(itemClassParam);
-
-        JZNodeThis node_this;
-        itemClassParam->addChild(createNode(&node_this));
-
-        initClassParam(itemClassParam);
-    }
 
     QTreeWidgetItem *itemLocalParam = createFolder("局部变量");
     itemDataFolder->addChild(itemLocalParam);
@@ -288,50 +284,61 @@ void JZNodePanel::initClass()
 
     QMap<QString, QTreeWidgetItem*> itemMap;
 
-    auto funcs = JZNodeFunctionManager::instance()->functionList();
-    for (int i = 0; i < funcs.size(); i++)
+    auto class_list = JZNodeObjectManager::instance()->getClassList();
+    for (int i = 0; i < class_list.size(); i++)
     {
-        QString function = funcs[i]->name;
-        int index = function.indexOf(".");
-        if (index == -1)
-            continue;
+        auto meta = JZNodeObjectManager::instance()->meta(class_list[i]);
         
-        QString class_name, short_name;
-        class_name = function.left(index);
-        short_name = function.mid(index + 1);
+        QString class_name = meta->className;
         
-        QTreeWidgetItem *item_class;
-        if (!itemMap.contains(class_name))
+        QTreeWidgetItem *item_class;        
+        item_class = new QTreeWidgetItem();
+        item_class->setText(0, class_name);
+        itemMap[class_name] = item_class;
+        item_class_root->addChild(item_class);
+        
+        for (int i = 0; i < meta->functions.size(); i++)
         {
-            item_class = new QTreeWidgetItem();
-            item_class->setText(0, class_name);
-            itemMap[class_name] = item_class;
-            item_class_root->addChild(item_class);
-        }
-        else
-        {
-            item_class = itemMap[class_name];
-        }
+            auto func = &meta->functions[i];
+            JZNodeFunction node_func;
+            node_func.setFunction(func);
 
-        JZNodeFunction node_func;
-        node_func.setName(function);
-        node_func.setFunction(funcs[i]);
-
-        auto function_node = createNode(&node_func);
-        function_node->setText(0, short_name);
-        item_class->addChild(function_node);
+            auto function_node = createNode(&node_func);
+            function_node->setText(0, func->name);
+            item_class->addChild(function_node);
+        }        
     }
 }
 
-void JZNodePanel::initClassParam(QTreeWidgetItem *root)
-{    
+void JZNodePanel::initClass(QTreeWidgetItem *root)
+{   
     auto def = m_classFile->objectDefine();
+    QTreeWidgetItem *itemClassEvent = createFolder("事件");
+    root->addChild(itemClassEvent);
+
+    auto event_list = def.eventList();
+    for (int i = 0; i < def.eventList().size(); i++)
+    {
+        auto event = def.event(event_list[i]);
+
+        JZNodeQtEvent node;
+        node.setEvent(def.className, event);
+        QTreeWidgetItem *item = createNode(&node);
+        itemClassEvent->addChild(item);
+    }
+
+    QTreeWidgetItem *itemClassParam = createFolder("成员变量");
+    root->addChild(itemClassParam);
+
+    JZNodeThis node_this;
+    itemClassParam->addChild(createNode(&node_this));
+    
     auto list = def.paramList();
     for(int i = 0; i < list.size(); i++)
     {
         auto info = &def.params[list[i]];
         QTreeWidgetItem *item = createParam(list[i],info->dataType,"this");
-        root->addChild(item);
+        itemClassParam->addChild(item);
     }
 }
 
@@ -451,7 +458,7 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     JZNodeReturn node_return;
     if (m_file->itemType() == ProjectItem_scriptFunction) 
     {
-        node_return.setFunction(m_file->function());
+        node_return.setFunction(&m_file->function());
     }
 
     item_process->addChild(createNode(&node_seq));

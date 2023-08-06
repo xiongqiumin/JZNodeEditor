@@ -279,6 +279,14 @@ QVector<int> JZNode::paramInList() const
     return propInList(Prop_param);
 }
 
+void JZNode::setParamInValue(int index, const QVariant &value)
+{
+    auto list = paramInList();
+    Q_ASSERT(index < list.size());
+
+    setPropValue(list[index], value);
+}
+
 int JZNode::paramOut(int index) const
 {
     auto list = propOutList(Prop_param);
@@ -602,16 +610,16 @@ JZNodeReturn::JZNodeReturn()
     addFlowIn();
 }
 
-void JZNodeReturn::setFunction(FunctionDefine def)
+void JZNodeReturn::setFunction(const FunctionDefine *def)
 {
     auto inList = paramInList();
     for (int i = 0; i < inList.size(); i++)
         removeProp(inList[i]);
 
-    for (int i = 0; i < def.paramOut.size(); i++)
+    for (int i = 0; i < def->paramOut.size(); i++)
     {
-        int in = addParamIn(def.paramOut[i].name);
-        setPinType(in, { def.paramOut[i].dataType });
+        int in = addParamIn(def->paramOut[i].name);
+        setPinType(in, { def->paramOut[i].dataType });
     }
 }
 
@@ -718,6 +726,7 @@ JZNodeFor::JZNodeFor()
     addFlowOut("complete",Prop_dispName);
 
     int id_start = addParamIn("First index",Prop_editValue | Prop_dispName | Prop_dispValue);
+    int id_step = addParamIn("Step", Prop_editValue | Prop_dispName | Prop_dispValue);
     int id_end = addParamIn("Last index",Prop_editValue | Prop_dispName | Prop_dispValue);
     int id_index = addParamOut("index");
     setPinTypeInt(id_start);
@@ -731,11 +740,13 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
         return false;
 
     int indexStart = paramIn(0);
-    int indexEnd = paramIn(1);
+    int indexStep = paramIn(1);
+    int indexEnd = paramIn(2);
     int indexOut = paramOut(0);
 
     int id_start = c->paramId(m_id,indexStart);
     int id_end = c->paramId(m_id,indexEnd);
+    int id_step = c->paramId(m_id, indexStep);
     int id_index = c->paramId(m_id,indexOut);
     c->addSetVariable(irId(id_index),irId(id_start));
 
@@ -746,7 +757,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_true));    
     c->addJumpSubNode(subFlowOut(0));
 
-    int continuePc = c->addExpr(irId(id_index),irId(id_index),irLiteral(1),OP_add);
+    int continuePc = c->addExpr(irId(id_index),irId(id_index), irId(id_step),OP_add);
     JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
     jmp->jmpPc = startPc;
     c->addStatement(JZNodeIRPtr(jmp));
@@ -756,6 +767,21 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     c->setBreakContinue({breakPc},{continuePc});    
 
     return true;
+}
+
+void JZNodeFor::setRange(int start, int end)
+{
+    int step = 1;
+    setPropValue(paramIn(0), start);
+    setPropValue(paramIn(1), step);
+    setPropValue(paramIn(2), end);
+}
+
+void JZNodeFor::setRange(int start, int end, int step)
+{
+    setPropValue(paramIn(0), start);
+    setPropValue(paramIn(1), step);
+    setPropValue(paramIn(2), end);
 }
 
 //JZNodeForEach
@@ -880,6 +906,65 @@ bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
 JZNodeIf::JZNodeIf()
 {
     m_name = "if";
+    addFlowIn();
+    addFlowOut();
+    addCondPin();    
+}
+
+void JZNodeIf::addCondPin()
+{
+    int in = addParamIn("cond");
+    setPinTypeBool(in);
+
+    addSubFlowOut("cond");
+}
+
+void JZNodeIf::addElsePin()
+{
+    addSubFlowOut("else");
+}
+
+bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error) 
+{
+    QList<int> breakPc,continuePc;
+    bool isElse = subFlowCount() > paramInCount();
+    
+    JZNodeIRJmp *last_jmp = nullptr;
+    QVector<int> inList = paramInList();
+    for (int i = 0; i < inList.size(); i++)
+    {
+        int nextPc = c->currentPc() + 1;
+        if (!c->addFlowInput(m_id, inList[i], error))
+            return false;
+        if (last_jmp)
+            last_jmp->jmpPc = nextPc;
+
+        int cond = c->paramId(m_id, inList[i]);
+        c->addCompare(irId(cond), irLiteral(false), OP_eq);
+
+        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_je);
+        c->addStatement(JZNodeIRPtr(jmp));
+        last_jmp = jmp;
+
+        c->addJumpSubNode(subFlowOut(0));        
+    }    
+    if (isElse)
+    {
+        int else_pc = c->addJumpSubNode(subFlowOut(0));
+        last_jmp->jmpPc = else_pc;
+    }    
+    int ret = c->addJumpNode(0);    
+    if(!isElse)
+        last_jmp->jmpPc = ret;
+
+    int sub_flow_count = subFlowCount();
+    for (int i = 0; i < sub_flow_count; i++)
+    {
+        continuePc << ret;
+        breakPc << 1;
+    }
+    c->setBreakContinue(breakPc, continuePc);
+    return true;
 }
 
 //JZNodeSwitch

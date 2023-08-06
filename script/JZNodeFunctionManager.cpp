@@ -16,12 +16,11 @@ JZNodeFunctionManager::JZNodeFunctionManager()
 
 JZNodeFunctionManager::~JZNodeFunctionManager()
 {
-    qDeleteAll(m_cfuncs);
-    qDeleteAll(m_csingles);
 }
 
 void JZNodeFunctionManager::init()
 {
+    registCFunction("rand", false, jzbind::createFuncion(rand));
     registCFunction("exp",false,jzbind::createFuncion((double (*)(double))(exp)));
     registCFunction("log",false,jzbind::createFuncion((double (*)(double))(log)));
     registCFunction("log10",false,jzbind::createFuncion((double (*)(double))(log10)));
@@ -50,7 +49,18 @@ const FunctionDefine *JZNodeFunctionManager::function(QString funcName)
     if (it != m_funcMap.end())
         return &it.value();
     else
-        return nullptr;    
+    {
+        int index = funcName.indexOf(".");
+        if (index >= 0)
+        {
+            QString base_name = funcName.mid(0, index);
+            QString function_name = funcName.mid(index + 1);
+            auto meta = JZNodeObjectManager::instance()->meta(base_name);
+            if (meta)
+                return meta->function(function_name);
+        }        
+        return nullptr;
+    }
 }
 
 void JZNodeFunctionManager::loadLibrary(QString filename)
@@ -74,10 +84,8 @@ QList<const FunctionDefine*> JZNodeFunctionManager::functionList()
     return list;
 }
 
-void JZNodeFunctionManager::registCFunction(QString name,bool isFlow,CFunction *func)
+void JZNodeFunctionManager::registCFunction(QString name,bool isFlow, QSharedPointer<CFunction> func)
 {
-    m_cfuncs.push_back(func);
-
     FunctionDefine define;
     define.name = name;
     define.isCFunction = true;
@@ -111,11 +119,6 @@ void JZNodeFunctionManager::unregistFunction(QString name)
     if(it == m_funcMap.end())
         return;
 
-    if(it->isCFunction)
-    {
-        m_cfuncs.removeAll(it->cfunc);
-        delete it->cfunc;
-    }
     m_funcMap.erase(it);
 }
 
@@ -136,14 +139,4 @@ void JZNodeFunctionManager::registFunction(const FunctionDefine &define)
 void JZNodeFunctionManager::replaceFunction(const FunctionDefine &define)
 {
     m_funcMap[define.name] = define;
-}
-
-void JZNodeFunctionManager::registCSingle(CSingle *single)
-{
-    m_csingles.push_back(single);
-}
-
-void JZNodeFunctionManager::unregistCSingle(CSingle *single)
-{
-    m_csingles.removeAll(single);
 }

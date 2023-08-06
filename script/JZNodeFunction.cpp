@@ -46,6 +46,7 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
 
 void JZNodeFunction::setFunction(const FunctionDefine *define)
 {
+    Q_ASSERT(define);
     if(define->isFlowFunction)
     {
         addFlowIn();
@@ -67,8 +68,8 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
         pin.setDataType({define->paramOut[i].dataType});
         addProp(pin);
     }
-    m_functionName = define->name;
-    setName(define->name);
+    m_functionName = define->fullName();    
+    setName(m_functionName);
 }
 
 QString JZNodeFunction::function() const
@@ -104,8 +105,10 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         c->addSetVariable(irId(id),irId(Reg_Call+i));
     }
 
-    if(isFlowNode())
+    if (isFlowNode())
+    {
+        c->addFlowOutput(m_id);
         c->addJumpNode(flowOut());
-
+    }
     return true;
 }

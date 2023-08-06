@@ -14,7 +14,6 @@
 #include "JZNodeBind.h"
 #include "JZNodeFactory.h"
 #include "JZNodeObject.h"
-#include "JZNodeBind.h"
 #include "JZParamFile.h"
 
 class ScriptTest : public QObject

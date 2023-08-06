@@ -43,6 +43,7 @@ public:
     virtual void open(JZProjectItem *item) = 0;
     virtual void close() = 0;
     virtual void save() = 0;
+    virtual void active();
 
     virtual bool isModified();    
     virtual void undo();

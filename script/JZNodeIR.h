@@ -11,7 +11,7 @@ enum
 {
     OP_none,
     OP_nodeId,
-    OP_nop,        
+    OP_nop,            
     OP_alloc,
     OP_set,    
     OP_get,    

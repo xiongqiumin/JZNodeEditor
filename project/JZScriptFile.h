@@ -27,7 +27,7 @@ public:
     void setNodePos(int id,QPointF pos);
     QPointF getNodePos(int id);
 
-    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error);
+    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString *error = nullptr);
     int addConnect(JZNodeGemo from, JZNodeGemo to);
     bool hasConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);
@@ -86,12 +86,15 @@ public:
 
     QString className() const;
     int classType() const;
+    JZNodeObjectDefine objectDefine();
 
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
     void removeMemberVariable(QString name);
-    bool addMemberFunction(FunctionDefine func);
+    JZParamDefine *memberVariableInfo(QString name);
+
+    JZScriptFile *addMemberFunction(FunctionDefine func);    
     void removeMemberFunction(QString func);
-    JZNodeObjectDefine objectDefine();
+    JZScriptFile *getMemberFunction(QString func);    
 
 protected:   
     JZParamFile *getParamFile();

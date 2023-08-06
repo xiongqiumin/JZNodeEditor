@@ -72,6 +72,7 @@ protected slots:
     void onFileOpened(QString filepath);    
     void onFileClosed(QString filepath);
     void onEditorClose(int index);
+    void onEditorActivite(int index);
     void onNodeClicked(QString file, int nodeId);
 
     void onRuntimeLog(QString log);

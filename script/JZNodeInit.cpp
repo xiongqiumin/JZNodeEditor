@@ -8,7 +8,7 @@
 void JZNodeInit()
 {
     JZNodeType::init();
-    JZNodeFactory::instance()->init();
+    JZNodeFactory::instance()->init();    
     JZNodeFunctionManager::instance()->init();   
     JZNodeObjectManager::instance()->init();
 

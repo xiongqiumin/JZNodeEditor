@@ -44,6 +44,7 @@ void JZNodeFactory::init()
     registNode(Node_setParam,createFunc<JZNodeSetParam>);
     registNode(Node_setParamData,createFunc<JZNodeSetParamDataFlow>);
     
+    registNode(Node_functionStart, createFunc<JZNodeFunctionStart>);
     registNode(Node_function,createFunc<JZNodeFunction>);
     registNode(Node_while,createFunc<JZNodeWhile>);
     registNode(Node_for,createFunc<JZNodeFor>);
@@ -78,6 +79,7 @@ void JZNodeFactory::init()
     registNode(Node_event,createFunc<JZNodeEvent>);
     registNode(Node_paramChangedEvent,createFunc<JZNodeParamChangedEvent>);
     registNode(Node_singleEvent,createFunc<JZNodeSingleEvent>);
+    registNode(Node_qtEvent, createFunc<JZNodeQtEvent>);
 }
 
 //parseNode

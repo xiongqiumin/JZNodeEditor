@@ -15,6 +15,7 @@
 #include "JZUiEditor.h"
 #include "JZParamEditor.h"
 #include "JZNewProjectDialog.h"
+#include "JZDesignerEditor.h"
 
 //Setting
 Setting::Setting()
@@ -261,7 +262,7 @@ void MainWindow::initUi()
     m_editorStack = new QTabWidget(); 
     m_editorStack->setTabsClosable(true);
     connect(m_editorStack, &QTabWidget::tabCloseRequested, this, &MainWindow::onEditorClose);
-
+    connect(m_editorStack, &QTabWidget::currentChanged, this, &MainWindow::onEditorActivite);
 
     QSplitter *splitterLeft = new QSplitter(Qt::Vertical);
     splitterLeft->addWidget(m_editorStack);    
@@ -294,6 +295,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+    JZDesigner::instance()->closeEditor();
     QMainWindow::closeEvent(event);
 }
 
@@ -553,9 +555,7 @@ void MainWindow::onActionStepOut()
 }
 
 void MainWindow::onModifyChanged(bool flag)
-{
-    auto s = sender();
-    qDebug() << sender();
+{        
     auto editor = qobject_cast<JZEditor*>(sender());
     int index = m_editorStack->indexOf(editor);
     QString title = editor->item()->itemPath();
@@ -607,6 +607,7 @@ void MainWindow::switchEditor(JZEditor *editor)
 
         m_editorStack->setCurrentWidget(m_editor);
         m_editor->addMenuBar(this->menuBar());
+        m_editor->active();
     }
     else
         m_editorStack->setCurrentIndex(0);
@@ -624,11 +625,11 @@ bool MainWindow::openEditor(QString filepath)
 
         connect(editor, &JZEditor::redoAvailable, this, &MainWindow::onRedoAvailable);
         connect(editor, &JZEditor::undoAvailable, this, &MainWindow::onUndoAvailable);
-        connect(editor, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);
-        m_editorStack->addTab(editor, filepath);
+        connect(editor, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);        
         editor->setItem(item);
         editor->open(item);
         m_editors[file] = editor;
+        m_editorStack->addTab(editor, filepath);        
     }
     switchEditor(m_editors[file]);
     return true;
@@ -678,6 +679,15 @@ void MainWindow::onEditorClose(int index)
 {
     JZEditor *editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
     closeEditor(editor);
+}
+
+void MainWindow::onEditorActivite(int index)
+{
+    if (index == -1)
+        return;
+
+    JZEditor *editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
+    editor->active();
 }
 
 void MainWindow::onNodeClicked(QString file, int nodeId)
@@ -816,6 +826,7 @@ void MainWindow::saveAll()
 
         it++;
     }
+    m_project.saveAllItem();
     m_project.save();
 }
 

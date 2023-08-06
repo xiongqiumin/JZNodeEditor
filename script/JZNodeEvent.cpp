@@ -66,18 +66,16 @@ QList<JZParamDefine> JZNodeSingleEvent::params()
 {
     auto def = JZNodeObjectManager::instance()->meta(m_className);
     auto sig_func = def->single(m_single);
-    QList<JZParamDefine> result = sig_func->paramOut;
-
-    JZParamDefine sender;
-    sender.name = "sender";
-    sender.dataType = def->id;
-    result.insert(0, sender);
-    return result;
+    return sig_func->paramOut;    
 }
 
 void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
 {
+    Q_ASSERT(single);
+
     auto def = JZNodeObjectManager::instance()->meta(className);
+    Q_ASSERT(def);
+
     m_single = single->name;
     m_className = className;
 
@@ -85,12 +83,6 @@ void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
     setName(function);
     setPropName(paramIn(0),className);
    
-    JZNodePin sender;
-    sender.setName("sender");
-    sender.setFlag(Prop_param | Prop_out);
-    sender.setDataType({ def->id });
-    addProp(sender);
-
     for(int i = 0; i < single->paramOut.size(); i++)
     {
         JZNodePin pin;
@@ -151,6 +143,73 @@ void JZNodeSingleEvent::loadFromStream(QDataStream &s)
     JZNodeEvent::loadFromStream(s);
     s >> m_className;
     s >> m_single;
+}
+
+//JZNodeQtEvent
+JZNodeQtEvent::JZNodeQtEvent()
+{
+    m_type = Node_qtEvent;    
+}
+
+JZNodeQtEvent::~JZNodeQtEvent()
+{
+
+}
+
+bool JZNodeQtEvent::compiler(JZNodeCompiler *c, QString &error)
+{    
+    auto list = paramOutList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        int id = c->paramId(m_id, list[i]);
+        c->addSetVariable(irId(id), irId(Reg_Call + i + 1));
+    }
+    c->addFlowOutput(m_id);
+    c->addJumpNode(flowOut());
+    return true;
+
+}
+void JZNodeQtEvent::saveToStream(QDataStream &s) const
+{
+    JZNodeEvent::saveToStream(s);
+    s << m_className;
+    s << m_event;
+}
+
+void JZNodeQtEvent::loadFromStream(QDataStream &s)
+{
+    JZNodeEvent::loadFromStream(s);
+    s >> m_className;
+    s >> m_event;
+}
+
+QList<JZParamDefine> JZNodeQtEvent::params()
+{
+    auto def = JZNodeObjectManager::instance()->meta(m_className);
+    return def->event(m_event)->paramOut;
+}
+
+void JZNodeQtEvent::setEvent(QString className, const EventDefine *func)
+{
+    auto def = JZNodeObjectManager::instance()->meta(className);
+    m_event = func->name;
+    m_className = className;
+    m_eventType = func->eventType;
+    setName(func->name);
+
+    for (int i = 1; i < func->paramOut.size(); i++)
+    {
+        JZNodePin pin;
+        pin.setName(func->paramOut[i].name);
+        pin.setFlag(Prop_param | Prop_out);
+        pin.setDataType({ func->paramOut[i].dataType });
+        addProp(pin);
+    }
+}
+
+QString JZNodeQtEvent::event()
+{
+    return m_event;
 }
 
 //JZNodeParamChangedEvent

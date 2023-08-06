@@ -100,6 +100,8 @@ class JZNodeAnd: public JZNodeOperator
 {
 public:
     JZNodeAnd();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
 };
 
 //JZNodeOr
@@ -107,6 +109,8 @@ class JZNodeOr: public JZNodeOperator
 {
 public:
     JZNodeOr();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
 };
 
 //JZNodeBitAnd
@@ -141,6 +145,7 @@ public:
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    bool isNumber(QString text);
 
     QString m_expression;
     QStringList m_exprList;

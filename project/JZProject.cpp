@@ -122,7 +122,7 @@ void JZProject::initUi()
 
     set_param->setVariable("mainwindow");
     create->setClassName("mainwindow");
-    func_show->setFunction(func_inst->function("widget.show"));
+    func_show->setFunction(func_inst->function("Widget.show"));
 
     JZNode *start = main_script->getNode(0);   
     main_script->addConnect(start->flowOutGemo(),create->flowInGemo());
@@ -440,7 +440,7 @@ JZScriptClassFile *JZProject::addClass(QString path,QString name,QString super)
 
 JZScriptClassFile *JZProject::addUiClass(QString path, QString name)
 {
-    JZScriptClassFile *file = addClass(path, name,"JZMainWindow");
+    JZScriptClassFile *file = addClass(path, name,"Widget");
     if(!file)
         return nullptr;
 

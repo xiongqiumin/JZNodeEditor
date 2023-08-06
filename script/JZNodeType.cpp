@@ -1,7 +1,8 @@
-﻿#include "JZNodeType.h"
-#include <QVariant>
-#include "JZNodeObject.h"
+﻿#include <QVariant>
 #include <QMap>
+#include "JZNodeType.h"
+#include "JZNodeObject.h"
+#include "JZNodeIR.h"
 
 static QMap<QString,int> typeMap;
 
@@ -166,6 +167,30 @@ bool JZNodeType::canConvert(QList<int> type1,QList<int> type2)
 QString JZNodeType::toString(const QVariant &v)
 {
     return v.toString();
+}
+
+QString JZNodeType::opName(int op)
+{
+    QStringList opNames = QStringList{ "+","-","*","/","%","==","!=","<=",">=","<",">","&&","||","|","&","^" };
+    Q_ASSERT(op >= OP_add && op < OP_bitxor);
+    return opNames[op - OP_add];
+}
+
+
+QVariant JZNodeType::matchValue(const QVariant &v, QList<int> type)
+{
+    int v_type = variantType(v);
+    if (type.contains(v_type))
+        return v;
+
+    if (type.contains(Type_int))
+        return v.toInt();
+    if (type.contains(Type_double))
+        return v.toDouble();
+
+    QVariant ret = v;
+    ret.convert(type[0]);
+    return ret;
 }
 
 //JZParamDefine

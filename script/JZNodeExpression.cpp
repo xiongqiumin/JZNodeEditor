@@ -2,6 +2,7 @@
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
 #include "JZExpression.h"
+#include <QRegularExpression>
 
 JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {
@@ -212,6 +213,34 @@ JZNodeAnd::JZNodeAnd()
     setPinTypeBool(paramOut(0));
 }
 
+bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
+{
+    auto input_list = paramInList();
+
+    QVector<JZNodeIRJmp*> jmpList;
+    int out = c->paramId(m_id, paramOut(0));
+    c->addSetVariable(irId(out), irLiteral(false));
+    for (int i = 0; i < input_list.size(); i++)
+    {
+        if (!c->addFlowInput(m_id, input_list[i], error))
+            return false;
+
+        int in_id = c->paramId(m_id, input_list[i]);
+        c->addCompare(irId(in_id), irLiteral(false), OP_eq);
+        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_je);
+        c->addStatement(JZNodeIRPtr(jmp));
+        jmpList.push_back(jmp);
+
+        if(i == input_list.size() - 1)
+            c->addSetVariable(irId(out), irLiteral(true));
+    }
+    int ret = c->addNop();
+    for (int i = 0; i < jmpList.size(); i++)
+        jmpList[i]->jmpPc = ret;
+
+    return true;
+}
+
 //JZNodeOr
 JZNodeOr::JZNodeOr()
     :JZNodeOperator(Node_or,OP_or)
@@ -222,6 +251,34 @@ JZNodeOr::JZNodeOr()
     setPinTypeBool(paramOut(0));
 }
 
+bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
+{
+    auto input_list = paramInList();
+
+    QVector<JZNodeIRJmp*> jmpList;
+    int out = c->paramId(m_id, paramOut(0));
+    c->addSetVariable(irId(out), irLiteral(true));
+    for (int i = 0; i < input_list.size(); i++)
+    {
+        if (!c->addFlowInput(m_id, input_list[i], error))
+            return false;
+
+        int in_id = c->paramId(m_id, input_list[i]);
+        c->addCompare(irId(in_id), irLiteral(true), OP_eq);
+        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_je);
+        c->addStatement(JZNodeIRPtr(jmp));
+        jmpList.push_back(jmp);
+
+        if (i == input_list.size() - 1)
+            c->addSetVariable(irId(out), irLiteral(false));
+    }
+    int ret = c->addNop();
+    for (int i = 0; i < jmpList.size(); i++)
+        jmpList[i]->jmpPc = ret;
+
+    return true;
+
+}
 //JZNodeBitAnd
 JZNodeBitAnd::JZNodeBitAnd()
     :JZNodeOperator(Node_bitand,OP_bitand)
@@ -281,13 +338,14 @@ bool JZNodeExpression::setExpr(QString expr,QString &error)
     m_exprList = parser.opList();
     for(int i = 0; i < parser.inList.size(); i++)
     {     
-        addParamIn(parser.inList[i]);
+        int id = addParamIn(parser.inList[i]);
+        setPinTypeNumber(id);
     }    
     for(int i = 0; i < parser.outList.size(); i++)
     {
-        addParamOut(parser.outList[i]);
+        int id = addParamOut(parser.outList[i]);
+        setPinTypeNumber(id);
     }
-
     return true;
 }
 
@@ -296,26 +354,37 @@ QString JZNodeExpression::expr()
     return m_expression;
 }
 
+bool JZNodeExpression::isNumber(QString text)
+{
+    QRegularExpression reg("^[0-9]");
+    int index = text.indexOf(reg);
+    return index == 0;
+}
+
 bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
 {            
     QMap<int,int> reg_map;    
-    auto toIr = [this,c,&reg_map](QString name)->JZNodeIRParam{
-        JZNodeIRParam parma;        
-        int id = -1;
-        if(name.startsWith("#Reg"))
+    auto toIr = [this, c, &reg_map](QString name)->JZNodeIRParam {
+        JZNodeIRParam parma;
+        if (name.startsWith("#Reg"))
         {
             int reg_index = name.mid(4).toInt();
-            if(!reg_map.contains(reg_index))
+            if (!reg_map.contains(reg_index))
                 reg_map[reg_index] = c->allocStack();
-            id = reg_map[reg_index];                
+            int id = reg_map[reg_index];
+            return irId(id);
         }
-        else
+        else if(isNumber(name))
+        {
+            return irLiteral(name.toInt());
+        }
+        else 
         {
             auto pin = prop(name);
             Q_ASSERT(pin);
-            id = c->paramId(m_id,pin->id());
-        }
-        return irId(id);
+            int id = c->paramId(m_id,pin->id());
+            return irId(id);
+        }        
     };
 
     if(!c->addDataInput(m_id,error))

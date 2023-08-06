@@ -1,5 +1,5 @@
-﻿#ifndef JZNODE_DATA_SOURCE_H_
-#define JZNODE_DATA_SOURCE_H_
+﻿#ifndef JZNODE_VALUE_H_
+#define JZNODE_VALUE_H_
 
 #include "JZNode.h"
 

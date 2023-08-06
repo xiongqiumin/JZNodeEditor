@@ -86,8 +86,8 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
         return false;
     }
 
-    int type = JZNodeObjectManager::instance()->getClassId(className());
-    if (type == Type_none) 
+    auto meta = JZNodeObjectManager::instance()->meta(className());    
+    if (meta->id == Type_none)
     {
         error = "没有此类型:" + className();
         return false;
@@ -100,7 +100,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     JZNodeIRParam irIn = irId(in_id);
     JZNodeIRParam irOut = irId(out_id);
 
-    c->addCall(irLiteral("createObject"),{irIn},{irOut});
+    c->addCall(irLiteral("createObject"), { irIn }, { irOut });    
     c->addFlowOutput(m_id);
     c->addJumpNode(flowOut());
     return true;

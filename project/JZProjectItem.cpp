@@ -163,6 +163,7 @@ QList<JZProjectItem *> JZProjectItem::itemList(int type)
     return result;
 }
 
+
 //JZProjectItemFolder
 JZProjectItemFolder::JZProjectItemFolder()
     :JZProjectItem(ProjectItem_folder)
@@ -200,7 +201,7 @@ JZProjectItem *JZProjectItemFactory::load(const QByteArray &buffer)
         item = new JZScriptLibraryFile();
     else if(itemType == ProjectItem_param)
         item = new JZParamFile();
-    else if(itemType >= ProjectItem_scriptParamBinding && itemType <= ProjectItem_scriptFlow)
+    else if(itemType >= ProjectItem_scriptParamBinding && itemType <= ProjectItem_scriptFunction)
         item = new JZScriptFile(itemType);
     else
     {

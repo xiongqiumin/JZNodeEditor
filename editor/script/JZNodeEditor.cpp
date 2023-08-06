@@ -6,8 +6,8 @@
 
 JZNodeEditor::JZNodeEditor()
 {
-    init();       
-    m_type = Editor_script;    
+    m_type = Editor_script;
+    init();           
 }
 
 JZNodeEditor::~JZNodeEditor()

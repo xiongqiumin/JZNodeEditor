@@ -46,6 +46,11 @@ void JZEditor::removeMenuBar(QMenuBar *menubar)
 
 }
 
+void JZEditor::active()
+{
+
+}
+
 void JZEditor::undo()
 {
 

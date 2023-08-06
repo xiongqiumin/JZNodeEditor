@@ -73,16 +73,6 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
         m_program->m_objectDefines << define;        
     }
 
-    auto function_list = root->itemList(ProjectItem_scriptFunction);
-    for(int i = 0; i < function_list.size(); i++)
-    {
-        JZScriptFile *script = dynamic_cast<JZScriptFile*>(function_list[i]);
-        if(!buildScriptFile(script))
-            return false;
-
-        m_program->m_functionDefines << script->function();
-    }
-
     auto bind_list = root->itemList(ProjectItem_scriptParamBinding);
     for(int i = 0; i < bind_list.size(); i++)
     {

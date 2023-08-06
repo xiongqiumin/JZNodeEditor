@@ -50,7 +50,7 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="QtSettings">
     <QtInstall>Qt5.15.2_64</QtInstall>
-    <QtModules>core;gui;widgets;network;testlib</QtModules>
+    <QtModules>core;gui;widgets;network;testlib;designer;uitools</QtModules>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="QtSettings">
     <QtInstall>Qt5.6.2</QtInstall>
@@ -72,7 +72,7 @@
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>C:\Qt5.15\5.15.2\msvc2015_64\lib\qtmaind.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Qt5.15\5.15.2\msvc2015_64\lib\qtmaind.lib;C:\Qt5.15\5.15.2\msvc2015_64\lib\Qt5DesignerComponentsd.lib;C:\Qt5.15\5.15.2\msvc2015_64\lib\Qt5Designerd.lib;C:\Qt5.15\5.15.2\msvc2015_64\lib\Qt5UiToolsd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -105,13 +105,20 @@
     <ClCompile Include="editor\script\JZNodeTypeDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeView.cpp" />
     <ClCompile Include="editor\script\JZParamEditor.cpp" />
+    <ClCompile Include="editor\ui\JZDesignerEditor.cpp" />
+    <ClCompile Include="editor\ui\JZDesignerFormWindow.cpp" />
+    <ClCompile Include="editor\ui\JZDesinger.cpp" />
+    <ClCompile Include="editor\ui\formresizer.cpp" />
+    <ClCompile Include="editor\ui\JZNodeIntegration.cpp" />
     <ClCompile Include="editor\ui\JZUiEditor.cpp" />
+    <ClCompile Include="editor\ui\sizehandlerect.cpp" />
     <ClCompile Include="LogWidget.cpp" />
     <ClCompile Include="project\JZParamFile.cpp" />
     <ClCompile Include="project\JZProject.cpp" />
     <ClCompile Include="project\JZProjectItem.cpp" />
     <ClCompile Include="project\JZScriptFile.cpp" />
     <ClCompile Include="project\JZUIFile.cpp" />
+    <ClCompile Include="sample\Russian.cpp" />
     <ClCompile Include="script\JZEvent.cpp" />
     <ClCompile Include="script\JZExpression.cpp" />
     <ClCompile Include="script\JZNode.cpp" />
@@ -138,6 +145,7 @@
     <ClCompile Include="script\JZNodeType.cpp" />
     <ClCompile Include="script\JZNodeValue.cpp" />
     <ClCompile Include="script\JZNodeVM.cpp" />
+    <ClCompile Include="script\JZNodeUiLoader.cpp" />
     <ClCompile Include="tests\test_script.cpp" />
     <ClCompile Include="UiCommon.cpp" />
     <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.cpp">
@@ -168,6 +176,14 @@
   <ItemGroup>
     <ClInclude Include="3rd\jznet\JZNetDataManager.h" />
     <ClInclude Include="3rd\jznet\JZNetPack.h" />
+    <ClInclude Include="script\JZNodeWidgetWrapper.h" />
+    <QtMoc Include="editor\ui\JZDesinger.h" />
+    <QtMoc Include="editor\ui\JZDesignerEditor.h" />
+    <QtMoc Include="editor\ui\JZDesignerFormWindow.h" />
+    <QtMoc Include="editor\ui\formresizer.h" />
+    <QtMoc Include="editor\ui\sizehandlerect.h" />
+    <QtMoc Include="editor\ui\JZNodeIntegration.h" />
+    <QtMoc Include="script\JZNodeUiLoader.h" />
     <QtMoc Include="tests\test_script.h" />
     <QtMoc Include="script\JZNodeVM.h" />
     <QtMoc Include="3rd\qtpropertybrowser\qtvariantproperty.h">
@@ -213,6 +229,7 @@
     <ClInclude Include="project\JZProjectItem.h" />
     <ClInclude Include="project\JZScriptFile.h" />
     <ClInclude Include="project\JZUiFile.h" />
+    <ClInclude Include="sample\Russian.h" />
     <ClInclude Include="script\JZEvent.h" />
     <ClInclude Include="script\JZExpression.h" />
     <ClInclude Include="script\JZNode.h" />
@@ -233,7 +250,7 @@
     <ClInclude Include="script\JZNodePin.h" />
     <ClInclude Include="script\JZNodeProgram.h" />
     <ClInclude Include="script\JZNodeType.h" />
-    <QtMoc Include="script\JZNodeObject.h" />
+    <ClInclude Include="script\JZNodeObject.h" />
     <QtMoc Include="script\JZNodeEngine.h" />
     <QtMoc Include="script\JZNodeDebugServer.h" />
     <QtMoc Include="script\JZNodeDebugClient.h" />

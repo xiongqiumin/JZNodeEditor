@@ -49,6 +49,26 @@ protected:
     QString m_single;
 };
 
+//JZNodeQtEvent
+class JZNodeQtEvent : public JZNodeEvent
+{
+public:
+    JZNodeQtEvent();
+    virtual ~JZNodeQtEvent();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
+    virtual QList<JZParamDefine> params() override;
+
+    void setEvent(QString className, const EventDefine *func);
+    QString event();
+
+protected:
+    QString m_className;
+    QString m_event;
+};
+
 //JZNodeParamChangedEvent
 class JZNodeParamChangedEvent : public JZNodeEvent
 {

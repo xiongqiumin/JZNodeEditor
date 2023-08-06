@@ -42,8 +42,8 @@ protected:
     void initFunction();
     void initClass();
     
-    void initConstParam(QTreeWidgetItem *root);
-    void initClassParam(QTreeWidgetItem *root);
+    void initClass(QTreeWidgetItem *root);
+    void initConstParam(QTreeWidgetItem *root);    
     void initProjectParam(QTreeWidgetItem *root);
     void initScriptParam(QTreeWidgetItem *root);    
         

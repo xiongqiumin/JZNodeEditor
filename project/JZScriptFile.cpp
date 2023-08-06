@@ -39,8 +39,8 @@ const FunctionDefine &JZScriptFile::function()
 
 void JZScriptFile::setFunction(FunctionDefine def)
 {
+    m_name = def.name;
     m_function = def;
-    m_function.script = itemPath();
 }
 
 int JZScriptFile::addNode(JZNodePtr node)
@@ -62,6 +62,10 @@ void JZScriptFile::insertNode(JZNodePtr node)
 
 void JZScriptFile::removeNode(int id)
 {
+    QList<int> lines = getConnectId(id);
+    for (int i = 0; i < lines.size(); i++)
+        removeConnect(lines[i]);
+
     m_nodes.remove(id);
     m_nodesPos.remove(id);
 }
@@ -108,30 +112,37 @@ bool JZScriptFile::hasConnect(JZNodeGemo from, JZNodeGemo to)
     return false;
 }
 
-bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
-{    
+bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString *perror)
+{        
+    QString tmp;
+    if (!perror)
+        perror = &tmp;
+
     JZNode *node_from = getNode(from.nodeId);
     JZNode *node_to = getNode(to.nodeId);
-    if(node_from == node_to)
+    if (node_from == node_to)
+    {
+        *perror = "输入输出不能是同一节点";
         return false;
-
+    }
+    
     JZNodePin *pin_from = getPin(from);
     JZNodePin *pin_to = getPin(to);
     if(!(pin_from->isOutput() && pin_to->isInput())){
-        error = "只能连接输入节点";
+        *perror = "只能连接输入节点";
         return false;
     }
     if(hasConnect(from,to))
     {
-        error = "连接已存在";
+        *perror = "连接已存在";
         return false;
     }
     if((pin_from->isFlow() || pin_from->isSubFlow()) != pin_to->isFlow())
     {
         if(pin_from->isParam())
-            error = "数据节点只能连接数据";
+            *perror = "数据节点只能连接数据";
         else
-            error = "流程节点只能连接流程";
+            *perror = "流程节点只能连接流程";
         return false;
     }
 
@@ -139,29 +150,41 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
     auto in_lines = getConnectId(to.nodeId, to.propId);
     if((pin_from->isFlow() || pin_from->isSubFlow()) && out_lines.size() != 0)
     {
-        error = "已有流程节点连接";
+        *perror = "已有流程节点连接";
         return false;
     }
     if(pin_from->isSubFlow() && in_lines.size() != 0)
     {
-        error = "子过程只能连接未连接的节点";
+        *perror = "子过程只能连接未连接的节点";
         return false;
     }
     if(!node_to->isFlowNode() && in_lines.size() > 0)  //输入点只能连接一个计算
     {
-        error = "已有输入,只能连接一个输入";
+        *perror = "已有输入,只能连接一个输入";
         return false;
     }
     if(pin_to->isLiteral() && node_from->type() != Node_literal)
     {
-        error = "只能连接常量";
+        *perror = "只能连接常量";
         return false;
     }
     //检测数据类型
     if(pin_from->isParam())
     {
         QList<int> form_type = node_from->propType(from.propId);
+        if (form_type.size() == 0)
+        {
+            *perror = "输出数据未设置";
+            return false;
+        }
+
         QList<int> in_type = node_to->propType(to.propId);
+        if (in_type.size() == 0) 
+        {
+            *perror = "输入数据未设置";
+            return false;
+        }
+
         bool ok = JZNodeType::canConvert(form_type,in_type);
         if(!ok)
         {
@@ -169,7 +192,7 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
             for(int i = 0; i < in_type.size(); i++)
                 inTypes << JZNodeType::typeToName(in_type[i]);
 
-            error = "数据类型不匹配,需要" + inTypes.join(",");
+            *perror = "数据类型不匹配,需要" + inTypes.join(",");
             return false;
         }
     }
@@ -179,11 +202,11 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
 
 int JZScriptFile::addConnect(JZNodeGemo from, JZNodeGemo to)
 {
+    QString error;
     auto pin_from = getPin(from);
     auto pin_to = getPin(to);
     Q_ASSERT(pin_from && pin_to && pin_from->isOutput() && pin_to->isInput());
-    Q_ASSERT(((pin_from->isFlow() || pin_from->isSubFlow()) && pin_to->isFlow()) 
-        || (pin_from->isParam() && pin_to->isParam()));
+    Q_ASSERT(canConnect(from,to,&error));
 
     JZNodeConnect connect;
     connect.id = m_nodeId++;
@@ -491,14 +514,36 @@ void JZScriptClassFile::removeMemberVariable(QString name)
     JZNodeObjectManager::instance()->replace(objectDefine());
 }
 
-bool JZScriptClassFile::addMemberFunction(FunctionDefine func)
+JZParamDefine *JZScriptClassFile::memberVariableInfo(QString name)
 {
+    return getParamFile()->getVariable(name);
+}
+
+JZScriptFile *JZScriptClassFile::addMemberFunction(FunctionDefine func)
+{
+    JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
+    func.className = m_className;
+    file->setFunction(func);
+    m_project->addItem(itemPath(), file);
     JZNodeObjectManager::instance()->replace(objectDefine());
-    return true;
+    return file;
+}
+
+JZScriptFile *JZScriptClassFile::getMemberFunction(QString func)
+{
+    auto list = itemList(ProjectItem_scriptFunction);
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (list[i]->name() == func)
+            return (JZScriptFile *)list[i];
+    }
+    return nullptr;
 }
 
 void JZScriptClassFile::removeMemberFunction(QString func)
 {
+    JZScriptFile *item = getMemberFunction(func);
+    m_project->removeItem(item->itemPath());
     JZNodeObjectManager::instance()->replace(objectDefine());
 }
 
@@ -536,7 +581,7 @@ JZNodeObjectDefine JZScriptClassFile::objectDefine()
         else if(item->itemType() == ProjectItem_ui)
         {
             auto ui_item = dynamic_cast<JZUiFile*>(item);
-            ui_item->getWidgetMembers(define.params);
+            ui_item->updateDefine(define);
         }
     }
     return define;

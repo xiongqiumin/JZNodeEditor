@@ -1224,7 +1224,7 @@ void JZNodeView::mouseMoveEvent(QMouseEvent *event)
             {
                 JZNodeGemo to(node_item->id(), prop->id());
                 QString error;
-                if(!m_file->canConnect(m_selLine->startTraget(),to,error))
+                if(!m_file->canConnect(m_selLine->startTraget(),to,&error))
                 {
                     auto rc = node_item->propRect(prop->id());
                     rc = node_item->mapToScene(rc).boundingRect();
@@ -1266,10 +1266,9 @@ void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
             auto pos = node_item->mapFromScene(mapToScene(event->pos()));
             auto prop = node_item->propAt(pos);
             if(prop)
-            {
-                QString error;
+            {                
                 JZNodeGemo to(node_item->id(), prop->id());
-                if(m_file->canConnect(m_selLine->startTraget(),to,error))
+                if(m_file->canConnect(m_selLine->startTraget(),to))
                     gemo = to;
             }
         }

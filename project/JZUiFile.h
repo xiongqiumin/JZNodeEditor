@@ -3,6 +3,7 @@
 
 #include "JZProjectItem.h"
 #include "JZNode.h"
+#include "JZNodeObject.h"
 
 //JZUiFile
 class JZUiFile : public JZProjectItem
@@ -11,10 +12,16 @@ public:
     JZUiFile();
     virtual ~JZUiFile();
 
+    QString xml();
+    void setXml(QString xml);
+
     virtual void saveToStream(QDataStream &s);
     virtual void loadFromStream(QDataStream &s);
 
-    void getWidgetMembers(QMap<QString,JZParamDefine> &params);
+    void updateDefine(JZNodeObjectDefine &define);
+
+protected:
+    QString m_xml;
 };
 
 

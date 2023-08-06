@@ -17,6 +17,7 @@ enum{
     Status_running,
     Status_pause,
     Status_idlePause,
+    Status_error,
 };
 
 class RunnerEnv
@@ -25,6 +26,8 @@ public:
     RunnerEnv();
     
     const FunctionDefine *func;
+    JZNodeObject *object; //this    
+    JZNodeScript *script;    
     int pc;
 };
 
@@ -39,6 +42,7 @@ public:
     bool isEmpty() const;
 
     RunnerEnv &env();
+    RunnerEnv &env(int index);
     void pop();
     void push();
 
@@ -222,6 +226,9 @@ protected:
     QVariant dealExpr(const QVariant &a, const QVariant &b,int op);
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);
+
+    void dealQtEvent(JZEvent *event);
+    void dealSingleEvent(JZEvent *event);
 
     void pushStack(const FunctionDefine *define);
     void popStack();
