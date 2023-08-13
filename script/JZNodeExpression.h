@@ -15,6 +15,8 @@ public:
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType) override;    
 
 protected:
+    void addInputButton();
+
     int m_op;    
 };
 
@@ -113,6 +115,15 @@ public:
     bool compiler(JZNodeCompiler *c, QString &error);
 };
 
+//JZNodeNot
+class JZNodeNot : public JZNode
+{
+public:
+    JZNodeNot();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
+};
+
 //JZNodeBitAnd
 class JZNodeBitAnd: public JZNodeOperator
 {
@@ -145,7 +156,9 @@ public:
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    bool isNumber(QString text);
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
 
     QString m_expression;
     QStringList m_exprList;

@@ -5,7 +5,68 @@
 #include <QMouseEvent>
 #include <QDebug>
 #include <QMenu>
+#include <QTextDocument>
 
+//LogBrowser
+LogBrowser::LogBrowser()
+{    
+    setOpenLinks(false);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &QWidget::customContextMenuRequested, this, &LogBrowser::onLogContextMenu);
+    setReadOnly(true);
+}
+
+void LogBrowser::onLogContextMenu(QPoint pos)
+{
+    QMenu menu(this);
+    QAction *actCopy = menu.addAction("复制");
+    menu.addSeparator();
+    QAction *actClear = menu.addAction("全部清除");
+    QAction *act = menu.exec(this->mapToGlobal(pos));
+    if (!act)
+        return;
+
+    if (act == actClear)
+        this->clear();
+    else if (act == actCopy)
+        this->copy();
+}
+
+void LogBrowser::addLog(QString log)
+{
+    QStringList list  = log.split("\n");
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (list[i].startsWith("link:"))
+        {
+            QString line = list[i];
+            int index = line.indexOf(";");
+            QString link = line.mid(5, index - 5);
+
+            QTextCharFormat fmt;
+            fmt.setForeground(QColor("blue"));
+            fmt.setAnchor(true);
+            fmt.setAnchorHref(link);
+            fmt.setToolTip("address");
+            fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);            
+            
+            auto tc = textCursor();
+            tc.movePosition(QTextCursor::End);
+            tc.insertBlock();            
+            tc.insertText(link, fmt);
+            tc.setCharFormat(QTextCharFormat());
+
+            tc.insertText(line.mid(index + 1));
+            tc.movePosition(QTextCursor::End);
+        }
+        else
+        {
+            append(list[i]);
+        }
+    }
+}
+
+//LogWidget
 LogWidget::LogWidget()
 {
     m_tabWidget = new QTabWidget();
@@ -19,7 +80,7 @@ LogWidget::LogWidget()
     QStringList domains = { "编译输出","运行输出" };
     for (int i = 0; i < domains.size(); i++)
     {
-        QTextEdit *edit = new QTextEdit();
+        LogBrowser *edit = new LogBrowser();
         m_logs << edit;
 
         QWidget *w = new QWidget();
@@ -28,19 +89,15 @@ LogWidget::LogWidget()
         w->setLayout(sub_layout);
         m_tabWidget->addTab(w,domains[i]);
 
-        m_logs[i]->setContextMenuPolicy(Qt::CustomContextMenu);
-        connect(m_logs[i], &QWidget::customContextMenuRequested, this, &LogWidget::onLogContextMenu);
+        connect(edit, &LogBrowser::anchorClicked, this, &LogWidget::onAchorClicked);
     }
 
-    /*
-    QTextCharFormat fmt;
-    fmt.setForeground(QColor("blue"));
-    fmt.setAnchor(true);
-    fmt.setAnchorHref("http://example.com");
-    fmt.setToolTip("address");
-    fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);
-    m_logs[0]->textCursor().insertText("Hello world again\n", fmt);
-    */
+    m_breakPoint = new JZNodeBreakPoint();
+    m_tabWidget->addTab(m_breakPoint, "断点");
+    m_stack = new JZNodeStack();
+    m_tabWidget->addTab(m_stack, "堆栈");
+    m_watch = new JZNodeWatch();
+    m_tabWidget->addTab(m_watch, "监控");    
 }
 
 LogWidget::~LogWidget()
@@ -50,34 +107,34 @@ LogWidget::~LogWidget()
 
 void LogWidget::addLog(int type, const QString &log)
 {
-    m_logs[type]->append(log);
+    m_logs[type]->addLog(log);
 }
 
-void LogWidget::mousePressEvent(QMouseEvent *event)
+JZNodeStack *LogWidget::stack()
 {
-    int index = m_tabWidget->currentIndex();
-    QTextEdit *w = m_logs[index];
-    QPoint pt = w->mapFrom(this, event->pos());
-    QString text = w->anchorAt(pt);
-    qDebug() << text;
+    return m_stack;
 }
 
-void LogWidget::onLogContextMenu(QPoint pos)
+JZNodeWatch *LogWidget::watch()
 {
-    QTextEdit *edit = (QTextEdit *)sender();
+    return m_watch;
+}
 
-    QMenu menu(edit);
-    QAction *actCopy = menu.addAction("复制");
-    menu.addSeparator();
-    QAction *actClear = menu.addAction("全部清除");    
-    
+JZNodeBreakPoint *LogWidget::breakpoint()
+{
+    return m_breakPoint;
+}
 
-    QAction *act = menu.exec(edit->mapToGlobal(pos));
-    if (!act)
-        return;
+void LogWidget::onAchorClicked(QUrl url)
+{
+    QString link = url.toString();    
 
-    if (act == actClear)    
-        edit->clear();
-    else if (act == actCopy)    
-        edit->copy();    
+    int index_file = link.indexOf("(");    
+    QString file = link.mid(0,index_file);    
+
+    int id_s = link.indexOf("id=") + 3;
+    int id_e = link.indexOf(")");
+    QString node_id_text = link.mid(id_s, id_e - id_s);
+    int node_id = node_id_text.toInt();
+    sigNodeClicked(file, node_id);
 }

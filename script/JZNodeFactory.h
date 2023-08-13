@@ -23,7 +23,8 @@ public:
 protected:
     QMap<int,JZNodeCreateFunc> m_nodes;
 };
-JZNode *parseNode(const QByteArray &buffer);
-QByteArray formatNode(JZNode *node);
 
+//这两个函数保存了类型
+JZNode *loadNode(const QByteArray &buffer);
+QByteArray saveNode(JZNode *node);  
 #endif

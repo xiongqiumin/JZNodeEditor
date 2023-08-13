@@ -14,6 +14,8 @@
 #include "JZNodeDebugClient.h"
 #include "JZNodeProgram.h"
 #include "LogWidget.h"
+#include "JZNodeStack.h"
+#include "JZNodeBreakPoint.h"
 
 class Setting
 {
@@ -71,15 +73,18 @@ protected slots:
 
     void onFileOpened(QString filepath);    
     void onFileClosed(QString filepath);
+    void onFileRemoved(QString filepath);
     void onEditorClose(int index);
     void onEditorActivite(int index);
     void onNodeClicked(QString file, int nodeId);
+    void onStackChanged(int stack);
 
     void onRuntimeLog(QString log);
     void onRuntimeInfo(JZNodeRuntimeInfo error);
-    void onRuntimeError(JZNodeRuntimeError error);
+    void onRuntimeError(JZNodeRuntimeError error);    
     void onRuntimeStatus(int staus);    
-    void onDebugFinish(int code,QProcess::ExitStatus status);
+    void onRuntimeFinish(int code,QProcess::ExitStatus status);
+    void onNetError();
 
 private:
     struct ActionStatus{
@@ -105,6 +110,7 @@ private:
 
     void loadSetting();
     void saveSetting();
+    bool openProject(QString filepath);
     JZEditor *createEditor(int type);
     bool openEditor(QString filepath);
     void closeEditor(JZEditor *editor);
@@ -113,17 +119,23 @@ private:
     void initMenu();
     void initUi();        
     void switchEditor(JZEditor *editor);    
+    void gotoNode(QString file, int nodeId);
+    void setRunning(bool flag);
+    void setRuntimeInfo();
+    void setRuntimeNode(QString file, int nodeId);
+
     bool build();
     void start(bool startPause);    
     void saveToFile(QString file,QString text);
     void saveAll();
-    bool closeAll();
-
-    JZNodeBuilder m_builder;
-    JZProject m_project;
-    JZNodeProgram m_program;
+    bool closeAll();    
+    
+    JZProject m_project;    
 
     LogWidget *m_log;
+    JZNodeStack *m_stack;
+    JZNodeWatch *m_watch;
+    JZNodeBreakPoint *m_breakPoint;
     JZProjectTree *m_projectTree;
     QList<QMenu*> m_menuList;
         
@@ -136,7 +148,12 @@ private:
     Setting m_setting;
 
     JZNodeDebugClient m_debuger;
-    QProcess m_process;   
+    QProcess m_process;       
     bool m_processVaild;
+
+    QAction *m_actionRun, *m_actionResume;
+
+    JZNodeProgramInfo m_program;
+    JZNodeRuntimeInfo m_runtime;
 };
 #endif // MAINWINDOW_H

@@ -26,7 +26,20 @@ void JZNodeLineItem::setDrag(bool flag)
 
 QRectF JZNodeLineItem::boundingRect() const
 {    
-    return QRectF(m_startPoint, m_endPoint).normalized();
+    auto rc = QRectF(m_startPoint, m_endPoint).normalized();
+    if (rc.width() < 8)
+    {
+        auto ct = rc.center();
+        rc.setLeft(ct.x() - 4);
+        rc.setRight(ct.x() + 4);
+    }
+    if (rc.height() < 8)
+    {
+        auto ct = rc.center();
+        rc.setTop(ct.y() - 4);
+        rc.setBottom(ct.y() + 4);
+    }
+    return rc;
 }
 
 QPainterPath JZNodeLineItem::shape() const
@@ -89,7 +102,7 @@ void JZNodeLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *st
     if(m_to.nodeId == -1)
         pen_style = Qt::DashLine;
 
-    painter->setPen(QPen(QBrush(c),1,pen_style));
+    painter->setPen(QPen(QBrush(c),4,pen_style));
     painter->drawLine(m_startPoint, m_endPoint);
 }
 

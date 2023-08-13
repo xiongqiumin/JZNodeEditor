@@ -309,8 +309,21 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
     if(act == actCreateFunction)
     {        
+        FunctionDefine function;
+        function.name = "new";
+        if (!className.isEmpty())
+        {
+            function.className = className;
+
+            int classType = JZNodeObjectManager::instance()->getClassId(className);
+            JZParamDefine def;
+            def.name = "object";
+            def.dataType = classType;            
+            function.paramIn.push_back(def);
+        }
+
         JZNodeFuctionEditDialog dialog(this);
-        dialog.setClass(className);        
+        dialog.setFunctionInfo(function,true);
         dialog.init();
         if (dialog.exec() != QDialog::Accepted)
             return;
@@ -346,9 +359,8 @@ void JZProjectTree::onContextMenu(QPoint pos)
         JZScriptFile *func_item = (JZScriptFile*)item;
         QString oldName = func_item->name();
 
-        JZNodeFuctionEditDialog dialog(this);
-        dialog.setClass(className);
-        dialog.setFunctionInfo(func_item->function());
+        JZNodeFuctionEditDialog dialog(this);        
+        dialog.setFunctionInfo(func_item->function(),false);
         dialog.init();
         if (dialog.exec() != QDialog::Accepted)
             return;
@@ -370,7 +382,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     }
     else if(act == actRemove)
     {
-        m_project->removeItem(item->itemPath());
+        emit sigFileRemoved(item->itemPath());
         delete view_item;
     }
     else if(act == actRename)

@@ -13,22 +13,22 @@ int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
-    JZNodeInit();    
+    JZNodeInit();       
 
     if(0)
     {
         test_script();
         return 0;
     }
-    if (0)
+    if (1)
     {
         SampleRussian russian;
-        russian.run();
-        return 0;
+        //russian.run();
+        //return 0;
     }
     if(0)
     {         
-        QString project_name = "project22";
+        QString project_name = "project998";
         QString program_path = "C:/Users/xiong/Desktop/JZNodeEditor/x64/Debug/project/" + project_name 
             +  "/build/" +  project_name + ".program";
 

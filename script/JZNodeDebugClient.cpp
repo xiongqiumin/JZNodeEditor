@@ -5,26 +5,11 @@ JZNodeDebugClient::JZNodeDebugClient()
     connect(&m_client,&JZNetClient::sigConnect,this,&JZNodeDebugClient::onConnect);
 	connect(&m_client,&JZNetClient::sigDisConnect,this,&JZNodeDebugClient::onDisConnect);
 	connect(&m_client,&JZNetClient::sigNetPackRecv,this,&JZNodeDebugClient::onNetPackRecv);
-    m_status = Status_none;
 }
 
 JZNodeDebugClient::~JZNodeDebugClient()
 {
 
-}
-
-int JZNodeDebugClient::status()
-{
-    return m_status;
-}
-
-void JZNodeDebugClient::setStatus(int status)
-{
-    if (m_status != status)
-    {
-        m_status = status;
-        emit sigRuntimeStatus(status);
-    }
 }
 
 bool JZNodeDebugClient::isConnect()
@@ -42,11 +27,16 @@ void JZNodeDebugClient::disconnectFromServer()
     m_client.disconnectFromHost();
 }
 
-void JZNodeDebugClient::init(const JZNodeDebugInfo &info)
+JZNodeProgramInfo JZNodeDebugClient::init(const JZNodeDebugInfo &info)
 {    
+    JZNodeProgramInfo program_info;
+
     QVariantList params, result;
     params << netDataPack(info);
-    sendCommand(Cmd_init, params, result);
+    if (sendCommand(Cmd_init, params, result))
+        program_info = netDataUnPack<JZNodeProgramInfo>(result[0].toByteArray());
+    
+    return program_info;
 }
 
 JZNodeRuntimeInfo JZNodeDebugClient::runtimeInfo()
@@ -79,21 +69,22 @@ void JZNodeDebugClient::clearBreakPoint()
     sendCommand(Cmd_clearBreakPoint,params,result);
 }
 
-QVariant JZNodeDebugClient::getVariable(QString name)
+JZNodeDebugParamInfo JZNodeDebugClient::getVariable(JZNodeDebugParamInfo info)
 {
-    QVariant ret;
+    JZNodeDebugParamInfo ret;
+    
     QVariantList params,result;
-    params << name;
-    if(sendCommand(Cmd_getVariable,params,result))
-        ret = result[0];
+    params << netDataPack(info);
+    if (sendCommand(Cmd_getVariable, params, result))
+        ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
 
     return ret;
 }
 
-void JZNodeDebugClient::setVariable(QString name,QVariant value)
+void JZNodeDebugClient::setVariable(JZNodeDebugParamInfo info)
 {
     QVariantList params,result;
-    params << name << value;
+    params << netDataPack(info);
     sendCommand(Cmd_setVariable,params,result);
 }
 
@@ -102,7 +93,6 @@ void JZNodeDebugClient::detach()
     QVariantList params,result;
     sendCommand(Cmd_detach,params,result);
     disconnectFromServer();
-    setStatus(Status_none);
 }
 
 void JZNodeDebugClient::pause()
@@ -122,28 +112,24 @@ void JZNodeDebugClient::stop()
     QVariantList params,result;
     sendCommand(Cmd_stop,params,result);
     disconnectFromServer();
-    setStatus(Status_none);
 }
 
 void JZNodeDebugClient::stepIn()
 {
     QVariantList params,result;
     sendCommand(Cmd_stepIn,params,result);
-    setStatus(Status_running);
 }
 
 void JZNodeDebugClient::stepOver()
 {
     QVariantList params,result;
     sendCommand(Cmd_stepOver,params,result);
-    setStatus(Status_running);
 }
 
 void JZNodeDebugClient::stepOut()
 {
     QVariantList params,result;
     sendCommand(Cmd_stepOut,params,result);
-    setStatus(Status_running);
 }
 
 void JZNodeDebugClient::onConnect()
@@ -164,13 +150,7 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
     else if (packet->cmd == Cmd_runtimeStatus)
     {
         int status = packet->params[0].toInt();
-        setStatus(status);
-
-        if (status == Status_pause)
-        {
-            JZNodeRuntimeInfo info = runtimeInfo();
-            emit sigRuntimeInfo(info);
-        }
+        emit sigRuntimeStatus(status);
     }
     else if (packet->cmd == Cmd_runtimeInfo)
     {
@@ -178,8 +158,7 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
         emit sigRuntimeInfo(info);
     }
     else if (packet->cmd == Cmd_runtimeError)
-    {
-        setStatus(Status_pause);        
+    {   
         emit sigRuntimeError(netDataUnPack<JZNodeRuntimeError>(packet->params[0].toByteArray()));
     }
 }

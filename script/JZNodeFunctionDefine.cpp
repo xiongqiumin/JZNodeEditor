@@ -28,6 +28,32 @@ QString FunctionDefine::fullName() const
     return result;
 }
 
+void FunctionDefine::updateCFunctionParam()
+{
+    Q_ASSERT(cfunc);
+    paramIn.clear();
+    paramOut.clear();
+
+    for (int i = 0; i < cfunc->args.size(); i++)
+    {
+        JZParamDefine prop;
+        prop.name = "input" + QString::number(i);
+        prop.dataType = JZNodeType::typeidToType(cfunc->args[i]);
+        Q_ASSERT(prop.dataType != Type_none);
+
+        paramIn.push_back(prop);
+    }
+    if (cfunc->result != typeid(void).name())
+    {
+        JZParamDefine prop;
+        prop.name = "output";
+        prop.dataType = JZNodeType::typeidToType(cfunc->result);
+        Q_ASSERT(prop.dataType != Type_none);
+
+        paramOut.push_back(prop);
+    }
+}
+
 QDataStream &operator<<(QDataStream &s, const FunctionDefine &param)
 {
     Q_ASSERT(!param.isCFunction);

@@ -60,10 +60,12 @@ QDataStream &operator >> (QDataStream &s, JZProject::ItemInfo &param)
 // JZProject
 JZProject::JZProject()    
 {        
+    m_blockRegist = false;
 }
 
 JZProject::~JZProject()
 {
+    close();
 }
 
 bool JZProject::isVaild()
@@ -81,7 +83,7 @@ void JZProject::clear()
 }
 
 void JZProject::init()
-{    
+{        
     clear();
 
     JZScriptFile *main_flow = new JZScriptFile(ProjectItem_scriptFlow);
@@ -98,15 +100,18 @@ void JZProject::init()
     start->setFlag(Node_propNoRemove);
     main_flow->addNode(JZNodePtr(start));
 
-    saveItem(main_flow);
+    saveItem(main_flow);    
 }
 
 void JZProject::initUi()
 {    
+    m_blockRegist = true;
     auto func_inst = JZNodeFunctionManager::instance();
 
     init();        
     addUiClass("./","mainwindow");
+    m_blockRegist = false;
+    registType();
 
     auto main_script = (JZScriptFile *)getItem("./main.jz");
     auto param_def = (JZParamFile *)getItem("./param.def");
@@ -139,12 +144,17 @@ void JZProject::initUi()
     main_script->setNodePos(node_show, QPointF(730, 0));
 
     saveItem(param_def);
-    saveItem(main_script);
+    saveItem(main_script);       
 }
 
 void JZProject::initConsole()
 {
+    m_blockRegist = true;
+    
     init();
+    
+    m_blockRegist = false;
+    registType();
 }
 
 void JZProject::registType()
@@ -153,14 +163,13 @@ void JZProject::registType()
     JZNodeObjectManager::instance()->clearUserReigst();
 
     // regist type
-    QList<JZProjectItem *> class_list = itemList("./",ProjectItem_class);
+    QList<JZProjectItem *> function_list = itemList("./",ProjectItem_scriptFunction);
+    for (int i = 0; i < function_list.size(); i++)    
+        regist(function_list[i]);    
 
-    for(int i = 0; i < class_list.size(); i++)
-    {
-        JZScriptClassFile *class_file = dynamic_cast<JZScriptClassFile*>(class_list[i]);
-        auto obj_def = class_file->objectDefine();
-        JZNodeObjectManager::instance()->regist(obj_def);
-    }
+    QList<JZProjectItem *> class_list = itemList("./",ProjectItem_class);
+    for(int i = 0; i < class_list.size(); i++)    
+        regist(class_list[i]);    
 }
 
 bool JZProject::open(QString filepath)
@@ -169,23 +178,29 @@ bool JZProject::open(QString filepath)
     if(!file.open(QFile::ReadOnly))
         return false;
 
+    m_blockRegist = true;
     clear();
     m_filepath = filepath;
     QDataStream s(&file);
     loadFromStream(s);
     file.close();
 
+    m_blockRegist = false;
     registType();    
     return true;
 }
 
 void JZProject::close()
 {
+    save();
     clear();    
 }
 
 bool JZProject::save()
 {    
+    if (m_filepath.isEmpty())
+        return false;
+
     return saveAs(m_filepath);    
 }
 
@@ -274,15 +289,36 @@ int JZProject::addItem(QString dir,JZProjectItem *item)
     item->parent()->sort();
 
     m_itemBuffer[item->itemPath()].buffer = JZProjectItemFactory::save(item);
+    regist(item);
     return item->parent()->indexOfItem(item);
 }
 
 void JZProject::removeItem(QString filepath)
 {
     JZProjectItem *item = getItem(filepath);
+    Q_ASSERT(item);
+
+    bool replace_class = false;
+    auto class_file = getClassFile(item);
+    if (class_file)
+    {
+        if (item->itemType() == ProjectItem_class)
+            JZNodeObjectManager::instance()->unregist(class_file->classType());
+        else
+            replace_class = true;
+    }
+    else
+    {
+        if (item->itemType() == ProjectItem_scriptFunction)
+            JZNodeFunctionManager::instance()->unregistFunction(item->name());
+    }
+
     auto parent = item->parent();
     int index = parent->indexOfItem(item);
     parent->removeItem(index);
+
+    if(replace_class)
+        JZNodeObjectManager::instance()->replace(class_file->objectDefine());
 
     m_itemBuffer.remove(filepath);
     QString path = filepath + "/";
@@ -420,7 +456,7 @@ JZScriptClassFile *JZProject::addClass(QString path,QString name,QString super)
     QString flow = name + ".jz";
 
     JZScriptClassFile *class_file = new JZScriptClassFile();
-    class_file->init(name,super);
+    class_file->setClass(name, super);
 
     JZParamFile *data_page = new JZParamFile();
     JZScriptFile *script_flow = new JZScriptFile(ProjectItem_scriptFlow);
@@ -447,7 +483,6 @@ JZScriptClassFile *JZProject::addUiClass(QString path, QString name)
     JZUiFile *ui_page = new JZUiFile();
     ui_page->setName(name + ".ui");
     addItem(file->itemPath(),ui_page);
-    file->reinit();
 
     return file;
 }
@@ -488,7 +523,6 @@ JZScriptClassFile *JZProject::getClassFile(JZProjectItem *item)
 
 void JZProject::removeClass(QString name)
 {
-    getClass(name)->uninit();
     removeItem(name);    
 }
 
@@ -631,4 +665,35 @@ QString JZProject::domain(JZProjectItem *item)
         item = item->parent();
     }
     return result;
+}
+
+void JZProject::regist(JZProjectItem *item)
+{
+    if (m_blockRegist)
+        return;
+
+    auto class_file = getClassFile(item);
+    if (class_file)
+    {
+        auto def = class_file->objectDefine();
+        auto id = JZNodeObjectManager::instance()->getClassId(class_file->name());
+        if (id == -1)
+        {
+            id = JZNodeObjectManager::instance()->regist(def);
+            class_file->setClassType(id);
+        }
+        else
+        {
+            Q_ASSERT(id == def.id);
+            JZNodeObjectManager::instance()->replace(def);
+        }
+    }
+    else
+    {
+        if (item->itemType() == ProjectItem_scriptFunction)
+        {
+            JZScriptFile* func = dynamic_cast<JZScriptFile*>(item);            
+            JZNodeFunctionManager::instance()->registFunction(func->function());
+        }
+    }
 }

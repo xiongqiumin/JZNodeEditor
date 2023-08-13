@@ -10,6 +10,7 @@
 enum
 {
     Node_none,    
+    Node_nop,
     Node_param,
     Node_create,
     Node_this,
@@ -31,6 +32,7 @@ enum
     Node_gt,  // >
     Node_and,
     Node_or,
+    Node_not,
     Node_bitand,
     Node_bitor,    
     Node_bitxor,
@@ -119,11 +121,12 @@ public:
     JZNodePin *prop(int id);
     const JZNodePin *prop(int id) const;
     JZNodePin *prop(QString name);
+    bool hasProp(int id) const;
     int indexOfProp(int id) const;
     int indexOfPropByName(QString name) const;
     int indexOfPropByType(int id, int type) const;
-    QVector<int> propInList(int flag) const;
-    QVector<int> propOutList(int flag) const;
+    QVector<int> propInList(int flag = 0) const;
+    QVector<int> propOutList(int flag = 0) const;
     QVector<int> propListByType(int flag) const;    
     QVector<int> propList() const;
     int propCount(int flag) const;
@@ -199,6 +202,17 @@ protected:
     QVector<int> m_notifyList;
 };
 typedef QSharedPointer<JZNode> JZNodePtr;
+
+//JZNodeNop
+class JZNodeNop : public JZNode
+{
+public:
+    JZNodeNop();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:
+};
 
 //JZNodeContinue
 class JZNodeContinue : public JZNode
@@ -316,7 +330,7 @@ class JZNodeIf : public JZNode
 public:
     JZNodeIf();
 
-    void addCondPin();    
+    void addCondPin();
     void addElsePin();
 
 protected:
@@ -328,6 +342,10 @@ class JZNodeSwitch : public JZNode
 {
 public:
     JZNodeSwitch();
+    void addCondPin();
+
+protected:
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 };
 
 

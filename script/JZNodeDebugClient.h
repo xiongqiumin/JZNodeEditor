@@ -17,15 +17,14 @@ public:
     bool connectToServer(QString ip,int port);
     void disconnectFromServer();
     bool isConnect();
-    int status();
 
-    void init(const JZNodeDebugInfo &info);
+    JZNodeProgramInfo init(const JZNodeDebugInfo &info);
     JZNodeRuntimeInfo runtimeInfo();
     void addBreakPoint(QString file,int nodeId);
     void removeBreakPoint(QString file,int nodeId);
     void clearBreakPoint();    
-    QVariant getVariable(QString name);
-    void setVariable(QString name,QVariant value);
+    JZNodeDebugParamInfo getVariable(JZNodeDebugParamInfo info);
+    void setVariable(JZNodeDebugParamInfo info);
     
     void detach();
     void pause();       
@@ -51,11 +50,8 @@ protected slots:
 	void onNetPackRecv(JZNetPackPtr ptr);    
 
 protected:    
-    bool sendCommand(int command,QVariantList &params,QVariantList &result);
-    void setStatus(int status);
-
-    JZNetClient m_client;
-    int m_status;
+    bool sendCommand(int command,QVariantList &params,QVariantList &result);    
+    JZNetClient m_client;    
 };
 
 

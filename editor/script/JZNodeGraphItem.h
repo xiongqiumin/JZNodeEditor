@@ -21,8 +21,8 @@ public:
     JZNode *node();
     JZNodePin *propAt(QPointF pos);
     QRectF propRect(int prop);
-
-    void setBreakPoint(bool flag);
+    QSize size() const;
+    
     void setError(QString error);
     void clearError();
 
@@ -30,11 +30,20 @@ protected:
     enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };    
     struct PropGemo
     {
+        PropGemo();
+        ~PropGemo();
+        
+        void clear();
         int width();
-
+        void valueRectChanged();
+        
         QRectF iconRect;
         QRectF nameRect;
         QRectF valueRect;
+
+        int widgetType;
+        QGraphicsProxyWidget *proxy;
+        QWidget *widget;       
     };
 
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;
@@ -46,15 +55,15 @@ protected:
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
     void drawProp(QPainter *painter,int propId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
-    PropGemo calcGemo(int x,int y,int prop);
+    void calcGemo(int prop, int x, int y,PropGemo *gemo);
+    void updatePropGemo();
     void updateErrorGemo();
+    void setPropValue(int id, const QVariant &value);
 
     QSize m_size;    
     JZNode *m_node;    
     QMap<int,PropGemo> m_propRects;
-    QRectF m_errorRect;
-
-    bool m_breakPoint;
+    QRectF m_errorRect;    
     QString m_error;
 
     bool m_pinButtonOn;

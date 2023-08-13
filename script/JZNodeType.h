@@ -36,18 +36,21 @@ public:
     static int variantType(const QVariant &v);
     static QVariant::Type typeToQMeta(int id);
     static int typeidToType(QString name);
+    static QVariant convertTo(const QVariant &v, int type);
+    static QVariant value(int type);    
     
     static bool isBaseType(int id);    
     static bool isObject(int type);
     static bool isNumber(int type);
+
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
     static bool canConvert(int type1,int type2);
     static bool canConvert(QList<int> type1,QList<int> type2);
-    static QString toString(const QVariant &v);
-    static QString opName(int op);
+    static QString toString(const QVariant &v);    
     
     static QVariant matchValue(const QVariant &v, QList<int> type);
+    static QString opName(int op);
 };
 
 class JZParamDefine

@@ -39,7 +39,7 @@ public:
     JZProjectItem *parent();
     
     void addItem(QSharedPointer<JZProjectItem> child);
-    void removeItem(int index);
+    void removeItem(int index);    
     JZProjectItem *getItem(QString name);     
     bool hasItem(QString name);
     int indexOfItem(JZProjectItem *item);
@@ -56,6 +56,8 @@ public:
     
 protected:
     Q_DISABLE_COPY(JZProjectItem)
+
+    void regist();
 
     JZProjectItem *m_parent;
     QList<QSharedPointer<JZProjectItem>> m_childs;

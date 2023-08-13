@@ -108,7 +108,7 @@ QTreeWidgetItem *JZNodePanel::createNode(JZNode *node)
     item->setText(0, node->name());
     item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
     item->setData(0, TreeItem_type, "node_data");
-    item->setData(0, TreeItem_value, formatNode(node));
+    item->setData(0, TreeItem_value, saveNode(node));
     return item;
 }
 
@@ -157,7 +157,7 @@ QTreeWidgetItem * JZNodePanel::createClassEvent(QString className)
         QTreeWidgetItem *sub_event = new QTreeWidgetItem();
         sub_event->setData(0, TreeItem_type, "node_data");
         sub_event->setText(0, meta->singles[i].name);
-        sub_event->setData(0, TreeItem_value, formatNode(&node_event));
+        sub_event->setData(0, TreeItem_value, saveNode(&node_event));
         item_class->addChild(sub_event);                   
     }
     return item_class;
@@ -327,12 +327,24 @@ void JZNodePanel::initClass(QTreeWidgetItem *root)
         itemClassEvent->addChild(item);
     }
 
+    QTreeWidgetItem *itemFunction = createFolder("成员函数");
+    root->addChild(itemFunction);
+    for (int i = 0; i < def.functions.size(); i++)
+    {
+        JZNodeFunction node;
+        node.setFunction(&def.functions[i]);
+
+        QTreeWidgetItem *item = createNode(&node);
+        itemFunction->addChild(item);
+    }
+
+    //成员变量
     QTreeWidgetItem *itemClassParam = createFolder("成员变量");
     root->addChild(itemClassParam);
 
     JZNodeThis node_this;
     itemClassParam->addChild(createNode(&node_this));
-    
+
     auto list = def.paramList();
     for(int i = 0; i < list.size(); i++)
     {

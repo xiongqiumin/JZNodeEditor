@@ -19,6 +19,7 @@ enum{
     Status_idlePause,
     Status_error,
 };
+bool statusIsPause(int status);
 
 class RunnerEnv
 {
@@ -34,6 +35,11 @@ public:
 class Stack
 {
 public:
+    struct StackVariant {
+        QVariantMap locals;
+        QMap<int, QVariant> stacks;
+    };
+
     Stack();
     ~Stack();
 
@@ -41,10 +47,13 @@ public:
     int size() const;
     bool isEmpty() const;
 
-    RunnerEnv &env();
-    RunnerEnv &env(int index);
     void pop();
     void push();
+
+    RunnerEnv &env();
+    RunnerEnv &env(int index);    
+
+    StackVariant *stackVariable(int index);
 
     QVariant *getVariableRef(QString name);
     QVariant getVariable(const QString &name);
@@ -56,39 +65,39 @@ public:
     QVariant getVariable(int level,int id);
     void setVariable(int level,int id, const QVariant &value);
 
-public:
-    struct StackVariant{
-        QVariantMap locals;
-        QMap<int,QVariant> stacks;
-    };
-
+protected:   
     QList<StackVariant> m_stack;    
     QList<RunnerEnv> m_env;
 };
 
-class JZNodeRuntimeError
-{
-public:    
-    QString info;
-    QString script;
-    int pc;
-};
-QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeError &param);
-QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
-
-
 class JZNodeRuntimeInfo
 {
 public:
+    struct Stack 
+    {
+        Stack();
+
+        QString function;
+        QString file;
+        int nodeId;
+        int pc;
+    };
     JZNodeRuntimeInfo();   
 
     int status;
-    QString file;
-    int nodeId;
-    int pc;
+    QVector<Stack> stacks;    
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param);
+
+class JZNodeRuntimeError
+{
+public:
+    QString error;
+    JZNodeRuntimeInfo info;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeError &param);
+QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
 
 class BreakPoint
 {
@@ -96,7 +105,7 @@ public:
     enum{
         none,
         nodeEnter,
-        nodeExit,     //step over
+        stepOver,     //step over
         stackEqual,   //step in/out     
     };
 
@@ -106,7 +115,8 @@ public:
     int type;
     QString file;
     int nodeId;    
-    int stack;     
+    int stack;
+    NodeRange range;
 };
 
 //JZNodeEngine
@@ -123,10 +133,10 @@ public:
 
     void setProgram(JZNodeProgram *program);
     JZNodeProgram *program();        
-    void setDebugger(JZNodeDebugServer *debug);    
 
     JZNodeRuntimeInfo runtimeInfo();    
 
+    void setDebug(bool flag);
     void addWatch();
     void clearWatch();
 
@@ -143,6 +153,8 @@ public:
 
     QVariant getThis();
     void setThis(QVariant var);
+
+    Stack *stack();
 
     QVariant *getVariableRef(QString name);
     JZNodeObject *getObject(QString name);
@@ -217,6 +229,7 @@ protected:
 
     virtual void customEvent(QEvent *event) override;
     void clear();
+    bool checkIdlePause(const FunctionDefine *func);  //return is stop
     bool checkPauseStop();  //return is stop
     bool run();         
     void updateStatus(int status);
@@ -234,12 +247,14 @@ protected:
     void popStack();
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
-    
-    QString variableToString(const QVariant &v);
+        
     QVariant getParam(const JZNodeIRParam &param);
     void setParam(const JZNodeIRParam &param,const QVariant &value);        
         
     int nodeIdByPc(int pc);        
+    int nodeIdByPc(JZNodeScript *script,int pc);
+    int breakNodeId(int pc, int skip_id);
+
     JZNodeScript *getScript(QString path);
     JZNodeScript *getObjectScript(QString objName);
     /*
@@ -255,8 +270,10 @@ protected:
     
     bool isWatch();        
     bool splitMember(const QString &fullName,QString &objName,QString &memberName);
+    void unSupportOp(int a,int b,int op);
 
-    int m_pc;            
+    int m_pc;
+    int m_breakNodeId;
     JZNodeProgram *m_program;    
     JZNodeScript *m_script;
     QWidget *m_window;    
@@ -276,12 +293,12 @@ protected:
     int m_status;     
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
+    bool m_debug;
 
     QList<ConnectInfo> m_connectInfo;
     QMap<JZNodeObject*,QList<JZObjectConnect>> m_connects;
     QList<ConnectCache> m_connectCache;
-    QList<ParamChangeEvent> m_paramChangeHandle;
-    JZNodeDebugServer *m_debug;
+    QList<ParamChangeEvent> m_paramChangeHandle;        
 };
 extern JZNodeEngine *g_engine;
 

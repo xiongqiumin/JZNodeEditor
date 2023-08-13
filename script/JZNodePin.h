@@ -38,7 +38,7 @@ public:
     void setName(QString name);
     QString name() const;
 
-    void setFlag(int dir);
+    void setFlag(int flag);
     int flag() const;
     int pri() const; // 显示优先级
 
@@ -50,7 +50,7 @@ public:
     bool isSubFlow() const;
     bool isButton() const;
 
-    bool isEditable() const;
+    bool isEditValue() const;
     bool isDispName() const;
     bool isDispValue() const;
     bool isLiteral() const;

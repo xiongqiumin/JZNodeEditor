@@ -268,8 +268,7 @@ JZNodeIRJmp::JZNodeIRJmp(int type)
     :JZNodeIR(type)
 {
     Q_ASSERT(type == OP_je || type == OP_jne || type == OP_jmp);
-    type = OP_call;
-    jmpPc = -1;
+    type = OP_call;    
 }
 
 JZNodeIRJmp::~JZNodeIRJmp()

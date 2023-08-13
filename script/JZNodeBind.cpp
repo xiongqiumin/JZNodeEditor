@@ -20,9 +20,15 @@ void copyClassAssert(void *,void *)
 }
 
 template<>
-QVariant getValue<QVariant>(QVariant v,std::false_type)
+QVariant getValue<QVariant>(const QVariant &v,std::false_type)
 {
     return v;
+}
+
+template<>
+QString getValue<QString>(const QVariant &v, std::false_type)
+{
+    return v.toString();
 }
 
 template<>

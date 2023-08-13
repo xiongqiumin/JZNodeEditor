@@ -24,9 +24,7 @@ public:
     QStringList variableList();
     const QMap<QString,JZParamDefine> &variables();
 
-protected:
-    void reinitClass();
-
+protected:    
     QMap<QString,JZParamDefine> m_variables;
 };
 

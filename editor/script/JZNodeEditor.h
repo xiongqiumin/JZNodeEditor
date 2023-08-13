@@ -34,8 +34,9 @@ public:
     
     BreakPointTriggerResult breakPointTrigger();
     void ensureNodeVisible(int nodeId);
+    void selectNode(int nodeId);
 
-    void setRuntimeStatus(int staus);
+    void setRunning(bool staus);
     int runtimeNode();
     void setRuntimeNode(int nodeId);
 

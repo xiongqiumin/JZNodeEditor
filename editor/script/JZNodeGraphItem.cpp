@@ -5,18 +5,52 @@
 #include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QComboBox>
+#include <math.h>
 #include "JZNodeGraphItem.h"
 #include "JZNodeView.h"
-#include <math.h>
+
+enum {
+    Widget_none,
+    Widget_lineEdit,    
+    Widget_comboBox,
+};
 
 //JZNodeGraphItem::PropGemo
-int JZNodeGraphItem::PropGemo::width()
+JZNodeGraphItem::PropGemo::PropGemo()
 {
-    if(!valueRect.isNull())
-        return valueRect.right();
-    if(!nameRect.isNull())
-        return nameRect.right();
-    return iconRect.right();
+    widgetType = Widget_none;
+    proxy = nullptr;
+    widget = nullptr;    
+}
+
+JZNodeGraphItem::PropGemo::~PropGemo()
+{
+    Q_ASSERT(!proxy && !widget);
+}
+
+void JZNodeGraphItem::PropGemo::clear()
+{
+    if (proxy)
+    {
+        delete proxy;
+    }
+    widgetType = 0;
+    proxy = nullptr;
+    widget = nullptr;
+}
+
+int JZNodeGraphItem::PropGemo::width()
+{    
+    return iconRect.width() + nameRect.width() + valueRect.width();
+}
+
+void JZNodeGraphItem::PropGemo::valueRectChanged()
+{
+    if (proxy)
+    {
+        proxy->setPos(valueRect.topLeft());
+    }
 }
 
 // JZNodeGraphItem
@@ -24,8 +58,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 {
     m_type = Item_node;
     m_node = node;
-    m_id = node->id();
-    m_breakPoint = false;
+    m_id = node->id();    
     m_pinButtonOn = false;
 
     setOpacity(0.9);
@@ -33,10 +66,43 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);
+    
+    updatePropGemo();
 }
 
 JZNodeGraphItem::~JZNodeGraphItem()
 {
+    auto it = m_propRects.begin();
+    while (it != m_propRects.end())
+    {
+        it->clear();
+        it++;
+    }
+    m_propRects.clear();
+}
+
+void JZNodeGraphItem::updatePropGemo()
+{
+    //remove
+    auto it = m_propRects.begin();
+    while (it != m_propRects.end())
+    {
+        if (!m_node->hasProp(it.key()))
+        {
+            it = m_propRects.erase(it);
+        }
+        else
+            it++;
+    }
+
+    //add
+    auto list = m_node->propList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        int prop = list[i];
+        if (!m_propRects.contains(prop))
+            m_propRects[prop] = PropGemo();
+    }
 }
 
 QRectF JZNodeGraphItem::boundingRect() const
@@ -51,9 +117,12 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
     QRectF title_rc = QRectF(rc.left(), rc.top(), rc.width(), 20);
     painter->fillRect(rc, QColor(192,192,192));
 
+    QTextOption text_opt;
+    text_opt.setWrapMode(QTextOption::NoWrap);
+    text_opt.setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
     QString title = m_node->name();
     painter->fillRect(title_rc, QColor(220,220,220));
-    painter->drawText(title_rc, title, QTextOption(Qt::AlignVCenter | Qt::AlignHCenter));
+    painter->drawText(title_rc, title, text_opt);
 
     auto in_list = m_node->propList();
     for (int i = 0; i < in_list.size(); i++)
@@ -75,7 +144,7 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
         painter->drawRect(rc.adjusted(0,0,-1,-1));
     }
 
-    if(m_breakPoint)
+    if(editor()->isBreakPoint(m_id))
     {
         QRect bt_rc = QRect(5,5,15,15);
         painter->fillRect(bt_rc,Qt::green);
@@ -109,28 +178,82 @@ QRectF JZNodeGraphItem::propRect(int prop)
     return m_propRects[prop].iconRect;
 }
 
-JZNodeGraphItem::PropGemo JZNodeGraphItem::calcGemo(int x,int y,int prop)
+QSize JZNodeGraphItem::size() const
 {
-    auto pin = m_node->prop(prop);
-    JZNodeGraphItem::PropGemo gemo;
-    gemo.iconRect = QRectF(x,y,24,24);
+    return m_size;
+}
 
-    x = gemo.iconRect.right() + 5;
+void JZNodeGraphItem::calcGemo(int prop,int x,int y, PropGemo *gemo)
+{
+    auto pin = m_node->prop(prop);    
+    gemo->iconRect = QRectF(x,y,24,24);
+
+    x = gemo->iconRect.right() + 5;
     if(pin->isDispName())
     {
         QFontMetrics ft(scene()->font());
-        int w = qMin(60,ft.horizontalAdvance(pin->name()));
-        gemo.nameRect = QRectF(x,y,w,24);
-        x = gemo.nameRect.right() + 5;
+        int w = qMin(80,ft.horizontalAdvance(pin->name()));
+        gemo->nameRect = QRectF(x,y,w,24);
+        x = gemo->nameRect.right() + 5;
     }
-    if(editor()->isPropEditable(m_id,prop))
+    if (pin->isEditValue())
+    {        
+        if (!gemo->widget)
+        {
+            int w = 60;
+            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();    
+            QWidget *widget = nullptr;
+            if (pin->dataType().size() == 1 && pin->dataType()[0] == Type_bool)
+            {
+                w = 80;
+                gemo->widgetType = Widget_comboBox;
+                QComboBox *box = new QComboBox();
+                box->addItem("true",true);
+                box->addItem("false",false);
+                box->connect(box, SIGNAL(currentIndexChanged(int)), editor(), SLOT(onItemPropChanged()));
+                widget = box;
+            }
+            else
+            {
+                gemo->widgetType = Widget_lineEdit;
+                QLineEdit *edit = new QLineEdit();                
+                edit->connect(edit, SIGNAL(editingFinished()), editor(), SLOT(onItemPropChanged()));
+                widget = edit;
+            }
+
+            gemo->valueRect = QRectF(x, y, w, 24);
+            widget->resize(w, 24);
+            widget->setProperty("node_id", m_id);
+            widget->setProperty("prop_id", prop);
+            gemo->widget = widget;
+            proxy->setWidget(widget);
+            gemo->proxy = proxy;
+            proxy->setParentItem(this);
+            proxy->setPos(x, y);
+        } 
+        bool editable = editor()->isPropEditable(m_id, prop);
+        gemo->widget->setEnabled(editable);
+    }      
+}
+
+void JZNodeGraphItem::setPropValue(int id, const QVariant &value)
+{
+    PropGemo &gemo = m_propRects[id];
+    Q_ASSERT(gemo.widget);
+
+    gemo.widget->blockSignals(true);
+    if (gemo.widgetType == Widget_comboBox)
     {
-        QString value = pin->value().toString();
-        QFontMetrics ft(scene()->font());
-        int w = qMin(60,ft.horizontalAdvance(value) + 10);
-        gemo.valueRect = QRectF(x,y,w,24);
+        QComboBox *box = qobject_cast<QComboBox*>(gemo.widget);
+        int index = box->findData(value);
+        box->setCurrentIndex(index);
     }
-    return gemo;
+    else if(gemo.widgetType == Widget_lineEdit)
+    {
+        QLineEdit *edit = qobject_cast<QLineEdit*>(gemo.widget);
+        edit->setText(value.toString());
+    }
+    gemo.widget->blockSignals(false);
 }
 
 void JZNodeGraphItem::updateNode()
@@ -145,18 +268,18 @@ void JZNodeGraphItem::updateNode()
         else
             return pin1->id() < pin2->id();
     };
+    updatePropGemo();
 
     int in_x = 0, out_x = 0;
     int in_y = 24,out_y = 24;
-    int y_gap = 28;
-    m_propRects.clear();
+    int y_gap = 28;    
 
     auto in_list = m_node->propInList(Prop_none);
     std::sort(in_list.begin(),in_list.end(),cmp);
     for(int i = 0; i < in_list.size(); i++)
     {
         auto &gemo = m_propRects[in_list[i]];
-        gemo = calcGemo(4,in_y,in_list[i]);
+        calcGemo(in_list[i],4,in_y,&gemo);
         in_x = qMax(in_x,gemo.width());
         in_y += y_gap;
     }
@@ -166,11 +289,18 @@ void JZNodeGraphItem::updateNode()
     for(int i = 0; i < out_list.size(); i++)
     {        
         auto &gemo = m_propRects[out_list[i]];
-        gemo = calcGemo(4,out_y,out_list[i]);
-        out_x = qMax(in_x,gemo.width());
+        calcGemo(out_list[i],4,out_y,&gemo);
+        out_x = qMax(out_x,gemo.width());
         out_y += y_gap;
     }
     
+    QVector<int> propList = m_node->propList();
+    for (int i = 0; i < propList.size(); i++)
+    {
+        auto pin = m_node->prop(propList[i]);
+        if(pin->isParam() && pin->isEditValue())
+            setPropValue(pin->id(), pin->value());
+    }    
     int w = qMax(100,in_x + out_x + 20);
     int h = qMax(in_y, out_y);
     prepareGeometryChange();
@@ -184,8 +314,11 @@ void JZNodeGraphItem::updateNode()
             info.nameRect.moveRight(last.left() - 5);
             last = info.nameRect;
         }
-        if(!info.valueRect.isEmpty())
+        if (!info.valueRect.isEmpty())
+        {
             info.valueRect.moveRight(last.left() - 5);
+            info.valueRectChanged();
+        }
     }
     m_size = QSize(w, qMax(h,50));    
     updateErrorGemo();
@@ -251,12 +384,6 @@ void JZNodeGraphItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     event->accept();
 }
 
-void JZNodeGraphItem::setBreakPoint(bool flag)
-{
-    m_breakPoint = flag;
-    update();
-}
-
 void JZNodeGraphItem::updateErrorGemo()
 {
     m_errorRect = QRectF();
@@ -279,7 +406,7 @@ void JZNodeGraphItem::clearError()
 }
 
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
-{
+{    
     JZNodePin *pin = m_node->prop(prop_id);
     PropGemo &info = m_propRects[prop_id];
 
@@ -313,20 +440,14 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
     QColor innerColor = QColor(40,40,40,80);
     drawIcon(painter,info.iconRect,type,false,color,innerColor);
 
+    QTextOption text_opt;
+    text_opt.setWrapMode(QTextOption::NoWrap);
     if(!pin->name().isEmpty())
-    {
+    {        
         auto opt = pin->isInput()? Qt::AlignLeft : Qt::AlignRight;
-        painter->drawText(info.nameRect,pin->name(),QTextOption(opt | Qt::AlignVCenter));
-    }
-    if(!info.valueRect.isEmpty())
-    {
-        auto opt = pin->isInput()? Qt::AlignLeft : Qt::AlignRight;
-        painter->drawText(info.valueRect.adjusted(5,0,-5,0),pin->value().toString(),QTextOption(opt | Qt::AlignVCenter));
-        painter->save();
-        painter->setPen(QPen(Qt::white));
-        painter->drawRect(info.valueRect);
-        painter->restore();
-    }
+        text_opt.setAlignment(Qt::AlignVCenter | opt);
+        painter->drawText(info.nameRect,pin->name(), text_opt);
+    }    
 }
 
 void JZNodeGraphItem::drawIcon(QPainter *painter,QRectF rect, IconType type, bool filled, QColor color, QColor innerColor)

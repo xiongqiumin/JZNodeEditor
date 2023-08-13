@@ -18,7 +18,7 @@ enum
     OP_getRef,
     OP_jmp,
     OP_je,
-    OP_jne,  
+    OP_jne,      
     OP_call,     
     OP_return, 
     OP_exit,    
@@ -35,6 +35,7 @@ enum
     OP_gt,  // >
     OP_and,
     OP_or,
+    OP_not,
     OP_bitand,
     OP_bitor,
     OP_bitxor,
@@ -156,7 +157,7 @@ public:
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);   
 
-    int jmpPc;
+    JZNodeIRParam jmpPc;
 };
 
 class JZNodeIRCall : public JZNodeIR

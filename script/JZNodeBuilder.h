@@ -11,13 +11,10 @@ public:
     ~JZNodeBuilder();
 
     bool build(JZProject *project,JZNodeProgram *program);
-    QList<Graph*> graphs(QString filename) const;
     QString error() const;
 
 protected:    
     bool buildScriptFile(JZScriptFile *script);    
-    bool buildLibraryFile(JZScriptLibraryFile *script);
-    bool buildClassFile(JZScriptClassFile *script);
     bool link();    
 
     JZNodeProgram *m_program;    

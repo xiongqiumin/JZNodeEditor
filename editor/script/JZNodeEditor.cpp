@@ -142,14 +142,19 @@ void JZNodeEditor::ensureNodeVisible(int nodeId)
     m_view->ensureNodeVisible(nodeId);
 }
 
+void JZNodeEditor::selectNode(int nodeId)
+{
+    m_view->selectNode(nodeId);
+}
+
 BreakPointTriggerResult JZNodeEditor::breakPointTrigger()
 {
     return m_view->breakPointTrigger();
 }
 
-void JZNodeEditor::setRuntimeStatus(int status)
+void JZNodeEditor::setRunning(bool status)
 {
-    m_view->setRuntimeStatus(status);
+    m_view->setRunning(status);
 }
 
 int JZNodeEditor::runtimeNode()

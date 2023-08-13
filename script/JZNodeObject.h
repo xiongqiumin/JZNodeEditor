@@ -41,27 +41,27 @@ public:
 
     void addParam(JZParamDefine def);
     void removeParam(QString name);
-    QStringList paramList();
+    QStringList paramList() const;
     JZParamDefine *param(QString name);
 
     void addFunction(FunctionDefine def);
     void removeFunction(QString function);    
-    int indexOfFunction(QString function);
+    int indexOfFunction(QString function) const;
 
     void addSingle(FunctionDefine def);
     void removeSingle(QString function);
 
     QString fullname() const;
 
-    const FunctionDefine *function(QString function);
+    const FunctionDefine *function(QString function) const;
     
-    QStringList singleList();
-    const SingleDefine *single(QString function);
+    QStringList singleList() const;
+    const SingleDefine *single(QString function) const;
     
-    QStringList eventList();
-    const EventDefine *event(QString function);
+    QStringList eventList() const;
+    const EventDefine *event(QString function) const;
     
-    JZNodeObjectDefine *super();    
+    JZNodeObjectDefine *super() const;
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
@@ -101,8 +101,9 @@ public:
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
     bool isCObject() const;
-    bool isString() const;
-    const QString &className() const;    
+    const QString &className() const;
+    int type() const;
+    const JZNodeObjectDefine *meta() const;
 
     bool hasParam(QString name) const;
     QVariant param(QString name) const;    
@@ -129,9 +130,9 @@ typedef QSharedPointer<JZNodeObject> JZNodeObjectPtr;
 Q_DECLARE_METATYPE(JZNodeObject*)
 Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
-bool isJZObjectDelcare(const QVariant &v);
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
+
 int JZClassId(const QString &name);
 QString JZClassName(int id);
 void JZObjectEvent(JZEvent *event);
@@ -174,11 +175,6 @@ public:
 protected:
     void create(JZNodeObjectDefine *define,JZNodeObject *obj);
     void copy(JZNodeObject *src,JZNodeObject *dst);
-    void initBase();
-    void initCore();
-    void initEvent();
-    void initObjects();    
-    void initWidgets();
     void initFunctions();
 
     QMap<int,QSharedPointer<JZNodeObjectDefine>> m_metas;

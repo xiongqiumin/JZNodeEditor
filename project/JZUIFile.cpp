@@ -7,6 +7,24 @@ JZUiFile::JZUiFile()
     :JZProjectItem(ProjectItem_ui)
 {
     m_pri = 9;
+    m_xml =  R"(<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>widget</class>
+ <widget class="QWidget" name="widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>430</width>
+    <height>552</height>
+   </rect>
+  </property>        
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+)";
+
 }
 
 JZUiFile::~JZUiFile()
@@ -22,6 +40,7 @@ QString JZUiFile::xml()
 void JZUiFile::setXml(QString xml)
 {
     m_xml = xml;
+    regist();
 }
 
 void JZUiFile::saveToStream(QDataStream &s)

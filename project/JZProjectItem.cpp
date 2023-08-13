@@ -163,6 +163,12 @@ QList<JZProjectItem *> JZProjectItem::itemList(int type)
     return result;
 }
 
+void JZProjectItem::regist()
+{
+    if (m_project)
+        m_project->regist(this);
+}
+
 
 //JZProjectItemFolder
 JZProjectItemFolder::JZProjectItemFolder()

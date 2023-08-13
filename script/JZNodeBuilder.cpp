@@ -12,17 +12,6 @@ JZNodeBuilder::~JZNodeBuilder()
 
 }
 
-QList<Graph*> JZNodeBuilder::graphs(QString filename) const
-{
-    Q_ASSERT(m_scripts.contains(filename));
-    auto &graph_list = m_scripts[filename]->graphs;
-    QList<Graph*> result;
-    for(int i = 0; i < graph_list.size(); i++)         
-        result.push_back(graph_list[i].data());
-    
-    return result;    
-}
-
 QString JZNodeBuilder::error() const
 {
     return m_error;
@@ -52,28 +41,15 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
         QString name = list[i];
         m_program->m_variables[name] = *m_project->globalVariableInfo(name);
     }
-
-    auto root = m_project->root();
-    auto library_list = root->itemList(ProjectItem_library);
-    for(int i = 0; i < library_list.size(); i++)
-    {
-        JZScriptLibraryFile *script = dynamic_cast<JZScriptLibraryFile*>(library_list[i]);
-        if(!buildLibraryFile(script))
-            return false;
-    }
-
-    auto class_list = root->itemList(ProjectItem_class);
+    
+    auto class_list = m_project->itemList("./",ProjectItem_class);
     for(int i = 0; i < class_list.size(); i++)
     {
-        JZScriptClassFile *script = dynamic_cast<JZScriptClassFile*>(class_list[i]);
-        if(!buildClassFile(script))
-            return false;
-        
-        auto define = script->objectDefine();
-        m_program->m_objectDefines << define;        
+        JZScriptClassFile *script = dynamic_cast<JZScriptClassFile*>(class_list[i]);        
+        m_program->m_objectDefines << script->objectDefine();
     }
 
-    auto bind_list = root->itemList(ProjectItem_scriptParamBinding);
+    auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);
     for(int i = 0; i < bind_list.size(); i++)
     {
         JZScriptFile *script = dynamic_cast<JZScriptFile*>(bind_list[i]);
@@ -81,7 +57,15 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
             return false;
     }
 
-    auto flow_list = root->itemList(ProjectItem_scriptFlow);
+    auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
+    for (int i = 0; i < function_list.size(); i++)
+    {
+        JZScriptFile *script = dynamic_cast<JZScriptFile*>(function_list[i]);
+        if (!buildScriptFile(script))
+            return false;        
+    }
+
+    auto flow_list = m_project->itemList("./", ProjectItem_scriptFlow);
     for(int i = 0; i < flow_list.size(); i++)
     {
         JZScriptFile *script = dynamic_cast<JZScriptFile*>(flow_list[i]);
@@ -113,31 +97,6 @@ bool JZNodeBuilder::buildScriptFile(JZScriptFile *scriptFile)
         return false;
     }
     
-    return true;
-}
-
-bool JZNodeBuilder::buildLibraryFile(JZScriptLibraryFile *script)
-{
-    return true;
-}
-
-bool JZNodeBuilder::buildClassFile(JZScriptClassFile *classFile)
-{
-    auto flowList = classFile->itemList(ProjectItem_scriptFlow);
-    Q_ASSERT(flowList.size() == 1);
-
-    JZScriptFile *flow_script = dynamic_cast<JZScriptFile*>(flowList[0]);
-    if(!buildScriptFile(flow_script))
-        return false;
-
-    auto funcList = classFile->itemList(ProjectItem_scriptFunction);
-    for(int i = 0; i < funcList.size(); i++)
-    {
-        JZScriptFile *script = dynamic_cast<JZScriptFile*>(funcList[i]);
-        if(!buildScriptFile(script))
-            return false;
-    }
-
     return true;
 }
 

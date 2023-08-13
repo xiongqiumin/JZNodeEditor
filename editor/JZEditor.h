@@ -64,7 +64,7 @@ protected:
 
     JZProjectItem *m_item;
     JZProject *m_project;
-    int m_type;
+    int m_type;    
 };
 
 

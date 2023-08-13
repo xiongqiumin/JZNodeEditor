@@ -5,6 +5,7 @@ JZNodeFunctionStart::JZNodeFunctionStart()
 {
     m_name = "Start";
     m_type = Node_functionStart;
+    setFlag(Node_propNoRemove);
     addFlowOut();   
 }
 
@@ -58,6 +59,8 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
         pin.setName(define->paramIn[i].name);
         pin.setFlag(Prop_param | Prop_in | Prop_dispName);
         pin.setDataType({define->paramIn[i].dataType});
+        if(JZNodeType::isBaseType(define->paramIn[i].dataType))
+            pin.setFlag(pin.flag() | Prop_dispValue | Prop_editValue);
         addProp(pin);
     }
     for(int i = 0; i < define->paramOut.size(); i++)
@@ -79,6 +82,26 @@ QString JZNodeFunction::function() const
 
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
 {
+    auto def = c->function(m_functionName);
+    if (!def)
+    {
+        error = "函数不存在";
+        return false;
+    }
+
+    QVector<int> in_list = propInList(Prop_param);
+    QVector<int> out_list = propOutList(Prop_param);
+    if (def->paramIn.size() != in_list.size())
+    {
+        error = QString("函数不接受%1个输入").arg(in_list.size());
+        return false;
+    }
+    if (def->paramOut.size() != out_list.size())
+    {
+        error = QString("函数不接受%1个输出").arg(out_list.size());
+        return false;
+    }
+
     bool input_ret = false;
     if(isFlowNode())
         input_ret = c->addFlowInput(m_id,error);
@@ -86,9 +109,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         input_ret = c->addDataInput(m_id,error);
     if(!input_ret)        
         return false;
-        
-    QVector<int> in_list = propInList(Prop_param);
-    QVector<int> out_list = propOutList(Prop_param);
+            
     for(int i = 0; i < in_list.size(); i++)
     {
         int id = c->paramId(m_id,in_list[i]);

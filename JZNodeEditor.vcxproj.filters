@@ -286,6 +286,33 @@
     <ClCompile Include="sample\Russian.cpp">
       <Filter>Source Files\sample</Filter>
     </ClCompile>
+    <ClCompile Include="script\JZNodeEnum.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZRegExpHelp.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeWatch.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeStack.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_server.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeQtWrapper.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeBreakPoint.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeLayout.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeUtils.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -402,6 +429,15 @@
     <QtMoc Include="script\JZNodeUiLoader.h">
       <Filter>Header Files\script</Filter>
     </QtMoc>
+    <QtMoc Include="editor\script\JZNodeWatch.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeStack.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeBreakPoint.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="script\JZEvent.h">
@@ -505,6 +541,24 @@
     </ClInclude>
     <ClInclude Include="script\JZNodeWidgetWrapper.h">
       <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeEnum.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZRegExpHelp.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="tests\test_server.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeQtWrapper.h">
+      <Filter>Source Files\editor\script</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZNodeLayout.h">
+      <Filter>Header Files\editor\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeUtils.h">
+      <Filter>Source Files\editor\script</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

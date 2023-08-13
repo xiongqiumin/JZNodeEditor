@@ -2,247 +2,6 @@
 #include "JZNodeCompiler.h"
 #include <QFile>
 
-//TopoTool
-TopoTool::TopoTool()
-{
-
-}
-
-void TopoTool::addDepend(int id,QStringList in,QStringList out)
-{
-    TopoNode node;
-    node.id = id;
-    node.in = in;
-    node.out = out;
-    m_list.push_back(node);
-}
-
-bool TopoTool::toposort(QList<int> &result)
-{
-    QMap<QString,QList<int>> inList;
-    for(int i = 0; i < m_list.size(); i++)
-    {
-        auto &node = m_list[i];
-        for(int in_idx = 0; in_idx < node.in.size(); in_idx++)
-            inList[node.in[in_idx]] << i;
-    }
-
-    QMap<int, int> nodeMap;
-    for(int i = 0; i < m_list.size(); i++)
-        nodeMap[i] = 0;
-
-    for(int i = 0; i < m_list.size(); i++)
-    {
-        auto &node = m_list[i];
-        node.next.clear();
-
-        for(int out_idx = 0; out_idx < node.out.size(); out_idx++)
-        {
-            auto it = inList.find(node.out[out_idx]);
-            if(it == inList.end())
-                continue;
-
-            auto &next = it.value();
-            for (int j = 0; j < next.size(); j++)
-                nodeMap[next[j]]++;
-
-            node.next << next;
-        }
-    }
-
-    while (true)
-    {
-        QList<TopoNode*> tmp;
-        auto it = nodeMap.begin();
-        while (it != nodeMap.end())
-        {
-            if (it.value() == 0)
-            {
-                auto &cur_node = m_list[it.key()];
-                auto &next = cur_node.next;
-                for (int i = 0; i < next.size(); i++)
-                    nodeMap[next[i]]--;
-
-                tmp.push_back(&cur_node);
-                it = nodeMap.erase(it);
-            }
-            else
-                it++;
-        }
-        if (tmp.size() == 0)
-        {
-            if (nodeMap.size() != 0)
-            {
-                return false;
-            }
-            break;
-        }
-        std::sort(tmp.begin(), tmp.end(), [](const TopoNode *n1, const TopoNode *n2)
-                  { return n1->id < n2->id; });
-        for(int i = 0; i < tmp.size(); i++)
-            result.push_back(tmp[i]->id);
-    }
-
-    return true;
-}
-
-// GraphNode
-GraphNode::GraphNode()
-{
-    node = nullptr;
-}
-
-// Graph
-Graph::Graph()
-{
-}
-
-Graph::~Graph()
-{
-}
-
-void Graph::clear()
-{
-    topolist.clear();
-    m_nodes.clear();
-    error.clear();
-}
-
-GraphNode *Graph::graphNode(int id)
-{
-    auto it = m_nodes.find(id);
-    if(it != m_nodes.end())
-        return it.value().data();        
-    else
-        return nullptr;
-}
-    
-JZNode *Graph::node(int id)
-{
-    auto node = graphNode(id);
-    if(node)
-        return node->node;
-    else
-        return nullptr;
-}
-
-JZNodePin *Graph::pin(JZNodeGemo gemo)
-{
-    return pin(gemo.nodeId,gemo.propId);
-}
-
-JZNodePin *Graph::pin(int nodeId,int pinId)
-{
-    auto n = node(nodeId);
-    if(n)
-        return n->prop(pinId);
-    else
-        return nullptr;
-}
-
-bool Graph::check()
-{    
-    //排序          
-    if (!toposort())    
-        return false;
-/*
-    //计算节点类型传递
-    for (GraphNodePtr v : m_nodes)
-    { 
-        auto it = v->paramOut.begin();
-        while(it != v->paramOut.end())
-        {
-            int pin_id = it.key();
-            JZNodePin *prop = v->node->prop(pin_id);
-            QMap<int,int> outType = v->node->calcPropOutType(v->pinType);
-
-            QList<JZNodeGemo> &list = it.value();
-            for(int i = 0; i < list.size(); i++)
-            {
-                int next_node_id = list[i].nodeId;
-                int next_pin_id = list[i].propId;                
-
-                GraphNode *next = m_nodes[next_node_id].data();
-                next->pinType[next_pin_id] = outType[pin_id];
-            }            
-            it++;
-        }
-    }
-
-    for (auto &v : m_nodes)
-    {
-        auto in_list = v->node->paramInList();
-        for(int i = 0; i < in_list.size(); i++)
-        {
-            int id = in_list[i];
-            if(!v->paramIn.contains(id) && !v->node->prop(id)->isEditable())
-            {
-                error += v->node->name() + "(" + QString::number(v->node->id()) + ")" + "输入不全\n";
-                break;
-            }
-        }
-    }
-*/
-    return error.isEmpty();
-}
-
-bool Graph::toposort()
-{
-    QList<GraphNode *> result;
-    QMap<int, int> nodeMap;
-    for (auto v : m_nodes)
-        nodeMap[v.data()->node->id()] = 0;
-    for (auto v : m_nodes)
-    {
-        auto &next = v->next;
-        for (int j = 0; j < next.size(); j++)
-            nodeMap[next[j].nodeId]++;
-    }
-
-    while (true)
-    {
-        QList<GraphNode *> tmp;
-        auto it = nodeMap.begin();
-        while (it != nodeMap.end())
-        {
-            if (it.value() == 0)
-            {
-                auto cur_node = m_nodes[it.key()].data();
-                auto &next = cur_node->next;
-                for (int i = 0; i < next.size(); i++)
-                    nodeMap[next[i].nodeId]--;
-
-                tmp.push_back(cur_node);
-                it = nodeMap.erase(it);
-            }
-            else
-                it++;
-        }
-        if (tmp.size() == 0)
-        {
-            if (nodeMap.size() != 0)
-            {
-                error += "存在环,请检查,";
-                QStringList names;
-                auto it_loop = nodeMap.begin();
-                while (it_loop != nodeMap.end())
-                {
-                    names.push_back(m_nodes[it_loop.key()]->node->name());
-                    it_loop++;
-                }
-                error += names.join(" -> ");
-                return false;
-            }
-            break;
-        }
-        std::sort(tmp.begin(), tmp.end(), [](const GraphNode *n1, const GraphNode *n2)
-                  { return n1->node->id() < n2->node->id(); });
-        result.append(tmp);
-    }
-    topolist = result;
-    return true;
-}
-
 //JZEventHandle
 JZEventHandle::JZEventHandle()
 {    
@@ -284,6 +43,25 @@ QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param)
     return s;
 }
 
+//NodeRange
+NodeRange::NodeRange()
+{
+    start = -1;
+    end = -1;
+}
+
+QDataStream &operator<<(QDataStream &s, const NodeRange &param)
+{
+    s << param.start;
+    s << param.end;
+    return s;
+}
+QDataStream &operator>>(QDataStream &s, NodeRange &param)
+{
+    s >> param.start;
+    s >> param.end;
+    return s;
+}
 
 //NodeInfo
 NodeInfo::NodeInfo()
@@ -293,11 +71,22 @@ NodeInfo::NodeInfo()
     isFlow = false;
 }
 
+int NodeInfo::indexOfRange(int pc)
+{
+    for (int i = 0; i < pcRanges.size(); i++)
+    {
+        if (pc >= pcRanges[i].start && pc < pcRanges[i].end)
+            return i;
+    }
+    return -1;
+}
+
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
 {
     s << param.node_id;
     s << param.node_type;
     s << param.isFlow;
+    s << param.pcRanges;
     return s;
 }
 
@@ -306,19 +95,20 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
     s >> param.node_id;
     s >> param.node_type;
     s >> param.isFlow;
+    s >> param.pcRanges;
     return s;
 }
 
 //JZFunction
 QDataStream &operator<<(QDataStream &s, const JZFunction &param)
 {
-    s << param.file << param.addr;
+    s << param.file << param.addr << param.localVariables;
     return s;
 }
 
 QDataStream &operator >> (QDataStream &s, JZFunction &param)
 {
-    s >> param.file >> param.addr;
+    s >> param.file >> param.addr >> param.localVariables;
     return s;
 }
 
@@ -330,13 +120,12 @@ JZNodeScript::JZNodeScript()
 
 void JZNodeScript::clear()
 {
-    file.clear();
-    graphs.clear();
+    file.clear();    
     events.clear();
     statmentList.clear();
     functionList.clear();
-    localVariable.clear();
     nodeInfo.clear();
+    runtimeInfo.clear();
 }
 
 FunctionDefine *JZNodeScript::function(QString name)
@@ -346,10 +135,10 @@ FunctionDefine *JZNodeScript::function(QString name)
         if(functionList[i].fullName() == name)
             return &functionList[i];
     }    
-    for (int i = 0; i < paramChanges.size(); i++)
+    for (int i = 0; i < paramChangeEvents.size(); i++)
     {
-        if (paramChanges[i].function.fullName() == name)
-            return &paramChanges[i].function;
+        if (paramChangeEvents[i].function.fullName() == name)
+            return &paramChangeEvents[i].function;
     }
     for (int i = 0; i < events.size(); i++)
     {
@@ -371,10 +160,8 @@ void JZNodeScript::saveToStream(QDataStream &s)
     }    
     s << functionList;
     s << nodeInfo;
-    s << localVariable;    
     s << events;
-    s << paramChanges;
-    s << watchList;   
+    s << paramChangeEvents;
     s << runtimeInfo;
 }
 
@@ -393,11 +180,9 @@ void JZNodeScript::loadFromStream(QDataStream &s)
         statmentList.push_back(JZNodeIRPtr(ir));
     }
     s >> functionList;
-    s >> nodeInfo;
-    s >> localVariable;    
+    s >> nodeInfo;  
     s >> events;
-    s >> paramChanges;
-    s >> watchList;    
+    s >> paramChangeEvents;
     s >> runtimeInfo;
 }
 
@@ -495,32 +280,18 @@ FunctionDefine *JZNodeProgram::function(QString name)
     return nullptr;
 }
 
-JZNodeScript *JZNodeProgram::functionScript(QString function)
+JZFunction *JZNodeProgram::runtimeInfo(QString function)
 {
     auto it = m_scripts.begin();
     while (it != m_scripts.end())
     {
         auto run_it = it->data()->runtimeInfo.find(function);
         if (run_it != it->data()->runtimeInfo.end())
-            return script(run_it->file);
+            return &run_it.value();
 
         it++;
     }
     return nullptr;
-}
-
-int JZNodeProgram::functionAddr(QString function)
-{
-    auto it = m_scripts.begin();
-    while (it != m_scripts.end())
-    {
-        auto run_it = it->data()->runtimeInfo.find(function);
-        if (run_it != it->data()->runtimeInfo.end())
-            return run_it->addr;
-
-        it++;
-    }
-    return -1;
 }
 
 QList<JZNodeScript*> JZNodeProgram::scriptList()
@@ -558,17 +329,29 @@ QList<JZEventHandle*> JZNodeProgram::eventList() const
     return result;
 }
 
+QList<FunctionDefine> JZNodeProgram::functionDefines()
+{
+    QList<FunctionDefine> result;
+    auto it = m_scripts.begin();
+    while (it != m_scripts.end())
+    {
+        auto list = it->data()->functionList;        
+        it++;
+    }
+    return result;
+}
+
 QList<JZNodeObjectDefine> JZNodeProgram::objectDefines()
 {
     return m_objectDefines;
 }
 
-QMap<QString,JZParamDefine> JZNodeProgram::variables()
+QMap<QString,JZParamDefine> JZNodeProgram::globalVariables()
 {
     return m_variables;
 }
 
-QString JZNodeProgram::paramName(JZNodeIRParam param)
+QString JZNodeProgram::toString(JZNodeIRParam param)
 {
     if(param.type == JZNodeIRParam::Literal)
         return "$" + param.value.toString();
@@ -617,7 +400,7 @@ QString JZNodeProgram::dump()
                 case OP_set:
                 {
                     JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
-                    line += "SET " + paramName(ir_set->dst) + " = " + paramName(ir_set->src);
+                    line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
                     break;
                 }
                 case OP_get:
@@ -628,7 +411,7 @@ QString JZNodeProgram::dump()
                 case OP_call:
                 {
                     JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
-                    line += "CALL " + paramName(ir_call->function);
+                    line += "CALL " + toString(ir_call->function);
                     break;
                 }
                 case OP_return:
@@ -655,10 +438,18 @@ QString JZNodeProgram::dump()
                 case OP_bitxor:
                 {
                     JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
-                    QString c = paramName(ir_expr->dst);
-                    QString a = paramName(ir_expr->src1);
-                    QString b = paramName(ir_expr->src2);
+                    QString c = toString(ir_expr->dst);
+                    QString a = toString(ir_expr->src1);
+                    QString b = toString(ir_expr->src2);
                     line += c + " = " + a + " " + JZNodeType::opName(op->type) + " " + b;
+                    break;
+                }
+                case OP_not:
+                {
+                    JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
+                    QString c = toString(ir_expr->dst);
+                    QString a = toString(ir_expr->src1);                    
+                    line += c + " = " + JZNodeType::opName(op->type) + " " + a;
                     break;
                 }
                 case OP_jmp:
@@ -667,11 +458,11 @@ QString JZNodeProgram::dump()
                 {
                     JZNodeIRJmp *ir_jmp = (JZNodeIRJmp *)op;
                     if(op->type == OP_jmp)
-                        line += "JMP " + QString::number(ir_jmp->jmpPc);
+                        line += "JMP " + toString(ir_jmp->jmpPc);
                     else if(op->type == OP_je)
-                        line += "JE " + QString::number(ir_jmp->jmpPc);
+                        line += "JE " + toString(ir_jmp->jmpPc);
                     else
-                        line += "JNE " + QString::number(ir_jmp->jmpPc);
+                        line += "JNE " + toString(ir_jmp->jmpPc);
                     break;
                 }
                 default:
@@ -693,7 +484,7 @@ QString JZNodeProgram::dump()
                 content += "event handles:\n";
 
             auto &event = script->events[i];
-            QString line = event.function.name + " addr: " + QString::number(functionAddr(event.function.fullName()));
+            QString line = event.function.name + " addr: " + QString::number(runtimeInfo(event.function.fullName())->addr);
             content += line + "\n";
         }
 

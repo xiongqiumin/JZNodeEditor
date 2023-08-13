@@ -86,7 +86,7 @@ void destoryClassAssert(void *);
 void copyClassAssert(void *,void *);
 
 template<class T>
-T getValue(QVariant v,std::true_type)
+T getValue(const QVariant &v,std::true_type)
 {
     JZNodeObject *obj = toJZObject(v);
     if (!obj)
@@ -95,7 +95,7 @@ T getValue(QVariant v,std::true_type)
 }
 
 template<class T>
-T getValue(QVariant v,std::false_type)
+T getValue(const QVariant &v,std::false_type)
 {    
     if(v.type() == QVariant::UserType)
     {
@@ -110,7 +110,10 @@ T getValue(QVariant v,std::false_type)
 }
 
 template<>
-QVariant getValue<QVariant>(QVariant v,std::false_type);
+QVariant getValue<QVariant>(const QVariant &v,std::false_type);
+
+template<>
+QString getValue<QString>(const QVariant &v, std::false_type);
 
 template<class T>
 remove_cvr_t<T> getValue(QVariant v)
@@ -545,26 +548,8 @@ public:
         }
         for (int func_idx = 0; func_idx < m_define.functions.size(); func_idx++)
         {
-            auto &f = m_define.functions[func_idx];
-            auto cfunc = m_define.functions[func_idx].cfunc.get();
-            for (int i = 0; i < cfunc->args.size(); i++)
-            {
-                JZParamDefine prop;
-                prop.name = "input" + QString::number(i);
-                prop.dataType = JZNodeType::typeidToType(cfunc->args[i]);
-                Q_ASSERT(prop.dataType != Type_none);
-
-                f.paramIn.push_back(prop);
-            }
-            if (cfunc->result != typeid(void).name())
-            {
-                JZParamDefine prop;
-                prop.name = "output";
-                prop.dataType = JZNodeType::typeidToType(cfunc->result);
-                Q_ASSERT(prop.dataType != Type_none);
-
-                f.paramOut.push_back(prop);
-            }
+            auto &f = m_define.functions[func_idx];            
+            f.updateCFunctionParam();            
         }
         //regist
         JZNodeObjectManager::instance()->replace(m_define);

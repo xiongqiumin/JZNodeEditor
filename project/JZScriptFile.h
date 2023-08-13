@@ -27,7 +27,7 @@ public:
     void setNodePos(int id,QPointF pos);
     QPointF getNodePos(int id);
 
-    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString *error = nullptr);
+    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error);
     int addConnect(JZNodeGemo from, JZNodeGemo to);
     bool hasConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);
@@ -64,8 +64,7 @@ class JZScriptLibraryFile : public JZProjectItem
 public:
     JZScriptLibraryFile();
     virtual ~JZScriptLibraryFile();
-
-    void addFunction(QString name,QStringList in,QStringList out);
+    
 public:
 
 };
@@ -78,16 +77,16 @@ public:
     virtual ~JZScriptClassFile();    
 
     virtual void saveToStream(QDataStream &s);
-    virtual void loadFromStream(QDataStream &s);
+    virtual void loadFromStream(QDataStream &s);    
 
-    void init(QString className,QString super = QString());
-    void uninit();
-    void reinit();
-
+    void setClass(QString className, QString super);
     QString className() const;
-    int classType() const;
-    JZNodeObjectDefine objectDefine();
 
+    int classType() const;
+    void setClassType(int classId);
+
+    JZNodeObjectDefine objectDefine();
+    
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
     void removeMemberVariable(QString name);
     JZParamDefine *memberVariableInfo(QString name);

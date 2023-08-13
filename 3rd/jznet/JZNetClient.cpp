@@ -11,7 +11,7 @@ JZNetClient::JZNetClient(QObject * parent)
 {
 	tcpSocket = new QTcpSocket();
 
-    m_net = 1;
+    m_net = -1;
     m_waitRecv = false;
     m_userDisconnect = false;
 
@@ -74,6 +74,7 @@ bool JZNetClient::isConnect()
 
 void JZNetClient::onConnected()
 {
+    m_net = 1;
     m_dataManager.newSession(m_net, tcpSocket);
     emit sigConnect();
 }
@@ -86,7 +87,7 @@ void JZNetClient::onDisConnected()
 	
 	//结束会话
     m_dataManager.endSession(m_net);
-    m_net = 0;
+    m_net = -1;
     m_userDisconnect = false;
 }
 
@@ -124,14 +125,20 @@ bool JZNetClient::sendPack(JZNetPack *pack)
 JZNetPackPtr JZNetClient::waitPack(int type, int param,int timeout)
 {
 	JZNetPackPtr pack;
-        
+
 	QElapsedTimer t;
 	t.start();
 	//等待数据包
     m_waitRecv = true;               
     while(timeout == -1 || t.elapsed() <= timeout)
-    {	    
+    {	            
         m_dataManager.socket(m_net)->waitForReadyRead(10);
+        if (m_net == -1)
+        {
+            m_waitRecv = false;
+            return JZNetPackPtr();
+        }
+
         m_dataManager.recvPack(m_net);
 		if(type == 0)
             pack = m_dataManager.takePack(m_net);
@@ -145,7 +152,7 @@ JZNetPackPtr JZNetClient::waitPack(int type, int param,int timeout)
     m_waitRecv = false; 
     
     QTimer::singleShot(0, this, [this]{ 
-        if(m_net) 
+        if(m_net != -1) 
             dispatchPack();
     });
 	return pack;

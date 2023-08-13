@@ -15,7 +15,7 @@ JZNetServer::JZNetServer(QObject * parent)
 
 JZNetServer::~JZNetServer() 
 {	
-	stopServer();	
+	stopServer();	    
 	delete tcpServer;
 }
 

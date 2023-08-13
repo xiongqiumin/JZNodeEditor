@@ -8,6 +8,7 @@
 #include "JZNodeDebugPacket.h"
 
 class JZNodeEngine;
+class JZNodeVM;
 class JZNodeDebugServer : public QThread
 {
     Q_OBJECT
@@ -21,28 +22,37 @@ public:
     void log(QString log);
     
     void setEngine(JZNodeEngine *eng);
-    bool waitForAttach();
+    void setVM(JZNodeVM *vm);
+
+    bool waitForAttach(int timeout = 30 * 1000);
     JZNodeDebugInfo debugInfo();
 
 signals:
-    void sigStop(QPrivateSignal);
+    void sigStop(QThread *stopThread, QPrivateSignal);
 
 protected slots:
     void onNewConnect(int netId);
 	void onDisConnect(int netId);
 	void onNetPackRecv(int netId,JZNetPackPtr ptr);
-    void onStop();
+    void onStop(QThread *stopThread);
 
     void onRuntimeError(JZNodeRuntimeError error);    
     void onStatusChanged(int status);
     void onLog(const QString &log);
 
 protected:        
-    JZNetServer m_server;
-    int m_client;
-    JZNodeEngine *m_engine;
+    QVariant getVariable(const QVariantList &list);
+    void setVariable(const QVariantList &list);
+    JZNodeDebugParamValue toDebugParam(const QVariant &value);
+    JZNodeProgramInfo getProgramInfo();
+
     bool m_init;
+    int m_client;
+
     JZNodeDebugInfo m_debugInfo;
+    JZNetServer m_server;    
+    JZNodeEngine *m_engine;    
+    JZNodeVM *m_vm;        
 };
 
 

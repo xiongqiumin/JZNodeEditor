@@ -66,7 +66,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>3rd\jznet;3rd\qtpropertybrowser;editor;editor\ui;editor\script;project;script;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>3rd\jznet;3rd\qtpropertybrowser;editor;editor\ui;editor\script;project;script;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,15 +95,19 @@
     <ClCompile Include="editor\JZNewProjectDialog.cpp" />
     <ClCompile Include="editor\JZProjectTree.cpp" />
     <ClCompile Include="editor\script\JZNodeBaseItem.cpp" />
+    <ClCompile Include="editor\script\JZNodeBreakPoint.cpp" />
     <ClCompile Include="editor\script\JZNodeEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeFuctionEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeGraphItem.cpp" />
+    <ClCompile Include="editor\script\JZNodeLayout.cpp" />
     <ClCompile Include="editor\script\JZNodeLineItem.cpp" />
     <ClCompile Include="editor\script\JZNodePanel.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeScene.cpp" />
+    <ClCompile Include="editor\script\JZNodeStack.cpp" />
     <ClCompile Include="editor\script\JZNodeTypeDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeView.cpp" />
+    <ClCompile Include="editor\script\JZNodeWatch.cpp" />
     <ClCompile Include="editor\script\JZParamEditor.cpp" />
     <ClCompile Include="editor\ui\JZDesignerEditor.cpp" />
     <ClCompile Include="editor\ui\JZDesignerFormWindow.cpp" />
@@ -130,6 +134,7 @@
     <ClCompile Include="script\JZNodeDebugServer.cpp" />
     <ClCompile Include="script\JZNodeDefine.cpp" />
     <ClCompile Include="script\JZNodeEngine.cpp" />
+    <ClCompile Include="script\JZNodeEnum.cpp" />
     <ClCompile Include="script\JZNodeEvent.cpp" />
     <ClCompile Include="script\JZNodeExpression.cpp" />
     <ClCompile Include="script\JZNodeFactory.cpp" />
@@ -142,11 +147,15 @@
     <ClCompile Include="script\JZNodeObject.cpp" />
     <ClCompile Include="script\JZNodePin.cpp" />
     <ClCompile Include="script\JZNodeProgram.cpp" />
+    <ClCompile Include="script\JZNodeQtWrapper.cpp" />
     <ClCompile Include="script\JZNodeType.cpp" />
+    <ClCompile Include="script\JZNodeUtils.cpp" />
     <ClCompile Include="script\JZNodeValue.cpp" />
     <ClCompile Include="script\JZNodeVM.cpp" />
     <ClCompile Include="script\JZNodeUiLoader.cpp" />
+    <ClCompile Include="script\JZRegExpHelp.cpp" />
     <ClCompile Include="tests\test_script.cpp" />
+    <ClCompile Include="tests\test_server.cpp" />
     <ClCompile Include="UiCommon.cpp" />
     <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.cpp">
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
@@ -176,7 +185,16 @@
   <ItemGroup>
     <ClInclude Include="3rd\jznet\JZNetDataManager.h" />
     <ClInclude Include="3rd\jznet\JZNetPack.h" />
+    <QtMoc Include="editor\script\JZNodeBreakPoint.h" />
+    <ClInclude Include="editor\script\JZNodeLayout.h" />
+    <ClInclude Include="script\JZNodeQtWrapper.h" />
+    <ClInclude Include="script\JZNodeUtils.h" />
+    <ClInclude Include="tests\test_server.h" />
+    <QtMoc Include="editor\script\JZNodeWatch.h" />
+    <QtMoc Include="editor\script\JZNodeStack.h" />
+    <ClInclude Include="script\JZNodeEnum.h" />
     <ClInclude Include="script\JZNodeWidgetWrapper.h" />
+    <ClInclude Include="script\JZRegExpHelp.h" />
     <QtMoc Include="editor\ui\JZDesinger.h" />
     <QtMoc Include="editor\ui\JZDesignerEditor.h" />
     <QtMoc Include="editor\ui\JZDesignerFormWindow.h" />

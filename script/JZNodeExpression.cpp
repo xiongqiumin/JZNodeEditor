@@ -3,6 +3,7 @@
 #include "JZNodeCompiler.h"
 #include "JZExpression.h"
 #include <QRegularExpression>
+#include "JZRegExpHelp.h"
 
 JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {
@@ -15,8 +16,11 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
     int in2 = addParamIn("",Prop_editValue | Prop_dispValue);
     prop(in1)->setValue(0);
     prop(in2)->setValue(0);
-    addParamOut("out");
+    addParamOut("out");    
+}
 
+void JZNodeOperator::addInputButton()
+{
     JZNodePin btn;
     btn.setName("Add input");
     btn.setFlag(Prop_button | Prop_in | Prop_dispName);
@@ -101,6 +105,7 @@ JZNodeAdd::JZNodeAdd()
     setPinTypeNumber(paramIn(0));
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
+    addInputButton();
 }
 
 //JZNodeSub
@@ -111,6 +116,7 @@ JZNodeSub::JZNodeSub()
     setPinTypeNumber(paramIn(0));
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
+    addInputButton();
 }
     
 //JZNodeMul
@@ -121,6 +127,7 @@ JZNodeMul::JZNodeMul()
     setPinTypeNumber(paramIn(0));
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
+    addInputButton();
 }
 
 //JZNodeDiv
@@ -131,6 +138,8 @@ JZNodeDiv::JZNodeDiv()
     setPinTypeNumber(paramIn(0));
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
+    setParamInValue(1, 1);
+    addInputButton();
 }
 
 //JZNodeMod
@@ -211,6 +220,9 @@ JZNodeAnd::JZNodeAnd()
     setPinTypeBool(paramIn(0));
     setPinTypeBool(paramIn(1));
     setPinTypeBool(paramOut(0));
+    prop(paramIn(0))->setFlag(Prop_in | Prop_param);
+    prop(paramIn(1))->setFlag(Prop_in | Prop_param);
+    addInputButton();
 }
 
 bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
@@ -236,7 +248,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
     }
     int ret = c->addNop();
     for (int i = 0; i < jmpList.size(); i++)
-        jmpList[i]->jmpPc = ret;
+        jmpList[i]->jmpPc = irLiteral(ret);
 
     return true;
 }
@@ -249,6 +261,9 @@ JZNodeOr::JZNodeOr()
     setPinTypeBool(paramIn(0));
     setPinTypeBool(paramIn(1));
     setPinTypeBool(paramOut(0));
+    prop(paramIn(0))->setFlag(Prop_in | Prop_param);
+    prop(paramIn(1))->setFlag(Prop_in | Prop_param);
+    addInputButton();
 }
 
 bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
@@ -274,11 +289,34 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
     }
     int ret = c->addNop();
     for (int i = 0; i < jmpList.size(); i++)
-        jmpList[i]->jmpPc = ret;
+        jmpList[i]->jmpPc = irLiteral(ret);
 
     return true;
 
 }
+
+//JZNodeNot
+JZNodeNot::JZNodeNot()
+{
+    m_name = "not";
+    m_type = Node_not;    
+    int in = addParamIn("", Prop_editValue | Prop_dispValue);
+    int out = addParamOut("");
+    setPinTypeBool(in);
+    setPinTypeBool(out);
+}
+
+bool JZNodeNot::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addDataInput(m_id, error))
+        return false;
+
+    int id_in = c->paramId(m_id, paramIn(0));
+    int id_out = c->paramId(m_id, paramOut(0));
+    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_not);
+    return true;
+}
+
 //JZNodeBitAnd
 JZNodeBitAnd::JZNodeBitAnd()
     :JZNodeOperator(Node_bitand,OP_bitand)
@@ -354,11 +392,18 @@ QString JZNodeExpression::expr()
     return m_expression;
 }
 
-bool JZNodeExpression::isNumber(QString text)
+void JZNodeExpression::saveToStream(QDataStream &s) const
 {
-    QRegularExpression reg("^[0-9]");
-    int index = text.indexOf(reg);
-    return index == 0;
+    JZNode::saveToStream(s);
+    s << m_expression;
+    s << m_exprList;
+}
+
+void JZNodeExpression::loadFromStream(QDataStream &s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_expression;
+    s >> m_exprList;
 }
 
 bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
@@ -374,7 +419,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
             int id = reg_map[reg_index];
             return irId(id);
         }
-        else if(isNumber(name))
+        else if(JZRegExpHelp::isInt(name))
         {
             return irLiteral(name.toInt());
         }

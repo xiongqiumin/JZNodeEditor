@@ -28,6 +28,7 @@ private slots:
     void init();
     void cleanup();
 
+    void testRegExp();
     void testProjectSave();
     void testBind();
     void testParamBinding();

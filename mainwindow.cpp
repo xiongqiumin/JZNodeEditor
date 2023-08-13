@@ -16,6 +16,7 @@
 #include "JZParamEditor.h"
 #include "JZNewProjectDialog.h"
 #include "JZDesignerEditor.h"
+#include "JZNodeUtils.h"
 
 //Setting
 Setting::Setting()
@@ -61,8 +62,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeInfo,this,&MainWindow::onRuntimeInfo);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeStatus, this, &MainWindow::onRuntimeStatus);    
+    connect(&m_debuger, &JZNodeDebugClient::sigNetError, this, &MainWindow::onNetError);
 
-    connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onDebugFinish);
+    connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
 
     loadSetting();
     initMenu();
@@ -183,6 +185,7 @@ void MainWindow::initMenu()
     QMenu *menu_build = menubar->addMenu("构建");
     auto actBuild = menu_build->addAction("编译");
     connect(actBuild,&QAction::triggered,this,&MainWindow::onActionBuild);
+    m_actionStatus << ActionStatus(actBuild, { as::ProjectVaild, as::ProcessIsEmpty });
 
     QMenu *menu_debug = menubar->addMenu("调试");    
     auto actRun = menu_debug->addAction("开始调试");
@@ -201,6 +204,9 @@ void MainWindow::initMenu()
     actStepIn->setShortcut(QKeySequence("F11"));
     actStepOut->setShortcut(QKeySequence("Shift+F11"));
     actBreakPoint->setShortcut(QKeySequence("F9"));
+
+    m_actionRun = actRun;
+    m_actionResume = actResume;
 
     connect(actRun,&QAction::triggered,this,&MainWindow::onActionRun);
     connect(actDetach,&QAction::triggered,this,&MainWindow::onActionDetach);
@@ -236,8 +242,16 @@ void MainWindow::initUi()
     m_log = new LogWidget();
     connect(m_log, &LogWidget::sigNodeClicked, this, &MainWindow::onNodeClicked);
 
+    m_stack = m_log->stack();    
+    connect(m_stack, &JZNodeStack::sigStackChanged, this, &MainWindow::onStackChanged);
+
+    m_watch = m_log->watch();    
+    m_breakPoint = m_log->breakpoint();
+    m_breakPoint->setMainWindow(this);
+
     m_projectTree = new JZProjectTree();    
     connect(m_projectTree,&JZProjectTree::sigFileOpened,this,&MainWindow::onFileOpened);
+    connect(m_projectTree,&JZProjectTree::sigFileRemoved,this,&MainWindow::onFileRemoved);
 
     QWidget *widget = new QWidget();
     QVBoxLayout *center = new QVBoxLayout();     
@@ -273,7 +287,7 @@ void MainWindow::initUi()
     splitterMain->setCollapsible(1,false);
     splitterMain->setStretchFactor(0,0);
     splitterMain->setStretchFactor(1,1);
-    splitterMain->setSizes({150,600});
+    splitterMain->setSizes({250,600});
 
     splitterLeft->setCollapsible(0,false);
     splitterLeft->setCollapsible(1,false);
@@ -301,7 +315,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::updateActionStatus()
 {
-    int status = m_debuger.status();
+    int status = m_runtime.status;
 
     bool isProject = m_project.isVaild();
     bool isEditor = (m_editor != nullptr);
@@ -309,7 +323,7 @@ void MainWindow::updateActionStatus()
     bool isEditorScript = (m_editor && m_editor->type() == Editor_script);
     bool isProcess = m_processVaild;
     bool canPause = isProcess && (status  == Status_running || status == Status_none);
-    bool canResume = (status == Status_pause || status == Status_idlePause);    
+    bool canResume = isProcess && (status == Status_pause || status == Status_idlePause);
 
     QVector<bool> cond;
     cond << isProject << isEditor << isEditorModify << isEditorScript
@@ -330,6 +344,17 @@ void MainWindow::updateActionStatus()
             }
         }        
         act->setEnabled(enabled);
+    }
+
+    if (canResume)
+    {
+        m_actionRun->setShortcut(QKeySequence());
+        m_actionResume->setShortcut(QKeySequence("F5"));
+    }
+    else
+    {
+        m_actionResume->setShortcut(QKeySequence());
+        m_actionRun->setShortcut(QKeySequence("F5"));
     }
 }
 
@@ -365,12 +390,7 @@ void MainWindow::onActionOpenProject()
     if(filepath.isEmpty())
         return;
         
-    if (m_project.open(filepath))
-    {        
-        m_projectTree->setProject(&m_project);
-        m_setting.addRecentProject(m_project.filePath());        
-    }
-    updateActionStatus();
+    openProject(filepath);        
 }
 
 void MainWindow::onActionCloseProject()
@@ -380,6 +400,7 @@ void MainWindow::onActionCloseProject()
 
     m_project.close();    
     m_projectTree->clear();
+    m_breakPoint->clear();
     updateActionStatus();
 }
 
@@ -387,16 +408,11 @@ void MainWindow::onActionRecentProject()
 {
     QAction *act = qobject_cast<QAction*>(sender());
     QString filepath = act->text();
+    if (!closeAll())
+        return;
 
-    closeAll();
-    if (m_project.open(filepath))
-    {        
-        m_projectTree->setProject(&m_project);
-        m_setting.addRecentProject(m_project.filePath());
-        updateActionStatus();
-    }
-    else
-    {
+    if (!openProject(filepath))
+    {             
         m_setting.recentFile.removeAll(filepath);
         QMenu *menu = qobject_cast<QMenu *>(act->parent());
         menu->removeAction(act);  
@@ -515,7 +531,7 @@ void MainWindow::onActionResume()
 }
 
 void MainWindow::onActionStop()
-{    
+{        
     m_process.kill();
     updateActionStatus();
 }
@@ -575,6 +591,20 @@ void MainWindow::onUndoAvailable(bool flag)
     m_menuList[1]->actions()[0]->setEnabled(flag);
 }
 
+bool MainWindow::openProject(QString filepath)
+{
+    bool ret = false;
+    if (m_project.open(filepath))
+    {
+        m_projectTree->setProject(&m_project);
+        m_setting.addRecentProject(m_project.filePath());
+        m_breakPoint->updateBreakPoint(&m_project);
+        ret = true;
+    }
+    updateActionStatus();
+    return ret;
+}
+
 JZEditor *MainWindow::createEditor(int type)
 {
     JZEditor *editor = nullptr;
@@ -593,6 +623,15 @@ JZEditor *MainWindow::createEditor(int type)
 void MainWindow::onFileOpened(QString filepath)
 {
     openEditor(filepath);    
+}
+
+void MainWindow::gotoNode(QString file, int nodeId)
+{
+    if (openEditor(file))
+    {
+        JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
+        editor->ensureNodeVisible(nodeId);
+    }
 }
 
 void MainWindow::switchEditor(JZEditor *editor)
@@ -616,6 +655,9 @@ void MainWindow::switchEditor(JZEditor *editor)
 
 bool MainWindow::openEditor(QString filepath)
 {
+    if (filepath == "idle")
+        return false;
+
     JZProjectItem *item = m_project.getItem(filepath);
     QString file = item->itemPath();
     if (!m_editors.contains(file)) {
@@ -628,6 +670,11 @@ bool MainWindow::openEditor(QString filepath)
         connect(editor, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);        
         editor->setItem(item);
         editor->open(item);
+        if (editor->type() == Editor_script)
+        {
+            auto node_edit = (JZNodeEditor*)editor;
+            node_edit->setRunning(m_processVaild);
+        }
         m_editors[file] = editor;
         m_editorStack->addTab(editor, filepath);        
     }
@@ -675,6 +722,12 @@ void MainWindow::onFileClosed(QString filepath)
     closeEditor(editor);
 }
 
+void MainWindow::onFileRemoved(QString filepath)
+{
+    onFileClosed(filepath);
+    m_project.removeItem(filepath);
+}
+
 void MainWindow::onEditorClose(int index)
 {
     JZEditor *editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
@@ -695,17 +748,83 @@ void MainWindow::onNodeClicked(QString file, int nodeId)
     if(openEditor(file))
     {
         JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
-        editor->ensureNodeVisible(nodeId);
+        editor->selectNode(nodeId);
     }
+}
+
+void MainWindow::onStackChanged(int index)
+{
+    if (index == -1)
+    {
+        m_watch->clear();
+        return;
+    }
+
+    auto stack = m_runtime.stacks[index];
+    if (stack.file == "idle")
+    {
+        m_watch->clear();
+        return;
+    }
+    
+    JZNodeDebugParamInfo param_info;        
+    //local
+    auto runtime = m_program.scripts[stack.file].runtimeInfo[stack.function];
+    for (int i = 0; i < runtime.localVariables.size(); i++)
+    {
+        auto &l = runtime.localVariables[i];
+
+        JZNodeParamCoor coor;
+        coor.type = JZNodeParamCoor::Local;
+        coor.stack = index;
+        coor.name = l.name;
+        param_info.coors << coor;
+    }
+
+    //this
+    auto func = m_program.function(stack.function);
+    if (!func->className.isEmpty())
+    {
+        auto meta = m_program.meta(func->className);
+        auto paramList = meta->paramList();
+        for (int i = 0; i < paramList.size(); i++)
+        {
+            JZNodeParamCoor coor;
+            coor.type = JZNodeParamCoor::This;
+            coor.name = paramList[i];
+            param_info.coors << coor;
+        }
+    }
+
+    //global
+    auto it = m_program.globalVariables.begin();
+    while (it != m_program.globalVariables.end())
+    {
+        JZNodeParamCoor coor;
+        coor.type = JZNodeParamCoor::Global;
+        coor.name = it->name;
+        param_info.coors << coor;
+        it++;
+    }    
+
+    param_info = m_debuger.getVariable(param_info);
+    m_watch->setParamInfo(&param_info);    
+    setRuntimeNode(stack.file, stack.nodeId);
 }
 
 bool MainWindow::build()
 {
     m_log->addLog(Log_Compiler, "开始编译");
-    if(!m_builder.build(&m_project,&m_program))
+
+    JZNodeBuilder builder;
+    JZNodeProgram program;
+    if(!builder.build(&m_project,&program))
     {
-        m_log->addLog(Log_Compiler,m_builder.error());
-        m_log->addLog(Log_Compiler, "编译失败");
+        QString error = builder.error();
+        if (error.endsWith("\n"))
+            error.chop(1);
+        m_log->addLog(Log_Compiler, error);
+        m_log->addLog(Log_Compiler, "编译失败\n");
         return false;
     }
     QString build_path = m_project.path() + "/build";
@@ -713,12 +832,12 @@ bool MainWindow::build()
     QDir dir;
     if (!dir.exists(build_path))
         dir.mkdir(build_path);
-    if (!m_program.save(build_exe))
+    if (!program.save(build_exe))
     {
         m_log->addLog(Log_Compiler, "generate program failed");
         return false;
     }
-    saveToFile(build_path + "/" + m_project.name() + ".jsm", m_program.dump());
+    saveToFile(build_path + "/" + m_project.name() + ".jsm", program.dump());
 
     m_log->addLog(Log_Compiler, "编译完成:" + build_exe);
     return true;
@@ -766,22 +885,15 @@ void MainWindow::start(bool startPause)
 
     JZNodeDebugInfo info;
     info.breakPoints = m_project.breakPoints();
-    m_debuger.init(info);
+    m_program = m_debuger.init(info);
+
+    setRunning(true);    
 }
 
 void MainWindow::onRuntimeStatus(int status)
 {
-    m_log->addLog(Log_Runtime, QString("status:") + QString::number(status));
-    auto it = m_editors.begin();
-    while (it != m_editors.end())
-    {
-        auto editor = it.value();
-        if (editor->type() == Editor_script)
-            ((JZNodeEditor*)editor)->setRuntimeStatus(status);
-
-        it++;
-    }
-    updateActionStatus();
+    m_runtime.status = status;
+    setRuntimeInfo();    
 }
 
 void MainWindow::onRuntimeLog(QString log)
@@ -791,22 +903,37 @@ void MainWindow::onRuntimeLog(QString log)
 
 void MainWindow::onRuntimeInfo(JZNodeRuntimeInfo info)
 {    
-    if (openEditor(info.file))
-    {
-        JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
-        editor->setRuntimeNode(info.nodeId);        
-    }
-    updateActionStatus();
+    m_runtime = info;
+    setRuntimeInfo();    
 }
 
 void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
     m_log->addLog(Log_Runtime, "Runtime error:");
-    m_log->addLog(Log_Runtime, error.info);
+    m_log->addLog(Log_Runtime, error.error + "\n");
+
+    int stack_size = error.info.stacks.size();
+    for (int i = 0; i < stack_size; i++)
+    {
+        auto s = error.info.stacks[stack_size - i - 1];
+        QString line = makeLink(s.file, s.function, s.nodeId);
+        m_log->addLog(Log_Runtime, line);
+    }    
+
+    onRuntimeInfo(error.info);
 }
 
-void MainWindow::onDebugFinish(int code,QProcess::ExitStatus status)
+void MainWindow::onNetError()
 {
+    return;
+    m_log->addLog(Log_Runtime, "调试连接中断");
+    onActionStop();
+}
+
+void MainWindow::onRuntimeFinish(int code,QProcess::ExitStatus status)
+{
+    setRunning(false);    
+
     if(status == QProcess::CrashExit)
         m_log->addLog(Log_Runtime, "process crash ");
     else
@@ -869,4 +996,62 @@ bool MainWindow::closeAll()
     }
     m_editors.clear();    
     return true;
+}
+
+void MainWindow::setRunning(bool flag)
+{
+    m_watch->setRunning(flag);
+    m_stack->setRunning(flag);
+
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
+    {
+        if (it.value()->type() == Editor_script)
+        {
+            auto node_edit = (JZNodeEditor*)it.value();
+            node_edit->setRunning(false);
+        }        
+        it++;
+    }
+}
+
+void MainWindow::setRuntimeInfo()
+{
+    int status = m_runtime.status;    
+    bool is_pause = statusIsPause(status);
+    if (is_pause)
+    {        
+        if (m_runtime.stacks.size() > 0)
+        {
+            auto stack = m_runtime.stacks.back();
+            setRuntimeNode(stack.file, stack.nodeId);
+        }
+    }   
+    m_log->addLog(Log_Runtime, QString("status:") + QString::number(status));
+
+    m_log->watch()->setRuntimeStatus(status);
+    m_log->stack()->setRuntime(m_runtime);
+    
+    if(!is_pause)
+    {
+        auto it = m_editors.begin();
+        while (it != m_editors.end())
+        {
+            auto editor = it.value();
+            if (editor->type() == Editor_script)
+                ((JZNodeEditor*)editor)->setRuntimeNode(-1);
+
+            it++;
+        }
+    }
+    updateActionStatus();
+}
+
+void MainWindow::setRuntimeNode(QString file, int nodeId)
+{
+    if (openEditor(file))
+    {
+        JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
+        editor->setRuntimeNode(nodeId);
+    }
 }

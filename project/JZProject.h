@@ -67,6 +67,7 @@ public:
     QMap<QString, QVector<int>> breakPoints();
 
     const FunctionDefine *function(QString name);
+    void regist(JZProjectItem *item);    
 
 protected:
     Q_DISABLE_COPY(JZProject)
@@ -91,6 +92,7 @@ protected:
     JZProjectItemFolder m_root;
     QMap<QString,ItemInfo> m_itemBuffer;
     QString m_filepath;
+    bool m_blockRegist;
 };
 
 #endif

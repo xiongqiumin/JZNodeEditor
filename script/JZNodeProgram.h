@@ -18,63 +18,6 @@ enum{
     Reg_Cmp = 2500000,
 };
 
-//TopoTool
-class TopoTool
-{
-public:
-    TopoTool();
-
-    void addDepend(int id,QStringList in,QStringList out);
-    bool toposort(QList<int> &list);
-
-protected:
-    class TopoNode
-    {
-    public:
-        int id;
-        QStringList in;
-        QStringList out;
-        QList<int> next;
-    };
-    QList<TopoNode> m_list;
-};
-
-class GraphNode
-{
-public:
-    GraphNode();
-
-    JZNode *node;
-    QList<JZNodeGemo> next;    
-
-    QMap<int,int> pinType;  //节点数据类型
-    QMap<int,QList<JZNodeGemo>> paramIn;  //输入位置
-    QMap<int,QList<JZNodeGemo>> paramOut; //输出位置
-};
-typedef QSharedPointer<GraphNode> GraphNodePtr;
-
-//Graph
-class Graph
-{
-public:
-    Graph();
-    ~Graph();
-
-    bool check();
-    bool toposort(); //拓扑排序
-    void clear();
-
-    GraphNode *graphNode(int id);
-    JZNode *node(int id);
-    JZNodePin *pin(JZNodeGemo gemo);
-    JZNodePin *pin(int nodeId,int pinId);
-
-    QList<GraphNode*> topolist;
-    QMap<int, GraphNodePtr> m_nodes;
-    QString error;
-};
-typedef QSharedPointer<Graph> GraphPtr;
-
 //JZEventHandle
 class JZEventHandle
 {
@@ -100,15 +43,29 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZParamChangeHandle &param);
 QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param);
 
+//NodeRange
+struct NodeRange
+{
+    NodeRange();
+
+    int start;
+    int end;
+};
+QDataStream &operator<<(QDataStream &s, const NodeRange &param);
+QDataStream &operator>>(QDataStream &s, NodeRange &param);
+
+
 //NodeInfo
 struct NodeInfo
 {        
     NodeInfo();
+
+    int indexOfRange(int pc);
     
     int node_id;
     int node_type;
-    bool isFlow;   
-    QString error;
+    bool isFlow;       
+    QList<NodeRange> pcRanges;
 };
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeInfo &param);
@@ -119,6 +76,7 @@ class JZFunction
 public:
     QString file;
     int addr;
+    QList<JZParamDefine> localVariables;
 };
 QDataStream &operator<<(QDataStream &s, const JZFunction &param);
 QDataStream &operator >> (QDataStream &s, JZFunction &param);
@@ -129,20 +87,17 @@ class JZNodeScript
 public:    
     JZNodeScript();
     void clear();    
+
     FunctionDefine *function(QString name);
 
     QString file;
     QString className;
-    QList<GraphPtr> graphs;     
     QMap<int, NodeInfo> nodeInfo;
-    QList<JZNodeIRPtr> statmentList;
-    QList<JZParamDefine> localVariable;
+    QList<JZNodeIRPtr> statmentList;    
 
-    QList<JZParamChangeHandle> paramChanges;    
+    QList<JZParamChangeHandle> paramChangeEvents;    
     QList<JZEventHandle> events;
-    QList<FunctionDefine> functionList;        
-    QList<JZNodeIRParam> watchList;
-
+    QList<FunctionDefine> functionList;
     QMap<QString, JZFunction> runtimeInfo;
 
     void saveToStream(QDataStream &s);
@@ -166,16 +121,16 @@ public:
     void clear();
 
     FunctionDefine *function(QString name);
-    JZNodeScript *script(QString path);
-    JZNodeScript *functionScript(QString function);
-    int functionAddr(QString function);
+    JZNodeScript *script(QString path);    
+    JZFunction *runtimeInfo(QString function);
 
     QList<JZNodeScript*> scriptList();
     JZNodeScript *objectScript(QString className);    
     QList<JZEventHandle*> eventList() const;
 
+    QList<FunctionDefine> functionDefines();
     QList<JZNodeObjectDefine> objectDefines();
-    QMap<QString,JZParamDefine> variables();        
+    QMap<QString,JZParamDefine> globalVariables();
     QString dump();   
     QString error();
     
@@ -183,9 +138,8 @@ protected:
     Q_DISABLE_COPY(JZNodeProgram);
 
     friend JZNodeBuilder;    
-    QString paramName(JZNodeIRParam param);
-
-    QStringList m_opNames;
+    QString toString(JZNodeIRParam param);
+    
     QMap<QString,JZNodeScriptPtr> m_scripts; 
     QMap<QString,JZParamDefine> m_variables;        
     QList<JZNodeObjectDefine> m_objectDefines;        

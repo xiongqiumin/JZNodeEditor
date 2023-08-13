@@ -35,10 +35,15 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
     if (m_debug)
     {
         m_debugServer.setEngine(&m_engine);
-        m_engine.setDebugger(&m_debugServer);
+        m_debugServer.setVM(this);
+        m_engine.setDebug(true);
 
         m_debugServer.startServer(19888);
-        m_debugServer.waitForAttach();
+        if (!m_debugServer.waitForAttach(30000)) 
+        {
+            error = "wait attach failed";
+            return false;
+        }
 
         auto debug_info = m_debugServer.debugInfo();
         auto it = debug_info.breakPoints.begin();
@@ -66,12 +71,24 @@ void JZNodeVM::customEvent(QEvent *event)
 void JZNodeVM::quit()
 {
     m_engine.stop();
+    m_debugServer.stopServer();
     qApp->exit();
 }
 
 void JZNodeVM::onRuntimeError(JZNodeRuntimeError error)
 {
-    QMessageBox::information(nullptr,"",error.info);
+    if (m_debug)
+        return;        
+
+    QString text = "Error: " + error.error + "\n\n";
+    int stack_size = error.info.stacks.size();
+    for (int i = 0; i < stack_size; i++)
+    {
+        auto s = error.info.stacks[stack_size - i - 1];
+        text += s.function + "(" + s.file + "," + QString::number(s.nodeId) + ")\n";
+    }
+    
+    QMessageBox::information(nullptr,"", text);    
     QTimer::singleShot(0,[]{
        qApp->quit();
     });

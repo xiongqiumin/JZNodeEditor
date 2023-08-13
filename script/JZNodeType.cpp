@@ -3,6 +3,7 @@
 #include "JZNodeType.h"
 #include "JZNodeObject.h"
 #include "JZNodeIR.h"
+#include "JZRegExpHelp.h"
 
 static QMap<QString,int> typeMap;
 
@@ -96,7 +97,7 @@ int JZNodeType::variantType(const QVariant &v)
 
 bool JZNodeType::isNumber(int type)
 {
-    if(type == Type_int || type == Type_int64 || type == Type_double)
+    if(type == Type_int || type == Type_int64 || type == Type_double || type == Type_bool)
         return true;
     
     return false;
@@ -138,8 +139,6 @@ bool JZNodeType::canConvert(int type1,int type2)
         return true;
     if(isNumber(type1) && isNumber(type2))
         return true;
-    if(isNumber(type1) && type2 == Type_bool)
-        return true;
     if (type1 == Type_nullptr && type2 >= Type_object)
         return true;
     if(type1 >= Type_object && type2 >= Type_object)
@@ -171,11 +170,26 @@ QString JZNodeType::toString(const QVariant &v)
 
 QString JZNodeType::opName(int op)
 {
-    QStringList opNames = QStringList{ "+","-","*","/","%","==","!=","<=",">=","<",">","&&","||","|","&","^" };
-    Q_ASSERT(op >= OP_add && op < OP_bitxor);
+    QStringList opNames = QStringList{ "+","-","*","/","%","==","!=","<=",">=","<",">","and","or","not","|","&","^" };
+    Q_ASSERT(op >= OP_add && op <= OP_bitxor);
     return opNames[op - OP_add];
 }
 
+QVariant JZNodeType::value(int type)
+{
+    return QVariant(typeToQMeta(type));
+}
+
+QVariant JZNodeType::convertTo(const QVariant &v, int type)
+{
+    if (type == Type_any)
+        return v;
+
+    auto qtype = typeToQMeta(type);
+    QVariant ret = v;
+    ret.convert(qtype);
+    return ret;
+}
 
 QVariant JZNodeType::matchValue(const QVariant &v, QList<int> type)
 {
@@ -183,14 +197,37 @@ QVariant JZNodeType::matchValue(const QVariant &v, QList<int> type)
     if (type.contains(v_type))
         return v;
 
-    if (type.contains(Type_int))
-        return v.toInt();
-    if (type.contains(Type_double))
-        return v.toDouble();
+    for(int i = 0; i < type.size(); i++)    
+    {
+        if (canConvert(v_type, type[i]))
+            return convertTo(v, type[i]);
+    }
 
-    QVariant ret = v;
-    ret.convert(type[0]);
-    return ret;
+    if (v.type() == QMetaType::QString)
+    {
+        QString text = v.toString();
+
+        JZRegExpHelp help;        
+        bool isInt = help.isInt(text);
+        bool isHex = help.isHex(text);
+        bool isFloat = help.isFloat(text);
+        if (type.contains(Type_int) && (isInt || isHex))
+        {
+            if (isInt)
+                return text.toInt();
+            else
+                return text.toInt(nullptr, 16);
+        }
+        if (type.contains(Type_double) && (isInt || isHex || isFloat))
+        {
+            if(isHex)
+                return text.toInt(nullptr, 16);
+            else
+                return text.toDouble();
+        }
+    }
+
+    return value(type[0]);
 }
 
 //JZParamDefine

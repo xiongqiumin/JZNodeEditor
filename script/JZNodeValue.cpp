@@ -22,6 +22,12 @@ int JZNodeLiteral::dataType() const
 void JZNodeLiteral::setDataType(int type)
 {
     prop(paramOut(0))->setDataType({type});
+    if (type == Type_nullptr)
+    {
+        int out = paramOut(0);
+        setPropName(out, "null");
+        prop(out)->setFlag(Prop_out | Prop_param  | Prop_dispName);
+    }
 }
 
 QVariant JZNodeLiteral::literal() const
@@ -87,7 +93,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     }
 
     auto meta = JZNodeObjectManager::instance()->meta(className());    
-    if (meta->id == Type_none)
+    if (!meta)
     {
         error = "没有此类型:" + className();
         return false;
@@ -192,8 +198,7 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
     QString name = variable();
     if (!c->checkVariableExist(name, error))
         return false;
-
-    c->allocLocalVariable(name);
+    
     int out_id = c->paramId(m_id,paramOut(0));
     JZNodeIRParam ref = irRef(name);
     c->addSetVariable(irId(out_id),ref);
@@ -278,8 +283,7 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
         
     int id = c->paramId(m_id,paramIn(0));
     int m_out = c->paramId(m_id,paramOut(0));
-
-    c->allocLocalVariable(name);
+    
     JZNodeIRParam ref = irRef(name);
     c->addSetVariable(ref,irId(id));
     c->addSetVariable(irId(m_out),irId(id));
@@ -294,7 +298,7 @@ JZNodeSetParamDataFlow::JZNodeSetParamDataFlow()
     m_name = "set";
     m_type = Node_setParamData;
 
-    addParamIn("",Prop_dispName | Prop_editName | Prop_literal);
+    addParamIn("",Prop_dispName | Prop_editName);
 }
 
 JZNodeSetParamDataFlow::~JZNodeSetParamDataFlow()
@@ -333,8 +337,7 @@ bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
         return false;
     if(!c->addDataInput(m_id,error))
         return false;
-
-    c->allocLocalVariable(name);
+    
     int id = c->paramId(m_id,paramIn(0));
     c->addSetVariable(irRef(name),irId(id));
     return true;

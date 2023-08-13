@@ -52,10 +52,7 @@ void JZUiEditor::save()
     JZUiFile *file = (JZUiFile*)m_item;    
     QString xml = m_form->editor()->contents();    
     file->setXml(xml);
-    m_form->editor()->setDirty(false);
-
-    auto classFile = m_project->getClassFile(file);
-    classFile->reinit();
+    m_form->editor()->setDirty(false);    
 }
 
 void JZUiEditor::active()

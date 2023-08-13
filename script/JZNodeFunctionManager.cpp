@@ -91,25 +91,7 @@ void JZNodeFunctionManager::registCFunction(QString name,bool isFlow, QSharedPoi
     define.isCFunction = true;
     define.cfunc = func;
     define.isFlowFunction = isFlow;
-
-    for(int i = 0; i < func->args.size(); i++)
-    {
-        JZParamDefine prop;
-        prop.name = "input" + QString::number(i);
-        prop.dataType = JZNodeType::typeidToType(func->args[i]);
-        Q_ASSERT(prop.dataType != Type_none);
-
-        define.paramIn.push_back(prop);
-    }    
-    if(func->result != typeid(void).name())
-    {
-        JZParamDefine prop;
-        prop.name = "output";
-        prop.dataType = JZNodeType::typeidToType(func->result);
-        Q_ASSERT(prop.dataType != Type_none);
-
-        define.paramOut.push_back(prop);
-    }
+    define.updateCFunctionParam();
     registFunction(define);
 }
 

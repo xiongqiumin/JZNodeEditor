@@ -29,6 +29,7 @@ protected slots:
 
 signals:
     void sigFileOpened(QString file);  
+    void sigFileRemoved(QString file);
 
 protected:    
     void addItem(QTreeWidgetItem *parent, JZProjectItem *item);

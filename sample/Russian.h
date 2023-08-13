@@ -10,6 +10,7 @@ public:
     ~SampleRussian();
 
     bool run();
+    void saveProject();
 
 protected:
     void addInitFunction();

@@ -15,6 +15,7 @@
 #include <QGraphicsRectItem>
 #include "JZNodeProgram.h"
 
+
 class JZNodeView;
 class JZProject;
 class JZNodeViewCommand : public QUndoCommand
@@ -50,6 +51,7 @@ protected:
 
     JZNodeView *m_view;
 };
+
 
 class BreakPointTriggerResult
 {
@@ -87,7 +89,9 @@ public:
     void moveNode(int id,QPointF pos);
     void removeNode(int id);    
 
-    void setNode(int id,const QByteArray &buffer);
+    QByteArray getNodeData(int id);
+    void setNodeData(int id,const QByteArray &buffer);
+
     void pinClicked(int nodeId,int pinId);
     void updateNode(int id);
     bool isPropEditable(int id,int propId);
@@ -125,23 +129,28 @@ public:
     void updateNodeLayout();    
     void fitNodeView();
     void ensureNodeVisible(int id);
+    void selectNode(int id);
     BreakPointTriggerResult breakPointTrigger();
 
-    void setRuntimeStatus(int staus);
+    void setRunning(bool flag);
+
     int runtimeNode();
     void setRuntimeNode(int nodeId);
+    bool isBreakPoint(int nodeId);
 
 signals:
     void redoAvailable(bool available);
     void undoAvailable(bool available);
-    void modifyChanged(bool modify);
+    void modifyChanged(bool modify);    
 
 protected slots:
     void onContextMenu(const QPoint &pos);
+    void onItemPropChanged();
     void onPropNameUpdate(int nodeId,int propId,const QString &value);
     void onPropUpdate(int nodeId,int propId,const QVariant &value);
     void onAutoCompiler();
     void onCleanChanged(bool modify);
+    void onUndoStackChanged();
 
 protected:
     friend JZNodeViewCommand;
@@ -166,9 +175,7 @@ protected:
     void copyItems(QList<QGraphicsItem*> item);
     void removeItems(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);    
-    void initGraph();        
-    int nodeDepth(GraphNode *node,Graph *graph);
-    void setDepth(GraphNode *node,int depth,Graph *graph,QMap<GraphNode*,int> &result);
+    void initGraph();            
     void setSelectNode(int id);
     void updatePropEditable(const JZNodeGemo &gemo);
     void saveNodePos();
@@ -194,7 +201,7 @@ protected:
     bool m_propEditFlag;
 
     QPointF m_downPoint;
-    QTimer *m_compilerTimer;  
+    QTimer *m_compilerTimer;      
 
     bool m_runningMode;
     int m_runNode;

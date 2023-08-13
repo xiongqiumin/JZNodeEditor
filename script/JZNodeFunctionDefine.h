@@ -25,6 +25,7 @@ public:
     FunctionDefine();    
 
     QString fullName() const;
+    void updateCFunctionParam();
             
     QString name;
     QString className;

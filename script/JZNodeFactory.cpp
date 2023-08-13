@@ -36,6 +36,7 @@ JZNode *JZNodeFactory::createNode(int type)
 void JZNodeFactory::init()
 {    
     registNode(Node_print,createFunc<JZNodePrint>);  
+    registNode(Node_nop, createFunc<JZNodeNop>);
 
     registNode(Node_literal,createFunc<JZNodeLiteral>);    
     registNode(Node_create,createFunc<JZNodeCreate>);
@@ -55,8 +56,8 @@ void JZNodeFactory::init()
     registNode(Node_continue,createFunc<JZNodeContinue>);
     registNode(Node_return,createFunc<JZNodeReturn>);
     registNode(Node_exit,createFunc<JZNodeExit>);
-    //registNode(Node_switch,createFunc<JZNodeSwitch>);
-    //registNode(Node_if,createFunc<JZNodeIf>);
+    registNode(Node_switch,createFunc<JZNodeSwitch>);
+    registNode(Node_if,createFunc<JZNodeIf>);
 
     registNode(Node_add,createFunc<JZNodeAdd>);
     registNode(Node_sub,createFunc<JZNodeSub>);
@@ -71,6 +72,7 @@ void JZNodeFactory::init()
     registNode(Node_gt,createFunc<JZNodeGT>);
     registNode(Node_and,createFunc<JZNodeAnd>);
     registNode(Node_or,createFunc<JZNodeOr>);
+    registNode(Node_not, createFunc<JZNodeNot>);
     registNode(Node_bitand,createFunc<JZNodeBitAnd>);
     registNode(Node_bitor,createFunc<JZNodeBitOr>);
     registNode(Node_bitxor,createFunc<JZNodeBitXor>);
@@ -83,7 +85,7 @@ void JZNodeFactory::init()
 }
 
 //parseNode
-JZNode *parseNode(const QByteArray &buffer)
+JZNode *loadNode(const QByteArray &buffer)
 {
     QDataStream s(buffer);
     int type;
@@ -93,7 +95,7 @@ JZNode *parseNode(const QByteArray &buffer)
     return node;
 }
 
-QByteArray formatNode(JZNode *node)
+QByteArray saveNode(JZNode *node)
 {
     QByteArray data;
     QDataStream s(&data, QIODevice::WriteOnly);

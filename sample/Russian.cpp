@@ -6,6 +6,7 @@
 #include "JZNodeFunction.h"
 #include "JZNodeValue.h"
 #include "JZUiFile.h"
+#include "JZNodeView.h"
 #include <QDir>
 
 static QString xml = 
@@ -120,11 +121,42 @@ SampleRussian::SampleRussian()
     main->addConnect(node->flowOutGemo(0), init_func->flowInGemo());
     main->addConnect(node_main->paramOutGemo(0), node_show->paramInGemo(0));
     main->addConnect(init_func->flowOutGemo(0), node_show->flowInGemo());
+
+    saveProject();
 }
 
 SampleRussian::~SampleRussian()
 {
 
+}
+
+void SampleRussian::saveProject()
+{
+    JZNodeView *view = new JZNodeView();
+
+    auto item_list = m_project.itemList("./", ProjectItem_any);
+    for (int i = 0; i < item_list.size(); i++)
+    {
+        int item_type = item_list[i]->itemType();
+        if (item_type == ProjectItem_scriptFlow || item_type == ProjectItem_scriptFunction
+            || item_type == ProjectItem_scriptParamBinding)
+        {
+            JZScriptFile *file = (JZScriptFile *)item_list[i];
+            view->setFile(file);
+            view->updateNodeLayout();
+            view->save();
+        }
+    }        
+    m_project.saveAllItem();
+    delete view;    
+
+    QString dir = qApp->applicationDirPath() + "/sample";
+    if (!QDir().exists(dir))
+        QDir().mkdir(dir);
+    QString path = qApp->applicationDirPath() + "/sample/russion.jzproject";
+    m_project.saveAs(path);
+
+    m_project.open(path);
 }
 
 bool SampleRussian::run()
@@ -143,15 +175,8 @@ bool SampleRussian::run()
         qDebug() << "save failed";
         return false;
     }
-    qDebug().noquote() << program.dump();
-    m_project.saveAllItem();
-
-    QString dir = qApp->applicationDirPath() + "/sample";
-    if (!QDir().exists(dir))
-        QDir().mkdir(dir);
-    QString path = qApp->applicationDirPath() + "/sample/russion.jzproject";
-    m_project.saveAs(path);
-
+    qDebug().noquote() << program.dump();    
+    
     JZNodeVM vm;
     QString error;
     if (!vm.init(program_path, false, error))
@@ -1110,39 +1135,80 @@ void SampleRussian::addKeyEvent()
     node_keyPress->setEvent("mainwindow", meta->event("keyPressEvent"));
     m_script->addNode(JZNodePtr(node_keyPress));
 
-    JZNodeThis *node_this = new JZNodeThis();
-
+    
     JZNodeFunction *canRight = new JZNodeFunction();
     canRight->setFunction(meta->function("canMoveRight"));
 
     JZNodeFunction *moveRight = new JZNodeFunction();
     moveRight->setFunction(meta->function("moveRight"));
 
+    JZNodeFunction *canLeft = new JZNodeFunction();
+    canLeft->setFunction(meta->function("canMoveLeft"));
+
+    JZNodeFunction *moveLeft = new JZNodeFunction();
+    moveLeft->setFunction(meta->function("moveLeft"));
+
+    JZNodeFunction *canDown = new JZNodeFunction();
+    canDown->setFunction(meta->function("canMoveDown"));
+
+    JZNodeFunction *moveDown = new JZNodeFunction();
+    moveDown->setFunction(meta->function("moveDown"));
+
+
+    JZNodeIf *key_if = new JZNodeIf();
+    key_if->addCondPin();
+    key_if->addCondPin();
+
     JZNodeBranch *branch_right = new JZNodeBranch();
+    JZNodeBranch *branch_left = new JZNodeBranch();
+    JZNodeBranch *branch_down = new JZNodeBranch();
 
 
     JZNodeFunction *key_code = new JZNodeFunction();
     key_code->setFunction(key_meta->function("key"));
 
-    JZNodeEQ *key_eq = new JZNodeEQ();
-    
-    m_script->addNode(JZNodePtr(node_this));
+    JZNodeEQ *key_eqR = new JZNodeEQ();
+    JZNodeEQ *key_eqD = new JZNodeEQ();
+    JZNodeEQ *key_eqL = new JZNodeEQ();
+        
     m_script->addNode(JZNodePtr(canRight));
     m_script->addNode(JZNodePtr(moveRight));
+    m_script->addNode(JZNodePtr(canLeft));
+    m_script->addNode(JZNodePtr(moveLeft));
+    m_script->addNode(JZNodePtr(canDown));
+    m_script->addNode(JZNodePtr(moveDown));
     m_script->addNode(JZNodePtr(branch_right));
+    m_script->addNode(JZNodePtr(branch_left));
+    m_script->addNode(JZNodePtr(branch_down));
     m_script->addNode(JZNodePtr(key_code));
-    m_script->addNode(JZNodePtr(key_eq));
+    m_script->addNode(JZNodePtr(key_eqR));
+    m_script->addNode(JZNodePtr(key_eqD));
+    m_script->addNode(JZNodePtr(key_eqL));
+    m_script->addNode(JZNodePtr(key_if));
 
-    m_script->addConnect(node_keyPress->paramOutGemo(0), key_code->paramInGemo(0));
-    m_script->addConnect(key_code->paramOutGemo(0), key_eq->paramInGemo(0));
-    key_eq->setPropValue(1, Qt::Key_D);
+    m_script->addConnect(node_keyPress->paramOutGemo(0), key_code->paramInGemo(0));    
+    key_eqR->setPropValue(1, Qt::Key_D);
+    key_eqD->setPropValue(1, Qt::Key_S);
+    key_eqL->setPropValue(1, Qt::Key_A);
 
-    m_script->addConnect(node_this->paramOutGemo(0), canRight->paramInGemo(0));
-    m_script->addConnect(node_this->paramOutGemo(0), moveRight->paramInGemo(0));
+    m_script->addConnect(node_keyPress->flowOutGemo(0), key_if->flowInGemo());
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqL->paramInGemo(0));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqD->paramInGemo(0));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqR->paramInGemo(0));
 
-    m_script->addConnect(node_keyPress->flowOutGemo(0), branch_right->flowInGemo());
+    m_script->addConnect(key_eqL->paramOutGemo(0), key_if->paramInGemo(0));
+    m_script->addConnect(key_eqD->paramOutGemo(0), key_if->paramInGemo(1));
+    m_script->addConnect(key_eqR->paramOutGemo(0), key_if->paramInGemo(2));
 
-    m_script->addConnect(key_eq->paramOutGemo(0), branch_right->paramInGemo(0));
-    //m_script->addConnect(canRight->paramOutGemo(0), branch_right->paramInGemo(0));
-    m_script->addConnect(branch_right->flowOutGemo(0), moveRight->flowInGemo());
+    m_script->addConnect(key_if->subFlowOutGemo(0), branch_left->flowInGemo());
+    m_script->addConnect(key_if->subFlowOutGemo(1), branch_down->flowInGemo());
+    m_script->addConnect(key_if->subFlowOutGemo(2), branch_right->flowInGemo());
+    
+    m_script->addConnect(canLeft->paramOutGemo(0), branch_left->paramInGemo(0));
+    m_script->addConnect(canDown->paramOutGemo(0), branch_down->paramInGemo(0));
+    m_script->addConnect(canRight->paramOutGemo(0), branch_right->paramInGemo(0));
+
+    m_script->addConnect(branch_down->flowOutGemo(0), moveDown->flowInGemo());    
+    m_script->addConnect(branch_right->flowOutGemo(0), moveRight->flowInGemo());    
+    m_script->addConnect(branch_left->flowOutGemo(0), moveLeft->flowInGemo());
 }

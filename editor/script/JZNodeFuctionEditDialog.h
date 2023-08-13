@@ -16,9 +16,8 @@ public:
     JZNodeFuctionEditDialog(QWidget *parent = Q_NULLPTR);
     ~JZNodeFuctionEditDialog();
     
-    void init();
-    void setClass(QString className);
-    void setFunctionInfo(FunctionDefine info);
+    void init();    
+    void setFunctionInfo(FunctionDefine info,bool newFunction);
     FunctionDefine functionInfo();    
 
 protected slots:    
@@ -52,6 +51,7 @@ private:
     void uiToData();
 
     QString m_className;
+    bool m_newFunction;
     FunctionDefine m_functionDefine;    
     Ui::JZNodeFuctionEditDialog *ui;
 };

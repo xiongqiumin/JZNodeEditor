@@ -2,17 +2,24 @@
 #include <QFontMetrics>
 #include <QDebug>
 #include <QComboBox>
+#include "JZNodeFunctionManager.h"
 #include "JZNodeFuctionEditDialog.h"
 #include "ui_JZNodeFuctionEditDialog.h"
+
+enum {
+    Item_name = Qt::UserRole,    
+    Item_type,
+};
+
 
 //JZNodeFuctionEditDialog
 JZNodeFuctionEditDialog::JZNodeFuctionEditDialog(QWidget *parent)
     : QDialog(parent)
 {
+    m_newFunction = false;
+
     ui = new Ui::JZNodeFuctionEditDialog();
-    ui->setupUi(this);    
-            
-    m_functionDefine.name = "新建函数";
+    ui->setupUi(this);                   
 
     ui->tableIn->setColumnCount(2);
     ui->tableIn->setHorizontalHeaderLabels({ "名称","类型"});
@@ -26,27 +33,15 @@ JZNodeFuctionEditDialog::~JZNodeFuctionEditDialog()
     delete ui;
 }
 
-void JZNodeFuctionEditDialog::setClass(QString className)
-{
-    m_className = className;        
-}
-
 void JZNodeFuctionEditDialog::init()
-{
-    if (isMemberFunction() && m_functionDefine.paramIn.isEmpty())
-    {
-        int classType = JZNodeObjectManager::instance()->getClassId(m_className);
-        JZParamDefine def;
-        def.name = "this";
-        def.dataType = classType;
-        m_functionDefine.paramIn.push_back(def);
-    }
+{    
     dataToUi();
 }
 
-void JZNodeFuctionEditDialog::setFunctionInfo(FunctionDefine info)
+void JZNodeFuctionEditDialog::setFunctionInfo(FunctionDefine info, bool newFunction)
 {
     m_functionDefine = info;
+    m_newFunction = newFunction;
 }
 
 FunctionDefine JZNodeFuctionEditDialog::functionInfo()
@@ -112,6 +107,17 @@ void JZNodeFuctionEditDialog::on_btnReset_clicked()
 void JZNodeFuctionEditDialog::on_btnOk_clicked()
 {
     uiToData();
+
+    if (m_newFunction)
+    {
+        auto func = JZNodeFunctionManager::instance()->function(m_functionDefine.fullName());
+        if (func)
+        {
+            QMessageBox::information(this, "", "同名函数已存在");
+            return;
+        }
+    }
+
     QDialog::accept();
 }
 
@@ -122,12 +128,18 @@ void JZNodeFuctionEditDialog::on_btnCancel_clicked()
 
 bool JZNodeFuctionEditDialog::isMemberFunction()
 {
-    return !m_className.isEmpty();
+    return !m_functionDefine.className.isEmpty();
 }
 
 QStringList JZNodeFuctionEditDialog::localVarList()
 {
-    return QStringList();
+    QStringList names;
+    names << "this";
+    int count = ui->tableIn->rowCount();
+    for (int i = 0; i < count; i++)
+        names << ui->tableIn->item(i, 0)->text();
+
+    return names;
 }
 
 void JZNodeFuctionEditDialog::add(QTableWidget *table)
@@ -193,13 +205,19 @@ void JZNodeFuctionEditDialog::tableToData(QTableWidget *table, QList<JZParamDefi
 {
     param.clear();
     int count = table->rowCount();
-    for (int i = 0; i < count; i++)
-    {
-        QComboBox *box = (QComboBox *)table->cellWidget(i, 1);
-
+    for (int row = 0; row < count; row++)
+    {        
         JZParamDefine def;
-        def.name = table->item(i, 0)->text();        
-        def.dataType = box->itemData(Qt::UserRole).toInt();        
+        def.name = table->item(row, 0)->text();
+        if ((table == ui->tableIn && row == 0 && isMemberFunction()))
+        {
+            def.dataType = table->item(row, 1)->data(Item_type).toInt();
+        }
+        else
+        {
+            QComboBox *box = (QComboBox *)table->cellWidget(row, 1);
+            def.dataType = box->currentData().toInt();
+        }
         param.push_back(def);
     }
 }
@@ -210,22 +228,29 @@ void JZNodeFuctionEditDialog::addRow(QTableWidget *table, QString name, int data
     table->setRowCount(row + 1);
 
     QTableWidgetItem *itemName = new QTableWidgetItem(name);
-    itemName->setData(Qt::UserRole, name);
+    itemName->setData(Item_name, name);    
     table->setItem(row, 0, itemName);
-    if (table == ui->tableOut || (table == ui->tableIn && row == 0 && isMemberFunction()))
-    {
-        itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
+    if ((table == ui->tableIn && row == 0 && isMemberFunction()))
+    {        
+        QString type_name = JZNodeObjectManager::instance()->getClassName(dataType);
+        QTableWidgetItem *itemType = new QTableWidgetItem(name);        
+        itemType->setText(type_name);
+        itemType->setData(Item_type, dataType);
+        itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, 1, itemType);
     }
+    else
+    {
+        TypeEditHelp help;
+        help.init(dataType);
 
-    TypeEditHelp help;
-    help.init(dataType);
-
-    QComboBox *box = new QComboBox();
-    for (int i = 0; i < help.typeNames.size(); i++)
-        box->addItem(help.typeNames[i], help.types[i]);
-    box->setCurrentIndex(help.index);
-    connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
-    table->setCellWidget(row, 1, box);
+        QComboBox *box = new QComboBox();
+        for (int i = 0; i < help.typeNames.size(); i++)
+            box->addItem(help.typeNames[i], help.types[i]);
+        box->setCurrentIndex(help.index);
+        connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
+        table->setCellWidget(row, 1, box);
+    }
 }
 
 void JZNodeFuctionEditDialog::onTypeChanged(int index)

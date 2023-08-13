@@ -89,7 +89,7 @@ bool JZNodePin::isButton() const
     return (m_flag & Prop_button);
 }
 
-bool JZNodePin::isEditable() const
+bool JZNodePin::isEditValue() const
 {
     return (m_flag & Prop_editValue);
 }
