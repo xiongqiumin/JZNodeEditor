@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     if (1)
     {
         SampleRussian russian;
+        russian.saveProject();
         //russian.run();
         //return 0;
     }

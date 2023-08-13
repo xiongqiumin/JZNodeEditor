@@ -19,6 +19,8 @@ JZNodeBreakPoint::JZNodeBreakPoint(QWidget *parent)
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setEditTriggers(QTableWidget::NoEditTriggers);    
 
+    connect(m_table, &QTableWidget::itemDoubleClicked, this, &JZNodeBreakPoint::onItemDoubleClicked);
+
     QVBoxLayout *sub_layout = new QVBoxLayout();
     sub_layout->addWidget(m_table);
     this->setLayout(sub_layout);
@@ -62,4 +64,10 @@ void JZNodeBreakPoint::clear()
 {
     m_table->clearContents();
     m_table->setRowCount(0);
+}
+
+
+void JZNodeBreakPoint::onItemDoubleClicked()
+{
+
 }

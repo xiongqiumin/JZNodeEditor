@@ -79,8 +79,7 @@ protected slots:
     void onNodeClicked(QString file, int nodeId);
     void onStackChanged(int stack);
 
-    void onRuntimeLog(QString log);
-    void onRuntimeInfo(JZNodeRuntimeInfo error);
+    void onRuntimeLog(QString log);    
     void onRuntimeError(JZNodeRuntimeError error);    
     void onRuntimeStatus(int staus);    
     void onRuntimeFinish(int code,QProcess::ExitStatus status);
@@ -120,8 +119,7 @@ private:
     void initUi();        
     void switchEditor(JZEditor *editor);    
     void gotoNode(QString file, int nodeId);
-    void setRunning(bool flag);
-    void setRuntimeInfo();
+    void setRunning(bool flag);    
     void setRuntimeNode(QString file, int nodeId);
 
     bool build();

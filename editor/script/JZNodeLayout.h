@@ -13,6 +13,7 @@ public:
     void clear();
 
     int nodeId;
+    bool isFlow;
     int row, col;    
 
     QList<int> input;
@@ -28,10 +29,15 @@ public:
 
     void make(Graph *graph);
     JZNodeLayoutNode *getNode(int id);
+
+    int calcCol(int id);
+
     int calcNodeOuput(int id,int row);
-    int calcNodeInput(int id,int row,int &user_row);
+    void calcNodeInput(int id,int row,int &user_row);
     int toInt(int row, int col);
-    
+    int max_row;
+    int max_col;
+
     QMap<int, LayoutNodePtr> m_nodeMap;
     int gap;
     JZNodeView *m_view;

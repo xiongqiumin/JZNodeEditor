@@ -12,7 +12,8 @@ public:
     bool run();
     void saveProject();
 
-protected:
+protected:    
+    void addInitGame();
     void addInitFunction();
     void addMapGet();
     void addMapSet();    
@@ -23,6 +24,9 @@ protected:
     void addGameLoop();
     void addPaintEvent();
     void addKeyEvent();
+    void addRotate();
+    void addCreateShape();
+    void addCanPlaceShape();
 
     JZProject m_project;
     JZScriptFile *m_script;

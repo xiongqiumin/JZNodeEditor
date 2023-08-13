@@ -39,8 +39,7 @@ signals:
     void sigConnect();
     void sigDisConnect();       
 
-    void sigRuntimeStatus(int stauts);
-    void sigRuntimeInfo(JZNodeRuntimeInfo info);
+    void sigRuntimeStatus(int stauts);    
     void sigRuntimeError(JZNodeRuntimeError error);
     void sigLog(QString log);
 

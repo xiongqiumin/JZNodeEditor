@@ -22,8 +22,10 @@ public:
     void clear();
 
 signals:    
-    
+    void sigBreakPointClicked();    
+
 protected slots:       
+    void onItemDoubleClicked();
 
 protected:       
     void updateStatus();    

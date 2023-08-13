@@ -27,12 +27,18 @@ void JZNodeOperator::addInputButton()
     addProp(btn);
 }
 
+void JZNodeOperator::addInput()
+{
+    auto pin0 = prop(paramIn(0));
+    int in = addParamIn("", pin0->flag());
+    prop(in)->setValue(0);
+    prop(in)->setDataType(pin0->dataType());
+}
+
 bool JZNodeOperator::pinClicked(int id)
 {
     Q_UNUSED(id);        
-    int in = addParamIn("",Prop_editValue | Prop_dispValue);
-    prop(in)->setValue(0);
-    prop(in)->setDataType(prop(paramIn(0))->dataType());
+    addInput();
     return true;
 }
 

@@ -73,7 +73,7 @@ JZParamEditor::JZParamEditor()
     ui->setupUi(this);    
     m_table = ui->tableWidget;
 
-    m_table->setColumnCount(4);
+    m_table->setColumnCount(2);
     m_table->setHorizontalHeaderLabels({"名称","类型","绑定控件","方向"});
     m_table->setSelectionBehavior(QTableWidget::SelectRows);
     

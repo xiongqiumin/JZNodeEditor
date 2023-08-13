@@ -152,11 +152,6 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
         int status = packet->params[0].toInt();
         emit sigRuntimeStatus(status);
     }
-    else if (packet->cmd == Cmd_runtimeInfo)
-    {
-        JZNodeRuntimeInfo info = netDataUnPack<JZNodeRuntimeInfo>(packet->params[0].toByteArray());        
-        emit sigRuntimeInfo(info);
-    }
     else if (packet->cmd == Cmd_runtimeError)
     {   
         emit sigRuntimeError(netDataUnPack<JZNodeRuntimeError>(packet->params[0].toByteArray()));

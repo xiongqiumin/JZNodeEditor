@@ -404,6 +404,11 @@ void JZNodeCompiler::allocLocalVariable(JZNodeIRParam param)
     if (!info)
         return;
 
+    for (int i = 0; i < m_localVaribales.size(); i++)
+    {
+        if (m_localVaribales[i].name == param.ref())
+            return;
+    }
     m_localVaribales.push_back(*info);
 }
 
@@ -970,7 +975,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
                 {
                     JZNodeFunction *func_node = (JZNodeFunction*)in_node->node;
                     auto func = JZNodeFunctionManager::instance()->function(func_node->function());
-                    if (!func->className.isEmpty() && func->className == m_className)
+                    if (!func->className.isEmpty() && JZNodeObjectManager::instance()->isInherits(m_className,func->className))
                     {
                         addSetVariable(irId(to_id), irThis());
                         continue;
@@ -981,7 +986,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
                 return false;
             }            
 
-            //对比比较，立即数类型等于其他类型
+            //对于比较，立即数类型等于其他类型
             QList<int> match_type = prop->dataType();
             if(in_node->node->type() >= Node_eq && in_node->node->type() <= Node_gt)
             {
@@ -1156,9 +1161,8 @@ void JZNodeCompiler::allocFunctionVariable()
         }
         else
         {
-            addAllocLocal(&define.paramIn[i]);            
-            addSetVariable(irRef(define.paramIn[i].name), irId(Reg_Call + i));
             m_localVaribales.push_back(define.paramIn[i]);
+            addSetVariable(irRef(define.paramIn[i].name), irId(Reg_Call + i));            
         }
     }
 }

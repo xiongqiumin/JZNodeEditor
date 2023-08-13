@@ -35,7 +35,7 @@ void JZNodeWatch::updateStatus()
 {
     if (m_running)
     {
-        if (statusIsPause(Status_pause))
+        if (statusIsPause(m_status))
             this->setEnabled(true);
         else
             this->setEnabled(false);

@@ -1425,6 +1425,7 @@ bool JZNodeEngine::checkPauseStop()
     }
     if (wait)
     {
+        m_stack.env().pc = m_pc;
         m_statusCommand = Command_none;
         updateStatus(Status_pause);
         m_waitCond.wait(&m_mutex);

@@ -675,6 +675,8 @@ QVariant JZNodeView::onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsI
 void JZNodeView::initGraph()
 {
     m_loadFlag = true;
+    m_scene->clear();
+
     QList<int> node_list = m_file->nodeList();
     for (int i = 0; i < node_list.size(); i++)
     {
@@ -847,6 +849,7 @@ void JZNodeView::updateNodeLayout()
     JZNodeLayoutTree tree;
     tree.m_view = this;
 
+    int gap = 20;
     int y_offset = 0;
     int max_y = 0;
     for (int graph_idx = 0; graph_idx < graph_list.size(); graph_idx++)
@@ -856,11 +859,13 @@ void JZNodeView::updateNodeLayout()
 
         QVector<int> col_start;
         QVector<int> row_start;
-        QMap<int, int> row_max;
-        QMap<int, int> col_max;
+        QVector<int> row_max;
+        QVector<int> col_max;
+        row_max.resize(tree.max_row + 1);
+        col_max.resize(tree.max_col + 1);
+        row_start.resize(tree.max_row + 1);
+        col_start.resize(tree.max_col + 1);
 
-        int max_col = 0;
-        int max_row = 0;
         auto it = tree.m_nodeMap.begin();
         while (it != tree.m_nodeMap.end())
         {
@@ -869,22 +874,25 @@ void JZNodeView::updateNodeLayout()
             auto tree_node = it->data();
             row_max[tree_node->row] = qMax(item->size().height(), row_max[tree_node->row]);
             col_max[tree_node->col] = qMax(item->size().width(), col_max[tree_node->col]);
-
-            max_row = qMax(max_row, tree_node->row);
-            max_col = qMax(max_col, tree_node->col);
             it++;
+        }        
+        for (int i = 0; i < row_max.size(); i++)
+        {
+            if (row_max[i] != 0)
+                row_max[i] += gap;
         }
-        row_start.resize(max_row + 1);
-        col_start.resize(max_col + 1);
-
-        int gap = 20;
+        for (int i = 0; i < col_max.size(); i++)
+        {
+            if (col_max[i] != 0)
+                col_max[i] += gap;
+        }        
         for (int i = 1; i < col_start.size(); i++)
         {
-            col_start[i] = col_start[i - 1] + col_max[i - 1] + gap;
+            col_start[i] = col_start[i - 1] + col_max[i - 1];
         }
         for (int i = 1; i < row_start.size(); i++)
         {
-            row_start[i] = row_start[i - 1] + row_max[i - 1] + gap;
+            row_start[i] = row_start[i - 1] + row_max[i - 1];
         }
 
         it = tree.m_nodeMap.begin();
@@ -893,8 +901,7 @@ void JZNodeView::updateNodeLayout()
             int node_id = it.key();
             auto item = getNodeItem(node_id);
             auto tree_node = it->data();
-            item->setPos(col_start[tree_node->col], y_offset + row_start[tree_node->row]);
-            //item->setPos(tree_node->col * 100, y_offset + tree_node->row * 100);
+            item->setPos(col_start[tree_node->col], y_offset + row_start[tree_node->row]);            
             max_y = qMax(max_y,(int)item->pos().y() + item->size().width());
 
             //add command
@@ -1001,10 +1008,8 @@ void JZNodeView::setRuntimeNode(int nodeId)
         return;
         
     auto item = getNodeItem(m_runNode);
-    if (item)
-    {
-        item->update();
-    }
+    item->update();    
+    selectNode(nodeId);
 }
 
 bool JZNodeView::isBreakPoint(int nodeId)

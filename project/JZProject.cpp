@@ -402,8 +402,8 @@ JZScriptFile *JZProject::addFunction(QString path, const FunctionDefine &define)
 
     JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
     file->setName(define.name);
-    addItem(path,file);
     file->setFunction(define);
+    addItem(path,file);    
     return file;
 }
 

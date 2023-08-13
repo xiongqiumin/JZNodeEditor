@@ -12,10 +12,11 @@ JZNodeStack::JZNodeStack(QWidget *parent)
     :QWidget(parent)
 {        
     m_table = new QTableWidget();
-    m_table->setColumnCount(1);
-    m_table->setHorizontalHeaderLabels({ "位置" });
+    m_table->setColumnCount(2);
+    m_table->setHorizontalHeaderLabels({ "序号","位置" });
     m_table->setSelectionBehavior(QTableWidget::SelectRows);
     m_table->horizontalHeader()->setStretchLastSection(true);
+    m_table->verticalHeader()->hide();
     m_table->setEditTriggers(QTableWidget::NoEditTriggers);
 
     QVBoxLayout *sub_layout = new QVBoxLayout();
@@ -62,6 +63,9 @@ void JZNodeStack::setRuntime(JZNodeRuntimeInfo info)
 
     for (int i = info.stacks.size() - 1; i >= 0; i--)
     {
+        QTableWidgetItem *itemSeq = new QTableWidgetItem();
+        itemSeq->setText(QString::number(i + 1));
+
         QTableWidgetItem *itemName = new QTableWidgetItem();
         auto &s = info.stacks[i];
         QString line = s.file;
@@ -72,7 +76,9 @@ void JZNodeStack::setRuntime(JZNodeRuntimeInfo info)
         itemName->setText(line);
 
         int row = info.stacks.size() - i - 1;
-        m_table->setItem(row, 0, itemName);
+
+        m_table->setItem(row, 0, itemSeq);
+        m_table->setItem(row, 1, itemName);
     }
     m_table->blockSignals(false);
     m_table->setCurrentCell(0, 0);

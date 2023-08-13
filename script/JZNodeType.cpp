@@ -184,6 +184,9 @@ QVariant JZNodeType::convertTo(const QVariant &v, int type)
 {
     if (type == Type_any)
         return v;
+    int v_type = variantType(v);
+    if (v_type == Type_nullptr && type > Type_object)
+        return v;
 
     auto qtype = typeToQMeta(type);
     QVariant ret = v;
@@ -197,7 +200,7 @@ QVariant JZNodeType::matchValue(const QVariant &v, QList<int> type)
     if (type.contains(v_type))
         return v;
 
-    for(int i = 0; i < type.size(); i++)    
+    for(int i = 0; i < type.size(); i++)
     {
         if (canConvert(v_type, type[i]))
             return convertTo(v, type[i]);

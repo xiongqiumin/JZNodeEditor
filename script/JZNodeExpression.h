@@ -13,9 +13,10 @@ public:
     virtual bool pinClicked(int id) override;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType) override;    
+    void addInput();
 
 protected:
-    void addInputButton();
+    void addInputButton();    
 
     int m_op;    
 };

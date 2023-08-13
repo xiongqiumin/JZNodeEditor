@@ -180,14 +180,6 @@ void JZNodeDebugServer::onStatusChanged(int status)
     status_pack.cmd = Cmd_runtimeStatus;
     status_pack.params << status;
     m_server.sendPack(m_client, &status_pack);
-
-    if (status == Status_pause || status == Status_idlePause)
-    {
-        JZNodeDebugPacket runtime_pack;
-        runtime_pack.cmd = Cmd_runtimeInfo;
-        runtime_pack.params << netDataPack(m_engine->runtimeInfo());
-        m_server.sendPack(m_client, &runtime_pack);
-    }
 }
 
 QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
