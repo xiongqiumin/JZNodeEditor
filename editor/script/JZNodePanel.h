@@ -25,14 +25,14 @@ public:
     JZNodePanel(QWidget *widget = nullptr);
     ~JZNodePanel();    
 
-    void setFile(JZScriptFile *file);    
-    void setPropertyEditor(JZNodePropertyEditor *propEditor);    
+    void setFile(JZScriptFile *file);        
+    void updateNode();
 
 protected slots:
     void onSearch();
     void onTreeItemClicked(QTreeWidgetItem *current,int col);
-    void onAddScriptParam();
-    void onPropUpdate(int prop_id, const QVariant &value);
+    void onAddScriptParam();    
+    void onContextMenu(const QPoint &pos);
 
 protected:
     void init();
@@ -40,9 +40,10 @@ protected:
     void initBasicFlow();
     void initEvent();
     void initFunction();
+    void initEnums();
     void initClass();
     
-    void initClass(QTreeWidgetItem *root);
+    void initThis(QTreeWidgetItem *root);
     void initConstParam(QTreeWidgetItem *root);    
     void initProjectParam(QTreeWidgetItem *root);
     void initScriptParam(QTreeWidgetItem *root);    
@@ -51,20 +52,27 @@ protected:
     void initExpression(QTreeWidgetItem *root);
     void initConvert(QTreeWidgetItem *root);
 
+    void updateClass();    
+    void updateInput();
+
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
-    QTreeWidgetItem *createParam(QString name,int dataType,QString preName = QString());    
+    QTreeWidgetItem *createParam(QString name);    
     QTreeWidgetItem *createClassEvent(QString name);
 
-    bool filterItem(QTreeWidgetItem *root,QString name);
+    bool filterItem(QTreeWidgetItem *root,QString name);    
 
     JZNodeTreeWidget *m_tree;    
     JZScriptFile *m_file;
     JZScriptClassFile *m_classFile;
-    QLineEdit *m_lineSearch;
-    JZNodePropertyEditor *m_propEditor;    
+    QLineEdit *m_lineSearch;    
+    
+    QTreeWidgetItem *m_memberFunction;
+    QTreeWidgetItem *m_memberParam;
+    QTreeWidgetItem *m_itemLocal;
+    QTreeWidgetItem *m_itemInput;
 
-    QTreeWidgetItem *m_itemLocalVariable;
+    QMap<QString, QStringList> m_functionMap;
 };
 
 #endif

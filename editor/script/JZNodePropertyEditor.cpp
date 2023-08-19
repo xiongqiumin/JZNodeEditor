@@ -37,8 +37,7 @@ void JZNodePropertyEditor::clear()
     m_propMap.clear();
     m_propNameMap.clear();
     
-    m_node = nullptr;
-    m_paramDefine = JZParamDefine();
+    m_node = nullptr;    
 }
 
 void JZNodePropertyEditor::onValueChanged(QtProperty *prop, const QVariant &value)
@@ -56,31 +55,6 @@ void JZNodePropertyEditor::onValueChanged(QtProperty *prop, const QVariant &valu
         int prop_name_id = m_propNameMap.key(p, -1);
         if (prop_name_id != -1)        
             emit sigNodePropNameChanged(m_node->id(), prop_name_id, value.toString());        
-    }
-    else
-    {
-        int prop_id = m_propMap.key(p, -1);
-        if (prop_id != -1)
-        {
-            if (prop_id == PropEditor_varType)
-            {                
-                int index = value.toInt();
-                int dataType;
-                if (index < m_typeHelp.types.size() - 1)
-                {
-                    dataType = m_typeHelp.types[index];
-                    m_paramDefine.dataType = dataType;
-                }
-                else
-                {
-                    QTimer::singleShot(0,this, SLOT(onMoreDataType()));                    
-                    return;
-                }
-                emit sigPropChanged(prop_id, dataType);
-            }
-            else
-                emit sigPropChanged(prop_id, value);
-        }
     }
 }
 
@@ -196,48 +170,4 @@ void JZNodePropertyEditor::updateNode()
     addPropList("输出",out_list);
 
     m_editing = false;
-}
-
-void JZNodePropertyEditor::setParamDefine(JZParamDefine *def)
-{
-    clear();
-    if (!def)
-        return;    
-
-    m_paramDefine = *def;
-    m_editing = true;
-
-    auto prop_base = m_propManager->addProperty(m_propManager->groupTypeId(), "基本信息");
-    auto prop_name = m_propManager->addProperty(QVariant::String, "名称");
-    auto prop_type = m_propManager->addProperty(m_propManager->enumTypeId(), "类型");
-    prop_base->addSubProperty(prop_name);
-    prop_base->addSubProperty(prop_type);
-    m_tree->addProperty(prop_base);
-    m_propMap[PropEditor_varName] = prop_name;
-    m_propMap[PropEditor_varType] = prop_type;
-       
-    prop_name->setValue(def->name);
-    m_typeHelp.init(def->dataType);
-    prop_type->setAttribute("enumNames", m_typeHelp.typeNames);
-    prop_type->setValue(m_typeHelp.index);
-
-    m_editing = false;
-}
-
-void JZNodePropertyEditor::onMoreDataType()
-{    
-    auto prop_type = m_propMap[PropEditor_varType];
-    JZNodeTypeDialog dialog(this);
-    if (dialog.exec() != QDialog::Accepted)
-    {
-        int index = m_typeHelp.types.indexOf(m_paramDefine.dataType);
-        m_propMap[PropEditor_varType]->setValue(index);
-        return;
-    }
-
-    int dataType = dialog.dataType();
-    m_typeHelp.init(dataType);
-    prop_type->setAttribute("enumNames", m_typeHelp.typeNames);
-    prop_type->setValue(m_typeHelp.index);
-    return;    
 }

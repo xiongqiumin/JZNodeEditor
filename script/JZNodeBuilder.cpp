@@ -1,6 +1,8 @@
 ﻿#include "JZNodeBuilder.h"
 #include "JZParamFile.h"
 #include "JZUiFile.h"
+#include "JZClassFile.h"
+#include "JZLibraryFile.h"
 
 JZNodeBuilder::JZNodeBuilder()
 {

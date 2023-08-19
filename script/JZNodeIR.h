@@ -35,10 +35,11 @@ enum
     OP_gt,  // >
     OP_and,
     OP_or,
-    OP_not,
+    OP_not,    
     OP_bitand,
     OP_bitor,
     OP_bitxor,
+    OP_assert,
 };
 
 class JZNodeIRParam
@@ -66,9 +67,9 @@ public:
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param);
-JZNodeIRParam irRef(QString id);
+JZNodeIRParam irRef(const QString &id);
 JZNodeIRParam irId(int id);
-JZNodeIRParam irLiteral(QVariant value);
+JZNodeIRParam irLiteral(const QVariant &value);
 JZNodeIRParam irThis();
 
 class JZNodeIR
@@ -172,6 +173,19 @@ public:
     JZNodeIRParam function;
     QList<JZNodeIRParam> paramIn;
     QList<JZNodeIRParam> paramOut;
+};
+
+
+class JZNodeIRAssert : public JZNodeIR
+{
+public:
+    JZNodeIRAssert();
+    virtual ~JZNodeIRAssert();
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
+
+    JZNodeIRParam tips;
 };
 
 #endif

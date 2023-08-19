@@ -3,21 +3,24 @@
 #include <QSharedPointer>
 
 enum{    
-    ProjectItem_root,
-    ProjectItem_folder,
-    ProjectItem_class,
-    ProjectItem_library,
-    ProjectItem_ui,
-    ProjectItem_param,    
-    ProjectItem_scriptParamBinding,
-    ProjectItem_scriptFlow,    
-    ProjectItem_scriptFunction,
+    ProjectItem_none = 0x0,
+    ProjectItem_root = 0x1,
+    ProjectItem_folder = 0x2,
+    ProjectItem_class = 0x4,
+    ProjectItem_library = 0x8,
+    ProjectItem_ui = 0x10,
+    ProjectItem_param = 0x20,
+    ProjectItem_scriptParamBinding = 0x40,
+    ProjectItem_scriptFlow = 0x80,
+    ProjectItem_scriptFunction = 0x100,
+    ProjectItem_script = (ProjectItem_scriptParamBinding | ProjectItem_scriptFlow | ProjectItem_scriptFunction),
 
-    ProjectItem_any = 0xFFFF,
+    ProjectItem_any = 0xFFFFFFFF,
 };
 
 class JZProject;
 class JZScriptClassFile;
+class JZEditor;
 class JZProjectItem
 {    
 public:
@@ -26,6 +29,9 @@ public:
 
     void setProject(JZProject *project);
     JZProject *project() const;
+
+    void setEditor(JZEditor *editor);
+    JZEditor *editor() const;  
 
     QString name();
     void setName(QString name);
@@ -37,6 +43,7 @@ public:
     void setItemType(int type);
 
     JZProjectItem *parent();
+    JZScriptClassFile *getClassFile();
     
     void addItem(QSharedPointer<JZProjectItem> child);
     void removeItem(int index);    
@@ -65,6 +72,7 @@ protected:
     int m_itemType;    
     QString m_name;    
     JZProject *m_project;
+    JZEditor *m_editor;
     int m_pri;
 };
 typedef QSharedPointer<JZProjectItem> JZProjectItemPtr;

@@ -8,7 +8,29 @@
 #include "JZNodeBind.h"
 #include "sample/Russian.h"
 
+
 extern void test_script();
+void test_build()
+{
+    QString path = qApp->applicationDirPath() + "/sample/russion.jzproject";
+    JZProject project;
+    project.open(path);
+
+    QElapsedTimer t;
+    t.start();
+    for (int i = 0; i < 200; i++)
+    {       
+        JZNodeBuilder builder;
+        JZNodeProgram program;
+        if (!builder.build(&project, &program))
+        {
+            qDebug().noquote() << builder.error();
+            return;
+        }        
+    }
+    qDebug() << "build cost" << t.elapsed();
+}
+
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -20,6 +42,11 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
+    if(0)
+    {
+        test_build();
+        return 0;
+    }
     if (1)
     {
         SampleRussian russian;
@@ -29,7 +56,7 @@ int main(int argc, char *argv[])
     }
     if(0)
     {         
-        QString project_name = "project998";
+        QString project_name = "projectFab";
         QString program_path = "C:/Users/xiong/Desktop/JZNodeEditor/x64/Debug/project/" + project_name 
             +  "/build/" +  project_name + ".program";
 

@@ -1,6 +1,7 @@
 ﻿#ifndef JZNODE_BIND_H_
 #define JZNODE_BIND_H_
 
+#include <QMetaEnum>
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
 #include "JZNodeFunctionManager.h"
@@ -72,13 +73,23 @@ using function_signature_t = conditional_t<
     >::type
 >;
 
+template<class T>
+constexpr bool is_enum_or_qenum_cond()
+{
+    return std::is_enum<T>() || QtPrivate::IsQEnumHelper<T>::Value;
+}
+
+template<class T>
+using is_enum_or_qenum = std::bool_constant<is_enum_or_qenum_cond<T>()>;
+
+
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
 template<class T> void copyClass(void *src,void *dst){ *((T*)src) = *((T*)dst); }
 template<class T> void addEventFilter(void *ptr, int filter) 
 { 
     JZNodeObject *obj = (JZNodeObject*)ptr;
-    ((T*)obj->cobj)->addEventFilter(obj,filter); 
+    ((T*)obj->cobj())->addEventFilter(obj,filter); 
 };
 
 void *createClassAssert();
@@ -91,16 +102,29 @@ T getValue(const QVariant &v,std::true_type)
     JZNodeObject *obj = toJZObject(v);
     if (!obj)
         throw std::runtime_error("object is null");
-    return (T)obj->cobj;
+    return (T)obj->cobj();
 }
 
 template<class T>
-T getValue(const QVariant &v,std::false_type)
-{    
+T getValue(const QVariant &v, std::false_type)
+{
+    return getValueEnum<T>(v, is_enum_or_qenum<T>());
+}
+
+template<class T>
+T getValueEnum(const QVariant &v, std::true_type)
+{
+    Q_ASSERT(v.type() == Type_int);
+    return (T)v.toInt();
+}
+
+template<class T>
+T getValueEnum(const QVariant &v, std::false_type)
+{
     if(v.type() == QVariant::UserType)
     {
         JZNodeObject *obj = toJZObject(v);
-        T *cobj = (T*)(obj->cobj);
+        T *cobj = (T*)(obj->cobj());
         return *cobj;
     }
     else
@@ -143,7 +167,7 @@ QVariant getReturnPointer(T value,bool isRef,std::true_type)
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
     JZNodeObjectPtr obj = JZObjectRefrence<T>(value);    
     if(!isRef)
-        obj->cowner = true;
+        obj->setCowner(true);
     return QVariant::fromValue(obj);
 }
 
@@ -157,14 +181,14 @@ template<class T>
 QVariant getReturnClass(T value, std::true_type)
 {
     JZNodeObjectPtr obj = JZObjectCreate<T>();
-    *((T*)obj->cobj) = value;
+    *((T*)obj->cobj()) = value;
     return QVariant::fromValue(obj);
 }
 
 template<class T>
 QVariant getReturnClass(T value, std::false_type)
 {    
-    return getReturnEnum(value, std::is_enum<T>());
+    return getReturnEnum(value, is_enum_or_qenum<T>());
 }
  
 template<class T>
@@ -316,7 +340,7 @@ class CSingleImpl : public CSingle
 public:    
     virtual void connect(JZNodeObject *obj,int eventType)
     {
-        Class *cobj = (Class*)obj->cobj;
+        Class *cobj = (Class*)obj->cobj();
         cobj->connect(cobj,single,[obj,eventType](Args... args){
            JZEvent event;
            event.sender = obj;
@@ -336,7 +360,7 @@ class CPrivateSingleImpl : public CSingle
 public:    
     virtual void connect(JZNodeObject *obj, int eventType)
     {
-        Class *cobj = (Class*)obj->cobj;
+        Class *cobj = (Class*)obj->cobj();
         cobj->connect(cobj, single, [obj, eventType](Args... args) {
             JZEvent event;
             event.sender = obj;
@@ -352,9 +376,21 @@ public:
 
 template<typename T>
 void registEnum(QString name)
-{
-    //static_assert(std::is_enum<T>(), "need enum");
-    JZNodeObjectManager::instance()->registEnum(name,typeid(T).name());
+{    
+    QStringList keys;
+    QVector<int> values;
+    
+    auto meta = QMetaEnum::fromType<T>();
+    int count = meta.keyCount();
+    for (int i = 0; i < count; i++)
+    {
+        keys << meta.key(i);
+        values << meta.value(i);
+    }
+
+    JZNodeEnumDefine define;
+    define.init(meta.name(),keys,values);
+    JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
 template<class T>

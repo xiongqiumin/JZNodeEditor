@@ -6,6 +6,8 @@
 #include "JZNode.h"
 #include "JZNodeFunctionDefine.h"
 
+typedef bool(*JZNodeFunctionEdit)(JZNode *node);
+
 class JZNodeFunctionManager
 {
 public:
@@ -23,11 +25,15 @@ public:
     void registCFunction(QString name,bool isFlow, QSharedPointer<CFunction> func);
     void unregistFunction(QString name);       
 
+    JZNodeFunctionEdit editFunction(QString name);
+    void registEditFunction(QString name, JZNodeFunctionEdit func);
+
 protected:
     JZNodeFunctionManager();
     ~JZNodeFunctionManager();           
     
     QMap<QString, FunctionDefine> m_funcMap;
+    QMap<QString, JZNodeFunctionEdit> m_funcEditMap;
     bool m_userRegist;
     QStringList m_userFuncs;
 };

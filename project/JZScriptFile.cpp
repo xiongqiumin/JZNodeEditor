@@ -24,6 +24,16 @@ JZScriptFile::~JZScriptFile()
 
 }
 
+void JZScriptFile::loadFinish()
+{
+    auto it = m_nodes.begin();
+    while (it != m_nodes.end())
+    {
+        it->data()->setFile(this);
+        it++;
+    }
+}
+
 void JZScriptFile::clear()
 {
     m_nodeId = 0;    
@@ -158,9 +168,9 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         error = "已有输入,只能连接一个输入";
         return false;
     }
-    if(pin_to->isLiteral() && node_from->type() != Node_literal)
+    if(pin_to->isLiteral() /*&& node_from->type() != Node_literal*/)
     {
-        error = "只能连接常量";
+        error = "常量,无法连接数据";
         return false;
     }
     //检测数据类型
@@ -325,45 +335,42 @@ void JZScriptFile::removeLocalVariable(QString name)
     m_variables.remove(name);
 }
 
-void JZScriptFile::renameLocalVariable(QString oldName, QString newName)
+void JZScriptFile::replaceLocalVariableInfo(QString oldName, JZParamDefine def)
 {
-    Q_ASSERT(m_variables.contains(oldName));
-    auto def = m_variables[oldName];
-    def.name = newName;
+    Q_ASSERT(m_variables.contains(oldName));    
     m_variables.remove(oldName);
-    m_variables[newName] = def;
-}
-
-void JZScriptFile::setLocalVariableType(QString name, int type)
-{
-    Q_ASSERT(m_variables.contains(name));
-    m_variables[name].dataType = type;
+    m_variables[def.name] = def;
 }
 
 void JZScriptFile::addLocalVariable(QString name, int type, QVariant v)
 {
-    Q_ASSERT(!localVariableInfo(name) && type != Type_none);
-
     JZParamDefine info;
     info.name = name;
     info.dataType = type;
     info.value = v;
-    m_variables[name] = info;
+    addLocalVariable(info);
 }
 
-QStringList JZScriptFile::localVariableList()
+void JZScriptFile::addLocalVariable(JZParamDefine def)
 {
-    if (m_itemType == ProjectItem_scriptFunction)
-    {
-        QStringList list;
-        for (int i = 0; i < m_function.paramIn.size(); i++)
-            list << m_function.paramIn[i].name;                
+    Q_ASSERT(!localVariableInfo(def.name) && def.dataType != Type_none);
+    m_variables[def.name] = def;
+}
 
-        list << m_variables.keys();
-        return list;
+QStringList JZScriptFile::localVariableList(bool hasFunc)
+{
+    QStringList list = m_variables.keys();
+    if (hasFunc && m_itemType == ProjectItem_scriptFunction) 
+    {        
+        for (int i = 0; i < m_function.paramIn.size(); i++)
+        {
+            if (m_function.paramIn[i].name == "this")
+                continue;
+
+            list << m_function.paramIn[i].name;
+        }            
     }
-    else
-        return m_variables.keys();
+    return list;
 }
 
 void JZScriptFile::saveToStream(QDataStream &s)
@@ -398,158 +405,11 @@ void JZScriptFile::loadFromStream(QDataStream &s)
         int type;
         s >> type;
         JZNode *node = JZNodeFactory::instance()->createNode(type);
-        node->loadFromStream(s);
-        m_nodes.insert(node->id(), JZNodePtr(node));        
+        node->loadFromStream(s);        
+        m_nodes.insert(node->id(), JZNodePtr(node));
     }    
     s >> m_connects;    
     s >> m_function;    
     s >> m_variables;
     s >> m_nodesPos;
 }
-
-//JZScriptLibraryFile
-JZScriptLibraryFile::JZScriptLibraryFile()
-    :JZProjectItem(ProjectItem_library)
-{
-}
-    
-JZScriptLibraryFile::~JZScriptLibraryFile()
-{
-
-}
-
-//JZScriptClassFile
-JZScriptClassFile::JZScriptClassFile()
-    :JZProjectItem(ProjectItem_class)
-{
-    m_classId = -1;
-}
-
-JZScriptClassFile::~JZScriptClassFile()
-{
-
-}
-
-void JZScriptClassFile::setClass(QString className, QString super)
-{
-    m_className = className;
-    m_super = super;
-}
-
-QString JZScriptClassFile::className() const
-{
-    return m_className;
-}
-
-int JZScriptClassFile::classType() const
-{
-    return JZNodeObjectManager::instance()->getClassId(m_className);
-}
-
-void JZScriptClassFile::setClassType(int classId)
-{
-    m_classId = classId;
-}
-
-void JZScriptClassFile::saveToStream(QDataStream &s)
-{
-    JZProjectItem::saveToStream(s);
-    s << m_className;
-    s << m_super;
-    s << m_classId;
-}
-
-void JZScriptClassFile::loadFromStream(QDataStream &s)
-{
-    JZProjectItem::loadFromStream(s);
-    s >> m_className;
-    s >> m_super;
-    s >> m_classId;
-}
-
-bool JZScriptClassFile::addMemberVariable(QString name,int dataType,const QVariant &v)
-{    
-    getParamFile()->addVariable(name,dataType,v);    
-    regist();
-    return true;
-}
-
-void JZScriptClassFile::removeMemberVariable(QString name)
-{
-    getParamFile()->removeVariable(name);    
-    regist();
-}
-
-JZParamDefine *JZScriptClassFile::memberVariableInfo(QString name)
-{
-    return getParamFile()->getVariable(name);
-}
-
-JZScriptFile *JZScriptClassFile::addMemberFunction(FunctionDefine func)
-{
-    JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
-    func.className = m_className;
-    file->setFunction(func);
-    m_project->addItem(itemPath(), file);        
-    return file;
-}
-
-JZScriptFile *JZScriptClassFile::getMemberFunction(QString func)
-{
-    auto list = itemList(ProjectItem_scriptFunction);
-    for (int i = 0; i < list.size(); i++)
-    {
-        if (list[i]->name() == func)
-            return (JZScriptFile *)list[i];
-    }
-    return nullptr;
-}
-
-void JZScriptClassFile::removeMemberFunction(QString func)
-{
-    JZScriptFile *item = getMemberFunction(func);
-    m_project->removeItem(item->itemPath());    
-}
-
-JZParamFile *JZScriptClassFile::getParamFile()
-{
-    for(int i = 0; i < m_childs.size(); i++)
-    {
-        auto item = m_childs[i].data();
-        if(item->itemType() == ProjectItem_param)
-            return dynamic_cast<JZParamFile*>(item);
-    }
-    Q_ASSERT(0);
-    return nullptr;
-}
-
-JZNodeObjectDefine JZScriptClassFile::objectDefine()
-{    
-    JZNodeObjectDefine define;
-    define.className = m_className;
-    define.superName = m_super;
-    define.id = m_classId;
-
-    auto item_list = itemList(ProjectItem_any);
-    for(int i = 0; i < item_list.size(); i++)
-    {
-        auto item = item_list[i];
-        if(item->itemType() == ProjectItem_param)
-        {
-            auto param_item = dynamic_cast<JZParamFile*>(item);
-            define.params = param_item->variables();
-        }
-        else if(item->itemType() == ProjectItem_scriptFunction)
-        {
-            auto function_item = dynamic_cast<JZScriptFile*>(item);
-            define.addFunction(function_item->function());
-        }
-        else if(item->itemType() == ProjectItem_ui)
-        {
-            auto ui_item = dynamic_cast<JZUiFile*>(item);
-            ui_item->updateDefine(define);
-        }
-    }
-    return define;
-}
-

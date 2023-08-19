@@ -76,6 +76,7 @@ protected:
     JZParamFile *m_file;    
     QTableWidget *m_table;
     Ui::JZParamEditor *ui;
+    int m_widgetCount;
 
     QUndoStack m_commandStack;
 };

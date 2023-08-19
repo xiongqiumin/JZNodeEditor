@@ -17,6 +17,11 @@ void JZScriptLog(const QString &log)
     qDebug() << log;
 }
 
+void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out)
+{
+    g_engine->call(function, in, out);
+}
+
 bool statusIsPause(int status)
 {
     return (status == Status_pause || status == Status_idlePause || status == Status_error);
@@ -782,7 +787,7 @@ void JZNodeEngine::connectClassEvent(JZNodeObject *obj)
             JZEventHandle &event = script->events[i];
             if (event.type >= Event_paint && event.type <= Event_mouseRelease)
             {
-                obj->define->super()->cMeta.addEventFilter(obj, event.type);
+                obj->meta()->super()->cMeta.addEventFilter(obj, event.type);
             }
         }
     }
@@ -1157,6 +1162,8 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
         bool ret = JZNodeType::canConvert(inType,func->paramIn[i].dataType);
         if(!ret)
             throw std::runtime_error("type node match");
+        if(JZNodeType::isObject(func->paramIn[i].dataType) && JZNodeType::isNull(paramIn.back()))
+            throw std::runtime_error("object is nullptr");
     }
 
     // call function
@@ -1570,6 +1577,15 @@ bool JZNodeEngine::run()
         }
         case OP_exit:
             goto RunEnd;
+        case OP_assert:
+        {            
+            if (!getReg(Reg_Cmp).toBool())
+            {
+                JZNodeIRAssert *ir_assert = (JZNodeIRAssert*)op;
+                QString tips = getParam(ir_assert->tips).toString();
+                throw std::runtime_error(qUtf8Printable(tips));
+            }
+        }
         default:
             Q_ASSERT(0);
             break;

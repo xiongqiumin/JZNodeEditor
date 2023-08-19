@@ -266,20 +266,73 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
     if (isJZObject(value))
     {
         auto obj = toJZObject(value);
-        if (obj)
+        if (!obj)
+        {
+            ret.type = Type_nullptr;
+            ret.value = "nullptr";
+        }
+        else if (obj->type() == Type_list)
+        {
+            ret.type = obj->type();            
+            
+            QVariantList in, out;
+            in << value;
+            obj->function("size")->cfunc->call(in, out);
+                        
+            int size = out[0].toInt();            
+            in << 0;
+
+            auto list_at = obj->function("get")->cfunc;
+            for (int i = 0; i < size; i++)
+            {
+                in[1] = i;
+                list_at->call(in, out);
+                ret.params[QString::number(i)] = toDebugParam(out[0]);
+            }
+        }
+        else if (obj->type() == Type_map)
+        {
+            ret.type = obj->type();
+            
+            QVariantList in, out;
+            in << value;            
+                        
+            obj->function("iterator")->cfunc->call(in, out);            
+            QVariantList it = out;
+            auto it_meta = toJZObject(it[0])->meta();
+
+            auto func_end = it_meta->function("atEnd")->cfunc;
+            auto func_next = it_meta->function("next")->cfunc;
+            auto func_key = it_meta->function("key")->cfunc;
+            auto func_value = it_meta->function("value")->cfunc;
+
+            while (true)
+            {
+                func_end->call(it, out);
+                if (out[0].toBool())
+                    break;
+
+                func_next->call(it, out);
+                QString key = out[0].toString();
+
+                func_value->call(it, out);
+                ret.params[key] = toDebugParam(out[0]);
+
+                func_next->call(it, out);
+            }
+        }
+        else 
         {
             ret.type = obj->type();            
             auto def = obj->meta();
-            auto params = def->paramList();
+            auto params = def->paramList(false);
             for (int i = 0; i < params.size(); i++)
             {
                 QString name = params[i];
                 ret.params[name] = toDebugParam(obj->param(name));
             }
-        }
-        else
-            ret.type = Type_nullptr;
-        ret.value = (qint64)obj;
+            ret.value = (qint64)obj;
+        }                  
     }
     else
     {

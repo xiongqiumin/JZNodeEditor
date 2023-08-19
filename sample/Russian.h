@@ -27,6 +27,9 @@ protected:
     void addRotate();
     void addCreateShape();
     void addCanPlaceShape();
+    void addClearLine();
+    QVector<QVector<QVector<QPoint>>> shapeGroup();
+
 
     JZProject m_project;
     JZScriptFile *m_script;

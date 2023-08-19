@@ -55,6 +55,31 @@ void JZUiFile::loadFromStream(QDataStream &s)
     s >> m_xml;
 }
 
+QList<JZParamDefine> JZUiFile::widgets()
+{
+    QList<JZParamDefine> list;
+
+    JZNodeUiLoader loader;
+    QWidget *root = loader.create(m_xml);
+    Q_ASSERT(root);
+    QList<QWidget*> widgets = root->findChildren<QWidget*>();    
+    for (int i = 0; i < widgets.size(); i++)
+    {
+        QString name = widgets[i]->objectName();
+        QString class_name = widgets[i]->metaObject()->className();
+        int type = JZNodeObjectManager::instance()->getClassIdByQObject(class_name);
+        if (!name.isEmpty() && type != Type_none)
+        {
+            JZParamDefine def;
+            def.name = name;
+            def.dataType = type;
+            def.cref = true;
+            list << def;
+        }
+    }
+    return list;
+}
+
 void JZUiFile::updateDefine(JZNodeObjectDefine &def)
 {        
     def.isUiWidget = true;
@@ -63,20 +88,10 @@ void JZUiFile::updateDefine(JZNodeObjectDefine &def)
     JZNodeUiLoader loader;
     QWidget *root = loader.create(m_xml);
     Q_ASSERT(root);
-    QList<QWidget*> widgets = root->findChildren<QWidget*>();
-    QMap<QString, JZParamDefine> &params = def.params;
-    for(int i = 0; i < widgets.size(); i++)
+
+    QList<JZParamDefine> widget_list = widgets();    
+    for (int i = 0; i < widget_list.size(); i++)
     {
-        QString name = widgets[i]->objectName();
-        QString class_name = widgets[i]->metaObject()->className();
-        int type = JZNodeObjectManager::instance()->getClassIdByQObject(class_name);
-        if(!name.isEmpty() && type != Type_none)
-        {
-            JZParamDefine def;
-            def.name = name;
-            def.dataType = type;
-            def.cref = true;
-            params[name] = def;
-        }
+        def.params[widget_list[i].name] = widget_list[i];
     }
 }

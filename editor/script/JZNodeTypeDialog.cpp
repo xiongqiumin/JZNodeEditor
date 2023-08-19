@@ -1,6 +1,7 @@
 ﻿#include "JZNodeTypeDialog.h"
 #include "ui_JZNodeTypeDialog.h"
 #include "JZNodeObject.h"
+#include <QComboBox>
 
 //TypeEditHelp
 TypeEditHelp::TypeEditHelp()
@@ -22,8 +23,18 @@ void TypeEditHelp::init(int dataType)
         typeNames << JZNodeType::typeToName(types[i]);
     typeNames << "更多类型...";
     types << Type_none;
-
 }
+
+void TypeEditHelp::update(QComboBox *box)
+{
+    box->blockSignals(true);
+    box->clear();
+    for (int i = 0; i < typeNames.size(); i++)
+        box->addItem(typeNames[i], types[i]);
+    box->setCurrentIndex(index);
+    box->blockSignals(false);
+}
+
 //JZNodeTypeDialog
 JZNodeTypeDialog::JZNodeTypeDialog(QWidget *p)
     :QDialog(p)
@@ -48,9 +59,26 @@ JZNodeTypeDialog::~JZNodeTypeDialog()
     delete ui;
 }
 
+void JZNodeTypeDialog::setDataType(int dataType)
+{
+    QString className = JZNodeObjectManager::instance()->getClassName(dataType);
+    auto list = ui->treeWidget->findItems(className, Qt::MatchExactly);
+    if (list.size() >= 0)
+    {
+        ui->treeWidget->scrollToItem(list[0]);        
+        ui->treeWidget->setItemSelected(list[0], true);
+    }
+}
+
 int JZNodeTypeDialog::dataType()
 {
     return m_dataType;
+}
+
+void JZNodeTypeDialog::on_lineClassName_returnPressed()
+{
+    auto line = ui->lineClassName->text();    
+    UiHelper::treeFilter(ui->treeWidget->invisibleRootItem(), line);
 }
 
 void JZNodeTypeDialog::on_btnOk_clicked()

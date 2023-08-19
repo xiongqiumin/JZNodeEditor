@@ -8,6 +8,7 @@ JZProjectItem::JZProjectItem(int itemType)
 {
     m_parent = nullptr;
     m_project = nullptr;
+    m_editor = nullptr;
     m_itemType = itemType;    
     m_pri = 0;
 }
@@ -24,6 +25,16 @@ void JZProjectItem::setProject(JZProject *project)
 JZProject *JZProjectItem::project() const
 {
     return m_project;
+}
+
+void JZProjectItem::setEditor(JZEditor *editor)
+{
+    m_editor = editor;
+}
+
+JZEditor *JZProjectItem::editor() const
+{
+    return m_editor;
 }
 
 void JZProjectItem::save()
@@ -100,6 +111,14 @@ JZProjectItem *JZProjectItem::parent()
     return m_parent;
 }
 
+JZScriptClassFile *JZProjectItem::getClassFile()
+{
+    if (!m_project)
+        return nullptr;
+
+    return m_project->getClassFile(this);
+}
+
 void JZProjectItem::addItem(JZProjectItemPtr child)
 {
     Q_ASSERT(child->parent() == nullptr);
@@ -153,7 +172,7 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
 QList<JZProjectItem *> JZProjectItem::itemList(int type)
 {
     QList<JZProjectItem *> result;
-    if(this->itemType() == type || type == ProjectItem_any)
+    if(this->itemType() & type)
         result << this;
 
     auto chlid = this->childs();

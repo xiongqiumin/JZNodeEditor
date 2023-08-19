@@ -187,6 +187,7 @@ protected:
     void autoCompiler();
     QString getExpr();
     int getSelect(QStringList list);
+    QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);
 
     JZNodeScene *m_scene;
     JZScriptFile *m_file;    

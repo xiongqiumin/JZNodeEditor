@@ -13,7 +13,9 @@ public:
     JZScriptFile(int type);
     virtual ~JZScriptFile();
 
+    void loadFinish();
     void clear();
+
     const FunctionDefine &function();
     void setFunction(FunctionDefine def);
 
@@ -44,12 +46,12 @@ public:
 
     JZParamDefine *localVariableInfo(const QString &name);
     void addLocalVariable(QString name, int type, QVariant v = QVariant());
+    void addLocalVariable(JZParamDefine def);
     void removeLocalVariable(QString name);
-    void renameLocalVariable(QString oldName, QString newName);
-    void setLocalVariableType(QString name,int type);
-    QStringList localVariableList();
+    void replaceLocalVariableInfo(QString oldName, JZParamDefine def);
+    QStringList localVariableList(bool hasFunc);
 
-protected:
+protected:    
     int m_nodeId;
     QMap<int, JZNodePtr> m_nodes;        
     QList<JZNodeConnect> m_connects;    
@@ -57,49 +59,6 @@ protected:
     QMap<QString, JZParamDefine> m_variables;
 
     QMap<int, QPointF> m_nodesPos;
-};
-
-class JZScriptLibraryFile : public JZProjectItem
-{
-public:
-    JZScriptLibraryFile();
-    virtual ~JZScriptLibraryFile();
-    
-public:
-
-};
-
-class JZParamFile;
-class JZScriptClassFile : public JZProjectItem
-{
-public:
-    JZScriptClassFile();
-    virtual ~JZScriptClassFile();    
-
-    virtual void saveToStream(QDataStream &s);
-    virtual void loadFromStream(QDataStream &s);    
-
-    void setClass(QString className, QString super);
-    QString className() const;
-
-    int classType() const;
-    void setClassType(int classId);
-
-    JZNodeObjectDefine objectDefine();
-    
-    bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
-    void removeMemberVariable(QString name);
-    JZParamDefine *memberVariableInfo(QString name);
-
-    JZScriptFile *addMemberFunction(FunctionDefine func);    
-    void removeMemberFunction(QString func);
-    JZScriptFile *getMemberFunction(QString func);    
-
-protected:   
-    JZParamFile *getParamFile();
-    QString m_className;
-    QString m_super;
-    int m_classId;
 };
 
 #endif

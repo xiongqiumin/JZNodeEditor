@@ -317,7 +317,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
             int classType = JZNodeObjectManager::instance()->getClassId(className);
             JZParamDefine def;
-            def.name = "object";
+            def.name = "this";
             def.dataType = classType;            
             function.paramIn.push_back(def);
         }

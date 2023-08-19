@@ -3,10 +3,8 @@
 
 #include <QMap>
 #include "JZNode.h"
-#include "JZNodeValue.h"
-#include "JZNodeExpression.h"
-#include "JZNodeEvent.h"
-#include "JZNodeFunction.h"
+
+typedef bool(*JZNodeFactoryEdit)(JZNode *node);
 
 typedef JZNode *(*JZNodeCreateFunc)();
 class JZNodeFactory
@@ -20,8 +18,12 @@ public:
     void registNode(int type,JZNodeCreateFunc func);
     QList<int> nodeTypeList();
 
+    bool edit(JZNode *node);
+    void registEdit(int type,JZNodeFactoryEdit func);
+
 protected:
     QMap<int,JZNodeCreateFunc> m_nodes;
+    QMap<int,JZNodeFactoryEdit> m_edits;
 };
 
 //这两个函数保存了类型

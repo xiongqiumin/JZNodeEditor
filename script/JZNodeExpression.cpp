@@ -21,10 +21,7 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 
 void JZNodeOperator::addInputButton()
 {
-    JZNodePin btn;
-    btn.setName("Add input");
-    btn.setFlag(Prop_button | Prop_in | Prop_dispName);
-    addProp(btn);
+    addButtonIn("Add input");
 }
 
 void JZNodeOperator::addInput()

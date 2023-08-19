@@ -3,7 +3,7 @@
 
 #include "JZNode.h"
 
-//JZNodeValue
+//JZNodeLiteral
 class JZNodeLiteral : public JZNode
 {
 public:
@@ -17,6 +17,22 @@ public:
 
     QVariant literal() const;
     void setLiteral(QVariant value);    
+
+protected:
+
+};
+
+//JZNodeEnum
+class JZNodeEnum : public JZNode
+{
+public:
+    JZNodeEnum();
+    ~JZNodeEnum();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+    void setEnmu(int id);
+    void setValue(int value);
 
 protected:
 
@@ -69,8 +85,8 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     virtual void pinChanged(int id) override;
 
-    void setVariable(const QString &name);
-    QString variable() const;
+    virtual void setVariable(const QString &name) override;
+    virtual QString variable() const override;
     virtual void drag(const QVariant &value) override;
 
 protected:
@@ -87,14 +103,13 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     virtual void pinChanged(int id) override;
     
-    void setVariable(const QString &name);
-    QString variable() const;
+    virtual void setVariable(const QString &name) override;
+    virtual QString variable() const override;
     virtual void drag(const QVariant &value) override;
 
 protected:        
 
 };
-
 
 //JZNodeSetParamDataFlow
 class JZNodeSetParamDataFlow : public JZNode
@@ -112,6 +127,66 @@ public:
 
 protected:    
 
+};
+
+//JZNodeAbstractMember
+class JZNodeAbstractMember : public JZNode
+{
+public:
+    void setMember(QString className,QStringList params);
+    QString className();
+    QStringList members();
+    virtual bool pinClicked(int id) override;
+};
+
+//JZNodeMemberParam
+class JZNodeMemberParam : public JZNodeAbstractMember
+{
+public:
+    JZNodeMemberParam();
+    ~JZNodeMemberParam();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+};
+
+//JZNodeSetMemberParam
+class JZNodeSetMemberParam : public JZNodeAbstractMember
+{
+public:
+    JZNodeSetMemberParam();
+    ~JZNodeSetMemberParam();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
+};
+
+//JZNodeSetMemberParamData
+class JZNodeSetMemberParamData : public JZNodeAbstractMember
+{
+public:
+    JZNodeSetMemberParamData();
+    ~JZNodeSetMemberParamData();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+};
+
+//JZNodeClone
+class JZNodeClone : public JZNode
+{
+public:
+    JZNodeClone();
+    ~JZNodeClone();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+};
+
+//JZNodeSwap
+class JZNodeSwap : public JZNode
+{
+public:
+    JZNodeSwap();
+    ~JZNodeSwap();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 };
 
 #endif

@@ -31,6 +31,8 @@ public:
     QString function() const;
 
 protected:
+    bool pinClicked(int id);
+
     QString m_functionName;
 };
 

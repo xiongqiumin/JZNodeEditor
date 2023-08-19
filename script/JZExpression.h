@@ -41,6 +41,7 @@ protected:
     QString m_error;
     QMap<int,QList<int>> m_tokenMap;
     QStringList m_opList;
+    QStringList m_opSingleList;
     QStringList m_tokenExpr;
 };
 

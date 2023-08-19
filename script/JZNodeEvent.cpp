@@ -54,7 +54,9 @@ bool JZNodeEvent::compiler(JZNodeCompiler *c,QString &error)
 JZNodeSingleEvent::JZNodeSingleEvent()
 {
     m_type = Node_singleEvent;
-    addParamIn("",Prop_dispName | Prop_dispValue | Prop_editValue);
+    m_flag = Node_propDragVariable;
+    int in = addParamIn("",Prop_dispName | Prop_dispValue | Prop_editValue | Prop_literal);
+    setPinTypeString(in);
 }
 
 JZNodeSingleEvent::~JZNodeSingleEvent()
@@ -107,6 +109,12 @@ void JZNodeSingleEvent::setVariable(const QString &name)
 QString JZNodeSingleEvent::variable() const
 {
     return propValue(paramIn(0)).toString();
+}
+
+int JZNodeSingleEvent::variableType() const
+{
+    auto def = JZNodeObjectManager::instance()->meta(m_className);
+    return def? def->id : Type_none;
 }
 
 void JZNodeSingleEvent::drag(const QVariant &value)

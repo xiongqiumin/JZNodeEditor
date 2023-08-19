@@ -77,8 +77,9 @@ protected slots:
     void onEditorClose(int index);
     void onEditorActivite(int index);
     void onNodeClicked(QString file, int nodeId);
-    void onStackChanged(int stack);
+    void onProjectChanged();
 
+    void onStackChanged(int stack);
     void onRuntimeLog(QString log);    
     void onRuntimeError(JZNodeRuntimeError error);    
     void onRuntimeStatus(int staus);    
@@ -121,6 +122,8 @@ private:
     void gotoNode(QString file, int nodeId);
     void setRunning(bool flag);    
     void setRuntimeNode(QString file, int nodeId);
+    void clearRuntimeNode();
+    void updateRuntime(int stack_index, bool isNew);
 
     bool build();
     void start(bool startPause);    

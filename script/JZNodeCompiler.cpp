@@ -4,6 +4,7 @@
 #include <QSet>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
+#include "JZClassFile.h"
 
 // GraphNode
 GraphNode::GraphNode()
@@ -358,12 +359,18 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
 
     QString error;
     bool ret = node->compiler(this,error);
-    if(!ret)
+    if (ret)
+    {        
+        Q_ASSERT(node->flowOutCount() == m_currentNodeInfo->jmpList.size());
+        Q_ASSERT(node->subFlowCount() == m_currentNodeInfo->jmpSubList.size());
+    }
+    else
         m_currentNodeInfo->error = error;
     
     range.end = currentPc() + 1;
     m_currentNodeInfo->ranges.push_back(range);
     popCompilerNode();
+
     return ret;
 }
 
@@ -759,6 +766,11 @@ int JZNodeCompiler::addStatement(JZNodeIRPtr ir)
     return ir->pc;
 }
 
+Graph *JZNodeCompiler::currentGraph()
+{
+    return m_currentGraph;
+}
+
 int JZNodeCompiler::currentPc()
 {
     return (m_script->statmentList.size() - 1);
@@ -811,7 +823,7 @@ int JZNodeCompiler::addJumpSubNode(int prop)
     return info.pc;
 }
 
-void JZNodeCompiler::setBreakContinue(QList<int> breakPc,QList<int> continuePc)
+void JZNodeCompiler::setBreakContinue(const QList<int> &breakPc,const QList<int> &continuePc)
 {
     m_currentNodeInfo->breakPc = breakPc;
     m_currentNodeInfo->continuePc = continuePc;
@@ -835,7 +847,7 @@ int JZNodeCompiler::addBreak()
     return jmp->pc;
 }
 
-void JZNodeCompiler::addCall(JZNodeIRParam function,QList<JZNodeIRParam> paramIn,QList<JZNodeIRParam> paramOut)
+void JZNodeCompiler::addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn,const QList<JZNodeIRParam> &paramOut)
 {
     for(int i = 0; i < paramIn.size(); i++)
         addSetVariable(irId(Reg_Call+i),paramIn[i]);
@@ -858,7 +870,7 @@ void JZNodeCompiler::freeStack(int id)
 {
 }
 
-JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptFile *file,const QString &name)
+const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptFile *file,const QString &name)
 {
     auto project = file->project();
     if (name.startsWith("this."))
@@ -901,12 +913,12 @@ JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptFile *file,const QString 
     }
 }
 
-JZParamDefine *JZNodeCompiler::getVariableInfo(const QString &name)
+const JZParamDefine *JZNodeCompiler::getVariableInfo(const QString &name)
 {
     return getVariableInfo(m_scriptFile, name);
 }
 
-bool JZNodeCompiler::checkVariableExist(QString name,QString &error)
+bool JZNodeCompiler::checkVariableExist(const QString &name,QString &error)
 {
     if(name.isEmpty())
     {
@@ -923,7 +935,7 @@ bool JZNodeCompiler::checkVariableExist(QString name,QString &error)
     return true;
 }
 
-bool JZNodeCompiler::checkVariableType(QString name,QString className,QString &error)
+bool JZNodeCompiler::checkVariableType(const QString &name,const QString &className,QString &error)
 {        
     if(!checkVariableExist(name,error))
         return false;
@@ -1150,6 +1162,13 @@ void JZNodeCompiler::addAllocLocal(JZParamDefine *def)
     addStatement(JZNodeIRPtr(alloc));
 }
 
+void JZNodeCompiler::addAssert(const JZNodeIRParam &tips)
+{
+    JZNodeIRAssert *assert = new JZNodeIRAssert();
+    assert->tips = tips;
+    addStatement(JZNodeIRPtr(assert));
+}
+
 void JZNodeCompiler::allocFunctionVariable()
 {
     auto define = m_scriptFile->function();
@@ -1173,7 +1192,7 @@ int JZNodeCompiler::addNop()
     return addStatement(JZNodeIRPtr(nop));
 }
 
-int JZNodeCompiler::addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op)
+int JZNodeCompiler::addExpr(const JZNodeIRParam &dst,const JZNodeIRParam &p1,const JZNodeIRParam &p2,int op)
 {
     JZNodeIRExpr *expr = new JZNodeIRExpr(op);
     expr->src1 = p1;
@@ -1182,12 +1201,12 @@ int JZNodeCompiler::addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,
     return addStatement(JZNodeIRPtr(expr));
 }
 
-int JZNodeCompiler::addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op)
+int JZNodeCompiler::addCompare(const JZNodeIRParam &p1,const JZNodeIRParam &p2,int op)
 {
     return addExpr(irId(Reg_Cmp),p1,p2,op);    
 }
 
-int JZNodeCompiler::addSetVariable(JZNodeIRParam dst,JZNodeIRParam src)
+int JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst,const JZNodeIRParam &src)
 {
     Q_ASSERT(src.type != JZNodeIRParam::None && dst.type != JZNodeIRParam::None);
     Q_ASSERT(dst.type != JZNodeIRParam::Literal);

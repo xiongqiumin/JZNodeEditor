@@ -43,15 +43,16 @@ void LogBrowser::addLog(QString log)
             int index = line.indexOf(";");
             QString link = line.mid(5, index - 5);
 
+            auto tc = textCursor();
+            tc.movePosition(QTextCursor::End);
+
             QTextCharFormat fmt;
             fmt.setForeground(QColor("blue"));
             fmt.setAnchor(true);
             fmt.setAnchorHref(link);
             fmt.setToolTip("address");
             fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);            
-            
-            auto tc = textCursor();
-            tc.movePosition(QTextCursor::End);
+                        
             tc.insertBlock();            
             tc.insertText(link, fmt);
             tc.setCharFormat(QTextCharFormat());

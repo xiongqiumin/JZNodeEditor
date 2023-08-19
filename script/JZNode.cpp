@@ -284,11 +284,15 @@ QVector<int> JZNode::paramInList() const
     return propInList(Prop_param);
 }
 
-void JZNode::setParamInValue(int index, const QVariant &value)
+QVariant JZNode::paramInValue(int index) const
 {
     auto list = paramInList();
-    Q_ASSERT(index < list.size());
+    return propValue(list[index]);
+}
 
+void JZNode::setParamInValue(int index, const QVariant &value)
+{
+    auto list = paramInList();    
     setPropValue(list[index], value);
 }
 
@@ -378,6 +382,14 @@ int JZNode::subFlowCount() const
     return propOutList(Prop_subFlow).size();
 }
 
+int JZNode::addButtonIn(QString name)
+{
+    JZNodePin btn;
+    btn.setName(name);
+    btn.setFlag(Prop_button | Prop_in | Prop_dispName);
+    return addProp(btn);    
+}
+
 QVariant JZNode::propValue(int id) const
 {
     auto pin = prop(id);
@@ -427,6 +439,21 @@ QVector<int> JZNode::propList() const
     return result;
 }
 
+void JZNode::setVariable(const QString &name)
+{
+    Q_UNUSED(name);
+}
+
+QString JZNode::variable() const
+{
+    return QString();
+}
+
+int JZNode::variableType() const
+{
+    return Type_any;
+}
+
 JZScriptFile *JZNode::file() const
 {
     return m_file;
@@ -460,7 +487,7 @@ bool JZNode::canRemove()
 
 bool JZNode::canDragVariable()
 {
-    return !(m_flag & Node_propDragVariable);
+    return (m_flag & Node_propDragVariable);
 }
 
 int JZNode::id() const
@@ -640,7 +667,7 @@ void JZNodeReturn::setFunction(const FunctionDefine *def)
 
     for (int i = 0; i < def->paramOut.size(); i++)
     {
-        int in = addParamIn(def->paramOut[i].name);
+        int in = addParamIn(def->paramOut[i].name, Prop_dispName | Prop_dispValue | Prop_editValue);
         setPinType(in, { def->paramOut[i].dataType });
     }
 }
@@ -750,8 +777,8 @@ JZNodeFor::JZNodeFor()
 
     int id_start = addParamIn("First index",Prop_editValue | Prop_dispName | Prop_dispValue);
     int id_step = addParamIn("Step", Prop_editValue | Prop_dispName | Prop_dispValue);
-    int id_end = addParamIn("Last index",Prop_editValue | Prop_dispName | Prop_dispValue);
-    int id_index = addParamOut("index");
+    int id_end = addParamIn("End index",Prop_editValue | Prop_dispName | Prop_dispValue);
+    int id_index = addParamOut("index", Prop_dispName);
     setPinTypeInt(id_start);
     setPinTypeInt(id_step);
     setPinTypeInt(id_index);
@@ -836,7 +863,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 
 void JZNodeFor::setRange(int start, int end)
 {
-    int step = 1;
+    int step = (start < end)? 1: -1;
     setPropValue(paramIn(0), start);
     setPropValue(paramIn(1), step);
     setPropValue(paramIn(2), end);
@@ -846,6 +873,21 @@ void JZNodeFor::setRange(int start, int end, int step)
 {
     setPropValue(paramIn(0), start);
     setPropValue(paramIn(1), step);
+    setPropValue(paramIn(2), end);
+}
+
+void JZNodeFor::setStart(int start)
+{
+    setPropValue(paramIn(0), start);
+}
+
+void JZNodeFor::setStep(int step)
+{
+    setPropValue(paramIn(1), step);
+}
+
+void JZNodeFor::setEnd(int end)
+{
     setPropValue(paramIn(2), end);
 }
 
@@ -1082,5 +1124,48 @@ bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
     
     jmp_true->jmpPc = irLiteral(c->addJumpNode(flowOut(0)));
     jmp_false->jmpPc = irLiteral(c->addJumpNode(flowOut(1)));
+    return true;
+}
+
+//JZNodeAssert
+JZNodeAssert::JZNodeAssert()
+{
+    m_name = "assert";
+    m_type = Node_assert;
+    addFlowIn();
+    addFlowOut();    
+
+    int cond = addParamIn("cond", Prop_dispName);
+    setPinTypeBool(cond);
+
+    int tips = addParamIn("tips", Prop_dispName | Prop_dispValue | Prop_editValue);
+    setPinTypeString(tips);
+}
+
+bool JZNodeAssert::compiler(JZNodeCompiler *c, QString &error)
+{
+    int cond = paramIn(0);
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    int id = c->paramId(m_id, cond);
+    int id_tips = c->paramId(m_id, paramIn(1));
+    c->addCompare(irId(id), irLiteral(true), OP_eq);
+    c->addAssert(irId(id_tips));
+    return true;
+}
+
+//JZNodeTryCatch
+JZNodeTryCatch::JZNodeTryCatch()
+{
+    addFlowIn();
+    addFlowOut("complete",Prop_dispName);
+    addSubFlowOut("try");
+    addSubFlowOut("catch");
+    addSubFlowOut("finally");
+}
+
+bool JZNodeTryCatch::compiler(JZNodeCompiler *compiler, QString &error)
+{
     return true;
 }

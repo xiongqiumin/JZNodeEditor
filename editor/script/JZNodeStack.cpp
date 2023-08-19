@@ -80,8 +80,8 @@ void JZNodeStack::setRuntime(JZNodeRuntimeInfo info)
         m_table->setItem(row, 0, itemSeq);
         m_table->setItem(row, 1, itemName);
     }
-    m_table->blockSignals(false);
     m_table->setCurrentCell(0, 0);
+    m_table->blockSignals(false);    
 }
 
 void JZNodeStack::setRunning(bool isRun)

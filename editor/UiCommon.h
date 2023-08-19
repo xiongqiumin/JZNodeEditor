@@ -6,12 +6,16 @@
 #endif
 
 #include <QMessageBox>
+#include <QTreeWidget>
+#include <functional>
 
 class QTreeWidget;
 class UiHelper
 {
 public:
-    static void filter(QTreeWidget *tree, QString name);
+    static bool treeFilter(QTreeWidgetItem *tree, QString name);
+    static void treeUpdate(QTreeWidgetItem *root,const QStringList &names, std::function<QTreeWidgetItem*(int)> func); //返回新增的item
+    static void clearTreeItem(QTreeWidgetItem *root);
 };
 
 

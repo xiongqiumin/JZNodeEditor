@@ -71,10 +71,11 @@ JZParamEditor::JZParamEditor()
     :ui(new Ui::JZParamEditor())
 {
     ui->setupUi(this);    
+    m_widgetCount = 0;
     m_table = ui->tableWidget;
 
-    m_table->setColumnCount(2);
-    m_table->setHorizontalHeaderLabels({"名称","类型","绑定控件","方向"});
+    m_table->setColumnCount(3);
+    m_table->setHorizontalHeaderLabels({"名称","类型","默认值"});
     m_table->setSelectionBehavior(QTableWidget::SelectRows);
     
     connect(m_table, &QTableWidget::itemChanged, this, &JZParamEditor::onItemChanged);
@@ -94,15 +95,29 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
     itemName->setData(Qt::UserRole, def->name);
     m_table->setItem(row, 0, itemName);
 
-    TypeEditHelp help;
-    help.init(def->dataType);
+    if (row < m_widgetCount)
+    {
+        QString type = JZNodeObjectManager::instance()->getClassName(def->dataType);
 
-    QComboBox *box = new QComboBox();
-    for (int i = 0; i < help.typeNames.size(); i++)
-        box->addItem(help.typeNames[i], help.types[i]);
-    box->setCurrentIndex(help.index);
-    connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
-    m_table->setCellWidget(row, 1, box);
+        QTableWidgetItem *itemType = new QTableWidgetItem(def->name);        
+        itemType->setText(type);
+        m_table->setItem(row, 1, itemType);
+
+        itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
+        itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
+    }
+    else
+    {
+        TypeEditHelp help;
+        help.init(def->dataType);
+
+        QComboBox *box = new QComboBox();
+        for (int i = 0; i < help.typeNames.size(); i++)
+            box->addItem(help.typeNames[i], help.types[i]);
+        box->setCurrentIndex(help.index);
+        connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
+        m_table->setCellWidget(row, 1, box);
+    }
 }
 
 void JZParamEditor::open(JZProjectItem *item)
@@ -110,13 +125,26 @@ void JZParamEditor::open(JZProjectItem *item)
     m_file = dynamic_cast<JZParamFile*>(item);
     m_table->blockSignals(true);
     m_table->clearContents();
+
+    m_widgetCount = 0;
+    JZScriptClassFile *class_file = m_project->getClassFile(item);
+    if (class_file)
+    {
+        auto widgets = class_file->uiWidgets();
+        m_table->setRowCount(widgets.size());
+        m_widgetCount = widgets.size();
+        for (int i = 0; i < widgets.size(); i++)
+        {            
+            updateItem(i, &widgets[i]);
+        }        
+    }
     
     QStringList list = m_file->variableList();
-    m_table->setRowCount(list.size());
+    m_table->setRowCount(m_widgetCount + list.size());
     for(int i = 0; i < list.size(); i++)
     {
         auto info = m_file->getVariable(list[i]);
-        updateItem(i, info);
+        updateItem(m_widgetCount + i, info);
     }
     m_table->blockSignals(false);
 }
@@ -273,7 +301,7 @@ void JZParamEditor::on_btnAdd_clicked()
 void JZParamEditor::on_btnRemove_clicked()
 {
     int index = m_table->currentRow();
-    if (index == -1)
+    if (index == -1 || index < m_widgetCount)
         return;
 
     QString name = m_table->item(index, 0)->text();

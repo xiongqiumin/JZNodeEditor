@@ -11,6 +11,7 @@
 #include <QCoreApplication>
 #include <QMessageBox>
 #include <QCloseEvent>
+#include <QElapsedTimer>
 #include "JZNodeEditor.h"
 #include "JZUiEditor.h"
 #include "JZParamEditor.h"
@@ -61,9 +62,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_debuger,&JZNodeDebugClient::sigLog,this,&MainWindow::onRuntimeLog);    
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeStatus, this, &MainWindow::onRuntimeStatus);    
-    connect(&m_debuger, &JZNodeDebugClient::sigNetError, this, &MainWindow::onNetError);
+    connect(&m_debuger,&JZNodeDebugClient::sigNetError, this, &MainWindow::onNetError);
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
+    connect(&m_project,&JZProject::sigFileChanged, this, &MainWindow::onProjectChanged);
 
     loadSetting();
     initMenu();
@@ -694,8 +696,9 @@ void MainWindow::closeEditor(JZEditor *editor)
         }
         else if (ret == QMessageBox::Cancel)
             return;
-    }
+    }    
     editor->close();
+    editor->setItem(nullptr);
 
     int index = m_editorStack->indexOf(editor);
     m_editorStack->removeTab(index);    
@@ -752,7 +755,28 @@ void MainWindow::onNodeClicked(QString file, int nodeId)
     }
 }
 
+void MainWindow::onProjectChanged()
+{
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
+    {
+        auto editor = it.value();
+        if (it.value()->type() == Editor_script)
+        {
+            auto node_edit = (JZNodeEditor*)it.value();
+            node_edit->updateNode();
+        }
+
+        it++;
+    }
+}
+
 void MainWindow::onStackChanged(int stack_index)
+{
+    updateRuntime(stack_index, false);
+}
+
+void MainWindow::updateRuntime(int stack_index,bool isNew)
 {
     if (stack_index == -1)
     {
@@ -786,7 +810,7 @@ void MainWindow::onStackChanged(int stack_index)
     if (!func->className.isEmpty())
     {
         auto meta = m_program.meta(func->className);
-        auto paramList = meta->paramList();
+        auto paramList = meta->paramList(true);
         for (int i = 0; i < paramList.size(); i++)
         {
             JZNodeParamCoor coor;
@@ -808,12 +832,14 @@ void MainWindow::onStackChanged(int stack_index)
     }    
 
     param_info = m_debuger.getVariable(param_info);
-    m_watch->setParamInfo(&param_info);    
+    m_watch->setParamInfo(&param_info,isNew);    
     setRuntimeNode(stack.file, stack.nodeId);
 }
 
 bool MainWindow::build()
 {
+    QElapsedTimer timer;
+    timer.start();
     m_log->addLog(Log_Compiler, "开始编译");
 
     JZNodeBuilder builder;
@@ -839,7 +865,7 @@ bool MainWindow::build()
     }
     saveToFile(build_path + "/" + m_project.name() + ".jsm", program.dump());
 
-    m_log->addLog(Log_Compiler, "编译完成:" + build_exe);
+    m_log->addLog(Log_Compiler, "编译完成:" + build_exe + ",用时" + QString::number(timer.elapsed()) + "ms");
     return true;
 }
 
@@ -898,13 +924,18 @@ void MainWindow::onRuntimeStatus(int status)
     m_watch->setRuntimeStatus(status);
     if (is_pause)
     {
-        m_runtime = m_debuger.runtimeInfo();
-        if (m_runtime.stacks.size() > 0)
+        auto new_runtime = m_debuger.runtimeInfo();
+        bool isNew = true;
+        if (new_runtime.stacks.size() > 0 && new_runtime.stacks.size() == m_runtime.stacks.size()
+            && new_runtime.stacks.back().file == m_runtime.stacks.back().file
+            && new_runtime.stacks.back().function == m_runtime.stacks.back().function)
         {
-            auto stack = m_runtime.stacks.back();
-            setRuntimeNode(stack.file, stack.nodeId);
+            isNew = false;
         }
+
+        m_runtime = new_runtime;
         m_log->stack()->setRuntime(m_runtime);
+        updateRuntime(m_runtime.stacks.size() - 1, isNew);
     }
     else
     {
@@ -913,16 +944,8 @@ void MainWindow::onRuntimeStatus(int status)
     }
 
     if (!is_pause)
-    {
-        auto it = m_editors.begin();
-        while (it != m_editors.end())
-        {
-            auto editor = it.value();
-            if (editor->type() == Editor_script)
-                ((JZNodeEditor*)editor)->setRuntimeNode(-1);
-            it++;
-        }
-    }
+        clearRuntimeNode();
+
     updateActionStatus();
 }
 
@@ -1043,8 +1066,21 @@ void MainWindow::setRunning(bool flag)
     }
 }
 
+void MainWindow::clearRuntimeNode()
+{
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
+    {
+        auto editor = it.value();
+        if (editor->type() == Editor_script)
+            ((JZNodeEditor*)editor)->setRuntimeNode(-1);
+        it++;
+    }
+}
+
 void MainWindow::setRuntimeNode(QString file, int nodeId)
 {
+    clearRuntimeNode();
     if (openEditor(file))
     {
         JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);

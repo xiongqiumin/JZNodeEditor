@@ -122,3 +122,13 @@ void JZNodeFunctionManager::replaceFunction(const FunctionDefine &define)
 {
     m_funcMap[define.name] = define;
 }
+
+JZNodeFunctionEdit JZNodeFunctionManager::editFunction(QString name)
+{
+    return m_funcEditMap.value(name, nullptr);
+}
+
+void JZNodeFunctionManager::registEditFunction(QString name, JZNodeFunctionEdit func)
+{
+    m_funcEditMap[name] = func;
+}

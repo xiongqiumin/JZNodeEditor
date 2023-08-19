@@ -1,0 +1,1 @@
+计算:rand,pow,sqrt,ceil,floor,round,fmod,sin,cos,exp,log,log10,tan,sinh,cosh,tanh,asin,acos,atan,atan2

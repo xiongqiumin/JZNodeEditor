@@ -53,7 +53,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param)
     return s;
 }
 
-JZNodeIRParam irRef(QString id)
+JZNodeIRParam irRef(const QString &id)
 {
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Reference;
@@ -70,7 +70,7 @@ JZNodeIRParam irId(int id)
     return param;
 }
 
-JZNodeIRParam irLiteral(QVariant value)
+JZNodeIRParam irLiteral(const QVariant &value)
 {
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Literal;
@@ -124,7 +124,9 @@ JZNodeIR *createNodeIR(int type)
     case OP_jne:
         return new JZNodeIRJmp(type);
     case OP_call:       
-        return new JZNodeIRCall();    
+        return new JZNodeIRCall();
+    case OP_assert:
+        return new JZNodeIRAssert();
     default:
         break;
     }
@@ -309,4 +311,27 @@ void JZNodeIRCall::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
     s >> function >> paramIn >> paramOut;
+}
+
+//JZNodeIRAssert
+JZNodeIRAssert::JZNodeIRAssert()
+{
+    type = OP_assert;
+}
+
+JZNodeIRAssert::~JZNodeIRAssert()
+{
+
+}
+
+void JZNodeIRAssert::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << tips;
+}
+
+void JZNodeIRAssert::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> tips;
 }

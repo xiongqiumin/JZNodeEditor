@@ -18,6 +18,7 @@ public:
     virtual void saveToStream(QDataStream &s);
     virtual void loadFromStream(QDataStream &s);
 
+    QList<JZParamDefine> widgets();
     void updateDefine(JZNodeObjectDefine &define);
 
 protected:

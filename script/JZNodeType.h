@@ -27,13 +27,14 @@ enum
     Type_userObject = 10000,    // 用户注册起始
 };
 
+class JZNodeObject;
 class JZNodeType
 {
 public:
     static void init();
     static QString typeToName(int id);
     static int nameToType(QString name);
-    static int variantType(const QVariant &v);
+    static int variantType(const QVariant &v);    
     static QVariant::Type typeToQMeta(int id);
     static int typeidToType(QString name);
     static QVariant convertTo(const QVariant &v, int type);
@@ -42,12 +43,15 @@ public:
     static bool isBaseType(int id);    
     static bool isObject(int type);
     static bool isNumber(int type);
+    static bool isEnum(int type);    
+    static bool isNull(const QVariant &v);
 
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
     static bool canConvert(int type1,int type2);
     static bool canConvert(QList<int> type1,QList<int> type2);
-    static QString toString(const QVariant &v);    
+    static QString toString(const QVariant &v);
+    static QString toString(JZNodeObject *obj);
     
     static QVariant matchValue(const QVariant &v, QList<int> type);
     static QString opName(int op);
@@ -66,6 +70,6 @@ public:
     bool cref;         //从c++侧引用
 };
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param);
-QDataStream &operator >> (QDataStream &s, JZParamDefine &param);
+QDataStream &operator>>(QDataStream &s, JZParamDefine &param);
 
 #endif

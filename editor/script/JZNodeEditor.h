@@ -40,6 +40,8 @@ public:
     int runtimeNode();
     void setRuntimeNode(int nodeId);
 
+    void updateNode();
+
 protected slots:
     void onActionLayout();
     void onActionFitInView();

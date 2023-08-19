@@ -16,6 +16,8 @@ enum {
     Widget_comboBox,
 };
 
+constexpr int name_max_width = 120;
+
 //JZNodeGraphItem::PropGemo
 JZNodeGraphItem::PropGemo::PropGemo()
 {
@@ -192,7 +194,7 @@ void JZNodeGraphItem::calcGemo(int prop,int x,int y, PropGemo *gemo)
     if(pin->isDispName())
     {
         QFontMetrics ft(scene()->font());
-        int w = qMin(80,ft.horizontalAdvance(pin->name()));
+        int w = qMin(name_max_width,ft.horizontalAdvance(pin->name()));
         gemo->nameRect = QRectF(x,y,w,24);
         x = gemo->nameRect.right() + 5;
     }
@@ -204,14 +206,28 @@ void JZNodeGraphItem::calcGemo(int prop,int x,int y, PropGemo *gemo)
             QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();    
             QWidget *widget = nullptr;
             if (pin->dataType().size() == 1 && pin->dataType()[0] == Type_bool)
-            {
-                w = 80;
+            {                
                 gemo->widgetType = Widget_comboBox;
                 QComboBox *box = new QComboBox();
                 box->addItem("true",true);
                 box->addItem("false",false);
                 box->connect(box, SIGNAL(currentIndexChanged(int)), editor(), SLOT(onItemPropChanged()));
+                box->adjustSize();
+                w = box->width();
                 widget = box;
+            }
+            else if (pin->dataType().size() == 1 && JZNodeType::isEnum(pin->dataType()[0]))
+            {
+                auto meta = JZNodeObjectManager::instance()->enumMeta(pin->dataType()[0]);
+                
+                gemo->widgetType = Widget_comboBox;
+                QComboBox *box = new QComboBox();
+                for (int i = 0; i < meta->count(); i++)                
+                    box->addItem(meta->key(i), meta->value(i));                
+                box->connect(box, SIGNAL(currentIndexChanged(int)), editor(), SLOT(onItemPropChanged()));
+                box->adjustSize();
+                w = box->width();
+                widget = box;                
             }
             else
             {
@@ -270,6 +286,10 @@ void JZNodeGraphItem::updateNode()
     };
     updatePropGemo();
 
+    QString title = m_node->name();
+    QFontMetrics title_ft(scene()->font());
+    int title_w = title_ft.horizontalAdvance(title) + 20;
+
     int in_x = 0, out_x = 0;
     int in_y = 24,out_y = 24;
     int y_gap = 28;    
@@ -301,7 +321,10 @@ void JZNodeGraphItem::updateNode()
         if(pin->isParam() && pin->isEditValue())
             setPropValue(pin->id(), pin->value());
     }    
-    int w = qMax(100,in_x + out_x + 20);
+
+    int w = qMax(100,in_x + out_x + 30);
+    w = qMax(title_w, w);
+
     int h = qMax(in_y, out_y);
     prepareGeometryChange();
     for(int i = 0; i < out_list.size(); i++)

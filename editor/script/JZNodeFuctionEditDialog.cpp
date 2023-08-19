@@ -138,7 +138,6 @@ QStringList JZNodeFuctionEditDialog::localVarList()
     int count = ui->tableIn->rowCount();
     for (int i = 0; i < count; i++)
         names << ui->tableIn->item(i, 0)->text();
-
     return names;
 }
 
@@ -231,7 +230,9 @@ void JZNodeFuctionEditDialog::addRow(QTableWidget *table, QString name, int data
     itemName->setData(Item_name, name);    
     table->setItem(row, 0, itemName);
     if ((table == ui->tableIn && row == 0 && isMemberFunction()))
-    {        
+    {   
+        itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
+
         QString type_name = JZNodeObjectManager::instance()->getClassName(dataType);
         QTableWidgetItem *itemType = new QTableWidgetItem(name);        
         itemType->setText(type_name);
@@ -278,7 +279,7 @@ void JZNodeFuctionEditDialog::onTypeChanged(int index)
 void JZNodeFuctionEditDialog::dataToUi()
 {
     ui->lineName->setText(m_functionDefine.name);
-    ui->boxFlow->setChecked(m_functionDefine.isFlowFunction);
+    ui->boxFlow->setChecked(!m_functionDefine.isFlowFunction);
     dataToTable(m_functionDefine.paramIn, ui->tableIn);
     dataToTable(m_functionDefine.paramOut, ui->tableOut);
 }
@@ -286,7 +287,7 @@ void JZNodeFuctionEditDialog::dataToUi()
 void JZNodeFuctionEditDialog::uiToData()
 {
     m_functionDefine.name = ui->lineName->text();
-    m_functionDefine.isFlowFunction = ui->boxFlow->isChecked();
+    m_functionDefine.isFlowFunction = !ui->boxFlow->isChecked();
     tableToData(ui->tableIn, m_functionDefine.paramIn);
     tableToData(ui->tableOut, m_functionDefine.paramOut);
 }

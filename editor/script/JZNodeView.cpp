@@ -1059,6 +1059,24 @@ void JZNodeView::removeItem(QGraphicsItem *item)
     }
 }
 
+QStringList JZNodeView::matchParmas(JZNodeObjectDefine *meta, int match_type, QString pre)
+{
+    QStringList list;
+    auto params = meta->paramList(true);
+    for (int i = 0; i < params.size(); i++)
+    {
+        auto p = meta->param(params[i]);
+        if (JZNodeType::canConvert(p->dataType,match_type))
+            list << pre + p->name;
+        if (JZNodeType::isObject(p->dataType))
+        {
+            auto sub_meta = JZNodeObjectManager::instance()->meta(p->dataType);
+            list << matchParmas(sub_meta, match_type, pre + p->name + ".");
+        }
+    }
+    return list;
+}
+
 void JZNodeView::onContextMenu(const QPoint &pos)
 {
     if (m_runningMode)
@@ -1071,6 +1089,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QAction *actCpy = nullptr;
     QAction *actDel = nullptr;
     QAction *actPaste = nullptr;
+    QList<QAction*> param_actions;
     if (!item)
     {
         actAdd = menu.addAction("添加节点");
@@ -1085,6 +1104,20 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         }
         if (item->type() == Item_node)
         {
+            auto node = ((JZNodeGraphItem*)item)->node();
+            if (node->canDragVariable())
+            {
+                auto classFile = m_file->getClassFile();
+                auto meta = JZNodeObjectManager::instance()->meta(classFile->className());
+                QStringList param_list = matchParmas(meta,node->variableType(),"this.");
+                if (param_list.size() > 0)
+                {
+                    auto tmp_menu = menu.addMenu("设置参数");
+                    for(int i = 0; i < param_list.size(); i++)
+                        param_actions << tmp_menu->addAction(param_list[i]);
+                }
+            }
+
             actCpy = menu.addAction("复制节点");
             actDel = menu.addAction("删除节点");
         }
@@ -1110,6 +1143,13 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     else if(ret == actDel)
     {
         removeItem(item);
+    }
+    else if (param_actions.contains(ret))
+    {
+        auto node = ((JZNodeGraphItem*)item)->node();
+        auto old = getNodeData(node->id());        
+        node->setVariable(ret->text());        
+        addPropChangedCommand(node->id(), old);
     }
 }
 
@@ -1192,7 +1232,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
         }
         else if(node_item->node()->canDragVariable())
         {
-            QByteArray old = saveNode(node_item->node());
+            QByteArray old = getNodeData(node_item->node()->id());
             node_item->node()->drag(param_name);
             addPropChangedCommand(node_item->id(),old);
         }

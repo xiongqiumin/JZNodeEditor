@@ -3,11 +3,71 @@
 #include <QSplitter>
 #include <QShortcut>
 #include <QDebug>
+#include <QLabel>
+#include <QDialogButtonBox>
+#include "JZNodeFunctionManager.h"
+#include "JZNodeFactory.h"
+#include "JZNodeMemberEditDialog.h"
 
+//JZListInitFunct
+bool JZListInitFunction(JZNode *node)
+{
+    QString value = node->paramInValue(0).toString();
+    value.replace(",", "\n");
+    QDialog dialog(node->file()->editor());
+
+    QVBoxLayout *l = new QVBoxLayout();
+    l->addWidget(new QLabel("init"));
+
+    QTextEdit *edit = new QTextEdit();
+    edit->setPlainText(value);
+    l->addWidget(edit);
+
+    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+        | QDialogButtonBox::Cancel);
+    dialog.connect(buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    dialog.connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    l->addWidget(buttonBox);
+    dialog.setLayout(l);
+    if (dialog.exec() != QDialog::Accepted)
+        return false;
+
+    QStringList result;
+    QStringList lines = edit->toPlainText().split("\n");
+    for (int i = 0; i < lines.size(); i++)
+    {
+        QString line = lines[i].simplified();
+        if (!line.isEmpty())
+            result.push_back(line);
+    }
+    node->setParamInValue(0, result.join(","));
+    return true;
+}
+
+//JZMemberEdit
+bool JZMemberEdit(JZNode *node)
+{
+    JZNodeMemberEditDialog dialog(node->file()->editor());
+    dialog.init(node);
+    if (dialog.exec() != QDialog::Accepted)
+        return false;
+
+    return true;
+}
+
+//JZNodeEditor
 JZNodeEditor::JZNodeEditor()
 {
     m_type = Editor_script;
     init();           
+
+    auto func_inst = JZNodeFunctionManager::instance();
+    func_inst->registEditFunction("StringList.create", JZListInitFunction);
+    func_inst->registEditFunction("List.create", JZListInitFunction);
+    func_inst->registEditFunction("Map.create", JZListInitFunction);
+
+    JZNodeFactory::instance()->registEdit(Node_memberParam, JZMemberEdit);
+    JZNodeFactory::instance()->registEdit(Node_setMemberParam, JZMemberEdit);    
 }
 
 JZNodeEditor::~JZNodeEditor()
@@ -39,12 +99,11 @@ void JZNodeEditor::init()
     splitter->setStretchFactor(0,0);
     splitter->setStretchFactor(1,1);
     splitter->setStretchFactor(2,0);
-    splitter->setSizes({150,300,150});
+    splitter->setSizes({220,300,220});
     l->addWidget(splitter);
     
     //m_nodeProp->setMaximumWidth(200);
-    m_view->setPropertyEditor(m_nodeProp);
-    m_nodePanel->setPropertyEditor(m_nodeProp);
+    m_view->setPropertyEditor(m_nodeProp);    
 }
 
 void JZNodeEditor::open(JZProjectItem *item)
@@ -165,4 +224,9 @@ int JZNodeEditor::runtimeNode()
 void JZNodeEditor::setRuntimeNode(int nodeId)
 {
     m_view->setRuntimeNode(nodeId);
+}
+
+void JZNodeEditor::updateNode()
+{
+    m_nodePanel->updateNode();
 }

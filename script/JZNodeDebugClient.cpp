@@ -160,6 +160,9 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
 
 bool JZNodeDebugClient::sendCommand(int command,QVariantList &params,QVariantList &result)
 {
+    if (!m_client.isConnect())
+        return false;
+
     JZNodeDebugPacket packet;
     packet.cmd = command;
     packet.params = params;

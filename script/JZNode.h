@@ -16,9 +16,16 @@ enum
     Node_this,
     Node_setParam,
     Node_setParamData,
+    Node_memberParam,
+    Node_setMemberParam,
+    Node_setMemberParamData,
     Node_literal,
+    Node_enum,
     Node_functionStart,
-    Node_function,            
+    Node_function,      
+    Node_clone,
+    Node_assert,
+    Node_swap,
     Node_add,
     Node_sub,
     Node_mul,
@@ -55,7 +62,7 @@ enum
     Node_singleEvent,
     Node_qtEvent,
     Node_paramChangedEvent,
-    Node_timeEvent,
+    Node_timeEvent,        
 };
 
 enum
@@ -136,6 +143,7 @@ public:
     JZNodeGemo paramInGemo(int index) const;
     int paramInCount() const;
     QVector<int> paramInList() const;
+    QVariant paramInValue(int index) const;
     void setParamInValue(int index, const QVariant &value);
 
     int addParamOut(QString name,int extFlag = 0);
@@ -158,14 +166,20 @@ public:
     JZNodeGemo subFlowOutGemo(int index) const;
     QVector<int> subFlowList() const;
     int subFlowCount() const;
+
+    int addButtonIn(QString name);
     
     QVariant propValue(int prop) const;
     void setPropValue(int prop,QVariant value);
     QString propName(int id) const;
     void setPropName(int id,QString name);
+    
+    virtual void setVariable(const QString &name);
+    virtual QString variable() const;
+    virtual int variableType() const;
 
     bool canRemove();
-    bool canDragVariable();
+    bool canDragVariable();    
 
     virtual QList<int> propType(int id);
     virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
@@ -296,6 +310,9 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     void setRange(int start, int end);
     void setRange(int start, int end, int step);
+    void setStart(int start);
+    void setStep(int step);
+    void setEnd(int end);
 
 protected:
 };
@@ -359,6 +376,29 @@ public:
 
 protected:
 
+};
+
+//JZNodeAssert
+class JZNodeAssert : public JZNode
+{
+public:
+    JZNodeAssert();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:
+
+};
+
+//JZNodeTryCatch
+class JZNodeTryCatch : public JZNode
+{
+public:
+    JZNodeTryCatch();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:
 };
 
 #endif

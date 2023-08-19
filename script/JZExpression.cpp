@@ -6,9 +6,10 @@ enum{
     Token_Start,
     Token_ID,
     Token_Func,
-    Token_Number,
+    Token_Number,    
     Token_EQ,
     Token_OP,
+    Token_OP_Single,
     Token_LBkt,
     Token_RBkt,
     Token_Comma,
@@ -21,8 +22,9 @@ JZExpression::JZExpression()
     m_tokenMap[Token_Start] << Token_LBkt << Token_Number << Token_ID << Token_Func;
     m_tokenMap[Token_ID] << Token_OP << Token_Comma << Token_RBkt;
     m_tokenMap[Token_Func] << Token_LBkt << Token_OP << Token_Comma << Token_RBkt;
-    m_tokenMap[Token_Number] << Token_OP << Token_Comma;
-    m_tokenMap[Token_OP] << Token_LBkt << Token_Number << Token_ID << Token_Func;
+    m_tokenMap[Token_Number] << Token_OP << Token_Comma << Token_RBkt;
+    m_tokenMap[Token_OP] << Token_LBkt << Token_Number << Token_ID << Token_OP_Single << Token_Func;
+    m_tokenMap[Token_OP_Single] << Token_LBkt << Token_Number << Token_ID << Token_Func;
     m_tokenMap[Token_LBkt] << Token_LBkt << Token_Number << Token_ID << Token_Func;
     m_tokenMap[Token_RBkt] << Token_OP << Token_RBkt;
     m_tokenMap[Token_Comma] << Token_LBkt << Token_Number << Token_ID << Token_Func;
@@ -37,12 +39,14 @@ bool JZExpression::parse(const QString &expr)
 {
     m_tokenExpr.clear();
 
-    QRegularExpression exp_num("^[-?[0-9]+(\\.[0-9]+)?|0x[0-9]+]+$");
+    QRegularExpression exp_num("^(-?[0-9]+(\\.[0-9]+)?|0x[0-9a-fA-F]+)+$");
     QRegularExpression exp_id("^[a-zA-Z]+[0-9a-zA-Z]*$");
 
     QVector<QList<Token>> token_list;
     QList<Token> cur_token;
     QStringList lines = expr.split("\n");
+
+    bool pre_sub_op = true;
     for(int line_idx = 0; line_idx < lines.size(); line_idx++)
     {
         QStringList strs = readToken(lines[line_idx].simplified());
@@ -56,12 +60,18 @@ bool JZExpression::parse(const QString &expr)
                 tk.type = Token_RBkt;
             else if(m_opList.contains(tk.word))
                 tk.type = Token_OP;
+            else if (m_opSingleList.contains(tk.word))
+                tk.type = Token_OP_Single;
             else if(tk.word == "=")
                 tk.type = Token_EQ;
             else if(tk.word == ",")
                 tk.type = Token_Comma;
-            else if(exp_num.match(tk.word).hasMatch())
+            else if (exp_num.match(tk.word).hasMatch())
+            {
                 tk.type = Token_Number;
+                if (pre_sub_op && exp_num.match("-" + tk.word).hasMatch())
+                    cur_token.pop_back();
+            }
             else if(exp_id.match(tk.word).hasMatch())
                 tk.type = Token_ID;
             else
@@ -69,6 +79,10 @@ bool JZExpression::parse(const QString &expr)
                 m_error = "SyntaxError: " + tk.word;
                 return false;
             }
+            if (pre_sub_op)
+                pre_sub_op = false;
+            if (tk.word == "-" && cur_token.size() > 0 && cur_token.back().type == Token_OP)
+                pre_sub_op = true;
             if(tk.type == Token_LBkt && cur_token.size() > 0 && cur_token.back().type == Token_ID)
                 cur_token.back().type = Token_Func;
             cur_token.push_back(tk);
@@ -215,6 +229,10 @@ bool JZExpression::paresToken(const QList<Token> &tokens)
             }
             stack.push(tk);
         }
+        else if (tk.type == Token_OP_Single)
+        {
+            stack.push(tk);
+        }
         else if(tk.type == Token_Func)
         {
             stack.push(tk);
@@ -281,6 +299,18 @@ bool JZExpression::paresToken(const QList<Token> &tokens)
             auto a = stack.pop().word;
             QString reg = "#Reg" + QString::number(regId++);
             QString expr = reg + " = " + a + " " + token_expr[i].word + " " + b;
+            m_tokenExpr.push_back(expr);
+
+            Token ret;
+            ret.type = Token_ID;
+            ret.word = reg;
+            stack.push(ret);
+        }
+        else if (token_expr[i].type == Token_OP_Single)
+        {
+            auto a = stack.pop().word;
+            QString reg = "#Reg" + QString::number(regId++);
+            QString expr = reg + " = " + token_expr[i].word + "a";
             m_tokenExpr.push_back(expr);
 
             Token ret;

@@ -86,9 +86,9 @@ int JZNodeType::variantType(const QVariant &v)
         if(v.userType() == qMetaTypeId<JZObjectNull>())
             return Type_nullptr;
         else if(isJZObject(v))
-        {
-            auto obj = toJZObject(v);
-            return obj->define->id;
+        {            
+            auto obj = toJZObjectOriginal(v);
+            return obj->type();
         }
     }
     return Type_none;
@@ -100,6 +100,24 @@ bool JZNodeType::isNumber(int type)
     if(type == Type_int || type == Type_int64 || type == Type_double || type == Type_bool)
         return true;
     
+    return false;
+}
+
+bool JZNodeType::isEnum(int type)
+{
+    return (JZNodeObjectManager::instance()->enumMeta(type) != nullptr);
+}
+
+bool JZNodeType::isNull(const QVariant &v)
+{
+    if (v.userType() == qMetaTypeId<JZObjectNull>())
+        return true;
+
+    if (isJZObject(v))
+    {
+        auto obj = toJZObject(v);
+        return obj->isNull();
+    }
     return false;
 }
 
@@ -163,9 +181,57 @@ bool JZNodeType::canConvert(QList<int> type1,QList<int> type2)
     return false;
 }
 
+QString JZNodeType::toString(JZNodeObject *obj)
+{
+    QString text = obj->className();
+    if (obj->type() == Type_list)
+    {
+        QVariantList in, out;
+        in << QVariant::fromValue(obj);
+        obj->function("size")->cfunc->call(in, out);
+
+        int size = out[0].toInt();
+        in << 0;
+
+        auto list_at = obj->function("get")->cfunc;
+        text = "{";
+        for (int i = 0; i < size; i++)
+        {
+            in[1] = i;
+            list_at->call(in, out);
+            if (i != 0)
+                text += ",";
+            text += toString(out[0]);
+        }
+        text += "}";
+    }
+    else if (obj->type() == Type_map)
+    {
+
+    }
+    else
+    {
+
+    }
+    return text;
+}
+
 QString JZNodeType::toString(const QVariant &v)
 {
-    return v.toString();
+    if (isJZObject(v))
+    {
+        auto obj = toJZObject(v);
+        if (obj)
+        {
+            return toString(obj);            
+        }
+        else
+            return "nullptr";
+    }
+    else
+    {
+        return v.toString();
+    }    
 }
 
 QString JZNodeType::opName(int op)

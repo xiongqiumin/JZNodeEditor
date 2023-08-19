@@ -7,10 +7,14 @@
 #include "JZProjectItem.h"
 #include "JZParamFile.h"
 #include "JZScriptFile.h"
+#include "JZClassFile.h"
+#include "JZLibraryFile.h"
 
 //JZProject
-class JZProject
+class JZProject : public QObject
 {
+    Q_OBJECT
+
 public:
     JZProject();
     ~JZProject();
@@ -67,7 +71,12 @@ public:
     QMap<QString, QVector<int>> breakPoints();
 
     const FunctionDefine *function(QString name);
-    void regist(JZProjectItem *item);    
+    QStringList functionList();
+
+    void regist(JZProjectItem *item);     
+
+signals:
+    void sigFileChanged();
 
 protected:
     Q_DISABLE_COPY(JZProject)
@@ -87,7 +96,7 @@ protected:
     void init();    
     void clear();
     void registType();
-    QString dir(const QString &filepath);
+    QString dir(const QString &filepath);    
             
     JZProjectItemFolder m_root;
     QMap<QString,ItemInfo> m_itemBuffer;

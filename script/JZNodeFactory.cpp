@@ -1,4 +1,8 @@
 ﻿#include "JZNodeFactory.h"
+#include "JZNodeValue.h"
+#include "JZNodeExpression.h"
+#include "JZNodeEvent.h"
+#include "JZNodeFunction.h"
 
 template<class T> 
 JZNode *createFunc(){ return new T();}
@@ -37,13 +41,20 @@ void JZNodeFactory::init()
 {    
     registNode(Node_print,createFunc<JZNodePrint>);  
     registNode(Node_nop, createFunc<JZNodeNop>);
+    registNode(Node_assert, createFunc<JZNodeAssert>);
 
     registNode(Node_literal,createFunc<JZNodeLiteral>);    
+    registNode(Node_enum,createFunc<JZNodeEnum>);
     registNode(Node_create,createFunc<JZNodeCreate>);
     registNode(Node_this,createFunc<JZNodeThis>);
     registNode(Node_param,createFunc<JZNodeParam>);
     registNode(Node_setParam,createFunc<JZNodeSetParam>);
     registNode(Node_setParamData,createFunc<JZNodeSetParamDataFlow>);
+    registNode(Node_memberParam, createFunc<JZNodeMemberParam>);
+    registNode(Node_setMemberParam, createFunc<JZNodeSetMemberParam>);
+    registNode(Node_setMemberParamData, createFunc<JZNodeSetMemberParamData>);
+    registNode(Node_clone, createFunc<JZNodeClone>);
+    registNode(Node_swap, createFunc<JZNodeSwap>);    
     
     registNode(Node_functionStart, createFunc<JZNodeFunctionStart>);
     registNode(Node_function,createFunc<JZNodeFunction>);
@@ -82,6 +93,17 @@ void JZNodeFactory::init()
     registNode(Node_paramChangedEvent,createFunc<JZNodeParamChangedEvent>);
     registNode(Node_singleEvent,createFunc<JZNodeSingleEvent>);
     registNode(Node_qtEvent, createFunc<JZNodeQtEvent>);
+}
+
+bool JZNodeFactory::edit(JZNode *node)
+{
+    Q_ASSERT(m_edits.contains(node->type()));
+    return m_edits[node->type()](node);
+}
+
+void JZNodeFactory::registEdit(int type, JZNodeFactoryEdit func)
+{
+    m_edits[type] = func;
 }
 
 //parseNode

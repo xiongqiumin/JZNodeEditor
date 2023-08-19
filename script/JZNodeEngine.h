@@ -302,4 +302,7 @@ protected:
 };
 extern JZNodeEngine *g_engine;
 
+void JZScriptLog(const QString &name);
+void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out);
+
 #endif

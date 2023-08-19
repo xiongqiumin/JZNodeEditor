@@ -23,9 +23,7 @@ public:
     JZNode *node();
 
     void setNode(JZNode *node);    
-    void updateNode();
-
-    void setParamDefine(JZParamDefine *def);
+    void updateNode();    
 
     void setPropName(int prop_id,const QString &name);
     void setPropValue(int prop_id,const QVariant &value);
@@ -33,12 +31,10 @@ public:
 
 signals:
     void sigNodePropNameChanged(int nodeId,int propId,const QString &name);
-    void sigNodePropChanged(int nodeId,int propId,const QVariant &value);
-    void sigPropChanged(int propId, const QVariant &value);
+    void sigNodePropChanged(int nodeId,int propId,const QVariant &value);    
 
 protected slots:
-    void onValueChanged(QtProperty *prop, const QVariant &value);
-    void onMoreDataType();
+    void onValueChanged(QtProperty *prop, const QVariant &value);    
 
 protected:
     void clear();
@@ -54,8 +50,7 @@ protected:
     QMap<int,QtVariantProperty*> m_propMap;
     QMap<int,QtVariantProperty*> m_propNameMap;
     bool m_editing;
-
-    JZParamDefine m_paramDefine;    
+      
     TypeEditHelp m_typeHelp;
 };
 

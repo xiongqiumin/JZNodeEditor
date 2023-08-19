@@ -1,5 +1,6 @@
 ﻿#include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
+#include "JZNodeFunctionManager.h"
 
 JZNodeFunctionStart::JZNodeFunctionStart()
 {
@@ -53,6 +54,9 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
         addFlowIn();
         addFlowOut();
     }
+    auto edit = JZNodeFunctionManager::instance()->editFunction(define->fullName());
+    if (edit)
+        addButtonIn("edit");
     for(int i = 0; i < define->paramIn.size(); i++)
     {
         JZNodePin pin;
@@ -78,6 +82,13 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
 QString JZNodeFunction::function() const
 {
     return m_functionName;
+}
+
+bool JZNodeFunction::pinClicked(int id)
+{
+    Q_UNUSED(id);
+    auto edit = JZNodeFunctionManager::instance()->editFunction(m_functionName);    
+    return edit(this);
 }
 
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)

@@ -11,11 +11,17 @@
 #include <QCheckBox>
 #include <QPushButton>
 #include <QTimer>
+#include <QDialogButtonBox>
+#include <QTextEdit>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QPlainTextEdit>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeBind.h"
+#include "JZRegExpHelp.h"
 
 void checkSize(int index, int size)
 {
@@ -52,10 +58,30 @@ public:
     QVariantMap::iterator it;
 };
 
+void initEnum()
+{
+    jzbind::registEnum<Qt::KeyboardModifiers>("KeyboardModifiers");
+    jzbind::registEnum<Qt::SplitBehavior>("SplitBehavior");
+
+    JZNodeEnumDefine keyCode;
+    QStringList key_codes;
+    QVector<int> key_values;
+    for (int i = 0; i < 10; i++)
+    {
+        key_codes.push_back(QChar('0' + i));
+        key_values.push_back('0' + i);
+    }
+    for (int i = 0; i < 26; i++)
+    {
+        key_codes.push_back(QChar('A' + i));
+        key_values.push_back('A' + i);
+    }
+    keyCode.init("Key", key_codes, key_values);
+    JZNodeObjectManager::instance()->registEnum(keyCode);
+}
+
 void initBase()
 {
-    jzbind::ClassDelcare<QString>("string", Type_string);
-
     jzbind::ClassBind<QPoint> cls_pt("Point");
     cls_pt.def("create", false, [](int x, int y)->QPoint { return QPoint(x, y); });
     cls_pt.def("x", false, &QPoint::x);
@@ -102,6 +128,10 @@ void initCore()
 
     //stringlist
     jzbind::ClassBind<QStringList> cls_string_list("StringList");
+    cls_string_list.def("create", false, [](const QString &text)->QStringList {
+        QStringList list = text.split(",");
+        return list;
+    });
     cls_string_list.def("join", false, [](const QStringList *list, const QString &sep)->QString {
         return (*list).join(sep);
     });
@@ -119,22 +149,27 @@ void initCore()
     cls_string_list.regist();
 
     //string È«²¿Ö»¶Á
-    funcInst->registCFunction("string.append", false, jzbind::createFuncion([](const QString &a, const QString &b)->QString {
+    jzbind::ClassBind<QString> cls_string("String");
+    cls_string.def("append", false, [](const QString &a, const QString &b)->QString {
         return a + b;
-    }));
-    funcInst->registCFunction("string.left", false, jzbind::createFuncion([](const QString &a, int num)->QString {
+    });
+    cls_string.def("left", false, [](const QString &a, int num)->QString {
         return a.left(num);
-    }));
-    funcInst->registCFunction("string.right", false, jzbind::createFuncion([](const QString &a, int num)->QString {
+    });
+    cls_string.def("right", false, [](const QString &a, int num)->QString {
         return a.right(num);
-    }));
-    funcInst->registCFunction("string.size", false, jzbind::createFuncion([](const QString &a)->int {
+    });
+    cls_string.def("size", false, [](const QString &a)->int {
         return a.size();
-    }));
-    funcInst->registCFunction("string.replace", false, jzbind::createFuncion([](const QString &in, const QString &before, const QString &after)->QString {
+    });
+    cls_string.def("replace", false, [](const QString &in, const QString &before, const QString &after)->QString {
         QString ret = in;
         return ret.replace(before, after);
-    }));
+    });
+    cls_string.def("split", false, [](const QString &in, const QString &before, Qt::SplitBehavior behavior)->QStringList {        
+        return in.split(before, behavior);
+    });
+    cls_string.regist();
 
     //list
     jzbind::ClassBind<JZNodeListIterator> cls_list_it("ListIterator");
@@ -145,9 +180,25 @@ void initCore()
     cls_list_it.regist();
 
     jzbind::ClassBind<QVariantList> cls_list("List");
+    cls_list.def("create", false, [](const QString &text)->QVariantList {
+        QVariantList ret;
+        QStringList list = text.split(",");
+        for (int i = 0; i < list.size(); i++)
+        {
+            if (JZRegExpHelp::isInt(list[i]))
+                ret.push_back(list[i].toInt());
+            else if (JZRegExpHelp::isHex(list[i]))
+                ret.push_back(list[i].toInt(nullptr, 16));
+            else if (JZRegExpHelp::isFloat(list[i]))
+                ret.push_back(list[i].toDouble());
+            else
+                ret.push_back(list[i]);
+        }
+        return ret;
+    });
     cls_list.def("iterator", true, [](QVariantList *list)->QVariant {
         JZNodeObjectPtr it_ptr = JZObjectCreate<JZNodeListIterator>();
-        auto list_it = (JZNodeListIterator*)it_ptr->cobj;
+        auto list_it = (JZNodeListIterator*)it_ptr->cobj();
         list_it->it = list->begin();
         list_it->list = list;
         return QVariant::fromValue(it_ptr);
@@ -201,9 +252,17 @@ void initCore()
     map_it.regist();
 
     jzbind::ClassBind<QVariantMap> cls_map("Map");
+    cls_map.def("create", false, [](const QString &text)->QVariantMap {
+        QVariantMap ret;
+        QStringList list = text.split(",");
+        for (int i = 0; i < list.size(); i++)
+        {        
+        }
+        return ret;
+    });
     cls_map.def("iterator", true, [](QVariantMap *map)->QVariant {
         JZNodeObjectPtr it_ptr = JZObjectCreate<JZNodeMapIterator>();
-        auto map_it = (JZNodeMapIterator*)it_ptr->cobj;
+        auto map_it = (JZNodeMapIterator*)it_ptr->cobj();
         map_it->it = map->begin();
         map_it->map = map;
         return QVariant::fromValue(it_ptr);
@@ -221,14 +280,11 @@ void initCore()
     });
     cls_map.def("size", false, &QVariantMap::size);
     cls_map.def("clear", true, &QVariantMap::clear);
-    cls_map.regist(Type_map);
+    cls_map.regist(Type_map);    
 }
 
-
 void initEvent()
-{
-    jzbind::registEnum<Qt::KeyboardModifiers>(QString("KeypadModifier"));
-
+{    
     jzbind::ClassBind<QEvent> cls_event("Event");
     cls_event.regist();
 
@@ -284,22 +340,47 @@ void initWidgets()
     cls_lineEdit.def("setText", true, &QLineEdit::setText);;
     cls_lineEdit.regist();
 
+    //textedit
+    jzbind::ClassBind<QTextEdit> cls_textEdit("QTextEdit", "Widget");
+    cls_textEdit.def("toPlainText", false, &QTextEdit::toPlainText);
+    cls_textEdit.def("setText", true, &QTextEdit::setText);
+    cls_textEdit.def("append", true, &QTextEdit::append);
+    cls_textEdit.regist();
+
     //abs_button
-    jzbind::ClassBind<QAbstractButton> cls_abs_button("AbstractButton", "Widget");
+    jzbind::ClassBind<QAbstractButton> cls_abs_button("Button", "Widget");
     cls_abs_button.def("text", false, &QAbstractButton::text);
     cls_abs_button.def("setText", true, &QAbstractButton::setText);
     cls_abs_button.def("isChecked", false, &QAbstractButton::isChecked);
     cls_abs_button.def("setChecked", true, &QAbstractButton::setChecked);
     cls_abs_button.defSingle("clicked", Event_buttonClicked, &QAbstractButton::clicked);
     cls_abs_button.regist();
-
-    //button
-    jzbind::ClassBind<QPushButton> cls_button("PushButton", "AbstractButton");
+    
+    jzbind::ClassBind<QPushButton> cls_button("PushButton", "Button");
     cls_button.regist();
+    
+    jzbind::ClassBind<QRadioButton> cls_radio_btn("RadioButton", "Button");
+    cls_radio_btn.regist();
 
-    //button
-    jzbind::ClassBind<QCheckBox> cls_check_box("RadioButton", "AbstractButton");
+    jzbind::ClassBind<QCheckBox> cls_check_box("CheckBox", "Button");
     cls_check_box.regist();
+    
+    jzbind::ClassBind<QMessageBox> cls_msg_box("MessageBox", "Widget");
+    cls_msg_box.def("information", true, [](QWidget *w, QString text) {
+        QMessageBox::information(w, "", text);
+    });
+    cls_msg_box.regist();
+}
+
+void initPainter()
+{
+    //pen
+    jzbind::ClassBind<QPen> cls_pen("Pen");
+    cls_pen.regist();
+
+    //brush
+    jzbind::ClassBind<QBrush> cls_brush("Brush");
+    cls_brush.regist();
 
     //painter
     jzbind::ClassBind<QPainter> cls_painter("Painter");
@@ -307,17 +388,15 @@ void initWidgets()
     cls_painter.def("drawRect", true, QOverload<const QRect&>::of(&QPainter::drawRect));
     cls_painter.def("fillRect", true, QOverload<const QRect&, const QColor&>::of(&QPainter::fillRect));
     cls_painter.regist();
-
-    JZNodeFunctionManager::instance()->registCFunction("MessageBox.information", true, jzbind::createFuncion([](QWidget *w, QString text) {
-        QMessageBox::information(w, "", text);
-    }));
 }
 
 void registQtClass()
 {    
+    initEnum();
     initBase();
     initEvent();
     initCore();
     initObjects();
     initWidgets();
+    initPainter();
 }

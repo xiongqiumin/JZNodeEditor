@@ -1,6 +1,8 @@
 ﻿#include "JZNodeValue.h"
 #include "JZNodeCompiler.h"
 #include "JZProject.h"
+#include "JZNodeFactory.h"
+#include "JZClassFile.h"
 
 //JZNodeLiteral
 JZNodeLiteral::JZNodeLiteral()
@@ -39,6 +41,7 @@ QVariant JZNodeLiteral::literal() const
         v = QVariant::fromValue(JZObjectNull());
     else
         v.convert(JZNodeType::typeToQMeta(dataType));
+
     return v;
 }
 
@@ -52,6 +55,39 @@ bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
     int id = c->paramId(m_id,paramOut(0));
     c->addSetVariable(irId(id),irLiteral(literal()));
     return true;
+}
+
+//JZNodeEnum
+JZNodeEnum::JZNodeEnum()
+{
+    m_type = Node_enum;
+    addParamOut("out", Prop_dispValue | Prop_editValue);   
+}
+
+JZNodeEnum::~JZNodeEnum()
+{
+
+}
+
+bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
+{
+    int v = prop(paramOut(0))->value().toInt();
+    int id = c->paramId(m_id, paramOut(0));
+    c->addSetVariable(irId(id), irLiteral(v));
+    return true;
+}
+
+void JZNodeEnum::setEnmu(int id)
+{
+    auto meta = JZNodeObjectManager::instance()->enumMeta(id);
+    setName(meta->name());
+    setPinType(paramOut(0), { id });
+    setValue(meta->value(0));
+}
+
+void JZNodeEnum::setValue(int value)
+{
+    prop(paramOut(0))->setValue(value);
 }
 
 //JZNodeCreate
@@ -185,6 +221,7 @@ void JZNodeThis::fileInitialized()
 JZNodeParam::JZNodeParam()
 {
     m_name = "get";
+    m_flag = Node_propDragVariable;
     m_type = Node_param;
     addParamOut("",Prop_dispName | Prop_editName);
 }
@@ -226,6 +263,7 @@ void JZNodeParam::pinChanged(int id)
     {
         auto def = JZNodeCompiler::getVariableInfo(m_file, variable());
         int dataType = def? def->dataType : Type_none;
+        Q_ASSERT(dataType != Type_none);
         setPinType(id,{dataType});
     }
 }
@@ -234,6 +272,7 @@ void JZNodeParam::pinChanged(int id)
 JZNodeSetParam::JZNodeSetParam()
 {
     m_type = Node_setParam;
+    m_flag = Node_propDragVariable;
     m_name = "set";
 
     addFlowIn();    
@@ -296,9 +335,10 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
 JZNodeSetParamDataFlow::JZNodeSetParamDataFlow()
 {
     m_name = "set";
+    m_flag = Node_propDragVariable;
     m_type = Node_setParamData;
 
-    addParamIn("",Prop_dispName | Prop_editName);
+    addParamIn("",Prop_dispName | Prop_editName | Prop_editValue | Prop_dispValue);
 }
 
 JZNodeSetParamDataFlow::~JZNodeSetParamDataFlow()
@@ -340,5 +380,294 @@ bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
     
     int id = c->paramId(m_id,paramIn(0));
     c->addSetVariable(irRef(name),irId(id));
+    return true;
+}
+
+//JZNodeAbstractMember
+void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
+{
+    auto meta = JZNodeObjectManager::instance()->meta(className);
+    prop(paramIn(0))->setName(className);    
+    setPinType(paramIn(0), { meta->id });
+
+    for (int i = 0; i < param_list.size(); i++)
+    {
+        auto param = meta->param(param_list[i]);
+
+        int flag = Prop_dispName;        
+        int pin_id = -1;
+        if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
+        {
+            if (JZNodeType::isBaseType(param->dataType))
+                flag |= (Prop_dispValue | Prop_editValue);
+            pin_id = addParamIn(param->name, flag);
+        }
+        else
+        {            
+            pin_id = addParamOut(param->name, flag);
+        }
+        setPinType(pin_id, { param->dataType});
+    }
+}
+
+QString JZNodeAbstractMember::className()
+{
+    return prop(paramIn(0))->name();
+}
+
+QStringList JZNodeAbstractMember::members()
+{
+    QStringList ret;
+    QVector<int> pin_list;
+    if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
+    {
+        pin_list = paramInList();
+        pin_list.removeAt(0);
+    }
+    else
+        pin_list = paramOutList();
+
+    for (int i = 0; i < pin_list.size(); i++)
+        ret << prop(pin_list[i])->name();
+    return ret;
+}
+
+bool JZNodeAbstractMember::pinClicked(int id)
+{
+    Q_UNUSED(id);
+    return JZNodeFactory::instance()->edit(this);
+}
+
+//JZNodeMemberParam
+JZNodeMemberParam::JZNodeMemberParam()
+{
+    m_name = "getMember";
+    m_type = Node_memberParam;
+
+    addParamIn("", Prop_dispName);
+    addButtonIn("edit");
+}
+
+JZNodeMemberParam::~JZNodeMemberParam()
+{
+
+}
+
+
+bool JZNodeMemberParam::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addDataInput(m_id, error))
+        return false;
+
+    int obj_id = c->paramId(m_id, paramIn(0));
+    auto list = paramOutList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        QList<JZNodeIRParam> in,out;
+        in << irId(obj_id);
+        in << irLiteral(prop(list[i])->name());
+        out << irId(c->paramId(m_id, list[i]));
+        c->addCall(irLiteral("getMemberParam"), in, out);
+    }
+    return true;
+}
+
+//JZNodeSetMemberParam
+JZNodeSetMemberParam::JZNodeSetMemberParam()
+{
+    m_name = "setMember";
+    m_type = Node_setMemberParam;
+
+    addParamIn("", Prop_dispName);
+    addFlowIn();
+    addFlowOut();
+    addButtonIn("edit");
+}
+
+JZNodeSetMemberParam::~JZNodeSetMemberParam()
+{
+
+}
+
+
+bool JZNodeSetMemberParam::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addFlowInput(m_id,error))
+        return false;
+
+    int obj_id = c->paramId(m_id, paramIn(0));        
+    QList<JZNodeIRParam> in, out;
+    in << irId(obj_id);
+    in << irId(0);
+    in << irId(0);
+
+    auto list = paramInList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        int var_id = c->paramId(m_id, paramIn(i + 1));
+        QString var_name = prop(paramIn(i + 1))->name();
+        in[1] = irId(var_id);
+        in[2] = irLiteral(var_name);
+        c->addCall(irLiteral("setMemberParam"), in, out);    
+    }
+
+    c->addJumpNode(flowOut());
+    return true;
+}
+
+//JZNodeSetMemberData
+JZNodeSetMemberParamData::JZNodeSetMemberParamData()
+{
+    m_name = "setMember";
+    m_type = Node_setMemberParamData;
+
+    addParamIn("",Prop_dispName);    
+    addButtonIn("edit");
+}
+
+JZNodeSetMemberParamData::~JZNodeSetMemberParamData()
+{
+
+}
+
+bool JZNodeSetMemberParamData::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addDataInput(m_id, error))
+        return false;
+
+    int obj_id = c->paramId(m_id, paramIn(0));
+    int var_id = c->paramId(m_id, paramIn(1));
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(obj_id);
+    in << irLiteral(prop(paramIn(1))->name());
+    in << irId(var_id);
+    c->addCall(irLiteral("setMemberParam"), in, out);
+
+    c->addJumpNode(flowOut());
+    return true;
+}
+
+//JZNodeClone
+JZNodeClone::JZNodeClone()
+{
+    m_name = "clone";
+    m_type = Node_clone;
+
+    auto in = addParamIn("");
+    auto out = addParamOut("");
+    setPinTypeAny(in);
+    setPinTypeAny(out);
+}
+
+JZNodeClone::~JZNodeClone()
+{
+
+}
+
+bool JZNodeClone::compiler(JZNodeCompiler *c, QString &error)
+{
+    return false;
+}
+
+//JZNodeSwap
+JZNodeSwap::JZNodeSwap()
+{
+    m_name = "swap";
+    m_type = Node_swap;
+
+    addFlowIn();
+    addFlowOut();
+
+    int in1 = addParamIn("");
+    int in2 = addParamIn("");
+    setPinTypeAny(in1);
+    setPinTypeAny(in2);
+}
+
+JZNodeSwap::~JZNodeSwap()
+{
+
+}
+
+bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
+{    
+    enum {
+        swap_none,
+        swap_param,
+        swap_list,
+        swap_map,
+    };
+
+    auto getType = [](JZNode *node)->int{
+        if (node->type() == Node_param)
+            return swap_param;
+        else if (node->type() == Node_function)
+        {
+            if (node->name() == "List.get")
+                return swap_list;
+            else if (node->name() == "Map.get")
+                return swap_param;
+        }
+        return swap_none;
+    }; 
+
+    auto setType = [c](int type,JZNode *node,int id)->int {
+        if (node->type() == Node_param)
+            return swap_param;
+        else if (node->type() == Node_function)
+        {            
+            if (type == swap_param)
+            {
+                int param_id = c->paramId(node->id(), node->paramIn(0));
+                c->addSetVariable(irId(param_id), irId(id));
+            }
+            else
+            {
+                QList<JZNodeIRParam> in;
+                QList<JZNodeIRParam> out;
+                in << irId(c->paramId(node->id(), node->paramIn(0)));
+                in << irId(c->paramId(node->id(), node->paramIn(1)));
+                in << irId(id);
+                if (type == swap_list)
+                {
+                    c->addCall(irLiteral("List.set"), in, out);
+                }
+                else if (type == swap_map)
+                {
+                    c->addCall(irLiteral("Map.set"), in, out);
+                }
+            }
+        }
+        return swap_none;
+    };
+
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    auto graph = c->currentGraph();
+    GraphNode *node = graph->graphNode(m_id);
+    auto in1 = paramIn(0);
+    auto in2 = paramIn(1);   
+    auto &in1_list = node->paramIn[in1];
+    auto &in2_list = node->paramIn[in2];    
+    auto in1_node = graph->node(in1_list[0].nodeId);
+    auto in2_node = graph->node(in2_list[0].nodeId);
+
+    int in1_type = getType(in1_node);
+    int in2_type = getType(in2_node);
+    if (in1_type == swap_none || in2_type == swap_none)
+    {
+        error = "不支持此类转换";
+        return false;
+    }
+
+    auto in1_id = c->paramId(m_id, in1);
+    auto in2_id = c->paramId(m_id, in2);
+    setType(in1_type, in1_node, in2_id);
+    setType(in2_type, in2_node, in1_id);
+
+    c->addJumpNode(flowOut());
+
     return true;
 }

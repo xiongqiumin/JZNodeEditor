@@ -18,7 +18,7 @@ public:
 
     void setRunning(bool isRun);
     void setRuntimeStatus(int status);
-    void setParamInfo(JZNodeDebugParamInfo *info);
+    void setParamInfo(JZNodeDebugParamInfo *info,bool isNew);
     void clear();
         
 signals:
@@ -29,12 +29,14 @@ protected slots:
     void onItemChanged(QTreeWidgetItem *item, int column);
 
 protected:       
-    void updateStatus();
-    QTreeWidgetItem *createItem(QString name,const JZNodeDebugParamValue &info);
+    void updateStatus();    
+    int indexOfItem(QTreeWidgetItem *root, const QString &name);
+    void setItem(QTreeWidgetItem *root,int index,const QString &name,const JZNodeDebugParamValue &info);    
     JZNodeDebugParamValue getParamValue(QTreeWidgetItem *item);
 
     bool m_running;
-    int m_status;
+    int m_status;    
+    bool m_newParam;
     
     QTreeWidget *m_view;
 };

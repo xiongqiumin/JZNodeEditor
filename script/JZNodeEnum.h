@@ -1,16 +1,27 @@
-#ifndef JZNODE_ENUM_H_
-#define JZNODE_ENUM_H_
+#ifndef JZNODE_ENUM_DEFINE_H_
+#define JZNODE_ENUM_DEFINE_H_
 
 #include <QStringList>
+#include <QVector>
 
-class JZNodeEnum
+class JZNodeEnumDefine
 {
 public:
-    int count();
-    QString key(int index);
-    int value(int index);
+    void init(QString name, QStringList keys, QVector<int> values);
+
+    void setType(int type);
+    int type() const;
+
+    QString name() const;
+    int count() const;
+    QString key(int index) const;
+    int value(int index) const;
+    int keyToValue(QString key) const;
+    QString valueToKey(int value) const;
 
 protected:
+    int m_type;
+    QString m_name;
     QStringList m_keys;
     QVector<int> m_values;
 };

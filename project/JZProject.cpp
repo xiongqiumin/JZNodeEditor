@@ -6,6 +6,9 @@
 #include "JZUiFile.h"
 #include "JZEvent.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeFunction.h"
+#include "JZNodeEvent.h"
+#include "JZNodeValue.h"
 
 QByteArray ProjectMagic()
 {
@@ -164,8 +167,11 @@ void JZProject::registType()
 
     // regist type
     QList<JZProjectItem *> function_list = itemList("./",ProjectItem_scriptFunction);
-    for (int i = 0; i < function_list.size(); i++)    
-        regist(function_list[i]);    
+    for (int i = 0; i < function_list.size(); i++)
+    {
+        if(!function_list[i]->getClassFile())
+            regist(function_list[i]);
+    }
 
     QList<JZProjectItem *> class_list = itemList("./",ProjectItem_class);
     for(int i = 0; i < class_list.size(); i++)    
@@ -187,6 +193,14 @@ bool JZProject::open(QString filepath)
 
     m_blockRegist = false;
     registType();    
+
+    auto script_list = itemList("./", ProjectItem_script);
+    for (int i = 0; i < script_list.size(); i++)
+    {
+        auto item = (JZScriptFile*)script_list[i];      
+        item->loadFinish();
+    }
+
     return true;
 }
 
@@ -297,7 +311,7 @@ void JZProject::removeItem(QString filepath)
 {
     JZProjectItem *item = getItem(filepath);
     Q_ASSERT(item);
-
+    
     bool replace_class = false;
     auto class_file = getClassFile(item);
     if (class_file)
@@ -330,6 +344,7 @@ void JZProject::removeItem(QString filepath)
         else
             it++;
     }    
+    emit sigFileChanged();
 }
 
 int JZProject::renameItem(JZProjectItem *item,QString newname)
@@ -582,6 +597,20 @@ const FunctionDefine *JZProject::function(QString name)
     return nullptr;
 }
 
+QStringList JZProject::functionList()
+{
+    QStringList ret;
+
+    auto list = itemList("./", ProjectItem_scriptFunction);
+    for (int i = 0; i < list.size(); i++)
+    {
+        JZScriptFile *file = (JZScriptFile*)list[i];
+        if (file->function().className.isEmpty())
+            ret << file->function().fullName();
+    }
+    return ret;
+}
+
 QString JZProject::dir(const QString &filepath)
 {
     int index = filepath.lastIndexOf("/");
@@ -696,4 +725,5 @@ void JZProject::regist(JZProjectItem *item)
             JZNodeFunctionManager::instance()->registFunction(func->function());
         }
     }
+    emit sigFileChanged();
 }

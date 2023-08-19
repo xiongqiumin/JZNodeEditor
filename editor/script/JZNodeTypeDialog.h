@@ -7,11 +7,13 @@
 
 namespace Ui { class JZNodeTypeDialog; }
 
+class QComboBox;
 class TypeEditHelp
 {
 public:
     TypeEditHelp();
     void init(int dataType);
+    void update(QComboBox *box);
 
     int index;
     QVector<int> types;
@@ -27,9 +29,11 @@ public:
     JZNodeTypeDialog(QWidget *p = nullptr);
     ~JZNodeTypeDialog();
     
+    void setDataType(int dataType);
     int dataType();
 
 protected slots:
+    void on_lineClassName_returnPressed();
     void on_btnOk_clicked();
     void on_btnCancel_clicked();
 

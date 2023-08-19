@@ -69,11 +69,7 @@ struct NodeCompilerInfo
     QString error;
 };
 
-/*
-    节点数据传递规则:
-    依赖 flow 节点, 被依赖节点计算后主动推送
-    依赖 data 节点, 节点计算前主动获取.
-*/
+
 class JZNodeCompiler
 {
 public:
@@ -89,15 +85,22 @@ public:
     bool build(JZScriptFile *file,JZNodeScript *result);
     const QMap<int, NodeCompilerInfo> &compilerInfo();
     
-    static JZParamDefine *getVariableInfo(JZScriptFile *file, const QString &name);
-    JZParamDefine *getVariableInfo(const QString &name);
-    bool checkVariableExist(QString var, QString &error);
-    bool checkVariableType(QString var, QString className, QString &error);
+    static const JZParamDefine *getVariableInfo(JZScriptFile *file, const QString &name);
+    const JZParamDefine *getVariableInfo(const QString &name);
+    bool checkVariableExist(const QString &var, QString &error);
+    bool checkVariableType(const QString &var, const QString &className, QString &error);
 
     int allocStack();
     void freeStack(int id);    
     void allocFunctionVariable();    
 
+    /*
+    节点数据传递规则:
+    flow 依赖 flow 节点, 被依赖flow节点计算后主动推送
+    flow 依赖 data 节点, data节点展开
+    data 依赖 flow 节点, 被依赖flow节点计算后主动推送
+    data 依赖 data 节点, 节点计算前主动获取.
+    */
     bool addFlowInput(int nodeId,QString &error);
     bool addFlowInput(int nodeId,int prop_id,QString &error);
     bool addDataInput(int nodeId,QString &error);
@@ -105,20 +108,22 @@ public:
     void addFlowOutput(int nodeId);            
 
     int addNop();
-    int addExpr(JZNodeIRParam dst,JZNodeIRParam p1,JZNodeIRParam p2,int op);
-    int addCompare(JZNodeIRParam p1,JZNodeIRParam p2,int op);
-    int addSetVariable(JZNodeIRParam dst,JZNodeIRParam src);
+    int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
+    int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
+    int addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);
     int addStatement(JZNodeIRPtr ir);    
     int addJumpNode(int prop);      //设置下一个flow,应当在执行完操作后增加
     int addJumpSubNode(int prop);   //设置下一个sub flow
     int addContinue();
     int addBreak();    
-    void addCall(JZNodeIRParam function,QList<JZNodeIRParam> paramIn,QList<JZNodeIRParam> paramOut);
+    void addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAllocLocal(JZParamDefine *def);    
+    void addAssert(const JZNodeIRParam &tips);
 
-    void setBreakContinue(QList<int> breakPc,QList<int> continuePC);    
+    void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
     void replaceStatement(int pc,JZNodeIRPtr ir);
     
+    Graph *currentGraph();
     int currentPc();
     const FunctionDefine *function(QString name);
 

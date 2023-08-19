@@ -13,10 +13,7 @@ JZNodeUiLoader::~JZNodeUiLoader()
 }
 
 QWidget *JZNodeUiLoader::create(QString xml)
-{
-    if (xml.isEmpty())     
-        return new jzbind::WidgetWrapper<QWidget>();
-
+{    
     QBuffer buffer;
     QByteArray data = xml.toUtf8();
     buffer.setData(data);
