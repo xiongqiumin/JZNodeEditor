@@ -108,12 +108,17 @@ void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const QString &name,
     }
     
     item->setText(2, JZNodeType::typeToName(info.type));
-    if (JZNodeType::isBaseType(info.type))
+    if (JZNodeType::isBase(info.type))
         item->setFlags(item->flags() | Qt::ItemIsEditable);
 
     QString cur_value;
-    if(JZNodeType::isBaseType(info.type))
+    if(JZNodeType::isBase(info.type))
         cur_value = info.value.toString();
+    else if (JZNodeType::isEnum(info.type))
+    {
+        auto meta = JZNodeObjectManager::instance()->enumMeta(info.type);
+        cur_value = meta->key(info.value.toInt());
+    }
     else
     {
         int ptr = info.value.toLongLong();       
@@ -162,14 +167,7 @@ void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info, bool isNew)
     {
         auto &c = info->coors[i];                
         QString name;        
-        if (c.type == JZNodeParamCoor::Local || c.type == JZNodeParamCoor::This || c.type == JZNodeParamCoor::Global)
-            name = c.name;
-        else if (c.type == JZNodeParamCoor::NodeId)
-            name = QString::number(c.id);
-        else
-            name = QString::number(c.id);
-
-        sub_params << name;
+        sub_params << c.name;
         setItem(root, i, name, info->values[i]);
     }
     for (int i = root->childCount() - 1; i >= info->coors.size(); i--)

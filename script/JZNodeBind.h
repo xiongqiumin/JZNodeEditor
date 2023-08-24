@@ -165,9 +165,7 @@ template<class T>
 QVariant getReturnPointer(T value,bool isRef,std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    JZNodeObjectPtr obj = JZObjectRefrence<T>(value);    
-    if(!isRef)
-        obj->setCowner(true);
+    JZNodeObjectPtr obj = JZObjectCreate<T>(value, !isRef);
     return QVariant::fromValue(obj);
 }
 
@@ -375,7 +373,7 @@ public:
 };
 
 template<typename T>
-void registEnum(QString name)
+int registEnum(QString name)
 {    
     QStringList keys;
     QVector<int> values;
@@ -390,7 +388,7 @@ void registEnum(QString name)
 
     JZNodeEnumDefine define;
     define.init(meta.name(),keys,values);
-    JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
+    return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
 template<class T>

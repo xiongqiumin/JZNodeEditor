@@ -69,7 +69,7 @@ public:
         Local,
         This,
         Global,
-        NodeId,
+        Node,
         Reg,
     };
 

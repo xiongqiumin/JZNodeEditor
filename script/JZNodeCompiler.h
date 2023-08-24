@@ -64,6 +64,7 @@ struct NodeCompilerInfo
     int parentId;           //用于subFlow 指明父节点
     QList<Jump> jmpList;
     QList<Jump> jmpSubList;
+    int subReturnCount;
     QList<int> continueList;
     QList<int> breakList;
     QString error;
@@ -123,6 +124,7 @@ public:
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
     void replaceStatement(int pc,JZNodeIRPtr ir);
     
+    JZScriptFile *currentFile();
     Graph *currentGraph();
     int currentPc();
     const FunctionDefine *function(QString name);
@@ -140,7 +142,8 @@ protected:
     bool bulidControlFlow(Graph *graph);    
     bool buildParamBinding(Graph *graph);
     void buildWatchInfo(Graph *graph);
-    void replaceSubNode(int id,int parentId,int flow_index);   
+    void replaceSubNode(int id,int parentId,int flow_index);
+    bool isAllFlowReturn(int id);
     void addEventHandle(const QList<GraphNode*> &list);      
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *prop);    

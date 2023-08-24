@@ -28,19 +28,26 @@ private slots:
     void init();
     void cleanup();
 
+    void testClass();
+    void testCClass();
+
     void testRegExp();
     void testProjectSave();
     void testBind();
     void testParamBinding();
+    
     void testWhileLoop();
     void testFor();
-    void testClass();
-    void testCClass();
+    void testForEach();
+
+    void testBranch();
+    void testIf();
+    void testSwitch();
     void testSequeue();
+    
     void testExpr();
     void testCustomExpr();
-    void testFunction();
-    void testForEach();
+    void testFunction();    
     void testBreakPoint();
     void testDebugServer();
 
@@ -49,6 +56,7 @@ protected:
     void call();
     bool run(bool async);
     void stop();
+    void printCode();
     QMap<int,int> initWhileSetCase(); //返回第几行应该是什么值
 
     JZProject m_project;
@@ -59,6 +67,7 @@ protected:
     JZNodeEngine m_engine;
     std::thread m_asyncThread;
     QString m_testPath;
+    QString m_error;
 };
 
 

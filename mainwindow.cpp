@@ -791,9 +791,24 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         return;
     }
     
-    JZNodeDebugParamInfo param_info;        
+    JZNodeDebugParamInfo param_info;      
+    
+    //node
+    auto &node_info = m_program.scripts[stack.file].nodeInfo[stack.nodeId];
+    for (int i = 0; i < node_info.paramIn.size(); i++)
+    {
+        JZNodeParamCoor coor;
+        coor.type = JZNodeParamCoor::Node;
+        coor.stack = stack_index;
+        coor.id = node_info.paramInId[i];
+        coor.name = node_info.paramIn[i];
+        if (coor.name.isEmpty())
+            coor.name = "input" + QString::number(i+1);
+        param_info.coors << coor;
+    }
+
     //local
-    auto runtime = m_program.scripts[stack.file].runtimeInfo[stack.function];
+    auto &runtime = m_program.scripts[stack.file].runtimeInfo[stack.function];
     for (int i = 0; i < runtime.localVariables.size(); i++)
     {
         auto &local = runtime.localVariables[i];

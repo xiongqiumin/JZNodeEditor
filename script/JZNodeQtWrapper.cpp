@@ -62,6 +62,11 @@ void initEnum()
 {
     jzbind::registEnum<Qt::KeyboardModifiers>("KeyboardModifiers");
     jzbind::registEnum<Qt::SplitBehavior>("SplitBehavior");
+    jzbind::registEnum<Qt::PenStyle>("PenStyle");
+    jzbind::registEnum<Qt::Orientation>("Orientation");
+    jzbind::registEnum<Qt::SortOrder>("SortOrder");
+    jzbind::registEnum<Qt::Alignment>("Alignment");
+    jzbind::registEnum<Qt::GlobalColor>("GlobalColor");
 
     JZNodeEnumDefine keyCode;
     QStringList key_codes;
@@ -84,6 +89,7 @@ void initBase()
 {
     jzbind::ClassBind<QPoint> cls_pt("Point");
     cls_pt.def("create", false, [](int x, int y)->QPoint { return QPoint(x, y); });
+    cls_pt.def("createFromString", false, [](const QString &text)->QPoint { return QPoint(0,0); });
     cls_pt.def("x", false, &QPoint::x);
     cls_pt.def("y", false, &QPoint::y);
     cls_pt.def("setX", true, &QPoint::setX);
@@ -92,6 +98,7 @@ void initBase()
 
     jzbind::ClassBind<QPointF> cls_ptf("PointF");
     cls_ptf.def("create", false, [](double x, double y)->QPointF { return QPointF(x, y); });
+    cls_ptf.def("createFromString", false, [](const QString &text)->QPointF { return QPointF(0, 0); });
     cls_ptf.def("x", false, &QPointF::x);
     cls_ptf.def("y", false, &QPointF::y);
     cls_ptf.def("setX", true, &QPointF::setX);
@@ -102,18 +109,21 @@ void initBase()
     cls_rect.def("create", false, [](int x, int y, int w, int h)->QRect {
         return QRect(x, y, w, h);
     });
+    cls_rect.def("createFromString", false, [](const QString &text)->QRect { return QRect(); });
     cls_rect.regist();
 
     jzbind::ClassBind<QRectF> cls_rectf("RectF");
     cls_rectf.def("create", false, [](double x, double y, double w, double h)->QRectF {
         return QRectF(x, y, w, h);
     });
+    cls_rectf.def("createFromString", false, [](const QString &text)->QRectF { return QRectF(); });
     cls_rectf.regist();
 
     jzbind::ClassBind<QColor> cls_color("Color");
     cls_color.def("create", false, [](int r, int g, int b)->QColor {
         return QColor(r, g, b);
     });
+    cls_color.def("createFromString", false, [](const QString &text)->QColor { return QColor(); });
     cls_color.def("red", false, &QColor::red);
     cls_color.def("green", false, &QColor::green);
     cls_color.def("blue", false, &QColor::blue);    
@@ -128,7 +138,7 @@ void initCore()
 
     //stringlist
     jzbind::ClassBind<QStringList> cls_string_list("StringList");
-    cls_string_list.def("create", false, [](const QString &text)->QStringList {
+    cls_string_list.def("createFromString", false, [](const QString &text)->QStringList {
         QStringList list = text.split(",");
         return list;
     });
@@ -180,7 +190,7 @@ void initCore()
     cls_list_it.regist();
 
     jzbind::ClassBind<QVariantList> cls_list("List");
-    cls_list.def("create", false, [](const QString &text)->QVariantList {
+    cls_list.def("createFromString", false, [](const QString &text)->QVariantList {
         QVariantList ret;
         QStringList list = text.split(",");
         for (int i = 0; i < list.size(); i++)
@@ -252,7 +262,7 @@ void initCore()
     map_it.regist();
 
     jzbind::ClassBind<QVariantMap> cls_map("Map");
-    cls_map.def("create", false, [](const QString &text)->QVariantMap {
+    cls_map.def("createFromString", false, [](const QString &text)->QVariantMap {
         QVariantMap ret;
         QStringList list = text.split(",");
         for (int i = 0; i < list.size(); i++)
@@ -315,7 +325,7 @@ void initEvent()
 void initObjects()
 {
     jzbind::ClassBind<QTimer> cls_timer("Timer", "Object");
-    cls_timer.def("start", true, QOverload<int>::of(&QTimer::start));
+    cls_timer.def("start",true, QOverload<int>::of(&QTimer::start));
     cls_timer.def("stop", true, &QTimer::stop);
     cls_timer.def("isActive", false, &QTimer::isActive);
     cls_timer.defPrivateSingle("timeout", Event_timeout, &QTimer::timeout);
@@ -376,10 +386,12 @@ void initPainter()
 {
     //pen
     jzbind::ClassBind<QPen> cls_pen("Pen");
+    cls_pen.def("create", false, [](QColor c,int width,Qt::PenStyle style)->QPen*{ return new QPen(c, width, style); }, false);
     cls_pen.regist();
 
     //brush
     jzbind::ClassBind<QBrush> cls_brush("Brush");
+    cls_brush.def("create", false, [](QColor c)->QBrush* { return new QBrush(c); }, false);
     cls_brush.regist();
 
     //painter
@@ -388,6 +400,48 @@ void initPainter()
     cls_painter.def("drawRect", true, QOverload<const QRect&>::of(&QPainter::drawRect));
     cls_painter.def("fillRect", true, QOverload<const QRect&, const QColor&>::of(&QPainter::fillRect));
     cls_painter.regist();
+}
+
+void initFiles()
+{
+
+}
+
+QVariant colorEnum_to_color(const QVariant &v)
+{
+    QColor *color = new QColor((Qt::GlobalColor)v.toInt());
+    auto ptr = JZObjectCreate(color);
+    return QVariant::fromValue(ptr);
+}
+
+QVariant colorEnum_to_brush(const QVariant &v)
+{
+    QBrush *brush = new QBrush((Qt::GlobalColor)v.toInt());
+    auto ptr = JZObjectCreate(brush);
+    return QVariant::fromValue(ptr);
+}
+
+QVariant color_to_brush(const QVariant &v)
+{    
+    QColor *c = jzbind::getValue<QColor*>(v);
+    QBrush *brush = new QBrush(*c);
+    auto ptr = JZObjectCreate(brush);
+    return QVariant::fromValue(ptr);
+}
+
+void registConvert()
+{
+    auto inst = JZNodeObjectManager::instance();
+    int from_id = inst->getEnumId("GlobalColor");
+    int to_id = inst->getClassId("Brush");
+
+    JZNodeType::registConvert(from_id, to_id, colorEnum_to_brush);
+    to_id = inst->getClassId("Color");
+    JZNodeType::registConvert(from_id, to_id, colorEnum_to_color);
+
+    from_id = inst->getClassId("Color");
+    to_id = inst->getClassId("Brush");
+    JZNodeType::registConvert(from_id, to_id, color_to_brush);
 }
 
 void registQtClass()
@@ -399,4 +453,6 @@ void registQtClass()
     initObjects();
     initWidgets();
     initPainter();
+    initFiles();
+    registConvert();
 }

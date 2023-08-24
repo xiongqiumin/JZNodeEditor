@@ -1124,7 +1124,7 @@ void JZNodeEngine::stepOver()
     m_breakStep.type = BreakPoint::stepOver;
     m_breakStep.file = m_script->file;
     m_breakStep.nodeId = node_id;
-    m_breakStep.stack = m_stack.size() - 1;    
+    m_breakStep.stack = m_stack.size();    
 
     int rng_idx = m_script->nodeInfo[node_id].indexOfRange(m_pc);    
     m_breakStep.range = m_script->nodeInfo[node_id].pcRanges[rng_idx];
@@ -1150,21 +1150,29 @@ void JZNodeEngine::stepOut()
     waitCommand();
 }
 
+void JZNodeEngine::checkFunction(const FunctionDefine *func)
+{
+    // get input
+    auto &inList = func->paramIn;
+    for (int i = 0; i < inList.size(); i++)
+    {
+        QVariant v = getReg(Reg_Call + i);
+        int inType = JZNodeType::variantType(v);
+        bool ret = JZNodeType::canConvert(inType, func->paramIn[i].dataType);
+        if (!ret)            
+            throw std::runtime_error(qUtf8Printable(func->paramIn[i].name + " type node match"));
+        if (JZNodeType::isObject(func->paramIn[i].dataType) && JZNodeType::isNullObject(v))
+            throw std::runtime_error(qUtf8Printable(func->paramIn[i].name + " object is nullptr"));
+    }
+}
+
 void JZNodeEngine::callCFunction(const FunctionDefine *func)
 {    
     QVariantList paramIn, paramOut;
     // get input
     auto &inList = func->paramIn;
-    for (int i = 0; i < inList.size(); i++)
-    {
-        paramIn.push_back(getReg(Reg_Call + i));
-        int inType = JZNodeType::variantType(paramIn.back());
-        bool ret = JZNodeType::canConvert(inType,func->paramIn[i].dataType);
-        if(!ret)
-            throw std::runtime_error("type node match");
-        if(JZNodeType::isObject(func->paramIn[i].dataType) && JZNodeType::isNull(paramIn.back()))
-            throw std::runtime_error("object is nullptr");
-    }
+    for (int i = 0; i < inList.size(); i++)    
+        paramIn.push_back(getReg(Reg_Call + i));  
 
     // call function
     pushStack(func);
@@ -1471,7 +1479,7 @@ void JZNodeEngine::updateStatus(int status)
 
 bool JZNodeEngine::run()
 {    
-    int stack_size = m_stack.size();
+    int in_stack_size = m_stack.size();
     while (true)
     {                   
         Q_ASSERT(m_script);
@@ -1563,6 +1571,7 @@ bool JZNodeEngine::run()
                 callCFunction(func);
             else
             {
+                checkFunction(func);
                 pushStack(func);
                 continue;
             }
@@ -1571,7 +1580,7 @@ bool JZNodeEngine::run()
         case OP_return:
         {
             popStack();
-            if(m_stack.size() < stack_size)
+            if(m_stack.size() < in_stack_size)
                 goto RunEnd;
             break;
         }

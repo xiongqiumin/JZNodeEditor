@@ -171,6 +171,7 @@ NodeCompilerInfo::NodeCompilerInfo()
     start = -1;
     end = -1;    
     parentId = -1;
+    subReturnCount = 0;
 }
 
 // JZNodeCompiler
@@ -318,11 +319,26 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
     auto it = m_nodeInfo.begin();
     while(it != m_nodeInfo.end())
     {
+        auto node = scriptFile->getNode(it->node_id);
+
         NodeInfo info;
         info.node_id = it->node_id;
         info.node_type = it->node_type;
-        info.isFlow = scriptFile->getNode(info.node_id)->isFlowNode();        
+        info.isFlow = node->isFlowNode();
         info.pcRanges = it->ranges;
+
+        auto in_list = node->paramInList();
+        for (int i = 0; i < in_list.size(); i++)
+        {
+            info.paramInId.push_back(paramId(node->id(), in_list[i]));
+            info.paramIn.push_back(node->prop(in_list[i])->name());
+        }
+        auto out_list = node->paramOutList();
+        for (int i = 0; i < out_list.size(); i++)
+        {
+            info.paramOutId.push_back(paramId(node->id(), out_list[i]));
+            info.paramOut.push_back(node->prop(out_list[i])->name());
+        }
         m_script->nodeInfo[it.key()] = info;
 
         it++;
@@ -354,7 +370,7 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
     NodeRange range;
     JZNodeIRNodeId *node_ir = new JZNodeIRNodeId();
     node_ir->id = node->id();
-    node_ir->memo = node->name();
+    node_ir->memo = node->name() + "(" + QString::number(node->id()) + ")";
     range.start = addStatement(JZNodeIRPtr(node_ir));
 
     QString error;
@@ -591,17 +607,21 @@ bool JZNodeCompiler::bulidControlFlow(Graph *graph)
 
             auto &out_list = graph_node->paramOut[prop];
             Q_ASSERT(out_list.size() == 1);
-
             JZNodeGemo next_gemo = out_list[0];
+            if (isAllFlowReturn(next_gemo.nodeId))
+                info.subReturnCount++;
+            
             JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
             jmp->jmpPc = irLiteral(m_nodeInfo[next_gemo.nodeId].start);
             replaceStatement(info.jmpSubList[i].pc,JZNodeIRPtr(jmp));
 
             replaceSubNode(out_list[0].nodeId,graph_node->node->id(),i);
-        }                    
+        }                            
     }
 
     //替换 flowOut 为实际节点地址
+    bool is_return_value = (m_scriptFile->itemType() == ProjectItem_scriptFunction &&
+        m_scriptFile->function().paramOut.size() != 0);
     for(int node_idx = 0; node_idx < graph_list.size(); node_idx++)
     {   
         GraphNode *graph_node = graph_list[node_idx];
@@ -625,17 +645,26 @@ bool JZNodeCompiler::bulidControlFlow(Graph *graph)
                 replaceStatement(pc,JZNodeIRPtr(jmp));
             }
             else
-            {
-                if (m_scriptFile->itemType() == ProjectItem_scriptFunction &&
-                    m_scriptFile->function().paramOut.size() != 0)
+            {                
+                if (is_return_value && info.subReturnCount != info.jmpSubList.size())
                 {
                     QString error_tips = "输出" + QString::number(i + 1) + "需要连接return,并给与返回值";
                     m_nodeInfo[graph_node->node->id()].error = error_tips;
                     continue;
                 }
 
-                JZNodeIR *ir_return = new JZNodeIR(OP_return);
-                replaceStatement(pc,JZNodeIRPtr(ir_return));
+                //if (info.subReturnCount == 0 || info.subReturnCount < info.jmpSubList.size())
+                {
+                    JZNodeIR *ir_return = new JZNodeIR(OP_return);
+                    replaceStatement(pc, JZNodeIRPtr(ir_return));
+                }
+                /*else
+                {
+                    JZNodeIRAssert *ir_assert = new JZNodeIRAssert();
+                    ir_assert->tips = irLiteral("flow return");
+                    replaceStatement(pc, JZNodeIRPtr(ir_assert));
+                }
+                */
             }
         }          
     }    
@@ -709,6 +738,42 @@ void JZNodeCompiler::buildWatchInfo(Graph *graph)
 {    
 }
 
+bool JZNodeCompiler::isAllFlowReturn(int id)
+{
+    NodeCompilerInfo &info = m_nodeInfo[id];
+    auto graph_node = m_currentGraph->graphNode(id);
+    if (info.jmpList.size() == 0 && info.jmpSubList.size() == 0)
+    {
+        return (info.node_type == Node_return);
+    }
+
+    int ret_count = 0;
+    for (int i = 0; i < info.jmpSubList.size(); i++)
+    {        
+        int prop = info.jmpSubList[i].prop;
+        if (!graph_node->paramOut.contains(prop))
+            continue;
+
+        auto &out_list = graph_node->paramOut[prop];
+        if (isAllFlowReturn(out_list[0].nodeId))
+            ret_count++;
+    }
+    if (ret_count == info.jmpSubList.size())
+        return true;
+
+    for (int i = 0; i < info.jmpList.size(); i++)
+    {
+        int prop = info.jmpList[i].prop;
+        if (!graph_node->paramOut.contains(prop))
+            continue;
+
+        auto &out_list = graph_node->paramOut[prop];
+        if (isAllFlowReturn(out_list[0].nodeId))
+            ret_count++;
+    }
+    return (ret_count == info.jmpList.size());
+}
+
 void JZNodeCompiler::replaceSubNode(int id,int parent_id,int flow_index)
 {
     NodeCompilerInfo &parent_info = m_nodeInfo[parent_id];
@@ -764,6 +829,11 @@ int JZNodeCompiler::addStatement(JZNodeIRPtr ir)
     ir->pc = m_script->statmentList.size();    
     m_script->statmentList.push_back(ir);
     return ir->pc;
+}
+
+JZScriptFile *JZNodeCompiler::currentFile()
+{
+    return m_scriptFile;
 }
 
 Graph *JZNodeCompiler::currentGraph()
@@ -849,6 +919,12 @@ int JZNodeCompiler::addBreak()
 
 void JZNodeCompiler::addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn,const QList<JZNodeIRParam> &paramOut)
 {
+    if (function.isLiteral())
+    {
+        auto func = JZNodeFunctionManager::instance()->function(function.literal().toString());
+        Q_ASSERT(func);
+    }
+
     for(int i = 0; i < paramIn.size(); i++)
         addSetVariable(irId(Reg_Call+i),paramIn[i]);
 
@@ -1155,10 +1231,7 @@ void JZNodeCompiler::addAllocLocal(JZParamDefine *def)
     alloc->allocType = JZNodeIRAlloc::Stack;
     alloc->name = def->name;
     alloc->dataType = def->dataType;
-    if (def->value.isValid())
-        alloc->value = def->value;
-    else if (JZNodeType::isBaseType(def->dataType))
-        alloc->value = QVariant(JZNodeType::typeToQMeta(def->dataType));
+    alloc->value = def->initialValue();    
     addStatement(JZNodeIRPtr(alloc));
 }
 

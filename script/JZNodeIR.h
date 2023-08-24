@@ -61,6 +61,7 @@ public:
 
     int id() const;
     QString ref() const;
+    QVariant literal() const;
 
     int type;
     QVariant value;

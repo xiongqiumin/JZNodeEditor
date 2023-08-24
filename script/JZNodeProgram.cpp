@@ -87,7 +87,9 @@ QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
     s << param.node_type;
     s << param.isFlow;
     s << param.paramIn;
+    s << param.paramInId;
     s << param.paramOut;
+    s << param.paramOutId;
     s << param.pcRanges;
     return s;
 }
@@ -98,7 +100,9 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
     s >> param.node_type;
     s >> param.isFlow;
     s >> param.paramIn;
+    s >> param.paramInId;
     s >> param.paramOut;
+    s >> param.paramOutId;
     s >> param.pcRanges;
     return s;
 }

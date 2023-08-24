@@ -15,8 +15,7 @@ enum
     Type_nullptr,
     Type_any,
 
-    Type_enum = 1000,
-    Type_flag = 2000,
+    Type_enum = 1000,    
 
     Type_object = 5000,    
     Type_list,
@@ -26,6 +25,8 @@ enum
     Type_internalObject = 8000, // 内部注册起始
     Type_userObject = 10000,    // 用户注册起始
 };
+
+typedef QVariant (*ConvertFunc)(const QVariant& v);
 
 class JZNodeObject;
 class JZNodeType
@@ -40,11 +41,12 @@ public:
     static QVariant convertTo(const QVariant &v, int type);
     static QVariant value(int type);    
     
-    static bool isBaseType(int id);    
+    static bool isBase(int type);
+    static bool isEnum(int type);
+    static bool isBaseEnum(int type);
     static bool isObject(int type);
-    static bool isNumber(int type);
-    static bool isEnum(int type);    
-    static bool isNull(const QVariant &v);
+    static bool isNumber(int type);    
+    static bool isNullObject(const QVariant &v);
 
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
@@ -55,6 +57,8 @@ public:
     
     static QVariant matchValue(const QVariant &v, QList<int> type);
     static QString opName(int op);
+
+    static void registConvert(int from, int to, ConvertFunc func);
 };
 
 class JZParamDefine

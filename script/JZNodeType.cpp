@@ -6,6 +6,7 @@
 #include "JZRegExpHelp.h"
 
 static QMap<QString,int> typeMap;
+static QMap<int64_t,ConvertFunc> convertMap;
 
 void JZNodeType::init()
 {
@@ -18,12 +19,20 @@ void JZNodeType::init()
      typeMap["nullptr"] = Type_nullptr;
 }
 
-QString JZNodeType::typeToName(int id)
+int64_t makeConvertId(int from, int to)
 {
-    if(id < Type_object)
-        return typeMap.key(id,QString());
-    else
+    int64_t id = (int64_t)from << 32 | (int64_t)to;
+    return id;
+}
+
+QString JZNodeType::typeToName(int id)
+{            
+    if(isEnum(id))
+        return JZNodeObjectManager::instance()->getEnumName(id);
+    else if (id >= Type_object)
         return JZNodeObjectManager::instance()->getClassName(id);
+    else
+        return typeMap.key(id, QString());
 }
 
 int JZNodeType::nameToType(QString name)
@@ -108,7 +117,12 @@ bool JZNodeType::isEnum(int type)
     return (JZNodeObjectManager::instance()->enumMeta(type) != nullptr);
 }
 
-bool JZNodeType::isNull(const QVariant &v)
+bool JZNodeType::isBaseEnum(int type)
+{
+    return (type >= Type_none && type <= Type_string && isEnum(type));
+}
+
+bool JZNodeType::isNullObject(const QVariant &v)
 {
     if (v.userType() == qMetaTypeId<JZObjectNull>())
         return true;
@@ -121,7 +135,7 @@ bool JZNodeType::isNull(const QVariant &v)
     return false;
 }
 
-bool JZNodeType::isBaseType(int type)
+bool JZNodeType::isBase(int type)
 {
     return (type >= Type_none && type <= Type_string);
 }
@@ -164,6 +178,9 @@ bool JZNodeType::canConvert(int type1,int type2)
         auto inst = JZNodeObjectManager::instance();        
         return inst->isInherits(type1,type2);
     }
+    int64_t id = makeConvertId(type1, type2);
+    if (convertMap.contains(id))
+        return true;
 
     return false;
 }
@@ -251,8 +268,23 @@ QVariant JZNodeType::convertTo(const QVariant &v, int type)
     if (type == Type_any)
         return v;
     int v_type = variantType(v);
-    if (v_type == Type_nullptr && type > Type_object)
-        return v;
+    if (v_type == Type_string && type == Type_bool)
+    {
+        QString text = v.toString();
+        if (text.isEmpty() || text == "false" || text == "0")
+            return false;
+        else
+            return true;
+    }
+    if (v_type == Type_nullptr && type >= Type_object)
+    {
+        auto ptr = JZNodeObjectManager::instance()->createEmpty(type);
+        return QVariant::fromValue(ptr);
+    }
+    int64_t cvt_id = makeConvertId(v_type, type);
+    auto it = convertMap.find(cvt_id);
+    if (it != convertMap.end())
+        return it.value()(v);
 
     auto qtype = typeToQMeta(type);
     QVariant ret = v;
@@ -299,6 +331,12 @@ QVariant JZNodeType::matchValue(const QVariant &v, QList<int> type)
     return value(type[0]);
 }
 
+void JZNodeType::registConvert(int from, int to, ConvertFunc func)
+{
+    int id = (int64_t)from << 32 | (int64_t)to;
+    convertMap[id] = func;
+}
+
 //JZParamDefine
 JZParamDefine::JZParamDefine()
 {
@@ -316,23 +354,30 @@ JZParamDefine::JZParamDefine(QString name, int dataType, const QVariant &v)
 
 QVariant JZParamDefine::initialValue() const
 {
-    if (dataType < Type_object)
+    if (JZNodeType::isBase(dataType))
     {        
         QVariant::Type q_type = JZNodeType::typeToQMeta(dataType);
         if (value.isNull()) 
             return QVariant(q_type);
         else
         {
-            QVariant v = value;
-            if(v.convert(q_type))
-                return v;
-            else
-                return QVariant(q_type);
+            return JZNodeType::matchValue(value, { dataType });            
         }        
+    }
+    else if (JZNodeType::isEnum(dataType))
+    {
+        if (value.isNull())
+        {
+            auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
+            return meta->value(0);
+        }
+        else
+            return value.toInt();
     }
     else
     {
-        return QVariant::fromValue(JZObjectNull());
+        auto ptr = JZNodeObjectManager::instance()->createEmpty(dataType);
+        return QVariant::fromValue(ptr);
     }
 }
 

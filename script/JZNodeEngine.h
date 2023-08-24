@@ -235,7 +235,8 @@ protected:
     void updateStatus(int status);
 
     const FunctionDefine *function(QString name);       
-    void callCFunction(const FunctionDefine *func);        
+    void checkFunction(const FunctionDefine *func);
+    void callCFunction(const FunctionDefine *func);
     QVariant dealExpr(const QVariant &a, const QVariant &b,int op);
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);

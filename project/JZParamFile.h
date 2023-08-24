@@ -19,6 +19,7 @@ public:
     void removeVariable(QString name);
     void renameVariable(QString oldName,QString newName);
     void setVariableType(QString name,int dataType);
+    void setVariableValue(QString name, const QVariant &value);
 
     JZParamDefine *getVariable(QString name);
     QStringList variableList();

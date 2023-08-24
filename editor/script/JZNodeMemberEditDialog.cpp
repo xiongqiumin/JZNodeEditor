@@ -79,7 +79,7 @@ QTreeWidgetItem *JZNodeMemberEditDialog::createTreeItem(QString name, int type)
     QTreeWidgetItem *item = new QTreeWidgetItem();
     item->setText(0, name);
 
-    if (!JZNodeType::isBaseType(type))
+    if (JZNodeType::isObject(type))
     {        
         auto def = JZNodeObjectManager::instance()->meta(type);
         auto super = def->super();

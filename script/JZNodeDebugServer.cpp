@@ -192,7 +192,7 @@ QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
         JZNodeDebugParamValue param;
         QVariant value;
         auto &coor = info.coors[i];
-        if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::NodeId)
+        if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::Node)
         {
             auto env = stack->stackVariable(coor.stack);
             if (coor.type == JZNodeParamCoor::Local)
@@ -234,7 +234,7 @@ void JZNodeDebugServer::setVariable(const QVariantList &list)
     {
         QVariant value;
         auto &coor = info.coors[i];
-        if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::NodeId)
+        if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::Node)
         {
             auto env = stack->stackVariable(coor.stack);
             if (coor.type == JZNodeParamCoor::Local)

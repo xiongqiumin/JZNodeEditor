@@ -25,6 +25,14 @@ enum
     Prop_All = 0xFFFFFFFF,
 };
 
+enum {    
+    Pri_none = -1,
+    Pri_sub_flow = 0,
+    Pri_flow = 100,
+    Pri_param = 200,
+    Pri_button = 300,
+};
+
 class JZNodePin
 {
 public:
@@ -40,6 +48,8 @@ public:
 
     void setFlag(int flag);
     int flag() const;
+
+    void setPri(int pri);
     int pri() const; // 显示优先级
 
     bool isInput() const;
@@ -70,6 +80,7 @@ protected:
 
     int m_id;
     int m_flag;
+    int m_pri;
     QString m_name;    
     QList<int> m_dataType;
     QVariant m_value;

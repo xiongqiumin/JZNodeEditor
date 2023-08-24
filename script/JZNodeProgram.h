@@ -66,8 +66,12 @@ struct NodeInfo
     int node_type;
     bool isFlow;       
 
-    QList<JZParamDefine> paramIn;
-    QList<JZParamDefine> paramOut;
+    QStringList paramIn;
+    QList<int> paramInId;
+
+    QStringList paramOut;
+    QList<int> paramOutId;
+
     QList<NodeRange> pcRanges;
 };
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);

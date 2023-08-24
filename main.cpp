@@ -10,26 +10,6 @@
 
 
 extern void test_script();
-void test_build()
-{
-    QString path = qApp->applicationDirPath() + "/sample/russion.jzproject";
-    JZProject project;
-    project.open(path);
-
-    QElapsedTimer t;
-    t.start();
-    for (int i = 0; i < 200; i++)
-    {       
-        JZNodeBuilder builder;
-        JZNodeProgram program;
-        if (!builder.build(&project, &program))
-        {
-            qDebug().noquote() << builder.error();
-            return;
-        }        
-    }
-    qDebug() << "build cost" << t.elapsed();
-}
 
 int main(int argc, char *argv[])
 {
@@ -42,17 +22,12 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
-    if(0)
-    {
-        test_build();
-        return 0;
-    }
-    if (1)
+    if (0)
     {
         SampleRussian russian;
-        russian.saveProject();
-        //russian.run();
-        //return 0;
+        //russian.saveProject();
+        russian.run();
+        return 0;
     }
     if(0)
     {         

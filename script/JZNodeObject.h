@@ -191,8 +191,8 @@ public:
     JZNodeObjectPtr create(int type_id);
     JZNodeObjectPtr createEmpty(int type_id);
     JZNodeObjectPtr createCClass(QString ctype_id);
-    JZNodeObjectPtr createCClassRefrence(QString ctype_id,void *cobj);
-    JZNodeObjectPtr clone(JZNodeObjectPtr other);
+    JZNodeObjectPtr createCClassRefrence(QString ctype_id,void *cobj,bool owner);
+    JZNodeObjectPtr clone(JZNodeObject *other);
 
 protected:
     void create(const JZNodeObjectDefine *define,JZNodeObject *obj);
@@ -216,11 +216,11 @@ JZNodeObjectPtr JZObjectCreate()
 }
 
 template<class T>
-JZNodeObjectPtr JZObjectRefrence(T ptr)
+JZNodeObjectPtr JZObjectCreate(T ptr,bool owner = true)
 {
     static_assert(std::is_pointer<T>(), "only support class pointer");
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();
-    return JZNodeObjectManager::instance()->createCClassRefrence(c_typeid,ptr);
+    return JZNodeObjectManager::instance()->createCClassRefrence(c_typeid, ptr, owner);
 }
 
 #endif

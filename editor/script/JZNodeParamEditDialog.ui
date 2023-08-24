@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>252</width>
+    <width>280</width>
     <height>134</height>
    </rect>
   </property>
@@ -47,6 +47,16 @@
          <item row="0" column="1">
           <widget class="QLineEdit" name="lineName"/>
          </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>类型:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="comboBox"/>
+         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
@@ -54,11 +64,28 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>类型:</string>
-           </property>
+         <item row="2" column="1">
+          <widget class="QWidget" name="widget" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLineEdit" name="lineValue"/>
+            </item>
+            <item>
+             <widget class="QComboBox" name="boxValue"/>
+            </item>
+           </layout>
           </widget>
          </item>
          <item row="2" column="0">
@@ -67,12 +94,6 @@
             <string>默认值:</string>
            </property>
           </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QComboBox" name="comboBox"/>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="lineValue"/>
          </item>
         </layout>
        </widget>

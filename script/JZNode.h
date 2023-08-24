@@ -151,6 +151,8 @@ public:
     JZNodeGemo paramOutGemo(int index) const;
     int paramOutCount() const;
     QVector<int> paramOutList() const;
+    QVariant paramOutValue(int index) const;
+    void setParamOutValue(int index, const QVariant &value);
     
     int addFlowIn(int extFlag = 0);
     int flowIn() const;
@@ -168,6 +170,7 @@ public:
     int subFlowCount() const;
 
     int addButtonIn(QString name);
+    int addButtonOut(QString name);
     
     QVariant propValue(int prop) const;
     void setPropValue(int prop,QVariant value);
@@ -348,10 +351,14 @@ public:
     JZNodeIf();
 
     void addCondPin();
-    void addElsePin();
+    void addElsePin();    
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+    virtual bool pinClicked(int id) override;
+
+    int m_btnCond;
+    int m_btnElse;
 };
 
 //JZNodeSwitch
@@ -359,10 +366,16 @@ class JZNodeSwitch : public JZNode
 {
 public:
     JZNodeSwitch();
-    void addCondPin();
+    void addCase();
+    void addDefault();
+    void setCaseValue(int index, const QVariant &v);
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+    virtual bool pinClicked(int id) override;
+
+    int m_btnCase;
+    int m_btnDefault;
 };
 
 

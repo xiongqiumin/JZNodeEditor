@@ -3,11 +3,50 @@
 #include <QShortcut>
 #include <JZNodeType.h>
 #include <QComboBox>
+#include <QStyledItemDelegate>
+#include <QLineEdit>
 
 #include "JZParamEditor.h"
 #include "ui_JZParamEditor.h"
 #include "JZProject.h"
 #include "JZNodeTypeDialog.h"
+
+class ValueItemDelegate : public QStyledItemDelegate
+{
+public:
+    ValueItemDelegate(QObject *parent)
+        :QStyledItemDelegate(parent)
+    {
+
+    }
+
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+    {        
+        auto item = m_table->item(index.row(), index.column());
+        auto box = (QComboBox*)(m_table->cellWidget(index.row(), 1));
+        int dataType = box->currentData().toInt();
+        if (JZNodeType::isEnum(dataType))
+        {            
+            auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
+            QComboBox *box = new QComboBox(parent);
+            for (int i = 0; i < meta->count(); i++)
+                box->addItem(meta->key(i), meta->value(i));
+            if(!item->text().isEmpty())
+                box->setCurrentText(item->text());
+            return box;
+        }
+        else
+            return new QLineEdit(item->text(), parent);
+    }
+
+    void setTable(QTableWidget *table)
+    {
+        m_table = table;
+    }
+
+    QTableWidget *m_table;
+};
+
 
 //JZParamEditorCommand
 JZParamEditorCommand::JZParamEditorCommand(JZParamEditor *editor, int type)
@@ -77,6 +116,11 @@ JZParamEditor::JZParamEditor()
     m_table->setColumnCount(3);
     m_table->setHorizontalHeaderLabels({"名称","类型","默认值"});
     m_table->setSelectionBehavior(QTableWidget::SelectRows);
+    m_table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
+
+    ValueItemDelegate *delegate = new ValueItemDelegate(this);
+    delegate->setTable(m_table);
+    m_table->setItemDelegateForColumn(2, delegate);
     
     connect(m_table, &QTableWidget::itemChanged, this, &JZParamEditor::onItemChanged);
     connect(&m_commandStack, &QUndoStack::cleanChanged, this, &JZParamEditor::onCleanChanged);
@@ -97,14 +141,18 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
 
     if (row < m_widgetCount)
     {
-        QString type = JZNodeObjectManager::instance()->getClassName(def->dataType);
+        QString type = JZNodeType::typeToName(def->dataType);
 
         QTableWidgetItem *itemType = new QTableWidgetItem(def->name);        
         itemType->setText(type);
         m_table->setItem(row, 1, itemType);
 
+        QTableWidgetItem *itemValue = new QTableWidgetItem();            
+        m_table->setItem(row, 2, itemValue);
+
         itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
         itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
+        itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
     }
     else
     {
@@ -117,6 +165,19 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
         box->setCurrentIndex(help.index);
         connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
         m_table->setCellWidget(row, 1, box);
+
+        QTableWidgetItem *itemValue = new QTableWidgetItem();
+        m_table->setItem(row, 2, itemValue);
+        if (JZNodeType::isBase(def->dataType))
+            itemValue->setText(def->value.toString());
+        else if (JZNodeType::isEnum(def->dataType))
+        {
+            auto meta = JZNodeObjectManager::instance()->enumMeta(def->dataType);                 
+            QString text = meta->valueToKey(def->value.toInt());
+            itemValue->setText(text);
+        }
+        else
+            itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
     }
 }
 
@@ -172,12 +233,24 @@ void JZParamEditor::onCleanChanged(bool clean)
 
 void JZParamEditor::onItemChanged(QTableWidgetItem *item)
 {
-    if (item->column() != 0)
-        return;
-
-    QString oldName = item->data(Qt::UserRole).toString();
-    QString newName = item->text();
-    addRenameCommand(oldName, newName);
+    QString varName = m_table->item(item->row(), 0)->data(Qt::UserRole).toString();
+    if (item->column() == 0)
+    {        
+        QString newName = item->text();
+        addRenameCommand(varName, newName);
+    }
+    else if (item->column() == 2)
+    {
+        QString value = item->text();
+        int dataType = rowDataType(item->row());
+        if (JZNodeType::isEnum(dataType))
+        {
+            auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);            
+            m_file->setVariableValue(varName, meta->keyToValue(value));
+        }
+        else
+            m_file->setVariableValue(varName, value);
+    }
 }
 
 void JZParamEditor::addNewCommand(QString name, int type)
@@ -215,6 +288,12 @@ void JZParamEditor::addSetTypeCommand(QString name, int newType)
     cmd->oldType = info->dataType;
     cmd->newType = newType;
     m_commandStack.push(cmd);
+}
+
+int JZParamEditor::rowDataType(int row)
+{
+    auto box = (QComboBox*)m_table->cellWidget(row, 1);
+    return box->currentData().toInt();
 }
 
 int JZParamEditor::rowIndex(QComboBox *box)
@@ -311,17 +390,26 @@ void JZParamEditor::on_btnRemove_clicked()
 void JZParamEditor::onTypeChanged(int index)
 {
     QComboBox *box = qobject_cast<QComboBox*>(sender());
-    if (index < box->count() - 1) 
-    {
-        return;
-    }
-
-    JZNodeTypeDialog dialog(this);
-    if (dialog.exec() != QDialog::Accepted)    
-        return;
-    
     int row = rowIndex(box);
-    QString name = m_table->item(row,0)->text();
-    int dataType = dialog.dataType();
+    QString name = m_table->item(row, 0)->text();
+    
+    int dataType;
+    if (index == box->count() - 1) 
+    {
+        JZNodeTypeDialog dialog(this);    
+        if (dialog.exec() != QDialog::Accepted)
+        {
+            auto info = m_file->getVariable(name);
+            int index = box->findData(info->dataType);
+            box->setCurrentIndex(index);
+            return;
+        }
+        dataType = dialog.dataType();
+    }
+    else
+    {
+        dataType = box->currentData().toInt();
+    }                       
+
     addSetTypeCommand(name, dataType);
 }

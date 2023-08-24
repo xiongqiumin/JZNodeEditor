@@ -24,12 +24,14 @@ public:
     void removeNode(int id);
     JZNode *getNode(int id);
     JZNodePin *getPin(const JZNodeGemo &gemo);    
-    QList<int> nodeList();        
+    QList<int> nodeList();            
 
     void setNodePos(int id,QPointF pos);
     QPointF getNodePos(int id);
 
-    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error);
+    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error); 
+    int parentNode(int id);
+
     int addConnect(JZNodeGemo from, JZNodeGemo to);
     bool hasConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);

@@ -320,6 +320,18 @@ QVector<int> JZNode::paramOutList() const
     return propOutList(Prop_param);
 }
 
+QVariant JZNode::paramOutValue(int index) const
+{
+    auto list = paramOutList();
+    return propValue(list[index]);
+}
+
+void JZNode::setParamOutValue(int index, const QVariant &value)
+{
+    auto list = paramOutList();
+    setPropValue(list[index], value);
+}
+
 int JZNode::flowIn() const
 {
     auto list = propInList(Prop_flow);
@@ -388,6 +400,14 @@ int JZNode::addButtonIn(QString name)
     btn.setName(name);
     btn.setFlag(Prop_button | Prop_in | Prop_dispName);
     return addProp(btn);    
+}
+
+int JZNode::addButtonOut(QString name)
+{
+    JZNodePin btn;
+    btn.setName(name);
+    btn.setFlag(Prop_button | Prop_out | Prop_dispName);
+    return addProp(btn);
 }
 
 QVariant JZNode::propValue(int id) const
@@ -630,9 +650,17 @@ JZNodeContinue::JZNodeContinue()
     addFlowIn(); 
 }
 
-bool JZNodeContinue::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodeContinue::compiler(JZNodeCompiler *c,QString &error)
 {   
-    compiler->addContinue();
+    QVector<int> allow_node = { Node_for,Node_while,Node_foreach };
+    auto file = c->currentFile();
+    int paremt_id = file->parentNode(m_id);
+    if (paremt_id == -1 || !allow_node.contains(file->getNode(paremt_id)->type()))
+    {
+        error = "无效的break";
+        return false;
+    }
+    c->addContinue();
     return true;
 }
 
@@ -644,9 +672,17 @@ JZNodeBreak::JZNodeBreak()
     addFlowIn();
 }
 
-bool JZNodeBreak::compiler(JZNodeCompiler *compiler,QString &error)
+bool JZNodeBreak::compiler(JZNodeCompiler *c,QString &error)
 {       
-    compiler->addBreak();
+    QVector<int> allow_node = { Node_for,Node_while,Node_foreach,Node_switch };
+    auto file = c->currentFile();
+    int paremt_id = file->parentNode(m_id);
+    if (paremt_id == -1 || !allow_node.contains(file->getNode(paremt_id)->type()))
+    {
+        error = "无效的break";
+        return false;
+    }    
+    c->addBreak();
     return true;
 }
 
@@ -934,16 +970,16 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
     JZNodeIRParam itValue = irId(c->paramId(m_id,paramOut(1)));    
 
     c->addCall(irLiteral("typename"),{list},{className});
-    c->addCall(irLiteral("string.append"),{className,irLiteral(".iterator")},{itBeginFunc});
+    c->addCall(irLiteral("String.append"),{className,irLiteral(".iterator")},{itBeginFunc});
 
     //it = list.first
     c->addCall(itBeginFunc,{list},{it});
 
     c->addCall(irLiteral("typename"),{it},{itName});
-    c->addCall(irLiteral("string.append"),{itName,irLiteral(".next")},{itNextFunc});
-    c->addCall(irLiteral("string.append"),{itName,irLiteral(".atEnd")},{itEndFunc});
-    c->addCall(irLiteral("string.append"),{itName,irLiteral(".key")},{itKeyFunc});
-    c->addCall(irLiteral("string.append"),{itName,irLiteral(".value")},{itValueFunc});
+    c->addCall(irLiteral("String.append"),{itName,irLiteral(".next")},{itNextFunc});
+    c->addCall(irLiteral("String.append"),{itName,irLiteral(".atEnd")},{itEndFunc});
+    c->addCall(irLiteral("String.append"),{itName,irLiteral(".key")},{itKeyFunc});
+    c->addCall(irLiteral("String.append"),{itName,irLiteral(".value")},{itValueFunc});
 
     //while(it != it.end()
     int startPc = c->currentPc() + 1;
@@ -1017,11 +1053,14 @@ JZNodeIf::JZNodeIf()
     addFlowIn();
     addFlowOut();
     addCondPin();    
+
+    m_btnCond = addButtonIn("Add cond");
+    m_btnElse = addButtonIn("Add else");
 }
 
 void JZNodeIf::addCondPin()
 {
-    int in = addParamIn("cond");
+    int in = addParamIn("cond",Prop_dispName);
     setPinTypeBool(in);
 
     addSubFlowOut("cond");
@@ -1030,6 +1069,16 @@ void JZNodeIf::addCondPin()
 void JZNodeIf::addElsePin()
 {
     addSubFlowOut("else");
+}
+
+bool JZNodeIf::pinClicked(int id)
+{
+    if (id == m_btnCond)
+        addCondPin();
+    else if (id == m_btnElse)
+        addElsePin();
+
+    return true;
 }
 
 bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error) 
@@ -1080,17 +1129,95 @@ JZNodeSwitch::JZNodeSwitch()
 {
     m_type = Node_switch;
     m_name = "switch";
+    addFlowIn();
+    addFlowOut("complete",Prop_dispName);
+    int in = addParamIn("cond", Prop_dispName);    
+    setPinType(in, { Type_int,Type_string });
+
+    addParamOut("cond", Prop_dispName);
+
+    m_btnCase = addButtonOut("Add case");
+    m_btnDefault = addButtonOut("Add default");
 }
 
-void JZNodeSwitch::addCondPin()
+void JZNodeSwitch::addCase()
 {
+    addSubFlowOut("case", Prop_dispName | Prop_dispValue | Prop_editValue);
+}
 
+void JZNodeSwitch::addDefault()
+{
+    addSubFlowOut("default", Prop_dispName);
+}
+
+void JZNodeSwitch::setCaseValue(int index, const QVariant &v)
+{
+    prop(subFlowOut(index))->setValue(v);
+}
+
+bool JZNodeSwitch::pinClicked(int id)
+{
+    if (id == m_btnCase)
+        addCase();
+    else if (id == m_btnDefault)
+        addDefault();
+
+    return true;
 }
 
 bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    int case_idx = 0;    
+    auto sub_flow_list = subFlowList();
+    if (sub_flow_list.size() == 0) 
+    {
+        error = "请添加case";
+        return false;
+    }
+
+    int in_id = c->paramId(m_id, paramIn(0));
+    int out_id = c->paramId(m_id, paramOut(0));
+    
+    c->addSetVariable(irId(out_id), irId(in_id));
+    c->addFlowOutput(m_id);
+
+    int case_count = sub_flow_list.size();
+    if (prop(sub_flow_list.back())->name() == "default")
+        case_count--;
+
+    JZNodeIRJmp *pre_jmp = nullptr;
+    for (case_idx = 0; case_idx < case_count; case_idx++)
+    {
+        auto out_value = prop(sub_flow_list[case_idx])->value();
+
+        int jmp_cmp = c->addCompare(irId(in_id), irLiteral(out_value), OP_eq);
+        JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
+        JZNodeIRJmp *jmp_false = new JZNodeIRJmp(OP_jmp);
+        c->addStatement(JZNodeIRPtr(jmp_true));
+        c->addStatement(JZNodeIRPtr(jmp_false));
+        int jmp = c->addJumpSubNode(sub_flow_list[case_idx]);
+        jmp_true->jmpPc = irLiteral(jmp);
+        if (pre_jmp)
+            pre_jmp->jmpPc = irLiteral(jmp_cmp);
+        pre_jmp = jmp_false;
+    }
+    for (; case_idx < sub_flow_list.size(); case_idx++)
+    {
+        int jmp = c->addJumpSubNode(sub_flow_list[case_idx]);
+        if (pre_jmp)
+            pre_jmp->jmpPc = irLiteral(jmp);
+    }        
+    int out_pc = c->addJumpNode(flowOut());
+    QList<int> breakPc, continuePc;
+    for (int i = 0; i < sub_flow_list.size(); i++)
+    {
+        breakPc.push_back(out_pc);
+        continuePc.push_back(out_pc);
+    }
+    c->setBreakContinue(breakPc, continuePc);    
 
     return true;
 }

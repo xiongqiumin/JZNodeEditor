@@ -38,7 +38,7 @@ protected slots:
     void on_btnCancel_clicked();
 
 protected:
-    int m_dataType;
+    int m_dataType;    
     Ui::JZNodeTypeDialog *ui;
 };
 

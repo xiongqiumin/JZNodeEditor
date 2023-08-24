@@ -45,13 +45,37 @@ JZNodeTypeDialog::JZNodeTypeDialog(QWidget *p)
 
     ui->treeWidget->setHeaderHidden(true);
 
-    auto list = JZNodeObjectManager::instance()->getClassList();
+    QTreeWidgetItem *item_class = new QTreeWidgetItem();
+    item_class->setText(0, "object");
+    ui->treeWidget->addTopLevelItem(item_class);
+
+    auto inst = JZNodeObjectManager::instance();
+    auto list = inst->getClassList();
     for (int i = 0; i < list.size(); i++)
     {
         QTreeWidgetItem *item = new QTreeWidgetItem();
+        int id = inst->getClassId(list[i]);
         item->setText(0, list[i]);
-        ui->treeWidget->addTopLevelItem(item);
+        item->setData(0, Qt::UserRole, id);
+        item_class->addChild(item);
     }
+
+    //item_enum
+    QTreeWidgetItem *item_enum = new QTreeWidgetItem();
+    item_enum->setText(0, "enum");
+    ui->treeWidget->addTopLevelItem(item_enum);
+
+    auto enum_list = inst->getEnumList();
+    for (int i = 0; i < enum_list.size(); i++)
+    {        
+        QTreeWidgetItem *item = new QTreeWidgetItem();
+        int id = inst->getEnumId(enum_list[i]);
+        item->setText(0, enum_list[i]);
+        item->setData(0, Qt::UserRole, id);
+        item_enum->addChild(item);
+    }    
+
+    ui->treeWidget->expandAll();
 }
 
 JZNodeTypeDialog::~JZNodeTypeDialog()
@@ -61,7 +85,10 @@ JZNodeTypeDialog::~JZNodeTypeDialog()
 
 void JZNodeTypeDialog::setDataType(int dataType)
 {
-    QString className = JZNodeObjectManager::instance()->getClassName(dataType);
+    if (JZNodeType::isBase(dataType))
+        return;
+
+    QString className = JZNodeType::typeToName(dataType);
     auto list = ui->treeWidget->findItems(className, Qt::MatchExactly);
     if (list.size() >= 0)
     {
@@ -84,17 +111,17 @@ void JZNodeTypeDialog::on_lineClassName_returnPressed()
 void JZNodeTypeDialog::on_btnOk_clicked()
 {
     auto item = ui->treeWidget->currentItem();
-    if (!item) 
+    if (!item || !item->data(0,Qt::UserRole).isValid())
     {
         QMessageBox::information(this, "", "请先选择一项");
         return;
     }
 
-    m_dataType = JZNodeObjectManager::instance()->getClassId(item->text(0));
+    m_dataType = item->data(0, Qt::UserRole).toInt();
     QDialog::accept();
 }
 
 void JZNodeTypeDialog::on_btnCancel_clicked()
 {
-    QDialog::rejected();
+    QDialog::reject();
 }

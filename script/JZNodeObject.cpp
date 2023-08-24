@@ -8,7 +8,7 @@
 #include "JZNodeQtWrapper.h"
 #include "JZNodeEngine.h"
 
-QString JObjectTypename(const QVariant &v)
+QString JZObjectTypename(const QVariant &v)
 {
     if(v.type() < QVariant::UserType)
         return v.typeName();
@@ -19,6 +19,22 @@ QString JObjectTypename(const QVariant &v)
     }
     else
         return "unknown";
+}
+
+QVariant JZObjectClone(const QVariant &v)
+{
+    int v_type = JZNodeType::variantType(v);
+    if (JZNodeType::isBase(v_type))
+        return v_type;
+    else
+    {
+        if (JZNodeType::isNullObject(v))
+            return v;
+
+        auto obj = toJZObject(v);
+        auto ptr = JZNodeObjectManager::instance()->clone(obj);
+        return QVariant::fromValue(ptr);
+    }
 }
 
 int JZClassId(const QString &name)
@@ -687,8 +703,9 @@ void JZNodeObjectManager::init()
 void JZNodeObjectManager::initFunctions()
 {
     JZNodeFunctionManager::instance()->registCFunction("createObject",true,jzbind::createFuncion(CreateJZObject));    
-    JZNodeFunctionManager::instance()->registCFunction("typename",false,jzbind::createFuncion(JObjectTypename));
+    JZNodeFunctionManager::instance()->registCFunction("typename",false,jzbind::createFuncion(JZObjectTypename));
     JZNodeFunctionManager::instance()->registCFunction("print",true,jzbind::createFuncion(JZNodeDisp));
+    JZNodeFunctionManager::instance()->registCFunction("clone", true, jzbind::createFuncion(JZObjectClone));
 
     JZNodeFunctionManager::instance()->registCFunction("toString", false,jzbind::createFuncion(toString));
     JZNodeFunctionManager::instance()->registCFunction("toBool", false,jzbind::createFuncion(toBool));
@@ -1013,22 +1030,22 @@ JZNodeObjectPtr JZNodeObjectManager::createCClass(QString type_id)
     return create(className);
 }
 
-JZNodeObjectPtr JZNodeObjectManager::createCClassRefrence(QString type_id,void *ptr)
+JZNodeObjectPtr JZNodeObjectManager::createCClassRefrence(QString type_id,void *ptr, bool owner)
 {
     if(!m_typeidMetas.contains(type_id))
         return nullptr;
 
     auto def = meta(m_typeidMetas[type_id]);
     JZNodeObject *obj = new JZNodeObject(def);
-    obj->setCObject(ptr,false);
+    obj->setCObject(ptr, owner);
     return JZNodeObjectPtr(obj);
 }
 
-JZNodeObjectPtr JZNodeObjectManager::clone(JZNodeObjectPtr other)
+JZNodeObjectPtr JZNodeObjectManager::clone(JZNodeObject *other)
 {
     Q_ASSERT(other->isCopyable());
 
     JZNodeObjectPtr ret = create(other->type());
-    copy(ret.data(),other.data());    
+    copy(ret.data(),other);    
     return ret;
 }

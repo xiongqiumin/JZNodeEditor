@@ -5,12 +5,21 @@ JZNodePin::JZNodePin()
 {
     m_id = INVALID_ID;
     m_flag = Prop_none;
+    m_pri = Pri_none;
 }
 
 JZNodePin::JZNodePin(QString name, int dataType, int flag)
 {
     m_name = name;
     m_flag = flag;
+    if(flag & Prop_subFlow)
+        m_pri = Pri_sub_flow;
+    else if (flag & Prop_flow)
+        m_pri = Pri_flow;
+    else if (flag & Prop_param)
+        m_pri = Pri_param;
+    else if (flag & Prop_button)
+        m_pri = Pri_button;
 }
 
 JZNodePin::~JZNodePin()
@@ -48,15 +57,13 @@ int JZNodePin::flag() const
 }
 
 int JZNodePin::pri() const
-{
-    if(m_flag & Prop_subFlow)
-        return 0;
-    else if(m_flag & Prop_flow)
-        return 1;
-    else if(m_flag & Prop_button)
-        return 3;
+{    
+    return m_pri;
+}
 
-    return 2;
+void JZNodePin::setPri(int pri)
+{
+    m_pri = pri;
 }
 
 bool JZNodePin::isInput() const
@@ -143,9 +150,10 @@ QDataStream &operator<<(QDataStream &s, const JZNodePin &param)
 {
     s << param.m_id;
     s << param.m_name;
-    s << param.m_flag;    
+    s << param.m_flag;     
     s << param.m_dataType;
     s << param.m_value;
+    s << param.m_pri;
     return s;
 }
 
@@ -156,5 +164,6 @@ QDataStream &operator>>(QDataStream &s, JZNodePin &param)
     s >> param.m_flag;    
     s >> param.m_dataType;
     s >> param.m_value;
+    s >> param.m_pri;
     return s;
 }

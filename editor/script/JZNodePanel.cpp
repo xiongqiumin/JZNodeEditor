@@ -111,6 +111,9 @@ void JZNodePanel::updateNode()
 
 void JZNodePanel::updateClass()
 {
+    if (!m_classFile)
+        return;
+
     auto def = m_classFile->objectDefine();
     //function
     UiHelper::clearTreeItem(m_memberFunction);    
@@ -604,26 +607,34 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     JZNodeWhile node_while;
     JZNodeSequence node_seq;
     JZNodeBranch node_branch;
+    JZNodeIf node_if;
+    JZNodeSwitch node_switch;
     JZNodeForEach node_foreach;
     JZNodeBreak node_break;
     JZNodeContinue node_continue;
     JZNodeExit node_exit;
     JZNodeReturn node_return;
+    JZNodeNop node_nop;
     if (m_file->itemType() == ProjectItem_scriptFunction) 
     {
         node_return.setFunction(&m_file->function());
     }
-
-    item_process->addChild(createNode(&node_seq));
+    
     item_process->addChild(createNode(&node_branch));
+    item_process->addChild(createNode(&node_if));
+    item_process->addChild(createNode(&node_switch));
+    item_process->addChild(createNode(&node_seq));
+    
     item_process->addChild(createNode(&node_while));
     item_process->addChild(createNode(&node_for));
     item_process->addChild(createNode(&node_foreach));
-    item_process->addChild(createNode(&node_break));
     item_process->addChild(createNode(&node_continue));
-    item_process->addChild(createNode(&node_exit));
-    item_process->addChild(createNode(&node_return));
+    item_process->addChild(createNode(&node_break));    
 
+    item_process->addChild(createNode(&node_nop));
+
+    item_process->addChild(createNode(&node_return));
+    item_process->addChild(createNode(&node_exit));        
     root->addChild(item_process);
 }
 

@@ -121,6 +121,25 @@ bool JZScriptFile::hasConnect(JZNodeGemo from, JZNodeGemo to)
     return false;
 }
 
+int JZScriptFile::parentNode(int id)
+{
+    JZNode *node = getNode(id);
+    if(node->flowIn() == -1)
+        return id;
+    auto in_lines = getConnectId(id, node->flowIn());
+    if (in_lines.size() == 0)
+        return -1;
+
+    auto line = getConnect(in_lines[0]);
+
+    JZNode *from = getNode(line->from.nodeId);
+    auto pin = from->prop(line->from.propId);
+    if (pin->isSubFlow())
+        return line->from.nodeId;
+    else
+        return parentNode(line->from.nodeId);
+}
+
 bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
 {        
     JZNode *node_from = getNode(from.nodeId);
@@ -155,7 +174,7 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
     auto in_lines = getConnectId(to.nodeId, to.propId);
     if((pin_from->isFlow() || pin_from->isSubFlow()) && out_lines.size() != 0)
     {
-        error = "已有流程节点连接";
+        error = "已连接其他流程节点";
         return false;
     }
     if(pin_from->isSubFlow() && in_lines.size() != 0)
@@ -163,10 +182,24 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         error = "子过程只能连接未连接的节点";
         return false;
     }
-    if(!node_to->isFlowNode() && in_lines.size() > 0)  //输入点只能连接一个计算
-    {
-        error = "已有输入,只能连接一个输入";
+    if(pin_from->isFlow() && in_lines.size() > 0 && (parentNode(from.nodeId) != parentNode(to.nodeId)))
+    {        
+        error = "两个节点属于不同的流程，无法连接";
         return false;
+    }
+    if(in_lines.size() > 0)  //输入点只能连接一个计算
+    {
+        bool cur_flow = node_from->isFlowNode();
+        auto other_node = getNode(getConnect(in_lines[0])->from.nodeId);
+        if (other_node->isFlowNode() != cur_flow)
+        {
+            error = "不能同时连接流程输入和数据输入";
+        }
+        else if (!cur_flow)
+        {
+            error = "已有数据输入,只能连接一个输入";
+            return false;
+        }
     }
     if(pin_to->isLiteral() /*&& node_from->type() != Node_literal*/)
     {

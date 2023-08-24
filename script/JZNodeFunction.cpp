@@ -63,7 +63,7 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
         pin.setName(define->paramIn[i].name);
         pin.setFlag(Prop_param | Prop_in | Prop_dispName);
         pin.setDataType({define->paramIn[i].dataType});
-        if(JZNodeType::isBaseType(define->paramIn[i].dataType))
+        if(JZNodeType::isBaseEnum(define->paramIn[i].dataType))
             pin.setFlag(pin.flag() | Prop_dispValue | Prop_editValue);
         addProp(pin);
     }

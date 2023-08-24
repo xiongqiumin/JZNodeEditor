@@ -39,6 +39,12 @@ QString JZNodeIRParam::ref() const
     return value.toString();
 }
 
+QVariant JZNodeIRParam::literal() const
+{
+    Q_ASSERT(type == Literal);
+    return value;
+}
+
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param)
 {
     s << param.type;

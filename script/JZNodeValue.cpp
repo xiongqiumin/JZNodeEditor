@@ -398,7 +398,7 @@ void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
         int pin_id = -1;
         if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
         {
-            if (JZNodeType::isBaseType(param->dataType))
+            if (JZNodeType::isBaseEnum(param->dataType))
                 flag |= (Prop_dispValue | Prop_editValue);
             pin_id = addParamIn(param->name, flag);
         }
@@ -567,7 +567,15 @@ JZNodeClone::~JZNodeClone()
 
 bool JZNodeClone::compiler(JZNodeCompiler *c, QString &error)
 {
-    return false;
+    if (!c->addDataInput(m_id, error))
+        return false;
+
+    QList<JZNodeIRParam> in;
+    QList<JZNodeIRParam> out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall(irLiteral("clone"), in, out);
+    return true;
 }
 
 //JZNodeSwap

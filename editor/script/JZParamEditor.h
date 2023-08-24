@@ -72,6 +72,7 @@ protected:
     void setParamType(QString newName, int newType);
     int rowIndex(QString name);
     int rowIndex(QComboBox *box);
+    int rowDataType(int row);
 
     JZParamFile *m_file;    
     QTableWidget *m_table;

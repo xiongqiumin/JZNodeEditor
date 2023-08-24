@@ -58,6 +58,22 @@ void JZParamFile::setVariableType(QString name, int dataType)
 {
     Q_ASSERT(m_variables.contains(name));
     m_variables[name].dataType = dataType;
+    if (JZNodeType::isEnum(dataType))
+    {
+        auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
+        m_variables[name].value = meta->value(0);
+    }
+    else
+    {
+        m_variables[name].value.clear();
+    }
+    regist();
+}
+
+void JZParamFile::setVariableValue(QString name, const QVariant &value)
+{
+    Q_ASSERT(m_variables.contains(name));
+    m_variables[name].value = value;
     regist();
 }
 

@@ -1,5 +1,8 @@
 #include <QTreeWidget>
+#include <QComboBox>
+
 #include "UiCommon.h"
+#include "JZNodeObject.h"
 
 bool UiHelper::treeFilter(QTreeWidgetItem *item, QString name)
 {
@@ -64,4 +67,18 @@ void UiHelper::treeUpdate(QTreeWidgetItem *root, const QStringList &names, std::
             root->addChild(item);
         }
     }    
+}
+
+void UiHelper::updateEnumBox(QComboBox *box, int dataType, int value)
+{
+    box->blockSignals(true);
+    auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
+    for (int i = 0; i < meta->count(); i++)
+        box->addItem(meta->key(i), meta->value(i));
+    if (value != 0xfafa)
+    {
+        int index = box->findData(value);
+        box->setCurrentIndex(index);
+    }
+    box->blockSignals(false);
 }
