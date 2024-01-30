@@ -3,6 +3,7 @@
 #include "JZUiFile.h"
 #include "JZClassFile.h"
 #include "JZLibraryFile.h"
+#include "LogManager.h"
 
 JZNodeBuilder::JZNodeBuilder()
 {
@@ -19,23 +20,58 @@ QString JZNodeBuilder::error() const
     return m_error;
 }
 
-bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
+void JZNodeBuilder::clear()
 {
-    m_error.clear();        
+    m_connects.clear();
+    m_error.clear();
     m_scripts.clear();
+}
+
+void JZNodeBuilder::initGlobal()
+{        
+    int pc = 0;
+    JZNodeScriptPtr boot = JZNodeScriptPtr(new JZNodeScript());
+    boot->file = "__init__";
+
+    m_program->m_scripts[boot->file] = boot;           
+
+    // init variable
+    auto global_params = m_program->globalVariables();
+    auto it = global_params.begin();
+    while(it != global_params.end() )
+    {        
+        JZNodeIRAlloc *alloc = new JZNodeIRAlloc();      
+        alloc->pc = pc++;
+        alloc->allocType = JZNodeIRAlloc::Heap;
+        alloc->name = it.key();        
+        alloc->dataType = it.value().dataType;
+        if (it.value().dataType < Type_object)
+            alloc->value = irLiteral(it.value().initialValue());
+        else
+            alloc->value = irLiteral(QVariant::fromValue(JZObjectNull(it.value().dataType)));
+
+        boot->statmentList.push_back(JZNodeIRPtr(alloc));
+        it++;
+    }        
+    
+    JZNodeIR *ir_return = new JZNodeIR(OP_return);
+    ir_return->pc = pc++;
+    boot->statmentList.push_back(JZNodeIRPtr(ir_return));
+        
+    FunctionDefine func_def;
+    func_def.name = "__init__";
+    func_def.file = "__init__";
+    func_def.addr = 0;
+
+    boot->functionList.push_back(func_def);
+}
+
+bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
+{    
+    clear();
     m_project = project;    
     m_program = program;        
-    m_program->clear();
-
-    //删除无用编译结果
-    auto it = m_scripts.begin();
-    while(it != m_scripts.end())
-    {
-        if(m_project->getItem(it.key()) == nullptr)
-            it = m_scripts.erase(it);
-        else
-            it++;
-    }
+    m_program->clear();    
     
     auto list = m_project->globalVariableList();
     for(int i = 0; i < list.size(); i++)
@@ -82,7 +118,7 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
 }
 
 bool JZNodeBuilder::buildScriptFile(JZScriptFile *scriptFile)
-{   
+{       
     QString path = scriptFile->itemPath();
     if(!m_scripts.contains(path))    
         m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
@@ -92,10 +128,12 @@ bool JZNodeBuilder::buildScriptFile(JZScriptFile *scriptFile)
     if(classFile)
         script->className = classFile->className();
 
+    LOGI(Log_Compiler, "build " + scriptFile->itemPath());
     JZNodeCompiler compiler;
     if(!compiler.build(scriptFile,script))
-    {
+    {        
         m_error += compiler.error();
+        LOGE(Log_Compiler, compiler.error());
         return false;
     }
     
@@ -109,6 +147,9 @@ bool JZNodeBuilder::link()
             return d1.id < d2.id;
         });
 
-    m_program->m_scripts = m_scripts;            
+    m_program->m_scripts = m_scripts;          
+
+    initGlobal();
+
     return true;
 }

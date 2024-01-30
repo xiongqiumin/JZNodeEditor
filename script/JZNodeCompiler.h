@@ -58,16 +58,25 @@ struct NodeCompilerInfo
     int node_type;
     int start;              //flow节点起始结束
     int end;
+    QMap<int,int> pinType;
+
+    int parentId;           //用于subFlow 指明父节点
     QList<NodeRange> ranges;
     QList<int> continuePc;
-    QList<int> breakPc;
-    int parentId;           //用于subFlow 指明父节点
+    QList<int> breakPc;    
     QList<Jump> jmpList;
-    QList<Jump> jmpSubList;
-    int subReturnCount;
+    QList<Jump> jmpSubList;    
     QList<int> continueList;
-    QList<int> breakList;
+    QList<int> breakList;    
+    int allSubReturn;        
     QString error;
+};
+
+//CompilerInfo
+class CompilerInfo
+{
+public:
+    QMap<int, NodeCompilerInfo> nodeInfo;    
 };
 
 
@@ -83,17 +92,21 @@ public:
     ~JZNodeCompiler();
 
     bool genGraphs(JZScriptFile *file, QVector<GraphPtr> &result);
-    bool build(JZScriptFile *file,JZNodeScript *result);
-    const QMap<int, NodeCompilerInfo> &compilerInfo();
+    bool build(JZScriptFile *file,JZNodeScript *result);        
+    CompilerInfo compilerInfo();
     
     static const JZParamDefine *getVariableInfo(JZScriptFile *file, const QString &name);
     const JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(const QString &var, QString &error);
-    bool checkVariableType(const QString &var, const QString &className, QString &error);
+    bool checkVariableType(const QString &var, const QString &className, QString &error);    
 
     int allocStack();
     void freeStack(int id);    
     void allocFunctionVariable();    
+    
+    void setPinType(int nodeId, int propId, int type);    
+    int pinType(int nodeId, int propId);
+    int pinType(JZNodeGemo gemo);
 
     /*
     节点数据传递规则:
@@ -111,14 +124,14 @@ public:
     int addNop();
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
-    int addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);
+    int addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);    
     int addStatement(JZNodeIRPtr ir);    
     int addJumpNode(int prop);      //设置下一个flow,应当在执行完操作后增加
     int addJumpSubNode(int prop);   //设置下一个sub flow
     int addContinue();
     int addBreak();    
     void addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addAllocLocal(JZParamDefine *def);    
+    void addAllocLocal(const JZParamDefine *def, const JZNodeIRParam &value = JZNodeIRParam());
     void addAssert(const JZNodeIRParam &tips);
 
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
@@ -127,11 +140,12 @@ public:
     JZScriptFile *currentFile();
     Graph *currentGraph();
     int currentPc();
+    int nextPc();
     const FunctionDefine *function(QString name);
 
     QString error();    
 
-protected:                
+protected:    
     void init(JZScriptFile *file);
     bool genGraphs();
     bool checkGraphs();
@@ -139,33 +153,38 @@ protected:
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
     bool buildDataFlow(const QList<GraphNode*> &list);
-    bool bulidControlFlow(Graph *graph);    
-    bool buildParamBinding(Graph *graph);
-    void buildWatchInfo(Graph *graph);
+    bool bulidControlFlow();    
+    bool buildParamBinding();
     void replaceSubNode(int id,int parentId,int flow_index);
-    bool isAllFlowReturn(int id);
+    int isAllFlowReturn(int id,bool root);
     void addEventHandle(const QList<GraphNode*> &list);      
+    void addFunction(const FunctionDefine &define,int pc);
     QString nodeName(JZNode *node);
-    QString pinName(JZNodePin *prop);    
+    QString pinName(JZNodePin *prop);     
+    
     bool compilerNode(JZNode *node);
     void pushCompilerNode(int id);
     void popCompilerNode();
-    void allocLocalVariable(JZNodeIRParam param);
+    void addLocalVariable(JZNodeIRParam param);  
+
+    bool checkPinInType(int nodeId,int prop_id,QString &error);
+    void setOutPinTypeDefault(JZNode *node);    
                 
     /* build info*/        
+    QVector<GraphPtr> m_graphList;
+
     QString m_className;
     int m_stackId;          //当前栈位置
     JZNodeScript *m_script;
     JZScriptFile *m_scriptFile;         
-    Graph *m_currentGraph;       
-    QVector<GraphPtr> m_graphList;
+    Graph *m_currentGraph;               
 
     NodeCompilerInfo *m_currentNodeInfo;
     JZNode* m_currentNode;        
     QList<int> m_compilerNodeStack;       //编译时node栈
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
-    QMap<int,NodeCompilerInfo> m_nodeInfo;
+    QMap<int,NodeCompilerInfo> m_nodeInfo;    
     QList<JZParamDefine> m_localVaribales;
     
     JZProject *m_project;

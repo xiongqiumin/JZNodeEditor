@@ -355,15 +355,7 @@ JZNodeProgramInfo JZNodeDebugServer::getProgramInfo()
         script_info.file = s->file;
         script_info.className = s->className;
         script_info.nodeInfo = s->nodeInfo;
-        script_info.functionList = s->functionList;
-        for (int j = 0; j < s->paramChangeEvents.size(); j++)
-        {
-            script_info.functionList << s->paramChangeEvents[j].function;
-        }
-        for (int j = 0; j < s->events.size(); j++)
-        {
-            script_info.functionList << s->events[j].function;
-        }
+        script_info.functionList = s->functionList;        
         script_info.runtimeInfo = s->runtimeInfo;
 
         info.scripts[s->file] = script_info;

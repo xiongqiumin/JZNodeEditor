@@ -12,18 +12,23 @@ JZNodePin::JZNodePin(QString name, int dataType, int flag)
 {
     m_name = name;
     m_flag = flag;
-    if(flag & Prop_subFlow)
-        m_pri = Pri_sub_flow;
-    else if (flag & Prop_flow)
-        m_pri = Pri_flow;
-    else if (flag & Prop_param)
-        m_pri = Pri_param;
-    else if (flag & Prop_button)
-        m_pri = Pri_button;
+    updatePri();    
 }
 
 JZNodePin::~JZNodePin()
 {
+}
+
+void JZNodePin::updatePri()
+{
+    if (m_flag & Prop_subFlow)
+        m_pri = Pri_sub_flow;
+    else if (m_flag & Prop_flow)
+        m_pri = Pri_flow;
+    else if (m_flag & Prop_param)
+        m_pri = Pri_param;
+    else if (m_flag & Prop_button)
+        m_pri = Pri_button;
 }
 
 void JZNodePin::setId(int id)
@@ -49,6 +54,7 @@ QString JZNodePin::name() const
 void JZNodePin::setFlag(int flag)
 {
     m_flag = flag;
+    updatePri();
 }
 
 int JZNodePin::flag() const
@@ -133,6 +139,7 @@ QVariant JZNodePin::value() const
 
 void JZNodePin::setValue(QVariant value)
 {
+    Q_ASSERT(JZNodeType::isNullptr(value) || JZNodeType::isBase(JZNodeType::variantType(value)));
     m_value = value;
 }
 

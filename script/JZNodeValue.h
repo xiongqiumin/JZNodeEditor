@@ -38,6 +38,33 @@ protected:
 
 };
 
+//JZNodeParamFunction
+class JZNodeParamFunction : public JZNode
+{
+public:
+    JZNodeParamFunction();
+    ~JZNodeParamFunction();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+    void setFucntion(QString name);    
+
+protected:
+
+};
+
+//JZNodeDisplay
+class JZNodeDisplay : public JZNode
+{
+public:
+    JZNodeDisplay();
+    ~JZNodeDisplay();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+protected:
+
+};
+
 //JZNodePrint
 class JZNodePrint : public JZNode
 {

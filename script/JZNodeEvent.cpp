@@ -2,11 +2,12 @@
 #include "JZEvent.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeName.h"
 
 // JZNodeEvent
 JZNodeEvent::JZNodeEvent()
 {
-    m_type = Node_event;
+    m_type = Node_none;
     m_eventType = Event_none;
 
     addFlowOut();
@@ -39,16 +40,29 @@ int JZNodeEvent::eventType() const
     return m_eventType;
 }
 
-QList<JZParamDefine> JZNodeEvent::params()
-{
-    return QList<JZParamDefine>();
-}
-
 bool JZNodeEvent::compiler(JZNodeCompiler *c,QString &error)
 {    
     c->addJumpNode(flowOut());
     return true;
 }
+
+//JZNodeStartEvent
+JZNodeStartEvent::JZNodeStartEvent()
+{
+    m_type = Node_startEvent;
+    m_eventType = Event_programStart;
+    m_name = "startProgram";
+    setFlag(Node_propNoRemove);
+}
+
+FunctionDefine JZNodeStartEvent::function()
+{
+    FunctionDefine func;
+    func.name = "__main__";
+    func.isFlowFunction = true;
+    return func;
+}
+
 
 //JZNodeSingleEvent
 JZNodeSingleEvent::JZNodeSingleEvent()
@@ -64,11 +78,26 @@ JZNodeSingleEvent::~JZNodeSingleEvent()
 
 }
 
-QList<JZParamDefine> JZNodeSingleEvent::params()
-{
-    auto def = JZNodeObjectManager::instance()->meta(m_className);
-    auto sig_func = def->single(m_single);
-    return sig_func->paramOut;    
+FunctionDefine JZNodeSingleEvent::function()
+{    
+    FunctionDefine def;
+    def.isFlowFunction = true;    
+    def.name = "on_" + JZNodeName::memberName(variable()) + "_" + JZNodeName::memberName(name());
+    
+    auto cls = m_file->getClassFile();
+    if (cls)
+    {
+        def.className = cls->name();
+        def.paramIn << JZParamDefine("this", cls->classType());
+    }
+    
+    //存在私有信号，没有对应的函数，这里要取信号来计算
+    auto meta = JZNodeObjectManager::instance()->meta(m_sender);
+    auto s = meta->single(m_single);
+    if(s->paramOut.size() > 0)
+        def.paramIn << s->paramOut.mid(1);
+
+    return def;
 }
 
 void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
@@ -79,7 +108,7 @@ void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
     Q_ASSERT(def);
 
     m_single = single->name;
-    m_className = className;
+    m_sender = className;
 
     QString function = className + "." + single->name;
     setName(function);
@@ -113,7 +142,7 @@ QString JZNodeSingleEvent::variable() const
 
 int JZNodeSingleEvent::variableType() const
 {
-    auto def = JZNodeObjectManager::instance()->meta(m_className);
+    auto def = JZNodeObjectManager::instance()->meta(m_sender);
     return def? def->id : Type_none;
 }
 
@@ -125,7 +154,7 @@ void JZNodeSingleEvent::drag(const QVariant &value)
 bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 {
     QString sender = propValue(paramIn(0)).toString();
-    if(!c->checkVariableType(sender,m_className,error))
+    if(!c->checkVariableType(sender, m_sender,error))
         return false;
 
     auto list = paramOutList();
@@ -142,14 +171,14 @@ bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 void JZNodeSingleEvent::saveToStream(QDataStream &s) const
 {
     JZNodeEvent::saveToStream(s);
-    s << m_className;
+    s << m_sender;
     s << m_single;
 }
 
 void JZNodeSingleEvent::loadFromStream(QDataStream &s)
 {
     JZNodeEvent::loadFromStream(s);
-    s >> m_className;
+    s >> m_sender;
     s >> m_single;
 }
 
@@ -191,26 +220,36 @@ void JZNodeQtEvent::loadFromStream(QDataStream &s)
     s >> m_event;
 }
 
-QList<JZParamDefine> JZNodeQtEvent::params()
+FunctionDefine JZNodeQtEvent::function()
 {
-    auto def = JZNodeObjectManager::instance()->meta(m_className);
-    return def->event(m_event)->paramOut;
+    auto meta = JZNodeObjectManager::instance()->meta(m_className);
+    auto def = meta->function(m_event);
+
+    FunctionDefine func;
+    func.isFlowFunction = true;
+    func.className = m_className;    
+    func.name = "event_" + m_event;
+    func.paramIn = def->paramIn;
+    return func;
 }
 
 void JZNodeQtEvent::setEvent(QString className, const EventDefine *func)
 {
+    Q_ASSERT(!className.isEmpty() && func);
+
     auto def = JZNodeObjectManager::instance()->meta(className);
     m_event = func->name;
     m_className = className;
     m_eventType = func->eventType;
     setName(func->name);
 
-    for (int i = 1; i < func->paramOut.size(); i++)
+    auto paramOut = def->function(m_event)->paramIn;
+    for (int i = 1; i < paramOut.size(); i++)
     {
         JZNodePin pin;
-        pin.setName(func->paramOut[i].name);
+        pin.setName(paramOut[i].name);
         pin.setFlag(Prop_param | Prop_out);
-        pin.setDataType({ func->paramOut[i].dataType });
+        pin.setDataType({ paramOut[i].dataType });
         addProp(pin);
     }
 }
@@ -243,4 +282,10 @@ void JZNodeParamChangedEvent::setVariable(const QString &name)
 QString JZNodeParamChangedEvent::variable() const
 {
     return QString();
+}
+
+FunctionDefine JZNodeParamChangedEvent::function()
+{
+    FunctionDefine def;
+    return def;
 }

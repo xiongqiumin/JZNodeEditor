@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QElapsedTimer>
+#include <QToolBar>
 #include "JZNodeEditor.h"
 #include "JZUiEditor.h"
 #include "JZParamEditor.h"
@@ -59,6 +60,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_editor = nullptr;
     m_processVaild = false;    
 
+    connect(LogManager::instance(), &LogManager::sigLog, this, &MainWindow::onLog);
+
     connect(&m_debuger,&JZNodeDebugClient::sigLog,this,&MainWindow::onRuntimeLog);    
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeStatus, this, &MainWindow::onRuntimeStatus);    
@@ -67,8 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
     connect(&m_project,&JZProject::sigFileChanged, this, &MainWindow::onProjectChanged);
 
-    loadSetting();
-    initMenu();
+    loadSetting();    
     initUi();     
     updateActionStatus();    
 }
@@ -150,7 +152,7 @@ void MainWindow::initMenu()
     m_actionStatus << ActionStatus(actCloseProject, { as::ProjectVaild })
         << ActionStatus(actSaveFile, { as::FileIsModify })
         << ActionStatus(actCloseFile, { as::FileOpen })
-        << ActionStatus(actSaveAllFile, { as::ProjectVaild })
+        << ActionStatus(actSaveAllFile, { as::HasModifyFile })
         << ActionStatus(actCloseAllFile, { as::FileOpen });
 
     QMenu *menu_edit = menubar->addMenu("编辑");
@@ -236,10 +238,25 @@ void MainWindow::initMenu()
     menu_help->addAction("检查更新");       
 
     m_menuList << menu_file << menu_edit << menu_view << menu_build << menu_debug << menu_help;
+    
+    //tool bar
+    QToolBar *main = new QToolBar();    
+    main->addAction(actSaveFile);
+    main->addAction(actSaveAllFile);
+    main->addSeparator();
+    
+    main->addAction(actRun);
+    main->addAction(actPause);
+    main->addAction(actResume);
+    main->addAction(actStop);
+
+    addToolBar(main);
 }
 
 void MainWindow::initUi()
 {    
+    initMenu();    
+
     m_log = new LogWidget();
     connect(m_log, &LogWidget::sigNodeClicked, this, &MainWindow::onNodeClicked);
 
@@ -322,12 +339,21 @@ void MainWindow::updateActionStatus()
     bool isEditor = (m_editor != nullptr);
     bool isEditorModify = (m_editor && m_editor->isModified());    
     bool isEditorScript = (m_editor && m_editor->type() == Editor_script);
+    bool hasModifyFile = false;
     bool isProcess = m_processVaild;
     bool canPause = isProcess && (status  == Status_running || status == Status_none);
     bool canResume = isProcess && (status == Status_pause || status == Status_idlePause);
+    for (auto v : m_editors)
+    {
+        if (v->isModified())
+        {
+            hasModifyFile = true;
+            break;
+        }
+    }
 
     QVector<bool> cond;
-    cond << isProject << isEditor << isEditorModify << isEditorScript
+    cond << isProject << isEditor << isEditorModify << isEditorScript << hasModifyFile
         << !isProcess << isProcess << canPause << canResume;
     
     Q_ASSERT(cond.size() == ActionStatus::Count);
@@ -570,6 +596,12 @@ void MainWindow::onActionStepOut()
 {
     m_debuger.stepOut();
     updateActionStatus();
+}
+
+void MainWindow::onActionHelp()
+{
+    QString text = "欢迎试用\nQQ群:598601341";
+    QMessageBox::information(this, "", text);
 }
 
 void MainWindow::onModifyChanged(bool flag)
@@ -860,11 +892,7 @@ bool MainWindow::build()
     JZNodeBuilder builder;
     JZNodeProgram program;
     if(!builder.build(&m_project,&program))
-    {
-        QString error = builder.error();
-        if (error.endsWith("\n"))
-            error.chop(1);
-        m_log->addLog(Log_Compiler, error);
+    {        
         m_log->addLog(Log_Compiler, "编译失败\n");
         return false;
     }
@@ -880,7 +908,7 @@ bool MainWindow::build()
     }
     saveToFile(build_path + "/" + m_project.name() + ".jsm", program.dump());
 
-    m_log->addLog(Log_Compiler, "编译完成:" + build_exe + ",用时" + QString::number(timer.elapsed()) + "ms");
+    m_log->addLog(Log_Compiler, "编译完成 -> " + build_exe + ", 用时" + QString::number(timer.elapsed()) + "ms");
     return true;
 }
 
@@ -931,10 +959,13 @@ void MainWindow::start(bool startPause)
     setRunning(true);    
 }
 
+void MainWindow::onLog(LogObjectPtr log)
+{
+    m_log->addLog(log->module, log->message);
+}
+
 void MainWindow::onRuntimeStatus(int status)
 {        
-    m_log->addLog(Log_Runtime, QString("status:") + QString::number(status));
-
     bool is_pause = statusIsPause(status);
     m_watch->setRuntimeStatus(status);
     if (is_pause)

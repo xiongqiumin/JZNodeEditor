@@ -23,12 +23,26 @@ int JZNodeLiteral::dataType() const
 
 void JZNodeLiteral::setDataType(int type)
 {
-    prop(paramOut(0))->setDataType({type});
-    if (type == Type_nullptr)
+    int out = paramOut(0);
+    prop(out)->setDataType({type});
+    setName(JZNodeType::typeToName(type));
+    if(JZNodeType::isBaseOrEnum(type))
+        prop(out)->setFlag(Prop_out | Prop_param | Prop_dispValue | Prop_editValue);
+    else
+        prop(out)->setFlag(Prop_out | Prop_param | Prop_dispName);
+    
+    if (type == Type_bool)
+        setLiteral(false);
+    else if (type == Type_int)
+        setLiteral(0);
+    else if (type == Type_double)
+        setLiteral(0.0);
+    else if (type == Type_string)
+        setLiteral("");    
+    else if (type == Type_nullptr)
     {
-        int out = paramOut(0);
         setPropName(out, "null");
-        prop(out)->setFlag(Prop_out | Prop_param  | Prop_dispName);
+        setLiteral(QVariant::fromValue(JZObjectNull()));
     }
 }
 
@@ -40,7 +54,7 @@ QVariant JZNodeLiteral::literal() const
     if (dataType == Type_nullptr)
         v = QVariant::fromValue(JZObjectNull());
     else
-        v.convert(JZNodeType::typeToQMeta(dataType));
+        v = JZNodeType::matchValue(dataType, v);        
 
     return v;
 }
@@ -157,11 +171,44 @@ void JZNodeCreate::pinChanged(int id)
     }
 }
 
+//JZNodeParamFunction
+JZNodeParamFunction::JZNodeParamFunction()
+{
+
+}
+
+JZNodeParamFunction::~JZNodeParamFunction()
+{
+
+}
+
+bool JZNodeParamFunction::compiler(JZNodeCompiler *compiler, QString &error)
+{
+    return false;
+}
+
+//JZNodeDisplay
+JZNodeDisplay::JZNodeDisplay()
+{
+    m_type = Node_display;
+    m_name = "display";
+}
+
+JZNodeDisplay::~JZNodeDisplay()
+{
+
+}
+
+bool JZNodeDisplay::compiler(JZNodeCompiler *compiler, QString &error)
+{
+    return true;
+}
+
 //JZNodePrint
 JZNodePrint::JZNodePrint()
 {
     m_type = Node_print;
-    m_name = "Print";
+    m_name = "print";
 
     addFlowIn();
     addFlowOut();
@@ -202,7 +249,7 @@ JZNodeThis::~JZNodeThis()
 bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
 {
     int out_id = c->paramId(m_id,paramOut(0));
-    c->addSetVariable(irId(out_id),irThis());
+    c->addSetVariable(irId(out_id),irThis());    
     return true;
 }
 
@@ -325,7 +372,7 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
     
     JZNodeIRParam ref = irRef(name);
     c->addSetVariable(ref,irId(id));
-    c->addSetVariable(irId(m_out),irId(id));
+    c->addSetVariable(irId(m_out),irId(id));    
     c->addFlowOutput(m_id);
     c->addJumpNode(flowOut());
     return true;
@@ -379,7 +426,7 @@ bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
         return false;
     
     int id = c->paramId(m_id,paramIn(0));
-    c->addSetVariable(irRef(name),irId(id));
+    c->addSetVariable(irRef(name),irId(id));    
     return true;
 }
 
@@ -398,7 +445,7 @@ void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
         int pin_id = -1;
         if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
         {
-            if (JZNodeType::isBaseEnum(param->dataType))
+            if (JZNodeType::isBaseOrEnum(param->dataType))
                 flag |= (Prop_dispValue | Prop_editValue);
             pin_id = addParamIn(param->name, flag);
         }

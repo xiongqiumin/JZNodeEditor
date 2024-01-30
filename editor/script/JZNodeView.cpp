@@ -924,8 +924,7 @@ void JZNodeView::updateNodeLayout()
 void JZNodeView::fitNodeView()
 {
     this->setSceneRect(QRectF());
-    this->fitInView(m_scene->itemsBoundingRect(), Qt::KeepAspectRatio);
-    qDebug() << this->sceneRect() << m_scene->sceneRect();
+    this->fitInView(m_scene->itemsBoundingRect(), Qt::KeepAspectRatio);    
 }
 
 void JZNodeView::ensureNodeVisible(int id)
@@ -1089,6 +1088,8 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QAction *actCpy = nullptr;
     QAction *actDel = nullptr;
     QAction *actPaste = nullptr;
+    int pin_id = -1;
+    QList<QAction*> pin_actions;
     QList<QAction*> param_actions;
     if (!item)
     {
@@ -1104,22 +1105,40 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         }
         if (item->type() == Item_node)
         {
+            JZNodeGraphItem* node_item = (JZNodeGraphItem*)item;
             auto node = ((JZNodeGraphItem*)item)->node();
-            if (node->canDragVariable())
-            {
-                auto classFile = m_file->getClassFile();
-                auto meta = JZNodeObjectManager::instance()->meta(classFile->className());
-                QStringList param_list = matchParmas(meta,node->variableType(),"this.");
-                if (param_list.size() > 0)
-                {
-                    auto tmp_menu = menu.addMenu("设置参数");
-                    for(int i = 0; i < param_list.size(); i++)
-                        param_actions << tmp_menu->addAction(param_list[i]);
-                }
-            }
 
-            actCpy = menu.addAction("复制节点");
-            actDel = menu.addAction("删除节点");
+            auto scene_pos = mapToScene(pos);
+            auto item_pos = node_item->mapFromScene(scene_pos);
+            pin_id = node_item->propAt(item_pos);
+
+            QStringList actions_list;
+            if(pin_id >= 0)
+                actions_list = node_item->node()->pinActionList(pin_id);
+
+            if (actions_list.size() > 0)
+            {
+                for (int i = 0; i < actions_list.size(); i++)
+                    pin_actions << menu.addAction(actions_list[i]);
+            }
+            else
+            {
+                if (node->canDragVariable())
+                {
+                    auto classFile = m_file->getClassFile();
+                    auto meta = JZNodeObjectManager::instance()->meta(classFile->className());
+                    QStringList param_list = matchParmas(meta, node->variableType(), "this.");
+                    if (param_list.size() > 0)
+                    {
+                        auto tmp_menu = menu.addMenu("设置参数");
+                        for (int i = 0; i < param_list.size(); i++)
+                            param_actions << tmp_menu->addAction(param_list[i]);
+                    }
+                }
+
+                actCpy = menu.addAction("复制节点");
+                actDel = menu.addAction("删除节点");
+            }
         }
         else
             actDel = menu.addAction("删除连线");
@@ -1144,10 +1163,36 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     {
         removeItem(item);
     }
+    else if (pin_actions.contains(ret))
+    {
+        int index = pin_actions.indexOf(ret);
+        auto node = ((JZNodeGraphItem*)item)->node();
+        auto pre_list = node->propList();
+
+        auto old = getNodeData(node->id());
+        if (node->pinActionTriggered(pin_id, index))
+        {
+            auto cur_data = getNodeData(node->id());
+            setNodeData(node->id(), old);
+
+            m_commandStack.beginMacro(ret->text());
+            auto new_list = node->propList();
+            auto remove_set = pre_list.toList().toSet() - new_list.toList().toSet();
+            for (auto remove_prop : remove_set)
+            {
+                auto lines = m_file->getConnectId(node->id(),remove_prop);                                
+                for (int i = 0; i < lines.size(); i++)                
+                    addRemoveLineCommand(lines[i]);                
+            }            
+            setNodeData(node->id(), cur_data);
+            addPropChangedCommand(node->id(), old);
+            m_commandStack.endMacro();
+        }
+    }
     else if (param_actions.contains(ret))
     {
         auto node = ((JZNodeGraphItem*)item)->node();
-        auto old = getNodeData(node->id());        
+        auto old = getNodeData(node->id());
         node->setVariable(ret->text());        
         addPropChangedCommand(node->id(), old);
     }
@@ -1159,6 +1204,16 @@ void JZNodeView::addCreateNodeCommand(const QByteArray &buffer,QPointF pt)
     cmd->itemId = -1;
     cmd->newValue = buffer;
     cmd->newPos = pt;
+    m_commandStack.push(cmd);
+}
+
+void JZNodeView::addRemoveLineCommand(int line_id)
+{
+    auto line = m_file->getConnect(line_id);
+
+    JZNodeViewCommand *cmd = new JZNodeViewCommand(this, JZNodeViewCommand::RemoveLine);
+    cmd->itemId = line->id;
+    cmd->oldValue = formatLine(*line);
     m_commandStack.push(cmd);
 }
 
@@ -1301,14 +1356,14 @@ void JZNodeView::mouseMoveEvent(QMouseEvent *event)
         {
             auto scene_pos = mapToScene(event->pos());
             auto item_pos = node_item->mapFromScene(scene_pos);
-            auto prop = node_item->propAt(item_pos);
-            if(prop)
+            auto pin_id = node_item->propAt(item_pos);
+            if(pin_id >= 0)
             {
-                JZNodeGemo to(node_item->id(), prop->id());
+                JZNodeGemo to(node_item->id(), pin_id);
                 QString error;
                 if(!m_file->canConnect(m_selLine->startTraget(),to,error))
                 {
-                    auto rc = node_item->propRect(prop->id());
+                    auto rc = node_item->propRect(pin_id);
                     rc = node_item->mapToScene(rc).boundingRect();
                     addTip(rc,"无法连接: " + error);
                 }
@@ -1346,11 +1401,11 @@ void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
         if (node_item && m_selLine->startTraget().nodeId != node_item->id())
         {            
             auto pos = node_item->mapFromScene(mapToScene(event->pos()));
-            auto prop = node_item->propAt(pos);
-            if(prop)
+            auto pin_id = node_item->propAt(pos);
+            if(pin_id >= 0)
             {                
                 QString error;
-                JZNodeGemo to(node_item->id(), prop->id());
+                JZNodeGemo to(node_item->id(), pin_id);
                 if(m_file->canConnect(m_selLine->startTraget(),to, error))
                     gemo = to;
             }
@@ -1511,7 +1566,8 @@ void JZNodeView::onAutoCompiler()
     JZNodeScript result;
     if(!compiler.build(m_file,&result))
     {
-        auto &nodeInfo = compiler.compilerInfo();
+        auto compilerInfo = compiler.compilerInfo();
+        auto &nodeInfo = compilerInfo.nodeInfo;
         auto it = nodeInfo.begin();
         while(it != nodeInfo.end())
         {

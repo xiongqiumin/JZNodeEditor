@@ -18,11 +18,19 @@ public:
     void setEventType(int eventType);
     int eventType() const;    
 
-    virtual QList<JZParamDefine> params();
+    virtual FunctionDefine function() = 0;
 
 protected:    
-    int m_eventType;
-    QList<JZParamDefine> m_params;
+    int m_eventType;    
+};
+
+//JZNodeStartEvent
+class JZNodeStartEvent : public JZNodeEvent
+{
+public:
+    JZNodeStartEvent();
+
+    virtual FunctionDefine function() override;
 };
 
 //JZNodeSingleEvent
@@ -35,9 +43,9 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error);
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-    virtual QList<JZParamDefine> params() override;
+    virtual FunctionDefine function() override;
 
-    void setSingle(QString className,const SingleDefine *single);
+    void setSingle(QString sender,const SingleDefine *single);
     QString single();
 
     virtual void setVariable(const QString &name) override;
@@ -47,7 +55,7 @@ public:
     virtual void drag(const QVariant &value) override;
 
 protected:
-    QString m_className;
+    QString m_sender;
     QString m_single;
 };
 
@@ -61,7 +69,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-    virtual QList<JZParamDefine> params() override;
+    virtual FunctionDefine function() override;
 
     void setEvent(QString className, const EventDefine *func);
     QString event();
@@ -81,6 +89,7 @@ public:
     virtual void setVariable(const QString &name);
     virtual QString variable() const;
 
+    virtual FunctionDefine function() override;
 };
 
 #endif

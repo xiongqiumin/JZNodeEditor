@@ -14,13 +14,24 @@ public:
     QString error() const;
 
 protected:    
+    struct ConnectInfo
+    {
+        QString sender;
+        int event;
+        QString recv;
+        QString handle;
+    };
+
+    void clear();
     bool buildScriptFile(JZScriptFile *script);    
-    bool link();    
+    bool link();        
+    void initGlobal();
 
     JZNodeProgram *m_program;    
-    JZProject *m_project;
+    JZProject *m_project;    
 
-    QMap<QString,JZNodeScriptPtr> m_scripts;    
+    QMap<QString,JZNodeScriptPtr> m_scripts;   
+    QList<ConnectInfo> m_connects;
     QString m_error;
 };
 

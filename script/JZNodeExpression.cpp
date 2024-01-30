@@ -27,15 +27,38 @@ void JZNodeOperator::addInputButton()
 void JZNodeOperator::addInput()
 {
     auto pin0 = prop(paramIn(0));
-    int in = addParamIn("", pin0->flag());
-    prop(in)->setValue(0);
+    int in = addParamIn("", pin0->flag());    
     prop(in)->setDataType(pin0->dataType());
+    if(pin0->isEditValue())
+        prop(in)->setValue(0);
+}
+
+void JZNodeOperator::removeInput(int index)
+{
+    int id = paramInList()[index];
+    removeProp(id);
 }
 
 bool JZNodeOperator::pinClicked(int id)
 {
     Q_UNUSED(id);        
     addInput();
+    return true;
+}
+
+QStringList JZNodeOperator::pinActionList(int id)
+{
+    QStringList ret;
+    if (paramInCount() > 2)
+        ret.push_back("删除");
+
+    return ret;
+}
+
+bool JZNodeOperator::pinActionTriggered(int id, int index)
+{
+    int pin_index = paramInList().indexOf(id);
+    removeInput(pin_index);
     return true;
 }
 
@@ -61,16 +84,16 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
         int r3 = c->paramId(m_id,out);
         c->addExpr(irId(r3),irId(r1),irId(r2),m_op);
     }
+    calcPropOutType(c);
     return true;
 }
 
-QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
-{
-    int in1 = paramIn(0);
-    int in2 = paramIn(1);
-    int out = paramOut(0);
+void JZNodeOperator::calcPropOutType(JZNodeCompiler *c)
+{    
+    int in_type1 = c->pinType(m_id,paramIn(0));
+    int in_type2 = c->pinType(m_id,paramIn(1));
+    int out_type = Type_none;    
 
-    QMap<int,int> result;
     switch (m_op)
     {
         case OP_add:
@@ -78,7 +101,7 @@ QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
         case OP_mul:
         case OP_div:
         case OP_mod:        
-            result[out] = JZNodeType::calcExprType(inType[in1],inType[in2]);
+            out_type = JZNodeType::calcExprType(in_type1, in_type2);
             break;
         case OP_eq:
         case OP_ne:
@@ -91,13 +114,13 @@ QMap<int,int> JZNodeOperator::calcPropOutType(const QMap<int,int> &inType)
         case OP_bitand:
         case OP_bitor:
         case OP_bitxor:
-            result[out] = Type_bool;
+            out_type = Type_bool;
             break;
         default:
             Q_ASSERT(0);
             break;
-    }
-    return result;
+    }    
+    c->setPinType(m_id, paramOut(0), out_type);
 }
 
 //JZNodeAdd
@@ -252,7 +275,6 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
     int ret = c->addNop();
     for (int i = 0; i < jmpList.size(); i++)
         jmpList[i]->jmpPc = irLiteral(ret);
-
     return true;
 }
 
@@ -293,7 +315,6 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
     int ret = c->addNop();
     for (int i = 0; i < jmpList.size(); i++)
         jmpList[i]->jmpPc = irLiteral(ret);
-
     return true;
 
 }
@@ -316,7 +337,7 @@ bool JZNodeNot::compiler(JZNodeCompiler *c, QString &error)
 
     int id_in = c->paramId(m_id, paramIn(0));
     int id_out = c->paramId(m_id, paramOut(0));
-    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_not);
+    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_not);    
     return true;
 }
 
@@ -482,5 +503,8 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
         }
     }
 
+    auto out_list = paramOutList();
+    for(int i = 0; i < out_list.size(); i++)
+        c->setPinType(id(), out_list[i], Type_double);
     return true;
 }

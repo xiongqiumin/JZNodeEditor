@@ -7,6 +7,11 @@ JZNodeIRParam::JZNodeIRParam()
     type = None;
 }
 
+bool JZNodeIRParam::isNull() const
+{
+    return type == None;
+}
+
 bool JZNodeIRParam::isLiteral() const
 {
     return type == Literal;
@@ -78,6 +83,8 @@ JZNodeIRParam irId(int id)
 
 JZNodeIRParam irLiteral(const QVariant &value)
 {
+    Q_ASSERT(JZNodeType::isBase(JZNodeType::variantType(value)) || JZNodeType::isNullptr(value));
+
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Literal;
     param.value = value;

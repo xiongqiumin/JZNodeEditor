@@ -12,8 +12,9 @@ enum
     Type_int64,
     Type_double,
     Type_string,
-    Type_nullptr,
+    Type_nullptr,    
     Type_any,
+    Type_function,
 
     Type_enum = 1000,    
 
@@ -38,24 +39,27 @@ public:
     static int variantType(const QVariant &v);    
     static QVariant::Type typeToQMeta(int id);
     static int typeidToType(QString name);
-    static QVariant convertTo(const QVariant &v, int type);
+    static QVariant convertTo(int type,const QVariant &v);
     static QVariant value(int type);    
     
     static bool isBase(int type);
     static bool isEnum(int type);
-    static bool isBaseEnum(int type);
+    static bool isBaseOrEnum(int type);
     static bool isObject(int type);
-    static bool isNumber(int type);    
-    static bool isNullObject(const QVariant &v);
+    static bool isNumber(int type);        
+    static bool isNullptr(const QVariant &v);
 
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
-    static bool canConvert(int type1,int type2);
-    static bool canConvert(QList<int> type1,QList<int> type2);
+    static bool canConvert(int type1,int type2);    
     static QString toString(const QVariant &v);
     static QString toString(JZNodeObject *obj);
     
-    static QVariant matchValue(const QVariant &v, QList<int> type);
+    static int upType(int type1, int type2);
+    static QVariant matchValue(int type,const QVariant &v);
+    static int matchType(QList<int> dst_types, QList<int> src_types);
+    static int matchType(QList<int> dst_types, const QVariant &v);
+    
     static QString opName(int op);
 
     static void registConvert(int from, int to, ConvertFunc func);
@@ -70,8 +74,7 @@ public:
 
     QString name;
     int dataType;
-    QVariant value;
-    bool cref;         //从c++侧引用
+    QVariant value;    
 };
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param);
 QDataStream &operator>>(QDataStream &s, JZParamDefine &param);

@@ -44,7 +44,7 @@ protected:
     QVariant getVariable(const QVariantList &list);
     void setVariable(const QVariantList &list);
     JZNodeDebugParamValue toDebugParam(const QVariant &value);
-    JZNodeProgramInfo getProgramInfo();
+    JZNodeProgramInfo getProgramInfo();    
 
     bool m_init;
     int m_client;

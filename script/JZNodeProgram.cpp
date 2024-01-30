@@ -2,47 +2,6 @@
 #include "JZNodeCompiler.h"
 #include <QFile>
 
-//JZEventHandle
-JZEventHandle::JZEventHandle()
-{    
-}
-
-QDataStream &operator<<(QDataStream &s, const JZEventHandle &param)
-{
-    s << param.type;
-    s << param.sender;
-    s << param.function;
-    return s;
-}
-
-QDataStream &operator>>(QDataStream &s, JZEventHandle &param)
-{
-    s >> param.type;
-    s >> param.sender;
-    s >> param.function;
-    return s;
-}
-
-//JZParamChangeHandle
-JZParamChangeHandle::JZParamChangeHandle()
-{
-
-}
-
-QDataStream &operator<<(QDataStream &s, const JZParamChangeHandle &param)
-{
-    s << param.paramName;
-    s << param.function;
-    return s;
-}
-
-QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param)
-{
-    s >> param.paramName;
-    s >> param.function;
-    return s;
-}
-
 //NodeRange
 NodeRange::NodeRange()
 {
@@ -110,13 +69,13 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
 //JZFunction
 QDataStream &operator<<(QDataStream &s, const JZFunction &param)
 {
-    s << param.file << param.addr << param.localVariables;
+    s << param.file << param.localVariables;
     return s;
 }
 
 QDataStream &operator >> (QDataStream &s, JZFunction &param)
 {
-    s >> param.file >> param.addr >> param.localVariables;
+    s >> param.file >> param.localVariables;
     return s;
 }
 
@@ -128,8 +87,7 @@ JZNodeScript::JZNodeScript()
 
 void JZNodeScript::clear()
 {
-    file.clear();    
-    events.clear();
+    file.clear();        
     statmentList.clear();
     functionList.clear();
     nodeInfo.clear();
@@ -142,17 +100,7 @@ FunctionDefine *JZNodeScript::function(QString name)
     {
         if(functionList[i].fullName() == name)
             return &functionList[i];
-    }    
-    for (int i = 0; i < paramChangeEvents.size(); i++)
-    {
-        if (paramChangeEvents[i].function.fullName() == name)
-            return &paramChangeEvents[i].function;
-    }
-    for (int i = 0; i < events.size(); i++)
-    {
-        if (events[i].function.fullName() == name)
-            return &events[i].function;
-    }
+    }        
     return nullptr;
 }
 
@@ -167,9 +115,7 @@ void JZNodeScript::saveToStream(QDataStream &s)
         statmentList[i]->saveToStream(s);
     }    
     s << functionList;
-    s << nodeInfo;
-    s << events;
-    s << paramChangeEvents;
+    s << nodeInfo;    
     s << runtimeInfo;
 }
 
@@ -188,9 +134,7 @@ void JZNodeScript::loadFromStream(QDataStream &s)
         statmentList.push_back(JZNodeIRPtr(ir));
     }
     s >> functionList;
-    s >> nodeInfo;  
-    s >> events;
-    s >> paramChangeEvents;
+    s >> nodeInfo;      
     s >> runtimeInfo;
 }
 
@@ -320,23 +264,6 @@ JZNodeScript *JZNodeProgram::objectScript(QString name)
     return script(path);
 }
 
-QList<JZEventHandle*> JZNodeProgram::eventList() const
-{
-    QList<JZEventHandle*> result;
-    auto it = m_scripts.begin();
-    while(it != m_scripts.end())
-    {
-        if(it.value()->className.isEmpty())
-        {
-            QList<JZEventHandle> &handle_list = it.value()->events;
-            for(int i = 0; i < handle_list.size(); i++)
-                result.push_back(&handle_list[i]);
-        }
-        it++;
-    }
-    return result;
-}
-
 QList<FunctionDefine> JZNodeProgram::functionDefines()
 {
     QList<FunctionDefine> result;
@@ -361,8 +288,13 @@ QMap<QString,JZParamDefine> JZNodeProgram::globalVariables()
 
 QString JZNodeProgram::toString(JZNodeIRParam param)
 {
-    if(param.type == JZNodeIRParam::Literal)
-        return "$" + param.value.toString();
+    if (param.type == JZNodeIRParam::Literal)
+    {
+        if(param.value.type() == QVariant::String)
+            return "\"" + param.value.toString() + "\"";
+        else
+            return "$" + param.value.toString();
+    }
     else if(param.type == JZNodeIRParam::Reference)
         return param.ref();
     else if(param.type == JZNodeIRParam::This)
@@ -401,8 +333,8 @@ QString JZNodeProgram::dump()
                 case OP_alloc:
                 {
                     JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
-                    QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "HeapAlloc" : "StackAlloc";
-                    line += alloc + " " + ir_alloc->name + " = " + ir_alloc->value.toString();                    
+                    QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "Global" : "Local";
+                    line += alloc + " " + ir_alloc->name + " = " + toString(ir_alloc->value);
                     break;
                 }
                 case OP_set:
@@ -473,6 +405,12 @@ QString JZNodeProgram::dump()
                         line += "JNE " + toString(ir_jmp->jmpPc);
                     break;
                 }
+                case OP_assert:
+                {
+                    JZNodeIRAssert *ir_assert = (JZNodeIRAssert *)op;
+                    line += "ASSERT " + toString(ir_assert->tips);
+                    break;
+                }
                 default:
                     Q_ASSERT(0);
                     break;
@@ -486,13 +424,13 @@ QString JZNodeProgram::dump()
             content += line + "\n";
         }
 
-        for(int i = 0; i < script->events.size(); i++)
+        for(int i = 0; i < script->functionList.size(); i++)
         {
             if(i == 0)
-                content += "event handles:\n";
+                content += "functions:\n";
 
-            auto &event = script->events[i];
-            QString line = event.function.name + " addr: " + QString::number(runtimeInfo(event.function.fullName())->addr);
+            auto &func = script->functionList[i];
+            QString line = func.name + " addr: " + QString::number(func.addr);
             content += line + "\n";
         }
 

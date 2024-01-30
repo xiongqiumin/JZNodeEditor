@@ -40,28 +40,35 @@ QString JZUiFile::xml()
 void JZUiFile::setXml(QString xml)
 {
     m_xml = xml;
+    updateDefine();
     regist();
 }
 
 void JZUiFile::saveToStream(QDataStream &s)
 {
     JZProjectItem::saveToStream(s);
-    s << m_xml;
+    s << m_xml << m_widgets;
 }
 
 void JZUiFile::loadFromStream(QDataStream &s)
 {
     JZProjectItem::loadFromStream(s);
-    s >> m_xml;
+    s >> m_xml >> m_widgets;
 }
 
 QList<JZParamDefine> JZUiFile::widgets()
+{
+    return m_widgets;
+}
+
+void JZUiFile::updateDefine()
 {
     QList<JZParamDefine> list;
 
     JZNodeUiLoader loader;
     QWidget *root = loader.create(m_xml);
     Q_ASSERT(root);
+
     QList<QWidget*> widgets = root->findChildren<QWidget*>();    
     for (int i = 0; i < widgets.size(); i++)
     {
@@ -72,26 +79,10 @@ QList<JZParamDefine> JZUiFile::widgets()
         {
             JZParamDefine def;
             def.name = name;
-            def.dataType = type;
-            def.cref = true;
+            def.dataType = type;            
             list << def;
         }
     }
-    return list;
-}
-
-void JZUiFile::updateDefine(JZNodeObjectDefine &def)
-{        
-    def.isUiWidget = true;
-    def.widgteXml = m_xml;
-       
-    JZNodeUiLoader loader;
-    QWidget *root = loader.create(m_xml);
-    Q_ASSERT(root);
-
-    QList<JZParamDefine> widget_list = widgets();    
-    for (int i = 0; i < widget_list.size(); i++)
-    {
-        def.params[widget_list[i].name] = widget_list[i];
-    }
+    m_widgets = list;
+    delete root;
 }

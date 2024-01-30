@@ -18,6 +18,12 @@ FunctionDefine::FunctionDefine()
     isCFunction = false;
     isFlowFunction = false;      
     cfunc = nullptr;
+    addr = -1;
+}
+
+bool FunctionDefine::isNull() const
+{
+    return name.isEmpty();
 }
 
 QString FunctionDefine::fullName() const
@@ -54,6 +60,11 @@ void FunctionDefine::updateCFunctionParam()
     }
 }
 
+bool FunctionDefine::isMemberFunction() const
+{
+    return !className.isEmpty();
+}
+
 QDataStream &operator<<(QDataStream &s, const FunctionDefine &param)
 {
     Q_ASSERT(!param.isCFunction);
@@ -64,6 +75,9 @@ QDataStream &operator<<(QDataStream &s, const FunctionDefine &param)
     s << param.isFlowFunction;
     s << param.paramIn;
     s << param.paramOut;     
+
+    s << param.file;
+    s << param.addr;
     return s;
 }
 
@@ -75,6 +89,9 @@ QDataStream &operator>>(QDataStream &s, FunctionDefine &param)
     s >> param.isFlowFunction;     
     s >> param.paramIn;
     s >> param.paramOut;      
+
+    s >> param.file;
+    s >> param.addr;
     return s;
 }
 
@@ -88,13 +105,11 @@ QDataStream &operator<<(QDataStream &s, const EventDefine &param)
 {
     s << param.eventType;
     s << param.name;
-    s << param.paramOut;
     return s;
 }
 QDataStream &operator >> (QDataStream &s, EventDefine &param)
 {
     s >> param.eventType;
     s >> param.name;
-    s >> param.paramOut;
     return s;
 }

@@ -100,3 +100,13 @@ QStringList JZParamFile::variableList()
     }
     return list;
 }
+
+void JZParamFile::bindVariable(QString name, QString widget)
+{
+    m_variableBind[name] = widget;
+}
+
+void JZParamFile::unbindVariable(QString name)
+{
+    m_variableBind.remove(name);
+}

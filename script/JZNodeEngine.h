@@ -27,7 +27,7 @@ public:
     RunnerEnv();
     
     const FunctionDefine *func;
-    JZNodeObject *object; //this    
+    QVariant object;      //this    
     JZNodeScript *script;    
     int pc;
 };
@@ -126,10 +126,13 @@ class JZNodeEngine : public QObject
     Q_OBJECT
 
 public:
+    static void regist();
+    
     JZNodeEngine();
     virtual ~JZNodeEngine();
 
     void init();
+    void deinit();
 
     void setProgram(JZNodeProgram *program);
     JZNodeProgram *program();        
@@ -151,24 +154,39 @@ public:
     void stepOver();
     void stepOut();        
 
+    void initGlobal(QString name, const QVariant &v);
+    void initLocal(QString name, const QVariant &v);
+       
+    Stack *stack();    
+
+    QVariant *getVariableRef(const QString &name);
+    QVariant *getVariableRefSingle(const QString &name);
+    JZNodeObject *getObject(const QString &name);
+    QVariant getVariable(const QString &name);
+    void setVariable(const QString &name, const QVariant &value);
     QVariant getThis();
-    void setThis(QVariant var);
-
-    Stack *stack();
-
-    QVariant *getVariableRef(QString name);
-    JZNodeObject *getObject(QString name);
-    QVariant getVariable(QString name);
-    void setVariable(QString name, const QVariant &value);    
+    QVariant getSender();
 
     QVariant getReg(int id);
     void setReg(int id, const QVariant &value);
      
-    void dealEvent(JZEvent *event);
+    void connectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
+    void disconnectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
+    int connectCount(JZNodeObject *sender, int event);
+    void connectSelf(JZNodeObject *object);
+    void connectSingleLater(JZNodeObject *object,const QString &name);
+
+    void dealEvent(JZEvent *event);    
+    void dealSlot(JZEvent *event);
+
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
+    
+    void objectCreate(JZNodeObject *sender);
+    void objectDelete(JZNodeObject *sender);
+    void objectChanged(JZNodeObject *sender,const QString &name);        
 
-    void objectChanged(JZNodeObject *sender,const QString &name);    
+    void widgetValueChanged(QWidget *w);
 
     void print(const QString &log);
 
@@ -186,35 +204,44 @@ protected:
         Command_stop,
     };
     
+    struct BindInfo 
+    {
+        QString name;
+        QWidget *widget;        
+    };
+
+    struct BindCache 
+    {
+        QString paramName;
+        QString widgetName;
+    };
+
+    struct ConnectCache
+    {
+        QString sender;
+        int eventType;
+        QString handle;
+    };
 
     class ConnectInfo
     {
-    public:
-        QString sender;        
-        int eventType;
-        QString recv;
-        FunctionDefine *handle;
-    };
-
-    class ConnectCache
-    {
-    public:
-        QString sender;
-        JZNodeObject *parentObject;
-        int eventType;
-        JZNodeObject *recvObject;
-        FunctionDefine *handle;
-    };
-
-    class JZObjectConnect
-    {
     public:        
-        JZObjectConnect();
+        ConnectInfo();
 
         int eventType;
         JZNodeObject *sender;
         JZNodeObject *receiver;
-        FunctionDefine *handle;
+        QString handle;
+    };
+
+    class JZObjectInfo
+    {
+    public:
+        QList<ConnectInfo>  connects;
+        QList<BindInfo>  binds;
+        
+        QList<ConnectCache> connectQueue;
+        QList<BindCache> bindQueue;
     };
 
     class ParamChangeEvent
@@ -239,10 +266,7 @@ protected:
     void callCFunction(const FunctionDefine *func);
     QVariant dealExpr(const QVariant &a, const QVariant &b,int op);
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
-    QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);
-
-    void dealQtEvent(JZEvent *event);
-    void dealSingleEvent(JZEvent *event);
+    QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);    
 
     void pushStack(const FunctionDefine *define);
     void popStack();
@@ -256,21 +280,10 @@ protected:
     int nodeIdByPc(JZNodeScript *script,int pc);
     int breakNodeId(int pc, int skip_id);
 
-    JZNodeScript *getScript(QString path);
-    JZNodeScript *getObjectScript(QString objName);
-    /*
-     1. 赋值变量时作为 sender 连接所有
-     2. 赋值变量时作为 this.xxx 连接父类
-     3. CreateObject 连接自身 this 部分
-     */
-    void connectParamChanged(JZNodeObject *obj,JZNodeScript *script);
-    void connectClassEvent(JZNodeObject *obj);
-    void connectVariableEvent(QString name,JZNodeObject *obj);
-    void connectVariableThis(QString name, JZNodeObject *obj, JZNodeObject *recv);
-    void connectObject(JZObjectConnect connect);
+    JZNodeScript *getScript(QString path); 
     
     bool isWatch();        
-    bool splitMember(const QString &fullName,QString &objName,QString &memberName);
+    void splitMember(const QString &fullName,QStringList &objName,QString &memberName);
     void unSupportOp(int a,int b,int op);
 
     int m_pc;
@@ -287,7 +300,7 @@ protected:
     Stack m_stack;
     QMap<QString,QVariant> m_global;            
     QMap<int,QVariant> m_regs;        
-    QVariant m_this;
+    JZNodeObject *m_sender;
            
     FunctionDefine m_idleFunc;
     int m_statusCommand;
@@ -295,10 +308,8 @@ protected:
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
     bool m_debug;
-
-    QList<ConnectInfo> m_connectInfo;
-    QMap<JZNodeObject*,QList<JZObjectConnect>> m_connects;
-    QList<ConnectCache> m_connectCache;
+    
+    QMap<JZNodeObject*,JZObjectInfo> m_objects;
     QList<ParamChangeEvent> m_paramChangeHandle;        
 };
 extern JZNodeEngine *g_engine;

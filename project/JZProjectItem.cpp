@@ -119,6 +119,15 @@ JZScriptClassFile *JZProjectItem::getClassFile()
     return m_project->getClassFile(this);
 }
 
+QString JZProjectItem::className()
+{
+    auto class_file = getClassFile();
+    if (class_file)
+        return class_file->name();
+    else
+        return QString();
+}
+
 void JZProjectItem::addItem(JZProjectItemPtr child)
 {
     Q_ASSERT(child->parent() == nullptr);

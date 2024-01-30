@@ -21,12 +21,16 @@ public:
     void setVariableType(QString name,int dataType);
     void setVariableValue(QString name, const QVariant &value);
 
+    void bindVariable(QString name, QString widget);
+    void unbindVariable(QString name);
+
     JZParamDefine *getVariable(QString name);
     QStringList variableList();
     const QMap<QString,JZParamDefine> &variables();
 
 protected:    
     QMap<QString,JZParamDefine> m_variables;
+    QMap<QString, QString> m_variableBind;
 };
 
 

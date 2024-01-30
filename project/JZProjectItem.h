@@ -34,7 +34,7 @@ public:
     JZEditor *editor() const;  
 
     QString name();
-    void setName(QString name);
+    void setName(QString name);    
 
     QString path();
     QString itemPath();
@@ -44,6 +44,7 @@ public:
 
     JZProjectItem *parent();
     JZScriptClassFile *getClassFile();
+    QString className();
     
     void addItem(QSharedPointer<JZProjectItem> child);
     void removeItem(int index);    

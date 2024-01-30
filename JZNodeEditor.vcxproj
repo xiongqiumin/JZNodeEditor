@@ -13,6 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B12702AD-ABFB-343A-A199-8E24837244A3}</ProjectGuid>
     <Keyword>QtVS_v301</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -31,7 +32,7 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>.\bin\</OutDir>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
     <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
@@ -120,6 +121,7 @@
     <ClCompile Include="editor\ui\JZNodeIntegration.cpp" />
     <ClCompile Include="editor\ui\JZUiEditor.cpp" />
     <ClCompile Include="editor\ui\sizehandlerect.cpp" />
+    <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="LogWidget.cpp" />
     <ClCompile Include="project\JZClassFile.cpp" />
     <ClCompile Include="project\JZLibraryFile.cpp" />
@@ -150,9 +152,11 @@
     <ClCompile Include="script\JZNodeInit.cpp" />
     <ClCompile Include="script\JZNodeIR.cpp" />
     <ClCompile Include="script\JZNodeMeta.cpp" />
+    <ClCompile Include="script\JZNodeName.cpp" />
     <ClCompile Include="script\JZNodeObject.cpp" />
     <ClCompile Include="script\JZNodePin.cpp" />
     <ClCompile Include="script\JZNodeProgram.cpp" />
+    <ClCompile Include="script\JZNodeQtBind.cpp" />
     <ClCompile Include="script\JZNodeQtWrapper.cpp" />
     <ClCompile Include="script\JZNodeType.cpp" />
     <ClCompile Include="script\JZNodeUtils.cpp" />
@@ -201,8 +205,10 @@
     <ClInclude Include="editor\script\JZNodeLayout.h" />
     <QtMoc Include="editor\script\JZNodeMemberEditDialog.h" />
     <QtMoc Include="editor\script\JZNodeParamEditDialog.h" />
+    <QtMoc Include="LogManager.h" />
     <ClInclude Include="project\JZClassFile.h" />
     <ClInclude Include="project\JZLibraryFile.h" />
+    <ClInclude Include="script\JZNodeName.h" />
     <ClInclude Include="script\JZNodeQtWrapper.h" />
     <ClInclude Include="script\JZNodeUtils.h" />
     <ClInclude Include="script\JZNodeValue.h" />

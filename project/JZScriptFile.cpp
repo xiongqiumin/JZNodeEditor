@@ -223,7 +223,20 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
             return false;
         }
 
-        bool ok = JZNodeType::canConvert(from_type,in_type);
+        bool ok = false;
+        for (int i = 0; i < from_type.size(); i++)
+        {
+            for (int j = 0; j < in_type.size(); j++)
+            {
+                if (JZNodeType::canConvert(from_type[i], in_type[j]))
+                {
+                    ok = true;
+                    break;
+                }
+            }
+            if (ok)
+                break; 
+        }        
         if(!ok)
         {
             QStringList inTypes;

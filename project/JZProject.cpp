@@ -97,10 +97,7 @@ void JZProject::init()
     param_page->setName("param.def");
     addItem("",param_page);
 
-    JZNodeEvent *start = new JZNodeEvent();
-    start->setEventType(Event_programStart);
-    start->setName("startProgram");
-    start->setFlag(Node_propNoRemove);
+    JZNodeEvent *start = new JZNodeStartEvent();    
     main_flow->addNode(JZNodePtr(start));
 
     saveItem(main_flow);    
@@ -184,22 +181,22 @@ bool JZProject::open(QString filepath)
     if(!file.open(QFile::ReadOnly))
         return false;
 
-    m_blockRegist = true;
+    m_blockRegist = true;    
     clear();
     m_filepath = filepath;
     QDataStream s(&file);
     loadFromStream(s);
     file.close();
-
     m_blockRegist = false;
-    registType();    
+
+    registType();
 
     auto script_list = itemList("./", ProjectItem_script);
     for (int i = 0; i < script_list.size(); i++)
     {
         auto item = (JZScriptFile*)script_list[i];      
         item->loadFinish();
-    }
+    }    
 
     return true;
 }
@@ -704,18 +701,22 @@ void JZProject::regist(JZProjectItem *item)
     auto class_file = getClassFile(item);
     if (class_file)
     {
-        auto def = class_file->objectDefine();
-        auto id = JZNodeObjectManager::instance()->getClassId(class_file->name());
-        if (id == -1)
+        JZNodeObjectDefine base;
+        base.className = class_file->name();
+        base.superName = class_file->superClass();
+        base.id = class_file->classType();                
+        if (base.id == -1)
         {
-            id = JZNodeObjectManager::instance()->regist(def);
+            int id = JZNodeObjectManager::instance()->regist(base);
             class_file->setClassType(id);
         }
         else
         {
-            Q_ASSERT(id == def.id);
-            JZNodeObjectManager::instance()->replace(def);
+            JZNodeObjectManager::instance()->replace(base);            
         }
+
+        auto new_def = class_file->objectDefine();                        
+        JZNodeObjectManager::instance()->replace(new_def);
     }
     else
     {

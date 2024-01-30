@@ -2,6 +2,7 @@
 #include "JZParamFile.h"
 #include "JZProject.h"
 #include "JZUiFile.h"
+#include "JZNodeEvent.h"
 
 //JZScriptClassFile
 JZScriptClassFile::JZScriptClassFile()
@@ -34,6 +35,11 @@ int JZScriptClassFile::classType() const
 void JZScriptClassFile::setClassType(int classId)
 {
     m_classId = classId;
+}
+
+QString JZScriptClassFile::superClass() const
+{
+    return m_super;
 }
 
 void JZScriptClassFile::saveToStream(QDataStream &s)
@@ -146,7 +152,14 @@ JZNodeObjectDefine JZScriptClassFile::objectDefine()
         else if(item->itemType() == ProjectItem_ui)
         {
             auto ui_item = dynamic_cast<JZUiFile*>(item);
-            ui_item->updateDefine(define);
+            define.isUiWidget = true;
+            define.widgteXml = ui_item->xml();
+            
+            QList<JZParamDefine> widget_list = ui_item->widgets();
+            for (int i = 0; i < widget_list.size(); i++)
+            {
+                define.params[widget_list[i].name] = widget_list[i];
+            }
         }
     }
     return define;

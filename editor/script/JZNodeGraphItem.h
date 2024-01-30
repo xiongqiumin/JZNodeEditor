@@ -19,7 +19,7 @@ public:
     virtual void updateNode() override;
 
     JZNode *node();
-    JZNodePin *propAt(QPointF pos);
+    int propAt(QPointF pos);
     QRectF propRect(int prop);
     QSize size() const;
     

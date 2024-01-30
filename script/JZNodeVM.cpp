@@ -12,8 +12,7 @@
 //JZNodeVM
 JZNodeVM::JZNodeVM()
 {    
-    m_debug = false;        
-    connect(&m_engine,&JZNodeEngine::sigRuntimeError,this,&JZNodeVM::onRuntimeError);
+    m_debug = false;            
 }
 
 JZNodeVM::~JZNodeVM()
@@ -56,10 +55,18 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
             it++;
         }
     }
+    else
+    {
+        connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &JZNodeVM::onRuntimeError);
+    }
 
-    JZEvent event;
-    event.eventType = Event_programStart;
-    m_engine.dealEvent(&event);
+    QVariantList in, out;
+    m_engine.call("__main__", in, out);
+    
+    auto list = qApp->topLevelWidgets();
+    if (list.size() == 0)
+        quitLater();        
+    
     return true;
 }
 
@@ -68,18 +75,22 @@ void JZNodeVM::customEvent(QEvent *event)
     JZEvent *e = (JZEvent *)event;
 }
 
-void JZNodeVM::quit()
+void JZNodeVM::quitLater()
 {
-    m_engine.stop();
+    QTimer::singleShot(0, [this] {
+        this->quit();
+    });
+}
+
+void JZNodeVM::quit()
+{    
     m_debugServer.stopServer();
+    m_engine.deinit();
     qApp->exit();
 }
 
 void JZNodeVM::onRuntimeError(JZNodeRuntimeError error)
-{
-    if (m_debug)
-        return;        
-
+{    
     QString text = "Error: " + error.error + "\n\n";
     int stack_size = error.info.stacks.size();
     for (int i = 0; i < stack_size; i++)
@@ -89,7 +100,5 @@ void JZNodeVM::onRuntimeError(JZNodeRuntimeError error)
     }
     
     QMessageBox::information(nullptr,"", text);    
-    QTimer::singleShot(0,[]{
-       qApp->quit();
-    });
+    quitLater();
 }

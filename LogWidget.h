@@ -10,12 +10,6 @@
 #include "JZNodeWatch.h"
 #include "JZNodeBreakPoint.h"
 
-enum {
-    Log_Compiler,
-    Log_Runtime,
-};
-
-
 class LogBrowser : public QTextBrowser
 {
     Q_OBJECT

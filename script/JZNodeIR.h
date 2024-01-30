@@ -54,6 +54,7 @@ public:
     };    
 
     JZNodeIRParam();
+    bool isNull() const;
     bool isLiteral() const;
     bool isRef() const;
     bool isId() const;
@@ -120,7 +121,7 @@ public:
     int allocType;
     QString name;
     int dataType;
-    QVariant value;    
+    JZNodeIRParam value;
 };
 
 class JZNodeIRExpr : public JZNodeIR

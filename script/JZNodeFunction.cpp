@@ -57,13 +57,15 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
     auto edit = JZNodeFunctionManager::instance()->editFunction(define->fullName());
     if (edit)
         addButtonIn("edit");
+
     for(int i = 0; i < define->paramIn.size(); i++)
     {
         JZNodePin pin;
         pin.setName(define->paramIn[i].name);
         pin.setFlag(Prop_param | Prop_in | Prop_dispName);
         pin.setDataType({define->paramIn[i].dataType});
-        if(JZNodeType::isBaseEnum(define->paramIn[i].dataType))
+        if(JZNodeType::isBaseOrEnum(define->paramIn[i].dataType) 
+            || define->paramIn[i].dataType == Type_any)
             pin.setFlag(pin.flag() | Prop_dispValue | Prop_editValue);
         addProp(pin);
     }

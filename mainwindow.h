@@ -16,6 +16,7 @@
 #include "LogWidget.h"
 #include "JZNodeStack.h"
 #include "JZNodeBreakPoint.h"
+#include "LogManager.h"
 
 class Setting
 {
@@ -67,6 +68,8 @@ protected slots:
     void onActionStepIn();
     void onActionStepOut();    
 
+    void onActionHelp();
+
     void onModifyChanged(bool flag);
     void onRedoAvailable(bool flag);
     void onUndoAvailable(bool flag);
@@ -78,6 +81,8 @@ protected slots:
     void onEditorActivite(int index);
     void onNodeClicked(QString file, int nodeId);
     void onProjectChanged();
+
+    void onLog(LogObjectPtr log);
 
     void onStackChanged(int stack);
     void onRuntimeLog(QString log);    
@@ -91,8 +96,9 @@ private:
         enum {
             ProjectVaild,
             FileOpen,
-            FileIsModify,
+            FileIsModify,            
             FileIsScript,
+            HasModifyFile,
             ProcessIsEmpty,
             ProcessIsVaild,
             ProcessCanPause,
@@ -116,7 +122,7 @@ private:
     void closeEditor(JZEditor *editor);
     void updateActionStatus();    
 
-    void initMenu();
+    void initMenu();    
     void initUi();        
     void switchEditor(JZEditor *editor);    
     void gotoNode(QString file, int nodeId);

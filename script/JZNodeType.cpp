@@ -92,13 +92,8 @@ int JZNodeType::variantType(const QVariant &v)
         return Type_string;
     else if(v.type() == QVariant::UserType)
     {
-        if(v.userType() == qMetaTypeId<JZObjectNull>())
-            return Type_nullptr;
-        else if(isJZObject(v))
-        {            
-            auto obj = toJZObjectOriginal(v);
-            return obj->type();
-        }
+        if(isJZObject(v))        
+            return JZObjectType(v);        
     }
     return Type_none;
 }
@@ -117,22 +112,14 @@ bool JZNodeType::isEnum(int type)
     return (JZNodeObjectManager::instance()->enumMeta(type) != nullptr);
 }
 
-bool JZNodeType::isBaseEnum(int type)
+bool JZNodeType::isBaseOrEnum(int type)
 {
-    return (type >= Type_none && type <= Type_string && isEnum(type));
+    return (type >= Type_none && type <= Type_string || isEnum(type));
 }
 
-bool JZNodeType::isNullObject(const QVariant &v)
+bool JZNodeType::isNullptr(const QVariant &v)
 {
-    if (v.userType() == qMetaTypeId<JZObjectNull>())
-        return true;
-
-    if (isJZObject(v))
-    {
-        auto obj = toJZObject(v);
-        return obj->isNull();
-    }
-    return false;
+    return (v.userType() == qMetaTypeId<JZObjectNull>());
 }
 
 bool JZNodeType::isBase(int type)
@@ -157,6 +144,8 @@ int JZNodeType::calcExprType(int type1,int type2)
     
     if(type1 > type2)
         qSwap(type1,type2);    
+    if (type1 == Type_any || type2 == Type_any)
+        return Type_double;
     if(type1 == Type_int && type2 == Type_int64)
         return Type_int64;
     if((type1 == Type_int || type1 == Type_int64) && type2 == Type_double)    
@@ -182,19 +171,6 @@ bool JZNodeType::canConvert(int type1,int type2)
     if (convertMap.contains(id))
         return true;
 
-    return false;
-}
-
-bool JZNodeType::canConvert(QList<int> type1,QList<int> type2)
-{
-    for(int i = 0; i < type1.size(); i++)
-    {
-        for(int j = 0; j < type2.size(); j++)
-        {
-            if(canConvert(type1[i],type2[j]))
-                return true;
-        }
-    }
     return false;
 }
 
@@ -263,7 +239,7 @@ QVariant JZNodeType::value(int type)
     return QVariant(typeToQMeta(type));
 }
 
-QVariant JZNodeType::convertTo(const QVariant &v, int type)
+QVariant JZNodeType::convertTo(int type,const QVariant &v)
 {
     if (type == Type_any)
         return v;
@@ -277,9 +253,8 @@ QVariant JZNodeType::convertTo(const QVariant &v, int type)
             return true;
     }
     if (v_type == Type_nullptr && type >= Type_object)
-    {
-        auto ptr = JZNodeObjectManager::instance()->createEmpty(type);
-        return QVariant::fromValue(ptr);
+    {        
+        return QVariant::fromValue(JZObjectNull(type));
     }
     int64_t cvt_id = makeConvertId(v_type, type);
     auto it = convertMap.find(cvt_id);
@@ -292,43 +267,110 @@ QVariant JZNodeType::convertTo(const QVariant &v, int type)
     return ret;
 }
 
-QVariant JZNodeType::matchValue(const QVariant &v, QList<int> type)
+int JZNodeType::upType(int type1, int type2)
+{
+    if (type1 > type2)
+        std::swap(type1, type2);
+
+    if (type1 >= Type_bool && type1 <= Type_double
+        && type2 >= Type_bool && type2 <= Type_double)
+        return type2;
+
+    return Type_none;
+}
+
+QVariant JZNodeType::matchValue(int dataType,const QVariant &value)
+{
+    if (dataType == Type_any)
+        return value;
+
+    if (JZNodeType::isBase(dataType))
+    {
+        QVariant::Type q_type = JZNodeType::typeToQMeta(dataType);
+        if (value.isNull())
+            return QVariant(q_type);
+        else
+        {
+            return convertTo(dataType, value);
+        }
+    }
+    else if (JZNodeType::isEnum(dataType))
+    {
+        if (value.isNull())
+        {
+            auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
+            return meta->value(0);
+        }
+        else
+            return value.toInt();
+    }
+    else if(JZNodeType::isObject(dataType))
+    {        
+        return QVariant::fromValue(JZObjectNull(dataType));
+    }
+    else
+    {
+        Q_ASSERT(false);
+        return QVariant();
+    }
+}
+
+int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
+{
+    int up_type = src_types[0];
+    for (int i = 1; i < src_types.size(); i++)
+    {
+        if (up_type != src_types[i])
+            up_type = upType(up_type, src_types[i]);
+    }
+    if (up_type == Type_none)
+        return Type_none;
+
+    for (int i = 0; i < dst_types.size(); i++)
+    {
+        if (canConvert(up_type, dst_types[i]))
+            return up_type;
+    }
+    return Type_none;
+}
+
+int JZNodeType::matchType(QList<int> dst_types, const QVariant &v)
 {
     int v_type = variantType(v);
-    if (type.contains(v_type))
-        return v;
+    if (dst_types.contains(v_type))
+        return v_type;
 
-    for(int i = 0; i < type.size(); i++)
+    QList<int> prop_type;
+    for (int i = 0; i < dst_types.size(); i++)
     {
-        if (canConvert(v_type, type[i]))
-            return convertTo(v, type[i]);
+        if (canConvert(v_type, dst_types[i]))
+            prop_type << dst_types[i];
     }
+    if (prop_type.size() > 0)
+        return matchType(dst_types, prop_type);
 
     if (v.type() == QMetaType::QString)
     {
         QString text = v.toString();
 
-        JZRegExpHelp help;        
+        JZRegExpHelp help;
         bool isInt = help.isInt(text);
         bool isHex = help.isHex(text);
         bool isFloat = help.isFloat(text);
-        if (type.contains(Type_int) && (isInt || isHex))
+        if (dst_types.contains(Type_int) && (isInt || isHex))
         {
-            if (isInt)
-                return text.toInt();
-            else
-                return text.toInt(nullptr, 16);
+            return Type_int;
         }
-        if (type.contains(Type_double) && (isInt || isHex || isFloat))
+        if (dst_types.contains(Type_double) && (isInt || isHex || isFloat))
         {
-            if(isHex)
+            if (isHex)
                 return text.toInt(nullptr, 16);
             else
                 return text.toDouble();
         }
     }
 
-    return value(type[0]);
+    return Type_none;
 }
 
 void JZNodeType::registConvert(int from, int to, ConvertFunc func)
@@ -341,7 +383,6 @@ void JZNodeType::registConvert(int from, int to, ConvertFunc func)
 JZParamDefine::JZParamDefine()
 {
     dataType = Type_none;
-    cref = false;
 }
 
 JZParamDefine::JZParamDefine(QString name, int dataType, const QVariant &v)
@@ -349,36 +390,11 @@ JZParamDefine::JZParamDefine(QString name, int dataType, const QVariant &v)
     this->name = name;
     this->dataType = dataType;
     this->value = v;
-    this->cref = false;
 }
 
 QVariant JZParamDefine::initialValue() const
 {
-    if (JZNodeType::isBase(dataType))
-    {        
-        QVariant::Type q_type = JZNodeType::typeToQMeta(dataType);
-        if (value.isNull()) 
-            return QVariant(q_type);
-        else
-        {
-            return JZNodeType::matchValue(value, { dataType });            
-        }        
-    }
-    else if (JZNodeType::isEnum(dataType))
-    {
-        if (value.isNull())
-        {
-            auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
-            return meta->value(0);
-        }
-        else
-            return value.toInt();
-    }
-    else
-    {
-        auto ptr = JZNodeObjectManager::instance()->createEmpty(dataType);
-        return QVariant::fromValue(ptr);
-    }
+    return JZNodeType::matchValue(dataType,value);    
 }
 
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
@@ -386,7 +402,6 @@ QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
     s << param.name;
     s << param.dataType;
     s << param.value;
-    s << param.cref;
     return s;
 }
 
@@ -395,6 +410,5 @@ QDataStream &operator >> (QDataStream &s, JZParamDefine &param)
     s >> param.name;
     s >> param.dataType;
     s >> param.value;
-    s >> param.cref;
     return s;
 }

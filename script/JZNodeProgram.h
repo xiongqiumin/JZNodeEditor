@@ -18,31 +18,6 @@ enum{
     Reg_Cmp = 2500000,
 };
 
-//JZEventHandle
-class JZEventHandle
-{
-public:
-    JZEventHandle();
-    
-    int type;        
-    QString sender;
-    FunctionDefine function;
-};
-QDataStream &operator<<(QDataStream &s, const JZEventHandle &param);
-QDataStream &operator>>(QDataStream &s, JZEventHandle &param);
-
-//JZEventHandle
-class JZParamChangeHandle
-{
-public:
-    JZParamChangeHandle();
-
-    QString paramName;
-    FunctionDefine function;
-};
-QDataStream &operator<<(QDataStream &s, const JZParamChangeHandle &param);
-QDataStream &operator>>(QDataStream &s, JZParamChangeHandle &param);
-
 //NodeRange
 struct NodeRange
 {
@@ -81,12 +56,11 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 class JZFunction
 {
 public:
-    QString file;
-    int addr;
+    QString file;    
     QList<JZParamDefine> localVariables;
 };
 QDataStream &operator<<(QDataStream &s, const JZFunction &param);
-QDataStream &operator >> (QDataStream &s, JZFunction &param);
+QDataStream &operator>>(QDataStream &s, JZFunction &param);
 
 //JZNodeScript
 class JZNodeScript
@@ -100,10 +74,7 @@ public:
     QString file;
     QString className;
     QMap<int, NodeInfo> nodeInfo;
-    QList<JZNodeIRPtr> statmentList;    
-
-    QList<JZParamChangeHandle> paramChangeEvents;    
-    QList<JZEventHandle> events;
+    QList<JZNodeIRPtr> statmentList;        
     QList<FunctionDefine> functionList;
     QMap<QString, JZFunction> runtimeInfo;
 
@@ -132,8 +103,7 @@ public:
     JZFunction *runtimeInfo(QString function);
 
     QList<JZNodeScript*> scriptList();
-    JZNodeScript *objectScript(QString className);    
-    QList<JZEventHandle*> eventList() const;
+    JZNodeScript *objectScript(QString className);        
 
     QList<FunctionDefine> functionDefines();
     QList<JZNodeObjectDefine> objectDefines();
@@ -150,7 +120,7 @@ protected:
     QMap<QString,JZNodeScriptPtr> m_scripts; 
     QMap<QString,JZParamDefine> m_variables;        
     QList<JZNodeObjectDefine> m_objectDefines;        
-    QString m_error;
+    QString m_error;    
 };
 
 #endif

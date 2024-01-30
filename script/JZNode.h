@@ -58,11 +58,12 @@ enum
     Node_continue,
     Node_return,
     Node_exit,
-    Node_event,
+    Node_startEvent,
     Node_singleEvent,
     Node_qtEvent,
     Node_paramChangedEvent,
-    Node_timeEvent,        
+    Node_timeEvent,   
+    Node_display,
 };
 
 enum
@@ -184,16 +185,16 @@ public:
     bool canRemove();
     bool canDragVariable();    
 
-    virtual QList<int> propType(int id);
-    virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType);
-
+    virtual QList<int> propType(int id);        
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
+
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);    
     virtual void drag(const QVariant &value);
 
     virtual bool pinClicked(int id);    //返回属性是否变化
-    virtual bool pinAction(int id);
+    virtual QStringList pinActionList(int id);
+    virtual bool pinActionTriggered(int id,int index);
 
 protected:     
     friend JZScriptFile;
@@ -209,6 +210,7 @@ protected:
     virtual void pinLinked(int id);
     virtual void pinUnlinked(int id);
     virtual void pinChanged(int id);
+    void sortPinByPri();
 
     int m_id;
     int m_type;
@@ -352,10 +354,15 @@ public:
 
     void addCondPin();
     void addElsePin();    
+    void removeCond(int index);
+    void removeElse();
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
     virtual bool pinClicked(int id) override;
+    virtual QStringList pinActionList(int id);
+    virtual bool pinActionTriggered(int id, int index);
+    void updateCondName();
 
     int m_btnCond;
     int m_btnElse;
@@ -368,11 +375,17 @@ public:
     JZNodeSwitch();
     void addCase();
     void addDefault();
+    void removeCase(int index);
+    void removeDefault();
+    int caseCount();
+
     void setCaseValue(int index, const QVariant &v);
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
     virtual bool pinClicked(int id) override;
+    virtual QStringList pinActionList(int id);
+    virtual bool pinActionTriggered(int id, int index);
 
     int m_btnCase;
     int m_btnDefault;

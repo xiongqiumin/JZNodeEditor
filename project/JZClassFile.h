@@ -22,6 +22,8 @@ public:
     int classType() const;
     void setClassType(int classId);
 
+    QString superClass() const;
+
     JZNodeObjectDefine objectDefine();
     
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());

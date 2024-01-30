@@ -86,10 +86,12 @@ using is_enum_or_qenum = std::bool_constant<is_enum_or_qenum_cond<T>()>;
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
 template<class T> void copyClass(void *src,void *dst){ *((T*)src) = *((T*)dst); }
-template<class T> void addEventFilter(void *ptr, int filter) 
+template<class T> void addEventFilter(void *ptr, int filter)
 { 
-    JZNodeObject *obj = (JZNodeObject*)ptr;
-    ((T*)obj->cobj())->addEventFilter(obj,filter); 
+    JZNodeObject *jz_obj = (JZNodeObject*)ptr;
+    T *obj = (T*)jz_obj->cobj();
+    obj->setJZObject(jz_obj);
+    obj->addEventFilter(filter);    
 };
 
 void *createClassAssert();
@@ -100,9 +102,10 @@ template<class T>
 T getValue(const QVariant &v,std::true_type)
 {
     JZNodeObject *obj = toJZObject(v);
-    if (!obj)
-        throw std::runtime_error("object is null");
-    return (T)obj->cobj();
+    if (obj)
+        return (T)obj->cobj();
+    else
+        return nullptr;
 }
 
 template<class T>
@@ -165,7 +168,7 @@ template<class T>
 QVariant getReturnPointer(T value,bool isRef,std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    JZNodeObjectPtr obj = JZObjectCreate<T>(value, !isRef);
+    JZNodeObjectPtr obj = JZObjectRefrence<T>(value, !isRef);
     return QVariant::fromValue(obj);
 }
 
@@ -336,40 +339,54 @@ template<typename Class, typename... Args>
 class CSingleImpl : public CSingle
 {
 public:    
-    virtual void connect(JZNodeObject *obj,int eventType)
+    virtual void connect(JZNodeObject *obj)
     {
+        int event_type = this->eventType;
         Class *cobj = (Class*)obj->cobj();
-        cobj->connect(cobj,single,[obj,eventType](Args... args){
+        cobj->connect(cobj,single,[obj,event_type](Args... args){
            JZEvent event;
            event.sender = obj;
-           event.eventType = eventType;
-           event.params.push_back(QVariant::fromValue(event.sender));
+           event.eventType = event_type;           
            createEvent<int,Args...>(event,args...);
-           JZObjectEvent(&event);
+           JZObjectSlot(&event);
         });        
     }
 
-    void (Class::*single)(Args...);    
+    virtual void disconnect(JZNodeObject *obj)
+    {
+        Class *cobj = (Class*)obj->cobj();
+        cobj->disconnect(cobj, single, nullptr, nullptr);
+    }
+
+    void (Class::*single)(Args...);   
+    int eventType;
 };
 
 template<typename Class,typename PrivateSingle,typename... Args>
 class CPrivateSingleImpl : public CSingle
 {
 public:    
-    virtual void connect(JZNodeObject *obj, int eventType)
+    virtual void connect(JZNodeObject *obj)
     {
+        int event_type = this->eventType;
         Class *cobj = (Class*)obj->cobj();
-        cobj->connect(cobj, single, [obj, eventType](Args... args) {
+        cobj->connect(cobj, single, [obj, event_type](Args... args) {
             JZEvent event;
             event.sender = obj;
-            event.eventType = eventType;
-            event.params.push_back(QVariant::fromValue(event.sender));
+            event.eventType = event_type;            
             createEvent<int, Args...>(event, args...);
-            JZObjectEvent(&event);
+            JZObjectSlot(&event);
         });
     }
 
+    virtual void disconnect(JZNodeObject *obj)
+    {
+        Class *cobj = (Class*)obj->cobj();
+        cobj->disconnect(cobj,single,nullptr, nullptr);
+    }
+
     void (Class::*single)(PrivateSingle, Args...);
+    int eventType;    
 };
 
 template<typename T>
@@ -480,8 +497,9 @@ public:
 
         auto *impl = new CSingleImpl<Class,Args...>();        
         impl->single = f;
+        impl->eventType = eventType;
         single.isCSingle = true;
-        single.csingle = impl;        
+        single.csingle = impl;
         
         JZParamDefine sender;
         sender.name = "sender";
@@ -509,6 +527,7 @@ public:
 
         auto *impl = new CPrivateSingleImpl<Class, Args...>();
         impl->single = f;
+        impl->eventType = eventType;
         single.isCSingle = true;
         single.csingle = impl;
         
@@ -537,10 +556,6 @@ public:
         EventDefine event;
         event.name = name;
         event.eventType = type;
-
-        int event_type = JZNodeObjectManager::instance()->getClassIdByTypeid(m_define.functions.back().cfunc->args[1]);
-        event.paramOut << JZParamDefine("sender", Type_none);
-        event.paramOut << JZParamDefine("event", event_type);
         m_define.events.push_back(event);
     }
 
@@ -550,15 +565,15 @@ public:
         m_define.cMeta.create = &createClass<T>;
         m_define.cMeta.addEventFilter = &addEventFilter<T>;
 
-        defEvent("paintEvent", Event_paint, &T::callPaintEventHelp);
-        defEvent("showEvent",  Event_show, &T::callShowEventHelp);
-        defEvent("resizeEvent", Event_resize, &T::callResizeEventHelp);
-        defEvent("closeEvent", Event_close, &T::callCloseEventHelp);
-        defEvent("keyPressEvent", Event_keyPress, &T::callKeyPressHelp);
-        defEvent("keyReleaseEvent", Event_keyRelease, &T::callKeyReleaseHelp);
-        defEvent("mousePressEvent", Event_mousePress, &T::callMousePressHelp);
-        defEvent("mouseMoveEvent", Event_mouseMove, &T::callMouseMoveHelp);
-        defEvent("mouseReleaseEvent", Event_mouseRelease, &T::callMouseReleaseHelp);
+        defEvent("paintEvent", Event_paint, &T::call_paintEvent_help);
+        defEvent("showEvent",  Event_show, &T::call_showEvent_help);
+        defEvent("resizeEvent", Event_resize, &T::call_resizeEvent_help);
+        defEvent("closeEvent", Event_close, &T::call_closeEvent_help);
+        defEvent("keyPressEvent", Event_keyPress, &T::call_keyPressEvent_help);
+        defEvent("keyReleaseEvent", Event_keyRelease, &T::call_keyReleaseEvent_help);
+        defEvent("mousePressEvent", Event_mousePress, &T::call_mousePressEvent_help);
+        defEvent("mouseMoveEvent", Event_mouseMove, &T::call_mouseMoveEvent_help);
+        defEvent("mouseReleaseEvent", Event_mouseRelease, &T::call_mouseReleaseEvent_help);
     }
 
     void defWidgetEvent(std::false_type)
@@ -575,10 +590,6 @@ public:
             auto &single = m_define.singles[i];
             if (single.paramOut[0].dataType == Type_none)
                 single.paramOut[0].dataType = m_define.id;
-        }
-        for (int i = 0; i < m_define.events.size(); i++)
-        {
-            m_define.events[i].paramOut[0].dataType = m_define.id;
         }
         for (int func_idx = 0; func_idx < m_define.functions.size(); func_idx++)
         {

@@ -16,6 +16,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
+#include <QFileInfo>
+#include <QDir>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -404,20 +406,27 @@ void initPainter()
 
 void initFiles()
 {
+    jzbind::ClassBind<QFile> cls_file("File");
+    cls_file.regist();
 
+    jzbind::ClassBind<QFileInfo> cls_fileInfo("FileInfo");
+    cls_fileInfo.regist();
+
+    jzbind::ClassBind<QDir> cls_dir("Dir");
+    cls_dir.regist();
 }
 
 QVariant colorEnum_to_color(const QVariant &v)
 {
     QColor *color = new QColor((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectCreate(color);
+    auto ptr = JZObjectRefrence(color);
     return QVariant::fromValue(ptr);
 }
 
 QVariant colorEnum_to_brush(const QVariant &v)
 {
     QBrush *brush = new QBrush((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectCreate(brush);
+    auto ptr = JZObjectRefrence(brush);
     return QVariant::fromValue(ptr);
 }
 
@@ -425,7 +434,7 @@ QVariant color_to_brush(const QVariant &v)
 {    
     QColor *c = jzbind::getValue<QColor*>(v);
     QBrush *brush = new QBrush(*c);
-    auto ptr = JZObjectCreate(brush);
+    auto ptr = JZObjectRefrence(brush);
     return QVariant::fromValue(ptr);
 }
 

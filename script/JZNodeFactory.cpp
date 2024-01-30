@@ -38,7 +38,8 @@ JZNode *JZNodeFactory::createNode(int type)
 }
 
 void JZNodeFactory::init()
-{    
+{   
+    registNode(Node_display, createFunc<JZNodeDisplay>);
     registNode(Node_print,createFunc<JZNodePrint>);  
     registNode(Node_nop, createFunc<JZNodeNop>);
     registNode(Node_assert, createFunc<JZNodeAssert>);
@@ -89,7 +90,7 @@ void JZNodeFactory::init()
     registNode(Node_bitxor,createFunc<JZNodeBitXor>);
     registNode(Node_expr,createFunc<JZNodeExpression>);
 
-    registNode(Node_event,createFunc<JZNodeEvent>);
+    registNode(Node_startEvent,createFunc<JZNodeStartEvent>);
     registNode(Node_paramChangedEvent,createFunc<JZNodeParamChangedEvent>);
     registNode(Node_singleEvent,createFunc<JZNodeSingleEvent>);
     registNode(Node_qtEvent, createFunc<JZNodeQtEvent>);

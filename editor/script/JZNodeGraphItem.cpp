@@ -163,16 +163,16 @@ JZNode *JZNodeGraphItem::node()
     return m_node;
 }
 
-JZNodePin *JZNodeGraphItem::propAt(QPointF pos)
+int JZNodeGraphItem::propAt(QPointF pos)
 {    
     auto list = m_node->propList();
     for (int i = 0; i < list.size(); i++)
     {                    
         auto rc = propRect(list[i]);
         if (rc.contains(pos))
-            return m_node->prop(list[i]);            
+            return list[i];
     }
-    return nullptr;    
+    return -1;    
 }
 
 QRectF JZNodeGraphItem::propRect(int prop)
@@ -355,11 +355,11 @@ void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 }
 
 void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    auto list = m_node->propList();
-    auto pin = propAt(event->pos());
-    if (pin)
+{    
+    auto pin_id = propAt(event->pos());
+    if (pin_id >= 0)
     {
+        auto pin = m_node->prop(pin_id);
         if(pin->isButton())
         {
             m_pinButtonRect = propRect(pin->id());
@@ -378,8 +378,8 @@ void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     if(m_pinButtonOn && m_pinButtonRect.contains(event->pos()))
     {
-        auto pin = propAt(event->pos());
-        editor()->pinClicked(m_id,pin->id());
+        auto pin_id = propAt(event->pos());
+        editor()->pinClicked(m_id, pin_id);
     }
     m_pinButtonOn = false;
     return JZNodeBaseItem::mouseReleaseEvent(event);

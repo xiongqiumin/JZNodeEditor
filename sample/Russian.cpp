@@ -158,13 +158,14 @@ void SampleRussian::saveProject()
     QString dir = qApp->applicationDirPath() + "/sample";
     if (!QDir().exists(dir))
         QDir().mkdir(dir);
-    QString path = qApp->applicationDirPath() + "/sample/russion.jzproject";
+    QString path = qApp->applicationDirPath() + "/sample/russian.jzproject";
     m_project.saveAs(path);
 }
 
 bool SampleRussian::run()
 {
-    QString program_path = qApp->applicationDirPath() + "/russian.bin";
+    QString program_path = qApp->applicationDirPath() + "/sample/build/russian.program";
+    QString jsm_path = qApp->applicationDirPath() + "/sample/build/russian.jsm";
 
     JZNodeBuilder builder;
     JZNodeProgram program;
@@ -172,13 +173,21 @@ bool SampleRussian::run()
     {
         qDebug().noquote() << builder.error();
         return false;
+    }
+    //save asm
+    QFile file(jsm_path);
+    if (file.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        QTextStream s(&file);
+        s << program.dump();
+        file.close();
     }    
+    //save bin
     if (!program.save(program_path))
     {
         qDebug() << "save failed";
         return false;
-    }
-    qDebug().noquote() << program.dump();    
+    }    
     
     JZNodeVM vm;
     QString error;
@@ -665,7 +674,11 @@ void SampleRussian::addPaintEvent()
     m_script->addConnect(for_row->flowOutGemo(), branch_is_rect->flowInGemo());
     m_script->addConnect(branch_is_rect->flowOutGemo(), shape_null->flowInGemo());
     m_script->addConnect(shape->paramOutGemo(0), shape_null_cmp->paramInGemo(0));
-    shape_null_cmp->setParamInValue(1, QVariant::fromValue(JZObjectNull()));
+
+    JZNodeLiteral *node_nullptr = new JZNodeLiteral();
+    node_nullptr->setDataType(Type_nullptr);
+    m_script->addNode(JZNodePtr(node_nullptr));
+    m_script->addConnect(node_nullptr->paramOutGemo(0), shape_null_cmp->paramInGemo(1));
     
     m_script->addConnect(shape_null_cmp->paramOutGemo(0), shape_null->paramInGemo(0));
     m_script->addConnect(shape_null->flowOutGemo(0), shape_null_return->flowInGemo());

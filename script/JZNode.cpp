@@ -525,21 +525,6 @@ QList<int> JZNode::propType(int id)
     return prop(id)->dataType();
 }
 
-QMap<int,int> JZNode::calcPropOutType(const QMap<int,int> &inType)
-{
-    QMap<int,int> types;
-    auto list = paramOutList();
-    for(int i = 0; i < list.size(); i++)
-    {
-        auto pin = prop(list[i]);
-        int dataType = Type_none;
-        if(pin->dataType().size() > 0)
-            dataType = pin->dataType().front();
-        types[list[i]] = dataType;
-    }
-    return types;
-}
-
 void JZNode::setPinTypeAny(int id)
 {
     prop(id)->setDataType({Type_any});
@@ -547,12 +532,12 @@ void JZNode::setPinTypeAny(int id)
 
 void JZNode::setPinTypeInt(int id)
 {
-    prop(id)->setDataType({Type_int,Type_int64});
+    prop(id)->setDataType({Type_int});
 }
 
 void JZNode::setPinTypeNumber(int id)
 {
-    prop(id)->setDataType({Type_bool,Type_int,Type_int64,Type_double});
+    prop(id)->setDataType({Type_bool,Type_int,Type_double});
 }
 
 void JZNode::setPinTypeBool(int id)
@@ -570,6 +555,14 @@ void JZNode::setPinType(int id,const QList<int> &type)
     prop(id)->setDataType(type);
 }
 
+void JZNode::sortPinByPri()
+{
+    std::stable_sort(m_propList.begin(), m_propList.end(), 
+        [](const JZNodePin &p1, const JZNodePin &p2)->bool{
+            return p1.pri() < p2.pri();
+    });
+}
+
 void JZNode::drag(const QVariant &v)
 {
     Q_UNUSED(v);
@@ -581,7 +574,13 @@ bool JZNode::pinClicked(int id)
     return false;
 }
 
-bool JZNode::pinAction(int id)
+QStringList JZNode::pinActionList(int id)
+{
+    Q_UNUSED(id);
+    return QStringList();
+}
+
+bool JZNode::pinActionTriggered(int id, int index)
 {
     Q_UNUSED(id);
     return false;
@@ -1051,11 +1050,22 @@ JZNodeIf::JZNodeIf()
     m_type = Node_if;
     m_name = "if";
     addFlowIn();
-    addFlowOut();
+    addFlowOut("complete", Prop_dispName);
     addCondPin();    
 
     m_btnCond = addButtonIn("Add cond");
     m_btnElse = addButtonIn("Add else");
+}
+
+void JZNodeIf::updateCondName()
+{
+    auto list = paramInList();
+    auto flow_list = subFlowList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        setPropName(list[i], "cond" + QString::number(i + 1));
+        setPropName(flow_list[i], "cond" + QString::number(i + 1));
+    }
 }
 
 void JZNodeIf::addCondPin()
@@ -1063,12 +1073,30 @@ void JZNodeIf::addCondPin()
     int in = addParamIn("cond",Prop_dispName);
     setPinTypeBool(in);
 
-    addSubFlowOut("cond");
+    addSubFlowOut("cond", Prop_dispName);
+    sortPinByPri();
+    updateCondName();    
 }
 
 void JZNodeIf::addElsePin()
 {
-    addSubFlowOut("else");
+    int id = addSubFlowOut("else", Prop_dispName);
+    prop(id)->setPri(Pri_sub_flow + 1);
+}
+
+void JZNodeIf::removeCond(int index)
+{
+    int flow_id = paramInList()[index];
+    int in_id = subFlowList()[index];
+    removeProp(in_id);
+    removeProp(flow_id);
+    updateCondName();
+}
+
+void JZNodeIf::removeElse()
+{
+    int id = subFlowList().back();
+    removeProp(id);
 }
 
 bool JZNodeIf::pinClicked(int id)
@@ -1076,7 +1104,42 @@ bool JZNodeIf::pinClicked(int id)
     if (id == m_btnCond)
         addCondPin();
     else if (id == m_btnElse)
+    {
+        if (subFlowCount() > paramInCount())
+            return false;
+
         addElsePin();
+    }
+    return true;
+}
+
+QStringList JZNodeIf::pinActionList(int id)
+{
+    int param_index = paramInList().indexOf(id);
+    int sub_index = subFlowList().indexOf(id);
+    if (param_index == -1 && sub_index == -1)
+        return QStringList();
+
+    bool isElse = (subFlowCount() > paramInCount()) && (sub_index == subFlowCount() - 1);
+
+    QStringList ret;
+    if (paramInCount() > 1 || isElse)
+        ret.push_back("删除");
+
+    return ret;
+}
+
+bool JZNodeIf::pinActionTriggered(int id, int)
+{
+    int pin_index = paramInList().indexOf(id);
+    if(pin_index == -1)
+        pin_index = subFlowList().indexOf(id);
+
+    bool isElse = (subFlowCount() > paramInCount()) && (pin_index == subFlowCount() - 1);
+    if (isElse)
+        removeElse();
+    else
+        removeCond(pin_index);
 
     return true;
 }
@@ -1118,7 +1181,7 @@ bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error)
     for (int i = 0; i < sub_flow_count; i++)
     {
         continuePc << ret;
-        breakPc << 1;
+        breakPc << -1;
     }
     c->setBreakContinue(breakPc, continuePc);
     return true;
@@ -1135,6 +1198,7 @@ JZNodeSwitch::JZNodeSwitch()
     setPinType(in, { Type_int,Type_string });
 
     addParamOut("cond", Prop_dispName);
+    addCase();
 
     m_btnCase = addButtonOut("Add case");
     m_btnDefault = addButtonOut("Add default");
@@ -1143,15 +1207,41 @@ JZNodeSwitch::JZNodeSwitch()
 void JZNodeSwitch::addCase()
 {
     addSubFlowOut("case", Prop_dispName | Prop_dispValue | Prop_editValue);
+    sortPinByPri();
 }
 
 void JZNodeSwitch::addDefault()
 {
-    addSubFlowOut("default", Prop_dispName);
+    int id = addSubFlowOut("default", Prop_dispName);
+    prop(id)->setPri(Pri_sub_flow + 1);
+}
+
+void JZNodeSwitch::removeCase(int index)
+{
+    int id = subFlowList()[index];
+    removeProp(id);
+}
+
+void JZNodeSwitch::removeDefault()
+{
+    int id = subFlowList().back();
+    removeProp(id);    
+}
+
+int JZNodeSwitch::caseCount()
+{
+    auto list = subFlowList();
+    int id = list.back();
+    bool isDefault = !(prop(id)->flag() & Prop_editValue);
+    if (isDefault)
+        return list.size() - 1;
+    else
+        return list.size();
 }
 
 void JZNodeSwitch::setCaseValue(int index, const QVariant &v)
 {
+    Q_ASSERT(index < caseCount());
     prop(subFlowOut(index))->setValue(v);
 }
 
@@ -1160,7 +1250,42 @@ bool JZNodeSwitch::pinClicked(int id)
     if (id == m_btnCase)
         addCase();
     else if (id == m_btnDefault)
+    {
+        int id = subFlowList().back();
+        bool isDefault = !(prop(id)->flag() & Prop_editValue);
+        if (isDefault)
+            return false;
+
         addDefault();
+    }
+
+    return true;
+}
+
+QStringList JZNodeSwitch::pinActionList(int id)
+{    
+    int sub_index = subFlowList().indexOf(id);
+    if (sub_index == -1)
+        return QStringList();
+
+    bool isDefault = !(prop(id)->flag() & Prop_editValue);
+
+    QStringList ret;
+    if (caseCount() > 1 || isDefault)
+        ret.push_back("删除");
+
+    return ret;
+}
+
+bool JZNodeSwitch::pinActionTriggered(int id, int index)
+{
+    int pin_index = subFlowList().indexOf(id);
+
+    bool isDefault = !(prop(id)->flag() & Prop_editValue);
+    if (isDefault)
+        removeDefault();
+    else
+        removeCase(pin_index);
 
     return true;
 }
@@ -1217,7 +1342,8 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
         breakPc.push_back(out_pc);
         continuePc.push_back(out_pc);
     }
-    c->setBreakContinue(breakPc, continuePc);    
+    c->setBreakContinue(breakPc, continuePc);
+    c->setPinType(m_id, paramOut(0), paramIn(0));
 
     return true;
 }

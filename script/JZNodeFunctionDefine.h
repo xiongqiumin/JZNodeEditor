@@ -24,14 +24,21 @@ class FunctionDefine
 public:
     FunctionDefine();    
 
+    bool isNull() const;
+
     QString fullName() const;
     void updateCFunctionParam();
+    bool isMemberFunction() const;
             
-    QString name;
+    QString name;    
     QString className;
-    bool isFlowFunction;    
+    bool isFlowFunction;
     QList<JZParamDefine> paramIn;
     QList<JZParamDefine> paramOut;       
+
+    //for script
+    QString file;
+    int addr;
 
     //for c    
     bool isCFunction;
@@ -46,10 +53,12 @@ class CSingle
 public:
     CSingle();
     virtual ~CSingle();
-    virtual void connect(JZNodeObject *obj,int type) = 0;
+
+    virtual void connect(JZNodeObject *obj) = 0;
+    virtual void disconnect(JZNodeObject *obj) = 0;
 
 protected:
-    Q_DISABLE_COPY(CSingle);
+    Q_DISABLE_COPY(CSingle);       
 };
 
 class SingleDefine
@@ -74,8 +83,7 @@ public:
     EventDefine();
 
     int eventType;
-    QString name;
-    QList<JZParamDefine> paramOut;
+    QString name;        
 };
 QDataStream &operator<<(QDataStream &s, const EventDefine &param);
 QDataStream &operator>>(QDataStream &s, EventDefine &param);

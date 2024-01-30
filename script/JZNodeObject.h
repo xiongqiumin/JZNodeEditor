@@ -55,12 +55,15 @@ public:
     QString fullname() const;
 
     const FunctionDefine *function(QString function) const;
+    QStringList functionList() const;
     
-    QStringList singleList() const;
+    const SingleDefine *single(int type) const;
     const SingleDefine *single(QString function) const;
+    QStringList singleList() const;
     
-    QStringList eventList() const;
+    const EventDefine *event(int type) const;
     const EventDefine *event(QString function) const;
+    QStringList eventList() const;
     
     const JZNodeObjectDefine *super() const;
     bool isInherits(int type) const;
@@ -86,7 +89,8 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param);
 class JZObjectNull
 {
 public:
-
+    JZObjectNull(int t = Type_nullptr);
+    int type;
 };
 QDataStream &operator<<(QDataStream &s, const JZObjectNull &param);
 QDataStream &operator>>(QDataStream &s, JZObjectNull &param);
@@ -98,9 +102,6 @@ class JZNodeObject
 public:    
     JZNodeObject(JZNodeObjectDefine *def);
     ~JZNodeObject();
-    
-    bool isNull() const;
-    void setNull();
     
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
@@ -117,25 +118,28 @@ public:
     QStringList paramList() const;
 
     const FunctionDefine *function(const QString &function) const;
+    QStringList functionList() const;
+    
+    const SingleDefine *single(int eventType) const;
+    const SingleDefine *single(QString function) const;
+    QStringList singleList() const;
 
     void setCObject(void *cobj,bool owner);    
     void *cobj() const;
     void setCowner(bool owner);
 
-    void updateWidgetParam();
-    void connectSingles(int type);    
+    void updateWidgetParam();    
 
-protected:
+protected:    
     Q_DISABLE_COPY(JZNodeObject);    
 
     friend JZNodeObjectManager;
 
-    bool getParamRef(const QString &name,QVariant* &ref,QString &error);
+    bool getParamRef(const QString &name,QVariant* &ref,QString &error);    
 
-    bool m_isNull;
     JZNodeObjectDefine *m_define;
     QString m_name;
-    QMap<QString, QVariant> m_params;
+    QMap<QString, QVariant> m_params;    
     void *m_cobj;
     bool m_cowner;
 };
@@ -145,11 +149,14 @@ Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v); //对于空 object 返回 nullptr
-JZNodeObject* toJZObjectOriginal(const QVariant &v); //对于空 object 也返会指针
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
 void JZObjectEvent(JZEvent *event);
+void JZObjectSlot(JZEvent *event);
+void JZObjectConnect(JZNodeObject *sender, int single, JZNodeObject *recv, QString function);
+void JZObjectDisconnect(JZNodeObject *sender, int single, JZNodeObject *recv, QString function);
+int JZObjectType(const QVariant &v);
 
 class JZNodeObjectManager
 {
@@ -188,11 +195,11 @@ public:
     void unregist(int id);    
     void clearUserReigst();    
     
-    JZNodeObjectPtr create(int type_id);
-    JZNodeObjectPtr createEmpty(int type_id);
-    JZNodeObjectPtr createCClass(QString ctype_id);
-    JZNodeObjectPtr createCClassRefrence(QString ctype_id,void *cobj,bool owner);
-    JZNodeObjectPtr clone(JZNodeObject *other);
+    JZNodeObject* create(int type_id);
+    JZNodeObject* createCClass(QString ctype_id);
+    JZNodeObject* createCClassRefrence(int type_id, void *cobj, bool owner);
+    JZNodeObject* createCClassRefrence(QString ctype_id,void *cobj,bool owner);
+    JZNodeObject* clone(JZNodeObject *other);
 
 protected:
     void create(const JZNodeObjectDefine *define,JZNodeObject *obj);
@@ -212,15 +219,17 @@ protected:
 template<class T>
 JZNodeObjectPtr JZObjectCreate()
 {
-    return JZNodeObjectManager::instance()->createCClass(typeid(T).name());
+    auto ptr = JZNodeObjectManager::instance()->createCClass(typeid(T).name());
+    return JZNodeObjectPtr(ptr);
 }
 
 template<class T>
-JZNodeObjectPtr JZObjectCreate(T ptr,bool owner = true)
+JZNodeObjectPtr JZObjectRefrence(T ptr,bool owner = true)
 {
     static_assert(std::is_pointer<T>(), "only support class pointer");
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();
-    return JZNodeObjectManager::instance()->createCClassRefrence(c_typeid, ptr, owner);
+    auto obj = JZNodeObjectManager::instance()->createCClassRefrence(c_typeid, ptr, owner);
+    return JZNodeObjectPtr(obj);
 }
 
 #endif

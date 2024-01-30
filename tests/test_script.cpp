@@ -363,11 +363,10 @@ void ScriptTest::testSwitch()
     auto node_start = script->getNode(0);
 
     JZNodeSwitch *node_switch = new JZNodeSwitch();
-    for (int i = 0; i < 4; i++)
-    {
+    while (node_switch->caseCount() < 4)
         node_switch->addCase();
-        node_switch->setCaseValue(i, i);
-    }
+    for (int i = 0; i < 4; i++)            
+        node_switch->setCaseValue(i, i);    
     node_switch->addDefault();
 
     QCOMPARE(node_switch->paramInCount(), 1);
@@ -398,7 +397,7 @@ void ScriptTest::testSwitch()
     script->addConnect(node_switch->subFlowOutGemo(4), ret_else->flowInGemo());
 
     if (!build())
-        return;        
+        return;            
 
     JZNodeEngine *engine = &m_engine;
     for (int i = 0; i < 5; i++)
@@ -582,9 +581,7 @@ void ScriptTest::testForEach()
     
     if (!build())
         return;
-
-    QVariantList out;
-
+        
     call();
 
     QVariant sum = engine->getVariable("sum");

@@ -11,12 +11,16 @@ public:
     JZNodeOperator(int node_type,int op_type);
 
     virtual bool pinClicked(int id) override;
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
-    virtual QMap<int,int> calcPropOutType(const QMap<int,int> &inType) override;    
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;        
     void addInput();
+    void removeInput(int index);
 
 protected:
     void addInputButton();    
+
+    virtual QStringList pinActionList(int id) override;
+    virtual bool pinActionTriggered(int id, int index) override;
+    void calcPropOutType(JZNodeCompiler *compiler);
 
     int m_op;    
 };
@@ -159,7 +163,7 @@ protected:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
     virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
+    virtual void loadFromStream(QDataStream &s);        
 
     QString m_expression;
     QStringList m_exprList;

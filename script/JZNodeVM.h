@@ -20,14 +20,13 @@ protected slots:
     void onRuntimeError(JZNodeRuntimeError error);
 
 protected:
-    virtual void customEvent(QEvent *event);                
+    virtual void customEvent(QEvent *event);
+    void quitLater();
     
     JZNodeEngine m_engine;
     JZNodeProgram m_program;
     JZNodeDebugServer m_debugServer;   
-    bool m_debug;
-    QMap<JZNodeObject*,JZNodeScript*> m_objectScripts;
-    QMap<QObject*,JZNodeObject*> m_objects;    
+    bool m_debug;    
 };
 
 

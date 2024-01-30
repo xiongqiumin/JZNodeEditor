@@ -19,10 +19,12 @@ public:
     virtual void loadFromStream(QDataStream &s);
 
     QList<JZParamDefine> widgets();
-    void updateDefine(JZNodeObjectDefine &define);
-
+    
 protected:
+    void updateDefine();
+
     QString m_xml;
+    QList<JZParamDefine> m_widgets;
 };
 
 

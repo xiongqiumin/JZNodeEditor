@@ -12,8 +12,8 @@ enum
     Prop_none,
     Prop_in = 0x1,
     Prop_out = 0x2,    
-    Prop_param = 0x4,
-    Prop_flow = 0x8,
+    Prop_param = 0x4,       //参数
+    Prop_flow = 0x8,        //流程 
     Prop_subFlow  = 0x10,   //子程序
     Prop_button = 0x20,
     Prop_dispName = 0x40,
@@ -77,6 +77,7 @@ public:
 protected:
     friend QDataStream &operator<<(QDataStream &s, const JZNodePin &param);
     friend QDataStream &operator>>(QDataStream &s, JZNodePin &param);
+    void updatePri();
 
     int m_id;
     int m_flag;

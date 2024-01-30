@@ -542,30 +542,32 @@ void JZNodePanel::initConstParam(QTreeWidgetItem *root)
 {
     JZNodeLiteral node_int,node_bool,node_string,node_double,node_null;
     node_int.setName("整数");
-    node_int.setLiteral(0);
     node_int.setDataType(Type_int);
+    node_int.setLiteral(0);    
 
     node_bool.setName("Bool");
-    node_bool.setLiteral(false);
     node_bool.setDataType(Type_bool);
+    node_bool.setLiteral(false);    
 
     node_string.setName("字符串");
-    node_string.setLiteral("");
     node_string.setDataType(Type_string);
+    node_string.setLiteral("");    
 
     node_double.setName("浮点数");
-    node_double.setLiteral(0.0);
     node_double.setDataType(Type_double);
+    node_double.setLiteral(0.0);    
 
-    node_null.setName("null");    
-    node_null.setLiteral("null");
-    node_null.setDataType(Type_nullptr);
+    node_null.setName("null");   
+    node_null.setDataType(Type_nullptr);    
 
     root->addChild(createNode(&node_int));    
     root->addChild(createNode(&node_string));
     root->addChild(createNode(&node_double));
     root->addChild(createNode(&node_bool));
     root->addChild(createNode(&node_null));
+
+    JZNodeDisplay node_disp;
+    root->addChild(createNode(&node_disp));
 }
 
 void JZNodePanel::initConvert(QTreeWidgetItem *root)

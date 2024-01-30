@@ -325,6 +325,15 @@
     <ClCompile Include="project\JZLibraryFile.cpp">
       <Filter>Source Files\project</Filter>
     </ClCompile>
+    <ClCompile Include="LogManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeName.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeQtBind.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -459,6 +468,9 @@
     <QtMoc Include="editor\script\JZNodeParamEditDialog.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
+    <QtMoc Include="LogManager.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="script\JZEvent.h">
@@ -569,9 +581,6 @@
     <ClInclude Include="tests\test_server.h">
       <Filter>Header Files\tests</Filter>
     </ClInclude>
-    <ClInclude Include="script\JZNodeQtWrapper.h">
-      <Filter>Source Files\editor\script</Filter>
-    </ClInclude>
     <ClInclude Include="editor\script\JZNodeLayout.h">
       <Filter>Header Files\editor\script</Filter>
     </ClInclude>
@@ -585,6 +594,12 @@
       <Filter>Header Files\project</Filter>
     </ClInclude>
     <ClInclude Include="script\JZNodeValue.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeQtWrapper.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeName.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
   </ItemGroup>

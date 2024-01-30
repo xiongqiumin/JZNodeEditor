@@ -182,6 +182,7 @@ protected:
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
+    void addRemoveLineCommand(int line_id);
     int getVariableType(const QString &param_name);    
     void setRecordMove(bool flag);
     void autoCompiler();
