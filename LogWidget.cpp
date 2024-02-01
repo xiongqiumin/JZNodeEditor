@@ -99,10 +99,20 @@ LogWidget::LogWidget()
 
     m_breakPoint = new JZNodeBreakPoint();
     m_tabWidget->addTab(m_breakPoint, "¶Ïµã");
+
     m_stack = new JZNodeStack();
     m_tabWidget->addTab(m_stack, "¶ÑÕ»");
-    m_watch = new JZNodeWatch();
-    m_tabWidget->addTab(m_watch, "¼à¿Ø");    
+
+    m_watchManual = new JZNodeWatch();
+    m_tabWidget->addTab(m_watchManual, "¼à¿Ø");
+
+    m_watchAuto = new JZNodeWatch();
+    m_watchAuto->setReadOnly(true);
+    m_tabWidget->addTab(m_watchAuto, "×Ô¶¯´°¿Ú");
+
+    m_watchReg = new JZNodeWatch();
+    m_watchReg->setReadOnly(true);
+    m_tabWidget->addTab(m_watchReg, "¼Ä´æÆ÷");
 }
 
 LogWidget::~LogWidget()
@@ -120,9 +130,19 @@ JZNodeStack *LogWidget::stack()
     return m_stack;
 }
 
-JZNodeWatch *LogWidget::watch()
+JZNodeWatch *LogWidget::watchAuto()
 {
-    return m_watch;
+    return m_watchAuto;
+}
+
+JZNodeWatch *LogWidget::watchManual()
+{
+    return m_watchManual;
+}
+
+JZNodeWatch *LogWidget::watchReg()
+{
+    return m_watchReg;
 }
 
 JZNodeBreakPoint *LogWidget::breakpoint()

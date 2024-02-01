@@ -66,18 +66,13 @@ class JZNodeParamCoor
 {
 public:
     enum {
-        Local,
-        This,
-        Global,
-        Node,
-        Reg,
+        Name,
+        Id,
     };
 
     JZNodeParamCoor();
 
-    int type;
-    
-    int stack;
+    int type;        
     QString name;
     int id;        //节点id
 };
@@ -99,11 +94,28 @@ QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param);
 class JZNodeDebugParamInfo
 {
 public:
+    JZNodeDebugParamInfo();
+
+    int stack;
     QList<JZNodeParamCoor> coors;
     QList<JZNodeDebugParamValue> values;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugParamInfo &param);
+
+//JZNodeSetDebugParamInfo
+class JZNodeSetDebugParamInfo
+{
+public:
+    JZNodeSetDebugParamInfo();
+
+    int stack;
+    JZNodeParamCoor coor;
+    QVariant value;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamInfo &param);
+QDataStream &operator >> (QDataStream &s, JZNodeSetDebugParamInfo &param);
+
 
 //JZNodeScriptInfo
 class JZNodeScriptInfo

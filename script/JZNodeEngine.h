@@ -26,26 +26,21 @@ class RunnerEnv
 public:
     RunnerEnv();
     
+    QVariant *getRef(int id);
+    QVariant *getRef(QString name);
+
     const FunctionDefine *func;
     QVariant object;      //this    
     JZNodeScript *script;    
     int pc;
+    
+    JZVariantMap locals;
+    JZVariantIntMap stacks;
 };
 
 class Stack
 {
 public:
-    struct StackVariable{
-        StackVariable();
-        ~StackVariable();
-
-        QVariant *getRef(int id);
-        QVariant *getRef(QString name);
-
-        JZVariantMap locals;
-        JZVariantIntMap stacks;
-    };
-
     Stack();
     ~Stack();
 
@@ -59,10 +54,6 @@ public:
     RunnerEnv *currentEnv();
     RunnerEnv *env(int index);    
 
-    StackVariable *currentVariable();
-    StackVariable *variable(int index);
-
-    QVariant *getVariableRef(QString name);
     QVariant getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
 
@@ -73,7 +64,6 @@ public:
     void setVariable(int level,int id, const QVariant &value);
 
 protected:   
-    QList<StackVariable> m_stack;
     QList<RunnerEnv> m_env;
 };
 
@@ -166,9 +156,9 @@ public:
        
     Stack *stack();    
 
-    QVariant *getVariableRef(const QString &name);
-    QVariant *getVariableRefSingle(const QString &name);
-    JZNodeObject *getObject(const QString &name);
+    QVariant *getVariableRef(const QString &name);        
+    QVariant *getVariableRef(const QString &name,int stack_level);
+    
     QVariant getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
     QVariant getThis();
@@ -286,7 +276,8 @@ protected:
     void waitCommand();
         
     QVariant getParam(const JZNodeIRParam &param);    
-    void setParam(const JZNodeIRParam &param,const QVariant &value);        
+    void setParam(const JZNodeIRParam &param,const QVariant &value);
+    QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
         
     int nodeIdByPc(int pc);        
     int nodeIdByPc(JZNodeScript *script,int pc);

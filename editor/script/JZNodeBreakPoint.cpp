@@ -31,11 +31,6 @@ JZNodeBreakPoint::~JZNodeBreakPoint()
 
 }
 
-void JZNodeBreakPoint::setMainWindow(MainWindow *w)
-{
-    m_window = w;
-}
-
 void JZNodeBreakPoint::updateBreakPoint(JZProject *project)
 {
     clear();
@@ -44,12 +39,13 @@ void JZNodeBreakPoint::updateBreakPoint(JZProject *project)
     auto it = breakPoints.begin();
     while (it != breakPoints.end())
     {
-        for (int i = 0; i < it.value().size(); it++)
+        auto &pt_list = it.value();
+        for (int i = 0; i < pt_list.size(); i++)
         {
             QTableWidgetItem *itemName = new QTableWidgetItem();
             QTableWidgetItem *itemNode = new QTableWidgetItem();
             itemName->setText(it.key());
-            itemNode->setText(QString::number(it.value()[i]));
+            itemNode->setText(QString::number(pt_list[i]));
 
             int row = m_table->rowCount();
             m_table->setRowCount(row + 1);

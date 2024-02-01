@@ -9,14 +9,16 @@ class TestServer : public QThread
 {
 public:
     TestServer();  
+
+    void init(JZProject *project);
     void stop();
 
 protected:
-    virtual void run() override;
-    void init();
-
-    JZProject m_project;
-    JZNodeProgram m_program;        
+    virtual void run() override;    
+    
+    JZProject *m_project;
+    JZNodeProgram m_program;     
+    JZNodeEngine *m_engine;
 };
 
 

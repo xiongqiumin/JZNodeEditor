@@ -5,26 +5,53 @@
 #include <QMenu>
 #include <QApplication>
 #include <QClipBoard>
+#include <QKeyEvent>
+#include <QStyledItemDelegate>
 #include "UiCommon.h"
 #include "JZNodeEngine.h"
+
+class GridDelegate : public QStyledItemDelegate
+{
+public:
+    explicit GridDelegate(QObject * parent = nullptr) : QStyledItemDelegate(parent) { }
+
+    void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
+    {
+        painter->setPen(QColor(Qt::black)); // set ink to black
+        painter->drawRect(option.rect);  // draw a rect covering cell area     
+        QStyledItemDelegate::paint(painter, option, index);  // tell it to draw as normally after
+    }
+};
 
 JZNodeWatch::JZNodeWatch(QWidget *parent)
     :QWidget(parent)
 {
-    m_running = false;    
-    m_newParam = false;
     m_status = Status_none;
+    m_running = false;    
+    m_newParam = false;    
+    m_readOnly = false;
+    m_editColumn = 0;
+    m_editItem = nullptr;
 
     m_view = new QTreeWidget();
     m_view->setColumnCount(3);
     m_view->setHeaderLabels({ "名称","值","类型" });
     m_view->setEditTriggers(QTreeWidget::NoEditTriggers);
+
+    m_view->setRootIsDecorated(false);
+    //m_view->setStyleSheet("QTreeWidget::item { border: 1px solid gray; }");
+
+    GridDelegate *grid = new GridDelegate(m_view);
+    m_view->setItemDelegate(grid);
+
     connect(m_view, &QTreeWidget::itemDoubleClicked, this, &JZNodeWatch::onTreeWidgetItemDoubleClicked);
     connect(m_view, &QTreeWidget::itemChanged, this, &JZNodeWatch::onItemChanged);
 
     QVBoxLayout *sub_layout = new QVBoxLayout();
     sub_layout->addWidget(m_view);
     this->setLayout(sub_layout);
+
+    updateWatchItem();
 }
 
 JZNodeWatch::~JZNodeWatch()
@@ -48,6 +75,32 @@ void JZNodeWatch::updateStatus()
     }
 }
 
+void JZNodeWatch::updateWatchItem()
+{
+    if (m_readOnly)
+    {
+        if (m_view->topLevelItemCount() > 0
+            && m_view->topLevelItem(m_view->topLevelItemCount() - 1)->text(0).isEmpty())
+            delete m_view->takeTopLevelItem(m_view->topLevelItemCount() - 1);
+    }
+    else
+    {
+        if (m_view->topLevelItemCount() == 0
+            || !m_view->topLevelItem(m_view->topLevelItemCount() - 1)->text(0).isEmpty())
+        {
+            QTreeWidgetItem *item = new QTreeWidgetItem();
+            item->setFlags(item->flags() | Qt::ItemIsEditable);
+            m_view->addTopLevelItem(item);
+        }        
+    }
+}
+
+void JZNodeWatch::setReadOnly(bool flag)
+{
+    m_readOnly = flag;
+    updateWatchItem();
+}
+
 void JZNodeWatch::setRunning(bool isRun)
 {
     m_running = isRun;    
@@ -65,13 +118,63 @@ void JZNodeWatch::setRuntimeStatus(int status)
 
 void JZNodeWatch::onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column)
 {
-    if (column == 1)
+    if (!m_running)
+        return;
+
+    QString name = item->text(0);
+    int row = m_view->indexOfTopLevelItem(item);
+    if ((!m_readOnly && (column == 0 && row >= 0))
+        || (name != "this" && !name.isEmpty() && column == 1))
+    {        
+        m_editColumn = column;
+        m_editItem = item;
         m_view->editItem(item, column);
+    }
 }
 
 void JZNodeWatch::onItemChanged(QTreeWidgetItem *item, int column)
 {
+    if (m_editItem != item)
+        return;
+    m_editItem = nullptr;
 
+    if (m_editColumn == 0)
+    {
+        if (item->text(0).isEmpty())
+        {
+            auto row = m_view->indexOfTopLevelItem(item);
+            delete m_view->takeTopLevelItem(row);
+        }
+        else
+        {
+            JZNodeParamCoor coor;
+            coor.type = JZNodeParamCoor::Name;
+            coor.name = item->text(0);
+            sigParamNameChanged(coor);
+        }
+    }
+    else
+    {
+        JZNodeParamCoor coor;
+        coor.type = JZNodeParamCoor::Name;
+        coor.name = item->text(0);
+        sigParamValueChanged(coor, item->text(1));
+    }    
+    updateWatchItem();
+}
+
+void JZNodeWatch::keyPressEvent(QKeyEvent *e)
+{
+    if (e->key() == Qt::Key_Delete && !m_readOnly) 
+    {
+        auto item = m_view->currentItem();
+        if (!item)
+            return;
+
+        int row = m_view->indexOfTopLevelItem(item);
+        if (row >= 0 && row != m_view->topLevelItemCount() - 1)
+            delete m_view->takeTopLevelItem(row);
+    }
 }
 
 int JZNodeWatch::indexOfItem(QTreeWidgetItem *root, const QString &name)
@@ -102,7 +205,8 @@ void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const QString &name,
     }
     else
     {
-        item = new QTreeWidgetItem();        
+        item = new QTreeWidgetItem();       
+        item->setFlags(item->flags() | Qt::ItemIsEditable);
         item->setText(0,name);
         root->insertChild(index,item);        
     }
@@ -156,27 +260,60 @@ JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
 void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info, bool isNew)
 {   
     m_newParam = isNew;
-    if (m_newParam)
-    {
+    if (m_newParam)    
         m_view->clear();
-    }
 
-    auto root = m_view->invisibleRootItem();    
-    QStringList sub_params;
+    auto root = m_view->invisibleRootItem();        
     for (int i = 0; i < info->coors.size(); i++)
     {
-        auto &c = info->coors[i];                
-        QString name;        
-        sub_params << c.name;
-        setItem(root, i, name, info->values[i]);
+        auto &c = info->coors[i];                        
+        setItem(root, i, c.name, info->values[i]);
     }
     for (int i = root->childCount() - 1; i >= info->coors.size(); i--)
         delete root->takeChild(i);
     if(m_newParam)
         m_view->invisibleRootItem()->setExpanded(true);
+
+    updateWatchItem();
+}
+
+void JZNodeWatch::updateParamInfo(JZNodeDebugParamInfo *info)
+{    
+    auto root = m_view->invisibleRootItem();
+    QStringList sub_params;
+    auto count = m_view->topLevelItemCount();
+    for (int i = 0; i < count; i++)
+    {
+        auto item = m_view->topLevelItem(i);
+        
+        for (int j = 0; j < info->coors.size(); j++)
+        {
+            auto &c = info->coors[i];
+            if (c.name == item->text(0))
+            {
+                sub_params << c.name;
+                setItem(root, i, c.name, info->values[i]);
+                break;
+            }
+        }
+    }    
+}
+
+QStringList JZNodeWatch::watchList()
+{
+    QStringList list;
+    auto count = m_view->topLevelItemCount();
+    for (int i = 0; i < count; i++)
+    {
+        QString name = m_view->topLevelItem(i)->text(0);
+        if(!name.isEmpty())
+            list << name;
+    }
+    return list;
 }
 
 void JZNodeWatch::clear()
 {
-    m_view->clear();    
+    m_view->clear();
+    updateWatchItem();
 }

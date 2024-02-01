@@ -2,19 +2,29 @@
 #include "JZNodeBuilder.h"
 #include "JZNodeValue.h"
 #include "JZNodeFunction.h"
+#include "JZNodeUtils.h"
+#include <QApplication>
+#include <QDir>
 
 TestServer::TestServer()
-{
-    init();
+{    
+    m_project = nullptr;
+    m_engine = nullptr;
 }
 
-void TestServer::init()
+void TestServer::init(JZProject *project)
 {
+    QString filepath = qApp->applicationDirPath() + "/test";
+    if (!QDir().exists(filepath))
+        QDir().mkpath(filepath);
+
+    m_project = project;    
+
     auto func_inst = JZNodeFunctionManager::instance();
 
-    m_project.initConsole();
-    JZScriptFile *script = (JZScriptFile*)m_project.getItem(m_project.mainScript());
-    JZParamFile *paramDef = (JZParamFile*)m_project.getItem("param.def");
+    m_project->initConsole();
+    JZScriptFile *script = (JZScriptFile*)m_project->getItem(m_project->mainScript());
+    JZParamFile *paramDef = (JZParamFile*)m_project->getItem("param.def");
     paramDef->addVariable("timer", Type_timer);
 
     auto time_meta = JZNodeObjectManager::instance()->meta(Type_timer);
@@ -48,44 +58,53 @@ void TestServer::init()
     JZNodeFor *node_for = new JZNodeFor();
     node_for->setRange(0, 10000, 1);
 
+    JZNodePrint *node_print = new JZNodePrint();
+    node_print->setParamInValue(0, "hello");
+
     JZNodeNop *nop = new JZNodeNop();
     script->addNode(JZNodePtr(nop));
     script->addNode(JZNodePtr(timeout));
     script->addNode(JZNodePtr(node_for));
+    script->addNode(JZNodePtr(node_print));
 
-    script->addConnect(timeout->flowOutGemo(0), node_for->flowInGemo());
+    script->addConnect(timeout->flowOutGemo(0), node_print->flowInGemo());
+    script->addConnect(node_print->flowOutGemo(0), node_for->flowInGemo());
     script->addConnect(node_for->subFlowOutGemo(0), nop->flowInGemo());
 
-    m_project.saveAllItem();
+    m_project->saveAllItem();
+    projectUpdateLayout(m_project);
+    m_project->saveAs(filepath + "/localTest.jzprogram");
 }
 
 void TestServer::stop()
 {
+    if(m_engine)
+        m_engine->stop();
     quit();
     wait();
 }
 
 void TestServer::run()
-{
-    JZNodeDebugServer server;
-    JZNodeEngine engine;
+{    
 
     JZNodeBuilder builder;
-    if (!builder.build(&m_project, &m_program))
+    if (!builder.build(m_project, &m_program))
     {
         Q_ASSERT(0);
-    }
-    qDebug().noquote() << m_program.dump();
+    }    
 
-    server.setEngine(&engine);
-    server.startServer(19888);
-    server.waitForAttach();
-    
+    JZNodeEngine engine;
+    m_engine = &engine;
     engine.setProgram(&m_program);
     engine.init();
+     
+    JZNodeDebugServer server;
+    server.setEngine(&engine);
+    server.startServer(19888);
+    server.waitForAttach();       
         
-    JZEvent event;
-    event.eventType = Event_programStart;
-    engine.dealEvent(&event);
+    QVariantList in, out;
+    engine.call("__main__", in,out);
     exec();
+    m_engine = nullptr;
 }

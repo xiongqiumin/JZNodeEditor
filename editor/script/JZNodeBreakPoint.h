@@ -17,7 +17,6 @@ public:
     JZNodeBreakPoint(QWidget *parent = nullptr);
     ~JZNodeBreakPoint();
     
-    void setMainWindow(MainWindow *w);
     void updateBreakPoint(JZProject *project);
     void clear();
 

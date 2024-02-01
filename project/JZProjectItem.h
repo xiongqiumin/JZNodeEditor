@@ -3,19 +3,17 @@
 #include <QSharedPointer>
 
 enum{    
-    ProjectItem_none = 0x0,
-    ProjectItem_root = 0x1,
-    ProjectItem_folder = 0x2,
-    ProjectItem_class = 0x4,
-    ProjectItem_library = 0x8,
-    ProjectItem_ui = 0x10,
-    ProjectItem_param = 0x20,
-    ProjectItem_scriptParamBinding = 0x40,
-    ProjectItem_scriptFlow = 0x80,
-    ProjectItem_scriptFunction = 0x100,
-    ProjectItem_script = (ProjectItem_scriptParamBinding | ProjectItem_scriptFlow | ProjectItem_scriptFunction),
-
-    ProjectItem_any = 0xFFFFFFFF,
+    ProjectItem_any = -1,
+    ProjectItem_none,
+    ProjectItem_root,
+    ProjectItem_folder,
+    ProjectItem_class,
+    ProjectItem_library,
+    ProjectItem_ui,
+    ProjectItem_param,
+    ProjectItem_scriptParamBinding,
+    ProjectItem_scriptFlow,
+    ProjectItem_scriptFunction,    
 };
 
 class JZProject;
@@ -61,6 +59,7 @@ public:
 
     void sort();
     QList<JZProjectItem *> itemList(int type);
+    QList<JZProjectItem *> itemList(QList<int> type);
     
 protected:
     Q_DISABLE_COPY(JZProjectItem)
@@ -94,5 +93,7 @@ public:
     static QByteArray save(JZProjectItem *item);
     static QString itemTypeName(int itemType);
 };
+
+int JZProjectItemIsScript(JZProjectItem *item);
 
 #endif

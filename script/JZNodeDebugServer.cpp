@@ -121,6 +121,17 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         
         JZNodeProgramInfo info = getProgramInfo();                
         result << netDataPack(info);
+        for (int i = 0; i < m_debugInfo.breakPoints.size(); i++)
+        {
+            auto it = m_debugInfo.breakPoints.begin();
+            while (it != m_debugInfo.breakPoints.end())
+            {
+                auto &break_list = it.value();
+                for(int bk_idx = 0; bk_idx < break_list.size(); bk_idx++)
+                    m_engine->addBreakPoint(it.key(), break_list[bk_idx]);
+                it++;
+            }
+        }
         m_init = true;
     }
     else if(cmd == Cmd_addBreakPoint)
@@ -182,6 +193,24 @@ void JZNodeDebugServer::onStatusChanged(int status)
     m_server.sendPack(m_client, &status_pack);
 }
 
+QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
+{
+    QVariant *ref = nullptr;
+    auto env = m_engine->stack()->env(stack);
+    if (coor.type == JZNodeParamCoor::Name)
+    {
+        ref = m_engine->getVariableRef(coor.name, stack);
+    }
+    else if (coor.type == JZNodeParamCoor::Id)
+    {
+        if (coor.id < Stack_User)
+            ref = env->getRef(coor.id);
+        else
+            ref = m_engine->getRegRef(coor.id);
+    }
+    return ref;
+}
+
 QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
 {    
     JZNodeDebugParamInfo info = netDataUnPack<JZNodeDebugParamInfo>(list[0].toByteArray());
@@ -189,30 +218,11 @@ QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
     for (int i = 0; i < info.coors.size(); i++)
     {
         JZNodeDebugParamValue param;
-        QVariant *value = nullptr;
-        auto &coor = info.coors[i];
-        if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::Node)
-        {
-            auto env = stack->variable(coor.stack);            
-            if (coor.type == JZNodeParamCoor::Local)
-                value = env->getRef(coor.name);
-            else
-                value = env->getRef(coor.id);
-        }
-        else if (coor.type == JZNodeParamCoor::This)
-        {            
-            value = &stack->env(coor.stack)->object;
-        }
-        else if (coor.type == JZNodeParamCoor::Global)
-        {
-            value = m_engine->getVariableRef(coor.name);                
-        }
-        else if (coor.type == JZNodeParamCoor::Reg)
-        {
-            value = m_engine->getRegRef(coor.id);
-        }                        
-                
-        param = toDebugParam(*value);
+        QVariant *ref = getVariableRef(info.stack,info.coors[i]);
+        if (ref)
+            param = toDebugParam(*ref);
+        else
+            param.value = "没找到";
         info.values << param;
     }
     return netDataPack(info);
@@ -220,36 +230,11 @@ QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
 
 void JZNodeDebugServer::setVariable(const QVariantList &list)
 {
-    JZNodeDebugParamInfo info = netDataUnPack<JZNodeDebugParamInfo>(list[0].toByteArray());
-    auto stack = m_engine->stack();
-    for (int i = 0; i < info.coors.size(); i++)
-    {
-        QVariant value;
-        auto &coor = info.coors[i];
-        if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::Node)
-        {
-            auto env = stack->variable(coor.stack);
-            if (coor.type == JZNodeParamCoor::Local)
-            {
-                if (env->locals.contains(coor.name))
-                    *env->locals[coor.name] = value;
-            }
-            else
-            {
-                if (env->stacks.contains(coor.id))
-                    *env->stacks[coor.id] = value;
-            }
-        }
-        else if (coor.type == JZNodeParamCoor::Global)
-        {
-            if (auto ref = m_engine->getVariableRef(coor.name))
-                *ref = value;
-        }
-        else if (coor.type == JZNodeParamCoor::Reg)
-        {
-            m_engine->setReg(coor.id,value);
-        }        
-    }
+    JZNodeSetDebugParamInfo info = netDataUnPack<JZNodeSetDebugParamInfo>(list[0].toByteArray());
+    auto stack = m_engine->stack();    
+    QVariant *ref = getVariableRef(info.stack, info.coor);
+    if (ref && !isJZObject(*ref))
+        *ref = JZNodeType::matchValue(JZNodeType::variantType(*ref), info.value);
 }
 
 JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)

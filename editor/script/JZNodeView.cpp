@@ -240,14 +240,13 @@ JZNodeView::JZNodeView(QWidget *widget)
 
     m_compilerTimer = new QTimer();
     connect(m_compilerTimer,&QTimer::timeout,this,&JZNodeView::onAutoCompiler);
-    m_compilerTimer->setSingleShot(true);    
-    //setWindowFlags(Qt::BypassGraphicsProxyWidget);
+    m_compilerTimer->setSingleShot(true);        
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &JZNodeView::customContextMenuRequested, this, &JZNodeView::onContextMenu);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);        
 
-    setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
     setRenderHint(QPainter::Antialiasing);    
     setDragMode(QGraphicsView::NoDrag);
@@ -691,6 +690,8 @@ void JZNodeView::initGraph()
     m_loadFlag = false;    
     m_scene->update();
     m_commandStack.clear();
+
+    fitNodeView();
 }
 
 void JZNodeView::clear()
@@ -931,11 +932,13 @@ void JZNodeView::ensureNodeVisible(int id)
 {
     auto item = getNodeItem(id);
 
-    QRectF rc = sceneRect();
-    rc.moveLeft(item->x() - rc.width() / 2);
-    rc.moveTop(item->y() - rc.height() / 2);
-    setSceneRect(rc);
-    this->centerOn(item);
+    QRectF view_rc = mapToScene(rect()).boundingRect();    
+    auto item_rc = item->mapRectToScene(item->boundingRect());
+    if (!view_rc.contains(item_rc))
+    {        
+        setSceneRect(QRectF());
+        this->centerOn(item);
+    }
 }
 
 void JZNodeView::selectNode(int id)

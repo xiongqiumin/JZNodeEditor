@@ -180,13 +180,19 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
 
 QList<JZProjectItem *> JZProjectItem::itemList(int type)
 {
+    QList<int> type_list = { type };
+    return itemList(type_list);
+}
+
+QList<JZProjectItem *> JZProjectItem::itemList(QList<int> type_list)
+{
     QList<JZProjectItem *> result;
-    if(this->itemType() & type)
+    if(type_list.contains(this->itemType()) || type_list.contains(ProjectItem_any))
         result << this;
 
     auto chlid = this->childs();
     for(int i = 0; i < chlid.size(); i++)
-        result << chlid[i]->itemList(type);
+        result << chlid[i]->itemList(type_list);
         
     return result;
 }
@@ -253,4 +259,16 @@ QString JZProjectItemFactory::itemTypeName(int itemType)
         return "流程";
 
     return QString();
+}
+
+
+int JZProjectItemIsScript(JZProjectItem *item)
+{
+    auto type = item->itemType();
+    if (type == ProjectItem_scriptParamBinding
+        || type == ProjectItem_scriptFlow
+        || type == ProjectItem_scriptFunction)
+        return true;
+
+    return false;
 }

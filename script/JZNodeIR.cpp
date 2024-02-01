@@ -209,6 +209,7 @@ JZNodeIRAlloc::JZNodeIRAlloc()
     type = OP_alloc;
     dataType = Type_none;
     allocType = None;
+    id = -1;
 }
 
 JZNodeIRAlloc::~JZNodeIRAlloc()
@@ -219,13 +220,13 @@ JZNodeIRAlloc::~JZNodeIRAlloc()
 void JZNodeIRAlloc::saveToStream(QDataStream &s) const
 {
     JZNodeIR::saveToStream(s);
-    s << allocType << name << dataType << value;
+    s << allocType << name << id << dataType << value;
 }
 
 void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
-    s >> allocType >> name >> dataType >> value;
+    s >> allocType >> name >> id >> dataType >> value;
 }
 
 QString name;

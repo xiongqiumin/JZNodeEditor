@@ -110,6 +110,7 @@ public:
         None,
         Heap,
         Stack,
+        StackId,
     };
 
     JZNodeIRAlloc();
@@ -120,6 +121,7 @@ public:
 
     int allocType;
     QString name;
+    int id;
     int dataType;
     JZNodeIRParam value;
 };

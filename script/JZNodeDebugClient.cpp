@@ -81,7 +81,7 @@ JZNodeDebugParamInfo JZNodeDebugClient::getVariable(JZNodeDebugParamInfo info)
     return ret;
 }
 
-void JZNodeDebugClient::setVariable(JZNodeDebugParamInfo info)
+void JZNodeDebugClient::setVariable(JZNodeSetDebugParamInfo info)
 {
     QVariantList params,result;
     params << netDataPack(info);

@@ -128,16 +128,7 @@ RunnerEnv::RunnerEnv()
     pc = -1;
 }
 
-//Stack
-Stack::StackVariable::StackVariable()
-{
-}
-
-Stack::StackVariable::~StackVariable()
-{    
-}
-
-QVariant *Stack::StackVariable::getRef(int id)
+QVariant *RunnerEnv::getRef(int id)
 {
     auto it = stacks.find(id);
     if (it == stacks.end())
@@ -146,7 +137,7 @@ QVariant *Stack::StackVariable::getRef(int id)
     return it->data();
 }
 
-QVariant *Stack::StackVariable::getRef(QString name)
+QVariant *RunnerEnv::getRef(QString name)
 {
     auto it = locals.find(name);
     if (it == locals.end())
@@ -166,18 +157,17 @@ Stack::~Stack()
 
 void Stack::clear()
 {
-    m_stack.clear();
     m_env.clear();  
 }
 
 int Stack::size() const
 {
-    return m_stack.size();
+    return m_env.size();
 }
 
 bool Stack::isEmpty() const
 {
-    return (m_stack.size() == 0);
+    return (m_env.size() == 0);
 }
 
 RunnerEnv *Stack::currentEnv()
@@ -190,47 +180,21 @@ RunnerEnv *Stack::env(int index)
     return &m_env[index];
 }
 
-Stack::StackVariable *Stack::currentVariable()
-{
-    if (m_stack.size() == 0)
-        return nullptr;
-
-    return &m_stack.back();
-}
-
-Stack::StackVariable *Stack::variable(int index)
-{
-    return &m_stack[index];
-}
-
 void Stack::pop()
 {       
-    m_stack.pop_back();    
     m_env.pop_back();
 }
 
 void Stack::push()
 {           
-    StackVariable v;
-    m_stack.push_back(v);
     m_env.push_back(RunnerEnv());
-}
-
-QVariant *Stack::getVariableRef(QString name)
-{
-    int level = m_stack.size() - 1;
-    auto it = m_stack[level].locals.find(name);
-    if(it != m_stack[level].locals.end())
-        return it->data();
-    else
-        return nullptr;
 }
 
 QVariant Stack::getVariable(const QString &name)
 {
-    int level = m_stack.size() - 1;
-    auto it = m_stack[level].locals.find(name);
-    if (it == m_stack[level].locals.end())
+    int level = m_env.size() - 1;
+    auto it = m_env[level].locals.find(name);
+    if (it == m_env[level].locals.end())
         return QVariant();
 
     return *it.value();
@@ -238,28 +202,28 @@ QVariant Stack::getVariable(const QString &name)
 
 void Stack::setVariable(const QString &name, const QVariant &value)
 {
-    int level = m_stack.size() - 1;
-    auto it = m_stack[level].locals.find(name);
-    if (it == m_stack[level].locals.end())    
-        m_stack[level].locals[name] = JZVariantPtr(new QVariant());
+    int level = m_env.size() - 1;
+    auto it = m_env[level].locals.find(name);
+    if (it == m_env[level].locals.end())
+        m_env[level].locals[name] = JZVariantPtr(new QVariant());
 
-    *m_stack[level].locals[name] = value;
+    *m_env[level].locals[name] = value;
 }
 
 QVariant Stack::getVariable(int id)
 {
-    return getVariable(m_stack.size() - 1,id);
+    return getVariable(m_env.size() - 1,id);
 }
 
 void Stack::setVariable(int id, const QVariant &value)
 {
-    setVariable(m_stack.size() - 1,id,value);
+    setVariable(m_env.size() - 1,id,value);
 }
 
 QVariant Stack::getVariable(int level,int id)
 {
-    auto it = m_stack[level].stacks.find(id);
-    if (it == m_stack[level].stacks.end())
+    auto it = m_env[level].stacks.find(id);
+    if (it == m_env[level].stacks.end())
         return QVariant();
 
     return *(it.value());
@@ -267,11 +231,11 @@ QVariant Stack::getVariable(int level,int id)
 
 void Stack::setVariable(int level,int id, const QVariant &value)
 {
-    auto it = m_stack[level].stacks.find(id);
-    if (it == m_stack[level].stacks.end())
-        m_stack[level].stacks[id] = JZVariantPtr(new QVariant());
+    auto it = m_env[level].stacks.find(id);
+    if (it == m_env[level].stacks.end())
+        m_env[level].stacks[id] = JZVariantPtr(new QVariant());
 
-    *m_stack[level].stacks[id] = value;
+    *m_env[level].stacks[id] = value;
 }
 
 //JZNodeRuntimeError
@@ -432,6 +396,7 @@ void JZNodeEngine::clear()
     m_statusCommand = Status_none;
     m_status = Status_none;
 
+    setReg(Reg_Cmp, false);
     if (g_engine == this)
         g_engine = nullptr;
 }
@@ -457,6 +422,45 @@ void JZNodeEngine::init()
     QVariantList in, out;
     auto init_func = function("__init__");    
     call(init_func, in,out);
+
+    //init global connect cache    
+    auto script_list = m_program->scriptList();
+    for (int sc_idx = 0; sc_idx < script_list.size(); sc_idx++)
+    {
+        if (!script_list[sc_idx]->className.isEmpty())
+            continue;
+
+        auto list = script_list[sc_idx]->functionList;
+        for (int i = 0; i < list.size(); i++)
+        {
+            auto &func_def = list[i];
+            QString &func = func_def.name;
+            if (func.startsWith("on_"))
+            {
+                int index = func.indexOf("_", 3);
+                if (index == -1)
+                    continue;
+
+                QString param = func.mid(3, index - 3);
+                QString single = func.mid(index + 1);
+                Q_ASSERT(m_global.contains(param));
+                auto ref = m_global[param].data();                
+
+                auto sender_type = JZObjectType(*ref);
+                auto sender_meta = JZNodeObjectManager::instance()->meta(sender_type);
+                Q_ASSERT(sender_meta);
+
+                auto s = sender_meta->single(single);
+
+                ConnectCache info;
+                info.eventType = s->eventType;
+                info.sender = ref;
+                info.recv = nullptr;
+                info.handle = func_def.fullName();
+                m_variantInfo[ref].connectQueue.push_back(info);
+            }
+        }
+    }
 }   
 
 void JZNodeEngine::deinit()
@@ -514,7 +518,7 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
     if (m_status == Status_idlePause)
     {
         JZNodeRuntimeInfo::Stack s;
-        s.file = "idle";
+        s.file = "__idle__";
         info.stacks.push_back(s);
     }
     else
@@ -566,10 +570,10 @@ void JZNodeEngine::pushStack(const FunctionDefine *func)
 
 void JZNodeEngine::popStack()
 {   
-    auto &locals = m_stack.currentVariable()->locals;
-    for (int i = 0; i < locals.size(); i++)
+    auto &locals = m_stack.currentEnv()->locals;
+    for (auto &ptr : locals)
     {
-
+        varaiantDeleteNotify(ptr.data());
     }
 
     m_stack.pop();
@@ -782,9 +786,11 @@ void JZNodeEngine::connectSingleLater(QVariant *v)
         if (c.sender == v)
         {
             connectEvent(sender, c.eventType, c.recv, c.handle);
-            m_objectInfo[c.recv].connectQueue--;
-            Q_ASSERT(m_objectInfo[c.recv].connectQueue >= 0);
-
+            if (c.recv)
+            {
+                m_objectInfo[c.recv].connectQueue--;
+                Q_ASSERT(m_objectInfo[c.recv].connectQueue >= 0);
+            }
             list.removeAt(i);           
         }
     }
@@ -1027,9 +1033,9 @@ void JZNodeEngine::splitMember(const QString &fullName, QStringList &objName,QSt
     memberName = list.back();
 }
 
-QVariant *JZNodeEngine::getVariableRefSingle(const QString &name)
+QVariant *JZNodeEngine::getVariableRefSingle(RunnerEnv *env, const QString &name)
 {
-    QVariant *obj = m_stack.isEmpty() ? nullptr : m_stack.getVariableRef(name);
+    QVariant *obj = env->getRef(name);
     if (obj)
         return obj;
 
@@ -1042,8 +1048,15 @@ QVariant *JZNodeEngine::getVariableRefSingle(const QString &name)
 
 QVariant *JZNodeEngine::getVariableRef(const QString &name)
 {
+    return getVariableRef(name, -1);    
+}
+
+QVariant *JZNodeEngine::getVariableRef(const QString &name, int stack_level)
+{
+    auto env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
+
     if (name == "this")
-        return &m_stack.currentEnv()->object;
+        return &env->object;
 
     QStringList obj_list;
     QString param_name;
@@ -1053,19 +1066,22 @@ QVariant *JZNodeEngine::getVariableRef(const QString &name)
     {
         QVariant *obj = nullptr;
         if (obj_list[0] == "this")
-            obj = &m_stack.currentEnv()->object;
+            obj = &env->object;
         else
-            obj = getVariableRefSingle(obj_list[0]);
+            obj = getVariableRefSingle(env,obj_list[0]);
 
-        for (int i = 1; i < obj_list.size(); i++)                    
-            obj = toJZObject(*obj)->paramRef(obj_list[i]);        
+        if (!obj)
+            return nullptr;
+
+        for (int i = 1; i < obj_list.size(); i++)
+            obj = toJZObject(*obj)->paramRef(obj_list[i]);
 
         JZNodeObject *ptr = toJZObject(*obj);
         return ptr->paramRef(param_name);
     }
     else
     {
-        return getVariableRefSingle(param_name);
+        return getVariableRefSingle(env, param_name);
     }
 }
 
@@ -1094,14 +1110,6 @@ void JZNodeEngine::setVariable(const QString &name, const QVariant &value)
         connectSingleLater(ref);
     if (isChange)
         valueChanged(ref);  
-}
-
-JZNodeObject* JZNodeEngine::getObject(const QString &name)
-{
-    auto ref = getVariableRef(name);
-    if (!ref)
-        return nullptr;
-    return toJZObject(*ref);
 }
 
 QVariant JZNodeEngine::getThis()
@@ -1198,7 +1206,7 @@ void JZNodeEngine::print(const QString &log)
 }
 
 QVariant JZNodeEngine::getReg(int id)
-{       
+{               
     auto *ref = getRegRef(id);
     if (!ref)
         throw std::runtime_error("no such reg " + to_string(id));

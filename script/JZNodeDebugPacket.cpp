@@ -30,15 +30,13 @@ void JZNodeDebugPacket::loadFromStream(QDataStream &s)
 //JZNodeParamCoor
 JZNodeParamCoor::JZNodeParamCoor()
 {
-    type = 0;
-    id = -1;
-    stack = -1;
+    type = Name;
+    id = -1;    
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeParamCoor &param)
 {
-    s << param.type;
-    s << param.stack;
+    s << param.type;    
     s << param.name;
     s << param.id;
     return s;
@@ -46,8 +44,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeParamCoor &param)
 
 QDataStream &operator >> (QDataStream &s, JZNodeParamCoor &param)
 {
-    s >> param.type;
-    s >> param.stack;
+    s >> param.type;    
     s >> param.name;
     s >> param.id;
     return s;
@@ -71,8 +68,14 @@ QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param)
 }
 
 //JZNodeDebugParamInfo
+JZNodeDebugParamInfo::JZNodeDebugParamInfo()
+{
+    stack = -1;
+}
+
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamInfo &param)
 {
+    s << param.stack;
     s << param.coors;
     s << param.values;
     return s;
@@ -80,8 +83,31 @@ QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamInfo &param)
 
 QDataStream &operator>>(QDataStream &s, JZNodeDebugParamInfo &param)
 {
+    s >> param.stack;
     s >> param.coors;
     s >> param.values;
+    return s;
+}
+
+//JZNodeSetDebugParamInfo
+JZNodeSetDebugParamInfo::JZNodeSetDebugParamInfo()
+{
+    stack = -1;
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamInfo &param)
+{
+    s << param.stack;
+    s << param.coor;
+    s << param.value;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamInfo &param)
+{
+    s >> param.stack;
+    s >> param.coor;
+    s >> param.value;
     return s;
 }
 

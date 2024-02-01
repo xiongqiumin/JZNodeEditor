@@ -187,7 +187,7 @@ void JZProjectTree::renameItem(QTreeWidgetItem *view_item)
 void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
 {
     if(m_editItem != item)
-        return;
+        return;    
 
     QString name_error;
     QString name = m_editItem->text(0);

@@ -81,8 +81,7 @@ void JZProject::clear()
     m_itemBuffer.clear();
     m_filepath.clear();
     m_root.removeChlids();
-    m_root.setName(".");
-    m_filepath.clear();
+    m_root.setName(".");    
 }
 
 void JZProject::init()
@@ -191,11 +190,14 @@ bool JZProject::open(QString filepath)
 
     registType();
 
-    auto script_list = itemList("./", ProjectItem_script);
+    auto script_list = itemList("./", ProjectItem_any);
     for (int i = 0; i < script_list.size(); i++)
-    {
-        auto item = (JZScriptFile*)script_list[i];      
-        item->loadFinish();
+    {        
+        if (JZProjectItemIsScript(script_list[i]))
+        {            
+            auto item = dynamic_cast<JZScriptFile*>(script_list[i]);
+            item->loadFinish();
+        }
     }    
 
     return true;
@@ -645,8 +647,9 @@ QMap<QString, QVector<int>> JZProject::breakPoints()
     QMap<QString, QVector<int>> breakPoints;
     auto it = m_itemBuffer.begin();
     while (it != m_itemBuffer.end())
-    {
-        breakPoints.insert(it.key(), it->breakPoints);
+    {     
+        if(JZProjectItemIsScript(getItem(it.key())))
+            breakPoints.insert(it.key(), it->breakPoints);
         it++;
     }
     return breakPoints;

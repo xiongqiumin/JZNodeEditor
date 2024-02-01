@@ -14,8 +14,9 @@ enum{
     Stack_User = 1000000,    
 
     Reg_Start = 2000000,    
-    Reg_Call = Reg_Start,               //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User
-    Reg_Cmp = 2500000,
+    Reg_Pc,
+    Reg_Cmp,
+    Reg_Call,   //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User    
 };
 
 //NodeRange

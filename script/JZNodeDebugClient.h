@@ -24,7 +24,7 @@ public:
     void removeBreakPoint(QString file,int nodeId);
     void clearBreakPoint();    
     JZNodeDebugParamInfo getVariable(JZNodeDebugParamInfo info);
-    void setVariable(JZNodeDebugParamInfo info);
+    void setVariable(JZNodeSetDebugParamInfo info);
     
     void detach();
     void pause();       

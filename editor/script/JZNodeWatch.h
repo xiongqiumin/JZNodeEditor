@@ -16,29 +16,43 @@ public:
     JZNodeWatch(QWidget *parent = nullptr);
     ~JZNodeWatch();
 
+    void setReadOnly(bool flag);
     void setRunning(bool isRun);
     void setRuntimeStatus(int status);
+    
     void setParamInfo(JZNodeDebugParamInfo *info,bool isNew);
+    void updateParamInfo(JZNodeDebugParamInfo *info);
+    QStringList watchList();
+
     void clear();
         
 signals:
-    void sigParamChanged(JZNodeParamCoor coor,QVariant value);
+    void sigParamValueChanged(JZNodeParamCoor coor,QVariant value);
+    void sigParamNameChanged(JZNodeParamCoor coor);
     
 protected slots:   
     void onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column);
     void onItemChanged(QTreeWidgetItem *item, int column);
 
 protected:       
-    void updateStatus();    
+    virtual void keyPressEvent(QKeyEvent *e) override;
+
+    void updateStatus();
+    void updateWatchItem();
     int indexOfItem(QTreeWidgetItem *root, const QString &name);
     void setItem(QTreeWidgetItem *root,int index,const QString &name,const JZNodeDebugParamValue &info);    
-    JZNodeDebugParamValue getParamValue(QTreeWidgetItem *item);
+    
+    JZNodeDebugParamValue getParamValue(QTreeWidgetItem *item);    
 
+    bool m_readOnly;
     bool m_running;
     int m_status;    
-    bool m_newParam;
-    
-    QTreeWidget *m_view;
+    bool m_newParam;    
+    QTreeWidgetItem *m_editItem;
+    int m_editColumn;
+
+    QTreeWidget *m_view;    
+
 };
 
 

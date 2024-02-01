@@ -36,7 +36,9 @@ public:
 
     void addLog(int type, const QString &log);
     JZNodeStack *stack();
-    JZNodeWatch *watch();
+    JZNodeWatch *watchAuto();
+    JZNodeWatch *watchManual();
+    JZNodeWatch *watchReg();
     JZNodeBreakPoint *breakpoint();
 
 signals:
@@ -49,7 +51,9 @@ protected:
     QList<LogBrowser*> m_logs;
     QTabWidget *m_tabWidget;
     JZNodeStack *m_stack;    
-    JZNodeWatch *m_watch;
+    JZNodeWatch *m_watchAuto;
+    JZNodeWatch *m_watchManual;
+    JZNodeWatch *m_watchReg;
     JZNodeBreakPoint *m_breakPoint;    
 };
 

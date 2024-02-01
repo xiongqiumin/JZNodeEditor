@@ -272,26 +272,6 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
             }
         }
 
-        //add display
-        if (ret)
-        {
-            for (int node_idx = 0; node_idx < graph->topolist.size(); node_idx++)
-            {
-                auto node = graph->topolist[node_idx];
-                if (node->node->type() != Node_display)
-                    continue;
-
-                auto in_map = node->paramIn;
-                auto it = in_map.begin();
-                while (it != in_map.end())
-                {
-
-
-
-                    it++;
-                }
-            }
-        }
         buildRet = (buildRet && ret);
     }
     
@@ -1054,6 +1034,22 @@ void JZNodeCompiler::addFunctionAlloc(const FunctionDefine &define)
     {
         auto param = m_scriptFile->localVariable(list[i]);        
         addAllocLocal(param);
+    }
+    for (int i = 0; i < m_currentGraph->topolist.size(); i++)
+    {
+        auto node = m_currentGraph->topolist[i]->node;
+        auto in_list = node->paramInList();
+        for (int j = 0; j < in_list.size(); j++)
+        {
+            addAllocLocal(param);
+            paramId(node->id(), in_list[i]);
+        }
+
+        auto out_list = node->paramOutList();
+        for (int j = 0; j < out_list.size(); j++)
+        {
+            paramId(node->id(), out_list[i]);
+        }
     }
 }
 

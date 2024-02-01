@@ -17,6 +17,7 @@
 #include "JZNodeStack.h"
 #include "JZNodeBreakPoint.h"
 #include "LogManager.h"
+#include "tests/test_server.h"
 
 class Setting
 {
@@ -85,10 +86,14 @@ protected slots:
     void onLog(LogObjectPtr log);
 
     void onStackChanged(int stack);
+    void onWatchValueChanged(JZNodeParamCoor coor, QVariant value);
+    void onWatchNameChanged(JZNodeParamCoor coor);
+    
     void onRuntimeLog(QString log);    
     void onRuntimeError(JZNodeRuntimeError error);    
     void onRuntimeStatus(int staus);    
     void onRuntimeFinish(int code,QProcess::ExitStatus status);
+    void onTestProcessFinish();
     void onNetError();
 
 private:
@@ -130,18 +135,22 @@ private:
     void setRuntimeNode(QString file, int nodeId);
     void clearRuntimeNode();
     void updateRuntime(int stack_index, bool isNew);
+    void clearWatchs();
+    void setWatchStatus(int status);
+    void setWatchRunning(bool flag);
 
     bool build();
     void start(bool startPause);    
     void saveToFile(QString file,QString text);
     void saveAll();
-    bool closeAll();    
+    bool closeAll(); 
+    void initLocalProcessTest();
     
     JZProject m_project;    
 
     LogWidget *m_log;
     JZNodeStack *m_stack;
-    JZNodeWatch *m_watch;
+    JZNodeWatch *m_watchAuto,*m_watchManual,*m_watchReg;
     JZNodeBreakPoint *m_breakPoint;
     JZProjectTree *m_projectTree;
     QList<QMenu*> m_menuList;
@@ -155,9 +164,13 @@ private:
     Setting m_setting;
 
     JZNodeDebugClient m_debuger;
-    QProcess m_process;       
+    QProcess m_process;           
     bool m_processVaild;
 
+    bool m_useTestProcess;
+    TestServer m_testProcess;
+
+    QList<JZNodeWatch*> m_debugWidgets;
     QAction *m_actionRun, *m_actionResume;
 
     JZNodeProgramInfo m_program;

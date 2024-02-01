@@ -192,6 +192,9 @@ JZNodeDisplay::JZNodeDisplay()
 {
     m_type = Node_display;
     m_name = "display";
+
+    int in = addParamIn("value");
+    setPinTypeAny(in);
 }
 
 JZNodeDisplay::~JZNodeDisplay()
