@@ -693,6 +693,9 @@ bool MainWindow::openEditor(QString filepath)
         return false;
 
     JZProjectItem *item = m_project.getItem(filepath);
+    if (!item)
+        return false;
+
     QString file = item->itemPath();
     if (!m_editors.contains(file)) {
         JZEditor *editor = createEditor(item->itemType());
@@ -825,18 +828,14 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
     
     JZNodeDebugParamInfo param_info;      
     
-    //node
-    auto &node_info = m_program.scripts[stack.file].nodeInfo[stack.nodeId];
-    for (int i = 0; i < node_info.paramIn.size(); i++)
-    {
+    //this
+    auto func = m_program.function(stack.function);    
+    if (func->isMemberFunction())
+    {        
         JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Node;
-        coor.stack = stack_index;
-        coor.id = node_info.paramInId[i];
-        coor.name = node_info.paramIn[i];
-        if (coor.name.isEmpty())
-            coor.name = "input" + QString::number(i+1);
-        param_info.coors << coor;
+        coor.type = JZNodeParamCoor::This;
+        coor.name = "this";
+        param_info.coors << coor;        
     }
 
     //local
@@ -851,32 +850,6 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         coor.name = local.name;
         param_info.coors << coor;
     }
-
-    //this
-    auto func = m_program.function(stack.function);
-    if (!func->className.isEmpty())
-    {
-        auto meta = m_program.meta(func->className);
-        auto paramList = meta->paramList(true);
-        for (int i = 0; i < paramList.size(); i++)
-        {
-            JZNodeParamCoor coor;
-            coor.type = JZNodeParamCoor::This;
-            coor.name = paramList[i];
-            param_info.coors << coor;
-        }
-    }
-
-    //global
-    auto it = m_program.globalVariables.begin();
-    while (it != m_program.globalVariables.end())
-    {
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Global;
-        coor.name = it->name;
-        param_info.coors << coor;
-        it++;
-    }    
 
     param_info = m_debuger.getVariable(param_info);
     m_watch->setParamInfo(&param_info,isNew);    
@@ -1002,16 +975,24 @@ void MainWindow::onRuntimeLog(QString log)
 
 void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
-    m_log->addLog(Log_Runtime, "Runtime error:");
-    m_log->addLog(Log_Runtime, error.error + "\n");
-
+    QString error_msg = "Runtime Error: " + error.error + "\n\n";
+    m_log->addLog(Log_Runtime, error_msg);
+    
     int stack_size = error.info.stacks.size();
     for (int i = 0; i < stack_size; i++)
     {
         auto s = error.info.stacks[stack_size - i - 1];
         QString line = makeLink(s.file, s.function, s.nodeId);
         m_log->addLog(Log_Runtime, line);
+        
+        line = s.function;
+        if (!s.file.isEmpty())
+            line += +"(" + s.file + "," + QString::number(s.nodeId) + ")";        
+        error_msg += line + "\n";
     }    
+
+    activateWindow();    
+    QMessageBox::information(this, "", error_msg);
 }
 
 void MainWindow::onNetError()

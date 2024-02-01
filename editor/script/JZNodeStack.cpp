@@ -5,8 +5,34 @@
 #include <QMenu>
 #include <QApplication>
 #include <QClipBoard>
+#include <QKeyEvent>
 #include "UiCommon.h"
 #include "JZNodeEngine.h"
+
+class TableEnterFilter : public QObject
+{
+public:
+    TableEnterFilter(QObject *parent)
+        :QObject(parent)
+    {
+    }
+
+    bool eventFilter(QObject*obj, QEvent*event)
+    {
+        if (event->type() == QEvent::KeyPress)
+        {
+            QKeyEvent*keyEvent = static_cast<QKeyEvent*>(event);//将事件转化为键盘事件
+            if (keyEvent->key() == Qt::Key_Enter)
+            {         
+                JZNodeStack *w = (JZNodeStack*)parent();
+                w->enterPressed();
+                return true;
+            }          
+        }
+        
+        return QObject::eventFilter(obj, event);        
+    }
+};
 
 JZNodeStack::JZNodeStack(QWidget *parent)
     :QWidget(parent)
@@ -19,13 +45,16 @@ JZNodeStack::JZNodeStack(QWidget *parent)
     m_table->verticalHeader()->hide();
     m_table->setEditTriggers(QTableWidget::NoEditTriggers);
 
+    TableEnterFilter *filter = new TableEnterFilter(this);
+    m_table->installEventFilter(filter);//注册事件过滤器
+
     QVBoxLayout *sub_layout = new QVBoxLayout();
     sub_layout->addWidget(m_table);
     this->setLayout(sub_layout);
 
     m_running = false;
     m_status = Status_none;
-    connect(m_table, &QTableWidget::currentItemChanged, this, &JZNodeStack::onStackChanged);
+    connect(m_table, &QTableWidget::itemDoubleClicked, this, &JZNodeStack::onItemDoubleClicked);
 }
 
 JZNodeStack::~JZNodeStack()
@@ -92,12 +121,25 @@ void JZNodeStack::setRunning(bool isRun)
     updateStatus();
 }
 
-void JZNodeStack::onStackChanged()
+void JZNodeStack::enterPressed()
+{
+    if (!m_running || m_table->currentRow() == -1)
+        return;
+
+    stackChanged(m_table->currentRow());
+}
+
+void JZNodeStack::onItemDoubleClicked(QTableWidgetItem *item)
 {
     if (!m_running)
         return;
 
-    int row = m_table->currentRow();
+    stackChanged(item->row());
+    
+}
+
+void JZNodeStack::stackChanged(int row)
+{
     int level = m_table->rowCount() - row - 1;
     emit sigStackChanged(level);
 }

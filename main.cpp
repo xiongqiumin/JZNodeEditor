@@ -25,8 +25,8 @@ int main(int argc, char *argv[])
     {
         SampleRussian russian;
         russian.saveProject();
-        russian.run();
-        return 0;
+        //russian.run();
+        //return 0;
     }
     if(0)
     {         

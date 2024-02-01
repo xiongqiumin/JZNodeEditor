@@ -17,7 +17,7 @@ JZNodeFunctionStart::~JZNodeFunctionStart()
 
 bool JZNodeFunctionStart::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->allocFunctionVariable();
+    c->addFunctionAlloc(m_file->function());
     c->addFlowOutput(m_id);
     c->addJumpNode(flowOut());
     return true;

@@ -26,6 +26,7 @@ public:
 
     JZNodeObjectDefine objectDefine();
     
+    JZParamFile *getParamFile();
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
     void removeMemberVariable(QString name);
     JZParamDefine *memberVariableInfo(QString name);
@@ -36,8 +37,7 @@ public:
 
     QList<JZParamDefine> uiWidgets();
 
-protected:   
-    JZParamFile *getParamFile();
+protected:       
     QString m_className;
     QString m_super;
     int m_classId;

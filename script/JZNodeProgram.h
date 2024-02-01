@@ -102,12 +102,13 @@ public:
     JZNodeScript *script(QString path);    
     JZFunction *runtimeInfo(QString function);
 
-    QList<JZNodeScript*> scriptList();
-    JZNodeScript *objectScript(QString className);        
+    QList<JZNodeScript*> scriptList();    
+    QMap<QString, QString> bindInfo(QString className);
 
     QList<FunctionDefine> functionDefines();
     QList<JZNodeObjectDefine> objectDefines();
-    QMap<QString,JZParamDefine> globalVariables();
+    QMap<QString,JZParamDefine> globalVariables();    
+
     QString dump();   
     QString error();
     
@@ -117,10 +118,12 @@ protected:
     friend JZNodeBuilder;    
     QString toString(JZNodeIRParam param);
     
+    QString m_error;
+
     QMap<QString,JZNodeScriptPtr> m_scripts; 
     QMap<QString,JZParamDefine> m_variables;        
     QList<JZNodeObjectDefine> m_objectDefines;        
-    QString m_error;    
+    QMap<QString, QMap<QString, QString>> m_binds;    
 };
 
 #endif

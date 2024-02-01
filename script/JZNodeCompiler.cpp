@@ -177,8 +177,7 @@ JZNodeCompiler::JZNodeCompiler()
     m_scriptFile = nullptr;
     m_currentGraph = nullptr;
     m_currentNodeInfo = nullptr;
-    m_currentNode = nullptr;
-    m_stackId = Stack_User;
+    m_currentNode = nullptr;    
 }
 
 JZNodeCompiler::~JZNodeCompiler()
@@ -193,9 +192,9 @@ void JZNodeCompiler::init(JZScriptFile *scriptFile)
     m_script = nullptr;        
     m_nodeGraph.clear();
     m_nodeInfo.clear();
-    m_className.clear();
-    m_localVaribales.clear();
+    m_className.clear();    
     m_graphList.clear();
+    resetStack();
 }
 
 bool JZNodeCompiler::genGraphs(JZScriptFile *scriptFile, QVector<GraphPtr> &list)
@@ -248,8 +247,7 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
         m_currentGraph = graph;                
 
         int buildType = m_scriptFile->itemType();
-        m_stackId = Stack_User;    
-        m_localVaribales.clear();
+        resetStack();            
 
         bool ret = false;
         if(buildType == ProjectItem_scriptFlow)
@@ -265,15 +263,12 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
             JZNode *start_node = graph->topolist[0]->node;
             if(start_node->type() != Node_functionStart)
                 continue;
-            
-            FunctionDefine define = scriptFile->function();            
-            m_stackId = Stack_User;
-
-            int start_pc = nextPc();
+                        
             ret = bulidControlFlow();
             if(ret)
             {           
-                addFunction(define, start_pc);
+                FunctionDefine define = scriptFile->function();
+                addFunction(define, start_node->id());
             }
         }
 
@@ -449,7 +444,7 @@ void JZNodeCompiler::addLocalVariable(JZNodeIRParam param)
     if (!param.isRef())
         return;
 
-    auto info = m_scriptFile->localVariableInfo(param.ref());
+    auto info = m_scriptFile->localVariable(param.ref());
     if (!info)
         return;
 
@@ -579,38 +574,25 @@ void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
         JZNode *node = graph_list[node_idx]->node;
         JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(graph_list[node_idx]->node);
         if(node_event)
-        {
-            int start_pc = m_nodeInfo[node->id()].start;            
-
+        {            
             FunctionDefine def = node_event->function();
             if(!def.isNull())
-                addFunction(def, start_pc);
+                addFunction(def, node->id());
         }
     }
 }
 
-void JZNodeCompiler::addFunction(const FunctionDefine &define, int node_pc)
+void JZNodeCompiler::addFunction(const FunctionDefine &define, int node_id)
 {    
-    int start_pc = nextPc();    
-    for (int i = 0; i < define.paramIn.size(); i++)
-    {
-        addAllocLocal(&define.paramIn[i]);
-        addSetVariable(irRef(define.paramIn[i].name), irId(Reg_Call + i));
-    }
-    for (int i = 0; i < m_localVaribales.size(); i++)
-        addAllocLocal(&m_localVaribales[i]);
-
-    JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
-    jmp->jmpPc = irLiteral(node_pc);
-    addStatement(JZNodeIRPtr(jmp));
-
     m_script->functionList.push_back(define);
-    m_script->functionList.back().addr = start_pc;
+    m_script->functionList.back().addr = m_nodeInfo[node_id].start;
     m_script->functionList.back().file = m_script->file;
 
     JZFunction runtime;
     runtime.file = m_script->file;
-    runtime.localVariables = m_localVaribales;
+    runtime.localVariables << define.paramIn << m_localVaribales;
+    if (define.isMemberFunction())
+        runtime.localVariables.pop_front();
 
     m_script->runtimeInfo[define.fullName()] = runtime;
 }
@@ -1017,7 +999,7 @@ void JZNodeCompiler::addCall(const JZNodeIRParam &function, const QList<JZNodeIR
     if (function.isLiteral())
     {
         auto func = JZNodeFunctionManager::instance()->function(function.literal().toString());
-        Q_ASSERT(func);
+        Q_ASSERT(func && func->paramIn.size() == paramIn.size() && func->paramOut.size() >= paramOut.size());
     }
 
     for(int i = 0; i < paramIn.size(); i++)
@@ -1031,14 +1013,48 @@ void JZNodeCompiler::addCall(const JZNodeIRParam &function, const QList<JZNodeIR
         addSetVariable(paramOut[i],irId(Reg_Call+i));
 }
 
+void JZNodeCompiler::resetStack()
+{
+    m_stack.resize(128);
+    m_stack.fill(false);
+    m_localVaribales.clear();
+}
+
 int JZNodeCompiler::allocStack()
 {
-    Q_ASSERT(m_stackId < Reg_Start - 1);
-    return m_stackId++;
+    for (int i = 0; i < m_stack.size(); i++)
+    {
+        if (!m_stack[i])
+        {
+            m_stack[i] = true;
+            return Stack_User + i;
+        }
+    }
+    Q_ASSERT(0);
+    return -1;
 }
 
 void JZNodeCompiler::freeStack(int id)
 {
+    m_stack[id - Stack_User] = false;
+}
+
+void JZNodeCompiler::addFunctionAlloc(const FunctionDefine &define)
+{
+    QSet<QString> func_param;
+    int start_pc = nextPc();
+    for (int i = 0; i < define.paramIn.size(); i++)
+    {
+        func_param.insert(define.paramIn[i].name);
+        if (i != 0 || !define.isMemberFunction())
+            addAllocLocal(&define.paramIn[i], irId(Reg_Call + i));
+    }
+    auto list = m_scriptFile->localVariableList(false);
+    for (int i = 0; i < list.size(); i++)
+    {
+        auto param = m_scriptFile->localVariable(list[i]);        
+        addAllocLocal(param);
+    }
 }
 
 const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptFile *file,const QString &name)
@@ -1068,7 +1084,7 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptFile *file,const QS
             param_name = name.mid(gap + 1);
         }
 
-        auto def = file->localVariableInfo(base_name);
+        auto def = file->localVariable(base_name);
         if (!def)
             def = project->globalVariableInfo(base_name);
         if (!def)
@@ -1146,8 +1162,22 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
 
                 Q_ASSERT(gemo_list.size() == 1);
                 int from_id = paramId(gemo_list[i]);
-                int to_id = paramId(in_node->node->id(), in_prop);
-                addSetVariable(irId(to_id), irId(from_id));
+                int to_id = paramId(nodeId, in_prop);
+
+                int from_type = pinType(gemo_list[i]);
+                int to_type = pinType(nodeId, in_prop);
+                if(from_type == to_type)
+                    addSetVariable(irId(to_id), irId(from_id));
+                else
+                {
+                    int tmp_id = allocStack();
+                    QList<JZNodeIRParam> in, out;
+                    in << irId(from_id) << irLiteral(to_type);
+                    out << irId(tmp_id);
+                    addCall(irLiteral("convert"), in, out);
+                    addSetVariable(irId(to_id), irId(tmp_id));
+                    freeStack(tmp_id);
+                }
             }
         }
         else
@@ -1310,23 +1340,6 @@ void JZNodeCompiler::addAssert(const JZNodeIRParam &tips)
     JZNodeIRAssert *assert = new JZNodeIRAssert();
     assert->tips = tips;
     addStatement(JZNodeIRPtr(assert));
-}
-
-void JZNodeCompiler::allocFunctionVariable()
-{
-    auto define = m_scriptFile->function();
-    for(int i = 0; i < define.paramIn.size(); i++)
-    {
-        if (i == 0 && !define.className.isEmpty())
-        {
-            addSetVariable(irRef("this"), irId(Reg_Call + i));
-        }
-        else
-        {
-            m_localVaribales.push_back(define.paramIn[i]);
-            addSetVariable(irRef(define.paramIn[i].name), irId(Reg_Call + i));            
-        }
-    }
 }
 
 int JZNodeCompiler::addNop()

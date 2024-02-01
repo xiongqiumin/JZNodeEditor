@@ -20,17 +20,17 @@ public:
     void renameVariable(QString oldName,QString newName);
     void setVariableType(QString name,int dataType);
     void setVariableValue(QString name, const QVariant &value);
-
-    void bindVariable(QString name, QString widget);
-    void unbindVariable(QString name);
-
     JZParamDefine *getVariable(QString name);
     QStringList variableList();
-    const QMap<QString,JZParamDefine> &variables();
+    const QMap<QString, JZParamDefine> &variables();
+
+    void bindVariable(QString name, QString widget);
+    void unbindVariable(QString name);    
+    const QMap<QString, QString> &binds();
 
 protected:    
     QMap<QString,JZParamDefine> m_variables;
-    QMap<QString, QString> m_variableBind;
+    QMap<QString,QString> m_binds;
 };
 
 

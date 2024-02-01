@@ -43,6 +43,7 @@ void JZScriptFile::clear()
 
 const FunctionDefine &JZScriptFile::function()
 {
+    Q_ASSERT(m_itemType == ProjectItem_scriptFunction);
     return m_function;
 }
 
@@ -182,7 +183,7 @@ bool JZScriptFile::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         error = "子过程只能连接未连接的节点";
         return false;
     }
-    if(pin_from->isFlow() && in_lines.size() > 0 && (parentNode(from.nodeId) != parentNode(to.nodeId)))
+    if(pin_from->isFlow() && parentNode(to.nodeId) != -1 && (parentNode(from.nodeId) != parentNode(to.nodeId)))
     {        
         error = "两个节点属于不同的流程，无法连接";
         return false;
@@ -358,7 +359,7 @@ QList<JZNodeConnect> JZScriptFile::connectList()
     return m_connects;
 }
 
-JZParamDefine *JZScriptFile::localVariableInfo(const QString &name)
+JZParamDefine *JZScriptFile::localVariable(const QString &name)
 {
     if (m_itemType == ProjectItem_scriptFunction)
     {
@@ -399,7 +400,7 @@ void JZScriptFile::addLocalVariable(QString name, int type, QVariant v)
 
 void JZScriptFile::addLocalVariable(JZParamDefine def)
 {
-    Q_ASSERT(!localVariableInfo(def.name) && def.dataType != Type_none);
+    Q_ASSERT(!localVariable(def.name) && def.dataType != Type_none);
     m_variables[def.name] = def;
 }
 

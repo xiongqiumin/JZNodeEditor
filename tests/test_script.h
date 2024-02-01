@@ -68,6 +68,7 @@ protected:
     std::thread m_asyncThread;
     QString m_testPath;
     QString m_error;
+    bool m_dump;
 };
 
 

@@ -188,7 +188,8 @@ bool JZNodeProgram::load(QString filepath)
         m_scripts[path] = JZNodeScriptPtr(script);       
     }
     s >> m_variables;    
-    s >> m_objectDefines;       
+    s >> m_objectDefines;
+    s >> m_binds;
     return true;
 }
     
@@ -209,7 +210,8 @@ bool JZNodeProgram::save(QString filepath)
         it++;
     }        
     s << m_variables;        
-    s << m_objectDefines;      
+    s << m_objectDefines;
+    s << m_binds;
     return true;
 }
 
@@ -258,10 +260,9 @@ QList<JZNodeScript*> JZNodeProgram::scriptList()
     return list;
 }
 
-JZNodeScript *JZNodeProgram::objectScript(QString name)
+QMap<QString, QString> JZNodeProgram::bindInfo(QString className)
 {
-    QString path = "./" + name + "/事件";
-    return script(path);
+    return m_binds.value(className);
 }
 
 QList<FunctionDefine> JZNodeProgram::functionDefines()
@@ -290,8 +291,13 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
 {
     if (param.type == JZNodeIRParam::Literal)
     {
-        if(param.value.type() == QVariant::String)
+        if (param.value.type() == QVariant::String)
             return "\"" + param.value.toString() + "\"";
+        else if (JZNodeType::isNullptr(param.value))
+        {
+            auto v = toJZNullptr(param.value);
+            return "nullptr(" + JZNodeType::typeToName(v->type) +")";
+        }
         else
             return "$" + param.value.toString();
     }

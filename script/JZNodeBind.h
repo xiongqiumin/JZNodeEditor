@@ -615,7 +615,7 @@ protected:
 
     void declareQObject(std::true_type)
     {
-        int id = JZNodeObjectManager::instance()->getClassIdByTypeid(typeid(Class).name());
+        int id = JZNodeObjectManager::instance()->getClassIdByCType(typeid(Class).name());
         QString className = Class::staticMetaObject.className();
         JZNodeObjectManager::instance()->declareQObject(id,className);
     }

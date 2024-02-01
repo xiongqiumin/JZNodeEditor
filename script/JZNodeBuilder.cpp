@@ -85,6 +85,14 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
     {
         JZScriptClassFile *script = dynamic_cast<JZScriptClassFile*>(class_list[i]);        
         m_program->m_objectDefines << script->objectDefine();
+                
+        auto params = script->itemList(ProjectItem_param);
+        Q_ASSERT(params.size() == 0 || params.size() == 1);
+        if(params.size() == 1)
+        {
+            auto param = dynamic_cast<JZParamFile*>(params[0]);
+            m_program->m_binds[script->className()] = param->binds();
+        }
     }
 
     auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);

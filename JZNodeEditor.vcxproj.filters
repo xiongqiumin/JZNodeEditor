@@ -471,6 +471,9 @@
     <QtMoc Include="LogManager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="script\JZNodeQtBind.h">
+      <Filter>Header Files\script</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="script\JZEvent.h">

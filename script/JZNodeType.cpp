@@ -58,7 +58,7 @@ int JZNodeType::typeidToType(QString name)
     else if(name == typeid(QString).name())
         return Type_string;
     else    
-        return JZNodeObjectManager::instance()->getClassIdByTypeid(name);
+        return JZNodeObjectManager::instance()->getClassIdByCType(name);
 }
 
 QVariant::Type JZNodeType::typeToQMeta(int type)
@@ -98,6 +98,10 @@ int JZNodeType::variantType(const QVariant &v)
     return Type_none;
 }
 
+bool JZNodeType::isBool(int type)
+{
+    return (type == Type_bool);
+}
 
 bool JZNodeType::isNumber(int type)
 {
@@ -122,6 +126,12 @@ bool JZNodeType::isNullptr(const QVariant &v)
     return (v.userType() == qMetaTypeId<JZObjectNull>());
 }
 
+bool JZNodeType::isWidget(const QVariant &v)
+{
+    auto type = variantType(v);
+    return isInherits(type, Type_widget);
+}
+
 bool JZNodeType::isBase(int type)
 {
     return (type >= Type_none && type <= Type_string);
@@ -138,10 +148,14 @@ int JZNodeType::isInherits(int type1,int type2)
 }
 
 int JZNodeType::calcExprType(int type1,int type2)
-{       
-    if(type1 == type2)
+{           
+    if (isEnum(type1) || isBool(type1))
+        type1 = Type_int;
+    if (isEnum(type2) || isBool(type2))
+        type2 = Type_int;
+    if (type1 == type2)
         return type1;
-    
+
     if(type1 > type2)
         qSwap(type1,type2);    
     if (type1 == Type_any || type2 == Type_any)
@@ -279,6 +293,15 @@ int JZNodeType::upType(int type1, int type2)
     return Type_none;
 }
 
+int JZNodeType::upType(QList<int> types)
+{
+    int type = types[0];
+    for (int i = 1; i < types.size(); i++)
+        type = upType(type, types[i]);
+    
+    return type;
+}
+
 QVariant JZNodeType::matchValue(int dataType,const QVariant &value)
 {
     if (dataType == Type_any)
@@ -306,7 +329,11 @@ QVariant JZNodeType::matchValue(int dataType,const QVariant &value)
     }
     else if(JZNodeType::isObject(dataType))
     {        
-        return QVariant::fromValue(JZObjectNull(dataType));
+        auto v_type = variantType(value);
+        if (isInherits(v_type, dataType))
+            return value;
+        else
+            return QVariant::fromValue(JZObjectNull(dataType));
     }
     else
     {
@@ -316,22 +343,63 @@ QVariant JZNodeType::matchValue(int dataType,const QVariant &value)
 }
 
 int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
-{
-    int up_type = src_types[0];
-    for (int i = 1; i < src_types.size(); i++)
-    {
-        if (up_type != src_types[i])
-            up_type = upType(up_type, src_types[i]);
-    }
-    if (up_type == Type_none)
-        return Type_none;
-
+{   
+    QList<int> dst_allow_type;    
+    //在dst中选择能被所有src转换到的类型
     for (int i = 0; i < dst_types.size(); i++)
     {
-        if (canConvert(up_type, dst_types[i]))
-            return up_type;
+        bool can_convert = true;
+        for (int j = 0; j < src_types.size(); j++)
+        {
+            if (!canConvert(src_types[j], dst_types[i]))
+            {
+                can_convert = false;
+                break;
+            }                
+        }
+        if (can_convert)
+            dst_allow_type << dst_types[i];
     }
-    return Type_none;
+    if (dst_allow_type.size() == 0)
+        return Type_none;
+    if (dst_allow_type.size() == 1)
+        return dst_allow_type[0];
+
+    QList<int> dst_near_type;
+    //对scr 选择dst_allow_type 里面最近似的类型
+    for (int i = 0; i < src_types.size(); i++)
+    {
+        int near_type = Type_none;
+        int near = INT_MAX;
+        for (int j = 0; j < dst_allow_type.size(); j++)
+        {
+            if (src_types[i] == dst_allow_type[j])
+            {
+                near_type = dst_allow_type[j];
+                break;
+            }
+            else
+            {
+                int cur_near = 0;
+                if (isBaseOrEnum(src_types[i]))
+                {
+                    cur_near = abs(src_types[i] - dst_allow_type[j]);
+                }
+                else if (isObject(src_types[i]))
+                {
+
+                }
+
+                if (cur_near < near) 
+                {
+                    near_type = dst_allow_type[j];
+                    near = cur_near;
+                }
+            }
+        }
+        dst_near_type << near_type;
+    }
+    return upType(dst_near_type);
 }
 
 int JZNodeType::matchType(QList<int> dst_types, const QVariant &v)

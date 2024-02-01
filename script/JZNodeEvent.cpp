@@ -114,7 +114,7 @@ void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
     setName(function);
     setPropName(paramIn(0),className);
    
-    for(int i = 0; i < single->paramOut.size(); i++)
+    for(int i = 1; i < single->paramOut.size(); i++)
     {
         JZNodePin pin;
         pin.setName(single->paramOut[i].name);
@@ -152,16 +152,18 @@ void JZNodeSingleEvent::drag(const QVariant &value)
 }
 
 bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
-{
+{    
     QString sender = propValue(paramIn(0)).toString();
     if(!c->checkVariableType(sender, m_sender,error))
         return false;
+        
+    c->addFunctionAlloc(function());
 
     auto list = paramOutList();
     for(int i = 0; i < list.size(); i++)
     {
         int id = c->paramId(m_id,list[i]);
-        c->addSetVariable(irId(id),irId(Reg_Call + i));
+        c->addSetVariable(irId(id),irId(Reg_Call + 1 + i));
     }
     c->addFlowOutput(m_id);
     c->addJumpNode(flowOut());
@@ -195,6 +197,8 @@ JZNodeQtEvent::~JZNodeQtEvent()
 
 bool JZNodeQtEvent::compiler(JZNodeCompiler *c, QString &error)
 {    
+    c->addFunctionAlloc(function());
+
     auto list = paramOutList();
     for (int i = 0; i < list.size(); i++)
     {

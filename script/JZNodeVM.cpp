@@ -96,7 +96,10 @@ void JZNodeVM::onRuntimeError(JZNodeRuntimeError error)
     for (int i = 0; i < stack_size; i++)
     {
         auto s = error.info.stacks[stack_size - i - 1];
-        text += s.function + "(" + s.file + "," + QString::number(s.nodeId) + ")\n";
+        text += s.function;
+        if (!s.file.isEmpty())
+            text += +"(" + s.file + "," + QString::number(s.nodeId) + ")";
+        text += "\n";
     }
     
     QMessageBox::information(nullptr,"", text);    

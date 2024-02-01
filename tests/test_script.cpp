@@ -9,13 +9,13 @@
 ScriptTest::ScriptTest()
 {
     m_testPath = qApp->applicationDirPath() + "/testcase";
+    m_dump = false;
 }
 
 void ScriptTest::call()
 {
-    JZEvent event;
-    event.eventType = Event_programStart;
-    m_engine.dealEvent(&event);
+    QVariantList in, out;
+    m_engine.call("__main__", in, out);
 }
 
 bool ScriptTest::build()
@@ -27,6 +27,8 @@ bool ScriptTest::build()
         QTest::qVerify(false, "build", m_error.toLocal8Bit().data(), __FILE__, __LINE__);
         return false;
     }        
+    if (m_dump)
+        qDebug().noquote() << m_program.dump();
 
     m_engine.setProgram(&m_program);
     m_engine.init();
@@ -783,7 +785,6 @@ void ScriptTest::testExpr()
 
     if(!run())
         return;
-
 
     QVariant i0 = engine->getVariable("i0");
     QVariant i1 = engine->getVariable("i1");

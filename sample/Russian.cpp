@@ -64,9 +64,25 @@ R"(<?xml version="1.0" encoding="UTF-8"?>
     </rect>
    </property>
    <property name="text">
-    <string>得分</string>
+    <string>得分:</string>
    </property>
-  </widget>  
+  </widget> 
+  <widget class="QLineEdit" name="lineScore">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>60</y>
+     <width>50</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>0</string>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget> 
  </widget>
  <resources/>
  <connections/>
@@ -93,6 +109,9 @@ SampleRussian::SampleRussian()
     class_file->addMemberVariable("shape_row", Type_int);
     class_file->addMemberVariable("shape_col", Type_int);
     class_file->addMemberVariable("shape_color", Type_int);
+    class_file->addMemberVariable("score", Type_int);
+
+    class_file->getParamFile()->bindVariable("score","lineScore");
     
     addInitGame();
     addInitFunction();
@@ -230,19 +249,24 @@ void SampleRussian::addInitGame()
     JZNodeParam *node_color_list = new JZNodeParam();
     node_color_list->setVariable("this.colors");
 
+    JZNodeSetParam *set_score = new JZNodeSetParam();
+    set_score->setVariable("this.score");
+    set_score->setParamInValue(0, 0);
+
     script->addNode(JZNodePtr(set_map));
     script->addNode(JZNodePtr(set_color_list));
     script->addNode(JZNodePtr(create_map));
     script->addNode(JZNodePtr(create_color_list));
-
     script->addNode(JZNodePtr(node_color_list));
+    script->addNode(JZNodePtr(set_score));
 
     script->addConnect(func_start->flowOutGemo(0), create_map->flowInGemo());
     script->addConnect(create_map->paramOutGemo(0), set_map->paramInGemo(0));
     script->addConnect(create_map->flowOutGemo(0), set_map->flowInGemo());
-    script->addConnect(set_map->flowOutGemo(0), create_color_list->flowInGemo());
+    script->addConnect(set_map->flowOutGemo(0), set_score->flowInGemo());
+    script->addConnect(set_score->flowOutGemo(), create_color_list->flowInGemo());
     script->addConnect(create_color_list->paramOutGemo(0), set_color_list->paramInGemo(0));
-    script->addConnect(create_color_list->flowOutGemo(0), set_color_list->flowInGemo());
+    script->addConnect(create_color_list->flowOutGemo(0), set_color_list->flowInGemo());    
 
     JZNodeFunction *color_resize = new JZNodeFunction();
     color_resize->setFunction(func_inst->function("List.resize"));
@@ -1326,9 +1350,20 @@ void SampleRussian::addKeyEvent()
 
     JZNodeEQ *key_eqR = new JZNodeEQ();
     JZNodeEQ *key_eqD = new JZNodeEQ();
-    JZNodeEQ *key_eqL = new JZNodeEQ();
+    JZNodeEQ *key_eqL = new JZNodeEQ();    
     JZNodeEQ *key_eqRotate = new JZNodeEQ();
-    JZNodeEQ *key_eqSpace = new JZNodeEQ();
+
+    JZNodeEQ *key_eqR2 = new JZNodeEQ();
+    JZNodeEQ *key_eqD2 = new JZNodeEQ();
+    JZNodeEQ *key_eqL2 = new JZNodeEQ();
+    JZNodeEQ *key_eqRotate2 = new JZNodeEQ();
+
+    JZNodeOr *key_eqROr = new JZNodeOr();
+    JZNodeOr *key_eqDOr = new JZNodeOr();
+    JZNodeOr *key_eqLOr = new JZNodeOr();
+    JZNodeOr *key_eqRotateOr = new JZNodeOr();
+
+    JZNodeEQ *key_eqSpace = new JZNodeEQ(); 
         
     m_script->addNode(JZNodePtr(canRight));
     m_script->addNode(JZNodePtr(moveRight));
@@ -1352,24 +1387,54 @@ void SampleRussian::addKeyEvent()
     m_script->addNode(JZNodePtr(while_space));
     m_script->addNode(JZNodePtr(moveDown2));
 
+    m_script->addNode(JZNodePtr(key_eqR2));
+    m_script->addNode(JZNodePtr(key_eqD2));
+    m_script->addNode(JZNodePtr(key_eqL2));
+    m_script->addNode(JZNodePtr(key_eqRotate2));
+
+    m_script->addNode(JZNodePtr(key_eqROr));
+    m_script->addNode(JZNodePtr(key_eqDOr));
+    m_script->addNode(JZNodePtr(key_eqLOr));
+    m_script->addNode(JZNodePtr(key_eqRotateOr));
+
     m_script->addConnect(node_keyPress->paramOutGemo(0), key_code->paramInGemo(0));    
+    key_eqRotate->setPropValue(1, Qt::Key_W);
     key_eqR->setPropValue(1, Qt::Key_D);
     key_eqD->setPropValue(1, Qt::Key_S);
-    key_eqL->setPropValue(1, Qt::Key_A);
-    key_eqRotate->setPropValue(1, Qt::Key_W);
+    key_eqL->setPropValue(1, Qt::Key_A);            
     key_eqSpace->setPropValue(1, Qt::Key_Space);
+
+    key_eqRotate2->setPropValue(1, Qt::Key_Up);
+    key_eqD2->setPropValue(1, Qt::Key_Down);
+    key_eqL2->setPropValue(1, Qt::Key_Left);
+    key_eqR2->setPropValue(1, Qt::Key_Right);
 
     m_script->addConnect(node_keyPress->flowOutGemo(0), key_if->flowInGemo());
     m_script->addConnect(key_code->paramOutGemo(0), key_eqL->paramInGemo(0));
     m_script->addConnect(key_code->paramOutGemo(0), key_eqD->paramInGemo(0));
-    m_script->addConnect(key_code->paramOutGemo(0), key_eqR->paramInGemo(0));
-    m_script->addConnect(key_code->paramOutGemo(0), key_eqRotate->paramInGemo(0));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqR->paramInGemo(0));    
     m_script->addConnect(key_code->paramOutGemo(0), key_eqSpace->paramInGemo(0));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqRotate->paramInGemo(0));
 
-    m_script->addConnect(key_eqL->paramOutGemo(0), key_if->paramInGemo(0));
-    m_script->addConnect(key_eqD->paramOutGemo(0), key_if->paramInGemo(1));
-    m_script->addConnect(key_eqR->paramOutGemo(0), key_if->paramInGemo(2));
-    m_script->addConnect(key_eqRotate->paramOutGemo(0), key_if->paramInGemo(3));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqL2->paramInGemo(0));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqD2->paramInGemo(0));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqR2->paramInGemo(0));
+    m_script->addConnect(key_code->paramOutGemo(0), key_eqRotate2->paramInGemo(0));
+
+    m_script->addConnect(key_eqL->paramOutGemo(0), key_eqLOr->paramInGemo(0));
+    m_script->addConnect(key_eqD->paramOutGemo(0), key_eqDOr->paramInGemo(0));
+    m_script->addConnect(key_eqR->paramOutGemo(0), key_eqROr->paramInGemo(0));
+    m_script->addConnect(key_eqRotate->paramOutGemo(0), key_eqRotateOr->paramInGemo(0));
+
+    m_script->addConnect(key_eqL2->paramOutGemo(0), key_eqLOr->paramInGemo(1));
+    m_script->addConnect(key_eqD2->paramOutGemo(0), key_eqDOr->paramInGemo(1));
+    m_script->addConnect(key_eqR2->paramOutGemo(0), key_eqROr->paramInGemo(1));
+    m_script->addConnect(key_eqRotate2->paramOutGemo(0), key_eqRotateOr->paramInGemo(1));
+
+    m_script->addConnect(key_eqLOr->paramOutGemo(0), key_if->paramInGemo(0));
+    m_script->addConnect(key_eqDOr->paramOutGemo(0), key_if->paramInGemo(1));
+    m_script->addConnect(key_eqROr->paramOutGemo(0), key_if->paramInGemo(2));        
+    m_script->addConnect(key_eqRotateOr->paramOutGemo(0), key_if->paramInGemo(3));
     m_script->addConnect(key_eqSpace->paramOutGemo(0), key_if->paramInGemo(4));
 
     m_script->addConnect(key_if->subFlowOutGemo(0), branch_left->flowInGemo());
@@ -2016,9 +2081,30 @@ void SampleRussian::addClearLine()
     script->addConnect(for_col_clear->paramOutGemo(0), set_map_clear->paramInGemo(2));
     set_map_clear->setParamInValue(3, -1);    
 
-    script->addConnect(node_row->paramOutGemo(0), for_row_down->paramInGemo(0));
+    script->addConnect(node_row->paramOutGemo(0), for_row_down->paramInGemo(0));    
+    
+    JZNodeAdd *score_add = new JZNodeAdd();
+    score_add->setParamInValue(1, 10);
+
+    JZNodeParam *score_get = new JZNodeParam();
+    score_get->setVariable("this.score");
+
+    JZNodeSetParam *score_set = new JZNodeSetParam();
+    score_set->setVariable("this.score");
+
+    script->addNode(JZNodePtr(score_get));
+    script->addNode(JZNodePtr(score_add));
+    script->addNode(JZNodePtr(score_set));
+
+    script->addConnect(score_get->paramOutGemo(0), score_add->paramInGemo(0));
+    script->addConnect(score_add->paramOutGemo(0), score_set->paramInGemo(0));
+
+#if 1  
+    script->addConnect(line_count_eq_col_branch->flowOutGemo(0), score_set->flowInGemo());
+    script->addConnect(score_set->flowOutGemo(), for_col_clear->flowInGemo());
+#else    
     script->addConnect(line_count_eq_col_branch->flowOutGemo(0), for_col_clear->flowInGemo());
-        
+#endif
     script->addConnect(for_col_clear->subFlowOutGemo(0), set_map_clear->flowInGemo());
 
     script->addConnect(for_col_clear->flowOutGemo(0), for_row_down->flowInGemo());
@@ -2041,4 +2127,7 @@ void SampleRussian::addClearLine()
     script->addConnect(for_col_top->subFlowOutGemo(0), set_map2->flowInGemo());
 
     script->addConnect(line_count_eq_col_branch->flowOutGemo(1), node_set_row->flowInGemo());
+
+    
+    
 }

@@ -46,7 +46,7 @@ public:
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);    
 
-    JZParamDefine *localVariableInfo(const QString &name);
+    JZParamDefine *localVariable(const QString &name);
     void addLocalVariable(QString name, int type, QVariant v = QVariant());
     void addLocalVariable(JZParamDefine def);
     void removeLocalVariable(QString name);

@@ -35,9 +35,15 @@ public:
 class Stack
 {
 public:
-    struct StackVariant {
-        QVariantMap locals;
-        QMap<int, QVariant> stacks;
+    struct StackVariable{
+        StackVariable();
+        ~StackVariable();
+
+        QVariant *getRef(int id);
+        QVariant *getRef(QString name);
+
+        JZVariantMap locals;
+        JZVariantIntMap stacks;
     };
 
     Stack();
@@ -50,10 +56,11 @@ public:
     void pop();
     void push();
 
-    RunnerEnv &env();
-    RunnerEnv &env(int index);    
+    RunnerEnv *currentEnv();
+    RunnerEnv *env(int index);    
 
-    StackVariant *stackVariable(int index);
+    StackVariable *currentVariable();
+    StackVariable *variable(int index);
 
     QVariant *getVariableRef(QString name);
     QVariant getVariable(const QString &name);
@@ -66,7 +73,7 @@ public:
     void setVariable(int level,int id, const QVariant &value);
 
 protected:   
-    QList<StackVariant> m_stack;    
+    QList<StackVariable> m_stack;
     QList<RunnerEnv> m_env;
 };
 
@@ -168,13 +175,18 @@ public:
     QVariant getSender();
 
     QVariant getReg(int id);
+    QVariant *getRegRef(int id);
     void setReg(int id, const QVariant &value);
      
     void connectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
     void disconnectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
     int connectCount(JZNodeObject *sender, int event);
     void connectSelf(JZNodeObject *object);
-    void connectSingleLater(JZNodeObject *object,const QString &name);
+    void connectSingleLater(QVariant *v);
+
+    void widgetBind(QWidget *w,QVariant *ref);
+    void widgetUnBind(QWidget *w);
+    void widgetUnBindNotify(QWidget *w);
 
     void dealEvent(JZEvent *event);    
     void dealSlot(JZEvent *event);
@@ -184,9 +196,10 @@ public:
     
     void objectCreate(JZNodeObject *sender);
     void objectDelete(JZNodeObject *sender);
-    void objectChanged(JZNodeObject *sender,const QString &name);        
+    void varaiantDeleteNotify(QVariant *v);
 
     void widgetValueChanged(QWidget *w);
+    void valueChanged(QVariant *v);
 
     void print(const QString &log);
 
@@ -204,23 +217,33 @@ protected:
         Command_stop,
     };
     
-    struct BindInfo 
-    {
-        QString name;
-        QWidget *widget;        
-    };
-
-    struct BindCache 
-    {
-        QString paramName;
-        QString widgetName;
-    };
 
     struct ConnectCache
     {
-        QString sender;
         int eventType;
+        QVariant *sender;
+        JZNodeObject *recv;        
         QString handle;
+    };
+
+    class ParamChangeInfo
+    {
+    public:
+        ParamChangeInfo();
+
+        JZNodeObject *recv;
+        QString handle;
+    };
+
+    class VariantInfo
+    {
+    public:
+        VariantInfo();
+
+        QList<ConnectCache> connectQueue;
+        QList<ParamChangeInfo> paramChanges;
+        QVariant *bindWidget;
+        QVariant *bindValueCache;  //value
     };
 
     class ConnectInfo
@@ -237,22 +260,11 @@ protected:
     class JZObjectInfo
     {
     public:
-        QList<ConnectInfo>  connects;
-        QList<BindInfo>  binds;
-        
-        QList<ConnectCache> connectQueue;
-        QList<BindCache> bindQueue;
-    };
+        JZObjectInfo();
 
-    class ParamChangeEvent
-    {
-    public:
-        ParamChangeEvent();
-
-        QString name;        
-        JZNodeObject *receiver;
-        FunctionDefine *handle;
-    };
+        QList<ConnectInfo> connects;
+        int connectQueue;
+    };    
 
     virtual void customEvent(QEvent *event) override;
     void clear();
@@ -273,7 +285,7 @@ protected:
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
         
-    QVariant getParam(const JZNodeIRParam &param);
+    QVariant getParam(const JZNodeIRParam &param);    
     void setParam(const JZNodeIRParam &param,const QVariant &value);        
         
     int nodeIdByPc(int pc);        
@@ -298,8 +310,8 @@ protected:
     QList<int> m_watchParam;
 
     Stack m_stack;
-    QMap<QString,QVariant> m_global;            
-    QMap<int,QVariant> m_regs;        
+    JZVariantMap m_global;
+    JZVariantIntMap m_regs;
     JZNodeObject *m_sender;
            
     FunctionDefine m_idleFunc;
@@ -309,8 +321,8 @@ protected:
     QWaitCondition m_waitCond;
     bool m_debug;
     
-    QMap<JZNodeObject*,JZObjectInfo> m_objects;
-    QList<ParamChangeEvent> m_paramChangeHandle;        
+    QMap<JZNodeObject*,JZObjectInfo> m_objectInfo;    
+    QMap<QVariant*, VariantInfo> m_variantInfo;    
 };
 extern JZNodeEngine *g_engine;
 

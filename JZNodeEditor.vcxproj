@@ -209,6 +209,7 @@
     <ClInclude Include="project\JZClassFile.h" />
     <ClInclude Include="project\JZLibraryFile.h" />
     <ClInclude Include="script\JZNodeName.h" />
+    <QtMoc Include="script\JZNodeQtBind.h" />
     <ClInclude Include="script\JZNodeQtWrapper.h" />
     <ClInclude Include="script\JZNodeUtils.h" />
     <ClInclude Include="script\JZNodeValue.h" />

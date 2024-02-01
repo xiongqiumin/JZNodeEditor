@@ -18,15 +18,17 @@ public:
     
     void setRuntime(JZNodeRuntimeInfo info);
     void setRunning(bool isRun);
+    void enterPressed();
 
 signals:
     void sigStackChanged(int level);
 
 protected slots:
-    void onStackChanged();
+    void onItemDoubleClicked(QTableWidgetItem *item);
 
 protected:       
     void updateStatus();
+    void stackChanged(int level);
 
     bool m_running;
     int m_status;

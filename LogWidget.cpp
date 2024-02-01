@@ -14,6 +14,8 @@ LogBrowser::LogBrowser()
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &QWidget::customContextMenuRequested, this, &LogBrowser::onLogContextMenu);
     setReadOnly(true);
+
+    m_baseForamt = currentCharFormat();
 }
 
 void LogBrowser::onLogContextMenu(QPoint pos)
@@ -40,25 +42,27 @@ void LogBrowser::addLog(QString log)
         if (list[i].startsWith("link:"))
         {
             QString line = list[i];
-            int index = line.indexOf(";");
-            QString link = line.mid(5, index - 5);
-
-            auto tc = textCursor();
+            int s = line.indexOf("(");
+            int e = line.indexOf(")");
+            QString link = line.mid(s+1, e - s-1);
+            
+            auto tc = textCursor();            
             tc.movePosition(QTextCursor::End);
+            tc.setCharFormat(m_baseForamt);
+
+            tc.insertBlock();
+            tc.insertText(line.mid(5,s-5));                        
 
             QTextCharFormat fmt;
             fmt.setForeground(QColor("blue"));
             fmt.setAnchor(true);
             fmt.setAnchorHref(link);
             fmt.setToolTip("address");
-            fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);            
+            fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);                        
+            tc.insertText(line.mid(s), fmt);            
                         
-            tc.insertBlock();            
-            tc.insertText(link, fmt);
-            tc.setCharFormat(QTextCharFormat());
-
-            tc.insertText(line.mid(index + 1));
-            tc.movePosition(QTextCursor::End);
+            setCurrentCharFormat(m_baseForamt);
+                        
         }
         else
         {
@@ -130,7 +134,7 @@ void LogWidget::onAchorClicked(QUrl url)
 {
     QString link = url.toString();    
 
-    int index_file = link.indexOf("(");    
+    int index_file = link.indexOf(",");    
     QString file = link.mid(0,index_file);    
 
     int id_s = link.indexOf("id=") + 3;

@@ -20,21 +20,6 @@ public:
     void (*addEventFilter)(void *obj,int event_type);
 };
 
-class JZZNodeEnumDefine
-{
-public:
-    QString name;
-    QStringList enums;
-};
-
-
-class JZZNodeFlagDefine
-{
-public:
-    QString name;
-    QStringList enums;
-};
-
 class JZNodeObjectDefine
 {
 public:
@@ -48,9 +33,6 @@ public:
     void addFunction(FunctionDefine def);
     void removeFunction(QString function);    
     int indexOfFunction(QString function) const;
-
-    void addSingle(FunctionDefine def);
-    void removeSingle(QString function);
 
     QString fullname() const;
 
@@ -124,8 +106,8 @@ public:
     const SingleDefine *single(QString function) const;
     QStringList singleList() const;
 
-    void setCObject(void *cobj,bool owner);    
     void *cobj() const;
+    void setCObject(void *cobj,bool owner);        
     void setCowner(bool owner);
 
     void updateWidgetParam();    
@@ -139,7 +121,7 @@ protected:
 
     JZNodeObjectDefine *m_define;
     QString m_name;
-    QMap<QString, QVariant> m_params;    
+    JZVariantMap m_params;    
     void *m_cobj;
     bool m_cowner;
 };
@@ -149,6 +131,7 @@ Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v); //对于空 object 返回 nullptr
+JZObjectNull* toJZNullptr(const QVariant &v);
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
@@ -170,6 +153,7 @@ public:
     JZNodeObjectDefine *meta(int type_id);
     QString getClassName(int type_id);
     int getClassId(QString class_name);
+    int getClassIdByCType(QString class_name);
     bool isInherits(QString class_name, QString super_name);
     bool isInherits(int class_name,int super_name);
     QStringList getClassList();
@@ -178,9 +162,7 @@ public:
     JZNodeEnumDefine *enumMeta(QString enumName);
     QString getEnumName(int type_id);
     int getEnumId(QString enumName);
-    QStringList getEnumList();
-
-    int getClassIdByTypeid(QString name);
+    QStringList getEnumList();    
     
     int getClassIdByQObject(QString name);
     void declareQObject(int id,QString name);
@@ -230,6 +212,20 @@ JZNodeObjectPtr JZObjectRefrence(T ptr,bool owner = true)
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();
     auto obj = JZNodeObjectManager::instance()->createCClassRefrence(c_typeid, ptr, owner);
     return JZNodeObjectPtr(obj);
+}
+
+template<class T>
+T *JZObjectCast(JZNodeObject *obj)
+{
+    int c_type = JZNodeObjectManager::instance()->getClassIdByCType(typeid(T).name());
+    Q_ASSERT(obj->isInherits(c_type));
+    return (T*)obj->cobj();
+}
+
+template<class T>
+T *JZObjectCast(const QVariant &v)
+{
+    return JZObjectCast<T>(toJZObject(v));
 }
 
 #endif

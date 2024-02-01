@@ -532,7 +532,7 @@ void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
     m_tree->setItemWidget(m_itemLocal, 0, w);
     for (int i = 0; i < list.size(); i++)
     {
-        auto info = m_file->localVariableInfo(list[i]);
+        auto info = m_file->localVariable(list[i]);
         QTreeWidgetItem *item = createParam(list[i]);        
         m_itemLocal->addChild(item);
     }
@@ -690,7 +690,7 @@ void JZNodePanel::onContextMenu(const QPoint &pos)
 
     if (act == actEdit)
     {
-        auto def = m_file->localVariableInfo(item->text(0));
+        auto def = m_file->localVariable(item->text(0));
 
         JZNodeParamEditDialog dialog(this);;
         dialog.init(m_file, *def);

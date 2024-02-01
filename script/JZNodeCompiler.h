@@ -100,9 +100,10 @@ public:
     bool checkVariableExist(const QString &var, QString &error);
     bool checkVariableType(const QString &var, const QString &className, QString &error);    
 
+    void resetStack();
     int allocStack();
-    void freeStack(int id);    
-    void allocFunctionVariable();    
+    void freeStack(int id);        
+    void addFunctionAlloc(const FunctionDefine &define);
     
     void setPinType(int nodeId, int propId, int type);    
     int pinType(int nodeId, int propId);
@@ -118,7 +119,7 @@ public:
     bool addFlowInput(int nodeId,QString &error);
     bool addFlowInput(int nodeId,int prop_id,QString &error);
     bool addDataInput(int nodeId,QString &error);
-    bool addDataInput(int nodeId,int prop_id,QString &error);
+    bool addDataInput(int nodeId,int prop_id,QString &error); //获得指定nodeId 的 prop_id 输入
     void addFlowOutput(int nodeId);            
 
     int addNop();
@@ -158,7 +159,7 @@ protected:
     void replaceSubNode(int id,int parentId,int flow_index);
     int isAllFlowReturn(int id,bool root);
     void addEventHandle(const QList<GraphNode*> &list);      
-    void addFunction(const FunctionDefine &define,int pc);
+    void addFunction(const FunctionDefine &define,int node_id);
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *prop);     
     
@@ -167,8 +168,8 @@ protected:
     void popCompilerNode();
     void addLocalVariable(JZNodeIRParam param);  
 
-    bool checkPinInType(int nodeId,int prop_id,QString &error);
-    void setOutPinTypeDefault(JZNode *node);    
+    bool checkPinInType(int nodeId,int prop_id,QString &error); //计算输入类型
+    void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
                 
     /* build info*/        
     QVector<GraphPtr> m_graphList;
@@ -185,10 +186,11 @@ protected:
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
     QMap<int,NodeCompilerInfo> m_nodeInfo;    
-    QList<JZParamDefine> m_localVaribales;
+    QList<JZParamDefine> m_localVaribales; //不包含函数定义
     
     JZProject *m_project;
-    QString m_error;    
+    QString m_error;
+    QVector<int> m_stack;
 };
 
 #endif

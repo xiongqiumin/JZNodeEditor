@@ -185,42 +185,34 @@ void JZNodeDebugServer::onStatusChanged(int status)
 QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
 {    
     JZNodeDebugParamInfo info = netDataUnPack<JZNodeDebugParamInfo>(list[0].toByteArray());
-    auto stack = m_engine->stack();
-    auto this_obj = toJZObject(m_engine->getThis());
+    auto stack = m_engine->stack();    
     for (int i = 0; i < info.coors.size(); i++)
     {
         JZNodeDebugParamValue param;
-        QVariant value;
+        QVariant *value = nullptr;
         auto &coor = info.coors[i];
         if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::Node)
         {
-            auto env = stack->stackVariable(coor.stack);
+            auto env = stack->variable(coor.stack);            
             if (coor.type == JZNodeParamCoor::Local)
-            {
-                if (env->locals.contains(coor.name))
-                    value = env->locals[coor.name];
-            }
+                value = env->getRef(coor.name);
             else
-            {
-                if (env->stacks.contains(coor.id))
-                    value = env->stacks[coor.id];
-            }
+                value = env->getRef(coor.id);
         }
         else if (coor.type == JZNodeParamCoor::This)
-        {
-            value = this_obj->param(coor.name);
+        {            
+            value = &stack->env(coor.stack)->object;
         }
         else if (coor.type == JZNodeParamCoor::Global)
         {
-            if (auto ref = m_engine->getVariableRef(coor.name))
-                value = *ref;
+            value = m_engine->getVariableRef(coor.name);                
         }
         else if (coor.type == JZNodeParamCoor::Reg)
         {
-            value = m_engine->getReg(coor.id);
+            value = m_engine->getRegRef(coor.id);
         }                        
                 
-        param = toDebugParam(value);
+        param = toDebugParam(*value);
         info.values << param;
     }
     return netDataPack(info);
@@ -236,16 +228,16 @@ void JZNodeDebugServer::setVariable(const QVariantList &list)
         auto &coor = info.coors[i];
         if (coor.type == JZNodeParamCoor::Local || coor.type == JZNodeParamCoor::Node)
         {
-            auto env = stack->stackVariable(coor.stack);
+            auto env = stack->variable(coor.stack);
             if (coor.type == JZNodeParamCoor::Local)
             {
                 if (env->locals.contains(coor.name))
-                    env->locals[coor.name] = value;
+                    *env->locals[coor.name] = value;
             }
             else
             {
                 if (env->stacks.contains(coor.id))
-                    env->stacks[coor.id] = value;
+                    *env->stacks[coor.id] = value;
             }
         }
         else if (coor.type == JZNodeParamCoor::Global)
@@ -268,7 +260,7 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
         auto obj = toJZObject(value);
         if (!obj)
         {
-            ret.type = Type_nullptr;
+            ret.type = JZNodeType::variantType(value);
             ret.value = "nullptr";
         }
         else if (obj->type() == Type_list)

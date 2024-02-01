@@ -23,7 +23,7 @@ protected slots:
     void onLogContextMenu(QPoint pos);
 
 protected:
-    
+    QTextCharFormat m_baseForamt;
 };
 
 class LogWidget : public QWidget
@@ -50,7 +50,7 @@ protected:
     QTabWidget *m_tabWidget;
     JZNodeStack *m_stack;    
     JZNodeWatch *m_watch;
-    JZNodeBreakPoint *m_breakPoint;
+    JZNodeBreakPoint *m_breakPoint;    
 };
 
 #endif

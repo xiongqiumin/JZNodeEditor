@@ -231,16 +231,6 @@ int JZNodeObjectDefine::indexOfFunction(QString function) const
     return -1;
 }
 
-void JZNodeObjectDefine::addSingle(FunctionDefine def)
-{
-
-}
-
-void JZNodeObjectDefine::removeSingle(QString function)
-{
-
-}
-
 const FunctionDefine *JZNodeObjectDefine::function(QString name) const
 {
     int index = indexOfFunction(name);
@@ -459,7 +449,7 @@ JZNodeObject::JZNodeObject(JZNodeObjectDefine *def)
 }
 
 JZNodeObject::~JZNodeObject()
-{
+{    
     if(m_cowner && m_define->isCObject)
         m_define->cMeta.destory(m_cobj);
 }
@@ -506,24 +496,25 @@ bool JZNodeObject::getParamRef(const QString &name,QVariant *&ref,QString &error
     for(int i = 0; i < list.size() - 1; i++)
     {
         auto it = obj->m_params.find(list[i]);
+        QVariant *v = it->data();
         if(it == obj->m_params.end())
         {
             error = "no such element";
             return false;
         }
-        if(!isJZObject(it.value()))
+        if(!isJZObject(*v))
         {
             error = "not a object";
             return false;
         }
-        obj = toJZObject(it.value());
+        obj = toJZObject(*v);
     }
     if(!obj->m_params.contains(list.back()))
     {
         error = "no such element";
         return false;
     }
-    ref = &obj->m_params[list.back()];
+    ref = obj->m_params[list.back()].data();
     return true;
 }
 
@@ -609,7 +600,7 @@ void JZNodeObject::updateWidgetParam()
             {
                 JZNodeObject *jzobj = new JZNodeObject(inst->meta(it.value().dataType));
                 jzobj->setCObject(w, false);
-                m_params[it.key()] = QVariant::fromValue(JZNodeObjectPtr(jzobj));
+                m_params[it.key()] = JZVariantPtr(new QVariant(QVariant::fromValue(JZNodeObjectPtr(jzobj))));
             }
             
             it++;
@@ -688,6 +679,14 @@ JZNodeObject* toJZObject(const QVariant &v)
     {      
         return nullptr;
     }
+}
+
+JZObjectNull* toJZNullptr(const QVariant &v)
+{
+    if (v.userType() == qMetaTypeId<JZObjectNull>())
+        return (JZObjectNull*)v.data();
+    else
+        return nullptr;
 }
 
 
@@ -831,11 +830,6 @@ JZNodeObjectDefine *JZNodeObjectManager::meta(QString className)
     return meta(getClassId(className));
 }
 
-int JZNodeObjectManager::getClassIdByTypeid(QString name)
-{
-    return m_typeidMetas.value(name,Type_none);
-}
-
 int JZNodeObjectManager::getClassIdByQObject(QString name)
 {
     return m_qobjectId.value(name,Type_none);
@@ -852,6 +846,11 @@ int JZNodeObjectManager::getClassId(QString class_name)
         it++;
     }
     return Type_none;
+}
+
+int JZNodeObjectManager::getClassIdByCType(QString class_name)
+{
+    return m_typeidMetas.value(class_name, Type_none);
 }
 
 bool JZNodeObjectManager::isInherits(QString class_name, QString super_name)
@@ -1014,10 +1013,11 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
         auto param = def->param(list[i]);
         if (!obj->m_params.contains(param->name))
         {
+            obj->m_params[param->name] = JZVariantPtr(new QVariant());
             if (param->dataType < Type_object)            
-                obj->m_params[param->name] = param->initialValue();
+                *obj->m_params[param->name] = param->initialValue();
             else            
-                obj->m_params[param->name] = QVariant::fromValue(JZObjectNull(param->dataType));            
+                *obj->m_params[param->name] = QVariant::fromValue(JZObjectNull(param->dataType));
         }
     }
 }

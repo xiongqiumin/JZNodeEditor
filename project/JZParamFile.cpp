@@ -102,11 +102,17 @@ QStringList JZParamFile::variableList()
 }
 
 void JZParamFile::bindVariable(QString name, QString widget)
-{
-    m_variableBind[name] = widget;
+{    
+    Q_ASSERT(getClassFile());
+    m_binds[name] = widget;
 }
 
 void JZParamFile::unbindVariable(QString name)
 {
-    m_variableBind.remove(name);
+    m_binds.remove(name);
+}
+
+const QMap<QString, QString> &JZParamFile::binds()
+{
+    return m_binds;
 }

@@ -344,7 +344,7 @@ void initWidgets()
     cls_widget.def("close", true, &QWidget::close);
     cls_widget.def("rect", false, &QWidget::rect);
     cls_widget.def("update", true, QOverload<>::of(&QWidget::update));
-    cls_widget.regist();
+    cls_widget.regist(Type_widget);
 
     //lineedit
     jzbind::ClassBind<QLineEdit> cls_lineEdit("LineEdit", "Widget");
