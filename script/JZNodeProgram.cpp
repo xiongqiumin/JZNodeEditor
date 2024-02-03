@@ -1,6 +1,7 @@
 ﻿#include "JZNodeProgram.h"
 #include "JZNodeCompiler.h"
 #include <QFile>
+#include <QDebug>
 
 //NodeRange
 NodeRange::NodeRange()
@@ -22,6 +23,21 @@ QDataStream &operator>>(QDataStream &s, NodeRange &param)
     return s;
 }
 
+//NodeParamInfo
+QDataStream &operator<<(QDataStream &s, const NodeParamInfo &param)
+{
+    s << param.define;
+    s << param.id;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, NodeParamInfo &param)
+{
+    s >> param.define;
+    s >> param.id;
+    return s;
+}
+
 //NodeInfo
 NodeInfo::NodeInfo()
 {
@@ -33,11 +49,16 @@ NodeInfo::NodeInfo()
 int NodeInfo::indexOfRange(int pc)
 {
     for (int i = 0; i < pcRanges.size(); i++)
-    {
+    {        
         if (pc >= pcRanges[i].start && pc < pcRanges[i].end)
             return i;
     }
     return -1;
+}
+
+NodeRange NodeInfo::pcRange(int index)
+{
+    return pcRanges[index];
 }
 
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
@@ -45,10 +66,8 @@ QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
     s << param.node_id;
     s << param.node_type;
     s << param.isFlow;
-    s << param.paramIn;
-    s << param.paramInId;
+    s << param.paramIn;    
     s << param.paramOut;
-    s << param.paramOutId;
     s << param.pcRanges;
     return s;
 }
@@ -58,10 +77,8 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
     s >> param.node_id;
     s >> param.node_type;
     s >> param.isFlow;
-    s >> param.paramIn;
-    s >> param.paramInId;
-    s >> param.paramOut;
-    s >> param.paramOutId;
+    s >> param.paramIn;    
+    s >> param.paramOut;    
     s >> param.pcRanges;
     return s;
 }
@@ -117,6 +134,7 @@ void JZNodeScript::saveToStream(QDataStream &s)
     s << functionList;
     s << nodeInfo;    
     s << runtimeInfo;
+    s << canBreak;
 }
 
 void JZNodeScript::loadFromStream(QDataStream &s)
@@ -136,6 +154,7 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     s >> functionList;
     s >> nodeInfo;      
     s >> runtimeInfo;
+    s >> canBreak;
 }
 
 //JZNodeProgram
@@ -299,7 +318,7 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
             return "nullptr(" + JZNodeType::typeToName(v->type) +")";
         }
         else
-            return "$" + param.value.toString();
+            return "$" + JZNodeType::toString(param.value);
     }
     else if(param.type == JZNodeIRParam::Reference)
         return param.ref();
@@ -340,9 +359,12 @@ QString JZNodeProgram::dump()
                 {
                     JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
                     QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "Global" : "Local";
-                    line += alloc + " " + ir_alloc->name + " = " + toString(ir_alloc->value);
+                    if(ir_alloc->type == JZNodeIRAlloc::Heap || ir_alloc->type == JZNodeIRAlloc::Stack)
+                        line += alloc + " " + ir_alloc->name + " = " + toString(ir_alloc->value);
+                    else
+                        line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id) + " = " + toString(ir_alloc->value);
                     break;
-                }
+                }                
                 case OP_set:
                 {
                     JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
@@ -404,11 +426,11 @@ QString JZNodeProgram::dump()
                 {
                     JZNodeIRJmp *ir_jmp = (JZNodeIRJmp *)op;
                     if(op->type == OP_jmp)
-                        line += "JMP " + toString(ir_jmp->jmpPc);
+                        line += "JMP " + QString::number(ir_jmp->jmpPc);
                     else if(op->type == OP_je)
-                        line += "JE " + toString(ir_jmp->jmpPc);
+                        line += "JE " + QString::number(ir_jmp->jmpPc);
                     else
-                        line += "JNE " + toString(ir_jmp->jmpPc);
+                        line += "JNE " + QString::number(ir_jmp->jmpPc);
                     break;
                 }
                 case OP_assert:

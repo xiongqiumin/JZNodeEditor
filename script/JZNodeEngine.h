@@ -7,6 +7,7 @@
 #include <QThread>
 #include <QException>
 #include <QWaitCondition>
+#include <QSet>
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeFunctionManager.h"
@@ -26,6 +27,9 @@ class RunnerEnv
 public:
     RunnerEnv();
     
+    void initVariable(QString name, const QVariant &value);
+    void initVariable(int id, const QVariant &value);
+
     QVariant *getRef(int id);
     QVariant *getRef(QString name);
 
@@ -53,15 +57,6 @@ public:
 
     RunnerEnv *currentEnv();
     RunnerEnv *env(int index);    
-
-    QVariant getVariable(const QString &name);
-    void setVariable(const QString &name, const QVariant &value);
-
-    QVariant getVariable(int id);
-    void setVariable(int id, const QVariant &value);
-
-    QVariant getVariable(int level,int id);
-    void setVariable(int level,int id, const QVariant &value);
 
 protected:   
     QList<RunnerEnv> m_env;
@@ -112,8 +107,8 @@ public:
     int type;
     QString file;
     int nodeId;    
-    int stack;
-    NodeRange range;
+    int stack;    
+    NodeRange pcRange;
 };
 
 //JZNodeEngine
@@ -153,6 +148,7 @@ public:
 
     void initGlobal(QString name, const QVariant &v);
     void initLocal(QString name, const QVariant &v);
+    void initLocal(int id, const QVariant &v);
        
     Stack *stack();    
 
@@ -194,7 +190,7 @@ public:
     void print(const QString &log);
 
 signals:
-    void sigParamChanged();
+    void sigNodePropChanged(QString file,int id,QString value);
     void sigRuntimeError(JZNodeRuntimeError error);
     void sigLog(const QString &log);
     void sigStatusChanged(int status);
@@ -207,7 +203,6 @@ protected:
         Command_stop,
     };
     
-
     struct ConnectCache
     {
         int eventType;
@@ -269,6 +264,7 @@ protected:
     QVariant dealExpr(const QVariant &a, const QVariant &b,int op);
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);    
+    void dealSet(QVariant *ref, const QVariant &value);
 
     void pushStack(const FunctionDefine *define);
     void popStack();
@@ -280,23 +276,23 @@ protected:
     QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
         
     int nodeIdByPc(int pc);        
-    int nodeIdByPc(JZNodeScript *script,int pc);
+    int nodeIdByPc(JZNodeScript *script, int pc);
     int breakNodeId(int pc, int skip_id);
 
     JZNodeScript *getScript(QString path); 
     
-    bool isWatch();        
+    bool isWatch(QVariant *var); //node display
     void splitMember(const QString &fullName,QStringList &objName,QString &memberName);
     void unSupportOp(int a,int b,int op);
 
-    int m_pc;
-    int m_breakNodeId;
+    int m_pc;    
     JZNodeProgram *m_program;    
     JZNodeScript *m_script;
     QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
-    BreakPoint m_breakStep;        
+    BreakPoint m_breakStep;     
+    int m_breakNodeId;
 
     QList<int> m_watchParam;
 
@@ -314,6 +310,7 @@ protected:
     
     QMap<JZNodeObject*,JZObjectInfo> m_objectInfo;    
     QMap<QVariant*, VariantInfo> m_variantInfo;    
+    QSet<QVariant*> m_anyVariants;
 };
 extern JZNodeEngine *g_engine;
 

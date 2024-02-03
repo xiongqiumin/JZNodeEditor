@@ -40,12 +40,6 @@ int JZNodeEvent::eventType() const
     return m_eventType;
 }
 
-bool JZNodeEvent::compiler(JZNodeCompiler *c,QString &error)
-{    
-    c->addJumpNode(flowOut());
-    return true;
-}
-
 //JZNodeStartEvent
 JZNodeStartEvent::JZNodeStartEvent()
 {
@@ -61,6 +55,14 @@ FunctionDefine JZNodeStartEvent::function()
     func.name = "__main__";
     func.isFlowFunction = true;
     return func;
+}
+
+bool JZNodeStartEvent::compiler(JZNodeCompiler *c, QString &error)
+{
+    auto func = function();
+    c->addFunctionAlloc(func);    
+    c->addJumpNode(flowOut());
+    return true;
 }
 
 
@@ -157,6 +159,8 @@ bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
     if(!c->checkVariableType(sender, m_sender,error))
         return false;
         
+    auto def = JZNodeObjectManager::instance()->meta(m_sender);
+    c->setPinType(m_id, paramIn(0), def->id);
     c->addFunctionAlloc(function());
 
     auto list = paramOutList();
@@ -292,4 +296,9 @@ FunctionDefine JZNodeParamChangedEvent::function()
 {
     FunctionDefine def;
     return def;
+}
+
+bool JZNodeParamChangedEvent::compiler(JZNodeCompiler *compiler, QString &error)
+{
+    return false;
 }

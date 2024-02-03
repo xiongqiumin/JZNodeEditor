@@ -25,6 +25,7 @@ enum{
     Cmd_runtimeError,
     Cmd_getVariable,
     Cmd_setVariable,
+    Cmd_nodePropChanged,
     Cmd_log,
 };
 
@@ -84,7 +85,7 @@ class JZNodeDebugParamValue
 {
 public:
     int type;
-    QVariant value;
+    QString value;
     QMap<QString, JZNodeDebugParamValue> params;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param);
@@ -162,5 +163,17 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param);
 
+//JZNodeValueChanged
+class JZNodeValueChanged
+{
+public:
+    JZNodeValueChanged();
+
+    QString file;
+    int id;
+    QString value;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeValueChanged &param);
+QDataStream &operator>>(QDataStream &s, JZNodeValueChanged &param);
 
 #endif

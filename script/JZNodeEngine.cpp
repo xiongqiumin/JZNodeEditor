@@ -128,6 +128,16 @@ RunnerEnv::RunnerEnv()
     pc = -1;
 }
 
+void RunnerEnv::initVariable(QString name, const QVariant &value)
+{
+    locals[name] = JZVariantPtr(new QVariant(value));
+}
+
+void RunnerEnv::initVariable(int id, const QVariant &value)
+{
+    stacks[id] = JZVariantPtr(new QVariant(value));
+}
+
 QVariant *RunnerEnv::getRef(int id)
 {
     auto it = stacks.find(id);
@@ -188,54 +198,6 @@ void Stack::pop()
 void Stack::push()
 {           
     m_env.push_back(RunnerEnv());
-}
-
-QVariant Stack::getVariable(const QString &name)
-{
-    int level = m_env.size() - 1;
-    auto it = m_env[level].locals.find(name);
-    if (it == m_env[level].locals.end())
-        return QVariant();
-
-    return *it.value();
-}
-
-void Stack::setVariable(const QString &name, const QVariant &value)
-{
-    int level = m_env.size() - 1;
-    auto it = m_env[level].locals.find(name);
-    if (it == m_env[level].locals.end())
-        m_env[level].locals[name] = JZVariantPtr(new QVariant());
-
-    *m_env[level].locals[name] = value;
-}
-
-QVariant Stack::getVariable(int id)
-{
-    return getVariable(m_env.size() - 1,id);
-}
-
-void Stack::setVariable(int id, const QVariant &value)
-{
-    setVariable(m_env.size() - 1,id,value);
-}
-
-QVariant Stack::getVariable(int level,int id)
-{
-    auto it = m_env[level].stacks.find(id);
-    if (it == m_env[level].stacks.end())
-        return QVariant();
-
-    return *(it.value());
-}
-
-void Stack::setVariable(int level,int id, const QVariant &value)
-{
-    auto it = m_env[level].stacks.find(id);
-    if (it == m_env[level].stacks.end())
-        m_env[level].stacks[id] = JZVariantPtr(new QVariant());
-
-    *m_env[level].stacks[id] = value;
 }
 
 //JZNodeRuntimeError
@@ -357,8 +319,7 @@ JZNodeEngine::JZNodeEngine()
     m_program = nullptr;
     m_script = nullptr;
     m_sender = nullptr;
-    m_pc = -1;    
-    m_breakNodeId = -1;
+    m_pc = -1;        
     m_debug = false;
     m_status = Status_none;
     m_statusCommand = Command_none;
@@ -395,6 +356,7 @@ void JZNodeEngine::clear()
     m_sender = nullptr;
     m_statusCommand = Status_none;
     m_status = Status_none;
+    m_breakNodeId = -1;
 
     setReg(Reg_Cmp, false);
     if (g_engine == this)
@@ -500,14 +462,22 @@ int JZNodeEngine::nodeIdByPc(JZNodeScript *script, int pc)
             if (rng_idx >= 0)
                 return ir_node->id;
         }
+    }     
+    for (int i = pc; i < op_list.size(); i++)
+    {
+        if (op_list[i]->type == OP_nodeId)
+        {
+            JZNodeIRNodeId *ir_node = (JZNodeIRNodeId *)op_list[i].data();
+            return ir_node->id;
+        }
     }
     Q_ASSERT(0);
-    return 0;
+    return -1;
 }
 
 int JZNodeEngine::nodeIdByPc(int m_pc)
 {
-    return nodeIdByPc(m_script,m_pc);    
+    return nodeIdByPc(m_script,m_pc);        
 }
 
 JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
@@ -531,10 +501,7 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
             if (env->script)
             {
                 s.file = env->script->file;
-                if (i == m_stack.size() - 1 && m_breakNodeId != -1)
-                    s.nodeId = m_breakNodeId;
-                else
-                    s.nodeId = nodeIdByPc(env->script, env->pc);
+                s.nodeId = nodeIdByPc(env->script, env->pc);                  
             }            
             s.pc = env->pc;
             info.stacks.push_back(s);
@@ -569,12 +536,11 @@ void JZNodeEngine::pushStack(const FunctionDefine *func)
 }
 
 void JZNodeEngine::popStack()
-{   
-    auto &locals = m_stack.currentEnv()->locals;
-    for (auto &ptr : locals)
-    {
+{       
+    for (auto &ptr : m_stack.currentEnv()->locals)
         varaiantDeleteNotify(ptr.data());
-    }
+    for (auto &ptr : m_stack.currentEnv()->stacks)
+        varaiantDeleteNotify(ptr.data());
 
     m_stack.pop();
     if(m_stack.size() > 0)
@@ -981,28 +947,36 @@ QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
         if (param.id() >= Reg_Start)
             return getReg(param.id());
         else
-            return m_stack.getVariable(param.id());
+        {
+            auto ref = m_stack.currentEnv()->getRef(param.id());
+            if (!ref)
+                throw std::runtime_error("no such variable id=" + to_string(param.id()));
+
+            return *ref;
+        }
     }
 }
 
 void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
 {
     if (param.isId())
-    {
+    {        
         if (param.id() >= Reg_Start)
-            setReg(param.id(), value);
+            setReg(param.id(),value);
         else
-            m_stack.setVariable(param.id(), value);
+        {
+            QVariant *ref = m_stack.currentEnv()->getRef(param.id());
+            if (!ref)
+                throw std::runtime_error("no such variable " + to_string(param.id()));
+            dealSet(ref, value);
+        }
     }
     else if(param.isRef())
         setVariable(param.ref(),value);
     else
     {
         Q_ASSERT(0);
-    }                       
-
-    if(isWatch())
-        emit sigParamChanged();
+    }                           
 }
 
 void JZNodeEngine::initGlobal(QString name, const QVariant &v)
@@ -1016,7 +990,14 @@ void JZNodeEngine::initGlobal(QString name, const QVariant &v)
 
 void JZNodeEngine::initLocal(QString name, const QVariant &v)
 {
-    m_stack.setVariable(name, v);
+    auto env = m_stack.currentEnv();
+    env->initVariable(name, v);
+}
+
+void JZNodeEngine::initLocal(int id, const QVariant &v)
+{
+    auto env = m_stack.currentEnv();
+    env->initVariable(id, v);
 }
 
 Stack *JZNodeEngine::stack()
@@ -1100,16 +1081,25 @@ void JZNodeEngine::setVariable(const QString &name, const QVariant &value)
     if(!ref)
         throw std::runtime_error("no such variable " + name.toStdString());
 
+    dealSet(ref, value);
+}
+
+void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
+{
     bool isChange = false;
     if (JZNodeType::isBaseOrEnum(JZNodeType::variantType(value)) && value != *ref)
         isChange = true;
 
-    Q_ASSERT(JZNodeType::variantType(*ref) == JZNodeType::variantType(value));
-    *ref = value;    
+    Q_ASSERT(m_anyVariants.contains(ref) || JZNodeType::variantType(*ref) == JZNodeType::variantType(value));
+    *ref = value;
+
     if (isJZObject(value))
         connectSingleLater(ref);
     if (isChange)
-        valueChanged(ref);  
+        valueChanged(ref); 
+    if (m_debug && isWatch(ref))
+    {
+    }
 }
 
 QVariant JZNodeEngine::getThis()
@@ -1154,17 +1144,17 @@ void JZNodeEngine::objectDelete(JZNodeObject *object)
 
 void JZNodeEngine::varaiantDeleteNotify(QVariant *v)
 {    
+    m_anyVariants.remove(v);
     auto it = m_variantInfo.find(v);
-    if (it == m_variantInfo.end())
-        return;
-
-    if (it->bindWidget)
+    if(it != m_variantInfo.end())
     {
-        auto w = JZObjectCast<QWidget>(toJZObject(*it->bindWidget));
-        JZNodeQtBind::unbind(w);
+        if (it->bindWidget)
+        {
+            auto w = JZObjectCast<QWidget>(toJZObject(*it->bindWidget));
+            JZNodeQtBind::unbind(w);
+        }
+        m_variantInfo.erase(it);
     }
-
-    m_variantInfo.erase(it);
 }
 
 void JZNodeEngine::widgetValueChanged(QWidget *w)
@@ -1235,7 +1225,7 @@ JZNodeScript *JZNodeEngine::getScript(QString path)
     return m_program->script(path);
 }
 
-bool JZNodeEngine::isWatch()
+bool JZNodeEngine::isWatch(QVariant *var)
 {
     return false;
 }
@@ -1269,6 +1259,8 @@ void JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
     pt.type = BreakPoint::nodeEnter;
     pt.file = filepath;
     pt.nodeId = nodeId;    
+    if(script->nodeInfo[pt.nodeId].isFlow)
+        pt.pcRange = script->nodeInfo[pt.nodeId].pcRanges[0];
     m_breakPoints.push_back(pt);    
 }
 
@@ -1359,9 +1351,8 @@ void JZNodeEngine::stepIn()
     QMutexLocker lock(&m_mutex);
     if (m_status != Status_pause)
         return;
-
-    int node_id = nodeIdByPc(m_pc);
-    auto info = m_script->nodeInfo[node_id];
+    
+    auto info = m_script->nodeInfo[m_breakNodeId];
     if(info.node_type == Node_function)
     {
         m_breakStep.type = BreakPoint::stackEqual;
@@ -1384,21 +1375,15 @@ void JZNodeEngine::stepOver()
     QMutexLocker lock(&m_mutex);  
     if (m_status != Status_pause)
         return;
-
-    int node_id = -1;
-    if (m_breakNodeId != -1)
-        node_id = m_breakNodeId;
-    else
-        node_id = nodeIdByPc(m_pc);
-
+    
     m_breakStep.type = BreakPoint::stepOver;
     m_breakStep.file = m_script->file;
-    m_breakStep.nodeId = node_id;
+    m_breakStep.nodeId = m_breakNodeId;
     m_breakStep.stack = m_stack.size();    
 
-    int rng_idx = m_script->nodeInfo[node_id].indexOfRange(m_pc);    
-    m_breakStep.range = m_script->nodeInfo[node_id].pcRanges[rng_idx];
-
+    int index = m_script->nodeInfo[m_breakNodeId].indexOfRange(m_pc);
+    m_breakStep.pcRange = m_script->nodeInfo[m_breakNodeId].pcRange(index);
+    
     m_statusCommand = Command_resume;
     lock.unlock();
     m_waitCond.wakeOne();
@@ -1443,6 +1428,8 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
     auto &inList = func->paramIn;
     for (int i = 0; i < inList.size(); i++)    
         paramIn.push_back(getReg(Reg_Call + i));  
+
+    checkFunction(func);
 
     // call function
     pushStack(func);
@@ -1645,8 +1632,8 @@ bool JZNodeEngine::checkPauseStop()
         m_statusCommand = Command_none;
         wait = true;
     }
-    else 
-    {
+    else if(m_script->canBreak[m_pc])
+    {                
         int node_id = -1;
         if (op_list[m_pc]->type == OP_nodeId)
         {
@@ -1657,24 +1644,18 @@ bool JZNodeEngine::checkPauseStop()
         int stack = m_stack.size();
         auto breakTriggred = [this](BreakPoint &pt,const QString &filepath,int stack,int pc,int node_id)->bool
         {
-            if(pt.type == BreakPoint::nodeEnter && pt.file == filepath && node_id == pt.nodeId)
+            if(pt.type == BreakPoint::nodeEnter && pt.file == filepath && (node_id == pt.nodeId
+                || (pt.pcRange.start != -1 && pc > pt.pcRange.start && pc < pt.pcRange.end)))
                 return true;
             else if (pt.type == BreakPoint::stepOver)
             {                
                 if (stack < pt.stack)
                     return true;
-                else if (pt.file == filepath)
+                else if (pt.stack == stack)
                 {
-                    if (node_id >= 0 && node_id != pt.nodeId)
-                    {
-                        m_breakNodeId = node_id;
-                        return true;
-                    }
-                    else if(m_pc < pt.range.start || m_pc >= pt.range.end)
-                    {             
-                        m_breakNodeId = breakNodeId(pc, pt.nodeId);
-                        return true;
-                    }
+                    Q_ASSERT(pt.file == filepath);
+                    if (pc < pt.pcRange.start || pc >= pt.pcRange.end)                        
+                        return true;                    
                 }                                         
             }
             else if(pt.type == BreakPoint::stackEqual && stack == pt.stack)
@@ -1703,7 +1684,7 @@ bool JZNodeEngine::checkPauseStop()
         }
     }
     if (wait)
-    {
+    {        
         m_stack.currentEnv()->pc = m_pc;
         m_statusCommand = Command_none;
         updateStatus(Status_pause);
@@ -1791,7 +1772,7 @@ bool JZNodeEngine::run()
         case OP_jne:
         {
             JZNodeIRJmp *ir_jmp = (JZNodeIRJmp*)op;
-            int jmpPc = getParam(ir_jmp->jmpPc).toInt();
+            int jmpPc = ir_jmp->jmpPc;
             Q_ASSERT(jmpPc >= 0 && jmpPc < op_list.size());
             if(op_type == OP_jmp)
                 m_pc = jmpPc;
@@ -1811,8 +1792,19 @@ bool JZNodeEngine::run()
             auto value = JZNodeType::matchValue(ir_alloc->dataType, getParam(ir_alloc->value));
             if(ir_alloc->allocType == JZNodeIRAlloc::Heap)
                 initGlobal(ir_alloc->name,value);
+            else if (ir_alloc->allocType == JZNodeIRAlloc::Stack)
+                initLocal(ir_alloc->name, value);
             else
-                m_stack.setVariable(ir_alloc->name, value);
+                initLocal(ir_alloc->id, value);
+
+            if (ir_alloc->dataType = Type_any)
+            {
+                if (ir_alloc->allocType == JZNodeIRAlloc::Heap
+                    || ir_alloc->allocType == JZNodeIRAlloc::Stack)
+                    m_anyVariants << getVariableRef(ir_alloc->name);
+                else
+                    m_anyVariants << m_stack.currentEnv()->getRef(ir_alloc->id);
+            }
             break;
         }
         case OP_set:

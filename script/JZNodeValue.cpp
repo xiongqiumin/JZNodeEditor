@@ -88,6 +88,9 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
     int v = prop(paramOut(0))->value().toInt();
     int id = c->paramId(m_id, paramOut(0));
     c->addSetVariable(irId(id), irLiteral(v));
+    
+    auto def = JZNodeObjectManager::instance()->meta(m_name);
+    c->setPinType(m_id,paramOut(0),def->id);
     return true;
 }
 
@@ -193,7 +196,7 @@ JZNodeDisplay::JZNodeDisplay()
     m_type = Node_display;
     m_name = "display";
 
-    int in = addParamIn("value");
+    int in = addParamIn("value",Prop_dispValue);
     setPinTypeAny(in);
 }
 
@@ -202,8 +205,9 @@ JZNodeDisplay::~JZNodeDisplay()
 
 }
 
-bool JZNodeDisplay::compiler(JZNodeCompiler *compiler, QString &error)
+bool JZNodeDisplay::compiler(JZNodeCompiler *c, QString &error)
 {
+    c->addNodeStart(m_id);
     return true;
 }
 
@@ -215,7 +219,7 @@ JZNodePrint::JZNodePrint()
 
     addFlowIn();
     addFlowOut();
-    int in = addParamIn("");
+    int in = addParamIn("text", Prop_dispName);
     setPinTypeAny(in);
 }
 

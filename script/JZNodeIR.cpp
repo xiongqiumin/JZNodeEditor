@@ -205,7 +205,7 @@ void JZNodeIRNodeId::loadFromStream(QDataStream &s)
 
 //JZNodeIRAlloc
 JZNodeIRAlloc::JZNodeIRAlloc()
-{
+{    
     type = OP_alloc;
     dataType = Type_none;
     allocType = None;
@@ -228,10 +228,6 @@ void JZNodeIRAlloc::loadFromStream(QDataStream &s)
     JZNodeIR::loadFromStream(s);
     s >> allocType >> name >> id >> dataType >> value;
 }
-
-QString name;
-int dataType;
-int allocType;
 
 //JZNodeIRExpr
 JZNodeIRExpr::JZNodeIRExpr(int type)
@@ -283,8 +279,8 @@ void JZNodeIRSet::loadFromStream(QDataStream &s)
 JZNodeIRJmp::JZNodeIRJmp(int type)
     :JZNodeIR(type)
 {
-    Q_ASSERT(type == OP_je || type == OP_jne || type == OP_jmp);
-    type = OP_call;    
+    Q_ASSERT(type == OP_je || type == OP_jne || type == OP_jmp);    
+    jmpPc = -1;
 }
 
 JZNodeIRJmp::~JZNodeIRJmp()

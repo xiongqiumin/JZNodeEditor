@@ -13,6 +13,9 @@ public:
     void init(JZProject *project);
     void stop();
 
+protected slots:
+    void onRuntimeError();
+
 protected:
     virtual void run() override;    
     

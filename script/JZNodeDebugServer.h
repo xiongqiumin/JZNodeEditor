@@ -38,11 +38,12 @@ protected slots:
 
     void onRuntimeError(JZNodeRuntimeError error);    
     void onStatusChanged(int status);
+    void onNodePropChanged(QString file,int id,QString value);
     void onLog(const QString &log);
 
 protected:        
-    QVariant getVariable(const QVariantList &list);
-    void setVariable(const QVariantList &list);
+    QVariant getVariable(const JZNodeDebugParamInfo &list);
+    QVariant setVariable(const JZNodeSetDebugParamInfo &list);
     JZNodeDebugParamValue toDebugParam(const QVariant &value);
     JZNodeProgramInfo getProgramInfo();    
     QVariant *getVariableRef(int stack,const JZNodeParamCoor &coor);

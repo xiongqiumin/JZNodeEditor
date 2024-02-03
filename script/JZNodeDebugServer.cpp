@@ -67,6 +67,7 @@ void JZNodeDebugServer::setEngine(JZNodeEngine *eng)
     connect(m_engine,&JZNodeEngine::sigRuntimeError,this,&JZNodeDebugServer::onRuntimeError);
     connect(m_engine,&JZNodeEngine::sigLog, this, &JZNodeDebugServer::onLog);
     connect(m_engine,&JZNodeEngine::sigStatusChanged, this, &JZNodeDebugServer::onStatusChanged);
+    connect(m_engine,&JZNodeEngine::sigNodePropChanged, this, &JZNodeDebugServer::onNodePropChanged);
 }
 
 void JZNodeDebugServer::setVM(JZNodeVM *vm)
@@ -154,10 +155,16 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         m_engine->stepOut();
     else if(cmd == Cmd_runtimeInfo)    
         result << netDataPack(m_engine->runtimeInfo());    
-    else if(cmd == Cmd_getVariable)
-        result << getVariable(params);
-    else if(cmd == Cmd_setVariable)
-        setVariable(params);
+    else if (cmd == Cmd_getVariable)
+    {
+        JZNodeDebugParamInfo info = netDataUnPack<JZNodeDebugParamInfo>(params[0].toByteArray());        
+        result << getVariable(info);
+    }
+    else if (cmd == Cmd_setVariable)
+    {
+        JZNodeSetDebugParamInfo info = netDataUnPack<JZNodeSetDebugParamInfo>(params[0].toByteArray());
+        result << setVariable(info);
+    }
 
     JZNodeDebugPacket result_pack;
     result_pack.cmd = cmd;
@@ -193,6 +200,22 @@ void JZNodeDebugServer::onStatusChanged(int status)
     m_server.sendPack(m_client, &status_pack);
 }
 
+void JZNodeDebugServer::onNodePropChanged(QString file, int id, QString value)
+{
+    if (m_client == -1)
+        return;
+
+    JZNodeValueChanged info;    
+    info.file = file;
+    info.id = id;    
+    info.value = value;
+
+    JZNodeDebugPacket status_pack;
+    status_pack.cmd = Cmd_nodePropChanged;
+    status_pack.params << netDataPack<JZNodeValueChanged>(info);
+    m_server.sendPack(m_client, &status_pack);
+}
+
 QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
 {
     QVariant *ref = nullptr;
@@ -211,9 +234,9 @@ QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &co
     return ref;
 }
 
-QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
-{    
-    JZNodeDebugParamInfo info = netDataUnPack<JZNodeDebugParamInfo>(list[0].toByteArray());
+QVariant JZNodeDebugServer::getVariable(const JZNodeDebugParamInfo &info)
+{        
+    JZNodeDebugParamInfo result = info;
     auto stack = m_engine->stack();    
     for (int i = 0; i < info.coors.size(); i++)
     {
@@ -222,19 +245,24 @@ QVariant JZNodeDebugServer::getVariable(const QVariantList &list)
         if (ref)
             param = toDebugParam(*ref);
         else
-            param.value = "没找到";
-        info.values << param;
+            param.type = Type_none;
+        
+        result.values.push_back(param);
     }
-    return netDataPack(info);
+    return netDataPack(result);
 }
 
-void JZNodeDebugServer::setVariable(const QVariantList &list)
-{
-    JZNodeSetDebugParamInfo info = netDataUnPack<JZNodeSetDebugParamInfo>(list[0].toByteArray());
+QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParamInfo &info)
+{    
     auto stack = m_engine->stack();    
     QVariant *ref = getVariableRef(info.stack, info.coor);
     if (ref && !isJZObject(*ref))
         *ref = JZNodeType::matchValue(JZNodeType::variantType(*ref), info.value);
+
+    JZNodeDebugParamInfo result;
+    result.coors << info.coor;
+    result.stack = info.stack;    
+    return getVariable(result);
 }
 
 JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
@@ -308,13 +336,13 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
                 QString name = params[i];
                 ret.params[name] = toDebugParam(obj->param(name));
             }
-            ret.value = (qint64)obj;
+            ret.value = "0x" + QString::number((quint64)obj,16);
         }                  
     }
     else
     {
         ret.type = JZNodeType::variantType(value);
-        ret.value = value;
+        ret.value = JZNodeType::toString(value);
     }
     return  ret;
 }

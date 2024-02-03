@@ -61,15 +61,19 @@ void TestServer::init(JZProject *project)
     JZNodePrint *node_print = new JZNodePrint();
     node_print->setParamInValue(0, "hello");
 
+    JZNodeDisplay *node_display = new JZNodeDisplay();
+
     JZNodeNop *nop = new JZNodeNop();
     script->addNode(JZNodePtr(nop));
     script->addNode(JZNodePtr(timeout));
     script->addNode(JZNodePtr(node_for));
     script->addNode(JZNodePtr(node_print));
+    script->addNode(JZNodePtr(node_display));
 
     script->addConnect(timeout->flowOutGemo(0), node_print->flowInGemo());
     script->addConnect(node_print->flowOutGemo(0), node_for->flowInGemo());
     script->addConnect(node_for->subFlowOutGemo(0), nop->flowInGemo());
+    script->addConnect(node_for->paramOutGemo(0), node_display->paramInGemo(0));
 
     m_project->saveAllItem();
     projectUpdateLayout(m_project);
@@ -84,6 +88,11 @@ void TestServer::stop()
     wait();
 }
 
+void TestServer::onRuntimeError()
+{
+    quit();
+}
+
 void TestServer::run()
 {    
 
@@ -94,6 +103,8 @@ void TestServer::run()
     }    
 
     JZNodeEngine engine;
+    connect(&engine, &JZNodeEngine::sigRuntimeError, this, &TestServer::onRuntimeError);
+
     m_engine = &engine;
     engine.setProgram(&m_program);
     engine.init();

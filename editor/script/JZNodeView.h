@@ -99,6 +99,10 @@ public:
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
 
+    void setNodePropValue(int nodeId, int prop_id,QString value);
+    QString getNodePropValue(int nodeId, int prop_id);
+    void longPressCheck(int nodeId);
+
     /* connect */
     JZNodeLineItem *createLine(JZNodeGemo from, JZNodeGemo to);
     JZNodeLineItem *insertLine(const JZNodeConnect &connect);

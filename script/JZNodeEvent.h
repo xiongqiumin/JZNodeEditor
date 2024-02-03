@@ -10,8 +10,7 @@ class JZNodeEvent : public JZNode
 public:
     JZNodeEvent();
     virtual ~JZNodeEvent();
-
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error);
+    
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
 
@@ -29,8 +28,9 @@ class JZNodeStartEvent : public JZNodeEvent
 {
 public:
     JZNodeStartEvent();
-
+    
     virtual FunctionDefine function() override;
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };
 
 //JZNodeSingleEvent
@@ -90,6 +90,7 @@ public:
     virtual QString variable() const;
 
     virtual FunctionDefine function() override;
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };
 
 #endif

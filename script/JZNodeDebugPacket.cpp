@@ -216,3 +216,20 @@ QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param)
     s >> param.breakPoints;
     return s;
 }
+
+//JZNodeValueChanged
+JZNodeValueChanged::JZNodeValueChanged()
+{    
+    id = -1;    
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeValueChanged &param)
+{
+    s << param.file << param.id << param.value;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZNodeValueChanged &param)
+{
+    s >> param.file >> param.id >> param.value;
+    return s;
+}

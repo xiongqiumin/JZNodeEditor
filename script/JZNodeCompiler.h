@@ -43,6 +43,31 @@ public:
 };
 typedef QSharedPointer<Graph> GraphPtr;
 
+enum {
+    OP_ComilerFlowOut = 0x8000,
+    OP_ComilerStackInit,    
+};
+
+//JZNodeIRFlowOut
+class JZNodeIRFlowOut : public JZNodeIR
+{
+public:
+    JZNodeIRFlowOut();
+
+    int fromId;
+    int toId;
+};
+
+//JZNodeIRStackInit
+class JZNodeIRStackInit : public JZNodeIR
+{
+public:
+    JZNodeIRStackInit(int node_id,int prop_id);
+
+    int nodeId;
+    int propId;
+};
+
 //NodeCompilerInfo
 struct NodeCompilerInfo
 {
@@ -55,20 +80,24 @@ struct NodeCompilerInfo
     };
 
     int node_id;
-    int node_type;
-    int start;              //flow节点起始结束
-    int end;
-    QMap<int,int> pinType;
+    int node_type;    
+    QMap<int,int> pinType;   //pin 类型
 
+    int start;
+    QList<NodeRange> ranges; //用于断点信息   
+    QMap<int, QList<NodeRange>> dataRanges;
+    QList<JZNodeIRPtr> statmentList;
+
+    //调转信息    
     int parentId;           //用于subFlow 指明父节点
-    QList<NodeRange> ranges;
-    QList<int> continuePc;
-    QList<int> breakPc;    
     QList<Jump> jmpList;
-    QList<Jump> jmpSubList;    
-    QList<int> continueList;
-    QList<int> breakList;    
-    int allSubReturn;        
+    QList<Jump> jmpSubList;
+    QList<int> continuePc;  //父节点continuet跳出的地址
+    QList<int> breakPc;
+    QList<int> continueList; //子节点continue语句地址
+    QList<int> breakList;
+    int allSubReturn;
+
     QString error;
 };
 
@@ -101,8 +130,7 @@ public:
     bool checkVariableType(const QString &var, const QString &className, QString &error);    
 
     void resetStack();
-    int allocStack();
-    void freeStack(int id);        
+    int allocStack(int dataType);
     void addFunctionAlloc(const FunctionDefine &define);
     
     void setPinType(int nodeId, int propId, int type);    
@@ -115,6 +143,8 @@ public:
     flow 依赖 data 节点, data节点展开
     data 依赖 flow 节点, 被依赖flow节点计算后主动推送
     data 依赖 data 节点, 节点计算前主动获取.
+
+    addFlowInput，addDataInput 后，会自动插入JZNodeIRNodeId, 表示一个节点的开始, 用于断点
     */
     bool addFlowInput(int nodeId,QString &error);
     bool addFlowInput(int nodeId,int prop_id,QString &error);
@@ -123,20 +153,25 @@ public:
     void addFlowOutput(int nodeId);            
 
     int addNop();
+    void addNodeStart(int id);
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);    
     int addStatement(JZNodeIRPtr ir);    
+    
     int addJumpNode(int prop);      //设置下一个flow,应当在执行完操作后增加
-    int addJumpSubNode(int prop);   //设置下一个sub flow
+    int addJumpSubNode(int prop);   //设置下一个sub flow    
     int addContinue();
     int addBreak();    
+    void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
+    
     void addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAllocLocal(const JZParamDefine *def, const JZNodeIRParam &value = JZNodeIRParam());
-    void addAssert(const JZNodeIRParam &tips);
+    void addAssert(const JZNodeIRParam &tips);       
 
-    void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
+    JZNodeIR *lastStatment();
     void replaceStatement(int pc,JZNodeIRPtr ir);
+    void replaceStatement(int pc,QList<JZNodeIRPtr> ir_list);
     
     JZScriptFile *currentFile();
     Graph *currentGraph();
@@ -147,6 +182,13 @@ public:
     QString error();    
 
 protected:    
+    struct NodeCompilerStack
+    {
+        NodeCompilerInfo *nodeInfo;
+        bool isFlow;
+        int startNodePc;
+    };
+
     void init(JZScriptFile *file);
     bool genGraphs();
     bool checkGraphs();
@@ -165,32 +207,35 @@ protected:
     
     bool compilerNode(JZNode *node);
     void pushCompilerNode(int id);
-    void popCompilerNode();
-    void addLocalVariable(JZNodeIRParam param);  
+    void popCompilerNode();    
 
     bool checkPinInType(int nodeId,int prop_id,QString &error); //计算输入类型
     void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
+    void updateFlowOut();    
+    void linkNodes();
+    void updateDebugInfo();
+    void addNodeFlowPc(int node_id, int cond, int pc);
                 
+    JZNode* currentNode();
+    NodeCompilerInfo *currentNodeInfo();
+
     /* build info*/        
     QVector<GraphPtr> m_graphList;
 
-    QString m_className;
-    int m_stackId;          //当前栈位置
+    QString m_className;    
     JZNodeScript *m_script;
     JZScriptFile *m_scriptFile;         
     Graph *m_currentGraph;               
-
-    NodeCompilerInfo *m_currentNodeInfo;
-    JZNode* m_currentNode;        
-    QList<int> m_compilerNodeStack;       //编译时node栈
+        
+    QList<NodeCompilerStack> m_compilerNodeStack;       //编译时node栈
+    QList<JZNodeIRPtr> *m_statmentList;
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
-    QMap<int,NodeCompilerInfo> m_nodeInfo;    
-    QList<JZParamDefine> m_localVaribales; //不包含函数定义
-    
+    QMap<int,NodeCompilerInfo> m_nodeInfo;        
+    int m_stackId;       //当前栈位置，用于分配内存
+
     JZProject *m_project;
     QString m_error;
-    QVector<int> m_stack;
 };
 
 #endif

@@ -254,6 +254,7 @@ JZNodeAnd::JZNodeAnd()
 bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
 {
     auto input_list = paramInList();
+    c->addNodeStart(m_id);
 
     QVector<JZNodeIRJmp*> jmpList;
     int out = c->paramId(m_id, paramOut(0));
@@ -274,7 +275,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
     }
     int ret = c->addNop();
     for (int i = 0; i < jmpList.size(); i++)
-        jmpList[i]->jmpPc = irLiteral(ret);
+        jmpList[i]->jmpPc = ret;
     return true;
 }
 
@@ -294,6 +295,7 @@ JZNodeOr::JZNodeOr()
 bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
 {
     auto input_list = paramInList();
+    c->addNodeStart(m_id);
 
     QVector<JZNodeIRJmp*> jmpList;
     int out = c->paramId(m_id, paramOut(0));
@@ -314,7 +316,7 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
     }
     int ret = c->addNop();
     for (int i = 0; i < jmpList.size(); i++)
-        jmpList[i]->jmpPc = irLiteral(ret);
+        jmpList[i]->jmpPc = ret;
     return true;
 
 }
@@ -439,7 +441,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
         {
             int reg_index = name.mid(4).toInt();
             if (!reg_map.contains(reg_index))
-                reg_map[reg_index] = c->allocStack();
+                reg_map[reg_index] = c->allocStack(Type_double);
             int id = reg_map[reg_index];
             return irId(id);
         }

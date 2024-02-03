@@ -22,9 +22,15 @@ public:
     int propAt(QPointF pos);
     QRectF propRect(int prop);
     QSize size() const;
-    
+
+    void setPropValue(int prop_id,const QString &value);
+    QString propValue(int prop_id);
+    void resetPropValue();
+
     void setError(QString error);
     void clearError();
+
+    void updateLongPress();
 
 protected:
     enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };    
@@ -58,7 +64,9 @@ protected:
     void calcGemo(int prop, int x, int y,PropGemo *gemo);
     void updatePropGemo();
     void updateErrorGemo();
-    void setPropValue(int id, const QVariant &value);
+    
+    void setWidgetValue(QWidget *widget, const QString &value);
+    QString getWidgetValue(QWidget *widget);
 
     QSize m_size;    
     JZNode *m_node;    
@@ -67,6 +75,7 @@ protected:
     QString m_error;
 
     bool m_pinButtonOn;
+    int m_longPress;
     QRectF m_pinButtonRect;
 };
 

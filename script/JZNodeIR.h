@@ -12,7 +12,7 @@ enum
     OP_none,
     OP_nodeId,
     OP_nop,            
-    OP_alloc,
+    OP_alloc,    
     OP_set,    
     OP_get,    
     OP_getRef,
@@ -162,7 +162,7 @@ public:
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);   
 
-    JZNodeIRParam jmpPc;
+    int jmpPc;
 };
 
 class JZNodeIRCall : public JZNodeIR

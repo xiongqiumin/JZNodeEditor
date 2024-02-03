@@ -635,6 +635,7 @@ JZNodeNop::JZNodeNop()
    
 bool JZNodeNop::compiler(JZNodeCompiler *c, QString &error)
 {
+    c->addNodeStart(m_id);
     c->addNop();
     c->addJumpNode(flowOut());
     return true;
@@ -834,64 +835,82 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     int id_end = c->paramId(m_id,indexEnd);
     int id_step = c->paramId(m_id, indexStep);
     int id_index = c->paramId(m_id,indexOut);
+    int cmp_flag = c->allocStack(Type_bool);
+    c->addSetVariable(irId(cmp_flag), irLiteral(false));
 
-    int id_jmp = c->allocStack();
+    //if((start < end && step >= 0) || (start > end && step < 0))  flag = true
     c->addCompare(irId(id_start), irId(id_end), OP_lt);
-    JZNodeIRJmp *jmp_set1 = new JZNodeIRJmp(OP_jne);    
+    JZNodeIRJmp *jmp_set1 = new JZNodeIRJmp(OP_jne);
     c->addStatement(JZNodeIRPtr(jmp_set1));
 
-    JZNodeIRSet *op_set1 = new JZNodeIRSet();
-    op_set1->dst = irId(id_jmp);
-    c->addStatement(JZNodeIRPtr(op_set1));
-    JZNodeIRJmp *jmp_set2 = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_set2));    
+    c->addCompare(irId(id_step), irLiteral(0), OP_ge);
+    JZNodeIRJmp *jmp_set2 = new JZNodeIRJmp(OP_je);
+    c->addStatement(JZNodeIRPtr(jmp_set2));
 
-    JZNodeIRSet *op_set2 = new JZNodeIRSet();
-    op_set2->dst = irId(id_jmp);    
-    int pc_set_2 = c->addStatement(JZNodeIRPtr(op_set2));
-    jmp_set1->jmpPc = irLiteral(pc_set_2);
+    int cmp3 = c->addCompare(irId(id_start), irId(id_end), OP_gt);    
+    jmp_set1->jmpPc = cmp3;
+
+    JZNodeIRJmp *jmp_set3 = new JZNodeIRJmp(OP_jne);
+    c->addStatement(JZNodeIRPtr(jmp_set3));
+
+    c->addCompare(irId(id_step), irLiteral(0), OP_lt);
+    JZNodeIRJmp *jmp_set4 = new JZNodeIRJmp(OP_jne);
+    c->addStatement(JZNodeIRPtr(jmp_set4));
+
+    int set_flag = c->addSetVariable(irId(cmp_flag), irLiteral(true));
+    jmp_set2->jmpPc = set_flag;
     
-    int set_index_pc = c->addSetVariable(irId(id_index),irId(id_start));
-    jmp_set2->jmpPc = irLiteral(set_index_pc);
+    //start 
+    int start = c->addCompare(irId(cmp_flag), irLiteral(true), OP_eq);
+    JZNodeIRJmp *jmp_flag1 = new JZNodeIRJmp(OP_je);
+    JZNodeIRJmp *jmp_flag2 = new JZNodeIRJmp(OP_jmp);
+    c->addStatement(JZNodeIRPtr(jmp_flag1));
+    c->addStatement(JZNodeIRPtr(jmp_flag2));
 
-    //有jmp_to_cmp保底，可以直接加1
-    int continue_next_pc = c->currentPc() + 1;
-    c->addFlowOutput(m_id);    
-    JZNodeIRJmp *jmp_to_cmp = new JZNodeIRJmp(OP_jmp);
-    jmp_to_cmp->jmpPc = irId(id_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_to_cmp));
+    jmp_set3->jmpPc = start;
+    jmp_set4->jmpPc = start;
 
-    // start < end
-    int cmp_lt = c->addCompare(irId(id_index),irId(id_end), OP_lt);
-    op_set1->src = irLiteral(cmp_lt);
-    JZNodeIRJmp *jmp_false_lt = new JZNodeIRJmp(OP_jne);
-    c->addStatement(JZNodeIRPtr(jmp_false_lt));
-    
-    JZNodeIRJmp *jmp_to_body1 = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_to_body1));
+    int cmp_end1 = c->addCompare(irId(id_index), irId(id_end), OP_lt);
+    JZNodeIRJmp *jmp_flag1_body = new JZNodeIRJmp(OP_je);
+    JZNodeIRJmp *jmp_flag1_end = new JZNodeIRJmp(OP_jmp);
+    c->addStatement(JZNodeIRPtr(jmp_flag1_body));
+    c->addStatement(JZNodeIRPtr(jmp_flag1_end));
+    jmp_flag1->jmpPc = cmp_end1;
 
-    // start > end
-    int cmp_gt = c->addCompare(irId(id_index), irId(id_end), OP_gt);
-    op_set2->src = irLiteral(cmp_gt);
-    JZNodeIRJmp *jmp_false_ge = new JZNodeIRJmp(OP_jne);
-    c->addStatement(JZNodeIRPtr(jmp_false_ge));
+    int cmp_end2 = c->addCompare(irId(id_index), irId(id_end), OP_gt);
+    JZNodeIRJmp *jmp_flag2_body = new JZNodeIRJmp(OP_je);
+    JZNodeIRJmp *jmp_flag2_end = new JZNodeIRJmp(OP_jmp);
+    c->addStatement(JZNodeIRPtr(jmp_flag2_body));
+    c->addStatement(JZNodeIRPtr(jmp_flag2_end));
+    jmp_flag2->jmpPc = cmp_end2;
 
-    JZNodeIRJmp *jmp_to_body2 = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_to_body2));
+    int body_pc = c->addNop();
+    c->lastStatment()->memo = "body";
+    c->addFlowOutput(m_id);
+    c->addJumpSubNode(subFlowOut(0));    
 
-    int body_pc = c->addJumpSubNode(subFlowOut(0));
-    jmp_to_body1->jmpPc = irLiteral(body_pc);
-    jmp_to_body2->jmpPc = irLiteral(body_pc);
+    int continue_pc = c->addCompare(irId(cmp_flag), irLiteral(true), OP_eq);
+    JZNodeIRJmp *jmp_continue_add = new JZNodeIRJmp(OP_je);
+    JZNodeIRJmp *jmp_continue_sub = new JZNodeIRJmp(OP_jmp);
+    c->addStatement(JZNodeIRPtr(jmp_continue_add));
+    c->addStatement(JZNodeIRPtr(jmp_continue_sub));
 
-    int continuePc = c->addExpr(irId(id_index),irId(id_index), irId(id_step),OP_add);
-    JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);       
-    jmp->jmpPc = irLiteral(continue_next_pc);
-    c->addStatement(JZNodeIRPtr(jmp));
-    
-    int breakPc = c->addJumpNode(flowOut());
-    jmp_false_lt->jmpPc = irLiteral(breakPc);
-    jmp_false_ge->jmpPc = irLiteral(breakPc);
-    c->setBreakContinue({breakPc},{continuePc});    
+    jmp_continue_add->jmpPc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_add);
+    JZNodeIRJmp *jmp_to_start1 = new JZNodeIRJmp(OP_jmp);
+    jmp_to_start1->jmpPc = start;
+    c->addStatement(JZNodeIRPtr(jmp_to_start1));
+
+    jmp_continue_sub->jmpPc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_sub);
+    JZNodeIRJmp *jmp_to_start2 = new JZNodeIRJmp(OP_jmp);        
+    jmp_to_start2->jmpPc = start;
+    c->addStatement(JZNodeIRPtr(jmp_to_start2));
+
+    int break_pc = c->addJumpNode(flowOut());
+    jmp_flag1_body->jmpPc = body_pc;
+    jmp_flag1_end->jmpPc = break_pc;
+    jmp_flag2_body->jmpPc = body_pc;
+    jmp_flag2_end->jmpPc = break_pc;         
+    c->setBreakContinue({break_pc},{ continue_pc });
 
     return true;
 }
@@ -956,15 +975,15 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 
     int id_list = c->paramId(m_id,paramIn(0));
     JZNodeIRParam list = irId(id_list);
-    JZNodeIRParam className = irId(c->allocStack());
-    JZNodeIRParam it = irId(c->allocStack());
-    JZNodeIRParam itName = irId(c->allocStack());
-    JZNodeIRParam itBeginFunc = irId(c->allocStack());
-    JZNodeIRParam itNextFunc = irId(c->allocStack());
-    JZNodeIRParam itEndFunc = irId(c->allocStack());
-    JZNodeIRParam itIsEnd = irId(c->allocStack());
-    JZNodeIRParam itKeyFunc = irId(c->allocStack());
-    JZNodeIRParam itValueFunc = irId(c->allocStack());
+    JZNodeIRParam className = irId(c->allocStack(Type_string));
+    JZNodeIRParam it = irId(c->allocStack(Type_any));
+    JZNodeIRParam itName = irId(c->allocStack(Type_string));
+    JZNodeIRParam itBeginFunc = irId(c->allocStack(Type_string));
+    JZNodeIRParam itNextFunc = irId(c->allocStack(Type_string));
+    JZNodeIRParam itEndFunc = irId(c->allocStack(Type_string));
+    JZNodeIRParam itIsEnd = irId(c->allocStack(Type_string));
+    JZNodeIRParam itKeyFunc = irId(c->allocStack(Type_string));
+    JZNodeIRParam itValueFunc = irId(c->allocStack(Type_string));
     JZNodeIRParam itKey = irId(c->paramId(m_id,paramOut(0)));
     JZNodeIRParam itValue = irId(c->paramId(m_id,paramOut(1)));    
 
@@ -997,11 +1016,11 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
     int continuePc = c->currentPc() + 1;
     c->addCall(itNextFunc,{it},{});
     JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
-    jmp->jmpPc = irLiteral(startPc);
+    jmp->jmpPc = startPc;
     c->addStatement(JZNodeIRPtr(jmp));
 
     int breakPc = c->addJumpNode(flowOut());
-    jmp_true->jmpPc = irLiteral(breakPc);
+    jmp_true->jmpPc = breakPc;
     c->setBreakContinue({breakPc},{continuePc});
 
     return true;
@@ -1037,8 +1056,8 @@ bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_false));    
 
     int breakPc = c->addJumpNode(flowOut());
-    jmp_true->jmpPc = irLiteral(c->addJumpSubNode(subFlowOut(0)));
-    jmp_false->jmpPc = irLiteral(breakPc);
+    jmp_true->jmpPc = c->addJumpSubNode(subFlowOut(0));
+    jmp_false->jmpPc = breakPc;
     
     c->setBreakContinue({breakPc},{continuePc});
     return true;
@@ -1157,7 +1176,7 @@ bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error)
         if (!c->addFlowInput(m_id, inList[i], error))
             return false;
         if (last_jmp)
-            last_jmp->jmpPc = irLiteral(nextPc);
+            last_jmp->jmpPc = nextPc;
 
         int cond = c->paramId(m_id, inList[i]);
         c->addCompare(irId(cond), irLiteral(false), OP_eq);
@@ -1171,11 +1190,11 @@ bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error)
     if (isElse)
     {
         int else_pc = c->addJumpSubNode(subFlowOut(inList.size()));
-        last_jmp->jmpPc = irLiteral(else_pc);
+        last_jmp->jmpPc = else_pc;
     }    
     int ret = c->addJumpNode(flowOut(0));    
     if(!isElse)
-        last_jmp->jmpPc = irLiteral(ret);
+        last_jmp->jmpPc = ret;
 
     int sub_flow_count = subFlowCount();
     for (int i = 0; i < sub_flow_count; i++)
@@ -1324,16 +1343,16 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
         c->addStatement(JZNodeIRPtr(jmp_true));
         c->addStatement(JZNodeIRPtr(jmp_false));
         int jmp = c->addJumpSubNode(sub_flow_list[case_idx]);
-        jmp_true->jmpPc = irLiteral(jmp);
+        jmp_true->jmpPc = jmp;
         if (pre_jmp)
-            pre_jmp->jmpPc = irLiteral(jmp_cmp);
+            pre_jmp->jmpPc = jmp_cmp;
         pre_jmp = jmp_false;
     }
     for (; case_idx < sub_flow_list.size(); case_idx++)
     {
         int jmp = c->addJumpSubNode(sub_flow_list[case_idx]);
         if (pre_jmp)
-            pre_jmp->jmpPc = irLiteral(jmp);
+            pre_jmp->jmpPc = jmp;
     }        
     int out_pc = c->addJumpNode(flowOut());
     QList<int> breakPc, continuePc;
@@ -1375,8 +1394,8 @@ bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_true));
     c->addStatement(JZNodeIRPtr(jmp_false));
     
-    jmp_true->jmpPc = irLiteral(c->addJumpNode(flowOut(0)));
-    jmp_false->jmpPc = irLiteral(c->addJumpNode(flowOut(1)));
+    jmp_true->jmpPc = c->addJumpNode(flowOut(0));
+    jmp_false->jmpPc = c->addJumpNode(flowOut(1));
     return true;
 }
 

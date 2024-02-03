@@ -31,7 +31,7 @@ void JZNodeBuilder::initGlobal()
 {        
     int pc = 0;
     JZNodeScriptPtr boot = JZNodeScriptPtr(new JZNodeScript());
-    boot->file = "__init__";
+    boot->file = "__init__";    
 
     m_program->m_scripts[boot->file] = boot;           
 
@@ -52,12 +52,14 @@ void JZNodeBuilder::initGlobal()
 
         boot->statmentList.push_back(JZNodeIRPtr(alloc));
         it++;
-    }        
+    }            
     
     JZNodeIR *ir_return = new JZNodeIR(OP_return);
     ir_return->pc = pc++;
-    boot->statmentList.push_back(JZNodeIRPtr(ir_return));
-        
+    boot->statmentList.push_back(JZNodeIRPtr(ir_return));    
+    boot->canBreak.resize(boot->statmentList.size());
+    boot->canBreak.fill(false);
+
     FunctionDefine func_def;
     func_def.name = "__init__";
     func_def.file = "__init__";

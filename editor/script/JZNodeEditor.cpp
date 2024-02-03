@@ -230,3 +230,8 @@ void JZNodeEditor::updateNode()
 {
     m_nodePanel->updateNode();
 }
+
+void JZNodeEditor::setNodeValue(int nodeId, int prop_id, const QString &value)
+{
+    m_view->setNodePropValue(nodeId, prop_id, value);
+}

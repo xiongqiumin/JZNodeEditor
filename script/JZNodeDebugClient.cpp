@@ -81,11 +81,16 @@ JZNodeDebugParamInfo JZNodeDebugClient::getVariable(JZNodeDebugParamInfo info)
     return ret;
 }
 
-void JZNodeDebugClient::setVariable(JZNodeSetDebugParamInfo info)
+JZNodeDebugParamInfo JZNodeDebugClient::setVariable(JZNodeSetDebugParamInfo info)
 {
+    JZNodeDebugParamInfo ret;
+
     QVariantList params,result;
     params << netDataPack(info);
-    sendCommand(Cmd_setVariable,params,result);
+    if (sendCommand(Cmd_setVariable,params,result))
+        ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
+
+    return ret;
 }
 
 void JZNodeDebugClient::detach()
@@ -155,6 +160,10 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
     else if (packet->cmd == Cmd_runtimeError)
     {   
         emit sigRuntimeError(netDataUnPack<JZNodeRuntimeError>(packet->params[0].toByteArray()));
+    }
+    else if (packet->cmd == Cmd_nodePropChanged)
+    {
+        emit sigNodePropChanged(netDataUnPack<JZNodeValueChanged>(packet->params[0].toByteArray()));
     }
 }
 

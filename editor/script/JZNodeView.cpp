@@ -441,6 +441,27 @@ JZNodeGraphItem *JZNodeView::getNodeItem(int id)
     return nullptr;
 }
 
+void JZNodeView::setNodePropValue(int nodeId, int prop_id, QString value)
+{
+    auto item = getNodeItem(nodeId);    
+    item->setPropValue(prop_id, value);
+}
+
+QString JZNodeView::getNodePropValue(int nodeId, int prop_id)
+{
+    auto item = getNodeItem(nodeId);
+    return item->propValue(prop_id);    
+}
+
+void JZNodeView::longPressCheck(int nodeId)
+{
+    QTimer::singleShot(200, this, [this,nodeId] {
+        auto node = getNodeItem(nodeId);
+        if (node)
+            node->updateLongPress();
+    });
+}
+
 void JZNodeView::updateNode(int id)
 {
     getNodeItem(id)->updateNode();
@@ -992,7 +1013,12 @@ void JZNodeView::setRunning(bool flag)
     });    
 
     if (!m_runningMode)
+    {
         m_runNode = -1;
+        foreachNode([flag](JZNodeGraphItem *node) {
+            node->resetPropValue();
+        });
+    }
 }
 
 int JZNodeView::runtimeNode()

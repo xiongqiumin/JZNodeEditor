@@ -27,8 +27,7 @@ JZNodeWatch::JZNodeWatch(QWidget *parent)
     :QWidget(parent)
 {
     m_status = Status_none;
-    m_running = false;    
-    m_newParam = false;    
+    m_running = false;         
     m_readOnly = false;
     m_editColumn = 0;
     m_editItem = nullptr;
@@ -155,9 +154,19 @@ void JZNodeWatch::onItemChanged(QTreeWidgetItem *item, int column)
     }
     else
     {
+        auto vid = item->data(0, Qt::UserRole);
+
         JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Name;
-        coor.name = item->text(0);
+        if (vid.isValid())
+        {
+            coor.type = JZNodeParamCoor::Id;
+            coor.id = vid.toInt();
+        }
+        else
+        {
+            coor.type = JZNodeParamCoor::Name;
+            coor.name = item->text(0);
+        }        
         sigParamValueChanged(coor, item->text(1));
     }    
     updateWatchItem();
@@ -188,10 +197,11 @@ int JZNodeWatch::indexOfItem(QTreeWidgetItem *root, const QString &name)
     return -1;
 }
 
-void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const QString &name, const JZNodeDebugParamValue &info)
+QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const QString &name, const JZNodeDebugParamValue &info)
 {
     QString preValue;
     QTreeWidgetItem *item;
+    //设置item位置
     int cur_index = indexOfItem(root, name);
     if (cur_index >= 0)
     {
@@ -216,13 +226,10 @@ void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const QString &name,
         item->setFlags(item->flags() | Qt::ItemIsEditable);
 
     QString cur_value;
-    if(JZNodeType::isBase(info.type))
-        cur_value = info.value.toString();
-    else if (JZNodeType::isEnum(info.type))
-    {
-        auto meta = JZNodeObjectManager::instance()->enumMeta(info.type);
-        cur_value = meta->key(info.value.toInt());
-    }
+    if (info.type == Type_none)
+        cur_value = "未定义";
+    else if(JZNodeType::isBaseOrEnum(info.type))
+        cur_value = info.value;    
     else
     {
         int ptr = info.value.toLongLong();       
@@ -236,7 +243,7 @@ void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const QString &name,
         int sub_index = 0;
         while (it != info.params.end())
         {        
-            setItem(item, sub_index, it.key(), it.value());
+            updateItem(item, sub_index, it.key(), it.value());
             sub_params << it.key();
             sub_index++;
             it++;
@@ -244,11 +251,20 @@ void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const QString &name,
         for (int i = item->childCount() - 1; i >= sub_index; i--)
             delete item->takeChild(i);        
     }    
-    item->setText(1, cur_value);
-    if(!m_newParam && cur_value != preValue)
+    item->setText(1, cur_value);    
+    if(cur_value != preValue)
         item->setTextColor(1, Qt::red);
     else
         item->setTextColor(1, Qt::black);
+
+    return item;
+}
+
+void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const JZNodeParamCoor &coor, const JZNodeDebugParamValue &info)
+{
+    auto item = updateItem(root, index, coor.name, info);
+    if(coor.type == JZNodeParamCoor::Id)
+        item->setData(0, Qt::UserRole, coor.id);
 }
 
 JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
@@ -257,23 +273,14 @@ JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
     return value;
 }
 
-void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info, bool isNew)
-{   
-    m_newParam = isNew;
-    if (m_newParam)    
-        m_view->clear();
-
+void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info)
+{       
     auto root = m_view->invisibleRootItem();        
-    for (int i = 0; i < info->coors.size(); i++)
-    {
-        auto &c = info->coors[i];                        
-        setItem(root, i, c.name, info->values[i]);
-    }
+    for (int i = 0; i < info->coors.size(); i++)                      
+        setItem(root, i, info->coors[i], info->values[i]);    
     for (int i = root->childCount() - 1; i >= info->coors.size(); i--)
         delete root->takeChild(i);
-    if(m_newParam)
-        m_view->invisibleRootItem()->setExpanded(true);
-
+    
     updateWatchItem();
 }
 
@@ -281,18 +288,19 @@ void JZNodeWatch::updateParamInfo(JZNodeDebugParamInfo *info)
 {    
     auto root = m_view->invisibleRootItem();
     QStringList sub_params;
+
+    //m_view 中可能存在多个同名的参数，所以此处要通过tree来遍历
     auto count = m_view->topLevelItemCount();
     for (int i = 0; i < count; i++)
     {
-        auto item = m_view->topLevelItem(i);
-        
+        auto item = m_view->topLevelItem(i);        
         for (int j = 0; j < info->coors.size(); j++)
         {
-            auto &c = info->coors[i];
+            auto &c = info->coors[j];
             if (c.name == item->text(0))
             {
                 sub_params << c.name;
-                setItem(root, i, c.name, info->values[i]);
+                setItem(root, i, c, info->values[i]);
                 break;
             }
         }

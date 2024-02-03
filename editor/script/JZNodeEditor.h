@@ -40,6 +40,7 @@ public:
     int runtimeNode();
     void setRuntimeNode(int nodeId);
 
+    void setNodeValue(int nodeId, int prop_id, const QString &value);
     void updateNode();
 
 protected slots:

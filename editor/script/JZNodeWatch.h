@@ -20,7 +20,7 @@ public:
     void setRunning(bool isRun);
     void setRuntimeStatus(int status);
     
-    void setParamInfo(JZNodeDebugParamInfo *info,bool isNew);
+    void setParamInfo(JZNodeDebugParamInfo *info);
     void updateParamInfo(JZNodeDebugParamInfo *info);
     QStringList watchList();
 
@@ -40,14 +40,15 @@ protected:
     void updateStatus();
     void updateWatchItem();
     int indexOfItem(QTreeWidgetItem *root, const QString &name);
-    void setItem(QTreeWidgetItem *root,int index,const QString &name,const JZNodeDebugParamValue &info);    
+
+    void setItem(QTreeWidgetItem *root, int index,const JZNodeParamCoor &coor, const JZNodeDebugParamValue &info);
+    QTreeWidgetItem *updateItem(QTreeWidgetItem *root,int index,const QString &name,const JZNodeDebugParamValue &info);
     
     JZNodeDebugParamValue getParamValue(QTreeWidgetItem *item);    
 
     bool m_readOnly;
     bool m_running;
-    int m_status;    
-    bool m_newParam;    
+    int m_status;          
     QTreeWidgetItem *m_editItem;
     int m_editColumn;
 

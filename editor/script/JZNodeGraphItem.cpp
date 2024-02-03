@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QTimer>
 #include <math.h>
 #include "JZNodeGraphItem.h"
 #include "JZNodeView.h"
@@ -62,6 +63,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     m_node = node;
     m_id = node->id();    
     m_pinButtonOn = false;
+    m_longPress = false;
 
     setOpacity(0.9);
     setFlag(QGraphicsItem::ItemIsMovable);
@@ -252,24 +254,33 @@ void JZNodeGraphItem::calcGemo(int prop,int x,int y, PropGemo *gemo)
     }      
 }
 
-void JZNodeGraphItem::setPropValue(int id, const QVariant &value)
+void JZNodeGraphItem::setWidgetValue(QWidget *widget, const QString &value)
 {
-    PropGemo &gemo = m_propRects[id];
-    Q_ASSERT(gemo.widget);
+    if (widget->inherits("QComboBox"))
+    {
+        QComboBox *box = qobject_cast<QComboBox*>(widget);                
+        box->setCurrentText(value);
+    }
+    else if(widget->inherits("QLineEdit"))
+    {
+        QLineEdit *edit = qobject_cast<QLineEdit*>(widget);
+        edit->setText(value);
+    }
+}
 
-    gemo.widget->blockSignals(true);
-    if (gemo.widgetType == Widget_comboBox)
+QString JZNodeGraphItem::getWidgetValue(QWidget *widget)
+{
+    if (widget->inherits("QComboBox"))
     {
-        QComboBox *box = qobject_cast<QComboBox*>(gemo.widget);
-        int index = box->findData(value);
-        box->setCurrentIndex(index);
+        QComboBox *box = qobject_cast<QComboBox*>(widget);
+        return box->currentText();
     }
-    else if(gemo.widgetType == Widget_lineEdit)
+    else if (widget->inherits("QLineEdit"))
     {
-        QLineEdit *edit = qobject_cast<QLineEdit*>(gemo.widget);
-        edit->setText(value.toString());
+        QLineEdit *edit = qobject_cast<QLineEdit*>(widget);
+        return edit->text();
     }
-    gemo.widget->blockSignals(false);
+    return QString();
 }
 
 void JZNodeGraphItem::updateNode()
@@ -319,8 +330,8 @@ void JZNodeGraphItem::updateNode()
     {
         auto pin = m_node->prop(propList[i]);
         if(pin->isParam() && pin->isEditValue())
-            setPropValue(pin->id(), pin->value());
-    }    
+            setPropValue(pin->id(), JZNodeType::toString(pin->value()));
+    }
 
     int w = qMax(100,in_x + out_x + 30);
     w = qMax(title_w, w);
@@ -347,13 +358,6 @@ void JZNodeGraphItem::updateNode()
     updateErrorGemo();
 }
 
-void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-{
-    if(m_pinButtonOn && !m_pinButtonRect.contains(event->pos()))
-        m_pinButtonOn = false;
-    return JZNodeBaseItem::mouseMoveEvent(event);
-}
-
 void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {    
     auto pin_id = propAt(event->pos());
@@ -371,7 +375,20 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
             editor()->startLine(gemo);
         }
     }
+    else
+    {
+        m_longPress = 1;
+        editor()->longPressCheck(m_node->id());
+    }
     return JZNodeBaseItem::mousePressEvent(event);
+}
+
+void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (m_pinButtonOn && !m_pinButtonRect.contains(event->pos()))
+        m_pinButtonOn = false;
+    if (m_longPress == 2)
+        JZNodeBaseItem::mouseMoveEvent(event);
 }
 
 void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
@@ -382,6 +399,7 @@ void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
         editor()->pinClicked(m_id, pin_id);
     }
     m_pinButtonOn = false;
+    m_longPress = 0;
     return JZNodeBaseItem::mouseReleaseEvent(event);
 }
 
@@ -414,6 +432,37 @@ void JZNodeGraphItem::updateErrorGemo()
         m_errorRect = QRect(m_size.width() - 15 - 5,5,15,15);
 }
 
+void JZNodeGraphItem::setPropValue(int prop_id, const QString &value)
+{
+    auto widget = m_propRects[prop_id].widget;
+    if (!widget)
+        return;
+
+    widget->blockSignals(true);
+    setWidgetValue(widget, value);
+    widget->blockSignals(false);
+}
+
+QString JZNodeGraphItem::propValue(int prop_id)
+{
+    auto widget = m_propRects[prop_id].widget;
+    if (!widget)
+        return QString();
+
+    return getWidgetValue(widget);
+}
+
+void JZNodeGraphItem::resetPropValue()
+{
+    QVector<int> propList = m_node->propList();
+    for (int i = 0; i < propList.size(); i++)
+    {
+        auto pin = m_node->prop(propList[i]);
+        if (pin->isParam() && pin->isEditValue())
+            setPropValue(pin->id(), JZNodeType::toString(pin->value()));
+    }
+}
+
 void JZNodeGraphItem::setError(QString error)
 {
     m_error = error;
@@ -427,6 +476,13 @@ void JZNodeGraphItem::clearError()
     updateErrorGemo();
     update();
 }
+
+void JZNodeGraphItem::updateLongPress()
+{
+    if (m_longPress == 1)
+        m_longPress = 2;
+}
+
 
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
 {    

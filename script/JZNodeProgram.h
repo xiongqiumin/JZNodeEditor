@@ -30,6 +30,14 @@ struct NodeRange
 QDataStream &operator<<(QDataStream &s, const NodeRange &param);
 QDataStream &operator>>(QDataStream &s, NodeRange &param);
 
+//NodeParamInfo
+struct NodeParamInfo
+{
+    JZParamDefine define;
+    int id;
+};
+QDataStream &operator<<(QDataStream &s, const NodeParamInfo &param);
+QDataStream &operator>>(QDataStream &s, NodeParamInfo &param);
 
 //NodeInfo
 struct NodeInfo
@@ -37,16 +45,14 @@ struct NodeInfo
     NodeInfo();
 
     int indexOfRange(int pc);
+    NodeRange pcRange(int index);
     
     int node_id;
     int node_type;
     bool isFlow;       
-
-    QStringList paramIn;
-    QList<int> paramInId;
-
-    QStringList paramOut;
-    QList<int> paramOutId;
+    
+    QList<NodeParamInfo> paramIn;
+    QList<NodeParamInfo> paramOut;
 
     QList<NodeRange> pcRanges;
 };
@@ -78,6 +84,7 @@ public:
     QList<JZNodeIRPtr> statmentList;        
     QList<FunctionDefine> functionList;
     QMap<QString, JZFunction> runtimeInfo;
+    QVector<bool> canBreak;
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);

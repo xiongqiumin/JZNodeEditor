@@ -66,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeStatus, this, &MainWindow::onRuntimeStatus);    
     connect(&m_debuger,&JZNodeDebugClient::sigNetError, this, &MainWindow::onNetError);
+    connect(&m_debuger,&JZNodeDebugClient::sigNodePropChanged, this, &MainWindow::onNodePropChanged);
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
     connect(&m_project,&JZProject::sigFileChanged, this, &MainWindow::onProjectChanged);
@@ -271,9 +272,11 @@ void MainWindow::initUi()
     m_watchAuto->setReadOnly(true);
     m_watchReg->setReadOnly(true);
     m_debugWidgets << m_watchAuto << m_watchManual << m_watchReg;
-
-    connect(m_watchManual, &JZNodeWatch::sigParamValueChanged, this, &MainWindow::onWatchValueChanged);
+    
     connect(m_watchManual, &JZNodeWatch::sigParamNameChanged, this, &MainWindow::onWatchNameChanged);
+    connect(m_watchManual, &JZNodeWatch::sigParamValueChanged, this, &MainWindow::onWatchValueChanged);
+
+    connect(m_watchAuto, &JZNodeWatch::sigParamValueChanged, this, &MainWindow::onWatchValueChanged);
 
     m_breakPoint = m_log->breakpoint();    
 
@@ -698,6 +701,15 @@ void MainWindow::gotoNode(QString file, int nodeId)
     }
 }
 
+JZEditor *MainWindow::editor(QString filepath)
+{
+    auto it = m_editors.find(filepath);
+    if (it == m_editors.end())
+        return nullptr;
+
+    return it.value();
+}
+
 void MainWindow::switchEditor(JZEditor *editor)
 {
     if(m_editor)
@@ -847,7 +859,21 @@ void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QVariant value)
     param_info.stack = m_stack->stackIndex();
     param_info.coor = coor;
     param_info.value = value;
-    m_debuger.setVariable(param_info);    
+    
+    JZNodeWatch *watch = qobject_cast<JZNodeWatch*>(sender());
+    JZNodeDebugParamInfo result = m_debuger.setVariable(param_info);
+    watch->updateParamInfo(&result);
+
+    if (coor.type == JZNodeParamCoor::Id)
+    {
+        auto stack_info = m_runtime.stacks[param_info.stack];
+
+        JZNodeValueChanged info;
+        info.file = stack_info.file;
+        info.id = coor.id;
+        info.value = result.values[0].value;
+        onNodePropChanged(info);
+    }
 }
 
 void MainWindow::onWatchNameChanged(JZNodeParamCoor coor)
@@ -857,7 +883,18 @@ void MainWindow::onWatchNameChanged(JZNodeParamCoor coor)
     param_info.coors << coor;
     
     param_info = m_debuger.getVariable(param_info);
-    m_watchManual->setParamInfo(&param_info, false);    
+    m_watchManual->updateParamInfo(&param_info);        
+}
+
+void MainWindow::onNodePropChanged(const JZNodeValueChanged &info)
+{
+    auto edit = editor(info.file);
+    if (!edit)
+        return;
+
+    auto gemo = JZNodeCompiler::paramGemo(info.id);
+    JZNodeEditor *node_editor = qobject_cast<JZNodeEditor*>(edit);
+    node_editor->setNodeValue(gemo.nodeId, gemo.propId,info.value);
 }
 
 void MainWindow::updateRuntime(int stack_index,bool isNew)
@@ -901,27 +938,37 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         coor.name = local.name;
         param_info.coors << coor;
     }
-
+    
     auto &node_info = m_program.scripts[stack.file].nodeInfo[stack.nodeId];
-    for (int i = 0; i < node_info.paramInId.size(); i++)
+    int node_prop_index = param_info.coors.size();
+    for (int i = 0; i < node_info.paramIn.size(); i++)
     {
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Id;
-        coor.name = node_info.paramIn[i];
-        coor.id = node_info.paramInId[i];
+        coor.name = node_info.paramIn[i].define.name;
+        coor.id = node_info.paramIn[i].id;
         param_info.coors << coor;
-    }
-    for (int i = 0; i < node_info.paramOutId.size(); i++)
+    }    
+    for (int i = 0; i < node_info.paramOut.size(); i++)
     {
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Id;
-        coor.name = node_info.paramOut[i];
-        coor.id = node_info.paramOutId[i];
+        coor.name = node_info.paramOut[i].define.name;
+        coor.id = node_info.paramOut[i].id;
         param_info.coors << coor;
     }
 
     param_info = m_debuger.getVariable(param_info);
-    m_watchAuto->setParamInfo(&param_info,isNew);        
+    m_watchAuto->setParamInfo(&param_info);
+
+    for (int i = node_prop_index; i < param_info.coors.size(); i++)
+    {
+        JZNodeValueChanged info;
+        info.file = stack.file;
+        info.id = param_info.coors[i].id;
+        info.value = param_info.values[i].value;
+        onNodePropChanged(info);
+    }
 
     //watch manual    
     JZNodeDebugParamInfo param_info_watch;
@@ -936,7 +983,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         param_info_watch.coors << coor;
     }
     param_info_watch = m_debuger.getVariable(param_info_watch);
-    m_watchManual->setParamInfo(&param_info_watch, isNew);
+    m_watchManual->setParamInfo(&param_info_watch);
 
     //watch reg
     JZNodeDebugParamInfo param_info_reg;
@@ -951,7 +998,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         param_info_reg.coors << coor;
     }
     param_info_reg = m_debuger.getVariable(param_info_reg);
-    m_watchReg->setParamInfo(&param_info_reg, isNew);
+    m_watchReg->setParamInfo(&param_info_reg);
 }
 
 bool MainWindow::build()

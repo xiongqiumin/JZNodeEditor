@@ -24,7 +24,7 @@ public:
     void removeBreakPoint(QString file,int nodeId);
     void clearBreakPoint();    
     JZNodeDebugParamInfo getVariable(JZNodeDebugParamInfo info);
-    void setVariable(JZNodeSetDebugParamInfo info);
+    JZNodeDebugParamInfo setVariable(JZNodeSetDebugParamInfo info);
     
     void detach();
     void pause();       
@@ -40,7 +40,8 @@ signals:
     void sigDisConnect();       
 
     void sigRuntimeStatus(int stauts);    
-    void sigRuntimeError(JZNodeRuntimeError error);
+    void sigRuntimeError(JZNodeRuntimeError error);    
+    void sigNodePropChanged(const JZNodeValueChanged &info);
     void sigLog(QString log);
 
 protected slots:    

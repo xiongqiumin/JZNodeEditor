@@ -88,11 +88,13 @@ protected slots:
     void onStackChanged(int stack);
     void onWatchValueChanged(JZNodeParamCoor coor, QVariant value);
     void onWatchNameChanged(JZNodeParamCoor coor);
-    
+    void onNodePropChanged(const JZNodeValueChanged &info);
+
     void onRuntimeLog(QString log);    
     void onRuntimeError(JZNodeRuntimeError error);    
     void onRuntimeStatus(int staus);    
-    void onRuntimeFinish(int code,QProcess::ExitStatus status);
+    void onRuntimeFinish(int code,QProcess::ExitStatus status);        
+    
     void onTestProcessFinish();
     void onNetError();
 
@@ -123,8 +125,9 @@ private:
     void saveSetting();
     bool openProject(QString filepath);
     JZEditor *createEditor(int type);
-    bool openEditor(QString filepath);
+    bool openEditor(QString filepath);    
     void closeEditor(JZEditor *editor);
+    JZEditor *editor(QString filepath);
     void updateActionStatus();    
 
     void initMenu();    

@@ -93,7 +93,7 @@ int JZNodeType::variantType(const QVariant &v)
     else if(v.type() == QVariant::UserType)
     {
         if(isJZObject(v))        
-            return JZObjectType(v);        
+            return JZObjectType(v);          
     }
     return Type_none;
 }
