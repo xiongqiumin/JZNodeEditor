@@ -107,6 +107,7 @@ void TestServer::run()
 
     m_engine = &engine;
     engine.setProgram(&m_program);
+    engine.setDebug(true);
     engine.init();
      
     JZNodeDebugServer server;

@@ -258,6 +258,8 @@ QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParamInfo &info)
     QVariant *ref = getVariableRef(info.stack, info.coor);
     if (ref && !isJZObject(*ref))
         *ref = JZNodeType::matchValue(JZNodeType::variantType(*ref), info.value);
+    if (info.coor.type == JZNodeParamCoor::Id)
+        m_engine->watchNotify(info.coor.id);
 
     JZNodeDebugParamInfo result;
     result.coors << info.coor;

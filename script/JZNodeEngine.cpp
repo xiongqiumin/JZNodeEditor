@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QApplication>
 #include <math.h>
+#include <QDateTime>
 #include "JZNodeVM.h"
 #include "JZNodeBind.h"
 #include "JZNodeQtBind.h"
@@ -344,7 +345,6 @@ void JZNodeEngine::clear()
 {    
     m_breakPoints.clear();
     m_breakStep.clear();    
-    m_watchParam.clear();    
 
     m_stack.clear();
     m_global.clear();
@@ -357,6 +357,7 @@ void JZNodeEngine::clear()
     m_statusCommand = Status_none;
     m_status = Status_none;
     m_breakNodeId = -1;
+    m_watchTime = 0;
 
     setReg(Reg_Cmp, false);
     if (g_engine == this)
@@ -972,6 +973,7 @@ void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
             if (!ref)
                 throw std::runtime_error("no such variable " + to_string(param.id()));
             dealSet(ref, value);
+            watchNotify(param.id());
         }
     }
     else if(param.isRef())
@@ -1030,9 +1032,43 @@ QVariant *JZNodeEngine::getVariableRefSingle(RunnerEnv *env, const QString &name
     return it->data();
 }
 
+QVariant *JZNodeEngine::getVariableRef(int id)
+{
+    return getVariableRef(id, -1);
+}
+
+QVariant *JZNodeEngine::getVariableRef(int id, int stack_level)
+{
+    auto env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
+
+    auto it = env->stacks.find(id);
+    if (it == env->stacks.end())
+        return nullptr;
+
+    return it->data();
+}
+
+QVariant JZNodeEngine::getVariable(int id)
+{
+    QVariant *ref = getVariableRef(id);
+    if (!ref)
+        throw std::runtime_error("no such variable " + to_string(id));
+
+    return *ref;
+}
+
+void JZNodeEngine::setVariable(int id, const QVariant &value)
+{
+    QVariant *ref = getVariableRef(id);
+    if (!ref)
+        throw std::runtime_error("no such variable " + to_string(id));
+
+    dealSet(ref, value);
+}
+
 QVariant *JZNodeEngine::getVariableRef(const QString &name)
 {
-    return getVariableRef(name, -1);    
+    return getVariableRef(name, -1);
 }
 
 QVariant *JZNodeEngine::getVariableRef(const QString &name, int stack_level)
@@ -1230,12 +1266,17 @@ void JZNodeEngine::watchNotify(int id)
     if (!m_debug || !m_script)
         return;
 
+    qint64 cur = QDateTime::currentMSecsSinceEpoch();
+    if (cur - m_watchTime < 50)
+        return;
+    m_watchTime = cur;
+
     for (int i = 0; i < m_script->watchList.size(); i++)
     {
         auto &w = m_script->watchList[i];
         if (w.source.contains(id))
         {
-            QString text = JZNodeType::toString(getReg(id));
+            QString text = JZNodeType::toString(getVariable(id));
             sigNodePropChanged(m_script->file, w.traget, text);
         }
     }
@@ -1244,16 +1285,6 @@ void JZNodeEngine::watchNotify(int id)
 void JZNodeEngine::setDebug(bool flag)
 {
     m_debug = flag;
-}
-
-void JZNodeEngine::addWatch()
-{
-
-}
-
-void JZNodeEngine::clearWatch()
-{
-    m_watchParam.clear();
 }
 
 void JZNodeEngine::addBreakPoint(QString filepath,int nodeId)

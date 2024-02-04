@@ -200,7 +200,7 @@ void JZNodeGraphItem::calcGemo(int prop,int x,int y, PropGemo *gemo)
         gemo->nameRect = QRectF(x,y,w,24);
         x = gemo->nameRect.right() + 5;
     }
-    if (pin->isEditValue())
+    if (pin->isEditValue() || pin->isDispValue())
     {        
         if (!gemo->widget)
         {

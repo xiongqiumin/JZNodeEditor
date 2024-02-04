@@ -131,9 +131,7 @@ public:
 
     JZNodeRuntimeInfo runtimeInfo();    
 
-    void setDebug(bool flag);
-    void addWatch();
-    void clearWatch();
+    void setDebug(bool flag);    
 
     void addBreakPoint(QString filepath,int nodeId);
     void removeBreakPoint(QString filepath,int nodeId);
@@ -152,8 +150,13 @@ public:
        
     Stack *stack();    
 
+    QVariant *getVariableRef(int id);
+    QVariant *getVariableRef(int id, int stack_level);
+    QVariant getVariable(int id);
+    void setVariable(int id, const QVariant &value);
+
     QVariant *getVariableRef(const QString &name);        
-    QVariant *getVariableRef(const QString &name,int stack_level);    
+    QVariant *getVariableRef(const QString &name,int stack_level);
     QVariant getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
 
@@ -173,6 +176,7 @@ public:
     void widgetBind(QWidget *w,QVariant *ref);
     void widgetUnBind(QWidget *w);
     void widgetUnBindNotify(QWidget *w);
+    void watchNotify(int param_id);         //node display    
 
     void dealEvent(JZEvent *event);    
     void dealSlot(JZEvent *event);
@@ -281,8 +285,7 @@ protected:
     int breakNodeId();
 
     JZNodeScript *getScript(QString path); 
-    
-    void watchNotify(int param_id); //node display    
+        
     void splitMember(const QString &fullName,QStringList &objName,QString &memberName);
     void unSupportOp(int a,int b,int op);
 
@@ -293,14 +296,13 @@ protected:
         
     QList<BreakPoint> m_breakPoints;
     BreakPoint m_breakStep;     
-    int m_breakNodeId;
-
-    QList<int> m_watchParam;
+    int m_breakNodeId;    
 
     Stack m_stack;
     JZVariantMap m_global;
     JZVariantIntMap m_regs;
     JZNodeObject *m_sender;
+    qint64 m_watchTime;
            
     FunctionDefine m_idleFunc;
     int m_statusCommand;
