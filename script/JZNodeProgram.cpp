@@ -7,18 +7,21 @@
 NodeRange::NodeRange()
 {
     start = -1;
+    debugStart = -1;
     end = -1;
 }
 
 QDataStream &operator<<(QDataStream &s, const NodeRange &param)
 {
     s << param.start;
+    s << param.debugStart;
     s << param.end;
     return s;
 }
 QDataStream &operator>>(QDataStream &s, NodeRange &param)
 {
     s >> param.start;
+    s >> param.debugStart;
     s >> param.end;
     return s;
 }
@@ -44,21 +47,6 @@ NodeInfo::NodeInfo()
     node_id = -1;
     node_type = Node_none;
     isFlow = false;
-}
-
-int NodeInfo::indexOfRange(int pc)
-{
-    for (int i = 0; i < pcRanges.size(); i++)
-    {        
-        if (pc >= pcRanges[i].start && pc < pcRanges[i].end)
-            return i;
-    }
-    return -1;
-}
-
-NodeRange NodeInfo::pcRange(int index)
-{
-    return pcRanges[index];
 }
 
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
@@ -93,6 +81,19 @@ QDataStream &operator<<(QDataStream &s, const JZFunction &param)
 QDataStream &operator >> (QDataStream &s, JZFunction &param)
 {
     s >> param.file >> param.localVariables;
+    return s;
+}
+
+//NodeWatch
+QDataStream &operator<<(QDataStream &s, const NodeWatch &param)
+{
+    s << param.traget << param.traget;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, NodeWatch &param)
+{
+    s >> param.traget >> param.traget;
     return s;
 }
 
@@ -135,6 +136,7 @@ void JZNodeScript::saveToStream(QDataStream &s)
     s << nodeInfo;    
     s << runtimeInfo;
     s << canBreak;
+    s << watchList;
 }
 
 void JZNodeScript::loadFromStream(QDataStream &s)
@@ -155,6 +157,7 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     s >> nodeInfo;      
     s >> runtimeInfo;
     s >> canBreak;
+    s >> watchList;
 }
 
 //JZNodeProgram

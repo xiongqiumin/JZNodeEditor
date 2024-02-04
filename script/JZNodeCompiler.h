@@ -186,7 +186,8 @@ protected:
     {
         NodeCompilerInfo *nodeInfo;
         bool isFlow;
-        int startNodePc;
+        int start;
+        int debugStart;
     };
 
     void init(JZScriptFile *file);
@@ -214,6 +215,7 @@ protected:
     void updateFlowOut();    
     void linkNodes();
     void updateDebugInfo();
+    void updateDispayNode();
     void addNodeFlowPc(int node_id, int cond, int pc);
                 
     JZNode* currentNode();

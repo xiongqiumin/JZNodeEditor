@@ -25,6 +25,7 @@ struct NodeRange
     NodeRange();
 
     int start;
+    int debugStart;
     int end;
 };
 QDataStream &operator<<(QDataStream &s, const NodeRange &param);
@@ -42,10 +43,7 @@ QDataStream &operator>>(QDataStream &s, NodeParamInfo &param);
 //NodeInfo
 struct NodeInfo
 {        
-    NodeInfo();
-
-    int indexOfRange(int pc);
-    NodeRange pcRange(int index);
+    NodeInfo();    
     
     int node_id;
     int node_type;
@@ -69,6 +67,16 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZFunction &param);
 QDataStream &operator>>(QDataStream &s, JZFunction &param);
 
+//NodeWatch
+class NodeWatch
+{
+public:
+    int traget;
+    QList<int> source;
+};
+QDataStream &operator<<(QDataStream &s, const NodeWatch &param);
+QDataStream &operator>>(QDataStream &s, NodeWatch &param);
+
 //JZNodeScript
 class JZNodeScript
 {    
@@ -84,6 +92,7 @@ public:
     QList<JZNodeIRPtr> statmentList;        
     QList<FunctionDefine> functionList;
     QMap<QString, JZFunction> runtimeInfo;
+    QList<NodeWatch> watchList;
     QVector<bool> canBreak;
 
     void saveToStream(QDataStream &s);

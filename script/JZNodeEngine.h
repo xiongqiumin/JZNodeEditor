@@ -153,16 +153,16 @@ public:
     Stack *stack();    
 
     QVariant *getVariableRef(const QString &name);        
-    QVariant *getVariableRef(const QString &name,int stack_level);
-    
+    QVariant *getVariableRef(const QString &name,int stack_level);    
     QVariant getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
-    QVariant getThis();
-    QVariant getSender();
 
     QVariant getReg(int id);
     QVariant *getRegRef(int id);
     void setReg(int id, const QVariant &value);
+
+    QVariant getThis();
+    QVariant getSender();    
      
     void connectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
     void disconnectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
@@ -277,11 +277,12 @@ protected:
         
     int nodeIdByPc(int pc);        
     int nodeIdByPc(JZNodeScript *script, int pc);
-    int breakNodeId(int pc, int skip_id);
+    NodeRange nodeDebugRange(int node_id, int pc);
+    int breakNodeId();
 
     JZNodeScript *getScript(QString path); 
     
-    bool isWatch(QVariant *var); //node display
+    void watchNotify(int param_id); //node display    
     void splitMember(const QString &fullName,QStringList &objName,QString &memberName);
     void unSupportOp(int a,int b,int op);
 
@@ -310,7 +311,7 @@ protected:
     
     QMap<JZNodeObject*,JZObjectInfo> m_objectInfo;    
     QMap<QVariant*, VariantInfo> m_variantInfo;    
-    QSet<QVariant*> m_anyVariants;
+    QSet<QVariant*> m_anyVariants;    
 };
 extern JZNodeEngine *g_engine;
 

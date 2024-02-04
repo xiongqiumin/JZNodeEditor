@@ -430,49 +430,52 @@ void JZNodeEngine::deinit()
     clear();    
 }
 
-int JZNodeEngine::breakNodeId(int pc, int skip_id)
-{
-    auto &op_list = m_script->statmentList;
-    for (int i = pc; i >= 0; i--)
-    {
-        if (op_list[i]->type == OP_nodeId)
-        {
-            JZNodeIRNodeId *ir_node = (JZNodeIRNodeId *)op_list[i].data();
-            if (ir_node->id == skip_id)
-                continue;
-
-            int rng_idx = m_script->nodeInfo[ir_node->id].indexOfRange(m_pc);
-            if (rng_idx >= 0)
-                return ir_node->id;
-        }
-    }
-    Q_ASSERT(0);
-    return 0;
-}
-
 int JZNodeEngine::nodeIdByPc(JZNodeScript *script, int pc)
 {
-    auto &op_list = script->statmentList;
-    for(int i = pc; i >= 0 ; i--)
+    int min_range = INT_MAX;
+    int node_id = -1;
+    auto it = script->nodeInfo.begin();
+    while (it != script->nodeInfo.end())
     {
-        if(op_list[i]->type == OP_nodeId)
+        auto &list = it->pcRanges;
+        for (int i = 0; i < list.size(); i++)
         {
-            JZNodeIRNodeId *ir_node = (JZNodeIRNodeId *)op_list[i].data();
-            int rng_idx = script->nodeInfo[ir_node->id].indexOfRange(pc);
-            if (rng_idx >= 0)
-                return ir_node->id;
+            if (pc >= list[i].start && pc < list[i].end)
+            {
+                int cur_min = qMin(pc - list[i].start, list[i].end - pc);
+                if (cur_min < min_range)
+                {
+                    node_id = it.key();
+                    min_range = cur_min;
+                }
+            }
         }
-    }     
-    for (int i = pc; i < op_list.size(); i++)
+
+        it++;
+    }
+    
+    Q_ASSERT(node_id != -1);
+    return node_id;
+}
+
+NodeRange JZNodeEngine::nodeDebugRange(int node_id, int pc)
+{
+    auto &list = m_script->nodeInfo[node_id].pcRanges;
+    for (int i = 0; i < list.size(); i++)
     {
-        if (op_list[i]->type == OP_nodeId)
-        {
-            JZNodeIRNodeId *ir_node = (JZNodeIRNodeId *)op_list[i].data();
-            return ir_node->id;
-        }
+        if (pc >= list[i].start && pc < list[i].end)
+            return list[i];
     }
     Q_ASSERT(0);
-    return -1;
+    return NodeRange();
+}
+
+int JZNodeEngine::breakNodeId()
+{
+    if (m_breakNodeId != -1)
+        return m_breakNodeId;
+    else
+        return nodeIdByPc(m_pc);
 }
 
 int JZNodeEngine::nodeIdByPc(int m_pc)
@@ -501,7 +504,7 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
             if (env->script)
             {
                 s.file = env->script->file;
-                s.nodeId = nodeIdByPc(env->script, env->pc);                  
+                s.nodeId = breakNodeId();                
             }            
             s.pc = env->pc;
             info.stacks.push_back(s);
@@ -526,7 +529,7 @@ void JZNodeEngine::pushStack(const FunctionDefine *func)
         m_stack.currentEnv()->pc = m_pc;
         m_stack.currentEnv()->script = m_script;
         if (func->isMemberFunction())
-            m_stack.currentEnv()->object = *m_regs[Reg_Call];
+            m_stack.currentEnv()->object = *m_regs[Reg_Call];        
     }
     else
     {
@@ -885,7 +888,7 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
         }
         else
         {            
-            pushStack(func);
+            pushStack(func);            
             if(!run())
             {                
                 updateStatus(Status_none);
@@ -1097,9 +1100,6 @@ void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
         connectSingleLater(ref);
     if (isChange)
         valueChanged(ref); 
-    if (m_debug && isWatch(ref))
-    {
-    }
 }
 
 QVariant JZNodeEngine::getThis()
@@ -1225,9 +1225,20 @@ JZNodeScript *JZNodeEngine::getScript(QString path)
     return m_program->script(path);
 }
 
-bool JZNodeEngine::isWatch(QVariant *var)
+void JZNodeEngine::watchNotify(int id)
 {
-    return false;
+    if (!m_debug || !m_script)
+        return;
+
+    for (int i = 0; i < m_script->watchList.size(); i++)
+    {
+        auto &w = m_script->watchList[i];
+        if (w.source.contains(id))
+        {
+            QString text = JZNodeType::toString(getReg(id));
+            sigNodePropChanged(m_script->file, w.traget, text);
+        }
+    }
 }
 
 void JZNodeEngine::setDebug(bool flag)
@@ -1259,7 +1270,7 @@ void JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
     pt.type = BreakPoint::nodeEnter;
     pt.file = filepath;
     pt.nodeId = nodeId;    
-    if(script->nodeInfo[pt.nodeId].isFlow)
+    if (script->nodeInfo[pt.nodeId].isFlow)    
         pt.pcRange = script->nodeInfo[pt.nodeId].pcRanges[0];
     m_breakPoints.push_back(pt);    
 }
@@ -1352,11 +1363,13 @@ void JZNodeEngine::stepIn()
     if (m_status != Status_pause)
         return;
     
-    auto info = m_script->nodeInfo[m_breakNodeId];
+    int node_id = breakNodeId();
+    auto info = m_script->nodeInfo[node_id];
     if(info.node_type == Node_function)
     {
         m_breakStep.type = BreakPoint::stackEqual;
         m_breakStep.stack = m_stack.size() + 1;
+        m_breakStep.nodeId = node_id;
 
         m_statusCommand = Command_resume;
         lock.unlock();
@@ -1378,11 +1391,10 @@ void JZNodeEngine::stepOver()
     
     m_breakStep.type = BreakPoint::stepOver;
     m_breakStep.file = m_script->file;
-    m_breakStep.nodeId = m_breakNodeId;
-    m_breakStep.stack = m_stack.size();    
+    m_breakStep.nodeId = breakNodeId();
 
-    int index = m_script->nodeInfo[m_breakNodeId].indexOfRange(m_pc);
-    m_breakStep.pcRange = m_script->nodeInfo[m_breakNodeId].pcRange(index);
+    m_breakStep.stack = m_stack.size();        
+    m_breakStep.pcRange = nodeDebugRange(m_breakStep.nodeId,m_pc);
     
     m_statusCommand = Command_resume;
     lock.unlock();
@@ -1397,6 +1409,7 @@ void JZNodeEngine::stepOut()
         return;
 
     m_breakStep.type = BreakPoint::stackEqual;
+    m_breakStep.nodeId = breakNodeId();
     m_breakStep.stack = m_stack.size() - 1;
 
     m_statusCommand = Command_resume;
@@ -1644,9 +1657,18 @@ bool JZNodeEngine::checkPauseStop()
         int stack = m_stack.size();
         auto breakTriggred = [this](BreakPoint &pt,const QString &filepath,int stack,int pc,int node_id)->bool
         {
-            if(pt.type == BreakPoint::nodeEnter && pt.file == filepath && (node_id == pt.nodeId
-                || (pt.pcRange.start != -1 && pc > pt.pcRange.start && pc < pt.pcRange.end)))
-                return true;
+            if (pt.type == BreakPoint::nodeEnter && pt.file == filepath)
+            {
+                if (m_breakStep.nodeId == pt.nodeId)
+                    return false;
+
+                if (node_id == pt.nodeId
+                    || (pt.pcRange.start != -1 && pc >= pt.pcRange.debugStart && pc < pt.pcRange.end))
+                {
+                    this->m_breakNodeId = pt.nodeId;
+                    return true;
+                }
+            }
             else if (pt.type == BreakPoint::stepOver)
             {                
                 if (stack < pt.stack)
@@ -1836,7 +1858,7 @@ bool JZNodeEngine::run()
         }
         case OP_return:
         {
-            popStack();
+            popStack();            
             if(m_stack.size() < in_stack_size)
                 goto RunEnd;
             break;
