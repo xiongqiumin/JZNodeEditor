@@ -10,6 +10,8 @@ ScriptTest::ScriptTest()
 {
     m_testPath = qApp->applicationDirPath() + "/testcase";
     m_dump = false;
+
+    connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &ScriptTest::onRuntimeError);
 }
 
 void ScriptTest::call()
@@ -20,6 +22,8 @@ void ScriptTest::call()
 
 bool ScriptTest::build()
 {
+    m_project.saveAllItem();
+
     JZNodeBuilder builder;
     if(!builder.build(&m_project,&m_program))
     {
@@ -52,6 +56,12 @@ bool ScriptTest::run(bool async = false)
     }
 
     return true;
+}
+
+void ScriptTest::onRuntimeError(JZNodeRuntimeError error)
+{        
+    qDebug() << error.error;    
+    Q_ASSERT(0);
 }
 
 void ScriptTest::initTestCase()
@@ -132,6 +142,12 @@ QMap<int,int> ScriptTest::initWhileSetCase()
         node_list.push_back(node_set);
     }
     return node_value;
+}
+
+void ScriptTest::testMatchType()
+{
+    int ret = JZNodeType::matchType({ Type_bool,Type_double,Type_int }, QList<int>{Type_any});
+    QVERIFY(ret == Type_double);
 }
 
 void ScriptTest::testRegExp()
@@ -473,58 +489,70 @@ void ScriptTest::testSequeue()
 }
 
 void ScriptTest::testFor()
-{
-    /*
-        for(int c = 5; c < 100; c++)
-        {
-            if(c > 20)
-            {
-                i = c;
-                break;            
-            }
-        }    
-    */
+{        
+    for (int i = 0; i < 4; i++)
+    {
+        FunctionDefine define;
+        define.name = "ForTest" + QString::number(i);        
+        define.paramOut.push_back(JZParamDefine("result", Type_int));
 
-    JZScriptFile *script = m_scriptFlow;
+        JZScriptFile *script = m_project.addFunction("./", define);
+        script->addLocalVariable("sum", Type_int);
 
-    JZNode *node_start = script->getNode(0);
-    JZNodeFor *node_for = new JZNodeFor();
-    JZNodeBranch *node_branch = new JZNodeBranch();
-    JZNodeBreak *node_break = new JZNodeBreak();
-    JZNodeGT *node_gt = new JZNodeGT();
-    JZNodeSetParam *node_set = new JZNodeSetParam();
-    
-    int start_id = node_start->id();
-    int for_id = script->addNode(JZNodePtr(node_for));    
-    int branch_id = script->addNode(JZNodePtr(node_branch));
-    int break_id = script->addNode(JZNodePtr(node_break));
-    int gt_id = script->addNode(JZNodePtr(node_gt));
-    int set_id = script->addNode(JZNodePtr(node_set));
+        JZNode *node_start = script->getNode(0);
 
-    m_paramDef->addVariable("i",Type_int);
-    node_set->setVariable("i");
+        JZNodeFor *node_for = new JZNodeFor();
+        JZNodeAdd *node_add = new JZNodeAdd();
+        JZNodeParam *node_sum = new JZNodeParam();
+        JZNodeSetParam *node_set = new JZNodeSetParam();
+        JZNodeReturn *node_ret = new JZNodeReturn();
 
-    //start
-    script->addConnect(JZNodeGemo(start_id,node_start->flowOut()),JZNodeGemo(for_id,node_for->flowIn()));
-    node_for->setRange(5, 100);
+        int start_id = node_start->id();
+        int for_id = script->addNode(JZNodePtr(node_for));
+        int set_id = script->addNode(JZNodePtr(node_set));
+        script->addNode(JZNodePtr(node_add));
+        script->addNode(JZNodePtr(node_sum));
+        script->addNode(JZNodePtr(node_ret));
 
-    // if(i > 20)    
-    script->addConnect(JZNodeGemo(for_id,node_for->subFlowOut(0)),JZNodeGemo(branch_id,node_branch->flowIn()));    
-    script->addConnect(JZNodeGemo(for_id,node_for->paramOut(0)),JZNodeGemo(gt_id,node_gt->paramIn(0)));
-    node_gt->setPropValue(node_gt->paramIn(1),20);
+        node_sum->setVariable("sum");
+        node_set->setVariable("sum");
+        node_ret->setFunction(&define);
 
-    script->addConnect(JZNodeGemo(gt_id,node_gt->paramOut(0)),JZNodeGemo(branch_id,node_branch->paramIn(0)));
+        //start
+        script->addConnect(JZNodeGemo(start_id, node_start->flowOut()), JZNodeGemo(for_id, node_for->flowIn()));
+        if(i == 0)
+            node_for->setRange(0, 1, 10);
+        else if (i == 0)
+            node_for->setRange(9, 1, -1);
+        else if (i == 0)
+            node_for->setRange(0, -1, 10);
+        else
+            node_for->setRange(9, -1, -1);        
 
-    script->addConnect(JZNodeGemo(branch_id,node_branch->flowOut(0)),JZNodeGemo(set_id,node_set->flowIn()));
-    script->addConnect(JZNodeGemo(for_id,node_for->paramOut(0)),JZNodeGemo(set_id,node_set->paramIn(0)));
+        script->addConnect(node_for->subFlowOutGemo(0), node_set->flowInGemo());
+        script->addConnect(node_sum->paramOutGemo(0), node_add->paramInGemo(0));
+        script->addConnect(node_for->paramOutGemo(0), node_add->paramInGemo(1));
+        script->addConnect(node_add->paramOutGemo(0), node_set->paramInGemo(0));
 
-    script->addConnect(JZNodeGemo(set_id,node_set->flowOut()),JZNodeGemo(break_id,node_break->flowIn()));        
+        script->addConnect(node_for->flowOutGemo(0), node_ret->flowInGemo());
+        script->addConnect(node_sum->paramOutGemo(0), node_ret->paramInGemo(0));
+    }
     
     if(!run())
         return;
 
-    int i = m_engine.getVariable("i").toInt();
-    QCOMPARE(i,21);
+    QVariantList in,out;
+    m_engine.call("ForTest0", in, out);
+    QCOMPARE(out[0].toInt(),45);
+
+    m_engine.call("ForTest1", in, out);
+    QCOMPARE(out[0].toInt(), 45);
+
+    m_engine.call("ForTest2", in, out);
+    QCOMPARE(out[0].toInt(), 45);
+
+    m_engine.call("ForTest3", in, out);
+    QCOMPARE(out[0].toInt(), 45);
 }
 
 void ScriptTest::testForEach()
@@ -643,9 +671,9 @@ void ScriptTest::testWhileLoop()
     script->addConnect(JZNodeGemo(value_id,node_value->paramOut(0)),JZNodeGemo(add_id,node_add->paramIn(1)));
         
     script->addConnect(JZNodeGemo(add_id,node_add->paramOut(0)),JZNodeGemo(set_id,node_set->paramIn(0)));
-    
+        
     if(run())
-        return;
+        return;    
 
     int sum = m_engine.getVariable("i").toInt();
     QCOMPARE(sum,55);

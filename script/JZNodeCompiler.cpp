@@ -138,6 +138,7 @@ JZNodeIRFlowOut::JZNodeIRFlowOut()
 //JZNodeIRStackInit
 JZNodeIRStackInit::JZNodeIRStackInit(int node_id, int prop_id)
 {
+    Q_ASSERT(prop_id >= 0);
     type = OP_ComilerStackInit;
     nodeId = node_id;
     propId = prop_id;
@@ -309,7 +310,7 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
 
                 auto in_list = node->paramInList();
                 for (int i = 0; i < in_list.size(); i++)
-                {
+                {                    
                     NodeParamInfo param_info;
                     param_info.define.name = node->prop(in_list[i])->name();
                     param_info.define.dataType = pinType(node->id(), in_list[i]);
@@ -562,6 +563,11 @@ NodeCompilerInfo *JZNodeCompiler::currentNodeInfo()
     return m_compilerNodeStack.back().nodeInfo;
 }
 
+bool JZNodeCompiler::hasPinType(int node_id, int prop_id)
+{
+    return m_nodeInfo[node_id].pinType.contains(prop_id);
+}
+
 void JZNodeCompiler::setPinType(int node_id, int prop_id, int type)
 {
     Q_ASSERT(type != Type_none);
@@ -800,8 +806,6 @@ void JZNodeCompiler::addFunction(const FunctionDefine &define, int node_id)
     auto local_list = m_scriptFile->localVariableList(true);
     for (int i = 0; i < local_list.size(); i++)
         runtime.localVariables << *m_scriptFile->localVariable(local_list[i]);
-    if (define.isMemberFunction())
-        runtime.localVariables.pop_front();
 
     m_script->runtimeInfo[define.fullName()] = runtime;
 }
@@ -874,7 +878,12 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
     }
 
 calc_end:
-    m_nodeInfo[node_id].pinType = in_type;
+    auto it_type = in_type.begin();
+    while (it_type != in_type.end())
+    {
+        m_nodeInfo[node_id].pinType.insert(it_type.key(), it_type.value());
+        it_type++;
+    }    
     return error.isEmpty();
 }
 
@@ -906,13 +915,13 @@ bool JZNodeCompiler::bulidControlFlow()
         if (m_statmentList->at(i)->type != OP_ComilerStackInit)
             continue;
 
-        auto stack_init = (JZNodeIRStackInit*)m_statmentList->at(i).data();        
+        auto stack_init = (JZNodeIRStackInit*)m_statmentList->at(i).data();                
         JZNodeIRAlloc *ir_alloc = new JZNodeIRAlloc();
         ir_alloc->type = JZNodeIRAlloc::StackId;
         ir_alloc->id = paramId(stack_init->nodeId, stack_init->propId);
         ir_alloc->dataType = pinType(stack_init->nodeId, stack_init->propId);
-        ir_alloc->value = irLiteral(JZNodeType::matchValue(ir_alloc->dataType,QVariant()));
-        replaceStatement(i, JZNodeIRPtr(ir_alloc));
+        ir_alloc->value = irLiteral(JZNodeType::matchValue(ir_alloc->dataType, QVariant()));
+        replaceStatement(i, JZNodeIRPtr(ir_alloc));        
     }   
 
     //替换 subFlowOut 为实际子节点地址, 子节点的后续节点也在此处处理
@@ -1273,6 +1282,11 @@ void JZNodeCompiler::addCall(const JZNodeIRParam &function, const QList<JZNodeIR
 
     for(int i = 0; i < paramOut.size(); i++)
         addSetVariable(paramOut[i],irId(Reg_Call+i));
+}
+
+void JZNodeCompiler::addCall(const FunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut)
+{
+    addCall(irLiteral(function->fullName()), paramIn, paramOut);
 }
 
 void JZNodeCompiler::resetStack()

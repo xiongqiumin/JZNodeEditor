@@ -208,13 +208,12 @@ void initCore()
         }
         return ret;
     });
-    cls_list.def("iterator", true, [](QVariantList *list)->QVariant {
-        JZNodeObjectPtr it_ptr = JZObjectCreate<JZNodeListIterator>();
-        auto list_it = (JZNodeListIterator*)it_ptr->cobj();
+    cls_list.def("iterator", true, [](QVariantList *list)->JZNodeListIterator* {        
+        JZNodeListIterator *list_it = new JZNodeListIterator();
         list_it->it = list->begin();
         list_it->list = list;
-        return QVariant::fromValue(it_ptr);
-    });
+        return list_it;
+    }, true);
     cls_list.def("resize", true, [](QVariantList *list, int size) {
         while (list->size() > size) {
             list->pop_back();
@@ -272,13 +271,12 @@ void initCore()
         }
         return ret;
     });
-    cls_map.def("iterator", true, [](QVariantMap *map)->QVariant {
-        JZNodeObjectPtr it_ptr = JZObjectCreate<JZNodeMapIterator>();
-        auto map_it = (JZNodeMapIterator*)it_ptr->cobj();
+    cls_map.def("iterator", true, [](QVariantMap *map)->JZNodeMapIterator*{
+        JZNodeMapIterator *map_it = new JZNodeMapIterator();        
         map_it->it = map->begin();
         map_it->map = map;
-        return QVariant::fromValue(it_ptr);
-    });    
+        return map_it;
+    },true);    
     cls_map.def("set", true, [](QVariantMap *map, const QString &key, const QVariant &value) { map->insert(key, value); });
     cls_map.def("get", false, [](QVariantMap *map, const QString &key)->QVariant {
         auto it = map->find(key);

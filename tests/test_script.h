@@ -23,10 +23,15 @@ class ScriptTest : public QObject
 public:
     ScriptTest();
 
+protected slots:
+    void onRuntimeError(JZNodeRuntimeError error);
+
 private slots:
     void initTestCase();
     void init();
     void cleanup();
+
+    void testMatchType();
 
     void testClass();
     void testCClass();

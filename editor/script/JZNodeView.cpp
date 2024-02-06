@@ -215,6 +215,7 @@ BreakPointTriggerResult::BreakPointTriggerResult()
     nodeId = 0;
 }
 
+JZNodeView *g_nodeView = nullptr;
 //JZNodeView
 JZNodeView::JZNodeView(QWidget *widget)
     : QGraphicsView(widget)
@@ -228,6 +229,7 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_propEditFlag = false;
     m_runningMode = false;
     m_runNode = -1;    
+    g_nodeView = this;
 
     connect(&m_commandStack,&QUndoStack::cleanChanged, this, &JZNodeView::onCleanChanged);
     connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
@@ -708,11 +710,11 @@ void JZNodeView::initGraph()
     for (int i = 0; i < lines.size(); i++)
         createLineItem(lines[i].id);
 
-    m_loadFlag = false;    
+    m_loadFlag = false;
     m_scene->update();
     m_commandStack.clear();
-
-    fitNodeView();
+        
+    setSceneRect(sceneRect().translated(-100, -100));    
 }
 
 void JZNodeView::clear()
@@ -944,7 +946,7 @@ void JZNodeView::updateNodeLayout()
 }
 
 void JZNodeView::fitNodeView()
-{
+{        
     this->setSceneRect(QRectF());
     this->fitInView(m_scene->itemsBoundingRect(), Qt::KeepAspectRatio);    
 }

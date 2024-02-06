@@ -27,6 +27,17 @@ void TestServer::init(JZProject *project)
     JZParamFile *paramDef = (JZParamFile*)m_project->getItem("param.def");
     paramDef->addVariable("timer", Type_timer);
 
+    JZScriptClassFile *class_file = m_project->addClass("TestClass", "TestClass");
+    class_file->addMemberVariable("i32", Type_int);
+    class_file->addMemberVariable("list", Type_list);
+    class_file->addMemberVariable("map", Type_map);
+
+    FunctionDefine func_def;
+    func_def.name = "testFunc";
+    func_def.isFlowFunction = true;
+    func_def.paramIn.push_back(JZParamDefine("this", class_file->classType()));
+    class_file->addMemberFunction(func_def);
+
     auto time_meta = JZNodeObjectManager::instance()->meta(Type_timer);
 
     JZNodeCreate *create_timer = new  JZNodeCreate();
@@ -50,6 +61,22 @@ void TestServer::init(JZProject *project)
     script->addConnect(set_timer->paramOutGemo(0), start_timer->paramInGemo(0));
     script->addConnect(set_timer->flowOutGemo(0), start_timer->flowInGemo());
 
+    auto param_def = (JZParamFile *)m_project->getItem("./param.def");
+    param_def->addVariable("test", JZClassId("TestClass"));
+
+    JZNodeSetParam *set_param = new JZNodeSetParam();
+    JZNodeCreate *create = new JZNodeCreate();
+
+    set_param->setVariable("test");
+    create->setClassName("TestClass");
+    
+    script->addNode(JZNodePtr(set_param));
+    script->addNode(JZNodePtr(create));
+    script->addConnect(start_timer->flowOutGemo(), create->flowInGemo());
+    script->addConnect(create->flowOutGemo(), set_param->flowInGemo());
+    script->addConnect(create->paramOutGemo(0), set_param->paramInGemo(0));
+    
+
     //timeout
     JZNodeSingleEvent *timeout = new  JZNodeSingleEvent();
     timeout->setSingle(time_meta->className, time_meta->single("timeout"));
@@ -70,10 +97,21 @@ void TestServer::init(JZProject *project)
     script->addNode(JZNodePtr(node_print));
     script->addNode(JZNodePtr(node_display));
 
+    JZNodeFunction *node_func = new JZNodeFunction();
+    node_func->setFunction(&class_file->getMemberFunction(func_def.name)->function());
+    script->addNode(JZNodePtr(node_func));
+
     script->addConnect(timeout->flowOutGemo(0), node_print->flowInGemo());
     script->addConnect(node_print->flowOutGemo(0), node_for->flowInGemo());
     script->addConnect(node_for->subFlowOutGemo(0), nop->flowInGemo());
     script->addConnect(node_for->paramOutGemo(0), node_display->paramInGemo(0));
+    script->addConnect(nop->flowOutGemo(0), node_func->flowInGemo());
+
+    JZNodeParam *get_param = new JZNodeParam();
+    get_param->setVariable("test");
+    script->addNode(JZNodePtr(get_param));
+
+    script->addConnect(get_param->paramOutGemo(0), node_func->paramInGemo(0));
 
     m_project->saveAllItem();
     projectUpdateLayout(m_project);

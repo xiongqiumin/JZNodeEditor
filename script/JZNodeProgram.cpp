@@ -331,6 +331,119 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
         return JZNodeCompiler::paramName(param.id());
 }
 
+QString JZNodeProgram::irToString(JZNodeIR *op)
+{    
+    QString line = QString::asprintf("%04d ", op->pc);
+    switch (op->type)
+    {
+    case OP_nodeId:
+    {
+        JZNodeIRNodeId *ir_node = (JZNodeIRNodeId*)op;
+        line += "Node" + QString::number(ir_node->id);
+        break;
+    }
+    case OP_nop:
+    {
+        line += "NOP";
+        break;
+    }
+    case OP_alloc:
+    {
+        JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
+        QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "Global" : "Local";
+        if (ir_alloc->allocType == JZNodeIRAlloc::Heap || ir_alloc->allocType == JZNodeIRAlloc::Stack)
+            line += alloc + " " + ir_alloc->name + " = " + toString(ir_alloc->value);
+        else
+            line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id) + " = " + toString(ir_alloc->value);
+        break;
+    }
+    case OP_set:
+    {
+        JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
+        line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
+        break;
+    }
+    case OP_get:
+    {
+        Q_ASSERT(0);
+        break;
+    }
+    case OP_call:
+    {
+        JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
+        line += "CALL " + toString(ir_call->function);
+        break;
+    }
+    case OP_return:
+        line += "RETURN";
+        break;
+    case OP_exit:
+        line += "EXIT";
+        break;
+    case OP_add:
+    case OP_sub:
+    case OP_mul:
+    case OP_div:
+    case OP_mod:
+    case OP_eq:
+    case OP_ne:
+    case OP_le:
+    case OP_ge:
+    case OP_lt:
+    case OP_gt:
+    case OP_and:
+    case OP_or:
+    case OP_bitand:
+    case OP_bitor:
+    case OP_bitxor:
+    {
+        JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
+        QString c = toString(ir_expr->dst);
+        QString a = toString(ir_expr->src1);
+        QString b = toString(ir_expr->src2);
+        line += c + " = " + a + " " + JZNodeType::opName(op->type) + " " + b;
+        break;
+    }
+    case OP_not:
+    {
+        JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
+        QString c = toString(ir_expr->dst);
+        QString a = toString(ir_expr->src1);
+        line += c + " = " + JZNodeType::opName(op->type) + " " + a;
+        break;
+    }
+    case OP_jmp:
+    case OP_jne:
+    case OP_je:
+    {
+        JZNodeIRJmp *ir_jmp = (JZNodeIRJmp *)op;
+        if (op->type == OP_jmp)
+            line += "JMP " + QString::number(ir_jmp->jmpPc);
+        else if (op->type == OP_je)
+            line += "JE " + QString::number(ir_jmp->jmpPc);
+        else
+            line += "JNE " + QString::number(ir_jmp->jmpPc);
+        break;
+    }
+    case OP_assert:
+    {
+        JZNodeIRAssert *ir_assert = (JZNodeIRAssert *)op;
+        line += "ASSERT " + toString(ir_assert->tips);
+        break;
+    }
+    default:
+        Q_ASSERT(0);
+        break;
+    }
+
+    if (!op->memo.isEmpty())
+    {
+        line = line.leftJustified(12);
+        line += " //" + op->memo;
+    }
+    return line;
+}
+
 QString JZNodeProgram::dump()
 {    
     QString content;    
@@ -342,117 +455,8 @@ QString JZNodeProgram::dump()
         auto &opList = script->statmentList;
         for(int i = 0; i < opList.size(); i++)
         {
-            //deal op
-            JZNodeIR *op = opList[i].data();
-            QString line = QString::asprintf("%04d ",i);
-            switch (op->type)
-            {
-                case OP_nodeId:
-                {
-                    JZNodeIRNodeId *ir_node = (JZNodeIRNodeId*)op;
-                    line += "Node" + QString::number(ir_node->id);
-                    break;
-                }
-                case OP_nop:
-                {
-                    line += "NOP";
-                    break;
-                }
-                case OP_alloc:
-                {
-                    JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
-                    QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "Global" : "Local";
-                    if(ir_alloc->type == JZNodeIRAlloc::Heap || ir_alloc->type == JZNodeIRAlloc::Stack)
-                        line += alloc + " " + ir_alloc->name + " = " + toString(ir_alloc->value);
-                    else
-                        line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id) + " = " + toString(ir_alloc->value);
-                    break;
-                }                
-                case OP_set:
-                {
-                    JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
-                    line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
-                    break;
-                }
-                case OP_get:
-                {
-                    Q_ASSERT(0);
-                    break;
-                }
-                case OP_call:
-                {
-                    JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
-                    line += "CALL " + toString(ir_call->function);
-                    break;
-                }
-                case OP_return:
-                    line += "RETURN";
-                    break;
-                case OP_exit:
-                    line += "EXIT";
-                    break;
-                case OP_add:                        
-                case OP_sub:            
-                case OP_mul:                
-                case OP_div:
-                case OP_mod:                
-                case OP_eq:            
-                case OP_ne:            
-                case OP_le:            
-                case OP_ge:            
-                case OP_lt:            
-                case OP_gt:
-                case OP_and:
-                case OP_or:
-                case OP_bitand:
-                case OP_bitor:
-                case OP_bitxor:
-                {
-                    JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
-                    QString c = toString(ir_expr->dst);
-                    QString a = toString(ir_expr->src1);
-                    QString b = toString(ir_expr->src2);
-                    line += c + " = " + a + " " + JZNodeType::opName(op->type) + " " + b;
-                    break;
-                }
-                case OP_not:
-                {
-                    JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
-                    QString c = toString(ir_expr->dst);
-                    QString a = toString(ir_expr->src1);                    
-                    line += c + " = " + JZNodeType::opName(op->type) + " " + a;
-                    break;
-                }
-                case OP_jmp:
-                case OP_jne:
-                case OP_je:
-                {
-                    JZNodeIRJmp *ir_jmp = (JZNodeIRJmp *)op;
-                    if(op->type == OP_jmp)
-                        line += "JMP " + QString::number(ir_jmp->jmpPc);
-                    else if(op->type == OP_je)
-                        line += "JE " + QString::number(ir_jmp->jmpPc);
-                    else
-                        line += "JNE " + QString::number(ir_jmp->jmpPc);
-                    break;
-                }
-                case OP_assert:
-                {
-                    JZNodeIRAssert *ir_assert = (JZNodeIRAssert *)op;
-                    line += "ASSERT " + toString(ir_assert->tips);
-                    break;
-                }
-                default:
-                    Q_ASSERT(0);
-                    break;
-            }
-
-            if(!op->memo.isEmpty())
-            {
-                line = line.leftJustified(12);        
-                line += " //" + op->memo;
-            }
-            content += line + "\n";
+            //deal op            
+            content += irToString(opList[i].data()) + "\n";
         }
 
         for(int i = 0; i < script->functionList.size(); i++)

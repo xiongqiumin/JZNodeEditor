@@ -505,7 +505,7 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
             if (env->script)
             {
                 s.file = env->script->file;
-                s.nodeId = breakNodeId();                
+                s.nodeId = nodeIdByPc(env->script, env->pc);
             }            
             s.pc = env->pc;
             info.stacks.push_back(s);
@@ -1021,9 +1021,13 @@ void JZNodeEngine::splitMember(const QString &fullName, QStringList &objName,QSt
 
 QVariant *JZNodeEngine::getVariableRefSingle(RunnerEnv *env, const QString &name)
 {
-    QVariant *obj = env->getRef(name);
-    if (obj)
-        return obj;
+    QVariant *obj = nullptr;
+    if (env)
+    {
+        obj = env->getRef(name);
+        if (obj)
+            return obj;
+    }
 
     auto it = m_global.find(name);
     if (it == m_global.end())
@@ -1073,10 +1077,12 @@ QVariant *JZNodeEngine::getVariableRef(const QString &name)
 
 QVariant *JZNodeEngine::getVariableRef(const QString &name, int stack_level)
 {
-    auto env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
+    RunnerEnv *env = nullptr;
+    if(m_stack.size() > 0)
+        env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
 
     if (name == "this")
-        return &env->object;
+        return env? &env->object : nullptr;
 
     QStringList obj_list;
     QString param_name;
@@ -1086,7 +1092,7 @@ QVariant *JZNodeEngine::getVariableRef(const QString &name, int stack_level)
     {
         QVariant *obj = nullptr;
         if (obj_list[0] == "this")
-            obj = &env->object;
+            obj = env? &env->object : nullptr;
         else
             obj = getVariableRefSingle(env,obj_list[0]);
 
@@ -1719,8 +1725,7 @@ bool JZNodeEngine::checkPauseStop()
         
         if(m_breakStep.type != BreakPoint::none 
             && breakTriggred(m_breakStep, m_script->file, stack, m_pc, node_id))
-        {
-            m_breakStep.clear();
+        {            
             wait = true;
         }   
         else
@@ -1738,6 +1743,7 @@ bool JZNodeEngine::checkPauseStop()
     }
     if (wait)
     {        
+        m_breakStep.clear();
         m_stack.currentEnv()->pc = m_pc;
         m_statusCommand = Command_none;
         updateStatus(Status_pause);
@@ -1787,7 +1793,8 @@ bool JZNodeEngine::run()
 
         auto &op_list = m_script->statmentList;
         //deal op
-        JZNodeIR *op = op_list[m_pc].data();
+        JZNodeIR *op = op_list[m_pc].data();           
+
         int op_type = op->type;
         switch (op_type)
         {

@@ -110,8 +110,7 @@ void JZNodeEditor::open(JZProjectItem *item)
 {
     JZScriptFile* file = dynamic_cast<JZScriptFile*>(item);
     m_view->setFile(file);    
-    m_nodePanel->setFile(file);
-    m_view->setSceneRect(m_view->rect());
+    m_nodePanel->setFile(file);    
 }
 
 void JZNodeEditor::close()

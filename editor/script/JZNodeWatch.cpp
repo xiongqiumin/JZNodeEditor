@@ -18,7 +18,10 @@ public:
     void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
     {
         painter->setPen(QColor(Qt::black)); // set ink to black
-        painter->drawRect(option.rect);  // draw a rect covering cell area     
+        QRect rc = option.rect;
+        if (index.column() == 0)
+            rc.setX(0);
+        painter->drawRect(rc);  // draw a rect covering cell area     
         QStyledItemDelegate::paint(painter, option, index);  // tell it to draw as normally after
     }
 };
@@ -36,10 +39,7 @@ JZNodeWatch::JZNodeWatch(QWidget *parent)
     m_view->setColumnCount(3);
     m_view->setHeaderLabels({ "名称","值","类型" });
     m_view->setEditTriggers(QTreeWidget::NoEditTriggers);
-
-    m_view->setRootIsDecorated(false);
-    //m_view->setStyleSheet("QTreeWidget::item { border: 1px solid gray; }");
-
+    
     GridDelegate *grid = new GridDelegate(m_view);
     m_view->setItemDelegate(grid);
 
@@ -231,12 +231,13 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
     else if(JZNodeType::isBaseOrEnum(info.type))
         cur_value = info.value;    
     else
-    {
-        int ptr = info.value.toLongLong();       
-        if (info.type == Type_list || info.type == Type_map)
-            cur_value = QString("{size = %1}").arg(info.params.size());
-        else
-            cur_value = "0x" + QString::number(ptr,16);
+    {       
+        cur_value = info.value;
+        if (info.value != "nullptr")
+        {
+            if (info.type == Type_list || info.type == Type_map)
+                cur_value = QString("{size = %1}").arg(info.params.size());
+        }        
 
         QStringList sub_params;
         auto it = info.params.begin();

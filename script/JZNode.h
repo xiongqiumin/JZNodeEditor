@@ -314,7 +314,7 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     void setRange(int start, int end);
-    void setRange(int start, int end, int step);
+    void setRange(int start, int step, int end);
     void setStart(int start);
     void setStep(int step);
     void setEnd(int end);

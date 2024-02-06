@@ -412,7 +412,7 @@ JZProjectItemFolder *JZProject::addFolder(QString path, QString name)
 
 JZScriptFile *JZProject::addFunction(QString path, const FunctionDefine &define)
 {
-    Q_ASSERT(!define.name.isEmpty());
+    Q_ASSERT(!define.name.isEmpty() && getItem(path));
 
     JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
     file->setName(define.name);

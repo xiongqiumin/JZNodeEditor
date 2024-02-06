@@ -67,6 +67,7 @@ void JZNodeLiteral::setLiteral(QVariant value)
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 {   
     int id = c->paramId(m_id,paramOut(0));
+    c->addNodeStart(m_id);
     c->addSetVariable(irId(id),irLiteral(literal()));
     return true;
 }
@@ -255,7 +256,8 @@ JZNodeThis::~JZNodeThis()
 
 bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
 {
-    int out_id = c->paramId(m_id,paramOut(0));
+    int out_id = c->paramId(m_id, paramOut(0));
+    c->addNodeStart(m_id);    
     c->addSetVariable(irId(out_id),irThis());    
     return true;
 }
@@ -290,6 +292,7 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
     if (!c->checkVariableExist(name, error))
         return false;
     
+    c->addNodeStart(m_id);
     int out_id = c->paramId(m_id,paramOut(0));
     JZNodeIRParam ref = irRef(name);
     c->addSetVariable(irId(out_id),ref);

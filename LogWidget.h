@@ -35,6 +35,8 @@ public:
     ~LogWidget();
 
     void addLog(int type, const QString &log);
+    void showRunningLog();
+
     JZNodeStack *stack();
     JZNodeWatch *watchAuto();
     JZNodeWatch *watchManual();

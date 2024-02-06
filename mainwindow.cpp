@@ -75,7 +75,8 @@ MainWindow::MainWindow(QWidget *parent)
     initUi();     
     updateActionStatus();    
 
-    initLocalProcessTest();
+    m_useTestProcess = 0;
+    initLocalProcessTest();    
 }
 
 MainWindow::~MainWindow()
@@ -547,8 +548,7 @@ void MainWindow::onActionBuild()
 }
 
 void MainWindow::initLocalProcessTest()
-{
-    m_useTestProcess = true;
+{    
     if (!m_useTestProcess)
         return;
     
@@ -758,6 +758,8 @@ bool MainWindow::openEditor(QString filepath)
         m_editorStack->addTab(editor, filepath);        
     }
     switchEditor(m_editors[file]);
+    
+
     return true;
 }
 
@@ -912,6 +914,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         return;
     }    
     setRuntimeNode(stack.file, stack.nodeId);
+    m_log->showRunningLog();
     
     //watch auto
     JZNodeDebugParamInfo param_info;      
@@ -919,6 +922,13 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
 
     //this
     auto func = m_program.function(stack.function);    
+    if (func->isCFunction)
+    {
+        m_watchAuto->setParamInfo(&param_info);
+        m_watchReg->setParamInfo(&param_info);
+        return;
+    }
+
     if (func->isMemberFunction())
     {        
         JZNodeParamCoor coor;
@@ -1146,7 +1156,7 @@ void MainWindow::onRuntimeError(JZNodeRuntimeError error)
     }    
 
     activateWindow();    
-    QMessageBox::information(this, "", error_msg);
+    QMessageBox::information(this, "", error_msg);    
 }
 
 void MainWindow::onNetError()

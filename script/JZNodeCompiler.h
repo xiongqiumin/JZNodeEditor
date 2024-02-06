@@ -136,6 +136,7 @@ public:
     void setPinType(int nodeId, int propId, int type);    
     int pinType(int nodeId, int propId);
     int pinType(JZNodeGemo gemo);
+    bool hasPinType(int nodeId, int propId);
 
     /*
     节点数据传递规则:
@@ -166,6 +167,7 @@ public:
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
     
     void addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+    void addCall(const FunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAllocLocal(const JZParamDefine *def, const JZNodeIRParam &value = JZNodeIRParam());
     void addAssert(const JZNodeIRParam &tips);       
 

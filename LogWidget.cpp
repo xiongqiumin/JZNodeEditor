@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QMenu>
 #include <QTextDocument>
+#include <QScrollBar>
 
 //LogBrowser
 LogBrowser::LogBrowser()
@@ -123,6 +124,12 @@ LogWidget::~LogWidget()
 void LogWidget::addLog(int type, const QString &log)
 {
     m_logs[type]->addLog(log);
+}
+
+void LogWidget::showRunningLog()
+{
+    m_tabWidget->setCurrentIndex(1);
+    m_logs[1]->moveCursor(QTextCursor::End);
 }
 
 JZNodeStack *LogWidget::stack()

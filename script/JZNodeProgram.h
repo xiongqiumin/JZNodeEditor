@@ -126,6 +126,7 @@ public:
     QList<JZNodeObjectDefine> objectDefines();
     QMap<QString,JZParamDefine> globalVariables();    
 
+    QString irToString(JZNodeIR *ir);
     QString dump();   
     QString error();
     

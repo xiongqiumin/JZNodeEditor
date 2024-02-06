@@ -363,7 +363,7 @@ int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
     if (dst_allow_type.size() == 0)
         return Type_none;
     if (dst_allow_type.size() == 1)
-        return dst_allow_type[0];
+        return dst_allow_type[0];    
 
     QList<int> dst_near_type;
     //对scr 选择dst_allow_type 里面最近似的类型
@@ -377,6 +377,13 @@ int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
             {
                 near_type = dst_allow_type[j];
                 break;
+            }
+            else if(src_types[i] == Type_any)
+            {
+                if (j == 0)
+                    near_type = dst_types[0];
+                else
+                    near_type = upType(near_type,dst_types[j]);
             }
             else
             {
