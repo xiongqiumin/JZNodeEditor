@@ -61,6 +61,7 @@ public:
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
     static bool canConvert(int type1,int type2);    
+    static bool canConvert(int type1,const QVariant &v);
     static QString toString(const QVariant &v);
     static QString toString(JZNodeObject *obj);
     

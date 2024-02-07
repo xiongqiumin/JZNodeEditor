@@ -154,6 +154,7 @@
     <ClCompile Include="script\JZNodeMeta.cpp" />
     <ClCompile Include="script\JZNodeName.cpp" />
     <ClCompile Include="script\JZNodeObject.cpp" />
+    <ClCompile Include="script\JZNodeObjectParser.cpp" />
     <ClCompile Include="script\JZNodePin.cpp" />
     <ClCompile Include="script\JZNodeProgram.cpp" />
     <ClCompile Include="script\JZNodeQtBind.cpp" />
@@ -210,6 +211,7 @@
     <ClInclude Include="project\JZLibraryFile.h" />
     <ClInclude Include="script\JZNodeName.h" />
     <QtMoc Include="script\JZNodeQtBind.h" />
+    <ClInclude Include="script\JZNodeObjectParser.h" />
     <ClInclude Include="script\JZNodeQtWrapper.h" />
     <ClInclude Include="script\JZNodeUtils.h" />
     <ClInclude Include="script\JZNodeValue.h" />

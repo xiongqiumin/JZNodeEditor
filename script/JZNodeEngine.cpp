@@ -14,6 +14,16 @@ QVariant JZConvert(const QVariant &in, int type)
     return JZNodeType::matchValue(type,in);
 }
 
+void JZObjectToString(JZNodeObject *obj)
+{
+
+}
+
+JZNodeObject *JZObjectFromString(QString text)
+{
+    return nullptr;
+}
+
 void JZObjectDelete(JZNodeObject *obj)
 {
     if(g_engine)

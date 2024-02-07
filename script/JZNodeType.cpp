@@ -188,6 +188,11 @@ bool JZNodeType::canConvert(int type1,int type2)
     return false;
 }
 
+bool JZNodeType::canConvert(int type1, const QVariant &v)
+{
+    return canConvert(type1, JZNodeType::variantType(v));
+}
+
 QString JZNodeType::toString(JZNodeObject *obj)
 {
     QString text = obj->className();

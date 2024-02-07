@@ -5,6 +5,7 @@
 #include <QTest>
 #include "test_script.h"
 #include "JZRegExpHelp.h"
+#include "JZNodeObjectParser.h"
 
 ScriptTest::ScriptTest()
 {
@@ -167,6 +168,20 @@ void ScriptTest::testRegExp()
     QCOMPARE(help.isFloat("-235.346"), true);
     QCOMPARE(help.isFloat("235346"), false);
     QCOMPARE(help.isFloat("23534.6xc"), false);
+}
+
+void ScriptTest::testObjectParse()
+{
+    QList<JZNodeObjectPtr> cache;
+
+    JZNodeObjectParser parser;
+    auto obj_list = parser.parse("[1,2,3,4,5,6,7,8]");
+    QVERIFY(obj_list && obj_list->type() == Type_list);
+    cache << JZNodeObjectPtr(obj_list);
+
+    auto obj_map = parser.parse(R"({"a":1,"b":998})");
+    QVERIFY(obj_map && obj_map->type() == Type_map);
+    cache << JZNodeObjectPtr(obj_map);
 }
 
 void ScriptTest::testProjectSave()

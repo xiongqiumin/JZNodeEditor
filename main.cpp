@@ -16,12 +16,12 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();           
 
-    if(0)
+    if(1)
     {
         test_script();
         return 0;
     }
-    if(1)
+    if(0)
     {
         SampleRussian russian;
         russian.saveProject();
