@@ -15,8 +15,8 @@ JZUiFile::JZUiFile()
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>430</width>
-    <height>552</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>        
  </widget>

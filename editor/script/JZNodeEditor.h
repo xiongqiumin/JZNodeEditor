@@ -3,6 +3,7 @@
 
 #include "JZNodeView.h"
 #include "JZNodePanel.h"
+#include "JZNodeViewPanel.h"
 #include "JZNodePropertyEditor.h"
 #include "JZEditor.h"
 #include "JZNodeCompiler.h"
@@ -43,6 +44,9 @@ public:
     void setNodeValue(int nodeId, int prop_id, const QString &value);
     void updateNode();
 
+signals:
+    void sigFunctionOpen(QString name);
+
 protected slots:
     void onActionLayout();
     void onActionFitInView();
@@ -52,6 +56,7 @@ protected:
 
     JZNodeView *m_view;    
     JZNodePanel *m_nodePanel;
+    JZNodeViewPanel *m_nodeViewPanel;
     JZNodePropertyEditor *m_nodeProp;
     JZNodeCompiler *m_compiler;
     QList<QAction*> m_actionList;

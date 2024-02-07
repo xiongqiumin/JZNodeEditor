@@ -40,7 +40,6 @@ public:
     JZNodeStack *stack();
     JZNodeWatch *watchAuto();
     JZNodeWatch *watchManual();
-    JZNodeWatch *watchReg();
     JZNodeBreakPoint *breakpoint();
 
 signals:
@@ -55,7 +54,6 @@ protected:
     JZNodeStack *m_stack;    
     JZNodeWatch *m_watchAuto;
     JZNodeWatch *m_watchManual;
-    JZNodeWatch *m_watchReg;
     JZNodeBreakPoint *m_breakPoint;    
 };
 

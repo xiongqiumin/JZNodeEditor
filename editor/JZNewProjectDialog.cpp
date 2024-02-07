@@ -11,11 +11,21 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
     ui->setupUi(this);
 	ui->lineProjectName->setText("project");
 	ui->lineProjectDir->setText(QDir::cleanPath(QApplication::applicationDirPath() + "/project"));
+
+    ui->listWidget->addItem("Ui界面程序");
+    ui->listWidget->addItem("命令行程序");
+
+    ui->listWidget->setCurrentRow(0);
 }
 
 JZNewProjectDialog::~JZNewProjectDialog()
 {
 	delete ui;
+}
+
+int JZNewProjectDialog::projectType()
+{
+    return ui->listWidget->currentRow();
 }
 
 QString JZNewProjectDialog::name()

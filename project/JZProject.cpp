@@ -64,6 +64,7 @@ QDataStream &operator >> (QDataStream &s, JZProject::ItemInfo &param)
 JZProject::JZProject()    
 {        
     m_blockRegist = false;
+    m_windowSystem = false;
 }
 
 JZProject::~JZProject()
@@ -93,27 +94,30 @@ void JZProject::init()
     addItem("",main_flow);
 
     JZParamFile *param_page = new JZParamFile();
-    param_page->setName("param.def");
+    param_page->setName("global.def");
     addItem("",param_page);
 
     JZNodeEvent *start = new JZNodeStartEvent();    
     main_flow->addNode(JZNodePtr(start));
 
-    saveItem(main_flow);    
+    saveItem(main_flow);
+    m_windowSystem = false;
 }
 
 void JZProject::initUi()
-{    
-    m_blockRegist = true;
-    auto func_inst = JZNodeFunctionManager::instance();
+{   
+    init();
 
-    init();        
+    m_windowSystem = true;
+    m_blockRegist = true;    
+
+    auto func_inst = JZNodeFunctionManager::instance();    
     addUiClass("./","mainwindow");
     m_blockRegist = false;
     registType();
 
     auto main_script = (JZScriptFile *)getItem("./main.jz");
-    auto param_def = (JZParamFile *)getItem("./param.def");
+    auto param_def = (JZParamFile *)getItem("./global.def");
     param_def->addVariable("mainwindow",JZClassId("mainwindow"));
 
     JZNodeSetParam *set_param = new JZNodeSetParam();    
@@ -279,9 +283,19 @@ QString JZProject::path()
     return info.path();
 }
 
-QString JZProject::mainScript()
+QString JZProject::mainScriptPath()
 {
     return "./main.jz";
+}
+
+JZScriptFile *JZProject::mainScript()
+{
+    return dynamic_cast<JZScriptFile*>(getItem("./main.jz"));
+}
+
+JZParamFile *JZProject::globalDefine()
+{
+    return dynamic_cast<JZParamFile*>(getItem("./global.def"));
 }
 
 JZProjectItem *JZProject::root()
@@ -430,7 +444,12 @@ void JZProject::removeFunction(QString name)
 
 JZScriptFile *JZProject::getFunction(QString name)
 {
-    return nullptr;
+    name.replace(".", "/");
+    auto item = getItem(name);
+    if (item && item->itemType() == ProjectItem_scriptFunction)
+        return (JZScriptFile *)item;
+    else
+        return nullptr;
 }
 
 JZScriptLibraryFile *JZProject::addLibrary(QString name)
@@ -658,6 +677,7 @@ QMap<QString, QVector<int>> JZProject::breakPoints()
 void JZProject::saveToStream(QDataStream &s)
 {
     s << m_itemBuffer;
+    s << m_windowSystem;
 }
 
 void JZProject::loadFromStream(QDataStream &s)
@@ -678,6 +698,7 @@ void JZProject::loadFromStream(QDataStream &s)
         addItem(dir(it_item.key()),it_item.value());
         it_item++;
     }
+    s >> m_windowSystem;
 }
 
 QString JZProject::domain(JZProjectItem *item)

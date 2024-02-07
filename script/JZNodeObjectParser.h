@@ -17,12 +17,13 @@ protected:
 
     QChar nextChar();
     QChar readChar();
-    QString readWord();
-    QVariant readVariable();
+    QString readWord();    
+    QVariant readVariable();    
     QVariantList *readList();
     QVariantMap *readMap();    
     JZNodeObject *readObject();
     bool readString(QString &text);
+    bool readBkt(QString &context);
     bool checkIsEnd();
 
     QList<QChar> m_gapList;

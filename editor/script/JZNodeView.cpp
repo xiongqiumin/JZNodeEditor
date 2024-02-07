@@ -24,6 +24,7 @@
 #include "JZProject.h"
 #include "JZNodeEngine.h"
 #include "JZNodeLayout.h"
+#include "JZNodeFunction.h"
 
 JZNodeViewCommand::JZNodeViewCommand(JZNodeView *view,int type)
 {
@@ -1119,6 +1120,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QAction *actCpy = nullptr;
     QAction *actDel = nullptr;
     QAction *actPaste = nullptr;
+    QAction *actGoto = nullptr;
     int pin_id = -1;
     QList<QAction*> pin_actions;
     QList<QAction*> param_actions;
@@ -1157,13 +1159,27 @@ void JZNodeView::onContextMenu(const QPoint &pos)
                 if (node->canDragVariable())
                 {
                     auto classFile = m_file->getClassFile();
-                    auto meta = JZNodeObjectManager::instance()->meta(classFile->className());
-                    QStringList param_list = matchParmas(meta, node->variableType(), "this.");
-                    if (param_list.size() > 0)
+                    if (classFile)
                     {
-                        auto tmp_menu = menu.addMenu("设置参数");
-                        for (int i = 0; i < param_list.size(); i++)
-                            param_actions << tmp_menu->addAction(param_list[i]);
+                        auto meta = JZNodeObjectManager::instance()->meta(classFile->className());
+                        QStringList param_list = matchParmas(meta, node->variableType(), "this.");
+                        if (param_list.size() > 0)
+                        {
+                            auto tmp_menu = menu.addMenu("设置参数");
+                            for (int i = 0; i < param_list.size(); i++)
+                                param_actions << tmp_menu->addAction(param_list[i]);
+                        }
+                    }                    
+                }
+                if (node->type() == Node_function)
+                {
+                    auto func = (JZNodeFunction*)node;
+                    auto func_def = JZNodeFunctionManager::instance()->function(func->function());
+                    if (func_def && !func_def->isCFunction)
+                    {
+                        QString fullName = func->function();
+                        actGoto = menu.addAction("跳转到");
+                        actGoto->setProperty("filePath",fullName);
                     }
                 }
 
@@ -1226,6 +1242,11 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         auto old = getNodeData(node->id());
         node->setVariable(ret->text());        
         addPropChangedCommand(node->id(), old);
+    }
+    else if(ret == actGoto)
+    {
+        QString filePath = actGoto->property("filePath").toString();
+        emit sigFunctionOpen(filePath);
     }
 }
 

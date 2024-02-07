@@ -8,20 +8,32 @@
 #include "JZNodeVM.h"
 #include "JZNodeBind.h"
 #include "JZNodeQtBind.h"
+#include "JZNodeObjectParser.h"
 
 QVariant JZConvert(const QVariant &in, int type)
 {
     return JZNodeType::matchValue(type,in);
 }
 
-void JZObjectToString(JZNodeObject *obj)
+QString JZObjectToString(JZNodeObject *obj)
 {
-
+    JZNodeObjectFormat format;
+    return format.format(obj);
 }
 
-JZNodeObject *JZObjectFromString(QString text)
+QVariant JZObjectFromString(QString type,const QString &text)
 {
-    return nullptr;
+    QString foramt;
+    JZNodeObjectParser parser;
+    if (type == Type_list)
+        foramt = "[" + text + "]";
+    else if (type == Type_map)
+        foramt = "[" + text + "]";
+    else
+        foramt = type + "{" + text + "}";
+
+    auto obj = parser.parse(foramt);
+    return QVariant::fromValue(JZNodeObjectPtr(obj));
 }
 
 void JZObjectDelete(JZNodeObject *obj)
@@ -318,6 +330,8 @@ void JZNodeEngine::regist()
     JZNodeFunctionManager::instance()->registCFunction("convert", true, jzbind::createFuncion(JZConvert));
     JZNodeFunctionManager::instance()->registCFunction("createObject", true, jzbind::createFuncion(JZObjectCreate));
 
+    JZNodeFunctionManager::instance()->registCFunction("createObjectByString", true, jzbind::createFuncion(JZObjectFromString));    
+
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitGlobal",true, jzbind::createFuncion(JZNodeInitGlobal));
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitLocal", true, jzbind::createFuncion(JZNodeInitLocal));
     
@@ -367,6 +381,7 @@ void JZNodeEngine::clear()
     m_statusCommand = Status_none;
     m_status = Status_none;
     m_breakNodeId = -1;
+    m_breakResume.clear();
     m_watchTime = 0;
 
     setReg(Reg_Cmp, false);
@@ -1699,6 +1714,7 @@ bool JZNodeEngine::checkPauseStop()
         {
             JZNodeIRNodeId *ir_node = dynamic_cast<JZNodeIRNodeId*>(op_list[m_pc].data());
             node_id = ir_node->id;
+            m_breakResume.clear();
         }
 
         int stack = m_stack.size();
@@ -1706,7 +1722,8 @@ bool JZNodeEngine::checkPauseStop()
         {
             if (pt.type == BreakPoint::nodeEnter && pt.file == filepath)
             {
-                if (m_breakStep.nodeId == pt.nodeId)
+                if (m_breakStep.nodeId == pt.nodeId
+                    || m_breakResume.nodeId == pt.nodeId)
                     return false;
 
                 if (node_id == pt.nodeId
@@ -1765,6 +1782,12 @@ bool JZNodeEngine::checkPauseStop()
         {
             updateStatus(Status_running);
             m_statusCommand = Command_none;
+
+            if (m_script)
+            {                
+                m_breakResume.file = m_script->file;
+                m_breakResume.nodeId = nodeIdByPc(m_stack.currentEnv()->pc);
+            }
         }
         m_mutex.unlock();
         if (cmd == Command_stop)

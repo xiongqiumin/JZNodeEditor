@@ -110,10 +110,6 @@ LogWidget::LogWidget()
     m_watchAuto = new JZNodeWatch();
     m_watchAuto->setReadOnly(true);
     m_tabWidget->addTab(m_watchAuto, "×Ô¶¯´°¿Ú");
-
-    m_watchReg = new JZNodeWatch();
-    m_watchReg->setReadOnly(true);
-    m_tabWidget->addTab(m_watchReg, "¼Ä´æÆ÷");
 }
 
 LogWidget::~LogWidget()
@@ -145,11 +141,6 @@ JZNodeWatch *LogWidget::watchAuto()
 JZNodeWatch *LogWidget::watchManual()
 {
     return m_watchManual;
-}
-
-JZNodeWatch *LogWidget::watchReg()
-{
-    return m_watchReg;
 }
 
 JZNodeBreakPoint *LogWidget::breakpoint()

@@ -33,9 +33,12 @@ public:
     QString name();
     QString filePath();
     QString path();
-    QString mainScript();       
 
-    JZProjectItemFolder *addFolder(QString path,QString name);
+    QString mainScriptPath();
+    JZScriptFile *mainScript();
+    JZParamFile *globalDefine();
+
+    JZProjectItemFolder *addFolder(QString path,QString name);    
 
     JZScriptFile *addFunction(QString path,const FunctionDefine &func);
     void removeFunction(QString name);
@@ -101,6 +104,7 @@ protected:
     JZProjectItemFolder m_root;
     QMap<QString,ItemInfo> m_itemBuffer;
     QString m_filepath;
+    bool m_windowSystem;
     bool m_blockRegist;
 };
 

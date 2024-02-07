@@ -70,6 +70,7 @@ void JZProjectTree::addItem(QTreeWidgetItem *parent, JZProjectItem *item)
 
     QTreeWidgetItem *view_item = new QTreeWidgetItem();
     view_item->setText(0,item->name());
+    view_item->setData(0, Qt::UserRole, item->name());
     parent->addChild(view_item);
     setItem(view_item, item);
 }
@@ -98,6 +99,7 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
         JZProjectItem *sub_item = list[i];
         QTreeWidgetItem *sub_view = new QTreeWidgetItem();
         sub_view->setText(0,sub_item->name());        
+        sub_view->setData(0, Qt::UserRole, sub_item->name());
         view_item->addChild(sub_view);
         setItem(sub_view,sub_item);
     }
@@ -152,9 +154,10 @@ void JZProjectTree::cancelEdit()
     m_tree->blockSignals(true);
     if(m_editItem)
     {
+        QString old_name = getFile(m_editItem)->name();
+
         m_editItem->setFlags(m_editItem->flags() & ~Qt::ItemIsEditable);
-        m_editItem->setText(0,m_editProjectItem->name());
-        m_editProjectItem = nullptr;
+        m_editItem->setText(0, old_name);        
         m_editItem = nullptr;        
     }
     m_tree->blockSignals(false);
@@ -168,7 +171,7 @@ QString JZProjectTree::filepath(QTreeWidgetItem *item)
     {
         if (!path.isEmpty())
             path = "/" + path;;
-        path = item->text(0) + path;
+        path = item->data(0,Qt::UserRole).toString() + path;
         item = item->parent();
     }
     return "./" + path;
@@ -178,9 +181,9 @@ void JZProjectTree::renameItem(QTreeWidgetItem *view_item)
 {
     m_tree->scrollToItem(view_item);
 
+    m_editItem = nullptr;
     view_item->setFlags(view_item->flags() | Qt::ItemIsEditable);
-    m_editItem = view_item;
-    m_editProjectItem = getFile(view_item);
+    m_editItem = view_item;    
     m_tree->editItem(view_item);
 }
 
@@ -189,28 +192,33 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     if(m_editItem != item)
         return;    
 
-    QString name_error;
+    QString old_name = getFile(m_editItem)->name();    
     QString name = m_editItem->text(0);
+    if (old_name == name)
+        return;
 
     auto item_parent = m_editItem->parent();
     auto p = getFile(item_parent);
+    QString name_error;
     if(name.isEmpty())
         name_error = "名称不能为空";
     else if(name.contains("/"))
         name_error = "无效名称";
     else if(p->getItem(name))
-        name_error = "名称重复";
+        name_error = "名称重复";    
 
     m_tree->blockSignals(true);
     m_editItem->setFlags(m_editItem->flags() & ~Qt::ItemIsEditable);
     if(name_error.isEmpty())
     {
-        m_editProjectItem->setName(name);
-        int new_idx = -1;
-        m_project->renameItem(m_editProjectItem,name);
-        item->setData(0,Qt::UserRole,m_editProjectItem->itemPath());
+        auto project_item = getFile(m_editItem);
+        project_item->setName(name);
+        
+        m_project->renameItem(project_item,name);
+        item->setData(0,Qt::UserRole, project_item->name());
 
         int old_idx = item_parent->indexOfChild(item);
+        int new_idx = project_item->parent()->indexOfItem(project_item);
         if(old_idx != new_idx)
         {
             bool pre_select = (m_tree->currentItem() == item);
@@ -223,11 +231,9 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     else
     {
         QMessageBox::information(this,"",name_error);
-        m_editItem->setText(0,m_editProjectItem->name());
+        m_editItem->setText(0, old_name);
     }
-    m_tree->blockSignals(false);
-
-    m_editProjectItem = nullptr;
+    m_tree->blockSignals(false);    
     m_editItem = nullptr;    
 }
 
@@ -268,8 +274,8 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actRemove = nullptr;
     QAction *actRename = nullptr;    
     QAction *actCreateFunction = nullptr;
-    QAction *actCreateFolder = nullptr;
     QAction *actCreateClass = nullptr;
+    QAction *actCreateEvent = nullptr;
     QAction *actEditFunction = nullptr;
     
     QString className = getClass(item);    
@@ -283,7 +289,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         actCreateFunction = menu_add->addAction(funcAct);
         if(className.isEmpty())
             actCreateClass = menu_add->addAction("类");
-        actCreateFolder = menu_add->addAction("新建筛选器");
+        actCreateEvent = menu_add->addAction("事件处理");
     }
     else if (item->itemType() == ProjectItem_scriptFunction)
     {
@@ -296,12 +302,15 @@ void JZProjectTree::onContextMenu(QPoint pos)
         actRename = menu.addAction("重命名");
     }
 
-    if (item->itemPath() == m_project->mainScript())
+    if (item->itemPath() == m_project->mainScriptPath())
     {
         actRemove->setEnabled(false);
-        actRename->setEnabled(false);
-        return;
+        actRename->setEnabled(false);        
     }
+
+    if (menu.actions().size() > 0)
+        menu.addSeparator();
+    auto actProp = menu.addAction("属性");
 
     QAction *act = menu.exec(m_tree->mapToGlobal(pos));
     if(!act)
@@ -374,9 +383,9 @@ void JZProjectTree::onContextMenu(QPoint pos)
             view_item->setText(0,def.name);
         }
     }
-    else if(act == actCreateFolder)
+    else if(act == actCreateEvent)
     {
-        QString name = "新建文件夹";
+        QString name = "事件";
         JZProjectItemFolder *folder = m_project->addFolder(item->itemPath(), name);
         addItem(view_item, folder);
     }
@@ -388,5 +397,9 @@ void JZProjectTree::onContextMenu(QPoint pos)
     else if(act == actRename)
     {
         onItemRename();
+    }
+    else if (act == actProp)
+    {
+        QMessageBox::information(this, "", item->name());
     }
 }

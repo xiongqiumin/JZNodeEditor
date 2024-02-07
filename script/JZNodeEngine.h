@@ -295,7 +295,8 @@ protected:
     QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
-    BreakPoint m_breakStep;     
+    BreakPoint m_breakStep;
+    BreakPoint m_breakResume; //避免断点在node，按F5后重复停止到当前node。
     int m_breakNodeId;    
 
     Stack m_stack;

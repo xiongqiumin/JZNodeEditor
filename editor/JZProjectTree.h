@@ -45,8 +45,7 @@ protected:
     JZProject *m_project;   
     QTreeWidget *m_tree; 
 
-    QTreeWidgetItem *m_editItem;
-    JZProjectItem *m_editProjectItem;    
+    QTreeWidgetItem *m_editItem;    
 };
 
 

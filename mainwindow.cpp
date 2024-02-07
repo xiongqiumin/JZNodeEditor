@@ -17,6 +17,7 @@
 #include "JZUiEditor.h"
 #include "JZParamEditor.h"
 #include "JZNewProjectDialog.h"
+#include "JZNewClassDialog.h"
 #include "JZDesignerEditor.h"
 #include "JZNodeUtils.h"
 
@@ -127,11 +128,13 @@ void MainWindow::initMenu()
     connect(actCloseProject,&QAction::triggered,this,&MainWindow::onActionCloseProject);
     menu_file->addSeparator();
 
-    QMenu *menu_NewFile = menu_file->addMenu("新建文件");    
-    auto actNewFile = menu_NewFile->addAction("项目");
-    connect(actNewFile,&QAction::triggered,this,&MainWindow::onActionNewFile);
+    QMenu *menu_NewFile = menu_file->addMenu("添加");    
+    auto actNewEventFile = menu_NewFile->addAction("事件");
     auto actNewClass = menu_NewFile->addAction("类");
-    connect(actNewClass, &QAction::triggered, this, &MainWindow::onActionNewFile);
+    auto actNewFunction = menu_NewFile->addAction("函数");
+    connect(actNewEventFile,&QAction::triggered,this,&MainWindow::onActionNewEvent);    
+    connect(actNewClass, &QAction::triggered, this, &MainWindow::onActionNewClass);    
+    connect(actNewFunction, &QAction::triggered, this, &MainWindow::onActionNewFunction);
 
     auto actCloseFile = menu_file->addAction("关闭文件");
     auto actSaveFile = menu_file->addAction("保存文件");
@@ -237,9 +240,13 @@ void MainWindow::initMenu()
         << ActionStatus(actBreakPoint, { as::FileIsScript });
 
     QMenu *menu_help = menubar->addMenu("帮助");
-    menu_help->addAction("帮助");
+    auto actHelp = menu_help->addAction("帮助");
     menu_help->addSeparator();
-    menu_help->addAction("检查更新");       
+    auto actCheckUpdate = menu_help->addAction("检查更新");
+    auto actAbout = menu_help->addAction("关于" + windowTitle());
+    connect(actHelp, &QAction::triggered, this, &MainWindow::onActionHelp);
+    connect(actCheckUpdate, &QAction::triggered, this, &MainWindow::onActionCheckUpdate);
+    connect(actAbout, &QAction::triggered, this, &MainWindow::onActionAbout);
 
     m_menuList << menu_file << menu_edit << menu_view << menu_build << menu_debug << menu_help;
     
@@ -268,11 +275,9 @@ void MainWindow::initUi()
     connect(m_stack, &JZNodeStack::sigStackChanged, this, &MainWindow::onStackChanged);
 
     m_watchAuto = m_log->watchAuto();   
-    m_watchManual = m_log->watchManual();
-    m_watchReg = m_log->watchReg();
-    m_watchAuto->setReadOnly(true);
-    m_watchReg->setReadOnly(true);
-    m_debugWidgets << m_watchAuto << m_watchManual << m_watchReg;
+    m_watchManual = m_log->watchManual();    
+    m_watchAuto->setReadOnly(true);    
+    m_debugWidgets << m_watchAuto << m_watchManual;
     
     connect(m_watchManual, &JZNodeWatch::sigParamNameChanged, this, &MainWindow::onWatchNameChanged);
     connect(m_watchManual, &JZNodeWatch::sigParamValueChanged, this, &MainWindow::onWatchValueChanged);
@@ -414,7 +419,10 @@ void MainWindow::onActionNewProject()
     if (!QDir().exists(project_dir))
         QDir().mkpath(project_dir);
     
-    m_project.initUi();
+    if (dialog.projectType() == 0)
+        m_project.initUi();
+    else
+        m_project.initConsole();
     if (m_project.saveAs(project_dir + "/" + name + ".jzproject"))
     {
         m_projectTree->setProject(&m_project);
@@ -462,9 +470,18 @@ void MainWindow::onActionRecentProject()
     }
 }
 
-void MainWindow::onActionNewFile()
+void MainWindow::onActionNewEvent()
 {
 
+}
+
+void MainWindow::onActionNewFunction()
+{
+
+}
+
+void MainWindow::onActionNewClass()
+{    
 }
 
 void MainWindow::onActionSaveFile()
@@ -637,6 +654,17 @@ void MainWindow::onActionHelp()
     QMessageBox::information(this, "", text);
 }
 
+void MainWindow::onActionCheckUpdate()
+{
+    QMessageBox::information(this, "", "这个功能还没做");
+}
+
+void MainWindow::onActionAbout()
+{
+    QString text = "欢迎试用\nQQ群:598601341";
+    QMessageBox::information(this, "关于" + windowTitle(), text);
+}
+
 void MainWindow::onModifyChanged(bool flag)
 {        
     auto editor = qobject_cast<JZEditor*>(sender());
@@ -701,6 +729,12 @@ void MainWindow::gotoNode(QString file, int nodeId)
     }
 }
 
+void MainWindow::onFunctionOpen(QString functionName)
+{
+    auto file = m_project.getFunction(functionName);
+    openEditor(file->itemPath());
+}
+
 JZEditor *MainWindow::editor(QString filepath)
 {
     auto it = m_editors.find(filepath);
@@ -752,6 +786,8 @@ bool MainWindow::openEditor(QString filepath)
         if (editor->type() == Editor_script)
         {
             auto node_edit = (JZNodeEditor*)editor;
+            connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
+
             node_edit->setRunning(m_processVaild);
         }
         m_editors[file] = editor;
@@ -924,8 +960,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
     auto func = m_program.function(stack.function);    
     if (func->isCFunction)
     {
-        m_watchAuto->setParamInfo(&param_info);
-        m_watchReg->setParamInfo(&param_info);
+        m_watchAuto->setParamInfo(&param_info);        
         return;
     }
 
@@ -1007,8 +1042,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         coor.id = reg_list[i];
         param_info_reg.coors << coor;
     }
-    param_info_reg = m_debuger.getVariable(param_info_reg);
-    m_watchReg->setParamInfo(&param_info_reg);
+    param_info_reg = m_debuger.getVariable(param_info_reg);    
 }
 
 bool MainWindow::build()

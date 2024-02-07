@@ -91,7 +91,25 @@ void initBase()
 {
     jzbind::ClassBind<QPoint> cls_pt("Point");
     cls_pt.def("create", false, [](int x, int y)->QPoint { return QPoint(x, y); });
-    cls_pt.def("createFromString", false, [](const QString &text)->QPoint { return QPoint(0,0); });
+    cls_pt.def("fromString", false, [](QPoint *pt,const QString &text){
+        bool ok1, ok2;
+        QStringList list = text.split(",");
+        if (list.size() != 2)
+            return;
+
+        int x = list[0].toInt(&ok1);
+        if (!ok1)
+            return;
+        int y = list[1].toInt(&ok2);
+        if (!ok2)
+            return;
+
+        pt->setX(x);
+        pt->setY(y);
+    });
+    cls_pt.def("toString", false, [](QPoint *pt)->QString{ 
+        return QString::number(pt->x()) + "," + QString::number(pt->y());
+    });
     cls_pt.def("x", false, &QPoint::x);
     cls_pt.def("y", false, &QPoint::y);
     cls_pt.def("setX", true, &QPoint::setX);
@@ -100,7 +118,25 @@ void initBase()
 
     jzbind::ClassBind<QPointF> cls_ptf("PointF");
     cls_ptf.def("create", false, [](double x, double y)->QPointF { return QPointF(x, y); });
-    cls_ptf.def("createFromString", false, [](const QString &text)->QPointF { return QPointF(0, 0); });
+    cls_ptf.def("fromString", false, [](QPointF *pt, const QString &text) {
+        bool ok1, ok2;
+        QStringList list = text.split(",");
+        if (list.size() != 2)
+            return;
+
+        double x = list[0].toDouble(&ok1);
+        if (!ok1)
+            return;
+        double y = list[1].toDouble(&ok2);
+        if (!ok2)
+            return;
+
+        pt->setX(x);
+        pt->setY(y);
+    });
+    cls_ptf.def("toString", false, [](QPointF *pt)->QString {
+        return QString::number(pt->x()) + "," + QString::number(pt->y());
+    });
     cls_ptf.def("x", false, &QPointF::x);
     cls_ptf.def("y", false, &QPointF::y);
     cls_ptf.def("setX", true, &QPointF::setX);

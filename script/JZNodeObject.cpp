@@ -1032,6 +1032,12 @@ JZNodeObject* JZNodeObjectManager::create(int type)
     return obj;
 }
 
+JZNodeObject* JZNodeObjectManager::create(QString name)
+{
+    int id = getClassId(name);
+    return create(id);
+}
+
 JZNodeObject* JZNodeObjectManager::createCClass(QString type_id)
 {
     Q_ASSERT(m_typeidMetas.contains(type_id));

@@ -112,6 +112,7 @@
     <ClCompile Include="editor\script\JZNodeStack.cpp" />
     <ClCompile Include="editor\script\JZNodeTypeDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeView.cpp" />
+    <ClCompile Include="editor\script\JZNodeViewPanel.cpp" />
     <ClCompile Include="editor\script\JZNodeWatch.cpp" />
     <ClCompile Include="editor\script\JZParamEditor.cpp" />
     <ClCompile Include="editor\ui\JZDesignerEditor.cpp" />
@@ -207,6 +208,7 @@
     <QtMoc Include="editor\script\JZNodeMemberEditDialog.h" />
     <QtMoc Include="editor\script\JZNodeParamEditDialog.h" />
     <QtMoc Include="LogManager.h" />
+    <QtMoc Include="editor\script\JZNodeViewPanel.h" />
     <ClInclude Include="project\JZClassFile.h" />
     <ClInclude Include="project\JZLibraryFile.h" />
     <ClInclude Include="script\JZNodeName.h" />

@@ -1,6 +1,7 @@
-#include "JZNodeObjectParser.h"
 #include <memory>
 #include <JZRegExpHelp.h>
+#include "JZNodeEngine.h"
+#include "JZNodeObjectParser.h"
 
 JZNodeObjectParser::JZNodeObjectParser()
 {
@@ -153,9 +154,16 @@ JZNodeObject *JZNodeObjectParser::readObject()
 
     JZNodeObject *obj = JZNodeObjectManager::instance()->create(meta->id);
     QScopedPointer<JZNodeObject> ptr(obj);
-    if (meta->function("fromString"))
+    auto func_def = meta->function("fromString");
+    if (func_def)
     {
-        
+        QString create_string;
+        if (!readBkt(create_string))
+            return nullptr;
+
+        QVariantList in,out;
+        in << QVariant::fromValue(obj) << create_string;
+        JZScriptInvoke(func_def->fullName(), in, out);
     }
     else
     {
@@ -266,6 +274,42 @@ bool JZNodeObjectParser::readString(QString &text)
 
     text = word;
     return true;
+}
+
+bool JZNodeObjectParser::readBkt(QString &context)
+{
+    if (readChar() != '{')
+        return false;
+
+    int start = m_currentIndex;
+    int bkt_num = 1;
+    QString word;
+    while (m_currentIndex < m_content.size())
+    {
+        QChar c = m_content[m_currentIndex++];
+        m_col++;
+
+        if (c == '{')
+            bkt_num++;
+        else if (c == '}')
+        {
+            bkt_num--;
+            if (bkt_num == 0)
+            {
+                context = word;
+                return true;
+            }
+        }
+        else if (c == '\"')
+        {
+            QString tmp;
+            if (!readString(tmp))
+                return false;
+        }        
+        word.push_back(c);
+    }
+    return false;
+
 }
 
 JZNodeObject *JZNodeObjectParser::parse(const QString &text)

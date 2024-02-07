@@ -178,6 +178,7 @@ public:
     void clearUserReigst();    
     
     JZNodeObject* create(int type_id);
+    JZNodeObject* create(QString name);
     JZNodeObject* createCClass(QString ctype_id);
     JZNodeObject* createCClassRefrence(int type_id, void *cobj, bool owner);
     JZNodeObject* createCClassRefrence(QString ctype_id,void *cobj,bool owner);

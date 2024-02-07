@@ -130,7 +130,7 @@ SampleRussian::SampleRussian()
     addGameLoop();
     addKeyEvent();
 
-    auto main = dynamic_cast<JZScriptFile*>(m_project.getItem(m_project.mainScript()));
+    auto main = m_project.mainScript();
     main->removeNode(3);
     auto node = main->getNode(2);
     JZNodeParam *node_main = new JZNodeParam();

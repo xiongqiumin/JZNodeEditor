@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();           
 
-    if(1)
+    if(0)
     {
         test_script();
         return 0;

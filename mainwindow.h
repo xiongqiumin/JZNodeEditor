@@ -42,7 +42,9 @@ protected slots:
     void onActionCloseProject();     
     void onActionRecentProject();
 
-    void onActionNewFile();
+    void onActionNewEvent();
+    void onActionNewFunction();
+    void onActionNewClass();
     void onActionSaveFile();
     void onActionCloseFile();
     void onActionSaveAllFile();
@@ -70,6 +72,8 @@ protected slots:
     void onActionStepOut();    
 
     void onActionHelp();
+    void onActionCheckUpdate();
+    void onActionAbout();
 
     void onModifyChanged(bool flag);
     void onRedoAvailable(bool flag);
@@ -82,6 +86,8 @@ protected slots:
     void onEditorActivite(int index);
     void onNodeClicked(QString file, int nodeId);
     void onProjectChanged();
+    
+    void onFunctionOpen(QString filepath);
 
     void onLog(LogObjectPtr log);
 
@@ -153,7 +159,7 @@ private:
 
     LogWidget *m_log;
     JZNodeStack *m_stack;
-    JZNodeWatch *m_watchAuto,*m_watchManual,*m_watchReg;
+    JZNodeWatch *m_watchAuto,*m_watchManual;
     JZNodeBreakPoint *m_breakPoint;
     JZProjectTree *m_projectTree;
     QList<QMenu*> m_menuList;

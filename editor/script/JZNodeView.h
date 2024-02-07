@@ -146,6 +146,7 @@ signals:
     void redoAvailable(bool available);
     void undoAvailable(bool available);
     void modifyChanged(bool modify);    
+    void sigFunctionOpen(QString name);
 
 protected slots:
     void onContextMenu(const QPoint &pos);

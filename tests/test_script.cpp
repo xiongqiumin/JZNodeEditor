@@ -75,8 +75,8 @@ void ScriptTest::initTestCase()
 void ScriptTest::init()
 {
     m_project.initConsole();
-    m_scriptFlow = (JZScriptFile*)m_project.getItem(m_project.mainScript());
-    m_paramDef = (JZParamFile*)m_project.getItem("param.def");
+    m_scriptFlow = m_project.mainScript();
+    m_paramDef = (JZParamFile*)m_project.getItem("global.def");
 }
 
 void ScriptTest::cleanup()
@@ -182,6 +182,10 @@ void ScriptTest::testObjectParse()
     auto obj_map = parser.parse(R"({"a":1,"b":998})");
     QVERIFY(obj_map && obj_map->type() == Type_map);
     cache << JZNodeObjectPtr(obj_map);
+
+    obj_list = parser.parse("[ Point{1,2},Point{3,4},Point{5,6},Point{7,8}]");
+    QVERIFY(obj_list && obj_list->type() == Type_list);
+    cache << JZNodeObjectPtr(obj_list);
 }
 
 void ScriptTest::testProjectSave()
@@ -193,7 +197,7 @@ void ScriptTest::testProjectSave()
     project.initConsole();
 
     //check flow
-    JZScriptFile *scriptFlow = (JZScriptFile*)project.getItem(project.mainScript());
+    JZScriptFile *scriptFlow = project.mainScript();
     JZNodeAdd *node_add = new JZNodeAdd();
     JZNodeParam *node_a = new JZNodeParam();
     JZNodeParam *node_b = new JZNodeParam();
@@ -203,7 +207,7 @@ void ScriptTest::testProjectSave()
     scriptFlow->save();
 
     //check define
-    JZParamFile *paramDef = (JZParamFile*)project.getItem("param.def");
+    JZParamFile *paramDef = (JZParamFile*)project.getItem("global.def");
 
     paramDef->addVariable("heello",Type_double,3.0);
     paramDef->save();
@@ -213,7 +217,7 @@ void ScriptTest::testProjectSave()
     ret = project.open(projectPath);
     QVERIFY2(ret,"project.open");
 
-    paramDef = (JZParamFile*)project.getItem("param.def");
+    paramDef = (JZParamFile*)project.getItem("global.def");
     JZParamDefine *def = paramDef->getVariable("heello");
     QVERIFY2(def,"getVariable");
     QCOMPARE(def->name,"heello");

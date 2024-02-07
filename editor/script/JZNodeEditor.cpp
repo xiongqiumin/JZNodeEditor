@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QTabWidget>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFactory.h"
 #include "JZNodeMemberEditDialog.h"
@@ -79,17 +80,24 @@ void JZNodeEditor::init()
 {
     m_view = new JZNodeView();
     m_nodePanel = new JZNodePanel();
+    m_nodeViewPanel = new JZNodeViewPanel();
     m_nodeProp = new JZNodePropertyEditor();
     connect(m_view,&JZNodeView::redoAvailable,this,&JZNodeEditor::redoAvailable);
     connect(m_view,&JZNodeView::undoAvailable,this,&JZNodeEditor::undoAvailable);
     connect(m_view,&JZNodeView::modifyChanged,this,&JZNodeEditor::modifyChanged);
+    connect(m_view,&JZNodeView::sigFunctionOpen, this, &JZNodeEditor::sigFunctionOpen);
 
     QVBoxLayout *l = new QVBoxLayout();
     l->setContentsMargins(0,0,0,0);
     this->setLayout(l);    
     
+    QTabWidget *m_tabView = new QTabWidget();
+    m_tabView->addTab(m_nodePanel,"编辑");
+    m_tabView->addTab(m_nodeViewPanel,"节点");
+    m_tabView->setTabPosition(QTabWidget::South);
+
     QSplitter *splitter = new QSplitter(Qt::Horizontal);    
-    splitter->addWidget(m_nodePanel);
+    splitter->addWidget(m_tabView);
     splitter->addWidget(m_view);
     splitter->addWidget(m_nodeProp);
 

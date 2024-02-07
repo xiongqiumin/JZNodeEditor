@@ -23,8 +23,8 @@ void TestServer::init(JZProject *project)
     auto func_inst = JZNodeFunctionManager::instance();
 
     m_project->initConsole();
-    JZScriptFile *script = (JZScriptFile*)m_project->getItem(m_project->mainScript());
-    JZParamFile *paramDef = (JZParamFile*)m_project->getItem("param.def");
+    JZScriptFile *script = m_project->mainScript();
+    JZParamFile *paramDef = (JZParamFile*)m_project->getItem("global.def");
     paramDef->addVariable("timer", Type_timer);
 
     JZScriptClassFile *class_file = m_project->addClass("TestClass", "TestClass");
@@ -61,7 +61,7 @@ void TestServer::init(JZProject *project)
     script->addConnect(set_timer->paramOutGemo(0), start_timer->paramInGemo(0));
     script->addConnect(set_timer->flowOutGemo(0), start_timer->flowInGemo());
 
-    auto param_def = (JZParamFile *)m_project->getItem("./param.def");
+    auto param_def = (JZParamFile *)m_project->getItem("./global.def");
     param_def->addVariable("test", JZClassId("TestClass"));
 
     JZNodeSetParam *set_param = new JZNodeSetParam();
