@@ -6,6 +6,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
 #include "JZClassFile.h"
+#include "JZNodeUtils.h"
 
 // GraphNode
 GraphNode::GraphNode()
@@ -771,7 +772,7 @@ bool JZNodeCompiler::checkBuildResult()
         if(!nodeInfo.error.isEmpty())
         {
             QString name = m_currentGraph->topolist[i]->node->name();
-            QString error = "link:" + m_scriptFile->itemPath() + "(" + name  +  ",id=" + QString::number(nodeInfo.node_id) + "); " + nodeInfo.error + "\n";
+            QString error = makeLink(nodeInfo.error,m_scriptFile->itemPath(),nodeInfo.node_id) + "\n";
             m_error += error;
             ok = false;
         }        
@@ -825,6 +826,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
             continue;
 
         auto pin = graph->node->prop(prop_in_id);
+        QString pin_name = "输入节点" + QString::number(param_idx + 1);
             
         int pin_type = Type_none;
         if (graph->paramIn.contains(prop_in_id))  //有输入
@@ -836,7 +838,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
                 auto from_gemo = from_list[i];
                 if (!m_nodeInfo[from_gemo.nodeId].pinType.contains(from_gemo.propId))
                 {
-                    error = "前置依赖未设置";
+                    error = pin_name + "前置依赖未设置";
                     return false;
                 }
 
@@ -844,13 +846,21 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
             }
             pin_type = JZNodeType::matchType(pin->dataType(),from_type);
             if (pin_type == Type_none)
-                error = "无法确定输入类型";                    
+            {
+                error = pin_name + "无法确定输入类型";
+                return false;
+            }
         }
         else
         {
             if (pin->value().isValid()) //默认值
             {                    
                 pin_type = JZNodeType::matchType(pin->dataType(), pin->value());
+                if (pin_type == Type_none)
+                {
+                    error = pin_name + "无法确定输入类型";
+                    return false;
+                }
             }
             else
             {
@@ -869,12 +879,11 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
                 }
                     
                 if(!is_this)
-                    error = "未设置";                                 
+                    error = pin_name + "未设置";
             }
         }
-
-        if (pin_type != Type_none)
-            in_type[prop_in_id] = pin_type;
+        
+        in_type[prop_in_id] = pin_type;
     }
 
 calc_end:
@@ -1478,7 +1487,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
                 return false;
             }            
             
-            int match_type = m_nodeInfo[nodeId].pinType[in_prop];
+            int match_type = pinType(nodeId,in_prop);
             addSetVariable(irId(to_id), irLiteral(JZNodeType::matchValue(match_type,prop->value())));
         }
     }

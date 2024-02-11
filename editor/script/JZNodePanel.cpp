@@ -275,6 +275,8 @@ void JZNodePanel::initData()
     JZNodeSetMemberParam setMember;    
 
     JZNodeCreate create;
+    JZNodeCreateFromString create_from_string;
+
     JZNodeClone swap;
     JZNodeSwap clone;    
     itemOp->addChild(createNode(&get));
@@ -286,6 +288,7 @@ void JZNodePanel::initData()
     {
         itemOp->addChild(createNode(&set));
         itemOp->addChild(createNode(&create));
+        itemOp->addChild(createNode(&create_from_string));
     }   
     itemOp->addChild(createNode(&getMember));
     itemOp->addChild(createNode(&setMember));

@@ -91,6 +91,23 @@ public:
     QString className() const;
 };
 
+//JZNodeCreateFromString
+class JZNodeCreateFromString : public JZNode
+{
+public:
+    JZNodeCreateFromString();
+    ~JZNodeCreateFromString();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+    virtual void pinChanged(int id) override;
+
+    void setClassName(const QString &name);
+    QString className() const;
+
+    void setContext(const QString &text);
+    QString context() const;
+};
+
 //JZNodeParamThis
 class JZNodeThis : public JZNode
 {

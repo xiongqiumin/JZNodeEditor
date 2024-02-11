@@ -363,7 +363,92 @@ JZNodeObjectFormat::~JZNodeObjectFormat()
 
 }
 
+QString JZNodeObjectFormat::variantToString(const QVariant *v)
+{
+    int type = JZNodeType::variantType(*v);
+    if(type == Type_list)
+        return listToString(JZObjectCast<QVariantList>(*v));
+    else if (type == Type_map)
+        return mapToString(JZObjectCast<QVariantMap>(*v));
+    else if (JZNodeType::isObject(type))
+        return objectToString(toJZObject(*v));
+    else    
+        return JZNodeType::convertTo(Type_string, *v).toString();    
+}
+
+QString JZNodeObjectFormat::listToString(const QVariantList *list)
+{
+    QString context = "[";
+    for (int i = 0; i < list->size(); i++)
+    {
+        context += variantToString(&list->at(i));
+        if (i != list->size() - 1)
+            context += ",";
+    }
+    context += "]";
+    return context;         
+}
+
+QString JZNodeObjectFormat::mapToString(const QVariantMap *map)
+{
+    QString context = "{";
+    auto it = map->begin();
+    while (it != map->end())
+    {
+        QString name = "\"" + it.key() + "\"";
+        QString value = variantToString(&it.value());
+        context += name + ":" + value;
+
+        it++;
+        if(it != map->end())
+            context += ",";
+    }
+    context += "}";
+    return context;
+}
+
+QString JZNodeObjectFormat::objectToString(JZNodeObject *obj)
+{    
+    QString text = obj->className() + "{";
+
+    auto func_def = obj->function("toString");
+    if (func_def)
+    {        
+        QVariantList in, out;
+        in << QVariant::fromValue(obj);;
+        JZScriptInvoke(func_def->fullName(), in, out);
+        text += out[0].toString();
+    }
+    else
+    {
+        auto params = obj->paramList();
+        for (int i = 0; i < params.size(); i++)
+        {
+            QString name = "\"" + params[i] + "\"";
+            QString value = variantToString(&obj->param(params[i]));
+            text += name + ":" + value;
+            if (i != params.size() - 1)
+                text += ",";
+        }
+    }
+    text += "}";
+    return text;
+}
+
 QString JZNodeObjectFormat::format(JZNodeObject *obj)
 {
-    return QString();
+    if (obj->type() == Type_list)
+    {
+        QVariantList *list = JZObjectCast<QVariantList>(obj);
+        return listToString(list);
+    }
+    else if (obj->type() == Type_map)
+    {
+        QVariantMap *map = JZObjectCast<QVariantMap>(obj);
+        return mapToString(map);
+    }
+    else
+    {
+        return objectToString(obj);
+    }    
 }

@@ -13,6 +13,7 @@ enum
     Node_nop,
     Node_param,
     Node_create,
+    Node_createFromString,
     Node_this,
     Node_setParam,
     Node_setParamData,

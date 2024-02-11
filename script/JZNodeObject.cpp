@@ -531,7 +531,7 @@ QStringList JZNodeObject::paramList() const
     return m_define->paramList(true);
 }
 
-QVariant JZNodeObject::param(const QString &name) const
+const QVariant &JZNodeObject::param(const QString &name) const
 {
     JZNodeObject *obj = const_cast<JZNodeObject *>(this);
     QVariant *ptr = nullptr;

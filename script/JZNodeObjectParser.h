@@ -41,6 +41,12 @@ public:
     ~JZNodeObjectFormat();
 
     QString format(JZNodeObject *obj);
+
+protected:
+    QString listToString(const QVariantList *list);
+    QString mapToString(const QVariantMap *map);
+    QString objectToString(JZNodeObject *obj);
+    QString variantToString(const QVariant *v);
 };
 
 #endif // ! JZNODE_OBJECT_PARSER_H_

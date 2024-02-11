@@ -94,7 +94,7 @@ public:
     const JZNodeObjectDefine *meta() const;
 
     bool hasParam(const QString &name) const;
-    QVariant param(const QString &name) const;
+    const QVariant &param(const QString &name) const;
     void setParam(const QString &name,QVariant value);
     QVariant *paramRef(const QString &name);
     QStringList paramList() const;
@@ -119,8 +119,7 @@ protected:
 
     bool getParamRef(const QString &name,QVariant* &ref,QString &error);    
 
-    JZNodeObjectDefine *m_define;
-    QString m_name;
+    JZNodeObjectDefine *m_define;    
     JZVariantMap m_params;    
     void *m_cobj;
     bool m_cowner;

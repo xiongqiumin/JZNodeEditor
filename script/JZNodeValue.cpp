@@ -118,6 +118,7 @@ JZNodeCreate::JZNodeCreate()
     addFlowOut();
 
     int id = addParamIn("Class",Prop_editValue | Prop_dispName | Prop_dispValue | Prop_literal);
+    setPinTypeString(id);
     addParamOut("Return", Prop_dispName);
 
     setPinTypeString(id);
@@ -173,6 +174,86 @@ void JZNodeCreate::pinChanged(int id)
         int type = JZNodeObjectManager::instance()->getClassId(className());
         setPinType(paramOut(0),{type});
     }
+}
+
+//JZNodeCreateFromString
+JZNodeCreateFromString::JZNodeCreateFromString()
+{
+    m_name = "createFromString";
+    m_type = Node_createFromString;
+
+    addFlowIn();
+    addFlowOut();
+
+    int in1 = addParamIn("Class", Prop_editValue | Prop_dispName | Prop_dispValue | Prop_literal);
+    int in2 = addParamIn("Context", Prop_editValue | Prop_dispName | Prop_dispValue );
+    setPinTypeString(in1);
+    setPinTypeString(in2);
+    addParamOut("Return", Prop_dispName);
+}
+
+JZNodeCreateFromString::~JZNodeCreateFromString()
+{
+
+}
+
+bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (className().isEmpty())
+    {
+        error = "没有设置类型";
+        return false;
+    }
+
+    auto meta = JZNodeObjectManager::instance()->meta(className());
+    if (!meta)
+    {
+        error = "没有此类型:" + className();
+        return false;
+    }
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    int in_id = c->paramId(m_id, paramIn(0));
+    int out_id = c->paramId(m_id, paramOut(0));
+    QList<JZNodeIRParam> in, out;
+    in << irId(in_id) << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(out_id);
+
+    c->addCall(irLiteral("createObjectFromString"), in, out);
+    c->addFlowOutput(m_id);
+    c->addJumpNode(flowOut());
+    return true;
+
+}
+
+void JZNodeCreateFromString::pinChanged(int id)
+{
+    if (id == paramIn(0))
+    {
+        int type = JZNodeObjectManager::instance()->getClassId(className());
+        setPinType(paramOut(0), { type });
+    }
+}
+
+void JZNodeCreateFromString::setClassName(const QString &name)
+{
+    setPropValue(paramIn(0), name);
+}
+
+QString JZNodeCreateFromString::className() const
+{
+    return propValue(paramIn(0)).toString();
+}
+
+void JZNodeCreateFromString::setContext(const QString &text)
+{
+    setPropValue(paramIn(1), text);
+}
+
+QString JZNodeCreateFromString::context() const
+{
+    return propValue(paramIn(1)).toString();
 }
 
 //JZNodeParamFunction

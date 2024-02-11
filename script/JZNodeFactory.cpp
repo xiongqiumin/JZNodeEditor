@@ -47,6 +47,7 @@ void JZNodeFactory::init()
     registNode(Node_literal,createFunc<JZNodeLiteral>);    
     registNode(Node_enum,createFunc<JZNodeEnum>);
     registNode(Node_create,createFunc<JZNodeCreate>);
+    registNode(Node_createFromString, createFunc<JZNodeCreateFromString>);
     registNode(Node_this,createFunc<JZNodeThis>);
     registNode(Node_param,createFunc<JZNodeParam>);
     registNode(Node_setParam,createFunc<JZNodeSetParam>);

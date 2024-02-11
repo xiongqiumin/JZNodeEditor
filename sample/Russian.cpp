@@ -1634,26 +1634,14 @@ void SampleRussian::addCreateShape()
 
     JZNodeParam *type = new JZNodeParam();
     type->setVariable("type");
-
-    JZNodeCreate *create_shape = new JZNodeCreate();
-    create_shape->setClassName("List");
-
-    JZNodeSetParam *set_shape = new JZNodeSetParam();
-    set_shape->setVariable("shape");
-
+    
     JZNodeReturn *node_return = new JZNodeReturn();
     node_return->setFunction(&define);    
 
     JZNode *node_start = script->getNode(0);
     script->addNode(JZNodePtr(type));
-    script->addNode(JZNodePtr(shape));
-    script->addNode(JZNodePtr(create_shape));
-    script->addNode(JZNodePtr(set_shape));
-    script->addNode(JZNodePtr(node_return));    
-
-    script->addConnect(node_start->flowOutGemo(0), create_shape->flowInGemo());
-    script->addConnect(create_shape->flowOutGemo(0), set_shape->flowInGemo());
-    script->addConnect(create_shape->paramOutGemo(0), set_shape->paramInGemo(0));            
+    script->addNode(JZNodePtr(shape));    
+    script->addNode(JZNodePtr(node_return));           
 
     JZNodeIf *node_if = new JZNodeIf();
     node_if->addCondPin();  //2
@@ -1661,7 +1649,7 @@ void SampleRussian::addCreateShape()
     node_if->addCondPin();  //4
     node_if->addCondPin();  //5
     script->addNode(JZNodePtr(node_if));
-    script->addConnect(set_shape->flowOutGemo(0), node_if->flowInGemo());
+    script->addConnect(node_start->flowOutGemo(0), node_if->flowInGemo());
             
     QVector<QVector<QVector<QPoint>>> ptGroup = shapeGroup();
     for (int shape_type = 0; shape_type < ptGroup.size(); shape_type++)
@@ -1673,50 +1661,35 @@ void SampleRussian::addCreateShape()
 
         script->addConnect(eq->paramOutGemo(0), node_if->paramInGemo(shape_type));
 
-        JZNode *pre_node = nullptr;
+        JZNodeCreateFromString *create_from_string = new JZNodeCreateFromString();
+        script->addNode(JZNodePtr(create_from_string));
+        script->addConnect(node_if->subFlowOutGemo(shape_type), create_from_string->flowInGemo());
+        create_from_string->setClassName("List");
+
+        QString context;
         for (int type_idx = 0; type_idx < ptGroup[shape_type].size(); type_idx++)
         {
+            context += "[";
             auto ptList = ptGroup[shape_type][type_idx];
-
-            JZNodeCreate *create_list = new JZNodeCreate();
-            create_list->setClassName("List");
-            script->addNode(JZNodePtr(create_list));
-
-            if(type_idx == 0)
-                script->addConnect(node_if->subFlowOutGemo(shape_type), create_list->flowInGemo());
-            else
-                script->addConnect(pre_node->flowOutGemo(0), create_list->flowInGemo());
-            pre_node = create_list;
-            
             for (int i = 0; i < ptList.size(); i++)
-            {        
-                JZNodeFunction *create_pt = new JZNodeFunction();
-                create_pt->setFunction(func_inst->function("Point.create"));
-                script->addNode(JZNodePtr(create_pt));
-
-                create_pt->setParamInValue(0, ptList[i].x());
-                create_pt->setParamInValue(1, ptList[i].y());
-
-                JZNodeFunction *list_push = new JZNodeFunction();
-                list_push->setFunction(func_inst->function("List.push_back"));
-                script->addNode(JZNodePtr(list_push));
-
-                script->addConnect(create_list->paramOutGemo(0), list_push->paramInGemo(0));
-                script->addConnect(create_pt->paramOutGemo(0), list_push->paramInGemo(1));
-
-                script->addConnect(pre_node->flowOutGemo(0), list_push->flowInGemo());
-                pre_node = list_push;
+            {
+                context += QString::asprintf("Point{%d,%d}", ptList[i].x(), ptList[i].y());
+                if (i != ptList.size() - 1)
+                    context += ",";
             }
-
-            JZNodeFunction *shape_push = new JZNodeFunction();
-            shape_push->setFunction(func_inst->function("List.push_back"));
-            script->addNode(JZNodePtr(shape_push));
-
-            script->addConnect(shape->paramOutGemo(0), shape_push->paramInGemo(0));
-            script->addConnect(create_list->paramOutGemo(0), shape_push->paramInGemo(1));
-            script->addConnect(pre_node->flowOutGemo(0), shape_push->flowInGemo());
-            pre_node = shape_push;
+            context += "]";
+            if (type_idx != ptGroup[shape_type].size() - 1)
+                context += ",";
+            context += "\n";
         }
+        create_from_string->setContext(context);
+
+        JZNodeSetParam *set_shape = new JZNodeSetParam();
+        set_shape->setVariable("shape");
+        script->addNode(JZNodePtr(set_shape));
+
+        script->addConnect(create_from_string->flowOutGemo(0), set_shape->flowInGemo());
+        script->addConnect(create_from_string->paramOutGemo(0), set_shape->paramInGemo(0));
     }
         
     

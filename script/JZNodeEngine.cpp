@@ -23,16 +23,20 @@ QString JZObjectToString(JZNodeObject *obj)
 
 QVariant JZObjectFromString(QString type,const QString &text)
 {
+    auto meta = JZNodeObjectManager::instance()->meta(type);
+
     QString foramt;
     JZNodeObjectParser parser;
-    if (type == Type_list)
+    if (meta->id == Type_list)
         foramt = "[" + text + "]";
-    else if (type == Type_map)
+    else if (meta->id == Type_map)
         foramt = "[" + text + "]";
     else
         foramt = type + "{" + text + "}";
 
     auto obj = parser.parse(foramt);
+    if (obj)
+        qDebug() << JZObjectToString(obj);
     return QVariant::fromValue(JZNodeObjectPtr(obj));
 }
 
@@ -330,7 +334,7 @@ void JZNodeEngine::regist()
     JZNodeFunctionManager::instance()->registCFunction("convert", true, jzbind::createFuncion(JZConvert));
     JZNodeFunctionManager::instance()->registCFunction("createObject", true, jzbind::createFuncion(JZObjectCreate));
 
-    JZNodeFunctionManager::instance()->registCFunction("createObjectByString", true, jzbind::createFuncion(JZObjectFromString));    
+    JZNodeFunctionManager::instance()->registCFunction("createObjectFromString", true, jzbind::createFuncion(JZObjectFromString));    
 
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitGlobal",true, jzbind::createFuncion(JZNodeInitGlobal));
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitLocal", true, jzbind::createFuncion(JZNodeInitLocal));

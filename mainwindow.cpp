@@ -948,9 +948,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
     {
         clearWatchs();
         return;
-    }    
-    setRuntimeNode(stack.file, stack.nodeId);
-    m_log->showRunningLog();
+    }                
     
     //watch auto
     JZNodeDebugParamInfo param_info;      
@@ -960,10 +958,21 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
     auto func = m_program.function(stack.function);    
     if (func->isCFunction)
     {
+        for(int i = stack_index - 1; i >= 0; i--)
+        {
+            auto &top = m_runtime.stacks[i];
+            if (!top.file.isEmpty())
+            {
+                setRuntimeNode(top.file, top.nodeId);
+                break;
+            }
+        }
+
         m_watchAuto->setParamInfo(&param_info);        
         return;
     }
 
+    setRuntimeNode(stack.file, stack.nodeId);
     if (func->isMemberFunction())
     {        
         JZNodeParamCoor coor;
