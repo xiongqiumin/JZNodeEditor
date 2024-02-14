@@ -206,7 +206,7 @@ QTreeWidgetItem *JZNodePanel::createNode(JZNode *node)
     item->setText(0, node->name());
     item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
     item->setData(0, TreeItem_type, "node_data");
-    item->setData(0, TreeItem_value, saveNode(node));
+    item->setData(0, TreeItem_value, JZNodeFactory::instance()->saveNode(node));
     return item;
 }
 
@@ -241,7 +241,7 @@ QTreeWidgetItem * JZNodePanel::createClassEvent(QString className)
         QTreeWidgetItem *sub_event = new QTreeWidgetItem();
         sub_event->setData(0, TreeItem_type, "node_data");
         sub_event->setText(0, meta->singles[i].name);
-        sub_event->setData(0, TreeItem_value, saveNode(&node_event));
+        sub_event->setData(0, TreeItem_value, JZNodeFactory::instance()->saveNode(&node_event));
         item_class->addChild(sub_event);                   
     }
     return item_class;
@@ -318,6 +318,9 @@ void JZNodePanel::initBasicFlow()
 
 void JZNodePanel::initEvent()
 {
+    if (m_file->itemType() != ProjectItem_scriptFlow)
+        return;
+
     QTreeWidgetItem *item_event = createFolder("事件");
     m_tree->addTopLevelItem(item_event);
 /*

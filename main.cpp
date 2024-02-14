@@ -7,6 +7,7 @@
 #include <QCommandLineParser>
 #include "JZNodeBind.h"
 #include "sample/Russian.h"
+#include "sample/Calculator.h"
 
 extern void test_script();
 
@@ -21,12 +22,13 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
-    if(1)
+    if(0)
     {
-        SampleRussian russian;
-        russian.saveProject();
-        //russian.run();
-        //return 1;
+        SampleRussian sample;
+        //SampleCalculator sample;
+        sample.saveProject();
+        sample.run();
+        return 1;
     }
     if(0)
     {         

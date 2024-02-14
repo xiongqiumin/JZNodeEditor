@@ -8,7 +8,8 @@ enum
 {
     Item_none = QGraphicsItem::UserType,
     Item_line,
-    Item_node,    
+    Item_node,
+    Item_group,
 };
 
 class JZNodeView;

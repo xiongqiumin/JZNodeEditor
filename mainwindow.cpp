@@ -315,6 +315,9 @@ void MainWindow::initUi()
     connect(m_editorStack, &QTabWidget::tabCloseRequested, this, &MainWindow::onEditorClose);
     connect(m_editorStack, &QTabWidget::currentChanged, this, &MainWindow::onEditorActivite);
 
+    m_editorStack->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_editorStack, &QWidget::customContextMenuRequested, this, &MainWindow::onTabContextMenu);
+
     QSplitter *splitterLeft = new QSplitter(Qt::Vertical);
     splitterLeft->addWidget(m_editorStack);    
     splitterLeft->addWidget(m_log);       
@@ -512,6 +515,12 @@ void MainWindow::onActionSaveAllFile()
 void MainWindow::onActionCloseAllFile()
 {
     closeAll();
+    updateActionStatus();
+}
+
+void MainWindow::onActionCloseAllFileExcept()
+{
+    closeAll(true);
     updateActionStatus();
 }
 
@@ -1138,6 +1147,35 @@ void MainWindow::start(bool startPause)
     setRunning(true);    
 }
 
+void MainWindow::onTabContextMenu(QPoint pos)
+{
+    QMenu menu(this);
+    QAction *actSave = menu.addAction("保存");
+    QAction *actClose = menu.addAction("关闭");
+    QAction *actAll = menu.addAction("关闭所有文档");
+    QAction *actAllExcept = menu.addAction("除此之外全部关闭");
+
+    QAction *ret = menu.exec(m_editorStack->mapToGlobal(pos));
+    if (!ret)
+        return;
+    if (ret == actSave)
+    {
+        onActionSaveFile();
+    }
+    else if (ret == actClose)
+    {
+        onActionCloseFile();
+    }
+    else if (ret == actAll)
+    {
+        onActionCloseAllFile();
+    }
+    else if (ret == actAllExcept)
+    {
+        onActionCloseAllFileExcept();
+    }
+}
+
 void MainWindow::onLog(LogObjectPtr log)
 {
     m_log->addLog(log->module, log->message);
@@ -1244,13 +1282,22 @@ void MainWindow::saveAll()
     m_project.save();
 }
 
-bool MainWindow::closeAll()
+bool MainWindow::closeAll(bool except_current)
 {
+    QList<JZEditor*> close_list;
+    QStringList close_file_list;
+
     bool saveToAll = false, noToAll = false;
     auto it = m_editors.begin();
-    while(it != m_editors.end())
+    while (it != m_editors.end())
     {
         auto editor = it.value();
+        if (except_current && m_editor == editor)
+        {
+            it++;
+            continue;
+        }
+
         if (editor->isModified())
         {
             if (!saveToAll && !noToAll)
@@ -1270,19 +1317,28 @@ bool MainWindow::closeAll()
                     noToAll = true;
             }
             else if (saveToAll)
+            {
                 editor->save();
+                m_project.save();
+            }
         }
         editor->close();
+        close_list << editor;
+        close_file_list << it.key();
 
         int index = m_editorStack->indexOf(editor);
-        m_editorStack->removeTab(index);        
+        m_editorStack->removeTab(index);
         it++;
     }
-    m_editor = nullptr;
-    for(auto editor : m_editors)
+    for (auto editor : close_list)
         delete editor;
-    m_editors.clear();    
-    switchEditor(nullptr);
+    for (auto editor_path : close_file_list)
+        m_editors.remove(editor_path);
+    if (!except_current)
+    {
+        m_editor = nullptr;
+        switchEditor(nullptr);
+    }
     return true;
 }
 

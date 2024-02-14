@@ -51,20 +51,24 @@ QDataStream &operator>>(QDataStream &s, JZNodeConnect &param)
     return s;
 }
 
-JZNodeConnect parseLine(const QByteArray &buffer)
+//JZNodeGroup
+JZNodeGroup::JZNodeGroup()
 {
-    JZNodeConnect line;
-    QDataStream s(buffer);
-    s >> line;
-    return line;
+    id = -1;
 }
 
-QByteArray formatLine(const JZNodeConnect &line)
+QDataStream &operator<<(QDataStream &s, const JZNodeGroup &param)
 {
-    QByteArray data;
-    QDataStream s(&data, QIODevice::WriteOnly);
-    s << line;
-    return data;
+    s << param.id;
+    s << param.memo;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZNodeGroup &param)
+{
+    s >> param.id;
+    s >> param.memo;
+    return s;
 }
 
 // JZNode
@@ -74,6 +78,7 @@ JZNode::JZNode()
     m_file = nullptr;
     m_flag = Node_propNone;
     m_type = Node_none;
+    m_group = -1;
 }
 
 JZNode::~JZNode()
@@ -93,6 +98,26 @@ void JZNode::setFlag(int flag)
 int JZNode::flag() const
 {
     return m_flag;
+}
+
+void JZNode::setGroup(int group)
+{
+    m_group = group;
+}
+
+int JZNode::group()
+{
+    return m_group;
+}
+
+const QString &JZNode::memo() const
+{
+    return m_memo;
+}
+
+void JZNode::setMemo(const QString &text)
+{
+    m_memo = text;
 }
 
 bool JZNode::isFlowNode() const
@@ -490,12 +515,12 @@ void JZNode::setFile(JZScriptFile *file)
     m_notifyList.clear();
 }
 
-QString JZNode::name() const
+const QString& JZNode::name() const
 {
     return m_name;
 }
 
-void JZNode::setName(QString name)
+void JZNode::setName(const QString &name)
 {
     m_name = name;
 }
@@ -611,8 +636,10 @@ void JZNode::saveToStream(QDataStream &s) const
     s << m_id;
     s << m_name;
     s << m_flag;    
+    s << m_group;
+    s << m_memo;
     s << m_propList;
-    s << m_notifyList;
+    s << m_notifyList;    
 }
 
 void JZNode::loadFromStream(QDataStream &s)
@@ -620,8 +647,10 @@ void JZNode::loadFromStream(QDataStream &s)
     s >> m_id;
     s >> m_name;
     s >> m_flag;
+    s >> m_group;
+    s >> m_memo;
     s >> m_propList;
-    s >> m_notifyList;
+    s >> m_notifyList;    
 }
 
 //JZNodeNop

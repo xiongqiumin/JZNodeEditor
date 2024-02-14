@@ -37,6 +37,25 @@ JZNode *JZNodeFactory::createNode(int type)
     return it.value()();
 }
 
+JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
+{
+    QDataStream s(buffer);
+    int type;
+    s >> type;
+    JZNode *node = JZNodeFactory::instance()->createNode(type);
+    node->loadFromStream(s);
+    return node;
+}
+
+QByteArray JZNodeFactory::saveNode(JZNode *node)
+{
+    QByteArray data;
+    QDataStream s(&data, QIODevice::WriteOnly);
+    s << node->type();
+    node->saveToStream(s);
+    return data;
+}
+
 void JZNodeFactory::init()
 {   
     registNode(Node_display, createFunc<JZNodeDisplay>);
@@ -106,24 +125,4 @@ bool JZNodeFactory::edit(JZNode *node)
 void JZNodeFactory::registEdit(int type, JZNodeFactoryEdit func)
 {
     m_edits[type] = func;
-}
-
-//parseNode
-JZNode *loadNode(const QByteArray &buffer)
-{
-    QDataStream s(buffer);
-    int type;
-    s >> type;
-    JZNode *node = JZNodeFactory::instance()->createNode(type);
-    node->loadFromStream(s);
-    return node;
-}
-
-QByteArray saveNode(JZNode *node)
-{
-    QByteArray data;
-    QDataStream s(&data, QIODevice::WriteOnly);
-    s << node->type();
-    node->saveToStream(s);
-    return data;
 }

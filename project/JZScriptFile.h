@@ -15,6 +15,7 @@ public:
 
     void loadFinish();
     void clear();
+    int nextId();
 
     const FunctionDefine &function();
     void setFunction(FunctionDefine def);
@@ -25,6 +26,13 @@ public:
     JZNode *getNode(int id);
     JZNodePin *getPin(const JZNodeGemo &gemo);    
     QList<int> nodeList();            
+
+    int addGroup(const JZNodeGroup &group);
+    void insertGroup(const JZNodeGroup &group);
+    void removeGroup(int id);
+    JZNodeGroup *getGroup(int id);
+    QList<JZNodeGroup> groupList();
+    QList<int> groupNodeList(int group_id);
 
     void setNodePos(int id,QPointF pos);
     QPointF getNodePos(int id);
@@ -56,6 +64,7 @@ public:
 protected:    
     int m_nodeId;
     QMap<int, JZNodePtr> m_nodes;        
+    QList<JZNodeGroup> m_groups;
     QList<JZNodeConnect> m_connects;    
     FunctionDefine m_function;
     QMap<QString, JZParamDefine> m_variables;

@@ -41,14 +41,24 @@ int JZNodePin::id() const
     return m_id;
 }
 
-void JZNodePin::setName(QString name)
+void JZNodePin::setName(const QString &name)
 {
     m_name = name;
 }
 
-QString JZNodePin::name() const
+const QString &JZNodePin::name() const
 {
     return m_name;
+}
+
+void JZNodePin::setEditor(const QString &name)
+{
+    m_editor = name;
+}
+
+const QString &JZNodePin::editor() const
+{
+    return m_editor;
 }
 
 void JZNodePin::setFlag(int flag)
@@ -157,9 +167,10 @@ QDataStream &operator<<(QDataStream &s, const JZNodePin &param)
 {
     s << param.m_id;
     s << param.m_name;
+    s << param.m_editor;
     s << param.m_flag;     
     s << param.m_dataType;
-    s << param.m_value;
+    s << param.m_value;    
     s << param.m_pri;
     return s;
 }
@@ -168,6 +179,7 @@ QDataStream &operator>>(QDataStream &s, JZNodePin &param)
 {
     s >> param.m_id;
     s >> param.m_name;
+    s >> param.m_editor;
     s >> param.m_flag;    
     s >> param.m_dataType;
     s >> param.m_value;

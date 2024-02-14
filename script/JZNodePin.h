@@ -43,8 +43,11 @@ public:
     void setId(int id);
     int id() const;
 
-    void setName(QString name);
-    QString name() const;
+    void setName(const QString &name);
+    const QString &name() const;
+
+    void setEditor(const QString &name);
+    const QString &editor() const;
 
     void setFlag(int flag);
     int flag() const;
@@ -82,7 +85,8 @@ protected:
     int m_id;
     int m_flag;
     int m_pri;
-    QString m_name;    
+    QString m_name;  
+    QString m_editor;
     QList<int> m_dataType;
     QVariant m_value;
     QStringList m_actionList;

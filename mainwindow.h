@@ -49,6 +49,7 @@ protected slots:
     void onActionCloseFile();
     void onActionSaveAllFile();
     void onActionCloseAllFile();
+    void onActionCloseAllFileExcept();
 
     void onActionUndo();
     void onActionRedo();
@@ -103,6 +104,7 @@ protected slots:
     
     void onTestProcessFinish();
     void onNetError();
+    void onTabContextMenu(QPoint pos);
 
 private:
     struct ActionStatus{
@@ -152,7 +154,7 @@ private:
     void start(bool startPause);    
     void saveToFile(QString file,QString text);
     void saveAll();
-    bool closeAll(); 
+    bool closeAll(bool except_current = false); 
     void initLocalProcessTest();
     
     JZProject m_project;    

@@ -102,6 +102,8 @@
     <ClCompile Include="editor\script\JZNodeEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeFuctionEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeGraphItem.cpp" />
+    <ClCompile Include="editor\script\JZNodeGroupEditDialog.cpp" />
+    <ClCompile Include="editor\script\JZNodeGroupItem.cpp" />
     <ClCompile Include="editor\script\JZNodeLayout.cpp" />
     <ClCompile Include="editor\script\JZNodeLineItem.cpp" />
     <ClCompile Include="editor\script\JZNodeMemberEditDialog.cpp" />
@@ -112,6 +114,7 @@
     <ClCompile Include="editor\script\JZNodeStack.cpp" />
     <ClCompile Include="editor\script\JZNodeTypeDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeView.cpp" />
+    <ClCompile Include="editor\script\JZNodeViewMap.cpp" />
     <ClCompile Include="editor\script\JZNodeViewPanel.cpp" />
     <ClCompile Include="editor\script\JZNodeWatch.cpp" />
     <ClCompile Include="editor\script\JZParamEditor.cpp" />
@@ -129,9 +132,12 @@
     <ClCompile Include="project\JZParamFile.cpp" />
     <ClCompile Include="project\JZProject.cpp" />
     <ClCompile Include="project\JZProjectItem.cpp" />
+    <ClCompile Include="project\JZProjectItemStream.cpp" />
     <ClCompile Include="project\JZScriptFile.cpp" />
     <ClCompile Include="project\JZUIFile.cpp" />
+    <ClCompile Include="sample\Calculator.cpp" />
     <ClCompile Include="sample\Russian.cpp" />
+    <ClCompile Include="sample\SampleProject.cpp" />
     <ClCompile Include="script\JZEvent.cpp" />
     <ClCompile Include="script\JZExpression.cpp" />
     <ClCompile Include="script\JZNode.cpp" />
@@ -204,13 +210,19 @@
     <ClInclude Include="3rd\jznet\JZNetDataManager.h" />
     <ClInclude Include="3rd\jznet\JZNetPack.h" />
     <QtMoc Include="editor\script\JZNodeBreakPoint.h" />
+    <QtMoc Include="editor\script\JZNodeGroupEditDialog.h" />
+    <ClInclude Include="editor\script\JZNodeGroupItem.h" />
     <ClInclude Include="editor\script\JZNodeLayout.h" />
     <QtMoc Include="editor\script\JZNodeMemberEditDialog.h" />
     <QtMoc Include="editor\script\JZNodeParamEditDialog.h" />
     <QtMoc Include="LogManager.h" />
     <QtMoc Include="editor\script\JZNodeViewPanel.h" />
+    <QtMoc Include="editor\script\JZNodeViewMap.h" />
     <ClInclude Include="project\JZClassFile.h" />
     <ClInclude Include="project\JZLibraryFile.h" />
+    <ClInclude Include="project\JZProjectItemStream.h" />
+    <ClInclude Include="sample\Calculator.h" />
+    <ClInclude Include="sample\SampleProject.h" />
     <ClInclude Include="script\JZNodeName.h" />
     <QtMoc Include="script\JZNodeQtBind.h" />
     <ClInclude Include="script\JZNodeObjectParser.h" />
@@ -310,6 +322,7 @@
     <QtUic Include="editor\JZNewClassDialog.ui" />
     <QtUic Include="editor\JZNewProjectDialog.ui" />
     <QtUic Include="editor\script\JZNodeFuctionEditDialog.ui" />
+    <QtUic Include="editor\script\JZNodeGroupEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeMemberEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeParamEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeTypeDialog.ui" />

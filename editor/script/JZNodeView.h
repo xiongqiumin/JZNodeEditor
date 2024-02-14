@@ -5,16 +5,17 @@
 #include <functional>
 #include <QMap>
 #include <QTextEdit>
-#include "JZNodeGraphItem.h"
 #include "JZNodeScene.h"
+#include "JZNodeGraphItem.h"
 #include "JZNodeLineItem.h"
+#include "JZNodeGroupItem.h"
 #include "JZNodePropertyEditor.h"
 #include "JZScriptFile.h"
 #include <QShortcut>
 #include <QUndoStack>
 #include <QGraphicsRectItem>
 #include "JZNodeProgram.h"
-
+#include "JZNodeViewMap.h"
 
 class JZNodeView;
 class JZProject;
@@ -25,9 +26,12 @@ public:
         CreateNode,
         RemoveNode,
         MoveNode,
+        NodePropertyChange,
         CreateLine,
         RemoveLine,
-        PropertyChange,
+        CreateGroup,
+        RemoveGroup,
+        SetGroup,
     };
 
     JZNodeViewCommand(JZNodeView *view,int type);
@@ -45,7 +49,6 @@ public:
     QPointF newPos; 
 
 protected:
-    void setItemPos(JZNodeGraphItem *item,QPointF pos);
     QVariant saveItem(JZNodeGraphItem *item);
     void loadItem(JZNodeGraphItem *item,const QVariant &value);
 
@@ -78,19 +81,22 @@ public:
     virtual ~JZNodeView();
 
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
+    
     void setFile(JZScriptFile *file);
+    JZScriptFile *file();
+
     bool isModified();
 
     /* node */
     JZNode *getNode(int id);
     JZNodePin *getPin(JZNodeGemo gemo);
     JZNodeGraphItem *createNode(JZNodePtr node);
-    JZNodeGraphItem *insertNode(JZNodePtr node);
-    void moveNode(int id,QPointF pos);
-    void removeNode(int id);    
+    JZNodeGraphItem *insertNode(JZNodePtr node);    
+    void removeNode(int id);   //只remove node,需要在remove node之前先删除所有连线。
 
     QByteArray getNodeData(int id);
     void setNodeData(int id,const QByteArray &buffer);
+    void setNodePos(int id, QPointF pos);
 
     void pinClicked(int nodeId,int pinId);
     void updateNode(int id);
@@ -109,10 +115,20 @@ public:
     void removeLine(int id);    
 
     JZNodeLineItem *createLineItem(int id);    
-    JZNodeLineItem *getLineItem(int id);
+    JZNodeLineItem *getLineItem(int id);    
     void startLine(JZNodeGemo from);
     void endLine(JZNodeGemo to);
     void cancelLine();
+    
+    /* group */
+    JZNodeGroupItem *createGroup(const JZNodeGroup &group);
+    JZNodeGroupItem *insertGroup(const JZNodeGroup &group);
+    void removeGroup(int id);
+    JZNodeGroupItem *createGroupItem(int id);
+    JZNodeGroupItem *getGroupItem(int id);
+    QByteArray getGroupData(int id);
+    void setGroupData(int id, QByteArray buffer);
+    void updateGroup(int id);
 
     void addTip(QRectF tipArea,QString tip);
     void clearTip();
@@ -156,14 +172,17 @@ protected slots:
     void onAutoCompiler();
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
+    void onMapSceneChanged(QRectF rc);
+    void onMapSceneScaled(bool flag);
 
 protected:
     friend JZNodeViewCommand;
 
+    virtual void resizeEvent(QResizeEvent *event) override;
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;    
 
     virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void keyReleaseEvent(QKeyEvent *event) override;
@@ -179,22 +198,31 @@ protected:
     void foreachLine(std::function<void(JZNodeLineItem *)> func);    
     void copyItems(QList<QGraphicsItem*> item);
     void removeItems(QList<QGraphicsItem*> item);
-    void removeItem(QGraphicsItem *item);    
+    void removeItem(QGraphicsItem *item);
+    QList<JZNodeGraphItem*> selectNodeItems();
     void initGraph();            
     void setSelectNode(int id);
     void updatePropEditable(const JZNodeGemo &gemo);
     void saveNodePos();
+    void sceneScale(QPoint center, bool up);
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
+    void addMoveNodeCommand(int id, QPointF pt);
+    
     void addRemoveLineCommand(int line_id);
-    int getVariableType(const QString &param_name);    
-    void setRecordMove(bool flag);
+    
+    int addCreateGroupCommand(const JZNodeGroup &group);
+    void addRemoveGroupCommand(int id);
+    void addSetGroupCommand(int id, const JZNodeGroup &group);
+
+    int getVariableType(const QString &param_name);        
     void autoCompiler();
     QString getExpr();
-    int getSelect(QStringList list);
+    int popMenu(QStringList list);
     QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);
 
+    JZNodeViewMap *m_map;
     JZNodeScene *m_scene;
     JZScriptFile *m_file;    
     JZNodeLineItem *m_selLine;    
@@ -205,6 +233,7 @@ protected:
     JZNodePropertyEditor *m_propEditor;
     QUndoStack m_commandStack;        
     bool m_recordMove;
+    bool m_groupIsMoving;
     bool m_propEditFlag;
 
     QPointF m_downPoint;

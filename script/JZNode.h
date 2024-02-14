@@ -99,8 +99,18 @@ public:
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeConnect &param);
 QDataStream &operator>>(QDataStream &s, JZNodeConnect &param);
-JZNodeConnect parseLine(const QByteArray &buffer);
-QByteArray formatLine(const JZNodeConnect &line);
+
+//JZNodeGroup
+class JZNodeGroup
+{
+public:
+    JZNodeGroup();
+
+    int id;
+    QString memo;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeGroup &param);
+QDataStream &operator>>(QDataStream &s, JZNodeGroup &param);
 
 class JZNodeCompiler;
 class JZScriptFile;
@@ -113,8 +123,8 @@ public:
     JZScriptFile *file() const;
     void setFile(JZScriptFile *file);
 
-    QString name() const;
-    void setName(QString name);
+    const QString &name() const;
+    void setName(const QString &name);
 
     int id() const;
     void setId(int id);
@@ -122,6 +132,12 @@ public:
 
     void setFlag(int flag);
     int flag() const;
+
+    void setGroup(int group);
+    int group();
+
+    const QString &memo() const;
+    void setMemo(const QString &text);
 
     bool isFlowNode() const;    
 
@@ -216,7 +232,9 @@ protected:
     int m_id;
     int m_type;
     int m_flag;
-    QString m_name;    
+    int m_group;
+    QString m_name;
+    QString m_memo;
     QList<JZNodePin> m_propList;
     JZScriptFile *m_file;
     QVector<int> m_notifyList;

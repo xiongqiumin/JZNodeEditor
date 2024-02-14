@@ -14,9 +14,12 @@ public:
 
     void init();
 
-    JZNode *createNode(int type);    
-    void registNode(int type,JZNodeCreateFunc func);
+    void registNode(int type, JZNodeCreateFunc func);
     QList<int> nodeTypeList();
+
+    JZNode *createNode(int type);        
+    JZNode *loadNode(const QByteArray &buffer);
+    QByteArray saveNode(JZNode *node);
 
     bool edit(JZNode *node);
     void registEdit(int type,JZNodeFactoryEdit func);
@@ -25,8 +28,4 @@ protected:
     QMap<int,JZNodeCreateFunc> m_nodes;
     QMap<int,JZNodeFactoryEdit> m_edits;
 };
-
-//这两个函数保存了类型
-JZNode *loadNode(const QByteArray &buffer);
-QByteArray saveNode(JZNode *node);  
 #endif

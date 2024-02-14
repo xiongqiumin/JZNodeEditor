@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QDir>
 #include "Russian.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeVM.h"
@@ -8,95 +9,15 @@
 #include "JZUiFile.h"
 #include "JZNodeView.h"
 #include "JZNodeUtils.h"
-#include <QDir>
-
-static QString xml = 
-R"(<?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>widget</class>
- <widget class="QWidget" name="widget">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>430</width>
-    <height>552</height>
-   </rect>
-  </property>
-  <widget class="QPushButton" name="btnStart">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>137</y>
-     <width>111</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>开始</string>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btnStop">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>190</y>
-     <width>111</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>结束</string>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>30</y>
-     <width>72</width>
-     <height>15</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>得分:</string>
-   </property>
-  </widget> 
-  <widget class="QLineEdit" name="lineScore">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>60</y>
-     <width>50</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>0</string>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget> 
- </widget>
- <resources/>
- <connections/>
-</ui>
-)";
 
 SampleRussian::SampleRussian()
 {
+    m_name = "russian";
     m_project.initUi();    
     m_script = dynamic_cast<JZScriptFile*>(m_project.getItem("./mainwindow/事件"));
 
     JZUiFile *ui_file = dynamic_cast<JZUiFile*>(m_project.getItem("./mainwindow/mainwindow.ui"));
-    ui_file->setXml(xml);
+    ui_file->setXml(loadUi("Russian.ui"));
     m_project.saveItem(ui_file);
 
     auto class_file = m_project.getClass("mainwindow");

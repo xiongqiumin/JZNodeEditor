@@ -1,9 +1,9 @@
 #ifndef JZNODE_RUSSIAN_H_
 #define JZNODE_RUSSIAN_H_
 
-#include "JZProject.h"
+#include "SampleProject.h"
 
-class SampleRussian
+class SampleRussian : public SampleProject
 {
 public:
     SampleRussian();
@@ -29,13 +29,11 @@ protected:
     void addCanPlaceShape();
     void addClearLine();
     QVector<QVector<QVector<QPoint>>> shapeGroup();
-
-
-    JZProject m_project;
-    JZScriptFile *m_script;
+    
     int m_row = 20;
     int m_col = 10;
     int m_blockSize = 26;
+    JZScriptFile *m_script;
 };
 
 

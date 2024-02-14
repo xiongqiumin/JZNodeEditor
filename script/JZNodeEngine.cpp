@@ -34,9 +34,7 @@ QVariant JZObjectFromString(QString type,const QString &text)
     else
         foramt = type + "{" + text + "}";
 
-    auto obj = parser.parse(foramt);
-    if (obj)
-        qDebug() << JZObjectToString(obj);
+    auto obj = parser.parse(foramt);    
     return QVariant::fromValue(JZNodeObjectPtr(obj));
 }
 

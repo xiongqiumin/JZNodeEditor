@@ -41,6 +41,11 @@ void JZScriptFile::clear()
     m_connects.clear();
 }
 
+int JZScriptFile::nextId()
+{
+    return m_nodeId;
+}
+
 const FunctionDefine &JZScriptFile::function()
 {
     Q_ASSERT(m_itemType == ProjectItem_scriptFunction);
@@ -78,6 +83,64 @@ void JZScriptFile::removeNode(int id)
 
     m_nodes.remove(id);
     m_nodesPos.remove(id);
+}
+
+int JZScriptFile::addGroup(const JZNodeGroup &group)
+{
+    Q_ASSERT(group.id == -1);    
+
+    int id = m_nodeId++;
+    m_groups.push_back(group);
+    m_groups.back().id = id;
+    return id;
+}
+
+void JZScriptFile::insertGroup(const JZNodeGroup &group)
+{
+    m_groups.push_back(group);
+    std::sort(m_groups.begin(), m_groups.end(), [](const JZNodeGroup &g1, const JZNodeGroup &g2)->bool{
+        return g1.id < g2.id;
+    });
+}
+
+void JZScriptFile::removeGroup(int id)
+{
+    for (int i = 0; i < m_groups.size(); i++)
+    {
+        if (m_groups[i].id == id)
+        {
+            m_groups.removeAt(i);
+            return;
+        }
+    }
+}
+
+JZNodeGroup *JZScriptFile::getGroup(int id)
+{
+    for (int i = 0; i < m_groups.size(); i++)
+    {
+        if (m_groups[i].id == id)        
+            return &m_groups[i];        
+    }
+    return nullptr;
+}
+
+QList<int> JZScriptFile::groupNodeList(int id)
+{
+    QList<int> list;
+    auto it = m_nodes.begin();
+    while (it != m_nodes.end())
+    {
+        if(it->data()->group() == id)
+            list << it->data()->id();
+        it++;
+    }
+    return list;
+}
+
+QList<JZNodeGroup> JZScriptFile::groupList()
+{
+    return m_groups;
 }
 
 JZNodePin *JZScriptFile::getPin(const JZNodeGemo &gemo)
@@ -275,6 +338,9 @@ void JZScriptFile::insertConnect(const JZNodeConnect &connect)
 {
     Q_ASSERT(connect.id != -1 && getConnect(connect.id) == nullptr);
     m_connects.push_back(connect);
+    std::sort(m_connects.begin(), m_connects.end(), [](const JZNodeConnect &l1, const JZNodeConnect &l2)->bool {
+        return l1.id < l2.id;
+    });
 
     JZNode *to = getNode(connect.to.nodeId);
     to->pinLinked(connect.to.propId);
@@ -438,6 +504,7 @@ void JZScriptFile::saveToStream(QDataStream &s)
     s << m_function;
     s << m_variables;
     s << m_nodesPos;
+    s << m_groups;
 }
 
 void JZScriptFile::loadFromStream(QDataStream &s)
@@ -459,4 +526,5 @@ void JZScriptFile::loadFromStream(QDataStream &s)
     s >> m_function;    
     s >> m_variables;
     s >> m_nodesPos;
+    s >> m_groups;
 }

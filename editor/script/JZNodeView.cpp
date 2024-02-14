@@ -25,7 +25,41 @@
 #include "JZNodeEngine.h"
 #include "JZNodeLayout.h"
 #include "JZNodeFunction.h"
+#include "JZNodeGroupEditDialog.h"
 
+JZNodeConnect parseLine(const QByteArray &buffer)
+{
+    JZNodeConnect line;
+    QDataStream s(buffer);
+    s >> line;
+    return line;
+}
+
+QByteArray formatLine(const JZNodeConnect &line)
+{
+    QByteArray data;
+    QDataStream s(&data, QIODevice::WriteOnly);
+    s << line;
+    return data;
+}
+
+JZNodeGroup parseGroup(const QByteArray &buffer)
+{
+    JZNodeGroup group;
+    QDataStream s(buffer);
+    s >> group;
+    return group;
+}
+
+QByteArray formatGroup(const JZNodeGroup &group)
+{
+    QByteArray data;
+    QDataStream s(&data, QIODevice::WriteOnly);
+    s << group;
+    return data;
+}
+
+//JZNodeViewCommand
 JZNodeViewCommand::JZNodeViewCommand(JZNodeView *view,int type)
 {
     itemId = -1;
@@ -39,13 +73,6 @@ int JZNodeViewCommand::id() const
         return command;
 
     return -1;
-}
-
-void JZNodeViewCommand::setItemPos(JZNodeGraphItem *item,QPointF pos)
-{
-    m_view->setRecordMove(false);
-    item->setPos(pos);
-    m_view->setRecordMove(true);
 }
 
 QVariant JZNodeViewCommand::saveItem(JZNodeGraphItem *item)
@@ -72,15 +99,19 @@ void JZNodeViewCommand::undo()
     }
     else if(command == RemoveNode)
     {
-        auto node = loadNode(oldValue.toByteArray());
+        auto node = JZNodeFactory::instance()->loadNode(oldValue.toByteArray());
         node->setId(itemId);
         auto item = m_view->insertNode(JZNodePtr(node));
-        setItemPos(item,oldPos);
+        m_view->setNodePos(itemId,oldPos);
     }
     else if(command == MoveNode)
     {        
         auto item = m_view->getNodeItem(itemId);
-        setItemPos(item,oldPos);
+        m_view->setNodePos(itemId,oldPos);
+    }
+    else if (command == NodePropertyChange)
+    {
+        m_view->setNodeData(itemId, oldValue.toByteArray());
     }
     else if(command == CreateLine)
     {        
@@ -92,17 +123,22 @@ void JZNodeViewCommand::undo()
         line.id = itemId;
         m_view->insertLine(line);
     }
-    else if(command == PropertyChange)
+    else if (command == CreateGroup)
     {
-        m_view->setNodeData(itemId,oldValue.toByteArray());
+        m_view->removeGroup(itemId);        
     }
+    else if (command == RemoveGroup)
+    {
+        auto group = parseGroup(oldValue.toByteArray());
+        m_view->insertGroup(group);
+    }    
 }
 
 void JZNodeViewCommand::redo()
 {
     if(command == CreateNode)
     {        
-        auto node = loadNode(newValue.toByteArray());        
+        auto node = JZNodeFactory::instance()->loadNode(newValue.toByteArray());
         JZNodeGraphItem *item = nullptr;
         if(itemId == -1)
         {
@@ -114,7 +150,7 @@ void JZNodeViewCommand::redo()
             node->setId(itemId);
             item = m_view->insertNode(JZNodePtr(node));
         }
-        setItemPos(item,newPos);
+        m_view->setNodePos(itemId,newPos);
     }
     else if(command == RemoveNode)
     {
@@ -123,7 +159,19 @@ void JZNodeViewCommand::redo()
     else if(command == MoveNode)
     {        
         auto item = m_view->getNodeItem(itemId);
-        setItemPos(item,newPos);
+        m_view->setNodePos(itemId,newPos);
+    }
+    else if (command == NodePropertyChange)
+    {
+        if (newValue.isNull())
+        {
+            newValue = m_view->getNodeData(itemId);
+            m_view->updateNode(itemId);
+        }
+        else
+        {
+            m_view->setNodeData(itemId, newValue.toByteArray());
+        }
     }
     else if(command == CreateLine)
     {
@@ -143,18 +191,36 @@ void JZNodeViewCommand::redo()
     {
         m_view->removeLine(itemId);
     }
-    else if(command == PropertyChange)
+    else if (command == CreateGroup)
     {
-        if(newValue.isNull())
+        auto group = parseGroup(newValue.toByteArray());
+        if (itemId == -1)
         {
-            newValue = m_view->getNodeData(itemId);
-            m_view->updateNode(itemId);
+            auto item = m_view->createGroup(group);
+            itemId = item->id();
         }
         else
         {
-            m_view->setNodeData(itemId,newValue.toByteArray());
+            group.id = itemId;
+            m_view->insertGroup(group);
         }
     }
+    else if (command == RemoveGroup)
+    {
+        m_view->removeGroup(itemId);
+    }
+    else if (command == SetGroup)
+    {
+        if (newValue.isNull())
+        {   
+            newValue = m_view->getGroupData(itemId);
+            m_view->updateGroup(itemId);
+        }
+        else
+        {
+            m_view->setGroupData(itemId,newValue.toByteArray());
+        }
+    }    
 }
 
 bool JZNodeViewCommand::mergeWith(const QUndoCommand *command)
@@ -216,7 +282,6 @@ BreakPointTriggerResult::BreakPointTriggerResult()
     nodeId = 0;
 }
 
-JZNodeView *g_nodeView = nullptr;
 //JZNodeView
 JZNodeView::JZNodeView(QWidget *widget)
     : QGraphicsView(widget)
@@ -229,17 +294,31 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_recordMove = true;
     m_propEditFlag = false;
     m_runningMode = false;
-    m_runNode = -1;    
-    g_nodeView = this;
+    m_runNode = -1;        
+    m_groupIsMoving = false;
 
     connect(&m_commandStack,&QUndoStack::cleanChanged, this, &JZNodeView::onCleanChanged);
     connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
     connect(&m_commandStack,&QUndoStack::canUndoChanged,this,&JZNodeView::undoAvailable);
     connect(&m_commandStack,&QUndoStack::indexChanged, this,&JZNodeView::onUndoStackChanged);
 
+    m_map = new JZNodeViewMap(this);
+    m_map->setFixedSize(160, 120);
+    m_map->setView(this);
+    connect(m_map, &JZNodeViewMap::mapSceneChanged, this, &JZNodeView::onMapSceneChanged);
+    connect(m_map, &JZNodeViewMap::mapSceneScaled, this, &JZNodeView::onMapSceneScaled);
+
+    QHBoxLayout *hbox = new QHBoxLayout();
+    hbox->addStretch();
+    hbox->addWidget(m_map);
+    hbox->setAlignment(Qt::AlignTop);
+    this->setLayout(hbox);
+
     m_scene = new JZNodeScene();    
     setScene(m_scene);
     setAcceptDrops(true);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     m_compilerTimer = new QTimer();
     connect(m_compilerTimer,&QTimer::timeout,this,&JZNodeView::onAutoCompiler);
@@ -319,11 +398,17 @@ void JZNodeView::setPropertyEditor(JZNodePropertyEditor *propEditor)
     connect(m_propEditor, &JZNodePropertyEditor::sigNodePropNameChanged, this, &JZNodeView::onPropNameUpdate);
 }
 
+JZScriptFile *JZNodeView::file()
+{
+    return m_file;
+}
+
 void JZNodeView::setFile(JZScriptFile *file)
 {
-    m_file = file;
+    m_file = file;    
+
     initGraph();
-    autoCompiler();
+    autoCompiler();    
 }
 
 bool JZNodeView::isModified()
@@ -366,11 +451,6 @@ JZNodeGraphItem *JZNodeView::insertNode(JZNodePtr node)
     return createNodeItem(node->id());
 }
 
-void JZNodeView::moveNode(int id,QPointF pos)
-{    
-    getNodeItem(id)->setPos(pos);
-}
-
 void JZNodeView::removeNode(int id)
 {
     auto item = getNodeItem(id);
@@ -398,12 +478,34 @@ QByteArray JZNodeView::getNodeData(int id)
 }
 
 void JZNodeView::setNodeData(int id,const QByteArray &buffer)
-{
+{    
     auto node = getNode(id);
+    int old_group = node->group();
+
     QDataStream s(buffer);
     node->loadFromStream(s);
+    if (old_group != -1 && old_group != node->group())
+        getGroupItem(old_group)->updateNode();
 
     updateNode(id);
+}
+
+void JZNodeView::setNodePos(int node_id, QPointF pos)
+{        
+    m_recordMove = false;    
+    auto node = getNode(node_id);
+    getNodeItem(node_id)->setPos(pos);
+    m_file->setNodePos(node_id, pos);
+
+    auto lineId = m_file->getConnectId(node_id);
+    for (int i = 0; i < lineId.size(); i++)
+        getLineItem(lineId[i])->updateNode();
+    
+    if (node->group() != -1 && !m_groupIsMoving)
+        getGroupItem(node->group())->updateNode();
+
+    m_map->updateMap();
+    m_recordMove = true;
 }
 
 void JZNodeView::pinClicked(int nodeId,int pinId)
@@ -430,6 +532,7 @@ JZNodeGraphItem *JZNodeView::createNodeItem(int id)
     m_scene->addItem(item);
     item->updateNode();
     item->update();    
+    m_map->updateMap();
     return item;
 }
 
@@ -448,6 +551,7 @@ void JZNodeView::setNodePropValue(int nodeId, int prop_id, QString value)
 {
     auto item = getNodeItem(nodeId);    
     item->setPropValue(prop_id, value);
+    m_map->updateMap();
 }
 
 QString JZNodeView::getNodePropValue(int nodeId, int prop_id)
@@ -471,6 +575,10 @@ void JZNodeView::updateNode(int id)
     auto lineId = m_file->getConnectId(id);
     for (int i = 0; i < lineId.size(); i++)
         getLineItem(lineId[i])->updateNode();
+
+    int group = getNode(id)->group();
+    if (group != -1)
+        getGroupItem(group)->updateNode();
 
     if(getNode(id) == m_propEditor->node())
     {
@@ -592,6 +700,67 @@ void JZNodeView::cancelLine()
     m_selLine = nullptr;
 }
 
+JZNodeGroupItem *JZNodeView::createGroupItem(int id)
+{
+    JZNodeGroupItem *item = new JZNodeGroupItem(id);
+    m_scene->addItem(item);
+    item->updateNode();
+    return item;
+}
+
+JZNodeGroupItem *JZNodeView::createGroup(const JZNodeGroup &group)
+{
+    int id = m_file->addGroup(group);
+    return createGroupItem(id);
+}
+
+JZNodeGroupItem *JZNodeView::insertGroup(const JZNodeGroup &group)
+{
+    m_file->insertGroup(group);
+    return createGroupItem(group.id);
+}
+void JZNodeView::removeGroup(int id)
+{
+    auto items = m_scene->items();
+    for (int i = 0; i < items.size(); i++)
+    {
+        if (items[i]->type() == Item_group && ((JZNodeGroupItem *)items[i])->id() == id)
+        {
+            m_scene->removeItem(items[i]);
+            break;
+        }
+    }
+    m_file->removeGroup(id);
+}
+
+JZNodeGroupItem *JZNodeView::getGroupItem(int id)
+{
+    auto items = m_scene->items();
+    for (int i = 0; i < items.size(); i++)
+    {
+        if (items[i]->type() == Item_group && ((JZNodeGroupItem *)items[i])->id() == id)
+            return (JZNodeGroupItem *)items[i];
+    }
+    return nullptr;
+}
+
+QByteArray JZNodeView::getGroupData(int id)
+{
+    auto group = m_file->getGroup(id);
+    return formatGroup(*group);
+}
+
+void JZNodeView::setGroupData(int id, QByteArray buffer)
+{
+    auto group = m_file->getGroup(id);
+    *group = parseGroup(buffer);
+}
+
+void JZNodeView::updateGroup(int id)
+{
+    getGroupItem(id)->updateNode();
+}
+
 void JZNodeView::addTip(QRectF tipArea,QString text)
 {
     if(!m_tip)
@@ -653,23 +822,33 @@ QVariant JZNodeView::onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsI
     if (m_loadFlag)
         return value;
 
-    if (change == QGraphicsItem::ItemPositionHasChanged)
+    if (change == QGraphicsItem::ItemPositionChange)
     {
         if (item->type() == Item_node)
         {
-            int node_id = ((JZNodeGraphItem *)item)->node()->id();
-            auto lineId = m_file->getConnectId(node_id);
-            for (int i = 0; i < lineId.size(); i++)
-                getLineItem(lineId[i])->updateNode();
-
-            if(m_recordMove)
+            if (m_recordMove)
             {
-                JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::MoveNode);
-                cmd->itemId = node_id;
-                cmd->oldPos = m_file->getNodePos(node_id);
-                cmd->newPos = item->pos();
-                m_commandStack.push(cmd);
+                auto node = ((JZNodeGraphItem *)item)->node();
+                addMoveNodeCommand(node->id(), value.toPointF());
             }
+        }
+        else if (item->type() == Item_group)
+        {            
+            JZNodeGroupItem *group_item = dynamic_cast<JZNodeGroupItem*>(item);
+            auto group_id = group_item->id();
+            QPointF offset = value.toPointF() - group_item->pos();
+
+            m_groupIsMoving = true;
+            m_commandStack.beginMacro("group move");
+            auto node_list = m_file->groupNodeList(group_id);
+            for (int i = 0; i < node_list.size(); i++)
+            {
+                int node_id = node_list[i];
+                QPointF old_pos = getNodeItem(node_id)->pos();
+                addMoveNodeCommand(node_id, old_pos + offset);
+            }
+            m_commandStack.endMacro();            
+            m_groupIsMoving = false;
         }
     }
     else if (change == QGraphicsItem::ItemSelectedHasChanged)
@@ -710,12 +889,16 @@ void JZNodeView::initGraph()
     auto lines = m_file->connectList();
     for (int i = 0; i < lines.size(); i++)
         createLineItem(lines[i].id);
+    auto groups = m_file->groupList();
+    for (int i = 0; i < groups.size(); i++)
+        createGroupItem(groups[i].id);
 
     m_loadFlag = false;
     m_scene->update();
     m_commandStack.clear();
         
     setSceneRect(sceneRect().translated(-100, -100));    
+    m_map->updateMap();
 }
 
 void JZNodeView::clear()
@@ -788,13 +971,14 @@ void JZNodeView::paste()
 
     for(int i = 0; i < copyData.nodesPos.size(); i++)
     {
-        JZNode *node = loadNode(copyData.nodes[i]);
+        JZNode *node = JZNodeFactory::instance()->loadNode(copyData.nodes[i]);
         int old_id = node->id();
         node->setId(-1);
+        node->setGroup(-1);
 
         JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::CreateNode);
         cmd->itemId = -1;
-        cmd->newValue = saveNode(node);
+        cmd->newValue = JZNodeFactory::instance()->saveNode(node);
         cmd->newPos = copyData.nodesPos[i] + offset;
         m_commandStack.push(cmd);
 
@@ -832,11 +1016,6 @@ void JZNodeView::selectAll()
 void JZNodeView::onCleanChanged(bool clean)
 {
     emit modifyChanged(!clean);
-}
-
-void JZNodeView::setRecordMove(bool flag)
-{
-    m_recordMove = flag;
 }
 
 void JZNodeView::setSelectNode(int id)
@@ -925,16 +1104,11 @@ void JZNodeView::updateNodeLayout()
         {
             int node_id = it.key();
             auto item = getNodeItem(node_id);
-            auto tree_node = it->data();
-            item->setPos(col_start[tree_node->col], y_offset + row_start[tree_node->row]);            
-            max_y = qMax(max_y,(int)item->pos().y() + item->size().width());
+            auto tree_node = it->data();            
 
-            //add command
-            JZNodeViewCommand *cmd = new JZNodeViewCommand(this, JZNodeViewCommand::MoveNode);
-            cmd->itemId = node_id;
-            cmd->oldPos = m_file->getNodePos(node_id);
-            cmd->newPos = item->pos();
-            m_commandStack.push(cmd);
+            QPointF new_pos(col_start[tree_node->col], y_offset + row_start[tree_node->row]);
+            addMoveNodeCommand(node_id, new_pos);
+            max_y = qMax(max_y,(int)item->pos().y() + item->size().width());            
 
             it++;
         }
@@ -1071,12 +1245,17 @@ void JZNodeView::removeItem(QGraphicsItem *item)
             m_commandStack.push(cmd);
         }
 
-        JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::RemoveNode);
         auto node = m_file->getNode(item_id);
+        int group = node->group();
+
+        JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::RemoveNode);        
         cmd->itemId = node->id(); 
-        cmd->oldValue = saveNode(node);
+        cmd->oldValue = JZNodeFactory::instance()->saveNode(node);
         cmd->oldPos = item->pos();
         m_commandStack.push(cmd);
+        
+        if (m_file->groupNodeList(group).size() == 0)
+            addRemoveGroupCommand(group);
 
         m_commandStack.endMacro();
     }
@@ -1087,6 +1266,21 @@ void JZNodeView::removeItem(QGraphicsItem *item)
         cmd->itemId = line->id;
         cmd->oldValue = formatLine(*line);
         m_commandStack.push(cmd);
+    }
+    else if (item->type() == Item_group)
+    {
+        m_commandStack.beginMacro("remove");
+
+        auto list = m_file->groupNodeList(item_id);
+        for (int i = 0; i < list.size(); i++)
+        {
+            QByteArray oldValue = getNodeData(list[i]);
+            getNode(list[i])->setGroup(-1);
+            addPropChangedCommand(list[i], oldValue);
+        }
+
+        addRemoveGroupCommand(item_id);
+        m_commandStack.endMacro();
     }
 }
 
@@ -1108,12 +1302,24 @@ QStringList JZNodeView::matchParmas(JZNodeObjectDefine *meta, int match_type, QS
     return list;
 }
 
+QList<JZNodeGraphItem*> JZNodeView::selectNodeItems()
+{
+    QList<JZNodeGraphItem*> result;
+    auto list = m_scene->selectedItems();
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (list[i]->type() == Item_node)
+            result << dynamic_cast<JZNodeGraphItem *>(list[i]);
+    }
+    return result;
+}
+
 void JZNodeView::onContextMenu(const QPoint &pos)
 {
     if (m_runningMode)
         return;
 
-    QMenu menu(this);
+    QMenu menu(this);    
 
     auto item = itemAt(pos);
     QAction *actAdd = nullptr;
@@ -1121,13 +1327,14 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QAction *actDel = nullptr;
     QAction *actPaste = nullptr;
     QAction *actGoto = nullptr;
+    QAction *actEditGroup = nullptr;
     int pin_id = -1;
     QList<QAction*> pin_actions;
     QList<QAction*> param_actions;
     if (!item)
     {
         actAdd = menu.addAction("添加节点");
-        actPaste = menu.addAction("粘贴");
+        actPaste = menu.addAction("粘贴");                
     }
     else
     {
@@ -1187,8 +1394,45 @@ void JZNodeView::onContextMenu(const QPoint &pos)
                 actDel = menu.addAction("删除节点");
             }
         }
-        else
+        else if (item->type() == Item_line)
             actDel = menu.addAction("删除连线");
+        else if (item->type() == Item_group)
+        {
+            actEditGroup = menu.addAction("编辑分组");
+            actDel = menu.addAction("删除分组");
+        }
+    }
+
+    auto node_list = selectNodeItems();    
+    int same_group_id = -1;
+    QAction *actAddNodeGroup = nullptr;
+    QAction *actRemoveNodeGroup = nullptr;
+    QAction *actMergeNodeGroup = nullptr;
+    if (node_list.size() > 0)
+    {          
+        QSet<int> group_ids;        
+        int vaild_group_num = 0;
+        for (int i = 0; i < node_list.size(); i++)
+        {
+            if (node_list[i]->node()->group() != -1)
+            {             
+                group_ids.insert(node_list[i]->node()->group());
+                vaild_group_num++;
+            }            
+        }    
+        if (group_ids.size() == 0 || group_ids.size() == 1)
+            menu.addSeparator();
+
+        if (group_ids.size() == 0)
+            actAddNodeGroup = menu.addAction("创建分组");
+        if (group_ids.size() == 1)
+        {
+            same_group_id = *group_ids.begin();
+            if(vaild_group_num == node_list.size())
+                actRemoveNodeGroup = menu.addAction("取消分组");
+            else
+                actMergeNodeGroup = menu.addAction("合并分组");
+        }                
     }
 
     QAction *ret = menu.exec(this->mapToGlobal(pos));
@@ -1213,7 +1457,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     else if (pin_actions.contains(ret))
     {
         int index = pin_actions.indexOf(ret);
-        auto node = ((JZNodeGraphItem*)item)->node();
+        auto node = dynamic_cast<JZNodeGraphItem*>(item)->node();
         auto pre_list = node->propList();
 
         auto old = getNodeData(node->id());
@@ -1238,7 +1482,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     }
     else if (param_actions.contains(ret))
     {
-        auto node = ((JZNodeGraphItem*)item)->node();
+        auto node = dynamic_cast<JZNodeGraphItem*>(item)->node();
         auto old = getNodeData(node->id());
         node->setVariable(ret->text());        
         addPropChangedCommand(node->id(), old);
@@ -1247,6 +1491,61 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     {
         QString filePath = actGoto->property("filePath").toString();
         emit sigFunctionOpen(filePath);
+    }
+    else if (ret == actEditGroup)
+    {
+        int group_id = dynamic_cast<JZNodeGroupItem*>(item)->id();
+        JZNodeGroupEditDialog dlg(this);
+        dlg.setGroup(*m_file->getGroup(group_id));
+        if (dlg.exec() != QDialog::Accepted)
+            return;
+        
+        addSetGroupCommand(group_id, dlg.group());
+    }
+    else if (ret == actAddNodeGroup)
+    {
+        JZNodeGroupEditDialog dlg(this);
+        if (dlg.exec() != QDialog::Accepted)
+            return;
+
+        m_commandStack.beginMacro("add group");
+        JZNodeGroup group = dlg.group();
+        int id = addCreateGroupCommand(group);
+        for (int i = 0; i < node_list.size(); i++)
+        {
+            QByteArray oldValue = getNodeData(node_list[i]->id());
+            node_list[i]->node()->setGroup(id);
+            addPropChangedCommand(node_list[i]->id(), oldValue);
+        }
+        m_commandStack.endMacro();
+    }
+    else if (ret == actRemoveNodeGroup)
+    {        
+        m_commandStack.beginMacro("remove group");
+        for (int i = 0; i < node_list.size(); i++)
+        {
+            QByteArray oldValue = getNodeData(node_list[i]->id());
+            node_list[i]->node()->setGroup(-1);
+            addPropChangedCommand(node_list[i]->id(), oldValue);
+        }
+        auto list = m_file->groupNodeList(same_group_id);
+        if(list.size() == 0)
+            addRemoveGroupCommand(same_group_id);
+        m_commandStack.endMacro();
+    }
+    else if (ret == actMergeNodeGroup)
+    {
+        m_commandStack.beginMacro("add group");                
+        for (int i = 0; i < node_list.size(); i++)
+        {            
+            if (node_list[i]->node()->group() == -1)
+            {
+                QByteArray oldValue = getNodeData(node_list[i]->id());
+                node_list[i]->node()->setGroup(same_group_id);
+                addPropChangedCommand(node_list[i]->id(), oldValue);
+            }
+        }
+        m_commandStack.endMacro();
     }
 }
 
@@ -1271,10 +1570,50 @@ void JZNodeView::addRemoveLineCommand(int line_id)
 
 void JZNodeView::addPropChangedCommand(int id,const QByteArray &oldValue)
 {
-    JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::PropertyChange);
+    JZNodeViewCommand *cmd = new JZNodeViewCommand(this,JZNodeViewCommand::NodePropertyChange);
     cmd->itemId = id;
     cmd->oldValue = oldValue;
     m_commandStack.push(cmd);
+}
+
+void JZNodeView::addMoveNodeCommand(int id, QPointF pt)
+{
+    JZNodeViewCommand *cmd = new JZNodeViewCommand(this, JZNodeViewCommand::MoveNode);
+    cmd->itemId = id;
+    cmd->oldPos = getNodeItem(id)->pos();
+    cmd->newPos = pt;
+    m_commandStack.push(cmd);
+}
+
+int JZNodeView::addCreateGroupCommand(const JZNodeGroup &group)
+{
+    int id = m_file->nextId();
+
+    JZNodeViewCommand *cmd = new JZNodeViewCommand(this, JZNodeViewCommand::CreateGroup);    
+    cmd->newValue = formatGroup(group);
+    m_commandStack.push(cmd);    
+    return id;
+}
+
+void JZNodeView::addRemoveGroupCommand(int id)
+{
+    auto group = m_file->getGroup(id);
+
+    JZNodeViewCommand *cmd = new JZNodeViewCommand(this, JZNodeViewCommand::RemoveGroup);
+    cmd->itemId = id;
+    cmd->oldValue = formatGroup(*group);
+    m_commandStack.push(cmd);
+}
+
+void JZNodeView::addSetGroupCommand(int id, const JZNodeGroup &new_group)
+{
+    auto group = m_file->getGroup(id);    
+
+    JZNodeViewCommand *cmd = new JZNodeViewCommand(this, JZNodeViewCommand::SetGroup);
+    cmd->itemId = id;
+    cmd->oldValue = formatGroup(*group);
+    *group = new_group;
+    m_commandStack.push(cmd);    
 }
 
 void JZNodeView::dragEnterEvent(QDragEnterEvent *event)
@@ -1294,6 +1633,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
     if (m_runningMode)
         return;
 
+    auto factory = JZNodeFactory::instance();
     if(event->mimeData()->hasFormat("node_data"))
     {
         QByteArray data = event->mimeData()->data("node_data");
@@ -1306,13 +1646,13 @@ void JZNodeView::dropEvent(QDropEvent *event)
             if(text.isEmpty())
                 return;
 
-            JZNodePtr node = JZNodePtr(loadNode(data));
+            JZNodePtr node = JZNodePtr(factory->loadNode(data));
             QString error;
             JZNodeExpression *expr = dynamic_cast<JZNodeExpression *>(node.data());
             if(!expr->setExpr(text,error))
                 return;
 
-            data = saveNode(node.data());
+            data = factory->saveNode(node.data());
         }
         addCreateNodeCommand(data,mapToScene(event->pos()));
         event->accept();
@@ -1323,18 +1663,18 @@ void JZNodeView::dropEvent(QDropEvent *event)
         JZNodeGraphItem *node_item = nodeItemAt(event->pos());
         if(!node_item)
         {
-            int sel = getSelect({ "Get","Set" });
+            int sel = popMenu({ "Get","Set" });
             if (sel == 0)
             {
                 JZNodeParam node_param;
                 node_param.setVariable(param_name);
-                addCreateNodeCommand(saveNode(&node_param), mapToScene(event->pos()));
+                addCreateNodeCommand(factory->saveNode(&node_param), mapToScene(event->pos()));
             }
             else if(sel == 1)
             {
                 JZNodeSetParam set_param;
                 set_param.setVariable(param_name);
-                addCreateNodeCommand(saveNode(&set_param), mapToScene(event->pos()));
+                addCreateNodeCommand(factory->saveNode(&set_param), mapToScene(event->pos()));
             }
         }
         else if(node_item->node()->canDragVariable())
@@ -1347,24 +1687,30 @@ void JZNodeView::dropEvent(QDropEvent *event)
     }
 }
 
-void JZNodeView::wheelEvent(QWheelEvent *event)
+void JZNodeView::resizeEvent(QResizeEvent *event)
+{
+    m_map->updateMap();
+    QGraphicsView::resizeEvent(event);
+}
+
+void JZNodeView::sceneScale(QPoint center,bool up)
 {
     double scale = this->transform().m11();
-    if(event->angleDelta().y() > 0)//鼠标滚轮向前滚动
+    if (up) //鼠标滚轮向前滚动
     {
-        if(scale >= 4)
+        if (scale >= 4)
             return;
 
-        scale*=1.1;//每次放大10%
-        scale = qMin(scale,4.0);
+        scale *= 1.1;//每次放大10%
+        scale = qMin(scale, 4.0);
     }
     else
     {
-        scale*=0.9;//每次缩小10%
+        scale *= 0.9;//每次缩小10%
     }
 
-    auto targetViewportPos = event->pos();
-    auto targetScenePos = mapToScene(event->pos());
+    auto targetViewportPos = center;
+    auto targetScenePos = mapToScene(center);
 
     resetTransform();
     this->scale(scale, scale);
@@ -1373,7 +1719,11 @@ void JZNodeView::wheelEvent(QWheelEvent *event)
     QPointF deltaViewportPos = targetViewportPos - QPointF(viewport()->width() / 2.0, viewport()->height() / 2.0);
     QPointF viewportCenter = mapFromScene(targetScenePos) - deltaViewportPos;
     centerOn(mapToScene(viewportCenter.toPoint()));
+}
 
+void JZNodeView::wheelEvent(QWheelEvent *event)
+{
+    sceneScale(event->pos(),event->angleDelta().y() > 0);
     event->accept();
 }
 
@@ -1437,6 +1787,8 @@ void JZNodeView::mouseMoveEvent(QMouseEvent *event)
       {
         QPointF difference = m_downPoint - mapToScene(event->pos());
         setSceneRect(sceneRect().translated(difference.x(), difference.y()));
+
+        m_map->update();
       }
     }
 }
@@ -1561,7 +1913,7 @@ void JZNodeView::copyItems(QList<QGraphicsItem*> items)
             if (node->node()->canRemove())
             {
                 node_ids << ((JZNodeGraphItem*)item)->id();
-                QByteArray data = saveNode(node->node());
+                QByteArray data = JZNodeFactory::instance()->saveNode(node->node());
                 copydata.nodes.append(data);
                 copydata.nodesPos.append(item->pos());
             }
@@ -1636,7 +1988,7 @@ QString JZNodeView::getExpr()
     return text;
 }
 
-int JZNodeView::getSelect(QStringList list)
+int JZNodeView::popMenu(QStringList list)
 {
     QMenu menu;
     for (int i = 0; i < list.size(); i++)
@@ -1651,4 +2003,14 @@ int JZNodeView::getSelect(QStringList list)
 void JZNodeView::onUndoStackChanged()
 {
     autoCompiler();
+}
+
+void JZNodeView::onMapSceneChanged(QRectF rc)
+{
+    setSceneRect(rc);
+}
+
+void JZNodeView::onMapSceneScaled(bool flag)
+{
+    sceneScale(rect().center(), flag);
 }

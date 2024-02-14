@@ -340,6 +340,24 @@
     <ClCompile Include="editor\script\JZNodeViewPanel.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
+    <ClCompile Include="sample\Calculator.cpp">
+      <Filter>Source Files\sample</Filter>
+    </ClCompile>
+    <ClCompile Include="sample\SampleProject.cpp">
+      <Filter>Source Files\sample</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeGroupItem.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZProjectItemStream.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeGroupEditDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeViewMap.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -483,6 +501,12 @@
     <QtMoc Include="editor\script\JZNodeViewPanel.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
+    <QtMoc Include="editor\script\JZNodeGroupEditDialog.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeViewMap.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="script\JZEvent.h">
@@ -617,6 +641,18 @@
     <ClInclude Include="script\JZNodeObjectParser.h">
       <Filter>Header Files\editor\script</Filter>
     </ClInclude>
+    <ClInclude Include="sample\Calculator.h">
+      <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="sample\SampleProject.h">
+      <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZNodeGroupItem.h">
+      <Filter>Header Files\editor\script</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZProjectItemStream.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="editor\script\JZParamEditor.ui">
@@ -638,6 +674,9 @@
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="editor\script\JZNodeParamEditDialog.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="editor\script\JZNodeGroupEditDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>
