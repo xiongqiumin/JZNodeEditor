@@ -3,7 +3,7 @@
 #include <QDialog>
 #include <QTableWidget>
 #include "JZNode.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 
 namespace Ui { class JZNodeParamEditDialog; }
 
@@ -15,7 +15,7 @@ public:
     JZNodeParamEditDialog(QWidget *parent = Q_NULLPTR);
     ~JZNodeParamEditDialog();
         
-    void init(JZScriptFile *file,JZParamDefine info);
+    void init(JZScriptItem *file,JZParamDefine info);
     JZParamDefine param();
 
 protected slots:      
@@ -29,6 +29,6 @@ private:
 
     JZParamDefine m_paramDefine;
     QString m_preName;
-    JZScriptFile *m_file;    
+    JZScriptItem *m_file;    
     Ui::JZNodeParamEditDialog *ui;
 };

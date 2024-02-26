@@ -4,7 +4,7 @@
 #include <QComboBox>
 #include "JZNodeParamEditDialog.h"
 #include "ui_JZNodeParamEditDialog.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include "UiCommon.h"
 #include "JZNodeTypeDialog.h"
 
@@ -70,7 +70,7 @@ void JZNodeParamEditDialog::dataToUi()
         ui->lineValue->setEnabled(false);
 }
 
-void JZNodeParamEditDialog::init(JZScriptFile *file, JZParamDefine info)
+void JZNodeParamEditDialog::init(JZScriptItem *file, JZParamDefine info)
 {    
     m_file = file;
     m_paramDefine = info;

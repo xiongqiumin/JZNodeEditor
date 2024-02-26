@@ -21,12 +21,11 @@ void projectUpdateLayout(JZProject *project)
             || item_type == ProjectItem_scriptParamBinding)
         {
             JZNodeView *view = new JZNodeView();
-            JZScriptFile *file = (JZScriptFile *)item_list[i];
+            JZScriptItem *file = (JZScriptItem *)item_list[i];
             view->setFile(file);
             view->updateNodeLayout();
             view->save();
             delete view;
         }
-    }
-    project->saveAllItem();
+    }    
 }

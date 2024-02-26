@@ -3,7 +3,7 @@
 
 #include <QVariant>
 #include <QPointF>
-#include <QDataStream>
+#include "JZProjectStream.h"
 #include "JZNodeDefine.h"
 #include "JZNodeType.h"
 
@@ -44,16 +44,10 @@ public:
     int id() const;
 
     void setName(const QString &name);
-    const QString &name() const;
-
-    void setEditor(const QString &name);
-    const QString &editor() const;
+    const QString &name() const;    
 
     void setFlag(int flag);
     int flag() const;
-
-    void setPri(int pri);
-    int pri() const; // 显示优先级
 
     bool isInput() const;
     bool isOutput() const;
@@ -71,27 +65,20 @@ public:
     void setDataType(QList<int> type);
     QList<int> dataType() const;    
 
-    QVariant value() const;
-    void setValue(QVariant value);
-
-    void addAction(QString action);
-    QStringList actionList();
+    QString value() const;
+    void setValue(QString value);
 
 protected:
-    friend QDataStream &operator<<(QDataStream &s, const JZNodePin &param);
-    friend QDataStream &operator>>(QDataStream &s, JZNodePin &param);
-    void updatePri();
+    friend void operator<<(JZProjectStream &s, const JZNodePin &param);
+    friend void operator>>(JZProjectStream &s, JZNodePin &param);    
 
     int m_id;
-    int m_flag;
-    int m_pri;
-    QString m_name;  
-    QString m_editor;
+    int m_flag;    
+    QString m_name;      
     QList<int> m_dataType;
-    QVariant m_value;
-    QStringList m_actionList;
+    QString m_value;    
 };
-QDataStream &operator<<(QDataStream &s, const JZNodePin &param);
-QDataStream &operator>>(QDataStream &s, JZNodePin &param);
+void operator<<(JZProjectStream &s, const JZNodePin &param);
+void operator>>(JZProjectStream &s, JZNodePin &param);
 
 #endif

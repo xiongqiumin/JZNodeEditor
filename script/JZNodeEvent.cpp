@@ -18,13 +18,13 @@ JZNodeEvent::~JZNodeEvent()
 
 }
 
-void JZNodeEvent::saveToStream(QDataStream &s) const
+void JZNodeEvent::saveToStream(JZProjectStream &s) const
 {
     JZNode::saveToStream(s);
     s << m_eventType;
 }
 
-void JZNodeEvent::loadFromStream(QDataStream &s)
+void JZNodeEvent::loadFromStream(JZProjectStream &s)
 {
     JZNode::loadFromStream(s);
     s >> m_eventType;
@@ -139,7 +139,7 @@ void JZNodeSingleEvent::setVariable(const QString &name)
 
 QString JZNodeSingleEvent::variable() const
 {
-    return propValue(paramIn(0)).toString();
+    return propValue(paramIn(0));
 }
 
 int JZNodeSingleEvent::variableType() const
@@ -155,7 +155,7 @@ void JZNodeSingleEvent::drag(const QVariant &value)
 
 bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 {    
-    QString sender = propValue(paramIn(0)).toString();
+    QString sender = propValue(paramIn(0));
     if(!c->checkVariableType(sender, m_sender,error))
         return false;
         
@@ -174,14 +174,14 @@ bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-void JZNodeSingleEvent::saveToStream(QDataStream &s) const
+void JZNodeSingleEvent::saveToStream(JZProjectStream &s) const
 {
     JZNodeEvent::saveToStream(s);
     s << m_sender;
     s << m_single;
 }
 
-void JZNodeSingleEvent::loadFromStream(QDataStream &s)
+void JZNodeSingleEvent::loadFromStream(JZProjectStream &s)
 {
     JZNodeEvent::loadFromStream(s);
     s >> m_sender;
@@ -214,14 +214,14 @@ bool JZNodeQtEvent::compiler(JZNodeCompiler *c, QString &error)
     return true;
 
 }
-void JZNodeQtEvent::saveToStream(QDataStream &s) const
+void JZNodeQtEvent::saveToStream(JZProjectStream &s) const
 {
     JZNodeEvent::saveToStream(s);
     s << m_className;
     s << m_event;
 }
 
-void JZNodeQtEvent::loadFromStream(QDataStream &s)
+void JZNodeQtEvent::loadFromStream(JZProjectStream &s)
 {
     JZNodeEvent::loadFromStream(s);
     s >> m_className;

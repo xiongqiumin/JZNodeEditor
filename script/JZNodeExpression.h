@@ -162,8 +162,8 @@ public:
 protected:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);        
+    virtual void saveToStream(JZProjectStream &s) const;
+    virtual void loadFromStream(JZProjectStream &s);        
 
     QString m_expression;
     QStringList m_exprList;

@@ -112,9 +112,6 @@
     <ClCompile Include="3rd\jznet\JZNetServer.cpp">
       <Filter>Source Files\3rd\jznet</Filter>
     </ClCompile>
-    <ClCompile Include="project\JZParamFile.cpp">
-      <Filter>Source Files\project</Filter>
-    </ClCompile>
     <ClCompile Include="project\JZProject.cpp">
       <Filter>Source Files\project</Filter>
     </ClCompile>
@@ -319,12 +316,6 @@
     <ClCompile Include="editor\script\JZNodeParamEditDialog.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
-    <ClCompile Include="project\JZClassFile.cpp">
-      <Filter>Source Files\project</Filter>
-    </ClCompile>
-    <ClCompile Include="project\JZLibraryFile.cpp">
-      <Filter>Source Files\project</Filter>
-    </ClCompile>
     <ClCompile Include="LogManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -349,14 +340,23 @@
     <ClCompile Include="editor\script\JZNodeGroupItem.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
-    <ClCompile Include="project\JZProjectItemStream.cpp">
-      <Filter>Source Files\project</Filter>
-    </ClCompile>
     <ClCompile Include="editor\script\JZNodeGroupEditDialog.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
     <ClCompile Include="editor\script\JZNodeViewMap.cpp">
       <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZProjectStream.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZClassItem.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZParamItem.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
+    <ClCompile Include="project\JZScriptItem.cpp">
+      <Filter>Source Files\project</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -569,13 +569,7 @@
     <ClInclude Include="script\JZNodeType.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
-    <ClInclude Include="project\JZParamFile.h">
-      <Filter>Header Files\project</Filter>
-    </ClInclude>
     <ClInclude Include="project\JZProjectItem.h">
-      <Filter>Header Files\project</Filter>
-    </ClInclude>
-    <ClInclude Include="project\JZScriptFile.h">
       <Filter>Header Files\project</Filter>
     </ClInclude>
     <ClInclude Include="project\JZUiFile.h">
@@ -623,12 +617,6 @@
     <ClInclude Include="script\JZNodeUtils.h">
       <Filter>Source Files\editor\script</Filter>
     </ClInclude>
-    <ClInclude Include="project\JZClassFile.h">
-      <Filter>Header Files\project</Filter>
-    </ClInclude>
-    <ClInclude Include="project\JZLibraryFile.h">
-      <Filter>Header Files\project</Filter>
-    </ClInclude>
     <ClInclude Include="script\JZNodeValue.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
@@ -652,6 +640,21 @@
     </ClInclude>
     <ClInclude Include="project\JZProjectItemStream.h">
       <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZProjectStream.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZParamItem.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZClassItem.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZScriptItem.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZScriptFile.h">
+      <Filter>Header Files\project</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

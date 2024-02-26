@@ -1,11 +1,25 @@
 <RCC>
   <qresource prefix="/JZNodeEditor">
-    <file>Resources/icons/iconLibrary.png</file>
-    <file>Resources/icons/iconProject.png</file>
     <file>Resources/icons/iconClass.png</file>
+    <file>Resources/icons/iconCopy.png</file>
+    <file>Resources/icons/iconCut.png</file>
+    <file>Resources/icons/iconDelete.png</file>
     <file>Resources/icons/iconFile.png</file>
     <file>Resources/icons/iconFolder.png</file>
     <file>Resources/icons/iconFunction.png</file>
-	<file>Resources/fucntionList.txt</file>
+    <file>Resources/icons/iconLibrary.png</file>
+    <file>Resources/icons/iconNewFolder.png</file>
+    <file>Resources/icons/iconOpen.png</file>
+    <file>Resources/icons/iconPaste.png</file>
+    <file>Resources/icons/iconPause.png</file>
+    <file>Resources/icons/iconProject.png</file>
+    <file>Resources/icons/iconRedo.png</file>
+    <file>Resources/icons/iconRun.png</file>
+    <file>Resources/icons/iconSave.png</file>
+    <file>Resources/icons/iconSaveAll.png</file>
+    <file>Resources/icons/iconSearch.png</file>
+    <file>Resources/icons/iconStop.png</file>
+    <file>Resources/icons/iconUndo.png</file>
+    <file>Resources/fucntionList.txt</file>
   </qresource>
 </RCC>

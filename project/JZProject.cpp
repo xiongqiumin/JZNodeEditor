@@ -1,64 +1,15 @@
 ﻿#include <QFile>
 #include <QFileInfo>
+#include <QDir>
 #include "JZProject.h"
 #include "JZNodeFactory.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include "JZUiFile.h"
 #include "JZEvent.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
 #include "JZNodeEvent.h"
 #include "JZNodeValue.h"
-
-QByteArray ProjectMagic()
-{
-    QString magic = "1234567";
-
-    QByteArray result;
-    QDataStream s(&result,QIODevice::WriteOnly);
-    s << QString(magic);
-
-    s << sizeof(JZProject);
-    s << sizeof(JZProjectItem);
-    s << sizeof(JZScriptFile);
-    s << sizeof(JZProjectItemFolder);
-    s << sizeof(JZScriptLibraryFile);
-
-    //node
-    s << sizeof(JZNodeGemo);
-    s << sizeof(JZNodeConnect);
-    s << sizeof(JZNode);
-    s << sizeof(JZNodeFunction);
-    s << sizeof(JZNodeBranch);
-    s << sizeof(JZNodeIRCall);
-    s << sizeof(JZNodeWhile);
-    s << sizeof(JZNodeFunction);
-
-    //node ir
-    s << sizeof(JZNodeIR);
-    s << sizeof(JZNodeIRNodeId);
-    s << sizeof(JZNodeIRCall);
-    s << sizeof(JZNodeIRJmp);
-    s << sizeof(JZNodeIRExpr);
-    s << sizeof(JZNodeIRSet);
-
-    return result;
-}
-
-
-QDataStream &operator<<(QDataStream &s, const JZProject::ItemInfo &param)
-{
-    s << param.buffer;
-    s << param.breakPoints;
-    return s;
-}
-
-QDataStream &operator >> (QDataStream &s, JZProject::ItemInfo &param)
-{
-    s >> param.buffer;
-    s >> param.breakPoints;
-    return s;
-}
 
 // JZProject
 JZProject::JZProject()    
@@ -79,21 +30,31 @@ bool JZProject::isVaild()
 
 void JZProject::clear()
 {
-    m_itemBuffer.clear();
     m_filepath.clear();
     m_root.removeChlids();
     m_root.setName(".");    
+}
+
+QByteArray JZProject::magic()
+{
+    QString magic = "1234567";
+
+    QByteArray result;
+    QDataStream s(&result, QIODevice::WriteOnly);
+    s << QString(magic);
+
+    return result;
 }
 
 void JZProject::init()
 {        
     clear();
 
-    JZScriptFile *main_flow = new JZScriptFile(ProjectItem_scriptFlow);
+    JZScriptItem *main_flow = new JZScriptItem(ProjectItem_scriptFlow);
     main_flow->setName("main.jz");
     addItem("",main_flow);
 
-    JZParamFile *param_page = new JZParamFile();
+    JZParamItem *param_page = new JZParamItem();
     param_page->setName("global.def");
     addItem("",param_page);
 
@@ -112,12 +73,14 @@ void JZProject::initUi()
     m_blockRegist = true;    
 
     auto func_inst = JZNodeFunctionManager::instance();    
-    addUiClass("./","mainwindow");
+    auto script_file = createScript("mainwindow");
+    script_file->addClass("mainwindow");
+
     m_blockRegist = false;
     registType();
 
-    auto main_script = (JZScriptFile *)getItem("./main.jz");
-    auto param_def = (JZParamFile *)getItem("./global.def");
+    auto main_script = (JZScriptItem *)getItem("./main.jz");
+    auto param_def = (JZParamItem *)getItem("./global.def");
     param_def->addVariable("mainwindow",JZClassId("mainwindow"));
 
     JZNodeSetParam *set_param = new JZNodeSetParam();    
@@ -150,6 +113,29 @@ void JZProject::initUi()
     saveItem(main_script);       
 }
 
+void JZProject::initTest()
+{
+    m_blockRegist = true;
+
+    clear();
+
+    JZScriptFile *file = new JZScriptFile();
+    file->setName("main.jz");
+    addItem("./", file);
+
+    JZScriptItem *main_flow = file->addFlow("main");
+    JZParamDefine *param = file->addParamDefine("global");
+
+    JZNodeEvent *start = new JZNodeStartEvent();
+    main_flow->addNode(JZNodePtr(start));
+
+    saveItem(main_flow);
+    m_windowSystem = false;
+
+    m_blockRegist = false;
+    registType();
+}
+
 void JZProject::initConsole()
 {
     m_blockRegist = true;
@@ -180,16 +166,56 @@ void JZProject::registType()
 
 bool JZProject::open(QString filepath)
 {
-    QFile file(filepath);
-    if(!file.open(QFile::ReadOnly))
-        return false;
-
-    m_blockRegist = true;    
     clear();
+    JZProjectFile file;    
+    if (!file.load(filepath))
+    {
+        m_error = file.error();
+        return false;
+    }
+
+    auto &pro_s = file.stream();
+    pro_s["filelist"] >> m_fileList;
+
+    m_blockRegist = true;        
     m_filepath = filepath;
-    QDataStream s(&file);
-    loadFromStream(s);
-    file.close();
+
+    QString dir = QFileInfo(m_filepath).filePath();
+    for (int i = 0; i < m_fileList.size(); i++)
+    {
+        QString sub_path;
+        if(QDir::isAbsolutePath(m_fileList[i]))
+            sub_path = m_fileList[i];
+        else
+            sub_path = dir + "/" + m_fileList[i];
+                                
+        if (!QFile::exists(sub_path))
+            return false;
+
+        QString ext = QFileInfo(sub_path).suffix();
+        QString sub_dir = QFileInfo(sub_path).path();
+        if (ext == "jz")
+        {
+            JZProjectFile sub_file;
+            if (!sub_file.load(sub_path))
+                return false;
+
+            auto s = sub_file.stream();            
+
+            JZScriptFile *class_file = new JZScriptFile();
+            class_file->loadFromStream(s);
+            addItem(sub_dir, class_file);
+        }
+        else if (ext == "ui")
+        {
+            QFile file(sub_path);
+            if (!file.open(QFile::WriteOnly | QFile::Text))
+                return false;
+
+            JZUiFile *ui_file = new JZUiFile();
+            addItem(sub_dir, ui_file);
+        }
+    }    
     m_blockRegist = false;
 
     registType();
@@ -199,17 +225,18 @@ bool JZProject::open(QString filepath)
     {        
         if (JZProjectItemIsScript(script_list[i]))
         {            
-            auto item = dynamic_cast<JZScriptFile*>(script_list[i]);
+            auto item = dynamic_cast<JZScriptItem*>(script_list[i]);
             item->loadFinish();
         }
     }    
 
+    loadCache();
     return true;
 }
 
 void JZProject::close()
 {
-    save();
+    saveCache();
     clear();    
 }
 
@@ -217,53 +244,47 @@ bool JZProject::save()
 {    
     if (m_filepath.isEmpty())
         return false;
+    
+    JZProjectFile file;
+    auto &pro_s = file.stream();
+    pro_s["filelist"] << m_fileList;
 
-    return saveAs(m_filepath);    
+    return file.save(m_filepath);        
 }
 
-bool JZProject::saveAs(QString filepath)
-{   
-    m_filepath = filepath;    
-
-    QFile file(m_filepath);
-    if(!file.open(QFile::WriteOnly | QFile::Truncate))
-        return false;
-
-    QDataStream s(&file);    
-    saveToStream(s);
-    file.close();    
-    return true;
-}
-
-void JZProject::saveAllItem()
+QString JZProject::error()
 {
-    QList<JZProjectItem*> list = itemList("./",ProjectItem_any);
-    for(int i = 0; i < list.size(); i++)
-        saveItem(list[i]);
+    return m_error;
 }
 
-void JZProject::saveItem(QString path)
-{
-    auto item = getItem(path);
-    Q_ASSERT(item);
-    saveItem(item);
-}
-
-void JZProject::saveItem(JZProjectItem *item)
-{
-    if(item->itemPath() == ".")
+void JZProject::saveCache()
+{    
+    QString cache = m_filepath + ".data";
+    QFile file(cache);
+    if (!file.open(QFile::WriteOnly | QFile::Truncate))
         return;
 
-    m_itemBuffer[item->itemPath()].buffer = JZProjectItemFactory::save(item);
+    QDataStream s(&file);
+    s << magic();
+    s << m_breakPoints;
+    file.close();
 }
 
-void JZProject::loadItem(JZProjectItem *item)
+void JZProject::loadCache()
 {
-    QByteArray &buffer = m_itemBuffer[item->itemPath()].buffer;
-    QDataStream s(buffer);
-    int itemType;
-    s >> itemType;
-    item->loadFromStream(s);
+    QString cache = m_filepath + ".data";
+    QFile file(cache);
+    if (!file.open(QFile::ReadOnly))
+        return;
+
+    QByteArray pre_magic;
+    QDataStream s(&file);
+    s >> pre_magic;
+    if (pre_magic == magic())
+    {
+        s >> m_breakPoints;
+        file.close();
+    }
 }
 
 QString JZProject::name()
@@ -288,14 +309,14 @@ QString JZProject::mainScriptPath()
     return "./main.jz";
 }
 
-JZScriptFile *JZProject::mainScript()
+JZScriptItem *JZProject::mainScript()
 {
-    return dynamic_cast<JZScriptFile*>(getItem("./main.jz"));
+    return dynamic_cast<JZScriptItem*>(getItem("./main.jz"));
 }
 
-JZParamFile *JZProject::globalDefine()
+JZParamItem *JZProject::globalDefine()
 {
-    return dynamic_cast<JZParamFile*>(getItem("./global.def"));
+    return dynamic_cast<JZParamItem*>(getItem("./global.def"));
 }
 
 JZProjectItem *JZProject::root()
@@ -303,30 +324,29 @@ JZProjectItem *JZProject::root()
     return &m_root;
 }
 
-int JZProject::addItem(QString dir,JZProjectItem *item)
-{    
+bool JZProject::addItem(QString dir, JZProjectItem *item)
+{
     auto parent = getItem(dir);
-    if(!parent)
-        return -1;    
-    
+    if (!parent)
+        return false;
+
     Q_ASSERT(!item->project());
     Q_ASSERT(!item->name().isEmpty());
     item->setProject(this);
     parent->addItem(JZProjectItemPtr(item));
     item->parent()->sort();
 
-    m_itemBuffer[item->itemPath()].buffer = JZProjectItemFactory::save(item);
     regist(item);
-    return item->parent()->indexOfItem(item);
+    return true;
 }
 
 void JZProject::removeItem(QString filepath)
 {
     JZProjectItem *item = getItem(filepath);
     Q_ASSERT(item);
-    
+
     bool replace_class = false;
-    auto class_file = getClassFile(item);
+    auto class_file = getClass(item);
     if (class_file)
     {
         if (item->itemType() == ProjectItem_class)
@@ -344,58 +364,18 @@ void JZProject::removeItem(QString filepath)
     int index = parent->indexOfItem(item);
     parent->removeItem(index);
 
-    if(replace_class)
+    if (replace_class)
         JZNodeObjectManager::instance()->replace(class_file->objectDefine());
-
-    m_itemBuffer.remove(filepath);
-    QString path = filepath + "/";
-    auto it = m_itemBuffer.begin();
-    while(it != m_itemBuffer.end())
-    {
-        if(it.key().startsWith(path))
-            it = m_itemBuffer.erase(it);
-        else
-            it++;
-    }    
-    emit sigFileChanged();
 }
 
-int JZProject::renameItem(JZProjectItem *item,QString newname)
+void JZProject::renameItem(JZProjectItem *item, QString newname)
 {
     QString newPath = item->path() + "/" + newname;
     QString oldPath = item->itemPath();
     item->setName(newname);
     item->parent()->sort();
 
-    m_itemBuffer[newPath] = m_itemBuffer[oldPath];
-    m_itemBuffer.remove(oldPath);
-
     oldPath += "/";
-
-    QList<QPair<QString,QString>> renameList;
-    auto it = m_itemBuffer.begin();
-    while(it != m_itemBuffer.end())
-    {
-        if(it.key().startsWith(oldPath))
-        {
-            QPair<QString,QString> pair;
-            pair.first = it.key();
-
-            QString new_key = it.key();
-            new_key.replace(oldPath,newPath);
-            pair.second = new_key;
-            renameList.push_back(pair);
-        }
-        it++;
-    }
-    for(int i = 0; i < renameList.size(); i++)
-    {
-        auto &p = renameList[i];
-        m_itemBuffer[p.first] = m_itemBuffer[p.second];
-        m_itemBuffer.remove(p.second);
-    }    
-
-    return item->parent()->indexOfItem(item);
 }
 
 JZProjectItem *JZProject::getItem(QString path)
@@ -416,147 +396,37 @@ JZProjectItem *JZProject::getItem(QString path)
     return folder;
 }
 
-JZProjectItemFolder *JZProject::addFolder(QString path, QString name)
-{
-    JZProjectItemFolder *folder = new JZProjectItemFolder();
-    folder->setName(name);
-    addItem(path, folder);
-    return folder;
-}
-
-JZScriptFile *JZProject::addFunction(QString path, const FunctionDefine &define)
-{
-    Q_ASSERT(!define.name.isEmpty() && getItem(path));
-
-    JZScriptFile *file = new JZScriptFile(ProjectItem_scriptFunction);
-    file->setName(define.name);
-    file->setFunction(define);
-    addItem(path,file);    
-    return file;
-}
-
-void JZProject::removeFunction(QString name)
-{
-    auto func = getFunction(name);
-    if(func)
-        removeItem(func->itemPath());
-}
-
-JZScriptFile *JZProject::getFunction(QString name)
-{
-    name.replace(".", "/");
-    auto item = getItem(name);
-    if (item && item->itemType() == ProjectItem_scriptFunction)
-        return (JZScriptFile *)item;
-    else
-        return nullptr;
-}
-
-JZScriptLibraryFile *JZProject::addLibrary(QString name)
+JZProjectItem *JZProject::addFile(QString dir)
 {
     return nullptr;
 }
 
-void JZProject::removeLibrary(QString name)
+void JZProject::removeFile(QString path)
 {
-    removeItem(name);
+
 }
 
-JZScriptLibraryFile *JZProject::getLibrary(QString name)
+void JZProject::renameFile(QString oldPath, QString newPath)
 {
-    QStringList list = name.split("::");
-    JZProjectItem *item = &m_root;
-    for(int i = 0; i < list.size(); i++)
-    {
-        QList<JZProjectItem*> item_list = item->itemList(ProjectItem_library);
-        item = nullptr;
-        for(int i = 0; i < item_list.size(); i++)
-        {
-            if(item_list[i]->name() == list[i])
-            {
-                item = item_list[i];
-                break;
-            }
-        }
-        if(!item)
-            return nullptr;
-    }
-    return dynamic_cast<JZScriptLibraryFile*>(item);
+
 }
 
-JZScriptClassFile *JZProject::addClass(QString path,QString name,QString super)
-{    
-    QString flow = name + ".jz";
-
-    JZScriptClassFile *class_file = new JZScriptClassFile();
-    class_file->setClass(name, super);
-
-    JZParamFile *data_page = new JZParamFile();
-    JZScriptFile *script_flow = new JZScriptFile(ProjectItem_scriptFlow);
-    JZProjectItemFolder *script_function = new JZProjectItemFolder();
-    class_file->setName(name);
-    data_page->setName("变量");
-    script_flow->setName("事件");
-    script_function->setName("成员函数");
-
-    addItem("./",class_file);
-    addItem(class_file->itemPath(),data_page);
-    addItem(class_file->itemPath(),script_flow);
-    addItem(class_file->itemPath(),script_function);
-
-    return class_file;
-}
-
-JZScriptClassFile *JZProject::addUiClass(QString path, QString name)
+JZScriptFile *JZProject::createScript(QString path)
 {
-    JZScriptClassFile *file = addClass(path, name,"Widget");
-    if(!file)
-        return nullptr;
-
-    JZUiFile *ui_page = new JZUiFile();
-    ui_page->setName(name + ".ui");
-    addItem(file->itemPath(),ui_page);
-
-    return file;
+    JZScriptFile *script = nullptr;
+    return script;
 }
 
-JZScriptClassFile *JZProject::getClass(QString name)
-{
-    QList<JZProjectItem*> list;
-
-    JZProjectItem *item = &m_root;
-    int index = name.lastIndexOf("::");
-    if(index >= 0)
-    {
-        QString lib_name = name.left(index);
-        item = getLibrary(lib_name);
-        name = name.mid(index + 2);
-    }
-    list = item->itemList(ProjectItem_class);
-    for(int i = 0; i < list.size(); i++)
-    {
-        JZScriptClassFile *file = dynamic_cast<JZScriptClassFile*>(list[i]);
-        if(file->name() == name)
-            return file;
-    }
-    return nullptr;
-}
-
-JZScriptClassFile *JZProject::getClassFile(JZProjectItem *item)
+JZScriptClassItem *JZProject::getClass(JZProjectItem *item)
 {    
     while (item)
     {
         if (item->itemType() == ProjectItem_class)
-            return (JZScriptClassFile*)item;
+            return (JZScriptClassItem*)item;
 
         item = item->parent();
     }
     return nullptr;
-}
-
-void JZProject::removeClass(QString name)
-{
-    removeItem(name);    
 }
 
 JZParamDefine *JZProject::globalVariableInfo(QString name)
@@ -564,7 +434,7 @@ JZParamDefine *JZProject::globalVariableInfo(QString name)
     QList<JZProjectItem*> list = paramDefineList();
     for(int i = 0; i < list.size(); i++)
     {        
-        JZParamFile *file = dynamic_cast<JZParamFile*>(list[i]);
+        JZParamItem *file = dynamic_cast<JZParamItem*>(list[i]);
         JZParamDefine *def = file->getVariable(name);
         if (def)
             return def;
@@ -578,7 +448,7 @@ QStringList JZProject::globalVariableList()
     QList<JZProjectItem*> list = paramDefineList();
     for(int i = 0; i < list.size(); i++)
     {
-        JZParamFile *file = dynamic_cast<JZParamFile*>(list[i]);
+        JZParamItem *file = dynamic_cast<JZParamItem*>(list[i]);
         result << file->variableList();
     }
     return result;
@@ -608,7 +478,7 @@ const FunctionDefine *JZProject::function(QString name)
     auto list = itemList("./",ProjectItem_scriptFunction);
     for(int i = 0; i < list.size(); i++)
     {
-        JZScriptFile *file = (JZScriptFile*)list[i];
+        JZScriptItem *file = (JZScriptItem*)list[i];
         if(file->function().name == name)
             return &file->function();
     }
@@ -622,7 +492,7 @@ QStringList JZProject::functionList()
     auto list = itemList("./", ProjectItem_scriptFunction);
     for (int i = 0; i < list.size(); i++)
     {
-        JZScriptFile *file = (JZScriptFile*)list[i];
+        JZScriptItem *file = (JZScriptItem*)list[i];
         if (file->function().className.isEmpty())
             ret << file->function().fullName();
     }
@@ -637,68 +507,22 @@ QString JZProject::dir(const QString &filepath)
 
 bool JZProject::hasBreakPoint(QString file,int id)
 {
-    auto it = m_itemBuffer.find(file);
-    if(it == m_itemBuffer.end())
-        return false;
-
-    return it->breakPoints.contains(id);
+    return false;
 }
 
 void JZProject::addBreakPoint(QString file,int id)
 {
     if(hasBreakPoint(file,id))
-        return;
-
-    m_itemBuffer[file].breakPoints.push_back(id);
+        return;    
 }
 
 void JZProject::removeBreakPoint(QString file,int id)
-{
-    auto it = m_itemBuffer.find(file);
-    if(it == m_itemBuffer.end())
-        return;
-
-    it->breakPoints.removeAll(id);
+{    
 }
 
-QMap<QString, QVector<int>> JZProject::breakPoints()
+QMap<QString, QList<int>> JZProject::breakPoints()
 {
-    QMap<QString, QVector<int>> breakPoints;
-    auto it = m_itemBuffer.begin();
-    while (it != m_itemBuffer.end())
-    {     
-        if(JZProjectItemIsScript(getItem(it.key())))
-            breakPoints.insert(it.key(), it->breakPoints);
-        it++;
-    }
-    return breakPoints;
-}
-
-void JZProject::saveToStream(QDataStream &s)
-{
-    s << m_itemBuffer;
-    s << m_windowSystem;
-}
-
-void JZProject::loadFromStream(QDataStream &s)
-{
-    QMap<QString,JZProjectItem*> itemMap;
-
-    s >> m_itemBuffer;
-    auto it = m_itemBuffer.begin();
-    while(it != m_itemBuffer.end())
-    {
-        itemMap[it.key()] = JZProjectItemFactory::load(it->buffer);
-        it++;
-    }
-
-    auto it_item = itemMap.begin();
-    while(it_item != itemMap.end())
-    {
-        addItem(dir(it_item.key()),it_item.value());
-        it_item++;
-    }
-    s >> m_windowSystem;
+    return m_breakPoints;
 }
 
 QString JZProject::domain(JZProjectItem *item)
@@ -722,7 +546,7 @@ void JZProject::regist(JZProjectItem *item)
     if (m_blockRegist)
         return;
 
-    auto class_file = getClassFile(item);
+    auto class_file = getClass(item);
     if (class_file)
     {
         JZNodeObjectDefine base;
@@ -746,7 +570,7 @@ void JZProject::regist(JZProjectItem *item)
     {
         if (item->itemType() == ProjectItem_scriptFunction)
         {
-            JZScriptFile* func = dynamic_cast<JZScriptFile*>(item);            
+            JZScriptItem* func = dynamic_cast<JZScriptItem*>(item);            
             JZNodeFunctionManager::instance()->registFunction(func->function());
         }
     }

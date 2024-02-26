@@ -9,9 +9,6 @@ public:
     SampleRussian();
     ~SampleRussian();
 
-    bool run();
-    void saveProject();
-
 protected:    
     void addInitGame();
     void addInitFunction();
@@ -33,7 +30,7 @@ protected:
     int m_row = 20;
     int m_col = 10;
     int m_blockSize = 26;
-    JZScriptFile *m_script;
+    JZScriptItem *m_script;
 };
 
 

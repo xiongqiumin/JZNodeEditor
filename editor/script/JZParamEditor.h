@@ -4,7 +4,7 @@
 #include <QTableWidget>
 #include <QUndoStack>
 #include "JZEditor.h"
-#include "JZParamFile.h"
+#include "JZParamItem.h"
 
 namespace Ui {
     class JZParamEditor;
@@ -74,7 +74,7 @@ protected:
     int rowIndex(QComboBox *box);
     int rowDataType(int row);
 
-    JZParamFile *m_file;    
+    JZParamItem *m_file;    
     QTableWidget *m_table;
     Ui::JZParamEditor *ui;
     int m_widgetCount;

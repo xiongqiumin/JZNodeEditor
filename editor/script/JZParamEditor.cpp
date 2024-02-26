@@ -183,12 +183,12 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
 
 void JZParamEditor::open(JZProjectItem *item)
 {   
-    m_file = dynamic_cast<JZParamFile*>(item);
+    m_file = dynamic_cast<JZParamItem*>(item);
     m_table->blockSignals(true);
     m_table->clearContents();
 
     m_widgetCount = 0;
-    JZScriptClassFile *class_file = m_project->getClassFile(item);
+    JZScriptClassItem *class_file = m_project->getClass(item);
     if (class_file)
     {
         auto widgets = class_file->uiWidgets();
@@ -358,7 +358,7 @@ void JZParamEditor::setParamType(QString name, int dataType)
 
 void JZParamEditor::on_btnAdd_clicked()
 {        
-    JZScriptClassFile *class_file = getClassFile(m_file);
+    JZScriptClassItem *class_file = getClassFile(m_file);
 
     QStringList namelist;    
     if (class_file)

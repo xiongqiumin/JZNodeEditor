@@ -158,7 +158,7 @@ class JZNodeDebugInfo
 public:
     JZNodeDebugInfo();
 
-    QMap<QString,QVector<int>> breakPoints;
+    QMap<QString,QList<int>> breakPoints;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param);

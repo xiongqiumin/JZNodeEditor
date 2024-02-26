@@ -5,10 +5,10 @@
 #include <QMap>
 #include "JZNodeObject.h"
 #include "JZProjectItem.h"
-#include "JZParamFile.h"
+#include "JZParamItem.h"
+#include "JZScriptItem.h"
+#include "JZClassItem.h"
 #include "JZScriptFile.h"
-#include "JZClassFile.h"
-#include "JZLibraryFile.h"
 
 //JZProject
 class JZProject : public QObject
@@ -22,59 +22,54 @@ public:
     bool isVaild();
 
     void initUi();
-    void initConsole();       
+    void initConsole();
+    void initTest();
 
     bool open(QString filepath);
     void close();
+    bool save();        
 
-    bool save();    
-    bool saveAs(QString filepath);    
+    void saveCache(); //保存 breakpoint 之类的设置信息
+    void loadCache();
+
+    QString error();
 
     QString name();
     QString filePath();
     QString path();
 
     QString mainScriptPath();
-    JZScriptFile *mainScript();
-    JZParamFile *globalDefine();
+    JZScriptItem *mainScript();
+    JZParamItem *globalDefine();
 
-    JZProjectItemFolder *addFolder(QString path,QString name);    
+    JZProjectItem *root();
 
-    JZScriptFile *addFunction(QString path,const FunctionDefine &func);
-    void removeFunction(QString name);
-    JZScriptFile *getFunction(QString name);
+    JZProjectItem *addFile(QString path);
+    void removeFile(QString path);    
+    void renameFile(QString oldPath,QString newPath);
 
-    JZScriptLibraryFile *addLibrary(QString name);
-    void removeLibrary(QString name);
-    JZScriptLibraryFile *getLibrary(QString libraryName);
+    JZScriptFile *createScript(QString path);
 
-    JZScriptClassFile *addClass(QString path,QString def,QString super = QString());
-    JZScriptClassFile *addUiClass(QString path,QString def);
-    void removeClass(QString name);
-    JZScriptClassFile *getClass(QString className);
-    JZScriptClassFile *getClassFile(JZProjectItem *item);
-
+    JZScriptClassItem *getClass(QString class_name);
+    JZScriptClassItem *getClass(JZProjectItem *item);
     JZParamDefine *globalVariableInfo(QString name);      
     QStringList globalVariableList();
-    
-    int addItem(QString dir,JZProjectItem *item);
+            
+    bool addItem(QString path, JZProjectItem *item);
     void removeItem(QString path);
     JZProjectItem *getItem(QString path);
-    void saveItem(QString path);
-    void saveItem(JZProjectItem *item);
-    void loadItem(JZProjectItem *item);
-    void saveAllItem();
-    int renameItem(JZProjectItem *item,QString newname);
-    QList<JZProjectItem *> itemList(QString path,int type);
-    JZProjectItem *root();
+    QList<JZProjectItem *> itemList(QString path, int type);
+    bool saveItem(JZProjectItem *item);
+    bool loadItem(JZProjectItem *item);
+    void renameItem(JZProjectItem *item, QString name);    
+    
+    const FunctionDefine *function(QString name);
+    QStringList functionList();
 
     bool hasBreakPoint(QString file,int id);
     void addBreakPoint(QString file,int id);
     void removeBreakPoint(QString file,int id);
-    QMap<QString, QVector<int>> breakPoints();
-
-    const FunctionDefine *function(QString name);
-    QStringList functionList();
+    QMap<QString, QList<int>> breakPoints();
 
     void regist(JZProjectItem *item);     
 
@@ -84,17 +79,9 @@ signals:
 protected:
     Q_DISABLE_COPY(JZProject)
 
-    struct ItemInfo
-    {        
-        QByteArray buffer;
-        QVector<int> breakPoints;
-    };
-    friend QDataStream &operator<<(QDataStream &s, const ItemInfo &param);
-    friend QDataStream &operator >> (QDataStream &s, ItemInfo &param);
-    QList<JZProjectItem *> paramDefineList();
+    QByteArray magic();
+    QList<JZProjectItem *> paramDefineList();    
 
-    void saveToStream(QDataStream &s);
-    void loadFromStream(QDataStream &s);
     QString domain(JZProjectItem *item);
     void init();    
     void clear();
@@ -102,10 +89,15 @@ protected:
     QString dir(const QString &filepath);    
             
     JZProjectItemFolder m_root;
-    QMap<QString,ItemInfo> m_itemBuffer;
-    QString m_filepath;
+    
     bool m_windowSystem;
+    QStringList m_fileList;
+    QList<JZProjectItemPtr> m_itemList;
+
+    QMap<QString, QList<int>> m_breakPoints;
+    QString m_filepath;    
     bool m_blockRegist;
+    QString m_error;
 };
 
 #endif

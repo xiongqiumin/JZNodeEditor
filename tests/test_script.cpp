@@ -22,9 +22,7 @@ void ScriptTest::call()
 }
 
 bool ScriptTest::build()
-{
-    m_project.saveAllItem();
-
+{    
     JZNodeBuilder builder;
     if(!builder.build(&m_project,&m_program))
     {
@@ -76,7 +74,7 @@ void ScriptTest::init()
 {
     m_project.initConsole();
     m_scriptFlow = m_project.mainScript();
-    m_paramDef = (JZParamFile*)m_project.getItem("global.def");
+    m_paramDef = (JZParamItem*)m_project.getItem("global.def");
 }
 
 void ScriptTest::cleanup()
@@ -129,7 +127,7 @@ QMap<int,int> ScriptTest::initWhileSetCase()
     {
         JZNodeSetParam *node_set = new JZNodeSetParam();
         node_set->setVariable("i");
-        node_set->setPropValue(node_set->paramIn(0),i);
+        node_set->setPropValue(node_set->paramIn(0),QString::number(i));
         script->addNode(JZNodePtr(node_set));
 
         node_value[node_set->id()] = i;
@@ -197,27 +195,23 @@ void ScriptTest::testProjectSave()
     project.initConsole();
 
     //check flow
-    JZScriptFile *scriptFlow = project.mainScript();
+    JZScriptItem *scriptFlow = project.mainScript();
     JZNodeAdd *node_add = new JZNodeAdd();
     JZNodeParam *node_a = new JZNodeParam();
     JZNodeParam *node_b = new JZNodeParam();
     scriptFlow->addNode(JZNodePtr(node_a));
     scriptFlow->addNode(JZNodePtr(node_b));
-    scriptFlow->addNode(JZNodePtr(node_add));    
-    scriptFlow->save();
+    scriptFlow->addNode(JZNodePtr(node_add));        
 
     //check define
-    JZParamFile *paramDef = (JZParamFile*)project.getItem("global.def");
+    JZParamItem *paramDef = (JZParamItem*)project.getItem("global.def");
 
-    paramDef->addVariable("heello",Type_double,3.0);
-    paramDef->save();
-    ret = project.saveAs(projectPath);
-    QVERIFY2(ret,"project.saveAs");
+    paramDef->addVariable("heello",Type_double,3.0);    
 
     ret = project.open(projectPath);
     QVERIFY2(ret,"project.open");
 
-    paramDef = (JZParamFile*)project.getItem("global.def");
+    paramDef = (JZParamItem*)project.getItem("global.def");
     JZParamDefine *def = paramDef->getVariable("heello");
     QVERIFY2(def,"getVariable");
     QCOMPARE(def->name,"heello");
@@ -275,9 +269,9 @@ void ScriptTest::testBranch()
     define.name = "testFunc";
     define.paramIn.push_back(JZParamDefine("a", Type_int));
     define.paramIn.push_back(JZParamDefine("b", Type_int));
-    define.paramOut.push_back(JZParamDefine("c", Type_int));
+    define.paramOut.push_back(JZParamDefine("c", Type_int));    
 
-    auto script = m_project.addFunction("./", define);
+    auto script = m_file->addFunction("./", define);
     auto node_start = script->getNode(0);
 
     JZNodeBranch *branch = new JZNodeBranch();
@@ -290,11 +284,11 @@ void ScriptTest::testBranch()
 
     JZNodeReturn *r1 = new JZNodeReturn();
     r1->setFunction(&define);
-    r1->setParamInValue(0, 1);
+    r1->setParamInValue(0, "1");
     
     JZNodeReturn *r2 = new JZNodeReturn();
     r2->setFunction(&define);
-    r2->setParamInValue(0, 0);
+    r2->setParamInValue(0, "0");
     
     script->addNode(JZNodePtr(branch));
     script->addNode(JZNodePtr(eq));
@@ -331,7 +325,7 @@ void ScriptTest::testIf()
     define.paramIn.push_back(JZParamDefine("a", Type_int));    
     define.paramOut.push_back(JZParamDefine("ret", Type_int));
 
-    auto script = m_project.addFunction("./", define);
+    auto script = m_file->addFunction("./", define);
     auto node_start = script->getNode(0);
 
     JZNodeIf *node_if = new JZNodeIf();
@@ -357,10 +351,10 @@ void ScriptTest::testIf()
         script->addNode(JZNodePtr(ret));
 
         ret->setFunction(&define);
-        ret->setParamInValue(0, i);
+        ret->setParamInValue(0, QString::number(i));
 
         script->addConnect(a->paramOutGemo(0), eq->paramInGemo(0));
-        eq->setParamInValue(1, i);
+        eq->setParamInValue(1, QString::number(i));
 
         script->addConnect(eq->paramOutGemo(0), node_if->paramInGemo(i));
         script->addConnect(node_if->subFlowOutGemo(i), ret->flowInGemo());
@@ -369,7 +363,7 @@ void ScriptTest::testIf()
     JZNodeReturn *ret_else = new JZNodeReturn();
     script->addNode(JZNodePtr(ret_else));
     ret_else->setFunction(&define);
-    ret_else->setParamInValue(0, -1);
+    ret_else->setParamInValue(0, "-1");
     script->addConnect(node_if->subFlowOutGemo(4), ret_else->flowInGemo());
 
     if (!build())
@@ -396,14 +390,14 @@ void ScriptTest::testSwitch()
     define.paramIn.push_back(JZParamDefine("a", Type_int));
     define.paramOut.push_back(JZParamDefine("ret", Type_int));
 
-    auto script = m_project.addFunction("./", define);
+    auto script = m_file->addFunction("./", define);
     auto node_start = script->getNode(0);
 
     JZNodeSwitch *node_switch = new JZNodeSwitch();
     while (node_switch->caseCount() < 4)
         node_switch->addCase();
     for (int i = 0; i < 4; i++)            
-        node_switch->setCaseValue(i, i);    
+        node_switch->setCaseValue(i, QString::number(i));
     node_switch->addDefault();
 
     QCOMPARE(node_switch->paramInCount(), 1);
@@ -422,7 +416,7 @@ void ScriptTest::testSwitch()
         script->addNode(JZNodePtr(ret));
 
         ret->setFunction(&define);
-        ret->setParamInValue(0, i);
+        ret->setParamInValue(0, QString::number(i));
         
         script->addConnect(node_switch->subFlowOutGemo(i), ret->flowInGemo());
     }
@@ -430,7 +424,7 @@ void ScriptTest::testSwitch()
     JZNodeReturn *ret_else = new JZNodeReturn();
     script->addNode(JZNodePtr(ret_else));
     ret_else->setFunction(&define);
-    ret_else->setParamInValue(0, -1);
+    ret_else->setParamInValue(0, "-1");
     script->addConnect(node_switch->subFlowOutGemo(4), ret_else->flowInGemo());
 
     if (!build())
@@ -458,7 +452,7 @@ void ScriptTest::testSequeue()
         c = 3 + 4
         d = 4 + 5
     */    
-    JZScriptFile *script = m_scriptFlow;
+    JZScriptItem *script = m_scriptFlow;
     JZNodeEngine *engine = &m_engine;
     auto *paramDef = m_paramDef;
 
@@ -485,8 +479,8 @@ void ScriptTest::testSequeue()
         node_set->setVariable(QString('a' + i));
 
         JZNodeAdd *node_add = new JZNodeAdd();
-        node_add->setPropValue(node_add->paramIn(0),i+1);
-        node_add->setPropValue(node_add->paramIn(1),i+2);
+        node_add->setPropValue(node_add->paramIn(0), QString::number(i+1));
+        node_add->setPropValue(node_add->paramIn(1), QString::number(i+2));
 
         script->addNode(JZNodePtr(node_set));
         script->addNode(JZNodePtr(node_add));
@@ -515,7 +509,7 @@ void ScriptTest::testFor()
         define.name = "ForTest" + QString::number(i);        
         define.paramOut.push_back(JZParamDefine("result", Type_int));
 
-        JZScriptFile *script = m_project.addFunction("./", define);
+        JZScriptItem *script = m_file->addFunction("./", define);
         script->addLocalVariable("sum", Type_int);
 
         JZNode *node_start = script->getNode(0);
@@ -582,9 +576,9 @@ void ScriptTest::testForEach()
             sum = sum + i;
         }
     */    
-    JZScriptFile *script = m_scriptFlow;
+    JZScriptItem *script = m_scriptFlow;
     JZNodeEngine *engine = &m_engine;
-    JZParamFile *paramDef = m_paramDef;
+    JZParamItem *paramDef = m_paramDef;
     paramDef->addVariable("sum",Type_int,0);
     paramDef->addVariable("a",JZNodeObjectManager::instance()->getClassId("List"));
 
@@ -643,7 +637,7 @@ void ScriptTest::testWhileLoop()
         while(i < 10)   
             i = i + 1;
     */
-    JZScriptFile *script = m_scriptFlow;
+    JZScriptItem *script = m_scriptFlow;
     script->addLocalVariable("i", Type_int);
 
     JZNode *node_start = script->getNode(0);
@@ -700,7 +694,7 @@ void ScriptTest::testWhileLoop()
 
 void ScriptTest::testBreakPoint()
 {    
-    JZScriptFile *script = m_scriptFlow;
+    JZScriptItem *script = m_scriptFlow;
     JZNodeEngine *engine = &m_engine;
     QMap<int,int> node_value = initWhileSetCase();
     if(!run(true))
@@ -712,7 +706,7 @@ void ScriptTest::testBreakPoint()
 
 void ScriptTest::testDebugServer()
 {           
-    JZScriptFile *script = m_scriptFlow;
+    JZScriptItem *script = m_scriptFlow;
     JZNodeEngine *engine = &m_engine;
     QMap<int,int> node_value = initWhileSetCase();
     if(!run(true))
@@ -783,9 +777,9 @@ void ScriptTest::testDebugServer()
 
 void ScriptTest::testExpr()
 {    
-    JZScriptFile *script = m_scriptFlow;
+    JZScriptItem *script = m_scriptFlow;
     JZNodeEngine *engine = &m_engine;
-    JZParamFile *paramDef = m_paramDef;
+    JZParamItem *paramDef = m_paramDef;
 
     QVector<int> op_type = {Node_add,Node_sub,Node_mul,Node_div,Node_mod,Node_eq,Node_ne,Node_le,
         Node_ge,Node_lt,Node_gt,Node_and,Node_or,Node_bitand,Node_bitor,Node_bitxor};
@@ -845,9 +839,9 @@ void ScriptTest::testExpr()
 
 void ScriptTest::testCustomExpr()
 {    
-    JZScriptFile *script = m_scriptFlow;
+    JZScriptItem *script = m_scriptFlow;
     JZNodeEngine *engine = &m_engine;
-    JZParamFile *paramDef = m_paramDef;
+    JZParamItem *paramDef = m_paramDef;
 
     JZNode *node_start = script->getNode(0);
     JZNodeParam *node_a = new JZNodeParam();
@@ -914,12 +908,12 @@ void ScriptTest::testFunction()
     fab.name = "fab";
     fab.paramIn.push_back(inParam);
     fab.paramOut.push_back(outParam);
-    JZScriptFile *script = m_project.addFunction("./",fab);
+    JZScriptItem *script = m_file->addFunction("./",fab);
 
     JZNode *node_start = script->getNode(0);
     JZNodeBranch *node_branch = new JZNodeBranch();    
     JZNodeGE *node_ge = new JZNodeGE();
-    node_ge->setPropValue(node_ge->paramIn(1),2);
+    node_ge->setPropValue(node_ge->paramIn(1), "2");
     JZNodeAdd *node_add = new JZNodeAdd();    
 
     JZNodeFunction *func1 = new JZNodeFunction();
@@ -958,8 +952,8 @@ void ScriptTest::testFunction()
     script->addConnect(node_branch->flowOutGemo(1),ret2->flowInGemo());
 
     /* return fab(n-1) + fab(n-2) */
-    sub1->setPropValue(sub1->paramIn(1),1);
-    sub2->setPropValue(sub2->paramIn(1),2);
+    sub1->setPropValue(sub1->paramIn(1),"1");
+    sub2->setPropValue(sub2->paramIn(1),"2");
     script->addConnect(n->paramOutGemo(0),sub1->paramInGemo(0));
     script->addConnect(n->paramOutGemo(0),sub2->paramInGemo(0));
     script->addConnect(sub1->paramOutGemo(0),func1->paramInGemo(0));
@@ -987,7 +981,7 @@ void ScriptTest::testFunction()
 void ScriptTest::testClass()
 {       
     JZProject *project = &m_project;
-    JZParamFile *paramDef = m_paramDef;
+    JZParamItem *paramDef = m_paramDef;
 /*
     auto classBase = project->addClass("./", "ClassBase");
     project->addClass("ClassA","ClassBase");
@@ -1035,7 +1029,7 @@ void ScriptTest::testBind()
 void ScriptTest::testCClass()
 {        
     JZNodeEngine *engine = &m_engine;
-    JZParamFile *paramDef = m_paramDef;
+    JZParamItem *paramDef = m_paramDef;
 
     paramDef->addVariable("a",Type_string);
     paramDef->addVariable("b",Type_string);

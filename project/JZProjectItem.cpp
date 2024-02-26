@@ -1,7 +1,7 @@
 ﻿#include "JZProjectItem.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include "JZUiFile.h"
-#include "JZParamFile.h"
+#include "JZParamItem.h"
 #include "JZProject.h"
 
 JZProjectItem::JZProjectItem(int itemType)
@@ -35,28 +35,6 @@ void JZProjectItem::setEditor(JZEditor *editor)
 JZEditor *JZProjectItem::editor() const
 {
     return m_editor;
-}
-
-void JZProjectItem::save()
-{
-    if(m_project)
-        m_project->saveItem(this);
-}
-
-void JZProjectItem::load()
-{
-    if(m_project)
-        m_project->loadItem(this);
-}
-
-void JZProjectItem::saveToStream(QDataStream &s)
-{
-    s << m_name;    
-}
-
-void JZProjectItem::loadFromStream(QDataStream &s)
-{
-    s >> m_name;
 }
 
 void JZProjectItem::sort()
@@ -111,12 +89,12 @@ JZProjectItem *JZProjectItem::parent()
     return m_parent;
 }
 
-JZScriptClassFile *JZProjectItem::getClassFile()
+JZScriptClassItem *JZProjectItem::getClassFile()
 {
     if (!m_project)
         return nullptr;
 
-    return m_project->getClassFile(this);
+    return m_project->getClass(this);
 }
 
 QString JZProjectItem::className()
@@ -214,53 +192,6 @@ JZProjectItemFolder::~JZProjectItemFolder()
 {
 
 }
-
-QByteArray JZProjectItemFactory::save(JZProjectItem *item)
-{
-    QByteArray buffer;
-    QDataStream s(&buffer,QIODevice::WriteOnly);
-    s << item->itemType();
-    item->saveToStream(s);
-    return buffer;
-}
-
-JZProjectItem *JZProjectItemFactory::load(const QByteArray &buffer)
-{
-    QDataStream s(buffer);
-    int itemType;
-    s >> itemType;
-
-    JZProjectItem *item = nullptr;
-    if(itemType == ProjectItem_folder)
-        item = new JZProjectItem(ProjectItem_folder);
-    else if(itemType == ProjectItem_ui)
-        item = new JZUiFile();
-    else if(itemType == ProjectItem_class)
-        item = new JZScriptClassFile();
-    else if(itemType == ProjectItem_library)
-        item = new JZScriptLibraryFile();
-    else if(itemType == ProjectItem_param)
-        item = new JZParamFile();
-    else if(itemType >= ProjectItem_scriptParamBinding && itemType <= ProjectItem_scriptFunction)
-        item = new JZScriptFile(itemType);
-    else
-    {
-        Q_ASSERT(0);
-    }
-    item->loadFromStream(s);
-    return item;
-}
-
-QString JZProjectItemFactory::itemTypeName(int itemType)
-{
-    if(itemType == ProjectItem_scriptParamBinding)
-        return "变量绑定";
-    else if(itemType == ProjectItem_scriptFlow)
-        return "流程";
-
-    return QString();
-}
-
 
 int JZProjectItemIsScript(JZProjectItem *item)
 {

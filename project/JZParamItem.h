@@ -6,14 +6,11 @@
 #include <QMap>
 #include <QVariant>
 
-class JZParamFile : public JZProjectItem
+class JZParamItem : public JZProjectItem
 {
 public:
-    JZParamFile();
-    virtual ~JZParamFile();
-
-    virtual void saveToStream(QDataStream &s);
-    virtual void loadFromStream(QDataStream &s);
+    JZParamItem();
+    virtual ~JZParamItem();
 
     void addVariable(QString name,int type,QVariant = QVariant());
     void removeVariable(QString name);

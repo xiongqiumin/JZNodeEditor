@@ -6,7 +6,7 @@
 #include "ui_JZNodeMemberEditDialog.h"
 #include "JZNodeObject.h"
 #include "JZNodeTypeDialog.h"
-#include "JZClassFile.h"
+#include "JZClassItem.h"
 #include "JZProject.h"
 
 //JZNodeMemberEditDialog
@@ -47,7 +47,7 @@ void JZNodeMemberEditDialog::init(JZNode *node)
     if (class_name.isEmpty())
     {
         auto project = node->file()->project();
-        auto class_file = project->getClassFile(node->file());
+        auto class_file = project->getClass(node->file());
         if (class_file)
             class_name = class_file->className();
     }

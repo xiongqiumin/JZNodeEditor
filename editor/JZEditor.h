@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QMenuBar>
 #include "JZProjectItem.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 
 enum{
     Editor_none,
@@ -60,7 +60,7 @@ signals:
     void modifyChanged(bool changed);
 
 protected:
-    JZScriptClassFile *getClassFile(JZProjectItem *item);
+    JZScriptClassItem *getClassFile(JZProjectItem *item);
 
     JZProjectItem *m_item;
     JZProject *m_project;

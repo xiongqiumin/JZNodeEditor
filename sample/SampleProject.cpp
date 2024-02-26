@@ -38,8 +38,7 @@ void SampleProject::saveProject()
     QString dir = qApp->applicationDirPath() + "/sample";
     if (!QDir().exists(dir))
         QDir().mkdir(dir);
-    QString path = qApp->applicationDirPath() + "/sample/" + m_name + ".jzproject";
-    m_project.saveAs(path);
+    QString path = qApp->applicationDirPath() + "/sample/" + m_name + ".jzproject";    
 }
 
 bool SampleProject::run()

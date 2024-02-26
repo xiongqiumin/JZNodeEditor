@@ -4,7 +4,7 @@
 #include <QTableWidget>
 #include "JZNodeFunction.h"
 #include "JZNodeTypeDialog.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 
 namespace Ui { class JZNodeFuctionEditDialog; }
 

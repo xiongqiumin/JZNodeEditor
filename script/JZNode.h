@@ -1,11 +1,11 @@
 ﻿#ifndef JZNODE_H_
 #define JZNODE_H_
 
-#include <QDataStream>
 #include <QSharedPointer>
 #include "JZNodePin.h"
 #include "JZNodeIR.h"
 #include "JZNodeFunctionDefine.h"
+#include "JZProjectStream.h"
 
 enum
 {
@@ -97,8 +97,8 @@ public:
     JZNodeGemo from;
     JZNodeGemo to;
 };
-QDataStream &operator<<(QDataStream &s, const JZNodeConnect &param);
-QDataStream &operator>>(QDataStream &s, JZNodeConnect &param);
+void operator<<(JZProjectStream &s, const JZNodeConnect &param);
+void operator>>(JZProjectStream &s, JZNodeConnect &param);
 
 //JZNodeGroup
 class JZNodeGroup
@@ -109,19 +109,19 @@ public:
     int id;
     QString memo;
 };
-QDataStream &operator<<(QDataStream &s, const JZNodeGroup &param);
-QDataStream &operator>>(QDataStream &s, JZNodeGroup &param);
+void operator<<(JZProjectStream &s, const JZNodeGroup &param);
+void operator>>(JZProjectStream &s, JZNodeGroup &param);
 
 class JZNodeCompiler;
-class JZScriptFile;
+class JZScriptItem;
 class JZNode
 {
 public:
     JZNode();
     virtual ~JZNode();
 
-    JZScriptFile *file() const;
-    void setFile(JZScriptFile *file);
+    JZScriptItem *file() const;
+    void setFile(JZScriptItem *file);
 
     const QString &name() const;
     void setName(const QString &name);
@@ -155,22 +155,23 @@ public:
     QVector<int> propListByType(int flag) const;    
     QVector<int> propList() const;
     int propCount(int flag) const;
+    virtual int propPri(int id) const;
               
     int addParamIn(QString name,int extFlag = 0);    
     int paramIn(int index) const;
     JZNodeGemo paramInGemo(int index) const;
     int paramInCount() const;
     QVector<int> paramInList() const;
-    QVariant paramInValue(int index) const;
-    void setParamInValue(int index, const QVariant &value);
+    QString paramInValue(int index) const;
+    void setParamInValue(int index, const QString &value);
 
     int addParamOut(QString name,int extFlag = 0);
     int paramOut(int index) const;
     JZNodeGemo paramOutGemo(int index) const;
     int paramOutCount() const;
     QVector<int> paramOutList() const;
-    QVariant paramOutValue(int index) const;
-    void setParamOutValue(int index, const QVariant &value);
+    QString paramOutValue(int index) const;
+    void setParamOutValue(int index, const QString &value);
     
     int addFlowIn(int extFlag = 0);
     int flowIn() const;
@@ -190,8 +191,8 @@ public:
     int addButtonIn(QString name);
     int addButtonOut(QString name);
     
-    QVariant propValue(int prop) const;
-    void setPropValue(int prop,QVariant value);
+    QString propValue(int prop) const;
+    void setPropValue(int prop, QString value);
     QString propName(int id) const;
     void setPropName(int id,QString name);
     
@@ -205,8 +206,8 @@ public:
     virtual QList<int> propType(int id);        
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
 
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);    
+    virtual void saveToStream(JZProjectStream &s) const;
+    virtual void loadFromStream(JZProjectStream &s);    
     virtual void drag(const QVariant &value);
 
     virtual bool pinClicked(int id);    //返回属性是否变化
@@ -214,7 +215,7 @@ public:
     virtual bool pinActionTriggered(int id,int index);
 
 protected:     
-    friend JZScriptFile;
+    friend JZScriptItem;
 
     void setPinTypeAny(int id);
     void setPinTypeInt(int id);
@@ -236,8 +237,8 @@ protected:
     QString m_name;
     QString m_memo;
     QList<JZNodePin> m_propList;
-    JZScriptFile *m_file;
-    QVector<int> m_notifyList;
+    JZScriptItem *m_file;
+    QList<int> m_notifyList;
 };
 typedef QSharedPointer<JZNode> JZNodePtr;
 
@@ -382,6 +383,7 @@ protected:
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
     void updateCondName();
+    int propPri(int id);
 
     int m_btnCond;
     int m_btnElse;
@@ -398,13 +400,14 @@ public:
     void removeDefault();
     int caseCount();
 
-    void setCaseValue(int index, const QVariant &v);
+    void setCaseValue(int index, const QString &v);
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
     virtual bool pinClicked(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
+    virtual int propPri(int id);
 
     int m_btnCase;
     int m_btnDefault;

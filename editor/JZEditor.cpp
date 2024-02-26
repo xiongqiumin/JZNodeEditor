@@ -91,12 +91,12 @@ void JZEditor::selectAll()
 
 }
 
-JZScriptClassFile *JZEditor::getClassFile(JZProjectItem *item)
+JZScriptClassItem *JZEditor::getClassFile(JZProjectItem *item)
 {    
     while (item)
     {
         if (item->itemType() == ProjectItem_class)
-            return (JZScriptClassFile*)item;
+            return (JZScriptClassItem*)item;
 
         item = item->parent();
     }

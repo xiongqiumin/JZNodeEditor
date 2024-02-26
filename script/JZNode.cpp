@@ -31,24 +31,22 @@ JZNodeConnect::JZNodeConnect()
     id = -1;
 }
 
-QDataStream &operator<<(QDataStream &s, const JZNodeConnect &param)
+void operator<<(JZProjectStream &s, const JZNodeConnect &param)
 {
     s << param.id;
     s << param.from.nodeId;
     s << param.from.propId;
     s << param.to.nodeId;
     s << param.to.propId;
-    return s;
 }
 
-QDataStream &operator>>(QDataStream &s, JZNodeConnect &param)
+void operator>>(JZProjectStream &s, JZNodeConnect &param)
 {
     s >> param.id;
     s >> param.from.nodeId;
     s >> param.from.propId;
     s >> param.to.nodeId;
     s >> param.to.propId;
-    return s;
 }
 
 //JZNodeGroup
@@ -57,18 +55,16 @@ JZNodeGroup::JZNodeGroup()
     id = -1;
 }
 
-QDataStream &operator<<(QDataStream &s, const JZNodeGroup &param)
+void operator<<(JZProjectStream &s, const JZNodeGroup &param)
 {
     s << param.id;
     s << param.memo;
-    return s;
 }
 
-QDataStream &operator >> (QDataStream &s, JZNodeGroup &param)
+void operator >> (JZProjectStream &s, JZNodeGroup &param)
 {
     s >> param.id;
     s >> param.memo;
-    return s;
 }
 
 // JZNode
@@ -285,6 +281,21 @@ int JZNode::propCount(int flag) const
     return count;
 }
 
+int JZNode::propPri(int id) const
+{
+    auto pin = prop(id);
+    if (pin->isSubFlow())
+        return Pri_sub_flow;
+    else if (pin->isFlow())
+        return Pri_flow;
+    else if (pin->isParam())
+        return Pri_param;
+    else if(pin->isButton())
+        return Pri_button;
+    else
+        return Pri_none;        
+}
+
 int JZNode::paramIn(int index) const
 {
     auto list = propInList(Prop_param);
@@ -309,13 +320,13 @@ QVector<int> JZNode::paramInList() const
     return propInList(Prop_param);
 }
 
-QVariant JZNode::paramInValue(int index) const
+QString JZNode::paramInValue(int index) const
 {
     auto list = paramInList();
     return propValue(list[index]);
 }
 
-void JZNode::setParamInValue(int index, const QVariant &value)
+void JZNode::setParamInValue(int index, const QString &value)
 {
     auto list = paramInList();    
     setPropValue(list[index], value);
@@ -345,13 +356,13 @@ QVector<int> JZNode::paramOutList() const
     return propOutList(Prop_param);
 }
 
-QVariant JZNode::paramOutValue(int index) const
+QString JZNode::paramOutValue(int index) const
 {
     auto list = paramOutList();
     return propValue(list[index]);
 }
 
-void JZNode::setParamOutValue(int index, const QVariant &value)
+void JZNode::setParamOutValue(int index, const QString &value)
 {
     auto list = paramOutList();
     setPropValue(list[index], value);
@@ -435,7 +446,7 @@ int JZNode::addButtonOut(QString name)
     return addProp(btn);
 }
 
-QVariant JZNode::propValue(int id) const
+QString JZNode::propValue(int id) const
 {
     auto pin = prop(id);
     Q_ASSERT(pin);
@@ -443,11 +454,11 @@ QVariant JZNode::propValue(int id) const
     return pin->value();
 }
 
-void JZNode::setPropValue(int id,QVariant value)
+void JZNode::setPropValue(int id,QString value)
 {        
     auto pin = prop(id);
     Q_ASSERT(pin);
-
+    
     pin->setValue(value);
     if(m_file)
         pinChanged(id);
@@ -499,12 +510,12 @@ int JZNode::variableType() const
     return Type_any;
 }
 
-JZScriptFile *JZNode::file() const
+JZScriptItem *JZNode::file() const
 {
     return m_file;
 }
 
-void JZNode::setFile(JZScriptFile *file)
+void JZNode::setFile(JZScriptItem *file)
 {
     m_file = file;
     fileInitialized();
@@ -583,8 +594,8 @@ void JZNode::setPinType(int id,const QList<int> &type)
 void JZNode::sortPinByPri()
 {
     std::stable_sort(m_propList.begin(), m_propList.end(), 
-        [](const JZNodePin &p1, const JZNodePin &p2)->bool{
-            return p1.pri() < p2.pri();
+        [this](const JZNodePin &p1, const JZNodePin &p2)->bool{
+            return this->propPri(p1.id()) < this->propPri(p2.id());
     });
 }
 
@@ -631,7 +642,7 @@ void JZNode::pinChanged(int id)
     Q_UNUSED(id);
 }
 
-void JZNode::saveToStream(QDataStream &s) const
+void JZNode::saveToStream(JZProjectStream &s) const
 {
     s << m_id;
     s << m_name;
@@ -642,7 +653,7 @@ void JZNode::saveToStream(QDataStream &s) const
     s << m_notifyList;    
 }
 
-void JZNode::loadFromStream(QDataStream &s)
+void JZNode::loadFromStream(JZProjectStream &s)
 {
     s >> m_id;
     s >> m_name;
@@ -955,31 +966,31 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 void JZNodeFor::setRange(int start, int end)
 {
     int step = (start < end)? 1: -1;
-    setPropValue(paramIn(0), start);
-    setPropValue(paramIn(1), step);
-    setPropValue(paramIn(2), end);
+    setPropValue(paramIn(0), QString::number(start));
+    setPropValue(paramIn(1), QString::number(step));
+    setPropValue(paramIn(2), QString::number(end));
 }
 
 void JZNodeFor::setRange(int start, int step, int end)
 {
-    setPropValue(paramIn(0), start);
-    setPropValue(paramIn(1), step);
-    setPropValue(paramIn(2), end);
+    setPropValue(paramIn(0), QString::number(start));
+    setPropValue(paramIn(1), QString::number(step));
+    setPropValue(paramIn(2), QString::number(end));
 }
 
 void JZNodeFor::setStart(int start)
 {
-    setPropValue(paramIn(0), start);
+    setPropValue(paramIn(0), QString::number(start));
 }
 
 void JZNodeFor::setStep(int step)
 {
-    setPropValue(paramIn(1), step);
+    setPropValue(paramIn(1), QString::number(step));
 }
 
 void JZNodeFor::setEnd(int end)
 {
-    setPropValue(paramIn(2), end);
+    setPropValue(paramIn(2), QString::number(end));
 }
 
 //JZNodeForEach
@@ -1132,8 +1143,15 @@ void JZNodeIf::addCondPin()
 
 void JZNodeIf::addElsePin()
 {
-    int id = addSubFlowOut("else", Prop_dispName);
-    prop(id)->setPri(Pri_sub_flow + 1);
+    addSubFlowOut("else", Prop_dispName);    
+}
+
+int JZNodeIf::propPri(int id)
+{
+    if (prop(id)->name() == "else")
+        return Pri_sub_flow + 1;
+    else
+        return JZNode::propPri(id);
 }
 
 void JZNodeIf::removeCond(int index)
@@ -1264,8 +1282,15 @@ void JZNodeSwitch::addCase()
 
 void JZNodeSwitch::addDefault()
 {
-    int id = addSubFlowOut("default", Prop_dispName);
-    prop(id)->setPri(Pri_sub_flow + 1);
+    addSubFlowOut("default", Prop_dispName);    
+}
+
+int JZNodeSwitch::propPri(int id)
+{
+    if(prop(id)->name() == "default")
+        return Pri_sub_flow + 1;
+    else
+        return JZNode::propPri(id);
 }
 
 void JZNodeSwitch::removeCase(int index)
@@ -1291,7 +1316,7 @@ int JZNodeSwitch::caseCount()
         return list.size();
 }
 
-void JZNodeSwitch::setCaseValue(int index, const QVariant &v)
+void JZNodeSwitch::setCaseValue(int index, const QString &v)
 {
     Q_ASSERT(index < caseCount());
     prop(subFlowOut(index))->setValue(v);

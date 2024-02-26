@@ -23,11 +23,13 @@ void TestServer::init(JZProject *project)
     auto func_inst = JZNodeFunctionManager::instance();
 
     m_project->initConsole();
-    JZScriptFile *script = m_project->mainScript();
-    JZParamFile *paramDef = (JZParamFile*)m_project->getItem("global.def");
+    JZScriptItem *script = m_project->mainScript();
+    JZParamItem *paramDef = m_project->globalDefine();
     paramDef->addVariable("timer", Type_timer);
 
-    JZScriptClassFile *class_file = m_project->addClass("TestClass", "TestClass");
+    auto script_file = m_project->createScript("TestClass");
+
+    JZScriptClassItem *class_file = script_file->addClass("TestClass");
     class_file->addMemberVariable("i32", Type_int);
     class_file->addMemberVariable("list", Type_list);
     class_file->addMemberVariable("map", Type_map);
@@ -48,7 +50,7 @@ void TestServer::init(JZProject *project)
 
     JZNodeFunction *start_timer = new JZNodeFunction();
     start_timer->setFunction(time_meta->function("start"));
-    start_timer->setParamInValue(1, 500);
+    start_timer->setParamInValue(1, "500");
 
     auto start_node = script->getNode(0);
     script->addNode(JZNodePtr(create_timer));
@@ -61,7 +63,7 @@ void TestServer::init(JZProject *project)
     script->addConnect(set_timer->paramOutGemo(0), start_timer->paramInGemo(0));
     script->addConnect(set_timer->flowOutGemo(0), start_timer->flowInGemo());
 
-    auto param_def = (JZParamFile *)m_project->getItem("./global.def");
+    auto param_def = (JZParamItem *)m_project->getItem("./global.def");
     param_def->addVariable("test", JZClassId("TestClass"));
 
     JZNodeSetParam *set_param = new JZNodeSetParam();
@@ -112,10 +114,8 @@ void TestServer::init(JZProject *project)
     script->addNode(JZNodePtr(get_param));
 
     script->addConnect(get_param->paramOutGemo(0), node_func->paramInGemo(0));
-
-    m_project->saveAllItem();
+    
     projectUpdateLayout(m_project);
-    m_project->saveAs(filepath + "/localTest.jzprogram");
 }
 
 void TestServer::stop()

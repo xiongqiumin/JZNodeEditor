@@ -34,13 +34,13 @@ JZNodeFunction::~JZNodeFunction()
 
 }
 
-void JZNodeFunction::saveToStream(QDataStream &s) const
+void JZNodeFunction::saveToStream(JZProjectStream &s) const
 {
     JZNode::saveToStream(s);
     s << m_functionName;
 }
 
-void JZNodeFunction::loadFromStream(QDataStream &s)
+void JZNodeFunction::loadFromStream(JZProjectStream &s)
 {
     JZNode::loadFromStream(s);
     s >> m_functionName;

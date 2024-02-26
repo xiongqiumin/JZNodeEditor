@@ -2,22 +2,23 @@
 #define JZPROJECT_ITEM_FILE_H_
 #include <QSharedPointer>
 
-enum{    
+enum {
     ProjectItem_any = -1,
     ProjectItem_none,
     ProjectItem_root,
-    ProjectItem_folder,
-    ProjectItem_class,
-    ProjectItem_library,
+    ProjectItem_folder,    
     ProjectItem_ui,
     ProjectItem_param,
+    ProjectItem_class,
+    ProjectItem_scriptFile,
     ProjectItem_scriptParamBinding,
     ProjectItem_scriptFlow,
     ProjectItem_scriptFunction,    
+    ProjectItem_library,
 };
 
 class JZProject;
-class JZScriptClassFile;
+class JZScriptClassItem;
 class JZEditor;
 class JZProjectItem
 {    
@@ -41,7 +42,7 @@ public:
     void setItemType(int type);
 
     JZProjectItem *parent();
-    JZScriptClassFile *getClassFile();
+    JZScriptClassItem *getClassFile();
     QString className();
     
     void addItem(QSharedPointer<JZProjectItem> child);
@@ -51,11 +52,6 @@ public:
     int indexOfItem(JZProjectItem *item);
     QList<JZProjectItem *> childs();
     void removeChlids();
-
-    void save();  //保存到project缓存
-    void load();  //从project缓存加载
-    virtual void saveToStream(QDataStream &s);
-    virtual void loadFromStream(QDataStream &s);
 
     void sort();
     QList<JZProjectItem *> itemList(int type);
@@ -83,15 +79,6 @@ class JZProjectItemFolder : public JZProjectItem
 public:
     JZProjectItemFolder();
     virtual ~JZProjectItemFolder();
-};
-
-//JZProjectItemFactory
-class JZProjectItemFactory
-{
-public:
-    static JZProjectItem *load(const QByteArray &buffer);
-    static QByteArray save(JZProjectItem *item);
-    static QString itemTypeName(int itemType);
 };
 
 int JZProjectItemIsScript(JZProjectItem *item);

@@ -2,7 +2,7 @@
 #include "JZNodeCompiler.h"
 #include "JZProject.h"
 #include "JZNodeFactory.h"
-#include "JZClassFile.h"
+#include "JZClassItem.h"
 
 //JZNodeLiteral
 JZNodeLiteral::JZNodeLiteral()
@@ -61,7 +61,8 @@ QVariant JZNodeLiteral::literal() const
 
 void JZNodeLiteral::setLiteral(QVariant value)
 {
-    setPropValue(paramOut(0),value);
+    QString str = JZNodeType::matchValue(Type_string, value).toString();
+    setPropValue(paramOut(0), str);
 }
 
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
@@ -76,7 +77,8 @@ bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 JZNodeEnum::JZNodeEnum()
 {
     m_type = Node_enum;
-    addParamOut("out", Prop_dispValue | Prop_editValue);   
+    addParamOut("out", Prop_dispValue | Prop_editValue);
+    m_enumId = -1;
 }
 
 JZNodeEnum::~JZNodeEnum()
@@ -98,14 +100,17 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 void JZNodeEnum::setEnmu(int id)
 {
     auto meta = JZNodeObjectManager::instance()->enumMeta(id);
+    m_enumId = id;
+
     setName(meta->name());
     setPinType(paramOut(0), { id });
-    setValue(meta->value(0));
+    setEnumValue(meta->value(0));
 }
 
-void JZNodeEnum::setValue(int value)
+void JZNodeEnum::setEnumValue(int value)
 {
-    prop(paramOut(0))->setValue(value);
+    auto meta = JZNodeObjectManager::instance()->enumMeta(m_enumId);
+    prop(paramOut(0))->setValue(meta->valueToKey(value));
 }
 
 //JZNodeCreate
@@ -136,7 +141,7 @@ void JZNodeCreate::setClassName(const QString &name)
 
 QString JZNodeCreate::className() const
 {
-    return propValue(paramIn(0)).toString();
+    return propValue(paramIn(0));
 }
 
 bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
@@ -243,7 +248,7 @@ void JZNodeCreateFromString::setClassName(const QString &name)
 
 QString JZNodeCreateFromString::className() const
 {
-    return propValue(paramIn(0)).toString();
+    return propValue(paramIn(0));
 }
 
 void JZNodeCreateFromString::setContext(const QString &text)
@@ -253,7 +258,7 @@ void JZNodeCreateFromString::setContext(const QString &text)
 
 QString JZNodeCreateFromString::context() const
 {
-    return propValue(paramIn(1)).toString();
+    return propValue(paramIn(1));
 }
 
 //JZNodeParamFunction
@@ -345,7 +350,7 @@ bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
 
 void JZNodeThis::fileInitialized()
 {
-    auto class_file = m_file->project()->getClassFile(m_file);
+    auto class_file = m_file->project()->getClass(m_file);
     Q_ASSERT(class_file);
 
     QString className = class_file->className();

@@ -1,8 +1,7 @@
 ﻿#include "JZNodeBuilder.h"
-#include "JZParamFile.h"
+#include "JZParamItem.h"
 #include "JZUiFile.h"
-#include "JZClassFile.h"
-#include "JZLibraryFile.h"
+#include "JZClassItem.h"
 #include "LogManager.h"
 
 JZNodeBuilder::JZNodeBuilder()
@@ -85,14 +84,14 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
     auto class_list = m_project->itemList("./",ProjectItem_class);
     for(int i = 0; i < class_list.size(); i++)
     {
-        JZScriptClassFile *script = dynamic_cast<JZScriptClassFile*>(class_list[i]);        
+        JZScriptClassItem *script = dynamic_cast<JZScriptClassItem*>(class_list[i]);        
         m_program->m_objectDefines << script->objectDefine();
                 
         auto params = script->itemList(ProjectItem_param);
         Q_ASSERT(params.size() == 0 || params.size() == 1);
         if(params.size() == 1)
         {
-            auto param = dynamic_cast<JZParamFile*>(params[0]);
+            auto param = dynamic_cast<JZParamItem*>(params[0]);
             m_program->m_binds[script->className()] = param->binds();
         }
     }
@@ -100,7 +99,7 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
     auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);
     for(int i = 0; i < bind_list.size(); i++)
     {
-        JZScriptFile *script = dynamic_cast<JZScriptFile*>(bind_list[i]);
+        JZScriptItem *script = dynamic_cast<JZScriptItem*>(bind_list[i]);
         if(!buildScriptFile(script))
             return false;
     }
@@ -108,7 +107,7 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
     auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
     for (int i = 0; i < function_list.size(); i++)
     {
-        JZScriptFile *script = dynamic_cast<JZScriptFile*>(function_list[i]);
+        JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
         if (!buildScriptFile(script))
             return false;        
     }
@@ -116,7 +115,7 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
     auto flow_list = m_project->itemList("./", ProjectItem_scriptFlow);
     for(int i = 0; i < flow_list.size(); i++)
     {
-        JZScriptFile *script = dynamic_cast<JZScriptFile*>(flow_list[i]);
+        JZScriptItem *script = dynamic_cast<JZScriptItem*>(flow_list[i]);
         if(!buildScriptFile(script))
             return false;
     }
@@ -127,13 +126,13 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
     return true;
 }
 
-bool JZNodeBuilder::buildScriptFile(JZScriptFile *scriptFile)
+bool JZNodeBuilder::buildScriptFile(JZScriptItem *scriptFile)
 {       
     QString path = scriptFile->itemPath();
     if(!m_scripts.contains(path))    
         m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
     
-    auto classFile = m_project->getClassFile(scriptFile);
+    auto classFile = m_project->getClass(scriptFile);
     JZNodeScript *script = m_scripts[path].data();
     if(classFile)
         script->className = classFile->className();

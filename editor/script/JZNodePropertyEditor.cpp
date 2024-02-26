@@ -50,7 +50,7 @@ void JZNodePropertyEditor::onValueChanged(QtProperty *prop, const QVariant &valu
     {
         int prop_id = m_propMap.key(p, -1);
         if (prop_id != -1)        
-            emit sigNodePropChanged(m_node->id(), prop_id, value);
+            emit sigNodePropChanged(m_node->id(), prop_id, value.toString());
 
         int prop_name_id = m_propNameMap.key(p, -1);
         if (prop_name_id != -1)        

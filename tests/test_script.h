@@ -14,7 +14,8 @@
 #include "JZNodeBind.h"
 #include "JZNodeFactory.h"
 #include "JZNodeObject.h"
-#include "JZParamFile.h"
+#include "JZParamItem.h"
+#include "JZScriptFile.h"
 
 class ScriptTest : public QObject
 {
@@ -67,8 +68,9 @@ protected:
     QMap<int,int> initWhileSetCase(); //返回第几行应该是什么值
 
     JZProject m_project;
-    JZScriptFile *m_scriptFlow;
-    JZParamFile *m_paramDef;
+    JZScriptFile *m_file;
+    JZScriptItem *m_scriptFlow;
+    JZParamItem *m_paramDef;
 
     JZNodeProgram m_program;
     JZNodeEngine m_engine;

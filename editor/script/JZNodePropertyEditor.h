@@ -31,7 +31,7 @@ public:
 
 signals:
     void sigNodePropNameChanged(int nodeId,int propId,const QString &name);
-    void sigNodePropChanged(int nodeId,int propId,const QVariant &value);    
+    void sigNodePropChanged(int nodeId,int propId,const QString &value);
 
 protected slots:
     void onValueChanged(QtProperty *prop, const QVariant &value);    

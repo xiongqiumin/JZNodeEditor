@@ -2,7 +2,7 @@
 #define JZNODE_VIEW_MAP_H_
 
 #include <QWidget>
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 
 class JZNodeView;
 class JZNodeViewMap : public QWidget

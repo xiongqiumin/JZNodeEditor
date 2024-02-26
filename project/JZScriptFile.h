@@ -1,75 +1,40 @@
-﻿#ifndef JZNODE_SCRIPT_FILE_H_
-#define JZNODE_SCRIPT_FILE_H_
+#ifndef JZ_SCRIPT_FILE_H_
+#define JZ_SCRIPT_FILE_H_
 
 #include "JZNode.h"
 #include "JZProjectItem.h"
-#include "JZNodeFunctionDefine.h"
-#include "JZNodeObject.h"
+#include "JZProjectStream.h"
+#include "JZClassItem.h"
+#include "JZParamItem.h"
+#include "JZScriptItem.h"
 
-class JZScriptClassFile;
+class JZParamItem;
 class JZScriptFile : public JZProjectItem
 {
-public:    
-    JZScriptFile(int type);
+public:
+    JZScriptFile();
     virtual ~JZScriptFile();
 
-    void loadFinish();
-    void clear();
-    int nextId();
+    bool loadFromStream(JZProjectStream &s);
+    bool saveToStream(JZProjectStream &s);
 
-    const FunctionDefine &function();
-    void setFunction(FunctionDefine def);
+    JZParamDefine *addParamDefine(QString name);
+    void removeParamDefine(QString name);
 
-    int addNode(JZNodePtr node);
-    void insertNode(JZNodePtr node);
-    void removeNode(int id);
-    JZNode *getNode(int id);
-    JZNodePin *getPin(const JZNodeGemo &gemo);    
-    QList<int> nodeList();            
+    JZScriptItem *addFlow(QString name);
+    void removeFlow(QString name);
 
-    int addGroup(const JZNodeGroup &group);
-    void insertGroup(const JZNodeGroup &group);
-    void removeGroup(int id);
-    JZNodeGroup *getGroup(int id);
-    QList<JZNodeGroup> groupList();
-    QList<int> groupNodeList(int group_id);
+    JZScriptItem *addFunction(QString name, const FunctionDefine &func);
+    void removeFunction(QString name);
+    JZScriptItem *getFunction(QString name);
 
-    void setNodePos(int id,QPointF pos);
-    QPointF getNodePos(int id);
+    JZScriptClassItem *addClass(QString name, QString super = QString());
+    void removeClass(QString name);
+    JZScriptClassItem *getClass(QString className);
 
-    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error); 
-    int parentNode(int id);
+protected:
 
-    int addConnect(JZNodeGemo from, JZNodeGemo to);
-    bool hasConnect(JZNodeGemo from, JZNodeGemo to);
-    void insertConnect(const JZNodeConnect &connect);
-    void removeConnect(int id);
-    void removeConnectByNode(int node_id, int prop_id);
-    JZNodeConnect *getConnect(int id);
-    QList<int> getConnectId(int node_id, int propId = -1);    // propId = -1 得到节点所有连线
-    QList<int> getConnectOut(int node_id, int propId = -1);
-    QList<int> getConnectInput(int node_id, int propId = -1);
-    QList<JZNodeConnect> connectList();
-
-    void saveToStream(QDataStream &s);
-    void loadFromStream(QDataStream &s);    
-
-    JZParamDefine *localVariable(const QString &name);
-    void addLocalVariable(QString name, int type, QVariant v = QVariant());
-    void addLocalVariable(JZParamDefine def);
-    void removeLocalVariable(QString name);
-    void replaceLocalVariableInfo(QString oldName, JZParamDefine def);
-    QStringList localVariableList(bool hasFunc);
-
-protected:    
-    int m_nodeId;
-    QMap<int, JZNodePtr> m_nodes;        
-    QList<JZNodeGroup> m_groups;
-    QList<JZNodeConnect> m_connects;    
-    FunctionDefine m_function;
-    QMap<QString, JZParamDefine> m_variables;
-
-    QMap<int, QPointF> m_nodesPos;
 };
+
 
 #endif

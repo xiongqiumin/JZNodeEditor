@@ -32,10 +32,10 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 
     void setEnmu(int id);
-    void setValue(int value);
+    void setEnumValue(int value);
 
 protected:
-
+    int m_enumId;
 };
 
 //JZNodeParamFunction

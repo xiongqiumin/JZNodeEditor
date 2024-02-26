@@ -13,7 +13,7 @@
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
 {
-    QString value = node->paramInValue(0).toString();
+    QString value = node->paramInValue(0);
     value.replace(",", "\n");
     QDialog dialog(node->file()->editor());
 
@@ -116,7 +116,7 @@ void JZNodeEditor::init()
 
 void JZNodeEditor::open(JZProjectItem *item)
 {
-    JZScriptFile* file = dynamic_cast<JZScriptFile*>(item);
+    JZScriptItem* file = dynamic_cast<JZScriptItem*>(item);
     m_view->setFile(file);    
     m_nodePanel->setFile(file);    
 }

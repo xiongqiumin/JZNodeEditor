@@ -164,7 +164,7 @@ JZNodeDiv::JZNodeDiv()
     setPinTypeNumber(paramIn(0));
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
-    setParamInValue(1, 1);
+    setParamInValue(1, "1");
     addInputButton();
 }
 
@@ -418,14 +418,14 @@ QString JZNodeExpression::expr()
     return m_expression;
 }
 
-void JZNodeExpression::saveToStream(QDataStream &s) const
+void JZNodeExpression::saveToStream(JZProjectStream &s) const
 {
     JZNode::saveToStream(s);
     s << m_expression;
     s << m_exprList;
 }
 
-void JZNodeExpression::loadFromStream(QDataStream &s)
+void JZNodeExpression::loadFromStream(JZProjectStream &s)
 {
     JZNode::loadFromStream(s);
     s >> m_expression;

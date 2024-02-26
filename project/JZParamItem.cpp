@@ -1,32 +1,20 @@
-﻿#include "JZParamFile.h"
+﻿#include "JZParamItem.h"
 #include "JZNodeType.h"
 #include "JZProject.h"
 
 //JZScriptParamFile
-JZParamFile::JZParamFile()
+JZParamItem::JZParamItem()
     :JZProjectItem(ProjectItem_param)
 {
 
 }
 
-JZParamFile::~JZParamFile()
+JZParamItem::~JZParamItem()
 {
 
 }
 
-void JZParamFile::saveToStream(QDataStream &s)
-{
-    JZProjectItem::saveToStream(s);
-    s << m_variables;
-}
-
-void JZParamFile::loadFromStream(QDataStream &s)
-{
-    JZProjectItem::loadFromStream(s);
-    s >> m_variables;
-}
-
-void JZParamFile::addVariable(QString name,int type,QVariant v)
+void JZParamItem::addVariable(QString name,int type,QVariant v)
 {
     Q_ASSERT(!getVariable(name) && type != Type_none);
 
@@ -38,13 +26,13 @@ void JZParamFile::addVariable(QString name,int type,QVariant v)
     regist();
 }
 
-void JZParamFile::removeVariable(QString name)
+void JZParamItem::removeVariable(QString name)
 {
     m_variables.remove(name);
     regist();
 }
 
-void JZParamFile::renameVariable(QString oldName, QString newName)
+void JZParamItem::renameVariable(QString oldName, QString newName)
 {
     Q_ASSERT(m_variables.contains(oldName));
     auto def = m_variables[oldName];
@@ -54,7 +42,7 @@ void JZParamFile::renameVariable(QString oldName, QString newName)
     regist();
 }
 
-void JZParamFile::setVariableType(QString name, int dataType)
+void JZParamItem::setVariableType(QString name, int dataType)
 {
     Q_ASSERT(m_variables.contains(name));
     m_variables[name].dataType = dataType;
@@ -70,26 +58,26 @@ void JZParamFile::setVariableType(QString name, int dataType)
     regist();
 }
 
-void JZParamFile::setVariableValue(QString name, const QVariant &value)
+void JZParamItem::setVariableValue(QString name, const QVariant &value)
 {
     Q_ASSERT(m_variables.contains(name));
     m_variables[name].value = value;
     regist();
 }
 
-const QMap<QString,JZParamDefine> &JZParamFile::variables()
+const QMap<QString,JZParamDefine> &JZParamItem::variables()
 {
     return m_variables;
 }
 
-JZParamDefine *JZParamFile::getVariable(QString name)
+JZParamDefine *JZParamItem::getVariable(QString name)
 {
     if(m_variables.contains(name))
         return &m_variables[name];
     return nullptr;
 }
 
-QStringList JZParamFile::variableList()
+QStringList JZParamItem::variableList()
 {
     QStringList list;
     auto it = m_variables.begin();
@@ -101,18 +89,18 @@ QStringList JZParamFile::variableList()
     return list;
 }
 
-void JZParamFile::bindVariable(QString name, QString widget)
+void JZParamItem::bindVariable(QString name, QString widget)
 {    
     Q_ASSERT(getClassFile());
     m_binds[name] = widget;
 }
 
-void JZParamFile::unbindVariable(QString name)
+void JZParamItem::unbindVariable(QString name)
 {
     m_binds.remove(name);
 }
 
-const QMap<QString, QString> &JZParamFile::binds()
+const QMap<QString, QString> &JZParamItem::binds()
 {
     return m_binds;
 }

@@ -7,11 +7,7 @@ SampleCalculator::SampleCalculator()
     m_project.initUi();
     
     JZUiFile *ui_file = dynamic_cast<JZUiFile*>(m_project.getItem("./mainwindow/mainwindow.ui"));
-    ui_file->setXml(loadUi("Calculator.ui"));
-    
-    
-    
-    m_project.saveAllItem();
+    ui_file->setXml(loadUi("Calculator.ui"));    
 }
 
 SampleCalculator::~SampleCalculator()

@@ -19,11 +19,11 @@
      <height>41</height>
     </rect>
    </property>
-   <property name="text">
-    <string>开始</string>
-   </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="text">
+    <string>开始</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnStop">
@@ -35,11 +35,11 @@
      <height>41</height>
     </rect>
    </property>
-   <property name="text">
-    <string>结束</string>
-   </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="text">
+    <string>结束</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">
@@ -54,7 +54,7 @@
    <property name="text">
     <string>得分:</string>
    </property>
-  </widget> 
+  </widget>
   <widget class="QLineEdit" name="lineScore">
    <property name="geometry">
     <rect>
@@ -70,7 +70,28 @@
    <property name="readOnly">
     <bool>true</bool>
    </property>
-  </widget> 
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>260</y>
+     <width>101</width>
+     <height>211</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>按键说明:
+W 旋转
+S 下
+A 左
+D 右
+空格 落下</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

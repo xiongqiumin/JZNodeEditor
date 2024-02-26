@@ -3,18 +3,15 @@
 
 #include "JZNode.h"
 #include "JZProjectItem.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include "JZNodeObject.h"
 
-class JZParamFile;
-class JZScriptClassFile : public JZProjectItem
+class JZParamItem;
+class JZScriptClassItem : public JZProjectItem
 {
 public:
-    JZScriptClassFile();
-    virtual ~JZScriptClassFile();    
-
-    virtual void saveToStream(QDataStream &s);
-    virtual void loadFromStream(QDataStream &s);    
+    JZScriptClassItem();
+    virtual ~JZScriptClassItem();    
 
     void setClass(QString className, QString super);
     QString className() const;
@@ -26,14 +23,14 @@ public:
 
     JZNodeObjectDefine objectDefine();
     
-    JZParamFile *getParamFile();
+    JZParamItem *getParamFile();
     bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
     void removeMemberVariable(QString name);
     JZParamDefine *memberVariableInfo(QString name);
 
-    JZScriptFile *addMemberFunction(FunctionDefine func);    
+    JZScriptItem *addMemberFunction(FunctionDefine func);    
     void removeMemberFunction(QString func);
-    JZScriptFile *getMemberFunction(QString func);    
+    JZScriptItem *getMemberFunction(QString func);    
 
     QList<JZParamDefine> uiWidgets();
 

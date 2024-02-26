@@ -285,15 +285,13 @@ QString JZNodeGraphItem::getWidgetValue(QWidget *widget)
 
 void JZNodeGraphItem::updateNode()
 {
-    auto cmp = [this](int i,int j)->bool{
-        auto pin1 = m_node->prop(i);
-        auto pin2 = m_node->prop(j);
-        int flag1 = pin1->pri();
-        int flag2 = pin2->pri();
+    auto cmp = [this](int i,int j)->bool{        
+        int flag1 = m_node->propPri(i);
+        int flag2 = m_node->propPri(j);
         if(flag1 != flag2)
             return flag1 < flag2;
         else
-            return pin1->id() < pin2->id();
+            return i < j;
     };
     updatePropGemo();
 

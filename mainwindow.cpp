@@ -112,6 +112,11 @@ void MainWindow::saveSetting()
     }
 }
 
+QIcon MainWindow::menuIcon(const QString &name)
+{
+    return QIcon(":/JZNodeEditor/Resources/icons/" + name);
+}
+
 void MainWindow::initMenu()
 {
     using as = ActionStatus;
@@ -137,8 +142,8 @@ void MainWindow::initMenu()
     connect(actNewFunction, &QAction::triggered, this, &MainWindow::onActionNewFunction);
 
     auto actCloseFile = menu_file->addAction("关闭文件");
-    auto actSaveFile = menu_file->addAction("保存文件");
-    auto actSaveAllFile = menu_file->addAction("全部保存");
+    auto actSaveFile = menu_file->addAction(menuIcon("iconSave.png"), "保存文件");
+    auto actSaveAllFile = menu_file->addAction(menuIcon("iconSaveAll.png"), "全部保存");
     auto actCloseAllFile = menu_file->addAction("全部关闭");
 
     connect(actSaveFile,&QAction::triggered,this,&MainWindow::onActionSaveFile);
@@ -163,13 +168,13 @@ void MainWindow::initMenu()
         << ActionStatus(actCloseAllFile, { as::FileOpen });
 
     QMenu *menu_edit = menubar->addMenu("编辑");
-    auto actUndo = menu_edit->addAction("撤销");
-    auto actRedo = menu_edit->addAction("重做");
+    auto actUndo = menu_edit->addAction(menuIcon("iconUndo.png"),"撤销");
+    auto actRedo = menu_edit->addAction(menuIcon("iconRedo.png"),"重做");
     menu_edit->addSeparator();
-    auto actDel = menu_edit->addAction("删除");
-    auto actCut = menu_edit->addAction("剪切");
-    auto actCopy = menu_edit->addAction("复制");
-    auto actPaste = menu_edit->addAction("粘贴");
+    auto actDel = menu_edit->addAction(menuIcon("iconDelete.png"),"删除");
+    auto actCut = menu_edit->addAction(menuIcon("iconCut.png"),"剪切");
+    auto actCopy = menu_edit->addAction(menuIcon("iconCopy.png"),"复制");
+    auto actPaste = menu_edit->addAction(menuIcon("iconPaste.png"),"粘贴");
     menu_edit->addSeparator();
     auto actSelectAll = menu_edit->addAction("全选");
     actUndo->setShortcut(QKeySequence("Ctrl+Z"));
@@ -198,22 +203,25 @@ void MainWindow::initMenu()
     m_actionStatus << ActionStatus(actBuild, { as::ProjectVaild, as::ProcessIsEmpty });
 
     QMenu *menu_debug = menubar->addMenu("调试");    
-    auto actRun = menu_debug->addAction("开始调试");
+    auto actRun = menu_debug->addAction(menuIcon("iconRun.png"), "开始调试");
     auto actDetach = menu_debug->addAction("脱离调试器");
-    auto actPause = menu_debug->addAction("中断");
-    auto actResume = menu_debug->addAction("继续");
-    auto actStop = menu_debug->addAction("停止调试");
+    auto actPause = menu_debug->addAction(menuIcon("iconPause.png"), "中断");
+    auto actResume = menu_debug->addAction(menuIcon("iconRun.png"), "继续");
+    auto actStop = menu_debug->addAction(menuIcon("iconStop.png"), "停止调试");
 
-    menu_debug->addSeparator();
-    auto actStepOver = menu_debug->addAction("单步");
-    auto actStepIn = menu_debug->addAction("单步进入");
-    auto actStepOut = menu_debug->addAction("单步跳出");
-    auto actBreakPoint = menu_debug->addAction("断点");
+    m_debugActions << menu_debug->addSeparator();
+    auto actStepOver = menu_debug->addAction(menuIcon("iconStepOver.png"), "单步");
+    auto actStepIn = menu_debug->addAction(menuIcon("iconStepIn.png"), "单步进入");
+    auto actStepOut = menu_debug->addAction(menuIcon("iconStepOver.png"), "单步跳出");
+    auto actBreakPoint = menu_debug->addAction(menuIcon("iconStepBreakpoint.png"), "断点");
     actRun->setShortcut(QKeySequence("F5"));
     actStepOver->setShortcut(QKeySequence("F10"));
     actStepIn->setShortcut(QKeySequence("F11"));
     actStepOut->setShortcut(QKeySequence("Shift+F11"));
     actBreakPoint->setShortcut(QKeySequence("F9"));
+
+    m_debugActions << actDetach << actPause << actResume << actStop << actStepOver 
+        << actStepIn << actStepOut << actBreakPoint;
 
     m_actionRun = actRun;
     m_actionResume = actResume;
@@ -253,15 +261,17 @@ void MainWindow::initMenu()
     //tool bar
     QToolBar *main = new QToolBar();    
     main->addAction(actSaveFile);
-    main->addAction(actSaveAllFile);
-    main->addSeparator();
+    main->addAction(actSaveAllFile);    
     
-    main->addAction(actRun);
-    main->addAction(actPause);
-    main->addAction(actResume);
-    main->addAction(actStop);
+    QToolBar *tool_debug = new QToolBar();
+    tool_debug->addAction(actResume);
+    tool_debug->addAction(actPause);    
+    tool_debug->addAction(actStop);
 
     addToolBar(main);
+    addToolBar(tool_debug);
+
+    m_toolDebug = tool_debug;
 }
 
 void MainWindow::initUi()
@@ -344,12 +354,22 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (!closeAll())
+    if (m_processVaild)
+    {
+        int ret = QMessageBox::question(this, "", "是否停止调试", QMessageBox::Yes | QMessageBox::No);
+        if (ret == QMessageBox::No) 
+        {
+            event->ignore();
+            return;
+        }
+        onActionStop();
+    }
+    if (!closeProject())
     {
         event->ignore();
         return;
-    }
-    onActionStop();
+    }    
+
     JZDesigner::instance()->closeEditor();
     QMainWindow::closeEvent(event);
 }
@@ -396,6 +416,10 @@ void MainWindow::updateActionStatus()
         act->setEnabled(enabled);
     }
 
+    m_toolDebug->setVisible(isProcess);
+    for (auto act : m_debugActions)
+        act->setVisible(isProcess);
+
     if (canResume)
     {
         m_actionRun->setShortcut(QKeySequence());
@@ -426,17 +450,19 @@ void MainWindow::onActionNewProject()
         m_project.initUi();
     else
         m_project.initConsole();
-    if (m_project.saveAs(project_dir + "/" + name + ".jzproject"))
+/*
+    if (m_project.newProject(project_dir + "/" + name + ".jzproject"))
     {
         m_projectTree->setProject(&m_project);
         m_setting.addRecentProject(m_project.filePath());
     }
+*/
     updateActionStatus();
 }
 
 void MainWindow::onActionOpenProject()
 {    
-    if (!closeAll())
+    if (!closeProject())
         return;
 
     QString filepath = QFileDialog::getOpenFileName(this,"","","*.jzproject");
@@ -447,21 +473,15 @@ void MainWindow::onActionOpenProject()
 }
 
 void MainWindow::onActionCloseProject()
-{
-    if (!closeAll())
-        return;
-
-    m_project.close();    
-    m_projectTree->clear();
-    m_breakPoint->clear();
-    updateActionStatus();
+{   
+    closeProject();    
 }
 
 void MainWindow::onActionRecentProject()
 {
     QAction *act = qobject_cast<QAction*>(sender());
     QString filepath = act->text();
-    if (!closeAll())
+    if (!closeProject())
         return;
 
     if (!openProject(filepath))
@@ -492,8 +512,7 @@ void MainWindow::onActionSaveFile()
     if(!m_editor)
         return;
 
-    m_editor->save();
-    m_project.save();
+    m_editor->save();    
     updateActionStatus();
 }
 
@@ -695,18 +714,31 @@ void MainWindow::onUndoAvailable(bool flag)
     m_menuList[1]->actions()[0]->setEnabled(flag);
 }
 
-bool MainWindow::openProject(QString filepath)
+bool MainWindow::closeProject()
 {
-    bool ret = false;
-    if (m_project.open(filepath))
-    {
-        m_projectTree->setProject(&m_project);
-        m_setting.addRecentProject(m_project.filePath());
-        m_breakPoint->updateBreakPoint(&m_project);
-        ret = true;
-    }
+    if (!closeAll())
+        return false;
+
+    m_project.close();
+    m_projectTree->clear();
+    m_breakPoint->clear();
     updateActionStatus();
-    return ret;
+    return true;
+}
+
+bool MainWindow::openProject(QString filepath)
+{    
+    if (!m_project.open(filepath))
+    {
+        QMessageBox::information(this, "", "打开工程失败: " + m_project.error());
+        return false;
+    }
+
+    m_projectTree->setProject(&m_project);
+    m_setting.addRecentProject(m_project.filePath());
+    m_breakPoint->updateBreakPoint(&m_project);     
+    updateActionStatus();
+    return true;
 }
 
 JZEditor *MainWindow::createEditor(int type)
@@ -740,8 +772,8 @@ void MainWindow::gotoNode(QString file, int nodeId)
 
 void MainWindow::onFunctionOpen(QString functionName)
 {
-    auto file = m_project.getFunction(functionName);
-    openEditor(file->itemPath());
+    //auto file = m_project.getFunction(functionName);
+    //openEditor(file->itemPath());
 }
 
 JZEditor *MainWindow::editor(QString filepath)
@@ -815,8 +847,7 @@ void MainWindow::closeEditor(JZEditor *editor)
         int ret = QMessageBox::question(this, "", "是否保存", QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
         if (ret == QMessageBox::Yes)
         {
-            editor->save();
-            m_project.save();
+            editor->save();            
         }
         else if (ret == QMessageBox::Cancel)
             return;
@@ -1278,8 +1309,6 @@ void MainWindow::saveAll()
 
         it++;
     }
-    m_project.saveAllItem();
-    m_project.save();
 }
 
 bool MainWindow::closeAll(bool except_current)
@@ -1306,8 +1335,7 @@ bool MainWindow::closeAll(bool except_current)
                     | QMessageBox::YesToAll | QMessageBox::NoToAll | QMessageBox::Cancel);
                 if (ret == QMessageBox::Yes)
                 {
-                    editor->save();
-                    m_project.save();
+                    editor->save();                    
                 }
                 else if (ret == QMessageBox::Cancel)
                     return false;
@@ -1318,8 +1346,7 @@ bool MainWindow::closeAll(bool except_current)
             }
             else if (saveToAll)
             {
-                editor->save();
-                m_project.save();
+                editor->save();                
             }
         }
         editor->close();

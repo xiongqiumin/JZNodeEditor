@@ -15,9 +15,6 @@ public:
     QString xml();
     void setXml(QString xml);
 
-    virtual void saveToStream(QDataStream &s);
-    virtual void loadFromStream(QDataStream &s);
-
     QList<JZParamDefine> widgets();
     
 protected:

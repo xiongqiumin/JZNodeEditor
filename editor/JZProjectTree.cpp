@@ -110,7 +110,7 @@ QString JZProjectTree::getClass(JZProjectItem *item)
     while (item)
     {
         if (item->itemType() == ProjectItem_class)
-            return ((JZScriptClassFile*)item)->className();
+            return ((JZScriptClassItem*)item)->className();
 
         item = item->parent();
     }
@@ -280,10 +280,8 @@ void JZProjectTree::onContextMenu(QPoint pos)
     
     QString className = getClass(item);    
     if(item->itemType() == ProjectItem_folder
-            || item->itemType() == ProjectItem_class
-            || item->itemType() == ProjectItem_library)
-    {
-        QString name = JZProjectItemFactory::itemTypeName(item->itemType());
+            || item->itemType() == ProjectItem_class)
+    {        
         QMenu *menu_add = menu.addMenu("添加");
         QString funcAct = className .isEmpty()?  "函数" : "成员函数";
         actCreateFunction = menu_add->addAction(funcAct);
@@ -343,9 +341,10 @@ void JZProjectTree::onContextMenu(QPoint pos)
             if(item->getItem("成员函数"))
                 parent_item = getItem(item->itemPath() + "/成员函数");
         }
-
+        /*
         auto func_item = m_project->addFunction(item->itemPath(), dialog.functionInfo());
         addItem(parent_item, func_item);
+        */
     }
     else if (act == actCreateClass)
     {
@@ -356,16 +355,18 @@ void JZProjectTree::onContextMenu(QPoint pos)
         QString def = dialog.className();
         QString super = dialog.super();
         bool isUi = dialog.isUi();
-        JZScriptClassFile *class_item = nullptr;
+        JZScriptClassItem *class_item = nullptr;
+        /*
         if(isUi)
             class_item = m_project->addUiClass(item->path(), def);
         else
             class_item = m_project->addClass(item->path(), def, super);
         addItem(view_item, class_item);
+        */
     }
     else if (act == actEditFunction)
     {        
-        JZScriptFile *func_item = (JZScriptFile*)item;
+        JZScriptItem *func_item = (JZScriptItem*)item;
         QString oldName = func_item->name();
 
         JZNodeFuctionEditDialog dialog(this);        
@@ -386,8 +387,10 @@ void JZProjectTree::onContextMenu(QPoint pos)
     else if(act == actCreateEvent)
     {
         QString name = "事件";
+        /*
         JZProjectItemFolder *folder = m_project->addFolder(item->itemPath(), name);
         addItem(view_item, folder);
+        */
     }
     else if(act == actRemove)
     {

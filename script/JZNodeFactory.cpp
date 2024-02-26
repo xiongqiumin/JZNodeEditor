@@ -39,7 +39,7 @@ JZNode *JZNodeFactory::createNode(int type)
 
 JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
 {
-    QDataStream s(buffer);
+    JZProjectStream s;
     int type;
     s >> type;
     JZNode *node = JZNodeFactory::instance()->createNode(type);
@@ -50,7 +50,7 @@ JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
 QByteArray JZNodeFactory::saveNode(JZNode *node)
 {
     QByteArray data;
-    QDataStream s(&data, QIODevice::WriteOnly);
+    JZProjectStream s;
     s << node->type();
     node->saveToStream(s);
     return data;

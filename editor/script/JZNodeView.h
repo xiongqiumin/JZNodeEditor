@@ -10,7 +10,7 @@
 #include "JZNodeLineItem.h"
 #include "JZNodeGroupItem.h"
 #include "JZNodePropertyEditor.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include <QShortcut>
 #include <QUndoStack>
 #include <QGraphicsRectItem>
@@ -82,8 +82,8 @@ public:
 
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
     
-    void setFile(JZScriptFile *file);
-    JZScriptFile *file();
+    void setFile(JZScriptItem *file);
+    JZScriptItem *file();
 
     bool isModified();
 
@@ -168,7 +168,7 @@ protected slots:
     void onContextMenu(const QPoint &pos);
     void onItemPropChanged();
     void onPropNameUpdate(int nodeId,int propId,const QString &value);
-    void onPropUpdate(int nodeId,int propId,const QVariant &value);
+    void onPropUpdate(int nodeId,int propId,const QString &value);
     void onAutoCompiler();
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
@@ -224,7 +224,7 @@ protected:
 
     JZNodeViewMap *m_map;
     JZNodeScene *m_scene;
-    JZScriptFile *m_file;    
+    JZScriptItem *m_file;    
     JZNodeLineItem *m_selLine;    
     QGraphicsTextItem *m_tip;
     QRectF m_tipArea;

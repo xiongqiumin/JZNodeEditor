@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QTreeWidget>
 #include "JZNode.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include "JZNodePropertyEditor.h"
 
 class JZNodeTreeWidget : public QTreeWidget
@@ -16,7 +16,7 @@ protected:
     QMimeData *mimeData(const QList<QTreeWidgetItem *> items) const;
 };
 
-class JZScriptFile;
+class JZScriptItem;
 class JZNodePanel : public QWidget
 {
     Q_OBJECT
@@ -25,7 +25,7 @@ public:
     JZNodePanel(QWidget *widget = nullptr);
     ~JZNodePanel();    
 
-    void setFile(JZScriptFile *file);        
+    void setFile(JZScriptItem *file);        
     void updateNode();
 
 protected slots:
@@ -63,8 +63,8 @@ protected:
     bool filterItem(QTreeWidgetItem *root,QString name);    
 
     JZNodeTreeWidget *m_tree;    
-    JZScriptFile *m_file;
-    JZScriptClassFile *m_classFile;
+    JZScriptItem *m_file;
+    JZScriptClassItem *m_classFile;
     QLineEdit *m_lineSearch;    
     
     QTreeWidgetItem *m_memberFunction;

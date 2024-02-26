@@ -30,7 +30,7 @@
 JZNodeConnect parseLine(const QByteArray &buffer)
 {
     JZNodeConnect line;
-    QDataStream s(buffer);
+    JZProjectStream s;
     s >> line;
     return line;
 }
@@ -38,7 +38,7 @@ JZNodeConnect parseLine(const QByteArray &buffer)
 QByteArray formatLine(const JZNodeConnect &line)
 {
     QByteArray data;
-    QDataStream s(&data, QIODevice::WriteOnly);
+    JZProjectStream s;
     s << line;
     return data;
 }
@@ -46,7 +46,7 @@ QByteArray formatLine(const JZNodeConnect &line)
 JZNodeGroup parseGroup(const QByteArray &buffer)
 {
     JZNodeGroup group;
-    QDataStream s(buffer);
+    JZProjectStream s;
     s >> group;
     return group;
 }
@@ -54,7 +54,7 @@ JZNodeGroup parseGroup(const QByteArray &buffer)
 QByteArray formatGroup(const JZNodeGroup &group)
 {
     QByteArray data;
-    QDataStream s(&data, QIODevice::WriteOnly);
+    JZProjectStream s;
     s << group;
     return data;
 }
@@ -78,7 +78,7 @@ int JZNodeViewCommand::id() const
 QVariant JZNodeViewCommand::saveItem(JZNodeGraphItem *item)
 {
     QByteArray buffer;
-    QDataStream s(&buffer,QIODevice::WriteOnly);
+    JZProjectStream s;
     m_view->getNode(itemId)->saveToStream(s);
     return buffer;
 }
@@ -86,7 +86,7 @@ QVariant JZNodeViewCommand::saveItem(JZNodeGraphItem *item)
 void JZNodeViewCommand::loadItem(JZNodeGraphItem *item,const QVariant &value)
 {
     QByteArray buffer = value.toByteArray();
-    QDataStream s(&buffer,QIODevice::ReadOnly);
+    JZProjectStream s;
     item->node()->loadFromStream(s);
     item->updateNode();
 }
@@ -258,20 +258,24 @@ bool CopyData::isEmpty()
 QByteArray pack(const CopyData &param)
 {
     QByteArray buffer;
-    QDataStream s(&buffer,QIODevice::WriteOnly);
+    /*
+    JZProjectStream s;
     s << param.nodes;
     s << param.nodesPos;
     s << param.lines;  
+    */
     return buffer;
 }
 
 CopyData unpack(const QByteArray &buffer)
 {
     CopyData param;
-    QDataStream s(buffer);
+    /*
+    JZProjectStream s;
     s >> param.nodes;
     s >> param.nodesPos;
     s >> param.lines;  
+    */
     return param;
 }
 
@@ -398,12 +402,12 @@ void JZNodeView::setPropertyEditor(JZNodePropertyEditor *propEditor)
     connect(m_propEditor, &JZNodePropertyEditor::sigNodePropNameChanged, this, &JZNodeView::onPropNameUpdate);
 }
 
-JZScriptFile *JZNodeView::file()
+JZScriptItem *JZNodeView::file()
 {
     return m_file;
 }
 
-void JZNodeView::setFile(JZScriptFile *file)
+void JZNodeView::setFile(JZScriptItem *file)
 {
     m_file = file;    
 
@@ -471,7 +475,7 @@ QByteArray JZNodeView::getNodeData(int id)
     auto node = getNode(id);
 
     QByteArray buffer;
-    QDataStream s(&buffer,QIODevice::WriteOnly);
+    JZProjectStream s;
     node->saveToStream(s);
 
     return buffer;
@@ -482,7 +486,7 @@ void JZNodeView::setNodeData(int id,const QByteArray &buffer)
     auto node = getNode(id);
     int old_group = node->group();
 
-    QDataStream s(buffer);
+    JZProjectStream s;
     node->loadFromStream(s);
     if (old_group != -1 && old_group != node->group())
         getGroupItem(old_group)->updateNode();
@@ -1637,7 +1641,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
     if(event->mimeData()->hasFormat("node_data"))
     {
         QByteArray data = event->mimeData()->data("node_data");
-        QDataStream s(&data,QIODevice::ReadOnly);
+        JZProjectStream s;
         int node_type;
         s >> node_type;
         if(node_type == Node_expr)
@@ -1866,7 +1870,7 @@ void JZNodeView::onItemPropChanged()
     
     m_propEditFlag = true;    
     auto old = getNodeData(node_id);
-    node->setPropValue(prop_id, value);
+    node->setPropValue(prop_id, value.toString());
     addPropChangedCommand(node->id(), old);
     m_propEditFlag = false;
 }
@@ -1885,7 +1889,7 @@ void JZNodeView::onPropNameUpdate(int id,int propId,const QString &value)
     m_propEditFlag = false;
 }
 
-void JZNodeView::onPropUpdate(int id,int propId,const QVariant &value)
+void JZNodeView::onPropUpdate(int id,int propId,const QString &value)
 {
     QVariant oldValue = getNode(id)->propValue(propId);
     if(oldValue == value)

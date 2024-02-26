@@ -131,6 +131,8 @@ private:
 
     void loadSetting();
     void saveSetting();
+
+    bool closeProject();
     bool openProject(QString filepath);
     JZEditor *createEditor(int type);
     bool openEditor(QString filepath);    
@@ -156,6 +158,7 @@ private:
     void saveAll();
     bool closeAll(bool except_current = false); 
     void initLocalProcessTest();
+    QIcon menuIcon(const QString &name);
     
     JZProject m_project;    
 
@@ -183,6 +186,8 @@ private:
 
     QList<JZNodeWatch*> m_debugWidgets;
     QAction *m_actionRun, *m_actionResume;
+    QList<QAction*> m_debugActions;
+    QToolBar *m_toolDebug;
 
     JZNodeProgramInfo m_program;
     JZNodeRuntimeInfo m_runtime;

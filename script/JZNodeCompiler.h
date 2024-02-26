@@ -4,7 +4,7 @@
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeExpression.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include "JZProject.h"
 
 class GraphNode
@@ -120,11 +120,11 @@ public:
     JZNodeCompiler();
     ~JZNodeCompiler();
 
-    bool genGraphs(JZScriptFile *file, QVector<GraphPtr> &result);
-    bool build(JZScriptFile *file,JZNodeScript *result);        
+    bool genGraphs(JZScriptItem *file, QVector<GraphPtr> &result);
+    bool build(JZScriptItem *file,JZNodeScript *result);        
     CompilerInfo compilerInfo();
     
-    static const JZParamDefine *getVariableInfo(JZScriptFile *file, const QString &name);
+    static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
     const JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(const QString &var, QString &error);
     bool checkVariableType(const QString &var, const QString &className, QString &error);    
@@ -175,7 +175,7 @@ public:
     void replaceStatement(int pc,JZNodeIRPtr ir);
     void replaceStatement(int pc,QList<JZNodeIRPtr> ir_list);
     
-    JZScriptFile *currentFile();
+    JZScriptItem *currentFile();
     Graph *currentGraph();
     int currentPc();
     int nextPc();
@@ -192,7 +192,7 @@ protected:
         int debugStart;
     };
 
-    void init(JZScriptFile *file);
+    void init(JZScriptItem *file);
     bool genGraphs();
     bool checkGraphs();
     bool checkBuildResult();
@@ -228,7 +228,7 @@ protected:
 
     QString m_className;    
     JZNodeScript *m_script;
-    JZScriptFile *m_scriptFile;         
+    JZScriptItem *m_scriptFile;         
     Graph *m_currentGraph;               
         
     QList<NodeCompilerStack> m_compilerNodeStack;       //编译时node栈

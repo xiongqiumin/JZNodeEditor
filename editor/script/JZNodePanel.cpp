@@ -15,7 +15,7 @@
 #include "JZProjectItem.h"
 #include "JZNodeObject.h"
 #include "JZProject.h"
-#include "JZScriptFile.h"
+#include "JZScriptItem.h"
 #include "JZNodeFunction.h"
 #include "JZNodeEvent.h"
 #include "JZNodeParamEditDialog.h"
@@ -96,10 +96,10 @@ JZNodePanel::~JZNodePanel()
 {
 }
 
-void JZNodePanel::setFile(JZScriptFile *file)
+void JZNodePanel::setFile(JZScriptItem *file)
 {
     m_file = file;    
-    m_classFile = m_file->project()->getClassFile(m_file);
+    m_classFile = m_file->project()->getClass(m_file);
     init();
 }
 

@@ -5,7 +5,7 @@
 #include <QDebug>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
-#include "JZClassFile.h"
+#include "JZClassItem.h"
 #include "JZNodeUtils.h"
 
 // GraphNode
@@ -200,7 +200,7 @@ JZNodeCompiler::~JZNodeCompiler()
 {
 }
 
-void JZNodeCompiler::init(JZScriptFile *scriptFile)
+void JZNodeCompiler::init(JZScriptItem *scriptFile)
 {
     m_project = scriptFile->project();
     m_scriptFile = scriptFile;
@@ -214,7 +214,7 @@ void JZNodeCompiler::init(JZScriptFile *scriptFile)
     resetStack();
 }
 
-bool JZNodeCompiler::genGraphs(JZScriptFile *scriptFile, QVector<GraphPtr> &list)
+bool JZNodeCompiler::genGraphs(JZScriptItem *scriptFile, QVector<GraphPtr> &list)
 {
     init(scriptFile);
     if(!genGraphs())
@@ -231,7 +231,7 @@ CompilerInfo JZNodeCompiler::compilerInfo()
     return info;
 }
 
-bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
+bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
 {        
     init(scriptFile);
     if (!genGraphs())
@@ -243,7 +243,7 @@ bool JZNodeCompiler::build(JZScriptFile *scriptFile,JZNodeScript *result)
     m_script->clear();
     m_script->file = scriptFile->itemPath();    
 
-    JZScriptClassFile *class_file = m_project->getClassFile(scriptFile);
+    JZScriptClassItem *class_file = m_project->getClass(scriptFile);
     if (class_file)
         m_className = class_file->name();       
            
@@ -853,7 +853,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
         }
         else
         {
-            if (pin->value().isValid()) //默认值
+            if (pin->value().isEmpty()) //默认值
             {                    
                 pin_type = JZNodeType::matchType(pin->dataType(), pin->value());
                 if (pin_type == Type_none)
@@ -1153,7 +1153,7 @@ int JZNodeCompiler::addStatement(JZNodeIRPtr ir)
     return ir->pc;
 }
 
-JZScriptFile *JZNodeCompiler::currentFile()
+JZScriptItem *JZNodeCompiler::currentFile()
 {
     return m_scriptFile;
 }
@@ -1346,12 +1346,12 @@ void JZNodeCompiler::addFunctionAlloc(const FunctionDefine &define)
     addNodeStart(currentNode()->id());
 }
 
-const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptFile *file,const QString &name)
+const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QString &name)
 {
     auto project = file->project();
     if (name.startsWith("this."))
     {
-        JZScriptClassFile *class_file = project->getClassFile(file);
+        JZScriptClassItem *class_file = project->getClass(file);
         auto def = JZNodeObjectManager::instance()->meta(class_file->className());
         Q_ASSERT(def);
 
@@ -1470,7 +1470,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
         {
             int to_id = paramId(in_node->node->id(), in_prop);
             auto prop = in_node->node->prop(in_prop);            
-            if (!prop->value().isValid())
+            if (!prop->value().isEmpty())
             {
                 //成员函数可以不输入this
                 if (prop_idx == 0 && in_node->node->type() == Node_function)

@@ -23,7 +23,7 @@ protected:
     };
 
     void clear();
-    bool buildScriptFile(JZScriptFile *script);    
+    bool buildScriptFile(JZScriptItem *script);    
     bool link();        
     void initGlobal();
 

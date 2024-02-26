@@ -44,18 +44,6 @@ void JZUiFile::setXml(QString xml)
     regist();
 }
 
-void JZUiFile::saveToStream(QDataStream &s)
-{
-    JZProjectItem::saveToStream(s);
-    s << m_xml << m_widgets;
-}
-
-void JZUiFile::loadFromStream(QDataStream &s)
-{
-    JZProjectItem::loadFromStream(s);
-    s >> m_xml >> m_widgets;
-}
-
 QList<JZParamDefine> JZUiFile::widgets()
 {
     return m_widgets;
