@@ -135,6 +135,7 @@ JZParamEditor::~JZParamEditor()
 
 void JZParamEditor::updateItem(int row,JZParamDefine *def)
 {
+/*
     QTableWidgetItem *itemName = new QTableWidgetItem(def->name);
     itemName->setData(Qt::UserRole, def->name);
     m_table->setItem(row, 0, itemName);
@@ -157,7 +158,7 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
     else
     {
         TypeEditHelp help;
-        help.init(def->dataType);
+        //help.init(def->dataType);
 
         QComboBox *box = new QComboBox();
         for (int i = 0; i < help.typeNames.size(); i++)
@@ -169,7 +170,7 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
         QTableWidgetItem *itemValue = new QTableWidgetItem();
         m_table->setItem(row, 2, itemValue);
         if (JZNodeType::isBase(def->dataType))
-            itemValue->setText(def->value.toString());
+            itemValue->setText(def->value);
         else if (JZNodeType::isEnum(def->dataType))
         {
             auto meta = JZNodeObjectManager::instance()->enumMeta(def->dataType);                 
@@ -179,6 +180,7 @@ void JZParamEditor::updateItem(int row,JZParamDefine *def)
         else
             itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
     }
+*/
 }
 
 void JZParamEditor::open(JZProjectItem *item)
@@ -188,7 +190,7 @@ void JZParamEditor::open(JZProjectItem *item)
     m_table->clearContents();
 
     m_widgetCount = 0;
-    JZScriptClassItem *class_file = m_project->getClass(item);
+    JZScriptClassItem *class_file = m_project->getItemClass(item);
     if (class_file)
     {
         auto widgets = class_file->uiWidgets();
@@ -204,8 +206,8 @@ void JZParamEditor::open(JZProjectItem *item)
     m_table->setRowCount(m_widgetCount + list.size());
     for(int i = 0; i < list.size(); i++)
     {
-        auto info = m_file->getVariable(list[i]);
-        updateItem(m_widgetCount + i, info);
+//        auto info = m_file->getVariable(list[i]);
+//        updateItem(m_widgetCount + i, info);
     }
     m_table->blockSignals(false);
 }
@@ -233,6 +235,7 @@ void JZParamEditor::onCleanChanged(bool clean)
 
 void JZParamEditor::onItemChanged(QTableWidgetItem *item)
 {
+/*
     QString varName = m_table->item(item->row(), 0)->data(Qt::UserRole).toString();
     if (item->column() == 0)
     {        
@@ -251,6 +254,7 @@ void JZParamEditor::onItemChanged(QTableWidgetItem *item)
         else
             m_file->setVariableValue(varName, value);
     }
+*/
 }
 
 void JZParamEditor::addNewCommand(QString name, int type)
@@ -263,12 +267,13 @@ void JZParamEditor::addNewCommand(QString name, int type)
 }
 void JZParamEditor::addRemoveCommand(QString name)
 {
-    auto info = m_file->getVariable(name);
+/*  auto info = m_file->getVariable(name);
 
     JZParamEditorCommand *cmd = new JZParamEditorCommand(this, JZParamEditorCommand::RemoveParam);
     cmd->newName = name;
     cmd->newType = info->dataType;
     m_commandStack.push(cmd);
+*/
 }
 
 void JZParamEditor::addRenameCommand(QString oldName, QString newName)
@@ -281,13 +286,14 @@ void JZParamEditor::addRenameCommand(QString oldName, QString newName)
 
 void JZParamEditor::addSetTypeCommand(QString name, int newType)
 {
-    auto info = m_file->getVariable(name);
+/*  auto info = m_file->getVariable(name);
 
     JZParamEditorCommand *cmd = new JZParamEditorCommand(this, JZParamEditorCommand::SetType);
     cmd->newName = name;
     cmd->oldType = info->dataType;
     cmd->newType = newType;
     m_commandStack.push(cmd);
+*/
 }
 
 int JZParamEditor::rowDataType(int row)
@@ -323,7 +329,7 @@ void JZParamEditor::addParam(QString name, int dataType)
     m_file->addVariable(name, dataType);
 
     m_table->blockSignals(true);
-    updateItem(row, m_file->getVariable(name));
+    //updateItem(row, m_file->getVariable(name));
     m_table->blockSignals(false);
 }
 
@@ -336,6 +342,7 @@ void JZParamEditor::removeParam(QString name)
 
 void JZParamEditor::renameParam(QString oldName, QString newName)
 {
+/*
     m_file->renameVariable(oldName, newName);
 
     m_table->blockSignals(true);
@@ -343,10 +350,12 @@ void JZParamEditor::renameParam(QString oldName, QString newName)
     m_table->item(row, 0)->setText(newName);
     m_table->item(row, 0)->setData(Qt::UserRole, newName);
     m_table->blockSignals(false);
+*/
 }
 
 void JZParamEditor::setParamType(QString name, int dataType)
 {
+/*
     m_file->setVariableType(name, dataType);
 
     auto def = m_file->getVariable(name);
@@ -354,6 +363,7 @@ void JZParamEditor::setParamType(QString name, int dataType)
     m_table->blockSignals(true);
     updateItem(row, def);
     m_table->blockSignals(false);
+*/
 }
 
 void JZParamEditor::on_btnAdd_clicked()
@@ -389,7 +399,7 @@ void JZParamEditor::on_btnRemove_clicked()
 
 void JZParamEditor::onTypeChanged(int index)
 {
-    QComboBox *box = qobject_cast<QComboBox*>(sender());
+/*    QComboBox *box = qobject_cast<QComboBox*>(sender());
     int row = rowIndex(box);
     QString name = m_table->item(row, 0)->text();
     
@@ -412,4 +422,5 @@ void JZParamEditor::onTypeChanged(int index)
     }                       
 
     addSetTypeCommand(name, dataType);
+*/
 }

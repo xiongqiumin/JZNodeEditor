@@ -31,7 +31,7 @@ JZNodeConnect::JZNodeConnect()
     id = -1;
 }
 
-void operator<<(JZProjectStream &s, const JZNodeConnect &param)
+void operator<<(QDataStream &s, const JZNodeConnect &param)
 {
     s << param.id;
     s << param.from.nodeId;
@@ -40,7 +40,7 @@ void operator<<(JZProjectStream &s, const JZNodeConnect &param)
     s << param.to.propId;
 }
 
-void operator>>(JZProjectStream &s, JZNodeConnect &param)
+void operator>>(QDataStream &s, JZNodeConnect &param)
 {
     s >> param.id;
     s >> param.from.nodeId;
@@ -55,13 +55,13 @@ JZNodeGroup::JZNodeGroup()
     id = -1;
 }
 
-void operator<<(JZProjectStream &s, const JZNodeGroup &param)
+void operator<<(QDataStream &s, const JZNodeGroup &param)
 {
     s << param.id;
     s << param.memo;
 }
 
-void operator >> (JZProjectStream &s, JZNodeGroup &param)
+void operator>>(QDataStream &s, JZNodeGroup &param)
 {
     s >> param.id;
     s >> param.memo;
@@ -79,6 +79,21 @@ JZNode::JZNode()
 
 JZNode::~JZNode()
 {
+}
+
+QByteArray JZNode::toBuffer()
+{
+    QByteArray buffer;
+    QDataStream s(&buffer, QIODevice::WriteOnly);
+    saveToStream(s);
+    return buffer;
+}
+
+bool JZNode::fromBuffer(const QByteArray &buffer)
+{
+    QDataStream s(buffer);    
+    loadFromStream(s);
+    return true;
 }
 
 int JZNode::type() const
@@ -591,14 +606,6 @@ void JZNode::setPinType(int id,const QList<int> &type)
     prop(id)->setDataType(type);
 }
 
-void JZNode::sortPinByPri()
-{
-    std::stable_sort(m_propList.begin(), m_propList.end(), 
-        [this](const JZNodePin &p1, const JZNodePin &p2)->bool{
-            return this->propPri(p1.id()) < this->propPri(p2.id());
-    });
-}
-
 void JZNode::drag(const QVariant &v)
 {
     Q_UNUSED(v);
@@ -642,19 +649,24 @@ void JZNode::pinChanged(int id)
     Q_UNUSED(id);
 }
 
-void JZNode::saveToStream(JZProjectStream &s) const
+void JZNode::saveToStream(QDataStream &s) const
 {
+    s << m_type;
     s << m_id;
     s << m_name;
-    s << m_flag;    
+    s << m_flag;
     s << m_group;
     s << m_memo;
     s << m_propList;
-    s << m_notifyList;    
+    s << m_notifyList;
 }
 
-void JZNode::loadFromStream(JZProjectStream &s)
-{
+void JZNode::loadFromStream(QDataStream &s)
+{    
+    int node_type;
+    s >> node_type;
+    Q_ASSERT(node_type == m_type);
+
     s >> m_id;
     s >> m_name;
     s >> m_flag;
@@ -745,7 +757,7 @@ void JZNodeReturn::setFunction(const FunctionDefine *def)
     for (int i = 0; i < def->paramOut.size(); i++)
     {
         int in = addParamIn(def->paramOut[i].name, Prop_dispName | Prop_dispValue | Prop_editValue);
-        setPinType(in, { def->paramOut[i].dataType });
+        setPinType(in, { def->paramOut[i].dataType() });
     }
 }
 
@@ -859,6 +871,9 @@ JZNodeFor::JZNodeFor()
     int id_step = addParamIn("Step", Prop_editValue | Prop_dispName | Prop_dispValue);
     int id_end = addParamIn("End index",Prop_editValue | Prop_dispName | Prop_dispValue);
     int id_index = addParamOut("index", Prop_dispName);
+    setPropValue(id_start, "0");
+    setPropValue(id_step, "1");
+    setPropValue(id_end, "1");
     setPinTypeInt(id_start);
     setPinTypeInt(id_step);
     setPinTypeInt(id_index);
@@ -1025,7 +1040,7 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
     auto meta = JZNodeObjectManager::instance()->meta(class_type);    
 
     auto *it_define = meta->function("iterator");
-    auto it_meta = JZNodeObjectManager::instance()->meta(it_define->paramOut[0].dataType);
+    auto it_meta = JZNodeObjectManager::instance()->meta(it_define->paramOut[0].dataType());
 
     int id_list = c->paramId(m_id,paramIn(0));
     JZNodeIRParam list = irId(id_list);    
@@ -1136,8 +1151,7 @@ void JZNodeIf::addCondPin()
     int in = addParamIn("cond",Prop_dispName);
     setPinTypeBool(in);
 
-    addSubFlowOut("cond", Prop_dispName);
-    sortPinByPri();
+    addSubFlowOut("cond", Prop_dispName);    
     updateCondName();    
 }
 
@@ -1277,7 +1291,6 @@ JZNodeSwitch::JZNodeSwitch()
 void JZNodeSwitch::addCase()
 {
     addSubFlowOut("case", Prop_dispName | Prop_dispValue | Prop_editValue);
-    sortPinByPri();
 }
 
 void JZNodeSwitch::addDefault()
@@ -1381,8 +1394,7 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
     }
 
     int in_id = c->paramId(m_id, paramIn(0));
-    int out_id = c->paramId(m_id, paramOut(0));
-    
+    int out_id = c->paramId(m_id, paramOut(0));    
     c->addSetVariable(irId(out_id), irId(in_id));
     c->addFlowOutput(m_id);
 
@@ -1390,12 +1402,15 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
     if (prop(sub_flow_list.back())->name() == "default")
         case_count--;
 
+    int in_type = c->pinType(m_id, paramIn(0));
+
     JZNodeIRJmp *pre_jmp = nullptr;
     for (case_idx = 0; case_idx < case_count; case_idx++)
     {
-        auto out_value = prop(sub_flow_list[case_idx])->value();
+        QString out_value_str = prop(sub_flow_list[case_idx])->value();
+        QVariant value = JZNodeType::initValue(in_type, out_value_str);
 
-        int jmp_cmp = c->addCompare(irId(in_id), irLiteral(out_value), OP_eq);
+        int jmp_cmp = c->addCompare(irId(in_id), irLiteral(value), OP_eq);
         JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
         JZNodeIRJmp *jmp_false = new JZNodeIRJmp(OP_jmp);
         c->addStatement(JZNodeIRPtr(jmp_true));

@@ -132,6 +132,7 @@
     <ClCompile Include="project\JZProject.cpp" />
     <ClCompile Include="project\JZProjectItem.cpp" />
     <ClCompile Include="project\JZProjectStream.cpp" />
+    <ClCompile Include="project\JZProjectTemplate.cpp" />
     <ClCompile Include="project\JZScriptFile.cpp" />
     <ClCompile Include="project\JZScriptItem.cpp" />
     <ClCompile Include="project\JZUIFile.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="project\JZClassItem.h" />
     <ClInclude Include="project\JZProjectItemStream.h" />
     <ClInclude Include="project\JZProjectStream.h" />
+    <ClInclude Include="project\JZProjectTemplate.h" />
     <ClInclude Include="project\JZScriptFile.h" />
     <ClInclude Include="sample\Calculator.h" />
     <ClInclude Include="sample\SampleProject.h" />

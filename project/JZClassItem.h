@@ -13,6 +13,9 @@ public:
     JZScriptClassItem();
     virtual ~JZScriptClassItem();    
 
+    QByteArray toBuffer();
+    bool fromBuffer(const QByteArray &object);
+
     void setClass(QString className, QString super);
     QString className() const;
 
@@ -24,19 +27,26 @@ public:
     JZNodeObjectDefine objectDefine();
     
     JZParamItem *getParamFile();
-    bool addMemberVariable(QString name,int dataType,const QVariant &v = QVariant());
-    void removeMemberVariable(QString name);
-    JZParamDefine *memberVariableInfo(QString name);
+    bool addMemberVariable(QString name,int dataType,const QString &v = QString());
+    bool addMemberVariable(QString name,QString dataType, const QString &v = QString());
+    void removeMemberVariable(QString name);    
+    const JZParamDefine *memberVariable(QString name);    
 
-    JZScriptItem *addMemberFunction(FunctionDefine func);    
+    JZScriptItem *addFlow(QString name);
+    void removeFlow(QString name);
+    JZScriptItem *flow(QString name);
+
+    JZScriptItem *addMemberFunction(FunctionDefine func);
     void removeMemberFunction(QString func);
     JZScriptItem *getMemberFunction(QString func);    
 
+    QString uiFile() const;
+    void setUiFile(QString file);
     QList<JZParamDefine> uiWidgets();
 
-protected:       
-    QString m_className;
+protected:           
     QString m_super;
+    QString m_uiFile;
     int m_classId;
 };
 

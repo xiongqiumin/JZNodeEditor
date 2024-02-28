@@ -13,6 +13,7 @@ public:
     bool run();
 
 protected:    
+    void newProject(QString project);
     QString loadUi(QString file);
 
     QString m_name;

@@ -44,8 +44,7 @@ protected slots:
 protected:        
     QVariant getVariable(const JZNodeDebugParamInfo &list);
     QVariant setVariable(const JZNodeSetDebugParamInfo &list);
-    JZNodeDebugParamValue toDebugParam(const QVariant &value);
-    JZNodeProgramInfo getProgramInfo();    
+    JZNodeDebugParamValue toDebugParam(const QVariant &value);      
     QVariant *getVariableRef(int stack,const JZNodeParamCoor &coor);
 
     bool m_init;

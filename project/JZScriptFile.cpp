@@ -1,3 +1,4 @@
+#include <QFileInfo>
 #include "JZScriptFile.h"
 #include "JZProject.h"
 
@@ -11,43 +12,202 @@ JZScriptFile::~JZScriptFile()
 
 }
 
-bool JZScriptFile::loadFromStream(JZProjectStream &s)
+bool JZScriptFile::save(QString filepath)
 {
+    auto items = itemList(ProjectItem_any);
+    return save(filepath, items);
+}
+
+bool JZScriptFile::save(QString filepath, QList<JZProjectItem*> change_items)
+{   
+    QFile sub_file(filepath);
+    if (!sub_file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
+    
+    for (int i = 0; i < change_items.size(); i++)
+    {
+        auto class_item = change_items[i]->getClassFile();
+        if (class_item)
+            m_itemCache.remove(class_item);
+        m_itemCache.remove(change_items[i]);
+    }
+    
+    QList<QByteArray> class_buffer;           
+    auto all_class = itemList(ProjectItem_class);
+    for(int i = 0; i < all_class.size(); i++)
+        class_buffer << getItemData(all_class[i]);
+
+    QDataStream s(&sub_file);
+    s << class_buffer;
+    saveScript(s, this);
     return true;
 }
 
-bool JZScriptFile::saveToStream(JZProjectStream &s)
+bool JZScriptFile::load(QString filepath)
 {
+    QFile sub_file(filepath);
+    if (!sub_file.open(QIODevice::ReadOnly))
+        return false;
+
+    QDataStream s(&sub_file);
+
+    QList<QByteArray> class_list;
+    s >> class_list;
+    for (int i = 0; i < class_list.size(); i++)
+    {
+        QByteArray cls_buffer = class_list[i];
+        QDataStream cls_s(&cls_buffer, QIODevice::ReadOnly);
+
+        QByteArray head;
+        cls_s >> head;
+
+        JZScriptClassItem *class_item = new JZScriptClassItem();
+        class_item->fromBuffer(head);
+        m_project->addItem(itemPath(), class_item);        
+        loadScript(cls_s, class_item);
+        m_itemCache[class_item] = class_list[i];
+    }
+    loadScript(s, this);
     return true;
 }
 
-JZParamDefine *JZScriptFile::addParamDefine(QString name)
+QByteArray JZScriptFile::getItemData(JZProjectItem *item)
 {
-    JZParamDefine *def = nullptr;
+    if (!m_itemCache.contains(item))
+    {
+        QByteArray buffer;        
+        if (item->itemType() == ProjectItem_class)
+        {
+            auto class_item = dynamic_cast<JZScriptClassItem*>(item);
+            QByteArray head = class_item->toBuffer();
+            
+            QDataStream cls_s(&buffer,QIODevice::WriteOnly);
+            cls_s << head;
+            saveScript(cls_s, class_item);
+        }
+        else if (item->itemType() == ProjectItem_param)
+        {
+            auto param_item = dynamic_cast<JZParamItem*>(item);
+            buffer = param_item->toBuffer();
+        }
+        else if (item->itemType() == ProjectItem_scriptFunction
+            || item->itemType() == ProjectItem_scriptFlow)
+        {
+            auto script = dynamic_cast<JZScriptItem*>(item);
+            buffer = script->toBuffer();
+        }
+        m_itemCache[item] = buffer;
+    }
+    return m_itemCache[item];
+}
+
+void JZScriptFile::saveScript(QDataStream &s, JZProjectItem *parent)
+{        
+    QList<QByteArray> function_list, param_list, flow_list;
+    auto items = parent->childs();
+    for (int i = 0; i < items.size(); i++)
+    {
+        auto item = items[i];
+
+        JZProjectStream s;
+        if (item->itemType() == ProjectItem_param)
+            param_list << getItemData(item);        
+        else if (item->itemType() == ProjectItem_scriptFunction)
+            function_list << getItemData(item);
+        else if (item->itemType() == ProjectItem_scriptFlow)
+            flow_list << getItemData(item);
+    }
+    
+    s << param_list;
+    s << function_list;
+    s << flow_list;
+}
+
+void JZScriptFile::loadScript(QDataStream &s, JZProjectItem *parent)
+{    
+    Q_ASSERT(parent->project());
+
+    QList<QByteArray> function_list, param_list, flow_list;
+    s >> param_list;
+    s >> function_list;    
+    s >> flow_list;
+
+    for (int i = 0; i < param_list.size(); i++)
+    {
+        JZParamItem *item = new JZParamItem();
+        item->fromBuffer(param_list[i]);
+        m_project->addItem(parent->itemPath(),item);
+        m_itemCache[item] = param_list[i];
+    }
+
+    for (int i = 0; i < function_list.size(); i++)
+    {
+        JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFunction);
+        item->fromBuffer(function_list[i]);
+        m_project->addItem(parent->itemPath(), item);
+        m_itemCache[item] = function_list[i];
+    }
+
+    for (int i = 0; i < flow_list.size(); i++)
+    {
+        JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFlow);        
+        item->fromBuffer(flow_list[i]);
+        m_project->addItem(parent->itemPath(), item);
+        m_itemCache[item] = flow_list[i];
+    } 
+}
+
+JZParamItem *JZScriptFile::addParamDefine(QString name)
+{
+    JZParamItem *def = new JZParamItem();
+    def->setName(name);
+    m_project->addItem(itemPath(), def);
     return def;
 }
 
 void JZScriptFile::removeParamDefine(QString name)
 {
+    auto path = getItem(name)->itemPath();
+    m_project->removeItem(path);
+}
 
+JZParamItem *JZScriptFile::paramDefine(QString name)
+{
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        if (m_childs[i]->name() == name && m_childs[i]->itemType() == ProjectItem_param)
+            return (JZParamItem *)m_childs[i].data();
+    }
+    return nullptr;
 }
 
 JZScriptItem *JZScriptFile::addFlow(QString name)
 {
-    return nullptr;
+    JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFlow);
+    item->setName(name);
+    m_project->addItem(itemPath(), item);
+    return item;
 }
 
 void JZScriptFile::removeFlow(QString name)
 {
+    auto path = getItem(name)->itemPath();
+    m_project->removeItem(path);
+}
 
+JZScriptItem *JZScriptFile::flow(QString name)
+{
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        if (m_childs[i]->name() == name && m_childs[i]->itemType() == ProjectItem_scriptFlow)
+            return (JZScriptItem *)m_childs[i].data();
+    }
+    return nullptr;
 }
 
 JZScriptItem *JZScriptFile::addFunction(QString path, const FunctionDefine &define)
-{
-    Q_ASSERT(!define.name.isEmpty() && getItem(path));
-
-    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);
-    file->setName(define.name);
+{    
+    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    
     file->setFunction(define);
     m_project->addItem(path, file);
     return file;
@@ -76,21 +236,18 @@ JZScriptClassItem *JZScriptFile::addClass(QString name, QString super)
 
     JZScriptClassItem *class_file = new JZScriptClassItem();
     class_file->setClass(name, super);
+    m_project->addItem(itemPath(), class_file);
 
-    JZParamItem *data_page = new JZParamItem();
-    JZScriptItem *script_flow = new JZScriptItem(ProjectItem_scriptFlow);
-    JZProjectItemFolder *script_function = new JZProjectItemFolder();
-    class_file->setName(name);
-    data_page->setName("变量");
-    script_flow->setName("事件");    
-    
+    JZParamItem *data_page = new JZParamItem();            
+    data_page->setName("成员变量");
+    m_project->addItem(class_file->itemPath(), data_page);
 
     return class_file;
 }
 
 void JZScriptFile::removeClass(QString name)
 {
-    m_project->removeItem(name);
+    m_project->removeItem(getItem(name)->itemPath());
 }
 
 JZScriptClassItem *JZScriptFile::getClass(QString name)

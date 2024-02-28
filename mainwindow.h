@@ -147,17 +147,18 @@ private:
     void setRunning(bool flag);    
     void setRuntimeNode(QString file, int nodeId);
     void clearRuntimeNode();
-    void updateRuntime(int stack_index, bool isNew);
+    void updateRuntime(int stack_index, bool isNew);    
     void clearWatchs();
     void setWatchStatus(int status);
     void setWatchRunning(bool flag);
+    void updateAutoWatch(int stack_index);
 
     bool build();
     void start(bool startPause);    
     void saveToFile(QString file,QString text);
     void saveAll();
     bool closeAll(bool except_current = false); 
-    void initLocalProcessTest();
+    void initLocalProcessTest(bool flag);
     QIcon menuIcon(const QString &name);
     
     JZProject m_project;    
@@ -189,7 +190,7 @@ private:
     QList<QAction*> m_debugActions;
     QToolBar *m_toolDebug;
 
-    JZNodeProgramInfo m_program;
+    JZNodeProgram m_program;
     JZNodeRuntimeInfo m_runtime;
 };
 #endif // MAINWINDOW_H

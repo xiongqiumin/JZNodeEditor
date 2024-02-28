@@ -15,6 +15,9 @@ public:
     QString xml();
     void setXml(QString xml);
 
+    bool save(QString filepath);
+    bool load(QString filepath);
+
     QList<JZParamDefine> widgets();
     
 protected:

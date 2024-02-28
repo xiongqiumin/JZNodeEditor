@@ -14,20 +14,22 @@ TestServer::TestServer()
 
 void TestServer::init(JZProject *project)
 {
-    QString filepath = qApp->applicationDirPath() + "/test";
-    if (!QDir().exists(filepath))
-        QDir().mkpath(filepath);
+    QString dirpath = qApp->applicationDirPath() + "/test";
+    if (!QFile::exists(dirpath))
+        QDir().mkdir(dirpath);
 
     m_project = project;    
 
     auto func_inst = JZNodeFunctionManager::instance();
 
-    m_project->initConsole();
+    m_project->newProject(dirpath,"test","console");
     JZScriptItem *script = m_project->mainScript();
-    JZParamItem *paramDef = m_project->globalDefine();
-    paramDef->addVariable("timer", Type_timer);
+    JZParamItem *param_def = m_project->globalDefine();
+    param_def->addVariable("timer", Type_timer);
 
-    auto script_file = m_project->createScript("TestClass");
+    JZScriptFile *script_file = new JZScriptFile();
+    script_file->setName("TestClass.jz");
+    m_project->addItem("./",script_file);
 
     JZScriptClassItem *class_file = script_file->addClass("TestClass");
     class_file->addMemberVariable("i32", Type_int);
@@ -62,8 +64,7 @@ void TestServer::init(JZProject *project)
     script->addConnect(create_timer->flowOutGemo(0), set_timer->flowInGemo());
     script->addConnect(set_timer->paramOutGemo(0), start_timer->paramInGemo(0));
     script->addConnect(set_timer->flowOutGemo(0), start_timer->flowInGemo());
-
-    auto param_def = (JZParamItem *)m_project->getItem("./global.def");
+    
     param_def->addVariable("test", JZClassId("TestClass"));
 
     JZNodeSetParam *set_param = new JZNodeSetParam();
@@ -78,7 +79,6 @@ void TestServer::init(JZProject *project)
     script->addConnect(create->flowOutGemo(), set_param->flowInGemo());
     script->addConnect(create->paramOutGemo(0), set_param->paramInGemo(0));
     
-
     //timeout
     JZNodeSingleEvent *timeout = new  JZNodeSingleEvent();
     timeout->setSingle(time_meta->className, time_meta->single("timeout"));
@@ -116,6 +116,8 @@ void TestServer::init(JZProject *project)
     script->addConnect(get_param->paramOutGemo(0), node_func->paramInGemo(0));
     
     projectUpdateLayout(m_project);
+    m_project->saveAllItem();
+    m_project->save();
 }
 
 void TestServer::stop()
@@ -139,6 +141,9 @@ void TestServer::run()
     {
         Q_ASSERT(0);
     }    
+
+    QString dirpath = qApp->applicationDirPath() + "/test/test/test.program";
+    m_program.save(dirpath);
 
     JZNodeEngine engine;
     connect(&engine, &JZNodeEngine::sigRuntimeError, this, &TestServer::onRuntimeError);

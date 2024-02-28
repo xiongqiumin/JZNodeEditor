@@ -118,10 +118,7 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     
     if(cmd == Cmd_init)
     {
-        m_debugInfo = netDataUnPack<JZNodeDebugInfo>(params[0].toByteArray());                                
-        
-        JZNodeProgramInfo info = getProgramInfo();                
-        result << netDataPack(info);
+        m_debugInfo = netDataUnPack<JZNodeDebugInfo>(params[0].toByteArray());                                               
         for (int i = 0; i < m_debugInfo.breakPoints.size(); i++)
         {
             auto it = m_debugInfo.breakPoints.begin();
@@ -133,6 +130,10 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
                 it++;
             }
         }
+
+        JZNodeProgramInfo info;
+        info.appPath = m_engine->program()->applicationFilePath();
+        result << netDataPack(info.appPath);
         m_init = true;
     }
     else if(cmd == Cmd_addBreakPoint)
@@ -269,6 +270,8 @@ QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParamInfo &info)
 
 JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
 {
+    auto func_inst = JZNodeFunctionManager::instance();
+
     JZNodeDebugParamValue ret;
     if (isJZObject(value))
     {
@@ -284,12 +287,12 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
             
             QVariantList in, out;
             in << value;
-            obj->function("size")->cfunc->call(in, out);
+            func_inst->functionImpl(obj->className() + ".size")->cfunc->call(in, out);
                         
             int size = out[0].toInt();            
             in << 0;
 
-            auto list_at = obj->function("get")->cfunc;
+            auto list_at = func_inst->functionImpl(obj->className() + ".get")->cfunc;
             for (int i = 0; i < size; i++)
             {
                 in[1] = i;
@@ -304,14 +307,14 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
             QVariantList in, out;
             in << value;            
                         
-            obj->function("iterator")->cfunc->call(in, out);            
+            func_inst->functionImpl(obj->className() + ".iterator")->cfunc->call(in, out);
             QVariantList it = out;
             auto it_meta = toJZObject(it[0])->meta();
 
-            auto func_end = it_meta->function("atEnd")->cfunc;
-            auto func_next = it_meta->function("next")->cfunc;
-            auto func_key = it_meta->function("key")->cfunc;
-            auto func_value = it_meta->function("value")->cfunc;
+            auto func_end = func_inst->functionImpl(it_meta->className + ".atEnd")->cfunc;
+            auto func_next = func_inst->functionImpl(it_meta->className + ".next")->cfunc;
+            auto func_key = func_inst->functionImpl(it_meta->className + ".key")->cfunc;
+            auto func_value = func_inst->functionImpl(it_meta->className + ".value")->cfunc;
 
             while (true)
             {
@@ -347,28 +350,4 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
         ret.value = JZNodeType::toString(value);
     }
     return  ret;
-}
-
-JZNodeProgramInfo JZNodeDebugServer::getProgramInfo()
-{
-    JZNodeProgramInfo info;
-    JZNodeProgram *program = m_engine->program();
-
-    auto list = program->scriptList();
-    for (int i = 0; i < list.size(); i++)
-    {
-        auto s = list[i];
-        JZNodeScriptInfo script_info;
-        script_info.file = s->file;
-        script_info.className = s->className;
-        script_info.nodeInfo = s->nodeInfo;
-        script_info.functionList = s->functionList;        
-        script_info.runtimeInfo = s->runtimeInfo;
-
-        info.scripts[s->file] = script_info;
-    }
-    info.globalFunstions = program->functionDefines();
-    info.globalVariables = program->globalVariables();
-    info.objectDefines = program->objectDefines();
-    return info;
 }

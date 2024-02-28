@@ -12,22 +12,21 @@ public:
     JZParamItem();
     virtual ~JZParamItem();
 
-    void addVariable(QString name,int type,QVariant = QVariant());
+    QByteArray toBuffer();
+    bool fromBuffer(const QByteArray &object);
+
+    void addVariable(QString name,QString type, const QString &v = QString());
+    void addVariable(QString name,int type, const QString &v = QString());
     void removeVariable(QString name);
-    void renameVariable(QString oldName,QString newName);
-    void setVariableType(QString name,int dataType);
-    void setVariableValue(QString name, const QVariant &value);
-    JZParamDefine *getVariable(QString name);
+    const JZParamDefine *variable(QString name) const;
     QStringList variableList();
-    const QMap<QString, JZParamDefine> &variables();
 
     void bindVariable(QString name, QString widget);
     void unbindVariable(QString name);    
-    const QMap<QString, QString> &binds();
-
-protected:    
-    QMap<QString,JZParamDefine> m_variables;
-    QMap<QString,QString> m_binds;
+    
+protected:        
+    QMap<QString, JZParamDefine> m_variables;
+    QMap<QString, QString> m_binds;
 };
 
 

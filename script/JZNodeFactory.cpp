@@ -39,21 +39,18 @@ JZNode *JZNodeFactory::createNode(int type)
 
 JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
 {
-    JZProjectStream s;
-    int type;
-    s >> type;
-    JZNode *node = JZNodeFactory::instance()->createNode(type);
-    node->loadFromStream(s);
+    QDataStream node_s(buffer);
+    int node_type;
+    node_s >> node_type;
+
+    JZNode *node = JZNodeFactory::instance()->createNode(node_type);
+    node->fromBuffer(buffer);
     return node;
 }
 
 QByteArray JZNodeFactory::saveNode(JZNode *node)
 {
-    QByteArray data;
-    JZProjectStream s;
-    s << node->type();
-    node->saveToStream(s);
-    return data;
+    return node->toBuffer();
 }
 
 void JZNodeFactory::init()

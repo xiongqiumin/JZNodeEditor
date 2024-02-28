@@ -11,6 +11,7 @@ ScriptTest::ScriptTest()
 {
     m_testPath = qApp->applicationDirPath() + "/testcase";
     m_dump = false;
+    m_file = nullptr;
 
     connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &ScriptTest::onRuntimeError);
 }
@@ -59,6 +60,8 @@ bool ScriptTest::run(bool async = false)
 
 void ScriptTest::onRuntimeError(JZNodeRuntimeError error)
 {        
+    qDebug().noquote() << m_program.dump();
+
     qDebug() << error.error;    
     Q_ASSERT(0);
 }
@@ -72,9 +75,20 @@ void ScriptTest::initTestCase()
 
 void ScriptTest::init()
 {
-    m_project.initConsole();
+    m_project.clear();
+    JZScriptFile *file = new JZScriptFile();
+    file->setName("main.jz");
+    m_project.addItem("./", file);
+
+    JZScriptItem *main_flow = file->addFlow("main");
+    JZNodeEvent *start = new JZNodeStartEvent();
+    main_flow->addNode(JZNodePtr(start));
+
+    file->addParamDefine("global");
+
+    m_file = file;
     m_scriptFlow = m_project.mainScript();
-    m_paramDef = (JZParamItem*)m_project.getItem("global.def");
+    m_paramDef = m_project.globalDefine();
 }
 
 void ScriptTest::cleanup()
@@ -184,39 +198,6 @@ void ScriptTest::testObjectParse()
     obj_list = parser.parse("[ Point{1,2},Point{3,4},Point{5,6},Point{7,8}]");
     QVERIFY(obj_list && obj_list->type() == Type_list);
     cache << JZNodeObjectPtr(obj_list);
-}
-
-void ScriptTest::testProjectSave()
-{
-    QString projectPath = m_testPath + "/test.prj";
-    bool ret;
-
-    JZProject project;
-    project.initConsole();
-
-    //check flow
-    JZScriptItem *scriptFlow = project.mainScript();
-    JZNodeAdd *node_add = new JZNodeAdd();
-    JZNodeParam *node_a = new JZNodeParam();
-    JZNodeParam *node_b = new JZNodeParam();
-    scriptFlow->addNode(JZNodePtr(node_a));
-    scriptFlow->addNode(JZNodePtr(node_b));
-    scriptFlow->addNode(JZNodePtr(node_add));        
-
-    //check define
-    JZParamItem *paramDef = (JZParamItem*)project.getItem("global.def");
-
-    paramDef->addVariable("heello",Type_double,3.0);    
-
-    ret = project.open(projectPath);
-    QVERIFY2(ret,"project.open");
-
-    paramDef = (JZParamItem*)project.getItem("global.def");
-    JZParamDefine *def = paramDef->getVariable("heello");
-    QVERIFY2(def,"getVariable");
-    QCOMPARE(def->name,"heello");
-    QCOMPARE(def->dataType,Type_double);
-    QCOMPARE(def->value,3.0);
 }
 
 void ScriptTest::testParamBinding()
@@ -510,7 +491,7 @@ void ScriptTest::testFor()
         define.paramOut.push_back(JZParamDefine("result", Type_int));
 
         JZScriptItem *script = m_file->addFunction("./", define);
-        script->addLocalVariable("sum", Type_int);
+        script->addLocalVariable("sum", "int");
 
         JZNode *node_start = script->getNode(0);
 
@@ -638,7 +619,7 @@ void ScriptTest::testWhileLoop()
             i = i + 1;
     */
     JZScriptItem *script = m_scriptFlow;
-    script->addLocalVariable("i", Type_int);
+    script->addLocalVariable("i", "int");
 
     JZNode *node_start = script->getNode(0);
     JZNodeSetParam *node_set = new JZNodeSetParam();
@@ -789,8 +770,8 @@ void ScriptTest::testExpr()
     JZNodeParam *node_b = new JZNodeParam();
 
     int a = 100,b = 50;    
-    paramDef->addVariable("a",Type_int,a);
-    paramDef->addVariable("b",Type_int,b);
+    paramDef->addVariable("a",Type_int, QString::number(a));
+    paramDef->addVariable("b",Type_int, QString::number(b));
 
     node_a->setVariable("a");
     node_b->setVariable("b");
@@ -848,9 +829,9 @@ void ScriptTest::testCustomExpr()
     JZNodeParam *node_b = new JZNodeParam();
     JZNodeExpression *node_expr = new JZNodeExpression();
     
-    paramDef->addVariable("a",Type_int,2);
-    paramDef->addVariable("b",Type_int,3);
-    paramDef->addVariable("c",Type_int,0);
+    paramDef->addVariable("a",Type_int,"2");
+    paramDef->addVariable("b",Type_int,"3");
+    paramDef->addVariable("c",Type_int,"0");
 
     node_a->setVariable("a");
     node_b->setVariable("b");
@@ -898,16 +879,10 @@ void ScriptTest::testFunction()
         }
     */    
 
-    JZParamDefine inParam,outParam;
-    inParam.name = "n";
-    inParam.dataType = Type_int;
-    outParam.name = "result";
-    outParam.dataType = Type_int;
-
     FunctionDefine fab;
     fab.name = "fab";
-    fab.paramIn.push_back(inParam);
-    fab.paramOut.push_back(outParam);
+    fab.paramIn.push_back(JZParamDefine("n", Type_int));
+    fab.paramOut.push_back(JZParamDefine("result", Type_int));
     JZScriptItem *script = m_file->addFunction("./",fab);
 
     JZNode *node_start = script->getNode(0);

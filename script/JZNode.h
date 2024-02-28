@@ -2,10 +2,10 @@
 #define JZNODE_H_
 
 #include <QSharedPointer>
+#include <QDataStream>
 #include "JZNodePin.h"
 #include "JZNodeIR.h"
 #include "JZNodeFunctionDefine.h"
-#include "JZProjectStream.h"
 
 enum
 {
@@ -45,6 +45,8 @@ enum
     Node_bitor,    
     Node_bitxor,
     Node_expr,
+    Node_floatEq,
+    Node_floatNe,
     Node_for,
     Node_foreach,
     Node_while,
@@ -97,8 +99,8 @@ public:
     JZNodeGemo from;
     JZNodeGemo to;
 };
-void operator<<(JZProjectStream &s, const JZNodeConnect &param);
-void operator>>(JZProjectStream &s, JZNodeConnect &param);
+void operator<<(QDataStream &s, const JZNodeConnect &param);
+void operator>>(QDataStream &s, JZNodeConnect &param);
 
 //JZNodeGroup
 class JZNodeGroup
@@ -109,8 +111,8 @@ public:
     int id;
     QString memo;
 };
-void operator<<(JZProjectStream &s, const JZNodeGroup &param);
-void operator>>(JZProjectStream &s, JZNodeGroup &param);
+void operator<<(QDataStream &s, const JZNodeGroup &param);
+void operator>>(QDataStream &s, JZNodeGroup &param);
 
 class JZNodeCompiler;
 class JZScriptItem;
@@ -119,6 +121,9 @@ class JZNode
 public:
     JZNode();
     virtual ~JZNode();
+
+    QByteArray toBuffer();
+    bool fromBuffer(const QByteArray &object);
 
     JZScriptItem *file() const;
     void setFile(JZScriptItem *file);
@@ -205,9 +210,7 @@ public:
 
     virtual QList<int> propType(int id);        
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
-
-    virtual void saveToStream(JZProjectStream &s) const;
-    virtual void loadFromStream(JZProjectStream &s);    
+    
     virtual void drag(const QVariant &value);
 
     virtual bool pinClicked(int id);    //返回属性是否变化
@@ -216,6 +219,8 @@ public:
 
 protected:     
     friend JZScriptItem;
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
 
     void setPinTypeAny(int id);
     void setPinTypeInt(int id);
@@ -228,7 +233,6 @@ protected:
     virtual void pinLinked(int id);
     virtual void pinUnlinked(int id);
     virtual void pinChanged(int id);
-    void sortPinByPri();
 
     int m_id;
     int m_type;

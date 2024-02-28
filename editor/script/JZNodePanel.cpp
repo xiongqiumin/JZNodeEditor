@@ -99,7 +99,7 @@ JZNodePanel::~JZNodePanel()
 void JZNodePanel::setFile(JZScriptItem *file)
 {
     m_file = file;    
-    m_classFile = m_file->project()->getClass(m_file);
+    m_classFile = m_file->project()->getItemClass(m_file);
     init();
 }
 
@@ -427,7 +427,7 @@ void JZNodePanel::initEnums()
         QString enum_name = meta->name();
 
         JZNodeEnum node_enum;
-        node_enum.setEnmu(meta->type());
+        node_enum.setEnum(meta->type());
 
         QTreeWidgetItem *item_enum = createNode(&node_enum);        
         item_enum_root->addChild(item_enum);        
@@ -504,7 +504,7 @@ void JZNodePanel::initProjectParam(QTreeWidgetItem *root)
     auto list = project->globalVariableList();
     for(int i = 0; i < list.size(); i++)
     {
-        auto info = project->globalVariableInfo(list[i]);
+        auto info = project->globalVariable(list[i]);
         QTreeWidgetItem *item = createParam(list[i]);
         root->addChild(item);
     }
@@ -538,9 +538,9 @@ void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
     m_tree->setItemWidget(m_itemLocal, 0, w);
     for (int i = 0; i < list.size(); i++)
     {
-        auto info = m_file->localVariable(list[i]);
-        QTreeWidgetItem *item = createParam(list[i]);        
-        m_itemLocal->addChild(item);
+//        auto info = m_file->localVariable(list[i]);
+//        QTreeWidgetItem *item = createParam(list[i]);        
+//        m_itemLocal->addChild(item);
     }
 }
 
@@ -696,7 +696,7 @@ void JZNodePanel::onContextMenu(const QPoint &pos)
 
     if (act == actEdit)
     {
-        auto def = m_file->localVariable(item->text(0));
+ /*       auto def = m_file->localVariable(item->text(0));
 
         JZNodeParamEditDialog dialog(this);;
         dialog.init(m_file, *def);
@@ -707,6 +707,7 @@ void JZNodePanel::onContextMenu(const QPoint &pos)
         if(new_def.name != def->name || new_def.dataType != def->dataType
             || new_def.value != def->value)
             m_file->replaceLocalVariableInfo(def->name,new_def);
+*/
     }
     else if (act == actDel)
     {
@@ -727,17 +728,13 @@ void JZNodePanel::onAddScriptParam()
             break;
         i++;
     }
-    
-    JZParamDefine def;
-    def.name = name;
-    def.dataType = Type_int;
 
     JZNodeParamEditDialog dialog(this);;
-    dialog.init(m_file, def);
+    dialog.init(m_file, JZParamDefine(name,"int"));
     if (dialog.exec() != QDialog::Accepted)
         return;
     
-    m_file->addLocalVariable(dialog.param());
+//    m_file->addLocalVariable(dialog.param());
     QTreeWidgetItem *item = createParam(name);
     m_itemLocal->addChild(item);
     m_itemLocal->setExpanded(true);       

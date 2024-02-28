@@ -6,34 +6,37 @@
 #include <QMap>
 #include <QSharedPointer>
 
-class JZProjectFile;
+//JZProjectStream
 class JZProjectStream
 {
 public:
     JZProjectStream();
     ~JZProjectStream();
 
-    void setReadOnly(bool flag);
-    bool readOnly();
-
+    void clear();
+    bool contains(const QString &name);
+    
     QJsonValue value();
     void setValue(const QJsonValue &value);
     JZProjectStream &operator[](const QString &name);
 
 protected:   
+    Q_DISABLE_COPY(JZProjectStream);
+
     int indexOfStream(const QString &name);
 
-    bool m_readOnly;
-    QString m_name;    
+    QString m_name;        
     QJsonValue m_value;
     QList<QSharedPointer<JZProjectStream>> m_childs;
 };
 
 void operator<<(JZProjectStream& stream, int value);
-void operator<<(JZProjectStream& stream, double value);
-void operator<<(JZProjectStream& stream, const QString &value);
 void operator>>(JZProjectStream& stream, int &value);
+
+void operator<<(JZProjectStream& stream, double value);
 void operator>>(JZProjectStream& stream, double &value);
+
+void operator<<(JZProjectStream& stream, const QString &value);
 void operator>>(JZProjectStream& stream, QString &value);
 
 template<class T>
@@ -52,12 +55,13 @@ template<class T>
 void operator>>(JZProjectStream& stream, QList<T> &list)
 {
     list.clear();
+    if (!stream.value().isArray())
+        return;
 
     QJsonArray array = stream.value().toArray();
     for (int i = 0; i < array.size(); i++)
     {
         JZProjectStream s;
-        s.setReadOnly(true);
         s.setValue(array[i]);                
 
         T v;
@@ -84,6 +88,8 @@ template<class T>
 void operator>>(JZProjectStream& stream, QMap<QString, T> &map)
 {
     map.clear();
+    if (!stream.value().isObject())
+        return;
 
     QJsonObject obj = stream.value().toObject();
     auto it = obj.begin();
@@ -91,7 +97,6 @@ void operator>>(JZProjectStream& stream, QMap<QString, T> &map)
     {
         T v;
         JZProjectStream s;       
-        s.setReadOnly(true);
         s.setValue(it.value());        
 
         s >> v;
@@ -100,7 +105,44 @@ void operator>>(JZProjectStream& stream, QMap<QString, T> &map)
     }
     stream.setValue(obj);
 }
+template<class T>
+void operator<<(JZProjectStream& stream, const QMap<int, T> &map)
+{
+    QJsonObject obj;
+    auto it = map.begin();
+    while (it != map.end())
+    {
+        JZProjectStream s;
+        s << it.value().toInt();
+        obj[it.key()] = s.value();
 
+        it++;
+    }
+    stream.setValue(obj);
+}
+template<class T>
+void operator >> (JZProjectStream& stream, QMap<int, T> &map)
+{
+    map.clear();
+    if (!stream.value().isObject())
+        return;
+
+    QJsonObject obj = stream.value().toObject();
+    auto it = obj.begin();
+    while (it != obj.end())
+    {
+        T v;
+        JZProjectStream s;
+        s.setValue(it.value());
+
+        s >> v;
+        map.insert(QString::number(it.key()), v);
+        it++;
+    }
+    stream.setValue(obj);
+}
+
+//JZProjectFile
 class JZProjectFile
 {
 public:

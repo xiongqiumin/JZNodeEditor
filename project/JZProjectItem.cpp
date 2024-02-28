@@ -94,7 +94,7 @@ JZScriptClassItem *JZProjectItem::getClassFile()
     if (!m_project)
         return nullptr;
 
-    return m_project->getClass(this);
+    return m_project->getItemClass(this);
 }
 
 QString JZProjectItem::className()

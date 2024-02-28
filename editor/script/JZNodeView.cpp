@@ -30,7 +30,7 @@
 JZNodeConnect parseLine(const QByteArray &buffer)
 {
     JZNodeConnect line;
-    JZProjectStream s;
+    QDataStream s;
     s >> line;
     return line;
 }
@@ -38,7 +38,7 @@ JZNodeConnect parseLine(const QByteArray &buffer)
 QByteArray formatLine(const JZNodeConnect &line)
 {
     QByteArray data;
-    JZProjectStream s;
+    QDataStream s;
     s << line;
     return data;
 }
@@ -46,7 +46,7 @@ QByteArray formatLine(const JZNodeConnect &line)
 JZNodeGroup parseGroup(const QByteArray &buffer)
 {
     JZNodeGroup group;
-    JZProjectStream s;
+    QDataStream s;
     s >> group;
     return group;
 }
@@ -54,7 +54,7 @@ JZNodeGroup parseGroup(const QByteArray &buffer)
 QByteArray formatGroup(const JZNodeGroup &group)
 {
     QByteArray data;
-    JZProjectStream s;
+    QDataStream s;
     s << group;
     return data;
 }
@@ -73,22 +73,6 @@ int JZNodeViewCommand::id() const
         return command;
 
     return -1;
-}
-
-QVariant JZNodeViewCommand::saveItem(JZNodeGraphItem *item)
-{
-    QByteArray buffer;
-    JZProjectStream s;
-    m_view->getNode(itemId)->saveToStream(s);
-    return buffer;
-}
-
-void JZNodeViewCommand::loadItem(JZNodeGraphItem *item,const QVariant &value)
-{
-    QByteArray buffer = value.toByteArray();
-    JZProjectStream s;
-    item->node()->loadFromStream(s);
-    item->updateNode();
 }
 
 void JZNodeViewCommand::undo()
@@ -259,7 +243,7 @@ QByteArray pack(const CopyData &param)
 {
     QByteArray buffer;
     /*
-    JZProjectStream s;
+    QDataStream s;
     s << param.nodes;
     s << param.nodesPos;
     s << param.lines;  
@@ -271,7 +255,7 @@ CopyData unpack(const QByteArray &buffer)
 {
     CopyData param;
     /*
-    JZProjectStream s;
+    QDataStream s;
     s >> param.nodes;
     s >> param.nodesPos;
     s >> param.lines;  
@@ -423,7 +407,7 @@ bool JZNodeView::isModified()
 int JZNodeView::getVariableType(const QString &name)
 {
     auto info = JZNodeCompiler::getVariableInfo(m_file, name);
-    return info? info->dataType : Type_none;    
+    return info? info->dataType() : Type_none;    
 }
 
 void JZNodeView::saveNodePos()
@@ -473,12 +457,7 @@ void JZNodeView::removeNode(int id)
 QByteArray JZNodeView::getNodeData(int id)
 {
     auto node = getNode(id);
-
-    QByteArray buffer;
-    JZProjectStream s;
-    node->saveToStream(s);
-
-    return buffer;
+    return node->toBuffer();
 }
 
 void JZNodeView::setNodeData(int id,const QByteArray &buffer)
@@ -486,8 +465,7 @@ void JZNodeView::setNodeData(int id,const QByteArray &buffer)
     auto node = getNode(id);
     int old_group = node->group();
 
-    JZProjectStream s;
-    node->loadFromStream(s);
+    node->fromBuffer(buffer);
     if (old_group != -1 && old_group != node->group())
         getGroupItem(old_group)->updateNode();
 
@@ -1295,11 +1273,11 @@ QStringList JZNodeView::matchParmas(JZNodeObjectDefine *meta, int match_type, QS
     for (int i = 0; i < params.size(); i++)
     {
         auto p = meta->param(params[i]);
-        if (JZNodeType::canConvert(p->dataType,match_type))
+        if (JZNodeType::canConvert(p->dataType(),match_type))
             list << pre + p->name;
-        if (JZNodeType::isObject(p->dataType))
+        if (JZNodeType::isObject(p->dataType()))
         {
-            auto sub_meta = JZNodeObjectManager::instance()->meta(p->dataType);
+            auto sub_meta = JZNodeObjectManager::instance()->meta(p->dataType());
             list << matchParmas(sub_meta, match_type, pre + p->name + ".");
         }
     }
@@ -1641,7 +1619,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
     if(event->mimeData()->hasFormat("node_data"))
     {
         QByteArray data = event->mimeData()->data("node_data");
-        JZProjectStream s;
+        QDataStream s;
         int node_type;
         s >> node_type;
         if(node_type == Node_expr)

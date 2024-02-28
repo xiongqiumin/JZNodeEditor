@@ -49,9 +49,6 @@ public:
     QPointF newPos; 
 
 protected:
-    QVariant saveItem(JZNodeGraphItem *item);
-    void loadItem(JZNodeGraphItem *item,const QVariant &value);
-
     JZNodeView *m_view;
 };
 

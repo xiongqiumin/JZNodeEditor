@@ -33,7 +33,7 @@ public:
     QVariant *getRef(int id);
     QVariant *getRef(QString name);
 
-    const FunctionDefine *func;
+    const JZFunction *func;
     QVariant object;      //this    
     JZNodeScript *script;    
     int pc;
@@ -180,9 +180,10 @@ public:
 
     void dealEvent(JZEvent *event);    
     void dealSlot(JZEvent *event);
+    QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
 
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
-    bool call(const FunctionDefine *func,const QVariantList &in,QVariantList &out);
+    bool call(const JZFunction *func,const QVariantList &in,QVariantList &out);
     
     void objectCreate(JZNodeObject *sender);
     void objectDelete(JZNodeObject *sender);
@@ -257,20 +258,19 @@ protected:
 
     virtual void customEvent(QEvent *event) override;
     void clear();
-    bool checkIdlePause(const FunctionDefine *func);  //return is stop
+    bool checkIdlePause(const JZFunction *func);  //return is stop
     bool checkPauseStop();  //return is stop
     bool run();         
     void updateStatus(int status);
 
-    const FunctionDefine *function(QString name);       
-    void checkFunction(const FunctionDefine *func);
-    void callCFunction(const FunctionDefine *func);
-    QVariant dealExpr(const QVariant &a, const QVariant &b,int op);
+    const JZFunction *function(QString name);
+    void checkFunction(const JZFunction *func);
+    void callCFunction(const JZFunction *func);    
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
-    QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);    
+    QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
     void dealSet(QVariant *ref, const QVariant &value);
 
-    void pushStack(const FunctionDefine *define);
+    void pushStack(const JZFunction *define);
     void popStack();
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
@@ -287,6 +287,7 @@ protected:
     JZNodeScript *getScript(QString path); 
         
     void splitMember(const QString &fullName,QStringList &objName,QString &memberName);
+    void unSupportSingleOp(int a,int op);
     void unSupportOp(int a,int b,int op);
 
     int m_pc;    
@@ -305,7 +306,7 @@ protected:
     JZNodeObject *m_sender;
     qint64 m_watchTime;
            
-    FunctionDefine m_idleFunc;
+    JZFunction m_idleFunc;
     int m_statusCommand;
     int m_status;     
     QMutex m_mutex;    

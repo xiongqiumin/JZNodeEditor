@@ -43,11 +43,11 @@ void JZNodeBuilder::initGlobal()
         alloc->pc = pc++;
         alloc->allocType = JZNodeIRAlloc::Heap;
         alloc->name = it.key();        
-        alloc->dataType = it.value().dataType;
-        if (it.value().dataType < Type_object)
-            alloc->value = irLiteral(it.value().initialValue());
+        alloc->dataType = it.value().dataType();
+        if (it.value().dataType() < Type_object)
+            alloc->value = irLiteral(JZNodeType::initValue(it.value().dataType(),it.value().value));
         else
-            alloc->value = irLiteral(QVariant::fromValue(JZObjectNull(it.value().dataType)));
+            alloc->value = irLiteral(QVariant::fromValue(JZObjectNull(it.value().dataType())));        
 
         boot->statmentList.push_back(JZNodeIRPtr(alloc));
         it++;
@@ -55,11 +55,9 @@ void JZNodeBuilder::initGlobal()
     
     JZNodeIR *ir_return = new JZNodeIR(OP_return);
     ir_return->pc = pc++;
-    boot->statmentList.push_back(JZNodeIRPtr(ir_return));    
-    boot->canBreak.resize(boot->statmentList.size());
-    boot->canBreak.fill(false);
+    boot->statmentList.push_back(JZNodeIRPtr(ir_return));        
 
-    FunctionDefine func_def;
+    JZFunction func_def;
     func_def.name = "__init__";
     func_def.file = "__init__";
     func_def.addr = 0;
@@ -78,7 +76,7 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
     for(int i = 0; i < list.size(); i++)
     {
         QString name = list[i];
-        m_program->m_variables[name] = *m_project->globalVariableInfo(name);
+        m_program->m_variables[name] = *m_project->globalVariable(name);
     }
     
     auto class_list = m_project->itemList("./",ProjectItem_class);
@@ -92,7 +90,7 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
         if(params.size() == 1)
         {
             auto param = dynamic_cast<JZParamItem*>(params[0]);
-            m_program->m_binds[script->className()] = param->binds();
+//            m_program->m_binds[script->className()] = param->binds();
         }
     }
 
@@ -132,7 +130,7 @@ bool JZNodeBuilder::buildScriptFile(JZScriptItem *scriptFile)
     if(!m_scripts.contains(path))    
         m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
     
-    auto classFile = m_project->getClass(scriptFile);
+    auto classFile = m_project->getItemClass(scriptFile);
     JZNodeScript *script = m_scripts[path].data();
     if(classFile)
         script->className = classFile->className();

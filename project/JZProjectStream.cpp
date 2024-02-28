@@ -6,7 +6,6 @@
 //JZProjectStream
 JZProjectStream::JZProjectStream()
 {    
-    m_readOnly = false;
 }
 
 JZProjectStream::~JZProjectStream()
@@ -14,14 +13,14 @@ JZProjectStream::~JZProjectStream()
 
 }
 
-bool JZProjectStream::readOnly()
+void JZProjectStream::clear()
 {
-    return m_readOnly;
+    m_childs.clear();
 }
 
-void JZProjectStream::setReadOnly(bool flag)
+bool JZProjectStream::contains(const QString &name)
 {
-    m_readOnly = flag;
+    return (indexOfStream(name) >= 0);
 }
 
 QJsonValue JZProjectStream::value()
@@ -62,9 +61,8 @@ JZProjectStream &JZProjectStream::operator[](const QString &name)
 
     auto s = new JZProjectStream();
     s->m_name = name;
-    s->m_readOnly = m_readOnly;
-    if (m_value.isObject())    
-        s->m_value = m_value.toObject()["name"];
+    if (m_value.isObject())
+        s->m_value = m_value.toObject()[name];
     
     m_childs.push_back(QSharedPointer<JZProjectStream>(s));
     return *m_childs.back();
@@ -72,44 +70,46 @@ JZProjectStream &JZProjectStream::operator[](const QString &name)
 
 void operator<<(JZProjectStream& s, int value)
 {
-    Q_ASSERT(!s.readOnly() && s.value().isNull());
+    Q_ASSERT(s.value().isNull());
     s.setValue(value);
 }
 
 void operator<<(JZProjectStream& s, double value)
 {
-    Q_ASSERT(!s.readOnly() && s.value().isNull());
+    Q_ASSERT(s.value().isNull());
     s.setValue(value);
 }
 
 void operator<<(JZProjectStream& s, const QString &value)
 {
-    Q_ASSERT(!s.readOnly() && s.value().isNull());
+    Q_ASSERT(s.value().isNull());
     s.setValue(value);
 }
 
 void operator>>(JZProjectStream& s, int &value)
 {
-    Q_ASSERT(s.readOnly());
+    if (s.value().isNull())
+        return;
     value = s.value().toInt();
 }
 
 void operator>>(JZProjectStream& s, double &value)
 {
-    Q_ASSERT(s.readOnly());
+    if (s.value().isNull())
+        return;
     value = s.value().toDouble();
 }
 
 void operator>>(JZProjectStream& s, QString &value)
 {
-    Q_ASSERT(s.readOnly());
+    if (s.value().isNull())
+        return;
     value = s.value().toString();
 }
 
 //JZProjectFile
 JZProjectFile::JZProjectFile()
 {
-    m_stream.setReadOnly(false);
 }
 
 JZProjectFile::~JZProjectFile()
@@ -133,9 +133,8 @@ bool JZProjectFile::load(const QString &filename)
         return false;
     }
 
-    m_stream = JZProjectStream();
+    m_stream.clear();
     m_stream.setValue(doc.object());
-    m_stream.setReadOnly(true);    
     return true;
 }
 

@@ -70,21 +70,7 @@ void initEnum()
     jzbind::registEnum<Qt::Alignment>("Alignment");
     jzbind::registEnum<Qt::GlobalColor>("GlobalColor");
 
-    JZNodeEnumDefine keyCode;
-    QStringList key_codes;
-    QVector<int> key_values;
-    for (int i = 0; i < 10; i++)
-    {
-        key_codes.push_back(QChar('0' + i));
-        key_values.push_back('0' + i);
-    }
-    for (int i = 0; i < 26; i++)
-    {
-        key_codes.push_back(QChar('A' + i));
-        key_values.push_back('A' + i);
-    }
-    keyCode.init("Key", key_codes, key_values);
-    JZNodeObjectManager::instance()->registEnum(keyCode);
+    jzbind::registEnum<Qt::Key>("Key", Type_keyCode);
 }
 
 void initBase()

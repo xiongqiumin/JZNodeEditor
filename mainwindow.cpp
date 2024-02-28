@@ -75,9 +75,8 @@ MainWindow::MainWindow(QWidget *parent)
     loadSetting();    
     initUi();     
     updateActionStatus();    
-
-    m_useTestProcess = 0;
-    initLocalProcessTest();    
+    
+    initLocalProcessTest(0);    
 }
 
 MainWindow::~MainWindow()
@@ -378,7 +377,7 @@ void MainWindow::updateActionStatus()
 {
     int status = m_runtime.status;
 
-    bool isProject = m_project.isVaild();
+    bool isProject = !m_project.isNull();
     bool isEditor = (m_editor != nullptr);
     bool isEditorModify = (m_editor && m_editor->isModified());    
     bool isEditorScript = (m_editor && m_editor->type() == Editor_script);
@@ -446,17 +445,18 @@ void MainWindow::onActionNewProject()
     if (!QDir().exists(project_dir))
         QDir().mkpath(project_dir);
     
+    QString project_tmp;
     if (dialog.projectType() == 0)
-        m_project.initUi();
+        project_tmp = "ui";
     else
-        m_project.initConsole();
-/*
-    if (m_project.newProject(project_dir + "/" + name + ".jzproject"))
+        project_tmp = "console";
+
+    if (m_project.newProject(project_dir, name, project_tmp))
     {
         m_projectTree->setProject(&m_project);
         m_setting.addRecentProject(m_project.filePath());
     }
-*/
+
     updateActionStatus();
 }
 
@@ -465,7 +465,7 @@ void MainWindow::onActionOpenProject()
     if (!closeProject())
         return;
 
-    QString filepath = QFileDialog::getOpenFileName(this,"","","*.jzproject");
+    QString filepath = QFileDialog::getOpenFileName(this,"","","*.jzproj");
     if(filepath.isEmpty())
         return;
         
@@ -592,8 +592,9 @@ void MainWindow::onActionBuild()
     build();
 }
 
-void MainWindow::initLocalProcessTest()
-{    
+void MainWindow::initLocalProcessTest(bool flag)
+{   
+    m_useTestProcess = flag;
     if (!m_useTestProcess)
         return;
     
@@ -635,7 +636,10 @@ void MainWindow::onActionStop()
         return;
 
     if (!m_useTestProcess)
+    {
+        m_process.setProperty("userKill", 1);
         m_process.kill();
+    }
     else
         m_testProcess.stop();
     updateActionStatus();
@@ -975,65 +979,37 @@ void MainWindow::onNodePropChanged(const JZNodeValueChanged &info)
     node_editor->setNodeValue(gemo.nodeId, gemo.propId,info.value);
 }
 
-void MainWindow::updateRuntime(int stack_index,bool isNew)
+void MainWindow::updateAutoWatch(int stack_index)
 {
-    if (stack_index == -1)
-    {
-        clearWatchs();
+    if (m_program.isNull())
         return;
-    }
 
-    auto stack = m_runtime.stacks[stack_index];
-    if (stack.file == "__idle__")
-    {
-        clearWatchs();
-        return;
-    }                
-    
-    //watch auto
-    JZNodeDebugParamInfo param_info;      
+    auto &stack = m_runtime.stacks[stack_index];
+
+    JZNodeDebugParamInfo param_info;
     param_info.stack = stack_index;
-
-    //this
-    auto func = m_program.function(stack.function);    
-    if (func->isCFunction)
-    {
-        for(int i = stack_index - 1; i >= 0; i--)
-        {
-            auto &top = m_runtime.stacks[i];
-            if (!top.file.isEmpty())
-            {
-                setRuntimeNode(top.file, top.nodeId);
-                break;
-            }
-        }
-
-        m_watchAuto->setParamInfo(&param_info);        
-        return;
-    }
-
-    setRuntimeNode(stack.file, stack.nodeId);
+    
+    auto func = m_program.function(stack.function);
     if (func->isMemberFunction())
-    {        
+    {
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Name;
         coor.name = "this";
-        param_info.coors << coor;        
+        param_info.coors << coor;
     }
 
-    //local
-    auto &runtime = m_program.scripts[stack.file].runtimeInfo[stack.function];
-    for (int i = 0; i < runtime.localVariables.size(); i++)
+    //local    
+    for (int i = 0; i < func->localVariables.size(); i++)
     {
-        auto &local = runtime.localVariables[i];
+        auto &local = func->localVariables[i];
 
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Name;
         coor.name = local.name;
         param_info.coors << coor;
     }
-    
-    auto &node_info = m_program.scripts[stack.file].nodeInfo[stack.nodeId];
+
+    auto &node_info = m_program.script(stack.file)->nodeInfo[stack.nodeId];
     int node_prop_index = param_info.coors.size();
     for (int i = 0; i < node_info.paramIn.size(); i++)
     {
@@ -1042,7 +1018,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         coor.name = node_info.paramIn[i].define.name;
         coor.id = node_info.paramIn[i].id;
         param_info.coors << coor;
-    }    
+    }
     for (int i = 0; i < node_info.paramOut.size(); i++)
     {
         JZNodeParamCoor coor;
@@ -1063,6 +1039,38 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         info.value = param_info.values[i].value;
         onNodePropChanged(info);
     }
+}
+
+void MainWindow::updateRuntime(int stack_index,bool isNew)
+{
+    if (stack_index == -1)
+    {
+        clearWatchs();
+        return;
+    }
+
+    auto stack = m_runtime.stacks[stack_index];
+    if (stack.file == "__idle__")
+    {
+        clearWatchs();
+        return;
+    }                
+    
+    //this
+    for (int i = stack_index; i >= 0; i--)
+    {
+        auto &top = m_runtime.stacks[i];
+        if (!top.file.isEmpty())
+        {
+            setRuntimeNode(top.file, top.nodeId);
+            break;
+        }
+    }
+    if (stack.file.isEmpty()) //in c function
+        return;    
+
+    //watch auto
+    updateAutoWatch(stack_index);
 
     //watch manual    
     JZNodeDebugParamInfo param_info_watch;
@@ -1077,21 +1085,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         param_info_watch.coors << coor;
     }
     param_info_watch = m_debuger.getVariable(param_info_watch);
-    m_watchManual->setParamInfo(&param_info_watch);
-
-    //watch reg
-    JZNodeDebugParamInfo param_info_reg;
-    param_info_reg.stack = stack_index;
-
-    QList<int> reg_list = {Reg_Cmp};
-    for (int i = 0; i < watch_list.size(); i++)
-    {
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Id;
-        coor.id = reg_list[i];
-        param_info_reg.coors << coor;
-    }
-    param_info_reg = m_debuger.getVariable(param_info_reg);    
+    m_watchManual->setParamInfo(&param_info_watch); 
 }
 
 bool MainWindow::build()
@@ -1173,7 +1167,11 @@ void MainWindow::start(bool startPause)
 
     JZNodeDebugInfo info;
     info.breakPoints = m_project.breakPoints();
-    m_program = m_debuger.init(info);
+    auto program_info = m_debuger.init(info);
+    if (!m_program.load(program_info.appPath))
+    {
+        m_log->addLog(Log_Runtime, "load debug info failed.");
+    }
 
     setRunning(true);    
 }
@@ -1290,8 +1288,13 @@ void MainWindow::onRuntimeFinish(int code,QProcess::ExitStatus status)
 {
     setRunning(false);
 
-    if(status == QProcess::CrashExit)
-        m_log->addLog(Log_Runtime, "process crash ");
+    if (status == QProcess::CrashExit)
+    {
+        if (m_process.property("userKill").isValid())
+            m_process.setProperty("userKill", QVariant());
+        else
+            m_log->addLog(Log_Runtime, "process crash ");
+    }
     else
         m_log->addLog(Log_Runtime, "process finish, exit code " + QString::number(code));
     m_processVaild = false;
@@ -1388,7 +1391,7 @@ void MainWindow::setRunning(bool flag)
 
     if (!flag)
     {
-        m_program = JZNodeProgramInfo();
+        m_program.clear();
         m_runtime = JZNodeRuntimeInfo();
     }
 }

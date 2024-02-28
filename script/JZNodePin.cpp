@@ -118,20 +118,20 @@ void JZNodePin::setValue(QString value)
     m_value = value;
 }
 
-void operator<<(JZProjectStream &s, const JZNodePin &param)
+void operator<<(QDataStream &s, const JZNodePin &param)
 {
     s << param.m_id;
-    s << param.m_name;    
-    s << param.m_flag;     
+    s << param.m_name;
+    s << param.m_flag;
     s << param.m_dataType;
-    s << param.m_value;           
+    s << param.m_value;
 }
 
-void operator>>(JZProjectStream &s, JZNodePin &param)
+void operator>>(QDataStream &s, JZNodePin &param)
 {
     s >> param.m_id;
-    s >> param.m_name;    
-    s >> param.m_flag;    
+    s >> param.m_name;
+    s >> param.m_flag;
     s >> param.m_dataType;
-    s >> param.m_value;       
+    s>> param.m_value;
 }

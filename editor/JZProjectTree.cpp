@@ -321,11 +321,10 @@ void JZProjectTree::onContextMenu(QPoint pos)
         if (!className.isEmpty())
         {
             function.className = className;
-
-            int classType = JZNodeObjectManager::instance()->getClassId(className);
+            
             JZParamDefine def;
             def.name = "this";
-            def.dataType = classType;            
+            def.type = className;
             function.paramIn.push_back(def);
         }
 

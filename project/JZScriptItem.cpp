@@ -258,6 +258,7 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         if (other_node->isFlowNode() != cur_flow)
         {
             error = "不能同时连接流程输入和数据输入";
+            return false;
         }
         else if (!cur_flow)
         {
@@ -425,49 +426,37 @@ QList<JZNodeConnect> JZScriptItem::connectList()
     return m_connects;
 }
 
-JZParamDefine *JZScriptItem::localVariable(const QString &name)
+void JZScriptItem::removeLocalVariable(QString name)
 {
+    m_variables.remove(name);
+}
+
+const JZParamDefine *JZScriptItem::localVariable(QString name)
+{
+    auto it = m_variables.find(name);
+    if (it != m_variables.end())
+        return &it.value();
+
     if (m_itemType == ProjectItem_scriptFunction)
     {
         for (int i = 0; i < m_function.paramIn.size(); i++)
         {
             if (m_function.paramIn[i].name == name)
                 return &m_function.paramIn[i];
-        }        
+        }
     }
-
-    auto it = m_variables.find(name);
-    if (it != m_variables.end())
-        return &it.value();
 
     return nullptr;
 }
 
-void JZScriptItem::removeLocalVariable(QString name)
-{
-    m_variables.remove(name);
+void JZScriptItem::addLocalVariable(QString name, QString type, const QString &v)
+{     
+    m_variables[name] = JZParamDefine(name, type, v);
 }
 
-void JZScriptItem::replaceLocalVariableInfo(QString oldName, JZParamDefine def)
+void JZScriptItem::addLocalVariable(QString name, int dataType, const QString &v)
 {
-    Q_ASSERT(m_variables.contains(oldName));    
-    m_variables.remove(oldName);
-    m_variables[def.name] = def;
-}
-
-void JZScriptItem::addLocalVariable(QString name, int type, QVariant v)
-{
-    JZParamDefine info;
-    info.name = name;
-    info.dataType = type;
-    info.value = v;
-    addLocalVariable(info);
-}
-
-void JZScriptItem::addLocalVariable(JZParamDefine def)
-{
-    Q_ASSERT(!localVariable(def.name) && def.dataType != Type_none);
-    m_variables[def.name] = def;
+    addLocalVariable(name, JZNodeType::typeToName(dataType), v);
 }
 
 QStringList JZScriptItem::localVariableList(bool hasFunc)
@@ -477,7 +466,7 @@ QStringList JZScriptItem::localVariableList(bool hasFunc)
     {        
         for (int i = 0; i < m_function.paramIn.size(); i++)
         {
-            if (m_function.paramIn[i].name == "this")
+            if (i == 0 && m_function.isMemberFunction())
                 continue;
 
             list << m_function.paramIn[i].name;
@@ -485,47 +474,57 @@ QStringList JZScriptItem::localVariableList(bool hasFunc)
     }
     return list;
 }
-/*
-void JZScriptItem::saveToStream(QDataStream &s)
-{
-    JZProjectItem::saveToStream(s);
 
+QByteArray JZScriptItem::toBuffer()
+{
+    QByteArray buffer;
+    QDataStream s(&buffer,QIODevice::WriteOnly);
+    
+    s << m_name;
     s << m_nodeId;
-    int size = m_nodes.size();
-    s << size;
+    
+    QList<QByteArray> node_list;
     auto it = m_nodes.begin();
     while (it != m_nodes.end())
-    {
-        s << it->data()->type();
-        it->data()->saveToStream(s);
+    {        
+        node_list << it.value()->toBuffer();
         it++;
-    }    
+    }
+    s << node_list;    
     s << m_connects;    
     s << m_function;
     s << m_variables;
     s << m_nodesPos;
     s << m_groups;
+
+    return buffer;
 }
 
-void JZScriptItem::loadFromStream(QDataStream &s)
+bool JZScriptItem::fromBuffer(const QByteArray &buffer)
 {
-    JZProjectItem::loadFromStream(s);
+    int node_type;
+    QDataStream s(buffer);    
 
+    s >> m_name;
     s >> m_nodeId;
-    int size = 0;
-    s >> size;
-    for (int i = 0; i < size; i++)
+    
+    QList<QByteArray> node_list;
+    s >> node_list;
+    for (int i = 0; i < node_list.size(); i++)
     {
-        int type;
-        s >> type;
-        JZNode *node = JZNodeFactory::instance()->createNode(type);
-        node->loadFromStream(s);        
+        QByteArray buffer = node_list[i];
+        QDataStream node_s(buffer);
+        int node_type;
+        node_s >> node_type;
+                
+        JZNode *node = JZNodeFactory::instance()->createNode(node_type);
+        node->fromBuffer(buffer);
         m_nodes.insert(node->id(), JZNodePtr(node));
     }    
-    s >> m_connects;    
-    s >> m_function;    
+    s >> m_connects;
+    s >> m_function;
     s >> m_variables;
     s >> m_nodesPos;
     s >> m_groups;
+    return true;
 }
-*/

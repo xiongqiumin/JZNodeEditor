@@ -14,16 +14,37 @@ JZParamItem::~JZParamItem()
 
 }
 
-void JZParamItem::addVariable(QString name,int type,QVariant v)
+QByteArray JZParamItem::toBuffer()
 {
-    Q_ASSERT(!getVariable(name) && type != Type_none);
+    QByteArray buffer;
+    QDataStream s(&buffer, QIODevice::WriteOnly);
+    s << m_name;    
+    s << m_variables;
+    return buffer;
+}
 
+bool JZParamItem::fromBuffer(const QByteArray &buffer)
+{
+    QDataStream s(buffer);
+    s >> m_name;
+    s >> m_variables;
+    return true;
+}
+
+void JZParamItem::addVariable(QString name, QString type, const QString &v)
+{    
     JZParamDefine info;
     info.name = name;
-    info.dataType = type;
+    info.type = type;
     info.value = v;
     m_variables[name] = info;
     regist();
+}
+
+void JZParamItem::addVariable(QString name,int type, const QString &v)
+{
+    QString type_name = JZNodeType::typeToName(type);
+    addVariable(name, type_name, v);
 }
 
 void JZParamItem::removeVariable(QString name)
@@ -32,75 +53,26 @@ void JZParamItem::removeVariable(QString name)
     regist();
 }
 
-void JZParamItem::renameVariable(QString oldName, QString newName)
+const JZParamDefine *JZParamItem::variable(QString name) const
 {
-    Q_ASSERT(m_variables.contains(oldName));
-    auto def = m_variables[oldName];
-    def.name = newName;
-    m_variables.remove(oldName);
-    m_variables[newName] = def;
-    regist();
-}
+    auto it = m_variables.find(name);
+    if (it == m_variables.end())
+        return nullptr;
 
-void JZParamItem::setVariableType(QString name, int dataType)
-{
-    Q_ASSERT(m_variables.contains(name));
-    m_variables[name].dataType = dataType;
-    if (JZNodeType::isEnum(dataType))
-    {
-        auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
-        m_variables[name].value = meta->value(0);
-    }
-    else
-    {
-        m_variables[name].value.clear();
-    }
-    regist();
-}
-
-void JZParamItem::setVariableValue(QString name, const QVariant &value)
-{
-    Q_ASSERT(m_variables.contains(name));
-    m_variables[name].value = value;
-    regist();
-}
-
-const QMap<QString,JZParamDefine> &JZParamItem::variables()
-{
-    return m_variables;
-}
-
-JZParamDefine *JZParamItem::getVariable(QString name)
-{
-    if(m_variables.contains(name))
-        return &m_variables[name];
-    return nullptr;
+    return &it.value();
 }
 
 QStringList JZParamItem::variableList()
-{
-    QStringList list;
-    auto it = m_variables.begin();
-    while(it != m_variables.end())
-    {
-        list << it.key();
-        it++;
-    }
-    return list;
+{    
+    return m_variables.keys();
 }
 
 void JZParamItem::bindVariable(QString name, QString widget)
-{    
-    Q_ASSERT(getClassFile());
+{        
     m_binds[name] = widget;
 }
 
 void JZParamItem::unbindVariable(QString name)
 {
     m_binds.remove(name);
-}
-
-const QMap<QString, QString> &JZParamItem::binds()
-{
-    return m_binds;
 }

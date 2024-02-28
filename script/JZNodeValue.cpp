@@ -88,16 +88,20 @@ JZNodeEnum::~JZNodeEnum()
 
 bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 {
-    int v = prop(paramOut(0))->value().toInt();
+    QString key = prop(paramOut(0))->value();
+    auto def = JZNodeObjectManager::instance()->enumMeta(m_name);
+    int v = def->keyToValue(key);
+
+    c->addNodeStart(m_id);
     int id = c->paramId(m_id, paramOut(0));
     c->addSetVariable(irId(id), irLiteral(v));
-    
-    auto def = JZNodeObjectManager::instance()->meta(m_name);
-    c->setPinType(m_id,paramOut(0),def->id);
+    c->lastStatment()->memo = key;
+        
+    c->setPinType(m_id,paramOut(0),def->type());
     return true;
 }
 
-void JZNodeEnum::setEnmu(int id)
+void JZNodeEnum::setEnum(int id)
 {
     auto meta = JZNodeObjectManager::instance()->enumMeta(id);
     m_enumId = id;
@@ -136,12 +140,16 @@ JZNodeCreate::~JZNodeCreate()
 
 void JZNodeCreate::setClassName(const QString &name)
 {
-    setPropValue(paramIn(0),name);
+    setPropValue(paramIn(0),"\"" + name + "\"");
 }
 
 QString JZNodeCreate::className() const
 {
-    return propValue(paramIn(0));
+    QString name = propValue(paramIn(0));
+    if (name.front() == '\"' && name.back() == '\"')
+        return name.mid(1, name.size() - 2);
+    else
+        return QString();
 }
 
 bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
@@ -243,12 +251,16 @@ void JZNodeCreateFromString::pinChanged(int id)
 
 void JZNodeCreateFromString::setClassName(const QString &name)
 {
-    setPropValue(paramIn(0), name);
+    setPropValue(paramIn(0), "\"" + name + "\"");
 }
 
 QString JZNodeCreateFromString::className() const
 {
-    return propValue(paramIn(0));
+    QString name = propValue(paramIn(0));
+    if (name.front() == '\"' && name.back() == '\"')
+        return name.mid(1, name.size() - 2);
+    else
+        return QString();
 }
 
 void JZNodeCreateFromString::setContext(const QString &text)
@@ -350,7 +362,7 @@ bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
 
 void JZNodeThis::fileInitialized()
 {
-    auto class_file = m_file->project()->getClass(m_file);
+    auto class_file = m_file->project()->getItemClass(m_file);
     Q_ASSERT(class_file);
 
     QString className = class_file->className();
@@ -405,8 +417,7 @@ void JZNodeParam::pinChanged(int id)
     if(id == paramOut(0))
     {
         auto def = JZNodeCompiler::getVariableInfo(m_file, variable());
-        int dataType = def? def->dataType : Type_none;
-        Q_ASSERT(dataType != Type_none);
+        int dataType = def? def->dataType() : Type_none;        
         setPinType(id,{dataType});
     }
 }
@@ -449,7 +460,7 @@ void JZNodeSetParam::pinChanged(int id)
     if(id == paramIn(0))
     {
         auto def = JZNodeCompiler::getVariableInfo(m_file, variable());
-        int dataType = def? def->dataType : Type_none;
+        int dataType = def? def->dataType() : Type_none;
         setPinType(id,{dataType});
         setPinType(paramOut(0),{dataType});
     }
@@ -508,7 +519,7 @@ void JZNodeSetParamDataFlow::pinChanged(int id)
     if(id == paramIn(0))
     {
         auto def = JZNodeCompiler::getVariableInfo(m_file,variable());
-        int dataType = def? def->dataType : Type_none;
+        int dataType = def? def->dataType() : Type_none;
         setPinType(id,{dataType});
     }
 }
@@ -541,7 +552,7 @@ void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
         int pin_id = -1;
         if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
         {
-            if (JZNodeType::isBaseOrEnum(param->dataType))
+            if (JZNodeType::isBaseOrEnum(param->dataType()))
                 flag |= (Prop_dispValue | Prop_editValue);
             pin_id = addParamIn(param->name, flag);
         }
@@ -549,7 +560,7 @@ void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
         {            
             pin_id = addParamOut(param->name, flag);
         }
-        setPinType(pin_id, { param->dataType});
+        setPinType(pin_id, { param->dataType() });
     }
 }
 

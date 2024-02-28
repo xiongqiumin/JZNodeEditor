@@ -147,60 +147,19 @@ QDataStream &operator >> (QDataStream &s, JZNodeScriptInfo &param)
 }
 
 //JZNodeProgramInfo
-JZNodeProgramInfo::JZNodeProgramInfo()
-{
-
-}
-
-const JZNodeObjectDefine *JZNodeProgramInfo::meta(QString name) const
-{
-    for (int i = 0; i < objectDefines.size(); i++)
-    {
-        if (objectDefines[i].className == name)
-            return &objectDefines[i];
-    }
-
-    return JZNodeObjectManager::instance()->meta(name);
-}
-
-const FunctionDefine *JZNodeProgramInfo::function(QString name) const
-{
-    auto it = scripts.begin();
-    while(it != scripts.end())
-    {
-        if (auto func = it->function(name))
-            return func;
-        it++;
-    }
-
-    for (int i = 0; i < globalFunstions.size(); i++)
-    {
-        if (globalFunstions[i].fullName() == name)
-            return &globalFunstions[i];
-    }
-    return JZNodeFunctionManager::instance()->function(name);
-}
-
 QDataStream &operator<<(QDataStream &s, const JZNodeProgramInfo &param)
-{ 
-    s << param.scripts;
-    s << param.globalFunstions;
-    s << param.globalVariables;
-    s << param.objectDefines;
+{
+    s << param.appPath;
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, JZNodeProgramInfo &param)
-{    
-    s >> param.scripts;
-    s >> param.globalFunstions;
-    s >> param.globalVariables;
-    s >> param.objectDefines;
+{
+    s >> param.appPath;
     return s;
 }
 
-
-//DebugInfo
+//JZNodeDebugInfo
 JZNodeDebugInfo::JZNodeDebugInfo()
 {
 }

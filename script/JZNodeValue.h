@@ -31,7 +31,7 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 
-    void setEnmu(int id);
+    void setEnum(int id);
     void setEnumValue(int value);
 
 protected:

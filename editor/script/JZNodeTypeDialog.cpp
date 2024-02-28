@@ -9,8 +9,9 @@ TypeEditHelp::TypeEditHelp()
 
 }
 
-void TypeEditHelp::init(int dataType)
+void TypeEditHelp::init(QString type_name)
 {
+    int dataType = JZNodeType::nameToType(type_name);
     types = { Type_bool,Type_int,Type_double,Type_string };
     index = types.indexOf(dataType);
     if (index == -1)
@@ -83,12 +84,13 @@ JZNodeTypeDialog::~JZNodeTypeDialog()
     delete ui;
 }
 
-void JZNodeTypeDialog::setDataType(int dataType)
+void JZNodeTypeDialog::setDataType(QString dataType)
 {
-    if (JZNodeType::isBase(dataType))
+    int t = JZNodeType::nameToType(dataType);
+    if (JZNodeType::isBase(t))
         return;
 
-    QString className = JZNodeType::typeToName(dataType);
+    QString className = dataType;
     auto list = ui->treeWidget->findItems(className, Qt::MatchExactly);
     if (list.size() >= 0)
     {
@@ -97,7 +99,7 @@ void JZNodeTypeDialog::setDataType(int dataType)
     }
 }
 
-int JZNodeTypeDialog::dataType()
+QString JZNodeTypeDialog::dataType()
 {
     return m_dataType;
 }
@@ -116,8 +118,7 @@ void JZNodeTypeDialog::on_btnOk_clicked()
         QMessageBox::information(this, "", "请先选择一项");
         return;
     }
-
-    m_dataType = item->data(0, Qt::UserRole).toInt();
+    
     QDialog::accept();
 }
 

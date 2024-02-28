@@ -86,6 +86,7 @@ public:
 
     int type;    
     int pc;    
+    bool isBreak;             //断点是否停留
     QString memo;
 };
 typedef QSharedPointer<JZNodeIR> JZNodeIRPtr;

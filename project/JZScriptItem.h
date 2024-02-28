@@ -17,6 +17,9 @@ public:
     void clear();
     int nextId();
 
+    QByteArray toBuffer();
+    bool fromBuffer(const QByteArray &object);
+
     const FunctionDefine &function();
     void setFunction(FunctionDefine def);
 
@@ -50,12 +53,11 @@ public:
     QList<int> getConnectOut(int node_id, int propId = -1);
     QList<int> getConnectInput(int node_id, int propId = -1);
     QList<JZNodeConnect> connectList();    
-
-    JZParamDefine *localVariable(const QString &name);
-    void addLocalVariable(QString name, int type, QVariant v = QVariant());
-    void addLocalVariable(JZParamDefine def);
-    void removeLocalVariable(QString name);
-    void replaceLocalVariableInfo(QString oldName, JZParamDefine def);
+    
+    void addLocalVariable(QString name, QString dataType, const QString &v = QString());        
+    void addLocalVariable(QString name, int dataType, const QString &v = QString());
+    void removeLocalVariable(QString name);    
+    const JZParamDefine *localVariable(QString name);
     QStringList localVariableList(bool hasFunc);
 
 protected:    
@@ -63,10 +65,10 @@ protected:
     QMap<int, JZNodePtr> m_nodes;        
     QList<JZNodeGroup> m_groups;
     QList<JZNodeConnect> m_connects;    
-    FunctionDefine m_function;
-    QMap<QString, JZParamDefine> m_variables;
+    FunctionDefine m_function;    
 
     QMap<int, QPointF> m_nodesPos;
+    QMap<QString, JZParamDefine> m_variables;
 };
 
 #endif

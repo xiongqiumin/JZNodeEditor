@@ -102,9 +102,7 @@ void JZNodeOperator::calcPropOutType(JZNodeCompiler *c)
         case OP_div:
         case OP_mod:        
             out_type = JZNodeType::calcExprType(in_type1, in_type2);
-            break;
-        case OP_eq:
-        case OP_ne:
+            break;        
         case OP_le:
         case OP_ge:
         case OP_lt:
@@ -178,63 +176,30 @@ JZNodeMod::JZNodeMod()
     setPinTypeNumber(paramOut(0));
 }
     
-//JZNodeEQ
-JZNodeEQ::JZNodeEQ()
-    :JZNodeOperator(Node_eq,OP_eq)
+
+//JZNodeFloatEQ
+JZNodeFloatEQ::JZNodeFloatEQ()
 {
     m_name = "==";
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
+    addParamIn("");
+    addParamIn("");
+    addParamIn("eps", Prop_dispName | Prop_editValue);
+
+    setPinType(paramIn(0), {Type_double});
+    setPinType(paramIn(1), {Type_double});
     setPinTypeBool(paramOut(0));
 }
 
-//JZNodeNE
-JZNodeNE::JZNodeNE()
-    :JZNodeOperator(Node_ne,OP_ne)
+//JZNodeFloatNE
+JZNodeFloatNE::JZNodeFloatNE()    
 {
     m_name = "!=";
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeLE
-JZNodeLE::JZNodeLE()
-    :JZNodeOperator(Node_le,OP_le)
-{
-    m_name = "<=";
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeGE
-JZNodeGE::JZNodeGE()
-    :JZNodeOperator(Node_ge,OP_ge)
-{
-    m_name = ">=";
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeLT
-JZNodeLT::JZNodeLT()
-    :JZNodeOperator(Node_lt,OP_lt)
-{
-    m_name = "<";
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeGT
-JZNodeGT::JZNodeGT()
-    :JZNodeOperator(Node_gt,OP_gt)
-{
-    m_name = ">";
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
+    addParamIn("");
+    addParamIn("");
+    addParamIn("eps", Prop_dispName | Prop_editValue);
+    
+    setPinType(paramIn(0), { Type_double });
+    setPinType(paramIn(1), { Type_double });
     setPinTypeBool(paramOut(0));
 }
 
@@ -373,6 +338,136 @@ JZNodeBitXor::JZNodeBitXor()
     setPinTypeInt(paramOut(0));
 }
 
+//JZNodeCompareOp
+JZNodeCompareOp::JZNodeCompareOp(int node_type, int op_type)
+{
+    m_type = node_type;
+    m_op = op_type;
+
+    addParamIn("", Prop_editValue | Prop_dispValue);
+    addParamIn("", Prop_editValue | Prop_dispValue);
+    addParamOut("out");
+}
+
+bool JZNodeCompareOp::compiler(JZNodeCompiler *c, QString &error)
+{
+    int in1 = paramIn(0);
+    int in2 = paramIn(1);
+    int out = paramOut(0);
+         
+    auto graph = c->currentGraph()->graphNode(m_id);    
+    auto isInputAny = [c,graph](int in_prop)->bool 
+    {
+        if (!graph->paramIn.contains(in_prop))
+            return false;
+
+        QList<int> from_type;
+        auto from_list = graph->paramIn[in_prop];
+        for (int i = 0; i < from_list.size(); i++)
+        {
+            auto from_gemo = from_list[i];
+            if (!c->hasPinType(from_gemo.nodeId,from_gemo.propId))            
+                return false;            
+
+            if (c->pinType(from_gemo) == Type_any)
+                return true;
+        }
+        return false;
+    };  
+
+    //计算type
+    bool input_any = false;
+    if (isInputAny(in1) || isInputAny(in2))
+    {
+        c->setPinType(m_id, in1, Type_any);
+        c->setPinType(m_id, in2, Type_any);
+        input_any = true;
+    }
+    
+    if (!c->addDataInput(m_id, error))
+        return false;
+
+    auto ir_in1 = irId(c->paramId(m_id, in1));
+    auto ir_in2 = irId(c->paramId(m_id, in2));
+    auto ir_out = irId(c->paramId(m_id, out));
+    if (!input_any)
+    {        
+        c->addExpr(ir_out, ir_in1, ir_in2, m_op);
+    }
+    else
+    {
+        QList<JZNodeIRParam> in_list, out_list;
+        in_list << ir_in1;
+        in_list << ir_in2;
+        in_list << irLiteral(m_op);
+        out_list << ir_out;
+
+        c->addCall(irLiteral("dealExpr"), in_list, out_list);        
+    }
+    c->setPinType(m_id, out, Type_bool);
+    return true;
+}
+
+//JZNodeLE
+JZNodeLE::JZNodeLE()
+    :JZNodeCompareOp(Node_le, OP_le)
+{
+    m_name = "<=";
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeGE
+JZNodeGE::JZNodeGE()
+    :JZNodeCompareOp(Node_ge, OP_ge)
+{
+    m_name = ">=";
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeLT
+JZNodeLT::JZNodeLT()
+    :JZNodeCompareOp(Node_lt, OP_lt)
+{
+    m_name = "<";
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeGT
+JZNodeGT::JZNodeGT()
+    :JZNodeCompareOp(Node_gt, OP_gt)
+{
+    m_name = ">";
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeEQ
+JZNodeEQ::JZNodeEQ()
+    :JZNodeCompareOp(Node_eq, OP_eq)
+{    
+    m_name = "==";    
+    setPinTypeAny(paramIn(0));
+    setPinTypeAny(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeNE
+JZNodeNE::JZNodeNE()
+    :JZNodeCompareOp(Node_ne, OP_ne)
+{    
+    m_name = "!=";    
+    setPinTypeAny(paramIn(0));
+    setPinTypeAny(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
 //JZNodeExpression
 JZNodeExpression::JZNodeExpression()
 {
@@ -418,14 +513,14 @@ QString JZNodeExpression::expr()
     return m_expression;
 }
 
-void JZNodeExpression::saveToStream(JZProjectStream &s) const
+void JZNodeExpression::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
     s << m_expression;
     s << m_exprList;
 }
 
-void JZNodeExpression::loadFromStream(JZProjectStream &s)
+void JZNodeExpression::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
     s >> m_expression;

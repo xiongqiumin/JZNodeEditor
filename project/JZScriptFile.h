@@ -15,14 +15,17 @@ public:
     JZScriptFile();
     virtual ~JZScriptFile();
 
-    bool loadFromStream(JZProjectStream &s);
-    bool saveToStream(JZProjectStream &s);
+    bool save(QString filepath);
+    bool save(QString filepath,QList<JZProjectItem*> items);
+    bool load(QString filepath);
 
-    JZParamDefine *addParamDefine(QString name);
+    JZParamItem *addParamDefine(QString name);
     void removeParamDefine(QString name);
+    JZParamItem *paramDefine(QString name);
 
     JZScriptItem *addFlow(QString name);
     void removeFlow(QString name);
+    JZScriptItem *flow(QString name);
 
     JZScriptItem *addFunction(QString name, const FunctionDefine &func);
     void removeFunction(QString name);
@@ -33,7 +36,11 @@ public:
     JZScriptClassItem *getClass(QString className);
 
 protected:
+    QByteArray getItemData(JZProjectItem *item);
+    void loadScript(QDataStream &s, JZProjectItem *item);
+    void saveScript(QDataStream &s, JZProjectItem *item);
 
+    QMap<JZProjectItem*, QByteArray> m_itemCache;
 };
 
 

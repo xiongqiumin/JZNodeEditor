@@ -30,21 +30,33 @@ QString SampleProject::loadUi(QString filename)
     return QString::fromUtf8(file.readAll());
 }
 
-void SampleProject::saveProject()
+void SampleProject::newProject(QString name)
 {
-    Q_ASSERT(!m_name.isEmpty());
-    projectUpdateLayout(&m_project);
+    m_name = name;
 
     QString dir = qApp->applicationDirPath() + "/sample";
     if (!QDir().exists(dir))
         QDir().mkdir(dir);
-    QString path = qApp->applicationDirPath() + "/sample/" + m_name + ".jzproject";    
+        
+    m_project.newProject(dir, m_name, "ui");
+}
+
+void SampleProject::saveProject()
+{
+    Q_ASSERT(!m_name.isEmpty());
+    projectUpdateLayout(&m_project);
+    m_project.saveAllItem();
+    m_project.save();
+
+    
 }
 
 bool SampleProject::run()
-{
-    QString program_path = qApp->applicationDirPath() + "/sample/build/" + m_name + ".program";
-    QString jsm_path = qApp->applicationDirPath() + "/sample/build/" + m_name + ".jsm";
+{    
+    QString program_path = m_project.path() + "/build/" + m_name + ".program";
+    QString jsm_path = m_project.path() + "/build/" + m_name + ".jsm";
+    if (!QFile::exists(m_project.path() + "/build"))
+        QDir().mkdir(m_project.path() + "/build");
 
     JZNodeBuilder builder;
     JZNodeProgram program;

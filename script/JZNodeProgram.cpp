@@ -71,29 +71,16 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
     return s;
 }
 
-//JZFunction
-QDataStream &operator<<(QDataStream &s, const JZFunction &param)
-{
-    s << param.file << param.localVariables;
-    return s;
-}
-
-QDataStream &operator >> (QDataStream &s, JZFunction &param)
-{
-    s >> param.file >> param.localVariables;
-    return s;
-}
-
 //NodeWatch
 QDataStream &operator<<(QDataStream &s, const NodeWatch &param)
 {
-    s << param.traget << param.traget;
+    s << param.source << param.traget;
     return s;
 }
 
-QDataStream &operator>>(QDataStream &s, NodeWatch &param)
+QDataStream &operator >> (QDataStream &s, NodeWatch &param)
 {
-    s >> param.traget >> param.traget;
+    s >> param.source >> param.traget;
     return s;
 }
 
@@ -108,11 +95,10 @@ void JZNodeScript::clear()
     file.clear();        
     statmentList.clear();
     functionList.clear();
-    nodeInfo.clear();
-    runtimeInfo.clear();
+    nodeInfo.clear();    
 }
 
-FunctionDefine *JZNodeScript::function(QString name)
+JZFunction *JZNodeScript::function(QString name)
 {
     for(int i = 0; i < functionList.size(); i++)
     {
@@ -134,8 +120,6 @@ void JZNodeScript::saveToStream(QDataStream &s)
     }    
     s << functionList;
     s << nodeInfo;    
-    s << runtimeInfo;
-    s << canBreak;
     s << watchList;
 }
 
@@ -155,8 +139,6 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     }
     s >> functionList;
     s >> nodeInfo;      
-    s >> runtimeInfo;
-    s >> canBreak;
     s >> watchList;
 }
 
@@ -169,6 +151,11 @@ JZNodeProgram::~JZNodeProgram()
 {
 }
 
+bool JZNodeProgram::isNull()
+{
+    return m_filePath.isEmpty();
+}
+
 void JZNodeProgram::clear()
 {
     m_scripts.clear();    
@@ -179,6 +166,11 @@ void JZNodeProgram::clear()
 QString JZNodeProgram::error()
 {
     return m_error;
+}
+
+QString JZNodeProgram::applicationFilePath()
+{
+    return m_filePath;
 }
 
 bool JZNodeProgram::load(QString filepath)
@@ -212,6 +204,8 @@ bool JZNodeProgram::load(QString filepath)
     s >> m_variables;    
     s >> m_objectDefines;
     s >> m_binds;
+
+    m_filePath = filepath;
     return true;
 }
     
@@ -234,6 +228,8 @@ bool JZNodeProgram::save(QString filepath)
     s << m_variables;        
     s << m_objectDefines;
     s << m_binds;
+    
+    m_filePath = filepath;
     return true;
 }
 
@@ -242,28 +238,30 @@ JZNodeScript *JZNodeProgram::script(QString path)
     return m_scripts.value(path, JZNodeScriptPtr()).data();
 }
 
-FunctionDefine *JZNodeProgram::function(QString name)
+QStringList JZNodeProgram::functionList()
+{
+    QStringList list;
+
+    auto it = m_scripts.begin();
+    while (it != m_scripts.end())
+    {
+        auto &sub_list = it.value()->functionList;
+        for (int i = 0; i < sub_list.size(); i++)
+            list << sub_list[i].fullName();
+
+        it++;
+    }
+    return list;
+}
+
+JZFunction *JZNodeProgram::function(QString name)
 {    
     auto it = m_scripts.begin();
     while (it != m_scripts.end())
     {
-        FunctionDefine *def = it->data()->function(name);
+        JZFunction *def = it->data()->function(name);
         if (def)
             return def;
-
-        it++;
-    }
-    return nullptr;
-}
-
-JZFunction *JZNodeProgram::runtimeInfo(QString function)
-{
-    auto it = m_scripts.begin();
-    while (it != m_scripts.end())
-    {
-        auto run_it = it->data()->runtimeInfo.find(function);
-        if (run_it != it->data()->runtimeInfo.end())
-            return &run_it.value();
 
         it++;
     }
@@ -285,18 +283,6 @@ QList<JZNodeScript*> JZNodeProgram::scriptList()
 QMap<QString, QString> JZNodeProgram::bindInfo(QString className)
 {
     return m_binds.value(className);
-}
-
-QList<FunctionDefine> JZNodeProgram::functionDefines()
-{
-    QList<FunctionDefine> result;
-    auto it = m_scripts.begin();
-    while (it != m_scripts.end())
-    {
-        auto list = it->data()->functionList;        
-        it++;
-    }
-    return result;
 }
 
 QList<JZNodeObjectDefine> JZNodeProgram::objectDefines()

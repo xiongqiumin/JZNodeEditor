@@ -34,16 +34,16 @@ JZNodeFunction::~JZNodeFunction()
 
 }
 
-void JZNodeFunction::saveToStream(JZProjectStream &s) const
+void JZNodeFunction::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
     s << m_functionName;
 }
 
-void JZNodeFunction::loadFromStream(JZProjectStream &s)
+void JZNodeFunction::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
-    s >> m_functionName;
+    s  >> m_functionName;
 }
 
 void JZNodeFunction::setFunction(const FunctionDefine *define)
@@ -63,9 +63,9 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
         JZNodePin pin;
         pin.setName(define->paramIn[i].name);
         pin.setFlag(Prop_param | Prop_in | Prop_dispName);
-        pin.setDataType({define->paramIn[i].dataType});
-        if(JZNodeType::isBaseOrEnum(define->paramIn[i].dataType) 
-            || define->paramIn[i].dataType == Type_any)
+        pin.setDataType({define->paramIn[i].dataType() });
+        if(JZNodeType::isBaseOrEnum(define->paramIn[i].dataType())
+            || define->paramIn[i].dataType() == Type_any)
             pin.setFlag(pin.flag() | Prop_dispValue | Prop_editValue);
         addProp(pin);
     }
@@ -74,7 +74,7 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
         JZNodePin pin;
         pin.setName(define->paramOut[i].name);
         pin.setFlag(Prop_param | Prop_out | Prop_dispName);
-        pin.setDataType({define->paramOut[i].dataType});
+        pin.setDataType({define->paramOut[i].dataType()});
         addProp(pin);
     }
     m_functionName = define->fullName();    

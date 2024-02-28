@@ -138,16 +138,8 @@ QDataStream &operator>>(QDataStream &s, JZNodeScriptInfo &param);
 //JZNodeProgramInfo
 class JZNodeProgramInfo
 {
-public:
-    JZNodeProgramInfo();
-
-    const JZNodeObjectDefine *meta(QString name) const;
-    const FunctionDefine *function(QString name) const;
-
-    QMap<QString, JZNodeScriptInfo> scripts;
-    QList<FunctionDefine> globalFunstions;
-    QMap<QString, JZParamDefine> globalVariables;
-    QList<JZNodeObjectDefine> objectDefines;    
+public:    
+    QString appPath;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeProgramInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeProgramInfo &param);

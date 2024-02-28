@@ -196,7 +196,7 @@ const JZParamDefine *JZNodeObjectDefine::param(QString name) const
                     return &it.value();
                 else
                 {
-                    def = JZNodeObjectManager::instance()->meta(it->dataType);
+                    def = JZNodeObjectManager::instance()->meta(it->dataType());
                     break;
                 }
             }
@@ -372,9 +372,9 @@ bool JZNodeObjectDefine::isCopyable() const
     {
         for(auto &v: params)
         {
-            if(JZNodeType::isObject(v.dataType))
+            if(JZNodeType::isObject(v.dataType()))
             {                
-                bool ret = JZNodeObjectManager::instance()->meta(v.dataType)->isCopyable();
+                bool ret = JZNodeObjectManager::instance()->meta(v.dataType())->isCopyable();
                 if(!ret)
                     return false;
             }
@@ -598,7 +598,7 @@ void JZNodeObject::updateWidgetParam()
             QWidget *w = obj->findChild<QWidget*>(it.key());
             if (w)
             {
-                JZNodeObject *jzobj = new JZNodeObject(inst->meta(it.value().dataType));
+                JZNodeObject *jzobj = new JZNodeObject(inst->meta(it.value().dataType()));
                 jzobj->setCObject(w, false);
                 m_params[it.key()] = JZVariantPtr(new QVariant(QVariant::fromValue(JZNodeObjectPtr(jzobj))));
             }
@@ -700,7 +700,7 @@ JZNodeObjectManager *JZNodeObjectManager::instance()
 JZNodeObjectManager::JZNodeObjectManager()
 {        
     m_objectId = Type_internalObject;
-    m_enumId = Type_enum;
+    m_enumId = Type_internalEnum;
 
     QString obj_typeid = typeid(JZNodeObject).name();
     m_typeidMetas[obj_typeid] = Type_object;
@@ -766,10 +766,10 @@ int JZNodeObjectManager::regist(JZNodeObjectDefine info)
 
 void JZNodeObjectManager::replace(JZNodeObjectDefine define)
 {
-    if (m_metas.contains(define.id))
-        unregist(define.id);
-    
-    regist(define);        
+    Q_ASSERT(m_metas.contains(define.id));
+        
+    JZNodeObjectDefine *ptr = m_metas[define.id].data();
+    *ptr = define;
 }
 
 int JZNodeObjectManager::registCClass(JZNodeObjectDefine define,QString ctype_id)
@@ -781,8 +781,13 @@ int JZNodeObjectManager::registCClass(JZNodeObjectDefine define,QString ctype_id
 
 int JZNodeObjectManager::registEnum(JZNodeEnumDefine define)
 {
-    int id = m_enumId++;
-    m_enums[id] = define;
+    int id = -1;
+    if (define.type() == -1)
+        id = m_enumId++;
+    else
+        id = define.type();
+
+    m_enums[id] = define;    
     m_enums[id].setType(id);
     return id;
 }
@@ -1014,10 +1019,10 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
         if (!obj->m_params.contains(param->name))
         {
             obj->m_params[param->name] = JZVariantPtr(new QVariant());
-            if (param->dataType < Type_object)            
-                *obj->m_params[param->name] = param->initialValue();
+            if (param->dataType() < Type_object)
+                *obj->m_params[param->name] = JZNodeType::matchValue(param->dataType(), param->value);
             else            
-                *obj->m_params[param->name] = QVariant::fromValue(JZObjectNull(param->dataType));
+                *obj->m_params[param->name] = QVariant::fromValue(JZObjectNull(param->dataType()));
         }
     }
 }

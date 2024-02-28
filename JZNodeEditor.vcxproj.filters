@@ -358,6 +358,9 @@
     <ClCompile Include="project\JZScriptItem.cpp">
       <Filter>Source Files\project</Filter>
     </ClCompile>
+    <ClCompile Include="project\JZProjectTemplate.cpp">
+      <Filter>Source Files\project</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -654,6 +657,9 @@
       <Filter>Header Files\project</Filter>
     </ClInclude>
     <ClInclude Include="project\JZScriptFile.h">
+      <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="project\JZProjectTemplate.h">
       <Filter>Header Files\project</Filter>
     </ClInclude>
   </ItemGroup>

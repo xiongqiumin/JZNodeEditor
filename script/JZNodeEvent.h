@@ -11,8 +11,8 @@ public:
     JZNodeEvent();
     virtual ~JZNodeEvent();
     
-    virtual void saveToStream(JZProjectStream &s) const override;
-    virtual void loadFromStream(JZProjectStream &s) override;
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
 
     void setEventType(int eventType);
     int eventType() const;    
@@ -41,8 +41,8 @@ public:
     virtual ~JZNodeSingleEvent();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error);
-    virtual void saveToStream(JZProjectStream &s) const override;
-    virtual void loadFromStream(JZProjectStream &s) override;
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
     virtual FunctionDefine function() override;
 
     void setSingle(QString sender,const SingleDefine *single);
@@ -67,8 +67,8 @@ public:
     virtual ~JZNodeQtEvent();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
-    virtual void saveToStream(JZProjectStream &s) const override;
-    virtual void loadFromStream(JZProjectStream &s) override;
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
     virtual FunctionDefine function() override;
 
     void setEvent(QString className, const EventDefine *func);

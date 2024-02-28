@@ -47,7 +47,7 @@ void JZNodeMemberEditDialog::init(JZNode *node)
     if (class_name.isEmpty())
     {
         auto project = node->file()->project();
-        auto class_file = project->getClass(node->file());
+        auto class_file = project->getItemClass(node->file());
         if (class_file)
             class_name = class_file->className();
     }
@@ -93,8 +93,8 @@ QTreeWidgetItem *JZNodeMemberEditDialog::createTreeItem(QString name, int type)
         for (int i = 0; i < list.size(); i++)
         {
             auto param = def->param(list[i]);
-            auto sub_item = createTreeItem(list[i], param->dataType);
-            item->addChild(sub_item);
+ //           auto sub_item = createTreeItem(list[i], param->dataType);
+ //           item->addChild(sub_item);
         }
     }
 
@@ -113,7 +113,7 @@ void JZNodeMemberEditDialog::on_btnSelect_clicked()
 
     JZNodeTypeDialog dialog(this);
     if (def)
-        dialog.setDataType(def->id);
+        dialog.setDataType(className);
     if (dialog.exec() != QDialog::Accepted)
         return;
     

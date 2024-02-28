@@ -47,7 +47,7 @@ const FunctionDefine *JZNodeFunctionManager::function(QString funcName)
 {
     auto it = m_funcMap.find(funcName);
     if (it != m_funcMap.end())
-        return &it.value();
+        return &it->funcDefine;
     else
     {
         int index = funcName.indexOf(".");
@@ -78,21 +78,47 @@ QList<const FunctionDefine*> JZNodeFunctionManager::functionList()
     auto it = m_funcMap.begin();
     while(it != m_funcMap.end())
     {
-        list << &it.value();
+        list << &it->funcDefine;
         it++;
     }
     return list;
 }
 
-void JZNodeFunctionManager::registCFunction(QString name,bool isFlow, QSharedPointer<CFunction> func)
+void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> cfunc)
 {
-    FunctionDefine define;
-    define.name = name;
-    define.isCFunction = true;
-    define.cfunc = func;
-    define.isFlowFunction = isFlow;
-    define.updateCFunctionParam();
-    registFunction(define);
+    QStringList name_list = fullName.split(".");
+
+    JZFunction define;
+    if (name_list.size() == 1)
+    {
+        define.name = name_list[0];
+    }
+    else
+    {
+        define.className = name_list[0];
+        define.name = name_list[1];
+    }
+    define.cfunc = cfunc;
+    define.flow = isFlow;
+    
+    for (int i = 0; i < cfunc->args.size(); i++)
+    {
+        QString name = "input" + QString::number(i);
+        int dataType = JZNodeType::typeidToType(cfunc->args[i]);
+        Q_ASSERT(dataType != Type_none);
+
+        define.paramIn.push_back(JZParam(name, dataType));
+    }
+    if (cfunc->result != typeid(void).name())
+    {
+        QString name = "output";
+        int dataType = JZNodeType::typeidToType(cfunc->result);
+        Q_ASSERT(dataType != Type_none);
+
+        define.paramOut.push_back(JZParam(name, dataType));
+    }
+
+    registFunctionImpl(define);
 }
 
 void JZNodeFunctionManager::unregistFunction(QString name)
@@ -112,15 +138,32 @@ void JZNodeFunctionManager::clearUserReigst()
 
 void JZNodeFunctionManager::registFunction(const FunctionDefine &define)
 {
-    Q_ASSERT(!m_funcMap.contains(define.name));
-    m_funcMap[define.name] = define;    
+    QString fullName = define.fullName();
+    Q_ASSERT(!m_funcMap.contains(fullName));
+
+    m_funcMap[fullName].funcDefine = define;
     if(m_userRegist)
-        m_userFuncs << define.name;
+        m_userFuncs << fullName;
 }
 
 void JZNodeFunctionManager::replaceFunction(const FunctionDefine &define)
 {
-    m_funcMap[define.name] = define;
+    m_funcMap[define.fullName()].funcDefine = define;
+}
+
+void JZNodeFunctionManager::registFunctionImpl(JZFunction &impl)
+{    
+    m_funcMap[impl.fullName()].funcDefine = impl.define();
+    m_funcMap[impl.fullName()].funcImpl = impl;
+}
+
+const JZFunction *JZNodeFunctionManager::functionImpl(QString funcName)
+{
+    auto it = m_funcMap.find(funcName);
+    if (it == m_funcMap.end())
+        return nullptr; 
+
+    return &it->funcImpl;
 }
 
 JZNodeFunctionEdit JZNodeFunctionManager::editFunction(QString name)

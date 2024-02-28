@@ -60,48 +60,6 @@ public:
     JZNodeMod();
 };
 
-//JZNodeEQ
-class JZNodeEQ: public JZNodeOperator
-{
-public:
-    JZNodeEQ();    
-};
-
-//JZNodeNE
-class JZNodeNE: public JZNodeOperator
-{
-public:
-    JZNodeNE();
-};
-
-//JZNodeLE
-class JZNodeLE: public JZNodeOperator
-{
-public:
-    JZNodeLE();
-};
-
-//JZNodeGE
-class JZNodeGE: public JZNodeOperator
-{
-public:
-    JZNodeGE();
-};
-
-//JZNodeLT
-class JZNodeLT: public JZNodeOperator
-{
-public:
-    JZNodeLT();
-};
-
-//JZNodeGT
-class JZNodeGT: public JZNodeOperator
-{
-public:
-    JZNodeGT();
-};
-
 //JZNodeAnd
 class JZNodeAnd: public JZNodeOperator
 {
@@ -116,15 +74,6 @@ class JZNodeOr: public JZNodeOperator
 {
 public:
     JZNodeOr();
-
-    bool compiler(JZNodeCompiler *c, QString &error);
-};
-
-//JZNodeNot
-class JZNodeNot : public JZNode
-{
-public:
-    JZNodeNot();
 
     bool compiler(JZNodeCompiler *c, QString &error);
 };
@@ -150,6 +99,83 @@ public:
     JZNodeBitXor();
 };
 
+//JZNodeFloatEQ
+class JZNodeFloatEQ : public JZNode
+{
+public:
+    JZNodeFloatEQ();
+};
+
+//JZNodeFloatNE
+class JZNodeFloatNE : public JZNode
+{
+public:
+    JZNodeFloatNE();
+};
+
+//class 
+class JZNodeCompareOp : public JZNode
+{
+public:
+    JZNodeCompareOp(int node_type, int op_type);
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:    
+    int m_op;
+};
+
+//JZNodeEQ
+class JZNodeEQ : public JZNodeCompareOp
+{
+public:
+    JZNodeEQ();
+};
+
+//JZNodeNE
+class JZNodeNE : public JZNodeCompareOp
+{
+public:
+    JZNodeNE();
+};
+
+//JZNodeLE
+class JZNodeLE : public JZNodeCompareOp
+{
+public:
+    JZNodeLE();
+};
+
+//JZNodeGE
+class JZNodeGE : public JZNodeCompareOp
+{
+public:
+    JZNodeGE();
+};
+
+//JZNodeLT
+class JZNodeLT : public JZNodeCompareOp
+{
+public:
+    JZNodeLT();
+};
+
+//JZNodeGT
+class JZNodeGT : public JZNodeCompareOp
+{
+public:
+    JZNodeGT();
+};
+
+//JZNodeNot
+class JZNodeNot : public JZNode
+{
+public:
+    JZNodeNot();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
+};
+
 //JZNodeExpression
 class JZNodeExpression: public JZNode
 {
@@ -162,8 +188,8 @@ public:
 protected:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-    virtual void saveToStream(JZProjectStream &s) const;
-    virtual void loadFromStream(JZProjectStream &s);        
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);        
 
     QString m_expression;
     QStringList m_exprList;

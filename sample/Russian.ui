@@ -10,6 +10,9 @@
     <height>552</height>
    </rect>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::StrongFocus</enum>
+  </property>
   <widget class="QPushButton" name="btnStart">
    <property name="geometry">
     <rect>
@@ -63,6 +66,9 @@
      <width>50</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
     <string>0</string>

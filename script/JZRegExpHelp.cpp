@@ -18,3 +18,8 @@ bool JZRegExpHelp::isFloat(const QString &str)
     QRegularExpression exp("^-?[0-9]+\\.[0-9]+$");
     return exp.match(str).hasMatch();
 }
+
+bool JZRegExpHelp::isBool(const QString &str)
+{    
+    return (str == "true" || str == "false");
+}

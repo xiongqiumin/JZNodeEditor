@@ -18,6 +18,9 @@ enum
     Type_function,
 
     Type_enum = 1000,    
+    Type_keyCode,   //Qt::Key
+
+    Type_internalEnum = 1100,
 
     Type_object = 5000,    
     Type_list,
@@ -69,25 +72,12 @@ public:
     static int upType(QList<int> types);
     static QVariant matchValue(int type,const QVariant &v);
     static int matchType(QList<int> dst_types, QList<int> src_types);
-    static int matchType(QList<int> dst_types, const QVariant &v);
+    static int matchType(QList<int> dst_types, const QString &v);
+    static QVariant initValue(int type, const QString &v);
     
     static QString opName(int op);
 
     static void registConvert(int from, int to, ConvertFunc func);
 };
-
-class JZParamDefine
-{
-public:
-    JZParamDefine();
-    JZParamDefine(QString name, int dataType, const QVariant &v = QVariant());
-    QVariant initialValue() const;
-
-    QString name;
-    int dataType;
-    QVariant value;    
-};
-QDataStream &operator<<(QDataStream &s, const JZParamDefine &param);
-QDataStream &operator>>(QDataStream &s, JZParamDefine &param);
 
 #endif

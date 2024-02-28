@@ -22,52 +22,14 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
-    if(0)
+    if(1)
     {
         SampleRussian sample;
         //SampleCalculator sample;
         sample.saveProject();
-        sample.run();
-        return 1;
-    }
-    if(0)
-    {         
-        QString project_name = "project8898";
-
-        QString project_path = "C:/Users/xiong/Desktop/JZNodeEditor/x64/Debug/project/" + project_name
-            + "/" + project_name + ".jzproject";
-        QString program_path = "C:/Users/xiong/Desktop/JZNodeEditor/x64/Debug/project/" + project_name 
-            +  "/build/" +  project_name + ".program";
-        
-        JZProject project;
-        if (!project.open(project_path))
-        {
-            qDebug() << "load project failed";
-            return false;
-        }
-
-        JZNodeBuilder builder;
-        JZNodeProgram program;
-        if (!builder.build(&project, &program))
-        {
-            qDebug().noquote() << builder.error();
-            return false;
-        }
-        if(!program.save(program_path))
-        {
-            qDebug() << "save failed";
-            return false;
-        }       
-
-        JZNodeVM vm;
-        QString error;
-        if(!vm.init(program_path,false, error))
-        {
-            QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed\n" + error);
-            return 1;
-        }
-        return a.exec();
-    }
+        //sample.run();
+        //return 1;
+    }    
 
     if(argc == 1)
     {

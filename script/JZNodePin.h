@@ -3,7 +3,7 @@
 
 #include <QVariant>
 #include <QPointF>
-#include "JZProjectStream.h"
+#include <QDataStream>
 #include "JZNodeDefine.h"
 #include "JZNodeType.h"
 
@@ -20,7 +20,8 @@ enum
     Prop_editName = 0x80,
     Prop_dispValue = 0x100,
     Prop_editValue = 0x200,
-    Prop_literal = 0x400,
+    Prop_noValue = 0x400,
+    Prop_literal = 0x800,
 
     Prop_All = 0xFFFFFFFF,
 };
@@ -69,8 +70,8 @@ public:
     void setValue(QString value);
 
 protected:
-    friend void operator<<(JZProjectStream &s, const JZNodePin &param);
-    friend void operator>>(JZProjectStream &s, JZNodePin &param);    
+    friend void operator<<(QDataStream &s, const JZNodePin &param);
+    friend void operator>>(QDataStream &s, JZNodePin &param);    
 
     int m_id;
     int m_flag;    
@@ -78,7 +79,7 @@ protected:
     QList<int> m_dataType;
     QString m_value;    
 };
-void operator<<(JZProjectStream &s, const JZNodePin &param);
-void operator>>(JZProjectStream &s, JZNodePin &param);
+void operator<<(QDataStream &s, const JZNodePin &param);
+void operator>>(QDataStream &s, JZNodePin &param);
 
 #endif

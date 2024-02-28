@@ -43,6 +43,7 @@ public:
 };
 typedef QSharedPointer<Graph> GraphPtr;
 
+//编译时占位的 statment
 enum {
     OP_ComilerFlowOut = 0x8000,
     OP_ComilerStackInit,    
@@ -146,12 +147,14 @@ public:
     data 依赖 data 节点, 节点计算前主动获取.
 
     addFlowInput，addDataInput 后，会自动插入JZNodeIRNodeId, 表示一个节点的开始, 用于断点
-    */
+    */    
+    bool checkPinInType(int nodeId, int prop_id, QString &error); //计算输入类型
+
     bool addFlowInput(int nodeId,QString &error);
     bool addFlowInput(int nodeId,int prop_id,QString &error);
     bool addDataInput(int nodeId,QString &error);
     bool addDataInput(int nodeId,int prop_id,QString &error); //获得指定nodeId 的 prop_id 输入
-    void addFlowOutput(int nodeId);            
+    void addFlowOutput(int nodeId);         
 
     int addNop();
     void addNodeStart(int id);
@@ -168,7 +171,7 @@ public:
     
     void addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const FunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addAllocLocal(const JZParamDefine *def, const JZNodeIRParam &value = JZNodeIRParam());
+    void addAllocLocal(QString name,int dataType,const JZNodeIRParam &value);
     void addAssert(const JZNodeIRParam &tips);       
 
     JZNodeIR *lastStatment();
@@ -211,8 +214,7 @@ protected:
     bool compilerNode(JZNode *node);
     void pushCompilerNode(int id);
     void popCompilerNode();    
-
-    bool checkPinInType(int nodeId,int prop_id,QString &error); //计算输入类型
+    
     void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
     void updateFlowOut();    
     void linkNodes();

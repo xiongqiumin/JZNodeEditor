@@ -19,20 +19,29 @@ public:
     void clearUserReigst(); 
 
     QList<const FunctionDefine*> functionList();
-    const FunctionDefine *function(QString name);
+    const FunctionDefine *function(QString name);    
     void registFunction(const FunctionDefine &define);
-    void replaceFunction(const FunctionDefine &define);
-    void registCFunction(QString name,bool isFlow, QSharedPointer<CFunction> func);
+    void replaceFunction(const FunctionDefine &define);        
+    void registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> func);
     void unregistFunction(QString name);       
+
+    void registFunctionImpl(JZFunction &impl);
+    const JZFunction *functionImpl(QString name);
 
     JZNodeFunctionEdit editFunction(QString name);
     void registEditFunction(QString name, JZNodeFunctionEdit func);
 
 protected:
+    struct Function
+    {
+        FunctionDefine funcDefine;
+        JZFunction funcImpl;
+    };
+
     JZNodeFunctionManager();
     ~JZNodeFunctionManager();           
     
-    QMap<QString, FunctionDefine> m_funcMap;
+    QMap<QString, Function> m_funcMap;
     QMap<QString, JZNodeFunctionEdit> m_funcEditMap;
     bool m_userRegist;
     QStringList m_userFuncs;

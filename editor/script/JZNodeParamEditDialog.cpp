@@ -31,40 +31,44 @@ JZParamDefine JZNodeParamEditDialog::param()
 void JZNodeParamEditDialog::uiToData()
 {
     m_paramDefine.name = ui->lineName->text();
-    m_paramDefine.dataType = ui->comboBox->currentData().toInt();
-    if (JZNodeType::isBase(m_paramDefine.dataType))
+    m_paramDefine.type = ui->comboBox->currentText();
+
+    int dataType = m_paramDefine.dataType();
+    if (JZNodeType::isBase(dataType))
     {
         if (ui->lineValue->text().isEmpty())
-            m_paramDefine.value = QVariant();
+            m_paramDefine.value.clear();
         else
             m_paramDefine.value = ui->lineValue->text();
     }
-    else if (JZNodeType::isEnum(m_paramDefine.dataType))
+    else if (JZNodeType::isEnum(dataType))
     {
-        m_paramDefine.value = ui->boxValue->currentData().toInt();
+        m_paramDefine.value = ui->boxValue->currentText();
     }
     else
-        m_paramDefine.value = QVariant();
+        m_paramDefine.value.clear();
 }
 
 void JZNodeParamEditDialog::dataToUi()
 {
-    ui->lineName->setText(m_paramDefine.name);    
-    ui->boxValue->setVisible(JZNodeType::isEnum(m_paramDefine.dataType));
-    ui->lineValue->setVisible(!JZNodeType::isEnum(m_paramDefine.dataType));
+    ui->lineName->setText(m_paramDefine.name);   
+
+    int dataType = m_paramDefine.dataType();
+    ui->boxValue->setVisible(JZNodeType::isEnum(dataType));
+    ui->lineValue->setVisible(!JZNodeType::isEnum(dataType));
 
     TypeEditHelp help;
-    help.init(m_paramDefine.dataType);
+    //help.init(m_paramDefine.dataType);
     help.update(ui->comboBox);
     
-    if (JZNodeType::isBase(m_paramDefine.dataType))
+    if (JZNodeType::isBase(dataType))
     {
-        ui->lineValue->setText(m_paramDefine.value.toString());
+        ui->lineValue->setText(m_paramDefine.value);
         ui->lineValue->setEnabled(true);
     }
-    else if (JZNodeType::isEnum(m_paramDefine.dataType))
+    else if (JZNodeType::isEnum(dataType))
     {
-        UiHelper::updateEnumBox(ui->boxValue, m_paramDefine.dataType, m_paramDefine.value.toInt());
+        UiHelper::updateEnumBox(ui->boxValue, dataType, m_paramDefine.value.toInt());
     }
     else
         ui->lineValue->setEnabled(false);
@@ -83,9 +87,9 @@ void JZNodeParamEditDialog::onTypeChanged(int index)
     QComboBox *box = qobject_cast<QComboBox*>(sender());    
     if (index < box->count() - 1)   
         return;    
-
+/*
     JZNodeTypeDialog dialog(this);
-    dialog.setDataType(m_paramDefine.dataType);
+    dialog.setDataType(m_paramDefine.type);
     if (dialog.exec() != QDialog::Accepted)
     {
         int index = box->findData(m_paramDefine.dataType);
@@ -97,8 +101,8 @@ void JZNodeParamEditDialog::onTypeChanged(int index)
     if (m_paramDefine.dataType != new_type)
     {        
         TypeEditHelp help;
-        help.init(new_type);
-        help.update(ui->comboBox);
+        //help.init(new_type);
+        //help.update(ui->comboBox);
 
         ui->lineValue->clear();
         if (JZNodeType::isEnum(new_type))
@@ -115,6 +119,7 @@ void JZNodeParamEditDialog::onTypeChanged(int index)
             ui->lineValue->setEnabled(JZNodeType::isBase(new_type));
         }
     }
+*/
 }
 
 void JZNodeParamEditDialog::on_btnOk_clicked()

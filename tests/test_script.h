@@ -39,8 +39,7 @@ private slots:
 
     void testRegExp();
     void testObjectParse();
-
-    void testProjectSave();
+    
     void testBind();
     void testParamBinding();
     

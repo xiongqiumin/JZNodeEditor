@@ -390,7 +390,7 @@ public:
 };
 
 template<typename T>
-int registEnum(QString name)
+int registEnum(QString name,int id = -1)
 {    
     QStringList keys;
     QVector<int> values;
@@ -405,6 +405,8 @@ int registEnum(QString name)
 
     JZNodeEnumDefine define;
     define.init(meta.name(),keys,values);
+    if(id != -1)
+        define.setType(id);
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
@@ -509,12 +511,13 @@ public:
         getFunctionParam<int, Args...>(args);
         for (int i = 0; i < args.size(); i++)
         {
+            int dataType = JZNodeType::typeidToType(args[i]);
+
             JZParamDefine def;
             def.name = "output" + QString::number(i);
-            def.dataType = JZNodeType::typeidToType(args[i]);
+            def.type = JZNodeType::typeToName(dataType);
             single.paramOut.push_back(def);
         }
-
         m_define.singles.push_back(single);
     }
 
@@ -539,12 +542,13 @@ public:
         getFunctionParam<int, Args...>(args);
         for (int i = 1; i < args.size(); i++)
         {
+            int dataType = JZNodeType::typeidToType(args[i]);
+
             JZParamDefine def;
-            def.name = "output" + QString::number(i);
-            def.dataType = JZNodeType::typeidToType(args[i]);
+            def.name = "output" + QString::number(i);            
+            def.type = JZNodeType::typeToName(dataType);
             single.paramOut.push_back(def);
         }
-
         m_define.singles.push_back(single);
     }
 
@@ -582,19 +586,22 @@ public:
     }
 
     void regist(int typeId = -1)
-    {        
+    {
+        auto func_inst = JZNodeFunctionManager::instance();
+
         m_define.id = JZNodeObjectManager::instance()->delcare(m_define.className, typeid(Class).name(), typeId);
         //replace with real id
         for (int i = 0; i < m_define.singles.size(); i++)
         {
             auto &single = m_define.singles[i];
-            if (single.paramOut[0].dataType == Type_none)
-                single.paramOut[0].dataType = m_define.id;
+            if (single.paramOut[0].dataType() == Type_none)
+                single.paramOut[0].type = JZNodeType::typeToName(m_define.id);
         }
-        for (int func_idx = 0; func_idx < m_define.functions.size(); func_idx++)
+        for (int func_idx = 0; func_idx < m_funcList.size(); func_idx++)
         {
-            auto &f = m_define.functions[func_idx];            
-            f.updateCFunctionParam();            
+            auto &f = m_funcList[func_idx];                        
+            func_inst->registCFunction(f.fullName(), f.isFlowFunction(), f.cfunc);
+            m_define.functions.push_back(*func_inst->function(f.fullName()));
         }
         //regist
         JZNodeObjectManager::instance()->replace(m_define);
@@ -604,13 +611,12 @@ public:
 protected:
     void registFunction(QString name,bool isflow,QSharedPointer<CFunction> func)
     {
-        FunctionDefine f;
+        JZFunction f;
         f.name = name;
         f.className = m_define.className;
-        f.isFlowFunction = isflow;        
-        f.isCFunction = true;
-        f.cfunc = func;        
-        m_define.functions.push_back(f);        
+        f.flow = isflow;        
+        f.cfunc = func;
+        m_funcList.push_back(f);
     }
 
     void declareQObject(std::true_type)
@@ -627,6 +633,7 @@ protected:
 
     QString m_super;
     JZNodeObjectDefine m_define;    
+    QList<JZFunction> m_funcList;
 };
 
 

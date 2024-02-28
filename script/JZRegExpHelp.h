@@ -9,6 +9,7 @@ public:
     static bool isInt(const QString &str);
     static bool isHex(const QString &str);
     static bool isFloat(const QString &str);
+    static bool isBool(const QString &str);    
 };
 
 

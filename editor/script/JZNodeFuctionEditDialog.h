@@ -44,7 +44,7 @@ private:
     void swap(QTableWidget *table,int row0,int row1);
     void dataToTable(const QList<JZParamDefine> &param,QTableWidget *table);
     void tableToData(QTableWidget *table,QList<JZParamDefine> &param);
-    void addRow(QTableWidget *table, QString name, int type);
+    void addRow(QTableWidget *table, QString name, QString type);
     QStringList localVarList();
     bool isMemberFunction();
     void dataToUi();

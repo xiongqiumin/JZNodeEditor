@@ -15,6 +15,11 @@ QVariant JZConvert(const QVariant &in, int type)
     return JZNodeType::matchValue(type,in);
 }
 
+QVariant JZDealExpr(const QVariant &in1, const QVariant &in2, const QVariant &op)
+{
+    return g_engine->dealExpr(in1, in2, op.toInt());
+}
+
 QString JZObjectToString(JZNodeObject *obj)
 {
     JZNodeObjectFormat format;
@@ -330,6 +335,7 @@ JZNodeEngine *g_engine = nullptr;
 void JZNodeEngine::regist()
 {
     JZNodeFunctionManager::instance()->registCFunction("convert", true, jzbind::createFuncion(JZConvert));
+    JZNodeFunctionManager::instance()->registCFunction("dealExpr", false, jzbind::createFuncion(JZDealExpr));
     JZNodeFunctionManager::instance()->registCFunction("createObject", true, jzbind::createFuncion(JZObjectCreate));
 
     JZNodeFunctionManager::instance()->registCFunction("createObjectFromString", true, jzbind::createFuncion(JZObjectFromString));    
@@ -399,9 +405,12 @@ void JZNodeEngine::init()
     JZNodeFunctionManager::instance()->clearUserReigst();
     JZNodeObjectManager::instance()->clearUserReigst();
     
-    auto function_list = m_program->functionDefines();
+    auto function_list = m_program->functionList();
     for (int i = 0; i < function_list.size(); i++)
-        JZNodeFunctionManager::instance()->registFunction(function_list[i]);
+    {
+        auto *func = m_program->function(function_list[i]);
+        JZNodeFunctionManager::instance()->registFunctionImpl(*func);
+    }
 
     auto define_list = m_program->objectDefines();    
     for(int i = 0; i < define_list.size(); i++)
@@ -541,14 +550,14 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
     return info;
 }
 
-void JZNodeEngine::pushStack(const FunctionDefine *func)
+void JZNodeEngine::pushStack(const JZFunction *func)
 {
     if (m_stack.size() > 0)    
         m_stack.currentEnv()->pc = m_pc;     
         
     m_stack.push();    
     m_stack.currentEnv()->func = func;
-    if(!func->isCFunction)
+    if(!func->isCFunction())
     {                
         m_pc = func->addr;
         m_script = getScript(func->file);
@@ -854,7 +863,7 @@ void JZNodeEngine::dealSlot(JZEvent *event)
     }
 }
 
-bool JZNodeEngine::checkIdlePause(const FunctionDefine *func)
+bool JZNodeEngine::checkIdlePause(const JZFunction *func)
 {
     m_mutex.lock();    
     if (m_status == Status_none)
@@ -896,7 +905,7 @@ bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList 
     return call(func,in,out);
 }
 
-bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVariantList &out)
+bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantList &out)
 {    
     if (checkIdlePause(func))
         return false;                    
@@ -910,7 +919,7 @@ bool JZNodeEngine::call(const FunctionDefine *func,const QVariantList &in,QVaria
     
     try
     {
-        if(func->isCFunction)
+        if(func->isCFunction())
         {
             callCFunction(func);
         }
@@ -1482,7 +1491,7 @@ void JZNodeEngine::stepOut()
     waitCommand();
 }
 
-void JZNodeEngine::checkFunction(const FunctionDefine *func)
+void JZNodeEngine::checkFunction(const JZFunction *func)
 {
     // get input
     auto &inList = func->paramIn;    
@@ -1498,7 +1507,7 @@ void JZNodeEngine::checkFunction(const FunctionDefine *func)
     }
 }
 
-void JZNodeEngine::callCFunction(const FunctionDefine *func)
+void JZNodeEngine::callCFunction(const JZFunction *func)
 {    
     QVariantList paramIn, paramOut;
     // get input
@@ -1519,12 +1528,20 @@ void JZNodeEngine::callCFunction(const FunctionDefine *func)
         setReg(Reg_Call + i,paramOut[i]);
 }
 
-const FunctionDefine *JZNodeEngine::function(QString name)
+const JZFunction *JZNodeEngine::function(QString name)
 {
-    FunctionDefine *func = m_program->function(name);
+    JZFunction *func = m_program->function(name);
     if(func)
         return func;        
-    return JZNodeFunctionManager::instance()->function(name);
+    return JZNodeFunctionManager::instance()->functionImpl(name);
+}
+
+void JZNodeEngine::unSupportSingleOp(int a, int op)
+{
+    QString error = QString("不支持的操作,操作符%1,数据类型%2").arg(JZNodeType::opName(op),
+        JZNodeType::typeToName(a));
+
+    throw std::runtime_error(qUtf8Printable(error));
 }
 
 void JZNodeEngine::unSupportOp(int a, int b, int op)
@@ -1685,7 +1702,7 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
                 return !obj;
             }
             else
-                unSupportOp(dataType1, dataType2, op);
+                unSupportSingleOp(dataType1, op);
         }
         else
             unSupportOp(dataType1, dataType2, op);
@@ -1709,7 +1726,7 @@ bool JZNodeEngine::checkPauseStop()
         m_statusCommand = Command_none;
         wait = true;
     }
-    else if(m_script->canBreak[m_pc])
+    else if(m_script->statmentList[m_pc]->isBreak)
     {                
         int node_id = -1;
         if (op_list[m_pc]->type == OP_nodeId)
@@ -1919,7 +1936,7 @@ bool JZNodeEngine::run()
             auto func = function(function_name);
             Q_ASSERT(func);            
 
-            if(func->isCFunction)
+            if(func->isCFunction())
                 callCFunction(func);
             else
             {

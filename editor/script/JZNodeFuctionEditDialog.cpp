@@ -153,7 +153,7 @@ void JZNodeFuctionEditDialog::add(QTableWidget *table)
             break;
     }
     int dataType = Type_int;
-    addRow(table,name, Type_int);
+    addRow(table,name, "int");
 }
 
 void JZNodeFuctionEditDialog::remove(QTableWidget *table)
@@ -195,13 +195,14 @@ void JZNodeFuctionEditDialog::dataToTable(const QList<JZParamDefine> &param, QTa
     table->blockSignals(true);
     table->clearContents();    
     table->setRowCount(0);
-    for (int i = 0; i < param.size(); i++)
-        addRow(table, param[i].name, param[i].dataType);
+    //for (int i = 0; i < param.size(); i++)
+    //    addRow(table, param[i].name, param[i].dataType);
     table->blockSignals(false);
 }
 
 void JZNodeFuctionEditDialog::tableToData(QTableWidget *table, QList<JZParamDefine> &param)
 {
+/*
     param.clear();
     int count = table->rowCount();
     for (int row = 0; row < count; row++)
@@ -219,9 +220,10 @@ void JZNodeFuctionEditDialog::tableToData(QTableWidget *table, QList<JZParamDefi
         }
         param.push_back(def);
     }
+*/
 }
 
-void JZNodeFuctionEditDialog::addRow(QTableWidget *table, QString name, int dataType)
+void JZNodeFuctionEditDialog::addRow(QTableWidget *table, QString name, QString dataType)
 {
     int row = table->rowCount();
     table->setRowCount(row + 1);
@@ -232,10 +234,9 @@ void JZNodeFuctionEditDialog::addRow(QTableWidget *table, QString name, int data
     if ((table == ui->tableIn && row == 0 && isMemberFunction()))
     {   
         itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
-
-        QString type_name = JZNodeObjectManager::instance()->getClassName(dataType);
+        
         QTableWidgetItem *itemType = new QTableWidgetItem(name);        
-        itemType->setText(type_name);
+        itemType->setText(dataType);
         itemType->setData(Item_type, dataType);
         itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
         table->setItem(row, 1, itemType);
@@ -263,10 +264,10 @@ void JZNodeFuctionEditDialog::onTypeChanged(int index)
     JZNodeTypeDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted)    
         return;    
-
+/*
     int dataType = dialog.dataType();
     TypeEditHelp help;
-    help.init(dataType);
+    //help.init(dataType);
 
     box->blockSignals(true);
     box->clear();
@@ -274,6 +275,7 @@ void JZNodeFuctionEditDialog::onTypeChanged(int index)
         box->addItem(help.typeNames[i], help.types[i]);
     box->setCurrentIndex(help.index);
     box->blockSignals(false);
+*/
 }
 
 void JZNodeFuctionEditDialog::dataToUi()

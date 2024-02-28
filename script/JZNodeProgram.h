@@ -34,7 +34,7 @@ QDataStream &operator>>(QDataStream &s, NodeRange &param);
 //NodeParamInfo
 struct NodeParamInfo
 {
-    JZParamDefine define;
+    JZParam define;
     int id;
 };
 QDataStream &operator<<(QDataStream &s, const NodeParamInfo &param);
@@ -57,16 +57,6 @@ struct NodeInfo
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 
-//JZFunction
-class JZFunction
-{
-public:
-    QString file;    
-    QList<JZParamDefine> localVariables;
-};
-QDataStream &operator<<(QDataStream &s, const JZFunction &param);
-QDataStream &operator>>(QDataStream &s, JZFunction &param);
-
 //NodeWatch
 class NodeWatch
 {
@@ -84,16 +74,15 @@ public:
     JZNodeScript();
     void clear();    
 
-    FunctionDefine *function(QString name);
+    JZFunction *function(QString name);
 
     QString file;
     QString className;
-    QMap<int, NodeInfo> nodeInfo;
-    QList<JZNodeIRPtr> statmentList;        
-    QList<FunctionDefine> functionList;
-    QMap<QString, JZFunction> runtimeInfo;
-    QList<NodeWatch> watchList;
-    QVector<bool> canBreak;
+    QMap<int, NodeInfo> nodeInfo;    
+    QList<JZNodeIRPtr> statmentList;            
+
+    QList<JZFunction> functionList;    
+    QList<NodeWatch> watchList;    //display node    
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
@@ -111,18 +100,19 @@ public:
     JZNodeProgram();
     ~JZNodeProgram();
 
+    bool isNull();
     bool load(QString file);
     bool save(QString file);
     void clear();
-
-    FunctionDefine *function(QString name);
+    QString applicationFilePath();
+    
+    QStringList functionList();
+    JZFunction *function(QString name);
     JZNodeScript *script(QString path);    
-    JZFunction *runtimeInfo(QString function);
 
     QList<JZNodeScript*> scriptList();    
     QMap<QString, QString> bindInfo(QString className);
-
-    QList<FunctionDefine> functionDefines();
+    
     QList<JZNodeObjectDefine> objectDefines();
     QMap<QString,JZParamDefine> globalVariables();    
 
@@ -136,6 +126,7 @@ protected:
     friend JZNodeBuilder;    
     QString toString(JZNodeIRParam param);
     
+    QString m_filePath;
     QString m_error;
 
     QMap<QString,JZNodeScriptPtr> m_scripts; 

@@ -12,7 +12,7 @@ class TypeEditHelp
 {
 public:
     TypeEditHelp();
-    void init(int dataType);
+    void init(QString dataType);
     void update(QComboBox *box);
 
     int index;
@@ -29,8 +29,8 @@ public:
     JZNodeTypeDialog(QWidget *p = nullptr);
     ~JZNodeTypeDialog();
     
-    void setDataType(int dataType);
-    int dataType();
+    void setDataType(QString dataType);
+    QString dataType();
 
 protected slots:
     void on_lineClassName_returnPressed();
@@ -38,7 +38,7 @@ protected slots:
     void on_btnCancel_clicked();
 
 protected:
-    int m_dataType;    
+    QString m_dataType;
     Ui::JZNodeTypeDialog *ui;
 };
 

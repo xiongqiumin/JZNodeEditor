@@ -19,12 +19,10 @@ public:
     JZProject();
     ~JZProject();
 
-    bool isVaild();
-
-    void initUi();
-    void initConsole();
-    void initTest();
-
+    bool isNull() const;
+    void clear();
+    
+    bool newProject(QString path,QString name, QString temp);
     bool open(QString filepath);
     void close();
     bool save();        
@@ -34,34 +32,39 @@ public:
 
     QString error();
 
-    QString name();
-    QString filePath();
+    QString name();    
     QString path();
+
+    void setFilePath(QString path);
+    QString filePath();
 
     QString mainScriptPath();
     JZScriptItem *mainScript();
+    
     JZParamItem *globalDefine();
+    const JZParamDefine *globalVariable(QString name);
+    QStringList globalVariableList();
 
     JZProjectItem *root();
 
     JZProjectItem *addFile(QString path);
     void removeFile(QString path);    
-    void renameFile(QString oldPath,QString newPath);
-
-    JZScriptFile *createScript(QString path);
+    void renameFile(QString oldPath,QString newPath);    
 
     JZScriptClassItem *getClass(QString class_name);
-    JZScriptClassItem *getClass(JZProjectItem *item);
-    JZParamDefine *globalVariableInfo(QString name);      
-    QStringList globalVariableList();
-            
+
     bool addItem(QString path, JZProjectItem *item);
     void removeItem(QString path);
     JZProjectItem *getItem(QString path);
-    QList<JZProjectItem *> itemList(QString path, int type);
+    QList<JZProjectItem*> itemList(QString path, int type);
     bool saveItem(JZProjectItem *item);
+    bool saveItems(QList<JZProjectItem*> item);
+    bool saveAllItem();
     bool loadItem(JZProjectItem *item);
     void renameItem(JZProjectItem *item, QString name);    
+
+    JZScriptClassItem *getItemClass(JZProjectItem *item);    
+    JZProjectItem *getItemFile(JZProjectItem *item);
     
     const FunctionDefine *function(QString name);
     QStringList functionList();
@@ -82,19 +85,15 @@ protected:
     QByteArray magic();
     QList<JZProjectItem *> paramDefineList();    
 
-    QString domain(JZProjectItem *item);
-    void init();    
-    void clear();
+    QString domain(JZProjectItem *item);        
     void registType();
     QString dir(const QString &filepath);    
             
     JZProjectItemFolder m_root;
     
-    bool m_windowSystem;
-    QStringList m_fileList;
-    QList<JZProjectItemPtr> m_itemList;
+    bool m_windowSystem;        
 
-    QMap<QString, QList<int>> m_breakPoints;
+    QMap<JZProjectItem*, QList<int>> m_breakPoints;
     QString m_filepath;    
     bool m_blockRegist;
     QString m_error;

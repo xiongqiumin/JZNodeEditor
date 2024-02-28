@@ -18,13 +18,13 @@ JZNodeEvent::~JZNodeEvent()
 
 }
 
-void JZNodeEvent::saveToStream(JZProjectStream &s) const
+void JZNodeEvent::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
     s << m_eventType;
 }
 
-void JZNodeEvent::loadFromStream(JZProjectStream &s)
+void JZNodeEvent::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
     s >> m_eventType;
@@ -121,7 +121,7 @@ void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
         JZNodePin pin;
         pin.setName(single->paramOut[i].name);
         pin.setFlag(Prop_param | Prop_out);
-        pin.setDataType({single->paramOut[i].dataType});
+        pin.setDataType({single->paramOut[i].dataType()});
         addProp(pin);
     }
     m_eventType = single->eventType;
@@ -174,14 +174,14 @@ bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-void JZNodeSingleEvent::saveToStream(JZProjectStream &s) const
+void JZNodeSingleEvent::saveToStream(QDataStream &s) const
 {
     JZNodeEvent::saveToStream(s);
     s << m_sender;
     s << m_single;
 }
 
-void JZNodeSingleEvent::loadFromStream(JZProjectStream &s)
+void JZNodeSingleEvent::loadFromStream(QDataStream &s)
 {
     JZNodeEvent::loadFromStream(s);
     s >> m_sender;
@@ -214,14 +214,14 @@ bool JZNodeQtEvent::compiler(JZNodeCompiler *c, QString &error)
     return true;
 
 }
-void JZNodeQtEvent::saveToStream(JZProjectStream &s) const
+void JZNodeQtEvent::saveToStream(QDataStream &s) const
 {
     JZNodeEvent::saveToStream(s);
     s << m_className;
     s << m_event;
 }
 
-void JZNodeQtEvent::loadFromStream(JZProjectStream &s)
+void JZNodeQtEvent::loadFromStream(QDataStream &s)
 {
     JZNodeEvent::loadFromStream(s);
     s >> m_className;
@@ -257,7 +257,7 @@ void JZNodeQtEvent::setEvent(QString className, const EventDefine *func)
         JZNodePin pin;
         pin.setName(paramOut[i].name);
         pin.setFlag(Prop_param | Prop_out);
-        pin.setDataType({ paramOut[i].dataType });
+        pin.setDataType({ paramOut[i].dataType() });
         addProp(pin);
     }
 }

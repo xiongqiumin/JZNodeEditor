@@ -16,20 +16,55 @@ JZScriptClassItem::~JZScriptClassItem()
 
 }
 
+QByteArray JZScriptClassItem::toBuffer()
+{
+    QByteArray buffer;
+    QDataStream s(&buffer, QIODevice::WriteOnly);
+
+    s << m_name;    
+    s << m_super;
+    s << m_uiFile;
+    s << m_classId;
+    return buffer;
+}
+
+bool JZScriptClassItem::fromBuffer(const QByteArray &buffer)
+{
+    QDataStream s(buffer);
+    s >> m_name;
+    s >> m_super;
+    s >> m_uiFile;
+    s >> m_classId;
+    return true;
+}
+
+
 void JZScriptClassItem::setClass(QString className, QString super)
 {
-    m_className = className;
+    m_name = className;    
     m_super = super;
+    regist();
 }
 
 QString JZScriptClassItem::className() const
 {
-    return m_className;
+    return m_name;
+}
+
+void JZScriptClassItem::setUiFile(QString uiFile)
+{
+    m_uiFile = uiFile;
+    regist();
+}
+
+QString JZScriptClassItem::uiFile() const
+{
+    return m_uiFile;
 }
 
 int JZScriptClassItem::classType() const
 {
-    return JZNodeObjectManager::instance()->getClassId(m_className);
+    return JZNodeObjectManager::instance()->getClassId(m_name);
 }
 
 void JZScriptClassItem::setClassType(int classId)
@@ -42,22 +77,48 @@ QString JZScriptClassItem::superClass() const
     return m_super;
 }
 
-bool JZScriptClassItem::addMemberVariable(QString name,int dataType,const QVariant &v)
+bool JZScriptClassItem::addMemberVariable(QString name,int dataType,const QString &v)
 {    
-    getParamFile()->addVariable(name,dataType,v);    
-    regist();
+    return addMemberVariable(name, JZNodeType::typeToName(dataType), v);    
+}
+
+bool JZScriptClassItem::addMemberVariable(QString name, QString dataType, const QString &v)
+{
+    getParamFile()->addVariable(name, dataType, v);    
     return true;
 }
 
 void JZScriptClassItem::removeMemberVariable(QString name)
 {
-    getParamFile()->removeVariable(name);    
-    regist();
+    getParamFile()->removeVariable(name);       
 }
 
-JZParamDefine *JZScriptClassItem::memberVariableInfo(QString name)
+const JZParamDefine *JZScriptClassItem::memberVariable(QString name)
 {
-    return getParamFile()->getVariable(name);
+    return getParamFile()->variable(name);
+}
+
+JZScriptItem *JZScriptClassItem::addFlow(QString name)
+{
+    JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFlow);
+    item->setName(name);
+    m_project->addItem(itemPath(), item);
+    return item;
+}
+
+void JZScriptClassItem::removeFlow(QString name)
+{
+    m_project->removeItem(getItem(name)->itemPath());
+}
+
+JZScriptItem *JZScriptClassItem::flow(QString name)
+{
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        if (m_childs[i]->name() == name && m_childs[i]->itemType() == ProjectItem_scriptFlow)
+            return (JZScriptItem *)m_childs[i].data();
+    }
+    return nullptr;
 }
 
 JZScriptItem *JZScriptClassItem::addMemberFunction(FunctionDefine func)
@@ -65,19 +126,18 @@ JZScriptItem *JZScriptClassItem::addMemberFunction(FunctionDefine func)
     Q_ASSERT(func.paramIn.size() > 0 && func.paramIn[0].name == "this");
 
     JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);
-    func.className = m_className;
+    func.className = m_name;
     file->setFunction(func);
     m_project->addItem(itemPath(), file);        
     return file;
 }
 
 JZScriptItem *JZScriptClassItem::getMemberFunction(QString func)
-{
-    auto list = itemList(ProjectItem_scriptFunction);
-    for (int i = 0; i < list.size(); i++)
+{    
+    for (int i = 0; i < m_childs.size(); i++)
     {
-        if (list[i]->name() == func)
-            return (JZScriptItem *)list[i];
+        if (m_childs[i]->name() == func && m_childs[i]->itemType() == ProjectItem_scriptFunction)
+            return (JZScriptItem *)m_childs[i].data();
     }
     return nullptr;
 }
@@ -91,11 +151,11 @@ void JZScriptClassItem::removeMemberFunction(QString func)
 QList<JZParamDefine> JZScriptClassItem::uiWidgets()
 {
     QList<JZParamDefine> list;
-    auto item_list = itemList(ProjectItem_ui);
-    if (item_list.size() > 0)
+    if (!m_uiFile.isEmpty())
     {
-        auto ui_item = dynamic_cast<JZUiFile*>(item_list[0]);
-        list = ui_item->widgets();
+        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        if(ui_item)
+            list = ui_item->widgets();
     }
     return list;
 }
@@ -115,37 +175,40 @@ JZParamItem *JZScriptClassItem::getParamFile()
 JZNodeObjectDefine JZScriptClassItem::objectDefine()
 {    
     JZNodeObjectDefine define;
-    define.className = m_className;
+    define.className = m_name;
     define.superName = m_super;
     define.id = m_classId;
 
     auto item_list = itemList(ProjectItem_any);
-    for(int i = 0; i < item_list.size(); i++)
+    for (int i = 0; i < item_list.size(); i++)
     {
         auto item = item_list[i];
-        if(item->itemType() == ProjectItem_param)
+        if (item->itemType() == ProjectItem_param)
         {
             auto param_item = dynamic_cast<JZParamItem*>(item);
-            define.params = param_item->variables();
+            auto var_list = param_item->variableList();
+            for (int i = 0; i < var_list.size(); i++)
+                define.params[var_list[i]] = *param_item->variable(var_list[i]);
         }
-        else if(item->itemType() == ProjectItem_scriptFunction)
+        else if (item->itemType() == ProjectItem_scriptFunction)
         {
             auto function_item = dynamic_cast<JZScriptItem*>(item);
             define.addFunction(function_item->function());
         }
-        else if(item->itemType() == ProjectItem_ui)
-        {
-            auto ui_item = dynamic_cast<JZUiFile*>(item);
-            define.isUiWidget = true;
-            define.widgteXml = ui_item->xml();
-            
-            QList<JZParamDefine> widget_list = ui_item->widgets();
-            for (int i = 0; i < widget_list.size(); i++)
-            {
-                define.params[widget_list[i].name] = widget_list[i];
-            }
-        }
     }
+        
+    if(!m_uiFile.isEmpty())
+    {        
+        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        define.isUiWidget = true;
+        define.widgteXml = ui_item->xml();
+            
+        QList<JZParamDefine> widget_list = ui_item->widgets();
+        for (int i = 0; i < widget_list.size(); i++)
+        {
+            define.params[widget_list[i].name] = widget_list[i];
+        }
+    }    
     return define;
 }
 

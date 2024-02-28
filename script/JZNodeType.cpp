@@ -197,25 +197,7 @@ QString JZNodeType::toString(JZNodeObject *obj)
 {
     QString text = obj->className();
     if (obj->type() == Type_list)
-    {
-        QVariantList in, out;
-        in << QVariant::fromValue(obj);
-        obj->function("size")->cfunc->call(in, out);
-
-        int size = out[0].toInt();
-        in << 0;
-
-        auto list_at = obj->function("get")->cfunc;
-        text = "{";
-        for (int i = 0; i < size; i++)
-        {
-            in[1] = i;
-            list_at->call(in, out);
-            if (i != 0)
-                text += ",";
-            text += toString(out[0]);
-        }
-        text += "}";
+    {        
     }
     else if (obj->type() == Type_map)
     {
@@ -414,81 +396,87 @@ int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
     return upType(dst_near_type);
 }
 
-int JZNodeType::matchType(QList<int> dst_types, const QVariant &v)
-{
-    int v_type = variantType(v);
-    if (dst_types.contains(v_type))
-        return v_type;
-
-    QList<int> prop_type;
-    for (int i = 0; i < dst_types.size(); i++)
-    {
-        if (canConvert(v_type, dst_types[i]))
-            prop_type << dst_types[i];
-    }
-    if (prop_type.size() > 0)
-        return matchType(dst_types, prop_type);
-
-    if (v.type() == QMetaType::QString)
-    {
-        QString text = v.toString();
-
-        JZRegExpHelp help;
-        bool isInt = help.isInt(text);
-        bool isHex = help.isHex(text);
-        bool isFloat = help.isFloat(text);
-        if (dst_types.contains(Type_int) && (isInt || isHex))
-        {
-            return Type_int;
-        }
-        if (dst_types.contains(Type_double) && (isInt || isHex || isFloat))
-        {
-            if (isHex)
-                return text.toInt(nullptr, 16);
-            else
-                return text.toDouble();
-        }
-    }
+int JZNodeType::matchType(QList<int> dst_types, const QString &text)
+{    
+    JZRegExpHelp help;
+    bool isInt = help.isInt(text);
+    bool isHex = help.isHex(text);
+    bool isFloat = help.isFloat(text);
+    if (dst_types.contains(Type_int) && (isInt || isHex))
+        return Type_int;    
+    if (dst_types.contains(Type_double) && (isInt || isHex || isFloat))    
+        return Type_double;    
+    if (dst_types.contains(Type_bool) && help.isBool(text))
+        return Type_bool;
+    if (dst_types.contains(Type_string) && text.front() == '"' && text.back() == '"')
+        return Type_string;
+    if (dst_types.contains(Type_any))    
+        return Type_any;    
 
     return Type_none;
+}
+
+QVariant JZNodeType::initValue(int type, const QString &text)
+{
+    if (text.isEmpty())
+        return JZNodeType::matchValue(type, QVariant());
+
+    bool type_any = (type == Type_any);
+    if (type == Type_string || type_any)
+    {
+        if(text.front() == '"' && text.back() == '"')
+            return text.mid(1, text.size() - 2);
+    }
+    if (type == Type_bool || type_any)
+    {
+        if (text == "false")
+            return false;
+        else if (text == "true")
+            return true;
+    }
+    if(type >= Type_object || type_any)
+    {
+        if(text == "nullptr")
+            return QVariant::fromValue(JZObjectNull(type));        
+    }
+    if (type == Type_int || type == Type_int64 || type == Type_double || type_any)
+    {        
+        bool isInt = JZRegExpHelp::isInt(text);
+        bool isHex = JZRegExpHelp::isHex(text);
+        bool isFloat = JZRegExpHelp::isFloat(text);
+        
+        if (isHex)
+            return text.toInt(nullptr, 16);
+        else
+        {
+            if (type == Type_int || type == Type_int64)
+            {
+                if (isFloat)
+                    return (int)text.toDouble();
+                else if (isInt)
+                    return text.toInt();
+            }
+            else if (type == Type_double)
+            {
+                if (isFloat || isInt)
+                    return text.toDouble();
+            }
+            else
+            {
+                if (isInt)
+                    return text.toInt();
+                if (isFloat)
+                    return text.toDouble();
+            }
+        }
+    }
+
+    Q_ASSERT(0);    
+    return QVariant();
 }
 
 void JZNodeType::registConvert(int from, int to, ConvertFunc func)
 {
     int id = (int64_t)from << 32 | (int64_t)to;
     convertMap[id] = func;
-}
-
-//JZParamDefine
-JZParamDefine::JZParamDefine()
-{
-    dataType = Type_none;
-}
-
-JZParamDefine::JZParamDefine(QString name, int dataType, const QVariant &v)
-{
-    this->name = name;
-    this->dataType = dataType;
-    this->value = v;
-}
-
-QVariant JZParamDefine::initialValue() const
-{
-    return JZNodeType::matchValue(dataType,value);    
-}
-
-QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
-{
-    s << param.name;
-    s << param.dataType;
-    s << param.value;
-    return s;
-}
-
-QDataStream &operator >> (QDataStream &s, JZParamDefine &param)
-{
-    s >> param.name;
-    s >> param.dataType;
-    s >> param.value;
-    return s;
 }
