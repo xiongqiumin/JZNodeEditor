@@ -33,6 +33,8 @@ bool JZParamItem::fromBuffer(const QByteArray &buffer)
 
 void JZParamItem::addVariable(QString name, QString type, const QString &v)
 {    
+    Q_ASSERT(!m_variables.contains(name));
+
     JZParamDefine info;
     info.name = name;
     info.type = type;
@@ -50,7 +52,21 @@ void JZParamItem::addVariable(QString name,int type, const QString &v)
 void JZParamItem::removeVariable(QString name)
 {
     m_variables.remove(name);
+    m_binds.remove(name);
     regist();
+}
+
+void JZParamItem::setVariable(QString name, JZParamDefine define)
+{
+    Q_ASSERT(m_variables.contains(name));
+    if (name != define.name)
+    {
+        Q_ASSERT(!m_variables.contains(define.name));
+        m_variables.remove(name);
+        if (m_binds.contains(name))
+            m_binds[define.name] = m_binds[name];
+    }
+    m_variables[define.name] = define;
 }
 
 const JZParamDefine *JZParamItem::variable(QString name) const
@@ -75,4 +91,9 @@ void JZParamItem::bindVariable(QString name, QString widget)
 void JZParamItem::unbindVariable(QString name)
 {
     m_binds.remove(name);
+}
+
+QMap<QString, QString> JZParamItem::bindVariables()
+{
+    return m_binds;
 }

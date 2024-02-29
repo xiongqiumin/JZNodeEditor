@@ -38,6 +38,7 @@ public:
     void setFilePath(QString path);
     QString filePath();
 
+    QString mainFile();
     QString mainScriptPath();
     JZScriptItem *mainScript();
     
@@ -89,7 +90,7 @@ protected:
     void registType();
     QString dir(const QString &filepath);    
             
-    JZProjectItemFolder m_root;
+    JZProjectItemRoot m_root;
     
     bool m_windowSystem;        
 

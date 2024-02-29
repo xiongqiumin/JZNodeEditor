@@ -23,7 +23,11 @@ public:
 
 protected:
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget);    
-    virtual void mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) override;    
+
+    QPointF drawStartPoint() const;
+    QPointF drawEndPoint() const;
+    void CalcVertexes(double startX, double startY, double endX, double endY, double& x1, double& y1, double& x2, double& y2);
 
     JZNodeGemo m_from;
     JZNodeGemo m_to;

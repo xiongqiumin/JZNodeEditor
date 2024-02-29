@@ -213,9 +213,14 @@ QString JZProject::path()
     return info.path();
 }
 
-QString JZProject::mainScriptPath()
+QString JZProject::mainFile()
 {
     return "./main.jz";
+}
+
+QString JZProject::mainScriptPath()
+{
+    return mainScript()->itemPath();
 }
 
 JZScriptItem *JZProject::mainScript()

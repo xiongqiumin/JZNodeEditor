@@ -97,7 +97,7 @@ public:
 
     void pinClicked(int nodeId,int pinId);
     void updateNode(int id);
-    bool isPropEditable(int id,int propId);
+    bool isPropEditable(int id,int pinId);
 
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
@@ -164,8 +164,8 @@ signals:
 protected slots:
     void onContextMenu(const QPoint &pos);
     void onItemPropChanged();
-    void onPropNameUpdate(int nodeId,int propId,const QString &value);
-    void onPropUpdate(int nodeId,int propId,const QString &value);
+    void onPropNameUpdate(int nodeId,int pinId,const QString &value);
+    void onPropUpdate(int nodeId,int pinId,const QString &value);
     void onAutoCompiler();
     void onCleanChanged(bool modify);
     void onUndoStackChanged();

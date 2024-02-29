@@ -78,17 +78,15 @@ protected slots:
 
     void onModifyChanged(bool flag);
     void onRedoAvailable(bool flag);
-    void onUndoAvailable(bool flag);
+    void onUndoAvailable(bool flag);    
+    void onProjectTreeAction(int type, QString filepah);
 
-    void onFileOpened(QString filepath);    
-    void onFileClosed(QString filepath);
-    void onFileRemoved(QString filepath);
     void onEditorClose(int index);
     void onEditorActivite(int index);
     void onNodeClicked(QString file, int nodeId);
     void onProjectChanged();
     
-    void onFunctionOpen(QString filepath);
+    void onFunctionOpen(QString filepath);    
 
     void onLog(LogObjectPtr log);
 
@@ -134,6 +132,11 @@ private:
 
     bool closeProject();
     bool openProject(QString filepath);
+
+    void openItem(QString filepath);
+    void closeItem(QString filepath);
+    void removeItem(QString filepath);
+
     JZEditor *createEditor(int type);
     bool openEditor(QString filepath);    
     void closeEditor(JZEditor *editor);

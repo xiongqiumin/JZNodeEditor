@@ -12,10 +12,10 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 
     m_type = node_type;
     m_op = op_type;
-    int in1 = addParamIn("",Prop_editValue | Prop_dispValue);
-    int in2 = addParamIn("",Prop_editValue | Prop_dispValue);
-    prop(in1)->setValue(0);
-    prop(in2)->setValue(0);
+    int in1 = addParamIn("",Pin_editValue | Pin_dispValue);
+    int in2 = addParamIn("",Pin_editValue | Pin_dispValue);
+    pin(in1)->setValue(0);
+    pin(in2)->setValue(0);
     addParamOut("out");    
 }
 
@@ -26,17 +26,17 @@ void JZNodeOperator::addInputButton()
 
 void JZNodeOperator::addInput()
 {
-    auto pin0 = prop(paramIn(0));
+    auto pin0 = pin(paramIn(0));
     int in = addParamIn("", pin0->flag());    
-    prop(in)->setDataType(pin0->dataType());
+    pin(in)->setDataType(pin0->dataType());
     if(pin0->isEditValue())
-        prop(in)->setValue(0);
+        pin(in)->setValue(0);
 }
 
 void JZNodeOperator::removeInput(int index)
 {
     int id = paramInList()[index];
-    removeProp(id);
+    removePin(id);
 }
 
 bool JZNodeOperator::pinClicked(int id)
@@ -183,7 +183,7 @@ JZNodeFloatEQ::JZNodeFloatEQ()
     m_name = "==";
     addParamIn("");
     addParamIn("");
-    addParamIn("eps", Prop_dispName | Prop_editValue);
+    addParamIn("eps", Pin_dispName | Pin_editValue);
 
     setPinType(paramIn(0), {Type_double});
     setPinType(paramIn(1), {Type_double});
@@ -196,7 +196,7 @@ JZNodeFloatNE::JZNodeFloatNE()
     m_name = "!=";
     addParamIn("");
     addParamIn("");
-    addParamIn("eps", Prop_dispName | Prop_editValue);
+    addParamIn("eps", Pin_dispName | Pin_editValue);
     
     setPinType(paramIn(0), { Type_double });
     setPinType(paramIn(1), { Type_double });
@@ -211,8 +211,8 @@ JZNodeAnd::JZNodeAnd()
     setPinTypeBool(paramIn(0));
     setPinTypeBool(paramIn(1));
     setPinTypeBool(paramOut(0));
-    prop(paramIn(0))->setFlag(Prop_in | Prop_param);
-    prop(paramIn(1))->setFlag(Prop_in | Prop_param);
+    pin(paramIn(0))->setFlag(Pin_in | Pin_param);
+    pin(paramIn(1))->setFlag(Pin_in | Pin_param);
     addInputButton();
 }
 
@@ -252,8 +252,8 @@ JZNodeOr::JZNodeOr()
     setPinTypeBool(paramIn(0));
     setPinTypeBool(paramIn(1));
     setPinTypeBool(paramOut(0));
-    prop(paramIn(0))->setFlag(Prop_in | Prop_param);
-    prop(paramIn(1))->setFlag(Prop_in | Prop_param);
+    pin(paramIn(0))->setFlag(Pin_in | Pin_param);
+    pin(paramIn(1))->setFlag(Pin_in | Pin_param);
     addInputButton();
 }
 
@@ -291,7 +291,7 @@ JZNodeNot::JZNodeNot()
 {
     m_name = "not";
     m_type = Node_not;    
-    int in = addParamIn("", Prop_editValue | Prop_dispValue);
+    int in = addParamIn("", Pin_editValue | Pin_dispValue);
     int out = addParamOut("");
     setPinTypeBool(in);
     setPinTypeBool(out);
@@ -344,8 +344,8 @@ JZNodeCompareOp::JZNodeCompareOp(int node_type, int op_type)
     m_type = node_type;
     m_op = op_type;
 
-    addParamIn("", Prop_editValue | Prop_dispValue);
-    addParamIn("", Prop_editValue | Prop_dispValue);
+    addParamIn("", Pin_editValue | Pin_dispValue);
+    addParamIn("", Pin_editValue | Pin_dispValue);
     addParamOut("out");
 }
 
@@ -366,7 +366,7 @@ bool JZNodeCompareOp::compiler(JZNodeCompiler *c, QString &error)
         for (int i = 0; i < from_list.size(); i++)
         {
             auto from_gemo = from_list[i];
-            if (!c->hasPinType(from_gemo.nodeId,from_gemo.propId))            
+            if (!c->hasPinType(from_gemo.nodeId,from_gemo.pinId))            
                 return false;            
 
             if (c->pinType(from_gemo) == Type_any)
@@ -484,7 +484,7 @@ JZNodeExpression::JZNodeExpression()
 bool JZNodeExpression::setExpr(QString expr,QString &error)
 {
     setName(expr);
-    m_propList.clear();
+    m_pinList.clear();
     m_exprList.clear();
     m_expression = expr;
     JZExpression parser;   
@@ -546,9 +546,9 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
         }
         else 
         {
-            auto pin = prop(name);
-            Q_ASSERT(pin);
-            int id = c->paramId(m_id,pin->id());
+            auto ptr = pin(name);
+            Q_ASSERT(ptr);
+            int id = c->paramId(m_id, ptr->id());
             return irId(id);
         }        
     };

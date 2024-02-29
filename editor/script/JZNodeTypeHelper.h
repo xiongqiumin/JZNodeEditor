@@ -1,7 +1,8 @@
-﻿#ifndef JZNODE_NEW_TYPE_DIALOG_H_
-#define JZNODE_NEW_TYPE_DIALOG_H_
+﻿#ifndef JZNODE_NEW_TYPE_HELPER_H_
+#define JZNODE_NEW_TYPE_HELPER_H_
 
 #include <QDialog>
+#include <QStyledItemDelegate>
 #include "UiCommon.h"
 #include "JZNodeType.h"
 
@@ -18,6 +19,15 @@ public:
     int index;
     QVector<int> types;
     QStringList typeNames;
+};
+
+class TypeItemDelegate : public QStyledItemDelegate
+{
+public:
+    TypeItemDelegate(QObject *parent);
+
+protected:
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 };
 
 //JZNodeTypeDialog

@@ -71,22 +71,22 @@ enum
 
 enum
 {
-    Node_propNone = 0,
-    Node_propNoRemove = 0x1,
-    Node_propDragVariable = 0x2,
+    Node_pinNone = 0,
+    Node_pinNoRemove = 0x1,
+    Node_pinDragVariable = 0x2,
 };
 
 //JZNodeGemo
 struct JZNodeGemo
 {
     JZNodeGemo();
-    JZNodeGemo(int id, int prop);
+    JZNodeGemo(int id, int pin_id);
 
     bool isNull() const;
     bool operator==(const JZNodeGemo &other) const;
 
     int nodeId;
-    int propId;
+    int pinId;
 };
 
 //JZNodeConnect
@@ -146,21 +146,21 @@ public:
 
     bool isFlowNode() const;    
 
-    int addProp(const JZNodePin &prop);         
-    void removeProp(int id);
-    JZNodePin *prop(int id);
-    const JZNodePin *prop(int id) const;
-    JZNodePin *prop(QString name);
-    bool hasProp(int id) const;
-    int indexOfProp(int id) const;
-    int indexOfPropByName(QString name) const;
-    int indexOfPropByType(int id, int type) const;
-    QVector<int> propInList(int flag = 0) const;
-    QVector<int> propOutList(int flag = 0) const;
-    QVector<int> propListByType(int flag) const;    
-    QVector<int> propList() const;
-    int propCount(int flag) const;
-    virtual int propPri(int id) const;
+    int addPin(const JZNodePin &pin);         
+    void removePin(int id);
+    JZNodePin *pin(int id);
+    const JZNodePin *pin(int id) const;
+    JZNodePin *pin(QString name);
+    bool hasPin(int id) const;
+    int indexOfPin(int id) const;
+    int indexOfPinByName(QString name) const;
+    int indexOfPinByType(int id, int type) const;
+    QVector<int> pinInList(int flag = 0) const;
+    QVector<int> pinOutList(int flag = 0) const;
+    QVector<int> pinListByType(int flag) const;    
+    QVector<int> pinList() const;
+    int pinCount(int flag) const;
+    virtual int pinPri(int id) const;
               
     int addParamIn(QString name,int extFlag = 0);    
     int paramIn(int index) const;
@@ -196,10 +196,10 @@ public:
     int addButtonIn(QString name);
     int addButtonOut(QString name);
     
-    QString propValue(int prop) const;
-    void setPropValue(int prop, QString value);
-    QString propName(int id) const;
-    void setPropName(int id,QString name);
+    QString pinValue(int pin) const;
+    void setPinValue(int pin, QString value);
+    QString pinName(int id) const;
+    void setPinName(int id,QString name);
     
     virtual void setVariable(const QString &name);
     virtual QString variable() const;
@@ -208,7 +208,8 @@ public:
     bool canRemove();
     bool canDragVariable();    
 
-    virtual QList<int> propType(int id);        
+    virtual QList<int> pinType(int id);
+    virtual bool update();              //返回属性是否变化
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     
     virtual void drag(const QVariant &value);
@@ -240,7 +241,7 @@ protected:
     int m_group;
     QString m_name;
     QString m_memo;
-    QList<JZNodePin> m_propList;
+    QList<JZNodePin> m_pinList;
     JZScriptItem *m_file;
     QList<int> m_notifyList;
 };
@@ -387,7 +388,7 @@ protected:
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
     void updateCondName();
-    int propPri(int id);
+    int pinPri(int id);
 
     int m_btnCond;
     int m_btnElse;
@@ -411,7 +412,7 @@ protected:
     virtual bool pinClicked(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
-    virtual int propPri(int id);
+    virtual int pinPri(int id);
 
     int m_btnCase;
     int m_btnDefault;

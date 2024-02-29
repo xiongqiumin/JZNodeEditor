@@ -25,7 +25,7 @@ protected slots:
     void on_btnCancel_clicked();
 
 protected:
-    JZNodeGroup m_group;
+    JZNodeGroup m_group;    
 
     Ui::JZNodeGroupEditDialog *ui;
 };

@@ -5,6 +5,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFuctionEditDialog.h"
 #include "ui_JZNodeFuctionEditDialog.h"
+#include "JZNodeTypeHelper.h"
 
 enum {
     Item_name = Qt::UserRole,    
@@ -20,6 +21,12 @@ JZNodeFuctionEditDialog::JZNodeFuctionEditDialog(QWidget *parent)
 
     ui = new Ui::JZNodeFuctionEditDialog();
     ui->setupUi(this);                   
+
+    TypeItemDelegate *type_delegate1 = new TypeItemDelegate(this);
+    ui->tableIn->setItemDelegateForColumn(1, type_delegate1);
+
+    TypeItemDelegate *type_delegate2 = new TypeItemDelegate(this);
+    ui->tableOut->setItemDelegateForColumn(1, type_delegate2);
 
     ui->tableIn->setColumnCount(2);
     ui->tableIn->setHorizontalHeaderLabels({ "名称","类型"});
@@ -195,32 +202,22 @@ void JZNodeFuctionEditDialog::dataToTable(const QList<JZParamDefine> &param, QTa
     table->blockSignals(true);
     table->clearContents();    
     table->setRowCount(0);
-    //for (int i = 0; i < param.size(); i++)
-    //    addRow(table, param[i].name, param[i].dataType);
+    for (int i = 0; i < param.size(); i++)
+        addRow(table, param[i].name, param[i].type);
     table->blockSignals(false);
 }
 
 void JZNodeFuctionEditDialog::tableToData(QTableWidget *table, QList<JZParamDefine> &param)
 {
-/*
     param.clear();
     int count = table->rowCount();
     for (int row = 0; row < count; row++)
     {        
         JZParamDefine def;
         def.name = table->item(row, 0)->text();
-        if ((table == ui->tableIn && row == 0 && isMemberFunction()))
-        {
-            def.dataType = table->item(row, 1)->data(Item_type).toInt();
-        }
-        else
-        {
-            QComboBox *box = (QComboBox *)table->cellWidget(row, 1);
-            def.dataType = box->currentData().toInt();
-        }
+        def.type = table->item(row, 1)->text();
         param.push_back(def);
     }
-*/
 }
 
 void JZNodeFuctionEditDialog::addRow(QTableWidget *table, QString name, QString dataType)
@@ -231,51 +228,16 @@ void JZNodeFuctionEditDialog::addRow(QTableWidget *table, QString name, QString 
     QTableWidgetItem *itemName = new QTableWidgetItem(name);
     itemName->setData(Item_name, name);    
     table->setItem(row, 0, itemName);
+    
+    QTableWidgetItem *itemType = new QTableWidgetItem(name);
+    itemType->setText(dataType);
+    table->setItem(row, 1, itemType);
+
     if ((table == ui->tableIn && row == 0 && isMemberFunction()))
-    {   
-        itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
-        
-        QTableWidgetItem *itemType = new QTableWidgetItem(name);        
-        itemType->setText(dataType);
-        itemType->setData(Item_type, dataType);
-        itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
-        table->setItem(row, 1, itemType);
-    }
-    else
     {
-        TypeEditHelp help;
-        help.init(dataType);
-
-        QComboBox *box = new QComboBox();
-        for (int i = 0; i < help.typeNames.size(); i++)
-            box->addItem(help.typeNames[i], help.types[i]);
-        box->setCurrentIndex(help.index);
-        connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
-        table->setCellWidget(row, 1, box);
+        itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);                                        
+        itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);        
     }
-}
-
-void JZNodeFuctionEditDialog::onTypeChanged(int index)
-{
-    QComboBox *box = qobject_cast<QComboBox*>(sender());
-    if (index < box->count() - 1)    
-        return;    
-
-    JZNodeTypeDialog dialog(this);
-    if (dialog.exec() != QDialog::Accepted)    
-        return;    
-/*
-    int dataType = dialog.dataType();
-    TypeEditHelp help;
-    //help.init(dataType);
-
-    box->blockSignals(true);
-    box->clear();
-    for (int i = 0; i < help.typeNames.size(); i++)
-        box->addItem(help.typeNames[i], help.types[i]);
-    box->setCurrentIndex(help.index);
-    box->blockSignals(false);
-*/
 }
 
 void JZNodeFuctionEditDialog::dataToUi()

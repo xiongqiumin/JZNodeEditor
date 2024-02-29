@@ -66,7 +66,7 @@ public:
     JZNodeIRStackInit(int node_id,int prop_id);
 
     int nodeId;
-    int propId;
+    int pinId;
 };
 
 //NodeCompilerInfo
@@ -76,7 +76,7 @@ struct NodeCompilerInfo
 
     struct Jump
     {
-        int prop;
+        int pin;
         int pc;
     };
 
@@ -113,7 +113,7 @@ public:
 class JZNodeCompiler
 {
 public:
-    static int paramId(int nodeId,int propId);
+    static int paramId(int nodeId,int pinId);
     static int paramId(const JZNodeGemo &gemo);    
     static QString paramName(int id);
     static JZNodeGemo paramGemo(int id);    
@@ -134,10 +134,10 @@ public:
     int allocStack(int dataType);
     void addFunctionAlloc(const FunctionDefine &define);
     
-    void setPinType(int nodeId, int propId, int type);    
-    int pinType(int nodeId, int propId);
+    void setPinType(int nodeId, int pinId, int type);    
+    int pinType(int nodeId, int pinId);
     int pinType(JZNodeGemo gemo);
-    bool hasPinType(int nodeId, int propId);
+    bool hasPinType(int nodeId, int pinId);
 
     /*
     节点数据传递规则:
@@ -163,8 +163,8 @@ public:
     int addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);    
     int addStatement(JZNodeIRPtr ir);    
     
-    int addJumpNode(int prop);      //设置下一个flow,应当在执行完操作后增加
-    int addJumpSubNode(int prop);   //设置下一个sub flow    
+    int addJumpNode(int pin);      //设置下一个flow,应当在执行完操作后增加
+    int addJumpSubNode(int pin);   //设置下一个sub flow    
     int addContinue();
     int addBreak();    
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
@@ -209,7 +209,7 @@ protected:
     void addEventHandle(const QList<GraphNode*> &list);      
     void addFunction(const FunctionDefine &define,int node_id);
     QString nodeName(JZNode *node);
-    QString pinName(JZNodePin *prop);     
+    QString pinName(JZNodePin *pin);     
     
     bool compilerNode(JZNode *node);
     void pushCompilerNode(int id);

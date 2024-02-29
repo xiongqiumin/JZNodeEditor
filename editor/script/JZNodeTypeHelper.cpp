@@ -1,7 +1,9 @@
-﻿#include "JZNodeTypeDialog.h"
+﻿#include "JZNodeTypeHelper.h"
 #include "ui_JZNodeTypeDialog.h"
 #include "JZNodeObject.h"
 #include <QComboBox>
+#include <QCompleter>
+#include <QTableWidget>
 
 //TypeEditHelp
 TypeEditHelp::TypeEditHelp()
@@ -34,6 +36,34 @@ void TypeEditHelp::update(QComboBox *box)
         box->addItem(typeNames[i], types[i]);
     box->setCurrentIndex(index);
     box->blockSignals(false);
+}
+
+//TypeItemDelegate
+TypeItemDelegate::TypeItemDelegate(QObject *parent)
+    :QStyledItemDelegate(parent)
+{
+}
+
+QWidget *TypeItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    QString type_text = option.text;
+
+    QComboBox *box = new QComboBox(parent);
+    box->setEditable(true);
+    box->setEditText(type_text);
+
+    QStringList type_list;
+    type_list << "bool" << "int" << "double" << "string";
+    type_list << JZNodeObjectManager::instance()->getClassList();
+    type_list << JZNodeObjectManager::instance()->getEnumList();
+    box->addItems(type_list);
+    box->setCurrentText(type_text);
+
+    QCompleter *comp = new QCompleter(type_list, box);
+    comp->setCaseSensitivity(Qt::CaseInsensitive);
+
+    box->setCompleter(comp);
+    return box;
 }
 
 //JZNodeTypeDialog

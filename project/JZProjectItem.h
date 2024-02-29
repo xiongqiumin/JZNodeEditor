@@ -73,6 +73,14 @@ protected:
 };
 typedef QSharedPointer<JZProjectItem> JZProjectItemPtr;
 
+//JZProjectItemRoot
+class JZProjectItemRoot : public JZProjectItem
+{
+public:
+    JZProjectItemRoot();
+    virtual ~JZProjectItemRoot();
+};
+
 //JZProjectItemFolder
 class JZProjectItemFolder : public JZProjectItem
 {

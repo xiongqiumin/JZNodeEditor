@@ -46,7 +46,7 @@ JZNodeStartEvent::JZNodeStartEvent()
     m_type = Node_startEvent;
     m_eventType = Event_programStart;
     m_name = "startProgram";
-    setFlag(Node_propNoRemove);
+    setFlag(Node_pinNoRemove);
 }
 
 FunctionDefine JZNodeStartEvent::function()
@@ -70,8 +70,8 @@ bool JZNodeStartEvent::compiler(JZNodeCompiler *c, QString &error)
 JZNodeSingleEvent::JZNodeSingleEvent()
 {
     m_type = Node_singleEvent;
-    m_flag = Node_propDragVariable;
-    int in = addParamIn("",Prop_dispName | Prop_dispValue | Prop_editValue | Prop_literal);
+    m_flag = Node_pinDragVariable;
+    int in = addParamIn("",Pin_dispName | Pin_dispValue | Pin_editValue | Pin_literal);
     setPinTypeString(in);
 }
 
@@ -114,15 +114,15 @@ void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
 
     QString function = className + "." + single->name;
     setName(function);
-    setPropName(paramIn(0),className);
+    setPinName(paramIn(0),className);
    
     for(int i = 1; i < single->paramOut.size(); i++)
     {
         JZNodePin pin;
         pin.setName(single->paramOut[i].name);
-        pin.setFlag(Prop_param | Prop_out);
+        pin.setFlag(Pin_param | Pin_out);
         pin.setDataType({single->paramOut[i].dataType()});
-        addProp(pin);
+        addPin(pin);
     }
     m_eventType = single->eventType;
 }
@@ -134,12 +134,12 @@ QString JZNodeSingleEvent::single()
 
 void JZNodeSingleEvent::setVariable(const QString &name)
 {
-    setPropValue(paramIn(0),name);
+    setPinValue(paramIn(0),name);
 }
 
 QString JZNodeSingleEvent::variable() const
 {
-    return propValue(paramIn(0));
+    return pinValue(paramIn(0));
 }
 
 int JZNodeSingleEvent::variableType() const
@@ -155,7 +155,7 @@ void JZNodeSingleEvent::drag(const QVariant &value)
 
 bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 {    
-    QString sender = propValue(paramIn(0));
+    QString sender = pinValue(paramIn(0));
     if(!c->checkVariableType(sender, m_sender,error))
         return false;
         
@@ -256,9 +256,9 @@ void JZNodeQtEvent::setEvent(QString className, const EventDefine *func)
     {
         JZNodePin pin;
         pin.setName(paramOut[i].name);
-        pin.setFlag(Prop_param | Prop_out);
+        pin.setFlag(Pin_param | Pin_out);
         pin.setDataType({ paramOut[i].dataType() });
-        addProp(pin);
+        addPin(pin);
     }
 }
 
@@ -274,7 +274,7 @@ JZNodeParamChangedEvent::JZNodeParamChangedEvent()
     m_type = Node_paramChangedEvent;
     m_eventType = Event_paramChanged;
 
-    addParamIn("", Prop_dispValue | Prop_editValue);
+    addParamIn("", Pin_dispValue | Pin_editValue);
 }
 
 JZNodeParamChangedEvent::~JZNodeParamChangedEvent()

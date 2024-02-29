@@ -1,5 +1,6 @@
 ﻿#include "JZNodeFunctionDefine.h"
 #include "JZEvent.h"
+#include "JZNodeObject.h"
 
 //JZParamDefine
 JZParamDefine::JZParamDefine()
@@ -23,6 +24,33 @@ JZParamDefine::JZParamDefine(QString name, QString dataType, const QString &v)
 int JZParamDefine::dataType() const
 {
     return JZNodeType::nameToType(type);
+}
+
+QString JZParamDefine::initValue() const
+{
+    if (value.isEmpty())
+    {
+        int t = dataType();
+        if (t == Type_bool)
+            return "false";
+        else if (JZNodeType::isNumber(t))
+            return "0";
+        else if (JZNodeType::isEnum(t))
+        {
+            auto meta = JZNodeObjectManager::instance()->enumMeta(t);
+            return meta->defaultValue();
+        }
+        else if (JZNodeType::isObject(t))
+            return "nullptr";
+        else if (t == Type_string)
+            return "\"\"";
+        else
+            return QString();
+    }
+    else
+    {
+        return value;
+    }
 }
 
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)

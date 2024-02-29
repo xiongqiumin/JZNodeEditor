@@ -141,7 +141,7 @@ QMap<int,int> ScriptTest::initWhileSetCase()
     {
         JZNodeSetParam *node_set = new JZNodeSetParam();
         node_set->setVariable("i");
-        node_set->setPropValue(node_set->paramIn(0),QString::number(i));
+        node_set->setPinValue(node_set->paramIn(0),QString::number(i));
         script->addNode(JZNodePtr(node_set));
 
         node_value[node_set->id()] = i;
@@ -460,8 +460,8 @@ void ScriptTest::testSequeue()
         node_set->setVariable(QString('a' + i));
 
         JZNodeAdd *node_add = new JZNodeAdd();
-        node_add->setPropValue(node_add->paramIn(0), QString::number(i+1));
-        node_add->setPropValue(node_add->paramIn(1), QString::number(i+2));
+        node_add->setPinValue(node_add->paramIn(0), QString::number(i+1));
+        node_add->setPinValue(node_add->paramIn(1), QString::number(i+2));
 
         script->addNode(JZNodePtr(node_set));
         script->addNode(JZNodePtr(node_add));
@@ -491,7 +491,7 @@ void ScriptTest::testFor()
         define.paramOut.push_back(JZParamDefine("result", Type_int));
 
         JZScriptItem *script = m_file->addFunction("./", define);
-        script->addLocalVariable("sum", "int");
+        script->addLocalVariable(JZParamDefine("sum", Type_int));
 
         JZNode *node_start = script->getNode(0);
 
@@ -619,7 +619,7 @@ void ScriptTest::testWhileLoop()
             i = i + 1;
     */
     JZScriptItem *script = m_scriptFlow;
-    script->addLocalVariable("i", "int");
+    script->addLocalVariable(JZParamDefine("i", Type_int));
 
     JZNode *node_start = script->getNode(0);
     JZNodeSetParam *node_set = new JZNodeSetParam();
@@ -888,7 +888,7 @@ void ScriptTest::testFunction()
     JZNode *node_start = script->getNode(0);
     JZNodeBranch *node_branch = new JZNodeBranch();    
     JZNodeGE *node_ge = new JZNodeGE();
-    node_ge->setPropValue(node_ge->paramIn(1), "2");
+    node_ge->setPinValue(node_ge->paramIn(1), "2");
     JZNodeAdd *node_add = new JZNodeAdd();    
 
     JZNodeFunction *func1 = new JZNodeFunction();
@@ -927,8 +927,8 @@ void ScriptTest::testFunction()
     script->addConnect(node_branch->flowOutGemo(1),ret2->flowInGemo());
 
     /* return fab(n-1) + fab(n-2) */
-    sub1->setPropValue(sub1->paramIn(1),"1");
-    sub2->setPropValue(sub2->paramIn(1),"2");
+    sub1->setPinValue(sub1->paramIn(1),"1");
+    sub2->setPinValue(sub2->paramIn(1),"2");
     script->addConnect(n->paramOutGemo(0),sub1->paramInGemo(0));
     script->addConnect(n->paramOutGemo(0),sub2->paramInGemo(0));
     script->addConnect(sub1->paramOutGemo(0),func1->paramInGemo(0));

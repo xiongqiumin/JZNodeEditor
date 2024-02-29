@@ -12,6 +12,7 @@ public:
     JZParamDefine(QString name, QString dataType, const QString &v = QString());    
 
     int dataType() const;
+    QString initValue() const;
 
     QString name;
     QString type;

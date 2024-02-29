@@ -91,7 +91,7 @@ void JZNodeGraphItem::updatePropGemo()
     auto it = m_propRects.begin();
     while (it != m_propRects.end())
     {
-        if (!m_node->hasProp(it.key()))
+        if (!m_node->hasPin(it.key()))
         {
             it = m_propRects.erase(it);
         }
@@ -100,12 +100,12 @@ void JZNodeGraphItem::updatePropGemo()
     }
 
     //add
-    auto list = m_node->propList();
+    auto list = m_node->pinList();
     for (int i = 0; i < list.size(); i++)
     {
-        int prop = list[i];
-        if (!m_propRects.contains(prop))
-            m_propRects[prop] = PropGemo();
+        int pin = list[i];
+        if (!m_propRects.contains(pin))
+            m_propRects[pin] = PropGemo();
     }
 }
 
@@ -128,7 +128,7 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
     painter->fillRect(title_rc, QColor(220,220,220));
     painter->drawText(title_rc, title, text_opt);
 
-    auto in_list = m_node->propList();
+    auto in_list = m_node->pinList();
     for (int i = 0; i < in_list.size(); i++)
         drawProp(painter,in_list[i]);   
 
@@ -167,7 +167,7 @@ JZNode *JZNodeGraphItem::node()
 
 int JZNodeGraphItem::propAt(QPointF pos)
 {    
-    auto list = m_node->propList();
+    auto list = m_node->pinList();
     for (int i = 0; i < list.size(); i++)
     {                    
         auto rc = propRect(list[i]);
@@ -177,9 +177,9 @@ int JZNodeGraphItem::propAt(QPointF pos)
     return -1;    
 }
 
-QRectF JZNodeGraphItem::propRect(int prop)
+QRectF JZNodeGraphItem::propRect(int pin)
 {
-    return m_propRects[prop].iconRect;
+    return m_propRects[pin].iconRect;
 }
 
 QSize JZNodeGraphItem::size() const
@@ -187,9 +187,9 @@ QSize JZNodeGraphItem::size() const
     return m_size;
 }
 
-void JZNodeGraphItem::calcGemo(int prop,int x,int y, PropGemo *gemo)
+void JZNodeGraphItem::calcGemo(int pin_id,int x,int y, PropGemo *gemo)
 {
-    auto pin = m_node->prop(prop);    
+    auto pin = m_node->pin(pin_id);
     gemo->iconRect = QRectF(x,y,24,24);
 
     x = gemo->iconRect.right() + 5;
@@ -242,14 +242,14 @@ void JZNodeGraphItem::calcGemo(int prop,int x,int y, PropGemo *gemo)
             gemo->valueRect = QRectF(x, y, w, 24);
             widget->resize(w, 24);
             widget->setProperty("node_id", m_id);
-            widget->setProperty("prop_id", prop);
+            widget->setProperty("prop_id", pin_id);
             gemo->widget = widget;
             proxy->setWidget(widget);
             gemo->proxy = proxy;
             proxy->setParentItem(this);
             proxy->setPos(x, y);
         } 
-        bool editable = editor()->isPropEditable(m_id, prop);
+        bool editable = editor()->isPropEditable(m_id, pin_id);
         gemo->widget->setEnabled(editable);
     }      
 }
@@ -286,8 +286,8 @@ QString JZNodeGraphItem::getWidgetValue(QWidget *widget)
 void JZNodeGraphItem::updateNode()
 {
     auto cmp = [this](int i,int j)->bool{        
-        int flag1 = m_node->propPri(i);
-        int flag2 = m_node->propPri(j);
+        int flag1 = m_node->pinPri(i);
+        int flag2 = m_node->pinPri(j);
         if(flag1 != flag2)
             return flag1 < flag2;
         else
@@ -303,7 +303,7 @@ void JZNodeGraphItem::updateNode()
     int in_y = 24,out_y = 24;
     int y_gap = 28;    
 
-    auto in_list = m_node->propInList(Prop_none);
+    auto in_list = m_node->pinInList(Pin_none);
     std::sort(in_list.begin(),in_list.end(),cmp);
     for(int i = 0; i < in_list.size(); i++)
     {
@@ -313,7 +313,7 @@ void JZNodeGraphItem::updateNode()
         in_y += y_gap;
     }
 
-    QVector<int> out_list = m_node->propOutList(Prop_none);
+    QVector<int> out_list = m_node->pinOutList(Pin_none);
     std::sort(out_list.begin(),out_list.end(),cmp);
     for(int i = 0; i < out_list.size(); i++)
     {        
@@ -323,12 +323,12 @@ void JZNodeGraphItem::updateNode()
         out_y += y_gap;
     }
     
-    QVector<int> propList = m_node->propList();
-    for (int i = 0; i < propList.size(); i++)
+    QVector<int> pinList = m_node->pinList();
+    for (int i = 0; i < pinList.size(); i++)
     {
-        auto pin = m_node->prop(propList[i]);
+        auto pin = m_node->pin(pinList[i]);
         if(pin->isParam() && pin->isEditValue())
-            setPropValue(pin->id(), JZNodeType::toString(pin->value()));
+            setPinValue(pin->id(), JZNodeType::toString(pin->value()));
     }
 
     int w = qMax(100,in_x + out_x + 30);
@@ -361,7 +361,7 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
     auto pin_id = propAt(event->pos());
     if (pin_id >= 0)
     {
-        auto pin = m_node->prop(pin_id);
+        auto pin = m_node->pin(pin_id);
         if(pin->isButton())
         {
             m_pinButtonRect = propRect(pin->id());
@@ -430,7 +430,7 @@ void JZNodeGraphItem::updateErrorGemo()
         m_errorRect = QRect(m_size.width() - 15 - 5,5,15,15);
 }
 
-void JZNodeGraphItem::setPropValue(int prop_id, const QString &value)
+void JZNodeGraphItem::setPinValue(int prop_id, const QString &value)
 {
     auto widget = m_propRects[prop_id].widget;
     if (!widget)
@@ -441,7 +441,7 @@ void JZNodeGraphItem::setPropValue(int prop_id, const QString &value)
     widget->blockSignals(false);
 }
 
-QString JZNodeGraphItem::propValue(int prop_id)
+QString JZNodeGraphItem::pinValue(int prop_id)
 {
     auto widget = m_propRects[prop_id].widget;
     if (!widget)
@@ -452,12 +452,12 @@ QString JZNodeGraphItem::propValue(int prop_id)
 
 void JZNodeGraphItem::resetPropValue()
 {
-    QVector<int> propList = m_node->propList();
-    for (int i = 0; i < propList.size(); i++)
+    QVector<int> pinList = m_node->pinList();
+    for (int i = 0; i < pinList.size(); i++)
     {
-        auto pin = m_node->prop(propList[i]);
+        auto pin = m_node->pin(pinList[i]);
         if (pin->isParam() && pin->isEditValue())
-            setPropValue(pin->id(), JZNodeType::toString(pin->value()));
+            setPinValue(pin->id(), JZNodeType::toString(pin->value()));
     }
 }
 
@@ -484,7 +484,7 @@ void JZNodeGraphItem::updateLongPress()
 
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
 {    
-    JZNodePin *pin = m_node->prop(prop_id);
+    JZNodePin *pin = m_node->pin(prop_id);
     PropGemo &info = m_propRects[prop_id];
 
     /*

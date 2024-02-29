@@ -49,13 +49,12 @@ public:
     void removeConnect(int id);
     void removeConnectByNode(int node_id, int prop_id);
     JZNodeConnect *getConnect(int id);
-    QList<int> getConnectId(int node_id, int propId = -1);    // propId = -1 得到节点所有连线
-    QList<int> getConnectOut(int node_id, int propId = -1);
-    QList<int> getConnectInput(int node_id, int propId = -1);
+    QList<int> getConnectId(int node_id, int pinId = -1);    // pinId = -1 得到节点所有连线
+    QList<int> getConnectOut(int node_id, int pinId = -1);
+    QList<int> getConnectInput(int node_id, int pinId = -1);
     QList<JZNodeConnect> connectList();    
     
-    void addLocalVariable(QString name, QString dataType, const QString &v = QString());        
-    void addLocalVariable(QString name, int dataType, const QString &v = QString());
+    void addLocalVariable(const JZParamDefine &def);            
     void removeLocalVariable(QString name);    
     const JZParamDefine *localVariable(QString name);
     QStringList localVariableList(bool hasFunc);

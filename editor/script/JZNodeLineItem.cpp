@@ -44,8 +44,8 @@ QRectF JZNodeLineItem::boundingRect() const
 
 QPainterPath JZNodeLineItem::shape() const
 {
-    QPointF p1 = m_startPoint;
-    QPointF p2 = m_endPoint;
+    QPointF p1 = drawStartPoint();
+    QPointF p2 = drawEndPoint();
 
     QPainterPathStroker st;
     st.setWidth(10.0);
@@ -61,12 +61,12 @@ void JZNodeLineItem::updateNode()
 
     JZNodeView *view = editor();
     JZNodeGraphItem *node_from = view->getNodeItem(m_from.nodeId);
-    auto from = node_from->mapToScene(node_from->propRect(m_from.propId).center());
+    auto from = node_from->mapToScene(node_from->propRect(m_from.pinId).center());
     m_startPoint = mapFromScene(from);
     if (m_to.nodeId != -1)
     {
         JZNodeGraphItem *node_to = view->getNodeItem(m_to.nodeId);
-        auto to = node_to->mapToScene(node_to->propRect(m_to.propId).center());
+        auto to = node_to->mapToScene(node_to->propRect(m_to.pinId).center());
         m_endPoint = mapFromScene(to);
     }
 }
@@ -93,6 +93,42 @@ void JZNodeLineItem::setEndTraget(JZNodeGemo to)
     m_to = to;
 }
 
+QPointF JZNodeLineItem::drawStartPoint() const
+{
+    JZNodeGraphItem *node = editor()->getNodeItem(m_from.nodeId);
+    int x = node->sceneBoundingRect().right();
+    return QPointF(x, m_startPoint.y());
+}
+
+QPointF JZNodeLineItem::drawEndPoint() const
+{
+    JZNodeGraphItem *node = editor()->getNodeItem(m_to.nodeId);
+    int x = node->sceneBoundingRect().left();
+    return QPointF(x, m_endPoint.y());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+void JZNodeLineItem::CalcVertexes(double startX, double startY, double endX, double endY, double& x1, double& y1, double& x2, double& y2)
+{
+    /*
+    * @brief 求得箭头两点坐标
+    */
+
+    double arrowLength = 10;      // 箭头长度，一般固定
+    double arrowDegrees = 0.5;    // 箭头角度，一般固定
+
+                                  // 求 y / x 的反正切值
+    double angle = atan2(endY - startY, endX - startX) + 3.1415926;
+
+    // 求得箭头点 1 的坐标
+    x1 = endX + arrowLength * cos(angle - arrowDegrees);
+    y1 = endY + arrowLength * sin(angle - arrowDegrees);
+
+    // 求得箭头点 2 的坐标
+    x2 = endX + arrowLength * cos(angle + arrowDegrees);
+    y2 = endY + arrowLength * sin(angle + arrowDegrees);
+}
+
 void JZNodeLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget)
 {    
     QColor c = Qt::black;
@@ -102,8 +138,24 @@ void JZNodeLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *st
     if(m_to.nodeId == -1)
         pen_style = Qt::DashLine;
 
+    auto start = drawStartPoint();
+    auto end = drawEndPoint();
+
     painter->setPen(QPen(QBrush(c),4,pen_style));
-    painter->drawLine(m_startPoint, m_endPoint);
+    painter->drawLine(start, end);
+
+    int lineHStartPos = start.x(); // 连接线起点水平位置
+    int lineVStartPos = start.y(); // 连接线起点垂直位置
+    int lineHEndPos = end.x();   // 连接线终点水平位置
+    int lineVEndPos = end.y();   // 连接线终点垂直位置    
+
+    // 箭头的两点坐标
+    double x1, y1, x2, y2;
+
+    // 求得箭头两点坐标
+    CalcVertexes(lineHStartPos, lineVStartPos, lineHEndPos, lineVEndPos, x1, y1, x2, y2);
+    painter->drawLine(lineHEndPos, lineVEndPos, x1, y1); // 绘制箭头一半
+    painter->drawLine(lineHEndPos, lineVEndPos, x2, y2); // 绘制箭头另一半
 }
 
 void JZNodeLineItem::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent)

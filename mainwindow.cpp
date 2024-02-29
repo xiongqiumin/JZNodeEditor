@@ -15,9 +15,8 @@
 #include <QToolBar>
 #include "JZNodeEditor.h"
 #include "JZUiEditor.h"
-#include "JZParamEditor.h"
+#include "JZNodeParamEditor.h"
 #include "JZNewProjectDialog.h"
-#include "JZNewClassDialog.h"
 #include "JZDesignerEditor.h"
 #include "JZNodeUtils.h"
 
@@ -124,29 +123,35 @@ void MainWindow::initMenu()
     this->setMenuBar(menubar);
 
     QMenu *menu_file = menubar->addMenu("文件");
-    auto actNewProject = menu_file->addAction("新建工程");
-    auto actOpenProject = menu_file->addAction("打开工程");
-    auto actCloseProject = menu_file->addAction("关闭工程");
-    connect(actNewProject,&QAction::triggered,this,&MainWindow::onActionNewProject);
-    connect(actOpenProject,&QAction::triggered,this,&MainWindow::onActionOpenProject);
-    connect(actCloseProject,&QAction::triggered,this,&MainWindow::onActionCloseProject);
-    menu_file->addSeparator();
+    auto actNewMenu = menu_file->addMenu("新建");
+    auto actOpenMenu = menu_file->addMenu("打开");
 
-    QMenu *menu_NewFile = menu_file->addMenu("添加");    
-    auto actNewEventFile = menu_NewFile->addAction("事件");
+    auto actNewProject = actNewMenu->addAction("项目");
+    auto actOpenProject = actOpenMenu->addAction("项目");
+    connect(actNewProject, &QAction::triggered, this, &MainWindow::onActionNewProject);
+    connect(actOpenProject, &QAction::triggered, this, &MainWindow::onActionOpenProject);
+    menu_file->addSeparator();
+/*
+    QMenu *menu_NewFile = menu_file->addMenu("添加");
+    auto actNewEventFile = menu_NewFile->addAction("新建项目");
     auto actNewClass = menu_NewFile->addAction("类");
     auto actNewFunction = menu_NewFile->addAction("函数");
-    connect(actNewEventFile,&QAction::triggered,this,&MainWindow::onActionNewEvent);    
-    connect(actNewClass, &QAction::triggered, this, &MainWindow::onActionNewClass);    
+    connect(actNewEventFile, &QAction::triggered, this, &MainWindow::onActionNewEvent);
+    connect(actNewClass, &QAction::triggered, this, &MainWindow::onActionNewClass);
     connect(actNewFunction, &QAction::triggered, this, &MainWindow::onActionNewFunction);
-
-    auto actCloseFile = menu_file->addAction("关闭文件");
+    menu_file->addSeparator();
+*/
+    auto actCloseFile = menu_file->addAction("关闭");
+    auto actCloseProject = menu_file->addAction("关闭工程");
+    connect(actCloseFile, &QAction::triggered, this, &MainWindow::onActionCloseFile);
+    connect(actCloseProject,&QAction::triggered,this,&MainWindow::onActionCloseProject);
+    menu_file->addSeparator();    
+    
     auto actSaveFile = menu_file->addAction(menuIcon("iconSave.png"), "保存文件");
     auto actSaveAllFile = menu_file->addAction(menuIcon("iconSaveAll.png"), "全部保存");
     auto actCloseAllFile = menu_file->addAction("全部关闭");
 
-    connect(actSaveFile,&QAction::triggered,this,&MainWindow::onActionSaveFile);
-    connect(actCloseFile,&QAction::triggered,this,&MainWindow::onActionCloseFile);
+    connect(actSaveFile,&QAction::triggered,this,&MainWindow::onActionSaveFile);    
     connect(actSaveAllFile, &QAction::triggered, this, &MainWindow::onActionSaveAllFile);
     connect(actCloseAllFile, &QAction::triggered, this, &MainWindow::onActionCloseAllFile);
     menu_file->addSeparator();
@@ -296,8 +301,7 @@ void MainWindow::initUi()
     m_breakPoint = m_log->breakpoint();    
 
     m_projectTree = new JZProjectTree();    
-    connect(m_projectTree,&JZProjectTree::sigFileOpened,this,&MainWindow::onFileOpened);
-    connect(m_projectTree,&JZProjectTree::sigFileRemoved,this,&MainWindow::onFileRemoved);
+    connect(m_projectTree,&JZProjectTree::sigActionTrigged,this,&MainWindow::onProjectTreeAction);
 
     QWidget *widget = new QWidget();
     QVBoxLayout *center = new QVBoxLayout();     
@@ -722,10 +726,10 @@ bool MainWindow::closeProject()
 {
     if (!closeAll())
         return false;
-
-    m_project.close();
+    
     m_projectTree->clear();
     m_breakPoint->clear();
+    m_project.close();
     updateActionStatus();
     return true;
 }
@@ -751,18 +755,13 @@ JZEditor *MainWindow::createEditor(int type)
     if(type == ProjectItem_scriptFlow ||type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
         editor = new JZNodeEditor();
     else if(type == ProjectItem_param)
-        editor = new JZParamEditor();
+        editor = new JZNodeParamEditor();
     else if(type == ProjectItem_ui)
         editor = new JZUiEditor();
 
     if(editor)
         editor->setProject(&m_project);
     return editor;
-}
-
-void MainWindow::onFileOpened(QString filepath)
-{
-    openEditor(filepath);    
 }
 
 void MainWindow::gotoNode(QString file, int nodeId)
@@ -875,7 +874,12 @@ void MainWindow::closeEditor(JZEditor *editor)
     delete editor;
 }
 
-void MainWindow::onFileClosed(QString filepath)
+void MainWindow::openItem(QString filepath)
+{
+    openEditor(filepath);
+}
+
+void MainWindow::closeItem(QString filepath)
 {
     if(!m_editors.contains(filepath))
         return;
@@ -884,10 +888,20 @@ void MainWindow::onFileClosed(QString filepath)
     closeEditor(editor);
 }
 
-void MainWindow::onFileRemoved(QString filepath)
+void MainWindow::removeItem(QString filepath)
 {
-    onFileClosed(filepath);
+    closeItem(filepath);
     m_project.removeItem(filepath);
+}
+
+void MainWindow::onProjectTreeAction(int type, QString filepah)
+{
+    if (type == Action_open)
+        openItem(filepah);
+    else if (type == Action_close)
+        closeItem(filepah);
+    else if (type == Action_remove)
+        removeItem(filepah);
 }
 
 void MainWindow::onEditorClose(int index)
@@ -976,7 +990,7 @@ void MainWindow::onNodePropChanged(const JZNodeValueChanged &info)
 
     auto gemo = JZNodeCompiler::paramGemo(info.id);
     JZNodeEditor *node_editor = qobject_cast<JZNodeEditor*>(edit);
-    node_editor->setNodeValue(gemo.nodeId, gemo.propId,info.value);
+    node_editor->setNodeValue(gemo.nodeId, gemo.pinId,info.value);
 }
 
 void MainWindow::updateAutoWatch(int stack_index)

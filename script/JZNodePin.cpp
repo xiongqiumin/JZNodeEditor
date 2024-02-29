@@ -4,7 +4,7 @@
 JZNodePin::JZNodePin()
 {
     m_id = INVALID_ID;
-    m_flag = Prop_none;    
+    m_flag = Pin_none;    
 }
 
 JZNodePin::JZNodePin(QString name, int dataType, int flag)
@@ -49,52 +49,52 @@ int JZNodePin::flag() const
 
 bool JZNodePin::isInput() const
 {
-    return (m_flag & Prop_in);
+    return (m_flag & Pin_in);
 }
 
 bool JZNodePin::isOutput() const
 {
-    return (m_flag & Prop_out);
+    return (m_flag & Pin_out);
 }
 
 bool JZNodePin::isParam() const
 {
-    return (m_flag & Prop_param);
+    return (m_flag & Pin_param);
 }
 
 bool JZNodePin::isFlow() const
 {
-    return (m_flag & Prop_flow);
+    return (m_flag & Pin_flow);
 }
 
 bool JZNodePin::isSubFlow() const
 {
-    return (m_flag & Prop_subFlow);
+    return (m_flag & Pin_subFlow);
 }
 
 bool JZNodePin::isButton() const
 {
-    return (m_flag & Prop_button);
+    return (m_flag & Pin_button);
 }
 
 bool JZNodePin::isEditValue() const
 {
-    return (m_flag & Prop_editValue);
+    return (m_flag & Pin_editValue);
 }
 
 bool JZNodePin::isDispName() const
 {
-    return (m_flag & Prop_dispName);
+    return (m_flag & Pin_dispName);
 }
 
 bool JZNodePin::isDispValue() const
 {
-    return (m_flag & Prop_dispValue);
+    return (m_flag & Pin_dispValue);
 }
 
 bool JZNodePin::isLiteral() const
 {
-    return (m_flag & Prop_literal);
+    return (m_flag & Pin_literal);
 }
 
 void JZNodePin::setDataType(QList<int> type)

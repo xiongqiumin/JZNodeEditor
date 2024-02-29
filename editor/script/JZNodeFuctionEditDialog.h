@@ -3,7 +3,6 @@
 #include <QDialog>
 #include <QTableWidget>
 #include "JZNodeFunction.h"
-#include "JZNodeTypeDialog.h"
 #include "JZScriptItem.h"
 
 namespace Ui { class JZNodeFuctionEditDialog; }
@@ -34,8 +33,7 @@ protected slots:
     void on_btnReset_clicked();
     void on_btnOk_clicked();
     void on_btnCancel_clicked();
-
-    void onTypeChanged(int index);
+    
 private:
     void add(QTableWidget *table);
     void remove(QTableWidget *table);

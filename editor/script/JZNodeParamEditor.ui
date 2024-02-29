@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>JZParamEditor</class>
- <widget class="QWidget" name="JZParamEditor">
+ <class>JZNodeParamEditor</class>
+ <widget class="QWidget" name="JZNodeParamEditor">
   <property name="geometry">
    <rect>
     <x>0</x>

@@ -6,7 +6,7 @@ JZNodeFunctionStart::JZNodeFunctionStart()
 {
     m_name = "Start";
     m_type = Node_functionStart;
-    setFlag(Node_propNoRemove);
+    setFlag(Node_pinNoRemove);
     addFlowOut();   
 }
 
@@ -49,6 +49,10 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
 void JZNodeFunction::setFunction(const FunctionDefine *define)
 {
     Q_ASSERT(define);
+
+    m_functionName = define->fullName();
+    setName(m_functionName);
+
     if(define->isFlowFunction)
     {
         addFlowIn();
@@ -62,23 +66,21 @@ void JZNodeFunction::setFunction(const FunctionDefine *define)
     {
         JZNodePin pin;
         pin.setName(define->paramIn[i].name);
-        pin.setFlag(Prop_param | Prop_in | Prop_dispName);
+        pin.setFlag(Pin_param | Pin_in | Pin_dispName);
         pin.setDataType({define->paramIn[i].dataType() });
         if(JZNodeType::isBaseOrEnum(define->paramIn[i].dataType())
             || define->paramIn[i].dataType() == Type_any)
-            pin.setFlag(pin.flag() | Prop_dispValue | Prop_editValue);
-        addProp(pin);
+            pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);
+        addPin(pin);
     }
     for(int i = 0; i < define->paramOut.size(); i++)
     {
         JZNodePin pin;
         pin.setName(define->paramOut[i].name);
-        pin.setFlag(Prop_param | Prop_out | Prop_dispName);
+        pin.setFlag(Pin_param | Pin_out | Pin_dispName);
         pin.setDataType({define->paramOut[i].dataType()});
-        addProp(pin);
-    }
-    m_functionName = define->fullName();    
-    setName(m_functionName);
+        addPin(pin);
+    }            
 }
 
 QString JZNodeFunction::function() const
@@ -102,8 +104,8 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         return false;
     }
 
-    QVector<int> in_list = propInList(Prop_param);
-    QVector<int> out_list = propOutList(Prop_param);
+    QVector<int> in_list = pinInList(Pin_param);
+    QVector<int> out_list = pinOutList(Pin_param);
     if (def->paramIn.size() != in_list.size())
     {
         error = QString("函数不接受%1个输入").arg(in_list.size());

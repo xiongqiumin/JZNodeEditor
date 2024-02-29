@@ -18,11 +18,14 @@ public:
     void addVariable(QString name,QString type, const QString &v = QString());
     void addVariable(QString name,int type, const QString &v = QString());
     void removeVariable(QString name);
+    void setVariable(QString name, JZParamDefine define);
     const JZParamDefine *variable(QString name) const;
+
     QStringList variableList();
 
     void bindVariable(QString name, QString widget);
     void unbindVariable(QString name);    
+    QMap<QString, QString> bindVariables();
     
 protected:        
     QMap<QString, JZParamDefine> m_variables;

@@ -20,11 +20,11 @@ public:
 
     JZNode *node();
     int propAt(QPointF pos);
-    QRectF propRect(int prop);
+    QRectF propRect(int pin);
     QSize size() const;
 
-    void setPropValue(int prop_id,const QString &value);
-    QString propValue(int prop_id);
+    void setPinValue(int prop_id,const QString &value);
+    QString pinValue(int prop_id);
     void resetPropValue();
 
     void setError(QString error);
@@ -59,9 +59,9 @@ protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
     virtual void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
-    void drawProp(QPainter *painter,int propId);
+    void drawProp(QPainter *painter,int pinId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
-    void calcGemo(int prop, int x, int y,PropGemo *gemo);
+    void calcGemo(int pin, int x, int y,PropGemo *gemo);
     void updatePropGemo();
     void updateErrorGemo();
     

@@ -501,7 +501,7 @@ void JZNodeView::pinClicked(int nodeId,int pinId)
 
 bool JZNodeView::isPropEditable(int id,int prop_id)
 {
-    if(!getNode(id)->prop(prop_id)->isEditValue())
+    if(!getNode(id)->pin(prop_id)->isEditValue())
         return false;
 
     QList<int> lines = m_file->getConnectInput(id,prop_id);
@@ -532,14 +532,14 @@ JZNodeGraphItem *JZNodeView::getNodeItem(int id)
 void JZNodeView::setNodePropValue(int nodeId, int prop_id, QString value)
 {
     auto item = getNodeItem(nodeId);    
-    item->setPropValue(prop_id, value);
+    item->setPinValue(prop_id, value);
     m_map->updateMap();
 }
 
 QString JZNodeView::getNodePropValue(int nodeId, int prop_id)
 {
     auto item = getNodeItem(nodeId);
-    return item->propValue(prop_id);    
+    return item->pinValue(prop_id);    
 }
 
 void JZNodeView::longPressCheck(int nodeId)
@@ -575,7 +575,7 @@ void JZNodeView::updatePropEditable(const JZNodeGemo &gemo)
 
     auto node = m_propEditor->node();    
     if(node && gemo.nodeId == node->id())
-        m_propEditor->setPropEditable(gemo.propId,isPropEditable(gemo.nodeId,gemo.propId));
+        m_propEditor->setPropEditable(gemo.pinId,isPropEditable(gemo.nodeId,gemo.pinId));
 }
 
 JZNodeLineItem *JZNodeView::createLine(JZNodeGemo from, JZNodeGemo to)
@@ -635,7 +635,7 @@ void JZNodeView::startLine(JZNodeGemo from)
         return;
 
     JZNodeGraphItem *node_from = getNodeItem(from.nodeId);
-    auto pt = node_from->mapToScene(node_from->propRect(from.propId).center());
+    auto pt = node_from->mapToScene(node_from->propRect(from.pinId).center());
 
     m_selLine = new JZNodeLineItem(from);
     m_selLine->setZValue(1);
@@ -1440,7 +1440,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     {
         int index = pin_actions.indexOf(ret);
         auto node = dynamic_cast<JZNodeGraphItem*>(item)->node();
-        auto pre_list = node->propList();
+        auto pre_list = node->pinList();
 
         auto old = getNodeData(node->id());
         if (node->pinActionTriggered(pin_id, index))
@@ -1449,7 +1449,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
             setNodeData(node->id(), old);
 
             m_commandStack.beginMacro(ret->text());
-            auto new_list = node->propList();
+            auto new_list = node->pinList();
             auto remove_set = pre_list.toList().toSet() - new_list.toList().toSet();
             for (auto remove_prop : remove_set)
             {
@@ -1843,40 +1843,40 @@ void JZNodeView::onItemPropChanged()
         value = line->text();
     }    
     auto node = getNode(node_id);
-    if (value == node->propValue(prop_id))
+    if (value == node->pinValue(prop_id))
         return;
     
     m_propEditFlag = true;    
     auto old = getNodeData(node_id);
-    node->setPropValue(prop_id, value.toString());
+    node->setPinValue(prop_id, value.toString());
     addPropChangedCommand(node->id(), old);
     m_propEditFlag = false;
 }
 
-void JZNodeView::onPropNameUpdate(int id,int propId,const QString &value)
+void JZNodeView::onPropNameUpdate(int id,int pinId,const QString &value)
 {
-    QVariant oldValue = getNode(id)->propName(propId);
+    QVariant oldValue = getNode(id)->pinName(pinId);
     if(oldValue == value)
         return;
 
     m_propEditFlag = true;
     auto node = getNode(id);
     auto old = getNodeData(id);
-    node->setPropName(propId,value);    
+    node->setPinName(pinId,value);    
     addPropChangedCommand(node->id(),old);
     m_propEditFlag = false;
 }
 
-void JZNodeView::onPropUpdate(int id,int propId,const QString &value)
+void JZNodeView::onPropUpdate(int id,int pinId,const QString &value)
 {
-    QVariant oldValue = getNode(id)->propValue(propId);
+    QVariant oldValue = getNode(id)->pinValue(pinId);
     if(oldValue == value)
         return;
 
     m_propEditFlag = true;
     auto node = getNode(id);
     auto old = getNodeData(id);
-    node->setPropValue(propId,value);    
+    node->setPinValue(pinId,value);    
     addPropChangedCommand(node->id(),old);
     m_propEditFlag = false;
 }

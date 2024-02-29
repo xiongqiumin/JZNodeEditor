@@ -6,6 +6,15 @@
 #include <QTreeWidget>
 #include "UiCommon.h"
 
+enum {
+    Action_build,
+    Action_reBuild,
+    Action_clearBuild,
+    Action_open,
+    Action_close,
+    Action_remove,
+};
+
 class JZProjectTree : public QWidget
 {
     Q_OBJECT
@@ -27,17 +36,20 @@ protected slots:
     void onItemRename();
     void onCurrentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);    
 
-signals:
-    void sigFileOpened(QString file);  
-    void sigFileRemoved(QString file);
+signals:    
+    void sigActionTrigged(int type,QString file);
 
 protected:    
+    virtual void keyPressEvent(QKeyEvent *e) override;
+
+    void addItem(JZProjectItem *item);
     void addItem(QTreeWidgetItem *parent, JZProjectItem *item);
-    void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);
+    void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);        
+
     QTreeWidgetItem *getItem(QString path);
     JZProjectItem *getFile(QTreeWidgetItem *view_item);
-
-    QString getClass(JZProjectItem *item);
+    bool canOpenItem(JZProjectItem *item);
+    
     void cancelEdit();
     QString filepath(QTreeWidgetItem *item);
     void renameItem(QTreeWidgetItem *item);    

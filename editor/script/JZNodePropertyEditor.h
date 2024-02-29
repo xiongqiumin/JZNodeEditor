@@ -5,7 +5,6 @@
 #include "JZNode.h"
 #include "qttreepropertybrowser.h"
 #include "qtvariantproperty.h"
-#include "JZNodeTypeDialog.h"
 
 enum {
     PropEditor_varName,
@@ -25,16 +24,16 @@ public:
     void setNode(JZNode *node);    
     void updateNode();    
 
-    void setPropName(int prop_id,const QString &name);
-    void setPropValue(int prop_id,const QVariant &value);
+    void setPinName(int prop_id,const QString &name);
+    void setPinValue(int prop_id,const QVariant &value);
     void setPropEditable(int prop_id,bool editable);
 
 signals:
-    void sigNodePropNameChanged(int nodeId,int propId,const QString &name);
-    void sigNodePropChanged(int nodeId,int propId,const QString &value);
+    void sigNodePropNameChanged(int nodeId,int pinId,const QString &name);
+    void sigNodePropChanged(int nodeId,int pinId,const QString &value);
 
 protected slots:
-    void onValueChanged(QtProperty *prop, const QVariant &value);    
+    void onValueChanged(QtProperty *pin, const QVariant &value);    
 
 protected:
     void clear();
@@ -50,8 +49,6 @@ protected:
     QMap<int,QtVariantProperty*> m_propMap;
     QMap<int,QtVariantProperty*> m_propNameMap;
     bool m_editing;
-      
-    TypeEditHelp m_typeHelp;
 };
 
 #endif

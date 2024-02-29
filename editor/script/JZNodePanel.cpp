@@ -18,7 +18,8 @@
 #include "JZScriptItem.h"
 #include "JZNodeFunction.h"
 #include "JZNodeEvent.h"
-#include "JZNodeParamEditDialog.h"
+#include "JZNodeLocalParamEditDialog.h"
+#include "UiCommon.h"
 
 enum{
     TreeItem_type = Qt::UserRole,
@@ -729,12 +730,11 @@ void JZNodePanel::onAddScriptParam()
         i++;
     }
 
-    JZNodeParamEditDialog dialog(this);;
-    dialog.init(m_file, JZParamDefine(name,"int"));
+    JZNodeLocalParamEditDialog dialog(this);;    
     if (dialog.exec() != QDialog::Accepted)
         return;
     
-//    m_file->addLocalVariable(dialog.param());
+    m_file->addLocalVariable(dialog.param());
     QTreeWidgetItem *item = createParam(name);
     m_itemLocal->addChild(item);
     m_itemLocal->setExpanded(true);       

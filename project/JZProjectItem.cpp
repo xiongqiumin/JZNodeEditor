@@ -181,6 +181,16 @@ void JZProjectItem::regist()
         m_project->regist(this);
 }
 
+//JZProjectItemRoot
+JZProjectItemRoot::JZProjectItemRoot()
+    :JZProjectItem(ProjectItem_root)
+{
+}
+
+JZProjectItemRoot::~JZProjectItemRoot()
+{
+}
+
 
 //JZProjectItemFolder
 JZProjectItemFolder::JZProjectItemFolder()

@@ -1,17 +1,17 @@
-﻿#ifndef JZNODE_NEW_DIALOG_H_
-#define JZNODE_NEW_DIALOG_H_
+﻿#ifndef JZNODE_NEW_CLASS_EDIT_DIALOG_H_
+#define JZNODE_NEW_CLASS_EDIT_DIALOG_H_
 
 #include <QDialog>
 
-namespace Ui { class JZNewClassDialog; }
+namespace Ui { class JZNodeClassEditDialog; }
 
-class JZNewClassDialog : public QDialog
+class JZNodeClassEditDialog : public QDialog
 {
     Q_OBJECT
     
 public:
-    JZNewClassDialog(QWidget *p = nullptr);
-    ~JZNewClassDialog();
+    JZNodeClassEditDialog(QWidget *p = nullptr);
+    ~JZNodeClassEditDialog();
 
     QString className();
     QString super();
@@ -26,7 +26,7 @@ protected:
     QString m_super;
     bool m_isUi;
 
-    Ui::JZNewClassDialog *ui;
+    Ui::JZNodeClassEditDialog *ui;
 };
 
 

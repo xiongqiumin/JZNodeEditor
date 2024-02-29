@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>JZNewClassDialog</class>
- <widget class="QWidget" name="JZNewClassDialog">
+ <class>JZNodeClassEditDialog</class>
+ <widget class="QWidget" name="JZNodeClassEditDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -171,7 +171,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../JZNodeEditor.qrc"/>
+  <include location="../../JZNodeEditor.qrc"/>
  </resources>
  <connections/>
 </ui>

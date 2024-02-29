@@ -4,8 +4,12 @@
 #include <QMessageBox>
 #include <QShortcut>
 #include <QLineEdit>
-#include "JZNewClassDialog.h"
+#include <QFileDialog>
+#include <QKeyEvent>
 #include "JZNodeFuctionEditDialog.h"
+#include "JZNewFileDialog.h"
+#include "JZNodeClassEditDialog.h"
+#include "JZUIFile.h"
 
 JZProjectTree::JZProjectTree()
 {
@@ -19,9 +23,8 @@ JZProjectTree::JZProjectTree()
     m_editItem = nullptr;
     m_tree->setHeaderHidden(true);
     l->addWidget(m_tree);
-
-    void onItemClicked(QTreeWidgetItem *item);
-    void onItemDoubleClicked(QTreeWidgetItem *item);
+    
+    m_tree->setExpandsOnDoubleClick(false);
     m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_tree,&QWidget::customContextMenuRequested,this,&JZProjectTree::onContextMenu);
 
@@ -46,9 +49,9 @@ void JZProjectTree::setProject(JZProject *project)
 }
 
 void JZProjectTree::clear()
-{
-    m_project = nullptr;
+{    
     m_tree->clear();
+    m_project = nullptr;
 }
 
 void JZProjectTree::init()
@@ -75,6 +78,37 @@ void JZProjectTree::addItem(QTreeWidgetItem *parent, JZProjectItem *item)
     setItem(view_item, item);
 }
 
+void JZProjectTree::keyPressEvent(QKeyEvent *e)
+{    
+    if (e->key() == Qt::Key_Return)
+    {
+        auto item = m_tree->currentItem();
+        if (item)
+        {
+            onItemDoubleClicked(item);
+            e->accept();
+            return;
+        }
+    }
+    QWidget::keyPressEvent(e);
+}
+
+void JZProjectTree::addItem(JZProjectItem *item)
+{
+    auto parent_item = item->parent();
+    while (parent_item)
+    {
+        auto parent_view_item = getItem(parent_item->itemPath());
+        if (parent_view_item)
+        {
+            addItem(parent_view_item, item);
+            return;
+        }
+        item = parent_item;
+        parent_item = parent_item->parent();
+    }
+}
+
 void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
 {
     QString icon_path;
@@ -91,7 +125,7 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
     else
         icon_path = ":/JZNodeEditor/Resources/icons/iconFile.png";
 
-    view_item->setIcon(0, QIcon(icon_path));
+    view_item->setIcon(0, QIcon(icon_path));    
 
     auto list = item->childs();
     for(int i = 0; i < list.size(); i++)
@@ -105,16 +139,16 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
     }
 }
 
-QString JZProjectTree::getClass(JZProjectItem *item)
-{    
-    while (item)
-    {
-        if (item->itemType() == ProjectItem_class)
-            return ((JZScriptClassItem*)item)->className();
+bool JZProjectTree::canOpenItem(JZProjectItem *item)
+{
+    if (item->itemType() == ProjectItem_ui
+        || item->itemType() == ProjectItem_scriptFunction
+        || item->itemType() == ProjectItem_param
+        || item->itemType() == ProjectItem_scriptParamBinding
+        || item->itemType() == ProjectItem_scriptFlow)
+        return true;
 
-        item = item->parent();
-    }
-    return QString();
+    return false;
 }
 
 QTreeWidgetItem *JZProjectTree::getItem(QString path)
@@ -246,7 +280,10 @@ void JZProjectTree::onItemClicked(QTreeWidgetItem *view_item)
 void JZProjectTree::onItemDoubleClicked(QTreeWidgetItem *view_item)
 {
     JZProjectItem *item = getFile(view_item);
-    sigFileOpened(item->itemPath());
+    if(canOpenItem(item))
+        sigActionTrigged(Action_open,item->itemPath());
+    else    
+        view_item->setExpanded(!view_item->isExpanded());    
 }
 
 void JZProjectTree::onItemRename()
@@ -264,67 +301,135 @@ void JZProjectTree::onCurrentItemChanged(QTreeWidgetItem *current, QTreeWidgetIt
 }
 
 void JZProjectTree::onContextMenu(QPoint pos)
-{    
+{
     QTreeWidgetItem *view_item = m_tree->itemAt(pos);
-    if(!view_item)
+    if (!view_item)
         return;
 
     JZProjectItem *item = getFile(view_item);
-    QMenu menu(this);            
+    QMenu menu(this);
     QAction *actRemove = nullptr;
-    QAction *actRename = nullptr;    
+    QAction *actRename = nullptr;
     QAction *actCreateFunction = nullptr;
     QAction *actCreateClass = nullptr;
     QAction *actCreateEvent = nullptr;
-    QAction *actEditFunction = nullptr;
-    
-    QString className = getClass(item);    
-    if(item->itemType() == ProjectItem_folder
-            || item->itemType() == ProjectItem_class)
-    {        
-        QMenu *menu_add = menu.addMenu("添加");
-        QString funcAct = className .isEmpty()?  "函数" : "成员函数";
-        actCreateFunction = menu_add->addAction(funcAct);
-        if(className.isEmpty())
-            actCreateClass = menu_add->addAction("类");
-        actCreateEvent = menu_add->addAction("事件处理");
-    }
-    else if (item->itemType() == ProjectItem_scriptFunction)
+    QAction *actOpen = nullptr;
+    QAction *actBuild = nullptr, *actRebuild = nullptr, *actClearBuild = nullptr;
+    QAction *actNewFile = nullptr, *actExistFile = nullptr;
+
+    bool canChanged = true;
+    auto item_class = m_project->getItemClass(item);
+    if (item->itemType() == ProjectItem_root)
     {
-        actEditFunction = menu.addAction("编辑");
+        actBuild = menu.addAction("编译");
+        actRebuild = menu.addAction("重新编译");
+        actClearBuild = menu.addAction("清理");
+        menu.addSeparator();
+        auto menu_new = menu.addMenu("添加");
+        actNewFile = menu_new->addAction("新建项");
+        actExistFile = menu_new->addAction("现有项");
+        menu.addSeparator();
+        auto menu_debug = menu.addMenu("调试");
+        menu_debug->addAction("启动");
+        menu_debug->addAction("启动并中断");
+    }
+    else if (item->itemType() == ProjectItem_folder)
+    {
+        auto menu_new = menu.addMenu("添加");
+        actNewFile = menu_new->addAction("新建项");
+        menu.addSeparator();
+    }
+    else if (item->itemType() == ProjectItem_scriptFile)
+    {
+        QMenu *menu_new = menu.addMenu("添加");
+        actCreateClass = menu_new->addAction("类");
+        actCreateFunction = menu_new->addAction("全局函数");
+    }
+    else if (item->itemType() == ProjectItem_ui)
+    {
+        actOpen = menu.addAction("打开");
+    }
+    else if (item->itemType() == ProjectItem_class)
+    {
+        QMenu *menu_new = menu.addMenu("添加");
+        actCreateFunction = menu_new->addAction("成员函数");
+        actCreateEvent = menu_new->addAction("事件处理");
+    }
+    else if (item->itemType() == ProjectItem_scriptFunction
+        || item->itemType() == ProjectItem_param
+        || item->itemType() == ProjectItem_scriptParamBinding
+        || item->itemType() == ProjectItem_scriptFlow)
+    {
+        actOpen = menu.addAction("打开");
     }
 
-    if(view_item->parent())
+    if(item->itemPath() == m_project->mainFile()
+        ||item->itemPath() == m_project->mainScriptPath()
+        ||item->itemType() == ProjectItem_param)
+    {
+        canChanged = false;
+    }
+    if(view_item->parent() && canChanged)
     {
         actRemove = menu.addAction("删除");
         actRename = menu.addAction("重命名");
-    }
-
-    if (item->itemPath() == m_project->mainScriptPath())
-    {
-        actRemove->setEnabled(false);
-        actRename->setEnabled(false);        
-    }
+    }    
 
     if (menu.actions().size() > 0)
         menu.addSeparator();
-    auto actProp = menu.addAction("属性");
 
+    auto actProp = menu.addAction("属性");
     QAction *act = menu.exec(m_tree->mapToGlobal(pos));
     if(!act)
         return;
 
-    if(act == actCreateFunction)
+    if (act == actBuild)
+        emit sigActionTrigged(Action_build, item->itemPath());
+    else if (act == actRebuild)
+        emit sigActionTrigged(Action_reBuild, item->itemPath());
+    else if (act == actClearBuild)
+        emit sigActionTrigged(Action_clearBuild, item->itemPath());
+    else if (act == actOpen)
+        emit sigActionTrigged(Action_open, item->itemPath());
+    else if (act == actNewFile)
+    {
+        JZNewFileDialog dlg(this);
+        if (dlg.exec() == QDialog::Accepted)
+        {
+            QString path = dlg.path();
+            QString name = dlg.name();
+
+            JZScriptFile *file = new JZScriptFile();
+            file->setName(name + ".jz");
+            m_project->addItem(path, file);
+            addItem(file);
+
+            JZUiFile *ui_file = new JZUiFile();
+            ui_file->setName(name + ".ui");
+            m_project->addItem(path, file);
+            addItem(ui_file);
+        }
+    }
+    else if (act == actExistFile)
+    {
+        QStringList filelist = QFileDialog::getOpenFileNames(this, "", QString(), "All(*.ui *.jz)");
+        for (int i = 0; i < filelist.size(); i++)
+        {
+            auto new_item = m_project->addFile(filelist[i]);
+            addItem(new_item);            
+        }
+    }
+    else if(act == actCreateFunction)
     {        
         FunctionDefine function;
         function.name = "new";
-        if (!className.isEmpty())
+        if (item_class)
         {
-            function.className = className;
+            function.className = item_class->className();
             
             JZParamDefine def;
             def.name = "this";
-            def.type = className;
+            def.type = function.className;
             function.paramIn.push_back(def);
         }
 
@@ -334,74 +439,75 @@ void JZProjectTree::onContextMenu(QPoint pos)
         if (dialog.exec() != QDialog::Accepted)
             return;
 
-        QTreeWidgetItem *parent_item = view_item;
-        if (item->itemType() == ProjectItem_class)
-        {
-            if(item->getItem("成员函数"))
-                parent_item = getItem(item->itemPath() + "/成员函数");
-        }
-        /*
-        auto func_item = m_project->addFunction(item->itemPath(), dialog.functionInfo());
-        addItem(parent_item, func_item);
-        */
+        JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptFunction);
+        func_item->setFunction(dialog.functionInfo());
+        m_project->addItem(item->itemPath(), func_item);
+        
+        addItem(view_item, func_item);        
     }
     else if (act == actCreateClass)
     {
-        JZNewClassDialog dialog(this);
+        JZNodeClassEditDialog dialog(this);
         if(dialog.exec() != QDialog::Accepted)
             return;
 
         QString def = dialog.className();
         QString super = dialog.super();
-        bool isUi = dialog.isUi();
-        JZScriptClassItem *class_item = nullptr;
-        /*
-        if(isUi)
-            class_item = m_project->addUiClass(item->path(), def);
-        else
-            class_item = m_project->addClass(item->path(), def, super);
-        addItem(view_item, class_item);
-        */
-    }
-    else if (act == actEditFunction)
-    {        
-        JZScriptItem *func_item = (JZScriptItem*)item;
-        QString oldName = func_item->name();
-
-        JZNodeFuctionEditDialog dialog(this);        
-        dialog.setFunctionInfo(func_item->function(),false);
-        dialog.init();
-        if (dialog.exec() != QDialog::Accepted)
-            return;
-
-        FunctionDefine def = dialog.functionInfo();        
-        func_item->setFunction(def);        
-
-        if (oldName != def.name)
-        {
-            m_project->renameItem(func_item, def.name);
-            view_item->setText(0,def.name);
-        }
-    }
+        bool isUi = dialog.isUi();        
+        
+        auto file_item = dynamic_cast<JZScriptFile*>(item);
+        auto class_item = file_item->addClass(def, super);
+        addItem(view_item, class_item);        
+    }    
     else if(act == actCreateEvent)
     {
         QString name = "事件";
-        /*
-        JZProjectItemFolder *folder = m_project->addFolder(item->itemPath(), name);
-        addItem(view_item, folder);
-        */
+        
+        JZScriptItem *flow = new JZScriptItem(ProjectItem_scriptFlow);
+        flow->setName(name);
+        m_project->addItem(item->itemPath(), flow);
+        addItem(view_item, flow);
     }
     else if(act == actRemove)
     {
-        emit sigFileRemoved(item->itemPath());
-        delete view_item;
+        if (QMessageBox::question(this, "", "是否删除", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+        {
+            emit sigActionTrigged(Action_remove, item->itemPath());
+            delete view_item;
+        }
     }
     else if(act == actRename)
-    {
+    {        
         onItemRename();
     }
     else if (act == actProp)
-    {
-        QMessageBox::information(this, "", item->name());
+    {        
+        if (item->itemType() == ProjectItem_scriptFunction)
+        {
+            JZScriptItem *func_item = (JZScriptItem*)item;
+            QString oldName = func_item->name();
+
+            JZNodeFuctionEditDialog dialog(this);
+            dialog.setFunctionInfo(func_item->function(), false);
+            dialog.init();
+            if (dialog.exec() != QDialog::Accepted)
+                return;
+
+            FunctionDefine def = dialog.functionInfo();
+            func_item->setFunction(def);
+            if (oldName != def.name)
+            {
+                m_project->renameItem(func_item, def.name);
+                view_item->setText(0, def.name);
+            }
+        }
+        else if (item->itemType() == ProjectItem_class)
+        {
+            JZNodeClassEditDialog dialog(this);
+            if (dialog.exec() != QDialog::Accepted)
+                return;
+        }
+        else
+            QMessageBox::information(this, "", item->name());
     }
 }

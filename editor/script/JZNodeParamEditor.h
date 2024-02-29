@@ -7,45 +7,43 @@
 #include "JZParamItem.h"
 
 namespace Ui {
-    class JZParamEditor;
+    class JZNodeParamEditor;
 }
 
-class JZParamEditor;
-class JZParamEditorCommand : public QUndoCommand
+class JZNodeParamEditor;
+class JZNodeParamEditorCommand : public QUndoCommand
 {
 public:
     enum {
         NewParam,
         RemoveParam,
         Rename,
-        SetType,        
+        Change,        
     };
 
-    JZParamEditorCommand(JZParamEditor *view, int type);
+    JZNodeParamEditorCommand(JZNodeParamEditor *view, int type);
 
     virtual void redo() override;
     virtual void undo() override;
     virtual int id() const override;
     virtual bool mergeWith(const QUndoCommand *command);
 
-    int command;    
-    QString oldName;
-    QString newName;
-    int oldType;
-    int newType;
+    int command;        
+    JZParamDefine oldParam;
+    JZParamDefine newParam;
 
 protected:    
-    JZParamEditor *m_editor;
+    JZNodeParamEditor *m_editor;
 };
 
-//JZParamEditor
-class JZParamEditor : public JZEditor
+//JZNodeParamEditor
+class JZNodeParamEditor : public JZEditor
 {
     Q_OBJECT
     
 public:
-    JZParamEditor();
-    ~JZParamEditor();
+    JZNodeParamEditor();
+    ~JZNodeParamEditor();
     
     virtual void open(JZProjectItem *item) override;
     virtual void close() override;
@@ -54,29 +52,31 @@ public:
 
 protected slots:
     void on_btnAdd_clicked();
-    void on_btnRemove_clicked();
-    void onTypeChanged(int index);
+    void on_btnRemove_clicked();    
     void onCleanChanged(bool modify);
     void onItemChanged(QTableWidgetItem *item);
 
 protected:
-    friend JZParamEditorCommand;
-    void updateItem(int row,JZParamDefine *define);
-    void addNewCommand(QString name, int type);
+    friend JZNodeParamEditorCommand;
+    virtual void keyPressEvent(QKeyEvent *e) override;
+
+    void updateItem(int row,const JZParamDefine *define);
+    void addNewCommand(QString name, QString type);
     void addRemoveCommand(QString name);
     void addRenameCommand(QString oldName,QString newName);
-    void addSetTypeCommand(QString name,int newType);
-    void addParam(QString newName, int newType);
+    void addChangeCommand(QString name, JZParamDefine define);
+
+    void addParam(JZParamDefine define);
     void removeParam(QString newName);
     void renameParam(QString oldName, QString newName);
-    void setParamType(QString newName, int newType);
+    void changeParam(QString newName, JZParamDefine define);
     int rowIndex(QString name);
     int rowIndex(QComboBox *box);
     int rowDataType(int row);
 
     JZParamItem *m_file;    
     QTableWidget *m_table;
-    Ui::JZParamEditor *ui;
+    Ui::JZNodeParamEditor *ui;
     int m_widgetCount;
 
     QUndoStack m_commandStack;

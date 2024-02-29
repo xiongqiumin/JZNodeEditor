@@ -132,7 +132,7 @@ void SampleRussian::addInitGame()
     script->addNode(JZNodePtr(color_resize));
 
     script->addConnect(node_color_list->paramOutGemo(0), color_resize->paramInGemo(0));
-    color_resize->setPropValue(color_resize->paramIn(1), "5");
+    color_resize->setPinValue(color_resize->paramIn(1), "5");
     script->addConnect(set_color_list->flowOutGemo(0), color_resize->flowInGemo());
 
     QColor color_list[] = { Qt::red,Qt::green,Qt::blue,Qt::yellow,Qt::cyan };
@@ -146,9 +146,9 @@ void SampleRussian::addInitGame()
 
         JZNodeFunction *color_create = new JZNodeFunction();
         color_create->setFunction(color_meta->function("create"));
-        color_create->setPropValue(color_create->paramIn(0), QString::number(r));
-        color_create->setPropValue(color_create->paramIn(1), QString::number(g));
-        color_create->setPropValue(color_create->paramIn(2), QString::number(b));
+        color_create->setPinValue(color_create->paramIn(0), QString::number(r));
+        color_create->setPinValue(color_create->paramIn(1), QString::number(g));
+        color_create->setPinValue(color_create->paramIn(2), QString::number(b));
 
         JZNodeFunction *list_set = new JZNodeFunction();
         list_set->setFunction(list_meta->function("set"));
@@ -157,7 +157,7 @@ void SampleRussian::addInitGame()
 
         script->addConnect(pre_node->flowOutGemo(0), list_set->flowInGemo());
         script->addConnect(node_color_list->paramOutGemo(0), list_set->paramInGemo(0));
-        list_set->setPropValue(list_set->paramIn(1), QString::number(i));
+        list_set->setPinValue(list_set->paramIn(1), QString::number(i));
         script->addConnect(color_create->paramOutGemo(0), list_set->paramInGemo(2));
         pre_node = list_set;
     }
@@ -179,7 +179,7 @@ void SampleRussian::addInitGame()
 
     JZNodeFunction *col_push = new JZNodeFunction();
     col_push->setFunction(func_inst->function("List.push_back"));
-    col_push->setPropValue(col_push->paramIn(1), QString::number(-1));
+    col_push->setPinValue(col_push->paramIn(1), QString::number(-1));
 
     script->addNode(JZNodePtr(node_map));
     script->addNode(JZNodePtr(for_col));
@@ -201,7 +201,7 @@ void SampleRussian::addInitGame()
 
     JZNodeSetParam *node_isRect = new JZNodeSetParam();
     node_isRect->setVariable("this.isRect");
-    node_isRect->setPropValue(node_isRect->paramIn(0), "false");
+    node_isRect->setPinValue(node_isRect->paramIn(0), "false");
     script->addNode(JZNodePtr(node_isRect));
 
     script->addConnect(for_row->flowOutGemo(), node_isRect->flowInGemo());
@@ -355,7 +355,7 @@ void SampleRussian::addPaintEvent()
     auto widget = JZNodeObjectManager::instance()->meta("Widget");    
     auto painter = JZNodeObjectManager::instance()->meta("Painter");
 
-    m_script->addLocalVariable("painter", "Painter");
+    m_script->addLocalVariable(JZParamDefine("painter", "Painter"));
 
     JZNodeQtEvent *node_paint = new JZNodeQtEvent();
     node_paint->setEvent("Mainwindow", meta->event("paintEvent"));
@@ -405,10 +405,10 @@ void SampleRussian::addPaintEvent()
     
     int m_offsetX = 20;
     int m_offsetY = 10;
-    rect_create_big->setPropValue(rect_create_big->paramIn(0), QString::number(m_offsetX - 1));
-    rect_create_big->setPropValue(rect_create_big->paramIn(1), QString::number(m_offsetY - 1));
-    rect_create_big->setPropValue(rect_create_big->paramIn(2), QString::number(m_blockSize * m_col + 2));
-    rect_create_big->setPropValue(rect_create_big->paramIn(3), QString::number(m_blockSize * m_row + 2));
+    rect_create_big->setPinValue(rect_create_big->paramIn(0), QString::number(m_offsetX - 1));
+    rect_create_big->setPinValue(rect_create_big->paramIn(1), QString::number(m_offsetY - 1));
+    rect_create_big->setPinValue(rect_create_big->paramIn(2), QString::number(m_blockSize * m_col + 2));
+    rect_create_big->setPinValue(rect_create_big->paramIn(3), QString::number(m_blockSize * m_row + 2));
         
     m_script->addConnect(set->flowOutGemo(), draw_rect->flowInGemo());
 
@@ -445,7 +445,7 @@ void SampleRussian::addPaintEvent()
     JZNodeBranch *branch = new JZNodeBranch();
 
     JZNodeGE *node_ge = new JZNodeGE();
-    node_ge->setPropValue(node_ge->paramIn(1), "0");
+    node_ge->setPinValue(node_ge->paramIn(1), "0");
     m_script->addNode(JZNodePtr(node_ge));
     m_script->addNode(JZNodePtr(branch));
 
@@ -476,8 +476,8 @@ void SampleRussian::addPaintEvent()
     m_script->addConnect(for_col->paramOutGemo(0), expr_col->paramInGemo(0));    
     m_script->addConnect(expr_col->paramOutGemo(0), rect_create->paramInGemo(0));
     m_script->addConnect(expr_row->paramOutGemo(0), rect_create->paramInGemo(1));
-    rect_create->setPropValue(rect_create->paramIn(2), QString::number(m_blockSize));
-    rect_create->setPropValue(rect_create->paramIn(3), QString::number(m_blockSize));
+    rect_create->setPinValue(rect_create->paramIn(2), QString::number(m_blockSize));
+    rect_create->setPinValue(rect_create->paramIn(3), QString::number(m_blockSize));
 
     m_script->addConnect(for_col->subFlowOutGemo(0), branch->flowInGemo());
     m_script->addConnect(branch->flowOutGemo(0), fill_rect->flowInGemo());
@@ -613,8 +613,8 @@ void SampleRussian::addPaintEvent()
 
     m_script->addConnect(pt_expr_col->paramOutGemo(0), pt_rect_create->paramInGemo(0));
     m_script->addConnect(pt_expr_row->paramOutGemo(0), pt_rect_create->paramInGemo(1));
-    pt_rect_create->setPropValue(pt_rect_create->paramIn(2), QString::number(m_blockSize));
-    pt_rect_create->setPropValue(pt_rect_create->paramIn(3), QString::number(m_blockSize));
+    pt_rect_create->setPinValue(pt_rect_create->paramIn(2), QString::number(m_blockSize));
+    pt_rect_create->setPinValue(pt_rect_create->paramIn(3), QString::number(m_blockSize));
 
     m_script->addConnect(node_for->subFlowOutGemo(0), pt_fill_rect->flowInGemo());
     m_script->addConnect(set->paramOutGemo(0), pt_fill_rect->paramInGemo(0));
@@ -646,7 +646,7 @@ void SampleRussian::addButtonClicked()
 
     JZNodeFunction *start = new JZNodeFunction();
     start->setFunction(JZNodeFunctionManager::instance()->function("Timer.start"));
-    start->setPropValue(start->paramIn(1), "500");
+    start->setPinValue(start->paramIn(1), "500");
 
     m_script->addNode(JZNodePtr(timer));
     m_script->addNode(JZNodePtr(start));
@@ -688,7 +688,7 @@ void SampleRussian::addCreateRect()
 
     JZNodeSetParam *node_isRect = new JZNodeSetParam();
     node_isRect->setVariable("this.isRect");
-    node_isRect->setPropValue(node_isRect->paramIn(0), "true");
+    node_isRect->setPinValue(node_isRect->paramIn(0), "true");
 
     JZNodeReturn *node_ret = new JZNodeReturn();
     node_ret->setFunction(JZNodeFunctionManager::instance()->function("Mainwindow.createRect"));
@@ -795,8 +795,8 @@ void SampleRussian::addCreateRect()
     script->addConnect(node_isRect->flowOutGemo(), node_ret->flowInGemo());
 
     script->addConnect(branch_place->flowOutGemo(1), node_ret_over->flowInGemo());
-    node_ret->setPropValue(node_ret->paramIn(0), "false");    
-    node_ret_over->setPropValue(node_ret->paramIn(0), "true");
+    node_ret->setPinValue(node_ret->paramIn(0), "false");    
+    node_ret_over->setPinValue(node_ret->paramIn(0), "true");
 }
 
 void SampleRussian::addRectDown()
@@ -812,7 +812,7 @@ void SampleRussian::addRectDown()
 
     auto class_file = m_project.getClass("Mainwindow");    
     auto script = class_file->addMemberFunction(define);
-    script->addLocalVariable("value", "int");
+    script->addLocalVariable(JZParamDefine("value", "int"));
 
     auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
 
@@ -945,7 +945,7 @@ void SampleRussian::addRectDown()
     script->addConnect(clear_line->flowOutGemo(0), node_update->flowInGemo());
 
     // return
-    node_ret->setPropValue(node_ret->paramIn(0), "false");
+    node_ret->setPinValue(node_ret->paramIn(0), "false");
     script->addConnect(moveDown->flowOutGemo(), node_ret->flowInGemo());
     script->addConnect(node_update->flowOutGemo(), node_ret->flowInGemo());
 }
@@ -1142,7 +1142,7 @@ void SampleRussian::addGameLoop()
 
     JZNodeFunction *message = new JZNodeFunction();
     message->setFunction(JZNodeFunctionManager::instance()->function("MessageBox.information"));
-    message->setPropValue(message->paramIn(1), "\"Game over\"");    
+    message->setPinValue(message->paramIn(1), "\"Game over\"");    
     m_script->addNode(JZNodePtr(message));
 
     m_script->addConnect(timer->paramOutGemo(0), stop_timer->paramInGemo(0));
@@ -1508,7 +1508,7 @@ void SampleRussian::addCreateShape()
     class_file->addMemberFunction(define);
     
     auto script = class_file->getMemberFunction("createShape");
-    script->addLocalVariable("shape", Type_list);
+    script->addLocalVariable(JZParamDefine("shape", Type_list));
 
     JZNodeParam *shape = new JZNodeParam();
     shape->setVariable("shape");
@@ -1598,8 +1598,8 @@ void SampleRussian::addCanPlaceShape()
     auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
 
     auto script = class_file->getMemberFunction("canPlace");
-    script->addLocalVariable("pt_row", "int");
-    script->addLocalVariable("pt_col", "int");
+    script->addLocalVariable(JZParamDefine("pt_row", "int"));
+    script->addLocalVariable(JZParamDefine("pt_col", "int"));
 
     JZNode *node_start = script->getNode(0);
 
@@ -1783,8 +1783,8 @@ void SampleRussian::addClearLine()
     auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
 
     auto script = class_file->getMemberFunction("clearLine");
-    script->addLocalVariable("line_count", "int");
-    script->addLocalVariable("row", "int", QString::number(m_row - 1));
+    script->addLocalVariable(JZParamDefine("line_count", "int"));
+    script->addLocalVariable(JZParamDefine("row", "int", QString::number(m_row - 1)));
 
     JZNode *node_start = script->getNode(0);
 
@@ -1939,12 +1939,9 @@ void SampleRussian::addClearLine()
     script->addConnect(score_get->paramOutGemo(0), score_add->paramInGemo(0));
     script->addConnect(score_add->paramOutGemo(0), score_set->paramInGemo(0));
 
-#if 1  
     script->addConnect(line_count_eq_col_branch->flowOutGemo(0), score_set->flowInGemo());
     script->addConnect(score_set->flowOutGemo(), for_col_clear->flowInGemo());
-#else    
-    script->addConnect(line_count_eq_col_branch->flowOutGemo(0), for_col_clear->flowInGemo());
-#endif
+
     script->addConnect(for_col_clear->subFlowOutGemo(0), set_map_clear->flowInGemo());
 
     script->addConnect(for_col_clear->flowOutGemo(0), for_row_down->flowInGemo());
@@ -1967,7 +1964,4 @@ void SampleRussian::addClearLine()
     script->addConnect(for_col_top->subFlowOutGemo(0), set_map2->flowInGemo());
 
     script->addConnect(line_count_eq_col_branch->flowOutGemo(1), node_set_row->flowInGemo());
-
-    
-    
 }

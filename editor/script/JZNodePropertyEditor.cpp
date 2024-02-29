@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QTimer>
+#include "JZNodeTypeHelper.h"
 
 JZNodePropertyEditor::JZNodePropertyEditor(QWidget *widget)
     :QWidget(widget)
@@ -40,12 +41,12 @@ void JZNodePropertyEditor::clear()
     m_node = nullptr;    
 }
 
-void JZNodePropertyEditor::onValueChanged(QtProperty *prop, const QVariant &value)
+void JZNodePropertyEditor::onValueChanged(QtProperty *pin, const QVariant &value)
 {    
     if (m_editing)
         return;
 
-    QtVariantProperty *p = dynamic_cast<QtVariantProperty*>(prop);        
+    QtVariantProperty *p = dynamic_cast<QtVariantProperty*>(pin);        
     if (m_node)
     {
         int prop_id = m_propMap.key(p, -1);
@@ -63,7 +64,7 @@ JZNode *JZNodePropertyEditor::node()
     return m_node;
 }
 
-void JZNodePropertyEditor::setPropName(int prop_id,const QString &name)
+void JZNodePropertyEditor::setPinName(int prop_id,const QString &name)
 {
     if(!m_propNameMap.contains(prop_id))
         return;
@@ -73,7 +74,7 @@ void JZNodePropertyEditor::setPropName(int prop_id,const QString &name)
     m_propManager->blockSignals(false);
 }
 
-void JZNodePropertyEditor::setPropValue(int prop_id,const QVariant &value)
+void JZNodePropertyEditor::setPinValue(int prop_id,const QVariant &value)
 {
     if(!m_propMap.contains(prop_id))
         return;
@@ -102,13 +103,13 @@ QtVariantProperty *JZNodePropertyEditor::createPropName(JZNodePin *pin)
 QtVariantProperty *JZNodePropertyEditor::createProp(JZNodePin *pin)
 {
     QString pin_name = pin->name();
-    if(pin->flag() & Prop_editName)
+    if(pin->flag() & Pin_editName)
         pin_name = "value";
 
-    auto prop = m_propManager->addProperty(QVariant::String, pin_name);
-    prop->setValue(pin->value());
-    m_propMap[pin->id()] = prop;
-    return prop;
+    auto pin_prop = m_propManager->addProperty(QVariant::String, pin_name);
+    pin_prop->setValue(pin->value());
+    m_propMap[pin->id()] = pin_prop;
+    return pin_prop;
 }
 
 void JZNodePropertyEditor::addPropList(QString name,QVector<int> list)
@@ -119,11 +120,11 @@ void JZNodePropertyEditor::addPropList(QString name,QVector<int> list)
     QtVariantProperty *prop_group = nullptr;
     for(int i = 0; i < list.size(); i++)
     {
-        auto pin = m_node->prop(list[i]);
+        auto pin = m_node->pin(list[i]);
         if(prop_group == nullptr)
             prop_group = m_propManager->addProperty(m_propManager->groupTypeId(),name);
         
-        if(pin->flag() & Prop_editName)
+        if(pin->flag() & Pin_editName)
         {
             auto prop_name = createPropName(pin);
             prop_group->addSubProperty(prop_name);
@@ -133,8 +134,8 @@ void JZNodePropertyEditor::addPropList(QString name,QVector<int> list)
         }
         else
         {
-            auto prop = createProp(pin);
-            prop_group->addSubProperty(prop);
+            auto pin_prop = createProp(pin);
+            prop_group->addSubProperty(pin_prop);
         }
     }
 
@@ -164,9 +165,9 @@ void JZNodePropertyEditor::updateNode()
     prop_name->setValue(m_node->name());
     m_tree->addProperty(prop_base);    
 
-    auto in_list = m_node->propInList(Prop_param);
+    auto in_list = m_node->pinInList(Pin_param);
     addPropList("输入",in_list);
-    auto out_list = m_node->propOutList(Prop_param);
+    auto out_list = m_node->pinOutList(Pin_param);
     addPropList("输出",out_list);
 
     m_editing = false;

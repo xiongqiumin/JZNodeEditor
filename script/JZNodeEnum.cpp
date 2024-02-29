@@ -34,9 +34,19 @@ QString JZNodeEnumDefine::key(int index) const
     return m_keys[index];
 }
 
+QString JZNodeEnumDefine::defaultKey() const
+{
+    return m_keys[0];
+}
+
 int JZNodeEnumDefine::value(int index) const
 {
     return m_values[index];
+}
+
+int JZNodeEnumDefine::defaultValue() const
+{
+    return keyToValue(defaultKey());
 }
 
 int JZNodeEnumDefine::keyToValue(QString key) const

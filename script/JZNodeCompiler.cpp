@@ -50,14 +50,14 @@ JZNode *Graph::node(int id)
 
 JZNodePin *Graph::pin(JZNodeGemo gemo)
 {
-    return pin(gemo.nodeId, gemo.propId);
+    return pin(gemo.nodeId, gemo.pinId);
 }
 
 JZNodePin *Graph::pin(int nodeId, int pinId)
 {
     auto n = node(nodeId);
     if (n)
-        return n->prop(pinId);
+        return n->pin(pinId);
     else
         return nullptr;
 }
@@ -142,7 +142,7 @@ JZNodeIRStackInit::JZNodeIRStackInit(int node_id, int prop_id)
     Q_ASSERT(prop_id >= 0);
     type = OP_ComilerStackInit;
     nodeId = node_id;
-    propId = prop_id;
+    pinId = prop_id;
 }
 
 //NodeCompilerInfo
@@ -155,15 +155,15 @@ NodeCompilerInfo::NodeCompilerInfo()
 }
 
 // JZNodeCompiler
-int JZNodeCompiler::paramId(int nodeId,int propId)
+int JZNodeCompiler::paramId(int nodeId,int pinId)
 {
-    Q_ASSERT(nodeId >= 0 && propId >= 0);
-    return nodeId * 100 + propId;
+    Q_ASSERT(nodeId >= 0 && pinId >= 0);
+    return nodeId * 100 + pinId;
 }
 
 int JZNodeCompiler::paramId(const JZNodeGemo &gemo)
 {
-    return paramId(gemo.nodeId,gemo.propId);
+    return paramId(gemo.nodeId,gemo.pinId);
 }
 
 QString JZNodeCompiler::paramName(int id)
@@ -312,11 +312,11 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
                 auto in_list = node->paramInList();
                 for (int i = 0; i < in_list.size(); i++)
                 {                    
-                    if (node->prop(in_list[i])->flag() & Prop_noValue)
+                    if (node->pin(in_list[i])->flag() & Pin_noValue)
                         continue;
 
                     NodeParamInfo param_info;
-                    param_info.define.name = node->prop(in_list[i])->name();
+                    param_info.define.name = node->pin(in_list[i])->name();
                     param_info.define.dataType = pinType(node->id(), in_list[i]);
                     param_info.id = paramId(node->id(), in_list[i]);
                     info.paramIn.push_back(param_info);
@@ -325,11 +325,11 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
                 auto out_list = node->paramOutList();
                 for (int i = 0; i < out_list.size(); i++)
                 {
-                    if (node->prop(out_list[i])->flag() & Prop_noValue)
+                    if (node->pin(out_list[i])->flag() & Pin_noValue)
                         continue;
 
                     NodeParamInfo param_info;
-                    param_info.define.name = node->prop(out_list[i])->name();
+                    param_info.define.name = node->pin(out_list[i])->name();
                     param_info.define.dataType = pinType(node->id(), out_list[i]);
                     param_info.id = paramId(node->id(), out_list[i]);
                     info.paramOut.push_back(param_info);
@@ -355,12 +355,12 @@ QString JZNodeCompiler::nodeName(JZNode *node)
     return name;
 }
 
-QString JZNodeCompiler::pinName(JZNodePin *prop)
+QString JZNodeCompiler::pinName(JZNodePin *pin)
 {
-    if(!prop->name().isEmpty())
-        return prop->name();
+    if(!pin->name().isEmpty())
+        return pin->name();
     else
-        return "pin" + QString::number(prop->id());
+        return "pin" + QString::number(pin->id());
 }
 
 void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
@@ -369,7 +369,7 @@ void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
     for (int i = 0; i < list.size(); i++)
     {
         int pin_id = list[i];
-        auto pin = node->prop(pin_id);
+        auto pin = node->pin(pin_id);
         if(pin->dataType().size() == 1)
             m_nodeInfo[node->id()].pinType[pin_id] = pin->dataType().front();
     }
@@ -388,7 +388,7 @@ void JZNodeCompiler::updateFlowOut()
 
             JZNodeIRFlowOut *stmt = (JZNodeIRFlowOut*)m_statmentList->at(i).data();
             auto to_gemo = paramGemo(stmt->toId);
-            if (!m_nodeInfo[to_gemo.nodeId].pinType.contains(to_gemo.propId))
+            if (!m_nodeInfo[to_gemo.nodeId].pinType.contains(to_gemo.pinId))
             {
                 replaceStatement(i, JZNodeIRPtr(new JZNodeIR(OP_nop)));
                 continue;
@@ -591,7 +591,7 @@ int JZNodeCompiler::pinType(int node_id, int prop_id)
 
 int JZNodeCompiler::pinType(JZNodeGemo gemo)
 {
-    return pinType(gemo.nodeId, gemo.propId);
+    return pinType(gemo.nodeId, gemo.pinId);
 }
 
 bool JZNodeCompiler::compilerNode(JZNode *node)
@@ -730,8 +730,8 @@ bool JZNodeCompiler::genGraphs()
 
         auto from = graph->m_nodes[lines[i].from.nodeId];
         auto to = graph->m_nodes[lines[i].to.nodeId];
-        int from_prop_id = lines[i].from.propId;
-        int to_prop_id = lines[i].to.propId;
+        int from_prop_id = lines[i].from.pinId;
+        int to_prop_id = lines[i].to.pinId;
         
         from->next.push_back(lines[i].to);                
         from->paramOut[from_prop_id].push_back(lines[i].to);
@@ -842,11 +842,11 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
         if (m_nodeInfo[node_id].pinType.contains(prop_in_id))
             continue;
 
-        auto pin = graph->node->prop(prop_in_id);
-        if (pin->flag() & Prop_noValue)
+        auto pin = graph->node->pin(prop_in_id);
+        if (pin->flag() & Pin_noValue)
             continue;
 
-        QString pin_name = "输入节点" + graph->node->propName(prop_in_id);            
+        QString pin_name = "输入节点" + graph->node->pinName(prop_in_id);            
         int pin_type = Type_none;
         if (graph->paramIn.contains(prop_in_id))  //有输入
         {
@@ -855,7 +855,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
             for (int i = 0; i < from_list.size(); i++)
             {   
                 auto from_gemo = from_list[i];
-                if (!m_nodeInfo[from_gemo.nodeId].pinType.contains(from_gemo.propId))
+                if (!m_nodeInfo[from_gemo.nodeId].pinType.contains(from_gemo.pinId))
                 {
                     error = pin_name + "前置依赖未设置";
                     return false;
@@ -949,8 +949,8 @@ bool JZNodeCompiler::bulidControlFlow()
         auto stack_init = (JZNodeIRStackInit*)m_statmentList->at(i).data();                
         JZNodeIRAlloc *ir_alloc = new JZNodeIRAlloc();
         ir_alloc->type = JZNodeIRAlloc::StackId;
-        ir_alloc->id = paramId(stack_init->nodeId, stack_init->propId);
-        ir_alloc->dataType = pinType(stack_init->nodeId, stack_init->propId);
+        ir_alloc->id = paramId(stack_init->nodeId, stack_init->pinId);
+        ir_alloc->dataType = pinType(stack_init->nodeId, stack_init->pinId);
         ir_alloc->value = irLiteral(JZNodeType::matchValue(ir_alloc->dataType, QVariant()));
         replaceStatement(i, JZNodeIRPtr(ir_alloc));        
     }   
@@ -962,11 +962,11 @@ bool JZNodeCompiler::bulidControlFlow()
         NodeCompilerInfo &info = m_nodeInfo[graph_node->node->id()];
         for(int i = 0; i < info.jmpSubList.size(); i++)
         {
-            int prop = info.jmpSubList[i].prop;
-            if(!graph_node->paramOut.contains(prop))
+            int pin = info.jmpSubList[i].pin;
+            if(!graph_node->paramOut.contains(pin))
                 continue;
 
-            auto &out_list = graph_node->paramOut[prop];
+            auto &out_list = graph_node->paramOut[pin];
             Q_ASSERT(out_list.size() == 1);
             JZNodeGemo next_gemo = out_list[0];            
 
@@ -992,11 +992,11 @@ bool JZNodeCompiler::bulidControlFlow()
         //connect next
         for(int i = 0; i < info.jmpList.size(); i++)
         {
-            int prop = info.jmpList[i].prop;
+            int pin = info.jmpList[i].pin;
             int pc = info.jmpList[i].pc;
-            if(graph_node->paramOut.contains(prop))
+            if(graph_node->paramOut.contains(pin))
             {
-                auto &out_list = graph_node->paramOut[info.jmpList[i].prop];
+                auto &out_list = graph_node->paramOut[info.jmpList[i].pin];
                 Q_ASSERT(out_list.size() == 1);
 
                 JZNodeGemo next_gemo = out_list[0];
@@ -1084,11 +1084,11 @@ int JZNodeCompiler::isAllFlowReturn(int id, bool root)
         int ret_count = 0;
         for (int i = 0; i < info.jmpSubList.size(); i++)
         {
-            int prop = info.jmpSubList[i].prop;
-            if (!graph_node->paramOut.contains(prop))
+            int pin = info.jmpSubList[i].pin;
+            if (!graph_node->paramOut.contains(pin))
                 continue;
 
-            auto &out_list = graph_node->paramOut[prop];
+            auto &out_list = graph_node->paramOut[pin];
             if (isAllFlowReturn(out_list[0].nodeId, false))
                 ret_count++;
         }
@@ -1101,11 +1101,11 @@ int JZNodeCompiler::isAllFlowReturn(int id, bool root)
             ret_count = 0;
             for (int i = 0; i < info.jmpList.size(); i++)
             {
-                int prop = info.jmpList[i].prop;
-                if (!graph_node->paramOut.contains(prop))
+                int pin = info.jmpList[i].pin;
+                if (!graph_node->paramOut.contains(pin))
                     continue;
 
-                auto &out_list = graph_node->paramOut[prop];
+                auto &out_list = graph_node->paramOut[pin];
                 if (isAllFlowReturn(out_list[0].nodeId, false))
                     ret_count++;
             }
@@ -1143,11 +1143,11 @@ void JZNodeCompiler::replaceSubNode(int id,int parent_id,int flow_index)
     auto graph_node = m_currentGraph->graphNode(id);
     for(int i = 0; i < info.jmpList.size(); i++)
     {   
-        int prop = info.jmpList[i].prop;
+        int pin = info.jmpList[i].pin;
         int pc = info.jmpList[i].pc;
-        if(graph_node->paramOut.contains(prop))
+        if(graph_node->paramOut.contains(pin))
         {
-            auto &out_list = graph_node->paramOut[prop];
+            auto &out_list = graph_node->paramOut[pin];
             Q_ASSERT(out_list.size() == 1);
 
             JZNodeGemo next_gemo = out_list[0];
@@ -1243,30 +1243,30 @@ void JZNodeCompiler::replaceStatement(int pc, QList<JZNodeIRPtr> ir_list)
     }
 }
 
-int JZNodeCompiler::addJumpNode(int prop)
+int JZNodeCompiler::addJumpNode(int pin)
 {
-    Q_ASSERT(currentNode()->prop(prop) && currentNode()->prop(prop)->isFlow()
-        && currentNode()->prop(prop)->isOutput());
+    Q_ASSERT(currentNode()->pin(pin) && currentNode()->pin(pin)->isFlow()
+        && currentNode()->pin(pin)->isOutput());
 
     NodeCompilerInfo::Jump info;
     JZNodeIR *jmp = new JZNodeIR(OP_none);
-    jmp->memo = "flow" + QString::number(currentNode()->flowOutList().indexOf(prop));
+    jmp->memo = "flow" + QString::number(currentNode()->flowOutList().indexOf(pin));
     addStatement(JZNodeIRPtr(jmp));
-    info.prop = prop;
+    info.pin = pin;
     info.pc = jmp->pc;
     currentNodeInfo()->jmpList.push_back(info);
     return info.pc;
 }
 
-int JZNodeCompiler::addJumpSubNode(int prop)
+int JZNodeCompiler::addJumpSubNode(int pin)
 {
-    Q_ASSERT(currentNode()->prop(prop) && currentNode()->prop(prop)->isSubFlow());
+    Q_ASSERT(currentNode()->pin(pin) && currentNode()->pin(pin)->isSubFlow());
 
     NodeCompilerInfo::Jump info;
     JZNodeIR *jmp = new JZNodeIR(OP_nop);
-    jmp->memo = "subflow" + QString::number(currentNode()->subFlowList().indexOf(prop));
+    jmp->memo = "subflow" + QString::number(currentNode()->subFlowList().indexOf(pin));
     addStatement(JZNodeIRPtr(jmp));
-    info.prop = prop;
+    info.pin = pin;
     info.pc = jmp->pc;
     currentNodeInfo()->jmpSubList.push_back(info);
     return info.pc;
@@ -1361,7 +1361,7 @@ void JZNodeCompiler::addFunctionAlloc(const FunctionDefine &define)
         auto in_list = node->paramInList();
         for (int j = 0; j < in_list.size(); j++)
         {
-            if (node->prop(in_list[j])->flag() & Prop_noValue)
+            if (node->pin(in_list[j])->flag() & Pin_noValue)
                 continue;
             addStatement(JZNodeIRPtr(new JZNodeIRStackInit(node->id(), in_list[j])));
         }
@@ -1369,7 +1369,7 @@ void JZNodeCompiler::addFunctionAlloc(const FunctionDefine &define)
         auto out_list = node->paramOutList();
         for (int j = 0; j < out_list.size(); j++)
         {
-            if (node->prop(out_list[j])->flag() & Prop_noValue)
+            if (node->pin(out_list[j])->flag() & Pin_noValue)
                 continue;
             addStatement(JZNodeIRPtr(new JZNodeIRStackInit(node->id(), out_list[j])));
         }
@@ -1470,8 +1470,8 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
         if (prop_id != -1 && in_prop != prop_id)
             continue;
 
-        auto pin = in_node->node->prop(in_prop);
-        if (pin->flag() & Prop_noValue)
+        auto pin = in_node->node->pin(in_prop);
+        if (pin->flag() & Pin_noValue)
             continue;
         
         if (in_node->paramIn.contains(in_prop))
@@ -1504,8 +1504,8 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
         else
         {
             int to_id = paramId(in_node->node->id(), in_prop);
-            auto prop = in_node->node->prop(in_prop);            
-            if (prop->value().isEmpty())
+            auto pin = in_node->node->pin(in_prop);            
+            if (pin->value().isEmpty())
             {
                 //成员函数可以不输入this
                 if (prop_idx == 0 && in_node->node->type() == Node_function)
@@ -1523,7 +1523,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
             }            
             
             int match_type = pinType(nodeId,in_prop);
-            addSetVariable(irId(to_id), irLiteral(JZNodeType::initValue(match_type,prop->value())));
+            addSetVariable(irId(to_id), irLiteral(JZNodeType::initValue(match_type,pin->value())));
         }
     }
     addNodeStart(nodeId);
@@ -1558,7 +1558,7 @@ bool JZNodeCompiler::addFlowInput(int nodeId, int prop_id, QString &error)
             //对每个节点遍历输入
             while (it != in_node->paramIn.end())
             {
-                if (!in_node->node->prop(it.key())->isParam())
+                if (!in_node->node->pin(it.key())->isParam())
                 {
                     it++;
                     continue;
@@ -1629,7 +1629,7 @@ void JZNodeCompiler::addFlowOutput(int nodeId)
     while(it_out != graph->paramOut.end())
     {
         auto &out_list = it_out.value();
-        auto pin = node->prop(it_out.key());
+        auto pin = node->pin(it_out.key());
         if(pin->isParam())
         {
             for(int out_idx = 0; out_idx < out_list.size(); out_idx++)

@@ -22,13 +22,13 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
-    if(1)
+    if(0)
     {
         SampleRussian sample;
         //SampleCalculator sample;
         sample.saveProject();
-        //sample.run();
-        //return 1;
+        sample.run();
+        return 0;
     }    
 
     if(argc == 1)

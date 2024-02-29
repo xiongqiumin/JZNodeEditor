@@ -9,21 +9,19 @@
 
 enum
 {
-    Prop_none,
-    Prop_in = 0x1,
-    Prop_out = 0x2,    
-    Prop_param = 0x4,       //参数
-    Prop_flow = 0x8,        //流程 
-    Prop_subFlow  = 0x10,   //子程序
-    Prop_button = 0x20,
-    Prop_dispName = 0x40,
-    Prop_editName = 0x80,
-    Prop_dispValue = 0x100,
-    Prop_editValue = 0x200,
-    Prop_noValue = 0x400,
-    Prop_literal = 0x800,
-
-    Prop_All = 0xFFFFFFFF,
+    Pin_none,
+    Pin_in = 0x1,
+    Pin_out = 0x2,
+    Pin_param = 0x4,       //参数
+    Pin_flow = 0x8,        //流程 
+    Pin_subFlow  = 0x10,   //子程序
+    Pin_button = 0x20,
+    Pin_dispName = 0x40,
+    Pin_editName = 0x80,
+    Pin_dispValue = 0x100,
+    Pin_editValue = 0x200,
+    Pin_noValue = 0x400,
+    Pin_literal = 0x800,    
 };
 
 enum {    

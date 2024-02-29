@@ -8,8 +8,8 @@
 JZNodeLiteral::JZNodeLiteral()
 {
     m_type = Node_literal;
-    addParamOut("out", Prop_dispValue | Prop_editValue);
-    prop(paramOut(0))->setDataType({Type_none});
+    addParamOut("out", Pin_dispValue | Pin_editValue);
+    pin(paramOut(0))->setDataType({Type_none});
 }
 
 JZNodeLiteral::~JZNodeLiteral()
@@ -18,18 +18,18 @@ JZNodeLiteral::~JZNodeLiteral()
 
 int JZNodeLiteral::dataType() const
 {
-    return prop(paramOut(0))->dataType()[0];
+    return pin(paramOut(0))->dataType()[0];
 }
 
 void JZNodeLiteral::setDataType(int type)
 {
     int out = paramOut(0);
-    prop(out)->setDataType({type});
+    pin(out)->setDataType({type});
     setName(JZNodeType::typeToName(type));
     if(JZNodeType::isBaseOrEnum(type))
-        prop(out)->setFlag(Prop_out | Prop_param | Prop_dispValue | Prop_editValue);
+        pin(out)->setFlag(Pin_out | Pin_param | Pin_dispValue | Pin_editValue);
     else
-        prop(out)->setFlag(Prop_out | Prop_param | Prop_dispName);
+        pin(out)->setFlag(Pin_out | Pin_param | Pin_dispName);
     
     if (type == Type_bool)
         setLiteral(false);
@@ -41,16 +41,16 @@ void JZNodeLiteral::setDataType(int type)
         setLiteral("");    
     else if (type == Type_nullptr)
     {
-        setPropName(out, "null");
+        setPinName(out, "null");
         setLiteral(QVariant::fromValue(JZObjectNull()));
     }
 }
 
 QVariant JZNodeLiteral::literal() const
 {
-    auto pin = prop(paramOut(0));
-    QVariant v = pin->value();
-    int dataType = pin->dataType()[0];
+    auto ptr = pin(paramOut(0));
+    QVariant v = ptr->value();
+    int dataType = ptr->dataType()[0];
     if (dataType == Type_nullptr)
         v = QVariant::fromValue(JZObjectNull());
     else
@@ -62,7 +62,7 @@ QVariant JZNodeLiteral::literal() const
 void JZNodeLiteral::setLiteral(QVariant value)
 {
     QString str = JZNodeType::matchValue(Type_string, value).toString();
-    setPropValue(paramOut(0), str);
+    setPinValue(paramOut(0), str);
 }
 
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
@@ -77,7 +77,7 @@ bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 JZNodeEnum::JZNodeEnum()
 {
     m_type = Node_enum;
-    addParamOut("out", Prop_dispValue | Prop_editValue);
+    addParamOut("out", Pin_dispValue | Pin_editValue);
     m_enumId = -1;
 }
 
@@ -88,7 +88,7 @@ JZNodeEnum::~JZNodeEnum()
 
 bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 {
-    QString key = prop(paramOut(0))->value();
+    QString key = pin(paramOut(0))->value();
     auto def = JZNodeObjectManager::instance()->enumMeta(m_name);
     int v = def->keyToValue(key);
 
@@ -114,7 +114,7 @@ void JZNodeEnum::setEnum(int id)
 void JZNodeEnum::setEnumValue(int value)
 {
     auto meta = JZNodeObjectManager::instance()->enumMeta(m_enumId);
-    prop(paramOut(0))->setValue(meta->valueToKey(value));
+    pin(paramOut(0))->setValue(meta->valueToKey(value));
 }
 
 //JZNodeCreate
@@ -126,9 +126,9 @@ JZNodeCreate::JZNodeCreate()
     addFlowIn();
     addFlowOut();
 
-    int id = addParamIn("Class",Prop_editValue | Prop_dispName | Prop_dispValue | Prop_literal);
+    int id = addParamIn("Class",Pin_editValue | Pin_dispName | Pin_dispValue | Pin_literal);
     setPinTypeString(id);
-    addParamOut("Return", Prop_dispName);
+    addParamOut("Return", Pin_dispName);
 
     setPinTypeString(id);
 }
@@ -140,12 +140,12 @@ JZNodeCreate::~JZNodeCreate()
 
 void JZNodeCreate::setClassName(const QString &name)
 {
-    setPropValue(paramIn(0),"\"" + name + "\"");
+    setPinValue(paramIn(0),"\"" + name + "\"");
 }
 
 QString JZNodeCreate::className() const
 {
-    QString name = propValue(paramIn(0));
+    QString name = pinValue(paramIn(0));
     if (name.front() == '\"' && name.back() == '\"')
         return name.mid(1, name.size() - 2);
     else
@@ -198,11 +198,11 @@ JZNodeCreateFromString::JZNodeCreateFromString()
     addFlowIn();
     addFlowOut();
 
-    int in1 = addParamIn("Class", Prop_editValue | Prop_dispName | Prop_dispValue | Prop_literal);
-    int in2 = addParamIn("Context", Prop_editValue | Prop_dispName | Prop_dispValue );
+    int in1 = addParamIn("Class", Pin_editValue | Pin_dispName | Pin_dispValue | Pin_literal);
+    int in2 = addParamIn("Context", Pin_editValue | Pin_dispName | Pin_dispValue );
     setPinTypeString(in1);
     setPinTypeString(in2);
-    addParamOut("Return", Prop_dispName);
+    addParamOut("Return", Pin_dispName);
 }
 
 JZNodeCreateFromString::~JZNodeCreateFromString()
@@ -251,12 +251,12 @@ void JZNodeCreateFromString::pinChanged(int id)
 
 void JZNodeCreateFromString::setClassName(const QString &name)
 {
-    setPropValue(paramIn(0), "\"" + name + "\"");
+    setPinValue(paramIn(0), "\"" + name + "\"");
 }
 
 QString JZNodeCreateFromString::className() const
 {
-    QString name = propValue(paramIn(0));
+    QString name = pinValue(paramIn(0));
     if (name.front() == '\"' && name.back() == '\"')
         return name.mid(1, name.size() - 2);
     else
@@ -265,12 +265,12 @@ QString JZNodeCreateFromString::className() const
 
 void JZNodeCreateFromString::setContext(const QString &text)
 {
-    setPropValue(paramIn(1), text);
+    setPinValue(paramIn(1), text);
 }
 
 QString JZNodeCreateFromString::context() const
 {
-    return propValue(paramIn(1));
+    return pinValue(paramIn(1));
 }
 
 //JZNodeParamFunction
@@ -295,7 +295,7 @@ JZNodeDisplay::JZNodeDisplay()
     m_type = Node_display;
     m_name = "display";
 
-    int in = addParamIn("value",Prop_dispValue);
+    int in = addParamIn("value",Pin_dispValue);
     setPinTypeAny(in);
 }
 
@@ -318,7 +318,7 @@ JZNodePrint::JZNodePrint()
 
     addFlowIn();
     addFlowOut();
-    int in = addParamIn("text", Prop_dispName);
+    int in = addParamIn("text", Pin_dispName);
     setPinTypeAny(in);
 }
 
@@ -344,7 +344,7 @@ JZNodeThis::JZNodeThis()
 {
     m_name = "this";
     m_type = Node_this;
-    addParamOut("this",Prop_dispName);
+    addParamOut("this",Pin_dispName);
 }
 
 JZNodeThis::~JZNodeThis()
@@ -375,9 +375,9 @@ void JZNodeThis::fileInitialized()
 JZNodeParam::JZNodeParam()
 {
     m_name = "get";
-    m_flag = Node_propDragVariable;
+    m_flag = Node_pinDragVariable;
     m_type = Node_param;
-    addParamOut("",Prop_dispName | Prop_editName);
+    addParamOut("",Pin_dispName | Pin_editName);
 }
 
 JZNodeParam::~JZNodeParam()
@@ -399,12 +399,12 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
 
 void JZNodeParam::setVariable(const QString &name)
 {
-    setPropName(paramOut(0),name);
+    setPinName(paramOut(0),name);
 }
 
 QString JZNodeParam::variable() const
 {
-    return propName(paramOut(0));
+    return pinName(paramOut(0));
 }
 
 void JZNodeParam::drag(const QVariant &value)
@@ -426,13 +426,13 @@ void JZNodeParam::pinChanged(int id)
 JZNodeSetParam::JZNodeSetParam()
 {
     m_type = Node_setParam;
-    m_flag = Node_propDragVariable;
+    m_flag = Node_pinDragVariable;
     m_name = "set";
 
     addFlowIn();    
     addFlowOut();
 
-    addParamIn("",Prop_dispName | Prop_editName | Prop_editValue | Prop_dispValue);
+    addParamIn("",Pin_dispName | Pin_editName | Pin_editValue | Pin_dispValue);
     addParamOut("");
 }
 
@@ -442,12 +442,12 @@ JZNodeSetParam::~JZNodeSetParam()
 
 void JZNodeSetParam::setVariable(const QString &name)
 {
-    setPropName(paramIn(0),name);
+    setPinName(paramIn(0),name);
 }
 
 QString JZNodeSetParam::variable() const
 {
-    return propName(paramIn(0));
+    return pinName(paramIn(0));
 }
 
 void JZNodeSetParam::drag(const QVariant &value)
@@ -489,10 +489,10 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
 JZNodeSetParamDataFlow::JZNodeSetParamDataFlow()
 {
     m_name = "set";
-    m_flag = Node_propDragVariable;
+    m_flag = Node_pinDragVariable;
     m_type = Node_setParamData;
 
-    addParamIn("",Prop_dispName | Prop_editName | Prop_editValue | Prop_dispValue);
+    addParamIn("",Pin_dispName | Pin_editName | Pin_editValue | Pin_dispValue);
 }
 
 JZNodeSetParamDataFlow::~JZNodeSetParamDataFlow()
@@ -501,12 +501,12 @@ JZNodeSetParamDataFlow::~JZNodeSetParamDataFlow()
 
 void JZNodeSetParamDataFlow::setVariable(const QString &name)
 {
-    setPropName(paramIn(0),name);
+    setPinName(paramIn(0),name);
 }
 
 QString JZNodeSetParamDataFlow::variable() const
 {
-    return propName(paramIn(0));
+    return pinName(paramIn(0));
 }
 
 void JZNodeSetParamDataFlow::drag(const QVariant &value)
@@ -541,19 +541,19 @@ bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
 void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
 {
     auto meta = JZNodeObjectManager::instance()->meta(className);
-    prop(paramIn(0))->setName(className);    
+    pin(paramIn(0))->setName(className);    
     setPinType(paramIn(0), { meta->id });
 
     for (int i = 0; i < param_list.size(); i++)
     {
         auto param = meta->param(param_list[i]);
 
-        int flag = Prop_dispName;        
+        int flag = Pin_dispName;        
         int pin_id = -1;
         if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
         {
             if (JZNodeType::isBaseOrEnum(param->dataType()))
-                flag |= (Prop_dispValue | Prop_editValue);
+                flag |= (Pin_dispValue | Pin_editValue);
             pin_id = addParamIn(param->name, flag);
         }
         else
@@ -566,7 +566,7 @@ void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
 
 QString JZNodeAbstractMember::className()
 {
-    return prop(paramIn(0))->name();
+    return pin(paramIn(0))->name();
 }
 
 QStringList JZNodeAbstractMember::members()
@@ -582,7 +582,7 @@ QStringList JZNodeAbstractMember::members()
         pin_list = paramOutList();
 
     for (int i = 0; i < pin_list.size(); i++)
-        ret << prop(pin_list[i])->name();
+        ret << pin(pin_list[i])->name();
     return ret;
 }
 
@@ -598,7 +598,7 @@ JZNodeMemberParam::JZNodeMemberParam()
     m_name = "getMember";
     m_type = Node_memberParam;
 
-    addParamIn("", Prop_dispName);
+    addParamIn("", Pin_dispName);
     addButtonIn("edit");
 }
 
@@ -619,7 +619,7 @@ bool JZNodeMemberParam::compiler(JZNodeCompiler *c, QString &error)
     {
         QList<JZNodeIRParam> in,out;
         in << irId(obj_id);
-        in << irLiteral(prop(list[i])->name());
+        in << irLiteral(pin(list[i])->name());
         out << irId(c->paramId(m_id, list[i]));
         c->addCall(irLiteral("getMemberParam"), in, out);
     }
@@ -632,7 +632,7 @@ JZNodeSetMemberParam::JZNodeSetMemberParam()
     m_name = "setMember";
     m_type = Node_setMemberParam;
 
-    addParamIn("", Prop_dispName);
+    addParamIn("", Pin_dispName);
     addFlowIn();
     addFlowOut();
     addButtonIn("edit");
@@ -659,7 +659,7 @@ bool JZNodeSetMemberParam::compiler(JZNodeCompiler *c, QString &error)
     for (int i = 0; i < list.size(); i++)
     {
         int var_id = c->paramId(m_id, paramIn(i + 1));
-        QString var_name = prop(paramIn(i + 1))->name();
+        QString var_name = pin(paramIn(i + 1))->name();
         in[1] = irId(var_id);
         in[2] = irLiteral(var_name);
         c->addCall(irLiteral("setMemberParam"), in, out);    
@@ -675,7 +675,7 @@ JZNodeSetMemberParamData::JZNodeSetMemberParamData()
     m_name = "setMember";
     m_type = Node_setMemberParamData;
 
-    addParamIn("",Prop_dispName);    
+    addParamIn("",Pin_dispName);    
     addButtonIn("edit");
 }
 
@@ -694,7 +694,7 @@ bool JZNodeSetMemberParamData::compiler(JZNodeCompiler *c, QString &error)
 
     QList<JZNodeIRParam> in, out;
     in << irId(obj_id);
-    in << irLiteral(prop(paramIn(1))->name());
+    in << irLiteral(pin(paramIn(1))->name());
     in << irId(var_id);
     c->addCall(irLiteral("setMemberParam"), in, out);
 

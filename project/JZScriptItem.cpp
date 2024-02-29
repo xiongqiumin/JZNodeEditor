@@ -148,7 +148,7 @@ JZNodePin *JZScriptItem::getPin(const JZNodeGemo &gemo)
     auto node = getNode(gemo.nodeId);
     if(!node)
         return nullptr;
-    return node->prop(gemo.propId);
+    return node->pin(gemo.pinId);
 }
 
 JZNode *JZScriptItem::getNode(int id)
@@ -197,7 +197,7 @@ int JZScriptItem::parentNode(int id)
     auto line = getConnect(in_lines[0]);
 
     JZNode *from = getNode(line->from.nodeId);
-    auto pin = from->prop(line->from.propId);
+    auto pin = from->pin(line->from.pinId);
     if (pin->isSubFlow())
         return line->from.nodeId;
     else
@@ -234,8 +234,8 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         return false;
     }
 
-    auto out_lines = getConnectId(from.nodeId, from.propId);
-    auto in_lines = getConnectId(to.nodeId, to.propId);
+    auto out_lines = getConnectId(from.nodeId, from.pinId);
+    auto in_lines = getConnectId(to.nodeId, to.pinId);
     if((pin_from->isFlow() || pin_from->isSubFlow()) && out_lines.size() != 0)
     {
         error = "已连接其他流程节点";
@@ -274,14 +274,14 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
     //检测数据类型
     if(pin_from->isParam())
     {
-        QList<int> from_type = node_from->propType(from.propId);
+        QList<int> from_type = node_from->pinType(from.pinId);
         if (from_type.size() == 0)
         {
             error = "输出数据未设置";
             return false;
         }
 
-        QList<int> in_type = node_to->propType(to.propId);
+        QList<int> in_type = node_to->pinType(to.pinId);
         if (in_type.size() == 0) 
         {
             error = "输入数据未设置";
@@ -331,7 +331,7 @@ int JZScriptItem::addConnect(JZNodeGemo from, JZNodeGemo to)
     m_connects.push_back(connect);
 
     JZNode *node_to = getNode(to.nodeId);
-    node_to->pinLinked(to.propId);
+    node_to->pinLinked(to.pinId);
     return connect.id;
 }
 
@@ -344,7 +344,7 @@ void JZScriptItem::insertConnect(const JZNodeConnect &connect)
     });
 
     JZNode *to = getNode(connect.to.nodeId);
-    to->pinLinked(connect.to.propId);
+    to->pinLinked(connect.to.pinId);
 }
 
 void JZScriptItem::removeConnect(int id)
@@ -355,7 +355,7 @@ void JZScriptItem::removeConnect(int id)
         if (line.id == id)
         {            
             JZNode *to = getNode(line.to.nodeId);
-            int pin_id = line.to.propId;
+            int pin_id = line.to.pinId;
 
             m_connects.removeAt(i);            
             to->pinUnlinked(pin_id);
@@ -371,41 +371,41 @@ void JZScriptItem::removeConnectByNode(int node_id, int prop_id)
         removeConnect(list[i]);
 }
 
-QList<int> JZScriptItem::getConnectId(int id, int propId)
+QList<int> JZScriptItem::getConnectId(int id, int pinId)
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
     {
         auto &c = m_connects[i];
-        if ((propId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
-                || (c.from.nodeId == id && c.from.propId == propId)
-                || (c.to.nodeId == id && c.to.propId == propId))
+        if ((pinId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
+                || (c.from.nodeId == id && c.from.pinId == pinId)
+                || (c.to.nodeId == id && c.to.pinId == pinId))
             list.push_back(c.id);
     }
     return list;
 }
 
-QList<int> JZScriptItem::getConnectOut(int id, int propId)
+QList<int> JZScriptItem::getConnectOut(int id, int pinId)
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
     {
         auto &c = m_connects[i];
-        if ((propId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
-                || (c.from.nodeId == id && c.from.propId == propId))
+        if ((pinId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
+                || (c.from.nodeId == id && c.from.pinId == pinId))
             list.push_back(c.id);
     }
     return list;
 }
 
-QList<int> JZScriptItem::getConnectInput(int id, int propId)
+QList<int> JZScriptItem::getConnectInput(int id, int pinId)
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
     {
         auto &c = m_connects[i];
-        if ((propId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
-                || (c.to.nodeId == id && c.to.propId == propId))
+        if ((pinId == -1 && (c.from.nodeId == id || c.to.nodeId == id))
+                || (c.to.nodeId == id && c.to.pinId == pinId))
             list.push_back(c.id);
     }
     return list;
@@ -424,6 +424,11 @@ JZNodeConnect *JZScriptItem::getConnect(int id)
 QList<JZNodeConnect> JZScriptItem::connectList()
 {
     return m_connects;
+}
+
+void JZScriptItem::addLocalVariable(const JZParamDefine &def)
+{
+    m_variables[def.name] = def;
 }
 
 void JZScriptItem::removeLocalVariable(QString name)
@@ -447,16 +452,6 @@ const JZParamDefine *JZScriptItem::localVariable(QString name)
     }
 
     return nullptr;
-}
-
-void JZScriptItem::addLocalVariable(QString name, QString type, const QString &v)
-{     
-    m_variables[name] = JZParamDefine(name, type, v);
-}
-
-void JZScriptItem::addLocalVariable(QString name, int dataType, const QString &v)
-{
-    addLocalVariable(name, JZNodeType::typeToName(dataType), v);
 }
 
 QStringList JZScriptItem::localVariableList(bool hasFunc)

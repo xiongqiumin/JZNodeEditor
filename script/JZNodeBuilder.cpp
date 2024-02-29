@@ -90,7 +90,7 @@ bool JZNodeBuilder::build(JZProject *project,JZNodeProgram *program)
         if(params.size() == 1)
         {
             auto param = dynamic_cast<JZParamItem*>(params[0]);
-//            m_program->m_binds[script->className()] = param->binds();
+            m_program->m_binds[script->className()] = param->bindVariables();
         }
     }
 

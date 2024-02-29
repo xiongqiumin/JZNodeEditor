@@ -11,11 +11,16 @@ public:
 
     void setType(int type);
     int type() const;
-
+    
     QString name() const;
     int count() const;
+        
     QString key(int index) const;
+    QString defaultKey() const;
+
     int value(int index) const;
+    int defaultValue() const;
+
     int keyToValue(QString key) const;
     QString valueToKey(int value) const;
 

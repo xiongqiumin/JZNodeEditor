@@ -8,7 +8,7 @@
 #include <QTabWidget>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFactory.h"
-#include "JZNodeMemberEditDialog.h"
+#include "JZNodeMemberSelectDialog.h"
 
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
@@ -48,7 +48,7 @@ bool JZListInitFunction(JZNode *node)
 //JZMemberEdit
 bool JZMemberEdit(JZNode *node)
 {
-    JZNodeMemberEditDialog dialog(node->file()->editor());
+    JZNodeMemberSelectDialog dialog(node->file()->editor());
     dialog.init(node);
     if (dialog.exec() != QDialog::Accepted)
         return false;
