@@ -6,9 +6,12 @@
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QTabWidget>
+#include <QCheckBox>
+#include <QPushButton>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFactory.h"
 #include "JZNodeMemberSelectDialog.h"
+#include "JZNodeAutoRunEditDialog.h"
 
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
@@ -86,6 +89,26 @@ void JZNodeEditor::init()
     connect(m_view,&JZNodeView::undoAvailable,this,&JZNodeEditor::undoAvailable);
     connect(m_view,&JZNodeView::modifyChanged,this,&JZNodeEditor::modifyChanged);
     connect(m_view,&JZNodeView::sigFunctionOpen, this, &JZNodeEditor::sigFunctionOpen);
+    
+    QWidget *mid_bar = new QWidget();
+    QHBoxLayout *midbar_layout = new QHBoxLayout();
+    mid_bar->setLayout(midbar_layout);
+    QCheckBox *boxAuto = new QCheckBox("自动运行");
+    QPushButton *autoRunSetting = new QPushButton("设置");
+    connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);
+    connect(autoRunSetting, &QPushButton::clicked, this, &JZNodeEditor::onAutoRunSetting);
+
+    midbar_layout->addWidget(boxAuto);
+    midbar_layout->addWidget(autoRunSetting);
+    midbar_layout->addStretch();
+    midbar_layout->setContentsMargins(0, 0, 0, 0);
+
+    QWidget *mid_widget = new QWidget();
+    QVBoxLayout *mid_layout = new QVBoxLayout();
+    mid_widget->setLayout(mid_layout);
+    mid_layout->addWidget(mid_bar);
+    mid_layout->addWidget(m_view);
+    mid_layout->setContentsMargins(0, 0, 0, 0);
 
     QVBoxLayout *l = new QVBoxLayout();
     l->setContentsMargins(0,0,0,0);
@@ -98,7 +121,7 @@ void JZNodeEditor::init()
 
     QSplitter *splitter = new QSplitter(Qt::Horizontal);    
     splitter->addWidget(m_tabView);
-    splitter->addWidget(m_view);
+    splitter->addWidget(mid_widget);
     splitter->addWidget(m_nodeProp);
 
     splitter->setCollapsible(0,false);
@@ -192,6 +215,16 @@ void JZNodeEditor::selectAll()
     m_view->selectAll();
 }
 
+void JZNodeEditor::onAutoRunChecked()
+{
+}
+
+void JZNodeEditor::onAutoRunSetting()
+{
+    JZNodeAutoRunEditDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+}
 
 void JZNodeEditor::onActionLayout()
 {

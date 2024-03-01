@@ -286,7 +286,7 @@ class JZNodeReturn : public JZNode
 public:
     JZNodeReturn();
 
-    void setFunction(const FunctionDefine *def);
+    void setFunction(const JZFunctionDefine *def);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
 protected:     

@@ -17,7 +17,7 @@ public:
     void setEventType(int eventType);
     int eventType() const;    
 
-    virtual FunctionDefine function() = 0;
+    virtual JZFunctionDefine function() = 0;
 
 protected:    
     int m_eventType;    
@@ -29,7 +29,7 @@ class JZNodeStartEvent : public JZNodeEvent
 public:
     JZNodeStartEvent();
     
-    virtual FunctionDefine function() override;
+    virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };
 
@@ -43,7 +43,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error);
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-    virtual FunctionDefine function() override;
+    virtual JZFunctionDefine function() override;
 
     void setSingle(QString sender,const SingleDefine *single);
     QString single();
@@ -69,7 +69,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-    virtual FunctionDefine function() override;
+    virtual JZFunctionDefine function() override;
 
     void setEvent(QString className, const EventDefine *func);
     QString event();
@@ -89,7 +89,7 @@ public:
     virtual void setVariable(const QString &name);
     virtual QString variable() const;
 
-    virtual FunctionDefine function() override;
+    virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };
 

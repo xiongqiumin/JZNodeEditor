@@ -484,7 +484,7 @@ QList<JZProjectItem *> JZProject::paramDefineList()
     return result;
 }
 
-const FunctionDefine *JZProject::function(QString name)
+const JZFunctionDefine *JZProject::function(QString name)
 {
     auto list = itemList("./",ProjectItem_scriptFunction);
     for(int i = 0; i < list.size(); i++)

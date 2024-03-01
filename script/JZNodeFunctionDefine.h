@@ -36,10 +36,10 @@ protected:
     Q_DISABLE_COPY(CFunction);
 };
 
-class FunctionDefine
+class JZFunctionDefine
 {
 public:
-    FunctionDefine();    
+    JZFunctionDefine();
 
     bool isNull() const;
 
@@ -53,8 +53,8 @@ public:
     QList<JZParamDefine> paramIn;
     QList<JZParamDefine> paramOut;       
 };
-QDataStream &operator<<(QDataStream &s, const FunctionDefine &param);
-QDataStream &operator>>(QDataStream &s, FunctionDefine &param);
+QDataStream &operator<<(QDataStream &s, const JZFunctionDefine &param);
+QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param);
 
 //single
 class CSingle
@@ -119,7 +119,7 @@ public:
     JZFunction();
     ~JZFunction();
 
-    FunctionDefine define() const;
+    JZFunctionDefine define() const;
     QString fullName() const;
 
     bool isCFunction() const;    

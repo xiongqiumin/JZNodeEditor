@@ -67,7 +67,7 @@ public:
     JZScriptClassItem *getItemClass(JZProjectItem *item);    
     JZProjectItem *getItemFile(JZProjectItem *item);
     
-    const FunctionDefine *function(QString name);
+    const JZFunctionDefine *function(QString name);
     QStringList functionList();
 
     bool hasBreakPoint(QString file,int id);

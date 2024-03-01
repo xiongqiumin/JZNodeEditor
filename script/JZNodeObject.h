@@ -30,13 +30,13 @@ public:
     QStringList paramList(bool hasParent) const;
     const JZParamDefine *param(QString name) const;
 
-    void addFunction(FunctionDefine def);
+    void addFunction(JZFunctionDefine def);
     void removeFunction(QString function);    
     int indexOfFunction(QString function) const;
 
     QString fullname() const;
 
-    const FunctionDefine *function(QString function) const;
+    const JZFunctionDefine *function(QString function) const;
     QStringList functionList() const;
     
     const SingleDefine *single(int type) const;
@@ -57,7 +57,7 @@ public:
     QString className;            
     QString superName;
     QMap<QString,JZParamDefine> params;
-    QList<FunctionDefine> functions;
+    QList<JZFunctionDefine> functions;
     QList<SingleDefine> singles;
     QList<EventDefine> events;
     bool isCObject;    
@@ -99,7 +99,7 @@ public:
     QVariant *paramRef(const QString &name);
     QStringList paramList() const;
 
-    const FunctionDefine *function(const QString &function) const;
+    const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
     
     const SingleDefine *single(int eventType) const;

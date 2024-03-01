@@ -102,6 +102,9 @@ QPointF JZNodeLineItem::drawStartPoint() const
 
 QPointF JZNodeLineItem::drawEndPoint() const
 {
+    if (m_to.nodeId == -1)
+        return m_endPoint;
+
     JZNodeGraphItem *node = editor()->getNodeItem(m_to.nodeId);
     int x = node->sceneBoundingRect().left();
     return QPointF(x, m_endPoint.y());

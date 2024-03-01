@@ -362,7 +362,7 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
     if (pin_id >= 0)
     {
         auto pin = m_node->pin(pin_id);
-        if(pin->isButton())
+        if(pin->isWidget())
         {
             m_pinButtonRect = propRect(pin->id());
             m_pinButtonOn = true;

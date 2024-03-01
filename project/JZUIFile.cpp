@@ -100,6 +100,10 @@ void JZUiFile::updateDefine()
             list << def;
         }
     }
+    std::sort(list.begin(), list.end(), [](const JZParamDefine &def1,const JZParamDefine &def2)->bool {
+        return def1.name < def2.name;
+    });
+
     m_widgets = list;
     delete root;
 }

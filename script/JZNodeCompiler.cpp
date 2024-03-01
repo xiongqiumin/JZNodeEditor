@@ -289,7 +289,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
             ret = bulidControlFlow();
             if(ret)
             {           
-                FunctionDefine define = scriptFile->function();
+                JZFunctionDefine define = scriptFile->function();
                 addFunction(define, start_node->id());
             }
         }
@@ -795,14 +795,14 @@ void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
         JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(graph_list[node_idx]->node);
         if(node_event)
         {            
-            FunctionDefine def = node_event->function();
+            JZFunctionDefine def = node_event->function();
             if(!def.isNull())
                 addFunction(def, node->id());
         }
     }
 }
 
-void JZNodeCompiler::addFunction(const FunctionDefine &define, int node_id)
+void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int node_id)
 {    
     JZFunction impl;
     impl.name = define.name;
@@ -1195,9 +1195,9 @@ int JZNodeCompiler::nextPc()
     return m_statmentList->size();
 }
 
-const FunctionDefine *JZNodeCompiler::function(QString name)
+const JZFunctionDefine *JZNodeCompiler::function(QString name)
 {
-    const FunctionDefine *func = m_project->function(name);
+    const JZFunctionDefine *func = m_project->function(name);
     if(func)
         return func;
     return JZNodeFunctionManager::instance()->function(name);
@@ -1315,7 +1315,7 @@ void JZNodeCompiler::addCall(const JZNodeIRParam &function, const QList<JZNodeIR
         addSetVariable(paramOut[i],irId(Reg_Call+i));
 }
 
-void JZNodeCompiler::addCall(const FunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut)
+void JZNodeCompiler::addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut)
 {
     addCall(irLiteral(function->fullName()), paramIn, paramOut);
 }
@@ -1338,7 +1338,7 @@ int JZNodeCompiler::allocStack(int dataType)
     return id;        
 }
 
-void JZNodeCompiler::addFunctionAlloc(const FunctionDefine &define)
+void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
 {
     QSet<QString> func_param;
     int start_pc = nextPc();

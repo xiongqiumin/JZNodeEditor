@@ -139,7 +139,7 @@ bool JZNode::isFlowNode() const
 int JZNode::addPin(const JZNodePin &pin)
 {
     Q_ASSERT(pin.isInput() || pin.isOutput());
-    Q_ASSERT(pin.isFlow() || pin.isParam() || pin.isSubFlow() || pin.isButton());
+    Q_ASSERT(pin.isFlow() || pin.isParam() || pin.isSubFlow() || pin.isWidget());
 
     int max_id = 0;
     for (int i = 0; i < m_pinList.size(); i++)
@@ -196,7 +196,7 @@ void JZNode::removePin(int id)
     if (index == -1)
         return;
 
-    m_pinList.removeAt(id);
+    m_pinList.removeAt(index);
 }
 
 JZNodePin *JZNode::pin(int id)
@@ -305,8 +305,8 @@ int JZNode::pinPri(int id) const
         return Pri_flow;
     else if (ptr->isParam())
         return Pri_param;
-    else if(ptr->isButton())
-        return Pri_button;
+    else if(ptr->isWidget())
+        return Pri_widget;
     else
         return Pri_none;        
 }
@@ -449,7 +449,8 @@ int JZNode::addButtonIn(QString name)
 {
     JZNodePin btn;
     btn.setName(name);
-    btn.setFlag(Pin_button | Pin_in | Pin_dispName);
+    btn.setFlag(Pin_widget | Pin_in | Pin_dispName);
+    btn.setWidget("QPushButton");
     return addPin(btn);    
 }
 
@@ -457,7 +458,8 @@ int JZNode::addButtonOut(QString name)
 {
     JZNodePin btn;
     btn.setName(name);
-    btn.setFlag(Pin_button | Pin_out | Pin_dispName);
+    btn.setWidget("QPushButton");
+    btn.setFlag(Pin_widget | Pin_out | Pin_dispName);
     return addPin(btn);
 }
 
@@ -753,7 +755,7 @@ JZNodeReturn::JZNodeReturn()
     addFlowIn();
 }
 
-void JZNodeReturn::setFunction(const FunctionDefine *def)
+void JZNodeReturn::setFunction(const JZFunctionDefine *def)
 {
     auto inList = paramInList();
     for (int i = 0; i < inList.size(); i++)
@@ -808,10 +810,7 @@ JZNodeSequence::JZNodeSequence()
 
     addSequeue();
 
-    JZNodePin btn;
-    btn.setName("Add pin");
-    btn.setFlag(Pin_button | Pin_out | Pin_dispName);
-    addPin(btn);           
+    addButtonOut("Add pin");    
 }
 
 int JZNodeSequence::addSequeue()

@@ -97,6 +97,7 @@
     <ClCompile Include="editor\JZNewFileDialog.cpp" />
     <ClCompile Include="editor\JZNewProjectDialog.cpp" />
     <ClCompile Include="editor\JZProjectTree.cpp" />
+    <ClCompile Include="editor\script\JZNodeAutoRunEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeBaseItem.cpp" />
     <ClCompile Include="editor\script\JZNodeBreakPoint.cpp" />
     <ClCompile Include="editor\script\JZNodeClassEditDialog.cpp" />
@@ -110,6 +111,7 @@
     <ClCompile Include="editor\script\JZNodeLocalParamEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodePanel.cpp" />
     <ClCompile Include="editor\script\JZNodeMemberSelectDialog.cpp" />
+    <ClCompile Include="editor\script\JZNodePropertyBrowser.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeScene.cpp" />
     <ClCompile Include="editor\script\JZNodeStack.cpp" />
@@ -177,31 +179,10 @@
     <ClCompile Include="tests\test_script.cpp" />
     <ClCompile Include="tests\test_server.cpp" />
     <ClCompile Include="UiCommon.cpp" />
-    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.cpp">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
-      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
-      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
-    </QtMoc>
     <ClCompile Include="3rd\jznet\JZNetClient.cpp" />
     <ClCompile Include="3rd\jznet\JZNetDataManager.cpp" />
     <ClCompile Include="3rd\jznet\JZNetPack.cpp" />
     <ClCompile Include="3rd\jznet\JZNetServer.cpp" />
-    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowser.cpp" />
-    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowserutils.cpp" />
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.cpp">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
-      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
-      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.cpp">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
-      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
-      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
-    </QtMoc>
-    <ClCompile Include="3rd\qtpropertybrowser\qtvariantproperty.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
   </ItemGroup>
@@ -215,6 +196,7 @@
     <QtMoc Include="editor\script\JZNodeGroupEditDialog.h" />
     <QtMoc Include="editor\JZNewFileDialog.h" />
     <QtMoc Include="editor\script\JZNodeClassEditDialog.h" />
+    <QtMoc Include="editor\script\JZNodeAutoRunEditDialog.h" />
     <ClInclude Include="editor\script\JZNodeGroupItem.h" />
     <ClInclude Include="editor\script\JZNodeLayout.h" />
     <QtMoc Include="editor\script\JZNodeMemberSelectDialog.h" />
@@ -222,6 +204,7 @@
     <QtMoc Include="editor\script\JZNodeViewPanel.h" />
     <QtMoc Include="editor\script\JZNodeViewMap.h" />
     <QtMoc Include="editor\script\JZNodeLocalParamEditDialog.h" />
+    <QtMoc Include="editor\script\JZNodePropertyBrowser.h" />
     <ClInclude Include="project\JZClassItem.h" />
     <ClInclude Include="project\JZProjectItemStream.h" />
     <ClInclude Include="project\JZProjectStream.h" />
@@ -250,29 +233,6 @@
     <QtMoc Include="script\JZNodeUiLoader.h" />
     <QtMoc Include="tests\test_script.h" />
     <QtMoc Include="script\JZNodeVM.h" />
-    <QtMoc Include="3rd\qtpropertybrowser\qtvariantproperty.h">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DynamicSource>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.h">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DynamicSource>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowser.h">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DynamicSource>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.h">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DynamicSource>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowserutils_p.h">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">output</DynamicSource>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.h">
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DynamicSource>
-      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DynamicSource>
-    </QtMoc>
     <QtMoc Include="editor\JZNewProjectDialog.h" />
     <ClInclude Include="editor\script\JZNodeBaseItem.h" />
     <QtMoc Include="editor\script\JZNodeFuctionEditDialog.h" />

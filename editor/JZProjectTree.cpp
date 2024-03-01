@@ -421,7 +421,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     }
     else if(act == actCreateFunction)
     {        
-        FunctionDefine function;
+        JZFunctionDefine function;
         function.name = "new";
         if (item_class)
         {
@@ -493,7 +493,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
             if (dialog.exec() != QDialog::Accepted)
                 return;
 
-            FunctionDefine def = dialog.functionInfo();
+            JZFunctionDefine def = dialog.functionInfo();
             func_item->setFunction(def);
             if (oldName != def.name)
             {

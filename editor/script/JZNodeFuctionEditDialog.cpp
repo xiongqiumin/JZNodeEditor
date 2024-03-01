@@ -45,13 +45,13 @@ void JZNodeFuctionEditDialog::init()
     dataToUi();
 }
 
-void JZNodeFuctionEditDialog::setFunctionInfo(FunctionDefine info, bool newFunction)
+void JZNodeFuctionEditDialog::setFunctionInfo(JZFunctionDefine info, bool newFunction)
 {
     m_functionDefine = info;
     m_newFunction = newFunction;
 }
 
-FunctionDefine JZNodeFuctionEditDialog::functionInfo()
+JZFunctionDefine JZNodeFuctionEditDialog::functionInfo()
 {
     return m_functionDefine;
 }

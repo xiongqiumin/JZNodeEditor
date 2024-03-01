@@ -36,7 +36,7 @@ public:
     void removeFlow(QString name);
     JZScriptItem *flow(QString name);
 
-    JZScriptItem *addMemberFunction(FunctionDefine func);
+    JZScriptItem *addMemberFunction(JZFunctionDefine func);
     void removeMemberFunction(QString func);
     JZScriptItem *getMemberFunction(QString func);    
 

@@ -20,8 +20,8 @@ public:
     QByteArray toBuffer();
     bool fromBuffer(const QByteArray &object);
 
-    const FunctionDefine &function();
-    void setFunction(FunctionDefine def);
+    const JZFunctionDefine &function();
+    void setFunction(JZFunctionDefine def);
 
     int addNode(JZNodePtr node);
     void insertNode(JZNodePtr node);
@@ -64,7 +64,7 @@ protected:
     QMap<int, JZNodePtr> m_nodes;        
     QList<JZNodeGroup> m_groups;
     QList<JZNodeConnect> m_connects;    
-    FunctionDefine m_function;    
+    JZFunctionDefine m_function;    
 
     QMap<int, QPointF> m_nodesPos;
     QMap<QString, JZParamDefine> m_variables;

@@ -49,9 +49,9 @@ JZNodeStartEvent::JZNodeStartEvent()
     setFlag(Node_pinNoRemove);
 }
 
-FunctionDefine JZNodeStartEvent::function()
+JZFunctionDefine JZNodeStartEvent::function()
 {
-    FunctionDefine func;
+    JZFunctionDefine func;
     func.name = "__main__";
     func.isFlowFunction = true;
     return func;
@@ -80,9 +80,9 @@ JZNodeSingleEvent::~JZNodeSingleEvent()
 
 }
 
-FunctionDefine JZNodeSingleEvent::function()
+JZFunctionDefine JZNodeSingleEvent::function()
 {    
-    FunctionDefine def;
+    JZFunctionDefine def;
     def.isFlowFunction = true;    
     def.name = "on_" + JZNodeName::memberName(variable()) + "_" + JZNodeName::memberName(name());
     
@@ -228,12 +228,12 @@ void JZNodeQtEvent::loadFromStream(QDataStream &s)
     s >> m_event;
 }
 
-FunctionDefine JZNodeQtEvent::function()
+JZFunctionDefine JZNodeQtEvent::function()
 {
     auto meta = JZNodeObjectManager::instance()->meta(m_className);
     auto def = meta->function(m_event);
 
-    FunctionDefine func;
+    JZFunctionDefine func;
     func.isFlowFunction = true;
     func.className = m_className;    
     func.name = "event_" + m_event;
@@ -292,9 +292,9 @@ QString JZNodeParamChangedEvent::variable() const
     return QString();
 }
 
-FunctionDefine JZNodeParamChangedEvent::function()
+JZFunctionDefine JZNodeParamChangedEvent::function()
 {
-    FunctionDefine def;
+    JZFunctionDefine def;
     return def;
 }
 

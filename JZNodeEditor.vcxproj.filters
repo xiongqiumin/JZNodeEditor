@@ -38,9 +38,6 @@
     <Filter Include="Source Files\3rd">
       <UniqueIdentifier>{0f58cf63-a37e-45a3-b5b8-a72a183c5ab2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\3rd\qtpropertybrowser">
-      <UniqueIdentifier>{c30fc961-5d0a-4cbd-a7d8-8425d4e58d5d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\3rd\jznet">
       <UniqueIdentifier>{a2216d2c-506f-41d9-b793-502bece920f7}</UniqueIdentifier>
     </Filter>
@@ -68,9 +65,6 @@
     <Filter Include="Header Files\3rd\jznet">
       <UniqueIdentifier>{92ebd816-2213-4124-9cc7-5976d1720738}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\3rd\qtpropertybrowser">
-      <UniqueIdentifier>{83693c4e-fa9f-4aeb-92cc-eb34b7057216}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\editor\ui">
       <UniqueIdentifier>{cf7993a2-d5f4-4ad7-aacb-e17f4d33de84}</UniqueIdentifier>
     </Filter>
@@ -90,15 +84,6 @@
     </ClCompile>
     <ClCompile Include="mainwindow.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowser.cpp">
-      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd\qtpropertybrowser\qtpropertybrowserutils.cpp">
-      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
-    </ClCompile>
-    <ClCompile Include="3rd\qtpropertybrowser\qtvariantproperty.cpp">
-      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
     </ClCompile>
     <ClCompile Include="3rd\jznet\JZNetClient.cpp">
       <Filter>Source Files\3rd\jznet</Filter>
@@ -364,19 +349,16 @@
     <ClCompile Include="editor\script\JZNodeTypeHelper.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
+    <ClCompile Include="editor\script\JZNodeAutoRunEditDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodePropertyBrowser.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
       <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.cpp">
-      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.cpp">
-      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.cpp">
-      <Filter>Source Files\3rd\qtpropertybrowser</Filter>
     </QtMoc>
     <QtMoc Include="script\JZNodeDebugClient.h">
       <Filter>Header Files\script</Filter>
@@ -416,24 +398,6 @@
     </QtMoc>
     <QtMoc Include="editor\ui\JZUiEditor.h">
       <Filter>Header Files\editor\ui</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtvariantproperty.h">
-      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qttreepropertybrowser.h">
-      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowser.h">
-      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qteditorfactory.h">
-      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertybrowserutils_p.h">
-      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
-    </QtMoc>
-    <QtMoc Include="3rd\qtpropertybrowser\qtpropertymanager.h">
-      <Filter>Header Files\3rd\qtpropertybrowser</Filter>
     </QtMoc>
     <QtMoc Include="script\JZNodeVM.h">
       <Filter>Header Files\script</Filter>
@@ -514,6 +478,12 @@
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
     <QtMoc Include="editor\script\JZNodeTypeHelper.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeAutoRunEditDialog.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodePropertyBrowser.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
   </ItemGroup>

@@ -565,7 +565,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
 
             QString function = strs[2].mid(1,s - 1);
             QStringList params = strs[2].mid(s + 1,strs[2].size()-1 - (s + 1)).split(",");
-            const FunctionDefine *define = c->function(function);
+            const JZFunctionDefine *define = c->function(function);
             if(!define)
             {
                 error = "no such function " + function;

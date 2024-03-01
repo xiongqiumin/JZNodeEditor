@@ -116,7 +116,7 @@ JZNodeScriptInfo::JZNodeScriptInfo()
 {
 }
 
-const FunctionDefine *JZNodeScriptInfo::function(QString name) const
+const JZFunctionDefine *JZNodeScriptInfo::function(QString name) const
 {
     for (int i = 0; i < functionList.size(); i++)
     {

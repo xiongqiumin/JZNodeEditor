@@ -36,7 +36,7 @@ void TestServer::init(JZProject *project)
     class_file->addMemberVariable("list", Type_list);
     class_file->addMemberVariable("map", Type_map);
 
-    FunctionDefine func_def;
+    JZFunctionDefine func_def;
     func_def.name = "testFunc";
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("this", class_file->classType()));

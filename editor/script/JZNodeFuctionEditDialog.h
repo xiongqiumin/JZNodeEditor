@@ -16,8 +16,8 @@ public:
     ~JZNodeFuctionEditDialog();
     
     void init();    
-    void setFunctionInfo(FunctionDefine info,bool newFunction);
-    FunctionDefine functionInfo();    
+    void setFunctionInfo(JZFunctionDefine info,bool newFunction);
+    JZFunctionDefine functionInfo();    
 
 protected slots:    
     void on_btnInUp_clicked();
@@ -50,6 +50,6 @@ private:
 
     QString m_className;
     bool m_newFunction;
-    FunctionDefine m_functionDefine;    
+    JZFunctionDefine m_functionDefine;    
     Ui::JZNodeFuctionEditDialog *ui;
 };

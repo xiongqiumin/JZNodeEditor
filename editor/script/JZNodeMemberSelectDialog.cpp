@@ -5,7 +5,7 @@
 #include "JZNodeMemberSelectDialog.h"
 #include "ui_JZNodeMemberSelectDialog.h"
 #include "JZNodeObject.h"
-#include "JZNodeTypeDialog.h"
+#include "JZNodeTypeHelper.h"
 #include "JZClassItem.h"
 #include "JZProject.h"
 

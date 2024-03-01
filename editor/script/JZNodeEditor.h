@@ -51,6 +51,9 @@ protected slots:
     void onActionLayout();
     void onActionFitInView();
 
+    void onAutoRunChecked();
+    void onAutoRunSetting();
+
 protected:
     void init();
 

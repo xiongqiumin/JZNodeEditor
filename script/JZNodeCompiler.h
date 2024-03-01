@@ -102,13 +102,21 @@ struct NodeCompilerInfo
     QString error;
 };
 
+//Depends
+class ScriptDepend
+{
+public:
+    QList<JZParamDefine> member;
+    QList<JZParamDefine> global;
+    QMap<int,JZFunctionDefine> functions;
+};
+
 //CompilerInfo
 class CompilerInfo
 {
 public:
     QMap<int, NodeCompilerInfo> nodeInfo;    
 };
-
 
 class JZNodeCompiler
 {
@@ -132,7 +140,7 @@ public:
 
     void resetStack();
     int allocStack(int dataType);
-    void addFunctionAlloc(const FunctionDefine &define);
+    void addFunctionAlloc(const JZFunctionDefine &define);
     
     void setPinType(int nodeId, int pinId, int type);    
     int pinType(int nodeId, int pinId);
@@ -170,7 +178,7 @@ public:
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
     
     void addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addCall(const FunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+    void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAllocLocal(QString name,int dataType,const JZNodeIRParam &value);
     void addAssert(const JZNodeIRParam &tips);       
 
@@ -182,7 +190,7 @@ public:
     Graph *currentGraph();
     int currentPc();
     int nextPc();
-    const FunctionDefine *function(QString name);
+    const JZFunctionDefine *function(QString name);
 
     QString error();    
 
@@ -207,7 +215,7 @@ protected:
     void replaceSubNode(int id,int parentId,int flow_index);
     int isAllFlowReturn(int id,bool root);
     void addEventHandle(const QList<GraphNode*> &list);      
-    void addFunction(const FunctionDefine &define,int node_id);
+    void addFunction(const JZFunctionDefine &define,int node_id);
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);     
     

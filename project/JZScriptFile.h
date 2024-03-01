@@ -27,7 +27,7 @@ public:
     void removeFlow(QString name);
     JZScriptItem *flow(QString name);
 
-    JZScriptItem *addFunction(QString name, const FunctionDefine &func);
+    JZScriptItem *addFunction(QString name, const JZFunctionDefine &func);
     void removeFunction(QString name);
     JZScriptItem *getFunction(QString name);
 

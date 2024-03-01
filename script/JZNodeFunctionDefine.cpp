@@ -80,19 +80,19 @@ CFunction::~CFunction()
 
 }
 
-//FunctionDefine
-FunctionDefine::FunctionDefine()
+//JZFunctionDefine
+JZFunctionDefine::JZFunctionDefine()
 {
     isCFunction = false;
     isFlowFunction = false;          
 }
 
-bool FunctionDefine::isNull() const
+bool JZFunctionDefine::isNull() const
 {
     return name.isEmpty();
 }
 
-QString FunctionDefine::fullName() const
+QString JZFunctionDefine::fullName() const
 {
     QString result = name;
     if (!className.isEmpty())
@@ -100,12 +100,12 @@ QString FunctionDefine::fullName() const
     return result;
 }
 
-bool FunctionDefine::isMemberFunction() const
+bool JZFunctionDefine::isMemberFunction() const
 {
     return !className.isEmpty();
 }
 
-QDataStream &operator<<(QDataStream &s, const FunctionDefine &param)
+QDataStream &operator<<(QDataStream &s, const JZFunctionDefine &param)
 {    
     s << param.name;
     s << param.className;
@@ -116,7 +116,7 @@ QDataStream &operator<<(QDataStream &s, const FunctionDefine &param)
     return s;
 }
 
-QDataStream &operator>>(QDataStream &s, FunctionDefine &param)
+QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param)
 {
     s >> param.name;
     s >> param.className;
@@ -197,9 +197,9 @@ bool JZFunction::isCFunction() const
     return cfunc;
 }
 
-FunctionDefine JZFunction::define() const
+JZFunctionDefine JZFunction::define() const
 {
-    FunctionDefine define;
+    JZFunctionDefine define;
     define.name = this->name;
     define.className = this->className;
     define.isFlowFunction = this->flow;

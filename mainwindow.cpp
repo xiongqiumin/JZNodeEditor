@@ -1147,6 +1147,7 @@ void MainWindow::start(bool startPause)
     if(!build())
         return;       
 
+    m_log->clearLog(Log_Runtime);
     if (!m_useTestProcess)
     {
         QString app = qApp->applicationFilePath();

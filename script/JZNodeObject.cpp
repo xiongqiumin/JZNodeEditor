@@ -208,7 +208,7 @@ const JZParamDefine *JZNodeObjectDefine::param(QString name) const
     return nullptr;
 }
 
-void JZNodeObjectDefine::addFunction(FunctionDefine def)
+void JZNodeObjectDefine::addFunction(JZFunctionDefine def)
 {
     Q_ASSERT(!def.name.contains(".") && !def.name.contains("::"));
     functions.push_back(def);    
@@ -231,7 +231,7 @@ int JZNodeObjectDefine::indexOfFunction(QString function) const
     return -1;
 }
 
-const FunctionDefine *JZNodeObjectDefine::function(QString name) const
+const JZFunctionDefine *JZNodeObjectDefine::function(QString name) const
 {
     int index = indexOfFunction(name);
     if(index >= 0)
@@ -558,7 +558,7 @@ QVariant *JZNodeObject::paramRef(const QString &name)
     return ptr;
 }
 
-const FunctionDefine *JZNodeObject::function(const QString &name) const
+const JZFunctionDefine *JZNodeObject::function(const QString &name) const
 {
     return m_define->function(name);
 }

@@ -117,6 +117,11 @@ LogWidget::~LogWidget()
 
 }
 
+void LogWidget::clearLog(int type)
+{
+    m_logs[type]->clear();
+}
+
 void LogWidget::addLog(int type, const QString &log)
 {
     m_logs[type]->addLog(log);

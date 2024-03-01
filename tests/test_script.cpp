@@ -246,7 +246,7 @@ void ScriptTest::testBranch()
 {    
     JZNodeEngine *engine = &m_engine;
 
-    FunctionDefine define;
+    JZFunctionDefine define;
     define.name = "testFunc";
     define.paramIn.push_back(JZParamDefine("a", Type_int));
     define.paramIn.push_back(JZParamDefine("b", Type_int));
@@ -301,7 +301,7 @@ void ScriptTest::testBranch()
 
 void ScriptTest::testIf()
 {
-    FunctionDefine define;
+    JZFunctionDefine define;
     define.name = "testFunc";
     define.paramIn.push_back(JZParamDefine("a", Type_int));    
     define.paramOut.push_back(JZParamDefine("ret", Type_int));
@@ -366,7 +366,7 @@ void ScriptTest::testIf()
 
 void ScriptTest::testSwitch()
 {
-    FunctionDefine define;
+    JZFunctionDefine define;
     define.name = "testFunc";
     define.paramIn.push_back(JZParamDefine("a", Type_int));
     define.paramOut.push_back(JZParamDefine("ret", Type_int));
@@ -486,7 +486,7 @@ void ScriptTest::testFor()
 {        
     for (int i = 0; i < 4; i++)
     {
-        FunctionDefine define;
+        JZFunctionDefine define;
         define.name = "ForTest" + QString::number(i);        
         define.paramOut.push_back(JZParamDefine("result", Type_int));
 
@@ -879,7 +879,7 @@ void ScriptTest::testFunction()
         }
     */    
 
-    FunctionDefine fab;
+    JZFunctionDefine fab;
     fab.name = "fab";
     fab.paramIn.push_back(JZParamDefine("n", Type_int));
     fab.paramOut.push_back(JZParamDefine("result", Type_int));

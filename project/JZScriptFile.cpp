@@ -205,7 +205,7 @@ JZScriptItem *JZScriptFile::flow(QString name)
     return nullptr;
 }
 
-JZScriptItem *JZScriptFile::addFunction(QString path, const FunctionDefine &define)
+JZScriptItem *JZScriptFile::addFunction(QString path, const JZFunctionDefine &define)
 {    
     JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    
     file->setFunction(define);

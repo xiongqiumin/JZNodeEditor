@@ -124,12 +124,12 @@ class JZNodeScriptInfo
 public:
     JZNodeScriptInfo();
 
-    const FunctionDefine *function(QString name) const;
+    const JZFunctionDefine *function(QString name) const;
 
     QString file;
     QString className;
     QMap<int, NodeInfo> nodeInfo;
-    QList<FunctionDefine> functionList;
+    QList<JZFunctionDefine> functionList;
     QMap<QString, JZFunction> runtimeInfo;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeScriptInfo &param);

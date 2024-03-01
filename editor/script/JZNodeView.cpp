@@ -30,33 +30,33 @@
 JZNodeConnect parseLine(const QByteArray &buffer)
 {
     JZNodeConnect line;
-    QDataStream s;
+    QDataStream s(buffer);
     s >> line;
     return line;
 }
 
 QByteArray formatLine(const JZNodeConnect &line)
 {
-    QByteArray data;
-    QDataStream s;
+    QByteArray buffer;
+    QDataStream s(&buffer, QIODevice::WriteOnly);
     s << line;
-    return data;
+    return buffer;
 }
 
 JZNodeGroup parseGroup(const QByteArray &buffer)
 {
     JZNodeGroup group;
-    QDataStream s;
+    QDataStream s(buffer);
     s >> group;
     return group;
 }
 
 QByteArray formatGroup(const JZNodeGroup &group)
 {
-    QByteArray data;
-    QDataStream s;
+    QByteArray buffer;
+    QDataStream s(&buffer, QIODevice::WriteOnly);
     s << group;
-    return data;
+    return buffer;
 }
 
 //JZNodeViewCommand
@@ -451,7 +451,8 @@ void JZNodeView::removeNode(int id)
     Q_ASSERT(m_file->getConnectId(id).size() == 0);
     m_scene->removeItem(item);
     delete item;
-    m_file->removeNode(id);        
+    m_file->removeNode(id);
+    m_map->updateMap();
 }
 
 QByteArray JZNodeView::getNodeData(int id)
@@ -856,6 +857,26 @@ QVariant JZNodeView::onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsI
     return value;
 }
 
+QRectF JZNodeView::mapRect()
+{
+    QRect scene_rc = scene()->itemsBoundingRect().toRect();
+    QRectF view_rc = mapToScene(rect()).boundingRect();
+    scene_rc.adjust(-20, -20, 20, 20);
+
+    double view_gap = 1.6;
+    if (scene_rc.width() < view_rc.width() * view_gap)
+    {
+        double gap = (view_rc.width() * view_gap - scene_rc.width()) / 2;
+        scene_rc.adjust(-gap, -0, gap, 0);
+    }
+    if (scene_rc.height() < view_rc.height() * view_gap)
+    {
+        double gap = (view_rc.height() * view_gap - scene_rc.height()) / 2;
+        scene_rc.adjust(0, -gap, 0, gap);
+    }
+    return scene_rc;
+}
+
 void JZNodeView::initGraph()
 {
     m_loadFlag = true;
@@ -879,7 +900,7 @@ void JZNodeView::initGraph()
     m_scene->update();
     m_commandStack.clear();
         
-    setSceneRect(sceneRect().translated(-100, -100));    
+    setSceneRect(mapRect());
     m_map->updateMap();
 }
 
@@ -1236,7 +1257,7 @@ void JZNodeView::removeItem(QGraphicsItem *item)
         cmd->oldPos = item->pos();
         m_commandStack.push(cmd);
         
-        if (m_file->groupNodeList(group).size() == 0)
+        if (group != -1 && m_file->groupNodeList(group).size() == 0)
             addRemoveGroupCommand(group);
 
         m_commandStack.endMacro();
@@ -1390,7 +1411,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QAction *actAddNodeGroup = nullptr;
     QAction *actRemoveNodeGroup = nullptr;
     QAction *actMergeNodeGroup = nullptr;
-    if (node_list.size() > 0)
+    if (node_list.size() > 0 && pin_actions.size() == 0)
     {          
         QSet<int> group_ids;        
         int vaild_group_num = 0;

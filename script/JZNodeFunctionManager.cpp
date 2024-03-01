@@ -43,7 +43,7 @@ void JZNodeFunctionManager::init()
     registCFunction("atan2",false,jzbind::createFuncion((double (*)(double,double))(atan2)));
 }
 
-const FunctionDefine *JZNodeFunctionManager::function(QString funcName)
+const JZFunctionDefine *JZNodeFunctionManager::function(QString funcName)
 {
     auto it = m_funcMap.find(funcName);
     if (it != m_funcMap.end())
@@ -72,9 +72,9 @@ void JZNodeFunctionManager::setUserRegist(bool flag)
     m_userRegist = flag;
 }
 
-QList<const FunctionDefine*> JZNodeFunctionManager::functionList()
+QList<const JZFunctionDefine*> JZNodeFunctionManager::functionList()
 {
-    QList<const FunctionDefine*>  list;
+    QList<const JZFunctionDefine*>  list;
     auto it = m_funcMap.begin();
     while(it != m_funcMap.end())
     {
@@ -136,7 +136,7 @@ void JZNodeFunctionManager::clearUserReigst()
         m_funcMap.remove(m_userFuncs[i]);
 }
 
-void JZNodeFunctionManager::registFunction(const FunctionDefine &define)
+void JZNodeFunctionManager::registFunction(const JZFunctionDefine &define)
 {
     QString fullName = define.fullName();
     Q_ASSERT(!m_funcMap.contains(fullName));
@@ -146,7 +146,7 @@ void JZNodeFunctionManager::registFunction(const FunctionDefine &define)
         m_userFuncs << fullName;
 }
 
-void JZNodeFunctionManager::replaceFunction(const FunctionDefine &define)
+void JZNodeFunctionManager::replaceFunction(const JZFunctionDefine &define)
 {
     m_funcMap[define.fullName()].funcDefine = define;
 }

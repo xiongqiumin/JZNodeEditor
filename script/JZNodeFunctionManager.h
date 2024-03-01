@@ -18,10 +18,10 @@ public:
     void setUserRegist(bool flag);
     void clearUserReigst(); 
 
-    QList<const FunctionDefine*> functionList();
-    const FunctionDefine *function(QString name);    
-    void registFunction(const FunctionDefine &define);
-    void replaceFunction(const FunctionDefine &define);        
+    QList<const JZFunctionDefine*> functionList();
+    const JZFunctionDefine *function(QString name);    
+    void registFunction(const JZFunctionDefine &define);
+    void replaceFunction(const JZFunctionDefine &define);        
     void registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> func);
     void unregistFunction(QString name);       
 
@@ -34,7 +34,7 @@ public:
 protected:
     struct Function
     {
-        FunctionDefine funcDefine;
+        JZFunctionDefine funcDefine;
         JZFunction funcImpl;
     };
 

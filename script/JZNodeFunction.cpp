@@ -46,7 +46,7 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
     s  >> m_functionName;
 }
 
-void JZNodeFunction::setFunction(const FunctionDefine *define)
+void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 {
     Q_ASSERT(define);
 

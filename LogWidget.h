@@ -18,7 +18,7 @@ public:
     LogBrowser();
 
     void addLog(QString log);
-
+    
 protected slots:
     void onLogContextMenu(QPoint pos);
 
@@ -34,6 +34,7 @@ public:
     LogWidget();
     ~LogWidget();
 
+    void clearLog(int type);
     void addLog(int type, const QString &log);
     void showRunningLog();
 

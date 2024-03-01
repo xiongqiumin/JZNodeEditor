@@ -15,7 +15,7 @@ enum
     Pin_param = 0x4,       //参数
     Pin_flow = 0x8,        //流程 
     Pin_subFlow  = 0x10,   //子程序
-    Pin_button = 0x20,
+    Pin_widget = 0x20,
     Pin_dispName = 0x40,
     Pin_editName = 0x80,
     Pin_dispValue = 0x100,
@@ -29,7 +29,7 @@ enum {
     Pri_sub_flow = 0,
     Pri_flow = 100,
     Pri_param = 200,
-    Pri_button = 300,
+    Pri_widget = 300,
 };
 
 class JZNodePin
@@ -43,10 +43,13 @@ public:
     int id() const;
 
     void setName(const QString &name);
-    const QString &name() const;    
+    const QString &name() const;
 
     void setFlag(int flag);
     int flag() const;
+
+    void setWidget(const QString &name);
+    const QString &widget() const;
 
     bool isInput() const;
     bool isOutput() const;
@@ -54,7 +57,7 @@ public:
     bool isParam() const;
     bool isFlow() const;
     bool isSubFlow() const;
-    bool isButton() const;
+    bool isWidget() const;
 
     bool isEditValue() const;
     bool isDispName() const;
@@ -75,7 +78,8 @@ protected:
     int m_flag;    
     QString m_name;      
     QList<int> m_dataType;
-    QString m_value;    
+    QString m_value;
+    QString m_widget;
 };
 void operator<<(QDataStream &s, const JZNodePin &param);
 void operator>>(QDataStream &s, JZNodePin &param);

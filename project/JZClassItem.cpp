@@ -121,7 +121,7 @@ JZScriptItem *JZScriptClassItem::flow(QString name)
     return nullptr;
 }
 
-JZScriptItem *JZScriptClassItem::addMemberFunction(FunctionDefine func)
+JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
 {
     Q_ASSERT(func.paramIn.size() > 0 && func.paramIn[0].name == "this");
 

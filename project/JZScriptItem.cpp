@@ -46,13 +46,13 @@ int JZScriptItem::nextId()
     return m_nodeId;
 }
 
-const FunctionDefine &JZScriptItem::function()
+const JZFunctionDefine &JZScriptItem::function()
 {
     Q_ASSERT(m_itemType == ProjectItem_scriptFunction);
     return m_function;
 }
 
-void JZScriptItem::setFunction(FunctionDefine def)
+void JZScriptItem::setFunction(JZFunctionDefine def)
 {
     m_name = def.name;
     m_function = def;
@@ -321,7 +321,7 @@ int JZScriptItem::addConnect(JZNodeGemo from, JZNodeGemo to)
     QString error;
     auto pin_from = getPin(from);
     auto pin_to = getPin(to);
-    Q_ASSERT(pin_from && pin_to && pin_from->isOutput() && pin_to->isInput());
+    Q_ASSERT(pin_from && pin_to);
     Q_ASSERT(canConnect(from,to,error));
 
     JZNodeConnect connect;

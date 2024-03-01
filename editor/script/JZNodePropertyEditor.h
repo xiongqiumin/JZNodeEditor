@@ -3,8 +3,7 @@
 
 #include <QWidget>
 #include "JZNode.h"
-#include "qttreepropertybrowser.h"
-#include "qtvariantproperty.h"
+#include "JZNodePropertyBrowser.h"
 
 enum {
     PropEditor_varName,
@@ -25,7 +24,7 @@ public:
     void updateNode();    
 
     void setPinName(int prop_id,const QString &name);
-    void setPinValue(int prop_id,const QVariant &value);
+    void setPinValue(int prop_id,const QString &value);
     void setPropEditable(int prop_id,bool editable);
 
 signals:
@@ -33,21 +32,18 @@ signals:
     void sigNodePropChanged(int nodeId,int pinId,const QString &value);
 
 protected slots:
-    void onValueChanged(QtProperty *pin, const QVariant &value);    
+    void onValueChanged(JZNodeProperty *pin, const QString &value);
 
 protected:
     void clear();
-    void addPropList(QString name,QVector<int> list);
-    QtVariantProperty *createPropName(JZNodePin *pin);
-    QtVariantProperty *createProp(JZNodePin *pin);
+    void addPropList(QString name,QVector<int> list);    
+    JZNodeProperty *createProp(JZNodePin *pin);
 
     JZNode *m_node;    
 
-    QtTreePropertyBrowser *m_tree;
-    QtVariantPropertyManager *m_propManager;
-    QtVariantEditorFactory *m_propEditor;
-    QMap<int,QtVariantProperty*> m_propMap;
-    QMap<int,QtVariantProperty*> m_propNameMap;
+    JZNodePropertyBrowser *m_tree;
+    QMap<int, JZNodeProperty*> m_propMap;
+    QMap<int, JZNodeProperty*> m_propNameMap;
     bool m_editing;
 };
 

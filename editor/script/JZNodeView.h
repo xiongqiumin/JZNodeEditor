@@ -202,6 +202,7 @@ protected:
     void updatePropEditable(const JZNodeGemo &gemo);
     void saveNodePos();
     void sceneScale(QPoint center, bool up);
+    QRectF mapRect();
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
@@ -217,7 +218,7 @@ protected:
     void autoCompiler();
     QString getExpr();
     int popMenu(QStringList list);
-    QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);
+    QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);    
 
     JZNodeViewMap *m_map;
     JZNodeScene *m_scene;
