@@ -22,14 +22,17 @@ public:
     void setValue(const QString &value);
     const QString &value() const;
 
+    JZNodeProperty *parent();
+
 protected:
-    friend JZNodePropertyBrowser;
+    friend JZNodePropertyBrowser;    
 
     QString m_name;
     int m_type;
     QString m_value;
-    QTreeWidgetItem *m_item;
     bool m_enabled;
+    QTreeWidgetItem *m_item;    
+    JZNodeProperty *m_parent;
     QList<QSharedPointer<JZNodeProperty>> m_childs;
 };
 
@@ -43,6 +46,12 @@ public:
 
     void addProperty(JZNodeProperty *prop);
     void clear();
+
+signals:
+    void valueChanged(JZNodeProperty *prop,const QString &value);
+
+protected slots:
+    void onItemChanged(QTreeWidgetItem *item, int column);
 
 protected:
     friend JZNodeProperty;

@@ -67,13 +67,14 @@ enum
     Node_paramChangedEvent,
     Node_timeEvent,   
     Node_display,
+    Node_custom,
 };
 
 enum
 {
-    Node_pinNone = 0,
-    Node_pinNoRemove = 0x1,
-    Node_pinDragVariable = 0x2,
+    NodeProp_none = 0,
+    NodeProp_noRemove = 0x1,
+    NodeProp_dragVariable = 0x2,
 };
 
 //JZNodeGemo
@@ -196,14 +197,10 @@ public:
     int addButtonIn(QString name);
     int addButtonOut(QString name);
     
-    QString pinValue(int pin) const;
-    void setPinValue(int pin, QString value);
-    QString pinName(int id) const;
-    void setPinName(int id,QString name);
-    
-    virtual void setVariable(const QString &name);
-    virtual QString variable() const;
-    virtual int variableType() const;
+    const QString &pinValue(int pin) const;
+    void setPinValue(int pin, const QString &value);
+    const QString &pinName(int id) const;
+    void setPinName(int id,const QString &name);
 
     bool canRemove();
     bool canDragVariable();    
@@ -214,7 +211,7 @@ public:
     
     virtual void drag(const QVariant &value);
 
-    virtual bool pinClicked(int id);    //返回属性是否变化
+    virtual QWidget *createWidget(int id);    
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id,int index);
 
@@ -229,11 +226,13 @@ protected:
     void setPinTypeBool(int id);
     void setPinTypeString(int id);
     void setPinType(int id,const QList<int> &type);
+    void clearPinType(int id);
 
     virtual void fileInitialized();
     virtual void pinLinked(int id);
     virtual void pinUnlinked(int id);
     virtual void pinChanged(int id);
+    void propertyChangedNotify(const QByteArray &old);
 
     int m_id;
     int m_type;
@@ -324,14 +323,13 @@ protected:
 class JZNodeParallel : public JZNode
 {
 public:
-    JZNodeParallel();
-
-    void addOutPin();
+    JZNodeParallel();    
 
 protected:   
 };
 
 //JZNodeFor
+class QComboBox;
 class JZNodeFor: public JZNode
 {
 public:
@@ -343,8 +341,14 @@ public:
     void setStart(int start);
     void setStep(int step);
     void setEnd(int end);
+    void setOp(int op);
 
 protected:
+    virtual void loadFromStream(QDataStream &s) override;
+
+    QStringList m_condTip;
+    QList<int> m_condOp;    
+    QComboBox *m_comboBox;
 };
 
 //JZNodeForEach

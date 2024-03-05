@@ -29,6 +29,11 @@ int JZNodeEnumDefine::count() const
     return m_keys.size();
 }
 
+bool JZNodeEnumDefine::hasKey(const QString &key) const
+{
+    return m_keys.contains(key);
+}
+
 QString JZNodeEnumDefine::key(int index) const
 {
     return m_keys[index];

@@ -91,6 +91,7 @@ protected:
     QString dir(const QString &filepath);    
             
     JZProjectItemRoot m_root;
+    JZProjectItemRoot m_temp;
     
     bool m_windowSystem;        
 

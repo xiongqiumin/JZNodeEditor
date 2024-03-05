@@ -135,9 +135,8 @@ void TestServer::onRuntimeError()
 
 void TestServer::run()
 {    
-
-    JZNodeBuilder builder;
-    if (!builder.build(m_project, &m_program))
+    JZNodeBuilder builder(m_project);
+    if (!builder.build(&m_program))
     {
         Q_ASSERT(0);
     }    

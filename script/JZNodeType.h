@@ -73,8 +73,16 @@ public:
     static QVariant matchValue(int type,const QVariant &v);
     static int matchType(QList<int> dst_types, QList<int> src_types);
     static int matchType(QList<int> dst_types, const QString &v);
-    static QVariant initValue(int type, const QString &v);
+    static QVariant initValue(int type, const QString &v);    
+    static QVariant defaultValue(int type);
+
+    static bool isMatchValue(const QList<int> &dst_types, const QString &v);
+    static QString dispString(const QString &text);
+    static QString storgeString(const QString &text);
     
+    static QString addMark(const QString &text);
+    static QString removeMark(const QString &text);
+
     static QString opName(int op);
 
     static void registConvert(int from, int to, ConvertFunc func);

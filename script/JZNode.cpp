@@ -1,4 +1,5 @@
-﻿#include "JZNode.h"
+﻿#include <QComboBox>
+#include "JZNode.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
 
@@ -72,7 +73,7 @@ JZNode::JZNode()
 {
     m_id = INVALID_ID;
     m_file = nullptr;
-    m_flag = Node_pinNone;
+    m_flag = NodeProp_none;
     m_type = Node_none;
     m_group = -1;
 }
@@ -463,7 +464,7 @@ int JZNode::addButtonOut(QString name)
     return addPin(btn);
 }
 
-QString JZNode::pinValue(int id) const
+const QString &JZNode::pinValue(int id) const
 {
     auto ptr = pin(id);
     Q_ASSERT(ptr);
@@ -471,7 +472,7 @@ QString JZNode::pinValue(int id) const
     return ptr->value();
 }
 
-void JZNode::setPinValue(int id,QString value)
+void JZNode::setPinValue(int id,const QString &value)
 {        
     auto ptr = pin(id);
     Q_ASSERT(ptr);
@@ -483,7 +484,7 @@ void JZNode::setPinValue(int id,QString value)
         m_notifyList << id;
 }
 
-QString JZNode::pinName(int id) const
+const QString &JZNode::pinName(int id) const
 {
     auto ptr = pin(id);
     Q_ASSERT(ptr);
@@ -491,7 +492,7 @@ QString JZNode::pinName(int id) const
     return ptr->name();
 }
 
-void JZNode::setPinName(int id,QString name)
+void JZNode::setPinName(int id,const QString &name)
 {
     auto ptr = pin(id);
     Q_ASSERT(ptr);
@@ -510,21 +511,6 @@ QVector<int> JZNode::pinList() const
         result.push_back(m_pinList[i].id());
 
     return result;
-}
-
-void JZNode::setVariable(const QString &name)
-{
-    Q_UNUSED(name);
-}
-
-QString JZNode::variable() const
-{
-    return QString();
-}
-
-int JZNode::variableType() const
-{
-    return Type_any;
 }
 
 JZScriptItem *JZNode::file() const
@@ -555,12 +541,12 @@ void JZNode::setName(const QString &name)
 
 bool JZNode::canRemove()
 {
-    return !(m_flag & Node_pinNoRemove);
+    return !(m_flag & NodeProp_noRemove);
 }
 
 bool JZNode::canDragVariable()
 {
-    return (m_flag & Node_pinDragVariable);
+    return (m_flag & NodeProp_dragVariable);
 }
 
 int JZNode::id() const
@@ -613,9 +599,20 @@ void JZNode::setPinType(int id,const QList<int> &type)
     pin(id)->setDataType(type);
 }
 
+void JZNode::clearPinType(int id)
+{
+    QList<int> type;
+    pin(id)->setDataType(type);
+}
+
 void JZNode::drag(const QVariant &v)
 {
     Q_UNUSED(v);
+}
+
+QWidget *JZNode::createWidget(int id)
+{
+    return nullptr;
 }
 
 bool JZNode::pinClicked(int id)
@@ -654,6 +651,12 @@ void JZNode::pinUnlinked(int id)
 void JZNode::pinChanged(int id)
 {
     Q_UNUSED(id);
+}
+
+void JZNode::propertyChangedNotify(const QByteArray &old)
+{
+    if (m_file && m_file->project())
+        m_file->project()->nodePropChanged(m_file,this);
 }
 
 void JZNode::saveToStream(QDataStream &s) const
@@ -874,112 +877,95 @@ JZNodeFor::JZNodeFor()
     int id_start = addParamIn("First index",Pin_editValue | Pin_dispName | Pin_dispValue);
     int id_step = addParamIn("Step", Pin_editValue | Pin_dispName | Pin_dispValue);
     int id_end = addParamIn("End index",Pin_editValue | Pin_dispName | Pin_dispValue);
-    int id_index = addParamOut("index", Pin_dispName);
-    setPinValue(id_start, "0");
-    setPinValue(id_step, "1");
-    setPinValue(id_end, "1");
+    int id_op = addParamIn("Cond", Pin_dispName | Pin_widget | Pin_noValue);
+    int id_index = addParamOut("index", Pin_dispName);    
     setPinTypeInt(id_start);
     setPinTypeInt(id_step);
     setPinTypeInt(id_index);
     setPinTypeInt(id_end);
+
+    setPinValue(id_start, "0");
+    setPinValue(id_step, "1");
+    setPinValue(id_end, "1");
+    setPinValue(id_op, "0");
+
+    QStringList list;
+    list << "First < Last";
+    list << "First <= Last";
+    list << "First > Last";
+    list << "First >= Last";
+    list << "First == Last";
+    list << "First != Last";
+
+    m_condOp.push_back(OP_lt);
+    m_condOp.push_back(OP_le);
+    m_condOp.push_back(OP_gt);
+    m_condOp.push_back(OP_ge);
+    m_condOp.push_back(OP_eq);
+    m_condOp.push_back(OP_ne);
 }
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 {
     if(!c->addFlowInput(m_id,error))
         return false;
-
+    
     int indexStart = paramIn(0);
     int indexStep = paramIn(1);
     int indexEnd = paramIn(2);
     int indexOut = paramOut(0);    
+    if (c->isPinLiteral(m_id, indexStart)
+        && c->isPinLiteral(m_id, indexEnd)
+        && c->isPinLiteral(m_id, indexStep))
+    {
+        int start = c->pinLiteral(m_id, indexStart).toInt();
+        int end = c->pinLiteral(m_id, indexEnd).toInt();
+        int step = c->pinLiteral(m_id, indexStep).toInt();
+        if ((start < end && step <= 0)
+            || (start > end && step >= 0))
+        {
+            error = "dead loop,please check";
+            return false;
+        }
+    }
 
     int id_start = c->paramId(m_id,indexStart);
     int id_end = c->paramId(m_id,indexEnd);
     int id_step = c->paramId(m_id, indexStep);
-    int id_index = c->paramId(m_id,indexOut);
-    int cmp_flag = c->allocStack(Type_bool);
-    int add_flag = c->allocStack(Type_bool);
-    c->addSetVariable(irId(cmp_flag), irLiteral(false));
-    c->addSetVariable(irId(add_flag), irLiteral(false));
+    int id_index = c->paramId(m_id,indexOut);     
     c->addSetVariable(irId(id_index), irId(id_start));
+    
+    int op_id = pinValue(paramIn(3)).toInt();
+    int op = m_condOp[op_id];
 
-    //if((start < end && step >= 0) || (start > end && step < 0))  flag = true
-    c->addCompare(irId(id_start), irId(id_end), OP_lt);
-    JZNodeIRJmp *jmp_set1 = new JZNodeIRJmp(OP_jne);
-    c->addStatement(JZNodeIRPtr(jmp_set1));
-
-    c->addSetVariable(irId(cmp_flag), irLiteral(true));
-    c->addCompare(irId(id_step), irLiteral(0), OP_ge);
-    JZNodeIRJmp *jmp_set2 = new JZNodeIRJmp(OP_je);
-    c->addStatement(JZNodeIRPtr(jmp_set2));
-
-    int cmp3 = c->addCompare(irId(id_start), irId(id_end), OP_gt);    
-    jmp_set1->jmpPc = cmp3;
-
-    JZNodeIRJmp *jmp_set3 = new JZNodeIRJmp(OP_jne);
-    c->addStatement(JZNodeIRPtr(jmp_set3));
-
-    c->addCompare(irId(id_step), irLiteral(0), OP_lt);
-    JZNodeIRJmp *jmp_set4 = new JZNodeIRJmp(OP_jne);
-    c->addStatement(JZNodeIRPtr(jmp_set4));
-
-    int set_flag = c->addSetVariable(irId(add_flag), irLiteral(true));
-    jmp_set2->jmpPc = set_flag;
+    QList<JZNodeIRParam> in, out;
+    in << irId(id_start) << irId(id_end) << irId(id_step) << irLiteral(op);
+    c->addCall("ForCheck", in, out);
     
     //start 
-    int start = c->addCompare(irId(cmp_flag), irLiteral(true), OP_eq);
-    JZNodeIRJmp *jmp_flag1 = new JZNodeIRJmp(OP_je);
-    JZNodeIRJmp *jmp_flag2 = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_flag1));
-    c->addStatement(JZNodeIRPtr(jmp_flag2));
-
-    jmp_set3->jmpPc = start;
-    jmp_set4->jmpPc = start;
-
-    int cmp_end1 = c->addCompare(irId(id_index), irId(id_end), OP_lt);
-    JZNodeIRJmp *jmp_flag1_body = new JZNodeIRJmp(OP_je);
-    JZNodeIRJmp *jmp_flag1_end = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_flag1_body));
-    c->addStatement(JZNodeIRPtr(jmp_flag1_end));
-    jmp_flag1->jmpPc = cmp_end1;
-
-    int cmp_end2 = c->addCompare(irId(id_index), irId(id_end), OP_gt);
-    JZNodeIRJmp *jmp_flag2_body = new JZNodeIRJmp(OP_je);
-    JZNodeIRJmp *jmp_flag2_end = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_flag2_body));
-    c->addStatement(JZNodeIRPtr(jmp_flag2_end));
-    jmp_flag2->jmpPc = cmp_end2;
-
-    int body_pc = c->addNop();
+    int start = c->addCompare(irId(id_index), irId(id_end), op);
+    JZNodeIRJmp *jmp_cond_break = new JZNodeIRJmp(OP_jne);
+    c->addStatement(JZNodeIRPtr(jmp_cond_break));
+    
     c->lastStatment()->memo = "body";
     c->addFlowOutput(m_id);
     c->addJumpSubNode(subFlowOut(0));    
 
-    int continue_pc = c->addCompare(irId(add_flag), irLiteral(true), OP_eq);
-    JZNodeIRJmp *jmp_continue_add = new JZNodeIRJmp(OP_je);
-    JZNodeIRJmp *jmp_continue_sub = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_continue_add));
-    c->addStatement(JZNodeIRPtr(jmp_continue_sub));
-
-    jmp_continue_add->jmpPc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_add);
-    JZNodeIRJmp *jmp_to_start1 = new JZNodeIRJmp(OP_jmp);
-    jmp_to_start1->jmpPc = start;
-    c->addStatement(JZNodeIRPtr(jmp_to_start1));
-
-    jmp_continue_sub->jmpPc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_sub);
-    JZNodeIRJmp *jmp_to_start2 = new JZNodeIRJmp(OP_jmp);        
-    jmp_to_start2->jmpPc = start;
-    c->addStatement(JZNodeIRPtr(jmp_to_start2));
-
-    int break_pc = c->addJumpNode(flowOut());
-    jmp_flag1_body->jmpPc = body_pc;
-    jmp_flag1_end->jmpPc = break_pc;
-    jmp_flag2_body->jmpPc = body_pc;
-    jmp_flag2_end->jmpPc = break_pc;         
+    int continue_pc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_add);
+    JZNodeIRJmp *jmp_to_start = new JZNodeIRJmp(OP_jmp);    
+    c->addStatement(JZNodeIRPtr(jmp_to_start));
+    jmp_to_start->jmpPc = start;
+        
+    int break_pc = c->addJumpNode(flowOut());        
+    jmp_cond_break->jmpPc = break_pc;
     c->setBreakContinue({break_pc},{ continue_pc });
 
     return true;
+}
+
+void JZNodeFor::loadFromStream(QDataStream &s)
+{
+    JZNodeFor::loadFromStream(s);
 }
 
 void JZNodeFor::setRange(int start, int end)
@@ -1010,6 +996,12 @@ void JZNodeFor::setStep(int step)
 void JZNodeFor::setEnd(int end)
 {
     setPinValue(paramIn(2), QString::number(end));
+}
+
+void JZNodeFor::setOp(int op)
+{
+    int index = m_condOp.indexOf(op);
+    Q_ASSERT(index >= 0);
 }
 
 //JZNodeForEach

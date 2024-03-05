@@ -20,7 +20,6 @@ QByteArray JZScriptClassItem::toBuffer()
 {
     QByteArray buffer;
     QDataStream s(&buffer, QIODevice::WriteOnly);
-
     s << m_name;    
     s << m_super;
     s << m_uiFile;
@@ -130,6 +129,17 @@ JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
     file->setFunction(func);
     m_project->addItem(itemPath(), file);        
     return file;
+}
+
+QStringList JZScriptClassItem::memberFunctionList()
+{
+    QStringList list;
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        if (m_childs[i]->itemType() == ProjectItem_scriptFunction)
+            list << m_childs[i]->name();
+    }
+    return list;
 }
 
 JZScriptItem *JZScriptClassItem::getMemberFunction(QString func)

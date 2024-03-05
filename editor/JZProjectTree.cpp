@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include <QFileDialog>
 #include <QKeyEvent>
+#include <JZRegExpHelp.h>
 #include "JZNodeFuctionEditDialog.h"
 #include "JZNewFileDialog.h"
 #include "JZNodeClassEditDialog.h"
@@ -399,15 +400,24 @@ void JZProjectTree::onContextMenu(QPoint pos)
             QString path = dlg.path();
             QString name = dlg.name();
 
-            JZScriptFile *file = new JZScriptFile();
-            file->setName(name + ".jz");
-            m_project->addItem(path, file);
-            addItem(file);
+            JZProjectItem *item = nullptr;
+            if (dlg.type() == "jz")
+            {
+                item = new JZScriptFile();
+                item->setName(name + ".jz");                
+            }
+            else
+            {
+                item = new JZUiFile();
+                item->setName(name + ".ui");                
+            }
 
-            JZUiFile *ui_file = new JZUiFile();
-            ui_file->setName(name + ".ui");
-            m_project->addItem(path, file);
-            addItem(ui_file);
+            if (item)
+            {
+                m_project->addItem(path, item);
+                addItem(item);
+                m_project->saveItem(item);
+            }
         }
     }
     else if (act == actExistFile)
@@ -421,16 +431,20 @@ void JZProjectTree::onContextMenu(QPoint pos)
     }
     else if(act == actCreateFunction)
     {        
-        JZFunctionDefine function;
-        function.name = "new";
+        JZFunctionDefine function;        
         if (item_class)
         {
             function.className = item_class->className();
-            
+            function.name = JZRegExpHelp::uniqueString("newFunction", item_class->memberFunctionList());
+
             JZParamDefine def;
             def.name = "this";
             def.type = function.className;
             function.paramIn.push_back(def);
+        }
+        else
+        {
+            function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());
         }
 
         JZNodeFuctionEditDialog dialog(this);
@@ -442,6 +456,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptFunction);
         func_item->setFunction(dialog.functionInfo());
         m_project->addItem(item->itemPath(), func_item);
+        m_project->saveItem(item);
         
         addItem(view_item, func_item);        
     }
@@ -458,6 +473,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         auto file_item = dynamic_cast<JZScriptFile*>(item);
         auto class_item = file_item->addClass(def, super);
         addItem(view_item, class_item);        
+        m_project->saveItem(class_item);
     }    
     else if(act == actCreateEvent)
     {
@@ -466,6 +482,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         JZScriptItem *flow = new JZScriptItem(ProjectItem_scriptFlow);
         flow->setName(name);
         m_project->addItem(item->itemPath(), flow);
+        m_project->saveItem(item);
         addItem(view_item, flow);
     }
     else if(act == actRemove)
@@ -484,7 +501,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     {        
         if (item->itemType() == ProjectItem_scriptFunction)
         {
-            JZScriptItem *func_item = (JZScriptItem*)item;
+            JZScriptItem *func_item = dynamic_cast<JZScriptItem*>(item);
             QString oldName = func_item->name();
 
             JZNodeFuctionEditDialog dialog(this);
@@ -492,9 +509,10 @@ void JZProjectTree::onContextMenu(QPoint pos)
             dialog.init();
             if (dialog.exec() != QDialog::Accepted)
                 return;
-
-            JZFunctionDefine def = dialog.functionInfo();
-            func_item->setFunction(def);
+            
+            JZFunctionDefine def = dialog.functionInfo(); 
+            auto file_item = dynamic_cast<JZScriptFile*>(m_project->getItemFile(func_item));
+            file_item->updateScriptFunction(func_item, def);
             if (oldName != def.name)
             {
                 m_project->renameItem(func_item, def.name);
@@ -506,6 +524,9 @@ void JZProjectTree::onContextMenu(QPoint pos)
             JZNodeClassEditDialog dialog(this);
             if (dialog.exec() != QDialog::Accepted)
                 return;
+
+            JZScriptClassItem *class_item = (JZScriptClassItem*)item;
+            //m_project->updateClass(class_item);
         }
         else
             QMessageBox::information(this, "", item->name());

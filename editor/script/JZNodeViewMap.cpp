@@ -110,13 +110,21 @@ void JZNodeViewMap::updateMapCache()
     {
         if (items[i]->type() == Item_node)
         {
-            QRectF rc = items[i]->sceneBoundingRect();
+            auto graph_item = dynamic_cast<JZNodeGraphItem*>(items[i]);
+            QRectF rc = graph_item->sceneBoundingRect();
             rc = m_drawInfo.toImage(rc);
-            pt.fillRect(rc, Qt::black);
+            if(graph_item->isError())
+                pt.fillRect(rc, Qt::red);
+            else
+                pt.fillRect(rc, Qt::black); 
         }
     }
 
     m_imageFg = m_imageBg.copy();    
+
+    QImage image = QImage(size(), QImage::Format_ARGB32);
+    image.fill(QColor(0, 0, 0, 50));
+    pt.drawImage(0, 0, image);
 }
 
 void JZNodeViewMap::paintEvent(QPaintEvent *event)

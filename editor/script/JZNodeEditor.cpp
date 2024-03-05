@@ -11,7 +11,6 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFactory.h"
 #include "JZNodeMemberSelectDialog.h"
-#include "JZNodeAutoRunEditDialog.h"
 
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
@@ -85,6 +84,7 @@ void JZNodeEditor::init()
     m_nodePanel = new JZNodePanel();
     m_nodeViewPanel = new JZNodeViewPanel();
     m_nodeProp = new JZNodePropertyEditor();
+    m_runProp = new JZNodeAutoRunWidget();
     connect(m_view,&JZNodeView::redoAvailable,this,&JZNodeEditor::redoAvailable);
     connect(m_view,&JZNodeView::undoAvailable,this,&JZNodeEditor::undoAvailable);
     connect(m_view,&JZNodeView::modifyChanged,this,&JZNodeEditor::modifyChanged);
@@ -93,13 +93,10 @@ void JZNodeEditor::init()
     QWidget *mid_bar = new QWidget();
     QHBoxLayout *midbar_layout = new QHBoxLayout();
     mid_bar->setLayout(midbar_layout);
-    QCheckBox *boxAuto = new QCheckBox("自动运行");
-    QPushButton *autoRunSetting = new QPushButton("设置");
-    connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);
-    connect(autoRunSetting, &QPushButton::clicked, this, &JZNodeEditor::onAutoRunSetting);
+    QCheckBox *boxAuto = new QCheckBox("开启测试");    
+    connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);    
 
-    midbar_layout->addWidget(boxAuto);
-    midbar_layout->addWidget(autoRunSetting);
+    midbar_layout->addWidget(boxAuto);    
     midbar_layout->addStretch();
     midbar_layout->setContentsMargins(0, 0, 0, 0);
 
@@ -114,15 +111,20 @@ void JZNodeEditor::init()
     l->setContentsMargins(0,0,0,0);
     this->setLayout(l);    
     
-    QTabWidget *m_tabView = new QTabWidget();
-    m_tabView->addTab(m_nodePanel,"编辑");
-    m_tabView->addTab(m_nodeViewPanel,"节点");
-    m_tabView->setTabPosition(QTabWidget::South);
+    QTabWidget *tabView = new QTabWidget();
+    tabView->addTab(m_nodePanel,"编辑");
+    tabView->addTab(m_nodeViewPanel,"节点");
+    tabView->setTabPosition(QTabWidget::South);
+
+    m_tabProp = new QTabWidget();
+    m_tabProp->addTab(m_nodeProp, "属性");
+    m_tabProp->addTab(m_runProp, "运行配置");
+    m_tabProp->setTabPosition(QTabWidget::South);
 
     QSplitter *splitter = new QSplitter(Qt::Horizontal);    
-    splitter->addWidget(m_tabView);
+    splitter->addWidget(tabView);
     splitter->addWidget(mid_widget);
-    splitter->addWidget(m_nodeProp);
+    splitter->addWidget(m_tabProp);
 
     splitter->setCollapsible(0,false);
     splitter->setCollapsible(1,false);
@@ -135,6 +137,8 @@ void JZNodeEditor::init()
     
     //m_nodeProp->setMaximumWidth(200);
     m_view->setPropertyEditor(m_nodeProp);    
+    m_view->setRunEditor(m_runProp);
+    m_tabProp->setTabVisible(1, false);
 }
 
 void JZNodeEditor::open(JZProjectItem *item)
@@ -217,13 +221,8 @@ void JZNodeEditor::selectAll()
 
 void JZNodeEditor::onAutoRunChecked()
 {
-}
-
-void JZNodeEditor::onAutoRunSetting()
-{
-    JZNodeAutoRunEditDialog dlg(this);
-    if (dlg.exec() != QDialog::Accepted)
-        return;
+    auto *box = qobject_cast<QCheckBox*>(sender());
+    m_tabProp->setTabVisible(1, box->isChecked());
 }
 
 void JZNodeEditor::onActionLayout()

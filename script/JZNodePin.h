@@ -16,12 +16,11 @@ enum
     Pin_flow = 0x8,        //流程 
     Pin_subFlow  = 0x10,   //子程序
     Pin_widget = 0x20,
-    Pin_dispName = 0x40,
-    Pin_editName = 0x80,
-    Pin_dispValue = 0x100,
-    Pin_editValue = 0x200,
-    Pin_noValue = 0x400,
-    Pin_literal = 0x800,    
+    Pin_dispName = 0x40,    
+    Pin_dispValue = 0x80,
+    Pin_editValue = 0x100,
+    Pin_noValue = 0x200,   //不在运行时起作用
+    Pin_literal = 0x400,    
 };
 
 enum {    
@@ -64,11 +63,11 @@ public:
     bool isDispValue() const;
     bool isLiteral() const;
 
-    void setDataType(QList<int> type);
-    QList<int> dataType() const;    
+    void setDataType(const QList<int> &type);
+    const QList<int> &dataType() const;
 
-    QString value() const;
-    void setValue(QString value);
+    const QString &value() const;
+    void setValue(const QString &value);
 
 protected:
     friend void operator<<(QDataStream &s, const JZNodePin &param);

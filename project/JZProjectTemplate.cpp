@@ -67,7 +67,7 @@ bool JZProjectTemplate::initProject(QString path,QString name, QString temp)
         main_flow->addConnect(start->flowOutGemo(), create->flowInGemo());
 
         main_flow->addConnect(create->flowOutGemo(), set_param->flowInGemo());
-        main_flow->addConnect(create->paramOutGemo(0), set_param->paramInGemo(0));
+        main_flow->addConnect(create->paramOutGemo(0), set_param->paramInGemo(1));
 
         main_flow->addConnect(set_param->flowOutGemo(0), func_show->flowInGemo());
         main_flow->addConnect(set_param->paramOutGemo(0), func_show->paramInGemo(0));

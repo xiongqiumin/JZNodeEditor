@@ -5,14 +5,15 @@
 #include <functional>
 #include <QMap>
 #include <QTextEdit>
+#include <QShortcut>
+#include <QUndoStack>
 #include "JZNodeScene.h"
 #include "JZNodeGraphItem.h"
 #include "JZNodeLineItem.h"
 #include "JZNodeGroupItem.h"
 #include "JZNodePropertyEditor.h"
+#include "JZNodeAutoRunWidget.h"
 #include "JZScriptItem.h"
-#include <QShortcut>
-#include <QUndoStack>
 #include <QGraphicsRectItem>
 #include "JZNodeProgram.h"
 #include "JZNodeViewMap.h"
@@ -78,6 +79,7 @@ public:
     virtual ~JZNodeView();
 
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
+    void setRunEditor(JZNodeAutoRunWidget *runEditor);
     
     void setFile(JZScriptItem *file);
     JZScriptItem *file();
@@ -104,7 +106,7 @@ public:
 
     void setNodePropValue(int nodeId, int prop_id,QString value);
     QString getNodePropValue(int nodeId, int prop_id);
-    void longPressCheck(int nodeId);
+    void setNodeTimer(int ms,int nodeId,int event);
 
     /* connect */
     JZNodeLineItem *createLine(JZNodeGemo from, JZNodeGemo to);
@@ -127,9 +129,8 @@ public:
     void setGroupData(int id, QByteArray buffer);
     void updateGroup(int id);
 
-    void addTip(QRectF tipArea,QString tip);
+    void showTip(QPointF pt,QString tip);    
     void clearTip();
-
     QVariant onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsItemChange change, const QVariant &value);
 
     void clear();
@@ -163,18 +164,26 @@ signals:
 
 protected slots:
     void onContextMenu(const QPoint &pos);
-    void onItemPropChanged();
-    void onPropNameUpdate(int nodeId,int pinId,const QString &value);
-    void onPropUpdate(int nodeId,int pinId,const QString &value);
+    void onItemPropChanged();        
     void onAutoCompiler();
+    void onNodeTimer();
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
     void onMapSceneChanged(QRectF rc);
     void onMapSceneScaled(bool flag);
 
+    void onPropUpdate(int nodeId, int pinId, const QString &value);
+    void onDependChanged();
+
 protected:
     friend JZNodeViewCommand;
 
+    struct NodeTimerInfo
+    {
+        int nodeId;
+        int event;
+    };
+    
     virtual void resizeEvent(QResizeEvent *event) override;
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
@@ -182,7 +191,7 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent *event) override;    
 
     virtual void keyPressEvent(QKeyEvent *event) override;
-    virtual void keyReleaseEvent(QKeyEvent *event) override;
+    virtual void keyReleaseEvent(QKeyEvent *event) override;    
 
     virtual void dragEnterEvent(QDragEnterEvent *event) override;
     virtual void dragMoveEvent(QDragMoveEvent *event) override;
@@ -223,19 +232,20 @@ protected:
     JZNodeViewMap *m_map;
     JZNodeScene *m_scene;
     JZScriptItem *m_file;    
-    JZNodeLineItem *m_selLine;    
-    QGraphicsTextItem *m_tip;
-    QRectF m_tipArea;
+    JZNodeLineItem *m_selLine;   
+    QPoint m_tipPoint;
 
     bool m_loadFlag;
     JZNodePropertyEditor *m_propEditor;
+    JZNodeAutoRunWidget *m_runEditor;
     QUndoStack m_commandStack;        
     bool m_recordMove;
-    bool m_groupIsMoving;
-    bool m_propEditFlag;
+    bool m_groupIsMoving;    
 
     QPointF m_downPoint;
     QTimer *m_compilerTimer;      
+    QTimer *m_nodeTimer;
+    NodeTimerInfo m_nodeTimeInfo;
 
     bool m_runningMode;
     int m_runNode;

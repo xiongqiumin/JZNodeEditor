@@ -24,8 +24,8 @@ void ScriptTest::call()
 
 bool ScriptTest::build()
 {    
-    JZNodeBuilder builder;
-    if(!builder.build(&m_project,&m_program))
+    JZNodeBuilder builder(&m_project);
+    if(!builder.build(&m_program))
     {
         m_error = "build failed: " + builder.error();        
         QTest::qVerify(false, "build", m_error.toLocal8Bit().data(), __FILE__, __LINE__);

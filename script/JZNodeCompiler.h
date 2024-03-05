@@ -7,6 +7,13 @@
 #include "JZScriptItem.h"
 #include "JZProject.h"
 
+enum VariableCoor{
+    Variable_none,
+    Variable_local,
+    Variable_member,
+    Variable_global,
+};
+
 class GraphNode
 {
 public:
@@ -106,16 +113,22 @@ struct NodeCompilerInfo
 class ScriptDepend
 {
 public:
+    void clear();
+    int indexOf(bool isMember, QString name);
+    JZParamDefine *param(bool isMember, QString name);
+
+    JZFunctionDefine function;
     QList<JZParamDefine> member;
     QList<JZParamDefine> global;
-    QMap<int,JZFunctionDefine> functions;
+    QMap<int, QList<JZParamDefine>> hook;
 };
 
 //CompilerInfo
 class CompilerInfo
 {
 public:
-    QMap<int, NodeCompilerInfo> nodeInfo;    
+    QMap<int, QString> nodeError;    
+    QMap<QString,ScriptDepend> depend;
 };
 
 class JZNodeCompiler
@@ -125,12 +138,13 @@ public:
     static int paramId(const JZNodeGemo &gemo);    
     static QString paramName(int id);
     static JZNodeGemo paramGemo(int id);    
+    static VariableCoor variableCoor(JZScriptItem *file, QString name);
 
     JZNodeCompiler();
     ~JZNodeCompiler();
 
     bool genGraphs(JZScriptItem *file, QVector<GraphPtr> &result);
-    bool build(JZScriptItem *file,JZNodeScript *result);        
+    bool build(JZScriptItem *file,JZNodeScript *result);
     CompilerInfo compilerInfo();
     
     static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
@@ -146,6 +160,8 @@ public:
     int pinType(int nodeId, int pinId);
     int pinType(JZNodeGemo gemo);
     bool hasPinType(int nodeId, int pinId);
+    bool isPinLiteral(int nodeId, int pinId);
+    QVariant pinLiteral(int nodeId, int pinId);
 
     /*
     节点数据传递规则:
@@ -177,9 +193,10 @@ public:
     int addBreak();    
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
     
-    void addCall(const JZNodeIRParam &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+    void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addAllocLocal(QString name,int dataType,const JZNodeIRParam &value);
+    void addAlloc(int allocType, QString name,int dataType,const QString &value = QString());
+    void addAlloc(int allocType, QString name,int dataType,const JZNodeIRParam &value);
     void addAssert(const JZNodeIRParam &tips);       
 
     JZNodeIR *lastStatment();
@@ -188,6 +205,8 @@ public:
     
     JZScriptItem *currentFile();
     Graph *currentGraph();
+    JZNode *currentNode();
+
     int currentPc();
     int nextPc();
     const JZFunctionDefine *function(QString name);
@@ -228,9 +247,9 @@ protected:
     void linkNodes();
     void updateDebugInfo();
     void updateDispayNode();
+    void updateDepend();
     void addNodeFlowPc(int node_id, int cond, int pc);
-                
-    JZNode* currentNode();
+                    
     NodeCompilerInfo *currentNodeInfo();
 
     /* build info*/        
@@ -245,8 +264,10 @@ protected:
     QList<JZNodeIRPtr> *m_statmentList;
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
-    QMap<int,NodeCompilerInfo> m_nodeInfo;        
-    int m_stackId;       //当前栈位置，用于分配内存
+    QMap<int,NodeCompilerInfo> m_nodeInfo;
+    int m_stackId;       //当前栈位置，用于分配内存    
+    ScriptDepend m_depend;
+    CompilerInfo m_compilerInfo;
 
     JZProject *m_project;
     QString m_error;

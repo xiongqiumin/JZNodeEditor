@@ -56,6 +56,7 @@ public:
     
     void addLocalVariable(const JZParamDefine &def);            
     void removeLocalVariable(QString name);    
+    void setLocalVariable(QString name, const JZParamDefine &def);
     const JZParamDefine *localVariable(QString name);
     QStringList localVariableList(bool hasFunc);
 

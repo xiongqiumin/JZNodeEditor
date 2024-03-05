@@ -7,15 +7,14 @@
 
 JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {
-    Q_ASSERT(node_type >= Node_add && node_type <= Node_bitxor);
-    Q_ASSERT(op_type >= OP_add && op_type <= OP_bitxor);
-
     m_type = node_type;
     m_op = op_type;
     int in1 = addParamIn("",Pin_editValue | Pin_dispValue);
     int in2 = addParamIn("",Pin_editValue | Pin_dispValue);
-    pin(in1)->setValue(0);
-    pin(in2)->setValue(0);
+    setPinTypeInt(in1);
+    setPinTypeInt(in2);
+    pin(in1)->setValue("0");
+    pin(in2)->setValue("0");
     addParamOut("out");    
 }
 
@@ -103,16 +102,20 @@ void JZNodeOperator::calcPropOutType(JZNodeCompiler *c)
         case OP_mod:        
             out_type = JZNodeType::calcExprType(in_type1, in_type2);
             break;        
+        case OP_eq:
+        case OP_ne:
         case OP_le:
         case OP_ge:
         case OP_lt:
         case OP_gt:
         case OP_and:
         case OP_or:
+            out_type = Type_bool;
+            break;
         case OP_bitand:
         case OP_bitor:
         case OP_bitxor:
-            out_type = Type_bool;
+            out_type = Type_int;
             break;
         default:
             Q_ASSERT(0);
@@ -338,79 +341,9 @@ JZNodeBitXor::JZNodeBitXor()
     setPinTypeInt(paramOut(0));
 }
 
-//JZNodeCompareOp
-JZNodeCompareOp::JZNodeCompareOp(int node_type, int op_type)
-{
-    m_type = node_type;
-    m_op = op_type;
-
-    addParamIn("", Pin_editValue | Pin_dispValue);
-    addParamIn("", Pin_editValue | Pin_dispValue);
-    addParamOut("out");
-}
-
-bool JZNodeCompareOp::compiler(JZNodeCompiler *c, QString &error)
-{
-    int in1 = paramIn(0);
-    int in2 = paramIn(1);
-    int out = paramOut(0);
-         
-    auto graph = c->currentGraph()->graphNode(m_id);    
-    auto isInputAny = [c,graph](int in_prop)->bool 
-    {
-        if (!graph->paramIn.contains(in_prop))
-            return false;
-
-        QList<int> from_type;
-        auto from_list = graph->paramIn[in_prop];
-        for (int i = 0; i < from_list.size(); i++)
-        {
-            auto from_gemo = from_list[i];
-            if (!c->hasPinType(from_gemo.nodeId,from_gemo.pinId))            
-                return false;            
-
-            if (c->pinType(from_gemo) == Type_any)
-                return true;
-        }
-        return false;
-    };  
-
-    //计算type
-    bool input_any = false;
-    if (isInputAny(in1) || isInputAny(in2))
-    {
-        c->setPinType(m_id, in1, Type_any);
-        c->setPinType(m_id, in2, Type_any);
-        input_any = true;
-    }
-    
-    if (!c->addDataInput(m_id, error))
-        return false;
-
-    auto ir_in1 = irId(c->paramId(m_id, in1));
-    auto ir_in2 = irId(c->paramId(m_id, in2));
-    auto ir_out = irId(c->paramId(m_id, out));
-    if (!input_any)
-    {        
-        c->addExpr(ir_out, ir_in1, ir_in2, m_op);
-    }
-    else
-    {
-        QList<JZNodeIRParam> in_list, out_list;
-        in_list << ir_in1;
-        in_list << ir_in2;
-        in_list << irLiteral(m_op);
-        out_list << ir_out;
-
-        c->addCall(irLiteral("dealExpr"), in_list, out_list);        
-    }
-    c->setPinType(m_id, out, Type_bool);
-    return true;
-}
-
 //JZNodeLE
 JZNodeLE::JZNodeLE()
-    :JZNodeCompareOp(Node_le, OP_le)
+    :JZNodeOperator(Node_le, OP_le)
 {
     m_name = "<=";
     setPinType(paramIn(0), { Type_int,Type_double,Type_string });
@@ -420,7 +353,7 @@ JZNodeLE::JZNodeLE()
 
 //JZNodeGE
 JZNodeGE::JZNodeGE()
-    :JZNodeCompareOp(Node_ge, OP_ge)
+    :JZNodeOperator(Node_ge, OP_ge)
 {
     m_name = ">=";
     setPinType(paramIn(0), { Type_int,Type_double,Type_string });
@@ -430,7 +363,7 @@ JZNodeGE::JZNodeGE()
 
 //JZNodeLT
 JZNodeLT::JZNodeLT()
-    :JZNodeCompareOp(Node_lt, OP_lt)
+    :JZNodeOperator(Node_lt, OP_lt)
 {
     m_name = "<";
     setPinType(paramIn(0), { Type_int,Type_double,Type_string });
@@ -440,7 +373,7 @@ JZNodeLT::JZNodeLT()
 
 //JZNodeGT
 JZNodeGT::JZNodeGT()
-    :JZNodeCompareOp(Node_gt, OP_gt)
+    :JZNodeOperator(Node_gt, OP_gt)
 {
     m_name = ">";
     setPinType(paramIn(0), { Type_int,Type_double,Type_string });
@@ -450,7 +383,7 @@ JZNodeGT::JZNodeGT()
 
 //JZNodeEQ
 JZNodeEQ::JZNodeEQ()
-    :JZNodeCompareOp(Node_eq, OP_eq)
+    :JZNodeOperator(Node_eq, OP_eq)
 {    
     m_name = "==";    
     setPinTypeAny(paramIn(0));
@@ -460,7 +393,7 @@ JZNodeEQ::JZNodeEQ()
 
 //JZNodeNE
 JZNodeNE::JZNodeNE()
-    :JZNodeCompareOp(Node_ne, OP_ne)
+    :JZNodeOperator(Node_ne, OP_ne)
 {    
     m_name = "!=";    
     setPinTypeAny(paramIn(0));
@@ -589,7 +522,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
                 
             QList<JZNodeIRParam> paramOut;            
             paramOut << toIr(strs[0]);
-            c->addCall(irLiteral(function),paramIn,paramOut);
+            c->addCall(function,paramIn,paramOut);
         }
         else
         {

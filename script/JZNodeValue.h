@@ -129,9 +129,10 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     virtual void pinChanged(int id) override;
 
-    virtual void setVariable(const QString &name) override;
-    virtual QString variable() const override;
-    virtual void drag(const QVariant &value) override;
+    void setVariable(const QString &name);
+    QString variable() const;
+
+    virtual void drag(const QVariant &value);
 
 protected:
 
@@ -147,8 +148,12 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     virtual void pinChanged(int id) override;
     
-    virtual void setVariable(const QString &name) override;
-    virtual QString variable() const override;
+    void setVariable(const QString &name);
+    QString variable() const;
+
+    void setValue(const QString &name);
+    QString value() const;
+
     virtual void drag(const QVariant &value) override;
 
 protected:        
@@ -167,6 +172,10 @@ public:
     
     void setVariable(const QString &name);
     QString variable() const;
+    
+    void setValue(const QString &name);
+    QString value() const;
+
     virtual void drag(const QVariant &value) override;
 
 protected:    

@@ -15,6 +15,7 @@ public:
     QString name() const;
     int count() const;
         
+    bool hasKey(const QString &key) const;
     QString key(int index) const;
     QString defaultKey() const;
 

@@ -32,6 +32,9 @@ void JZScriptItem::loadFinish()
         it->data()->setFile(this);
         it++;
     }
+
+    if (m_itemType == ProjectItem_scriptFunction)
+        m_function.name = m_name;
 }
 
 void JZScriptItem::clear()
@@ -49,6 +52,7 @@ int JZScriptItem::nextId()
 const JZFunctionDefine &JZScriptItem::function()
 {
     Q_ASSERT(m_itemType == ProjectItem_scriptFunction);
+    m_function.name = m_name;
     return m_function;
 }
 
@@ -434,6 +438,12 @@ void JZScriptItem::addLocalVariable(const JZParamDefine &def)
 void JZScriptItem::removeLocalVariable(QString name)
 {
     m_variables.remove(name);
+}
+
+void JZScriptItem::setLocalVariable(QString name, const JZParamDefine &def)
+{
+    m_variables.remove(name);
+    m_variables[def.name] = def;
 }
 
 const JZParamDefine *JZScriptItem::localVariable(QString name)

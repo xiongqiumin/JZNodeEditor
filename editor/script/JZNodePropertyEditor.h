@@ -27,8 +27,7 @@ public:
     void setPinValue(int prop_id,const QString &value);
     void setPropEditable(int prop_id,bool editable);
 
-signals:
-    void sigNodePropNameChanged(int nodeId,int pinId,const QString &name);
+signals:    
     void sigNodePropChanged(int nodeId,int pinId,const QString &value);
 
 protected slots:
@@ -43,7 +42,6 @@ protected:
 
     JZNodePropertyBrowser *m_tree;
     QMap<int, JZNodeProperty*> m_propMap;
-    QMap<int, JZNodeProperty*> m_propNameMap;
     bool m_editing;
 };
 

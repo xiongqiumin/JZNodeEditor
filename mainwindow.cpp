@@ -328,8 +328,8 @@ void MainWindow::initUi()
     connect(m_editorStack, &QTabWidget::tabCloseRequested, this, &MainWindow::onEditorClose);
     connect(m_editorStack, &QTabWidget::currentChanged, this, &MainWindow::onEditorActivite);
 
-    m_editorStack->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_editorStack, &QWidget::customContextMenuRequested, this, &MainWindow::onTabContextMenu);
+    m_editorStack->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_editorStack->tabBar(), &QWidget::customContextMenuRequested, this, &MainWindow::onTabContextMenu);
 
     QSplitter *splitterLeft = new QSplitter(Qt::Vertical);
     splitterLeft->addWidget(m_editorStack);    
@@ -537,14 +537,12 @@ void MainWindow::onActionSaveAllFile()
 
 void MainWindow::onActionCloseAllFile()
 {
-    closeAll();
-    updateActionStatus();
+    closeAll();    
 }
 
 void MainWindow::onActionCloseAllFileExcept()
 {
-    closeAll(true);
-    updateActionStatus();
+    closeAll(m_editor);    
 }
 
 void MainWindow::onActionUndo()
@@ -1106,11 +1104,13 @@ bool MainWindow::build()
 {
     QElapsedTimer timer;
     timer.start();
+
+    m_log->clearLog(Log_Compiler);
     m_log->addLog(Log_Compiler, "开始编译");
 
-    JZNodeBuilder builder;
+    JZNodeBuilder builder(&m_project);
     JZNodeProgram program;
-    if(!builder.build(&m_project,&program))
+    if(!builder.build(&program))
     {        
         m_log->addLog(Log_Compiler, "编译失败\n");
         return false;
@@ -1199,7 +1199,8 @@ void MainWindow::onTabContextMenu(QPoint pos)
     QAction *actAll = menu.addAction("关闭所有文档");
     QAction *actAllExcept = menu.addAction("除此之外全部关闭");
 
-    QAction *ret = menu.exec(m_editorStack->mapToGlobal(pos));
+    auto bar = qobject_cast<QTabBar*>(sender());
+    QAction *ret = menu.exec(bar->mapToGlobal(pos));
     if (!ret)
         return;
     if (ret == actSave)
@@ -1215,8 +1216,10 @@ void MainWindow::onTabContextMenu(QPoint pos)
         onActionCloseAllFile();
     }
     else if (ret == actAllExcept)
-    {
-        onActionCloseAllFileExcept();
+    {        
+        int index = bar->tabAt(pos);
+        auto editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
+        closeAll(editor);
     }
 }
 
@@ -1329,7 +1332,7 @@ void MainWindow::saveAll()
     }
 }
 
-bool MainWindow::closeAll(bool except_current)
+bool MainWindow::closeAll(JZEditor *except)
 {
     QList<JZEditor*> close_list;
     QStringList close_file_list;
@@ -1339,7 +1342,7 @@ bool MainWindow::closeAll(bool except_current)
     while (it != m_editors.end())
     {
         auto editor = it.value();
-        if (except_current && m_editor == editor)
+        if (except && except == editor)
         {
             it++;
             continue;
@@ -1379,11 +1382,9 @@ bool MainWindow::closeAll(bool except_current)
         delete editor;
     for (auto editor_path : close_file_list)
         m_editors.remove(editor_path);
-    if (!except_current)
-    {
-        m_editor = nullptr;
-        switchEditor(nullptr);
-    }
+    
+    m_editor = nullptr;
+    switchEditor(except);    
     return true;
 }
 

@@ -20,6 +20,43 @@ QVariant JZDealExpr(const QVariant &in1, const QVariant &in2, const QVariant &op
     return g_engine->dealExpr(in1, in2, op.toInt());
 }
 
+bool JZForCheck(int first,int last,int step,int op,QString &error)
+{
+    if (op == OP_eq)
+    {
+        if (first == last)
+            return true;
+        if (first < last && step > 0 && (last - first) % step == 0)
+            return true;
+        if (first > last && step < 0 && (first - last) % (-step) == 0)
+            return true;
+    }
+    else if (op == OP_ne)
+    {
+        if ((first != last) || (step != 0))
+            return true;
+    }
+    else
+    {
+        if(!((first < last && step <= 0 && (op == OP_lt || op == OP_le))
+            || (first > last && step >= 0 && (op == OP_gt || op == OP_ge))))
+            return true;
+    }
+
+    error = QString::asprintf("Dead loop, please check, first = %d, last = %d, step = %d, op = %s", 
+        first, last, step, qUtf8Printable(JZNodeType::opName(op)));
+    return false;
+}
+
+void JZForRuntimeCheck(int first, int last, int step, int op)
+{
+    QString error;
+    if (JZForCheck(first, last, step, op, error))
+        return;
+    
+    throw std::runtime_error(qUtf8Printable(error));
+}
+
 QString JZObjectToString(JZNodeObject *obj)
 {
     JZNodeObjectFormat format;
@@ -550,6 +587,11 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
     return info;
 }
 
+JZNodeRuntimeError JZNodeEngine::runtimeError()
+{
+    return m_error;
+}
+
 void JZNodeEngine::pushStack(const JZFunction *func)
 {
     if (m_stack.size() > 0)    
@@ -910,6 +952,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
     if (checkIdlePause(func))
         return false;                    
 
+    m_error = JZNodeRuntimeError();
     Q_ASSERT(in.size() == func->paramIn.size());
     for (int i = 0; i < in.size(); i++)
     {
@@ -948,9 +991,10 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         JZNodeRuntimeError error;
         error.error = e.what();
         error.info = runtimeInfo();
-        emit sigRuntimeError(error);
+        m_error = error;
+        emit sigRuntimeError(error);        
 
-        if (m_debug)
+        if (m_debug) //保留错误现场
         {
             m_mutex.lock();
             m_waitCond.wait(&m_mutex);
@@ -1420,7 +1464,7 @@ void JZNodeEngine::resume()
 void JZNodeEngine::stop()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status == Status_error || m_status == Status_none)
+    if(m_status == Status_none)
         return;
         
     m_statusCommand = Command_stop;
@@ -1925,15 +1969,10 @@ bool JZNodeEngine::run()
             setParam(ir_set->dst,getParam(ir_set->src));
             break;
         }
-        case OP_get:
-        {
-            break;
-        }
         case OP_call:
         {            
-            JZNodeIRCall *ir_call = (JZNodeIRCall*)op;
-            QString function_name = getParam(ir_call->function).toString();
-            auto func = function(function_name);
+            JZNodeIRCall *ir_call = (JZNodeIRCall*)op;            
+            auto func = function(ir_call->function);
             Q_ASSERT(func);            
 
             if(func->isCFunction())

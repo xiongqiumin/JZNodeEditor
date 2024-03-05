@@ -101,6 +101,8 @@ QDataStream &operator>>(QDataStream &s, EventDefine &param);
 class JZParam
 {
 public:
+    static JZParam formDefine(const JZParamDefine &def);
+
     JZParam();
     JZParam(const QString &name, int type);
 
@@ -135,6 +137,7 @@ public:
 
     //script
     int addr;
+    int addrEnd;
     QString file;
     QList<JZParamDefine> localVariables;
 

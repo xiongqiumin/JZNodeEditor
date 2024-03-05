@@ -48,10 +48,10 @@ public:
     void setSingle(QString sender,const SingleDefine *single);
     QString single();
 
-    virtual void setVariable(const QString &name) override;
-    virtual QString variable() const override;
-    virtual int variableType() const;
+    void setVariable(const QString &name);
+    QString variable() const;
 
+    virtual int variableType() const;
     virtual void drag(const QVariant &value) override;
 
 protected:

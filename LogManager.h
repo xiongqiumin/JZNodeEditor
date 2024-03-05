@@ -30,16 +30,6 @@ public:
 };
 typedef QSharedPointer<LogObject> LogObjectPtr;
 
-class LogModule
-{
-public:
-    int module;
-    QString name;
-    QFile file;
-};
-typedef QSharedPointer<LogModule> LogModulePtr;
-
-
 class LogManager : public QObject
 {
     Q_OBJECT
@@ -47,36 +37,15 @@ class LogManager : public QObject
 public:
     static LogManager *instance();
 
-    void init();
-    void deinit();
-
-    void addModule(int id,QString name);
-    void log(int module, int level, const char *format, ...);
-
-    template<typename...Args>
-    void log(int module, int level, const QString &format, Args ...args)
-    {
-        log(module, level, qUtf8Printable(format), args...);
-    }
+    void log(int module, int level, const QString &text);
+    void log(int module, int level, const char *format, ...);        
 
 signals:
     void sigLog(LogObjectPtr log);
 
-protected slots:
-    void onTimeOut();
-
 protected:
     LogManager();
     ~LogManager();
-
-    void createFile();
-    void flush();
-    
-    bool m_init;
-    QTimer m_timer;    
-
-    QMutex m_mutex;
-    QMap<int, LogModulePtr> m_logs;
 };
 
 #define LOGI(module,format,...)   LogManager::instance()->log(module,LOG_INFO,format,__VA_ARGS__)

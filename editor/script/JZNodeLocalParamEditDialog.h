@@ -2,7 +2,9 @@
 
 #include <QDialog>
 #include <QTableWidget>
+#include <QLineEdit>
 #include "JZNodeValue.h"
+#include "JZNodeParamWidget.h"
 
 namespace Ui { class JZNodeLocalParamEditDialog; }
 
@@ -19,9 +21,13 @@ public:
     JZParamDefine param();
 
 protected slots:
-    void on_btnOk_clicked();
-    void on_btnCancel_clicked();
+    void onBtnOkClicked();
+    void onBtnCancelClicked();
+    void onTypeChanged();
 
 private:
-    Ui::JZNodeLocalParamEditDialog *ui;
+    QLineEdit *m_lineName;
+    JZNodeParamTypeWidget *m_typeWidget;
+    JZNodeParamValueWidget *m_valueWidget;
+    JZParamDefine m_define;
 };

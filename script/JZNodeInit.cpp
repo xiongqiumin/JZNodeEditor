@@ -11,10 +11,6 @@ void JZNodeInit()
     qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
     qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");
 
-    LogManager::instance()->init();
-    LogManager::instance()->addModule(Log_Compiler,"Compiler");
-    LogManager::instance()->addModule(Log_Runtime,"Runtime");
-
     JZNodeType::init();
     JZNodeFactory::instance()->init();    
     JZNodeFunctionManager::instance()->init();   

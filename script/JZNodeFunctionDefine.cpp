@@ -147,6 +147,14 @@ QDataStream &operator >> (QDataStream &s, EventDefine &param)
 }
 
 //JZParam
+JZParam JZParam::formDefine(const JZParamDefine &def)
+{
+    JZParam param;
+    param.name = def.name;
+    param.dataType = def.dataType();
+    return param;
+}
+
 JZParam::JZParam()
 {
     dataType = Type_none;
@@ -184,7 +192,7 @@ QDataStream &operator>>(QDataStream &s, JZParam &param)
 JZFunction::JZFunction()
 {
     addr = -1;
-    cfunc = nullptr;
+    addrEnd = -1;    
 }
 
 JZFunction::~JZFunction()
@@ -241,6 +249,7 @@ QDataStream &operator<<(QDataStream &s, const JZFunction &param)
     s << param.flow;
    
     s << param.addr;
+    s << param.addrEnd;
     s << param.file;
     s << param.localVariables;
     return s;
@@ -255,6 +264,7 @@ QDataStream &operator >> (QDataStream &s, JZFunction &param)
     s >> param.flow;
 
     s >> param.addr;
+    s >> param.addrEnd;
     s >> param.file;
     s >> param.localVariables;
     return s;

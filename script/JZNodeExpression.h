@@ -113,55 +113,43 @@ public:
     JZNodeFloatNE();
 };
 
-//class 
-class JZNodeCompareOp : public JZNode
-{
-public:
-    JZNodeCompareOp(int node_type, int op_type);
-
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-
-protected:    
-    int m_op;
-};
-
 //JZNodeEQ
-class JZNodeEQ : public JZNodeCompareOp
+class JZNodeEQ : public JZNodeOperator
 {
 public:
     JZNodeEQ();
 };
 
 //JZNodeNE
-class JZNodeNE : public JZNodeCompareOp
+class JZNodeNE : public JZNodeOperator
 {
 public:
     JZNodeNE();
 };
 
 //JZNodeLE
-class JZNodeLE : public JZNodeCompareOp
+class JZNodeLE : public JZNodeOperator
 {
 public:
     JZNodeLE();
 };
 
 //JZNodeGE
-class JZNodeGE : public JZNodeCompareOp
+class JZNodeGE : public JZNodeOperator
 {
 public:
     JZNodeGE();
 };
 
 //JZNodeLT
-class JZNodeLT : public JZNodeCompareOp
+class JZNodeLT : public JZNodeOperator
 {
 public:
     JZNodeLT();
 };
 
 //JZNodeGT
-class JZNodeGT : public JZNodeCompareOp
+class JZNodeGT : public JZNodeOperator
 {
 public:
     JZNodeGT();

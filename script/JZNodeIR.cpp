@@ -130,8 +130,6 @@ JZNodeIR *createNodeIR(int type)
         return new JZNodeIRExpr(type);
     case OP_set:    
         return new JZNodeIRSet();
-    case OP_get:    
-        break;
     case OP_jmp:
     case OP_je:
     case OP_jne:

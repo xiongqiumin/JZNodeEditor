@@ -58,9 +58,10 @@ bool SampleProject::run()
     if (!QFile::exists(m_project.path() + "/build"))
         QDir().mkdir(m_project.path() + "/build");
 
-    JZNodeBuilder builder;
+    JZNodeBuilder builder(&m_project);
+
     JZNodeProgram program;
-    if (!builder.build(&m_project, &program))
+    if (!builder.build(&program))
     {
         qDebug().noquote() << builder.error();
         return false;

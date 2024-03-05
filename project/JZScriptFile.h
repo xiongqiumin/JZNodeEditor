@@ -19,6 +19,10 @@ public:
     bool save(QString filepath,QList<JZProjectItem*> items);
     bool load(QString filepath);
 
+    void updateClass(JZScriptClassItem *item, JZNodeObjectDefine define);
+    void updateScriptName(JZScriptItem *item, QString name);
+    void updateScriptFunction(JZScriptItem *item, JZFunctionDefine define);
+
     JZParamItem *addParamDefine(QString name);
     void removeParamDefine(QString name);
     JZParamItem *paramDefine(QString name);
@@ -36,7 +40,9 @@ public:
     JZScriptClassItem *getClass(QString className);
 
 protected:
-    QByteArray getItemData(JZProjectItem *item);
+    QByteArray getClassData(JZScriptClassItem *item);
+    QByteArray getItemData(JZProjectItem *item);        
+
     void loadScript(QDataStream &s, JZProjectItem *item);
     void saveScript(QDataStream &s, JZProjectItem *item);
 

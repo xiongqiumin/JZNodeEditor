@@ -113,8 +113,7 @@ public:
     QList<JZNodeScript*> scriptList();    
     QMap<QString, QString> bindInfo(QString className);
     
-    QList<JZNodeObjectDefine> objectDefines();
-    QMap<QString,JZParamDefine> globalVariables();    
+    QList<JZNodeObjectDefine> objectDefines();       
 
     QString irToString(JZNodeIR *ir);
     QString dump();   

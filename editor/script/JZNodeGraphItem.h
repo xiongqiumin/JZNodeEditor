@@ -5,6 +5,7 @@
 #include <QWidget>
 #include "JZNodeBaseItem.h"
 #include "JZNode.h"
+#include "JZNodeParamWidget.h"
 
 class JZNodeLineItem;
 
@@ -27,13 +28,20 @@ public:
     QString pinValue(int prop_id);
     void resetPropValue();
 
-    void setError(QString error);
+    void setError(const QString &error);
     void clearError();
+    bool isError() const;
 
-    void updateLongPress();
+    void onTimerEvent(int event);
 
 protected:
-    enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };    
+    enum
+    {
+        Timer_toolTip,
+        Timer_longPress,
+    };
+
+    enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };        
     struct PropGemo
     {
         PropGemo();
@@ -49,7 +57,16 @@ protected:
 
         int widgetType;
         QGraphicsProxyWidget *proxy;
-        QWidget *widget;       
+        JZNodeParamValueWidget *widget;
+    };
+
+    struct TipInfo
+    {
+        TipInfo();
+
+
+        QPointF pos;
+        QString tips;
     };
 
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;
@@ -64,19 +81,22 @@ protected:
     void calcGemo(int pin, int x, int y,PropGemo *gemo);
     void updatePropGemo();
     void updateErrorGemo();
+    void showTip(QPointF pt,QString text);
+    void clearTip();
     
-    void setWidgetValue(QWidget *widget, const QString &value);
-    QString getWidgetValue(QWidget *widget);
+    void setWidgetValue(int prop_id, const QString &value);
+    QString getWidgetValue(int prop_id);
 
     QSize m_size;    
     JZNode *m_node;    
-    QMap<int,PropGemo> m_propRects;
+    QMap<int,PropGemo> m_pinRects;
     QRectF m_errorRect;    
     QString m_error;
 
     bool m_pinButtonOn;
     int m_longPress;
     QRectF m_pinButtonRect;
+    TipInfo m_tip;
 };
 
 #endif

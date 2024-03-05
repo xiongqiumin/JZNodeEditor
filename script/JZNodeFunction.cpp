@@ -6,7 +6,7 @@ JZNodeFunctionStart::JZNodeFunctionStart()
 {
     m_name = "Start";
     m_type = Node_functionStart;
-    setFlag(Node_pinNoRemove);
+    setFlag(NodeProp_noRemove);
     addFlowOut();   
 }
 
@@ -132,7 +132,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     }
 
     JZNodeIRCall *call = new JZNodeIRCall();
-    call->function = irLiteral(m_functionName);
+    call->function = m_functionName;
     c->addStatement(JZNodeIRPtr(call));
 
     for(int i = 0; i < out_list.size(); i++)

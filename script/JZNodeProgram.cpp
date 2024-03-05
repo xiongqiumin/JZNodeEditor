@@ -290,11 +290,6 @@ QList<JZNodeObjectDefine> JZNodeProgram::objectDefines()
     return m_objectDefines;
 }
 
-QMap<QString,JZParamDefine> JZNodeProgram::globalVariables()
-{
-    return m_variables;
-}
-
 QString JZNodeProgram::toString(JZNodeIRParam param)
 {
     if (param.type == JZNodeIRParam::Literal)
@@ -349,15 +344,10 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
         line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
         break;
     }
-    case OP_get:
-    {
-        Q_ASSERT(0);
-        break;
-    }
     case OP_call:
     {
         JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
-        line += "CALL " + toString(ir_call->function);
+        line += "CALL " + ir_call->function;
         break;
     }
     case OP_return:

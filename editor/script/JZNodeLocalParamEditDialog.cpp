@@ -2,38 +2,85 @@
 #include <QFontMetrics>
 #include <QDebug>
 #include <QComboBox>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QLabel>
+#include <QPushButton>
 #include "JZNodeLocalParamEditDialog.h"
-#include "ui_JZNodeLocalParamEditDialog.h"
-
 
 //JZNodeLocalParamEditDialog
 JZNodeLocalParamEditDialog::JZNodeLocalParamEditDialog(QWidget *parent)
     : QDialog(parent)
-{
-    ui = new Ui::JZNodeLocalParamEditDialog();
-    ui->setupUi(this);
+{    
+    QVBoxLayout *verticalLayout = new QVBoxLayout();
+    
+    QWidget *widget_grid = new QWidget();    
+    QGridLayout *gridLayout = new QGridLayout(widget_grid);    
+    gridLayout->setContentsMargins(0, 0, 0, 0);
+
+    m_lineName = new QLineEdit();
+    gridLayout->addWidget(new QLabel("参数名:"), 0, 0);    
+    gridLayout->addWidget(m_lineName, 0, 1);
+    
+    m_typeWidget = new JZNodeParamTypeWidget();
+    gridLayout->addWidget(new QLabel("类型:"), 1, 0);    
+    gridLayout->addWidget(m_typeWidget, 1, 1);
+    connect(m_typeWidget,SIGNAL(currentTextChanged(QString)),this, SLOT(onTypeChanged()));
+
+    m_valueWidget = new JZNodeParamValueWidget();
+    gridLayout->addWidget(new QLabel("默认值:"), 2, 0);    
+    gridLayout->addWidget(m_valueWidget, 2, 1);    
+
+    QHBoxLayout *btnLayout = new QHBoxLayout();
+    btnLayout->setContentsMargins(0, 0, 0, 0);
+    QPushButton *btnOk = new QPushButton("Ok");    
+    QPushButton *btnCancel = new QPushButton("Cancel");
+    connect(btnOk, &QPushButton::clicked, this, &JZNodeLocalParamEditDialog::onBtnOkClicked);
+    connect(btnCancel, &QPushButton::clicked, this, &JZNodeLocalParamEditDialog::onBtnCancelClicked);
+
+    btnLayout->addStretch();
+    btnLayout->addWidget(btnOk);
+    btnLayout->addWidget(btnCancel);
+
+    this->setLayout(verticalLayout);
+    verticalLayout->addWidget(widget_grid);
+    verticalLayout->addLayout(btnLayout);    
+
+    setParam(JZParamDefine());
 }
 
 JZNodeLocalParamEditDialog::~JZNodeLocalParamEditDialog()
 {
-    delete ui;
 }
 
 void JZNodeLocalParamEditDialog::setParam(JZParamDefine define)
 {    
+    m_lineName->setText(define.name);
+    m_typeWidget->setType(define.type);
+    m_valueWidget->setDataType(m_typeWidget->type());
+    m_valueWidget->setValue(define.value);
 }
 
 JZParamDefine JZNodeLocalParamEditDialog::param()
-{
-    return JZParamDefine();
+{    
+    return m_define;
 }
 
-void JZNodeLocalParamEditDialog::on_btnOk_clicked()
+void JZNodeLocalParamEditDialog::onTypeChanged()
+{
+    m_valueWidget->setDataType(m_typeWidget->type());
+}
+
+void JZNodeLocalParamEditDialog::onBtnOkClicked()
 {    
+    m_define.name = m_lineName->text();
+    m_define.type = m_typeWidget->type();
+    m_define.value = m_valueWidget->value();
     QDialog::accept();
 }
 
-void JZNodeLocalParamEditDialog::on_btnCancel_clicked()
+void JZNodeLocalParamEditDialog::onBtnCancelClicked()
 {
     QDialog::reject();
 }

@@ -349,10 +349,13 @@
     <ClCompile Include="editor\script\JZNodeTypeHelper.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
-    <ClCompile Include="editor\script\JZNodeAutoRunEditDialog.cpp">
+    <ClCompile Include="editor\script\JZNodePropertyBrowser.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
-    <ClCompile Include="editor\script\JZNodePropertyBrowser.cpp">
+    <ClCompile Include="editor\script\JZNodeAutoRunWidget.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeParamWidget.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
   </ItemGroup>
@@ -447,9 +450,6 @@
     <QtMoc Include="project\JZProject.h">
       <Filter>Header Files\project</Filter>
     </QtMoc>
-    <QtMoc Include="LogManager.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="script\JZNodeQtBind.h">
       <Filter>Header Files\script</Filter>
     </QtMoc>
@@ -480,10 +480,16 @@
     <QtMoc Include="editor\script\JZNodeTypeHelper.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
-    <QtMoc Include="editor\script\JZNodeAutoRunEditDialog.h">
+    <QtMoc Include="editor\script\JZNodePropertyBrowser.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
-    <QtMoc Include="editor\script\JZNodePropertyBrowser.h">
+    <QtMoc Include="editor\script\JZNodeAutoRunWidget.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="LogManager.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeParamWidget.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
   </ItemGroup>
@@ -656,9 +662,6 @@
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="editor\script\JZNodeClassEditDialog.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtUic Include="editor\script\JZNodeLocalParamEditDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="editor\script\JZNodeMemberSelectDialog.ui">

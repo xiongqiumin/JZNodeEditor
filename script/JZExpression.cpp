@@ -128,7 +128,7 @@ QStringList JZExpression::readToken(const QString &line)
             }
             ret << line[i];
         }
-        else if(line[i] != " ")
+        else if(line[i] != ' ')
             pre.push_back(line[i]);
     }
     if(pre.size() != 0)

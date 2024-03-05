@@ -1,12 +1,13 @@
 ﻿#ifndef JZNODE_EDITOR_H_
 #define JZNODE_EDITOR_H_
 
+#include "JZEditor.h"
 #include "JZNodeView.h"
 #include "JZNodePanel.h"
 #include "JZNodeViewPanel.h"
-#include "JZNodePropertyEditor.h"
-#include "JZEditor.h"
 #include "JZNodeCompiler.h"
+#include "JZNodeAutoRunWidget.h"
+#include "JZNodePropertyEditor.h"
 
 class JZNodeEditor : public JZEditor
 {
@@ -51,8 +52,7 @@ protected slots:
     void onActionLayout();
     void onActionFitInView();
 
-    void onAutoRunChecked();
-    void onAutoRunSetting();
+    void onAutoRunChecked();    
 
 protected:
     void init();
@@ -61,8 +61,10 @@ protected:
     JZNodePanel *m_nodePanel;
     JZNodeViewPanel *m_nodeViewPanel;
     JZNodePropertyEditor *m_nodeProp;
+    JZNodeAutoRunWidget* m_runProp;
+    QTabWidget *m_tabProp;
     JZNodeCompiler *m_compiler;
-    QList<QAction*> m_actionList;
+    QList<QAction*> m_actionList;    
 };
 
 #endif

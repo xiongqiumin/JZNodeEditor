@@ -1,5 +1,7 @@
 .vscode
 *.user
 .vs
+Win32
 x64
+Debug
 bin

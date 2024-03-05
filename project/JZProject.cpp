@@ -34,7 +34,7 @@ void JZProject::clear()
     m_filepath.clear();
     m_root.removeChlids();
     m_root.setName(".");    
-
+    
     JZNodeFunctionManager::instance()->clearUserReigst();
     JZNodeObjectManager::instance()->clearUserReigst();
 }
@@ -225,13 +225,13 @@ QString JZProject::mainScriptPath()
 
 JZScriptItem *JZProject::mainScript()
 {
-    JZScriptFile *file = (JZScriptFile*)getItem("./main.jz");
+    JZScriptFile *file = dynamic_cast<JZScriptFile*>(getItem(mainFile()));
     return file->flow("main");
 }
 
 JZParamItem *JZProject::globalDefine()
 {
-    JZScriptFile *file = (JZScriptFile*)getItem("./main.jz");
+    JZScriptFile *file = dynamic_cast<JZScriptFile*>(getItem(mainFile()));
     return file->paramDefine("global");
 }
 
@@ -317,15 +317,8 @@ bool JZProject::saveItems(QList<JZProjectItem*> items)
         }
         else if (file->itemType() == ProjectItem_scriptFile)
         {
-            JZScriptFile *script_file = dynamic_cast<JZScriptFile*>(file);
-            
-            bool ret = false;
-            if (it.value().contains(script_file))
-                ret = script_file->save(file_path);
-            else
-                ret = script_file->save(file_path, it.value());
-
-            if (!ret)
+            JZScriptFile *script_file = dynamic_cast<JZScriptFile*>(file);                        
+            if (!script_file->save(file_path, it.value()))
                 return false;
         }
 

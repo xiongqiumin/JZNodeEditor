@@ -97,7 +97,7 @@
     <ClCompile Include="editor\JZNewFileDialog.cpp" />
     <ClCompile Include="editor\JZNewProjectDialog.cpp" />
     <ClCompile Include="editor\JZProjectTree.cpp" />
-    <ClCompile Include="editor\script\JZNodeAutoRunEditDialog.cpp" />
+    <ClCompile Include="editor\script\JZNodeAutoRunWidget.cpp" />
     <ClCompile Include="editor\script\JZNodeBaseItem.cpp" />
     <ClCompile Include="editor\script\JZNodeBreakPoint.cpp" />
     <ClCompile Include="editor\script\JZNodeClassEditDialog.cpp" />
@@ -111,6 +111,7 @@
     <ClCompile Include="editor\script\JZNodeLocalParamEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodePanel.cpp" />
     <ClCompile Include="editor\script\JZNodeMemberSelectDialog.cpp" />
+    <ClCompile Include="editor\script\JZNodeParamWidget.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyBrowser.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeScene.cpp" />
@@ -196,7 +197,7 @@
     <QtMoc Include="editor\script\JZNodeGroupEditDialog.h" />
     <QtMoc Include="editor\JZNewFileDialog.h" />
     <QtMoc Include="editor\script\JZNodeClassEditDialog.h" />
-    <QtMoc Include="editor\script\JZNodeAutoRunEditDialog.h" />
+    <QtMoc Include="editor\script\JZNodeAutoRunWidget.h" />
     <ClInclude Include="editor\script\JZNodeGroupItem.h" />
     <ClInclude Include="editor\script\JZNodeLayout.h" />
     <QtMoc Include="editor\script\JZNodeMemberSelectDialog.h" />
@@ -205,6 +206,7 @@
     <QtMoc Include="editor\script\JZNodeViewMap.h" />
     <QtMoc Include="editor\script\JZNodeLocalParamEditDialog.h" />
     <QtMoc Include="editor\script\JZNodePropertyBrowser.h" />
+    <QtMoc Include="editor\script\JZNodeParamWidget.h" />
     <ClInclude Include="project\JZClassItem.h" />
     <ClInclude Include="project\JZProjectItemStream.h" />
     <ClInclude Include="project\JZProjectStream.h" />
@@ -289,7 +291,6 @@
     <QtUic Include="editor\script\JZNodeClassEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeFuctionEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeGroupEditDialog.ui" />
-    <QtUic Include="editor\script\JZNodeLocalParamEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeMemberSelectDialog.ui" />
     <QtUic Include="editor\script\JZNodeTypeDialog.ui" />
     <QtUic Include="editor\script\JZNodeParamEditor.ui" />

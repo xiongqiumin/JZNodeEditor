@@ -10,6 +10,7 @@ JZNodeProperty::JZNodeProperty(QString name, int type)
     m_enabled = true;
     m_name = name;
     m_type = type;
+    m_parent = nullptr;
 }
 
 void JZNodeProperty::setEnabled(bool flag)
@@ -23,13 +24,19 @@ void JZNodeProperty::setEnabled(bool flag)
 
 void JZNodeProperty::addSubProperty(JZNodeProperty *prop)
 {
-    Q_ASSERT(!prop->m_item);
+    Q_ASSERT(!prop->parent());
+    prop->m_parent = this;
     m_childs.push_back(QSharedPointer<JZNodeProperty>(prop));
     if (m_item)
     {
         auto tree = qobject_cast<JZNodePropertyBrowser*>(m_item->treeWidget());
         tree->createPropItem(m_item, prop);
     }
+}
+
+JZNodeProperty *JZNodeProperty::parent()
+{
+    return m_parent;
 }
 
 const QString &JZNodeProperty::value() const
@@ -50,11 +57,22 @@ JZNodePropertyBrowser::JZNodePropertyBrowser()
 {
     this->setColumnCount(2);
     this->setHeaderLabels({ "name","value" });
+    this->setAlternatingRowColors(true);
+    connect(this, &QTreeWidget::itemChanged, this, &JZNodePropertyBrowser::onItemChanged);
+    this->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
 }
 
 JZNodePropertyBrowser::~JZNodePropertyBrowser()
 {
 
+}
+
+
+void JZNodePropertyBrowser::onItemChanged(QTreeWidgetItem *item, int column)
+{
+    auto text = item->text(column);
+    auto prop = m_propMap[item];
+    emit valueChanged(prop, text);
 }
 
 void JZNodePropertyBrowser::clear()
@@ -71,10 +89,12 @@ void JZNodePropertyBrowser::addProperty(JZNodeProperty *prop)
 
 void JZNodePropertyBrowser::setItemEnabled(QTreeWidgetItem *item, bool flag)
 {
+    this->blockSignals(true);
     if (flag)
-        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-    else
         item->setFlags(item->flags() | Qt::ItemIsEditable);
+    else
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+    this->blockSignals(false);
 }
 
 void JZNodePropertyBrowser::createPropItem(QTreeWidgetItem *parent, JZNodeProperty *prop)
@@ -82,6 +102,10 @@ void JZNodePropertyBrowser::createPropItem(QTreeWidgetItem *parent, JZNodeProper
     QTreeWidgetItem *item = new QTreeWidgetItem();
     item->setText(0, prop->m_name);
     item->setText(1, prop->m_value);
+    if (prop->m_enabled)
+        item->setFlags(item->flags() | Qt::ItemIsEditable);
+    else
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
     prop->m_item = item;
     parent->addChild(item);
     m_propMap[item] = prop;

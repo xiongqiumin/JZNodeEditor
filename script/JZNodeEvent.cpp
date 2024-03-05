@@ -46,7 +46,7 @@ JZNodeStartEvent::JZNodeStartEvent()
     m_type = Node_startEvent;
     m_eventType = Event_programStart;
     m_name = "startProgram";
-    setFlag(Node_pinNoRemove);
+    setFlag(NodeProp_noRemove);
 }
 
 JZFunctionDefine JZNodeStartEvent::function()
@@ -70,7 +70,7 @@ bool JZNodeStartEvent::compiler(JZNodeCompiler *c, QString &error)
 JZNodeSingleEvent::JZNodeSingleEvent()
 {
     m_type = Node_singleEvent;
-    m_flag = Node_pinDragVariable;
+    m_flag = NodeProp_dragVariable;
     int in = addParamIn("",Pin_dispName | Pin_dispValue | Pin_editValue | Pin_literal);
     setPinTypeString(in);
 }
@@ -134,12 +134,12 @@ QString JZNodeSingleEvent::single()
 
 void JZNodeSingleEvent::setVariable(const QString &name)
 {
-    setPinValue(paramIn(0),name);
+    setPinValue(paramIn(0),JZNodeType::addMark(name));
 }
 
 QString JZNodeSingleEvent::variable() const
 {
-    return pinValue(paramIn(0));
+    return JZNodeType::removeMark(pinValue(paramIn(0)));
 }
 
 int JZNodeSingleEvent::variableType() const

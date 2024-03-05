@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMenu>
+#include "JZRegExpHelp.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeValue.h"
 #include "JZNodeFactory.h"
@@ -697,18 +698,17 @@ void JZNodePanel::onContextMenu(const QPoint &pos)
 
     if (act == actEdit)
     {
- /*       auto def = m_file->localVariable(item->text(0));
+        auto old_def = m_file->localVariable(item->text(0));
+        Q_ASSERT(old_def);
 
-        JZNodeParamEditDialog dialog(this);;
-        dialog.init(m_file, *def);
+        JZNodeLocalParamEditDialog dialog(this);;
+        dialog.setParam(*old_def);
         if (dialog.exec() != QDialog::Accepted)
             return;
 
-        auto new_def = dialog.param();
-        if(new_def.name != def->name || new_def.dataType != def->dataType
-            || new_def.value != def->value)
-            m_file->replaceLocalVariableInfo(def->name,new_def);
-*/
+        auto new_def = dialog.param();        
+        m_file->setLocalVariable(old_def->name, new_def);
+        item->setText(0,new_def.name);
     }
     else if (act == actDel)
     {
@@ -719,23 +719,18 @@ void JZNodePanel::onContextMenu(const QPoint &pos)
 
 void JZNodePanel::onAddScriptParam()
 {
-    QString name;
-    auto list = m_file->localVariableList(true);
-    int i = 0;
-    while(true)
-    {
-        name = "local" + QString::number(i+1);
-        if (!list.contains(name))
-            break;
-        i++;
-    }
+    JZParamDefine define;
+    define.name = JZRegExpHelp::uniqueString("localVar", m_file->localVariableList(true));
+    define.type = "int";
 
-    JZNodeLocalParamEditDialog dialog(this);;    
+    JZNodeLocalParamEditDialog dialog(this);
+    dialog.setParam(define);
     if (dialog.exec() != QDialog::Accepted)
         return;
     
-    m_file->addLocalVariable(dialog.param());
-    QTreeWidgetItem *item = createParam(name);
+    define = dialog.param();
+    m_file->addLocalVariable(define);
+    QTreeWidgetItem *item = createParam(define.name);
     m_itemLocal->addChild(item);
     m_itemLocal->setExpanded(true);       
 }

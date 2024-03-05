@@ -160,7 +160,7 @@ private:
     void start(bool startPause);    
     void saveToFile(QString file,QString text);
     void saveAll();
-    bool closeAll(bool except_current = false); 
+    bool closeAll(JZEditor *except = nullptr);
     void initLocalProcessTest(bool flag);
     QIcon menuIcon(const QString &name);
     

@@ -230,9 +230,29 @@ QString JZNodeType::toString(const QVariant &v)
 
 QString JZNodeType::opName(int op)
 {
-    QStringList opNames = QStringList{ "+","-","*","/","%","==","!=","<=",">=","<",">","and","or","not","|","&","^" };
-    Q_ASSERT(op >= OP_add && op <= OP_bitxor);
-    return opNames[op - OP_add];
+    QMap<int, QString> opNames;
+    opNames[OP_add] = "+";
+    opNames[OP_sub] = "-";
+    opNames[OP_mul] = "*";
+    opNames[OP_div] = "/";
+    opNames[OP_mod] = "%";
+    opNames[OP_eq] = "==";
+    opNames[OP_ne] = "!=";
+    opNames[OP_le] = "<=";
+    opNames[OP_ge] = ">=";
+    opNames[OP_lt] = "<";
+    opNames[OP_gt] = ">";
+    opNames[OP_and] = "and";
+    opNames[OP_or] = "or";
+    opNames[OP_not] = "not";
+    opNames[OP_bitor] = "|";
+    opNames[OP_bitand] = "&";
+    opNames[OP_bitxor] = "~";
+    
+    if (opNames.contains(op))
+        return opNames[op];
+    else
+        return QString();    
 }
 
 QVariant JZNodeType::value(int type)
@@ -282,6 +302,9 @@ int JZNodeType::upType(int type1, int type2)
 
 int JZNodeType::upType(QList<int> types)
 {
+    if (types.size() == 0)
+        return Type_none;
+
     int type = types[0];
     for (int i = 1; i < types.size(); i++)
         type = upType(type, types[i]);
@@ -398,6 +421,9 @@ int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
 
 int JZNodeType::matchType(QList<int> dst_types, const QString &text)
 {    
+    if (text.isEmpty())
+        return upType(dst_types);
+
     JZRegExpHelp help;
     bool isInt = help.isInt(text);
     bool isHex = help.isHex(text);
@@ -411,7 +437,17 @@ int JZNodeType::matchType(QList<int> dst_types, const QString &text)
     if (dst_types.contains(Type_string) && text.front() == '"' && text.back() == '"')
         return Type_string;
     if (dst_types.contains(Type_any))    
-        return Type_any;    
+        return Type_any;
+
+    for (int i = 0; i < dst_types.size(); i++)
+    {
+        if (isEnum(dst_types[i]))
+        {
+            auto meta = JZNodeObjectManager::instance()->enumMeta(dst_types[i]);
+            if (meta->hasKey(text))
+                return dst_types[i];
+        }
+    }
 
     return Type_none;
 }
@@ -473,6 +509,57 @@ QVariant JZNodeType::initValue(int type, const QString &text)
 
     Q_ASSERT(0);    
     return QVariant();
+}
+
+bool JZNodeType::isMatchValue(const QList<int> &dst_types, const QString &v)
+{
+    return matchType(dst_types, v) != Type_none;
+}
+
+QString JZNodeType::dispString(const QString &text)
+{
+    if (text.size() < 2 || !(text.front() == '"' && text.back() == '"'))
+        return QString();
+
+    if (text.indexOf(' ') >= 0)
+        return text;
+
+    return text.mid(1, text.size() - 2);
+}
+
+QString JZNodeType::storgeString(const QString &text)
+{
+    if (text.isEmpty())
+        return QString();
+
+    if (text.size() >= 2 && text.front() == '"' && text.back() == '"')
+    {
+        if (text.size() == 2)
+            return QString();
+
+        return text;
+    }
+    else
+        return '"' + text + '"';
+}
+
+QString JZNodeType::addMark(const QString &text)
+{
+    return '"' + text + '"';
+}
+
+QString JZNodeType::removeMark(const QString &text)
+{
+    if (text.isEmpty())
+        return QString();
+
+    Q_ASSERT(text.size() >= 2 && text.front() == '"' && text.back() == '"');
+    return text.mid(1,text.size() - 2);
+}
+
+QVariant JZNodeType::defaultValue(int type)
+{
+    return initValue(type, QString());
 }
 
 void JZNodeType::registConvert(int from, int to, ConvertFunc func)

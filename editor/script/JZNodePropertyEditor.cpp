@@ -19,7 +19,7 @@ JZNodePropertyEditor::JZNodePropertyEditor(QWidget *widget)
     l->addWidget(m_tree);
     setLayout(l);
     
-    //connect(m_propManager,&JZNodePropertyManager::valueChanged,this,&JZNodePropertyEditor::onValueChanged);    
+    connect(m_tree,&JZNodePropertyBrowser::valueChanged,this,&JZNodePropertyEditor::onValueChanged);
 }
 
 JZNodePropertyEditor::~JZNodePropertyEditor()
@@ -32,7 +32,6 @@ void JZNodePropertyEditor::clear()
     m_tree->clear();
     m_tree->clear();
     m_propMap.clear();
-    m_propNameMap.clear();
     
     m_node = nullptr;    
 }
@@ -47,26 +46,12 @@ void JZNodePropertyEditor::onValueChanged(JZNodeProperty *p, const QString &valu
         int prop_id = m_propMap.key(p, -1);
         if (prop_id != -1)        
             emit sigNodePropChanged(m_node->id(), prop_id, value);
-
-        int prop_name_id = m_propNameMap.key(p, -1);
-        if (prop_name_id != -1)        
-            emit sigNodePropNameChanged(m_node->id(), prop_name_id, value);        
     }
 }
 
 JZNode *JZNodePropertyEditor::node()
 {
     return m_node;
-}
-
-void JZNodePropertyEditor::setPinName(int prop_id,const QString &name)
-{
-    if(!m_propNameMap.contains(prop_id))
-        return;
-
-    m_tree->blockSignals(true);
-    m_propNameMap[prop_id]->setValue(name);
-    m_tree->blockSignals(false);
 }
 
 void JZNodePropertyEditor::setPinValue(int prop_id,const QString &value)
@@ -90,11 +75,13 @@ void JZNodePropertyEditor::setPropEditable(int prop_id,bool editable)
 JZNodeProperty *JZNodePropertyEditor::createProp(JZNodePin *pin)
 {
     int type = JZNodeType::upType(pin->dataType());
-    if (type == Type_none)
+    if (type == Type_none && pin->dataType().size() > 0)
         type = Type_any;
 
     auto pin_prop = new JZNodeProperty(pin->name(), type);
     pin_prop->setValue(pin->value());
+    if(type == Type_none || !(pin->flag() & Pin_editValue))
+        pin_prop->setEnabled(false);
     m_propMap[pin->id()] = pin_prop;
     return pin_prop;
 }
@@ -137,9 +124,14 @@ void JZNodePropertyEditor::updateNode()
 
     auto prop_base = new JZNodeProperty("基本信息", NodeProprety_GroupId);
     auto prop_name = new JZNodeProperty("名称", Type_string);
+    auto prop_id = new JZNodeProperty("Id", Type_string);
     prop_base->addSubProperty(prop_name);
+    prop_base->addSubProperty(prop_id);
     prop_name->setValue(m_node->name());
-    m_tree->addProperty(prop_base);    
+    prop_name->setEnabled(false);
+    prop_id->setValue(QString::number(m_node->id()));    
+    prop_id->setEnabled(false);
+    m_tree->addProperty(prop_base);            
 
     auto in_list = m_node->pinInList(Pin_param);
     addPropList("输入",in_list);

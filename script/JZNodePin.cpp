@@ -4,7 +4,7 @@
 JZNodePin::JZNodePin()
 {
     m_id = INVALID_ID;
-    m_flag = Pin_none;    
+    m_flag = Pin_none;
 }
 
 JZNodePin::JZNodePin(QString name, int dataType, int flag)
@@ -107,24 +107,24 @@ bool JZNodePin::isLiteral() const
     return (m_flag & Pin_literal);
 }
 
-void JZNodePin::setDataType(QList<int> type)
+void JZNodePin::setDataType(const QList<int> &type)
 {
     m_dataType = type;
 }
 
-QList<int> JZNodePin::dataType() const
+const QList<int> &JZNodePin::dataType() const
 {
     return m_dataType;
 }
 
-QString JZNodePin::value() const
+const QString &JZNodePin::value() const
 {
     return m_value;
 }
 
-void JZNodePin::setValue(QString value)
+void JZNodePin::setValue(const QString &value)
 {
-    Q_ASSERT(JZNodeType::isNullptr(value) || JZNodeType::isBase(JZNodeType::variantType(value)));
+    Q_ASSERT(JZNodeType::isMatchValue(m_dataType,value));
     m_value = value;
 }
 

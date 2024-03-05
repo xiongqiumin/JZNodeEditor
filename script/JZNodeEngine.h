@@ -130,6 +130,7 @@ public:
     JZNodeProgram *program();        
 
     JZNodeRuntimeInfo runtimeInfo();    
+    JZNodeRuntimeError runtimeError();
 
     void setDebug(bool flag);    
 
@@ -312,6 +313,7 @@ protected:
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
     bool m_debug;
+    JZNodeRuntimeError m_error;
     
     QMap<JZNodeObject*,JZObjectInfo> m_objectInfo;    
     QMap<QVariant*, VariantInfo> m_variantInfo;    

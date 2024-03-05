@@ -14,8 +14,6 @@ enum
     OP_nop,            
     OP_alloc,    
     OP_set,    
-    OP_get,    
-    OP_getRef,
     OP_jmp,
     OP_je,
     OP_jne,      
@@ -27,6 +25,9 @@ enum
     OP_mul,
     OP_div,
     OP_mod,
+    OP_bitand,
+    OP_bitor,
+    OP_bitxor,
     OP_eq,  // ==
     OP_ne,  // !=
     OP_le,  // <=
@@ -35,10 +36,7 @@ enum
     OP_gt,  // >
     OP_and,
     OP_or,
-    OP_not,    
-    OP_bitand,
-    OP_bitor,
-    OP_bitxor,
+    OP_not,        
     OP_assert,
 };
 
@@ -175,7 +173,7 @@ public:
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);   
 
-    JZNodeIRParam function;
+    QString function;
     QList<JZNodeIRParam> paramIn;
     QList<JZNodeIRParam> paramOut;
 };
