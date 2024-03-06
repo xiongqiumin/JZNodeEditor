@@ -10,10 +10,11 @@ class JZNodeOperator: public JZNode
 public:
     JZNodeOperator(int node_type,int op_type);
 
-    virtual bool pinClicked(int id) override;
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;        
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual QWidget* createWidget(int id) override;
+
     void addInput();
-    void removeInput(int index);
+    void removeInput(int index);    
 
 protected:
     void addInputButton();    

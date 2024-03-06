@@ -165,13 +165,3 @@ const JZFunction *JZNodeFunctionManager::functionImpl(QString funcName)
 
     return &it->funcImpl;
 }
-
-JZNodeFunctionEdit JZNodeFunctionManager::editFunction(QString name)
-{
-    return m_funcEditMap.value(name, nullptr);
-}
-
-void JZNodeFunctionManager::registEditFunction(QString name, JZNodeFunctionEdit func)
-{
-    m_funcEditMap[name] = func;
-}

@@ -43,7 +43,7 @@ bool JZForCheck(int first,int last,int step,int op,QString &error)
             return true;
     }
 
-    error = QString::asprintf("Dead loop, please check, first = %d, last = %d, step = %d, op = %s", 
+    error = QString::asprintf("Dead loop, please check, first=%d, last=%d, step=%d, op='%s'", 
         first, last, step, qUtf8Printable(JZNodeType::opName(op)));
     return false;
 }
@@ -375,6 +375,7 @@ void JZNodeEngine::regist()
     JZNodeFunctionManager::instance()->registCFunction("dealExpr", false, jzbind::createFuncion(JZDealExpr));
     JZNodeFunctionManager::instance()->registCFunction("createObject", true, jzbind::createFuncion(JZObjectCreate));
 
+    JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
     JZNodeFunctionManager::instance()->registCFunction("createObjectFromString", true, jzbind::createFuncion(JZObjectFromString));    
 
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitGlobal",true, jzbind::createFuncion(JZNodeInitGlobal));

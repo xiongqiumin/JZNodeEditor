@@ -58,9 +58,6 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         addFlowIn();
         addFlowOut();
     }
-    auto edit = JZNodeFunctionManager::instance()->editFunction(define->fullName());
-    if (edit)
-        addButtonIn("edit");
 
     for(int i = 0; i < define->paramIn.size(); i++)
     {
@@ -86,13 +83,6 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 QString JZNodeFunction::function() const
 {
     return m_functionName;
-}
-
-bool JZNodeFunction::pinClicked(int id)
-{
-    Q_UNUSED(id);
-    auto edit = JZNodeFunctionManager::instance()->editFunction(m_functionName);    
-    return edit(this);
 }
 
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)

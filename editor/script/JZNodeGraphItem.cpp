@@ -67,7 +67,6 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     m_type = Item_node;
     m_node = node;
     m_id = node->id();    
-    m_pinButtonOn = false;
     m_longPress = false;
 
     setOpacity(0.9);
@@ -193,53 +192,77 @@ QSize JZNodeGraphItem::size() const
     return m_size;
 }
 
-void JZNodeGraphItem::calcGemo(int pin_id,int x,int y, PropGemo *gemo)
+void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
 {
     auto pin = m_node->pin(pin_id);
-    gemo->iconRect = QRectF(x,y,24,24);
+    gemo->iconRect = QRectF(x, y, 24, 24);
 
     x = gemo->iconRect.right() + 5;
-    if(pin->isDispName())
+    if (pin->isDispName())
     {
         QFontMetrics ft(scene()->font());
-        int w = qMin(name_max_width,ft.horizontalAdvance(pin->name()));
-        gemo->nameRect = QRectF(x,y,w,24);
+        int w = qMin(name_max_width, ft.horizontalAdvance(pin->name()));
+        gemo->nameRect = QRectF(x, y, w, 24);
         x = gemo->nameRect.right() + 5;
     }
-    if (pin->isEditValue() || pin->isDispValue())
-    {        
-        if (!gemo->widget)
+
+    if (!gemo->widget)
+    {
+        QWidget *widget = nullptr;
+        if (pin->isWidget())
+        {
+            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+            if (!gemo->widget)
+                widget = m_node->createWidget(pin_id);
+        }
+        else if(pin->isEditValue() || pin->isDispValue())
         {
             int w = 60;
-            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();    
-            JZNodeParamValueWidget *widget = new JZNodeParamValueWidget();
-            widget->setDataType(pin->dataType());      
-            widget->connect(widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
+            JZNodeParamValueWidget *param_widget = new JZNodeParamValueWidget();
+            param_widget->setDataType(pin->dataType());
+            param_widget->connect(param_widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
 
-            gemo->valueRect = QRectF(x, y, w, 24);
+            widget = param_widget;
             widget->resize(w, 24);
             widget->setProperty("node_id", m_id);
             widget->setProperty("prop_id", pin_id);
+        }
+
+        if (widget)
+        {
+            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
             gemo->widget = widget;
-            proxy->setWidget(widget);
             gemo->proxy = proxy;
+
+            int w = widget->width();
+            gemo->valueRect = QRectF(x, y, w, 24);
+
+            proxy->setWidget(widget);
             proxy->setParentItem(this);
             proxy->setPos(x, y);
-        } 
-        bool editable = editor()->isPropEditable(m_id, pin_id);
-        gemo->widget->setEnabled(editable);
-    }      
+        }        
+    }
+
+    if (gemo->widget)
+    {
+        if (pin->isEditValue() || pin->isDispValue())
+        {
+            bool editable = editor()->isPropEditable(m_id, pin_id);
+            gemo->widget->setEnabled(editable);
+        }
+        gemo->proxy->setPos(x, y);
+    }
 }
 
 void JZNodeGraphItem::setWidgetValue(int prop_id, const QString &value)
 {    
-    JZNodeParamValueWidget *widget = m_pinRects[prop_id].widget;
+    auto *widget = qobject_cast<JZNodeParamValueWidget*>(m_pinRects[prop_id].widget);
     widget->setValue(value);
 }
 
 QString JZNodeGraphItem::getWidgetValue(int prop_id)
 {
-    JZNodeParamValueWidget *widget = m_pinRects[prop_id].widget;
+    auto *widget = qobject_cast<JZNodeParamValueWidget*>(m_pinRects[prop_id].widget);
     return widget->value();
 }
 
@@ -322,12 +345,7 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
     if (pin_id >= 0)
     {
         auto pin = m_node->pin(pin_id);
-        if(pin->isWidget())
-        {
-            m_pinButtonRect = propRect(pin->id());
-            m_pinButtonOn = true;
-        }
-        else if(pin->isOutput())
+        if(pin->isOutput())
         {
             JZNodeGemo gemo(m_node->id(), pin->id());
             editor()->startLine(gemo);
@@ -343,20 +361,12 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
-    if (m_pinButtonOn && !m_pinButtonRect.contains(event->pos()))
-        m_pinButtonOn = false;
     if (m_longPress == 2)
         JZNodeBaseItem::mouseMoveEvent(event);
 }
 
 void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
-    if(m_pinButtonOn && m_pinButtonRect.contains(event->pos()))
-    {
-        auto pin_id = propAt(event->pos());
-        editor()->pinClicked(m_id, pin_id);
-    }
-    m_pinButtonOn = false;
     m_longPress = 0;
     return JZNodeBaseItem::mouseReleaseEvent(event);
 }

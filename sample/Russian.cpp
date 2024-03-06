@@ -1891,6 +1891,7 @@ void SampleRussian::addClearLine()
     JZNodeFor *for_col_down = new JZNodeFor();
     for_row_down->setStep(-1);
     for_row_down->setEnd(0);
+    for_row_down->setOp(OP_gt);
     for_col_down->setRange(0, m_col);
     
     JZNodeAdd *row_add = new JZNodeAdd();

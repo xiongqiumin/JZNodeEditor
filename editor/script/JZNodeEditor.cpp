@@ -62,15 +62,7 @@ bool JZMemberEdit(JZNode *node)
 JZNodeEditor::JZNodeEditor()
 {
     m_type = Editor_script;
-    init();           
-
-    auto func_inst = JZNodeFunctionManager::instance();
-    func_inst->registEditFunction("StringList.create", JZListInitFunction);
-    func_inst->registEditFunction("List.create", JZListInitFunction);
-    func_inst->registEditFunction("Map.create", JZListInitFunction);
-
-    JZNodeFactory::instance()->registEdit(Node_memberParam, JZMemberEdit);
-    JZNodeFactory::instance()->registEdit(Node_setMemberParam, JZMemberEdit);    
+    init();            
 }
 
 JZNodeEditor::~JZNodeEditor()

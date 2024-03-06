@@ -188,8 +188,7 @@ class JZNodeAbstractMember : public JZNode
 public:
     void setMember(QString className,QStringList params);
     QString className();
-    QStringList members();
-    virtual bool pinClicked(int id) override;
+    QStringList members();    
 };
 
 //JZNodeMemberParam

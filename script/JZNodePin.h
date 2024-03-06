@@ -47,9 +47,6 @@ public:
     void setFlag(int flag);
     int flag() const;
 
-    void setWidget(const QString &name);
-    const QString &widget() const;
-
     bool isInput() const;
     bool isOutput() const;
 
@@ -78,7 +75,6 @@ protected:
     QString m_name;      
     QList<int> m_dataType;
     QString m_value;
-    QString m_widget;
 };
 void operator<<(QDataStream &s, const JZNodePin &param);
 void operator>>(QDataStream &s, JZNodePin &param);

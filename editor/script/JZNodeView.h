@@ -96,8 +96,7 @@ public:
     QByteArray getNodeData(int id);
     void setNodeData(int id,const QByteArray &buffer);
     void setNodePos(int id, QPointF pos);
-
-    void pinClicked(int nodeId,int pinId);
+    
     void updateNode(int id);
     bool isPropEditable(int id,int pinId);
 
@@ -172,6 +171,7 @@ protected slots:
     void onMapSceneChanged(QRectF rc);
     void onMapSceneScaled(bool flag);
 
+    void onScriptNodeChanged(JZScriptItem *file, int nodId, const QByteArray &buffer);
     void onPropUpdate(int nodeId, int pinId, const QString &value);
     void onDependChanged();
 

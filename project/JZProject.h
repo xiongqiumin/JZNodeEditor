@@ -79,6 +79,7 @@ public:
 
 signals:
     void sigFileChanged();
+    void sigScriptNodeChanged(JZScriptItem *file, int nodId,const QByteArray &buffer);
 
 protected:
     Q_DISABLE_COPY(JZProject)

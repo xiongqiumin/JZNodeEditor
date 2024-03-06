@@ -141,7 +141,7 @@ QMap<int,int> ScriptTest::initWhileSetCase()
     {
         JZNodeSetParam *node_set = new JZNodeSetParam();
         node_set->setVariable("i");
-        node_set->setPinValue(node_set->paramIn(0),QString::number(i));
+        node_set->setPinValue(node_set->paramIn(1),QString::number(i));
         script->addNode(JZNodePtr(node_set));
 
         node_value[node_set->id()] = i;
@@ -467,7 +467,7 @@ void ScriptTest::testSequeue()
         script->addNode(JZNodePtr(node_add));
 
         script->addConnect(node_seq->subFlowOutGemo(i),node_set->flowInGemo());
-        script->addConnect(node_add->paramOutGemo(0),node_set->paramInGemo(0));
+        script->addConnect(node_add->paramOutGemo(0),node_set->paramInGemo(1));
     }
     if(!run())
         return;
@@ -514,19 +514,31 @@ void ScriptTest::testFor()
 
         //start
         script->addConnect(JZNodeGemo(start_id, node_start->flowOut()), JZNodeGemo(for_id, node_for->flowIn()));
-        if(i == 0)
+        if (i == 0)
+        {
             node_for->setRange(0, 1, 10);
-        else if (i == 0)
-            node_for->setRange(9, 1, -1);
-        else if (i == 0)
-            node_for->setRange(0, -1, 10);
+            node_for->setOp(OP_lt);
+        }
+        else if (i == 1)
+        {
+            node_for->setRange(9, -1, -1);
+            node_for->setOp(OP_gt);
+        }
+        else if (i == 2)
+        {
+            node_for->setRange(0, 1, 9);
+            node_for->setOp(OP_le);
+        }
         else
-            node_for->setRange(9, -1, -1);        
+        {
+            node_for->setRange(9, -1, 0);
+            node_for->setOp(OP_ge);
+        }
 
         script->addConnect(node_for->subFlowOutGemo(0), node_set->flowInGemo());
         script->addConnect(node_sum->paramOutGemo(0), node_add->paramInGemo(0));
         script->addConnect(node_for->paramOutGemo(0), node_add->paramInGemo(1));
-        script->addConnect(node_add->paramOutGemo(0), node_set->paramInGemo(0));
+        script->addConnect(node_add->paramOutGemo(0), node_set->paramInGemo(1));
 
         script->addConnect(node_for->flowOutGemo(0), node_ret->flowInGemo());
         script->addConnect(node_sum->paramOutGemo(0), node_ret->paramInGemo(0));
@@ -572,14 +584,13 @@ void ScriptTest::testForEach()
 
     JZNodeSetParam *node_list = new JZNodeSetParam();
     node_list->setVariable("a");
-    node_list->setParamInValue(0, 0);
 
     node_sum->setVariable("sum");
     node_set->setVariable("sum");
 
     JZNodeFunction *node_create = new JZNodeFunction();
     node_create->setFunction(JZNodeFunctionManager::instance()->function("List.createFromString"));
-    node_create->setParamInValue(0, "1,2,3,4,5,6,7,8,9,10");
+    node_create->setParamInValue(0, "\"1,2,3,4,5,6,7,8,9,10\"");
 
     int start_id = node_start->id();
     script->addNode(JZNodePtr(node_for));    
@@ -591,7 +602,7 @@ void ScriptTest::testForEach()
 
     //start    
     script->addConnect(JZNodeGemo(start_id,node_start->flowOut()), node_list->flowInGemo());   
-    script->addConnect(node_create->paramOutGemo(0), node_list->paramInGemo(0));
+    script->addConnect(node_create->paramOutGemo(0), node_list->paramInGemo(1));
 
     script->addConnect(node_list->flowOutGemo(),node_for->flowInGemo());
     script->addConnect(node_list->paramOutGemo(0),node_for->paramInGemo(0));
@@ -600,7 +611,7 @@ void ScriptTest::testForEach()
     script->addConnect(node_sum->paramOutGemo(0),node_add->paramInGemo(0));
     script->addConnect(node_for->paramOutGemo(1),node_add->paramInGemo(1));
 
-    script->addConnect(node_add->paramOutGemo(0),node_set->paramInGemo(0));
+    script->addConnect(node_add->paramOutGemo(0),node_set->paramInGemo(1));
     script->addConnect(node_for->subFlowOutGemo(0),node_set->flowInGemo());
     
     if (!build())
@@ -664,7 +675,7 @@ void ScriptTest::testWhileLoop()
     script->addConnect(JZNodeGemo(param_id,node_param->paramOut(0)),JZNodeGemo(add_id,node_add->paramIn(0)));
     script->addConnect(JZNodeGemo(value_id,node_value->paramOut(0)),JZNodeGemo(add_id,node_add->paramIn(1)));
         
-    script->addConnect(JZNodeGemo(add_id,node_add->paramOut(0)),JZNodeGemo(set_id,node_set->paramIn(0)));
+    script->addConnect(JZNodeGemo(add_id,node_add->paramOut(0)),JZNodeGemo(set_id,node_set->paramIn(1)));
         
     if(run())
         return;    
@@ -794,7 +805,7 @@ void ScriptTest::testExpr()
 
         script->addConnect(node_a->paramOutGemo(0),node_op->paramInGemo(0));
         script->addConnect(node_b->paramOutGemo(0),node_op->paramInGemo(1));
-        script->addConnect(node_op->paramOutGemo(0),node_set->paramInGemo(0));
+        script->addConnect(node_op->paramOutGemo(0),node_set->paramInGemo(1));
 
         node_value[node_set->id()] = i;
         if(i == 0)
@@ -854,7 +865,7 @@ void ScriptTest::testCustomExpr()
 
     script->addConnect(node_a->paramOutGemo(0),node_expr->paramInGemo(0));
     script->addConnect(node_b->paramOutGemo(0),node_expr->paramInGemo(1));
-    script->addConnect(node_expr->paramOutGemo(0),node_set->paramInGemo(0));
+    script->addConnect(node_expr->paramOutGemo(0),node_set->paramInGemo(1));
 
     script->addConnect(node_start->flowOutGemo(),node_set->flowInGemo());
 

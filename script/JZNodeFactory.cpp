@@ -112,14 +112,3 @@ void JZNodeFactory::init()
     registNode(Node_singleEvent,createFunc<JZNodeSingleEvent>);
     registNode(Node_qtEvent, createFunc<JZNodeQtEvent>);
 }
-
-bool JZNodeFactory::edit(JZNode *node)
-{
-    Q_ASSERT(m_edits.contains(node->type()));
-    return m_edits[node->type()](node);
-}
-
-void JZNodeFactory::registEdit(int type, JZNodeFactoryEdit func)
-{
-    m_edits[type] = func;
-}

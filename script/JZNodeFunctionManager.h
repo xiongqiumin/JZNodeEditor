@@ -28,9 +28,6 @@ public:
     void registFunctionImpl(JZFunction &impl);
     const JZFunction *functionImpl(QString name);
 
-    JZNodeFunctionEdit editFunction(QString name);
-    void registEditFunction(QString name, JZNodeFunctionEdit func);
-
 protected:
     struct Function
     {
@@ -42,7 +39,6 @@ protected:
     ~JZNodeFunctionManager();           
     
     QMap<QString, Function> m_funcMap;
-    QMap<QString, JZNodeFunctionEdit> m_funcEditMap;
     bool m_userRegist;
     QStringList m_userFuncs;
 };

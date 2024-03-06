@@ -194,8 +194,10 @@ public:
     QVector<int> subFlowList() const;
     int subFlowCount() const;
 
-    int addButtonIn(QString name);
-    int addButtonOut(QString name);
+    int addWidgetIn(QString name);
+    int addWidgetOut(QString name);
+    int widgetIn(int index) const;
+    int widgetOut(int index) const;
     
     const QString &pinValue(int pin) const;
     void setPinValue(int pin, const QString &value);
@@ -310,7 +312,7 @@ public:
     JZNodeSequence();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual bool pinClicked(int id);
+    virtual QWidget *createWidget(int id) override;
 
     int addSequeue();
     void removeSequeue(int id);    
@@ -336,6 +338,8 @@ public:
     JZNodeFor();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    virtual QWidget* createWidget(int id) override;
+
     void setRange(int start, int end);
     void setRange(int start, int step, int end);
     void setStart(int start);
@@ -343,8 +347,9 @@ public:
     void setEnd(int end);
     void setOp(int op);
 
-protected:
+protected:    
     virtual void loadFromStream(QDataStream &s) override;
+    void updateWidget();
 
     QStringList m_condTip;
     QList<int> m_condOp;    
@@ -387,15 +392,15 @@ public:
     void removeElse();
 
 protected:
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-    virtual bool pinClicked(int id) override;
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
+    virtual QWidget* createWidget(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
     void updateCondName();
     int pinPri(int id);
 
-    int m_btnCond;
-    int m_btnElse;
+    int btnCondId();
+    int btnElseId();    
 };
 
 //JZNodeSwitch
@@ -412,8 +417,8 @@ public:
     void setCaseValue(int index, const QString &v);
 
 protected:
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-    virtual bool pinClicked(int id) override;
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
+    virtual QWidget* createWidget(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
     virtual int pinPri(int id);

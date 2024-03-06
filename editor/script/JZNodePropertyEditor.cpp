@@ -95,6 +95,9 @@ void JZNodePropertyEditor::addPropList(QString name,QVector<int> list)
     for(int i = 0; i < list.size(); i++)
     {
         auto pin = m_node->pin(list[i]);
+        if (pin->isWidget())
+            continue;
+
         if(prop_group == nullptr)
             prop_group = new JZNodeProperty(name, NodeProprety_GroupId);
         

@@ -621,12 +621,6 @@ QStringList JZNodeAbstractMember::members()
     return ret;
 }
 
-bool JZNodeAbstractMember::pinClicked(int id)
-{
-    Q_UNUSED(id);
-    return JZNodeFactory::instance()->edit(this);
-}
-
 //JZNodeMemberParam
 JZNodeMemberParam::JZNodeMemberParam()
 {
@@ -634,7 +628,6 @@ JZNodeMemberParam::JZNodeMemberParam()
     m_type = Node_memberParam;
 
     addParamIn("", Pin_dispName);
-    addButtonIn("edit");
 }
 
 JZNodeMemberParam::~JZNodeMemberParam()
@@ -669,8 +662,7 @@ JZNodeSetMemberParam::JZNodeSetMemberParam()
 
     addParamIn("", Pin_dispName);
     addFlowIn();
-    addFlowOut();
-    addButtonIn("edit");
+    addFlowOut();    
 }
 
 JZNodeSetMemberParam::~JZNodeSetMemberParam()
@@ -711,7 +703,6 @@ JZNodeSetMemberParamData::JZNodeSetMemberParamData()
     m_type = Node_setMemberParamData;
 
     addParamIn("",Pin_dispName);    
-    addButtonIn("edit");
 }
 
 JZNodeSetMemberParamData::~JZNodeSetMemberParamData()

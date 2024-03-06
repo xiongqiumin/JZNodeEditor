@@ -57,7 +57,7 @@ protected:
 
         int widgetType;
         QGraphicsProxyWidget *proxy;
-        JZNodeParamValueWidget *widget;
+        QWidget *widget;
     };
 
     struct TipInfo
@@ -92,10 +92,8 @@ protected:
     QMap<int,PropGemo> m_pinRects;
     QRectF m_errorRect;    
     QString m_error;
-
-    bool m_pinButtonOn;
-    int m_longPress;
-    QRectF m_pinButtonRect;
+    
+    int m_longPress;    
     TipInfo m_tip;
 };
 

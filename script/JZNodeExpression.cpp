@@ -1,8 +1,9 @@
-﻿#include "JZNodeExpression.h"
+﻿#include <QRegularExpression>
+#include <QPushButton>
+#include "JZNodeExpression.h"
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
 #include "JZExpression.h"
-#include <QRegularExpression>
 #include "JZRegExpHelp.h"
 
 JZNodeOperator::JZNodeOperator(int node_type,int op_type)
@@ -20,7 +21,7 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 
 void JZNodeOperator::addInputButton()
 {
-    addButtonIn("Add input");
+    addWidgetIn("Add input");
 }
 
 void JZNodeOperator::addInput()
@@ -38,11 +39,17 @@ void JZNodeOperator::removeInput(int index)
     removePin(id);
 }
 
-bool JZNodeOperator::pinClicked(int id)
+QWidget* JZNodeOperator::createWidget(int id)
 {
-    Q_UNUSED(id);        
-    addInput();
-    return true;
+    Q_UNUSED(id);    
+    QPushButton *btn = new QPushButton("Add Input");
+    btn->adjustSize();
+    btn->connect(btn, &QPushButton::clicked, [this] {
+        QByteArray old = toBuffer();
+        addInput();
+        propertyChangedNotify(old);        
+    });                
+    return btn;
 }
 
 QStringList JZNodeOperator::pinActionList(int id)

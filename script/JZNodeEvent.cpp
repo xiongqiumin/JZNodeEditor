@@ -155,7 +155,7 @@ void JZNodeSingleEvent::drag(const QVariant &value)
 
 bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 {    
-    QString sender = pinValue(paramIn(0));
+    QString sender = variable();
     if(!c->checkVariableType(sender, m_sender,error))
         return false;
         

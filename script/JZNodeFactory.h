@@ -21,9 +21,6 @@ public:
     JZNode *loadNode(const QByteArray &buffer);
     QByteArray saveNode(JZNode *node);
 
-    bool edit(JZNode *node);
-    void registEdit(int type,JZNodeFactoryEdit func);
-
 protected:
     QMap<int,JZNodeCreateFunc> m_nodes;
     QMap<int,JZNodeFactoryEdit> m_edits;

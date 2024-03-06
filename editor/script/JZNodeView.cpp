@@ -420,6 +420,7 @@ JZScriptItem *JZNodeView::file()
 void JZNodeView::setFile(JZScriptItem *file)
 {
     m_file = file;    
+    connect(m_file->project(), &JZProject::sigScriptNodeChanged, this, &JZNodeView::onScriptNodeChanged);
 
     initGraph();
     autoCompiler();    
@@ -516,15 +517,6 @@ void JZNodeView::setNodePos(int node_id, QPointF pos)
     m_map->updateMap();
     m_recordMove = true;
 }
-
-void JZNodeView::pinClicked(int nodeId,int pinId)
-{
-    auto node = getNode(nodeId);
-    QByteArray oldValue = getNodeData(nodeId);
-    if(node->pinClicked(pinId))
-        addPropChangedCommand(nodeId,oldValue);
-}
-
 
 bool JZNodeView::isPropEditable(int id,int prop_id)
 {
@@ -1470,28 +1462,10 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     else if (pin_actions.contains(ret))
     {
         int index = pin_actions.indexOf(ret);
-        auto node = dynamic_cast<JZNodeGraphItem*>(item)->node();
-        auto pre_list = node->pinList();
-
+        auto node = dynamic_cast<JZNodeGraphItem*>(item)->node();        
         auto old = getNodeData(node->id());
         if (node->pinActionTriggered(pin_id, index))
-        {
-            auto cur_data = getNodeData(node->id());
-            setNodeData(node->id(), old);
-
-            m_commandStack.beginMacro(ret->text());
-            auto new_list = node->pinList();
-            auto remove_set = pre_list.toList().toSet() - new_list.toList().toSet();
-            for (auto remove_prop : remove_set)
-            {
-                auto lines = m_file->getConnectId(node->id(),remove_prop);                                
-                for (int i = 0; i < lines.size(); i++)                
-                    addRemoveLineCommand(lines[i]);                
-            }            
-            setNodeData(node->id(), cur_data);
-            addPropChangedCommand(node->id(), old);
-            m_commandStack.endMacro();
-        }
+            onScriptNodeChanged(m_file, node->id(), old);        
     }
     else if(ret == actGoto)
     {
@@ -1865,20 +1839,45 @@ void JZNodeView::onItemPropChanged()
     setFocus();
 }
 
+void JZNodeView::onScriptNodeChanged(JZScriptItem *file, int node_id, const QByteArray &old)
+{
+    if (m_file != file)
+        return;
+    
+    auto old_node = JZNodeFactory::instance()->loadNode(old);
+    auto pre_list = old_node->pinList();
+    delete old_node;
+
+    auto node = getNode(node_id);            
+    m_commandStack.beginMacro("node changed");
+    auto new_list = node->pinList();
+    auto remove_set = pre_list.toList().toSet() - new_list.toList().toSet();
+    for (auto remove_prop : remove_set)
+    {
+        auto lines = m_file->getConnectId(node->id(), remove_prop);
+        for (int i = 0; i < lines.size(); i++)
+            addRemoveLineCommand(lines[i]);
+    }    
+    addPropChangedCommand(node->id(), old);
+    m_commandStack.endMacro();
+}
+
 void JZNodeView::onPropUpdate(int id,int pinId,const QString &value)
 {
     QVariant oldValue = getNode(id)->pinValue(pinId);
     if(oldValue == value)
         return;
-    
+        
     auto node = getNode(id);
     auto old = getNodeData(id);
     node->setPinValue(pinId,value);    
-    addPropChangedCommand(node->id(),old);    
+    addPropChangedCommand(node->id(),old);
 }
 
 void JZNodeView::onDependChanged()
 {
+    return;
+
     auto depend = m_runEditor->depend();
     if (depend.function.isNull())
         return;

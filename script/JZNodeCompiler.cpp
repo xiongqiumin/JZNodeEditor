@@ -165,6 +165,9 @@ void ScriptDepend::clear()
 
 int ScriptDepend::indexOf(bool isMember, QString name)
 {
+    if (name.startsWith("this."))
+        name = name.mid(5);
+
     QList<JZParamDefine> *list = isMember ? &member : &global;
     for (int i = 0; i < list->size(); i++)
     {

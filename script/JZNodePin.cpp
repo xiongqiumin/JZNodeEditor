@@ -47,16 +47,6 @@ int JZNodePin::flag() const
     return m_flag;
 }
 
-void JZNodePin::setWidget(const QString &widget)
-{
-    m_widget = widget;
-}
-
-const QString &JZNodePin::widget() const
-{
-    return m_widget;
-}
-
 bool JZNodePin::isInput() const
 {
     return (m_flag & Pin_in);
@@ -123,8 +113,7 @@ const QString &JZNodePin::value() const
 }
 
 void JZNodePin::setValue(const QString &value)
-{
-    Q_ASSERT(JZNodeType::isMatchValue(m_dataType,value));
+{    
     m_value = value;
 }
 
@@ -135,7 +124,6 @@ void operator<<(QDataStream &s, const JZNodePin &param)
     s << param.m_flag;
     s << param.m_dataType;
     s << param.m_value;
-    s << param.m_widget;
 }
 
 void operator>>(QDataStream &s, JZNodePin &param)
@@ -145,5 +133,4 @@ void operator>>(QDataStream &s, JZNodePin &param)
     s >> param.m_flag;
     s >> param.m_dataType;
     s >> param.m_value;
-    s >> param.m_widget;
 }
