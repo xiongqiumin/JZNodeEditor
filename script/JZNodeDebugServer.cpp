@@ -279,7 +279,7 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
         if (!obj)
         {
             ret.type = JZNodeType::variantType(value);
-            ret.value = "nullptr";
+            ret.value = "null";
         }
         else if (obj->type() == Type_list)
         {

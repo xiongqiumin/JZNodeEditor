@@ -40,7 +40,9 @@ void JZDesignerEditor::init(QDesignerFormEditorInterface *core)
     connect(m_view, &QStackedWidget::currentChanged,
         this, &JZDesignerEditor::slotSubWindowActivated);
 
-    auto panel = QDesignerComponents::createWidgetBox(core, this);
+    auto panel = QDesignerComponents::createWidgetBox(core, this); 
+    panel->setFileName(":/JZNodeEditor/Resources/widgetBox.xml");
+
     auto objectInspector = QDesignerComponents::createObjectInspector(core, this);
     auto propEditor = QDesignerComponents::createPropertyEditor(core, this);
     core->setWidgetBox(panel);

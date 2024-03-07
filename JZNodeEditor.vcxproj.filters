@@ -358,6 +358,9 @@
     <ClCompile Include="editor\script\JZNodeParamWidget.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
+    <ClCompile Include="sample\ImageBatch.cpp">
+      <Filter>Source Files\sample</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -643,6 +646,9 @@
     </ClInclude>
     <ClInclude Include="project\JZProjectTemplate.h">
       <Filter>Header Files\project</Filter>
+    </ClInclude>
+    <ClInclude Include="sample\ImageBatch.h">
+      <Filter>Header Files\sample</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

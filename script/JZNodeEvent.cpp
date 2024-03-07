@@ -94,27 +94,24 @@ JZFunctionDefine JZNodeSingleEvent::function()
     }
     
     //存在私有信号，没有对应的函数，这里要取信号来计算
-    auto meta = JZNodeObjectManager::instance()->meta(m_sender);
-    auto s = meta->single(m_single);
+    auto s = JZNodeObjectManager::instance()->single(m_single);    
     if(s->paramOut.size() > 0)
         def.paramIn << s->paramOut.mid(1);
 
     return def;
 }
 
-void JZNodeSingleEvent::setSingle(QString className,const SingleDefine *single)
+void JZNodeSingleEvent::setSingle(const SingleDefine *single)
 {
     Q_ASSERT(single);
 
-    auto def = JZNodeObjectManager::instance()->meta(className);
+    auto def = JZNodeObjectManager::instance()->meta(single->className);
     Q_ASSERT(def);
 
-    m_single = single->name;
-    m_sender = className;
-
-    QString function = className + "." + single->name;
-    setName(function);
-    setPinName(paramIn(0),className);
+    m_single = single->fullName();
+    
+    setName(m_single);
+    setPinName(paramIn(0), single->className);
    
     for(int i = 1; i < single->paramOut.size(); i++)
     {
@@ -142,12 +139,6 @@ QString JZNodeSingleEvent::variable() const
     return JZNodeType::removeMark(pinValue(paramIn(0)));
 }
 
-int JZNodeSingleEvent::variableType() const
-{
-    auto def = JZNodeObjectManager::instance()->meta(m_sender);
-    return def? def->id : Type_none;
-}
-
 void JZNodeSingleEvent::drag(const QVariant &value)
 {
     setVariable(value.toString());
@@ -155,11 +146,13 @@ void JZNodeSingleEvent::drag(const QVariant &value)
 
 bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 {    
+    QString className = m_single.split(".")[0];
+
     QString sender = variable();
-    if(!c->checkVariableType(sender, m_sender,error))
+    if(!c->checkVariableType(sender, className,error))
         return false;
         
-    auto def = JZNodeObjectManager::instance()->meta(m_sender);
+    auto def = JZNodeObjectManager::instance()->meta(className);
     c->setPinType(m_id, paramIn(0), def->id);
     c->addFunctionAlloc(function());
 
@@ -177,14 +170,12 @@ bool JZNodeSingleEvent::compiler(JZNodeCompiler *c,QString &error)
 void JZNodeSingleEvent::saveToStream(QDataStream &s) const
 {
     JZNodeEvent::saveToStream(s);
-    s << m_sender;
     s << m_single;
 }
 
 void JZNodeSingleEvent::loadFromStream(QDataStream &s)
 {
     JZNodeEvent::loadFromStream(s);
-    s >> m_sender;
     s >> m_single;
 }
 

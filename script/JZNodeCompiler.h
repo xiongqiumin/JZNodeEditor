@@ -156,6 +156,8 @@ public:
     int allocStack(int dataType);
     void addFunctionAlloc(const JZFunctionDefine &define);
     
+    JZNodeIRParam paramRef(QString name);
+
     void setPinType(int nodeId, int pinId, int type);    
     int pinType(int nodeId, int pinId);
     int pinType(JZNodeGemo gemo);
@@ -201,7 +203,7 @@ public:
 
     JZNodeIR *lastStatment();
     void replaceStatement(int pc,JZNodeIRPtr ir);
-    void replaceStatement(int pc,QList<JZNodeIRPtr> ir_list);
+    void replaceStatement(int pc,QList<JZNodeIRPtr> ir_list);    
     
     JZScriptItem *currentFile();
     Graph *currentGraph();

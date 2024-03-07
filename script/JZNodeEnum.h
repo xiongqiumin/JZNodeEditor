@@ -11,16 +11,20 @@ public:
 
     void setType(int type);
     int type() const;
+
+    void setFlag(bool isFlag);
+    bool flag() const;
     
     QString name() const;
     int count() const;
-        
-    bool hasKey(const QString &key) const;
-    QString key(int index) const;
+            
+    QString key(int index) const;    
     QString defaultKey() const;
+    bool hasKey(const QString &key) const;
 
-    int value(int index) const;
+    int value(int index) const;    
     int defaultValue() const;
+    void setDefaultValue(int value);
 
     int keyToValue(QString key) const;
     QString valueToKey(int value) const;
@@ -30,6 +34,8 @@ protected:
     QString m_name;
     QStringList m_keys;
     QVector<int> m_values;
+    int m_default;
+    bool m_isFlag;
 };
 
 

@@ -99,12 +99,21 @@ void JZNodeFactory::init()
     registNode(Node_ge,createFunc<JZNodeGE>);
     registNode(Node_lt,createFunc<JZNodeLT>);
     registNode(Node_gt,createFunc<JZNodeGT>);
+    registNode(Node_bitand, createFunc<JZNodeBitAnd>);
+    registNode(Node_bitor, createFunc<JZNodeBitOr>);
+    registNode(Node_bitxor, createFunc<JZNodeBitXor>);
     registNode(Node_and,createFunc<JZNodeAnd>);
     registNode(Node_or,createFunc<JZNodeOr>);
     registNode(Node_not, createFunc<JZNodeNot>);
-    registNode(Node_bitand,createFunc<JZNodeBitAnd>);
-    registNode(Node_bitor,createFunc<JZNodeBitOr>);
-    registNode(Node_bitxor,createFunc<JZNodeBitXor>);
+
+    registNode(Node_stringAdd,createFunc<JZNodeStringAdd>);
+    registNode(Node_stringEq, createFunc<JZNodeStringEQ>);
+    registNode(Node_stringNe, createFunc<JZNodeStringNE>);
+    registNode(Node_stringLe, createFunc<JZNodeStringLE>);
+    registNode(Node_stringGe, createFunc<JZNodeStringGE>);
+    registNode(Node_stringLt, createFunc<JZNodeStringLT>);
+    registNode(Node_stringGt, createFunc<JZNodeStringGT>);
+    
     registNode(Node_expr,createFunc<JZNodeExpression>);
 
     registNode(Node_startEvent,createFunc<JZNodeStartEvent>);

@@ -46,6 +46,12 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
     s  >> m_functionName;
 }
 
+void JZNodeFunction::setFunction(const QString &name)
+{
+    auto def = JZNodeFunctionManager::instance()->function(name);
+    setFunction(def);
+}
+
 void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 {
     Q_ASSERT(define);
@@ -65,9 +71,8 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         pin.setName(define->paramIn[i].name);
         pin.setFlag(Pin_param | Pin_in | Pin_dispName);
         pin.setDataType({define->paramIn[i].dataType() });
-        if(JZNodeType::isBaseOrEnum(define->paramIn[i].dataType())
-            || define->paramIn[i].dataType() == Type_any)
-            pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);
+        pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);
+        pin.setValue(define->paramIn[i].value);
         addPin(pin);
     }
     for(int i = 0; i < define->paramOut.size(); i++)

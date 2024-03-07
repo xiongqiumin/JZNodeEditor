@@ -8,6 +8,7 @@
 #include "JZNodeBind.h"
 #include "sample/Russian.h"
 #include "sample/Calculator.h"
+#include "sample/ImageBatch.h"
 
 extern void test_script();
 
@@ -24,11 +25,12 @@ int main(int argc, char *argv[])
     }
     if(1)
     {
-        SampleRussian sample;
+        //SampleRussian sample;
         //SampleCalculator sample;
+        SampleImageBatch sample;
         sample.saveProject();
-        sample.run();
-        return 0;
+        //sample.run();
+        //return 0;
     }    
 
     if(argc == 1)

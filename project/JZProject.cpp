@@ -600,6 +600,16 @@ void JZProject::regist(JZProjectItem *item)
             JZScriptItem* func = dynamic_cast<JZScriptItem*>(item);            
             JZNodeFunctionManager::instance()->registFunction(func->function());
         }
+        else if (item->itemType() == ProjectItem_ui)
+        {
+            auto class_list = itemList("./", ProjectItem_class);
+            for (int i = 0; i < class_list.size(); i++)
+            {
+                auto class_item = dynamic_cast<JZScriptClassItem*>(class_list[i]);                
+                if (class_item->uiFile() == item->itemPath())
+                    regist(class_item);
+            }
+        }
     }
     emit sigFileChanged();
 }

@@ -273,19 +273,6 @@ BreakPointTriggerResult::BreakPointTriggerResult()
     nodeId = 0;
 }
 
-class SceneHelpFilter : public QObject
-{
-    bool eventFilter(QObject *o, QEvent *e)
-    {
-        if (e->type() == QEvent::GraphicsSceneHelp)
-        {            
-            e->ignore();
-            return true;
-        }        
-        return QObject::eventFilter(o, e);
-    }
-};
-
 //JZNodeView
 JZNodeView::JZNodeView(QWidget *widget)
     : QGraphicsView(widget)
@@ -318,8 +305,6 @@ JZNodeView::JZNodeView(QWidget *widget)
 
     m_scene = new JZNodeScene();    
     setScene(m_scene);
-    SceneHelpFilter *filter = new SceneHelpFilter();
-    m_scene->installEventFilter(filter);
 
     setAcceptDrops(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -1818,6 +1803,28 @@ void JZNodeView::keyReleaseEvent(QKeyEvent *event)
     }
 
     QGraphicsView::keyReleaseEvent(event);
+}
+
+bool JZNodeView::event(QEvent *event)
+{
+    if (event->type() == QEvent::ToolTip) {      
+        QHelpEvent *helpEvent = static_cast<QHelpEvent *>(event);
+        auto node = nodeItemAt(helpEvent->pos());
+        if (node)
+        {            
+            QPointF scene_pt = mapToScene(helpEvent->pos());
+            QPointF item_pt = node->mapFromScene(scene_pt);
+            QString tips = node->getTip(item_pt);
+            if (!tips.isEmpty())
+            {
+                showTip(scene_pt, tips);
+                event->ignore();
+                return true;
+            }
+        }
+    }
+
+    return QGraphicsView::event(event);
 }
 
 void JZNodeView::onItemPropChanged()

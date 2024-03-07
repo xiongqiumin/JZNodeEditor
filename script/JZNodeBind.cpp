@@ -26,6 +26,15 @@ QVariant getValue<QVariant>(const QVariant &v,std::false_type)
 }
 
 template<>
+QString* getValue<QString*>(const QVariant &v, std::true_type)
+{
+    if (v.type() != QVariant::String)
+        return nullptr;
+
+    return (QString*)v.data();
+}
+
+template<>
 QString getValue<QString>(const QVariant &v, std::false_type)
 {
     return v.toString();

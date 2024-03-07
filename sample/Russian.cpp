@@ -18,7 +18,7 @@ SampleRussian::SampleRussian()
     ui_file->setXml(loadUi("Russian.ui"));
     m_project.saveItem(ui_file);
 
-    auto class_file = m_project.getClass("Mainwindow");
+    auto class_file = m_project.getClass("MainWindow");
     m_script = class_file->flow("ÊÂ¼þ");
 
     class_file->addMemberVariable("map", Type_list);
@@ -50,26 +50,6 @@ SampleRussian::SampleRussian()
     addButtonClicked();        
     addGameLoop();
     addKeyEvent();
-
-    auto main = m_project.mainScript();
-    main->removeNode(3);
-    auto node = main->getNode(2);
-    JZNodeParam *node_main = new JZNodeParam();
-    node_main->setVariable("mainwindow");
-
-    JZNodeFunction *node_show = new JZNodeFunction();
-    node_show->setFunction(JZNodeFunctionManager::instance()->function("Widget.show"));
-
-    JZNodeFunction *init_func = new JZNodeFunction();
-    init_func->setFunction(&class_file->getMemberFunction("init")->function());
-
-    main->addNode(JZNodePtr(init_func));
-    main->addNode(JZNodePtr(node_main));
-    main->addNode(JZNodePtr(node_show));
-    main->addConnect(node_main->paramOutGemo(0), init_func->paramInGemo(0));
-    main->addConnect(node->flowOutGemo(0), init_func->flowInGemo());
-    main->addConnect(node_main->paramOutGemo(0), node_show->paramInGemo(0));
-    main->addConnect(init_func->flowOutGemo(0), node_show->flowInGemo());
 }
 
 SampleRussian::~SampleRussian()
@@ -83,8 +63,8 @@ void SampleRussian::addInitGame()
     auto color_meta = JZNodeObjectManager::instance()->meta("Color");
     auto list_meta = JZNodeObjectManager::instance()->meta("List");
 
-    auto class_file = m_project.getClass("Mainwindow");
-    auto mainwindow_meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto class_file = m_project.getClass("MainWindow");
+    auto mainwindow_meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
     JZFunctionDefine define;
     define.name = "initGame";
@@ -213,15 +193,10 @@ void SampleRussian::addInitFunction()
     auto color_meta = JZNodeObjectManager::instance()->meta("Color");
     auto list_meta = JZNodeObjectManager::instance()->meta("List");
 
-    auto class_file = m_project.getClass("Mainwindow");
-    auto mainwindow_meta = JZNodeObjectManager::instance()->meta("Mainwindow");
-
-    JZFunctionDefine define;
-    define.name = "init";
-    define.isFlowFunction = true;
-    define.paramIn.push_back(JZParamDefine("this",mainwindow_meta->id));
-
-    auto script = class_file->addMemberFunction(define);    
+    auto class_file = m_project.getClass("MainWindow");
+    auto mainwindow_meta = JZNodeObjectManager::instance()->meta("MainWindow");
+    
+    auto script = class_file->memberFunction("init");               
 
     JZNodeFunction *init_game = new JZNodeFunction();
     init_game->setFunction(mainwindow_meta->function("initGame"));
@@ -247,8 +222,8 @@ void SampleRussian::addInitFunction()
 void SampleRussian::addMapGet()
 {
     auto func_inst = JZNodeFunctionManager::instance();
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
-    auto class_file = m_project.getClass("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
+    auto class_file = m_project.getClass("MainWindow");
 
     JZFunctionDefine define;
     define.name = "getMap";
@@ -298,8 +273,8 @@ void SampleRussian::addMapGet()
 void SampleRussian::addMapSet()
 {
     auto func_inst = JZNodeFunctionManager::instance();
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
-    auto class_file = m_project.getClass("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
+    auto class_file = m_project.getClass("MainWindow");
 
     JZFunctionDefine define;
     define.name = "setMap";
@@ -350,7 +325,7 @@ void SampleRussian::addPaintEvent()
 {
     auto func_inst = JZNodeFunctionManager::instance();
 
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
     auto rect_meta = JZNodeObjectManager::instance()->meta("Rect");
     auto widget = JZNodeObjectManager::instance()->meta("Widget");    
     auto painter = JZNodeObjectManager::instance()->meta("Painter");
@@ -358,7 +333,7 @@ void SampleRussian::addPaintEvent()
     m_script->addLocalVariable(JZParamDefine("painter", "Painter"));
 
     JZNodeQtEvent *node_paint = new JZNodeQtEvent();
-    node_paint->setEvent("Mainwindow", meta->event("paintEvent"));
+    node_paint->setEvent("MainWindow", meta->event("paintEvent"));
     m_script->addNode(JZNodePtr(node_paint));    
 
     JZNodeFunction *rect_create = new JZNodeFunction();
@@ -628,11 +603,11 @@ void SampleRussian::addPaintEvent()
 void SampleRussian::addButtonClicked()
 {
     auto btn_meta = JZNodeObjectManager::instance()->meta("PushButton");
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
     //btnStart
     JZNodeSingleEvent *btnStart = new JZNodeSingleEvent();
-    btnStart->setSingle(btn_meta->className, btn_meta->single("clicked"));
+    btnStart->setSingle(btn_meta->single("clicked"));
     btnStart->setVariable("this.btnStart");
 
     m_script->addNode(JZNodePtr(btnStart));    
@@ -657,7 +632,7 @@ void SampleRussian::addButtonClicked()
 
     //*btnStop
     JZNodeSingleEvent *btnStop = new JZNodeSingleEvent();
-    btnStop->setSingle(btn_meta->className, btn_meta->single("clicked"));
+    btnStop->setSingle(btn_meta->single("clicked"));
     btnStop->setVariable("this.btnStop");
 
     JZNodeFunction *stop = new JZNodeFunction();
@@ -672,7 +647,7 @@ void SampleRussian::addButtonClicked()
 
 void SampleRussian::addCreateRect()
 {
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");    
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");    
 
     JZFunctionDefine define;
     define.name = "createRect";
@@ -680,9 +655,9 @@ void SampleRussian::addCreateRect()
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramOut.push_back(JZParamDefine("ok", Type_bool));
 
-    auto class_file = m_project.getClass("Mainwindow");
+    auto class_file = m_project.getClass("MainWindow");
     auto script = class_file->addMemberFunction(define);
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
     JZNode *node_start = script->getNode(0);
 
@@ -691,10 +666,10 @@ void SampleRussian::addCreateRect()
     node_isRect->setPinValue(node_isRect->paramIn(1), "true");
 
     JZNodeReturn *node_ret = new JZNodeReturn();
-    node_ret->setFunction(JZNodeFunctionManager::instance()->function("Mainwindow.createRect"));
+    node_ret->setFunction(JZNodeFunctionManager::instance()->function("MainWindow.createRect"));
 
     JZNodeReturn *node_ret_over = new JZNodeReturn();
-    node_ret_over->setFunction(JZNodeFunctionManager::instance()->function("Mainwindow.createRect"));
+    node_ret_over->setFunction(JZNodeFunctionManager::instance()->function("MainWindow.createRect"));
 
 
     script->addNode(JZNodePtr(node_ret));
@@ -799,7 +774,7 @@ void SampleRussian::addCreateRect()
 
 void SampleRussian::addRectDown()
 {
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
     auto func_inst = JZNodeFunctionManager::instance();
 
     JZFunctionDefine define;
@@ -808,11 +783,11 @@ void SampleRussian::addRectDown()
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramOut.push_back(JZParamDefine("ok", Type_bool));
 
-    auto class_file = m_project.getClass("Mainwindow");    
+    auto class_file = m_project.getClass("MainWindow");    
     auto script = class_file->addMemberFunction(define);
     script->addLocalVariable(JZParamDefine("value", "int"));
 
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
     JZNodeThis *node_this = new JZNodeThis();
     JZNode *node_start = script->getNode(0);
@@ -950,8 +925,8 @@ void SampleRussian::addRectDown()
 
 void SampleRussian::addMoveFunction()
 {
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
-    auto class_file = m_project.getClass("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
+    auto class_file = m_project.getClass("MainWindow");
     QStringList functions = { "canMoveDown","canMoveLeft", "canMoveRight" , "moveDown", "moveLeft", "moveRight" };
 
     for (int i = 0; i < functions.size(); i++)
@@ -967,14 +942,14 @@ void SampleRussian::addMoveFunction()
         
         class_file->addMemberFunction(define);
     }   
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
     auto func_inst = JZNodeFunctionManager::instance();
 
     for (int i = 0; i < functions.size(); i++)
     {
         QString function_name = functions[i];
         bool isCan = functions[i].startsWith("can");
-        auto script = class_file->getMemberFunction(functions[i]);
+        auto script = class_file->memberFunction(functions[i]);
         JZNode *node_start = script->getNode(0);        
                       
         if (isCan)
@@ -1078,10 +1053,10 @@ void SampleRussian::addMoveFunction()
 void SampleRussian::addGameLoop()
 {
     auto timer_meta = JZNodeObjectManager::instance()->meta("Timer");
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
     JZNodeSingleEvent *onTimer = new JZNodeSingleEvent();
-    onTimer->setSingle(timer_meta->className,timer_meta->single("timeout"));
+    onTimer->setSingle(timer_meta->single("timeout"));
     onTimer->setVariable("this.timer");
 
     m_script->addNode(JZNodePtr(onTimer));
@@ -1140,7 +1115,7 @@ void SampleRussian::addGameLoop()
 
     JZNodeFunction *message = new JZNodeFunction();
     message->setFunction(JZNodeFunctionManager::instance()->function("MessageBox.information"));
-    message->setPinValue(message->paramIn(1), "\"Game over\"");    
+    message->setPinValue(message->paramIn(1), "\"Game over\"");
     m_script->addNode(JZNodePtr(message));
 
     m_script->addConnect(timer->paramOutGemo(0), stop_timer->paramInGemo(0));
@@ -1154,11 +1129,11 @@ void SampleRussian::addKeyEvent()
 {
     auto func_inst = JZNodeFunctionManager::instance();
 
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");    
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");    
     auto key_meta = JZNodeObjectManager::instance()->meta("KeyEvent");    
 
     JZNodeQtEvent *node_keyPress = new JZNodeQtEvent();
-    node_keyPress->setEvent("Mainwindow", meta->event("keyPressEvent"));
+    node_keyPress->setEvent("MainWindow", meta->event("keyPressEvent"));
     m_script->addNode(JZNodePtr(node_keyPress));
 
     
@@ -1323,8 +1298,8 @@ void SampleRussian::addKeyEvent()
 
 void SampleRussian::addRotate()
 {
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
-    auto class_file = m_project.getClass("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
+    auto class_file = m_project.getClass("MainWindow");
 
     JZFunctionDefine def_can;    
     def_can.name = "canRotate";
@@ -1339,12 +1314,12 @@ void SampleRussian::addRotate()
     def_rotate.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     class_file->addMemberFunction(def_rotate);
 
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
     auto func_inst = JZNodeFunctionManager::instance();
 
     //can
     {
-        auto script = class_file->getMemberFunction("canRotate");
+        auto script = class_file->memberFunction("canRotate");
         JZNode *node_start = script->getNode(0);
 
         JZNodeParam *shape_row = new JZNodeParam();
@@ -1398,7 +1373,7 @@ void SampleRussian::addRotate()
 
     //rotate       
     {
-        auto script = class_file->getMemberFunction("rotate");
+        auto script = class_file->memberFunction("rotate");
         JZNode *node_start = script->getNode(0);
         JZNodeFunction *node_update = new JZNodeFunction();
         node_update->setFunction(meta->function("update"));
@@ -1492,7 +1467,7 @@ QVector<QVector<QVector<QPoint>>> SampleRussian::shapeGroup()
 
 void SampleRussian::addCreateShape()
 {
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
 
     JZFunctionDefine define;
     define.name = "createShape";
@@ -1502,10 +1477,10 @@ void SampleRussian::addCreateShape()
     define.paramOut.push_back(JZParamDefine("shape", Type_list));
 
     auto func_inst = JZNodeFunctionManager::instance();
-    auto class_file = m_project.getClass("Mainwindow");
+    auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
     
-    auto script = class_file->getMemberFunction("createShape");
+    auto script = class_file->memberFunction("createShape");
     script->addLocalVariable(JZParamDefine("shape", Type_list));
 
     JZNodeParam *shape = new JZNodeParam();
@@ -1578,7 +1553,7 @@ void SampleRussian::addCreateShape()
 
 void SampleRussian::addCanPlaceShape()
 {
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
 
     JZFunctionDefine define;
     define.name = "canPlace";
@@ -1589,13 +1564,13 @@ void SampleRussian::addCanPlaceShape()
     define.paramIn.push_back(JZParamDefine("col", Type_int));
     define.paramOut.push_back(JZParamDefine("result", Type_bool));
 
-    auto class_file = m_project.getClass("Mainwindow");
+    auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
 
     auto func_inst = JZNodeFunctionManager::instance();
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
-    auto script = class_file->getMemberFunction("canPlace");
+    auto script = class_file->memberFunction("canPlace");
     script->addLocalVariable(JZParamDefine("pt_row", "int"));
     script->addLocalVariable(JZParamDefine("pt_col", "int"));
 
@@ -1767,20 +1742,20 @@ void SampleRussian::addCanPlaceShape()
 
 void SampleRussian::addClearLine()
 {
-    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("Mainwindow");
+    auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
 
     JZFunctionDefine define;
     define.name = "clearLine";
     define.isFlowFunction = true;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));    
 
-    auto class_file = m_project.getClass("Mainwindow");
+    auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
 
     auto func_inst = JZNodeFunctionManager::instance();
-    auto meta = JZNodeObjectManager::instance()->meta("Mainwindow");
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
-    auto script = class_file->getMemberFunction("clearLine");
+    auto script = class_file->memberFunction("clearLine");
     script->addLocalVariable(JZParamDefine("line_count", "int"));
     script->addLocalVariable(JZParamDefine("row", "int", QString::number(m_row - 1)));
 

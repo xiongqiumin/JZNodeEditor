@@ -141,6 +141,7 @@
     <ClCompile Include="project\JZScriptItem.cpp" />
     <ClCompile Include="project\JZUiFile.cpp" />
     <ClCompile Include="sample\Calculator.cpp" />
+    <ClCompile Include="sample\ImageBatch.cpp" />
     <ClCompile Include="sample\Russian.cpp" />
     <ClCompile Include="sample\SampleProject.cpp" />
     <ClCompile Include="script\JZEvent.cpp" />
@@ -213,6 +214,7 @@
     <ClInclude Include="project\JZProjectTemplate.h" />
     <ClInclude Include="project\JZScriptFile.h" />
     <ClInclude Include="sample\Calculator.h" />
+    <ClInclude Include="sample\ImageBatch.h" />
     <ClInclude Include="sample\SampleProject.h" />
     <ClInclude Include="script\JZNodeName.h" />
     <QtMoc Include="script\JZNodeQtBind.h" />

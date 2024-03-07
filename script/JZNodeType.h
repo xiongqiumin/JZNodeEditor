@@ -24,6 +24,7 @@ enum
 
     Type_object = 5000,    
     Type_list,
+    Type_stringList,
     Type_map,
     Type_timer,
     Type_widget,

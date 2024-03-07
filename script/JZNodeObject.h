@@ -162,11 +162,13 @@ public:
     QString getEnumName(int type_id);
     int getEnumId(QString enumName);
     QStringList getEnumList();    
+
+    const SingleDefine *single(QString name);
     
     int getClassIdByQObject(QString name);
     void declareQObject(int id,QString name);
 
-    int delcare(QString name, QString type_id, int id = -1);
+    int delcare(QString name, QString ctype_id, int id = -1);
     int regist(JZNodeObjectDefine define);    
     int registCClass(JZNodeObjectDefine define,QString type_id);
     void replace(JZNodeObjectDefine define);

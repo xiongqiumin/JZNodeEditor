@@ -7,6 +7,8 @@ void JZNodeEnumDefine::init(QString name, QStringList keys, QVector<int> values)
     m_name = name;
     m_keys = keys;
     m_values = values;
+    m_isFlag = false;
+    m_default = -1;
 }
 
 void JZNodeEnumDefine::setType(int type)
@@ -17,6 +19,16 @@ void JZNodeEnumDefine::setType(int type)
 int JZNodeEnumDefine::type() const
 {
     return m_type;
+}
+
+void JZNodeEnumDefine::setFlag(bool isFlag)
+{
+    m_isFlag = isFlag;
+}
+
+bool JZNodeEnumDefine::flag() const
+{
+    return m_isFlag;
 }
 
 QString JZNodeEnumDefine::name() const
@@ -41,7 +53,7 @@ QString JZNodeEnumDefine::key(int index) const
 
 QString JZNodeEnumDefine::defaultKey() const
 {
-    return m_keys[0];
+    return m_keys[defaultValue()];
 }
 
 int JZNodeEnumDefine::value(int index) const
@@ -51,7 +63,18 @@ int JZNodeEnumDefine::value(int index) const
 
 int JZNodeEnumDefine::defaultValue() const
 {
-    return keyToValue(defaultKey());
+    if (m_default != -1)
+        return m_values[m_default];
+    else
+    {
+        int index = std::min_element(m_values.begin(), m_values.end()) - m_values.begin();
+        return m_values[index];
+    }
+}
+
+void JZNodeEnumDefine::setDefaultValue(int value)
+{
+    m_default = m_values.indexOf(value);
 }
 
 int JZNodeEnumDefine::keyToValue(QString key) const

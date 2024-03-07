@@ -135,7 +135,7 @@ void JZNodeFuctionEditDialog::on_btnCancel_clicked()
 
 bool JZNodeFuctionEditDialog::isMemberFunction()
 {
-    return !m_functionDefine.className.isEmpty();
+    return m_functionDefine.isMemberFunction();
 }
 
 QStringList JZNodeFuctionEditDialog::localVarList()

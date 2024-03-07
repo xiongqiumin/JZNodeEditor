@@ -465,14 +465,14 @@ void MainWindow::onActionNewProject()
 }
 
 void MainWindow::onActionOpenProject()
-{    
-    if (!closeProject())
-        return;
-
+{        
     QString filepath = QFileDialog::getOpenFileName(this,"","","*.jzproj");
     if(filepath.isEmpty())
         return;
-        
+    
+    if (!closeProject())
+        return;
+
     openProject(filepath);        
 }
 

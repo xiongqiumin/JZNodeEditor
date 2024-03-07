@@ -23,6 +23,8 @@ public:
     int propAt(QPointF pos);
     QRectF propRect(int pin);
     QSize size() const;
+    
+    QString getTip(QPointF pt);
 
     void setPinValue(int prop_id,const QString &value);
     QString pinValue(int prop_id);
@@ -31,13 +33,12 @@ public:
     void setError(const QString &error);
     void clearError();
     bool isError() const;
-
+    
     void onTimerEvent(int event);
 
 protected:
     enum
     {
-        Timer_toolTip,
         Timer_longPress,
     };
 
@@ -58,16 +59,7 @@ protected:
         int widgetType;
         QGraphicsProxyWidget *proxy;
         QWidget *widget;
-    };
-
-    struct TipInfo
-    {
-        TipInfo();
-
-
-        QPointF pos;
-        QString tips;
-    };
+    };    
 
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
@@ -80,9 +72,7 @@ protected:
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
     void calcGemo(int pin, int x, int y,PropGemo *gemo);
     void updatePropGemo();
-    void updateErrorGemo();
-    void showTip(QPointF pt,QString text);
-    void clearTip();
+    void updateErrorGemo();        
     
     void setWidgetValue(int prop_id, const QString &value);
     QString getWidgetValue(int prop_id);
@@ -93,8 +83,7 @@ protected:
     QRectF m_errorRect;    
     QString m_error;
     
-    int m_longPress;    
-    TipInfo m_tip;
+    int m_longPress;        
 };
 
 #endif

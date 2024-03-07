@@ -61,24 +61,6 @@ public:
     JZNodeMod();
 };
 
-//JZNodeAnd
-class JZNodeAnd: public JZNodeOperator
-{
-public:
-    JZNodeAnd();
-
-    bool compiler(JZNodeCompiler *c, QString &error);
-};
-
-//JZNodeOr
-class JZNodeOr: public JZNodeOperator
-{
-public:
-    JZNodeOr();
-
-    bool compiler(JZNodeCompiler *c, QString &error);
-};
-
 //JZNodeBitAnd
 class JZNodeBitAnd: public JZNodeOperator
 {
@@ -98,20 +80,6 @@ class JZNodeBitXor: public JZNodeOperator
 {
 public:
     JZNodeBitXor();
-};
-
-//JZNodeFloatEQ
-class JZNodeFloatEQ : public JZNode
-{
-public:
-    JZNodeFloatEQ();
-};
-
-//JZNodeFloatNE
-class JZNodeFloatNE : public JZNode
-{
-public:
-    JZNodeFloatNE();
 };
 
 //JZNodeEQ
@@ -154,6 +122,87 @@ class JZNodeGT : public JZNodeOperator
 {
 public:
     JZNodeGT();
+};
+
+//JZNodeFloatEQ
+class JZNodeFloatEQ : public JZNode
+{
+public:
+    JZNodeFloatEQ();
+};
+
+//JZNodeFloatNE
+class JZNodeFloatNE : public JZNode
+{
+public:
+    JZNodeFloatNE();
+};
+
+//JZNodeStringAdd
+class JZNodeStringAdd : public JZNodeOperator
+{
+public:
+    JZNodeStringAdd();
+};
+
+//JZNodeStringEQ
+class JZNodeStringEQ : public JZNodeOperator
+{
+public:
+    JZNodeStringEQ();
+};
+
+//JZNodeStringNE
+class JZNodeStringNE : public JZNodeOperator
+{
+public:
+    JZNodeStringNE();
+};
+
+//JZNodeStringLE
+class JZNodeStringLE : public JZNodeOperator
+{
+public:
+    JZNodeStringLE();
+};
+
+//JZNodeStringGE
+class JZNodeStringGE : public JZNodeOperator
+{
+public:
+    JZNodeStringGE();
+};
+
+//JZNodeStringLT
+class JZNodeStringLT : public JZNodeOperator
+{
+public:
+    JZNodeStringLT();
+};
+
+//JZNodeStringGT
+class JZNodeStringGT : public JZNodeOperator
+{
+public:
+    JZNodeStringGT();
+};
+
+//JZNodeAnd
+class JZNodeAnd : public JZNodeOperator
+{
+public:
+    JZNodeAnd();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
+};
+
+//JZNodeOr
+class JZNodeOr : public JZNodeOperator
+{
+public:
+    JZNodeOr();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
 };
 
 //JZNodeNot

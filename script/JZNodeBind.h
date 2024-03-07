@@ -142,6 +142,9 @@ QVariant getValue<QVariant>(const QVariant &v,std::false_type);
 template<>
 QString getValue<QString>(const QVariant &v, std::false_type);
 
+template<>
+QString* getValue<QString*>(const QVariant &v, std::true_type);
+
 template<class T>
 remove_cvr_t<T> getValue(QVariant v)
 {
@@ -420,72 +423,43 @@ template<class Class>
 class ClassBind
 {
 public:
-    ClassBind(QString name, QString super = QString())
+    ClassBind(int typeId,QString name, QString super = QString())        
     {
         m_super = super;
         m_define.className = name;
         m_define.superName = super;
         m_define.isCObject = true;
+        m_define.id = JZNodeObjectManager::instance()->delcare(m_define.className, typeid(Class).name(), typeId);
 
         initCreate(std::is_abstract<Class>());
         initCopy(std::is_copy_constructible<Class>());
-        m_define.cMeta.isAbstract = std::is_abstract<Class>();
+        m_define.cMeta.isAbstract = std::is_abstract<Class>();        
     }
 
-    void initCreate(std::true_type)
-    {
-        m_define.cMeta.create = createClassAssert;
-        m_define.cMeta.destory = destoryClassAssert;
-    }
+    ClassBind(QString name, QString super = QString())
+        :ClassBind(-1, name, super)
+    {        
+    }    
 
-    void initCreate(std::false_type)
+    template<typename Return, typename... Args,typename... Extra>
+    JZFunctionDefine *def(QString name,bool isflow,Return (Class::*f)(Args...),Extra ...extra)
     {
-        initCreateDefault(std::is_default_constructible<Class>());
-        m_define.cMeta.destory = &destoryClass<Class>;
-    }
-
-    void initCreateDefault(std::true_type)
-    {
-        m_define.cMeta.create = &createClass<Class>;
-        defWidgetEvent(std::is_base_of<QWidget, Class>());
-    }
-
-    void initCreateDefault(std::false_type)
-    {
-        m_define.cMeta.create = createClassAssert;
-    }
-    
-    void initCopy(std::true_type)
-    {
-        m_define.cMeta.copy = &copyClass<Class>;
-        m_define.cMeta.isCopyable = true;
-    }
-
-    void initCopy(std::false_type)
-    {
-        m_define.cMeta.copy = &copyClassAssert;
-        m_define.cMeta.isCopyable = false;
+        auto impl = createFuncion(f,extra...);
+        return registFunction(name,isflow,impl);
     }
 
     template<typename Return, typename... Args,typename... Extra>
-    void def(QString name,bool isflow,Return (Class::*f)(Args...),Extra ...extra)
+    JZFunctionDefine *def(QString name,bool isflow,Return (Class::*f)(Args...) const,Extra ...extra)
     {
         auto impl = createFuncion(f,extra...);
-        registFunction(name,isflow,impl);
-    }
-
-    template<typename Return, typename... Args,typename... Extra>
-    void def(QString name,bool isflow,Return (Class::*f)(Args...) const,Extra ...extra)
-    {
-        auto impl = createFuncion(f,extra...);
-        registFunction(name,isflow,impl);
+        return registFunction(name,isflow,impl);
     }
 
     template <typename Func,typename... Extra>
-    void def(QString name,bool isflow,Func f,Extra ...extra)
+    JZFunctionDefine *def(QString name,bool isflow,Func f,Extra ...extra)
     {
         auto impl = createFuncion(f,extra...);
-        registFunction(name,isflow,impl);
+        return registFunction(name,isflow,impl);
     }       
 
     template<typename... Args>
@@ -495,6 +469,7 @@ public:
 
         SingleDefine single;
         single.name = name;
+        single.className = m_define.className;
         single.eventType = eventType;
 
         auto *impl = new CSingleImpl<Class,Args...>();        
@@ -526,6 +501,7 @@ public:
     {                
         SingleDefine single;
         single.name = name;
+        single.className = m_define.className;
         single.eventType = eventType;
 
         auto *impl = new CPrivateSingleImpl<Class, Args...>();
@@ -552,6 +528,28 @@ public:
         m_define.singles.push_back(single);
     }
 
+    void regist()
+    {
+        auto func_inst = JZNodeFunctionManager::instance();
+        //replace with real id
+        for (int i = 0; i < m_define.singles.size(); i++)
+        {
+            auto &single = m_define.singles[i];
+            if (single.paramOut[0].dataType() == Type_none)
+                single.paramOut[0].type = JZNodeType::typeToName(m_define.id);
+        }
+        for (int func_idx = 0; func_idx < m_funcList.size(); func_idx++)
+        {
+            auto f = m_funcList[func_idx].data();
+            func_inst->registCFunction(*f, m_funcImplList[func_idx]);
+            m_define.functions.push_back(*f);
+        }
+        //regist
+        JZNodeObjectManager::instance()->replace(m_define);
+        declareQObject(std::is_base_of<QObject, Class>());
+    }
+
+protected:
     template<class Function>
     void defEvent(QString name,int type, Function f)
     {
@@ -585,38 +583,55 @@ public:
 
     }
 
-    void regist(int typeId = -1)
+    void initCreate(std::true_type)
     {
-        auto func_inst = JZNodeFunctionManager::instance();
-
-        m_define.id = JZNodeObjectManager::instance()->delcare(m_define.className, typeid(Class).name(), typeId);
-        //replace with real id
-        for (int i = 0; i < m_define.singles.size(); i++)
-        {
-            auto &single = m_define.singles[i];
-            if (single.paramOut[0].dataType() == Type_none)
-                single.paramOut[0].type = JZNodeType::typeToName(m_define.id);
-        }
-        for (int func_idx = 0; func_idx < m_funcList.size(); func_idx++)
-        {
-            auto &f = m_funcList[func_idx];                        
-            func_inst->registCFunction(f.fullName(), f.isFlowFunction(), f.cfunc);
-            m_define.functions.push_back(*func_inst->function(f.fullName()));
-        }
-        //regist
-        JZNodeObjectManager::instance()->replace(m_define);
-        declareQObject(std::is_base_of<QObject, Class>());        
+        m_define.cMeta.create = createClassAssert;
+        m_define.cMeta.destory = destoryClassAssert;
     }
 
-protected:
-    void registFunction(QString name,bool isflow,QSharedPointer<CFunction> func)
+    void initCreate(std::false_type)
     {
-        JZFunction f;
-        f.name = name;
-        f.className = m_define.className;
-        f.flow = isflow;        
-        f.cfunc = func;
-        m_funcList.push_back(f);
+        initCreateDefault(std::is_default_constructible<Class>());
+        m_define.cMeta.destory = &destoryClass<Class>;
+    }
+
+    void initCreateDefault(std::true_type)
+    {
+        m_define.cMeta.create = &createClass<Class>;
+        defWidgetEvent(std::is_base_of<QWidget, Class>());
+    }
+
+    void initCreateDefault(std::false_type)
+    {
+        m_define.cMeta.create = createClassAssert;
+    }
+
+    void initCopy(std::true_type)
+    {
+        m_define.cMeta.copy = &copyClass<Class>;
+        m_define.cMeta.isCopyable = true;
+    }
+
+    void initCopy(std::false_type)
+    {
+        m_define.cMeta.copy = &copyClassAssert;
+        m_define.cMeta.isCopyable = false;
+    }    
+
+    JZFunctionDefine *registFunction(QString name,bool isflow,QSharedPointer<CFunction> cfunc)
+    {
+        JZFunctionDefine *f = new JZFunctionDefine();
+        f->name = name;
+        f->className = m_define.className;
+        f->isFlowFunction = isflow;        
+        f->isCFunction = true;
+        f->updateParam(cfunc.data());
+        if (cfunc->args.size() > 0 && JZNodeType::typeidToType(cfunc->args[0]) == m_define.id)
+            f->paramIn[0].name = "this";        
+
+        m_funcList.push_back(QSharedPointer<JZFunctionDefine>(f));
+        m_funcImplList.push_back(cfunc);
+        return f;
     }
 
     void declareQObject(std::true_type)
@@ -633,7 +648,8 @@ protected:
 
     QString m_super;
     JZNodeObjectDefine m_define;    
-    QList<JZFunction> m_funcList;
+    QList<QSharedPointer<JZFunctionDefine>> m_funcList;
+    QList<QSharedPointer<CFunction>> m_funcImplList;
 };
 
 

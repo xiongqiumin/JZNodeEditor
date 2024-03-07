@@ -18,6 +18,7 @@
 #include <QPlainTextEdit>
 #include <QFileInfo>
 #include <QDir>
+#include <QFileDialog>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -60,6 +61,7 @@ public:
     QVariantMap::iterator it;
 };
 
+
 void initEnum()
 {
     jzbind::registEnum<Qt::KeyboardModifiers>("KeyboardModifiers");
@@ -71,10 +73,48 @@ void initEnum()
     jzbind::registEnum<Qt::GlobalColor>("GlobalColor");
 
     jzbind::registEnum<Qt::Key>("Key", Type_keyCode);
+    jzbind::registEnum<QFileDialog::Option>("FileDialog.Option");    
+    jzbind::registEnum<QFileDialog::Options>("FileDialog.Options");
+        
+    QStringList filter_key_list;
+    QVector<int> filter_value_list;
+    JZNodeEnumDefine filter_define; 
+    filter_key_list << "Dirs";
+    filter_key_list << "Files";
+    filter_key_list << "NoDotAndDotDot";
+    filter_value_list << QDir::Dirs;
+    filter_value_list << QDir::Files;
+    filter_value_list << QDir::NoDotAndDotDot;
+    filter_define.init("Dir::Filter", filter_key_list, filter_value_list);
+    JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filter).name());
+    filter_define.setFlag(true);
+    filter_define.init("Dir::Filters", filter_key_list, filter_value_list);
+    JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filters).name());    
 }
 
 void initBase()
 {
+    JZNodeObjectManager::instance()->delcare("StringList",typeid(QStringList).name() ,Type_stringList);
+
+    //string 全部只读
+    jzbind::ClassBind<QString> cls_string(Type_string,"String");
+    cls_string.def("append", false, [](const QString &a, const QString &b)->QString {
+        return a + b;
+    });
+    cls_string.def("left", false, &QString::left);
+    cls_string.def("right", false, &QString::right);
+    cls_string.def("size", false, &QString::size);
+    cls_string.def("mid", false, &QString::mid);
+    cls_string.def("replace", false, [](const QString &in, const QString &before, const QString &after)->QString {
+        QString ret = in;
+        return ret.replace(before, after);
+    });
+    cls_string.def("split", false, [](const QString &in, const QString &before, Qt::SplitBehavior behavior)->QStringList {
+        return in.split(before, behavior);
+    });
+    cls_string.def("isEmpty", false, &QString::isEmpty);
+    cls_string.regist();
+
     jzbind::ClassBind<QPoint> cls_pt("Point");
     cls_pt.def("create", false, [](int x, int y)->QPoint { return QPoint(x, y); });
     cls_pt.def("fromString", false, [](QPoint *pt,const QString &text){
@@ -157,11 +197,11 @@ void initBase()
 void initCore()
 {
     auto funcInst = JZNodeFunctionManager::instance();
-    jzbind::ClassBind<QObject> cls_object("Object");
-    cls_object.regist(Type_object);
+    jzbind::ClassBind<QObject> cls_object(Type_object,"Object");
+    cls_object.regist();
 
     //stringlist
-    jzbind::ClassBind<QStringList> cls_string_list("StringList");
+    jzbind::ClassBind<QStringList> cls_string_list(Type_stringList,"StringList");
     cls_string_list.def("createFromString", false, [](const QString &text)->QStringList {
         QStringList list = text.split(",");
         return list;
@@ -180,30 +220,8 @@ void initCore()
         checkSize(index, list->size());
         return (*list)[index];
     });
-    cls_string_list.regist();
-
-    //string 全部只读
-    jzbind::ClassBind<QString> cls_string("String");
-    cls_string.def("append", false, [](const QString &a, const QString &b)->QString {
-        return a + b;
-    });
-    cls_string.def("left", false, [](const QString &a, int num)->QString {
-        return a.left(num);
-    });
-    cls_string.def("right", false, [](const QString &a, int num)->QString {
-        return a.right(num);
-    });
-    cls_string.def("size", false, [](const QString &a)->int {
-        return a.size();
-    });
-    cls_string.def("replace", false, [](const QString &in, const QString &before, const QString &after)->QString {
-        QString ret = in;
-        return ret.replace(before, after);
-    });
-    cls_string.def("split", false, [](const QString &in, const QString &before, Qt::SplitBehavior behavior)->QStringList {        
-        return in.split(before, behavior);
-    });
-    cls_string.regist();
+    cls_string_list.def("size", false, [](const QStringList *list)->int { return list->size(); });
+    cls_string_list.regist();    
 
     //list
     jzbind::ClassBind<JZNodeListIterator> cls_list_it("ListIterator");
@@ -213,7 +231,7 @@ void initCore()
     cls_list_it.def("value", true, &JZNodeListIterator::value);
     cls_list_it.regist();
 
-    jzbind::ClassBind<QVariantList> cls_list("List");
+    jzbind::ClassBind<QVariantList> cls_list(Type_list,"List");
     cls_list.def("createFromString", false, [](const QString &text)->QVariantList {
         QVariantList ret;
         QStringList list = text.split(",");
@@ -236,14 +254,6 @@ void initCore()
         list_it->list = list;
         return list_it;
     }, true);
-    cls_list.def("resize", true, [](QVariantList *list, int size) {
-        while (list->size() > size) {
-            list->pop_back();
-        }
-        while (list->size() < size) {
-            list->push_back(QVariant());
-        }
-    });
     cls_list.def("set", true, [](QVariantList *list, int index, const QVariant &value)
     {
         checkSize(index, list->size());
@@ -274,10 +284,10 @@ void initCore()
     });
     cls_list.def("size", false, &QVariantList::size);
     cls_list.def("clear", true, &QVariantList::clear);
-    cls_list.regist(Type_list);
+    cls_list.regist();
 
     //map
-    jzbind::ClassBind<JZNodeMapIterator> map_it("MapIterator");
+    jzbind::ClassBind<JZNodeMapIterator> map_it(Type_map,"MapIterator");
     map_it.def("next", true, &JZNodeListIterator::next);
     map_it.def("atEnd", true, &JZNodeListIterator::atEnd);
     map_it.def("key", true, &JZNodeListIterator::key);
@@ -312,7 +322,7 @@ void initCore()
     });
     cls_map.def("size", false, &QVariantMap::size);
     cls_map.def("clear", true, &QVariantMap::clear);
-    cls_map.regist(Type_map);    
+    cls_map.regist();    
 }
 
 void initEvent()
@@ -346,25 +356,25 @@ void initEvent()
 
 void initObjects()
 {
-    jzbind::ClassBind<QTimer> cls_timer("Timer", "Object");
+    jzbind::ClassBind<QTimer> cls_timer(Type_timer,"Timer", "Object");
     cls_timer.def("start",true, QOverload<int>::of(&QTimer::start));
     cls_timer.def("stop", true, &QTimer::stop);
     cls_timer.def("isActive", false, &QTimer::isActive);
     cls_timer.defPrivateSingle("timeout", Event_timeout, &QTimer::timeout);
-    cls_timer.regist(Type_timer);
+    cls_timer.regist();
 }
 
 void initWidgets()
 {
     //widget
-    jzbind::ClassBind<QWidget> cls_widget("Widget", "Object");
+    jzbind::ClassBind<QWidget> cls_widget(Type_widget,"Widget", "Object");
     cls_widget.def("setVisible", true, &QWidget::setVisible);
     cls_widget.def("show", true, &QWidget::show);
     cls_widget.def("hide", true, &QWidget::hide);
     cls_widget.def("close", true, &QWidget::close);
     cls_widget.def("rect", false, &QWidget::rect);
     cls_widget.def("update", true, QOverload<>::of(&QWidget::update));
-    cls_widget.regist(Type_widget);
+    cls_widget.regist();
 
     //lineedit
     jzbind::ClassBind<QLineEdit> cls_lineEdit("LineEdit", "Widget");
@@ -397,11 +407,28 @@ void initWidgets()
     jzbind::ClassBind<QCheckBox> cls_check_box("CheckBox", "Button");
     cls_check_box.regist();
     
-    jzbind::ClassBind<QMessageBox> cls_msg_box("MessageBox", "Widget");
+    jzbind::ClassBind<QDialog> cls_dlg("Dialog", "Widget");
+    cls_dlg.regist();
+
+    jzbind::ClassBind<QMessageBox> cls_msg_box("MessageBox", "Dialog");
     cls_msg_box.def("information", true, [](QWidget *w, QString text) {
         QMessageBox::information(w, "", text);
     });
-    cls_msg_box.regist();
+    cls_msg_box.regist();    
+    
+    jzbind::ClassBind<QFileDialog> cls_file_dlg("FileDialog", "Dialog");
+    auto open_file_def = cls_file_dlg.def("getOpenFileName", true, [](QWidget *parent,QString caption,QString dir,QString filter)->QString 
+    {
+        return QFileDialog::getOpenFileName(parent, caption, dir, filter);
+    });
+    open_file_def->setDefaultValue(0, {"null","","",""});
+    auto open_dlg_def = cls_file_dlg.def("getExistingDirectory", true, [](QWidget *parent, QString caption, QString dir)->QString
+    {
+        return QFileDialog::getExistingDirectory(parent, caption, dir);
+    });
+    open_dlg_def->setDefaultValue(0, { "null","",""});
+
+    cls_file_dlg.regist();
 }
 
 void initPainter()
@@ -422,17 +449,41 @@ void initPainter()
     cls_painter.def("drawRect", true, QOverload<const QRect&>::of(&QPainter::drawRect));
     cls_painter.def("fillRect", true, QOverload<const QRect&, const QColor&>::of(&QPainter::fillRect));
     cls_painter.regist();
+
+    //image
+    jzbind::ClassBind<QImage> cls_image("Image");
+    cls_image.def("create", false, [](QString filename)->QImage{ return QImage(filename); });
+    cls_image.def("load", true, [](QImage *image,QString filename)->bool { return image->load(filename); });
+    cls_image.def("save", true, [](QImage *image, QString filename)->bool { return image->save(filename); });
+    cls_image.regist();
 }
 
 void initFiles()
 {
     jzbind::ClassBind<QFile> cls_file("File");
+    cls_file.def("exists", false, QOverload<const QString&>::of(&QFile::exists));
     cls_file.regist();
 
     jzbind::ClassBind<QFileInfo> cls_fileInfo("FileInfo");
+    cls_fileInfo.def("create", false, [](QString filepath)->QFileInfo {
+        return QFileInfo();
+    });
+    cls_fileInfo.def("setFile", true, QOverload<const QString&>::of(&QFileInfo::setFile));
+    cls_fileInfo.def("isDir", false, &QFileInfo::isDir);
+    cls_fileInfo.def("isFile", false, &QFileInfo::isFile);
+    cls_fileInfo.def("fileName", false, &QFileInfo::fileName);
+    cls_fileInfo.def("filePath", false, &QFileInfo::filePath);
+    cls_fileInfo.def("path", false, &QFileInfo::path);
+    cls_fileInfo.def("suffix", false, &QFileInfo::suffix);
     cls_fileInfo.regist();
-
+    
     jzbind::ClassBind<QDir> cls_dir("Dir");
+    cls_dir.def("create", false, [](QString path)->QDir { return QDir(path);  });
+    auto entry_def = cls_dir.def("entryList", false, [](QDir *dir,QString nameFilter,int filter)->QStringList{
+        auto list = dir->nameFiltersFromString(nameFilter);
+        return dir->entryList(list, (QDir::Filters)filter);
+    });
+    entry_def->paramIn[1].type = "Dir::Filters";
     cls_dir.regist();
 }
 

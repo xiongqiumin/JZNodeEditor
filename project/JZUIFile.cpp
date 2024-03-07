@@ -72,6 +72,17 @@ void JZUiFile::setXml(QString xml)
     regist();
 }
 
+const JZParamDefine *JZUiFile::widgetVariable(QString name)
+{
+    for (int i = 0; i < m_widgets.size(); i++)
+    {
+        if (m_widgets[i].name == name)
+            return &m_widgets[i];
+    }
+
+    return nullptr;
+}
+
 QList<JZParamDefine> JZUiFile::widgets()
 {    
     return m_widgets;

@@ -373,10 +373,10 @@ void JZNodeEngine::regist()
 {
     JZNodeFunctionManager::instance()->registCFunction("convert", true, jzbind::createFuncion(JZConvert));
     JZNodeFunctionManager::instance()->registCFunction("dealExpr", false, jzbind::createFuncion(JZDealExpr));
-    JZNodeFunctionManager::instance()->registCFunction("createObject", true, jzbind::createFuncion(JZObjectCreate));
+    JZNodeFunctionManager::instance()->registCFunction("createObject", false, jzbind::createFuncion(JZObjectCreate));
 
     JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
-    JZNodeFunctionManager::instance()->registCFunction("createObjectFromString", true, jzbind::createFuncion(JZObjectFromString));    
+    JZNodeFunctionManager::instance()->registCFunction("createObjectFromString", false, jzbind::createFuncion(JZObjectFromString));
 
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitGlobal",true, jzbind::createFuncion(JZNodeInitGlobal));
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitLocal", true, jzbind::createFuncion(JZNodeInitLocal));

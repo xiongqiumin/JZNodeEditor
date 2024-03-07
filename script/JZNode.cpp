@@ -1245,7 +1245,7 @@ int JZNodeIf::btnElseId()
 QWidget* JZNodeIf::createWidget(int id)
 {
     Q_UNUSED(id);
-    QPushButton *btn = new QPushButton(pinValue(id));
+    QPushButton *btn = new QPushButton(pinName(id));
 	btn->adjustSize();
     if (id == btnCondId())
     {
@@ -1410,7 +1410,7 @@ void JZNodeSwitch::setCaseValue(int index, const QString &v)
 
 QWidget* JZNodeSwitch::createWidget(int id)
 {    
-    QPushButton *btn = new QPushButton(pinValue(id));
+    QPushButton *btn = new QPushButton(pinName(id));
 	btn->adjustSize();
     if (id == widgetOut(0))
     {

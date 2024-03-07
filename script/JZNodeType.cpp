@@ -16,7 +16,7 @@ void JZNodeType::init()
      typeMap["int64"]  = Type_int64;
      typeMap["double"] = Type_double;
      typeMap["string"] = Type_string;
-     typeMap["nullptr"] = Type_nullptr;
+     typeMap["null"] = Type_nullptr;
 }
 
 int64_t makeConvertId(int from, int to)
@@ -220,7 +220,7 @@ QString JZNodeType::toString(const QVariant &v)
             return toString(obj);            
         }
         else
-            return "nullptr";
+            return "null";
     }
     else
     {
@@ -447,7 +447,9 @@ int JZNodeType::matchType(QList<int> dst_types, const QString &text)
             if (meta->hasKey(text))
                 return dst_types[i];
         }
-    }
+        if (isObject(dst_types[i]) && text == "null")
+            return dst_types[i];
+    }   
 
     return Type_none;
 }
@@ -472,7 +474,7 @@ QVariant JZNodeType::initValue(int type, const QString &text)
     }
     if(type >= Type_object || type_any)
     {
-        if(text == "nullptr")
+        if(text == "null")
             return QVariant::fromValue(JZObjectNull(type));        
     }
     if (type == Type_int || type == Type_int64 || type == Type_double || type_any)
@@ -521,9 +523,9 @@ QString JZNodeType::dispString(const QString &text)
     if (text.size() < 2 || !(text.front() == '"' && text.back() == '"'))
         return QString();
 
-    if (text.indexOf(' ') >= 0)
+    if (text.size() == 2 || text.indexOf(' ') >= 0)
         return text;
-
+    
     return text.mid(1, text.size() - 2);
 }
 

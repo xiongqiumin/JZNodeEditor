@@ -46,9 +46,7 @@ void SampleProject::saveProject()
     Q_ASSERT(!m_name.isEmpty());
     projectUpdateLayout(&m_project);
     m_project.saveAllItem();
-    m_project.save();
-
-    
+    m_project.save();    
 }
 
 bool SampleProject::run()

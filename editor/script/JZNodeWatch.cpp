@@ -233,7 +233,7 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
     else
     {       
         cur_value = info.value;
-        if (info.value != "nullptr")
+        if (info.value != "null")
         {
             if (info.type == Type_list || info.type == Type_map)
                 cur_value = QString("{size = %1}").arg(info.params.size());

@@ -81,7 +81,7 @@ void TestServer::init(JZProject *project)
     
     //timeout
     JZNodeSingleEvent *timeout = new  JZNodeSingleEvent();
-    timeout->setSingle(time_meta->className, time_meta->single("timeout"));
+    timeout->setSingle(time_meta->single("timeout"));
     timeout->setVariable("timer");
 
     JZNodeFor *node_for = new JZNodeFor();
@@ -100,7 +100,7 @@ void TestServer::init(JZProject *project)
     script->addNode(JZNodePtr(node_display));
 
     JZNodeFunction *node_func = new JZNodeFunction();
-    node_func->setFunction(&class_file->getMemberFunction(func_def.name)->function());
+    node_func->setFunction(&class_file->memberFunction(func_def.name)->function());
     script->addNode(JZNodePtr(node_func));
 
     script->addConnect(timeout->flowOutGemo(0), node_print->flowInGemo());

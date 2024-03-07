@@ -94,7 +94,17 @@ void JZScriptClassItem::removeMemberVariable(QString name)
 
 const JZParamDefine *JZScriptClassItem::memberVariable(QString name)
 {
-    return getParamFile()->variable(name);
+    auto def = getParamFile()->variable(name);
+    if (def)
+        return def;
+
+    if (!m_uiFile.isEmpty())
+    {
+        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        return ui_item->widgetVariable(name);
+    }
+    else
+        return nullptr;
 }
 
 JZScriptItem *JZScriptClassItem::addFlow(QString name)
@@ -142,7 +152,7 @@ QStringList JZScriptClassItem::memberFunctionList()
     return list;
 }
 
-JZScriptItem *JZScriptClassItem::getMemberFunction(QString func)
+JZScriptItem *JZScriptClassItem::memberFunction(QString func)
 {    
     for (int i = 0; i < m_childs.size(); i++)
     {
@@ -154,7 +164,7 @@ JZScriptItem *JZScriptClassItem::getMemberFunction(QString func)
 
 void JZScriptClassItem::removeMemberFunction(QString func)
 {
-    JZScriptItem *item = getMemberFunction(func);
+    JZScriptItem *item = memberFunction(func);
     m_project->removeItem(item->itemPath());    
 }
 

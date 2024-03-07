@@ -56,11 +56,6 @@ void JZNodeGraphItem::PropGemo::valueRectChanged()
     }
 }
 
-//TipInfo
-JZNodeGraphItem::TipInfo::TipInfo()
-{
-}
-
 // JZNodeGraphItem
 JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 {
@@ -378,11 +373,7 @@ void JZNodeGraphItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 }
 
 void JZNodeGraphItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
-{
-    if(!m_error.isEmpty() && m_errorRect.contains(event->pos()))
-    {                
-        showTip(mapToScene(event->pos()), m_error);        
-    }
+{    
     event->accept();
 }
 
@@ -392,23 +383,19 @@ void JZNodeGraphItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     event->accept();
 }
 
-void JZNodeGraphItem::showTip(QPointF pt, QString text)
-{
-    m_tip.pos = pt;
-    m_tip.tips = text;
-    editor()->setNodeTimer(200, m_id, Timer_toolTip);
-}
-
-void JZNodeGraphItem::clearTip()
-{
-    editor()->clearTip();
-}
-
 void JZNodeGraphItem::updateErrorGemo()
 {
     m_errorRect = QRectF();
     if(!m_error.isEmpty())
         m_errorRect = QRect(m_size.width() - 15 - 5,5,15,15);
+}
+
+QString JZNodeGraphItem::getTip(QPointF pt)
+{
+    if (m_errorRect.contains(pt))
+        return m_error;
+
+    return QString();
 }
 
 void JZNodeGraphItem::setPinValue(int prop_id, const QString &value)
@@ -463,21 +450,12 @@ void JZNodeGraphItem::clearError()
 
 void JZNodeGraphItem::onTimerEvent(int event)
 {
-    if (event == Timer_toolTip)
-    {        
-        auto pos = QCursor::pos();
-        pos = editor()->mapFromGlobal(pos);
-        auto scene_pos = editor()->mapToScene(pos);
-        if((m_tip.pos - scene_pos).manhattanLength() < 10)
-            editor()->showTip(m_tip.pos, m_tip.tips);
-    }
-    else if(event == Timer_longPress)
+    if(event == Timer_longPress)
     {
         if (m_longPress == 1)
             m_longPress = 2;
     }
 }
-
 
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
 {    

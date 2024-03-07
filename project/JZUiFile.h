@@ -18,6 +18,7 @@ public:
     bool save(QString filepath);
     bool load(QString filepath);
 
+    const JZParamDefine *widgetVariable(QString name);
     QList<JZParamDefine> widgets();
     
 protected:

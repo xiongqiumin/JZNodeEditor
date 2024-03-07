@@ -95,20 +95,27 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
 }
 
 void JZNodeOperator::calcPropOutType(JZNodeCompiler *c)
-{    
-    int in_type1 = c->pinType(m_id,paramIn(0));
-    int in_type2 = c->pinType(m_id,paramIn(1));
+{        
     int out_type = Type_none;    
-
     switch (m_op)
     {
         case OP_add:
         case OP_sub:
         case OP_mul:
         case OP_div:
-        case OP_mod:        
-            out_type = JZNodeType::calcExprType(in_type1, in_type2);
-            break;        
+        case OP_mod:
+        {
+            auto list = paramInList();
+            QList<int> in_types;
+            for (int i = 0; i < list.size(); i++)            
+                in_types << c->pinType(m_id, list[i]);
+
+            if (m_op == OP_add && in_types[0] == Type_string)
+                out_type = Type_string;
+            else
+                out_type = JZNodeType::upType(in_types);
+            break;
+        }
         case OP_eq:
         case OP_ne:
         case OP_le:
@@ -213,9 +220,170 @@ JZNodeFloatNE::JZNodeFloatNE()
     setPinTypeBool(paramOut(0));
 }
 
+//JZNodeBitAnd
+JZNodeBitAnd::JZNodeBitAnd()
+    :JZNodeOperator(Node_bitand,OP_bitand)
+{
+    m_name = "bit and";
+    setPinTypeInt(paramIn(0));
+    setPinTypeInt(paramIn(1));
+    setPinTypeInt(paramOut(0));
+}
+
+//JZNodeBitOr
+JZNodeBitOr::JZNodeBitOr()
+    :JZNodeOperator(Node_bitor,OP_bitor)
+{
+    m_name = "bit or";
+    setPinTypeInt(paramIn(0));
+    setPinTypeInt(paramIn(1));
+    setPinTypeInt(paramOut(0));
+}
+
+//JZNodeBitXor
+JZNodeBitXor::JZNodeBitXor()
+    :JZNodeOperator(Node_bitxor,OP_bitxor)
+{
+    m_name = "bit xor";
+    setPinTypeInt(paramIn(0));
+    setPinTypeInt(paramIn(1));
+    setPinTypeInt(paramOut(0));
+}
+
+//JZNodeLE
+JZNodeLE::JZNodeLE()
+    :JZNodeOperator(Node_le, OP_le)
+{
+    m_name = "<=";
+    setPinType(paramIn(0), { Type_int,Type_double });
+    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeGE
+JZNodeGE::JZNodeGE()
+    :JZNodeOperator(Node_ge, OP_ge)
+{
+    m_name = ">=";
+    setPinType(paramIn(0), { Type_int,Type_double });
+    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeLT
+JZNodeLT::JZNodeLT()
+    :JZNodeOperator(Node_lt, OP_lt)
+{
+    m_name = "<";
+    setPinType(paramIn(0), { Type_int,Type_double });
+    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeGT
+JZNodeGT::JZNodeGT()
+    :JZNodeOperator(Node_gt, OP_gt)
+{
+    m_name = ">";
+    setPinType(paramIn(0), { Type_int,Type_double });
+    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeEQ
+JZNodeEQ::JZNodeEQ()
+    :JZNodeOperator(Node_eq, OP_eq)
+{    
+    m_name = "==";    
+    setPinTypeAny(paramIn(0));
+    setPinTypeAny(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeNE
+JZNodeNE::JZNodeNE()
+    :JZNodeOperator(Node_ne, OP_ne)
+{    
+    m_name = "!=";    
+    setPinTypeAny(paramIn(0));
+    setPinTypeAny(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeStringAdd
+JZNodeStringAdd::JZNodeStringAdd()
+    :JZNodeOperator(Node_stringAdd, OP_add)
+{
+    m_name = "+";
+    setPinTypeString(paramIn(0));
+    setPinTypeString(paramIn(1));
+    setPinTypeString(paramOut(0));
+    addInputButton();
+}
+
+//JZNodeStringEQ
+JZNodeStringEQ::JZNodeStringEQ()
+    :JZNodeOperator(Node_stringEq, OP_eq)
+{
+    m_name = "==";
+    setPinTypeString(paramIn(0));
+    setPinTypeString(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeStringNE
+JZNodeStringNE::JZNodeStringNE()
+    :JZNodeOperator(Node_stringNe, OP_ne)
+{
+    m_name = "!=";
+    setPinTypeString(paramIn(0));
+    setPinTypeString(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeStringLE
+JZNodeStringLE::JZNodeStringLE()
+    :JZNodeOperator(Node_stringLe, OP_le)
+{
+    m_name = "<=";
+    setPinTypeString(paramIn(0));
+    setPinTypeString(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeStringGE
+JZNodeStringGE::JZNodeStringGE()
+    :JZNodeOperator(Node_stringGe, OP_ge)
+{
+    m_name = ">=";
+    setPinTypeString(paramIn(0));
+    setPinTypeString(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeStringLT
+JZNodeStringLT::JZNodeStringLT()
+    :JZNodeOperator(Node_stringLt, OP_lt)
+{
+    m_name = "<";
+    setPinTypeString(paramIn(0));
+    setPinTypeString(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
+//JZNodeStringGT
+JZNodeStringGT::JZNodeStringGT()
+    :JZNodeOperator(Node_stringGt, OP_gt)
+{
+    m_name = ">";
+    setPinTypeString(paramIn(0));
+    setPinTypeString(paramIn(1));
+    setPinTypeBool(paramOut(0));
+}
+
 //JZNodeAnd
 JZNodeAnd::JZNodeAnd()
-    :JZNodeOperator(Node_and,OP_and)
+    :JZNodeOperator(Node_and, OP_and)
 {
     m_name = "and";
     setPinTypeBool(paramIn(0));
@@ -245,7 +413,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
         c->addStatement(JZNodeIRPtr(jmp));
         jmpList.push_back(jmp);
 
-        if(i == input_list.size() - 1)
+        if (i == input_list.size() - 1)
             c->addSetVariable(irId(out), irLiteral(true));
     }
     int ret = c->addNop();
@@ -256,7 +424,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
 
 //JZNodeOr
 JZNodeOr::JZNodeOr()
-    :JZNodeOperator(Node_or,OP_or)
+    :JZNodeOperator(Node_or, OP_or)
 {
     m_name = "or";
     setPinTypeBool(paramIn(0));
@@ -293,14 +461,13 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
     for (int i = 0; i < jmpList.size(); i++)
         jmpList[i]->jmpPc = ret;
     return true;
-
 }
 
 //JZNodeNot
 JZNodeNot::JZNodeNot()
 {
     m_name = "not";
-    m_type = Node_not;    
+    m_type = Node_not;
     int in = addParamIn("", Pin_editValue | Pin_dispValue);
     int out = addParamOut("");
     setPinTypeBool(in);
@@ -314,98 +481,8 @@ bool JZNodeNot::compiler(JZNodeCompiler *c, QString &error)
 
     int id_in = c->paramId(m_id, paramIn(0));
     int id_out = c->paramId(m_id, paramOut(0));
-    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_not);    
+    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_not);
     return true;
-}
-
-//JZNodeBitAnd
-JZNodeBitAnd::JZNodeBitAnd()
-    :JZNodeOperator(Node_bitand,OP_bitand)
-{
-    m_name = "bit and";
-    setPinTypeInt(paramIn(0));
-    setPinTypeInt(paramIn(1));
-    setPinTypeInt(paramOut(0));
-}
-
-//JZNodeBitOr
-JZNodeBitOr::JZNodeBitOr()
-    :JZNodeOperator(Node_bitor,OP_bitor)
-{
-    m_name = "bit or";
-    setPinTypeInt(paramIn(0));
-    setPinTypeInt(paramIn(1));
-    setPinTypeInt(paramOut(0));
-}
-
-//JZNodeBitXor
-JZNodeBitXor::JZNodeBitXor()
-    :JZNodeOperator(Node_bitxor,OP_bitxor)
-{
-    m_name = "bit xor";
-    setPinTypeInt(paramIn(0));
-    setPinTypeInt(paramIn(1));
-    setPinTypeInt(paramOut(0));
-}
-
-//JZNodeLE
-JZNodeLE::JZNodeLE()
-    :JZNodeOperator(Node_le, OP_le)
-{
-    m_name = "<=";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeGE
-JZNodeGE::JZNodeGE()
-    :JZNodeOperator(Node_ge, OP_ge)
-{
-    m_name = ">=";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeLT
-JZNodeLT::JZNodeLT()
-    :JZNodeOperator(Node_lt, OP_lt)
-{
-    m_name = "<";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeGT
-JZNodeGT::JZNodeGT()
-    :JZNodeOperator(Node_gt, OP_gt)
-{
-    m_name = ">";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeEQ
-JZNodeEQ::JZNodeEQ()
-    :JZNodeOperator(Node_eq, OP_eq)
-{    
-    m_name = "==";    
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeNE
-JZNodeNE::JZNodeNE()
-    :JZNodeOperator(Node_ne, OP_ne)
-{    
-    m_name = "!=";    
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
 }
 
 //JZNodeExpression

@@ -84,11 +84,35 @@ QList<const JZFunctionDefine*> JZNodeFunctionManager::functionList()
     return list;
 }
 
+void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func)
+{
+    Q_ASSERT(!m_funcMap.contains(define.fullName()) && define.isCFunction);
+
+    JZFunction impl;
+    impl.name = define.name;
+    impl.className = define.className;
+    impl.flow = define.isFlowFunction;
+    impl.cfunc = func;
+
+    for (int i = 0; i < define.paramIn.size(); i++)
+    {
+        auto &p = define.paramIn[i];
+        impl.paramIn << JZParam(p.name, p.dataType());
+    }
+    for (int i = 0; i < define.paramOut.size(); i++)
+    {
+        auto &p = define.paramOut[i];
+        impl.paramOut << JZParam(p.name, p.dataType());
+    }    
+    m_funcMap[define.fullName()].funcDefine = define;
+    m_funcMap[define.fullName()].funcImpl = impl;
+}
+
 void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> cfunc)
 {
-    QStringList name_list = fullName.split(".");
+    JZFunctionDefine define;
 
-    JZFunction define;
+    QStringList name_list = fullName.split(".");    
     if (name_list.size() == 1)
     {
         define.name = name_list[0];
@@ -98,27 +122,9 @@ void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QShare
         define.className = name_list[0];
         define.name = name_list[1];
     }
-    define.cfunc = cfunc;
-    define.flow = isFlow;
-    
-    for (int i = 0; i < cfunc->args.size(); i++)
-    {
-        QString name = "input" + QString::number(i);
-        int dataType = JZNodeType::typeidToType(cfunc->args[i]);
-        Q_ASSERT(dataType != Type_none);
-
-        define.paramIn.push_back(JZParam(name, dataType));
-    }
-    if (cfunc->result != typeid(void).name())
-    {
-        QString name = "output";
-        int dataType = JZNodeType::typeidToType(cfunc->result);
-        Q_ASSERT(dataType != Type_none);
-
-        define.paramOut.push_back(JZParam(name, dataType));
-    }
-
-    registFunctionImpl(define);
+    define.updateParam(cfunc.data());
+    define.isCFunction = true;
+    registCFunction(define, cfunc);       
 }
 
 void JZNodeFunctionManager::unregistFunction(QString name)

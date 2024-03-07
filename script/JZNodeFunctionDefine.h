@@ -44,7 +44,10 @@ public:
     bool isNull() const;
 
     QString fullName() const;    
-    bool isMemberFunction() const;
+    bool isMemberFunction() const;    
+    
+    void updateParam(CFunction *func);
+    void setDefaultValue(int index, QStringList values);
             
     QString name;    
     QString className;
@@ -75,8 +78,11 @@ class SingleDefine
 public:
     SingleDefine();
 
+    QString fullName() const;
+
     int eventType;
     QString name;
+    QString className;
     QList<JZParamDefine> paramOut;
 
     bool isCSingle;

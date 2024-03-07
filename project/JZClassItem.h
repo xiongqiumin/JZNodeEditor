@@ -38,7 +38,7 @@ public:
 
     JZScriptItem *addMemberFunction(JZFunctionDefine func);
     void removeMemberFunction(QString func);
-    JZScriptItem *getMemberFunction(QString func);    
+    JZScriptItem *memberFunction(QString func);    
     QStringList memberFunctionList();
 
     QString uiFile() const;

@@ -45,17 +45,15 @@ public:
     virtual void loadFromStream(QDataStream &s) override;
     virtual JZFunctionDefine function() override;
 
-    void setSingle(QString sender,const SingleDefine *single);
+    void setSingle(const SingleDefine *single);
     QString single();
 
     void setVariable(const QString &name);
     QString variable() const;
 
-    virtual int variableType() const;
     virtual void drag(const QVariant &value) override;
 
-protected:
-    QString m_sender;
+protected:    
     QString m_single;
 };
 

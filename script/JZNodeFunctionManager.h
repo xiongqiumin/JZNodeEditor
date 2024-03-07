@@ -22,10 +22,11 @@ public:
     const JZFunctionDefine *function(QString name);    
     void registFunction(const JZFunctionDefine &define);
     void replaceFunction(const JZFunctionDefine &define);        
+    void registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func);
     void registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> func);
     void unregistFunction(QString name);       
 
-    void registFunctionImpl(JZFunction &impl);
+    void registFunctionImpl(JZFunction &impl);    
     const JZFunction *functionImpl(QString name);
 
 protected:
@@ -42,5 +43,6 @@ protected:
     bool m_userRegist;
     QStringList m_userFuncs;
 };
+void updateParam(JZFunctionDefine &dei,CFunction *func);
 
 #endif

@@ -41,7 +41,7 @@ QString JZParamDefine::initValue() const
             return meta->defaultValue();
         }
         else if (JZNodeType::isObject(t))
-            return "nullptr";
+            return "null";
         else if (t == Type_string)
             return "\"\"";
         else
@@ -102,7 +102,40 @@ QString JZFunctionDefine::fullName() const
 
 bool JZFunctionDefine::isMemberFunction() const
 {
-    return !className.isEmpty();
+    return (paramIn.size() > 0 && paramIn[0].name == "this");
+}
+
+void JZFunctionDefine::updateParam(CFunction *func)
+{
+    paramIn.clear();
+    paramOut.clear();
+    for (int i = 0; i < func->args.size(); i++)
+    {
+        QString name = "input" + QString::number(i);
+        int dataType = JZNodeType::typeidToType(func->args[i]);
+        Q_ASSERT(dataType != Type_none);
+
+        paramIn.push_back(JZParamDefine(name, dataType));
+    }
+    if (func->result != typeid(void).name())
+    {
+        QString name = "output";
+        int dataType = JZNodeType::typeidToType(func->result);
+        Q_ASSERT(dataType != Type_none);
+
+        paramOut.push_back(JZParamDefine(name, dataType));
+    }
+}
+
+void JZFunctionDefine::setDefaultValue(int index, QStringList values)
+{
+    for (int i = 0; i < values.size(); i++)
+    {
+        if (paramIn[i + index].dataType() == Type_string)
+            paramIn[i + index].value = JZNodeType::addMark(values[i]);
+        else
+            paramIn[i + index].value = values[i];
+    }
 }
 
 QDataStream &operator<<(QDataStream &s, const JZFunctionDefine &param)
@@ -232,7 +265,7 @@ QString JZFunction::fullName() const
 
 bool JZFunction::isMemberFunction() const
 {
-    return !className.isEmpty();
+    return paramIn.size() > 0 && paramIn[0].name == "this";
 }
 
 bool JZFunction::isFlowFunction() const

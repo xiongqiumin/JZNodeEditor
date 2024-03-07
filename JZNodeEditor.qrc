@@ -21,5 +21,6 @@
     <file>Resources/icons/iconStop.png</file>
     <file>Resources/icons/iconUndo.png</file>
     <file>Resources/fucntionList.txt</file>
+	<file>Resources/widgetBox.xml</file>
   </qresource>
 </RCC>

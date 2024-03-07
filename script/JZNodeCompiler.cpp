@@ -235,7 +235,13 @@ VariableCoor JZNodeCompiler::variableCoor(JZScriptItem *file, QString name)
         if (file->project()->globalVariable(base))
             return Variable_global;
         else
-            return Variable_member;
+        {
+            auto class_file = file->getClassFile();
+            if (class_file && class_file->memberVariable(name))
+                return Variable_member;
+            else
+                return Variable_none;
+        }
     }
 }
 
@@ -768,7 +774,9 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
     
     int build_start_pc = nextPc();    
     QString error;
-    bool ret = node->compiler(this,error);
+
+    setOutPinTypeDefault(node);
+    bool ret = node->compiler(this,error);    
     if (ret)
     {                   
         auto &env = m_compilerNodeStack.back();
@@ -786,9 +794,7 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
         else
         {
             currentNodeInfo()->ranges.push_back(range);
-        }
-
-        setOutPinTypeDefault(node);        
+        }                
         
         Q_ASSERT(node->flowOutCount() == currentNodeInfo()->jmpList.size());
         Q_ASSERT(node->subFlowCount() == currentNodeInfo()->jmpSubList.size());
@@ -800,7 +806,7 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
     }
     else
         currentNodeInfo()->error = error;
-        
+            
     popCompilerNode();
 
     return ret;
@@ -1066,7 +1072,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
                 {
                     JZNodeFunction *func_node = (JZNodeFunction*)graph->node;
                     auto func = JZNodeFunctionManager::instance()->function(func_node->function());
-                    if (!func->className.isEmpty() && JZNodeObjectManager::instance()->isInherits(m_className, func->className))
+                    if (func->isMemberFunction() && JZNodeObjectManager::instance()->isInherits(m_className, func->className))
                     {
                         is_this = true;
                         pin_type = JZNodeObjectManager::instance()->getClassId(func->className);
@@ -1511,6 +1517,14 @@ int JZNodeCompiler::allocStack(int dataType)
     return id;        
 }
 
+JZNodeIRParam JZNodeCompiler::paramRef(QString name)
+{
+    auto coor = variableCoor(m_scriptFile,name);
+    if (coor == Variable_member && !name.startsWith("this."))
+        name = "this." + name;
+    return irRef(name);
+}
+
 void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
 {
     QSet<QString> func_param;
@@ -1701,7 +1715,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
                 {
                     JZNodeFunction *func_node = (JZNodeFunction*)in_node->node;
                     auto func = JZNodeFunctionManager::instance()->function(func_node->function());
-                    if (!func->className.isEmpty() && JZNodeObjectManager::instance()->isInherits(m_className,func->className))
+                    if (func->isMemberFunction() && JZNodeObjectManager::instance()->isInherits(m_className,func->className))
                     {
                         addSetVariable(irId(to_id), irThis());
                         continue;

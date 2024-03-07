@@ -10,6 +10,7 @@ enum {
     build_unitTest,
 };
 
+//JZNodeCustomBuild
 JZNodeCustomBuild::JZNodeCustomBuild()
 {
     m_type = Node_custom;

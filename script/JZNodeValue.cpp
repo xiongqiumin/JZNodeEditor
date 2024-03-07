@@ -386,7 +386,7 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
     
     c->addNodeStart(m_id);
     int out_id = c->paramId(m_id,paramOut(0));
-    JZNodeIRParam ref = irRef(name);
+    JZNodeIRParam ref = c->paramRef(name);;
     c->addSetVariable(irId(out_id),ref);
     c->setPinType(m_id, out_id, def->dataType());
     return true;
@@ -496,7 +496,7 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
     int id = c->paramId(m_id,paramIn(1));
     int m_out = c->paramId(m_id,paramOut(0));
     
-    JZNodeIRParam ref = irRef(name);
+    JZNodeIRParam ref = c->paramRef(name);
     c->addSetVariable(ref,irId(id));
     c->addSetVariable(irId(m_out),irId(id));    
     c->addFlowOutput(m_id);
@@ -568,7 +568,7 @@ bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
         return false;
     
     int id = c->paramId(m_id,paramIn(1));
-    c->addSetVariable(irRef(name),irId(id));    
+    c->addSetVariable(c->paramRef(name),irId(id));
     return true;
 }
 

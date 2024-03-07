@@ -121,10 +121,16 @@ SingleDefine::SingleDefine()
     csingle = nullptr;
 }
 
+QString SingleDefine::fullName() const
+{
+    return className + "." + name;
+}
+
 QDataStream &operator<<(QDataStream &s, const SingleDefine &param)
 {
     Q_ASSERT(!param.isCSingle);
     s << param.name;
+    s << param.className;
     s << param.eventType;
     s << param.paramOut;
     return s;
@@ -133,6 +139,7 @@ QDataStream &operator<<(QDataStream &s, const SingleDefine &param)
 QDataStream &operator>>(QDataStream &s, SingleDefine &param)
 {
     s >> param.name;
+    s >> param.className;
     s >> param.eventType;
     s >> param.paramOut;
     return s;
@@ -753,7 +760,7 @@ int JZNodeObjectManager::regist(JZNodeObjectDefine info)
     *def = info;
     if(info.id != -1)
     {
-        Q_ASSERT(getClassName(info.id).isEmpty());
+        Q_ASSERT(getClassName(info.id).isEmpty() || getClassName(info.id) == info.className);
         def->id = info.id;
         m_objectId = qMax(m_objectId,def->id + 1);
     }
@@ -833,6 +840,19 @@ JZNodeObjectDefine *JZNodeObjectManager::meta(QString className)
         return nullptr;
 
     return meta(getClassId(className));
+}
+
+const SingleDefine *JZNodeObjectManager::single(QString name)
+{
+    QStringList list = name.split(".");
+    if (list.size() != 2)
+        return nullptr;
+
+    auto cls = meta(list[0]);
+    if (!cls)
+        return nullptr;
+
+    return cls->single(list[1]);
 }
 
 int JZNodeObjectManager::getClassIdByQObject(QString name)

@@ -237,8 +237,8 @@ QTreeWidgetItem * JZNodePanel::createClassEvent(QString className)
     for (int i = 0; i < meta->singles.size(); i++)
     {        
         JZNodeSingleEvent node_event;
-        node_event.setName(meta->singles[i].name);
-        node_event.setSingle(className, &meta->singles[i]);
+        node_event.setName(meta->singles[i].fullName());
+        node_event.setSingle(&meta->singles[i]);
 
         QTreeWidgetItem *sub_event = new QTreeWidgetItem();
         sub_event->setData(0, TreeItem_type, "node_data");
