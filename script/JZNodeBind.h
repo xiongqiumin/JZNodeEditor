@@ -282,7 +282,7 @@ CFunctionImpl<Func,Return,Args...> *createCFunction(Func func,Return (*)(Args...
 
 template<typename Return,typename... Args,typename... Extra>
 void extra_check(Return (*)(Args...),Extra...)
-{
+{    
     static_assert(!std::is_pointer<Return>::value || sizeof...(Extra) == 1,"if return point type, need set refrence type");
     static_assert(std::is_pointer<Return>::value || sizeof...(Extra) == 0,"if return no point type, don't set refrence type");
 }
@@ -636,7 +636,7 @@ protected:
 
     void declareQObject(std::true_type)
     {
-        int id = JZNodeObjectManager::instance()->getClassIdByCType(typeid(Class).name());
+        int id = JZNodeObjectManager::instance()->getIdByCType(typeid(Class).name());
         QString className = Class::staticMetaObject.className();
         JZNodeObjectManager::instance()->declareQObject(id,className);
     }

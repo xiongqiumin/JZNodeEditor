@@ -31,11 +31,23 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 
-    void setEnum(int id);
-    void setEnumValue(int value);
+    void setEnum(QString text);
+    void setKey(QString text);
+    void setValue(int value);
+};
 
-protected:
-    int m_enumId;
+//JZNodeFlag
+class JZNodeFlag : public JZNode
+{
+public:
+    JZNodeFlag();
+    ~JZNodeFlag();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+    void setFlag(QString flag);
+    void setKey(QString value);
+    void setValue(int value);
 };
 
 //JZNodeParamFunction

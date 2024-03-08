@@ -250,6 +250,28 @@ JZNodeBitXor::JZNodeBitXor()
     setPinTypeInt(paramOut(0));
 }
 
+//JZNodeBitResver
+JZNodeBitResver::JZNodeBitResver()
+{
+    m_name = "~";
+    m_type = Node_bitresver;
+    int in = addParamIn("", Pin_editValue | Pin_dispValue);
+    int out = addParamOut("");
+    setPinTypeInt(in);
+    setPinTypeInt(out);
+}
+
+bool JZNodeBitResver::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addDataInput(m_id, error))
+        return false;
+
+    int id_in = c->paramId(m_id, paramIn(0));
+    int id_out = c->paramId(m_id, paramOut(0));
+    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_bitresver);
+    return true;
+}
+
 //JZNodeLE
 JZNodeLE::JZNodeLE()
     :JZNodeOperator(Node_le, OP_le)

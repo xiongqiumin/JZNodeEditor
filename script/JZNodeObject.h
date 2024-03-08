@@ -145,14 +145,16 @@ class JZNodeObjectManager
 public:
     static JZNodeObjectManager *instance();
     JZNodeObjectManager();   
-    ~JZNodeObjectManager(); 
+    ~JZNodeObjectManager();     
 
     void init();
+    int getId(QString type_name);
+    int getIdByCType(QString type_name);
+
     JZNodeObjectDefine *meta(QString className);
     JZNodeObjectDefine *meta(int type_id);
     QString getClassName(int type_id);
-    int getClassId(QString class_name);
-    int getClassIdByCType(QString class_name);
+    int getClassId(QString class_name);    
     bool isInherits(QString class_name, QString super_name);
     bool isInherits(int class_name,int super_name);
     QStringList getClassList();
@@ -219,7 +221,7 @@ JZNodeObjectPtr JZObjectRefrence(T ptr,bool owner = true)
 template<class T>
 T *JZObjectCast(JZNodeObject *obj)
 {
-    int c_type = JZNodeObjectManager::instance()->getClassIdByCType(typeid(T).name());
+    int c_type = JZNodeObjectManager::instance()->getIdByCType(typeid(T).name());
     Q_ASSERT(obj->isInherits(c_type));
     return (T*)obj->cobj();
 }

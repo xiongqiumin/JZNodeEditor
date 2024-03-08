@@ -744,6 +744,24 @@ void JZNodeObjectManager::initFunctions()
     JZNodeFunctionManager::instance()->registCFunction("invokeMemberFunction", false, jzbind::createFuncion(JZObjectInvoke));
 }
 
+int JZNodeObjectManager::getId(QString type_name)
+{
+    int type = getClassId(type_name);
+    if (type != Type_none)
+        return type;
+
+    type = getEnumId(type_name);
+    if (type != Type_none)
+        return type;
+
+    return type;
+}
+
+int JZNodeObjectManager::getIdByCType(QString type_name)
+{
+    return m_typeidMetas.value(type_name, Type_none);
+}
+
 int JZNodeObjectManager::delcare(QString name, QString c_typeid, int id)
 {    
     JZNodeObjectDefine def;
@@ -871,11 +889,6 @@ int JZNodeObjectManager::getClassId(QString class_name)
         it++;
     }
     return Type_none;
-}
-
-int JZNodeObjectManager::getClassIdByCType(QString class_name)
-{
-    return m_typeidMetas.value(class_name, Type_none);
 }
 
 bool JZNodeObjectManager::isInherits(QString class_name, QString super_name)

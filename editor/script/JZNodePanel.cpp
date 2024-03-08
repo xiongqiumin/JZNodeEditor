@@ -423,13 +423,9 @@ void JZNodePanel::initEnums()
     auto enum_list = JZNodeObjectManager::instance()->getEnumList();
     enum_list.sort();
     for (int i = 0; i < enum_list.size(); i++)
-    {
-        auto meta = JZNodeObjectManager::instance()->enumMeta(enum_list[i]);
-
-        QString enum_name = meta->name();
-
+    {        
         JZNodeEnum node_enum;
-        node_enum.setEnum(meta->type());
+        node_enum.setEnum(enum_list[i]);
 
         QTreeWidgetItem *item_enum = createNode(&node_enum);        
         item_enum_root->addChild(item_enum);        

@@ -301,7 +301,7 @@ void JZNodeWatch::updateParamInfo(JZNodeDebugParamInfo *info)
             if (c.name == item->text(0))
             {
                 sub_params << c.name;
-                setItem(root, i, c, info->values[i]);
+                setItem(root, i, c, info->values[j]);
                 break;
             }
         }

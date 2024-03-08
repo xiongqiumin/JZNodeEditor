@@ -82,6 +82,15 @@ public:
     JZNodeBitXor();
 };
 
+//JZNodeBitResver
+class JZNodeBitResver : public JZNode
+{
+public:
+    JZNodeBitResver();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+};
+
 //JZNodeEQ
 class JZNodeEQ : public JZNodeOperator
 {

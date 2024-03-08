@@ -53,7 +53,7 @@ QString JZNodeEnumDefine::key(int index) const
 
 QString JZNodeEnumDefine::defaultKey() const
 {
-    return m_keys[defaultValue()];
+    return valueToKey(defaultValue());
 }
 
 int JZNodeEnumDefine::value(int index) const
@@ -67,6 +67,9 @@ int JZNodeEnumDefine::defaultValue() const
         return m_values[m_default];
     else
     {
+        if (m_values.indexOf(0) >= 0)
+            return 0;
+
         int index = std::min_element(m_values.begin(), m_values.end()) - m_values.begin();
         return m_values[index];
     }
@@ -79,18 +82,72 @@ void JZNodeEnumDefine::setDefaultValue(int value)
 
 int JZNodeEnumDefine::keyToValue(QString key) const
 {
-    int index = m_keys.indexOf(key);
-    if (index >= 0)
-        return m_values[index];
+    if (m_isFlag)
+    {
+        auto list = key.split("|");
+        int value = 0;
+        for (int i = 0; i < list.size(); i++)
+        {
+            int key_idx = m_keys.indexOf(list[i]);
+            if (key_idx == -1)
+                return -1;
+            
+            value |= m_values[i];
+        }
+        return value;
+    }
     else
-        return -1;
+    {
+        int index = m_keys.indexOf(key);
+        if (index >= 0)
+            return m_values[index];
+        else
+            return -1;
+    }
 }
 
 QString JZNodeEnumDefine::valueToKey(int value) const
 {
-    int index = m_values.indexOf(value);
-    if (index >= 0)
-        return m_keys[index];
+    if (m_isFlag)
+    {        
+        QVector<int> key_indexs;
+        for (int i = 0; i < m_values.size(); i++)
+        {
+            if (value & m_values[i])
+                key_indexs << i;
+        }
+
+        QVector<int> remove;
+        for (int i = 0; i < key_indexs.size(); i++)
+        {
+            for (int j = 0; j < key_indexs.size(); j++)
+            {
+                if (i != j)
+                {
+                    int v_i = m_values[key_indexs[i]];
+                    int v_j = m_values[key_indexs[j]];
+
+                    bool con = (v_i > v_j) && ((v_i & v_j) == v_j);
+                    if (con && !remove.contains(v_j))
+                        remove << v_j;                    
+                }
+            }
+        }
+
+        QStringList list;
+        for (int i = 0; i < key_indexs.size(); i++)
+        {
+            if (!remove.contains(i))
+                list << m_keys[key_indexs[i]];
+        }
+        return list.join("|");
+    }
     else
-        return -1;
+    {
+        int index = m_values.indexOf(value);
+        if (index >= 0)
+            return m_keys[index];
+        else
+            return -1;
+    }
 }

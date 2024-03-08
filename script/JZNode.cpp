@@ -770,6 +770,12 @@ JZNodeReturn::JZNodeReturn()
     addFlowIn();
 }
 
+void JZNodeReturn::setFunction(const QString &name)
+{
+    auto def = JZNodeFunctionManager::instance()->function(name);
+    setFunction(def);
+}
+
 void JZNodeReturn::setFunction(const JZFunctionDefine *def)
 {
     auto inList = paramInList();

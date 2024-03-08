@@ -269,6 +269,7 @@ protected:
     void callCFunction(const JZFunction *func);    
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
+    QVariant dealSingleExpr(const QVariant &a, int op);
     void dealSet(QVariant *ref, const QVariant &value);
 
     void pushStack(const JZFunction *define);

@@ -22,6 +22,7 @@ enum
     Node_setMemberParamData,
     Node_literal,
     Node_enum,
+    Node_flag,
     Node_functionStart,
     Node_function,      
     Node_clone,
@@ -44,6 +45,7 @@ enum
     Node_bitand,
     Node_bitor,    
     Node_bitxor,
+    Node_bitresver,
     Node_expr,
     Node_stringAdd,
     Node_stringEq,
@@ -294,6 +296,7 @@ class JZNodeReturn : public JZNode
 public:
     JZNodeReturn();
 
+    void setFunction(const QString &name);
     void setFunction(const JZFunctionDefine *def);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 

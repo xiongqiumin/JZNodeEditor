@@ -225,7 +225,7 @@ void MainWindow::initMenu()
     actBreakPoint->setShortcut(QKeySequence("F9"));
 
     m_debugActions << actDetach << actPause << actResume << actStop << actStepOver 
-        << actStepIn << actStepOut << actBreakPoint;
+        << actStepIn << actStepOut;
 
     m_actionRun = actRun;
     m_actionResume = actResume;

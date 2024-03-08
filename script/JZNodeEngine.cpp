@@ -1696,6 +1696,8 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
 
         switch (op)
         {
+            case OP_add:
+                return str_a + str_b;
             case OP_eq:
                 return str_a == str_b;
             case OP_ne:
@@ -1738,19 +1740,29 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
             }
             else
                 unSupportOp(dataType1, dataType2, op);
-        }
-        else if (op == OP_not)
-        {
-            if (JZNodeType::isObject(dataType1))
-            {
-                auto obj = toJZObject(a);
-                return !obj;
-            }
-            else
-                unSupportSingleOp(dataType1, op);
-        }
+        }        
         else
             unSupportOp(dataType1, dataType2, op);
+    }
+    return QVariant();
+}
+
+QVariant JZNodeEngine::dealSingleExpr(const QVariant &a, int op)
+{
+    int dataType = JZNodeType::variantType(a);
+    if (op == OP_not)
+    {
+        if (dataType == Type_bool)
+            return !a.toBool();
+        else
+            unSupportSingleOp(dataType, op);
+    }
+    else if (op == OP_bitresver)
+    {
+        if (dataType == Type_int)
+            return ~(a.toInt());
+        else
+            unSupportSingleOp(dataType, op);
     }
     return QVariant();
 }
@@ -1922,6 +1934,16 @@ bool JZNodeEngine::run()
             b = getParam(ir_expr->src2);
             c = dealExpr(a,b,ir_expr->type);
             setParam(ir_expr->dst,c);
+            break; 
+        }
+        case OP_not:
+        case OP_bitresver:
+        {
+            JZNodeIRExpr *ir_expr = dynamic_cast<JZNodeIRExpr*>(op);
+            QVariant a, c;
+            a = getParam(ir_expr->src1);
+            c = dealSingleExpr(a, ir_expr->type);
+            setParam(ir_expr->dst, c);
             break;
         }
         case OP_jmp:

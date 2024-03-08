@@ -1232,8 +1232,8 @@ void SampleRussian::addKeyEvent()
     
     auto connectKey = [this](JZNodeEQ *eq, int key_code){
         JZNodeEnum *key = new JZNodeEnum();
-        key->setEnum(Type_keyCode);
-        key->setEnumValue(key_code);
+        key->setEnum("Key");
+        key->setValue(key_code);
         m_script->addNode(JZNodePtr(key));
         m_script->addConnect(key->paramOutGemo(0), eq->paramInGemo(1));
     };

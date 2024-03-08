@@ -200,6 +200,18 @@ void SampleImageBatch::addProcessImage()
     define.paramOut.push_back(JZParamDefine("output", "Image"));
     define.isFlowFunction = true;
     auto script = class_file->addMemberFunction(define);
+    auto start = script->getNode(0);
+
+    JZNodeParam *input = new JZNodeParam();
+    JZNodeReturn *ret = new JZNodeReturn();
+    input->setVariable("input");
+
+    ret->setFunction("MainWindow.processImage");
+    script->addNode(JZNodePtr(input));
+    script->addNode(JZNodePtr(ret));
+
+    script->addConnect(start->flowOutGemo(), ret->flowInGemo());
+    script->addConnect(input->paramOutGemo(0), ret->paramInGemo(0));
 }
 
 void SampleImageBatch::addProcessDir()
@@ -216,12 +228,14 @@ void SampleImageBatch::addProcessDir()
     auto script = class_file->addMemberFunction(define_dir);
     script->addLocalVariable(JZParamDefine("list", "StringList"));
     script->addLocalVariable(JZParamDefine("in", "String"));
-    script->addLocalVariable(JZParamDefine("out", "String"));
+    script->addLocalVariable(JZParamDefine("out", "String"));    
 
     JZNodeParam *in_dir = new JZNodeParam();
     JZNodeParam *out_dir = new JZNodeParam();
-    JZNodeSetParam *in_file = new JZNodeSetParam();
-    JZNodeSetParam *out_file = new JZNodeSetParam();
+    JZNodeParam *get_in_file = new JZNodeParam();
+    JZNodeParam *get_out_file = new JZNodeParam();
+    JZNodeSetParam *set_in_file = new JZNodeSetParam();
+    JZNodeSetParam *set_out_file = new JZNodeSetParam();
     JZNodeParam *get_list = new JZNodeParam();
     JZNodeSetParam *set_list = new JZNodeSetParam();
     JZNodeFunction *create_dir = new JZNodeFunction();
@@ -237,6 +251,7 @@ void SampleImageBatch::addProcessDir()
     JZNodeStringAdd *op_add_in = new JZNodeStringAdd();
     JZNodeStringAdd *op_add_out = new JZNodeStringAdd();
     JZNodeFunction *list_at = new JZNodeFunction();
+    JZNodeFunction *fileinfo_create = new JZNodeFunction();
 
     auto node_start = script->getNode(0);
     create_dir->setFunction("Dir.create");
@@ -248,18 +263,23 @@ void SampleImageBatch::addProcessDir()
     image_save->setFunction("Image.save");    
     list_at->setFunction("StringList.get");
     list_size->setFunction("StringList.size");
+    fileinfo_create->setFunction("FileInfo.create");
 
     in_dir->setVariable("inputDir");
     out_dir->setVariable("outputDir");
-    in_file->setVariable("in");
-    out_file->setVariable("out");
+    get_in_file->setVariable("in");
+    get_out_file->setVariable("out");
+    set_in_file->setVariable("in");
+    set_out_file->setVariable("out");
     set_list->setVariable("list");
     get_list->setVariable("list");
 
     script->addNode(JZNodePtr(in_dir));
     script->addNode(JZNodePtr(out_dir));
-    script->addNode(JZNodePtr(in_file));
-    script->addNode(JZNodePtr(out_file));
+    script->addNode(JZNodePtr(set_in_file));
+    script->addNode(JZNodePtr(set_out_file));
+    script->addNode(JZNodePtr(get_in_file));
+    script->addNode(JZNodePtr(get_out_file));
     script->addNode(JZNodePtr(get_list));
     script->addNode(JZNodePtr(set_list));
     script->addNode(JZNodePtr(create_dir));
@@ -275,14 +295,24 @@ void SampleImageBatch::addProcessDir()
     script->addNode(JZNodePtr(op_add_in));
     script->addNode(JZNodePtr(op_add_out));
     script->addNode(JZNodePtr(list_at));
+    script->addNode(JZNodePtr(fileinfo_create));
 
-    script->addConnect(node_start->flowOutGemo(0), set_list->flowInGemo());
+    JZNodeFlag *dir_flag = new JZNodeFlag();
+    dir_flag->setFlag("Dir::Filters");
+    dir_flag->setValue(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+    script->addNode(JZNodePtr(dir_flag));
+
+    script->addConnect(in_dir->paramOutGemo(0), create_dir->paramInGemo(0));
+    script->addConnect(node_start->flowOutGemo(0), set_list->flowInGemo());    
     script->addConnect(create_dir->paramOutGemo(0), entry_info->paramInGemo(0));
+    entry_info->setParamInValue(1, JZNodeType::storgeString("*.jpg;*.png;*.bmp"));
+    script->addConnect(dir_flag->paramOutGemo(0), entry_info->paramInGemo(2));
     script->addConnect(entry_info->paramOutGemo(0), set_list->paramInGemo(1));
     script->addConnect(set_list->flowOutGemo(0), node_for->flowInGemo());
     
+    script->addConnect(node_for->paramOutGemo(0), list_at->paramInGemo(1));
     // in = in_dir + "/" + list[i]
-    script->addConnect(node_for->subFlowOutGemo(0), in_file->flowInGemo());
+    script->addConnect(node_for->subFlowOutGemo(0), set_in_file->flowInGemo());
     script->addConnect(get_list->paramOutGemo(0), list_size->paramInGemo(0));
     script->addConnect(list_size->paramOutGemo(0), node_for->paramInGemo(2));
     op_add_in->addInput();
@@ -290,24 +320,29 @@ void SampleImageBatch::addProcessDir()
     op_add_in->setParamInValue(1, JZNodeType::storgeString("/"));
     script->addConnect(get_list->paramOutGemo(0), list_at->paramInGemo(0));
     script->addConnect(list_at->paramOutGemo(0), op_add_in->paramInGemo(2));    
-    script->addConnect(op_add_in->paramOutGemo(0), in_file->paramInGemo(1));
+    script->addConnect(op_add_in->paramOutGemo(0), set_in_file->paramInGemo(1));
     
     // out = out_dir + "/" + list[i]
-    script->addConnect(in_file->flowOutGemo(0), out_file->flowInGemo());
+    script->addConnect(set_in_file->flowOutGemo(0), set_out_file->flowInGemo());
     op_add_out->addInput();
     script->addConnect(out_dir->paramOutGemo(0), op_add_out->paramInGemo(0));
     op_add_out->setParamInValue(1, JZNodeType::storgeString("/"));
     script->addConnect(list_at->paramOutGemo(0), op_add_out->paramInGemo(2));    
-    script->addConnect(op_add_out->paramOutGemo(0), out_file->paramInGemo(1));
+    script->addConnect(op_add_out->paramOutGemo(0), set_out_file->paramInGemo(1));
 
-    script->addConnect(out_file->flowOutGemo(0), branch->flowInGemo());
+    script->addConnect(set_out_file->flowOutGemo(0), branch->flowInGemo());
     script->addConnect(fileinfo_isFile->paramOutGemo(0), branch->paramInGemo(0));
-
+    script->addConnect(get_in_file->paramOutGemo(0), fileinfo_create->paramInGemo(0));
+    script->addConnect(fileinfo_create->paramOutGemo(0), fileinfo_isFile->paramInGemo(0));
 
     script->addConnect(branch->flowOutGemo(0), file_process->flowInGemo());
+    script->addConnect(get_in_file->paramOutGemo(0), image_load->paramInGemo(0));
     script->addConnect(image_load->paramOutGemo(0), file_process->paramInGemo(1));    
     script->addConnect(file_process->flowOutGemo(0), image_save->flowInGemo());
     script->addConnect(file_process->paramOutGemo(0), image_save->paramInGemo(0));
+    script->addConnect(get_out_file->paramOutGemo(0), image_save->paramInGemo(1));
 
     script->addConnect(branch->flowOutGemo(1), dir_process->flowInGemo());
+    script->addConnect(get_in_file->paramOutGemo(0), dir_process->paramInGemo(1));
+    script->addConnect(get_out_file->paramOutGemo(0), dir_process->paramInGemo(2));
 }

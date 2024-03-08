@@ -62,6 +62,7 @@ void JZNodeFactory::init()
 
     registNode(Node_literal,createFunc<JZNodeLiteral>);    
     registNode(Node_enum,createFunc<JZNodeEnum>);
+    registNode(Node_flag,createFunc<JZNodeFlag>);
     registNode(Node_create,createFunc<JZNodeCreate>);
     registNode(Node_createFromString, createFunc<JZNodeCreateFromString>);
     registNode(Node_this,createFunc<JZNodeThis>);
@@ -102,6 +103,7 @@ void JZNodeFactory::init()
     registNode(Node_bitand, createFunc<JZNodeBitAnd>);
     registNode(Node_bitor, createFunc<JZNodeBitOr>);
     registNode(Node_bitxor, createFunc<JZNodeBitXor>);
+    registNode(Node_bitresver, createFunc<JZNodeBitResver>);
     registNode(Node_and,createFunc<JZNodeAnd>);
     registNode(Node_or,createFunc<JZNodeOr>);
     registNode(Node_not, createFunc<JZNodeNot>);

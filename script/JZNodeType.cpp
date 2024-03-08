@@ -40,7 +40,7 @@ int JZNodeType::nameToType(QString name)
     if(typeMap.contains(name))
         return typeMap.value(name,Type_none);
 
-    return JZNodeObjectManager::instance()->getClassId(name);
+    return JZNodeObjectManager::instance()->getId(name);
 }
 
 int JZNodeType::typeidToType(QString name)
@@ -58,7 +58,7 @@ int JZNodeType::typeidToType(QString name)
     else if(name == typeid(QString).name())
         return Type_string;
     else    
-        return JZNodeObjectManager::instance()->getClassIdByCType(name);
+        return JZNodeObjectManager::instance()->getIdByCType(name);
 }
 
 QVariant::Type JZNodeType::typeToQMeta(int type)
@@ -173,6 +173,8 @@ bool JZNodeType::canConvert(int type1,int type2)
     if(type1 == type2 || type1 == Type_any || type2 == Type_any)
         return true;
     if(isNumber(type1) && isNumber(type2))
+        return true;
+    if (type1 == Type_int && isEnum(type2))
         return true;
     if (type1 == Type_nullptr && type2 >= Type_object)
         return true;

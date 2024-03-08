@@ -77,8 +77,7 @@ bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 JZNodeEnum::JZNodeEnum()
 {
     m_type = Node_enum;
-    addParamOut("out", Pin_dispValue | Pin_editValue);
-    m_enumId = -1;
+    addParamOut("out", Pin_dispValue | Pin_editValue);    
 }
 
 JZNodeEnum::~JZNodeEnum()
@@ -101,30 +100,78 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-void JZNodeEnum::setEnum(int id)
+void JZNodeEnum::setEnum(QString type)
 {
-    auto meta = JZNodeObjectManager::instance()->enumMeta(id);
-    m_enumId = id;
+    auto meta = JZNodeObjectManager::instance()->enumMeta(type);    
 
     setName(meta->name());
-    setPinType(paramOut(0), { id });
-    setEnumValue(meta->value(0));
+    setPinType(paramOut(0), { meta->type() });
+    setKey(meta->defaultKey());
 }
 
-void JZNodeEnum::setEnumValue(int value)
+void JZNodeEnum::setKey(QString key)
 {
-    auto meta = JZNodeObjectManager::instance()->enumMeta(m_enumId);
-    pin(paramOut(0))->setValue(meta->valueToKey(value));
+    setPinValue(paramOut(0), key);
+}
+
+void JZNodeEnum::setValue(int value)
+{    
+    auto meta = JZNodeObjectManager::instance()->enumMeta(m_name);
+    setPinValue(paramOut(0), meta->valueToKey(value));
+}
+
+//JZNodeFlag
+JZNodeFlag::JZNodeFlag()
+{
+    m_type = Node_flag;
+    addParamOut("out", Pin_dispValue | Pin_editValue);
+}
+
+JZNodeFlag::~JZNodeFlag()
+{
+}
+
+bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
+{
+    QString key = pin(paramOut(0))->value();
+    auto def = JZNodeObjectManager::instance()->enumMeta(m_name);    
+    int v = def->keyToValue(key);
+
+    c->addNodeStart(m_id);
+    int id = c->paramId(m_id, paramOut(0));
+    c->addSetVariable(irId(id), irLiteral(v));
+    c->lastStatment()->memo = key;
+
+    c->setPinType(m_id, paramOut(0), def->type());
+    return true;
+}
+
+void JZNodeFlag::setFlag(QString type)
+{
+    auto meta = JZNodeObjectManager::instance()->enumMeta(type);
+
+    setName(meta->name());
+    setPinType(paramOut(0), { meta->type() });
+    setKey(meta->defaultKey());
+}
+
+void JZNodeFlag::setKey(QString value)
+{
+    setPinValue(paramOut(0), value);
+}
+
+void JZNodeFlag::setValue(int value)
+{
+    auto def = JZNodeObjectManager::instance()->enumMeta(m_name);
+    auto key = def->valueToKey(value);
+    setPinValue(paramOut(0), key);
 }
 
 //JZNodeCreate
 JZNodeCreate::JZNodeCreate()
 {
     m_name = "createObject";
-    m_type = Node_create;
-
-    addFlowIn();
-    addFlowOut();
+    m_type = Node_create;    
 
     int id = addParamIn("Class",Pin_editValue | Pin_dispName | Pin_dispValue | Pin_literal);
     setPinTypeString(id);
@@ -162,7 +209,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
         error = "没有此类型:" + className();
         return false;
     }
-    if(!c->addFlowInput(m_id,error))
+    if(!c->addDataInput(m_id,error))
         return false;
 
     int in_id = c->paramId(m_id,paramIn(0));
@@ -170,9 +217,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     JZNodeIRParam irIn = irId(in_id);
     JZNodeIRParam irOut = irId(out_id);
 
-    c->addCall("createObject", { irIn }, { irOut });    
-    c->addFlowOutput(m_id);
-    c->addJumpNode(flowOut());
+    c->addCall("createObject", { irIn }, { irOut });        
     return true;
 }
 
@@ -189,10 +234,7 @@ void JZNodeCreate::pinChanged(int id)
 JZNodeCreateFromString::JZNodeCreateFromString()
 {
     m_name = "createFromString";
-    m_type = Node_createFromString;
-
-    addFlowIn();
-    addFlowOut();
+    m_type = Node_createFromString;    
 
     int in1 = addParamIn("Class", Pin_editValue | Pin_dispName | Pin_dispValue | Pin_literal);
     int in2 = addParamIn("Context", Pin_editValue | Pin_dispName | Pin_dispValue );
@@ -220,7 +262,7 @@ bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
         error = "没有此类型:" + className();
         return false;
     }
-    if (!c->addFlowInput(m_id, error))
+    if (!c->addDataInput(m_id, error))
         return false;
 
     int in_id = c->paramId(m_id, paramIn(0));
@@ -229,9 +271,7 @@ bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
     in << irId(in_id) << irId(c->paramId(m_id, paramIn(1)));
     out << irId(out_id);
 
-    c->addCall("createObjectFromString", in, out);
-    c->addFlowOutput(m_id);
-    c->addJumpNode(flowOut());
+    c->addCall("createObjectFromString", in, out);    
     return true;
 
 }

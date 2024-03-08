@@ -19,6 +19,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QFileDialog>
+#include <QProgressDialog>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -427,8 +428,16 @@ void initWidgets()
         return QFileDialog::getExistingDirectory(parent, caption, dir);
     });
     open_dlg_def->setDefaultValue(0, { "null","",""});
-
     cls_file_dlg.regist();
+
+    jzbind::ClassBind<QProgressDialog> cls_progress_dlg("ProgressDialog", "Dialog");
+    cls_progress_dlg.def("create", false, []()->QProgressDialog* { return new QProgressDialog(); }, false);        
+    cls_progress_dlg.def("setRange", true, &QProgressDialog::setRange);
+    cls_progress_dlg.def("setLabelText", true, &QProgressDialog::setLabelText);
+    cls_progress_dlg.def("wasCanceled", false, &QProgressDialog::wasCanceled);
+    cls_progress_dlg.def("value", false, &QProgressDialog::value);
+    cls_progress_dlg.def("setValue", false, &QProgressDialog::setValue);        
+    cls_progress_dlg.regist();
 }
 
 void initPainter()
@@ -466,7 +475,7 @@ void initFiles()
 
     jzbind::ClassBind<QFileInfo> cls_fileInfo("FileInfo");
     cls_fileInfo.def("create", false, [](QString filepath)->QFileInfo {
-        return QFileInfo();
+        return QFileInfo(filepath);
     });
     cls_fileInfo.def("setFile", true, QOverload<const QString&>::of(&QFileInfo::setFile));
     cls_fileInfo.def("isDir", false, &QFileInfo::isDir);
@@ -483,7 +492,7 @@ void initFiles()
         auto list = dir->nameFiltersFromString(nameFilter);
         return dir->entryList(list, (QDir::Filters)filter);
     });
-    entry_def->paramIn[1].type = "Dir::Filters";
+    entry_def->paramIn[2].type = "Dir::Filters";
     cls_dir.regist();
 }
 
