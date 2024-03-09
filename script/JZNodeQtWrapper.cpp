@@ -98,7 +98,7 @@ void initBase()
     JZNodeObjectManager::instance()->delcare("StringList",typeid(QStringList).name() ,Type_stringList);
 
     //string È«²¿Ö»¶Á
-    jzbind::ClassBind<QString> cls_string(Type_string,"String");
+    jzbind::ClassBind<QString> cls_string(Type_string,"string");
     cls_string.def("append", false, [](const QString &a, const QString &b)->QString {
         return a + b;
     });
@@ -203,6 +203,9 @@ void initCore()
 
     //stringlist
     jzbind::ClassBind<QStringList> cls_string_list(Type_stringList,"StringList");
+    cls_string_list.def("create", false, []()->QStringList {        
+        return QStringList();
+    });
     cls_string_list.def("createFromString", false, [](const QString &text)->QStringList {
         QStringList list = text.split(",");
         return list;
@@ -210,10 +213,10 @@ void initCore()
     cls_string_list.def("join", false, [](const QStringList *list, const QString &sep)->QString {
         return (*list).join(sep);
     });
-    cls_string_list.def("push_back", false, [](QStringList *list, const QString &str){
+    cls_string_list.def("push_back", true, [](QStringList *list, const QString &str){
         list->push_back(str);
     });
-    cls_string_list.def("set", false, [](QStringList *list, int index, const QString &str){
+    cls_string_list.def("set", true, [](QStringList *list, int index, const QString &str){
         checkSize(index, list->size());
         (*list)[index] = str;
     });
@@ -431,12 +434,16 @@ void initWidgets()
     cls_file_dlg.regist();
 
     jzbind::ClassBind<QProgressDialog> cls_progress_dlg("ProgressDialog", "Dialog");
-    cls_progress_dlg.def("create", false, []()->QProgressDialog* { return new QProgressDialog(); }, false);        
+    cls_progress_dlg.def("create", false, []()->QProgressDialog* { 
+        auto dlg = new QProgressDialog();
+        dlg->setWindowModality(Qt::WindowModal);
+        return dlg;
+    }, false);        
     cls_progress_dlg.def("setRange", true, &QProgressDialog::setRange);
     cls_progress_dlg.def("setLabelText", true, &QProgressDialog::setLabelText);
     cls_progress_dlg.def("wasCanceled", false, &QProgressDialog::wasCanceled);
     cls_progress_dlg.def("value", false, &QProgressDialog::value);
-    cls_progress_dlg.def("setValue", false, &QProgressDialog::setValue);        
+    cls_progress_dlg.def("setValue", true, &QProgressDialog::setValue);
     cls_progress_dlg.regist();
 }
 
@@ -493,6 +500,10 @@ void initFiles()
         return dir->entryList(list, (QDir::Filters)filter);
     });
     entry_def->paramIn[2].type = "Dir::Filters";
+    cls_dir.def("mkpath", true, &QDir::mkpath);
+    cls_dir.def("mkdir", true, &QDir::mkdir);
+    cls_dir.def("isExists", false, QOverload<>::of(&QDir::exists));
+    cls_dir.def("exists", false, QOverload<const QString&>::of(&QDir::exists));    
     cls_dir.regist();
 }
 

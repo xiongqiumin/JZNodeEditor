@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMenu>
+#include "JZNodeExpression.h"
 #include "JZRegExpHelp.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeValue.h"
@@ -323,16 +324,16 @@ void JZNodePanel::initEvent()
     if (m_file->itemType() != ProjectItem_scriptFlow)
         return;
 
-    QTreeWidgetItem *item_event = createFolder("事件");
+    QTreeWidgetItem *item_event = createFolder("信号");
     m_tree->addTopLevelItem(item_event);
 /*
     JZNodeParamChangedEvent event;
     item_event->addChild(createNode(&event));
 */
-    QTreeWidgetItem *item_widget_event = createFolder("控件事件");
+    QTreeWidgetItem *item_widget_event = createFolder("控件信号");
     item_event->addChild(item_widget_event);
 
-    QTreeWidgetItem *item_object_event = createFolder("其他事件");
+    QTreeWidgetItem *item_object_event = createFolder("其他信号");
     item_event->addChild(item_object_event);
 
     auto inst = JZNodeObjectManager::instance();
@@ -470,7 +471,13 @@ void JZNodePanel::initClass()
 }
 
 void JZNodePanel::initThis(QTreeWidgetItem *root)
-{   
+{       
+    m_memberParam = createFolder("成员变量");
+    root->addChild(m_memberParam);
+
+    m_memberFunction = createFolder("成员函数");
+    root->addChild(m_memberFunction);    
+    
     auto def = m_classFile->objectDefine();
     QTreeWidgetItem *itemClassEvent = createFolder("事件");
     root->addChild(itemClassEvent);
@@ -485,14 +492,6 @@ void JZNodePanel::initThis(QTreeWidgetItem *root)
         QTreeWidgetItem *item = createNode(&node);
         itemClassEvent->addChild(item);
     }
-
-    m_memberFunction = createFolder("成员函数");
-    root->addChild(m_memberFunction);    
-
-    //成员变量
-    m_memberParam = createFolder("成员变量");
-    root->addChild(m_memberParam);    
-
     updateClass();
 }
 
@@ -596,13 +595,35 @@ void JZNodePanel::initConvert(QTreeWidgetItem *root)
 
 void JZNodePanel::initExpression(QTreeWidgetItem *root)
 {        
+    auto item_number = createFolder("数字");
     for (int i = Node_add; i <= Node_expr; i++)
     {   
         auto node = JZNodeFactory::instance()->createNode(i);
         QTreeWidgetItem *sub = createNode(node);
-        root->addChild(sub);
+        item_number->addChild(sub);
         delete node;
     }
+
+    auto item_string = createFolder("字符串");
+    for (int i = Node_stringAdd; i <= Node_stringGt; i++)
+    {
+        auto node = JZNodeFactory::instance()->createNode(i);
+        QTreeWidgetItem *sub = createNode(node);
+        item_string->addChild(sub);
+        delete node;
+    }
+
+    auto item_object = createFolder("对象");
+    JZNodeEQ node_eq;
+    JZNodeNE node_ne;
+    JZNodeNot node_not;
+    item_object->addChild(createNode(&node_eq));
+    item_object->addChild(createNode(&node_ne));
+    item_object->addChild(createNode(&node_not));
+
+    root->addChild(item_number);
+    root->addChild(item_string);
+    root->addChild(item_object);
 }
 
 void JZNodePanel::initProcess(QTreeWidgetItem *root)

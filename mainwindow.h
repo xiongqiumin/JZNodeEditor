@@ -161,6 +161,7 @@ private:
     void saveToFile(QString file,QString text);
     void saveAll();
     bool closeAll(JZEditor *except = nullptr);
+    void resetEditor(JZEditor *editor);
     void initLocalProcessTest(bool flag);
     QIcon menuIcon(const QString &name);
     

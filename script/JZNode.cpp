@@ -830,8 +830,19 @@ JZNodeSequence::JZNodeSequence()
     addFlowOut("complete",Pin_dispName);
 
     addSequeue();
+    addSequeue();
 
     addWidgetOut("Add pin");    
+}
+
+void JZNodeSequence::updateSeqName()
+{
+    auto list = subFlowList();
+    for(int i = 0; i < list.size(); i++)
+    {
+        QString name = "Seqeue " + QString::number(i + 1);
+        pin(list[i])->setName(name);
+    }
 }
 
 int JZNodeSequence::addSequeue()
@@ -842,12 +853,30 @@ int JZNodeSequence::addSequeue()
 void JZNodeSequence::removeSequeue(int id)
 {
     removePin(id);
-    auto list = subFlowList();
-    for(int i = 0; i < list.size(); i++)
-    {
-        QString name = "Seqeue " + QString::number(subFlowCount() + 1);
-        pin(list[i])->setName(name);
-    }
+    updateSeqName();
+}
+
+QStringList JZNodeSequence::pinActionList(int id)
+{
+    int sub_index = subFlowList().indexOf(id);
+    if (sub_index == -1)
+        return QStringList();
+    if (subFlowCount() < 2)
+        return QStringList();
+    
+    QStringList ret;
+    ret.push_back("删除");
+    return ret;
+}
+
+bool JZNodeSequence::pinActionTriggered(int id, int index)
+{
+    int pin_index = subFlowList().indexOf(id);
+    if (pin_index == -1)
+        return false;
+
+    removeSequeue(id);
+    return true;
 }
 
 bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
@@ -893,7 +922,6 @@ JZNodeFor::JZNodeFor()
 {
     m_name = "for";
     m_type = Node_for;
-    m_comboBox = nullptr;
 
     addFlowIn();
     addSubFlowOut("loop body",Pin_dispName);
@@ -994,35 +1022,22 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 
 QWidget* JZNodeFor::createWidget(int id)
 {
-    Q_ASSERT(!m_comboBox);
-    
-    m_comboBox = new QComboBox();
-    m_comboBox->addItems(m_condTip);      ;
-    m_comboBox->setCurrentIndex(paramInValue(3).toInt());
-    m_comboBox->adjustSize();
-    m_comboBox->connect(m_comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this]{        
+    QComboBox *comboBox = new QComboBox();
+    comboBox->addItems(m_condTip);      ;
+    comboBox->setCurrentIndex(paramInValue(3).toInt());
+    comboBox->adjustSize();
+    comboBox->connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index){        
         QByteArray old = toBuffer();
-        setParamInValue(3, QString::number(m_comboBox->currentIndex()));
+        setParamInValue(3, QString::number(index));
         propertyChangedNotify(old);
     });
 
-    return m_comboBox;
-}
-
-void JZNodeFor::updateWidget()
-{
-    if (m_comboBox)
-    {
-        m_comboBox->blockSignals(true);
-        m_comboBox->setCurrentIndex(paramInValue(3).toInt());
-        m_comboBox->blockSignals(false);
-    }
+    return comboBox;
 }
 
 void JZNodeFor::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);  
-    updateWidget();
 }
 
 void JZNodeFor::setRange(int start, int end)
@@ -1060,7 +1075,6 @@ void JZNodeFor::setOp(int op)
     int index = m_condOp.indexOf(op);
     Q_ASSERT(index >= 0);
     setParamInValue(3, QString::number(index));
-    updateWidget();
 }
 
 //JZNodeForEach
@@ -1196,9 +1210,11 @@ void JZNodeIf::updateCondName()
     auto flow_list = subFlowList();
     for (int i = 0; i < list.size(); i++)
     {
-        setPinName(list[i], "cond" + QString::number(i + 1));
+        setPinName(list[i], "cond" + QString::number(i + 1));        
         setPinName(flow_list[i], "cond" + QString::number(i + 1));
     }
+    if (flow_list.size() > list.size())
+        setPinName(flow_list.back(), "else");
 }
 
 void JZNodeIf::addCondPin()
@@ -1212,7 +1228,8 @@ void JZNodeIf::addCondPin()
 
 void JZNodeIf::addElsePin()
 {
-    addSubFlowOut("else", Pin_dispName);    
+    addSubFlowOut("else", Pin_dispName); 
+    updateCondName();
 }
 
 int JZNodeIf::pinPri(int id)
@@ -1236,6 +1253,7 @@ void JZNodeIf::removeElse()
 {
     int id = subFlowList().back();
     removePin(id);
+    updateCondName();
 }
 
 int JZNodeIf::btnCondId()

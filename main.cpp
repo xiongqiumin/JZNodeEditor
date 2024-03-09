@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
         //SampleCalculator sample;
         SampleImageBatch sample;
         sample.saveProject();
-        sample.run();
-        return 0;
+        //sample.run();
+        //return 0;
     }    
 
     if(argc == 1)

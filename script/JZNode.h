@@ -328,7 +328,9 @@ public:
     void removeSequeue(int id);    
 
 protected:
-
+    virtual QStringList pinActionList(int id);
+    virtual bool pinActionTriggered(int id, int index);
+    void updateSeqName();
 };
 
 //JZNodeParallel
@@ -359,11 +361,9 @@ public:
 
 protected:    
     virtual void loadFromStream(QDataStream &s) override;
-    void updateWidget();
 
     QStringList m_condTip;
-    QList<int> m_condOp;    
-    QComboBox *m_comboBox;
+    QList<int> m_condOp;        
 };
 
 //JZNodeForEach

@@ -18,6 +18,7 @@ public:
     bool save(QString filepath);
     bool save(QString filepath,QList<JZProjectItem*> items);
     bool load(QString filepath);
+    void reset(JZProjectItem *item);
 
     void updateClass(JZScriptClassItem *item, JZNodeObjectDefine define);
     void updateScriptName(JZScriptItem *item, QString name);
@@ -41,7 +42,8 @@ public:
 
 protected:
     QByteArray getClassData(JZScriptClassItem *item);
-    QByteArray getItemData(JZProjectItem *item);        
+    QByteArray getItemData(JZProjectItem *item);
+    void setItemData(JZProjectItem *item, const QByteArray &data);
 
     void loadScript(QDataStream &s, JZProjectItem *item);
     void saveScript(QDataStream &s, JZProjectItem *item);

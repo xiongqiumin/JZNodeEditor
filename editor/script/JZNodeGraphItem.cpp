@@ -48,14 +48,6 @@ int JZNodeGraphItem::PropGemo::width()
     return iconRect.width() + nameRect.width() + valueRect.width();
 }
 
-void JZNodeGraphItem::PropGemo::valueRectChanged()
-{
-    if (proxy)
-    {
-        proxy->setPos(valueRect.topLeft());
-    }
-}
-
 // JZNodeGraphItem
 JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 {
@@ -63,6 +55,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     m_node = node;
     m_id = node->id();    
     m_longPress = false;
+    m_downPin = -1;
 
     setOpacity(0.9);
     setFlag(QGraphicsItem::ItemIsMovable);
@@ -116,10 +109,10 @@ QRectF JZNodeGraphItem::boundingRect() const
 }
 
 void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget)
-{
+{    
     QRectF rc = boundingRect();
     QRectF title_rc = QRectF(rc.left(), rc.top(), rc.width(), 20);
-    painter->fillRect(rc, QColor(192,192,192));
+    painter->fillRect(rc, QColor(192,192,192));    
 
     QTextOption text_opt;
     text_opt.setWrapMode(QTextOption::NoWrap);
@@ -177,9 +170,26 @@ int JZNodeGraphItem::propAt(QPointF pos)
     return -1;    
 }
 
+int JZNodeGraphItem::propAtInName(QPointF pos)
+{
+    auto list = m_node->pinList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        auto rc = propRect(list[i]) & propNameRect(list[i]);
+        if (rc.contains(pos))
+            return list[i];
+    }
+    return -1;
+}
+
 QRectF JZNodeGraphItem::propRect(int pin)
 {
     return m_pinRects[pin].iconRect;
+}
+
+QRectF JZNodeGraphItem::propNameRect(int pin)
+{
+    return m_pinRects[pin].nameRect;
 }
 
 QSize JZNodeGraphItem::size() const
@@ -233,19 +243,18 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
             gemo->valueRect = QRectF(x, y, w, 24);
 
             proxy->setWidget(widget);
-            proxy->setParentItem(this);
-            proxy->setPos(x, y);
+            proxy->setParentItem(this);            
         }        
     }
 
     if (gemo->widget)
     {
+        gemo->valueRect.moveTo(QPointF(x, y));
         if (pin->isEditValue() || pin->isDispValue())
         {
             bool editable = editor()->isPropEditable(m_id, pin_id);
             gemo->widget->setEnabled(editable);
         }
-        gemo->proxy->setPos(x, y);
     }
 }
 
@@ -326,10 +335,16 @@ void JZNodeGraphItem::updateNode()
         }
         if (!info.valueRect.isEmpty())
         {
-            info.valueRect.moveRight(last.left() - 5);
-            info.valueRectChanged();
+            info.valueRect.moveRight(last.left() - 5);               
         }
     }
+    for (int i = 0; i < pinList.size(); i++)
+    {
+        auto &info = m_pinRects[pinList[i]];
+        if (info.proxy)
+            info.proxy->setPos(info.valueRect.topLeft());
+    }
+
     m_size = QSize(w, qMax(h,50));    
     updateErrorGemo();
 }
@@ -338,13 +353,12 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {    
     auto pin_id = propAt(event->pos());
     if (pin_id >= 0)
-    {
+    {        
         auto pin = m_node->pin(pin_id);
-        if(pin->isOutput())
-        {
-            JZNodeGemo gemo(m_node->id(), pin->id());
-            editor()->startLine(gemo);
-        }
+        if ((event->buttons() & Qt::LeftButton) && pin->isOutput() && !pin->isWidget())
+            m_downPin = pin_id;
+        else
+            m_downPin = -1;
     }
     else
     {
@@ -355,7 +369,17 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 }
 
 void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-{
+{    
+    if (event->buttons() & Qt::LeftButton)
+    {               
+        if (m_downPin != -1 && (event->pos() - m_pinRects[m_downPin].iconRect.center()).manhattanLength() > 10)
+        {
+            JZNodeGemo gemo(m_node->id(), m_downPin);
+            editor()->startLine(gemo);
+            m_downPin = -1;
+        }
+    }
+
     if (m_longPress == 2)
         JZNodeBaseItem::mouseMoveEvent(event);
 }
@@ -363,6 +387,7 @@ void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     m_longPress = 0;
+    m_downPin = -1;
     return JZNodeBaseItem::mouseReleaseEvent(event);
 }
 

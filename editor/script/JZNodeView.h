@@ -22,25 +22,11 @@ class JZNodeView;
 class JZProject;
 class JZNodeViewCommand : public QUndoCommand
 {
-public:
-    enum{
-        CreateNode,
-        RemoveNode,
-        MoveNode,
-        NodePropertyChange,
-        CreateLine,
-        RemoveLine,
-        CreateGroup,
-        RemoveGroup,
-        SetGroup,
-    };
-
+public:    
     JZNodeViewCommand(JZNodeView *view,int type);
 
     virtual void redo() override;
-    virtual void undo() override;
-    virtual int id() const override;
-    virtual bool mergeWith(const QUndoCommand *command);
+    virtual void undo() override;       
 
     int command;
     int itemId;
@@ -53,6 +39,29 @@ protected:
     JZNodeView *m_view;
 };
 
+class JZNodeMoveCommand : public QUndoCommand
+{
+public:
+    struct NodePosInfo
+    {
+        int itemId;
+        QPointF oldPos;
+        QPointF newPos;
+    };
+
+    JZNodeMoveCommand(JZNodeView *view, int type);
+
+    virtual void redo() override;
+    virtual void undo() override;
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *command);    
+   
+    int command;
+    QList<NodePosInfo> nodeList;
+
+protected:
+    JZNodeView *m_view;
+};
 
 class BreakPointTriggerResult
 {

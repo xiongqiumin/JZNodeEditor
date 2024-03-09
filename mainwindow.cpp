@@ -703,6 +703,9 @@ void MainWindow::onModifyChanged(bool flag)
 {        
     auto editor = qobject_cast<JZEditor*>(sender());
     int index = m_editorStack->indexOf(editor);
+    if (index == -1)
+        return;
+
     QString title = editor->item()->itemPath();
     if (flag)
         title += "*";
@@ -841,6 +844,16 @@ bool MainWindow::openEditor(QString filepath)
     return true;
 }
 
+void MainWindow::resetEditor(JZEditor *editor)
+{
+    JZProjectItem *file = m_project.getItemFile(editor->item());
+    if (file->itemType() == ProjectItem_scriptFile)
+    {
+        auto script_file = dynamic_cast<JZScriptFile*>(file);
+        script_file->reset(editor->item());
+    }
+}
+
 void MainWindow::closeEditor(JZEditor *editor)
 {
     if (editor->isModified())
@@ -850,8 +863,14 @@ void MainWindow::closeEditor(JZEditor *editor)
         {
             editor->save();            
         }
+        else if (ret == QMessageBox::No)
+        {
+            resetEditor(editor);            
+        }
         else if (ret == QMessageBox::Cancel)
+        {            
             return;
+        }
     }    
     editor->close();
     editor->setItem(nullptr);
@@ -1321,6 +1340,7 @@ void MainWindow::onRuntimeFinish(int code,QProcess::ExitStatus status)
 
 void MainWindow::saveAll()
 {
+    m_project.saveTransaction();
     auto it = m_editors.begin();
     while (it != m_editors.end())
     {
@@ -1330,6 +1350,7 @@ void MainWindow::saveAll()
 
         it++;
     }
+    m_project.saveCommit();
 }
 
 bool MainWindow::closeAll(JZEditor *except)
@@ -1337,6 +1358,7 @@ bool MainWindow::closeAll(JZEditor *except)
     QList<JZEditor*> close_list;
     QStringList close_file_list;
 
+    m_project.saveTransaction();
     bool saveToAll = false, noToAll = false;
     auto it = m_editors.begin();
     while (it != m_editors.end())
@@ -1355,11 +1377,14 @@ bool MainWindow::closeAll(JZEditor *except)
                 int ret = QMessageBox::question(this, "", "是否保存", QMessageBox::Yes | QMessageBox::No
                     | QMessageBox::YesToAll | QMessageBox::NoToAll | QMessageBox::Cancel);
                 if (ret == QMessageBox::Yes)
-                {
-                    editor->save();                    
-                }
+                    editor->save();
+                else if (ret == QMessageBox::Yes)
+                    resetEditor(editor);
                 else if (ret == QMessageBox::Cancel)
+                {
+                    m_project.saveCommit();
                     return false;
+                }
                 else if (ret == QMessageBox::YesToAll)
                     saveToAll = true;
                 else if (ret == QMessageBox::NoToAll)
@@ -1368,6 +1393,10 @@ bool MainWindow::closeAll(JZEditor *except)
             else if (saveToAll)
             {
                 editor->save();                
+            }
+            else if (noToAll)
+            {
+                resetEditor(editor);
             }
         }
         editor->close();
@@ -1378,6 +1407,8 @@ bool MainWindow::closeAll(JZEditor *except)
         m_editorStack->removeTab(index);
         it++;
     }
+    m_project.saveCommit();
+
     for (auto editor : close_list)
         delete editor;
     for (auto editor_path : close_file_list)

@@ -336,7 +336,7 @@ JZNodeNE::JZNodeNE()
 JZNodeStringAdd::JZNodeStringAdd()
     :JZNodeOperator(Node_stringAdd, OP_add)
 {
-    m_name = "+";
+    m_name = "+(string)";
     setPinTypeString(paramIn(0));
     setPinTypeString(paramIn(1));
     setPinTypeString(paramOut(0));
@@ -347,7 +347,7 @@ JZNodeStringAdd::JZNodeStringAdd()
 JZNodeStringEQ::JZNodeStringEQ()
     :JZNodeOperator(Node_stringEq, OP_eq)
 {
-    m_name = "==";
+    m_name = "==(string)";
     setPinTypeString(paramIn(0));
     setPinTypeString(paramIn(1));
     setPinTypeBool(paramOut(0));
@@ -357,7 +357,7 @@ JZNodeStringEQ::JZNodeStringEQ()
 JZNodeStringNE::JZNodeStringNE()
     :JZNodeOperator(Node_stringNe, OP_ne)
 {
-    m_name = "!=";
+    m_name = "!=(string)";
     setPinTypeString(paramIn(0));
     setPinTypeString(paramIn(1));
     setPinTypeBool(paramOut(0));
@@ -367,7 +367,7 @@ JZNodeStringNE::JZNodeStringNE()
 JZNodeStringLE::JZNodeStringLE()
     :JZNodeOperator(Node_stringLe, OP_le)
 {
-    m_name = "<=";
+    m_name = "<=(string)";
     setPinTypeString(paramIn(0));
     setPinTypeString(paramIn(1));
     setPinTypeBool(paramOut(0));
@@ -377,7 +377,7 @@ JZNodeStringLE::JZNodeStringLE()
 JZNodeStringGE::JZNodeStringGE()
     :JZNodeOperator(Node_stringGe, OP_ge)
 {
-    m_name = ">=";
+    m_name = ">=(string)";
     setPinTypeString(paramIn(0));
     setPinTypeString(paramIn(1));
     setPinTypeBool(paramOut(0));
@@ -387,7 +387,7 @@ JZNodeStringGE::JZNodeStringGE()
 JZNodeStringLT::JZNodeStringLT()
     :JZNodeOperator(Node_stringLt, OP_lt)
 {
-    m_name = "<";
+    m_name = "<(string)";
     setPinTypeString(paramIn(0));
     setPinTypeString(paramIn(1));
     setPinTypeBool(paramOut(0));
@@ -397,7 +397,7 @@ JZNodeStringLT::JZNodeStringLT()
 JZNodeStringGT::JZNodeStringGT()
     :JZNodeOperator(Node_stringGt, OP_gt)
 {
-    m_name = ">";
+    m_name = ">(string)";
     setPinTypeString(paramIn(0));
     setPinTypeString(paramIn(1));
     setPinTypeBool(paramOut(0));

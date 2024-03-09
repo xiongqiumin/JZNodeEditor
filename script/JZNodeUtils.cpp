@@ -1,5 +1,7 @@
 #include "JZNodeUtils.h"
 #include "JZNodeView.h"
+#include <QDateTime>
+#include <QDebug>
 
 QString makeLink(QString tips, QString filename, int nodeId)
 {
@@ -13,6 +15,8 @@ QString makeLink(QString tips, QString filename, int nodeId)
 
 void projectUpdateLayout(JZProject *project)
 {
+    TimerRecord r("projectUpdateLayout");
+
     auto item_list = project->itemList("./", ProjectItem_any);
     for (int i = 0; i < item_list.size(); i++)
     {
@@ -28,4 +32,16 @@ void projectUpdateLayout(JZProject *project)
             delete view;
         }
     }    
+}
+
+TimerRecord::TimerRecord(QString name)
+{
+    m_name = name;
+    m_time = QDateTime::currentMSecsSinceEpoch();
+}
+
+TimerRecord::~TimerRecord()
+{
+    qint64 time = QDateTime::currentMSecsSinceEpoch();
+    qDebug().noquote() << m_name + ": " + QString::number(time - m_time) + "ms";
 }

@@ -533,18 +533,7 @@ QString JZNodeType::dispString(const QString &text)
 
 QString JZNodeType::storgeString(const QString &text)
 {
-    if (text.isEmpty())
-        return QString();
-
-    if (text.size() >= 2 && text.front() == '"' && text.back() == '"')
-    {
-        if (text.size() == 2)
-            return QString();
-
-        return text;
-    }
-    else
-        return '"' + text + '"';
+    return '"' + text + '"';
 }
 
 QString JZNodeType::addMark(const QString &text)

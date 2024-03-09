@@ -78,6 +78,7 @@ protected:
     QTableWidget *m_table;
     Ui::JZNodeParamEditor *ui;
     int m_widgetCount;
+    bool m_isClass;
 
     QUndoStack m_commandStack;
 };

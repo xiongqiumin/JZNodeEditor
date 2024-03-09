@@ -77,6 +77,12 @@
     <Filter Include="Header Files\sample">
       <UniqueIdentifier>{2a17b5eb-c101-4d45-8aed-24d777480a0d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\widgets">
+      <UniqueIdentifier>{03f86c9d-aafd-4a43-9891-1fb8dfbfae3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\widgets">
+      <UniqueIdentifier>{fd170a4b-564a-4631-8669-b97e2c893e6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -361,6 +367,12 @@
     <ClCompile Include="sample\ImageBatch.cpp">
       <Filter>Source Files\sample</Filter>
     </ClCompile>
+    <ClCompile Include="widgets\JZBaseDialog.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeParamBindEditDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -493,6 +505,12 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="editor\script\JZNodeParamWidget.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="widgets\JZBaseDialog.h">
+      <Filter>Header Files\widgets</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeParamBindEditDialog.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
   </ItemGroup>
@@ -674,6 +692,9 @@
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="editor\script\JZNodeParamEditor.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="editor\script\JZNodeParamBindEditDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

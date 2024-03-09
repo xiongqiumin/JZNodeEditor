@@ -7,5 +7,15 @@
 QString makeLink(QString tips, QString filename, int nodeId);
 void projectUpdateLayout(JZProject *project);
 
+class TimerRecord
+{
+public:
+    TimerRecord(QString name);
+    ~TimerRecord();
+
+protected:
+    QString m_name;
+    qint64 m_time;
+};
 
 #endif // !JZNODE_UTILS_H_

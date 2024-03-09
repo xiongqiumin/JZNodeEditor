@@ -67,7 +67,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>3rd\jznet;3rd\qtpropertybrowser;editor;editor\ui;editor\script;project;script;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>3rd\jznet;3rd\qtpropertybrowser;editor;editor\ui;editor\script;project;script;widgets;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -111,6 +111,7 @@
     <ClCompile Include="editor\script\JZNodeLocalParamEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodePanel.cpp" />
     <ClCompile Include="editor\script\JZNodeMemberSelectDialog.cpp" />
+    <ClCompile Include="editor\script\JZNodeParamBindEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeParamWidget.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyBrowser.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyEditor.cpp" />
@@ -187,6 +188,7 @@
     <ClCompile Include="3rd\jznet\JZNetServer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
+    <ClCompile Include="widgets\JZBaseDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h" />
@@ -194,6 +196,7 @@
   <ItemGroup>
     <ClInclude Include="3rd\jznet\JZNetDataManager.h" />
     <ClInclude Include="3rd\jznet\JZNetPack.h" />
+    <QtMoc Include="widgets\JZBaseDialog.h" />
     <QtMoc Include="editor\script\JZNodeBreakPoint.h" />
     <QtMoc Include="editor\script\JZNodeGroupEditDialog.h" />
     <QtMoc Include="editor\JZNewFileDialog.h" />
@@ -208,6 +211,7 @@
     <QtMoc Include="editor\script\JZNodeLocalParamEditDialog.h" />
     <QtMoc Include="editor\script\JZNodePropertyBrowser.h" />
     <QtMoc Include="editor\script\JZNodeParamWidget.h" />
+    <QtMoc Include="editor\script\JZNodeParamBindEditDialog.h" />
     <ClInclude Include="project\JZClassItem.h" />
     <ClInclude Include="project\JZProjectItemStream.h" />
     <ClInclude Include="project\JZProjectStream.h" />
@@ -294,6 +298,7 @@
     <QtUic Include="editor\script\JZNodeFuctionEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeGroupEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeMemberSelectDialog.ui" />
+    <QtUic Include="editor\script\JZNodeParamBindEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeTypeDialog.ui" />
     <QtUic Include="editor\script\JZNodeParamEditor.ui" />
   </ItemGroup>

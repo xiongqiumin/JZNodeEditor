@@ -6,11 +6,14 @@
 #include <QStyledItemDelegate>
 #include <QLineEdit>
 #include <QKeyEvent>
+#include <QPushButton>
 
 #include "JZNodeParamEditor.h"
 #include "ui_JZNodeParamEditor.h"
 #include "JZProject.h"
 #include "JZNodeTypeHelper.h"
+#include "JZBaseDialog.h"
+#include "JZNodeParamBindEditDialog.h"
 
 class ValueItemDelegate : public QStyledItemDelegate
 {
@@ -118,16 +121,17 @@ JZNodeParamEditor::JZNodeParamEditor()
 {
     ui->setupUi(this);    
     m_widgetCount = 0;
+    m_isClass = false;
     m_table = ui->tableWidget;
 
-    m_table->setColumnCount(3);
-    m_table->setHorizontalHeaderLabels({"名称","类型","默认值"});
+    m_table->setColumnCount(4);
+    m_table->setHorizontalHeaderLabels({"名称","类型","默认值","参数绑定"});
     m_table->setSelectionBehavior(QTableWidget::SelectItems);
     m_table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);    
 
     ValueItemDelegate *delegate = new ValueItemDelegate(this);
     delegate->setTable(m_table);
-    m_table->setItemDelegateForColumn(2, delegate);
+    m_table->setItemDelegateForColumn(2, delegate);    
 
     TypeItemDelegate *type_delegate = new TypeItemDelegate(this);    
     m_table->setItemDelegateForColumn(1, type_delegate);
@@ -171,12 +175,26 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
     QTableWidgetItem *itemValue = new QTableWidgetItem();            
     m_table->setItem(row, 2, itemValue);
     itemValue->setText(def->initValue());
-
+    
     if (row < m_widgetCount)
     {
         itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
         itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);        
         itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
+
+        if (m_isClass)
+        {
+            QWidget *bind = new QWidget();
+            QHBoxLayout *layout = new QHBoxLayout();
+            QLineEdit *line = new QLineEdit();
+            QPushButton *btn = new QPushButton();
+            bind->setLayout(layout);
+            layout->setContentsMargins(2, 2, 2, 2);
+            layout->setSpacing(0);
+            layout->addWidget(line);
+            layout->addWidget(btn);
+            m_table->setCellWidget(row, 3, bind);
+        }
     }
     else
     {
@@ -188,6 +206,7 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
 void JZNodeParamEditor::open(JZProjectItem *item)
 {   
     m_file = dynamic_cast<JZParamItem*>(item);
+        
     m_table->blockSignals(true);
     m_table->clearContents();
 
@@ -195,6 +214,9 @@ void JZNodeParamEditor::open(JZProjectItem *item)
     JZScriptClassItem *class_file = m_project->getItemClass(item);
     if (class_file)
     {
+        m_table->setColumnHidden(3, false);
+        m_isClass = true;
+
         auto widgets = class_file->uiWidgets();
         m_table->setRowCount(widgets.size());
         m_widgetCount = widgets.size();
@@ -202,6 +224,11 @@ void JZNodeParamEditor::open(JZProjectItem *item)
         {            
             updateItem(i, &widgets[i]);
         }        
+    }
+    else
+    {
+        m_table->setColumnHidden(3, true);
+        m_isClass = false;
     }
     
     QStringList list = m_file->variableList();

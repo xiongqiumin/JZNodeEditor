@@ -1034,13 +1034,13 @@ void ScriptTest::testCClass()
     QVariant vb = engine->getVariable("b");
     QVariant vc = engine->getVariable("c");
     QVariantList out;
-    engine->call("String.left",{va,6},out);
+    engine->call("string.left",{va,6},out);
     QCOMPARE(out[0],a.left(6));
 
-    engine->call("String.size",{out[0]},out);
+    engine->call("string.size",{out[0]},out);
     QCOMPARE(out[0],a.left(6).size());
 
-    engine->call("String.replace",{va,vb,vc},out);
+    engine->call("string.replace",{va,vb,vc},out);
     QCOMPARE(out[0],a.replace(b,c));
 }
 

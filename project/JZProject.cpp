@@ -31,6 +31,7 @@ void JZProject::clear()
 {
     m_blockRegist = false;
     m_windowSystem = false;
+    m_isSaveCache = false;
     m_filepath.clear();
     m_root.removeChlids();
     m_root.setName(".");    
@@ -143,6 +144,18 @@ bool JZProject::save()
     pro_s["filelist"] << file_list;
 
     return file.save(m_filepath);        
+}
+
+void JZProject::saveTransaction()
+{
+    m_isSaveCache = true;
+}
+
+void JZProject::saveCommit()
+{
+    m_isSaveCache = false;
+    saveItems(m_saveCache);
+    m_saveCache.clear();
 }
 
 QString JZProject::error()
@@ -296,9 +309,16 @@ bool JZProject::saveItems(QList<JZProjectItem*> items)
     QMap<JZProjectItem*,QList<JZProjectItem*>> file_item;
     for (int i = 0; i < items.size(); i++)
     {
-        auto item = getItemFile(items[i]);
-        if(item)            
-            file_item[item].push_back(items[i]);
+        auto file = getItemFile(items[i]);        
+        if (file)
+        {
+            if (m_isSaveCache && (file->itemType() == ProjectItem_scriptFile))
+            {
+                m_saveCache << items[i];
+                continue;
+            }
+            file_item[file].push_back(items[i]);
+        }
     }
 
     auto it = file_item.begin();

@@ -27,6 +27,9 @@ public:
     void close();
     bool save();        
 
+    void saveTransaction();
+    void saveCommit();
+
     void saveCache(); //保存 breakpoint 之类的设置信息
     void loadCache();
 
@@ -100,6 +103,9 @@ protected:
     QString m_filepath;    
     bool m_blockRegist;
     QString m_error;
+
+    bool m_isSaveCache;
+    QList<JZProjectItem*> m_saveCache;
 };
 
 #endif

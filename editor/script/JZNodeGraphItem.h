@@ -21,7 +21,9 @@ public:
 
     JZNode *node();
     int propAt(QPointF pos);
+    int propAtInName(QPointF pos);
     QRectF propRect(int pin);
+    QRectF propNameRect(int pin);
     QSize size() const;
     
     QString getTip(QPointF pt);
@@ -49,8 +51,7 @@ protected:
         ~PropGemo();
         
         void clear();
-        int width();
-        void valueRectChanged();
+        int width();        
         
         QRectF iconRect;
         QRectF nameRect;
@@ -83,6 +84,7 @@ protected:
     QRectF m_errorRect;    
     QString m_error;
     
+    int m_downPin;
     int m_longPress;        
 };
 

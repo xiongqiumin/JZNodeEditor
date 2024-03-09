@@ -13,6 +13,7 @@ protected:
     void addEvent();
     void addProcessImage();
     void addProcessDir();
+    void addProcessGetImage();
 };
 
 
