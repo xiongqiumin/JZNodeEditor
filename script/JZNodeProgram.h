@@ -111,7 +111,7 @@ public:
     JZNodeScript *script(QString path);    
 
     QList<JZNodeScript*> scriptList();    
-    QMap<QString, QString> bindInfo(QString className);
+    QMap<QString, JZNodeParamBind> bindInfo(QString className);
     
     QList<JZNodeObjectDefine> objectDefines();       
 
@@ -131,7 +131,7 @@ protected:
     QMap<QString,JZNodeScriptPtr> m_scripts; 
     QMap<QString,JZParamDefine> m_variables;        
     QList<JZNodeObjectDefine> m_objectDefines;        
-    QMap<QString, QMap<QString, QString>> m_binds;    
+    QMap<QString, QMap<QString, JZNodeParamBind>> m_binds;    
 };
 
 #endif

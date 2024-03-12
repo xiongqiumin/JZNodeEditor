@@ -33,7 +33,11 @@ SampleRussian::SampleRussian()
     class_file->addMemberVariable("shape_color", Type_int);
     class_file->addMemberVariable("score", Type_int);
 
-    class_file->getParamFile()->bindVariable("score","lineScore");
+    JZNodeParamBind info;
+    info.variable = "score";
+    info.widget = "lineScore";
+    info.dir = JZNodeParamBind::DataToUi;
+    class_file->getParamFile()->addBind(info);
     
     addInitGame();
     addInitFunction();

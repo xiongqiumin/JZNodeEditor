@@ -62,10 +62,10 @@ public:
     static bool isNullptr(const QVariant &v);
     static bool isWidget(const QVariant &v);
 
+    static int isInherits(QString type1,QString type2);
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
-    static bool canConvert(int type1,int type2);    
-    static bool canConvert(int type1,const QVariant &v);
+    static bool canConvert(int from,int to);    
     static QString toString(const QVariant &v);
     static QString toString(JZNodeObject *obj);
     

@@ -280,7 +280,7 @@ QList<JZNodeScript*> JZNodeProgram::scriptList()
     return list;
 }
 
-QMap<QString, QString> JZNodeProgram::bindInfo(QString className)
+QMap<QString, JZNodeParamBind> JZNodeProgram::bindInfo(QString className)
 {
     return m_binds.value(className);
 }

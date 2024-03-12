@@ -237,7 +237,7 @@ VariableCoor JZNodeCompiler::variableCoor(JZScriptItem *file, QString name)
         else
         {
             auto class_file = file->getClassFile();
-            if (class_file && class_file->memberVariable(name))
+            if (class_file && class_file->memberVariable(name,true))
                 return Variable_member;
             else
                 return Variable_none;

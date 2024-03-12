@@ -69,6 +69,24 @@ QDataStream &operator >> (QDataStream &s, JZParamDefine &param)
     return s;
 }
 
+//JZNodeParamBind
+JZNodeParamBind::JZNodeParamBind()
+{
+    dir = UiToData;
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeParamBind &param)
+{
+    s << param.variable << param.widget << param.dir;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZNodeParamBind &param)
+{
+    s >> param.variable >> param.widget >> param.dir;
+    return s;
+}
+
 //CFunction
 CFunction::CFunction()
 {

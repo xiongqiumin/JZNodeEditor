@@ -92,19 +92,37 @@ void JZScriptClassItem::removeMemberVariable(QString name)
     getParamFile()->removeVariable(name);       
 }
 
-const JZParamDefine *JZScriptClassItem::memberVariable(QString name)
+QStringList JZScriptClassItem::memberVariableList(bool hasUi)
+{
+    QStringList list = getParamFile()->variableList();
+    if (hasUi && !m_uiFile.isEmpty())
+    {
+        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        if (ui_item)
+        {
+            auto widgets = ui_item->widgets();
+            for (int i = 0; i < widgets.size(); i++)
+                list << widgets[i].name;
+        }
+    }
+
+    return list;
+}
+
+const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
 {
     auto def = getParamFile()->variable(name);
     if (def)
         return def;
 
-    if (!m_uiFile.isEmpty())
+    if (hasUi && !m_uiFile.isEmpty())
     {
         auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
-        return ui_item->widgetVariable(name);
+        if (ui_item)        
+            return ui_item->widgetVariable(name);
     }
-    else
-        return nullptr;
+    
+    return nullptr;
 }
 
 JZScriptItem *JZScriptClassItem::addFlow(QString name)

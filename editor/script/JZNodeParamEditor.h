@@ -19,6 +19,7 @@ public:
         RemoveParam,
         Rename,
         Change,        
+        Bind,
     };
 
     JZNodeParamEditorCommand(JZNodeParamEditor *view, int type);
@@ -31,6 +32,8 @@ public:
     int command;        
     JZParamDefine oldParam;
     JZParamDefine newParam;
+    JZNodeParamBind oldBind;
+    JZNodeParamBind newBind;
 
 protected:    
     JZNodeParamEditor *m_editor;
@@ -49,6 +52,10 @@ public:
     virtual void close() override;
     virtual void save() override;
     virtual bool isModified() override;
+    virtual void redo() override;
+    virtual void undo() override;
+
+    JZScriptClassItem *classItem();
 
 protected slots:
     void on_btnAdd_clicked();
@@ -65,11 +72,13 @@ protected:
     void addRemoveCommand(QString name);
     void addRenameCommand(QString oldName,QString newName);
     void addChangeCommand(QString name, JZParamDefine define);
+    void addBindCommand(QString name, JZNodeParamBind define);
 
     void addParam(JZParamDefine define);
     void removeParam(QString newName);
     void renameParam(QString oldName, QString newName);
-    void changeParam(QString newName, JZParamDefine define);
+    void changeParam(QString name, JZParamDefine define);
+    void bindParam(QString name, JZNodeParamBind define);
     int rowIndex(QString name);
     int rowIndex(QComboBox *box);
     int rowDataType(int row);

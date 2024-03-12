@@ -23,13 +23,14 @@ public:
 
     QStringList variableList();
 
-    void bindVariable(QString name, QString widget);
-    void unbindVariable(QString name);    
-    QMap<QString, QString> bindVariables();
+    void addBind(JZNodeParamBind widget);
+    void removeBind(QString name);    
+    JZNodeParamBind *bindVariable(QString name);
+    QMap<QString, JZNodeParamBind> bindVariables();
     
 protected:        
     QMap<QString, JZParamDefine> m_variables;
-    QMap<QString, QString> m_binds;
+    QMap<QString, JZNodeParamBind> m_binds;
 };
 
 

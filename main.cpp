@@ -23,11 +23,11 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
-    if(1)
+    if(0)
     {
-        //SampleRussian sample;
+        SampleRussian sample;
         //SampleCalculator sample;
-        SampleImageBatch sample;
+        //SampleImageBatch sample;
         sample.saveProject();
         //sample.run();
         //return 0;

@@ -64,7 +64,11 @@ void JZParamItem::setVariable(QString name, JZParamDefine define)
         Q_ASSERT(!m_variables.contains(define.name));
         m_variables.remove(name);
         if (m_binds.contains(name))
+        {
             m_binds[define.name] = m_binds[name];
+            m_binds[define.name].variable = define.name;
+            m_binds.remove(name);
+        }
     }
     m_variables[define.name] = define;
 }
@@ -83,17 +87,26 @@ QStringList JZParamItem::variableList()
     return m_variables.keys();
 }
 
-void JZParamItem::bindVariable(QString name, QString widget)
+void JZParamItem::addBind(JZNodeParamBind info)
 {        
-    m_binds[name] = widget;
+    m_binds[info.variable] = info;
 }
 
-void JZParamItem::unbindVariable(QString name)
+void JZParamItem::removeBind(QString name)
 {
     m_binds.remove(name);
 }
 
-QMap<QString, QString> JZParamItem::bindVariables()
+QMap<QString, JZNodeParamBind> JZParamItem::bindVariables()
 {
     return m_binds;
+}
+
+JZNodeParamBind *JZParamItem::bindVariable(QString name)
+{
+    auto it = m_binds.find(name);
+    if (it == m_binds.end())
+        return nullptr;
+
+    return &it.value();
 }

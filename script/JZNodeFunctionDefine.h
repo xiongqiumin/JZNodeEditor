@@ -4,6 +4,7 @@
 #include "JZNodeType.h"
 #include <QSharedPointer>
 
+//JZParamDefine
 class JZParamDefine
 {
 public:
@@ -21,6 +22,25 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param);
 QDataStream &operator>>(QDataStream &s, JZParamDefine &param);
 
+//JZNodeParamBind
+class JZNodeParamBind {
+public:
+    enum {
+        UiToData = 0x1,
+        DataToUi = 0x2,
+        Duplex = UiToData | DataToUi,
+    };
+
+    JZNodeParamBind();
+
+    QString variable;
+    QString widget;
+    int dir;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeParamBind &param);
+QDataStream &operator>>(QDataStream &s, JZNodeParamBind &param);
+
+//CFunction
 class JZNodeObject;
 class CFunction
 {

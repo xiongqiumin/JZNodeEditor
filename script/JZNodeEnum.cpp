@@ -8,6 +8,7 @@ void JZNodeEnumDefine::init(QString name, QStringList keys, QVector<int> values)
     m_keys = keys;
     m_values = values;
     m_isFlag = false;
+    m_flagEnum = -1;
     m_default = -1;
 }
 
@@ -21,14 +22,20 @@ int JZNodeEnumDefine::type() const
     return m_type;
 }
 
-void JZNodeEnumDefine::setFlag(bool isFlag)
+void JZNodeEnumDefine::setFlag(bool isFlag, int enumId)
 {
     m_isFlag = isFlag;
+    m_flagEnum = enumId;
 }
 
-bool JZNodeEnumDefine::flag() const
+bool JZNodeEnumDefine::isFlag() const
 {
     return m_isFlag;
+}
+
+int JZNodeEnumDefine::flagEnum() const
+{
+    return m_flagEnum;
 }
 
 QString JZNodeEnumDefine::name() const

@@ -15,6 +15,27 @@
 #include "JZBaseDialog.h"
 #include "JZNodeParamBindEditDialog.h"
 
+static int bindDir(QString text)
+{
+    if (text == "DataToUi")
+        return JZNodeParamBind::DataToUi;
+    else if (text == "UiToData")
+        return JZNodeParamBind::UiToData;
+    else
+        return JZNodeParamBind::Duplex;
+}
+
+static QString bindText(int dir)
+{
+    if (dir == JZNodeParamBind::DataToUi)
+        return "DataToUi";
+    else if (dir == JZNodeParamBind::UiToData)
+        return "UiToData";
+    else
+        return "Duplex";
+}
+
+//
 class ValueItemDelegate : public QStyledItemDelegate
 {
 public:
@@ -58,6 +79,68 @@ public:
     QTableWidget *m_table;
 };
 
+class BindItemDelegate : public QStyledItemDelegate
+{
+public:
+    BindItemDelegate(QObject *parent)
+        :QStyledItemDelegate(parent)
+    {
+
+    }
+
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+    {
+        JZNodeParamBindEditDialog *dlg = new JZNodeParamBindEditDialog(parent);
+        QString name = index.model()->data(index.siblingAtColumn(0)).toString();
+        dlg->init(m_editor->classItem(), name);
+        return dlg;
+    }
+
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const
+    {
+        auto dlg = qobject_cast<JZNodeParamBindEditDialog*>(editor);
+        QString name = index.model()->data(index.siblingAtColumn(0)).toString();
+        QString text = index.model()->data(index).toString();        
+        if (text.size() > 0)
+        {
+            QStringList values = text.split("|");
+
+            JZNodeParamBind bind;
+            bind.variable = name;
+            bind.widget = values[0];
+            bind.dir = bindDir(values[1]);
+            dlg->setParamBind(bind);
+        }
+    }
+
+    virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+    {
+        auto dlg = qobject_cast<JZNodeParamBindEditDialog*>(editor);       
+        if (dlg->result() != QDialog::Accepted)
+            return;
+
+        auto bind = dlg->paramBind();
+        if (bind.widget.isEmpty())
+        {
+            model->setData(index, QString());
+        }
+        else
+        {
+            QString text = bind.widget + "|" + bindText(bind.dir);
+            model->setData(index, text);
+        }
+    }
+
+    virtual void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+    {
+        auto pt = editor->parentWidget()->mapToGlobal(option.rect.topLeft());
+        pt.ry() -= 30;
+        editor->move(pt);
+    }
+
+    JZNodeParamEditor *m_editor;
+};
+
 //JZNodeParamEditorCommand
 JZNodeParamEditorCommand::JZNodeParamEditorCommand(JZNodeParamEditor *editor, int type)
 {
@@ -83,6 +166,10 @@ void JZNodeParamEditorCommand::redo()
     {
         m_editor->changeParam(newParam.name, newParam);
     }
+    else if (command == Bind)
+    {
+        m_editor->bindParam(newBind.variable, newBind);
+    }
 }
 
 void JZNodeParamEditorCommand::undo()
@@ -102,6 +189,10 @@ void JZNodeParamEditorCommand::undo()
     else if (command == Change)
     {
         m_editor->changeParam(oldParam.name, oldParam);
+    }
+    else if (command == Bind)
+    {
+        m_editor->bindParam(oldBind.variable, oldBind);
     }
 }
 
@@ -133,6 +224,10 @@ JZNodeParamEditor::JZNodeParamEditor()
     delegate->setTable(m_table);
     m_table->setItemDelegateForColumn(2, delegate);    
 
+    BindItemDelegate *bind_delegate = new BindItemDelegate(this);    
+    bind_delegate->m_editor = this;
+    m_table->setItemDelegateForColumn(3, bind_delegate);
+
     TypeItemDelegate *type_delegate = new TypeItemDelegate(this);    
     m_table->setItemDelegateForColumn(1, type_delegate);
     
@@ -147,12 +242,17 @@ JZNodeParamEditor::~JZNodeParamEditor()
     delete ui;
 }
 
+JZScriptClassItem *JZNodeParamEditor::classItem()
+{
+    return m_project->getItemClass(m_file);
+}
+
 void JZNodeParamEditor::keyPressEvent(QKeyEvent *e)
 {
     if (e->key() == Qt::Key_Return)
     {
         auto item = m_table->currentItem();
-        if(item->flags() & Qt::ItemIsEditable)
+        if(item && item->flags() & Qt::ItemIsEditable)
         {
             m_table->editItem(item);
             e->accept();
@@ -176,31 +276,29 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
     m_table->setItem(row, 2, itemValue);
     itemValue->setText(def->initValue());
     
+    QTableWidgetItem *itemBind = new QTableWidgetItem();
+    m_table->setItem(row, 3, itemBind);        
+
+    auto bind = m_file->bindVariable(def->name);
+    if (bind)
+    {
+        itemBind->setText(bind->widget + "|" + bindText(bind->dir));
+    }
+
     if (row < m_widgetCount)
     {
         itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
         itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);        
         itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
-
-        if (m_isClass)
-        {
-            QWidget *bind = new QWidget();
-            QHBoxLayout *layout = new QHBoxLayout();
-            QLineEdit *line = new QLineEdit();
-            QPushButton *btn = new QPushButton();
-            bind->setLayout(layout);
-            layout->setContentsMargins(2, 2, 2, 2);
-            layout->setSpacing(0);
-            layout->addWidget(line);
-            layout->addWidget(btn);
-            m_table->setCellWidget(row, 3, bind);
-        }
     }
     else
     {
         if(!JZNodeType::isBaseOrEnum(def->dataType()))
             itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
     }
+
+    if (JZNodeType::isInherits(def->type, "Widget"))
+        itemBind->setFlags(itemBind->flags() & ~Qt::ItemIsEditable);
 }
 
 void JZNodeParamEditor::open(JZProjectItem *item)
@@ -257,6 +355,16 @@ bool JZNodeParamEditor::isModified()
     return !m_commandStack.isClean();
 }
 
+void JZNodeParamEditor::redo()
+{
+    m_commandStack.redo();
+}
+
+void JZNodeParamEditor::undo()
+{
+    m_commandStack.undo();
+}
+
 void JZNodeParamEditor::onCleanChanged(bool clean)
 {
     emit modifyChanged(!clean);
@@ -276,6 +384,18 @@ void JZNodeParamEditor::onItemChanged(QTableWidgetItem *item)
         JZParamDefine info = *m_file->variable(varName);
         info.value = value;
         addChangeCommand(varName, info);
+    }
+    else if (item->column() == 3)
+    {
+        QStringList value = item->text().split("|");        
+        JZNodeParamBind info;
+        info.variable = varName;
+        if (value.size() == 2)
+        {            
+            info.widget = value[0];
+            info.dir = bindDir(value[1]);
+        }
+        addBindCommand(varName, info);
     }
 }
 
@@ -317,6 +437,23 @@ void JZNodeParamEditor::addChangeCommand(QString name, JZParamDefine define)
     JZNodeParamEditorCommand *cmd = new JZNodeParamEditorCommand(this, JZNodeParamEditorCommand::Change);    
     cmd->oldParam = *info;
     cmd->newParam = define;
+    m_commandStack.push(cmd);
+}
+
+void JZNodeParamEditor::addBindCommand(QString name, JZNodeParamBind define)
+{
+    auto oldBind = m_file->bindVariable(name);
+    if (!oldBind && define.widget.isEmpty())
+        return;
+    if (oldBind && oldBind->widget == define.widget && oldBind->dir == define.dir)
+        return;
+
+    JZNodeParamEditorCommand *cmd = new JZNodeParamEditorCommand(this, JZNodeParamEditorCommand::Bind);
+    if(oldBind)
+        cmd->oldBind = *oldBind;
+    else
+        cmd->oldBind.variable = name;
+    cmd->newBind = define;
     m_commandStack.push(cmd);
 }
 
@@ -380,6 +517,20 @@ void JZNodeParamEditor::renameParam(QString oldName, QString newName)
 void JZNodeParamEditor::changeParam(QString name, JZParamDefine define)
 {
     m_file->setVariable(name, define);
+
+    auto def = m_file->variable(name);
+    int row = rowIndex(name);
+    m_table->blockSignals(true);
+    updateItem(row, def);
+    m_table->blockSignals(false);
+}
+
+void JZNodeParamEditor::bindParam(QString name, JZNodeParamBind define)
+{
+    if (define.widget.isEmpty())
+        m_file->removeBind(name);
+    else
+        m_file->addBind(define);
 
     auto def = m_file->variable(name);
     int row = rowIndex(name);

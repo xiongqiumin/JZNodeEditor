@@ -178,7 +178,8 @@ JZNodeObject *JZNodeObjectParser::readObject()
             if (!param_def)
                 return nullptr;
 
-            if (!JZNodeType::canConvert(param_def->dataType(), it.value()))
+            int v_type = JZNodeType::variantType(it.value());
+            if (!JZNodeType::canConvert(v_type, param_def->dataType()))
                 return nullptr;
             
             obj->setParam(it.key(),it.value());

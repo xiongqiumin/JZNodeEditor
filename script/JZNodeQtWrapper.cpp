@@ -74,8 +74,9 @@ void initEnum()
     jzbind::registEnum<Qt::GlobalColor>("GlobalColor");
 
     jzbind::registEnum<Qt::Key>("Key", Type_keyCode);
-    jzbind::registEnum<QFileDialog::Option>("FileDialog.Option");    
-    jzbind::registEnum<QFileDialog::Options>("FileDialog.Options");
+    int file_dlg_option = jzbind::registEnum<QFileDialog::Option>("FileDialog.Option");
+    int file_dlg_options = jzbind::registEnum<QFileDialog::Options>("FileDialog.Options");
+    JZNodeObjectManager::instance()->enumMeta(file_dlg_options)->setFlag(true, file_dlg_option);
         
     QStringList filter_key_list;
     QVector<int> filter_value_list;
@@ -87,8 +88,9 @@ void initEnum()
     filter_value_list << QDir::Files;
     filter_value_list << QDir::NoDotAndDotDot;
     filter_define.init("Dir::Filter", filter_key_list, filter_value_list);
-    JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filter).name());
-    filter_define.setFlag(true);
+    int filter_id = JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filter).name());
+
+    filter_define.setFlag(true, filter_id);
     filter_define.init("Dir::Filters", filter_key_list, filter_value_list);
     JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filters).name());    
 }

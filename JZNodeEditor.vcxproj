@@ -83,7 +83,7 @@
       </DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <AdditionalIncludeDirectories>$(Qt_INCLUDEPATH_);3rd\jznet;3rd\qtpropertybrowser;editor;editor\ui;editor\script;project;script;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Qt_INCLUDEPATH_);3rd\jznet;3rd\qtpropertybrowser;editor;editor\ui;editor\script;project;script;widgets;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -102,6 +102,7 @@
     <ClCompile Include="editor\script\JZNodeBreakPoint.cpp" />
     <ClCompile Include="editor\script\JZNodeClassEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeEditor.cpp" />
+    <ClCompile Include="editor\script\JZNodeFlagEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeFuctionEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeGraphItem.cpp" />
     <ClCompile Include="editor\script\JZNodeGroupEditDialog.cpp" />
@@ -202,6 +203,7 @@
     <QtMoc Include="editor\JZNewFileDialog.h" />
     <QtMoc Include="editor\script\JZNodeClassEditDialog.h" />
     <QtMoc Include="editor\script\JZNodeAutoRunWidget.h" />
+    <ClInclude Include="editor\script\JZNodeFlagEditDialog.h" />
     <ClInclude Include="editor\script\JZNodeGroupItem.h" />
     <ClInclude Include="editor\script\JZNodeLayout.h" />
     <QtMoc Include="editor\script\JZNodeMemberSelectDialog.h" />

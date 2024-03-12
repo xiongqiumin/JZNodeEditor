@@ -144,11 +144,11 @@ void JZWidgetValueChanged(QWidget *w)
     g_engine->widgetValueChanged(w);
 }
 
-void JZWidgetBind(JZNodeObject *obj, QString param_name)
+void JZWidgetBind(JZNodeObject *obj, QString param_name,int dir)
 {
     auto w = JZObjectCast<QWidget>(obj);
     auto ref = g_engine->getVariableRef(param_name);
-    g_engine->widgetBind(w, ref);
+    g_engine->widgetBind(w, ref, dir);
 }
 
 void JZWidgetUnBind(JZNodeObject *obj)
@@ -160,26 +160,6 @@ void JZWidgetUnBind(JZNodeObject *obj)
 void JZWidgetUnBindNotify(QWidget *w)
 {
     g_engine->widgetUnBindNotify(w);
-}
-
-QVariant JZUiToData(JZNodeObject *sender)
-{    
-    QVariant v;
-    if (sender->isInherits("Widget"))
-    {
-        QWidget *w = (QWidget*)(sender->cobj());
-        JZNodeQtBind::uiToData(w, v);
-    }
-    return v;
-}
-
-void JZDataToUi(const QVariant &v,JZNodeObject *sender)
-{    
-    if (sender->isInherits("Widget"))
-    {
-        QWidget *w = (QWidget*)(sender->cobj());
-        JZNodeQtBind::dataToUi(v,w);
-    }        
 }
 
 bool statusIsPause(int status)
@@ -362,8 +342,7 @@ JZNodeEngine::ParamChangeInfo::ParamChangeInfo()
 //VariantInfo
 JZNodeEngine::VariantInfo::VariantInfo()
 {
-    bindWidget = nullptr;
-    bindValueCache = nullptr;
+    bindWidget = nullptr;    
 }
 
 // JZNodeEngine
@@ -380,9 +359,6 @@ void JZNodeEngine::regist()
 
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitGlobal",true, jzbind::createFuncion(JZNodeInitGlobal));
     JZNodeFunctionManager::instance()->registCFunction("JZNodeInitLocal", true, jzbind::createFuncion(JZNodeInitLocal));
-    
-    JZNodeFunctionManager::instance()->registCFunction("JZDataToUi", true, jzbind::createFuncion(JZDataToUi));
-    JZNodeFunctionManager::instance()->registCFunction("JZUiToData", true, jzbind::createFuncion(JZUiToData));
 }
 
 JZNodeEngine::JZNodeEngine()
@@ -722,20 +698,21 @@ void JZNodeEngine::connectSelf(JZNodeObject *object)
     while (it != bindInfo.end())
     {
         QString var_name = it.key();
-        QString widget_name = it.value();
+        JZNodeParamBind &info = it.value();
         auto v = object->paramRef(var_name);
-        auto w = object->paramRef(widget_name);
+        auto w = object->paramRef(info.widget);
         Q_ASSERT(v && w && JZNodeType::isWidget(*w));
-        
-        m_variantInfo[v].bindWidget = w;
+                
         if (!JZNodeType::isNullptr(*w))
-        {
+        {            
             auto jz_w = toJZObject(*w);
-            JZNodeQtBind::bind(JZObjectCast<QWidget>(jz_w),v);
+            auto widget = JZObjectCast<QWidget>(jz_w);
+            widgetBind(widget, v, info.dir);            
         }
         else
         {            
-            m_variantInfo[w].bindValueCache = v;
+            m_widgetBindCache[w].bindValue = v;
+            m_widgetBindCache[w].dir = info.dir;
         }
 
         it++;
@@ -819,35 +796,38 @@ void JZNodeEngine::connectSingleLater(QVariant *v)
 
     auto it = m_variantInfo.find(v);
     if (it == m_variantInfo.end())
-        return;
-
-    if (it->bindValueCache)
     {
-        auto w = JZObjectCast<QWidget>(sender);
-        widgetBind(w, it->bindValueCache);        
-        it->bindValueCache = nullptr;
-    }
-    
-    auto &list = it->connectQueue;
-    for (int i = list.size() - 1; i >= 0; i--)
-    {
-        auto &c = list[i];
-        if (c.sender == v)
+        auto &list = it->connectQueue;
+        for (int i = list.size() - 1; i >= 0; i--)
         {
-            connectEvent(sender, c.eventType, c.recv, c.handle);
-            if (c.recv)
+            auto &c = list[i];
+            if (c.sender == v)
             {
-                m_objectInfo[c.recv].connectQueue--;
-                Q_ASSERT(m_objectInfo[c.recv].connectQueue >= 0);
+                connectEvent(sender, c.eventType, c.recv, c.handle);
+                if (c.recv)
+                {
+                    m_objectInfo[c.recv].connectQueue--;
+                    Q_ASSERT(m_objectInfo[c.recv].connectQueue >= 0);
+                }
+                list.removeAt(i);
             }
-            list.removeAt(i);           
         }
     }
+
+    auto it_w = m_widgetBindCache.find(v);
+    if (it_w != m_widgetBindCache.end())
+    {
+        auto w = JZObjectCast<QWidget>(sender);
+        widgetBind(w, it_w->bindValue, it_w->dir);
+    }           
 }
 
-void JZNodeEngine::widgetBind(QWidget *w, QVariant *ref)
+void JZNodeEngine::widgetBind(QWidget *w, QVariant *ref,int dir)
 {
-    JZNodeQtBind::bind(w, ref);
+    if (dir & JZNodeParamBind::UiToData)
+        JZNodeQtBind::bind(w, ref);
+    else if (dir & JZNodeParamBind::UiToData)
+        m_variantInfo[ref].bindWidget = w;    
 }
 
 void JZNodeEngine::widgetUnBind(QWidget *w)
@@ -860,7 +840,7 @@ void JZNodeEngine::widgetUnBindNotify(QWidget *w)
     auto it = m_variantInfo.begin();
     while (it != m_variantInfo.end())
     {        
-        if (it->bindWidget && JZObjectCast<QWidget>(toJZObject(*it->bindWidget)) == w)
+        if (it->bindWidget == w)
             it->bindWidget = nullptr;
         it++;
     }
@@ -1268,13 +1248,14 @@ void JZNodeEngine::objectDelete(JZNodeObject *object)
 void JZNodeEngine::varaiantDeleteNotify(QVariant *v)
 {    
     m_anyVariants.remove(v);
+    m_widgetBindCache.remove(v);
+
     auto it = m_variantInfo.find(v);
     if(it != m_variantInfo.end())
     {
         if (it->bindWidget)
-        {
-            auto w = JZObjectCast<QWidget>(toJZObject(*it->bindWidget));
-            JZNodeQtBind::unbind(w);
+        {            
+            JZNodeQtBind::unbind(it->bindWidget);
         }
         m_variantInfo.erase(it);
     }
@@ -1287,8 +1268,9 @@ void JZNodeEngine::widgetValueChanged(QWidget *w)
         
     QVariant *v = (QVariant*)id.value<void*>();
     QVariant old = *v;
-    JZNodeQtBind::uiToData(w,*v);
-    valueChanged(v);
+    JZNodeQtBind::uiToData(w,v);
+    if(old != *v)
+        valueChanged(v);
 }
 
 void JZNodeEngine::valueChanged(QVariant *v)
@@ -1297,11 +1279,8 @@ void JZNodeEngine::valueChanged(QVariant *v)
     if (it == m_variantInfo.end())
         return;
 
-    if (it->bindWidget)
-    {
-        auto w = JZObjectCast<QWidget>(toJZObject(*it->bindWidget));
-        JZNodeQtBind::dataToUi(*v,w);
-    }
+    if (it->bindWidget)    
+        JZNodeQtBind::dataToUi(v, it->bindWidget);    
 
     auto &list = it->paramChanges;
     for (int i = 0; i < list.size(); i++)

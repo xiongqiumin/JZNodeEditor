@@ -22,15 +22,21 @@ protected:
 };
 
 
+class BindSupportInfo
+{
+public:
+    QStringList dataType;
+};
+
 class JZNodeQtBind
 {
 public:
-    static bool isBindSupport(QWidget *w, int type);
-    static bool uiToData(QWidget *w, QVariant &v);
-    static bool dataToUi(const QVariant &v,QWidget *w);   
+    static BindSupportInfo BindSupport(QString className);
     
     static bool bind(QWidget *w,QVariant *v);
     static void unbind(QWidget *w);
+    static bool uiToData(QWidget *w, QVariant *v);
+    static bool dataToUi(QVariant *v, QWidget *w);
 };
 
 

@@ -80,23 +80,30 @@ void JZNodeParamValueWidget::setDataType(QString type)
     clearWidget();
     m_dataType = dataType;          
 
-    if (m_dataType == Type_bool || JZNodeType::isEnum(m_dataType))
+    if (m_dataType == Type_bool)
     {        
         QComboBox *box = new QComboBox();
-        if (m_dataType == Type_bool)
-        {
-            box->addItem("true", true);
-            box->addItem("false", false);
-        }
-        else
-        {
-            auto meta = JZNodeObjectManager::instance()->enumMeta(m_dataType);
-            for (int i = 0; i < meta->count(); i++)
-                box->addItem(meta->key(i), meta->value(i));
-        }        
+        box->addItem("true", true);
+        box->addItem("false", false);                
         box->connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onValueChanged()));        
         m_widget = box;
     }    
+    if (JZNodeType::isEnum(m_dataType))
+    {
+        auto meta = JZNodeObjectManager::instance()->enumMeta(m_dataType);
+        if(meta->isFlag())
+        {         
+
+        }
+        else
+        {
+            QComboBox *box = new QComboBox();
+            for (int i = 0; i < meta->count(); i++)
+                box->addItem(meta->key(i), meta->value(i));
+            box->connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onValueChanged()));
+            m_widget = box;
+        }
+    }
     else
     {        
         QLineEdit *edit = new QLineEdit();

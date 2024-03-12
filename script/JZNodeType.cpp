@@ -142,6 +142,13 @@ bool JZNodeType::isObject(int type)
     return (type == Type_nullptr || type >= Type_object);
 }
 
+int JZNodeType::isInherits(QString type1, QString type2)
+{
+    int t1 = JZNodeType::nameToType(type1);
+    int t2 = JZNodeType::nameToType(type2);
+    return JZNodeObjectManager::instance()->isInherits(t1, t2);
+}
+
 int JZNodeType::isInherits(int type1,int type2)
 {
     return JZNodeObjectManager::instance()->isInherits(type1,type2);
@@ -176,6 +183,16 @@ bool JZNodeType::canConvert(int type1,int type2)
         return true;
     if (type1 == Type_int && isEnum(type2))
         return true;
+    if (isEnum(type1) && isEnum(type2))
+    {
+        auto meta1 = JZNodeObjectManager::instance()->enumMeta(type1);
+        auto meta2 = JZNodeObjectManager::instance()->enumMeta(type2);
+        if (meta1->isFlag() && meta1->flagEnum() == type2
+            || meta2->isFlag() && meta2->flagEnum() == type1)
+            return true;
+        
+        return false;
+    }
     if (type1 == Type_nullptr && type2 >= Type_object)
         return true;
     if(type1 >= Type_object && type2 >= Type_object)
@@ -188,11 +205,6 @@ bool JZNodeType::canConvert(int type1,int type2)
         return true;
 
     return false;
-}
-
-bool JZNodeType::canConvert(int type1, const QVariant &v)
-{
-    return canConvert(type1, JZNodeType::variantType(v));
 }
 
 QString JZNodeType::toString(JZNodeObject *obj)

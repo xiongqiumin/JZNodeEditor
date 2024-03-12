@@ -3,6 +3,7 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include "JZNodeType.h"
+#include "JZNodeObject.h"
 
 JZNodeQtBindHelper::JZNodeQtBindHelper(QWidget *parent)
     :QObject(parent)
@@ -34,67 +35,79 @@ void JZNodeQtBindHelper::valueChanged()
 }
 
 //JZNodeQtBind
-bool JZNodeQtBind::isBindSupport(QWidget *w, int type)
+BindSupportInfo JZNodeQtBind::BindSupport(QString className)
 {
-    return true;
+    auto meta = JZNodeObjectManager::instance()->meta(className);
+    if (!meta)
+        return BindSupportInfo();
+
+    BindSupportInfo info;
+    if (meta->isInherits("LineEdit"))
+        info.dataType = QStringList{"string","int","double"};
+    else if(meta->isInherits("ComboBox"))
+        info.dataType = QStringList{ "string","int"};
+    else if (meta->isInherits("CheckBox"))
+        info.dataType = QStringList{ "bool" };
+
+    return info;
 }
 
-bool JZNodeQtBind::uiToData(QWidget *w, QVariant &v)
+bool JZNodeQtBind::uiToData(QWidget *w, QVariant *v)
 {
-    auto type = JZNodeType::variantType(v);    
+    auto type = JZNodeType::variantType(*v);    
     if (w->inherits("QLineEdit"))
     {
         QLineEdit *edit = qobject_cast<QLineEdit*>(w);
         if (type == Type_int)
-            v = edit->text().toInt();
+            *v = edit->text().toInt();
         else if (type == Type_double)
-            v = edit->text().toDouble();
+            *v = edit->text().toDouble();
         else if (type == Type_string)
-            v = edit->text();
+            *v = edit->text();
     }
     else if (w->inherits("QComboBox"))
     {
         QComboBox *box = qobject_cast<QComboBox*>(w);
         if (type == Type_int)
-            v = box->currentIndex();
+            *v = box->currentIndex();
         else if (type == Type_string)
-            v = box->currentText();
+            *v = box->currentText();
     }
     else if (w->inherits("QCheckBox"))
     {
         QCheckBox *box = qobject_cast<QCheckBox*>(w);
         if (type == Type_int)
-            v = (int)box->isChecked();
+            *v = (int)box->isChecked();
         else if(type == Type_bool)
-            v = box->isChecked();
+            *v = box->isChecked();
     }
     return true;
 }
 
-bool JZNodeQtBind::dataToUi(const QVariant &v, QWidget *w)
+bool JZNodeQtBind::dataToUi(QVariant *v, QWidget *w)
 {
     auto helper = w->findChild<JZNodeQtBindHelper*>();
     helper->blockChanged(true);
 
-    auto type = JZNodeType::variantType(v);
+    auto type = JZNodeType::variantType(*v);
     if (w->inherits("QLineEdit"))
     {
         QLineEdit *edit = qobject_cast<QLineEdit*>(w);
-        edit->setText(v.toString());
+        edit->setText(v->toString());
     }
     else if (w->inherits("QComboBox"))
     {
         QComboBox *box = qobject_cast<QComboBox*>(w);
         if(type == Type_int)
-            box->setCurrentIndex(v.toInt());
+            box->setCurrentIndex(v->toInt());
         else if (type == Type_string)
-            box->setCurrentText(v.toString());
+            box->setCurrentText(v->toString());
     }
     else if (w->inherits("QCheckBox"))
     {
         QCheckBox *box = qobject_cast<QCheckBox*>(w);
         if (type == Type_int || type == Type_bool)
-            box->setChecked(v.toBool());
+            box->setChecked(v->toBool());
     }
     helper->blockChanged(false);
     return true;

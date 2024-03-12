@@ -30,7 +30,8 @@ public:
     bool addMemberVariable(QString name,int dataType,const QString &v = QString());
     bool addMemberVariable(QString name,QString dataType, const QString &v = QString());
     void removeMemberVariable(QString name);    
-    const JZParamDefine *memberVariable(QString name);    
+    QStringList memberVariableList(bool hasUi);
+    const JZParamDefine *memberVariable(QString name, bool hasUi);
 
     JZScriptItem *addFlow(QString name);
     void removeFlow(QString name);

@@ -174,7 +174,7 @@ public:
     void connectSelf(JZNodeObject *object);
     void connectSingleLater(QVariant *v);
 
-    void widgetBind(QWidget *w,QVariant *ref);
+    void widgetBind(QWidget *w,QVariant *ref,int dir);
     void widgetUnBind(QWidget *w);
     void widgetUnBindNotify(QWidget *w);
     void watchNotify(int param_id);         //node display    
@@ -233,8 +233,14 @@ protected:
 
         QList<ConnectCache> connectQueue;
         QList<ParamChangeInfo> paramChanges;
-        QVariant *bindWidget;
-        QVariant *bindValueCache;  //value
+        QWidget *bindWidget;        
+    };
+
+    class VariantBindCache
+    {
+    public:
+        QVariant *bindValue;
+        int dir;
     };
 
     class ConnectInfo
@@ -317,7 +323,8 @@ protected:
     JZNodeRuntimeError m_error;
     
     QMap<JZNodeObject*,JZObjectInfo> m_objectInfo;    
-    QMap<QVariant*, VariantInfo> m_variantInfo;    
+    QMap<QVariant*, VariantInfo> m_variantInfo;
+    QMap<QVariant*, VariantBindCache> m_widgetBindCache;
     QSet<QVariant*> m_anyVariants;    
 };
 extern JZNodeEngine *g_engine;

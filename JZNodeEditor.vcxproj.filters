@@ -373,6 +373,9 @@
     <ClCompile Include="editor\script\JZNodeParamBindEditDialog.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
+    <ClCompile Include="editor\script\JZNodeFlagEditDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -667,6 +670,9 @@
     </ClInclude>
     <ClInclude Include="sample\ImageBatch.h">
       <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZNodeFlagEditDialog.h">
+      <Filter>Header Files\editor\script</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

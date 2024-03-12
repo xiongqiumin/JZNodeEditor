@@ -175,7 +175,7 @@ int JZNodeGraphItem::propAtInName(QPointF pos)
     auto list = m_node->pinList();
     for (int i = 0; i < list.size(); i++)
     {
-        auto rc = propRect(list[i]) & propNameRect(list[i]);
+        auto rc = propRect(list[i]) | propNameRect(list[i]);
         if (rc.contains(pos))
             return list[i];
     }
@@ -419,6 +419,19 @@ QString JZNodeGraphItem::getTip(QPointF pt)
 {
     if (m_errorRect.contains(pt))
         return m_error;
+
+    int id = propAtInName(pt);
+    if (id != -1)
+    {
+        auto pin = m_node->pin(id);
+        QString tips = pin->name() + "\ntype:";
+        QStringList type_list;
+        auto dataTypes = pin->dataType();
+        for (int i = 0; i < dataTypes.size(); i++)
+            type_list << JZNodeType::typeToName(dataTypes[i]);
+        tips += type_list.join(",");
+        return tips;
+    }
 
     return QString();
 }

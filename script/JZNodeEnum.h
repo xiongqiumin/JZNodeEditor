@@ -12,8 +12,9 @@ public:
     void setType(int type);
     int type() const;
 
-    void setFlag(bool isFlag);
-    bool flag() const;
+    void setFlag(bool isFlag,int enumId);
+    bool isFlag() const;
+    int flagEnum() const;
     
     QString name() const;
     int count() const;
@@ -36,6 +37,7 @@ protected:
     QVector<int> m_values;
     int m_default;
     bool m_isFlag;
+    int m_flagEnum;
 };
 
 
