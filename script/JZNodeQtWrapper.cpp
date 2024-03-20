@@ -89,9 +89,9 @@ void initEnum()
     filter_value_list << QDir::NoDotAndDotDot;
     filter_define.init("Dir::Filter", filter_key_list, filter_value_list);
     int filter_id = JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filter).name());
-
-    filter_define.setFlag(true, filter_id);
+    
     filter_define.init("Dir::Filters", filter_key_list, filter_value_list);
+    filter_define.setFlag(true, filter_id);
     JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filters).name());    
 }
 

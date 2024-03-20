@@ -319,7 +319,8 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_recordMove = true;    
     m_runningMode = false;
     m_runNode = -1;        
-    m_groupIsMoving = false;        
+    m_groupIsMoving = false;
+    m_autoCheck = false;
     
     connect(&m_commandStack,&QUndoStack::cleanChanged, this, &JZNodeView::onCleanChanged);
     connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
@@ -1222,6 +1223,11 @@ BreakPointTriggerResult JZNodeView::breakPointTrigger()
     return ret;
 }
 
+void JZNodeView::setAutoCheck(bool flag)
+{
+    m_autoCheck = flag;
+}
+
 void JZNodeView::setRunning(bool flag)
 {
     m_runningMode = flag;
@@ -1639,7 +1645,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
     if(event->mimeData()->hasFormat("node_data"))
     {
         QByteArray data = event->mimeData()->data("node_data");
-        QDataStream s;
+        QDataStream s(&data,QIODevice::ReadOnly);
         int node_type;
         s >> node_type;
         if(node_type == Node_expr)
@@ -1919,8 +1925,9 @@ void JZNodeView::onPropUpdate(int id,int pinId,const QString &value)
 }
 
 void JZNodeView::onDependChanged()
-{
-    return;
+{   
+    if (!m_autoCheck || m_runningMode)
+        return;
 
     auto depend = m_runEditor->depend();
     if (depend.function.isNull())
@@ -1929,7 +1936,7 @@ void JZNodeView::onDependChanged()
     LOGI(Log_Compiler, "build unittest");
 
     JZNodeBuilder builder(m_file->project());
-    JZNodeProgram program;
+    JZNodeProgram program;    
     if (!builder.buildUnitTest(m_file, &depend, &program))
         return;
 

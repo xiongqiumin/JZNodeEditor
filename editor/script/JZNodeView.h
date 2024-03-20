@@ -159,6 +159,7 @@ public:
     BreakPointTriggerResult breakPointTrigger();
 
     void setRunning(bool flag);
+    void setAutoCheck(bool flag);
 
     int runtimeNode();
     void setRuntimeNode(int nodeId);
@@ -258,6 +259,7 @@ protected:
     NodeTimerInfo m_nodeTimeInfo;
 
     bool m_runningMode;
+    bool m_autoCheck;
     int m_runNode;
 };
 

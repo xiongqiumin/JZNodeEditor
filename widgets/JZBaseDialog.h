@@ -16,8 +16,8 @@ protected slots:
     void onBtnOkClicked();
     void onBtnCancelClicked();    
 
-private:    	    
-	virtual bool onOk();
+protected:
+	virtual bool onOk() = 0;
 	virtual bool onCancel();
 
     QWidget *m_mainWidget;	

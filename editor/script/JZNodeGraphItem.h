@@ -52,10 +52,11 @@ protected:
         
         void clear();
         int width();        
+        int height();
         
-        QRectF iconRect;
-        QRectF nameRect;
-        QRectF valueRect;
+        QRect iconRect;
+        QRect nameRect;
+        QRect valueRect;
 
         int widgetType;
         QGraphicsProxyWidget *proxy;

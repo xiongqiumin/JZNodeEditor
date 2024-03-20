@@ -50,7 +50,18 @@ int JZNodeEnumDefine::count() const
 
 bool JZNodeEnumDefine::hasKey(const QString &key) const
 {
-    return m_keys.contains(key);
+    if (m_isFlag)
+    {
+        auto list = key.split("|");
+        for (int i = 0; i < list.size(); i++)
+        {
+            if (!m_keys.contains(list[i]))
+                return false;
+        }
+        return true;
+    }
+    else
+        return m_keys.contains(key);
 }
 
 QString JZNodeEnumDefine::key(int index) const

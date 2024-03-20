@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QCheckBox>
 #include <QVBoxLayout>
+#include <QLineEdit>
+#include <QComboBox>
 #include "JZNodeFlagEditDialog.h"
 #include "JZNodeObject.h"
 
@@ -30,7 +32,7 @@ void JZNodeFlagEditDialog::init(QString flagName)
 
         m_boxList.push_back(box);
     }
-    this->setLayout(l);
+    m_mainWidget->setLayout(l);
     setFlag(meta->defaultKey());
 }
 
@@ -49,7 +51,7 @@ QString JZNodeFlagEditDialog::flag()
     return m_flagKey;
 }
 
-void JZNodeFlagEditDialog::on_btnOk_clicked()
+bool JZNodeFlagEditDialog::onOk()
 {
     auto meta = JZNodeObjectManager::instance()->enumMeta(m_flag);
     QStringList keyList;
@@ -63,10 +65,51 @@ void JZNodeFlagEditDialog::on_btnOk_clicked()
     else
         m_flagKey = meta->defaultKey();
 
-    QDialog::accept();
+    return true;
 }
 
-void JZNodeFlagEditDialog::on_btnCancel_clicked()
+//JZNodeNumberStringEditDialog
+JZNodeNumberStringEditDialog::JZNodeNumberStringEditDialog(QWidget *parent)
+    : JZBaseDialog(parent)
 {
-    QDialog::reject();
+    QVBoxLayout *l = new QVBoxLayout();
+    m_box = new QComboBox();
+    m_box->addItem("int", Type_int);
+    m_box->addItem("double", Type_double);
+    m_box->addItem("string", Type_string);
+
+    m_line = new QLineEdit();
+    l->addWidget(m_box);
+    l->addWidget(m_line);
+    m_mainWidget->setLayout(l);
+}
+
+JZNodeNumberStringEditDialog::~JZNodeNumberStringEditDialog()
+{
+}
+
+void JZNodeNumberStringEditDialog::setValue(QString value)
+{
+    int data_type = JZNodeType::stringType(value);
+    int idx = m_box->findData(data_type);
+    m_box->setCurrentIndex(idx);
+
+    if (data_type == Type_string)
+        m_line->setText(JZNodeType::dispString(value));
+    else
+        m_line->setText(value);
+}
+
+QString JZNodeNumberStringEditDialog::value()
+{
+    int data_type = m_box->currentData().toInt();
+    if (data_type == Type_string)
+        return JZNodeType::storgeString(m_line->text());
+    else
+        return m_line->text();
+}
+
+bool JZNodeNumberStringEditDialog::onOk()
+{
+    return true;
 }

@@ -31,11 +31,6 @@ JZBaseDialog::~JZBaseDialog()
 {
 }
 
-bool JZBaseDialog::onOk()
-{
-    return true;
-}
-
 bool JZBaseDialog::onCancel()
 {
     return true;

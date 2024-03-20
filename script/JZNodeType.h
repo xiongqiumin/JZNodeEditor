@@ -80,6 +80,7 @@ public:
     static bool isMatchValue(const QList<int> &dst_types, const QString &v);
     static QString dispString(const QString &text);
     static QString storgeString(const QString &text);
+    static int stringType(const QString &text);
     
     static QString addMark(const QString &text);
     static QString removeMark(const QString &text);

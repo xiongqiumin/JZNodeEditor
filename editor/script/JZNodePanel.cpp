@@ -535,9 +535,9 @@ void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
     m_tree->setItemWidget(m_itemLocal, 0, w);
     for (int i = 0; i < list.size(); i++)
     {
-//        auto info = m_file->localVariable(list[i]);
-//        QTreeWidgetItem *item = createParam(list[i]);        
-//        m_itemLocal->addChild(item);
+        auto info = m_file->localVariable(list[i]);
+        QTreeWidgetItem *item = createParam(list[i]);        
+        m_itemLocal->addChild(item);
     }
 }
 
@@ -675,10 +675,19 @@ bool JZNodePanel::filterItem(QTreeWidgetItem *item,QString name)
     }
     else
     {
-        for(int i = 0; i < count; i++)
+        if (item->text(0).contains(name))
         {
-            if(filterItem(item->child(i),name))
-                show = true;
+            show = true;
+            for (int i = 0; i < count; i++)
+                filterItem(item->child(i), QString());
+        }
+        else
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (filterItem(item->child(i), name))
+                    show = true;
+            }
         }
     }
     item->setHidden(!show);

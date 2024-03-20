@@ -548,6 +548,36 @@ QString JZNodeType::storgeString(const QString &text)
     return '"' + text + '"';
 }
 
+int JZNodeType::stringType(const QString &text)
+{
+    if (text == "false" || text == "true")
+        return Type_bool;
+    else if (text == "null")
+        return Type_nullptr;
+    else if (text.size() >= 2 && text.front() == '"' && text.back() == '"')
+        return Type_string;
+
+    bool isInt = JZRegExpHelp::isInt(text);
+    bool isHex = JZRegExpHelp::isHex(text);
+    bool isFloat = JZRegExpHelp::isFloat(text);
+    if (isHex || isHex)
+        return Type_int;
+    else if(isFloat)
+    {
+        return Type_double;
+    }
+
+    auto enum_list = JZNodeObjectManager::instance()->getEnumList();
+    for (int i = 0; i < enum_list.size(); i++)
+    {
+        auto meta = JZNodeObjectManager::instance()->enumMeta(enum_list[i]);
+        if (meta->hasKey(text))
+            return meta->type();
+    }
+
+    return Type_none;
+}
+
 QString JZNodeType::addMark(const QString &text)
 {
     return '"' + text + '"';

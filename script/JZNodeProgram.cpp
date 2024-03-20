@@ -92,10 +92,12 @@ JZNodeScript::JZNodeScript()
 
 void JZNodeScript::clear()
 {
-    file.clear();        
+    file.clear();
+    className.clear();
+    nodeInfo.clear();
     statmentList.clear();
     functionList.clear();
-    nodeInfo.clear();    
+    watchList.clear();
 }
 
 JZFunction *JZNodeScript::function(QString name)

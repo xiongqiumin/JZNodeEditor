@@ -54,8 +54,7 @@ void JZNodeFunction::setFunction(const QString &name)
 
 void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 {
-    Q_ASSERT(define);
-
+    Q_ASSERT(define);            
     m_functionName = define->fullName();
     setName(m_functionName);
 
@@ -68,10 +67,11 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
     for(int i = 0; i < define->paramIn.size(); i++)
     {
         JZNodePin pin;
-        pin.setName(define->paramIn[i].name);
+        pin.setName(define->paramIn[i].name);    
         pin.setFlag(Pin_param | Pin_in | Pin_dispName);
         pin.setDataType({define->paramIn[i].dataType() });
-        pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);
+        if (JZNodeType::isBaseOrEnum(define->paramIn[i].dataType()))        
+            pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);        
         pin.setValue(define->paramIn[i].value);
         addPin(pin);
     }

@@ -48,6 +48,13 @@ int JZNodeGraphItem::PropGemo::width()
     return iconRect.width() + nameRect.width() + valueRect.width();
 }
 
+int JZNodeGraphItem::PropGemo::height()
+{
+    int h = qMax(iconRect.height(), nameRect.height());
+    h = qMax(h, valueRect.height());
+    return h;
+}
+
 // JZNodeGraphItem
 JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 {
@@ -112,7 +119,7 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
 {    
     QRectF rc = boundingRect();
     QRectF title_rc = QRectF(rc.left(), rc.top(), rc.width(), 20);
-    painter->fillRect(rc, QColor(192,192,192));    
+    painter->fillRect(rc, QColor(192,192,192));        
 
     QTextOption text_opt;
     text_opt.setWrapMode(QTextOption::NoWrap);
@@ -200,14 +207,14 @@ QSize JZNodeGraphItem::size() const
 void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
 {
     auto pin = m_node->pin(pin_id);
-    gemo->iconRect = QRectF(x, y, 24, 24);
+    gemo->iconRect = QRect(x, y, 24, 24);
 
     x = gemo->iconRect.right() + 5;
     if (pin->isDispName())
     {
         QFontMetrics ft(scene()->font());
         int w = qMin(name_max_width, ft.horizontalAdvance(pin->name()));
-        gemo->nameRect = QRectF(x, y, w, 24);
+        gemo->nameRect = QRect(x, y, w, 24);
         x = gemo->nameRect.right() + 5;
     }
 
@@ -221,39 +228,42 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
                 widget = m_node->createWidget(pin_id);
         }
         else if(pin->isEditValue() || pin->isDispValue())
-        {
-            int w = 60;
+        {            
             JZNodeParamValueWidget *param_widget = new JZNodeParamValueWidget();
             param_widget->setDataType(pin->dataType());
             param_widget->connect(param_widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
 
-            widget = param_widget;
-            widget->resize(w, 24);
+            widget = param_widget;            
             widget->setProperty("node_id", m_id);
             widget->setProperty("prop_id", pin_id);
         }
 
         if (widget)
         {
-            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();      
+            
             gemo->widget = widget;
-            gemo->proxy = proxy;
+            gemo->proxy = proxy;           
+            auto w = widget->sizeHint().width();
+            auto h = widget->sizeHint().height();            
+            w = qMax(w, 60);
+            h = qMax(h, 24);
+            gemo->valueRect = QRect(x, y, w, h);
 
-            int w = widget->width();
-            gemo->valueRect = QRectF(x, y, w, 24);
-
-            proxy->setWidget(widget);
+            widget->resize(w, h);
+            proxy->setWidget(widget);                      
             proxy->setParentItem(this);            
         }        
     }
 
     if (gemo->widget)
     {
-        gemo->valueRect.moveTo(QPointF(x, y));
+        gemo->valueRect.moveTo(QPoint(x, y));
         if (pin->isEditValue() || pin->isDispValue())
         {
             bool editable = editor()->isPropEditable(m_id, pin_id);
-            gemo->widget->setEnabled(editable);
+            JZNodeParamValueWidget *w = qobject_cast<JZNodeParamValueWidget*>(gemo->widget);            
+            w->setEditable(editable);
         }
     }
 }
@@ -288,7 +298,7 @@ void JZNodeGraphItem::updateNode()
 
     int in_x = 0, out_x = 0;
     int in_y = 24,out_y = 24;
-    int y_gap = 28;    
+    int y_gap = 4;    
 
     auto in_list = m_node->pinInList(Pin_none);
     std::sort(in_list.begin(),in_list.end(),cmp);
@@ -297,7 +307,7 @@ void JZNodeGraphItem::updateNode()
         auto &gemo = m_pinRects[in_list[i]];
         calcGemo(in_list[i],4,in_y,&gemo);
         in_x = qMax(in_x,gemo.width());
-        in_y += y_gap;
+        in_y += gemo.height() + y_gap;
     }
 
     QVector<int> out_list = m_node->pinOutList(Pin_none);
@@ -307,7 +317,7 @@ void JZNodeGraphItem::updateNode()
         auto &gemo = m_pinRects[out_list[i]];
         calcGemo(out_list[i],4,out_y,&gemo);
         out_x = qMax(out_x,gemo.width());
-        out_y += y_gap;
+        out_y += gemo.height() + y_gap;
     }
     
     QVector<int> pinList = m_node->pinList();
@@ -341,10 +351,10 @@ void JZNodeGraphItem::updateNode()
     for (int i = 0; i < pinList.size(); i++)
     {
         auto &info = m_pinRects[pinList[i]];
-        if (info.proxy)
-            info.proxy->setPos(info.valueRect.topLeft());
+        if (info.proxy)        
+            info.proxy->setPos(info.valueRect.topLeft());                    
     }
-
+    
     m_size = QSize(w, qMax(h,50));    
     updateErrorGemo();
 }

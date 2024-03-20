@@ -215,6 +215,7 @@ void JZNodeEditor::onAutoRunChecked()
 {
     auto *box = qobject_cast<QCheckBox*>(sender());
     m_tabProp->setTabVisible(1, box->isChecked());
+    m_view->setAutoCheck(box->isChecked());
 }
 
 void JZNodeEditor::onActionLayout()

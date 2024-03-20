@@ -6,6 +6,7 @@
 #include "JZScriptItem.h"
 #include "JZBaseDialog.h"
 
+class QCheckBox;
 class JZNodeFlagEditDialog : public JZBaseDialog
 {
     
@@ -15,14 +16,29 @@ public:
     
     void init(QString flagName);
     void setFlag(QString flag);
-    QString flag();
-
-protected slots:        
-    void on_btnOk_clicked();
-    void on_btnCancel_clicked();
+    QString flag();    
     
 private:    
+    virtual bool onOk() override;
+
     QString m_flag;    
     QString m_flagKey;
     QList<QCheckBox*> m_boxList;
+};
+
+
+class JZNodeNumberStringEditDialog : public JZBaseDialog
+{
+public:
+    JZNodeNumberStringEditDialog(QWidget *parent = Q_NULLPTR);
+    ~JZNodeNumberStringEditDialog();
+    
+    void setValue(QString flag);
+    QString value();
+
+private:
+    virtual bool onOk() override;
+
+    QComboBox *m_box;
+    QLineEdit *m_line;
 };

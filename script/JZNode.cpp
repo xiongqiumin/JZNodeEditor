@@ -903,7 +903,6 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
 QWidget *JZNodeSequence::createWidget(int id)
 {
     QPushButton *btn = new QPushButton("Add Input");
-	btn->adjustSize();
     btn->connect(btn, &QPushButton::clicked, [this] {
         QByteArray old = toBuffer();
         addSequeue();
@@ -1024,8 +1023,8 @@ QWidget* JZNodeFor::createWidget(int id)
 {
     QComboBox *comboBox = new QComboBox();
     comboBox->addItems(m_condTip);      ;
-    comboBox->setCurrentIndex(paramInValue(3).toInt());
-    comboBox->adjustSize();
+    comboBox->setCurrentIndex(paramInValue(3).toInt());    
+    comboBox->setMinimumSize(comboBox->sizeHint());
     comboBox->connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index){        
         QByteArray old = toBuffer();
         setParamInValue(3, QString::number(index));
@@ -1270,7 +1269,6 @@ QWidget* JZNodeIf::createWidget(int id)
 {
     Q_UNUSED(id);
     QPushButton *btn = new QPushButton(pinName(id));
-	btn->adjustSize();
     if (id == btnCondId())
     {
         btn->connect(btn, &QPushButton::clicked, [this] {
@@ -1435,7 +1433,6 @@ void JZNodeSwitch::setCaseValue(int index, const QString &v)
 QWidget* JZNodeSwitch::createWidget(int id)
 {    
     QPushButton *btn = new QPushButton(pinName(id));
-	btn->adjustSize();
     if (id == widgetOut(0))
     {
         btn->connect(btn, &QPushButton::clicked, [this] {

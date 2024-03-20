@@ -43,7 +43,6 @@ QWidget* JZNodeOperator::createWidget(int id)
 {
     Q_UNUSED(id);    
     QPushButton *btn = new QPushButton("Add Input");
-    btn->adjustSize();
     btn->connect(btn, &QPushButton::clicked, [this] {
         QByteArray old = toBuffer();
         addInput();
@@ -490,8 +489,8 @@ JZNodeNot::JZNodeNot()
 {
     m_name = "not";
     m_type = Node_not;
-    int in = addParamIn("", Pin_editValue | Pin_dispValue);
-    int out = addParamOut("");
+    int in = addParamIn("input",Pin_dispName);
+    int out = addParamOut("invert", Pin_dispName);
     setPinTypeBool(in);
     setPinTypeBool(out);
 }

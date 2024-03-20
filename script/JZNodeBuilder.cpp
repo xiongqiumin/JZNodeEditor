@@ -128,17 +128,63 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     return true;
 }
 
+void JZNodeBuilder::buildProgram()
+{
+    auto list = m_project->globalVariableList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        QString name = list[i];
+        m_program->m_variables[name] = *m_project->globalVariable(name);
+    }
+
+    auto class_list = m_project->itemList("./", ProjectItem_class);
+    for (int i = 0; i < class_list.size(); i++)
+    {
+        JZScriptClassItem *script = dynamic_cast<JZScriptClassItem*>(class_list[i]);
+        m_program->m_objectDefines << script->objectDefine();
+
+        auto params = script->itemList(ProjectItem_param);
+        Q_ASSERT(params.size() == 0 || params.size() == 1);
+        if (params.size() == 1)
+        {
+            auto param = dynamic_cast<JZParamItem*>(params[0]);
+            m_program->m_binds[script->className()] = param->bindVariables();
+        }
+    }
+
+    auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);
+    for (int i = 0; i < bind_list.size(); i++)
+    {
+        JZScriptItem *script = dynamic_cast<JZScriptItem*>(bind_list[i]);
+        buildScriptFile(script);
+    }
+
+    auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
+    for (int i = 0; i < function_list.size(); i++)
+    {
+        JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
+        buildScriptFile(script);
+    }
+
+    auto flow_list = m_project->itemList("./", ProjectItem_scriptFlow);
+    for (int i = 0; i < flow_list.size(); i++)
+    {
+        JZScriptItem *script = dynamic_cast<JZScriptItem*>(flow_list[i]);
+        buildScriptFile(script);
+    }
+}
+
 bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNodeProgram *program)
 {
     clear();    
     m_program = program;
     m_program->clear();
+    m_scripts.clear();
 
+    buildProgram();
+    m_scripts.remove(file->itemPath());
     if (!buildScriptFile(file))
-        return false;
-
-    if (file->getClassFile())
-        m_program->m_objectDefines << file->getClassFile()->objectDefine();
+        return false;    
 
     auto replaceStatment = [](JZNodeScript *script,int index)
     {
@@ -387,11 +433,11 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
 bool JZNodeBuilder::buildScriptFile(JZScriptItem *scriptFile)
 {       
     QString path = scriptFile->itemPath();
-    if(!m_scripts.contains(path))    
-        m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
+    m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
     
     auto classFile = m_project->getItemClass(scriptFile);
     JZNodeScript *script = m_scripts[path].data();
+    script->clear();
     if(classFile)
         script->className = classFile->className();
 

@@ -26,7 +26,7 @@ JZNodeLocalParamEditDialog::JZNodeLocalParamEditDialog(QWidget *parent)
     m_typeWidget = new JZNodeParamTypeWidget();
     gridLayout->addWidget(new QLabel("类型:"), 1, 0);    
     gridLayout->addWidget(m_typeWidget, 1, 1);
-    connect(m_typeWidget,SIGNAL(currentTextChanged(QString)),this, SLOT(onTypeChanged()));
+    connect(m_typeWidget,SIGNAL(sigTypeChanged()),this, SLOT(onTypeChanged()));
 
     m_valueWidget = new JZNodeParamValueWidget();
     gridLayout->addWidget(new QLabel("默认值:"), 2, 0);    
@@ -57,8 +57,8 @@ JZNodeLocalParamEditDialog::~JZNodeLocalParamEditDialog()
 void JZNodeLocalParamEditDialog::setParam(JZParamDefine define)
 {    
     m_lineName->setText(define.name);
-    m_typeWidget->setType(define.type);
-    m_valueWidget->setDataType(m_typeWidget->type());
+    m_typeWidget->setType(define.type);    
+    m_valueWidget->setDataType({ define.dataType() });
     m_valueWidget->setValue(define.value);
 }
 
@@ -69,7 +69,8 @@ JZParamDefine JZNodeLocalParamEditDialog::param()
 
 void JZNodeLocalParamEditDialog::onTypeChanged()
 {
-    m_valueWidget->setDataType(m_typeWidget->type());
+    int data_type = JZNodeType::nameToType(m_typeWidget->type());
+    m_valueWidget->setDataType({ data_type });
 }
 
 void JZNodeLocalParamEditDialog::onBtnOkClicked()

@@ -2,6 +2,7 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QCheckBox>
+#include <QRadioButton>
 #include "JZNodeType.h"
 #include "JZNodeObject.h"
 
@@ -81,6 +82,17 @@ bool JZNodeQtBind::uiToData(QWidget *w, QVariant *v)
         else if(type == Type_bool)
             *v = box->isChecked();
     }
+    else if (w->inherits("QRadioButton"))
+    {
+        QRadioButton *btn = qobject_cast<QRadioButton*>(w);
+        auto list = btn->parent()->findChildren<QRadioButton*>(QString(), Qt::FindDirectChildrenOnly);
+        for (int i = 0; i < list.size(); i++)
+        {
+            if (list[i]->isChecked())
+                *v = i;
+        }
+    }
+
     return true;
 }
 
@@ -109,6 +121,15 @@ bool JZNodeQtBind::dataToUi(QVariant *v, QWidget *w)
         if (type == Type_int || type == Type_bool)
             box->setChecked(v->toBool());
     }
+    else if (w->inherits("QRadioButton"))
+    {
+        QRadioButton *btn = qobject_cast<QRadioButton*>(w);
+        auto list = btn->parent()->findChildren<QRadioButton*>(QString(), Qt::FindDirectChildrenOnly);
+        int index = v->toInt();
+        if(index >= 0 && index < list.size())
+            list[index]->setChecked(true);
+    }
+
     helper->blockChanged(false);
     return true;
 }
