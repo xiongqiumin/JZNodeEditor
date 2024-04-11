@@ -212,15 +212,20 @@ QString JZNodeType::toString(JZNodeObject *obj)
     QString text = obj->className();
     if (obj->type() == Type_list)
     {        
+        auto list = JZObjectCast<QVariantList>(obj);
+        text = "list";
     }
     else if (obj->type() == Type_map)
     {
-
+        auto map = JZObjectCast<QVariantMap>(obj);
+        text = "map";
     }
     else
     {
 
     }
+
+
     return text;
 }
 

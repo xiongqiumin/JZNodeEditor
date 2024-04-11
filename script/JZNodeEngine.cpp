@@ -795,7 +795,7 @@ void JZNodeEngine::connectSingleLater(QVariant *v)
         return;
 
     auto it = m_variantInfo.find(v);
-    if (it == m_variantInfo.end())
+    if (it != m_variantInfo.end())
     {
         auto &list = it->connectQueue;
         for (int i = list.size() - 1; i >= 0; i--)
@@ -1525,7 +1525,7 @@ void JZNodeEngine::checkFunction(const JZFunction *func)
         int inType = JZNodeType::variantType(v);
         bool ret = JZNodeType::canConvert(inType, func->paramIn[i].dataType);
         if (!ret)            
-            throw std::runtime_error(qUtf8Printable(func->paramIn[i].name + " type node match"));
+            throw std::runtime_error(qUtf8Printable(func->paramIn[i].name + " type not match"));
         if (i == 0 && func->isMemberFunction() && JZNodeType::isNullptr(v))
             throw std::runtime_error("object is nullptr");
     }

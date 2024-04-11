@@ -32,13 +32,13 @@ public:
     void setEditor(JZEditor *editor);
     JZEditor *editor() const;  
 
-    QString name();
+    QString name() const;
     void setName(QString name);    
 
     QString path();
     QString itemPath();
 
-    int itemType();
+    int itemType() const;
     void setItemType(int type);
 
     JZProjectItem *parent();

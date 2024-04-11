@@ -26,6 +26,7 @@
 enum{
     TreeItem_type = Qt::UserRole,
     TreeItem_value,
+    TreeItem_isClass,
 };
 
 // JZNodeTreeWidget
@@ -394,25 +395,6 @@ void JZNodePanel::initFunction()
 
         addFunctions(item_group, functions, function_used);
         it++;
-    }
-
-    QTreeWidgetItem *itemOther = createFolder("其他");
-    itemFunction->addChild(itemOther);
-
-    auto funcs = JZNodeFunctionManager::instance()->functionList();
-    for (int i = 0; i < funcs.size(); i++)
-    {
-        QString function = funcs[i]->name;
-        if (function.indexOf(".") != -1 || function_used.contains(function))
-            continue;
-
-        JZNodeFunction node_func;
-        node_func.setName(function);
-        node_func.setFunction(funcs[i]);
-
-        auto function_node = createNode(&node_func);
-        function_node->setText(0, function);
-        itemOther->addChild(function_node);
     }    
 }
 
@@ -451,6 +433,7 @@ void JZNodePanel::initClass()
         QTreeWidgetItem *item_class;        
         item_class = new QTreeWidgetItem();
         item_class->setText(0, class_name);
+        item_class->setData(0, TreeItem_isClass, true);
         itemMap[class_name] = item_class;
         item_class_root->addChild(item_class);
         
@@ -665,17 +648,28 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     root->addChild(item_process);
 }
 
+bool JZNodePanel::isClassItem(QTreeWidgetItem *item)
+{
+    auto flag = item->data(0, TreeItem_isClass);
+    if (!flag.isValid())
+        return false;
+
+    return flag.toBool();
+}
+
 bool JZNodePanel::filterItem(QTreeWidgetItem *item,QString name)
 {
     bool show = false;
     int count = item->childCount();
+    bool has_name = item->text(0).contains(name,Qt::CaseInsensitive);
+
     if(count == 0)
     {
-        show = item->text(0).contains(name);
+        show = has_name;
     }
     else
     {
-        if (item->text(0).contains(name))
+        if(isClassItem(item) && has_name)
         {
             show = true;
             for (int i = 0; i < count; i++)
@@ -698,6 +692,7 @@ void JZNodePanel::onSearch()
 {
     QString name = m_lineSearch->text();
     filterItem(m_tree->invisibleRootItem(),name);
+    m_tree->expandAll();
 }
 
 void JZNodePanel::onTreeItemClicked(QTreeWidgetItem *item, int column)

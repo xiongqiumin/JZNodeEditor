@@ -138,6 +138,11 @@ bool JZNode::isFlowNode() const
     return pinCount(Pin_flow) > 0;
 }
 
+bool JZNode::isParamNode() const
+{
+    return pinCount(Pin_flow) == 0;
+}
+
 int JZNode::addPin(const JZNodePin &pin)
 {
     Q_ASSERT(pin.isInput() || pin.isOutput());
@@ -397,6 +402,11 @@ int JZNode::flowIn() const
 JZNodeGemo JZNode::flowInGemo() const
 {
     return JZNodeGemo(m_id,flowIn());
+}
+
+int JZNode::flowInCount() const
+{
+    return pinInList(Pin_flow).size();
 }
 
 int JZNode::flowOut(int index) const

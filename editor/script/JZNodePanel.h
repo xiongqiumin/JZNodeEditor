@@ -61,6 +61,7 @@ protected:
     QTreeWidgetItem *createClassEvent(QString name);
 
     bool filterItem(QTreeWidgetItem *root,QString name);    
+    bool isClassItem(QTreeWidgetItem *item);
 
     JZNodeTreeWidget *m_tree;    
     JZScriptItem *m_file;

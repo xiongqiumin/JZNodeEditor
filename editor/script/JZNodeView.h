@@ -27,9 +27,12 @@ public:
 
     virtual void redo() override;
     virtual void undo() override;       
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *command);
 
     int command;
     int itemId;
+    int pinId;
     QVariant oldValue;
     QVariant newValue;   
     QPointF oldPos;
@@ -159,29 +162,33 @@ public:
     BreakPointTriggerResult breakPointTrigger();
 
     void setRunning(bool flag);
-    void setAutoCheck(bool flag);
+    void setAutoRunning(bool flag);
 
     int runtimeNode();
     void setRuntimeNode(int nodeId);
     bool isBreakPoint(int nodeId);
 
+    void setCompierResult(const CompilerInfo &info);
+
 signals:
     void redoAvailable(bool available);
     void undoAvailable(bool available);
     void modifyChanged(bool modify);    
+
     void sigFunctionOpen(QString name);
+    void sigAutoCompiler();
+    void sigAutoRun();
 
 protected slots:
     void onContextMenu(const QPoint &pos);
     void onItemPropChanged();        
-    void onAutoCompiler();
     void onNodeTimer();
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
     void onMapSceneChanged(QRectF rc);
     void onMapSceneScaled(bool flag);
 
-    void onScriptNodeChanged(JZScriptItem *file, int nodId, const QByteArray &buffer);
+    void onScriptNodeChanged(JZScriptItem *file, int nodeId, const QByteArray &buffer);
     void onPropUpdate(int nodeId, int pinId, const QString &value);
     void onDependChanged();
 
@@ -226,6 +233,7 @@ protected:
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
+    void addPinValueChangedCommand(int id,int pin_id, const QByteArray &oldValue);
     void addMoveNodeCommand(int id, QPointF pt);
     
     void addRemoveLineCommand(int line_id);
@@ -236,6 +244,8 @@ protected:
 
     int getVariableType(const QString &param_name);        
     void autoCompiler();
+    void autoRunning();
+
     QString getExpr();
     int popMenu(QStringList list);
     QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);    
@@ -253,13 +263,12 @@ protected:
     bool m_recordMove;
     bool m_groupIsMoving;    
 
-    QPointF m_downPoint;
-    QTimer *m_compilerTimer;      
+    QPointF m_downPoint;    
     QTimer *m_nodeTimer;
     NodeTimerInfo m_nodeTimeInfo;
 
     bool m_runningMode;
-    bool m_autoCheck;
+    bool m_autoRunning;
     int m_runNode;
 };
 

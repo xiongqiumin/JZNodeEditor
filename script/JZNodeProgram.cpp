@@ -110,6 +110,18 @@ JZFunction *JZNodeScript::function(QString name)
     return nullptr;
 }
 
+JZNodeScript *JZNodeScript::clone()
+{
+    QByteArray buffer;
+    QDataStream out(&buffer, QIODevice::WriteOnly);
+    this->saveToStream(out);
+
+    QDataStream in(&buffer, QIODevice::ReadOnly);
+    JZNodeScript *script = new JZNodeScript();
+    script->loadFromStream(in);
+    return script;
+}
+
 void JZNodeScript::saveToStream(QDataStream &s)
 {
     s << file;    

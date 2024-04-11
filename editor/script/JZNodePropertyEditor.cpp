@@ -78,7 +78,8 @@ JZNodeProperty *JZNodePropertyEditor::createProp(JZNodePin *pin)
     if (type == Type_none && pin->dataType().size() > 0)
         type = Type_any;
 
-    auto pin_prop = new JZNodeProperty(pin->name(), type);
+    auto pin_prop = new JZNodeProperty(pin->name(), NodeProprety_GroupId);
+    pin_prop->setDataType(pin->dataType());
     pin_prop->setValue(pin->value());
     if(type == Type_none || !(pin->flag() & Pin_editValue))
         pin_prop->setEnabled(false);
@@ -126,10 +127,11 @@ void JZNodePropertyEditor::updateNode()
     m_editing = true;
 
     auto prop_base = new JZNodeProperty("基本信息", NodeProprety_GroupId);
-    auto prop_name = new JZNodeProperty("名称", Type_string);
-    auto prop_id = new JZNodeProperty("Id", Type_string);
+    auto prop_name = new JZNodeProperty("名称", NodeProprety_Value);
+    auto prop_id = new JZNodeProperty("Id", NodeProprety_NodeId);
     prop_base->addSubProperty(prop_name);
     prop_base->addSubProperty(prop_id);
+    prop_name->setDataType({ Type_string });
     prop_name->setValue(m_node->name());
     prop_name->setEnabled(false);
     prop_id->setValue(QString::number(m_node->id()));    

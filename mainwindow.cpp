@@ -46,6 +46,20 @@ QDataStream &operator >> (QDataStream &s, Setting &param)
     return s;
 }
 
+//AutoBuildInfo
+MainWindow::AutoBuildInfo::AutoBuildInfo()
+{
+    flag = Build_None;
+    timestamp = 0;
+}
+
+void MainWindow::AutoBuildInfo::clear()
+{
+    flag = Build_None;
+    itemPath.clear();
+    timestamp = 0;
+}
+
 //ActionStatus
 MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> flags)
 {
@@ -55,10 +69,13 @@ MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> flags)
 
 //MainWindow
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), m_builder(&m_project)
 {    
     m_editor = nullptr;
     m_processVaild = false;    
+    m_compilerTiemr = new QTimer(this);
+    connect(m_compilerTiemr, &QTimer::timeout, this, &MainWindow::onCompilerTimer);
+    m_compilerTiemr->start(100);
 
     connect(LogManager::instance(), &LogManager::sigLog, this, &MainWindow::onLog);
 
@@ -780,6 +797,102 @@ void MainWindow::onFunctionOpen(QString functionName)
     //openEditor(file->itemPath());
 }
 
+void MainWindow::dealCompiler()
+{
+    auto edit = editor(m_buildInfo.itemPath);
+    if (!edit)
+        return;
+
+    auto node_editor = qobject_cast<JZNodeEditor*>(edit);
+    auto script = node_editor->script();
+
+    JZNodeScript result;
+    m_builder.buildScript(script);
+        
+    auto compilerInfo = m_builder.compilerInfo(script);
+    node_editor->setCompierResult(compilerInfo);
+}
+
+void MainWindow::dealRun()
+{
+    auto widget = editor(m_buildInfo.itemPath);
+    if (!widget)
+        return;    
+
+    auto edit = qobject_cast<JZNodeEditor*>(widget);
+    auto script = edit->script();
+
+    dealCompiler();
+
+    ScriptDepend depend = edit->scriptTestDepend();
+    JZNodeProgram program;
+    if(!m_builder.buildUnitTest(script, &depend, &program))
+        return;
+    
+    JZNodeEngine engine;
+    engine.setProgram(&program);
+    engine.init();
+
+    QVariantList in, out;
+    for (int i = 0; i < depend.function.paramIn.size(); i++)
+        in << depend.function.paramIn[i].initValue();
+
+    QString unit_function = depend.function.fullName() + "__unittest__";
+
+    UnitTestResult ret;
+    if (engine.call(unit_function, in, out))
+    {
+        ret.result = true;
+        ret.out = out;
+    }
+    else
+    {
+        ret.result = false;
+        ret.runtimeError = engine.runtimeError();
+    }
+
+    edit->setAutoRunResult(ret);
+}
+
+void MainWindow::onAutoCompiler()
+{
+    auto edit = qobject_cast<JZNodeEditor*>(sender());    
+    if (m_buildInfo.itemPath == edit->item()->itemPath() && m_buildInfo.flag == AutoBuildInfo::Build_Run)
+    {
+        m_buildInfo.timestamp = QDateTime::currentMSecsSinceEpoch();
+        return;
+    }
+
+    m_buildInfo.timestamp = QDateTime::currentMSecsSinceEpoch();
+    m_buildInfo.flag = AutoBuildInfo::Build_Compiler;
+    m_buildInfo.itemPath = edit->item()->itemPath();
+}
+
+void MainWindow::onAutoRun()
+{
+    auto edit = qobject_cast<JZNodeEditor*>(sender());
+    m_buildInfo.timestamp = QDateTime::currentMSecsSinceEpoch();    
+    m_buildInfo.flag = AutoBuildInfo::Build_Run;
+    m_buildInfo.itemPath = edit->item()->itemPath();    
+}
+
+void MainWindow::onCompilerTimer()
+{
+    if (m_buildInfo.flag == AutoBuildInfo::Build_None)
+        return;
+
+    qint64 cur = QDateTime::currentMSecsSinceEpoch();
+    if (cur - m_buildInfo.timestamp <= 1000)
+        return;
+
+    if (m_buildInfo.flag == AutoBuildInfo::Build_Compiler)
+        dealCompiler();
+    else if (m_buildInfo.flag == AutoBuildInfo::Build_Run)
+        dealRun();
+
+    m_buildInfo.clear();
+}
+
 JZEditor *MainWindow::editor(QString filepath)
 {
     auto it = m_editors.find(filepath);
@@ -832,6 +945,8 @@ bool MainWindow::openEditor(QString filepath)
         {
             auto node_edit = (JZNodeEditor*)editor;
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
+            connect(node_edit, &JZNodeEditor::sigAutoCompiler, this, &MainWindow::onAutoCompiler);
+            connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
 
             node_edit->setRunning(m_processVaild);
         }
@@ -1127,9 +1242,8 @@ bool MainWindow::build()
     m_log->clearLog(Log_Compiler);
     m_log->addLog(Log_Compiler, "开始编译");
 
-    JZNodeBuilder builder(&m_project);
     JZNodeProgram program;
-    if(!builder.build(&program))
+    if(!m_builder.build(&program))
     {        
         m_log->addLog(Log_Compiler, "编译失败\n");
         return false;
@@ -1315,16 +1429,14 @@ void MainWindow::onNetError()
 
 void MainWindow::onTestProcessFinish()
 {
-    m_log->addLog(Log_Runtime, "local server test finish.");
-    setRunning(false);
+    m_log->addLog(Log_Runtime, "local server test finish.");    
     m_processVaild = false;
+    setRunning(false);
     updateActionStatus();
 }
 
 void MainWindow::onRuntimeFinish(int code,QProcess::ExitStatus status)
-{
-    setRunning(false);
-
+{    
     if (status == QProcess::CrashExit)
     {
         if (m_process.property("userKill").isValid())
@@ -1335,6 +1447,7 @@ void MainWindow::onRuntimeFinish(int code,QProcess::ExitStatus status)
     else
         m_log->addLog(Log_Runtime, "process finish, exit code " + QString::number(code));
     m_processVaild = false;
+    setRunning(false);
     updateActionStatus();
 }
 
@@ -1422,7 +1535,6 @@ bool MainWindow::closeAll(JZEditor *except)
 void MainWindow::setRunning(bool flag)
 {
     setWatchRunning(flag);    
-
     m_stack->setRunning(flag);
 
     auto it = m_editors.begin();

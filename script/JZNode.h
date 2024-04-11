@@ -154,7 +154,8 @@ public:
     const QString &memo() const;
     void setMemo(const QString &text);
 
-    bool isFlowNode() const;    
+    bool isFlowNode() const;
+    bool isParamNode() const;
 
     int addPin(const JZNodePin &pin);         
     void removePin(int id);
@@ -191,6 +192,8 @@ public:
     int addFlowIn(int extFlag = 0);
     int flowIn() const;
     JZNodeGemo flowInGemo() const;
+    int flowInCount() const;
+
     int addFlowOut(QString name = QString(),int extFlag = 0);
     int flowOut(int index = 0) const;
     JZNodeGemo flowOutGemo(int index = 0) const;

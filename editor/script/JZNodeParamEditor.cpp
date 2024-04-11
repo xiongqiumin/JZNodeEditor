@@ -14,6 +14,7 @@
 #include "JZNodeTypeHelper.h"
 #include "JZBaseDialog.h"
 #include "JZNodeParamBindEditDialog.h"
+#include "JZNodeParamWidget.h"
 
 static int bindDir(QString text)
 {
@@ -49,26 +50,21 @@ public:
         auto item = m_table->item(index.row(), index.column());
         QString type_text = m_table->item(index.row(), 1)->text();        
         int dataType = JZNodeType::nameToType(type_text);
-        if (dataType == Type_bool)
-        {
-            QComboBox *box = new QComboBox(parent);
-            box->addItem("true");
-            box->addItem("false");
-            box->setCurrentText(item->text());
-            return box;
-        }
-        else if (JZNodeType::isEnum(dataType))
-        {            
-            auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
-            QComboBox *box = new QComboBox(parent);
-            for (int i = 0; i < meta->count(); i++)
-                box->addItem(meta->key(i), meta->value(i));
-            if(!item->text().isEmpty())
-                box->setCurrentText(item->text());
-            return box;
-        }
-        else
-            return new QLineEdit(item->text(), parent);
+        if (dataType == Type_none)
+            return nullptr;
+
+        auto edit = new JZNodeParamValueWidget(parent);
+        edit->setDataType({ dataType });
+        edit->setValue(option.text);
+        return edit;
+    }
+
+    void setModelData(QWidget *editor,
+        QAbstractItemModel *model,
+        const QModelIndex &index) const override
+    {
+        auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
+        model->setData(index, edit->value());
     }
 
     void setTable(QTableWidget *table)

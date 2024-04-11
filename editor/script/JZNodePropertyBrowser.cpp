@@ -1,16 +1,28 @@
 #include <QApplication>
 #include <QPainter>
 #include <QStyle>
+#include <QStyledItemDelegate>
 #include "JZNodePropertyBrowser.h"
 #include "JZNodeType.h"
+#include "JZNodeParamWidget.h"
 
-JZNodeProperty::JZNodeProperty(QString name, int type)
-{
+JZNodeProperty::JZNodeProperty(QString name, NodePropretyType type)
+{    
     m_item = nullptr;
     m_enabled = true;
     m_name = name;
     m_type = type;
     m_parent = nullptr;
+}
+
+NodePropretyType JZNodeProperty::type() const
+{
+    return m_type;
+}
+
+bool JZNodeProperty::isEnabled() const
+{
+    return m_enabled;
 }
 
 void JZNodeProperty::setEnabled(bool flag)
@@ -44,6 +56,16 @@ const QString &JZNodeProperty::value() const
     return m_value;
 }
 
+void JZNodeProperty::setDataType(QList<int> data_type)
+{
+    m_dataType = data_type;
+}
+
+QList<int> JZNodeProperty::dataType()
+{
+    return m_dataType;
+}
+
 void JZNodeProperty::setValue(const QString &value)
 {
     m_value = value;
@@ -51,15 +73,52 @@ void JZNodeProperty::setValue(const QString &value)
         m_item->setText(1,value);
 }
 
+class PinValueItemDelegate : public QStyledItemDelegate
+{
+public:
+    PinValueItemDelegate(QObject *parent)
+        :QStyledItemDelegate(parent)
+    {
+    }
+
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+    {
+        auto prop = browser->property(index);
+        if (prop->type() != NodeProprety_Value)
+            return nullptr;
+        
+        QString text = index.data().toString();
+        auto edit = new JZNodeParamValueWidget(parent);
+        edit->setDataType(prop->dataType());
+        edit->setValue(option.text);
+        return edit;
+    }
+
+    void setModelData(QWidget *editor,
+        QAbstractItemModel *model,
+        const QModelIndex &index) const override
+    {
+        auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
+        model->setData(index, edit->value());
+        edit->deleteLater();
+    }
+
+    JZNodePropertyBrowser *browser;
+};
+
 //JZNodePropertyBrowser
 JZNodePropertyBrowser::JZNodePropertyBrowser()
-    :m_root("root", Type_none)
+    :m_root("root", NodeProprety_GroupId)
 {
     this->setColumnCount(2);
     this->setHeaderLabels({ "name","value" });
     this->setAlternatingRowColors(true);
     connect(this, &QTreeWidget::itemChanged, this, &JZNodePropertyBrowser::onItemChanged);
     this->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
+
+    PinValueItemDelegate *delegate = new PinValueItemDelegate(this);
+    delegate->browser = this;
+    this->setItemDelegateForColumn(1, delegate);
 }
 
 JZNodePropertyBrowser::~JZNodePropertyBrowser()
@@ -69,9 +128,9 @@ JZNodePropertyBrowser::~JZNodePropertyBrowser()
 
 
 void JZNodePropertyBrowser::onItemChanged(QTreeWidgetItem *item, int column)
-{
+{    
     auto text = item->text(column);
-    auto prop = m_propMap[item];
+    auto prop = m_propMap[item];    
     emit valueChanged(prop, text);
 }
 
@@ -85,6 +144,12 @@ void JZNodePropertyBrowser::clear()
 void JZNodePropertyBrowser::addProperty(JZNodeProperty *prop)
 {    
     createPropItem(this->invisibleRootItem(), prop);    
+}
+
+JZNodeProperty *JZNodePropertyBrowser::property(const QModelIndex &index)
+{
+    auto item = itemFromIndex(index);
+    return m_propMap.value(item, nullptr);
 }
 
 void JZNodePropertyBrowser::setItemEnabled(QTreeWidgetItem *item, bool flag)

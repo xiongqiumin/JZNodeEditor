@@ -87,6 +87,8 @@ protected slots:
     void onProjectChanged();
     
     void onFunctionOpen(QString filepath);    
+    void onAutoCompiler();
+    void onAutoRun();
 
     void onLog(LogObjectPtr log);
 
@@ -103,6 +105,8 @@ protected slots:
     void onTestProcessFinish();
     void onNetError();
     void onTabContextMenu(QPoint pos);
+
+    void onCompilerTimer();
 
 private:
     struct ActionStatus{
@@ -122,6 +126,22 @@ private:
 
         QVector<int> flags;
         QAction *action;
+    };
+
+    struct AutoBuildInfo
+    {
+        enum BuildFlag{
+            Build_None,
+            Build_Compiler,
+            Build_Run,
+        };
+
+        AutoBuildInfo();
+        void clear();
+
+        qint64 timestamp;
+        QString itemPath;
+        BuildFlag flag;
     };
 
     virtual void resizeEvent(QResizeEvent *event) override;
@@ -164,6 +184,8 @@ private:
     void resetEditor(JZEditor *editor);
     void initLocalProcessTest(bool flag);
     QIcon menuIcon(const QString &name);
+    void dealCompiler();
+    void dealRun();
     
     JZProject m_project;    
 
@@ -192,7 +214,11 @@ private:
     QList<JZNodeWatch*> m_debugWidgets;
     QAction *m_actionRun, *m_actionResume;
     QList<QAction*> m_debugActions;
-    QToolBar *m_toolDebug;
+    QToolBar *m_toolDebug;    
+
+    JZNodeBuilder m_builder;
+    QTimer *m_compilerTiemr;
+    AutoBuildInfo m_buildInfo;
 
     JZNodeProgram m_program;
     JZNodeRuntimeInfo m_runtime;

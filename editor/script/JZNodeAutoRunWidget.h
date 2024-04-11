@@ -19,6 +19,8 @@ public:
     void setDepend(const ScriptDepend &depend);
     const ScriptDepend &depend() const;
 
+    void setResult(QVariantList params);
+
 signals:
     void sigDependChanged();
 
@@ -26,8 +28,10 @@ protected slots:
     void onValueChanged(JZNodeProperty *pin, const QString &value);
 
 protected:       
-    enum {
+    enum PinType{
+        Pin_none,
         Pin_funcIn,
+        Pin_funcOut,
         Pin_member,
         Pin_global,
         Pin_hook,
@@ -39,13 +43,17 @@ protected:
         PropCoor();
 
         JZNodeProperty *pin;
-        int type;
+        PinType type;
         int nodeId;
         int index;
     };
 
-    void addPin(JZNodeProperty *pin, int type, int index, int nodeId = -1);
+    void addPin(JZNodeProperty *pin, PinType type, int index, int nodeId = -1);
     void clear();
+    PropCoor *propCoor(PinType type, int index);
+    void copyDependValue(ScriptDepend &old, ScriptDepend &dst);
+    bool typeEqual(const JZParamDefine &p1, const JZParamDefine &p2);
+    bool typeEqual(const QList<JZParamDefine> &p1, const QList<JZParamDefine> &p2);
 
     ScriptDepend m_depend;
     JZNodePropertyBrowser *m_tree;        

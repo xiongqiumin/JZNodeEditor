@@ -13,6 +13,8 @@ public:
     JZScriptItem(int type);
     virtual ~JZScriptItem();
 
+    bool isFunction() const;
+
     void loadFinish();
     void clear();
     int nextId();

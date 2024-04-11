@@ -48,7 +48,7 @@ void JZProjectItem::sort()
     });
 }
 
-QString JZProjectItem::name()
+QString JZProjectItem::name() const
 {
     return m_name;        
 }
@@ -74,7 +74,7 @@ QString JZProjectItem::itemPath()
         return m_name;
 }
 
-int JZProjectItem::itemType()
+int JZProjectItem::itemType() const
 {
     return m_itemType;
 }

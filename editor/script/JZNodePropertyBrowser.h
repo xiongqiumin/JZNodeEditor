@@ -4,20 +4,29 @@
 #include <QTreeWidget>
 #include <QSharedPointer>
 
-enum {
-    NodeProprety_GroupId = 20000,
-    NodeProprety_DataType,
-    NodeProprety_FilePath,
+enum NodePropretyType{
+    NodeProprety_GroupId,
+    NodeProprety_NodeId,
+    NodeProprety_Value,    
+    NodeProprety_FunctionHook,
+    NodeProprety_Count,
 };
 
 class JZNodePropertyBrowser;
 class JZNodeProperty
 {
 public:
-    JZNodeProperty(QString name, int type);
+    JZNodeProperty(QString name, NodePropretyType prop_type);
+
+    NodePropretyType type() const;
 
     void setEnabled(bool flag);
+    bool isEnabled() const;
+
     void addSubProperty(JZNodeProperty *prop);    
+
+    void setDataType(QList<int> data_type);
+    QList<int> dataType();
 
     void setValue(const QString &value);
     const QString &value() const;
@@ -28,12 +37,13 @@ protected:
     friend JZNodePropertyBrowser;    
 
     QString m_name;
-    int m_type;
+    NodePropretyType m_type;
     QString m_value;
     bool m_enabled;
     QTreeWidgetItem *m_item;    
     JZNodeProperty *m_parent;
     QList<QSharedPointer<JZNodeProperty>> m_childs;
+    QList<int> m_dataType;
 };
 
 class JZNodePropertyBrowser : public QTreeWidget
@@ -45,6 +55,8 @@ public:
     ~JZNodePropertyBrowser();
 
     void addProperty(JZNodeProperty *prop);
+    JZNodeProperty *property(const QModelIndex &index);
+
     void clear();
 
 signals:

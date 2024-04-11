@@ -11,6 +11,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFactory.h"
 #include "JZNodeMemberSelectDialog.h"
+#include "LogManager.h"
 
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
@@ -61,8 +62,7 @@ bool JZMemberEdit(JZNode *node)
 //JZNodeEditor
 JZNodeEditor::JZNodeEditor()
 {
-    m_type = Editor_script;
-    init();            
+    m_type = Editor_script;    
 }
 
 JZNodeEditor::~JZNodeEditor()
@@ -70,48 +70,73 @@ JZNodeEditor::~JZNodeEditor()
 
 }
 
-void JZNodeEditor::init()
-{
-    m_view = new JZNodeView();
-    m_nodePanel = new JZNodePanel();
-    m_nodeViewPanel = new JZNodeViewPanel();
-    m_nodeProp = new JZNodePropertyEditor();
-    m_runProp = new JZNodeAutoRunWidget();
-    connect(m_view,&JZNodeView::redoAvailable,this,&JZNodeEditor::redoAvailable);
-    connect(m_view,&JZNodeView::undoAvailable,this,&JZNodeEditor::undoAvailable);
-    connect(m_view,&JZNodeView::modifyChanged,this,&JZNodeEditor::modifyChanged);
-    connect(m_view,&JZNodeView::sigFunctionOpen, this, &JZNodeEditor::sigFunctionOpen);
-    
+QWidget *JZNodeEditor::createMidBar()
+{    
     QWidget *mid_bar = new QWidget();
+    mid_bar = new QWidget();
+
     QHBoxLayout *midbar_layout = new QHBoxLayout();
     mid_bar->setLayout(midbar_layout);
-    QCheckBox *boxAuto = new QCheckBox("开启测试");    
-    connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);    
-
-    midbar_layout->addWidget(boxAuto);    
-    midbar_layout->addStretch();
     midbar_layout->setContentsMargins(0, 0, 0, 0);
+
+    if (script()->isFunction())
+    {        
+        QCheckBox *boxAuto = new QCheckBox("开启测试");
+        connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);
+
+        QPushButton *btnAutoRun = new QPushButton("运行");
+        connect(btnAutoRun, &QPushButton::clicked, this, &JZNodeEditor::onAutoRuning);
+
+        midbar_layout->addWidget(boxAuto);
+        midbar_layout->addWidget(btnAutoRun);
+        midbar_layout->addStretch();                
+    }
+
+    return mid_bar;
+}
+
+void JZNodeEditor::init()
+{                
+    //left
+    m_nodePanel = new JZNodePanel();
+    m_nodeViewPanel = new JZNodeViewPanel();
+
+    QTabWidget *tabView = new QTabWidget();
+    tabView->addTab(m_nodePanel, "编辑");
+    tabView->addTab(m_nodeViewPanel, "节点");
+    tabView->setTabPosition(QTabWidget::South);
+
+    //mid
+    QWidget *mid_bar = createMidBar();
+    
+    m_view = new JZNodeView();
+    connect(m_view, &JZNodeView::redoAvailable, this, &JZNodeEditor::redoAvailable);
+    connect(m_view, &JZNodeView::undoAvailable, this, &JZNodeEditor::undoAvailable);
+    connect(m_view, &JZNodeView::modifyChanged, this, &JZNodeEditor::modifyChanged);
+    connect(m_view, &JZNodeView::sigFunctionOpen, this, &JZNodeEditor::sigFunctionOpen);
+    connect(m_view, &JZNodeView::sigAutoCompiler, this, &JZNodeEditor::sigAutoCompiler);
+    connect(m_view, &JZNodeView::sigAutoRun, this, &JZNodeEditor::sigAutoRun);
 
     QWidget *mid_widget = new QWidget();
     QVBoxLayout *mid_layout = new QVBoxLayout();
     mid_widget->setLayout(mid_layout);
     mid_layout->addWidget(mid_bar);
     mid_layout->addWidget(m_view);
-    mid_layout->setContentsMargins(0, 0, 0, 0);
+    mid_layout->setContentsMargins(0, 0, 0, 0);        
 
-    QVBoxLayout *l = new QVBoxLayout();
-    l->setContentsMargins(0,0,0,0);
-    this->setLayout(l);    
-    
-    QTabWidget *tabView = new QTabWidget();
-    tabView->addTab(m_nodePanel,"编辑");
-    tabView->addTab(m_nodeViewPanel,"节点");
-    tabView->setTabPosition(QTabWidget::South);
+    //right
+    m_nodeProp = new JZNodePropertyEditor();
+    m_runProp = new JZNodeAutoRunWidget();
 
     m_tabProp = new QTabWidget();
     m_tabProp->addTab(m_nodeProp, "属性");
     m_tabProp->addTab(m_runProp, "运行配置");
-    m_tabProp->setTabPosition(QTabWidget::South);
+    m_tabProp->setTabPosition(QTabWidget::South);    
+
+    //init widgets
+    QVBoxLayout *l = new QVBoxLayout();
+    l->setContentsMargins(0, 0, 0, 0);
+    this->setLayout(l);
 
     QSplitter *splitter = new QSplitter(Qt::Horizontal);    
     splitter->addWidget(tabView);
@@ -131,11 +156,13 @@ void JZNodeEditor::init()
     m_view->setPropertyEditor(m_nodeProp);    
     m_view->setRunEditor(m_runProp);
     m_tabProp->setTabVisible(1, false);
-}
+}    
 
 void JZNodeEditor::open(JZProjectItem *item)
 {
-    JZScriptItem* file = dynamic_cast<JZScriptItem*>(item);
+    init();
+
+    JZScriptItem* file = dynamic_cast<JZScriptItem*>(item);    
     m_view->setFile(file);    
     m_nodePanel->setFile(file);    
 }
@@ -215,7 +242,16 @@ void JZNodeEditor::onAutoRunChecked()
 {
     auto *box = qobject_cast<QCheckBox*>(sender());
     m_tabProp->setTabVisible(1, box->isChecked());
-    m_view->setAutoCheck(box->isChecked());
+    m_view->setAutoRunning(box->isChecked());   
+}
+
+void JZNodeEditor::onAutoRuning()
+{
+    auto script = this->script();    
+    if (m_runProp->depend().function.fullName() != script->function().fullName())
+        return;
+
+    emit sigAutoRun();
 }
 
 void JZNodeEditor::onActionLayout()
@@ -263,7 +299,43 @@ void JZNodeEditor::updateNode()
     m_nodePanel->updateNode();
 }
 
+JZScriptItem *JZNodeEditor::script()
+{
+    JZScriptItem* file = dynamic_cast<JZScriptItem*>(m_item);
+    return file;
+}
+
+ScriptDepend JZNodeEditor::scriptTestDepend()
+{
+    return m_runProp->depend();
+}
+
 void JZNodeEditor::setNodeValue(int nodeId, int prop_id, const QString &value)
 {
     m_view->setNodePropValue(nodeId, prop_id, value);
+}
+
+void JZNodeEditor::setCompierResult(const CompilerInfo &info)
+{
+    m_view->setCompierResult(info);
+
+    auto s = script();
+    if (s->itemType() == ProjectItem_scriptFunction)
+    {
+        QString function = script()->function().fullName();
+        m_runProp->setDepend(info.depend[function]);
+    }
+}
+
+void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
+{
+    if(info.result)
+    {
+        LOGI(Log_Runtime, "运行完毕.");
+        m_runProp->setResult(info.out);
+    }
+    else
+    {
+        LOGI(Log_Runtime, "run filed:" + info.runtimeError.error);
+    }
 }

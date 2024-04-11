@@ -24,6 +24,11 @@ JZScriptItem::~JZScriptItem()
 
 }
 
+bool JZScriptItem::isFunction() const
+{
+    return (itemType() == ProjectItem_scriptFunction);
+}
+
 void JZScriptItem::loadFinish()
 {
     auto it = m_nodes.begin();

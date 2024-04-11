@@ -12,6 +12,22 @@
 GraphNode::GraphNode()
 {
     node = nullptr;
+    isReached = false;
+}
+
+QList<JZNodeGemo> GraphNode::outPinList()
+{
+    QList<JZNodeGemo> next;
+    auto it_out = paramOut.begin();
+    while (it_out != paramOut.end())
+    {
+        auto &out_list = it_out.value();
+        for (int j = 0; j < out_list.size(); j++)
+            next << out_list[j];
+
+        it_out++;
+    }
+    return next;
 }
 
 // Graph
@@ -62,6 +78,93 @@ JZNodePin *Graph::pin(int nodeId, int pinId)
         return nullptr;
 }
 
+void Graph::walkParamNode(GraphNode *node)
+{
+    Q_ASSERT(node->node->isParamNode());
+
+    QList<GraphNode*> cur_list;
+    QList<GraphNode*> next_list;
+    cur_list.push_back(node);
+
+    for (int i = 0; i < cur_list.size(); i++)
+    {
+        auto cur = cur_list[i];
+        cur->isReached = true;
+
+        auto in_it = cur->paramIn.begin();
+        while (in_it != cur->paramIn.end())
+        {
+            auto &in_list = in_it.value();
+            for (int in_idx = 0; in_idx < in_list.size(); in_idx++)
+            {
+                auto pin = this->pin(in_list[i]);
+                if (!pin->isParam())
+                    continue;
+
+                auto in_node = graphNode(in_list[i].nodeId);
+                if (!in_node->isReached && in_node->node->isParamNode())
+                    next_list << in_node;
+            }
+            in_it++;
+        }
+        
+        std::swap(next_list, cur_list);
+    }
+}
+
+void Graph::walkFlowNode(GraphNode *node)
+{
+    QList<GraphNode*> cur_list;
+    QList<GraphNode*> next_list;    
+    cur_list.push_back(node);
+
+    while (cur_list.size() > 0)
+    {
+        next_list.clear();
+        for (int i = 0; i < cur_list.size(); i++)
+        {
+            auto cur = cur_list[i];
+            cur->isReached = true;
+
+            auto in_it = cur->paramIn.begin();
+            while (in_it != cur->paramIn.end())
+            {
+                auto &in_list = in_it.value();
+                for (int in_idx = 0; in_idx < in_list.size(); in_idx++)
+                {
+                    auto pin = this->pin(in_list[i]);
+                    if (!pin->isParam())
+                        continue;
+
+                    auto in_node = graphNode(in_list[i].nodeId);
+                    if (!in_node->isReached && in_node->node->isParamNode())
+                        walkParamNode(in_node);
+                }
+                in_it++;
+            }
+
+            auto out_it = cur->paramOut.begin();
+            while (out_it != cur->paramOut.end())
+            {
+                auto &out_list = out_it.value();
+                for (int out_idx = 0; out_idx < out_list.size(); out_idx++)
+                {
+                    auto pin = this->pin(out_list[i]);
+                    if (!(pin->isFlow() || pin->isSubFlow()))
+                        continue;
+
+                    auto out_node = graphNode(out_list[i].nodeId);
+                    if (!out_node->isReached)
+                        next_list << out_node;
+                }
+                out_it++;
+            }            
+        }
+
+        std::swap(next_list, cur_list);
+    }
+}
+
 bool Graph::check()
 {
     //排序          
@@ -74,13 +177,13 @@ bool Graph::check()
 bool Graph::toposort()
 {
     QList<GraphNode *> result;
-    QMap<int, int> nodeMap;
+    QMap<int, int> nodeMap; //入度
     for (auto v : m_nodes)
         nodeMap[v.data()->node->id()] = 0;
     for (auto v : m_nodes)
     {
-        auto &next = v->next;
-        for (int j = 0; j < next.size(); j++)
+        auto next = v->outPinList();
+        for(int j = 0; j < next.size(); j++)
             nodeMap[next[j].nodeId]++;
     }
 
@@ -93,7 +196,7 @@ bool Graph::toposort()
             if (it.value() == 0)
             {
                 auto cur_node = m_nodes[it.key()].data();
-                auto &next = cur_node->next;
+                auto next = cur_node->outPinList();
                 for (int i = 0; i < next.size(); i++)
                     nodeMap[next[i].nodeId]--;
 
@@ -120,11 +223,13 @@ bool Graph::toposort()
             }
             break;
         }
-        std::sort(tmp.begin(), tmp.end(), [](const GraphNode *n1, const GraphNode *n2)
-        { return n1->node->id() < n2->node->id(); });
+        
+        std::sort(tmp.begin(), tmp.end(), [](const GraphNode *n1, const GraphNode *n2){ 
+            return n1->node->id() < n2->node->id(); 
+        });
         result.append(tmp);
     }
-    topolist = result;
+    topolist = result;    
     return true;
 }
 
@@ -150,6 +255,7 @@ NodeCompilerInfo::NodeCompilerInfo()
 {
     node_id = -1;
     node_type = Node_none;    
+    start = -1;
     parentId = -1;    
     allSubReturn = -1;    
 }
@@ -249,8 +355,10 @@ JZNodeCompiler::JZNodeCompiler()
 {    
     m_script = nullptr;
     m_scriptFile = nullptr;
-    m_currentGraph = nullptr;    
+    m_originGraph = nullptr;
     m_statmentList = nullptr;
+
+    m_buildGraph = GraphPtr(new Graph());
 }
 
 JZNodeCompiler::~JZNodeCompiler()
@@ -286,6 +394,72 @@ CompilerInfo JZNodeCompiler::compilerInfo()
     return m_compilerInfo;
 }
 
+void JZNodeCompiler::updateBuildGraph()
+{
+    m_buildGraph->clear();
+
+    //clone
+    auto it = m_originGraph->m_nodes.begin();
+    while (it != m_originGraph->m_nodes.end())
+    {
+        GraphNode *node = new GraphNode();
+        *node = *it.value().data();
+        m_buildGraph->m_nodes[it.key()] = GraphNodePtr(node);
+        it++;
+    }
+    
+    for (int i = 0; i < m_originGraph->topolist.size(); i++)
+    {
+        int node_id = m_originGraph->topolist[i]->node->id();
+        auto node = m_buildGraph->m_nodes[node_id].data();
+        m_buildGraph->topolist.push_back(node);
+    }
+
+    //filter
+    auto topolist = m_buildGraph->topolist;
+    for (auto node : topolist)
+        node->isReached = false;
+    for (int i = 0; i < topolist.size(); i++)
+    {
+        if (topolist[i]->node->flowInCount() == 0 && topolist[i]->node->isFlowNode())
+            m_buildGraph->walkFlowNode(topolist[i]);
+    }
+   
+    topolist.clear();
+    for (int i = 0; i < m_buildGraph->topolist.size(); i++)
+    {
+        if (m_buildGraph->topolist[i]->isReached)
+            topolist << m_buildGraph->topolist[i];
+    }
+    m_buildGraph->topolist = topolist;
+
+    //unlink
+    auto unlinkNoReached = [this](QMap<int, QList<JZNodeGemo>> &gemo_map)
+    {   
+        auto it = gemo_map.begin();
+        while (it != gemo_map.end())
+        {
+            auto &gemo_list = it.value();
+            for (int i = gemo_list.size() - 1; i >= 0; i--)
+            {
+                GraphNode *other = m_buildGraph->graphNode(gemo_list[i].nodeId);
+                if (!other->isReached)
+                    gemo_list.removeAt(i);
+            }
+            if (gemo_list.size() == 0)
+                it = gemo_map.erase(it);
+            else
+                it++;
+        }
+    };        
+    for (int i = 0; i < m_buildGraph->topolist.size(); i++)
+    {
+        auto node = m_buildGraph->topolist[i];
+        unlinkNoReached(node->paramIn);
+        unlinkNoReached(node->paramOut);
+    }
+}
+
 bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
 {        
     init(scriptFile);
@@ -298,6 +472,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     m_script->clear();
     m_script->file = scriptFile->itemPath();    
     m_compilerInfo = CompilerInfo();
+    m_compilerInfo.result = false;
 
     JZScriptClassItem *class_file = m_project->getItemClass(scriptFile);
     if (class_file)
@@ -306,42 +481,30 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     bool buildRet = true;
     for(int graph_idx = 0; graph_idx < m_graphList.size(); graph_idx++)
     {
-        auto graph = m_graphList[graph_idx].data();
-        m_currentGraph = graph;                
+        m_originGraph = m_graphList[graph_idx].data();                
 
         int buildType = m_scriptFile->itemType();
         resetStack();         
         m_nodeInfo.clear();
         m_depend.clear();
         m_statmentList = nullptr;
-
-        for (int i = 0; i < graph->topolist.size(); i++)
-        {
-            auto node = graph->topolist[i]->node;
-            if (node->type() != Node_display)
-                continue;
-
-            NodeCompilerInfo info;
-            info.node_id = node->id();
-            info.node_type = node->type();
-            info.pinType.insert(node->paramIn(0), Type_any);
-            m_nodeInfo[info.node_id] = info;
-        }
+        updateBuildGraph();
+        if (m_buildGraph->topolist.isEmpty())
+            continue;
 
         bool ret = false;
         if(buildType == ProjectItem_scriptFlow)
         {
             ret = bulidControlFlow();
             if(ret)
-                addEventHandle(graph->topolist);
+                addEventHandle(m_buildGraph->topolist);
         }
         else if(buildType == ProjectItem_scriptParamBinding)
             ret = buildParamBinding();
         else if(buildType == ProjectItem_scriptFunction)
         {
-            JZNode *start_node = graph->topolist[0]->node;
-            if(start_node->type() != Node_functionStart)
-                continue;
+            JZNode *start_node = m_buildGraph->topolist[0]->node;
+            Q_ASSERT(start_node->type() == Node_functionStart);
                         
             ret = bulidControlFlow();
             if(ret)
@@ -411,6 +574,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
         buildRet = (buildRet && ret);
     }
     
+    m_compilerInfo.result = buildRet;
     return buildRet;
 }
 
@@ -523,9 +687,9 @@ void JZNodeCompiler::addNodeFlowPc(int node_id, int cond,int pc)
 
 void JZNodeCompiler::linkNodes()
 {
-    for (int node_idx = 0; node_idx < m_currentGraph->topolist.size(); node_idx++)
+    for (int node_idx = 0; node_idx < m_buildGraph->topolist.size(); node_idx++)
     {
-        auto node = m_currentGraph->topolist[node_idx]->node;
+        auto node = m_buildGraph->topolist[node_idx]->node;
         if (!node->isFlowNode())
             continue;
 
@@ -591,32 +755,23 @@ void JZNodeCompiler::updateDebugInfo()
 
 void JZNodeCompiler::updateDispayNode()
 {
-    for (int node_idx = 0; node_idx < m_currentGraph->topolist.size(); node_idx++)
+    for (int node_idx = 0; node_idx < m_originGraph->topolist.size(); node_idx++)
     {
-        auto graph = m_currentGraph->topolist[node_idx];
-        if (graph->node->type() != Node_display)
+        auto graph_node = m_originGraph->topolist[node_idx];
+        if (graph_node->node->type() != Node_display)
             continue;
 
-        auto it = graph->paramIn.begin();
-        while (it != graph->paramIn.end())
+        auto it = graph_node->paramIn.begin();
+        while (it != graph_node->paramIn.end())
         {
-            NodeWatch watch;
-            watch.traget = paramId(graph->node->id(), it.key());
-
-            auto &list = it.value();
-            for (int i = 0; i < list.size(); i++)
+            auto &in_list = it.value();
+            if (in_list.size() > 0)
             {
-                if (m_scriptFile->getNode(list[i].nodeId)->isFlowNode())
-                {
-                    watch.source << paramId(graph->node->id(),it.key());
-                    break;
-                }
-                else
-                {
-                    watch.source << paramId(list[i]);
-                }
-            }
-            m_script->watchList.push_back(watch);
+                NodeWatch watch;
+                watch.traget = paramId(graph_node->node->id(), it.key());
+                watch.source << paramId(in_list[0]);
+                m_script->watchList.push_back(watch);
+            }            
             it++;
         }
     }
@@ -704,9 +859,9 @@ void JZNodeCompiler::updateDepend()
         }
     }
 
-    for (int i = 0; i < m_currentGraph->topolist.size(); i++)
+    for (int i = 0; i < m_buildGraph->topolist.size(); i++)
     {
-        auto node = m_currentGraph->topolist[i]->node;
+        auto node = m_buildGraph->topolist[i]->node;
         if (node->type() == Node_function)
         {
             auto *func_node = dynamic_cast<JZNodeFunction*>(node);            
@@ -756,16 +911,16 @@ int JZNodeCompiler::pinType(JZNodeGemo gemo)
 
 bool JZNodeCompiler::isPinLiteral(int nodeId, int pinId)
 {
-    if (m_currentGraph->graphNode(nodeId)->paramIn.contains(pinId))
+    if (m_buildGraph->graphNode(nodeId)->paramIn.contains(pinId))
         return false;
 
-    return !m_currentGraph->node(nodeId)->pinValue(pinId).isEmpty();
+    return !m_buildGraph->node(nodeId)->pinValue(pinId).isEmpty();
 }
 
 QVariant JZNodeCompiler::pinLiteral(int nodeId, int pinId)
 {
     int data_type = pinType(nodeId, pinId);
-    return JZNodeType::matchValue(data_type, m_currentGraph->node(nodeId)->pinValue(pinId));
+    return JZNodeType::matchValue(data_type, m_buildGraph->node(nodeId)->pinValue(pinId));
 }
 
 bool JZNodeCompiler::compilerNode(JZNode *node)
@@ -906,8 +1061,7 @@ bool JZNodeCompiler::genGraphs()
         auto to = graph->m_nodes[lines[i].to.nodeId];
         int from_prop_id = lines[i].from.pinId;
         int to_prop_id = lines[i].to.pinId;
-        
-        from->next.push_back(lines[i].to);                
+                     
         from->paramOut[from_prop_id].push_back(lines[i].to);
         to->paramIn[to_prop_id].push_back(lines[i].from);        
     }
@@ -942,16 +1096,16 @@ bool JZNodeCompiler::checkBuildResult()
 {
     bool ok = true;
 
-    for(int i = 0; i < m_currentGraph->topolist.size(); i++)    
+    for(int i = 0; i < m_buildGraph->topolist.size(); i++)    
     {
-        int id = m_currentGraph->topolist[i]->node->id();
+        int id = m_buildGraph->topolist[i]->node->id();
         if (!m_nodeInfo.contains(id))
             continue;
 
         auto &nodeInfo = m_nodeInfo[id];
         if(!nodeInfo.error.isEmpty())
         {
-            QString name = m_currentGraph->topolist[i]->node->name();
+            QString name = m_buildGraph->topolist[i]->node->name();
             QString error = makeLink(nodeInfo.error,m_scriptFile->itemPath(),nodeInfo.node_id) + "\n";
             m_error += error;
             ok = false;
@@ -1003,7 +1157,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int node_id)
 
 bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &error)
 {                    
-    GraphNode *graph = m_currentGraph->graphNode(node_id);    
+    GraphNode *graph = m_buildGraph->graphNode(node_id);
     
     error.clear();
     //获得输入类型    
@@ -1103,7 +1257,7 @@ calc_end:
 bool JZNodeCompiler::bulidControlFlow()
 {        
     //build node
-    QList<GraphNode *> graph_list = m_currentGraph->topolist;    
+    QList<GraphNode *> graph_list = m_buildGraph->topolist;
     QList<GraphNode *> flow_list;
     for (int graph_idx = 0; graph_idx < graph_list.size(); graph_idx++)
     {
@@ -1238,20 +1392,20 @@ bool JZNodeCompiler::buildDataFlow(const QList<GraphNode*> &graph_list)
 bool JZNodeCompiler::buildParamBinding()
 {           
     int start = m_statmentList->size();
-    buildDataFlow(m_currentGraph->topolist);
+    buildDataFlow(m_buildGraph->topolist);
     addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
 
     if(!checkBuildResult())
         return false;
 
-    addEventHandle(m_currentGraph->topolist);
+    addEventHandle(m_buildGraph->topolist);
     return true;
 }
 
 int JZNodeCompiler::isAllFlowReturn(int id, bool root)
 {
     NodeCompilerInfo &info = m_nodeInfo[id];
-    auto graph_node = m_currentGraph->graphNode(id);
+    auto graph_node = m_buildGraph->graphNode(id);
     if (info.allSubReturn != -1)
         return info.allSubReturn;
 
@@ -1322,7 +1476,7 @@ void JZNodeCompiler::replaceSubNode(int id,int parent_id,int flow_index)
     }
 
     //替换子节点后续
-    auto graph_node = m_currentGraph->graphNode(id);
+    auto graph_node = m_buildGraph->graphNode(id);
     for(int i = 0; i < info.jmpList.size(); i++)
     {   
         int pin = info.jmpList[i].pin;
@@ -1364,7 +1518,7 @@ JZScriptItem *JZNodeCompiler::currentFile()
 
 Graph *JZNodeCompiler::currentGraph()
 {
-    return m_currentGraph;
+    return m_buildGraph.data();
 }
 
 int JZNodeCompiler::currentPc()
@@ -1542,9 +1696,9 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
         addAlloc(JZNodeIRAlloc::Stack, param->name,param->dataType(), param->value);
     }
 
-    for (int i = 0; i < m_currentGraph->topolist.size(); i++)
+    for (int i = 0; i < m_buildGraph->topolist.size(); i++)
     {
-        auto node = m_currentGraph->topolist[i]->node;        
+        auto node = m_buildGraph->topolist[i]->node;        
         auto in_list = node->paramInList();
         for (int j = 0; j < in_list.size(); j++)
         {
@@ -1665,7 +1819,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
     if (!checkPinInType(nodeId, prop_id, error))
         return false;
  
-    GraphNode* in_node = m_currentGraph->graphNode(nodeId);
+    GraphNode* in_node = m_buildGraph->graphNode(nodeId);
     auto in_list = in_node->node->paramInList();
     for (int prop_idx = 0; prop_idx < in_list.size(); prop_idx++)
     {
@@ -1683,7 +1837,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
             Q_ASSERT(gemo_list.size() > 0);
             for (int i = 0; i < gemo_list.size(); i++)
             {
-                GraphNode *from_node = m_currentGraph->graphNode(gemo_list[i].nodeId);
+                GraphNode *from_node = m_buildGraph->graphNode(gemo_list[i].nodeId);
                 if (from_node->node->isFlowNode())
                     break;
 
@@ -1740,15 +1894,15 @@ bool JZNodeCompiler::addDataInput(int nodeId,QString &error)
 
 bool JZNodeCompiler::addFlowInput(int nodeId, int prop_id, QString &error)
 {    
-    Q_ASSERT(m_currentGraph->graphNode(nodeId)->node->isFlowNode() || m_currentGraph->graphNode(nodeId)->node->type() == Node_and
-        || m_currentGraph->graphNode(nodeId)->node->type() == Node_or);        
+    Q_ASSERT(m_buildGraph->graphNode(nodeId)->node->isFlowNode() || m_buildGraph->graphNode(nodeId)->node->type() == Node_and
+        || m_buildGraph->graphNode(nodeId)->node->type() == Node_or);
 
     QList<GraphNode*> graph_list;
     QSet<GraphNode*> graphs;
 
     //广度遍历所有节点
     QList<GraphNode*> in_list;
-    in_list << m_currentGraph->graphNode(nodeId);
+    in_list << m_buildGraph->graphNode(nodeId);
 
     while (in_list.size() > 0)
     {
@@ -1776,7 +1930,7 @@ bool JZNodeCompiler::addFlowInput(int nodeId, int prop_id, QString &error)
                 QList<JZNodeGemo> &gemo_list = it.value();
                 for (int i = 0; i < gemo_list.size(); i++)
                 {
-                    GraphNode *from_node = m_currentGraph->graphNode(gemo_list[i].nodeId);
+                    GraphNode *from_node = m_buildGraph->graphNode(gemo_list[i].nodeId);
                     if (from_node->node->isFlowNode())
                     {
                         auto n = from_node->node;
@@ -1804,9 +1958,9 @@ bool JZNodeCompiler::addFlowInput(int nodeId, int prop_id, QString &error)
     }
 
     //要计算的节点，从topolist 获取保证计算顺序
-    for (int i = 0; i < m_currentGraph->topolist.size(); i++)
+    for (int i = 0; i < m_buildGraph->topolist.size(); i++)
     {
-        auto node = m_currentGraph->topolist[i];
+        auto node = m_buildGraph->topolist[i];
         if (graphs.contains(node))
             graph_list.push_back(node);
     }
@@ -1824,7 +1978,7 @@ bool JZNodeCompiler::addFlowInput(int nodeId,QString &error)
 
 void JZNodeCompiler::addFlowOutput(int nodeId)
 {
-    auto graph = m_currentGraph->graphNode(nodeId);
+    auto graph = m_buildGraph->graphNode(nodeId);
     Q_ASSERT(graph);
     auto node = graph->node;
     //set out put
@@ -1920,4 +2074,12 @@ int JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst,const JZNodeIRParam 
     op->dst = dst;
     op->src = src;
     return addStatement(JZNodeIRPtr(op));
+}
+
+void JZNodeCompiler::addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst)
+{
+    QList<JZNodeIRParam> in, out;
+    in << src << irLiteral(dst_type);
+    out << dst;
+    addCall("convert", in, out);   
 }

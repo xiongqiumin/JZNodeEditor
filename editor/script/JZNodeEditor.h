@@ -8,6 +8,15 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeAutoRunWidget.h"
 #include "JZNodePropertyEditor.h"
+#include "JZNodeEngine.h"
+
+class UnitTestResult
+{
+public:
+    bool result;
+    QVariantList out;
+    JZNodeRuntimeError runtimeError;
+};
 
 class JZNodeEditor : public JZEditor
 {
@@ -42,20 +51,29 @@ public:
     int runtimeNode();
     void setRuntimeNode(int nodeId);
 
+    JZScriptItem *script();
+    ScriptDepend scriptTestDepend();
+
+    void setCompierResult(const CompilerInfo &info);
+    void setAutoRunResult(const UnitTestResult &result);
+
     void setNodeValue(int nodeId, int prop_id, const QString &value);
     void updateNode();
 
 signals:
     void sigFunctionOpen(QString name);
+    void sigAutoCompiler();
+    void sigAutoRun();
 
 protected slots:
     void onActionLayout();
     void onActionFitInView();
-
     void onAutoRunChecked();    
+    void onAutoRuning();
 
 protected:
     void init();
+    QWidget *createMidBar();
 
     JZNodeView *m_view;    
     JZNodePanel *m_nodePanel;

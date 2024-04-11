@@ -19,8 +19,10 @@ class GraphNode
 public:
     GraphNode();
 
-    JZNode *node;
-    QList<JZNodeGemo> next;
+    QList<JZNodeGemo> outPinList();
+
+    JZNode *node;    
+    bool isReached;
 
     QMap<int, int> pinType;  //节点数据类型
     QMap<int, QList<JZNodeGemo>> paramIn;  //输入位置
@@ -43,6 +45,8 @@ public:
     JZNode *node(int id);
     JZNodePin *pin(JZNodeGemo gemo);
     JZNodePin *pin(int nodeId, int pinId);
+    void walkFlowNode(GraphNode *node);
+    void walkParamNode(GraphNode *node);    
 
     QList<GraphNode*> topolist;
     QMap<int, GraphNodePtr> m_nodes;
@@ -127,6 +131,7 @@ public:
 class CompilerInfo
 {
 public:
+    bool result;
     QMap<int, QString> nodeError;    
     QMap<QString,ScriptDepend> depend;
 };
@@ -187,6 +192,7 @@ public:
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);    
+    void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst);
     int addStatement(JZNodeIRPtr ir);    
     
     int addJumpNode(int pin);      //设置下一个flow,应当在执行完操作后增加
@@ -239,6 +245,8 @@ protected:
     void addFunction(const JZFunctionDefine &define,int node_id);
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);     
+
+    void updateBuildGraph();
     
     bool compilerNode(JZNode *node);
     void pushCompilerNode(int id);
@@ -260,7 +268,8 @@ protected:
     QString m_className;    
     JZNodeScript *m_script;
     JZScriptItem *m_scriptFile;         
-    Graph *m_currentGraph;               
+    Graph *m_originGraph; //原始图
+    GraphPtr m_buildGraph;  //当前处理的图
         
     QList<NodeCompilerStack> m_compilerNodeStack;       //编译时node栈
     QList<JZNodeIRPtr> *m_statmentList;

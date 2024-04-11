@@ -22,12 +22,20 @@ public:
     ~JZNodeBuilder();
     
     bool build(JZNodeProgram *program);
+    bool buildScript(JZScriptItem *file);
     bool buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNodeProgram *program);    
 
     QString error() const;
+    CompilerInfo compilerInfo(JZScriptItem *file) const;
 
 protected:    
     friend JZNodeCustomBuild;
+
+    struct ScriptInfo
+    {
+        JZNodeScriptPtr script;
+        CompilerInfo compilerInfo;
+    };
 
     struct ConnectInfo
     {
@@ -38,16 +46,20 @@ protected:
     };
 
     void clear();      
-    bool buildScriptFile(JZScriptItem *script);
     bool buildCustom(JZFunctionDefine define,std::function<bool(JZNodeCompiler*, QString&)> func,const QList<JZParamDefine> &local = QList<JZParamDefine>());
     bool link();        
     void initGlobal();
     void buildProgram();
 
+    void replaceNopStatment(JZNodeScript *script, int index);
+    void replaceUnitTestParam(JZScriptItem *file, ScriptDepend *depend);
+    void replaceUnitTestFunction(JZScriptItem *script, ScriptDepend *depend);
+
     JZNodeProgram *m_program;    
     JZProject *m_project;    
 
-    QMap<QString,JZNodeScriptPtr> m_scripts;   
+    QMap<QString, ScriptInfo> m_scripts;
+
     QList<ConnectInfo> m_connects;
     QString m_error;
 };

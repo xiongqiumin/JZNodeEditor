@@ -70,6 +70,40 @@ void JZNodeBuilder::initGlobal()
     buildCustom(global_func, func);
 }
 
+CompilerInfo JZNodeBuilder::compilerInfo(JZScriptItem *file) const
+{
+    auto it = m_scripts.find(file->itemPath());
+    if (it == m_scripts.end())
+        return CompilerInfo();
+
+    return it->compilerInfo;
+}
+
+bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
+{
+    QString path = scriptFile->itemPath();
+    m_scripts[path].script = JZNodeScriptPtr(new JZNodeScript());
+
+    auto classFile = m_project->getItemClass(scriptFile);
+    JZNodeScript *script = m_scripts[path].script.data();
+    script->clear();
+    if (classFile)
+        script->className = classFile->className();
+
+    LOGI(Log_Compiler, "build " + scriptFile->itemPath());
+    JZNodeCompiler compiler;
+    bool ret = compiler.build(scriptFile, script);
+    m_scripts[path].compilerInfo = compiler.compilerInfo();
+    if(!ret)
+    {
+        m_error += compiler.error();
+        LOGE(Log_Compiler, compiler.error());
+        return false;
+    }
+
+    return true;
+}
+
 bool JZNodeBuilder::build(JZNodeProgram *program)
 {    
     clear();    
@@ -102,7 +136,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     for(int i = 0; i < bind_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(bind_list[i]);
-        if(!buildScriptFile(script))
+        if(!buildScript(script))
             return false;
     }
 
@@ -110,7 +144,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     for (int i = 0; i < function_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
-        if (!buildScriptFile(script))
+        if (!buildScript(script))
             return false;        
     }
 
@@ -118,7 +152,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     for(int i = 0; i < flow_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(flow_list[i]);
-        if(!buildScriptFile(script))
+        if(!buildScript(script))
             return false;
     }
 
@@ -156,44 +190,34 @@ void JZNodeBuilder::buildProgram()
     for (int i = 0; i < bind_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(bind_list[i]);
-        buildScriptFile(script);
+        buildScript(script);
     }
 
     auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
     for (int i = 0; i < function_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
-        buildScriptFile(script);
+        buildScript(script);
     }
 
     auto flow_list = m_project->itemList("./", ProjectItem_scriptFlow);
     for (int i = 0; i < flow_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(flow_list[i]);
-        buildScriptFile(script);
+        buildScript(script);
     }
 }
 
-bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNodeProgram *program)
+void JZNodeBuilder::replaceNopStatment(JZNodeScript *script, int index)
 {
-    clear();    
-    m_program = program;
-    m_program->clear();
-    m_scripts.clear();
+    auto ir_nop = new JZNodeIR(OP_nop);
+    ir_nop->pc = script->statmentList[index]->pc;
+    ir_nop->isBreak = script->statmentList[index]->isBreak;
+    script->statmentList[index] = JZNodeIRPtr(ir_nop);
+}
 
-    buildProgram();
-    m_scripts.remove(file->itemPath());
-    if (!buildScriptFile(file))
-        return false;    
-
-    auto replaceStatment = [](JZNodeScript *script,int index)
-    {
-        auto ir_nop = new JZNodeIR(OP_nop);
-        ir_nop->pc = script->statmentList[index]->pc;
-        ir_nop->isBreak = script->statmentList[index]->isBreak;
-        script->statmentList[index] = JZNodeIRPtr(ir_nop);
-    };
-
+void JZNodeBuilder::replaceUnitTestParam(JZScriptItem *file,ScriptDepend *depend)
+{
     auto isDstVaild = [file](JZNodeIRParam *param, ScriptDepend *depend)->bool
     {
         if (!param->isRef())
@@ -210,7 +234,7 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
     {
         if (!param->isRef())
             return;
-        
+
         auto type = JZNodeCompiler::variableCoor(file, param->ref());
         if (type == Variable_local)
             return;
@@ -219,7 +243,7 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
         *param = irLiteral(JZNodeType::initValue(def->dataType(), def->value));
     };
 
-    auto script = m_scripts[file->itemPath()].data();
+    auto script = m_scripts[file->itemPath()].script.data();
     for (int i = 0; i < script->statmentList.size(); i++)
     {
         auto *stmt = script->statmentList[i].data();
@@ -231,7 +255,7 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
             if (isDstVaild(&set->dst, depend))
                 replaceParam(&set->src, depend);
             else
-                replaceStatment(script,i);
+                replaceNopStatment(script, i);
             break;
         }
         case OP_add:
@@ -258,15 +282,20 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
                 replaceParam(&expr->src2, depend);
             }
             else
-            {   
-                replaceStatment(script, i);                
-            }      
+            {
+                replaceNopStatment(script, i);
+            }
             break;
         }
         default:
             break;
         }
     }
+}
+
+void JZNodeBuilder::replaceUnitTestFunction(JZScriptItem *file, ScriptDepend *depend)
+{
+    auto script = m_scripts[file->itemPath()].script.data();
 
     auto it = depend->hook.begin();
     while (it != depend->hook.end())
@@ -296,19 +325,40 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
                                 replace = false;
                                 break;
                             }
-                        }                        
+                        }
                     }
                 }
 
-                if(replace)
-                    replaceStatment(script, pc);                
+                if (replace)
+                    replaceNopStatment(script, pc);
             }
         }
         it++;
     }
+}
 
+bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNodeProgram *program)
+{
+    clear();    
+    m_program = program;
+    m_program->clear();
+    m_scripts.clear();
+
+    buildProgram();
+    m_scripts.remove(file->itemPath());
+    if (!buildScript(file))
+        return false;        
+
+    auto script = m_scripts[file->itemPath()].script.data();
+    JZNodeScriptPtr tmp_script = JZNodeScriptPtr(script->clone());
+    
+    replaceUnitTestParam(file, depend);
+    replaceUnitTestFunction(file, depend);
+    
     JZFunctionDefine unit_func;
-    unit_func.name = "__unittest__";           
+    unit_func.name = depend->function.fullName() + "__unittest__";
+    for (int i = 0; i < depend->function.paramIn.size(); i++)
+        unit_func.paramIn.push_back(JZParamDefine("in" + QString::number(i), Type_string));
     unit_func.paramOut = depend->function.paramOut;    
 
     auto build_unit = [this, depend](JZNodeCompiler *c, QString&)->bool {        
@@ -329,9 +379,11 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
             ir_alloc->dataType = def.dataType();
             ir_alloc->value = irLiteral(JZNodeType::defaultValue(def.dataType()));
             c->addStatement(JZNodeIRPtr(ir_alloc));          
-
-            auto v = JZNodeType::initValue(def.dataType(), def.value);
-            c->addSetVariable(irId(i), irLiteral(v));
+            
+            if(def.dataType() != Type_string)
+                c->addConvert(irId(Reg_Call + i), def.dataType(), irId(i));
+            else
+                c->addSetVariable(irId(i), irId(Reg_Call + i));
         }
                                   
         for (int i = 0; i < depend->member.size(); i++)
@@ -367,9 +419,7 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
 
         c->addCall(depend->function.fullName(), in, out);
         return true;
-    };
-    
-    m_program->m_scripts = m_scripts;
+    };            
 
     QList<JZParamDefine> local_list;
     if (depend->function.isMemberFunction())
@@ -377,11 +427,7 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
     if (!buildCustom(unit_func, build_unit, local_list))
         return false;
 
-    JZFunctionDefine global_func;
-    global_func.name = "__init__";
-    if (!buildCustom(global_func, [](JZNodeCompiler*, QString&)->bool { return true; }))
-        return false;
-    
+    link();    
     return true;
 }
 
@@ -430,29 +476,6 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
     return true;
 }
 
-bool JZNodeBuilder::buildScriptFile(JZScriptItem *scriptFile)
-{       
-    QString path = scriptFile->itemPath();
-    m_scripts[path] = JZNodeScriptPtr(new JZNodeScript());
-    
-    auto classFile = m_project->getItemClass(scriptFile);
-    JZNodeScript *script = m_scripts[path].data();
-    script->clear();
-    if(classFile)
-        script->className = classFile->className();
-
-    LOGI(Log_Compiler, "build " + scriptFile->itemPath());
-    JZNodeCompiler compiler;
-    if(!compiler.build(scriptFile,script))
-    {        
-        m_error += compiler.error();
-        LOGE(Log_Compiler, compiler.error());
-        return false;
-    }
-    
-    return true;
-}
-
 bool JZNodeBuilder::link()
 {       
     std::sort(m_program->m_objectDefines.begin(),m_program->m_objectDefines.end(),
@@ -460,7 +483,12 @@ bool JZNodeBuilder::link()
             return d1.id < d2.id;
         });
 
-    m_program->m_scripts = m_scripts;     
+    auto it_s = m_scripts.begin();
+    while (it_s != m_scripts.end())
+    {
+        m_program->m_scripts[it_s.key()] = it_s->script;
+        it_s++;
+    }
 
     JZFunctionDefine func;
     func.name = "__init__";    

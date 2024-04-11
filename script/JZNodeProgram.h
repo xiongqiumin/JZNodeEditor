@@ -75,6 +75,10 @@ public:
     void clear();    
 
     JZFunction *function(QString name);
+    
+    JZNodeScript *clone();
+    void saveToStream(QDataStream &s);
+    void loadFromStream(QDataStream &s);
 
     QString file;
     QString className;
@@ -82,10 +86,7 @@ public:
     QList<JZNodeIRPtr> statmentList;            
 
     QList<JZFunction> functionList;    
-    QList<NodeWatch> watchList;    //display node    
-
-    void saveToStream(QDataStream &s);
-    void loadFromStream(QDataStream &s);
+    QList<NodeWatch> watchList;    //display node        
 
 protected:
     Q_DISABLE_COPY(JZNodeScript);    

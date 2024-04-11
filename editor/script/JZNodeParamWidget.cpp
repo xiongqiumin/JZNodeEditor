@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QPushButton>
 #include <QPlainTextEdit>
+#include <QApplication>
 #include "JZNodeObject.h"
 #include "JZNodeParamWidget.h"
 #include "JZNodeType.h"
@@ -119,6 +120,34 @@ void JZNodeParamTypeWidget::setType(QString type)
     setCurrentText(type);
 }
 
+//https://stackoverflow.com/questions/12145522/why-pressing-of-tab-key-emits-only-qeventshortcutoverride-event
+class JZNodeParamValueEventFilter : public QObject
+{
+public:
+    JZNodeParamValueEventFilter(QObject *parent)
+        :QObject(parent)
+    {
+    }
+
+    virtual bool eventFilter(QObject *object, QEvent *event) override
+    {
+        switch (event->type())
+        {
+        case QEvent::FocusIn:
+        case QEvent::FocusOut:
+        case QEvent::FocusAboutToChange:
+            // Forward focus events to editor because the QStyledItemDelegate relies on them
+            QCoreApplication::sendEvent(main, event);
+            break;
+        default:
+            break;
+        }
+        return QObject::eventFilter(object, event);
+    }
+
+    QWidget *main;
+};
+
 //JZNodeParamValueWidget
 JZNodeParamValueWidget::JZNodeParamValueWidget(QWidget *parent)
     :QWidget(parent)
@@ -199,6 +228,10 @@ void JZNodeParamValueWidget::createWidget(QString widget)
         m_widget = edit;
     }
 
+    JZNodeParamValueEventFilter *w = new JZNodeParamValueEventFilter(this);
+    w->main = this;
+    m_widget->installEventFilter(w);
+    setFocusProxy(m_widget);
     layout()->addWidget(m_widget);
 }
 
@@ -246,8 +279,8 @@ void JZNodeParamValueWidget::initWidget()
         }
     }    
 
-    if (m_widget->inherits("QLineEdit"))  
-        m_widget->setFixedWidth(80);    
+    //if (m_widget->inherits("QLineEdit"))  
+    //    m_widget->setFixedWidth(80);    
 
     m_widget->blockSignals(false);    
 }

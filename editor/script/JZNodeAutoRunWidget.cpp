@@ -5,7 +5,7 @@
 JZNodeAutoRunWidget::PropCoor::PropCoor()
 {
     pin = nullptr;
-    type = -1;
+    type = Pin_none;
     nodeId = -1;
     index = -1;
 }
@@ -13,21 +13,21 @@ JZNodeAutoRunWidget::PropCoor::PropCoor()
 //JZNodeAutoRunWidget
 JZNodeAutoRunWidget::JZNodeAutoRunWidget(QWidget *p)
     :QWidget(p)
-{    
+{
     QVBoxLayout *l = new QVBoxLayout();
-    l->setContentsMargins(0, 0, 0, 0);        
+    l->setContentsMargins(0, 0, 0, 0);
 
-    m_tree = new JZNodePropertyBrowser();    
+    m_tree = new JZNodePropertyBrowser();
     connect(m_tree, &JZNodePropertyBrowser::valueChanged, this, &JZNodeAutoRunWidget::onValueChanged);
-    
+
     l->addWidget(m_tree);
     setLayout(l);
 
-    setDepend(ScriptDepend());    
+    setDepend(ScriptDepend());
 }
 
 JZNodeAutoRunWidget::~JZNodeAutoRunWidget()
-{    
+{
 }
 
 void JZNodeAutoRunWidget::clear()
@@ -37,7 +37,7 @@ void JZNodeAutoRunWidget::clear()
     m_propList.clear();
 }
 
-void JZNodeAutoRunWidget::addPin(JZNodeProperty *pin, int type, int index, int nodeId)
+void JZNodeAutoRunWidget::addPin(JZNodeProperty *pin, PinType type, int index, int nodeId)
 {
     PropCoor coor;
     coor.pin = pin;
@@ -47,68 +47,119 @@ void JZNodeAutoRunWidget::addPin(JZNodeProperty *pin, int type, int index, int n
     m_propList.push_back(coor);
 }
 
+bool JZNodeAutoRunWidget::typeEqual(const JZParamDefine &p1, const JZParamDefine &p2)
+{
+    return p1.name == p2.name && p1.type == p2.type;
+}
+
+bool JZNodeAutoRunWidget::typeEqual(const QList<JZParamDefine> &p1, const QList<JZParamDefine> &p2)
+{
+    if (p1.size() != p2.size())
+        return false;
+
+    for (int i = 0; i < p1.size(); i++)
+    {
+        if (!typeEqual(p1[i], p2[i]))
+            return false;
+    }
+    return true;
+}
+
+void JZNodeAutoRunWidget::copyDependValue(ScriptDepend &old, ScriptDepend &dst)
+{
+    if (typeEqual(old.function.paramIn, dst.function.paramIn))
+        dst.function.paramIn = old.function.paramIn;
+
+    for (int i = 0; i < old.global.size(); i++)
+    {
+        for (int j = 0; j < dst.global.size(); j++)
+        {
+            if (typeEqual(old.global[i], dst.global[j]))
+                dst.global[j] = old.global[i];
+        }
+    }
+
+    auto old_it = old.hook.begin();
+    while(old_it != old.hook.end())    
+    {
+        auto new_it = dst.hook.find(old_it.key());
+        if (new_it != dst.hook.end())
+        {
+            if (typeEqual(new_it.value(),old_it.value()))
+                new_it.value() = old_it.value();
+        }
+        old_it++;
+    }
+}
+
 void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 {
-    clear();
+    auto old = m_depend;
     m_depend = depend;
-
+    copyDependValue(old,m_depend);
+    
+    m_tree->clear();
+    m_propList.clear();
     auto item_input = new JZNodeProperty("输入依赖", NodeProprety_GroupId);    
     m_tree->addProperty(item_input);    
 
-    int param_start = (depend.function.isMemberFunction())? 1:0;
-    if (depend.function.paramIn.size() > param_start)
+    int param_start = (m_depend.function.isMemberFunction())? 1:0;
+    if (m_depend.function.paramIn.size() > param_start)
     {
         auto func_input = new JZNodeProperty("输入参数", NodeProprety_GroupId);
         item_input->addSubProperty(func_input);
 
-        for (int i = param_start; i < depend.function.paramIn.size(); i++)
+        for (int i = param_start; i < m_depend.function.paramIn.size(); i++)
         {
-            auto &p = depend.function.paramIn[i];
-            auto sub_item = new JZNodeProperty(p.name, p.dataType());            
-            sub_item->setValue(depend.function.paramIn[i].initValue());
+            auto &p = m_depend.function.paramIn[i];
+            auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
+            sub_item->setDataType({ p.dataType()});
+            sub_item->setValue(m_depend.function.paramIn[i].initValue());
 
             func_input->addSubProperty(sub_item);
             addPin(sub_item, Pin_funcIn, i);
         }
     }
 
-    if (depend.member.size() > 0)
+    if (m_depend.member.size() > 0)
     {
         auto item_member = new JZNodeProperty("成员变量", NodeProprety_GroupId);
         item_input->addSubProperty(item_member);
 
-        for (int i = 0; i < depend.member.size(); i++)
+        for (int i = 0; i < m_depend.member.size(); i++)
         {
-            auto sub_item = new JZNodeProperty(depend.member[i].name, depend.member[i].dataType());
-            sub_item->setValue(depend.member[i].initValue());
+            auto sub_item = new JZNodeProperty(m_depend.member[i].name, NodeProprety_Value);
+            sub_item->setDataType({ m_depend.member[i].dataType()} );
+            sub_item->setValue(m_depend.member[i].initValue());
 
             item_member->addSubProperty(sub_item);
             addPin(sub_item, Pin_member, i);
         }
     }
 
-    if (depend.global.size() > 0)
+    if (m_depend.global.size() > 0)
     {        
         auto item_global = new JZNodeProperty("全局变量", NodeProprety_GroupId);
         item_input->addSubProperty(item_global);
 
-        for (int i = 0; i < depend.global.size(); i++)
+        for (int i = 0; i < m_depend.global.size(); i++)
         {
-            auto sub_item = new JZNodeProperty(depend.global[i].name, depend.global[i].dataType());
-            sub_item->setValue(depend.global[i].initValue());
+            auto sub_item = new JZNodeProperty(m_depend.global[i].name, NodeProprety_Value);
+            sub_item->setDataType({ m_depend.global[i].dataType() });
+            sub_item->setValue(m_depend.global[i].initValue());
 
             item_global->addSubProperty(sub_item);
             addPin(sub_item, Pin_global, i);
         }
     }
 
-    if (depend.hook.size() > 0)
+    if (m_depend.hook.size() > 0)
     {        
-        auto item_function_hook = new JZNodeProperty("函数返回", NodeProprety_GroupId);
+        auto item_function_hook = new JZNodeProperty("函数返回", NodeProprety_FunctionHook);        
         item_input->addSubProperty(item_function_hook);
 
-        auto it = depend.hook.begin();
-        while(it != depend.hook.end())
+        auto it = m_depend.hook.begin();
+        while(it != m_depend.hook.end())
         {
             QString id = "(" + QString::number(it.key()) + ")";
             auto item_function = new JZNodeProperty(id, NodeProprety_GroupId);
@@ -117,7 +168,8 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             auto &node_out = it.value();
             for (int i = 0; i < node_out.size(); i++)
             {
-                auto sub_item = new JZNodeProperty(node_out[i].name, node_out[i].dataType());
+                auto sub_item = new JZNodeProperty(node_out[i].name, NodeProprety_Value);
+                sub_item->setDataType({ node_out[i].dataType() });
                 sub_item->setValue(node_out[i].initValue());
 
                 item_function->addSubProperty(sub_item);
@@ -126,26 +178,51 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             it++;
         }
     }
-
-    auto item_output = new JZNodeProperty("运行输出", NodeProprety_GroupId);
-    if (depend.function.paramOut.size() > 0)
+    
+    if (m_depend.function.paramOut.size() > 0)
     {        
+        auto item_output = new JZNodeProperty("运行输出", NodeProprety_GroupId);
         m_tree->addProperty(item_output);
         
-        for (int i = 0; i < depend.function.paramOut.size(); i++)
+        for (int i = 0; i < m_depend.function.paramOut.size(); i++)
         {
-            auto &p = depend.function.paramOut[i];
-            auto sub_item = new JZNodeProperty(p.name, p.dataType());
-            sub_item->setValue(depend.function.paramOut[i].value);
+            auto &p = m_depend.function.paramOut[i];
+            auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
+            sub_item->setDataType({ Type_string });
+            sub_item->setEnabled(false);
 
-            item_output->addSubProperty(sub_item);            
+            item_output->addSubProperty(sub_item);       
+            addPin(sub_item, Pin_funcOut, i);            
         }
     }
 }
 
 const ScriptDepend &JZNodeAutoRunWidget::depend() const
 {
+    Q_ASSERT(!m_depend.function.isNull());
     return m_depend;
+}
+
+void JZNodeAutoRunWidget::setResult(QVariantList params)
+{
+    m_tree->blockSignals(true);
+    for (int i = 0; i < params.size(); i++)
+    {
+        auto coor = propCoor(Pin_funcOut, i);
+        QString text = JZNodeType::toString(params[i]);
+        coor->pin->setValue(text);
+    }
+    m_tree->blockSignals(false);
+}
+
+JZNodeAutoRunWidget::PropCoor *JZNodeAutoRunWidget::propCoor(PinType type, int index)
+{
+    for (int i = 0; i < m_propList.size(); i++)
+    {
+        if (m_propList[i].index == index && m_propList[i].type == type)
+            return &m_propList[i];
+    }
+    return nullptr;
 }
 
 void JZNodeAutoRunWidget::onValueChanged(JZNodeProperty *pin, const QString &value)
