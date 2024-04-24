@@ -55,12 +55,12 @@ void SampleImageBatch::addEvent()
         param_line->setVariable(line_name);
         set_text->setFunction("LineEdit.setText");
 
-        flow_srcipt->addNode(JZNodePtr(func_clicked));
-        flow_srcipt->addNode(JZNodePtr(func_open_dialog));
-        flow_srcipt->addNode(JZNodePtr(func_isEmpty));
-        flow_srcipt->addNode(JZNodePtr(branch));
-        flow_srcipt->addNode(JZNodePtr(param_line));
-        flow_srcipt->addNode(JZNodePtr(set_text));
+        flow_srcipt->addNode(func_clicked);
+        flow_srcipt->addNode(func_open_dialog);
+        flow_srcipt->addNode(func_isEmpty);
+        flow_srcipt->addNode(branch);
+        flow_srcipt->addNode(param_line);
+        flow_srcipt->addNode(set_text);
 
         flow_srcipt->addConnect(func_clicked->flowOutGemo(), func_open_dialog->flowInGemo());
         flow_srcipt->addConnect(func_open_dialog->flowOutGemo(), branch->flowInGemo());
@@ -101,8 +101,8 @@ void SampleImageBatch::addEvent()
     output_empty->setFunction("string.isEmpty");
     input_exist->setFunction("File.exists");
     output_exist->setFunction("File.exists");
-    flow_srcipt->addNode(JZNodePtr(deal_clicked));
-    flow_srcipt->addNode(JZNodePtr(func_deal));    
+    flow_srcipt->addNode(deal_clicked);
+    flow_srcipt->addNode(func_deal);    
 
     JZNodeThis *node_this = new JZNodeThis();
     JZNodeFunction *msg_empty = new JZNodeFunction();
@@ -111,30 +111,30 @@ void SampleImageBatch::addEvent()
     msg_noExist->setFunction("MessageBox.information");
     msg_empty->setParamInValue(1, "\"input or output is empty\"");
     msg_noExist->setParamInValue(1, "\"input or output not exists\"");
-    flow_srcipt->addNode(JZNodePtr(node_this));
-    flow_srcipt->addNode(JZNodePtr(msg_empty));
-    flow_srcipt->addNode(JZNodePtr(msg_noExist));
+    flow_srcipt->addNode(node_this);
+    flow_srcipt->addNode(msg_empty);
+    flow_srcipt->addNode(msg_noExist);
     flow_srcipt->addConnect(node_this->paramOutGemo(0), msg_empty->paramInGemo(0));
     flow_srcipt->addConnect(node_this->paramOutGemo(0), msg_noExist->paramInGemo(0));
 
-    flow_srcipt->addNode(JZNodePtr(param_lineInput));
-    flow_srcipt->addNode(JZNodePtr(param_lineOutput));
-    flow_srcipt->addNode(JZNodePtr(lineInput_text));
-    flow_srcipt->addNode(JZNodePtr(lineOutput_text));
+    flow_srcipt->addNode(param_lineInput);
+    flow_srcipt->addNode(param_lineOutput);
+    flow_srcipt->addNode(lineInput_text);
+    flow_srcipt->addNode(lineOutput_text);
     flow_srcipt->addConnect(param_lineInput->paramOutGemo(0), lineInput_text->paramInGemo(0));
     flow_srcipt->addConnect(param_lineOutput->paramOutGemo(0), lineOutput_text->paramInGemo(0));
     
 
     // if empty
-    flow_srcipt->addNode(JZNodePtr(param_or_empty));
-    flow_srcipt->addNode(JZNodePtr(if_empty));
-    flow_srcipt->addNode(JZNodePtr(return_empty));
+    flow_srcipt->addNode(param_or_empty);
+    flow_srcipt->addNode(if_empty);
+    flow_srcipt->addNode(return_empty);
     flow_srcipt->addConnect(deal_clicked->flowOutGemo(), if_empty->flowInGemo());
     flow_srcipt->addConnect(param_or_empty->paramOutGemo(0), if_empty->paramInGemo(0));    
     flow_srcipt->addConnect(if_empty->subFlowOutGemo(0), msg_empty->flowInGemo());
     flow_srcipt->addConnect(msg_empty->flowOutGemo(0), return_empty->flowInGemo());
-    flow_srcipt->addNode(JZNodePtr(input_empty));
-    flow_srcipt->addNode(JZNodePtr(output_empty));
+    flow_srcipt->addNode(input_empty);
+    flow_srcipt->addNode(output_empty);
     flow_srcipt->addConnect(lineInput_text->paramOutGemo(0), input_empty->paramInGemo(0));
     flow_srcipt->addConnect(lineOutput_text->paramOutGemo(0), output_empty->paramInGemo(0));
     flow_srcipt->addConnect(input_empty->paramOutGemo(0), param_or_empty->paramInGemo(0));
@@ -143,17 +143,17 @@ void SampleImageBatch::addEvent()
     // if exist
     JZNodeNot *not1 = new JZNodeNot();
     JZNodeNot *not2 = new JZNodeNot();
-    flow_srcipt->addNode(JZNodePtr(param_or_exist));
-    flow_srcipt->addNode(JZNodePtr(if_exist));
-    flow_srcipt->addNode(JZNodePtr(return_exist));    
-    flow_srcipt->addNode(JZNodePtr(not1));
-    flow_srcipt->addNode(JZNodePtr(not2));
+    flow_srcipt->addNode(param_or_exist);
+    flow_srcipt->addNode(if_exist);
+    flow_srcipt->addNode(return_exist);    
+    flow_srcipt->addNode(not1);
+    flow_srcipt->addNode(not2);
     flow_srcipt->addConnect(if_empty->flowOutGemo(), if_exist->flowInGemo());
     flow_srcipt->addConnect(if_exist->subFlowOutGemo(0), msg_noExist->flowInGemo());
     flow_srcipt->addConnect(msg_noExist->flowOutGemo(0), return_exist->flowInGemo());
     flow_srcipt->addConnect(param_or_exist->paramOutGemo(0), if_exist->paramInGemo(0));
-    flow_srcipt->addNode(JZNodePtr(input_exist));
-    flow_srcipt->addNode(JZNodePtr(output_exist));
+    flow_srcipt->addNode(input_exist);
+    flow_srcipt->addNode(output_exist);
     flow_srcipt->addConnect(lineInput_text->paramOutGemo(0), input_exist->paramInGemo(0));
     flow_srcipt->addConnect(lineOutput_text->paramOutGemo(0), output_exist->paramInGemo(0));
     flow_srcipt->addConnect(input_exist->paramOutGemo(0), not1->paramInGemo(0));
@@ -165,10 +165,10 @@ void SampleImageBatch::addEvent()
     JZNodeParam *param_lineOutput2 = new JZNodeParam();
     JZNodeFunction *lineInput_text2 = new JZNodeFunction();
     JZNodeFunction *lineOutput_text2 = new JZNodeFunction();
-    flow_srcipt->addNode(JZNodePtr(param_lineInput2));
-    flow_srcipt->addNode(JZNodePtr(param_lineOutput2));
-    flow_srcipt->addNode(JZNodePtr(lineInput_text2));
-    flow_srcipt->addNode(JZNodePtr(lineOutput_text2));
+    flow_srcipt->addNode(param_lineInput2);
+    flow_srcipt->addNode(param_lineOutput2);
+    flow_srcipt->addNode(lineInput_text2);
+    flow_srcipt->addNode(lineOutput_text2);
     param_lineInput2->setVariable("lineInput");
     param_lineOutput2->setVariable("lineOutput");    
     lineInput_text2->setFunction("LineEdit.text");
@@ -184,8 +184,8 @@ void SampleImageBatch::addEvent()
     exit_clicked->setSingle(btn_meta->single("clicked"));
     exit_clicked->setVariable("btnExit");
     func_exit->setFunction("MainWindow.close");
-    flow_srcipt->addNode(JZNodePtr(exit_clicked));
-    flow_srcipt->addNode(JZNodePtr(func_exit));
+    flow_srcipt->addNode(exit_clicked);
+    flow_srcipt->addNode(func_exit);
     flow_srcipt->addConnect(exit_clicked->flowOutGemo(), func_exit->flowInGemo());
 }
 
@@ -208,8 +208,8 @@ void SampleImageBatch::addProcessImage()
     input->setVariable("input");
 
     ret->setFunction("MainWindow.processImage");
-    script->addNode(JZNodePtr(input));
-    script->addNode(JZNodePtr(ret));
+    script->addNode(input);
+    script->addNode(ret);
 
     script->addConnect(start->flowOutGemo(), ret->flowInGemo());
     script->addConnect(input->paramOutGemo(0), ret->paramInGemo(0));
@@ -265,28 +265,28 @@ void SampleImageBatch::addProcessGetImage()
     set_list->setVariable("list");
     get_list->setVariable("list");
 
-    script->addNode(JZNodePtr(in_dir));    
-    script->addNode(JZNodePtr(set_in_file));   
-    script->addNode(JZNodePtr(get_in_file));    
-    script->addNode(JZNodePtr(get_list));
-    script->addNode(JZNodePtr(set_list));
-    script->addNode(JZNodePtr(create_dir));
-    script->addNode(JZNodePtr(entry_info));
-    script->addNode(JZNodePtr(fileinfo_isFile));    
-    script->addNode(JZNodePtr(dir_process));
-    script->addNode(JZNodePtr(branch));    
-    script->addNode(JZNodePtr(node_for));
-    script->addNode(JZNodePtr(list_size));
-    script->addNode(JZNodePtr(op_add_in));    
-    script->addNode(JZNodePtr(list_at));
-    script->addNode(JZNodePtr(fileinfo_create));
-    script->addNode(JZNodePtr(out_list));
-    script->addNode(JZNodePtr(outlist_push));
+    script->addNode(in_dir);    
+    script->addNode(set_in_file);   
+    script->addNode(get_in_file);    
+    script->addNode(get_list);
+    script->addNode(set_list);
+    script->addNode(create_dir);
+    script->addNode(entry_info);
+    script->addNode(fileinfo_isFile);    
+    script->addNode(dir_process);
+    script->addNode(branch);    
+    script->addNode(node_for);
+    script->addNode(list_size);
+    script->addNode(op_add_in);    
+    script->addNode(list_at);
+    script->addNode(fileinfo_create);
+    script->addNode(out_list);
+    script->addNode(outlist_push);
 
     JZNodeFlag *dir_flag = new JZNodeFlag();
     dir_flag->setFlag("Dir::Filters");
     dir_flag->setValue(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
-    script->addNode(JZNodePtr(dir_flag));
+    script->addNode(dir_flag);
 
     script->addConnect(in_dir->paramOutGemo(0), create_dir->paramInGemo(0));
     script->addConnect(node_start->flowOutGemo(0), set_list->flowInGemo());
@@ -376,29 +376,29 @@ void SampleImageBatch::addProcessDir()
     set_list->setVariable("list");
     get_list->setVariable("list");
 
-    script->addNode(JZNodePtr(in_dir));
-    script->addNode(JZNodePtr(out_dir));
-    script->addNode(JZNodePtr(set_in_file));
-    script->addNode(JZNodePtr(set_out_file));
-    script->addNode(JZNodePtr(get_in_file));
-    script->addNode(JZNodePtr(get_out_file));
-    script->addNode(JZNodePtr(get_list));
-    script->addNode(JZNodePtr(set_list));
+    script->addNode(in_dir);
+    script->addNode(out_dir);
+    script->addNode(set_in_file);
+    script->addNode(set_out_file);
+    script->addNode(get_in_file);
+    script->addNode(get_out_file);
+    script->addNode(get_list);
+    script->addNode(set_list);
     
-    script->addNode(JZNodePtr(file_process));    
-    script->addNode(JZNodePtr(image_load));
-    script->addNode(JZNodePtr(image_save));
-    script->addNode(JZNodePtr(node_for));
-    script->addNode(JZNodePtr(list_size));       
-    script->addNode(JZNodePtr(list_at));    
+    script->addNode(file_process);    
+    script->addNode(image_load);
+    script->addNode(image_save);
+    script->addNode(node_for);
+    script->addNode(list_size);       
+    script->addNode(list_at);    
     
     JZNodeFunction *str_replace = new JZNodeFunction();
     JZNodeFunction *walk_dir = new JZNodeFunction();    
     walk_dir->setFunction("MainWindow.walkDir");
     str_replace->setFunction("string.replace");
-    script->addNode(JZNodePtr(walk_dir));
-    script->addNode(JZNodePtr(str_replace));
-    script->addNode(JZNodePtr(list_create));
+    script->addNode(walk_dir);
+    script->addNode(str_replace);
+    script->addNode(list_create);
     
     script->addConnect(node_start->flowOutGemo(0), set_list->flowInGemo());        
     script->addConnect(list_create->paramOutGemo(0), set_list->paramInGemo(1));
@@ -423,15 +423,15 @@ void SampleImageBatch::addProcessDir()
     pro_dlg_set_value->setFunction("ProgressDialog.setValue");
     pro_dlg_set_range->setFunction("ProgressDialog.setRange");
     pro_dlg_cancel->setFunction("ProgressDialog.wasCanceled");
-    script->addNode(JZNodePtr(pro_dlg));
-    script->addNode(JZNodePtr(set_pro_dlg));
-    script->addNode(JZNodePtr(pro_dlg_create));
-    script->addNode(JZNodePtr(pro_dlg_set_label));
-    script->addNode(JZNodePtr(pro_dlg_set_value));
-    script->addNode(JZNodePtr(pro_dlg_set_range));
-    script->addNode(JZNodePtr(pro_dlg_cancel));
-    script->addNode(JZNodePtr(if_cancel));
-    script->addNode(JZNodePtr(node_ret));
+    script->addNode(pro_dlg);
+    script->addNode(set_pro_dlg);
+    script->addNode(pro_dlg_create);
+    script->addNode(pro_dlg_set_label);
+    script->addNode(pro_dlg_set_value);
+    script->addNode(pro_dlg_set_range);
+    script->addNode(pro_dlg_cancel);
+    script->addNode(if_cancel);
+    script->addNode(node_ret);
 
     script->addConnect(walk_dir->flowOutGemo(0), set_pro_dlg->flowInGemo());
     script->addConnect(pro_dlg_create->paramOutGemo(0), set_pro_dlg->paramInGemo(1));
@@ -488,16 +488,16 @@ void SampleImageBatch::addProcessDir()
     fileInfo_create->setFunction("FileInfo.create");
     fileInfo_path->setFunction("FileInfo.path");
 
-    script->addNode(JZNodePtr(fileInfo_create));
-    script->addNode(JZNodePtr(dir_create));
-    script->addNode(JZNodePtr(dir_isExists));
-    script->addNode(JZNodePtr(dir_makepath));
-    script->addNode(JZNodePtr(set_dir));    
-    script->addNode(JZNodePtr(out_path));
-    script->addNode(JZNodePtr(set_out_path));
-    script->addNode(JZNodePtr(if_exist));
-    script->addNode(JZNodePtr(if_not_exist));
-    script->addNode(JZNodePtr(fileInfo_path));
+    script->addNode(fileInfo_create);
+    script->addNode(dir_create);
+    script->addNode(dir_isExists);
+    script->addNode(dir_makepath);
+    script->addNode(set_dir);    
+    script->addNode(out_path);
+    script->addNode(set_out_path);
+    script->addNode(if_exist);
+    script->addNode(if_not_exist);
+    script->addNode(fileInfo_path);
 
     script->addConnect(set_out_file->flowOutGemo(0), set_out_path->flowInGemo());
     script->addConnect(fileInfo_path->paramOutGemo(0), set_out_path->paramInGemo(1));     

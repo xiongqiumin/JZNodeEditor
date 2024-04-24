@@ -1,7 +1,7 @@
 #ifndef JZNODE_IAMGE_BATCH_H_
 #define JZNODE_IAMGE_BATCH_H_
 
-#include "SampleProject.h"
+#include "../SampleProject.h"
 
 class SampleImageBatch : public SampleProject
 {

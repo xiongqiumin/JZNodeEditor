@@ -198,9 +198,19 @@ protected:
 class JZNodeAbstractMember : public JZNode
 {
 public:
-    void setMember(QString className,QStringList params);
+    JZNodeAbstractMember();
+    ~JZNodeAbstractMember();
+
     QString className();
-    QStringList members();    
+
+    void setMember(QStringList params);    
+    QStringList member();    
+
+protected:
+    virtual void pinLinked(int id);
+    void updateMemberType();
+    void updateMemberType(int type);
+    QList<int> memberPinList();
 };
 
 //JZNodeMemberParam

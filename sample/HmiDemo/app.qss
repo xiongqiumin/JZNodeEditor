@@ -1,0 +1,528 @@
+QPushButton
+{
+    background-color: #494951;
+    border-color: #575762;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 14px;
+}
+QPushButton:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style="back_btn"]
+{
+    background-color: #33333C;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/back_nor.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-width: 0;
+}
+QPushButton[style="back_btn"]:pressed
+{
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/back_pre.png);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+QPushButton[style="down"]
+{
+    background-color: #505059;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/down.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style="down"]:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QPushButton[style="down_coffee"]
+{
+    background-color: #505059;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/down.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style="down_coffee"]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style="l_coffee"]
+{
+    background-color: #505059;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/left.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style="l_coffee"]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style="r_coffee"]
+{
+    background-color: #505059;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/right.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style="r_coffee"]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style="up"]
+{
+    background-color: #505059;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/up.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style="up"]:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QPushButton[style="up_coffee"]
+{
+    background-color: #505059;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/up.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style="up_coffee"]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox
+{
+    background-color: #494951;
+    border-color: #575762;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 14px;
+}
+QCheckBox:checked:focus
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:checked
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:checked:hover
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:checked:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox[style="sw"]
+{
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/off.png);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+QCheckBox[style="sw"]:checked:focus
+{
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/on.png);
+    background-repeat: no-repeat;
+}
+QCheckBox[style="sw"]:checked
+{
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/on.png);
+    background-repeat: no-repeat;
+}
+QCheckBox[style="sw"]:checked:hover
+{
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/on.png);
+    background-repeat: no-repeat;
+}
+QCheckBox[style="sw"]:checked:pressed
+{
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/on.png);
+    background-repeat: no-repeat;
+}
+Image
+{
+    color: #444444;
+}
+Image[style="icon_btn"]
+{
+    background-color: #292930;
+    border-color: #5C5C66;
+    border-radius: 60;
+    border-style: solid;
+    border-width: 3;
+    color: #00000000;
+}
+Image[style="icon_btn"]:pressed
+{
+    background-color: #363640;
+    border-color: #A1A1B3;
+}
+QLabel
+{
+    color: #FFFFFF;
+}
+QLabel:disable
+{
+    color: #44444466;
+}
+QLabel[style="set_temp"]
+{
+    background-color: #37373D;
+    border-color: #5E5E69;
+    border-radius: 6;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 16px;
+}
+QRadioButton
+{
+    color: #444444;
+}
+QRadioButton[style="auto"]
+{
+    background-color: #323238;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/auto.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style="auto"]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="auto"]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="auto"]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="auto"]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="coffee"]
+{
+    background-color: #323238;
+    border-color: #737380;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 16px;
+}
+QRadioButton[style="coffee"]:checked:focus
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style="coffee"]:checked
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style="coffee"]:checked:hover
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style="coffee"]:checked:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style="cold"]
+{
+    background-color: #323238;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/cold.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style="cold"]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="cold"]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="cold"]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="cold"]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="hot"]
+{
+    background-color: #323238;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/hot.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style="hot"]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="hot"]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="hot"]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="hot"]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="humidity"]
+{
+    background-color: #323238;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/humidity.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style="humidity"]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="humidity"]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="humidity"]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="humidity"]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_direct"]
+{
+    background-color: #323238;
+    border-color: #737380;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 16px;
+}
+QRadioButton[style="wind_direct"]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_direct"]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_direct"]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_direct"]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_pre"]
+{
+    background-color: #323238;
+    background-image: url(C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/wind_pre.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style="wind_pre"]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_pre"]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_pre"]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style="wind_pre"]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QWidget[widget_type="view"]
+{
+    background-color: #3F3F47;
+    border-color: #505059;
+    border-radius: 8;
+    border-style: solid;
+    border-width: 1;
+}
+QWidget[style="air_line"][widget_type="view"]
+{
+    border-color: #5C5C66;
+    border-style: solid;
+    border-width: 0 2 0 2;
+    border-radius: 0;
+}
+QWidget[style="null"][widget_type="view"]
+{
+    border-color: #00000000;
+    border-style: solid;
+    border-width: 1;
+}
+QWidget[style="null"][widget_type="view"]:disable
+{
+    background-color: #3F3F47;
+    border-radius: 8;
+}
+QWidget[style="null"][widget_type="view"]:focus
+{
+    background-color: #3F3F47;
+    border-radius: 8;
+}
+QWidget[widget_type="window"]
+{
+    background-color: #33333C;
+}
+QWidget{ text-align: center; }
+QLabel{ text-align: center; }
+QPushButton{ text-align: center; }
+QRadioButton::indicator{ width: 0px;}
+QCheckBox::indicator{ width: 0px;}
+
+/*horizontal ：水平QSlider*/
+QSlider::groove:horizontal {
+border: 0px solid #bbb;
+}
+
+/*1.滑动过的槽设计参数*/
+QSlider::sub-page:horizontal {
+ /*槽颜色*/
+background: #FB9949;
+ /*外环区域倒圆角度*/
+border-radius: 10px;
+ /*上遮住区域高度*/
+margin-top:15px;
+ /*下遮住区域高度*/
+margin-bottom:15px;
+/*width在这里无效，不写即可*/
+}
+
+/*2.未滑动过的槽设计参数*/
+QSlider::add-page:horizontal {
+/*槽颜色*/
+background: rgb(0,0, 0);
+/*外环大小0px就是不显示，默认也是0*/
+border: 0px solid #777;
+/*外环区域倒圆角度*/
+border-radius: 10px;
+ /*上遮住区域高度*/
+margin-top: 15px;
+ /*下遮住区域高度*/
+margin-bottom:15px;
+}
+ 
+/*3.平时滑动的滑块设计参数*/
+QSlider::handle:horizontal {
+/*滑块颜色*/
+background: #FB9949;
+/*滑块的宽度*/
+width: 15px;
+ /*滑块外环倒圆角度*/
+border-radius: 5px; 
+ /*上遮住区域高度*/
+margin-top:12px;
+ /*下遮住区域高度*/
+margin-bottom:12px;
+}
+

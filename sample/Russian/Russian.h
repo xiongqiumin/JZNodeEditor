@@ -1,7 +1,7 @@
 #ifndef JZNODE_RUSSIAN_H_
 #define JZNODE_RUSSIAN_H_
 
-#include "SampleProject.h"
+#include "../SampleProject.h"
 
 class SampleRussian : public SampleProject
 {

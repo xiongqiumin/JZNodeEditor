@@ -55,9 +55,9 @@ void TestServer::init(JZProject *project)
     start_timer->setParamInValue(1, "500");
 
     auto start_node = script->getNode(0);
-    script->addNode(JZNodePtr(create_timer));
-    script->addNode(JZNodePtr(set_timer));
-    script->addNode(JZNodePtr(start_timer));
+    script->addNode(create_timer);
+    script->addNode(set_timer);
+    script->addNode(start_timer);
 
     script->addConnect(start_node->flowOutGemo(0), create_timer->flowInGemo());
     script->addConnect(create_timer->paramOutGemo(0), set_timer->paramInGemo(0));
@@ -73,8 +73,8 @@ void TestServer::init(JZProject *project)
     set_param->setVariable("test");
     create->setClassName("TestClass");
     
-    script->addNode(JZNodePtr(set_param));
-    script->addNode(JZNodePtr(create));
+    script->addNode(set_param);
+    script->addNode(create);
     script->addConnect(start_timer->flowOutGemo(), create->flowInGemo());
     script->addConnect(create->flowOutGemo(), set_param->flowInGemo());
     script->addConnect(create->paramOutGemo(0), set_param->paramInGemo(0));
@@ -93,15 +93,15 @@ void TestServer::init(JZProject *project)
     JZNodeDisplay *node_display = new JZNodeDisplay();
 
     JZNodeNop *nop = new JZNodeNop();
-    script->addNode(JZNodePtr(nop));
-    script->addNode(JZNodePtr(timeout));
-    script->addNode(JZNodePtr(node_for));
-    script->addNode(JZNodePtr(node_print));
-    script->addNode(JZNodePtr(node_display));
+    script->addNode(nop);
+    script->addNode(timeout);
+    script->addNode(node_for);
+    script->addNode(node_print);
+    script->addNode(node_display);
 
     JZNodeFunction *node_func = new JZNodeFunction();
     node_func->setFunction(&class_file->memberFunction(func_def.name)->function());
-    script->addNode(JZNodePtr(node_func));
+    script->addNode(node_func);
 
     script->addConnect(timeout->flowOutGemo(0), node_print->flowInGemo());
     script->addConnect(node_print->flowOutGemo(0), node_for->flowInGemo());
@@ -111,7 +111,7 @@ void TestServer::init(JZProject *project)
 
     JZNodeParam *get_param = new JZNodeParam();
     get_param->setVariable("test");
-    script->addNode(JZNodePtr(get_param));
+    script->addNode(get_param);
 
     script->addConnect(get_param->paramOutGemo(0), node_func->paramInGemo(0));
     

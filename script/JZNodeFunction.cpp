@@ -99,8 +99,8 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         return false;
     }
 
-    QVector<int> in_list = pinInList(Pin_param);
-    QVector<int> out_list = pinOutList(Pin_param);
+    QList<int> in_list = pinInList(Pin_param);
+    QList<int> out_list = pinOutList(Pin_param);
     if (def->paramIn.size() != in_list.size())
     {
         error = QString("函数不接受%1个输入").arg(in_list.size());

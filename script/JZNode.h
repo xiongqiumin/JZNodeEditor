@@ -166,10 +166,10 @@ public:
     int indexOfPin(int id) const;
     int indexOfPinByName(QString name) const;
     int indexOfPinByType(int id, int type) const;
-    QVector<int> pinInList(int flag = 0) const;
-    QVector<int> pinOutList(int flag = 0) const;
-    QVector<int> pinListByType(int flag) const;    
-    QVector<int> pinList() const;
+    QList<int> pinInList(int flag = 0) const;
+    QList<int> pinOutList(int flag = 0) const;
+    QList<int> pinListByType(int flag) const;
+    QList<int> pinList() const;
     int pinCount(int flag) const;
     virtual int pinPri(int id) const;
               
@@ -177,7 +177,7 @@ public:
     int paramIn(int index) const;
     JZNodeGemo paramInGemo(int index) const;
     int paramInCount() const;
-    QVector<int> paramInList() const;
+    QList<int> paramInList() const;
     QString paramInValue(int index) const;
     void setParamInValue(int index, const QString &value);
 
@@ -185,7 +185,7 @@ public:
     int paramOut(int index) const;
     JZNodeGemo paramOutGemo(int index) const;
     int paramOutCount() const;
-    QVector<int> paramOutList() const;
+    QList<int> paramOutList() const;
     QString paramOutValue(int index) const;
     void setParamOutValue(int index, const QString &value);
     
@@ -197,13 +197,13 @@ public:
     int addFlowOut(QString name = QString(),int extFlag = 0);
     int flowOut(int index = 0) const;
     JZNodeGemo flowOutGemo(int index = 0) const;
-    QVector<int> flowOutList() const;
+    QList<int> flowOutList() const;
     int flowOutCount() const;
 
     int addSubFlowOut(QString name,int extFlag = 0);
     int subFlowOut(int index) const;
     JZNodeGemo subFlowOutGemo(int index) const;
-    QVector<int> subFlowList() const;
+    QList<int> subFlowList() const;
     int subFlowCount() const;
 
     int addWidgetIn(QString name);
@@ -230,6 +230,8 @@ public:
     virtual bool pinActionTriggered(int id,int index);
 
 protected:     
+    Q_DISABLE_COPY(JZNode)
+
     friend JZScriptItem;
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
@@ -258,7 +260,6 @@ protected:
     JZScriptItem *m_file;
     QList<int> m_notifyList;
 };
-typedef QSharedPointer<JZNode> JZNodePtr;
 
 //JZNodeNop
 class JZNodeNop : public JZNode

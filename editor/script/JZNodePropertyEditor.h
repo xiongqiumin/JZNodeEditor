@@ -35,7 +35,7 @@ protected slots:
 
 protected:
     void clear();
-    void addPropList(QString name,QVector<int> list);    
+    void addPropList(QString name,const QList<int> &list);    
     JZNodeProperty *createProp(JZNodePin *pin);
 
     JZNode *m_node;    

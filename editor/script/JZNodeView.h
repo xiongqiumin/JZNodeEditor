@@ -101,8 +101,8 @@ public:
     /* node */
     JZNode *getNode(int id);
     JZNodePin *getPin(JZNodeGemo gemo);
-    JZNodeGraphItem *createNode(JZNodePtr node);
-    JZNodeGraphItem *insertNode(JZNodePtr node);    
+    JZNodeGraphItem *createNode(JZNode *node);
+    JZNodeGraphItem *insertNode(JZNode *node);
     void removeNode(int id);   //只remove node,需要在remove node之前先删除所有连线。
 
     QByteArray getNodeData(int id);

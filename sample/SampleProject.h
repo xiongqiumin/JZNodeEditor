@@ -14,6 +14,7 @@ public:
 
 protected:    
     void newProject(QString project);
+    void addClassFile(QString class_name,QString super, QString ui_file = QString());
     QString loadUi(QString file);
 
     QString m_name;

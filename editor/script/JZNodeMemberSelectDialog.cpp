@@ -53,7 +53,7 @@ void JZNodeMemberSelectDialog::init(JZNode *node)
     }
     ui->lineName->setText(class_name);
     updateTree();
-    ui->listWidget->addItems(m_node->members());
+    ui->listWidget->addItems(m_node->member());
 }
 
 void JZNodeMemberSelectDialog::updateTree()
@@ -147,9 +147,9 @@ void JZNodeMemberSelectDialog::on_btnOk_clicked()
     for (int i = 0; i < n; i++)
         params << ui->listWidget->item(i)->text();
 
-    if (m_className != m_node->className() || params != m_node->members())
+    if (m_className != m_node->className() || params != m_node->member())
     {
-        m_node->setMember(m_className, params);
+        m_node->setMember(params);
         QDialog::accept();
     }
     else

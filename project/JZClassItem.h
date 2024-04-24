@@ -29,6 +29,7 @@ public:
     JZParamItem *getParamFile();
     bool addMemberVariable(QString name,int dataType,const QString &v = QString());
     bool addMemberVariable(QString name,QString dataType, const QString &v = QString());
+    bool addMemberVariable(JZParamDefine param);
     void removeMemberVariable(QString name);    
     QStringList memberVariableList(bool hasUi);
     const JZParamDefine *memberVariable(QString name, bool hasUi);

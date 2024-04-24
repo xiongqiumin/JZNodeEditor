@@ -87,7 +87,7 @@ JZNodeProperty *JZNodePropertyEditor::createProp(JZNodePin *pin)
     return pin_prop;
 }
 
-void JZNodePropertyEditor::addPropList(QString name,QVector<int> list)
+void JZNodePropertyEditor::addPropList(QString name,const QList<int> &list)
 {
     if(list.size() == 0)
         return;

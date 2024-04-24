@@ -630,7 +630,7 @@ void *JZNodeObject::cobj() const
     return m_cobj;
 }
 
-void JZNodeObject::setCowner(bool owner)
+void JZNodeObject::setCOwner(bool owner)
 {
     m_cowner = owner;
 }

@@ -17,6 +17,7 @@ public:
 
     void addVariable(QString name,QString type, const QString &v = QString());
     void addVariable(QString name,int type, const QString &v = QString());
+    void addVariable(JZParamDefine define);
     void removeVariable(QString name);
     void setVariable(QString name, JZParamDefine define);
     const JZParamDefine *variable(QString name) const;

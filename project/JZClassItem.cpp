@@ -87,6 +87,12 @@ bool JZScriptClassItem::addMemberVariable(QString name, QString dataType, const 
     return true;
 }
 
+bool JZScriptClassItem::addMemberVariable(JZParamDefine param)
+{
+    getParamFile()->addVariable(param);
+    return true;
+}
+
 void JZScriptClassItem::removeMemberVariable(QString name)
 {
     getParamFile()->removeVariable(name);       

@@ -6,9 +6,8 @@
 #include <QMessageBox>
 #include <QCommandLineParser>
 #include "JZNodeBind.h"
-#include "sample/Russian.h"
-#include "sample/Calculator.h"
-#include "sample/ImageBatch.h"
+#include "sample/Russian/Russian.h"
+#include "sample/ImageBatch/ImageBatch.h"
 
 extern void test_script();
 
@@ -23,14 +22,13 @@ int main(int argc, char *argv[])
         test_script();
         return 0;
     }
-    if(1)
+    if(0)
     {
-        //SampleRussian sample;
-        //SampleCalculator sample;
-        SampleImageBatch sample;
+        SampleRussian sample;        
+        //SampleImageBatch sample;        
         sample.saveProject();
-        //sample.run();
-        //return 0;
+        sample.run();
+        return 0;
     }    
 
     if(argc == 1)

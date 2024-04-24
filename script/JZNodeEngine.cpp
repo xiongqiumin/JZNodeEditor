@@ -90,6 +90,8 @@ QVariant JZObjectCreate(QString name)
 {
     int id = JZNodeObjectManager::instance()->getClassId(name);
     JZNodeObject *obj = JZNodeObjectManager::instance()->create(id);
+    if (obj->isInherits("Object"))
+        obj->setCOwner(false);
     g_engine->objectCreate(obj);    
 
     JZNodeObjectPtr ptr = JZNodeObjectPtr(obj, JZObjectDelete);
@@ -353,6 +355,7 @@ void JZNodeEngine::regist()
     JZNodeFunctionManager::instance()->registCFunction("convert", true, jzbind::createFuncion(JZConvert));
     JZNodeFunctionManager::instance()->registCFunction("dealExpr", false, jzbind::createFuncion(JZDealExpr));
     JZNodeFunctionManager::instance()->registCFunction("createObject", false, jzbind::createFuncion(JZObjectCreate));
+    JZNodeFunctionManager::instance()->registCFunction("connect", false, jzbind::createFuncion(JZObjectConnect));
 
     JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
     JZNodeFunctionManager::instance()->registCFunction("createObjectFromString", false, jzbind::createFuncion(JZObjectFromString));

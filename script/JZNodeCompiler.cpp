@@ -1935,7 +1935,7 @@ bool JZNodeCompiler::addFlowInput(int nodeId, int prop_id, QString &error)
                     {
                         auto n = from_node->node;
                         JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(n);
-                        if (!node_event && m_scriptFile->getConnectId(n->id(), n->flowIn()).size() == 0)
+                        if (!node_event && m_scriptFile->getConnectPin(n->id(), n->flowIn()).size() == 0)
                         {
                             error += n->name() + "(" + QString::number(n->id()) + ")" + "没有连接输入流程";
                             return false;

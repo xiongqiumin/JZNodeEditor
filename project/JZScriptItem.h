@@ -25,8 +25,8 @@ public:
     const JZFunctionDefine &function();
     void setFunction(JZFunctionDefine def);
 
-    int addNode(JZNodePtr node);
-    void insertNode(JZNodePtr node);
+    int addNode(JZNode *node);
+    void insertNode(JZNode *node);
     void removeNode(int id);
     JZNode *getNode(int id);
     JZNodePin *getPin(const JZNodeGemo &gemo);    
@@ -49,9 +49,9 @@ public:
     bool hasConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);
     void removeConnect(int id);
-    void removeConnectByNode(int node_id, int prop_id);
+    void removeConnectByNode(int node_id, int pinId);
     JZNodeConnect *getConnect(int id);
-    QList<int> getConnectId(int node_id, int pinId = -1);    // pinId = -1 得到节点所有连线
+    QList<int> getConnectPin(int node_id, int pinId = -1);    // pinId = -1 得到节点所有连线
     QList<int> getConnectOut(int node_id, int pinId = -1);
     QList<int> getConnectInput(int node_id, int pinId = -1);
     QList<JZNodeConnect> connectList();    
@@ -64,7 +64,7 @@ public:
 
 protected:    
     int m_nodeId;
-    QMap<int, JZNodePtr> m_nodes;        
+    QMap<int, JZNode*> m_nodes;        
     QList<JZNodeGroup> m_groups;
     QList<JZNodeConnect> m_connects;    
     JZFunctionDefine m_function;    

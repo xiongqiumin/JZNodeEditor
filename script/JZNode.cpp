@@ -271,19 +271,19 @@ int JZNode::indexOfPinByType(int id, int flag) const
     return -1;
 }
 
-QVector<int> JZNode::pinInList(int flag) const
+QList<int> JZNode::pinInList(int flag) const
 {
     return pinListByType(Pin_in | flag);
 }
 
-QVector<int> JZNode::pinOutList(int flag) const
+QList<int> JZNode::pinOutList(int flag) const
 {
     return pinListByType(Pin_out | flag);
 }
 
-QVector<int> JZNode::pinListByType(int flag) const
+QList<int> JZNode::pinListByType(int flag) const
 {
-    QVector<int> ret;
+    QList<int> ret;
     for (int i = 0; i < m_pinList.size(); i++)
     {
         if((m_pinList[i].flag() & flag) == flag)
@@ -337,7 +337,7 @@ int JZNode::paramInCount() const
     return pinInList(Pin_param).size();
 }
 
-QVector<int> JZNode::paramInList() const
+QList<int> JZNode::paramInList() const
 {
     return pinInList(Pin_param);
 }
@@ -373,7 +373,7 @@ int JZNode::paramOutCount() const
     return pinOutList(Pin_param).size();
 }
 
-QVector<int> JZNode::paramOutList() const
+QList<int> JZNode::paramOutList() const
 {
     return pinOutList(Pin_param);
 }
@@ -423,7 +423,7 @@ JZNodeGemo JZNode::flowOutGemo(int index) const
     return JZNodeGemo(m_id,flowOut(index));
 }
 
-QVector<int> JZNode::flowOutList() const
+QList<int> JZNode::flowOutList() const
 {
     return pinOutList(Pin_flow);
 }
@@ -447,7 +447,7 @@ JZNodeGemo JZNode::subFlowOutGemo(int index) const
     return JZNodeGemo(m_id,subFlowOut(index));
 }
 
-QVector<int> JZNode::subFlowList() const
+QList<int> JZNode::subFlowList() const
 {
     return pinOutList(Pin_subFlow);
 }
@@ -532,9 +532,9 @@ void JZNode::setPinName(int id,const QString &name)
         m_notifyList << id;
 }
 
-QVector<int> JZNode::pinList() const
+QList<int> JZNode::pinList() const
 {
-    QVector<int> result;
+    QList<int> result;
     for(int i = 0; i < m_pinList.size(); i++)
         result.push_back(m_pinList[i].id());
 
@@ -1338,7 +1338,7 @@ bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error)
     bool isElse = subFlowCount() > paramInCount();
     
     JZNodeIRJmp *last_jmp = nullptr;
-    QVector<int> inList = paramInList();
+    QList<int> inList = paramInList();
     for (int i = 0; i < inList.size(); i++)
     {
         int nextPc = c->nextPc();

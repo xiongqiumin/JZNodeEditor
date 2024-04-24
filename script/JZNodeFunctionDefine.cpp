@@ -102,7 +102,7 @@ CFunction::~CFunction()
 JZFunctionDefine::JZFunctionDefine()
 {
     isCFunction = false;
-    isFlowFunction = false;          
+    isFlowFunction = true;          
 }
 
 bool JZFunctionDefine::isNull() const

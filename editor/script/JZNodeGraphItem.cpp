@@ -301,7 +301,7 @@ void JZNodeGraphItem::updateNode()
     int y_gap = 4;    
 
     auto in_list = m_node->pinInList(Pin_none);
-    std::sort(in_list.begin(),in_list.end(),cmp);
+    std::stable_sort(in_list.begin(),in_list.end(),cmp);
     for(int i = 0; i < in_list.size(); i++)
     {
         auto &gemo = m_pinRects[in_list[i]];
@@ -310,8 +310,8 @@ void JZNodeGraphItem::updateNode()
         in_y += gemo.height() + y_gap;
     }
 
-    QVector<int> out_list = m_node->pinOutList(Pin_none);
-    std::sort(out_list.begin(),out_list.end(),cmp);
+    QList<int> out_list = m_node->pinOutList(Pin_none);
+    std::stable_sort(out_list.begin(),out_list.end(),cmp);
     for(int i = 0; i < out_list.size(); i++)
     {        
         auto &gemo = m_pinRects[out_list[i]];
@@ -320,7 +320,7 @@ void JZNodeGraphItem::updateNode()
         out_y += gemo.height() + y_gap;
     }
     
-    QVector<int> pinList = m_node->pinList();
+    QList<int> pinList = m_node->pinList();
     for (int i = 0; i < pinList.size(); i++)
     {
         auto pin = m_node->pin(pinList[i]);
@@ -468,7 +468,7 @@ QString JZNodeGraphItem::pinValue(int prop_id)
 
 void JZNodeGraphItem::resetPropValue()
 {
-    QVector<int> pinList = m_node->pinList();
+    QList<int> pinList = m_node->pinList();
     for (int i = 0; i < pinList.size(); i++)
     {
         auto pin = m_node->pin(pinList[i]);

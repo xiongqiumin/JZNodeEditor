@@ -613,30 +613,51 @@ bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
 }
 
 //JZNodeAbstractMember
-void JZNodeAbstractMember::setMember(QString className, QStringList param_list)
+JZNodeAbstractMember::JZNodeAbstractMember()
 {
-    auto meta = JZNodeObjectManager::instance()->meta(className);
-    pin(paramIn(0))->setName(className);    
-    setPinType(paramIn(0), { meta->id });
+    addParamIn("Object",Pin_dispName);
+    setPinType(paramIn(0), { Type_object });
+}
 
-    for (int i = 0; i < param_list.size(); i++)
+JZNodeAbstractMember::~JZNodeAbstractMember()
+{
+
+}
+
+void JZNodeAbstractMember::setMember(QStringList param_list)
+{
+    auto pin_list = memberPinList();
+    for (int i = 0; i < pin_list.size(); i++)
     {
-        auto param = meta->param(param_list[i]);
+        if (!param_list.contains(pinName(pin_list[i])))
+            removePin(pin_list[i]);
+    }
 
-        int flag = Pin_dispName;        
-        int pin_id = -1;
+    auto cur_member = member();
+    for (int i = 0; i < param_list.size(); i++)
+    {        
+        if (cur_member.contains(param_list[i]))
+        {
+            int flag = Pin_dispName;
+            if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
+                addParamIn(param_list[i], flag);
+            else
+                addParamOut(param_list[i], flag);
+        }
+    }
+
+    std::sort(m_pinList.begin(), m_pinList.end(), [this](const JZNodePin &pin1, const JZNodePin &pin2) {
         if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
         {
-            if (JZNodeType::isBaseOrEnum(param->dataType()))
-                flag |= (Pin_dispValue | Pin_editValue);
-            pin_id = addParamIn(param->name, flag);
+            if (pin1.id() == 0)
+                return true;
+            if (pin2.id() == 0)
+                return false;
         }
-        else
-        {            
-            pin_id = addParamOut(param->name, flag);
-        }
-        setPinType(pin_id, { param->dataType() });
-    }
+        return pin1.name() < pin2.name();
+    });
+
+    updateMemberType();
 }
 
 QString JZNodeAbstractMember::className()
@@ -644,10 +665,18 @@ QString JZNodeAbstractMember::className()
     return pin(paramIn(0))->name();
 }
 
-QStringList JZNodeAbstractMember::members()
+QStringList JZNodeAbstractMember::member()
 {
     QStringList ret;
-    QVector<int> pin_list;
+    QList<int> pin_list = memberPinList();    
+    for (int i = 0; i < pin_list.size(); i++)
+        ret << pin(pin_list[i])->name();
+    return ret;
+}
+
+QList<int> JZNodeAbstractMember::memberPinList()
+{
+    QList<int> pin_list;
     if (m_type == Node_setMemberParam || m_type == Node_setMemberParamData)
     {
         pin_list = paramInList();
@@ -656,9 +685,43 @@ QStringList JZNodeAbstractMember::members()
     else
         pin_list = paramOutList();
 
+    return pin_list;
+}
+
+void JZNodeAbstractMember::pinLinked(int id)
+{
+    if (id == paramIn(0))
+        updateMemberType();
+}
+
+void JZNodeAbstractMember::updateMemberType()
+{
+    auto pin_id = m_file->getConnectPin(m_id, paramIn(0));
+    if (pin_id.size() == 0)
+        return;
+
+    auto gemo = m_file->getConnect(pin_id[0]);
+    auto type = m_file->getNode(gemo->from.nodeId)->pinType(gemo->from.pinId);
+    if (type.size() == 1)
+        updateMemberType(type[0]);
+}
+
+void JZNodeAbstractMember::updateMemberType(int type)
+{
+    auto meta = JZNodeObjectManager::instance()->meta(type);
+    if (!meta)
+        return;    
+
+    QList<int> pin_list = memberPinList();
     for (int i = 0; i < pin_list.size(); i++)
-        ret << pin(pin_list[i])->name();
-    return ret;
+    {
+        auto name = pinName(pin_list[i]);
+        auto param = meta->param(name);
+        if (param)
+            setPinType(pin_list[i], { param->dataType() });
+        else
+            setPinType(pin_list[i], {});
+    }
 }
 
 //JZNodeMemberParam

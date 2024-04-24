@@ -20,6 +20,8 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QProgressDialog>
+#include <QApplication>
+#include <QStackedWidget>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -201,7 +203,12 @@ void initCore()
 {
     auto funcInst = JZNodeFunctionManager::instance();
     jzbind::ClassBind<QObject> cls_object(Type_object,"Object");
-    cls_object.regist();
+    cls_object.regist();    
+    
+    //app
+    jzbind::ClassBind<QApplication> cls_app("Application");    
+    cls_app.def("setStyleSheet", true, [](const QString &style) { qApp->setStyleSheet(style); });
+    cls_app.regist();
 
     //stringlist
     jzbind::ClassBind<QStringList> cls_string_list(Type_stringList,"StringList");
@@ -370,16 +377,37 @@ void initObjects()
     cls_timer.regist();
 }
 
+void initLayout()
+{
+    JZNodeObjectManager::instance()->delcare("Widget", typeid(QWidget).name(), Type_widget);
+
+    jzbind::ClassBind<QLayout> cls_layout("Layout", "Object");    
+    cls_layout.def("setContentsMargins", true,QOverload<int,int,int,int>::of(&QLayout::setContentsMargins));
+    cls_layout.regist();
+
+    jzbind::ClassBind<QBoxLayout> cls_box_layout("BoxLayout", "Layout");
+    cls_box_layout.def("addLayout", true, [](QBoxLayout *l, QLayout *sub) { l->addLayout(sub); });
+    cls_box_layout.def("addWidget", true, [](QBoxLayout *l, QWidget *w) { l->addWidget(w); });
+    cls_box_layout.regist();
+
+    jzbind::ClassBind<QHBoxLayout> cls_hbox_layout("HBoxLayout", "BoxLayout");     
+    cls_hbox_layout.regist();
+
+    jzbind::ClassBind<QVBoxLayout> cls_vbox_layout("VBoxLayout", "BoxLayout");    
+    cls_vbox_layout.regist();
+}
+
 void initWidgets()
 {
     //widget
-    jzbind::ClassBind<QWidget> cls_widget(Type_widget,"Widget", "Object");
+    jzbind::ClassBind<QWidget> cls_widget(Type_widget, "Widget", "Object");
     cls_widget.def("setVisible", true, &QWidget::setVisible);
     cls_widget.def("show", true, &QWidget::show);
     cls_widget.def("hide", true, &QWidget::hide);
     cls_widget.def("close", true, &QWidget::close);
     cls_widget.def("rect", false, &QWidget::rect);
     cls_widget.def("update", true, QOverload<>::of(&QWidget::update));
+    cls_widget.def("setLayout", true, &QWidget::setLayout);
     cls_widget.regist();
 
     //lineedit
@@ -403,19 +431,34 @@ void initWidgets()
     cls_abs_button.def("setChecked", true, &QAbstractButton::setChecked);
     cls_abs_button.defSingle("clicked", Event_buttonClicked, &QAbstractButton::clicked);
     cls_abs_button.regist();
-    
+
     jzbind::ClassBind<QPushButton> cls_button("PushButton", "Button");
     cls_button.regist();
-    
+
     jzbind::ClassBind<QRadioButton> cls_radio_btn("RadioButton", "Button");
     cls_radio_btn.regist();
 
     jzbind::ClassBind<QCheckBox> cls_check_box("CheckBox", "Button");
     cls_check_box.regist();
-    
-    jzbind::ClassBind<QDialog> cls_dlg("Dialog", "Widget");
-    cls_dlg.regist();
 
+    //stack
+    jzbind::ClassBind<QStackedWidget> cls_stacked("StackedWidget", "Widget");
+    cls_stacked.def("addWidget", true, &QStackedWidget::addWidget);
+    cls_stacked.def("insertWidget", true, &QStackedWidget::insertWidget);
+    cls_stacked.def("removeWidget", true, &QStackedWidget::removeWidget);
+    cls_stacked.def("currentIndex", true, &QStackedWidget::currentIndex);
+    cls_stacked.def("setCurrentIndex", true, &QStackedWidget::setCurrentIndex);
+    cls_stacked.def("currentWidget", true, &QStackedWidget::currentWidget, false);
+    cls_stacked.def("setCurrentWidget", true, &QStackedWidget::setCurrentWidget);
+    cls_stacked.regist();
+}
+
+void initDialogs()
+{
+    jzbind::ClassBind<QDialog> cls_dlg("Dialog", "Widget");
+    cls_dlg.def("exec",true, &QDialog::exec);
+    cls_dlg.regist();
+    
     jzbind::ClassBind<QMessageBox> cls_msg_box("MessageBox", "Dialog");
     cls_msg_box.def("information", true, [](QWidget *w, QString text) {
         QMessageBox::information(w, "", text);
@@ -553,7 +596,9 @@ void registQtClass()
     initEvent();
     initCore();
     initObjects();
+    initLayout();
     initWidgets();
+    initDialogs();
     initPainter();
     initFiles();
     registConvert();

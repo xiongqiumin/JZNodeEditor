@@ -28,6 +28,12 @@ QWidget *JZNodeUiLoader::createWidget(const QString &className, QWidget *parent,
         w->setObjectName(name);
         return w;
     }
+    else if (className == "Image")
+    {
+        QWidget *w = new QWidget(parent);
+        w->setObjectName(name);
+        return w;
+    }
 
     return QUiLoader::createWidget(className, parent, name);
 }

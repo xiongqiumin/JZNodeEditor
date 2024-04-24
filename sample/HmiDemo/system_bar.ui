@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>system_bar</class>
+ <widget name="system_bar" class="QWidget">
+  <property name="widget_type">
+   <string>window</string>
+  </property>
+  <widget name="image" class="Image">
+   <property name="geometry">
+    <rect>
+     <x>22</x>
+     <y>m</y>
+     <width>133</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="image">
+    <string>C:/Users/xiong/Desktop/code/awtk/awtk-hmi/hmi/demo_home3/design/default/images/xx/home_logo.png</string>
+   </property>
+  </widget>
+  <widget name="close" class="QPushButton">
+   <property name="geometry">
+    <rect>
+     <x>729</x>
+     <y>0</y>
+     <width>71</width>
+     <height>45</height>
+    </rect>
+   </property>
+   <property name="style">
+    <string>back_btn</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

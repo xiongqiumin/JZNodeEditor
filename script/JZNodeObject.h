@@ -108,7 +108,7 @@ public:
 
     void *cobj() const;
     void setCObject(void *cobj,bool owner);        
-    void setCowner(bool owner);
+    void setCOwner(bool owner);
 
     void updateWidgetParam();    
 

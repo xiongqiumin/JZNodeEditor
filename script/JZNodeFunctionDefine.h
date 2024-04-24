@@ -60,7 +60,7 @@ class JZFunctionDefine
 {
 public:
     JZFunctionDefine();
-
+    
     bool isNull() const;
 
     QString fullName() const;    

@@ -6,6 +6,7 @@
 #include "JZNodeBuilder.h"
 #include "JZNodeVM.h"
 #include "JZNodeUtils.h"
+#include "JZUiFile.h"
 
 SampleProject::SampleProject()
 {
@@ -19,7 +20,7 @@ SampleProject::~SampleProject()
 
 QString SampleProject::loadUi(QString filename)
 {    
-    QString filepath = "sample/" + filename;
+    QString filepath = "sample/" + m_name + "/" + filename;
     QFile file(filepath);
     if (!file.open(QFile::ReadOnly | QFile::Text))
     {
@@ -39,6 +40,22 @@ void SampleProject::newProject(QString name)
         QDir().mkdir(dir);
         
     m_project.newProject(dir, m_name, "ui");
+}
+
+void SampleProject::addClassFile(QString class_name, QString super, QString ui_file)
+{
+    JZUiFile *file_ui = new JZUiFile();
+    file_ui->setName(class_name + ".ui");
+    file_ui->setXml(loadUi(ui_file));
+    m_project.addItem("./", file_ui);
+
+    JZScriptFile *file = new JZScriptFile();
+    file->setName(class_name + ".jz");
+    m_project.addItem("./", file);
+
+    auto class_item = file->addClass(class_name, super);
+    if (!ui_file.isEmpty())
+        class_item->setUiFile(ui_file);    
 }
 
 void SampleProject::saveProject()

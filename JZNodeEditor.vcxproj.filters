@@ -259,9 +259,6 @@
     <ClCompile Include="script\JZNodeUiLoader.cpp">
       <Filter>Source Files\script</Filter>
     </ClCompile>
-    <ClCompile Include="sample\Russian.cpp">
-      <Filter>Source Files\sample</Filter>
-    </ClCompile>
     <ClCompile Include="script\JZNodeEnum.cpp">
       <Filter>Source Files\script</Filter>
     </ClCompile>
@@ -303,12 +300,6 @@
     </ClCompile>
     <ClCompile Include="editor\script\JZNodeViewPanel.cpp">
       <Filter>Source Files\editor\script</Filter>
-    </ClCompile>
-    <ClCompile Include="sample\Calculator.cpp">
-      <Filter>Source Files\sample</Filter>
-    </ClCompile>
-    <ClCompile Include="sample\SampleProject.cpp">
-      <Filter>Source Files\sample</Filter>
     </ClCompile>
     <ClCompile Include="editor\script\JZNodeGroupItem.cpp">
       <Filter>Source Files\editor\script</Filter>
@@ -364,9 +355,6 @@
     <ClCompile Include="editor\script\JZNodeParamWidget.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
-    <ClCompile Include="sample\ImageBatch.cpp">
-      <Filter>Source Files\sample</Filter>
-    </ClCompile>
     <ClCompile Include="widgets\JZBaseDialog.cpp">
       <Filter>Source Files\widgets</Filter>
     </ClCompile>
@@ -375,6 +363,15 @@
     </ClCompile>
     <ClCompile Include="editor\script\JZNodeFlagEditDialog.cpp">
       <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="sample\ImageBatch\ImageBatch.cpp">
+      <Filter>Source Files\sample</Filter>
+    </ClCompile>
+    <ClCompile Include="sample\SampleProject.cpp">
+      <Filter>Source Files\sample</Filter>
+    </ClCompile>
+    <ClCompile Include="sample\Russian\Russian.cpp">
+      <Filter>Source Files\sample</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -605,9 +602,6 @@
     <ClInclude Include="script\JZNodeObject.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
-    <ClInclude Include="sample\Russian.h">
-      <Filter>Header Files\sample</Filter>
-    </ClInclude>
     <ClInclude Include="script\JZNodeWidgetWrapper.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
@@ -638,12 +632,6 @@
     <ClInclude Include="script\JZNodeObjectParser.h">
       <Filter>Header Files\editor\script</Filter>
     </ClInclude>
-    <ClInclude Include="sample\Calculator.h">
-      <Filter>Header Files\sample</Filter>
-    </ClInclude>
-    <ClInclude Include="sample\SampleProject.h">
-      <Filter>Header Files\sample</Filter>
-    </ClInclude>
     <ClInclude Include="editor\script\JZNodeGroupItem.h">
       <Filter>Header Files\editor\script</Filter>
     </ClInclude>
@@ -668,11 +656,17 @@
     <ClInclude Include="project\JZProjectTemplate.h">
       <Filter>Header Files\project</Filter>
     </ClInclude>
-    <ClInclude Include="sample\ImageBatch.h">
-      <Filter>Header Files\sample</Filter>
-    </ClInclude>
     <ClInclude Include="editor\script\JZNodeFlagEditDialog.h">
       <Filter>Header Files\editor\script</Filter>
+    </ClInclude>
+    <ClInclude Include="sample\Russian\Russian.h">
+      <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="sample\ImageBatch\ImageBatch.h">
+      <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="sample\SampleProject.h">
+      <Filter>Header Files\sample</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

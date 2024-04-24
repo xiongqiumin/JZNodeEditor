@@ -142,9 +142,8 @@
     <ClCompile Include="project\JZScriptFile.cpp" />
     <ClCompile Include="project\JZScriptItem.cpp" />
     <ClCompile Include="project\JZUiFile.cpp" />
-    <ClCompile Include="sample\Calculator.cpp" />
-    <ClCompile Include="sample\ImageBatch.cpp" />
-    <ClCompile Include="sample\Russian.cpp" />
+    <ClCompile Include="sample\ImageBatch\ImageBatch.cpp" />
+    <ClCompile Include="sample\Russian\Russian.cpp" />
     <ClCompile Include="sample\SampleProject.cpp" />
     <ClCompile Include="script\JZEvent.cpp" />
     <ClCompile Include="script\JZExpression.cpp" />
@@ -219,8 +218,8 @@
     <ClInclude Include="project\JZProjectStream.h" />
     <ClInclude Include="project\JZProjectTemplate.h" />
     <ClInclude Include="project\JZScriptFile.h" />
-    <ClInclude Include="sample\Calculator.h" />
-    <ClInclude Include="sample\ImageBatch.h" />
+    <ClInclude Include="sample\ImageBatch\ImageBatch.h" />
+    <ClInclude Include="sample\Russian\Russian.h" />
     <ClInclude Include="sample\SampleProject.h" />
     <ClInclude Include="script\JZNodeName.h" />
     <QtMoc Include="script\JZNodeQtBind.h" />
@@ -267,7 +266,6 @@
     <ClInclude Include="project\JZProjectItem.h" />
     <ClInclude Include="project\JZScriptItem.h" />
     <ClInclude Include="project\JZUiFile.h" />
-    <ClInclude Include="sample\Russian.h" />
     <ClInclude Include="script\JZEvent.h" />
     <ClInclude Include="script\JZExpression.h" />
     <ClInclude Include="script\JZNode.h" />

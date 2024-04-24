@@ -15,13 +15,13 @@ JZScriptItem::JZScriptItem(int type)
     if(type == ProjectItem_scriptFunction)
     {
         JZNodeFunctionStart *node_start = new JZNodeFunctionStart();
-        addNode(JZNodePtr(node_start));
+        addNode(node_start);
     }
 }
 
 JZScriptItem::~JZScriptItem()
 {
-
+    clear();
 }
 
 bool JZScriptItem::isFunction() const
@@ -34,7 +34,7 @@ void JZScriptItem::loadFinish()
     auto it = m_nodes.begin();
     while (it != m_nodes.end())
     {
-        it->data()->setFile(this);
+        it.value()->setFile(this);
         it++;
     }
 
@@ -43,10 +43,11 @@ void JZScriptItem::loadFinish()
 }
 
 void JZScriptItem::clear()
-{
-    m_nodeId = 0;    
+{    
+    qDeleteAll(m_nodes);
     m_nodes.clear();
     m_connects.clear();
+    m_nodeId = 0;
 }
 
 int JZScriptItem::nextId()
@@ -67,7 +68,7 @@ void JZScriptItem::setFunction(JZFunctionDefine def)
     m_function = def;
 }
 
-int JZScriptItem::addNode(JZNodePtr node)
+int JZScriptItem::addNode(JZNode *node)
 {
     Q_ASSERT(node->id() == -1);
     node->setId(m_nodeId++);
@@ -76,7 +77,7 @@ int JZScriptItem::addNode(JZNodePtr node)
     return node->id();
 }
 
-void JZScriptItem::insertNode(JZNodePtr node)
+void JZScriptItem::insertNode(JZNode * node)
 {
     Q_ASSERT(node->id() != -1 && getNode(node->id()) == nullptr);
     node->setFile(this);
@@ -86,11 +87,16 @@ void JZScriptItem::insertNode(JZNodePtr node)
 
 void JZScriptItem::removeNode(int id)
 {
-    QList<int> lines = getConnectId(id);
+    QList<int> lines = getConnectPin(id);
     for (int i = 0; i < lines.size(); i++)
         removeConnect(lines[i]);
 
-    m_nodes.remove(id);
+    auto it = m_nodes.find(id);
+    if (it != m_nodes.end())
+    {
+        delete it.value();
+        m_nodes.erase(it);
+    }
     m_nodesPos.remove(id);
 }
 
@@ -140,8 +146,8 @@ QList<int> JZScriptItem::groupNodeList(int id)
     auto it = m_nodes.begin();
     while (it != m_nodes.end())
     {
-        if(it->data()->group() == id)
-            list << it->data()->id();
+        if(it.value()->group() == id)
+            list << it.value()->id();
         it++;
     }
     return list;
@@ -164,7 +170,7 @@ JZNode *JZScriptItem::getNode(int id)
 {
     auto it = m_nodes.find(id);
     if (it != m_nodes.end())
-        return it->data();
+        return it.value();
     else
         return nullptr;
 }
@@ -199,7 +205,7 @@ int JZScriptItem::parentNode(int id)
     JZNode *node = getNode(id);
     if(node->flowIn() == -1)
         return id;
-    auto in_lines = getConnectId(id, node->flowIn());
+    auto in_lines = getConnectPin(id, node->flowIn());
     if (in_lines.size() == 0)
         return -1;
 
@@ -243,8 +249,8 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         return false;
     }
 
-    auto out_lines = getConnectId(from.nodeId, from.pinId);
-    auto in_lines = getConnectId(to.nodeId, to.pinId);
+    auto out_lines = getConnectPin(from.nodeId, from.pinId);
+    auto in_lines = getConnectPin(to.nodeId, to.pinId);
     if((pin_from->isFlow() || pin_from->isSubFlow()) && out_lines.size() != 0)
     {
         error = "已连接其他流程节点";
@@ -286,14 +292,14 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         QList<int> from_type = node_from->pinType(from.pinId);
         if (from_type.size() == 0)
         {
-            error = "输出数据未设置";
+            error = "输出数据未设置类型";
             return false;
         }
 
         QList<int> in_type = node_to->pinType(to.pinId);
         if (in_type.size() == 0) 
         {
-            error = "输入数据未设置";
+            error = "输入数据未设置类型";
             return false;
         }
 
@@ -375,12 +381,12 @@ void JZScriptItem::removeConnect(int id)
 
 void JZScriptItem::removeConnectByNode(int node_id, int prop_id)
 {
-    auto list = getConnectId(node_id, prop_id);
+    auto list = getConnectPin(node_id, prop_id);
     for (int i = 0; i < list.size(); i++)
         removeConnect(list[i]);
 }
 
-QList<int> JZScriptItem::getConnectId(int id, int pinId)
+QList<int> JZScriptItem::getConnectPin(int id, int pinId)
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
@@ -529,7 +535,7 @@ bool JZScriptItem::fromBuffer(const QByteArray &buffer)
                 
         JZNode *node = JZNodeFactory::instance()->createNode(node_type);
         node->fromBuffer(buffer);
-        m_nodes.insert(node->id(), JZNodePtr(node));
+        m_nodes.insert(node->id(), node);
     }    
     s >> m_connects;
     s >> m_function;

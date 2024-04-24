@@ -82,7 +82,7 @@ void ScriptTest::init()
 
     JZScriptItem *main_flow = file->addFlow("main");
     JZNodeEvent *start = new JZNodeStartEvent();
-    main_flow->addNode(JZNodePtr(start));
+    main_flow->addNode(start);
 
     file->addParamDefine("global");
 
@@ -126,8 +126,8 @@ QMap<int,int> ScriptTest::initWhileSetCase()
 
     m_paramDef->addVariable("i",Type_int);
     
-    script->addNode(JZNodePtr(node_while));
-    script->addNode(JZNodePtr(node_true));
+    script->addNode(node_while);
+    script->addNode(node_true);
 
     node_true->setDataType(Type_bool);
     node_true->setLiteral(true);
@@ -142,7 +142,7 @@ QMap<int,int> ScriptTest::initWhileSetCase()
         JZNodeSetParam *node_set = new JZNodeSetParam();
         node_set->setVariable("i");
         node_set->setPinValue(node_set->paramIn(1),QString::number(i));
-        script->addNode(JZNodePtr(node_set));
+        script->addNode(node_set);
 
         node_value[node_set->id()] = i;
         if(i == 0)
@@ -216,10 +216,10 @@ void ScriptTest::testParamBinding()
     JZNodeParam *node_a = new JZNodeParam();
     JZNodeParam *node_b = new JZNodeParam();
 
-    script->addNode(JZNodePtr(node_a));
-    script->addNode(JZNodePtr(node_b));
-    script->addNode(JZNodePtr(node_c));
-    script->addNode(JZNodePtr(node_add));
+    script->addNode(node_a));
+    script->addNode(node_b));
+    script->addNode(node_c));
+    script->addNode(node_add));
 
     node_a->setVariable("a");
     node_b->setVariable("b");
@@ -271,12 +271,12 @@ void ScriptTest::testBranch()
     r2->setFunction(&define);
     r2->setParamInValue(0, "0");
     
-    script->addNode(JZNodePtr(branch));
-    script->addNode(JZNodePtr(eq));
-    script->addNode(JZNodePtr(a));
-    script->addNode(JZNodePtr(b));
-    script->addNode(JZNodePtr(r1));
-    script->addNode(JZNodePtr(r2));
+    script->addNode(branch);
+    script->addNode(eq);
+    script->addNode(a);
+    script->addNode(b);
+    script->addNode(r1);
+    script->addNode(r2);
 
     script->addConnect(a->paramOutGemo(0), eq->paramInGemo(0));
     script->addConnect(b->paramOutGemo(0), eq->paramInGemo(1));
@@ -319,17 +319,17 @@ void ScriptTest::testIf()
     
     JZNodeParam *a = new JZNodeParam();
     a->setVariable("a");
-    script->addNode(JZNodePtr(node_if));
-    script->addNode(JZNodePtr(a));
+    script->addNode(node_if);
+    script->addNode(a);
     script->addConnect(node_start->flowOutGemo(0), node_if->flowInGemo());
 
     for (int i = 0; i < 4; i++)
     {
         JZNodeEQ *eq = new JZNodeEQ();                
-        script->addNode(JZNodePtr(eq));
+        script->addNode(eq);
 
         JZNodeReturn *ret = new JZNodeReturn();
-        script->addNode(JZNodePtr(ret));
+        script->addNode(ret);
 
         ret->setFunction(&define);
         ret->setParamInValue(0, QString::number(i));
@@ -342,7 +342,7 @@ void ScriptTest::testIf()
     }
 
     JZNodeReturn *ret_else = new JZNodeReturn();
-    script->addNode(JZNodePtr(ret_else));
+    script->addNode(ret_else);
     ret_else->setFunction(&define);
     ret_else->setParamInValue(0, "-1");
     script->addConnect(node_if->subFlowOutGemo(4), ret_else->flowInGemo());
@@ -386,15 +386,15 @@ void ScriptTest::testSwitch()
 
     JZNodeParam *a = new JZNodeParam();
     a->setVariable("a");
-    script->addNode(JZNodePtr(node_switch));
-    script->addNode(JZNodePtr(a));
+    script->addNode(node_switch);
+    script->addNode(a);
     script->addConnect(node_start->flowOutGemo(0), node_switch->flowInGemo());
 
     script->addConnect(a->paramOutGemo(0), node_switch->paramInGemo(0));
     for (int i = 0; i < 4; i++)
     {
         JZNodeReturn *ret = new JZNodeReturn();
-        script->addNode(JZNodePtr(ret));
+        script->addNode(ret);
 
         ret->setFunction(&define);
         ret->setParamInValue(0, QString::number(i));
@@ -403,7 +403,7 @@ void ScriptTest::testSwitch()
     }
 
     JZNodeReturn *ret_else = new JZNodeReturn();
-    script->addNode(JZNodePtr(ret_else));
+    script->addNode(ret_else);
     ret_else->setFunction(&define);
     ret_else->setParamInValue(0, "-1");
     script->addConnect(node_switch->subFlowOutGemo(4), ret_else->flowInGemo());
@@ -441,7 +441,7 @@ void ScriptTest::testSequeue()
     JZNodeSequence *node_seq = new JZNodeSequence();
 
     int start_id = node_start->id();
-    int for_id = script->addNode(JZNodePtr(node_seq));
+    int for_id = script->addNode(node_seq);
 
     paramDef->addVariable("a",Type_int);
     paramDef->addVariable("b",Type_int);
@@ -463,8 +463,8 @@ void ScriptTest::testSequeue()
         node_add->setPinValue(node_add->paramIn(0), QString::number(i+1));
         node_add->setPinValue(node_add->paramIn(1), QString::number(i+2));
 
-        script->addNode(JZNodePtr(node_set));
-        script->addNode(JZNodePtr(node_add));
+        script->addNode(node_set);
+        script->addNode(node_add);
 
         script->addConnect(node_seq->subFlowOutGemo(i),node_set->flowInGemo());
         script->addConnect(node_add->paramOutGemo(0),node_set->paramInGemo(1));
@@ -502,11 +502,11 @@ void ScriptTest::testFor()
         JZNodeReturn *node_ret = new JZNodeReturn();
 
         int start_id = node_start->id();
-        int for_id = script->addNode(JZNodePtr(node_for));
-        int set_id = script->addNode(JZNodePtr(node_set));
-        script->addNode(JZNodePtr(node_add));
-        script->addNode(JZNodePtr(node_sum));
-        script->addNode(JZNodePtr(node_ret));
+        int for_id = script->addNode(node_for);
+        int set_id = script->addNode(node_set);
+        script->addNode(node_add);
+        script->addNode(node_sum);
+        script->addNode(node_ret);
 
         node_sum->setVariable("sum");
         node_set->setVariable("sum");
@@ -593,12 +593,12 @@ void ScriptTest::testForEach()
     node_create->setParamInValue(0, "\"1,2,3,4,5,6,7,8,9,10\"");
 
     int start_id = node_start->id();
-    script->addNode(JZNodePtr(node_for));    
-    script->addNode(JZNodePtr(node_sum));
-    script->addNode(JZNodePtr(node_add));
-    script->addNode(JZNodePtr(node_set));
-    script->addNode(JZNodePtr(node_create));
-    script->addNode(JZNodePtr(node_list));
+    script->addNode(node_for);    
+    script->addNode(node_sum);
+    script->addNode(node_add);
+    script->addNode(node_set);
+    script->addNode(node_create);
+    script->addNode(node_list);
 
     //start    
     script->addConnect(JZNodeGemo(start_id,node_start->flowOut()), node_list->flowInGemo());   
@@ -642,13 +642,13 @@ void ScriptTest::testWhileLoop()
     JZNodeNE *node_eq = new JZNodeNE();        
     
     int start_id = node_start->id();
-    int param_id = script->addNode(JZNodePtr(node_param));    
-    int set_id = script->addNode(JZNodePtr(node_set));
-    int while_id = script->addNode(JZNodePtr(node_while));
-    int value_id = script->addNode(JZNodePtr(node_value));
-    int add_id = script->addNode(JZNodePtr(node_add));    
-    int eq_id = script->addNode(JZNodePtr(node_eq));
-    int value10_id = script->addNode(JZNodePtr(node_value10));
+    int param_id = script->addNode(node_param);    
+    int set_id = script->addNode(node_set);
+    int while_id = script->addNode(node_while);
+    int value_id = script->addNode(node_value);
+    int add_id = script->addNode(node_add);    
+    int eq_id = script->addNode(node_eq);
+    int value10_id = script->addNode(node_value10);
 
     //project.addVariable("i",1);
     node_param->setVariable("i");
@@ -787,8 +787,8 @@ void ScriptTest::testExpr()
     node_a->setVariable("a");
     node_b->setVariable("b");
 
-    script->addNode(JZNodePtr(node_a));
-    script->addNode(JZNodePtr(node_b));    
+    script->addNode(node_a);
+    script->addNode(node_b);    
 
     QMap<int,int> node_value;
     JZNodeSetParam *pre_node = nullptr;
@@ -798,10 +798,10 @@ void ScriptTest::testExpr()
 
         JZNodeSetParam *node_set = new JZNodeSetParam();
         node_set->setVariable("i" + QString::number(i));
-        script->addNode(JZNodePtr(node_set));
+        script->addNode(node_set);
 
         auto node_op = JZNodeFactory::instance()->createNode(op_type[i]);
-        script->addNode(JZNodePtr(node_op));
+        script->addNode(node_op);
 
         script->addConnect(node_a->paramOutGemo(0),node_op->paramInGemo(0));
         script->addConnect(node_b->paramOutGemo(0),node_op->paramInGemo(1));
@@ -848,8 +848,8 @@ void ScriptTest::testCustomExpr()
     node_b->setVariable("b");
 
     node_start->id();
-    script->addNode(JZNodePtr(node_a));
-    script->addNode(JZNodePtr(node_b));
+    script->addNode(node_a);
+    script->addNode(node_b);
 
     QString error;
     if(!node_expr->setExpr("c = pow(a,b) - pow(b,a)",error))
@@ -857,11 +857,11 @@ void ScriptTest::testCustomExpr()
         QVERIFY2(false,qUtf8Printable(error));
         return;
     }
-    script->addNode(JZNodePtr(node_expr));
+    script->addNode(node_expr);
 
     JZNodeSetParam *node_set = new JZNodeSetParam();
     node_set->setVariable("c");
-    script->addNode(JZNodePtr(node_set));
+    script->addNode(node_set);
 
     script->addConnect(node_a->paramOutGemo(0),node_expr->paramInGemo(0));
     script->addConnect(node_b->paramOutGemo(0),node_expr->paramInGemo(1));
@@ -918,16 +918,16 @@ void ScriptTest::testFunction()
     ret1->setFunction(&fab);
     ret2->setFunction(&fab);
 
-    script->addNode(JZNodePtr(node_branch));
-    script->addNode(JZNodePtr(node_ge));
-    script->addNode(JZNodePtr(func1));
-    script->addNode(JZNodePtr(func2));
-    script->addNode(JZNodePtr(sub1));
-    script->addNode(JZNodePtr(sub2));
-    script->addNode(JZNodePtr(n));
-    script->addNode(JZNodePtr(ret1));
-    script->addNode(JZNodePtr(ret2));
-    script->addNode(JZNodePtr(node_add));        
+    script->addNode(node_branch);
+    script->addNode(node_ge);
+    script->addNode(func1);
+    script->addNode(func2);
+    script->addNode(sub1);
+    script->addNode(sub2);
+    script->addNode(n);
+    script->addNode(ret1);
+    script->addNode(ret2);
+    script->addNode(node_add);        
 
     script->addConnect(node_start->flowOutGemo(),node_branch->flowInGemo());
 

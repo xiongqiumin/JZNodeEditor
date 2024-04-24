@@ -444,12 +444,12 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
     
     JZNodeCustomBuild *custom = new JZNodeCustomBuild();
     custom->buildFunction = buildFunction;
-    file.addNode(JZNodePtr(custom));
+    file.addNode(custom);
 
     JZNodeReturn *ret = new JZNodeReturn();
     ret->setFunction(&func);
 
-    file.addNode(JZNodePtr(ret));
+    file.addNode(ret);
     file.addConnect(custom->flowOutGemo(), ret->flowInGemo());
     for (int i = 0; i < func.paramOut.size(); i++)
     {

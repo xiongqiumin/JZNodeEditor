@@ -49,6 +49,11 @@ void JZParamItem::addVariable(QString name,int type, const QString &v)
     addVariable(name, type_name, v);
 }
 
+void JZParamItem::addVariable(JZParamDefine define)
+{
+    addVariable(define.name, define.type, define.value);
+}
+
 void JZParamItem::removeVariable(QString name)
 {
     m_variables.remove(name);
