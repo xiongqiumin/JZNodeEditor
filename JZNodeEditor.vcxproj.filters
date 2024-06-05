@@ -373,6 +373,9 @@
     <ClCompile Include="sample\Russian\Russian.cpp">
       <Filter>Source Files\sample</Filter>
     </ClCompile>
+    <ClCompile Include="sample\SmartHome\SmartHome.cpp">
+      <Filter>Source Files\sample</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -666,6 +669,9 @@
       <Filter>Header Files\sample</Filter>
     </ClInclude>
     <ClInclude Include="sample\SampleProject.h">
+      <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="sample\SmartHome\SmartHome.h">
       <Filter>Header Files\sample</Filter>
     </ClInclude>
   </ItemGroup>

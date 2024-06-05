@@ -179,6 +179,33 @@ void JZNodeSingleEvent::loadFromStream(QDataStream &s)
     s >> m_single;
 }
 
+//JZNodeSingleConnect
+JZNodeSingleConnect::JZNodeSingleConnect()
+{
+    addFlowIn();
+    addFlowOut();
+    
+    int in1 = addParamIn("sender", Pin_dispName);
+    int in2 = addParamIn("signal", Pin_dispName | Pin_literal);
+    int in3 = addParamIn("receiver", Pin_dispName);
+    int in4 = addParamIn("slot", Pin_dispName | Pin_literal);
+
+    setPinType(in1, { Type_object });
+    setPinTypeString(in2);
+    setPinType(in3, { Type_object });
+    setPinTypeString(in4);
+}
+
+JZNodeSingleConnect::~JZNodeSingleConnect()
+{
+
+}
+
+bool JZNodeSingleConnect::compiler(JZNodeCompiler *compiler, QString &error)
+{
+    return true;
+}
+
 //JZNodeQtEvent
 JZNodeQtEvent::JZNodeQtEvent()
 {

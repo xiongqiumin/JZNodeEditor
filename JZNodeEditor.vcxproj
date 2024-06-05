@@ -145,6 +145,7 @@
     <ClCompile Include="sample\ImageBatch\ImageBatch.cpp" />
     <ClCompile Include="sample\Russian\Russian.cpp" />
     <ClCompile Include="sample\SampleProject.cpp" />
+    <ClCompile Include="sample\SmartHome\SmartHome.cpp" />
     <ClCompile Include="script\JZEvent.cpp" />
     <ClCompile Include="script\JZExpression.cpp" />
     <ClCompile Include="script\JZNode.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="sample\ImageBatch\ImageBatch.h" />
     <ClInclude Include="sample\Russian\Russian.h" />
     <ClInclude Include="sample\SampleProject.h" />
+    <ClInclude Include="sample\SmartHome\SmartHome.h" />
     <ClInclude Include="script\JZNodeName.h" />
     <QtMoc Include="script\JZNodeQtBind.h" />
     <ClInclude Include="script\JZNodeObjectParser.h" />

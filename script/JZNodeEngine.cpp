@@ -453,7 +453,7 @@ void JZNodeEngine::init()
             QString &func = func_def.name;
             if (func.startsWith("on_"))
             {
-                int index = func.indexOf("_", 3);
+                int index = func.lastIndexOf("_");
                 if (index == -1)
                     continue;
 
@@ -748,14 +748,14 @@ void JZNodeEngine::connectSelf(JZNodeObject *object)
             }
             else if (func.startsWith("on_"))
             {
-                int index = func.indexOf("_", 3);
+                int index = func.lastIndexOf("_");
                 if (index == -1)
                     continue;
 
                 QString param = func.mid(3, index - 3);
                 QString single = func.mid(index + 1);
                 auto ref = object->paramRef(param);
-                if (!ref && isJZObject(*ref))
+                if (!ref || !isJZObject(*ref))
                 {
                     qDebug() << "no such element: " + param;
                     continue;

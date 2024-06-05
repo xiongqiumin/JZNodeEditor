@@ -1291,6 +1291,7 @@ void MainWindow::start(bool startPause)
             params << "--start-pause";
 
         m_log->addLog(Log_Runtime, "start program");
+        m_process.setWorkingDirectory(m_project.path());
         m_process.start(app, params);
         if (!m_process.waitForStarted())
         {

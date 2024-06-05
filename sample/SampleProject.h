@@ -15,9 +15,13 @@ public:
 protected:    
     void newProject(QString project);
     void addClassFile(QString class_name,QString super, QString ui_file = QString());
+    void addResources(QString path);
+    bool copyDir(QString fromDir, QString toDir);
+
     QString loadUi(QString file);
 
     QString m_name;
+    QString m_resources;
     JZProject m_project;    
 };
 

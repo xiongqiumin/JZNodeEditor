@@ -165,6 +165,9 @@ QString JZProject::error()
 
 void JZProject::saveCache()
 {    
+    if(m_filepath.isEmpty())
+        return;
+
     QString cache = m_filepath + ".data";
     QFile file(cache);
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
@@ -178,6 +181,9 @@ void JZProject::saveCache()
 
 void JZProject::loadCache()
 {
+    if(m_filepath.isEmpty())
+        return;
+    
     QString cache = m_filepath + ".data";
     QFile file(cache);
     if (!file.open(QFile::ReadOnly))

@@ -87,12 +87,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CppConvert.cpp" />
+    <ClCompile Include="as_parser.cpp" />
+    <ClCompile Include="as_scriptcode.cpp" />
+    <ClCompile Include="as_scriptnode.cpp" />
+    <ClCompile Include="as_tokenizer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ProConvert.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CppConvert.h" />
+    <ClInclude Include="as_parser.h" />
+    <ClInclude Include="as_scriptcode.h" />
+    <ClInclude Include="as_scriptnode.h" />
+    <ClInclude Include="as_tokenizer.h" />
     <ClInclude Include="ProConvert.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

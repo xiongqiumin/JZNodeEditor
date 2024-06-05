@@ -8,6 +8,7 @@
 #include <QWidget>
 #include <QLineEdit>
 #include <QRadioButton>
+#include <QToolButton>
 #include <QCheckBox>
 #include <QPushButton>
 #include <QTimer>
@@ -437,6 +438,9 @@ void initWidgets()
 
     jzbind::ClassBind<QRadioButton> cls_radio_btn("RadioButton", "Button");
     cls_radio_btn.regist();
+
+    jzbind::ClassBind<QToolButton> cls_tool_btn("ToolButton", "Button");
+    cls_tool_btn.regist();
 
     jzbind::ClassBind<QCheckBox> cls_check_box("CheckBox", "Button");
     cls_check_box.regist();

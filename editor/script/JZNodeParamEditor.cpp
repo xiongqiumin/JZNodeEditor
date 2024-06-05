@@ -206,15 +206,23 @@ bool JZNodeParamEditorCommand::mergeWith(const QUndoCommand *command)
 JZNodeParamEditor::JZNodeParamEditor()
     :ui(new Ui::JZNodeParamEditor())
 {
-    ui->setupUi(this);    
-    m_widgetCount = 0;
+    ui->setupUi(this);        
     m_isClass = false;
-    m_table = ui->tableWidget;
 
+    ui->boxParamType->addItem("成员");
+    ui->boxParamType->addItem("控件成员");
+
+    m_table = ui->tableWidget;    
     m_table->setColumnCount(4);
     m_table->setHorizontalHeaderLabels({"名称","类型","默认值","参数绑定"});
     m_table->setSelectionBehavior(QTableWidget::SelectItems);
     m_table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);    
+
+    m_tableUi = ui->tableWidgetUi;
+    m_tableUi->setColumnCount(2);
+    m_tableUi->setHorizontalHeaderLabels({ "名称","类型" });
+    m_tableUi->setSelectionBehavior(QTableWidget::SelectItems);
+    m_tableUi->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     ValueItemDelegate *delegate = new ValueItemDelegate(this);
     delegate->setTable(m_table);
@@ -264,8 +272,7 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
     itemName->setData(Qt::UserRole, def->name);
     m_table->setItem(row, 0, itemName);    
     
-    QTableWidgetItem *itemType = new QTableWidgetItem(def->name);        
-    itemType->setText(def->type);
+    QTableWidgetItem *itemType = new QTableWidgetItem(def->type);    
     m_table->setItem(row, 1, itemType);
 
     QTableWidgetItem *itemValue = new QTableWidgetItem();            
@@ -281,20 +288,8 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
         itemBind->setText(bind->widget + "|" + bindText(bind->dir));
     }
 
-    if (row < m_widgetCount)
-    {
-        itemName->setFlags(itemName->flags() & ~Qt::ItemIsEditable);
-        itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);        
-        itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
-    }
-    else
-    {
-        if(!JZNodeType::isBaseOrEnum(def->dataType()))
-            itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);
-    }
-
-    if (JZNodeType::isInherits(def->type, "Widget"))
-        itemBind->setFlags(itemBind->flags() & ~Qt::ItemIsEditable);
+    if(!JZNodeType::isBaseOrEnum(def->dataType()))
+        itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);        
 }
 
 void JZNodeParamEditor::open(JZProjectItem *item)
@@ -303,8 +298,7 @@ void JZNodeParamEditor::open(JZProjectItem *item)
         
     m_table->blockSignals(true);
     m_table->clearContents();
-
-    m_widgetCount = 0;
+    
     JZScriptClassItem *class_file = m_project->getItemClass(item);
     if (class_file)
     {
@@ -312,11 +306,16 @@ void JZNodeParamEditor::open(JZProjectItem *item)
         m_isClass = true;
 
         auto widgets = class_file->uiWidgets();
-        m_table->setRowCount(widgets.size());
-        m_widgetCount = widgets.size();
+        m_tableUi->setRowCount(widgets.size());        
         for (int i = 0; i < widgets.size(); i++)
         {            
-            updateItem(i, &widgets[i]);
+            auto &def = widgets[i];
+
+            QTableWidgetItem *itemName = new QTableWidgetItem(def.name);                        
+            m_tableUi->setItem(i, 0, itemName);
+
+            QTableWidgetItem *itemType = new QTableWidgetItem(def.type);            
+            m_tableUi->setItem(i, 1, itemType);
         }        
     }
     else
@@ -326,11 +325,11 @@ void JZNodeParamEditor::open(JZProjectItem *item)
     }
     
     QStringList list = m_file->variableList();
-    m_table->setRowCount(m_widgetCount + list.size());
+    m_table->setRowCount(list.size());
     for(int i = 0; i < list.size(); i++)
     {
         auto info = m_file->variable(list[i]);
-        updateItem(m_widgetCount + i, info);
+        updateItem(i, info);
     }
     m_table->blockSignals(false);
 }
@@ -559,9 +558,14 @@ void JZNodeParamEditor::on_btnAdd_clicked()
 void JZNodeParamEditor::on_btnRemove_clicked()
 {
     int index = m_table->currentRow();
-    if (index == -1 || index < m_widgetCount)
+    if (index == -1)
         return;
 
     QString name = m_table->item(index, 0)->text();
     addRemoveCommand(name);
+}
+
+void JZNodeParamEditor::on_boxParamType_currentIndexChanged(int index)
+{
+    ui->stackedWidget->setCurrentIndex(index);
 }

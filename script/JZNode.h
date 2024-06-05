@@ -23,6 +23,7 @@ enum
     Node_literal,
     Node_enum,
     Node_flag,
+    Node_functionPointer,
     Node_functionStart,
     Node_function,      
     Node_clone,

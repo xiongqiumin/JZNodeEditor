@@ -57,6 +57,16 @@ protected:
     QString m_single;
 };
 
+//JZNodeSingleConnect
+class JZNodeSingleConnect : public JZNode
+{
+public:
+    JZNodeSingleConnect();
+    virtual ~JZNodeSingleConnect();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error);
+};
+
 //JZNodeQtEvent
 class JZNodeQtEvent : public JZNodeEvent
 {

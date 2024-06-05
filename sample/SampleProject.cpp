@@ -47,7 +47,7 @@ void SampleProject::addClassFile(QString class_name, QString super, QString ui_f
     JZUiFile *file_ui = new JZUiFile();
     file_ui->setName(class_name + ".ui");
     file_ui->setXml(loadUi(ui_file));
-    m_project.addItem("./", file_ui);
+    m_project.addItem("./", file_ui);    
 
     JZScriptFile *file = new JZScriptFile();
     file->setName(class_name + ".jz");
@@ -58,12 +58,54 @@ void SampleProject::addClassFile(QString class_name, QString super, QString ui_f
         class_item->setUiFile(ui_file);    
 }
 
+void SampleProject::addResources(QString name)
+{
+    m_resources = "sample/" + m_name + "/" + name;
+}
+
+bool SampleProject::copyDir(QString srcPath, QString dstPath)
+{
+    QDir dir(dstPath);
+    if (!dir.exists())
+        dir.mkdir("./");
+
+    bool error = false;
+    QStringList fileNames = QDir(srcPath).entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
+    for (int i = 0; i != fileNames.size(); ++i)
+    {
+        QString fileName = fileNames.at(i);
+        QString srcFilePath = srcPath + "/" + fileName;
+        QString dstFilePath = dstPath + "/" + fileName;
+
+        QFileInfo fileInfo(srcFilePath);
+        if (fileInfo.isFile() || fileInfo.isSymLink())
+        {
+            QFile::copy(srcFilePath, dstFilePath);
+        }
+        else if (fileInfo.isDir())
+        {                        
+            if (!copyDir(srcFilePath, dstFilePath))
+            {
+                error = true;
+            }
+        }
+    }
+
+    return !error;    
+}
+
 void SampleProject::saveProject()
 {
     Q_ASSERT(!m_name.isEmpty());
     projectUpdateLayout(&m_project);
     m_project.saveAllItem();
-    m_project.save();    
+    m_project.save();
+    
+    if (!m_resources.isEmpty())
+    {
+        QFileInfo info(m_resources);
+        copyDir(m_resources, m_project.path() + "/" + info.fileName());
+    }
 }
 
 bool SampleProject::run()
@@ -81,6 +123,8 @@ bool SampleProject::run()
         qDebug().noquote() << builder.error();
         return false;
     }
+    QDir::setCurrent(m_project.path());
+
     //save asm
     QFile file(jsm_path);
     if (file.open(QFile::WriteOnly | QFile::Truncate))

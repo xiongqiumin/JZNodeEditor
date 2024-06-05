@@ -471,6 +471,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     m_script = result;
     m_script->clear();
     m_script->file = scriptFile->itemPath();    
+    m_script->className = scriptFile->className();
     m_compilerInfo = CompilerInfo();
     m_compilerInfo.result = false;
 

@@ -50,17 +50,16 @@ public:
     void setValue(int value);
 };
 
-//JZNodeParamFunction
-class JZNodeParamFunction : public JZNode
+//JZNodeFunctionPointer
+class JZNodeFunctionPointer : public JZNode
 {
 public:
-    JZNodeParamFunction();
-    ~JZNodeParamFunction();
+    JZNodeFunctionPointer();
+    ~JZNodeFunctionPointer();
 
+    void setFucntion(QString name);
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-
-    void setFucntion(QString name);    
-
+        
 protected:
 
 };

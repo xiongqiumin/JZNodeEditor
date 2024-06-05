@@ -8,6 +8,7 @@
 #include "JZNodeBind.h"
 #include "sample/Russian/Russian.h"
 #include "sample/ImageBatch/ImageBatch.h"
+#include "sample/SmartHome/SmartHome.h"
 
 extern void test_script();
 
@@ -21,14 +22,15 @@ int main(int argc, char *argv[])
     {
         test_script();
         return 0;
-    }
-    if(0)
+    }    
+    if(0 && argc == 1)
     {
-        SampleRussian sample;        
-        //SampleImageBatch sample;        
+        //SampleRussian sample;        
+        //SampleImageBatch sample;
+        SampleSmartHome sample;
         sample.saveProject();
-        sample.run();
-        return 0;
+        //sample.run();
+        //return 0;
     }    
 
     if(argc == 1)

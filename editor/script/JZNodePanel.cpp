@@ -327,10 +327,10 @@ void JZNodePanel::initEvent()
 
     QTreeWidgetItem *item_event = createFolder("信号");
     m_tree->addTopLevelItem(item_event);
-/*
-    JZNodeParamChangedEvent event;
-    item_event->addChild(createNode(&event));
-*/
+
+    JZNodeSingleConnect connect;
+    item_event->addChild(createNode(&connect));
+
     QTreeWidgetItem *item_widget_event = createFolder("控件信号");
     item_event->addChild(item_widget_event);
 

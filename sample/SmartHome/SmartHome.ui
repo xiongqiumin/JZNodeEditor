@@ -1,0 +1,2723 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>widget</class>
+ <widget class="QWidget" name="widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>480</height>
+   </rect>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QPushButton
+{
+    background-color: #494951;
+    border-color: #575762;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 14px;
+}
+QPushButton:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style=&quot;back_btn&quot;]
+{
+    background-color: #33333C;
+    background-image: url(Resources/back_nor.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-width: 0;
+}
+QPushButton[style=&quot;back_btn&quot;]:pressed
+{
+    background-image: url(Resources/back_pre.png);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+QPushButton[style=&quot;down&quot;]
+{
+    background-color: #505059;
+    background-image: url(Resources/down.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style=&quot;down&quot;]:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QPushButton[style=&quot;down_coffee&quot;]
+{
+    background-color: #505059;
+    background-image: url(Resources/down.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style=&quot;down_coffee&quot;]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style=&quot;l_coffee&quot;]
+{
+    background-color: #505059;
+    background-image: url(Resources/left.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style=&quot;l_coffee&quot;]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style=&quot;r_coffee&quot;]
+{
+    background-color: #505059;
+    background-image: url(Resources/right.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style=&quot;r_coffee&quot;]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QPushButton[style=&quot;up&quot;]
+{
+    background-color: #505059;
+    background-image: url(Resources/up.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style=&quot;up&quot;]:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QPushButton[style=&quot;up_coffee&quot;]
+{
+    background-color: #505059;
+    background-image: url(Resources/up.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #737380;
+    border-radius: 18;
+    border-style: solid;
+    border-width: 2;
+}
+QPushButton[style=&quot;up_coffee&quot;]:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox
+{
+    background-color: #494951;
+    border-color: #575762;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 14px;
+}
+QCheckBox:checked:focus
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:checked
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:checked:hover
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox:checked:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QCheckBox[style=&quot;sw&quot;]
+{
+    background-image: url(Resources/off.png);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+QCheckBox[style=&quot;sw&quot;]:checked:focus
+{
+    background-image: url(Resources/on.png);
+    background-repeat: no-repeat;
+}
+QCheckBox[style=&quot;sw&quot;]:checked
+{
+    background-image: url(Resources/on.png);
+    background-repeat: no-repeat;
+}
+QCheckBox[style=&quot;sw&quot;]:checked:hover
+{
+    background-image: url(Resources/on.png);
+    background-repeat: no-repeat;
+}
+QCheckBox[style=&quot;sw&quot;]:checked:pressed
+{
+    background-image: url(Resources/on.png);
+    background-repeat: no-repeat;
+}
+QToolButton
+{
+    color: #444444;
+}
+QToolButton[style=&quot;icon_btn&quot;]
+{
+    background-color: #292930;
+    border-color: #5C5C66;
+    border-radius: 60;
+    border-style: solid;
+    border-width: 3;
+    color: #00000000;
+}
+QToolButton[style=&quot;icon_btn&quot;]:pressed
+{
+    background-color: #363640;
+    border-color: #A1A1B3;
+}
+QLabel
+{
+    color: #FFFFFF;
+}
+QLabel:disable
+{
+    color: #44444466;
+}
+QLabel[style=&quot;set_temp&quot;]
+{
+    background-color: #37373D;
+    border-color: #5E5E69;
+    border-radius: 6;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 16px;
+}
+QRadioButton
+{
+    color: #444444;
+}
+QRadioButton[style=&quot;auto&quot;]
+{
+    background-color: #323238;
+    background-image: url(Resources/auto.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style=&quot;auto&quot;]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;auto&quot;]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;auto&quot;]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;auto&quot;]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;coffee&quot;]
+{
+    background-color: #323238;
+    border-color: #737380;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 16px;
+}
+QRadioButton[style=&quot;coffee&quot;]:checked:focus
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style=&quot;coffee&quot;]:checked
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style=&quot;coffee&quot;]:checked:hover
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style=&quot;coffee&quot;]:checked:pressed
+{
+    background-color: #FB9C49;
+    border-color: #FB9C49;
+}
+QRadioButton[style=&quot;cold&quot;]
+{
+    background-color: #323238;
+    background-image: url(Resources/cold.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style=&quot;cold&quot;]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;cold&quot;]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;cold&quot;]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;cold&quot;]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;hot&quot;]
+{
+    background-color: #323238;
+    background-image: url(Resources/hot.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style=&quot;hot&quot;]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;hot&quot;]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;hot&quot;]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;hot&quot;]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;humidity&quot;]
+{
+    background-color: #323238;
+    background-image: url(Resources/humidity.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style=&quot;humidity&quot;]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;humidity&quot;]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;humidity&quot;]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;humidity&quot;]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_direct&quot;]
+{
+    background-color: #323238;
+    border-color: #737380;
+    border-radius: 15;
+    border-style: solid;
+    border-width: 2;
+    color: #FFFFFF;
+    font-size: 16px;
+}
+QRadioButton[style=&quot;wind_direct&quot;]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_direct&quot;]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_direct&quot;]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_direct&quot;]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_pre&quot;]
+{
+    background-color: #323238;
+    background-image: url(Resources/wind_pre.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    border-color: #707070;
+    border-radius: 29;
+    border-style: solid;
+    border-width: 2;
+}
+QRadioButton[style=&quot;wind_pre&quot;]:checked:focus
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_pre&quot;]:checked
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_pre&quot;]:checked:hover
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QRadioButton[style=&quot;wind_pre&quot;]:checked:pressed
+{
+    background-color: #39C8FF;
+    border-color: #39C8FF;
+}
+QWidget[widget_type=&quot;view&quot;]
+{
+    background-color: #3F3F47;
+    border-color: #505059;
+    border-radius: 8;
+    border-style: solid;
+    border-width: 1;
+}
+QWidget[style=&quot;air_line&quot;][widget_type=&quot;view&quot;]
+{
+    border-color: #5C5C66;
+    border-style: solid;
+    border-width: 0 2 0 2;
+    border-radius: 0;
+}
+QWidget[style=&quot;null&quot;][widget_type=&quot;view&quot;]
+{
+    border-color: #00000000;
+    border-style: solid;
+    border-width: 1;
+}
+QWidget[style=&quot;null&quot;][widget_type=&quot;view&quot;]:disable
+{
+    background-color: #3F3F47;
+    border-radius: 8;
+}
+QWidget[style=&quot;null&quot;][widget_type=&quot;view&quot;]:focus
+{
+    background-color: #3F3F47;
+    border-radius: 8;
+}
+QWidget[widget_type=&quot;window&quot;]
+{
+    background-color: #33333C;
+}
+QWidget{ text-align: center; }
+QLabel{ text-align: center; }
+QPushButton{ text-align: center; }
+QRadioButton::indicator{ width: 0px;}
+QCheckBox::indicator{ width: 0px;}
+QToolButton{ background:transparent;}
+
+/*horizontal ：水平QSlider*/
+QSlider::groove:horizontal {
+border: 0px solid #bbb;
+}
+
+/*1.滑动过的槽设计参数*/
+QSlider::sub-page:horizontal {
+ /*槽颜色*/
+background: #FB9949;
+ /*外环区域倒圆角度*/
+border-radius: 10px;
+ /*上遮住区域高度*/
+margin-top:15px;
+ /*下遮住区域高度*/
+margin-bottom:15px;
+/*width在这里无效，不写即可*/
+}
+
+/*2.未滑动过的槽设计参数*/
+QSlider::add-page:horizontal {
+/*槽颜色*/
+background: rgb(0,0, 0);
+/*外环大小0px就是不显示，默认也是0*/
+border: 0px solid #777;
+/*外环区域倒圆角度*/
+border-radius: 10px;
+ /*上遮住区域高度*/
+margin-top: 15px;
+ /*下遮住区域高度*/
+margin-bottom:15px;
+}
+ 
+/*3.平时滑动的滑块设计参数*/
+QSlider::handle:horizontal {
+/*滑块颜色*/
+background: #FB9949;
+/*滑块的宽度*/
+width: 15px;
+ /*滑块外环倒圆角度*/
+border-radius: 5px; 
+ /*上遮住区域高度*/
+margin-top:12px;
+ /*下遮住区域高度*/
+margin-bottom:12px;
+}
+
+</string>
+  </property>
+  <widget class="QStackedWidget" name="stackedWidget">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>480</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="widget">
+    <property name="widget_type" stdset="0">
+     <string/>
+    </property>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>800</width>
+       <height>37</height>
+      </rect>
+     </property>
+     <property name="widget_type" stdset="0">
+      <string>window</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>37</y>
+       <width>800</width>
+       <height>443</height>
+      </rect>
+     </property>
+     <property name="widget_type" stdset="0">
+      <string>window</string>
+     </property>
+     <widget class="QToolButton" name="living_room_btn">
+      <property name="geometry">
+       <rect>
+        <x>53</x>
+        <y>33</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_air.png</normaloff>Resources/icon_air.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="coffee_btn">
+      <property name="geometry">
+       <rect>
+        <x>53</x>
+        <y>218</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_coffee.png</normaloff>Resources/icon_coffee.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="fridge_btn">
+      <property name="geometry">
+       <rect>
+        <x>436</x>
+        <y>33</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_fridge.png</normaloff>Resources/icon_fridge.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="wash_btn">
+      <property name="geometry">
+       <rect>
+        <x>627</x>
+        <y>33</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_wash.png</normaloff>Resources/icon_wash.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="bed_room_btn">
+      <property name="geometry">
+       <rect>
+        <x>244</x>
+        <y>33</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_air.png</normaloff>Resources/icon_air.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="secur_btn">
+      <property name="geometry">
+       <rect>
+        <x>244</x>
+        <y>218</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_secur.png</normaloff>Resources/icon_secur.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="movie_btn">
+      <property name="geometry">
+       <rect>
+        <x>436</x>
+        <y>218</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_movie.png</normaloff>Resources/icon_movie.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="photo_btn">
+      <property name="geometry">
+       <rect>
+        <x>627</x>
+        <y>218</y>
+        <width>120</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/icon_photo.png</normaloff>Resources/icon_photo.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="style" stdset="0">
+       <string>icon_btn</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>166</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>客厅空调</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>271</x>
+        <y>166</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>卧室空调</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>478</x>
+        <y>166</y>
+        <width>36</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>冰箱</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>166</y>
+        <width>54</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>洗衣机</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>86</x>
+        <y>350</y>
+        <width>54</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>咖啡机</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>286</x>
+        <y>350</y>
+        <width>36</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>安防</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>478</x>
+        <y>350</y>
+        <width>36</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>电影</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>669</x>
+        <y>350</y>
+        <width>36</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>相册</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="widget">
+    <property name="widget_type" stdset="0">
+     <string/>
+    </property>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>800</width>
+       <height>48</height>
+      </rect>
+     </property>
+     <property name="widget_type" stdset="0">
+      <string>window</string>
+     </property>
+     <widget class="QToolButton" name="image">
+      <property name="geometry">
+       <rect>
+        <x>22</x>
+        <y>0</y>
+        <width>133</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/home_logo.png</normaloff>Resources/home_logo.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>133</width>
+        <height>32</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="close1">
+      <property name="geometry">
+       <rect>
+        <x>729</x>
+        <y>0</y>
+        <width>71</width>
+        <height>45</height>
+       </rect>
+      </property>
+      <property name="style" stdset="0">
+       <string>back_btn</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>48</y>
+       <width>800</width>
+       <height>432</height>
+      </rect>
+     </property>
+     <property name="widget_type" stdset="0">
+      <string>window</string>
+     </property>
+     <widget class="QWidget" name="view" native="true">
+      <property name="geometry">
+       <rect>
+        <x>5</x>
+        <y>0</y>
+        <width>260</width>
+        <height>395</height>
+       </rect>
+      </property>
+      <property name="widget_type" stdset="0">
+       <string>view</string>
+      </property>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>364</y>
+         <width>28</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>位置</string>
+       </property>
+      </widget>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>36</x>
+         <y>86</y>
+         <width>180</width>
+         <height>180</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/air.png</normaloff>Resources/air.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>180</width>
+         <height>180</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>103</x>
+         <y>42</y>
+         <width>48</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 24px;</string>
+       </property>
+       <property name="text">
+        <string>空调</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="room">
+       <property name="geometry">
+        <rect>
+         <x>27</x>
+         <y>335</y>
+         <width>36</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 16px;</string>
+       </property>
+       <property name="text">
+        <string>{空调_位置}</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="air_sw">
+       <property name="geometry">
+        <rect>
+         <x>206</x>
+         <y>267</y>
+         <width>36</width>
+         <height>36</height>
+        </rect>
+       </property>
+       <property name="style" stdset="0">
+        <string>sw</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="widget" native="true">
+       <property name="geometry">
+        <rect>
+         <x>79</x>
+         <y>334</y>
+         <width>93</width>
+         <height>48</height>
+        </rect>
+       </property>
+       <property name="style" stdset="0">
+        <string>air_line</string>
+       </property>
+       <property name="widget_type" stdset="0">
+        <string>view</string>
+       </property>
+       <widget class="QLabel" name="room_temp">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>93</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 16px;</string>
+        </property>
+        <property name="text">
+         <string>{温度}</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>30</y>
+          <width>93</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>室内温度/ ℃</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QLabel" name="air_mode">
+       <property name="geometry">
+        <rect>
+         <x>194</x>
+         <y>335</y>
+         <width>42</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 16px;</string>
+       </property>
+       <property name="text">
+        <string>{模式}</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>201</x>
+         <y>364</y>
+         <width>28</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>模式</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="view1" native="true">
+      <property name="geometry">
+       <rect>
+        <x>269</x>
+        <y>0</y>
+        <width>526</width>
+        <height>185</height>
+       </rect>
+      </property>
+      <property name="widget_type" stdset="0">
+       <string>view</string>
+      </property>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>27</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/icon_temp.png</normaloff>Resources/icon_temp.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>98</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/air_mode.png</normaloff>Resources/air_mode.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>43</x>
+         <y>35</y>
+         <width>56</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>设定温度</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>43</x>
+         <y>106</y>
+         <width>28</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>模式</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="view1_vis" native="true">
+       <property name="geometry">
+        <rect>
+         <x>109</x>
+         <y>23</y>
+         <width>392</width>
+         <height>144</height>
+        </rect>
+       </property>
+       <property name="style" stdset="0">
+        <string>null</string>
+       </property>
+       <property name="widget_type" stdset="0">
+        <string>view</string>
+       </property>
+       <widget class="QPushButton" name="temp_up">
+        <property name="geometry">
+         <rect>
+          <x>125</x>
+          <y>3</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>up</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="temp_down">
+        <property name="geometry">
+         <rect>
+          <x>7</x>
+          <y>3</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>down</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="set_temp">
+        <property name="geometry">
+         <rect>
+          <x>51</x>
+          <y>3</y>
+          <width>67</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>{温度}</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>set_temp</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="mode_view">
+        <property name="geometry">
+         <rect>
+          <x>4</x>
+          <y>58</y>
+          <width>386</width>
+          <height>58</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout">
+         <property name="spacing">
+          <number>24</number>
+         </property>
+         <item>
+          <widget class="QRadioButton" name="radio_cold">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="style" stdset="0">
+            <string>cold</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radio_hot">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="style" stdset="0">
+            <string>hot</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radio_wind">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_pre</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radio_humi">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="style" stdset="0">
+            <string>humidity</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radio_auto">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="style" stdset="0">
+            <string>auto</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>19</x>
+          <y>130</y>
+          <width>28</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>制冷</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>default</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>101</x>
+          <y>130</y>
+          <width>28</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>制热</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>default</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>183</x>
+          <y>130</y>
+          <width>28</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>送风</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>default</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>265</x>
+          <y>130</y>
+          <width>28</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>除湿</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>default</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>347</x>
+          <y>130</y>
+          <width>28</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>自动</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>default</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="view2" native="true">
+      <property name="geometry">
+       <rect>
+        <x>269</x>
+        <y>189</y>
+        <width>526</width>
+        <height>206</height>
+       </rect>
+      </property>
+      <property name="widget_type" stdset="0">
+       <string>view</string>
+      </property>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>27</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/wind_speed.png</normaloff>Resources/wind_speed.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>143</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/wind_direct.png</normaloff>Resources/wind_direct.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>43</x>
+         <y>35</y>
+         <width>28</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>风速</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>43</x>
+         <y>153</y>
+         <width>28</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>风向</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="view2_vis" native="true">
+       <property name="geometry">
+        <rect>
+         <x>111</x>
+         <y>17</y>
+         <width>393</width>
+         <height>172</height>
+        </rect>
+       </property>
+       <property name="style" stdset="0">
+        <string>null</string>
+       </property>
+       <property name="widget_type" stdset="0">
+        <string>view</string>
+       </property>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>92</y>
+          <width>56</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>上下扫风</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>145</y>
+          <width>56</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>左右扫风</string>
+        </property>
+       </widget>
+       <widget class="QSlider" name="speed_slider">
+        <property name="geometry">
+         <rect>
+          <x>12</x>
+          <y>0</y>
+          <width>376</width>
+          <height>49</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">border-radius: 10;</string>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>9</x>
+          <y>46</y>
+          <width>386</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout">
+         <property name="spacing">
+          <number>61</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+           </property>
+           <property name="text">
+            <string>自动</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+           </property>
+           <property name="text">
+            <string>低速</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+           </property>
+           <property name="text">
+            <string>中速</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+           </property>
+           <property name="text">
+            <string>高速</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+           </property>
+           <property name="text">
+            <string>强力</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="up_down">
+        <property name="geometry">
+         <rect>
+          <x>71</x>
+          <y>79</y>
+          <width>321</width>
+          <height>40</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout">
+         <property name="spacing">
+          <number>11</number>
+         </property>
+         <item>
+          <widget class="QRadioButton" name="ud_auto">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>自动</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="ud_u">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>上</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="ud_m">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>中</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="ud_d">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>下</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="left_right">
+        <property name="geometry">
+         <rect>
+          <x>71</x>
+          <y>132</y>
+          <width>321</width>
+          <height>40</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout">
+         <property name="spacing">
+          <number>11</number>
+         </property>
+         <item>
+          <widget class="QRadioButton" name="lr_auto">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>自动</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="lr_l">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>左</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="lr_c">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>中</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="lr_r">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>右</string>
+           </property>
+           <property name="style" stdset="0">
+            <string>wind_direct</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="widget">
+    <property name="widget_type" stdset="0">
+     <string/>
+    </property>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>800</width>
+       <height>48</height>
+      </rect>
+     </property>
+     <property name="widget_type" stdset="0">
+      <string>window</string>
+     </property>
+     <widget class="QToolButton" name="image">
+      <property name="geometry">
+       <rect>
+        <x>22</x>
+        <y>0</y>
+        <width>133</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>Resources/home_logo.png</normaloff>Resources/home_logo.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>133</width>
+        <height>32</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="close2">
+      <property name="geometry">
+       <rect>
+        <x>729</x>
+        <y>0</y>
+        <width>71</width>
+        <height>45</height>
+       </rect>
+      </property>
+      <property name="style" stdset="0">
+       <string>back_btn</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>48</y>
+       <width>800</width>
+       <height>432</height>
+      </rect>
+     </property>
+     <property name="widget_type" stdset="0">
+      <string>window</string>
+     </property>
+     <widget class="QWidget" name="view" native="true">
+      <property name="geometry">
+       <rect>
+        <x>5</x>
+        <y>0</y>
+        <width>260</width>
+        <height>395</height>
+       </rect>
+      </property>
+      <property name="widget_type" stdset="0">
+       <string>view</string>
+      </property>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>364</y>
+         <width>28</width>
+         <height>14</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>口味</string>
+       </property>
+      </widget>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>36</x>
+         <y>86</y>
+         <width>180</width>
+         <height>180</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/coffee.png</normaloff>Resources/coffee.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>180</width>
+         <height>180</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>92</x>
+         <y>42</y>
+         <width>72</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 24px;</string>
+       </property>
+       <property name="text">
+        <string>咖啡机</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="mode_lb">
+       <property name="geometry">
+        <rect>
+         <x>13</x>
+         <y>325</y>
+         <width>63</width>
+         <height>26</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 16px;</string>
+       </property>
+       <property name="text">
+        <string>{口味}</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="coffee_sw">
+       <property name="geometry">
+        <rect>
+         <x>206</x>
+         <y>267</y>
+         <width>36</width>
+         <height>36</height>
+        </rect>
+       </property>
+       <property name="style" stdset="0">
+        <string>sw</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="widget" native="true">
+       <property name="geometry">
+        <rect>
+         <x>86</x>
+         <y>334</y>
+         <width>80</width>
+         <height>48</height>
+        </rect>
+       </property>
+       <property name="style" stdset="0">
+        <string>air_line</string>
+       </property>
+       <property name="widget_type" stdset="0">
+        <string>view</string>
+       </property>
+       <widget class="QLabel" name="volume_lb">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>-7</y>
+          <width>43</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 16px;</string>
+        </property>
+        <property name="text">
+         <string>{水量}</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>30</y>
+          <width>78</width>
+          <height>14</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>水量/ml</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QLabel" name="time_lb">
+       <property name="geometry">
+        <rect>
+         <x>176</x>
+         <y>335</y>
+         <width>84</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 16px;</string>
+       </property>
+       <property name="text">
+        <string>{剩余时间}</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>181</x>
+         <y>364</y>
+         <width>56</width>
+         <height>14</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #C2C2CC;font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>剩余时间</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="view1" native="true">
+      <property name="geometry">
+       <rect>
+        <x>269</x>
+        <y>0</y>
+        <width>526</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="widget_type" stdset="0">
+       <string>view</string>
+      </property>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>11</x>
+         <y>26</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/air_mode.png</normaloff>Resources/air_mode.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>47</x>
+         <y>34</y>
+         <width>28</width>
+         <height>14</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>模式</string>
+       </property>
+       <property name="style" stdset="0">
+        <string>default</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="view1_vis">
+       <property name="geometry">
+        <rect>
+         <x>114</x>
+         <y>21</y>
+         <width>391</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout">
+        <property name="spacing">
+         <number>13</number>
+        </property>
+        <item>
+         <widget class="QRadioButton" name="radio_cappu">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>卡布奇诺</string>
+          </property>
+          <property name="style" stdset="0">
+           <string>coffee</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radio_latte">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>拿铁</string>
+          </property>
+          <property name="style" stdset="0">
+           <string>coffee</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radio_american">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>美式</string>
+          </property>
+          <property name="style" stdset="0">
+           <string>coffee</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radio_italian">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>意式</string>
+          </property>
+          <property name="style" stdset="0">
+           <string>coffee</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="view2" native="true">
+      <property name="geometry">
+       <rect>
+        <x>269</x>
+        <y>85</y>
+        <width>526</width>
+        <height>221</height>
+       </rect>
+      </property>
+      <property name="widget_type" stdset="0">
+       <string>view</string>
+      </property>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>11</x>
+         <y>23</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/icon_taste.png</normaloff>Resources/icon_taste.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>11</x>
+         <y>73</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/icon_temp.png</normaloff>Resources/icon_temp.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QToolButton" name="toolButton">
+       <property name="geometry">
+        <rect>
+         <x>11</x>
+         <y>168</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Resources/icon_volume.png</normaloff>Resources/icon_volume.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>47</x>
+         <y>32</y>
+         <width>28</width>
+         <height>14</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>口味</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>47</x>
+         <y>81</y>
+         <width>28</width>
+         <height>14</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>水温</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>47</x>
+         <y>176</y>
+         <width>28</width>
+         <height>14</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px;</string>
+       </property>
+       <property name="text">
+        <string>水量</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="view2_vis" native="true">
+       <property name="geometry">
+        <rect>
+         <x>94</x>
+         <y>18</y>
+         <width>417</width>
+         <height>182</height>
+        </rect>
+       </property>
+       <property name="style" stdset="0">
+        <string>null</string>
+       </property>
+       <property name="widget_type" stdset="0">
+        <string>view</string>
+       </property>
+       <widget class="QPushButton" name="temp_r">
+        <property name="geometry">
+         <rect>
+          <x>114</x>
+          <y>52</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>up</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="temp_l">
+        <property name="geometry">
+         <rect>
+          <x>2</x>
+          <y>52</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>down</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="temp_lb">
+        <property name="geometry">
+         <rect>
+          <x>43</x>
+          <y>52</y>
+          <width>65</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">border-width: 2px;</string>
+        </property>
+        <property name="text">
+         <string>{温度}</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>set_temp</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="taste_r">
+        <property name="geometry">
+         <rect>
+          <x>114</x>
+          <y>1</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>r_coffee</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="taste_l">
+        <property name="geometry">
+         <rect>
+          <x>2</x>
+          <y>1</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>l_coffee</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="taste_lb">
+        <property name="geometry">
+         <rect>
+          <x>43</x>
+          <y>0</y>
+          <width>65</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>{口味}</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>set_temp</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="mhot_r">
+        <property name="geometry">
+         <rect>
+          <x>373</x>
+          <y>1</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>r_coffee</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="mhot_l">
+        <property name="geometry">
+         <rect>
+          <x>261</x>
+          <y>1</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>l_coffee</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="mhot_lb">
+        <property name="geometry">
+         <rect>
+          <x>302</x>
+          <y>0</y>
+          <width>65</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>{热奶}</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>set_temp</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="froth_r">
+        <property name="geometry">
+         <rect>
+          <x>373</x>
+          <y>52</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>r_coffee</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="froth_l">
+        <property name="geometry">
+         <rect>
+          <x>261</x>
+          <y>52</y>
+          <width>36</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="style" stdset="0">
+         <string>l_coffee</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="froth_lb">
+        <property name="geometry">
+         <rect>
+          <x>302</x>
+          <y>51</y>
+          <width>65</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>{奶泡}</string>
+        </property>
+        <property name="style" stdset="0">
+         <string>set_temp</string>
+        </property>
+       </widget>
+       <widget class="QSlider" name="volume_slider">
+        <property name="geometry">
+         <rect>
+          <x>2</x>
+          <y>135</y>
+          <width>403</width>
+          <height>40</height>
+         </rect>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="style" stdset="0">
+         <string>coffee</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>170</y>
+          <width>396</width>
+          <height>14</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout">
+         <property name="spacing">
+          <number>28</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>50ml</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>100ml</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>150ml</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>200ml</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>250ml</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>300ml</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">color: #C2C2CC;font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>350ml</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QToolButton" name="volume_img">
+        <property name="geometry">
+         <rect>
+          <x>372</x>
+          <y>116</y>
+          <width>45</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>Resources/drag_label.png</normaloff>Resources/drag_label.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>45</width>
+          <height>25</height>
+         </size>
+        </property>
+        <widget class="QLabel" name="volume_img_lb">
+         <property name="geometry">
+          <rect>
+           <x>5</x>
+           <y>0</y>
+           <width>34</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 12px;</string>
+         </property>
+         <property name="text">
+          <string>{水量}</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QToolButton" name="toolButton">
+        <property name="geometry">
+         <rect>
+          <x>185</x>
+          <y>55</y>
+          <width>30</width>
+          <height>30</height>
+         </rect>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>Resources/icon_froth.png</normaloff>Resources/icon_froth.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>30</width>
+          <height>30</height>
+         </size>
+        </property>
+       </widget>
+       <widget class="QToolButton" name="toolButton">
+        <property name="geometry">
+         <rect>
+          <x>186</x>
+          <y>4</y>
+          <width>30</width>
+          <height>30</height>
+         </rect>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>Resources/icon_mhot.png</normaloff>Resources/icon_mhot.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>30</width>
+          <height>30</height>
+         </size>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>12</y>
+          <width>28</width>
+          <height>14</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>热奶</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>63</y>
+          <width>28</width>
+          <height>14</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 14px;</string>
+        </property>
+        <property name="text">
+         <string>奶泡</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="view3" native="true">
+      <property name="geometry">
+       <rect>
+        <x>269</x>
+        <y>311</y>
+        <width>527</width>
+        <height>84</height>
+       </rect>
+      </property>
+      <property name="widget_type" stdset="0">
+       <string>view</string>
+      </property>
+      <widget class="QCheckBox" name="begin">
+       <property name="geometry">
+        <rect>
+         <x>19</x>
+         <y>22</y>
+         <width>490</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>开始制作</string>
+       </property>
+       <property name="style" stdset="0">
+        <string>default</string>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

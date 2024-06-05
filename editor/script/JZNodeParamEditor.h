@@ -60,6 +60,8 @@ public:
 protected slots:
     void on_btnAdd_clicked();
     void on_btnRemove_clicked();    
+    void on_boxParamType_currentIndexChanged(int index);
+
     void onCleanChanged(bool modify);
     void onItemChanged(QTableWidgetItem *item);
 
@@ -85,8 +87,8 @@ protected:
 
     JZParamItem *m_file;    
     QTableWidget *m_table;
-    Ui::JZNodeParamEditor *ui;
-    int m_widgetCount;
+    QTableWidget *m_tableUi;    
+    Ui::JZNodeParamEditor *ui;    
     bool m_isClass;
 
     QUndoStack m_commandStack;

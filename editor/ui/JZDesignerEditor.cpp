@@ -92,6 +92,7 @@ void JZDesignerEditor::init(QDesignerFormEditorInterface *core)
 JZDesignerFormWindow *JZDesignerEditor::open(JZUiFile *file)
 {    
     QDesignerFormWindowInterface *form = m_core->formWindowManager()->createFormWindow();
+    
     QString xml = file->xml();
     if (xml.isEmpty())
     {

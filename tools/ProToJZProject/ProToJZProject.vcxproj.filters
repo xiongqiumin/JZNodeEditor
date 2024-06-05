@@ -27,7 +27,16 @@
     <ClCompile Include="ProConvert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CppConvert.cpp">
+    <ClCompile Include="as_tokenizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="as_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="as_scriptcode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="as_scriptnode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,7 +44,16 @@
     <ClInclude Include="ProConvert.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CppConvert.h">
+    <ClInclude Include="as_tokenizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="as_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="as_scriptcode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="as_scriptnode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

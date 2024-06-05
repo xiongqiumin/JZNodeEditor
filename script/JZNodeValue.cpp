@@ -305,20 +305,31 @@ QString JZNodeCreateFromString::context() const
     return pinValue(paramIn(1));
 }
 
-//JZNodeParamFunction
-JZNodeParamFunction::JZNodeParamFunction()
+//JZNodeFunctionPointer
+JZNodeFunctionPointer::JZNodeFunctionPointer()
+{
+    m_type = Node_functionPointer;
+
+    int out = addParamOut("",Pin_dispValue | Pin_editValue);
+    setPinTypeString(Type_function);
+}
+
+JZNodeFunctionPointer::~JZNodeFunctionPointer()
 {
 
 }
 
-JZNodeParamFunction::~JZNodeParamFunction()
+void JZNodeFunctionPointer::setFucntion(QString name)
 {
-
+    setParamOutValue(paramOut(0), name);
 }
 
-bool JZNodeParamFunction::compiler(JZNodeCompiler *compiler, QString &error)
+bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
 {
-    return false;
+    int id = c->paramId(m_id, paramOut(0));
+    c->addNodeStart(m_id);
+    c->addSetVariable(irId(id), irLiteral(name));
+    return true;
 }
 
 //JZNodeDisplay
