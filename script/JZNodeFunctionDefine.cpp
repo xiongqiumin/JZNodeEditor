@@ -38,7 +38,7 @@ QString JZParamDefine::initValue() const
         else if (JZNodeType::isEnum(t))
         {
             auto meta = JZNodeObjectManager::instance()->enumMeta(t);
-            return meta->defaultValue();
+            return meta->defaultKey();
         }
         else if (JZNodeType::isObject(t))
             return "null";

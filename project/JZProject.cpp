@@ -382,7 +382,7 @@ JZProjectItem *JZProject::getItem(QString path)
     if(!path.startsWith("./"))
         path = "./" + path;
 
-    QStringList path_list = path.split("/",Qt::KeepEmptyParts);
+    QStringList path_list = path.split("/",QString::KeepEmptyParts);
     JZProjectItem *folder = &m_root;
     for(int i = 1; i < path_list.size(); i++)
     {        
@@ -397,7 +397,7 @@ JZProjectItem *JZProject::addFile(QString filepath)
 {    
     JZProjectItem *item = nullptr;
     if (!QFile::exists(filepath))
-        return false;
+        return nullptr;
 
     filepath = QFileInfo(filepath).canonicalFilePath();
 

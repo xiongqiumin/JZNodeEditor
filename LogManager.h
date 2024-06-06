@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <QObject>
 #include <QString>
 #include <QMutex>
@@ -48,7 +48,7 @@ protected:
     ~LogManager();
 };
 
-#define LOGI(module,format,...)   LogManager::instance()->log(module,LOG_INFO,format,__VA_ARGS__)
-#define LOGW(module,format,...)   LogManager::instance()->log(module,LOG_WARNING,format,__VA_ARGS__)
-#define LOGE(module,format,...)   LogManager::instance()->log(module,LOG_ERROR,format,__VA_ARGS__)
-#define LOGF(module,format,...)   LogManager::instance()->log(module,LOG_FATAL,format,__VA_ARGS__)
+#define LOGI(module,format,...)   LogManager::instance()->log(module,LOG_INFO,format,##__VA_ARGS__)
+#define LOGW(module,format,...)   LogManager::instance()->log(module,LOG_WARNING,format,##__VA_ARGS__)
+#define LOGE(module,format,...)   LogManager::instance()->log(module,LOG_ERROR,format,##__VA_ARGS__)
+#define LOGF(module,format,...)   LogManager::instance()->log(module,LOG_FATAL,format,##__VA_ARGS__)

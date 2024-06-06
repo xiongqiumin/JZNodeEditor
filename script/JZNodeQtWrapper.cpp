@@ -1,4 +1,4 @@
-#include <QResizeEvent>
+ï»¿#include <QResizeEvent>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QShowEvent>
@@ -102,7 +102,7 @@ void initBase()
 {
     JZNodeObjectManager::instance()->delcare("StringList",typeid(QStringList).name() ,Type_stringList);
 
-    //string È«²¿Ö»¶Á
+    //string å…¨éƒ¨åªè¯»
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
     cls_string.def("append", false, [](const QString &a, const QString &b)->QString {
         return a + b;

@@ -1,8 +1,6 @@
-QT       += core gui network uitools testlib
+QT       += core gui network uitools testlib designer
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-CONFIG += c++11
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -11,40 +9,40 @@ CONFIG += c++11
 QMAKE_CXXFLAGS += -Werror=return-type
 
 INCLUDEPATH += ./ \
+    ./widgets \
     ./project \
     ./script \
     ./editor \
     ./editor/script \
     ./editor/ui \
-    ./editor/device \    
-    ./editor/driver \
-    ./3rd/jznet \
-    ./3rd/qtpropertybrowser
-
-SOURCES += \
-    $$files(./*.cpp) \
-    $$files(./project/*.cpp) \
-    $$files(./script/*.cpp) \
-    $$files(./editor/*.cpp) \
-    $$files(./editor/script/*.cpp) \
-    $$files(./editor/ui/*.cpp) \
-    $$files(./editor/device/*.cpp) \    
-    $$files(./editor/driver/*.cpp) \
-    $$files(./3rd/qtpropertybrowser/*.cpp) \
-    $$files(./3rd/jznet/*.cpp) \
-    $$files(./tests/*.cpp)
+    ./3rd/jznet
 
 HEADERS += \
     $$files(./*.h) \
+    $$files(./widgets/*.h) \
     $$files(./project/*.h) \
     $$files(./script/*.h) \
     $$files(./editor/*.h) \
     $$files(./editor/script/*.h) \
     $$files(./editor/ui/*.h) \
-    $$files(./editor/device/*.h) \    
-    $$files(./editor/driver/*.h) \    
-    $$files(./3rd/qtpropertybrowser/*.h) \
+    $$files(./sample/*.h) \
+    $$files(./sample/SmartHome/*.h) \
     $$files(./3rd/jznet/*.h) \
     $$files(./tests/*.h)
 
-FORMS += 
+SOURCES += \
+    $$files(./*.cpp) \
+    $$files(./widgets/*.cpp) \
+    $$files(./project/*.cpp) \
+    $$files(./script/*.cpp) \
+    $$files(./editor/*.cpp) \
+    $$files(./editor/script/*.cpp) \
+    $$files(./editor/ui/*.cpp) \
+    $$files(./sample/*.cpp) \
+    $$files(./sample/SmartHome/*.cpp) \
+    $$files(./3rd/qtpropertybrowser/*.cpp) \
+    $$files(./3rd/jznet/*.cpp) \
+    $$files(./tests/*.cpp)
+
+FORMS += $$files(./editor/*.ui) \
+    $$files(./editor/script/*.ui)

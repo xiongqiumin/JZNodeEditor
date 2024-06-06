@@ -605,9 +605,6 @@
     <ClInclude Include="script\JZNodeObject.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
-    <ClInclude Include="script\JZNodeWidgetWrapper.h">
-      <Filter>Header Files\script</Filter>
-    </ClInclude>
     <ClInclude Include="script\JZNodeEnum.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>

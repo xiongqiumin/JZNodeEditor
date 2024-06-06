@@ -1,4 +1,4 @@
-#include "JZNodeEnum.h"
+﻿#include "JZNodeEnum.h"
 #include "JZNodeType.h"
 
 void JZNodeEnumDefine::init(QString name, QStringList keys, QVector<int> values)
@@ -166,6 +166,6 @@ QString JZNodeEnumDefine::valueToKey(int value) const
         if (index >= 0)
             return m_keys[index];
         else
-            return -1;
+            return QString();
     }
 }

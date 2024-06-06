@@ -11,7 +11,6 @@
 #include "JZNodeDebugServer.h"
 #include "JZNodeDebugClient.h"
 #include "JZNodeFunction.h"
-#include "JZNodeBind.h"
 #include "JZNodeFactory.h"
 #include "JZNodeObject.h"
 #include "JZParamItem.h"

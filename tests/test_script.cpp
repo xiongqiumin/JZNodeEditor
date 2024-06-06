@@ -6,6 +6,7 @@
 #include "test_script.h"
 #include "JZRegExpHelp.h"
 #include "JZNodeObjectParser.h"
+#include "JZNodeBind.h"
 
 ScriptTest::ScriptTest()
 {

@@ -1,4 +1,4 @@
-#include <memory>
+﻿#include <memory>
 #include <JZRegExpHelp.h>
 #include "JZNodeEngine.h"
 #include "JZNodeObjectParser.h"
@@ -104,7 +104,7 @@ QVariantList *JZNodeObjectParser::readList()
         if (c == ']')
             break;
         if (c != ',')
-            return false;
+            return nullptr;
     }
 
     return ptr.take();    
@@ -146,11 +146,11 @@ JZNodeObject *JZNodeObjectParser::readObject()
 {    
     QString type = readWord();
     if (type.isEmpty())
-        return false;
+        return nullptr;
 
     auto meta = JZNodeObjectManager::instance()->meta(type);
     if (!meta)
-        return false;
+        return nullptr;
 
     JZNodeObject *obj = JZNodeObjectManager::instance()->create(meta->id);
     QScopedPointer<JZNodeObject> ptr(obj);
@@ -323,7 +323,7 @@ JZNodeObject *JZNodeObjectParser::parse(const QString &text)
     {
         QVariantMap *map = readMap();
         if (!map)
-            return false;        
+            return nullptr;
         
         obj = JZNodeObjectManager::instance()->createCClassRefrence(Type_map, map, true);        
     }
@@ -331,7 +331,7 @@ JZNodeObject *JZNodeObjectParser::parse(const QString &text)
     {
         QVariantList *list = readList();
         if (!list)
-            return false;
+            return nullptr;
         obj = JZNodeObjectManager::instance()->createCClassRefrence(Type_list, list, true);
     }
     else if(c.isLetterOrNumber())

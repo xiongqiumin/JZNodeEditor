@@ -1,4 +1,4 @@
-#ifndef JZPROJECT_STREAM_H_
+﻿#ifndef JZPROJECT_STREAM_H_
 #define JZPROJECT_STREAM_H_
 
 #include <QJsonObject>
@@ -21,7 +21,7 @@ public:
     JZProjectStream &operator[](const QString &name);
 
 protected:   
-    Q_DISABLE_COPY(JZProjectStream);
+    Q_DISABLE_COPY(JZProjectStream)
 
     int indexOfStream(const QString &name);
 
@@ -135,8 +135,9 @@ void operator >> (JZProjectStream& stream, QMap<int, T> &map)
         JZProjectStream s;
         s.setValue(it.value());
 
-        s >> v;
-        map.insert(QString::number(it.key()), v);
+        int key;
+        s >> key;
+        map.insert(key, v);
         it++;
     }
     stream.setValue(obj);

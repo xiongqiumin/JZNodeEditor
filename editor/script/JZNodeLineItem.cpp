@@ -1,4 +1,5 @@
-﻿#include <QGraphicsSceneMouseEvent>
+﻿#include <math.h>
+#include <QGraphicsSceneMouseEvent>
 #include <QDebug>
 #include "JZNodeLineItem.h"
 #include "JZNodeView.h"

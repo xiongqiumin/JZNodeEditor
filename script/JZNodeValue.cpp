@@ -327,8 +327,10 @@ void JZNodeFunctionPointer::setFucntion(QString name)
 bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
 {
     int id = c->paramId(m_id, paramOut(0));
+    
+    QString function_name = paramOutValue(0);
     c->addNodeStart(m_id);
-    c->addSetVariable(irId(id), irLiteral(name));
+    c->addSetVariable(irId(id), irLiteral(function_name));
     return true;
 }
 

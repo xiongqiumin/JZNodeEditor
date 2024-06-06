@@ -354,7 +354,7 @@ void JZNodeEngine::regist()
 {
     JZNodeFunctionManager::instance()->registCFunction("convert", true, jzbind::createFuncion(JZConvert));
     JZNodeFunctionManager::instance()->registCFunction("dealExpr", false, jzbind::createFuncion(JZDealExpr));
-    JZNodeFunctionManager::instance()->registCFunction("createObject", false, jzbind::createFuncion(JZObjectCreate));
+    JZNodeFunctionManager::instance()->registCFunction("createObject", false, jzbind::createFuncion(QOverload<QString>::of(JZObjectCreate)));
     JZNodeFunctionManager::instance()->registCFunction("connect", false, jzbind::createFuncion(JZObjectConnect));
 
     JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    

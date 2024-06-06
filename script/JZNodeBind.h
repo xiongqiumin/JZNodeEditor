@@ -1,12 +1,21 @@
 ﻿#ifndef JZNODE_BIND_H_
 #define JZNODE_BIND_H_
 
+#include <type_traits>
 #include <QMetaEnum>
+#include <QSet>
+
+#include <QPaintEvent>
+#include <QShowEvent>
+#include <QResizeEvent>
+#include <QCloseEvent>
+#include <QKeyEvent>
+#include <QMouseEvent>
+
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
 #include "JZNodeFunctionManager.h"
 #include "JZEvent.h"
-#include "JZNodeWidgetWrapper.h"
 
 namespace jzbind
 {
@@ -80,7 +89,7 @@ constexpr bool is_enum_or_qenum_cond()
 }
 
 template<class T>
-using is_enum_or_qenum = std::bool_constant<is_enum_or_qenum_cond<T>()>;
+using is_enum_or_qenum = bool_constant<is_enum_or_qenum_cond<T>()>;
 
 
 template<class T> void *createClass(){ return new T(); }
@@ -97,22 +106,6 @@ template<class T> void addEventFilter(void *ptr, int filter)
 void *createClassAssert();
 void destoryClassAssert(void *);
 void copyClassAssert(void *,void *);
-
-template<class T>
-T getValue(const QVariant &v,std::true_type)
-{
-    JZNodeObject *obj = toJZObject(v);
-    if (obj)
-        return (T)obj->cobj();
-    else
-        return nullptr;
-}
-
-template<class T>
-T getValue(const QVariant &v, std::false_type)
-{
-    return getValueEnum<T>(v, is_enum_or_qenum<T>());
-}
 
 template<class T>
 T getValueEnum(const QVariant &v, std::true_type)
@@ -136,6 +129,28 @@ T getValueEnum(const QVariant &v, std::false_type)
     }
 }
 
+template<class T>
+T getValue(const QVariant &v, std::true_type)
+{
+    JZNodeObject *obj = toJZObject(v);
+    if (obj)
+        return (T)obj->cobj();
+    else
+        return nullptr;
+}
+
+template<class T>
+T getValue(const QVariant &v, std::false_type)
+{
+    return getValueEnum<T>(v, is_enum_or_qenum<T>());
+}
+
+template<class T>
+remove_cvr_t<T> getValue(QVariant v)
+{
+    return getValue<remove_cvr_t<T>>(v, std::is_pointer<T>());
+}
+
 template<>
 QVariant getValue<QVariant>(const QVariant &v,std::false_type);
 
@@ -144,12 +159,6 @@ QString getValue<QString>(const QVariant &v, std::false_type);
 
 template<>
 QString* getValue<QString*>(const QVariant &v, std::true_type);
-
-template<class T>
-remove_cvr_t<T> getValue(QVariant v)
-{
-    return getValue<remove_cvr_t<T>>(v,std::is_pointer<T>());
-}
 
 //这里加一个空模板函数是为了编译可以通过，否则编译期间调用printAmt<int>(int&)就会找不到可匹配的函数
 //模板参数第一个类型实际上是用不到的，但是这里必须要加上，否则就是调用printAmt<>(int&)，模板实参为空，但是模板形参列表是不能为空的
@@ -168,17 +177,15 @@ void getFunctionParam(QStringList &list)
 }
 
 template<class T>
-QVariant getReturnPointer(T value,bool isRef,std::true_type)
+QVariant getReturnEnum(T value, std::true_type)
 {
-    static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    JZNodeObjectPtr obj = JZObjectRefrence<T>(value, !isRef);
-    return QVariant::fromValue(obj);
+    return (int)value;
 }
 
 template<class T>
-QVariant getReturnPointer(T value, bool, std::false_type)
+QVariant getReturnEnum(T value, std::false_type)
 {
-    return getReturnClass(value,std::is_class<T>());
+    return value;
 }
 
 template<class T>
@@ -191,20 +198,22 @@ QVariant getReturnClass(T value, std::true_type)
 
 template<class T>
 QVariant getReturnClass(T value, std::false_type)
-{    
-    return getReturnEnum(value, is_enum_or_qenum<T>());
-}
- 
-template<class T>
-QVariant getReturnEnum(T value, std::true_type)
 {
-    return (int)value;
+    return getReturnEnum(value, is_enum_or_qenum<T>());
 }
 
 template<class T>
-QVariant getReturnEnum(T value, std::false_type)
+QVariant getReturnPointer(T value,bool isRef,std::true_type)
 {
-    return value;
+    static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
+    JZNodeObjectPtr obj = JZObjectRefrence<T>(value, !isRef);
+    return QVariant::fromValue(obj);
+}
+
+template<class T>
+QVariant getReturnPointer(T value, bool, std::false_type)
+{
+    return getReturnClass(value,std::is_class<T>());
 }
 
 // isRef 表示是否引用, false时, 才会自动管理
@@ -412,6 +421,70 @@ int registEnum(QString name,int id = -1)
         define.setType(id);
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
+
+//class regist
+#define DEFINE_EVENT(type,func,qevent)    \
+    void func(qevent *e){                 \
+        if (!eventFilter.contains(type))  \
+        {                                 \
+            Class::func(e);               \
+            return;                       \
+        }                                 \
+                                          \
+        JZEvent event;                                             \
+        event.eventType = type;                                    \
+        event.sender = jzobject;                                   \
+        event.params.push_back(QVariant::fromValue(event.sender)); \
+        event.params.push_back(getReturn(e, true));                \
+        JZObjectEvent(&event);                                     \
+    }                                                              \
+                                                                   \
+    void call_##func(qevent *event)                                \
+    {                                                              \
+        Class::func(event);                                        \
+    }                                                              \
+                                                                   \
+    void call_##func##_help(Class *widget, qevent *event)          \
+    {                                                              \
+        auto ptr = (WidgetWrapper<Class>*)widget;                  \
+        ptr->call_##func(event);                                   \
+    }                                                              
+
+template<class Class>
+class WidgetWrapper : public Class
+{
+public:
+    using T = WidgetWrapper<Class>;
+
+    WidgetWrapper()
+    {
+        jzobject = nullptr;
+    }
+
+    DEFINE_EVENT(Event_paint, paintEvent, QPaintEvent)
+    DEFINE_EVENT(Event_show, showEvent, QShowEvent)
+    DEFINE_EVENT(Event_resize, resizeEvent, QResizeEvent)
+    DEFINE_EVENT(Event_close, closeEvent, QCloseEvent)
+    DEFINE_EVENT(Event_keyPress, keyPressEvent, QKeyEvent)
+    DEFINE_EVENT(Event_keyRelease, keyReleaseEvent, QKeyEvent)
+    DEFINE_EVENT(Event_mousePress, mousePressEvent, QMouseEvent)
+    DEFINE_EVENT(Event_mouseMove, mouseMoveEvent, QMouseEvent)
+    DEFINE_EVENT(Event_mouseRelease, mouseReleaseEvent, QMouseEvent)
+
+        void setJZObject(JZNodeObject *obj)
+    {
+        jzobject = obj;
+    }
+
+    void addEventFilter(int event)
+    {
+        eventFilter.insert(event);
+    }
+
+private:
+    JZNodeObject *jzobject;
+    QSet<int> eventFilter;
+};
 
 template<class T>
 int ClassDelcare(QString name,int id)

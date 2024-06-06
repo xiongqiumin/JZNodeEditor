@@ -155,7 +155,9 @@ void JZNodeEditor::init()
     //m_nodeProp->setMaximumWidth(200);
     m_view->setPropertyEditor(m_nodeProp);    
     m_view->setRunEditor(m_runProp);
-    m_tabProp->setTabVisible(1, false);
+
+    //todo:
+    //m_tabProp->setTabVisible(1, false);
 }    
 
 void JZNodeEditor::open(JZProjectItem *item)

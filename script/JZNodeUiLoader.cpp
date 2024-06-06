@@ -1,6 +1,6 @@
-﻿#include "JZNodeUiLoader.h"
-#include <QBuffer>
+﻿#include <QBuffer>
 #include <QWidget>
+#include "JZNodeUiLoader.h"
 #include "JZNodeBind.h"
 
 JZNodeUiLoader::JZNodeUiLoader()

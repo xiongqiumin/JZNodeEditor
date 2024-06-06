@@ -233,7 +233,6 @@
     <QtMoc Include="editor\script\JZNodeWatch.h" />
     <QtMoc Include="editor\script\JZNodeStack.h" />
     <ClInclude Include="script\JZNodeEnum.h" />
-    <ClInclude Include="script\JZNodeWidgetWrapper.h" />
     <ClInclude Include="script\JZRegExpHelp.h" />
     <QtMoc Include="editor\ui\JZDesinger.h" />
     <QtMoc Include="editor\ui\JZDesignerEditor.h" />
