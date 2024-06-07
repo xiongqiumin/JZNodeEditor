@@ -1,4 +1,4 @@
-﻿#ifndef JZNODE_COMPILER_H_
+#ifndef JZNODE_COMPILER_H_
 #define JZNODE_COMPILER_H_
 
 #include "JZProject.h"
@@ -246,7 +246,7 @@ protected:
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);     
 
-    void updateBuildGraph();
+    void updateBuildGraph(const QList<GraphNode*> &root_list);
     
     bool compilerNode(JZNode *node);
     void pushCompilerNode(int id);
