@@ -8,6 +8,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 QMAKE_CXXFLAGS += -Werror=return-type
 
+LIBS += -L$$[QT_INSTALL_LIBS] -lQt5DesignerComponents
+
 INCLUDEPATH += ./ \
     ./widgets \
     ./project \
@@ -46,3 +48,5 @@ SOURCES += \
 
 FORMS += $$files(./editor/*.ui) \
     $$files(./editor/script/*.ui)
+
+RESOURCES = JZNodeEditor.qrc
