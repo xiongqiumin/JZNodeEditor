@@ -33,6 +33,20 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };
 
+//JZNodeFunctionStart
+class JZNodeFunctionStart : public JZNodeEvent
+{
+public:
+    JZNodeFunctionStart();
+    virtual ~JZNodeFunctionStart();
+
+    virtual JZFunctionDefine function() override;
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:
+
+};
+
 //JZNodeSingleEvent
 class JZNodeSingleEvent : public JZNodeEvent
 {

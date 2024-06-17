@@ -271,7 +271,8 @@ protected:
     void updateStatus(int status);
 
     const JZFunction *function(QString name);
-    void checkFunction(const JZFunction *func);
+    void checkFunctionIn(const JZFunction *func);
+    void checkFunctionOut(const JZFunction *func);
     void callCFunction(const JZFunction *func);    
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
@@ -324,8 +325,7 @@ protected:
     
     QMap<JZNodeObject*,JZObjectInfo> m_objectInfo;    
     QMap<QVariant*, VariantInfo> m_variantInfo;
-    QMap<QVariant*, VariantBindCache> m_widgetBindCache;
-    QSet<QVariant*> m_anyVariants;    
+    QMap<QVariant*, VariantBindCache> m_widgetBindCache;    
 };
 extern JZNodeEngine *g_engine;
 

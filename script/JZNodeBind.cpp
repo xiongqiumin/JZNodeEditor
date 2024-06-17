@@ -41,9 +41,9 @@ QString getValue<QString>(const QVariant &v, std::false_type)
 }
 
 template<>
-QVariant getReturn(QVariant value,bool)
+QVariant getReturn(JZNodeVariantAny value,bool)
 {
-    return value;
+    return QVariant::fromValue(value);
 }
 
 template<>

@@ -1199,7 +1199,7 @@ void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
     if (JZNodeType::isBaseOrEnum(JZNodeType::variantType(value)) && value != *ref)
         isChange = true;
 
-    Q_ASSERT(m_anyVariants.contains(ref) || JZNodeType::variantType(*ref) == JZNodeType::variantType(value));
+    Q_ASSERT(JZNodeType::variantType(*ref) == JZNodeType::variantType(value));
     *ref = value;
 
     if (isJZObject(value))
@@ -1249,8 +1249,7 @@ void JZNodeEngine::objectDelete(JZNodeObject *object)
 }
 
 void JZNodeEngine::varaiantDeleteNotify(QVariant *v)
-{    
-    m_anyVariants.remove(v);
+{        
     m_widgetBindCache.remove(v);
 
     auto it = m_variantInfo.find(v);
@@ -1518,36 +1517,43 @@ void JZNodeEngine::stepOut()
     waitCommand();
 }
 
-void JZNodeEngine::checkFunction(const JZFunction *func)
+void JZNodeEngine::checkFunctionIn(const JZFunction *func)
 {
     // get input
     auto &inList = func->paramIn;    
     for (int i = 0; i < inList.size(); i++)
     {
         QVariant v = getReg(Reg_Call + i);
-        int inType = JZNodeType::variantType(v);
-        bool ret = JZNodeType::canConvert(inType, func->paramIn[i].dataType);
-        if (!ret)            
-            throw std::runtime_error(qUtf8Printable(func->paramIn[i].name + " type not match"));
+        Q_ASSERT(JZNodeType::variantType(v) == inList[i].dataType);        
         if (i == 0 && func->isMemberFunction() && JZNodeType::isNullptr(v))
             throw std::runtime_error("object is nullptr");
     }
 }
 
+void JZNodeEngine::checkFunctionOut(const JZFunction *func)
+{
+    auto &outList = func->paramOut;
+    for (int i = 0; i < outList.size(); i++)
+    {        
+        Q_ASSERT(JZNodeType::variantType(getReg(Reg_Call + i)) == outList[i].dataType);
+    }
+}
+
 void JZNodeEngine::callCFunction(const JZFunction *func)
 {    
+    checkFunctionIn(func);
+
     QVariantList paramIn, paramOut;
     // get input
     auto &inList = func->paramIn;
     for (int i = 0; i < inList.size(); i++)    
-        paramIn.push_back(getReg(Reg_Call + i));  
-
-    checkFunction(func);
+        paramIn.push_back(getReg(Reg_Call + i));      
 
     // call function
     pushStack(func);
     func->cfunc->call(paramIn,paramOut);
-    popStack();
+    checkFunctionOut(func);
+    popStack();    
 
     // set output
     auto &outList = func->paramOut;
@@ -1956,16 +1962,7 @@ bool JZNodeEngine::run()
             else if (ir_alloc->allocType == JZNodeIRAlloc::Stack)
                 initLocal(ir_alloc->name, value);
             else
-                initLocal(ir_alloc->id, value);
-
-            if (ir_alloc->dataType = Type_any)
-            {
-                if (ir_alloc->allocType == JZNodeIRAlloc::Heap
-                    || ir_alloc->allocType == JZNodeIRAlloc::Stack)
-                    m_anyVariants << getVariableRef(ir_alloc->name);
-                else
-                    m_anyVariants << m_stack.currentEnv()->getRef(ir_alloc->id);
-            }
+                initLocal(ir_alloc->id, value);            
             break;
         }
         case OP_set:
@@ -1984,15 +1981,16 @@ bool JZNodeEngine::run()
                 callCFunction(func);
             else
             {
-                checkFunction(func);
+                checkFunctionIn(func);
                 pushStack(func);
                 continue;
             }
             break;
         }
         case OP_return:
-        {
-            popStack();            
+        {            ;
+            checkFunctionOut(m_stack.currentEnv()->func);
+            popStack();                  
             if(m_stack.size() < in_stack_size)
                 goto RunEnd;
             break;

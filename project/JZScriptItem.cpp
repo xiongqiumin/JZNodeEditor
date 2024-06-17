@@ -1,5 +1,6 @@
 ﻿#include "JZScriptItem.h"
 #include "JZNodeFactory.h"
+#include "JZNodeEvent.h"
 #include "JZNodeFunction.h"
 #include "JZUiFile.h"
 #include "JZParamItem.h"

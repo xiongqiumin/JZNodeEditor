@@ -92,8 +92,10 @@ int JZNodeType::variantType(const QVariant &v)
         return Type_string;
     else if(v.type() == QVariant::UserType)
     {
-        if(isJZObject(v))        
-            return JZObjectType(v);          
+        if (isJZObject(v))
+            return JZObjectType(v);
+        else if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
+            return Type_any;
     }
     return Type_none;
 }

@@ -65,6 +65,35 @@ bool JZNodeStartEvent::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
+//JZNodeFunctionStart
+JZNodeFunctionStart::JZNodeFunctionStart()
+{
+    m_name = "Start";
+    m_type = Node_functionStart;
+    m_eventType = Event_functionStart;
+    setFlag(NodeProp_noRemove);
+}
+
+JZNodeFunctionStart::~JZNodeFunctionStart()
+{
+
+}
+
+JZFunctionDefine JZNodeFunctionStart::function()
+{
+    if (!m_file)
+        return JZFunctionDefine();
+
+    return m_file->function();
+}
+
+bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
+{
+    c->addFunctionAlloc(m_file->function());
+    c->addFlowOutput(m_id);
+    c->addJumpNode(flowOut());
+    return true;
+}
 
 //JZNodeSingleEvent
 JZNodeSingleEvent::JZNodeSingleEvent()

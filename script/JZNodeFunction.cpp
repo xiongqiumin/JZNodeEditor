@@ -2,27 +2,6 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
 
-JZNodeFunctionStart::JZNodeFunctionStart()
-{
-    m_name = "Start";
-    m_type = Node_functionStart;
-    setFlag(NodeProp_noRemove);
-    addFlowOut();   
-}
-
-JZNodeFunctionStart::~JZNodeFunctionStart()
-{
-    
-}
-
-bool JZNodeFunctionStart::compiler(JZNodeCompiler *c,QString &error)
-{
-    c->addFunctionAlloc(m_file->function());
-    c->addFlowOutput(m_id);
-    c->addJumpNode(flowOut());
-    return true;
-}
-
 //JZNodeFunction
 JZNodeFunction::JZNodeFunction()
 {

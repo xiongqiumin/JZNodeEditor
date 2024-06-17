@@ -394,7 +394,7 @@ CompilerInfo JZNodeCompiler::compilerInfo()
     return m_compilerInfo;
 }
 
-void JZNodeCompiler::updateBuildGraph()
+void JZNodeCompiler::updateBuildGraph(const QList<GraphNode*> &root_list)
 {
     m_buildGraph->clear();
 
@@ -419,10 +419,12 @@ void JZNodeCompiler::updateBuildGraph()
     auto topolist = m_buildGraph->topolist;
     for (auto node : topolist)
         node->isReached = false;
-    for (int i = 0; i < topolist.size(); i++)
+    for (int i = 0; i < root_list.size(); i++)
     {
-        if (topolist[i]->node->flowInCount() == 0 && topolist[i]->node->isFlowNode())
-            m_buildGraph->walkFlowNode(topolist[i]);
+        int node_id = root_list[i]->node->id();
+        auto graph_node = m_buildGraph->m_nodes[node_id].data();
+        if (graph_node->node->flowInCount() == 0 && graph_node->node->isFlowNode())
+            m_buildGraph->walkFlowNode(graph_node);
     }
    
     topolist.clear();
@@ -483,95 +485,60 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     for(int graph_idx = 0; graph_idx < m_graphList.size(); graph_idx++)
     {
         m_originGraph = m_graphList[graph_idx].data();                
-
-        int buildType = m_scriptFile->itemType();
-        resetStack();         
-        m_nodeInfo.clear();
-        m_depend.clear();
-        m_statmentList = nullptr;
-        updateBuildGraph();
-        if (m_buildGraph->topolist.isEmpty())
+        if (m_originGraph->topolist.isEmpty())
             continue;
 
+        int buildType = m_scriptFile->itemType();        
         bool ret = false;
-        if(buildType == ProjectItem_scriptFlow)
+        if (buildType == ProjectItem_scriptParamBinding)
         {
-            ret = bulidControlFlow();
-            if(ret)
-                addEventHandle(m_buildGraph->topolist);
-        }
-        else if(buildType == ProjectItem_scriptParamBinding)
+            resetStack();
             ret = buildParamBinding();
-        else if(buildType == ProjectItem_scriptFunction)
-        {
-            JZNode *start_node = m_buildGraph->topolist[0]->node;
-            Q_ASSERT(start_node->type() == Node_functionStart);
-                        
-            ret = bulidControlFlow();
-            if(ret)
-            {           
-                JZFunctionDefine define = scriptFile->function();
-                addFunction(define, start_node->id());
-
-                updateDepend();
-                m_compilerInfo.depend[define.fullName()] = m_depend;
-            }
         }
-        updateDispayNode();
-
-        auto it = m_nodeInfo.begin();
-        while (it != m_nodeInfo.end())
-        {
-            if (!it->error.isEmpty())
-                m_compilerInfo.nodeError[it.key()] = it->error;
-            it++;
-        }
-
-        if (ret)
-        {
-            //编译结果    
-            auto it = m_nodeInfo.begin();
-            while (it != m_nodeInfo.end())
+        else
+        {            
+            QList<GraphNode*> event_list;            
+            if (buildType == ProjectItem_scriptFlow)
             {
-                auto node = scriptFile->getNode(it->node_id);
-
-                NodeInfo info;
-                info.node_id = it->node_id;
-                info.node_type = it->node_type;
-                info.isFlow = node->isFlowNode();
-                info.pcRanges << it->ranges;
-
-                auto in_list = node->paramInList();
-                for (int i = 0; i < in_list.size(); i++)
-                {                    
-                    if (node->pin(in_list[i])->flag() & Pin_noValue)
-                        continue;
-
-                    NodeParamInfo param_info;
-                    param_info.define.name = node->pin(in_list[i])->name();
-                    param_info.define.dataType = pinType(node->id(), in_list[i]);
-                    param_info.id = paramId(node->id(), in_list[i]);
-                    info.paramIn.push_back(param_info);
-                }
-
-                auto out_list = node->paramOutList();
-                for (int i = 0; i < out_list.size(); i++)
+                ret = bulidControlFlow();
+                // add event
+                for (int node_idx = 0; node_idx < m_originGraph->topolist.size(); node_idx++)
                 {
-                    if (node->pin(out_list[i])->flag() & Pin_noValue)
-                        continue;
-
-                    NodeParamInfo param_info;
-                    param_info.define.name = node->pin(out_list[i])->name();
-                    param_info.define.dataType = pinType(node->id(), out_list[i]);
-                    param_info.id = paramId(node->id(), out_list[i]);
-                    info.paramOut.push_back(param_info);
+                    JZNode *node = m_originGraph->topolist[node_idx]->node;
+                    JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(m_originGraph->topolist[node_idx]->node);
+                    if (node_event)
+                        event_list << m_originGraph->topolist[node_idx];
                 }
-                m_script->nodeInfo[it.key()] = info;
-
-                it++;
             }
-        }
+            else if (buildType == ProjectItem_scriptFunction)
+            {
+                JZNode *start_node = m_originGraph->topolist[0]->node;
+                Q_ASSERT(start_node->type() == Node_functionStart);
 
+                event_list.push_back(m_originGraph->topolist[0]);
+            }
+
+            for(int i = 0; i < event_list.size(); i++)
+            {                
+                resetStack();
+
+                QList<GraphNode*> cur_event_list;
+                cur_event_list << event_list[i];
+                updateBuildGraph(cur_event_list);
+                if (m_buildGraph->topolist.isEmpty())
+                    continue;
+
+                int start_pc = m_script->statmentList.size();
+                ret = bulidControlFlow();
+                if (!ret)
+                    break;
+                
+                JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(event_list[i]->node);
+                JZFunctionDefine define = node_event->function();
+                addFunction(define, start_pc);
+            }
+        }                            
+        
         buildRet = (buildRet && ret);
     }
     
@@ -1109,34 +1076,67 @@ bool JZNodeCompiler::checkBuildResult()
             QString name = m_buildGraph->topolist[i]->node->name();
             QString error = makeLink(nodeInfo.error,m_scriptFile->itemPath(),nodeInfo.node_id) + "\n";
             m_error += error;
+
+            m_compilerInfo.nodeError[id] = error;
             ok = false;
         }        
     }
+
     return ok;
 }
 
-void JZNodeCompiler::addEventHandle(const QList<GraphNode*> &graph_list)
-{
-    // add event
-    for(int node_idx = 0; node_idx < graph_list.size(); node_idx++)
-    {
-        JZNode *node = graph_list[node_idx]->node;
-        JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(graph_list[node_idx]->node);
-        if(node_event)
-        {            
-            JZFunctionDefine def = node_event->function();
-            if(!def.isNull())
-                addFunction(def, node->id());
-        }
-    }
-}
-
-void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int node_id)
+void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
 {    
+    updateDispayNode();
+    updateDepend();
+    m_compilerInfo.depend[define.fullName()] = m_depend;
+
+    //编译结果    
+    auto it = m_nodeInfo.begin();
+    while (it != m_nodeInfo.end())
+    {
+        auto node = m_scriptFile->getNode(it->node_id);
+
+        NodeInfo info;
+        info.node_id = it->node_id;
+        info.node_type = it->node_type;
+        info.isFlow = node->isFlowNode();
+        info.pcRanges << it->ranges;
+
+        auto in_list = node->paramInList();
+        for (int i = 0; i < in_list.size(); i++)
+        {
+            if (node->pin(in_list[i])->flag() & Pin_noValue)
+                continue;
+
+            NodeParamInfo param_info;
+            param_info.define.name = node->pin(in_list[i])->name();
+            param_info.define.dataType = pinType(node->id(), in_list[i]);
+            param_info.id = paramId(node->id(), in_list[i]);
+            info.paramIn.push_back(param_info);
+        }
+
+        auto out_list = node->paramOutList();
+        for (int i = 0; i < out_list.size(); i++)
+        {
+            if (node->pin(out_list[i])->flag() & Pin_noValue)
+                continue;
+
+            NodeParamInfo param_info;
+            param_info.define.name = node->pin(out_list[i])->name();
+            param_info.define.dataType = pinType(node->id(), out_list[i]);
+            param_info.id = paramId(node->id(), out_list[i]);
+            info.paramOut.push_back(param_info);
+        }
+        m_script->nodeInfo[it.key()] = info;
+
+        it++;
+    }
+
     JZFunction impl;
     impl.name = define.name;
     impl.className = define.className;
-    impl.addr = m_nodeInfo[node_id].start;
+    impl.addr = start_addr;
     impl.addrEnd = m_script->statmentList.size();
     impl.file = m_script->file;
     for(int i = 0; i < define.paramIn.size(); i++)
@@ -1392,14 +1392,17 @@ bool JZNodeCompiler::buildDataFlow(const QList<GraphNode*> &graph_list)
 
 bool JZNodeCompiler::buildParamBinding()
 {           
-    int start = m_statmentList->size();
-    buildDataFlow(m_buildGraph->topolist);
-    addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
-
+    int start_pc = m_script->statmentList.size();
+    buildDataFlow(m_buildGraph->topolist);    
     if(!checkBuildResult())
         return false;
+    
+    addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
+    for (int node_idx = 0; node_idx < m_originGraph->topolist.size(); node_idx++)
+    {
 
-    addEventHandle(m_buildGraph->topolist);
+    }
+    
     return true;
 }
 
@@ -1657,6 +1660,9 @@ void JZNodeCompiler::addCall(const JZFunctionDefine *function, const QList<JZNod
 void JZNodeCompiler::resetStack()
 {
     m_stackId = Stack_User;
+    m_nodeInfo.clear();
+    m_depend.clear();
+    m_statmentList = nullptr;
 }
 
 int JZNodeCompiler::allocStack(int dataType)

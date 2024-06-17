@@ -9,6 +9,7 @@ enum {
     Event_none,
     Event_idlePause,
     Event_programStart,
+    Event_functionStart,
     Event_libraryLoad,
     Event_paramChanged,
     

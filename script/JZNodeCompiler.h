@@ -1,4 +1,4 @@
-#ifndef JZNODE_COMPILER_H_
+﻿#ifndef JZNODE_COMPILER_H_
 #define JZNODE_COMPILER_H_
 
 #include "JZProject.h"
@@ -237,12 +237,14 @@ protected:
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
     bool buildDataFlow(const QList<GraphNode*> &list);
+    /*
+    先编译各个flow节点，最后连接，分开编译是因为out的时候无法确定对应输入节点的类型
+    */
     bool bulidControlFlow();    
     bool buildParamBinding();
     void replaceSubNode(int id,int parentId,int flow_index);
     int isAllFlowReturn(int id,bool root);
-    void addEventHandle(const QList<GraphNode*> &list);      
-    void addFunction(const JZFunctionDefine &define,int node_id);
+    void addFunction(const JZFunctionDefine &define,int start_addr);
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);     
 

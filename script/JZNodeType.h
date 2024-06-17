@@ -39,6 +39,13 @@ typedef QList<JZVariantPtr>         JZVariantList;
 typedef QMap<QString, JZVariantPtr> JZVariantMap;
 typedef QMap<int, JZVariantPtr>     JZVariantIntMap;
 
+class JZNodeVariantAny
+{
+public:
+    QVariant value;
+};
+Q_DECLARE_METATYPE(JZNodeVariantAny)
+
 class JZFunctionPointer
 {
 public:

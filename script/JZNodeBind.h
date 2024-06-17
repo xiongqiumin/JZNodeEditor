@@ -220,14 +220,15 @@ QVariant getReturnPointer(T value, bool, std::false_type)
 template<class T>
 QVariant getReturn(T value,bool isRef)
 {
+    static_assert(!std::is_same<QVariant, T>::value, "use JZNodeVariantAny");
     return getReturnPointer<remove_cvr_t<T>>(value,isRef,std::is_pointer<T>());
 }
 
 template<>
-QVariant getReturn(QVariant value,bool);
+QVariant getReturn(JZNodeVariantAny value, bool);
 
 template<>
-QVariant getReturn(QString value,bool);
+QVariant getReturn(QString value, bool);
 
 template<typename Func,typename Return, typename... Args>
 class CFunctionImpl : public CFunction
@@ -444,7 +445,7 @@ int registEnum(QString name,int id = -1)
         Class::func(event);                                        \
     }                                                              \
                                                                    \
-    void call_##func##_help(Class *widget, qevent *event)          \
+    static void call_##func##_help(Class *widget, qevent *event)   \
     {                                                              \
         auto ptr = (WidgetWrapper<Class>*)widget;                  \
         ptr->call_##func(event);                                   \
@@ -471,7 +472,7 @@ public:
     DEFINE_EVENT(Event_mouseMove, mouseMoveEvent, QMouseEvent)
     DEFINE_EVENT(Event_mouseRelease, mouseReleaseEvent, QMouseEvent)
 
-        void setJZObject(JZNodeObject *obj)
+    void setJZObject(JZNodeObject *obj)
     {
         jzobject = obj;
     }
