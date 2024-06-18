@@ -34,14 +34,12 @@ enum
 };
 
 typedef QVariant (*ConvertFunc)(const QVariant& v);
-typedef QSharedPointer<QVariant>    JZVariantPtr;
-typedef QList<JZVariantPtr>         JZVariantList;
-typedef QMap<QString, JZVariantPtr> JZVariantMap;
-typedef QMap<int, JZVariantPtr>     JZVariantIntMap;
+typedef QSharedPointer<QVariant> QVariantPtr;
 
 class JZNodeVariantAny
 {
 public:
+    int type();
     QVariant value;
 };
 Q_DECLARE_METATYPE(JZNodeVariantAny)
@@ -63,8 +61,8 @@ public:
     static int variantType(const QVariant &v);    
     static QVariant::Type typeToQMeta(int id);
     static int typeidToType(QString name);
-    static QVariant convertTo(int type,const QVariant &v);
-    static QVariant value(int type);    
+    static QVariant convertTo(int type,const QVariant &v); 
+    static QVariant clone(const QVariant &v);
         
     static bool isBase(int type);    
     static bool isEnum(int type);

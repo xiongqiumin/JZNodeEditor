@@ -1,40 +1,24 @@
-﻿#include "JZNodeObject.h"
-#include <QMetaObject>
-#include "JZNodeBind.h"
+﻿#include <QMetaObject>
 #include <QApplication>
 #include <QDebug>
 #include <QTime>
+#include "JZNodeObject.h"
 #include "JZNodeUiLoader.h"
 #include "JZNodeQtWrapper.h"
 #include "JZNodeEngine.h"
+#include "JZNodeBind.h"
 
-QString JZObjectTypename(const QVariant &v)
+QString JZObjectTypename(const JZNodeVariantAny &v)
 {
-    if(v.type() < QVariant::UserType)
-        return v.typeName();
-    else if(isJZObject(v))
-    {
-        JZNodeObject *ptr = toJZObject(v);
-        return ptr->className();
-    }
-    else
-        return "unknown";
+    int type = JZNodeType::variantType(v.value);
+    return JZNodeType::typeToName(type);
 }
 
-QVariant JZObjectClone(const QVariant &v)
+JZNodeVariantAny JZObjectClone(const JZNodeVariantAny &v)
 {
-    int v_type = JZNodeType::variantType(v);
-    if (JZNodeType::isBase(v_type))
-        return v_type;
-    else
-    {
-        if (JZNodeType::isNullptr(v))
-            return v;
-
-        auto obj = toJZObject(v);
-        auto ptr = JZNodeObjectManager::instance()->clone(obj);
-        return QVariant::fromValue(ptr);
-    }
+    JZNodeVariantAny ret;
+    ret.value = JZNodeType::clone(v.value);
+    return ret;
 }
 
 int JZClassId(const QString &name)
@@ -47,20 +31,10 @@ QString JZClassName(int id)
     return JZNodeObjectManager::instance()->getClassName(id);
 }
 
-void JZNodeDisp(const QVariant &v)
+void JZNodeDisp(const JZNodeVariantAny &v)
 {    
-    QString str = JZNodeType::toString(v);
+    QString str = JZNodeType::toString(v.value);
     JZScriptLog(str);    
-}
-
-void JZObjectSetParam(JZNodeObject *object,const QString &name,const QVariant &v)
-{
-    object->setParam(name, v);
-}
-
-QVariant JZObjectGetParam(JZNodeObject *object, const QString &name)
-{
-    return object->param(name);
 }
 
 void JZObjectInvoke(JZNodeObject *object, const QString &function,const QVariantList &in,QVariantList &out)
@@ -70,25 +44,25 @@ void JZObjectInvoke(JZNodeObject *object, const QString &function,const QVariant
     JZScriptInvoke(function, paramIn,out);
 }
 
-QString toString(const QVariant &v)
+QString toString(const JZNodeVariantAny &v)
 {
-    QString str = JZNodeType::toString(v);
+    QString str = JZNodeType::toString(v.value);
     return str;
 }
 
-bool toBool(const QVariant &v)
+bool toBool(const JZNodeVariantAny &v)
 {
-    return v.toBool();
+    return v.value.toBool();
 }
 
-int toInt(const QVariant &v)
+int toInt(const JZNodeVariantAny &v)
 {
-    return v.toInt();
+    return v.value.toInt();
 }
 
-double toDouble(const QVariant &v)
+double toDouble(const JZNodeVariantAny &v)
 {
-    return v.toDouble();
+    return v.value.toDouble();
 }
 
 //CMeta
@@ -607,7 +581,7 @@ void JZNodeObject::updateWidgetParam()
             {
                 JZNodeObject *jzobj = new JZNodeObject(inst->meta(it.value().dataType()));
                 jzobj->setCObject(w, false);
-                m_params[it.key()] = JZVariantPtr(new QVariant(QVariant::fromValue(JZNodeObjectPtr(jzobj))));
+                m_params[it.key()] = QVariantPtr(new QVariant(QVariant::fromValue(JZNodeObjectPtr(jzobj))));
             }
             
             it++;
@@ -707,10 +681,7 @@ JZNodeObjectManager *JZNodeObjectManager::instance()
 JZNodeObjectManager::JZNodeObjectManager()
 {        
     m_objectId = Type_internalObject;
-    m_enumId = Type_internalEnum;
-
-    QString obj_typeid = typeid(JZNodeObject).name();
-    m_typeidMetas[obj_typeid] = Type_object;
+    m_enumId = Type_internalEnum;    
 }
 
 JZNodeObjectManager::~JZNodeObjectManager()
@@ -721,6 +692,10 @@ JZNodeObjectManager::~JZNodeObjectManager()
 void JZNodeObjectManager::init()
 {  
     QMetaType::registerDebugStreamOperator<JZNodeObjectPtr>();           
+
+    jzbind::ClassBind<JZNodeVariantAny> cls_any(Type_any, "List");
+    cls_any.def("type", false, &JZNodeVariantAny::type);
+    cls_any.regist();
 
     registQtClass();    
     initFunctions();    
@@ -739,9 +714,7 @@ void JZNodeObjectManager::initFunctions()
     JZNodeFunctionManager::instance()->registCFunction("toInt", false,jzbind::createFuncion(toInt));
     JZNodeFunctionManager::instance()->registCFunction("toDouble", false,jzbind::createFuncion(toDouble));
 
-    JZNodeFunctionManager::instance()->registCFunction("getMemberParam", false, jzbind::createFuncion(JZObjectSetParam));
-    JZNodeFunctionManager::instance()->registCFunction("setMemberParam", false, jzbind::createFuncion(JZObjectGetParam));
-    JZNodeFunctionManager::instance()->registCFunction("invokeMemberFunction", false, jzbind::createFuncion(JZObjectInvoke));
+    //JZNodeFunctionManager::instance()->registCFunction("invokeMemberFunction", false, jzbind::createFuncion(JZObjectInvoke));
 }
 
 int JZNodeObjectManager::getId(QString type_name)
@@ -1051,7 +1024,7 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
         auto param = def->param(list[i]);
         if (!obj->m_params.contains(param->name))
         {
-            obj->m_params[param->name] = JZVariantPtr(new QVariant());
+            obj->m_params[param->name] = QVariantPtr(new QVariant());
             if (param->dataType() < Type_object)
                 *obj->m_params[param->name] = JZNodeType::matchValue(param->dataType(), param->value);
             else            

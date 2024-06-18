@@ -38,8 +38,8 @@ public:
     JZNodeScript *script;    
     int pc;
     
-    JZVariantMap locals;
-    JZVariantIntMap stacks;
+    QMap<QString,QVariantPtr> locals;
+    QMap<int,QVariantPtr> stacks;
 };
 
 class Stack
@@ -310,8 +310,8 @@ protected:
     int m_breakNodeId;    
 
     Stack m_stack;
-    JZVariantMap m_global;
-    JZVariantIntMap m_regs;
+    QMap<QString,QVariantPtr> m_global;
+    QMap<int,QVariantPtr> m_regs;
     JZNodeObject *m_sender;
     qint64 m_watchTime;
            

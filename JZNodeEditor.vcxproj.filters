@@ -516,6 +516,9 @@
     <QtMoc Include="editor\script\JZNodeParamBindEditDialog.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
+    <QtMoc Include="script\JZNodeObject.h">
+      <Filter>Header Files\script</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="script\JZEvent.h">
@@ -601,9 +604,6 @@
     </ClInclude>
     <ClInclude Include="editor\UiCommon.h">
       <Filter>Header Files\editor</Filter>
-    </ClInclude>
-    <ClInclude Include="script\JZNodeObject.h">
-      <Filter>Header Files\script</Filter>
     </ClInclude>
     <ClInclude Include="script\JZNodeEnum.h">
       <Filter>Header Files\script</Filter>

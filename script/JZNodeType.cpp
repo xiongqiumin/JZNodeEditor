@@ -8,6 +8,13 @@
 static QMap<QString,int> typeMap;
 static QMap<int64_t,ConvertFunc> convertMap;
 
+
+int JZNodeVariantAny::type()
+{
+    return JZNodeType::variantType(value);
+}
+
+//JZNodeType
 void JZNodeType::init()
 {
      typeMap["any"]    = Type_any;
@@ -16,7 +23,7 @@ void JZNodeType::init()
      typeMap["int64"]  = Type_int64;
      typeMap["double"] = Type_double;
      typeMap["string"] = Type_string;
-     typeMap["null"] = Type_nullptr;
+     typeMap["null"] = Type_nullptr;     
 }
 
 int64_t makeConvertId(int from, int to)
@@ -276,16 +283,20 @@ QString JZNodeType::opName(int op)
         return QString();    
 }
 
-QVariant JZNodeType::value(int type)
-{
-    return QVariant(typeToQMeta(type));
-}
-
 QVariant JZNodeType::convertTo(int type,const QVariant &v)
 {
-    if (type == Type_any)
-        return v;
     int v_type = variantType(v);
+    if (type == Type_any)
+    {
+        if (v_type == Type_any)
+            return v;
+        else
+        {
+            JZNodeVariantAny any;
+            any.value = v;
+            return QVariant::fromValue(v);
+        }
+    }    
     if (v_type == Type_string && type == Type_bool)
     {
         QString text = v.toString();
@@ -307,6 +318,29 @@ QVariant JZNodeType::convertTo(int type,const QVariant &v)
     QVariant ret = v;
     ret.convert(qtype);
     return ret;
+}
+
+QVariant JZNodeType::clone(const QVariant &v)
+{    
+    int v_type = JZNodeType::variantType(v);
+    if (v_type == Type_any)
+    {
+        JZNodeVariantAny *ptr = (JZNodeVariantAny*)v.data();
+        JZNodeVariantAny ret;
+        ret.value = clone(ptr->value);
+        return QVariant::fromValue(ret);
+    }
+    else if (JZNodeType::isBase(v_type))
+        return v;
+    else
+    {
+        if (JZNodeType::isNullptr(v))
+            return v;
+
+        auto obj = toJZObject(v);
+        auto ptr = JZNodeObjectManager::instance()->clone(obj);
+        return QVariant::fromValue(ptr);
+    }
 }
 
 int JZNodeType::upType(int type1, int type2)

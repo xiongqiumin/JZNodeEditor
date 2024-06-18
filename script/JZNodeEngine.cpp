@@ -10,14 +10,18 @@
 #include "JZNodeQtBind.h"
 #include "JZNodeObjectParser.h"
 
-QVariant JZConvert(const QVariant &in, int type)
+JZNodeVariantAny JZConvert(const JZNodeVariantAny &in, int type)
 {
-    return JZNodeType::matchValue(type,in);
+    JZNodeVariantAny ret;
+    ret.value = JZNodeType::matchValue(type,in.value);
+    return ret;
 }
 
-QVariant JZDealExpr(const QVariant &in1, const QVariant &in2, const QVariant &op)
+JZNodeVariantAny JZDealExpr(const JZNodeVariantAny &in1, const JZNodeVariantAny &in2, int op)
 {
-    return g_engine->dealExpr(in1, in2, op.toInt());
+    JZNodeVariantAny ret;
+    ret.value = g_engine->dealExpr(in1.value, in2.value, op);
+    return ret;
 }
 
 bool JZForCheck(int first,int last,int step,int op,QString &error)
@@ -63,7 +67,7 @@ QString JZObjectToString(JZNodeObject *obj)
     return format.format(obj);
 }
 
-QVariant JZObjectFromString(QString type,const QString &text)
+JZNodeVariantAny JZObjectFromString(QString type,const QString &text)
 {
     auto meta = JZNodeObjectManager::instance()->meta(type);
 
@@ -76,8 +80,10 @@ QVariant JZObjectFromString(QString type,const QString &text)
     else
         foramt = type + "{" + text + "}";
 
-    auto obj = parser.parse(foramt);    
-    return QVariant::fromValue(JZNodeObjectPtr(obj));
+    auto obj = parser.parse(foramt);   
+    JZNodeVariantAny any;        
+    any.value = QVariant::fromValue(JZNodeObjectPtr(obj));
+    return any;
 }
 
 void JZObjectDelete(JZNodeObject *obj)
@@ -86,7 +92,7 @@ void JZObjectDelete(JZNodeObject *obj)
         g_engine->objectDelete(obj);
 }
 
-QVariant JZObjectCreate(QString name)
+JZNodeVariantAny JZObjectCreate(QString name)
 {
     int id = JZNodeObjectManager::instance()->getClassId(name);
     JZNodeObject *obj = JZNodeObjectManager::instance()->create(id);
@@ -95,17 +101,9 @@ QVariant JZObjectCreate(QString name)
     g_engine->objectCreate(obj);    
 
     JZNodeObjectPtr ptr = JZNodeObjectPtr(obj, JZObjectDelete);
-    return QVariant::fromValue(ptr);
-}
-
-void JZNodeInitGlobal(QString name, const QVariant &v)
-{
-    g_engine->initGlobal(name, v);
-}
-
-void JZNodeInitLocal(QString name, const QVariant &v)
-{
-    g_engine->initLocal(name, v);
+    JZNodeVariantAny any;
+    any.value = QVariant::fromValue(ptr);
+    return any;
 }
 
 void JZObjectSlot(JZEvent *event)
@@ -120,14 +118,14 @@ void JZObjectEvent(JZEvent *event)
         g_engine->dealEvent(event);
 }
 
-void JZObjectConnect(JZNodeObject *sender, int single, JZNodeObject *recv, QString function)
+void JZObjectConnect(QObject *sender, int single, QObject *recv, QString function)
 {
-    g_engine->connectEvent(sender, single, recv, function);
+    //g_engine->connectEvent(sender, single, recv, function);
 }
 
-void JZObjectDisconnect(JZNodeObject *sender, int single, JZNodeObject *recv, QString function)
+void JZObjectDisconnect(QObject *sender, int single, QObject *recv, QString function)
 {
-    g_engine->disconnectEvent(sender, single, recv, function);
+    //g_engine->disconnectEvent(sender, single, recv, function);
 }
 
 void JZScriptLog(const QString &log)
@@ -179,12 +177,12 @@ RunnerEnv::RunnerEnv()
 
 void RunnerEnv::initVariable(QString name, const QVariant &value)
 {
-    locals[name] = JZVariantPtr(new QVariant(value));
+    locals[name] = QVariantPtr(new QVariant(value));
 }
 
 void RunnerEnv::initVariable(int id, const QVariant &value)
 {
-    stacks[id] = JZVariantPtr(new QVariant(value));
+    stacks[id] = QVariantPtr(new QVariant(value));
 }
 
 QVariant *RunnerEnv::getRef(int id)
@@ -320,7 +318,7 @@ void BreakPoint::clear()
     stack = -1;        
 }
 
-//JZObjectConnect
+//ConnectInfo
 JZNodeEngine::ConnectInfo::ConnectInfo()
 {
     eventType = Event_none;
@@ -355,13 +353,10 @@ void JZNodeEngine::regist()
     JZNodeFunctionManager::instance()->registCFunction("convert", true, jzbind::createFuncion(JZConvert));
     JZNodeFunctionManager::instance()->registCFunction("dealExpr", false, jzbind::createFuncion(JZDealExpr));
     JZNodeFunctionManager::instance()->registCFunction("createObject", false, jzbind::createFuncion(QOverload<QString>::of(JZObjectCreate)));
-    JZNodeFunctionManager::instance()->registCFunction("connect", false, jzbind::createFuncion(JZObjectConnect));
+    //JZNodeFunctionManager::instance()->registCFunction("connect", false, jzbind::createFuncion(JZObjectConnect));
 
     JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
     JZNodeFunctionManager::instance()->registCFunction("createObjectFromString", false, jzbind::createFuncion(JZObjectFromString));
-
-    JZNodeFunctionManager::instance()->registCFunction("JZNodeInitGlobal",true, jzbind::createFuncion(JZNodeInitGlobal));
-    JZNodeFunctionManager::instance()->registCFunction("JZNodeInitLocal", true, jzbind::createFuncion(JZNodeInitLocal));
 }
 
 JZNodeEngine::JZNodeEngine()
@@ -1052,7 +1047,7 @@ void JZNodeEngine::initGlobal(QString name, const QVariant &v)
 {
 	auto it = m_global.find(name);
 	if (it == m_global.end())
-		m_global[name] = JZVariantPtr(new QVariant());
+		m_global[name] = QVariantPtr(new QVariant());
 	
 	*m_global[name] = v;
 }
@@ -1321,7 +1316,7 @@ QVariant *JZNodeEngine::getRegRef(int id)
 
 void JZNodeEngine::setReg(int id, const QVariant &value)
 {    
-    m_regs[id] = JZVariantPtr(new QVariant(value));
+    m_regs[id] = QVariantPtr(new QVariant(value));
 }
 
 JZNodeScript *JZNodeEngine::getScript(QString path)

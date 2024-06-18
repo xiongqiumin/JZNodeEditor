@@ -30,6 +30,9 @@
 #include "JZNodeBind.h"
 #include "JZRegExpHelp.h"
 
+typedef QList<JZNodeVariantAny>         JZVariantList;
+typedef QMap<QString, JZNodeVariantAny> JZVariantMap;
+
 void checkSize(int index, int size)
 {
     if (index < 0 || index >= size)
@@ -45,11 +48,11 @@ class JZNodeListIterator
 public:
     void next() { it++; }
     bool atEnd() { return (it == list->end()); }
-    QVariant key() { return (it - list->begin()); }
-    QVariant value() { return *it; }
+    int key() { return (it - list->begin()); }
+    JZNodeVariantAny value() { return *it; }
 
-    QVariantList *list;
-    QVariantList::iterator it;
+    JZVariantList *list;
+    JZVariantList::iterator it;
 };
 
 //JZNodeMapIterator
@@ -58,11 +61,11 @@ class JZNodeMapIterator
 public:
     void next() { it++; }
     bool atEnd() { return (it == map->end()); }
-    QVariant key() { return it.value(); }
-    QVariant value() { return it.key(); }
+    QString key() { return it.key(); }
+    JZNodeVariantAny value() { return it.value(); }
 
-    QVariantMap *map;
-    QVariantMap::iterator it;
+    JZVariantMap *map;
+    JZVariantMap::iterator it;
 };
 
 
@@ -245,59 +248,61 @@ void initCore()
     cls_list_it.def("value", true, &JZNodeListIterator::value);
     cls_list_it.regist();
 
-    jzbind::ClassBind<QVariantList> cls_list(Type_list,"List");
-    cls_list.def("createFromString", false, [](const QString &text)->QVariantList {
-        QVariantList ret;
+    jzbind::ClassBind<JZVariantList> cls_list(Type_list,"List");
+    cls_list.def("createFromString", false, [](const QString &text)->JZVariantList {
+        JZVariantList ret;
         QStringList list = text.split(",");
         for (int i = 0; i < list.size(); i++)
         {
+            JZNodeVariantAny var;
             if (JZRegExpHelp::isInt(list[i]))
-                ret.push_back(list[i].toInt());
+                var.value = list[i].toInt();
             else if (JZRegExpHelp::isHex(list[i]))
-                ret.push_back(list[i].toInt(nullptr, 16));
+                var.value = list[i].toInt(nullptr, 16);
             else if (JZRegExpHelp::isFloat(list[i]))
-                ret.push_back(list[i].toDouble());
+                var.value = list[i].toDouble();
             else
-                ret.push_back(list[i]);
+                var.value = list[i];
+            ret.push_back(var);
         }
         return ret;
     });
-    cls_list.def("iterator", true, [](QVariantList *list)->JZNodeListIterator* {        
+    cls_list.def("iterator", true, [](JZVariantList *list)->JZNodeListIterator* {        
         JZNodeListIterator *list_it = new JZNodeListIterator();
         list_it->it = list->begin();
         list_it->list = list;
         return list_it;
     }, true);
-    cls_list.def("set", true, [](QVariantList *list, int index, const QVariant &value)
+    cls_list.def("set", true, [](JZVariantList *list, int index, const JZNodeVariantAny &value)
     {
         checkSize(index, list->size());
         (*list)[index] = value;
     });
-    cls_list.def("get", false, [](QVariantList *list, int index)->QVariant {
+    cls_list.def("get", false, [](JZVariantList *list, int index)->JZNodeVariantAny {
         checkSize(index, list->size());
         return list->at(index);
     });
-    cls_list.def("push_front", true, &QVariantList::push_front);
-    cls_list.def("pop_front", true, [](QVariantList *list)
+    cls_list.def("push_front", true, &JZVariantList::push_front);
+    cls_list.def("pop_front", true, [](JZVariantList *list)
     {
         if (list->size() == 0)
             throw std::runtime_error("list is empty");
         list->pop_front();
     });
-    cls_list.def("push_back", true, &QVariantList::push_back);
-    cls_list.def("pop_back", true, [](QVariantList *list) {
+    cls_list.def("push_back", true, &JZVariantList::push_back);
+    cls_list.def("pop_back", true, [](JZVariantList *list) {
         if (list->size() == 0)
             throw std::runtime_error("list is empty");
         list->pop_back();
     });
-    cls_list.def("resize", true, [](QVariantList *list, int size) {
+    cls_list.def("resize", true, [](JZVariantList *list, int size) {
         while (list->size() > size)
             list->pop_back();
         while (list->size() < size)
-            list->push_back(QVariant());
+            list->push_back(JZNodeVariantAny());
     });
-    cls_list.def("size", false, &QVariantList::size);
-    cls_list.def("clear", true, &QVariantList::clear);
+    cls_list.def("size", false, &JZVariantList::size);
+    cls_list.def("clear", true, &JZVariantList::clear);
     cls_list.regist();
 
     //map
@@ -308,23 +313,23 @@ void initCore()
     map_it.def("value", true, &JZNodeListIterator::value);
     map_it.regist();
 
-    jzbind::ClassBind<QVariantMap> cls_map("Map");
-    cls_map.def("createFromString", false, [](const QString &text)->QVariantMap {
-        QVariantMap ret;
+    jzbind::ClassBind<JZVariantMap> cls_map("Map");
+    cls_map.def("createFromString", false, [](const QString &text)->JZVariantMap {
+        JZVariantMap ret;
         QStringList list = text.split(",");
         for (int i = 0; i < list.size(); i++)
         {        
         }
         return ret;
     });
-    cls_map.def("iterator", true, [](QVariantMap *map)->JZNodeMapIterator*{
+    cls_map.def("iterator", true, [](JZVariantMap *map)->JZNodeMapIterator*{
         JZNodeMapIterator *map_it = new JZNodeMapIterator();        
         map_it->it = map->begin();
         map_it->map = map;
         return map_it;
     },true);    
-    cls_map.def("set", true, [](QVariantMap *map, const QString &key, const QVariant &value) { map->insert(key, value); });
-    cls_map.def("get", false, [](QVariantMap *map, const QString &key)->QVariant {
+    cls_map.def("set", true, [](JZVariantMap *map, const QString &key, const JZNodeVariantAny &value) { map->insert(key, value); });
+    cls_map.def("get", false, [](JZVariantMap *map, const QString &key)->JZNodeVariantAny {
         auto it = map->find(key);
         if (it == map->end())
         {
@@ -334,8 +339,8 @@ void initCore()
 
         return it.value();
     });
-    cls_map.def("size", false, &QVariantMap::size);
-    cls_map.def("clear", true, &QVariantMap::clear);
+    cls_map.def("size", false, &JZVariantMap::size);
+    cls_map.def("clear", true, &JZVariantMap::clear);
     cls_map.regist();    
 }
 

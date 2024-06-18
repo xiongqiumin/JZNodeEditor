@@ -79,11 +79,13 @@ QDataStream &operator>>(QDataStream &s, JZObjectNull &param);
 Q_DECLARE_METATYPE(JZObjectNull)
 
 class JZNodeObjectManager;
-class JZNodeObject
+class JZNodeObject : public QObject
 {
+    Q_OBJECT
+
 public:    
     JZNodeObject(JZNodeObjectDefine *def);
-    ~JZNodeObject();
+    virtual ~JZNodeObject();
     
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
@@ -120,7 +122,7 @@ protected:
     bool getParamRef(const QString &name,QVariant* &ref,QString &error);    
 
     JZNodeObjectDefine *m_define;    
-    JZVariantMap m_params;    
+    QMap<QString,QVariantPtr> m_params;    
     void *m_cobj;
     bool m_cowner;
 };

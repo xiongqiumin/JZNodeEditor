@@ -148,11 +148,9 @@ T getValue(const QVariant &v, std::false_type)
 template<class T>
 remove_cvr_t<T> getValue(QVariant v)
 {
+    static_assert(!std::is_same<QVariant, remove_cvr_t<T>>::value, "use JZNodeVariantAny");
     return getValue<remove_cvr_t<T>>(v, std::is_pointer<T>());
 }
-
-template<>
-QVariant getValue<QVariant>(const QVariant &v,std::false_type);
 
 template<>
 QString getValue<QString>(const QVariant &v, std::false_type);
@@ -171,9 +169,9 @@ void getFunctionParam(QStringList &)
 template <class type,typename T,typename... Args>
 void getFunctionParam(QStringList &list)
 {
+    static_assert(!std::is_same<QVariant, T>::value, "use JZNodeVariantAny");
     list.push_back(typeid(typename std::remove_pointer<T>::type).name());
-    if((sizeof ... (Args)) > 0 )
-        getFunctionParam<type,Args...>(list);
+    getFunctionParam<type,Args...>(list);
 }
 
 template<class T>
@@ -333,6 +331,22 @@ QSharedPointer<CFunction> createFuncion(Return (Class::*f)(Args...) const,Extra.
     return createFuncionImpl<decltype(func),Extra...>(func,extra...);
 }
 
+#if __cplusplus >= 201103L
+template <typename Return, typename Class, typename... Args, typename... Extra>
+QSharedPointer<CFunction> createFuncion(Return(Class::*f)(Args...) noexcept, Extra... extra)
+{
+    auto func = [f](Class *inst, Args... args)->Return { return (inst->*f)(args...); };
+    return createFuncionImpl<decltype(func), Extra...>(func, extra...);
+}
+
+template <typename Return, typename Class, typename... Args, typename... Extra>
+QSharedPointer<CFunction> createFuncion(Return(Class::*f)(Args...) const noexcept, Extra... extra)
+{
+    auto func = [f](Class *inst, Args... args)->Return { return (inst->*f)(args...); };
+    return createFuncionImpl<decltype(func), Extra...>(func, extra...);
+}
+#endif
+
 //signle
 template<class type>
 void createEvent(JZEvent &)
@@ -422,6 +436,21 @@ int registEnum(QString name,int id = -1)
         define.setType(id);
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
+
+enum
+{
+    Event_none,
+    Event_paint,
+    Event_show,
+    Event_resize,
+    Event_close,
+    Event_keyPress,
+    Event_keyRelease,
+    Event_mousePress,
+    Event_mouseMove,
+    Event_mouseRelease,
+    Event_timeout,
+};
 
 //class regist
 #define DEFINE_EVENT(type,func,qevent)    \

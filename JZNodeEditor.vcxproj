@@ -287,7 +287,7 @@
     <ClInclude Include="script\JZNodePin.h" />
     <ClInclude Include="script\JZNodeProgram.h" />
     <ClInclude Include="script\JZNodeType.h" />
-    <ClInclude Include="script\JZNodeObject.h" />
+    <QtMoc Include="script\JZNodeObject.h" />
     <QtMoc Include="script\JZNodeEngine.h" />
     <QtMoc Include="script\JZNodeDebugServer.h" />
     <QtMoc Include="script\JZNodeDebugClient.h" />
