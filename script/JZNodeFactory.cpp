@@ -107,19 +107,8 @@ void JZNodeFactory::init()
     registNode(Node_and,createFunc<JZNodeAnd>);
     registNode(Node_or,createFunc<JZNodeOr>);
     registNode(Node_not, createFunc<JZNodeNot>);
-
-    registNode(Node_stringAdd,createFunc<JZNodeStringAdd>);
-    registNode(Node_stringEq, createFunc<JZNodeStringEQ>);
-    registNode(Node_stringNe, createFunc<JZNodeStringNE>);
-    registNode(Node_stringLe, createFunc<JZNodeStringLE>);
-    registNode(Node_stringGe, createFunc<JZNodeStringGE>);
-    registNode(Node_stringLt, createFunc<JZNodeStringLT>);
-    registNode(Node_stringGt, createFunc<JZNodeStringGT>);
     
     registNode(Node_expr,createFunc<JZNodeExpression>);
 
-    registNode(Node_startEvent,createFunc<JZNodeStartEvent>);
     registNode(Node_paramChangedEvent,createFunc<JZNodeParamChangedEvent>);
-    registNode(Node_singleEvent,createFunc<JZNodeSingleEvent>);
-    registNode(Node_qtEvent, createFunc<JZNodeQtEvent>);
 }

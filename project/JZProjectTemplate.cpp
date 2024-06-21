@@ -1,4 +1,4 @@
-#include <QDir>
+ï»¿#include <QDir>
 #include "JZProjectTemplate.h"
 #include "JZProject.h"
 #include "JZScriptFile.h"
@@ -15,24 +15,17 @@ JZProjectTemplate *JZProjectTemplate::instance()
     return &inst;
 }        
 
-bool JZProjectTemplate::initProject(QString path,QString name, QString temp)
+bool JZProjectTemplate::initProject(JZProject *project, QString temp)
 {
-    QString project_dir = path + "/" + name;
-    if(!QFile::exists(project_dir))
-        QDir().mkdir(project_dir);
-
-    JZProject project;
-    project.setFilePath(project_dir + "/" + name + ".jzproj");
-
     JZScriptFile *main_file = new JZScriptFile();
     main_file->setName("main.jz");
-    project.addItem("./", main_file);
+    project->addItem("./", main_file);
     
-    auto *main_flow = main_file->addFlow("main");
+    JZFunctionDefine main_def;
+    main_def.name = "main";
+    auto *main_flow = main_file->addFunction(main_def);
     auto *global_def = main_file->addParamDefine("global");
-
-    JZNodeEvent *start = new JZNodeStartEvent();
-    main_flow->addNode(start);
+    JZNode *start = main_flow->getNode(0);
 
     if (temp == "ui")
     {  
@@ -43,12 +36,11 @@ bool JZProjectTemplate::initProject(QString path,QString name, QString temp)
         auto ui_file = new JZUiFile();
         ui_file->setName("mainwindow.ui");        
 
-        project.addItem("./",window_file);
-        project.addItem("./",ui_file);
+        project->addItem("./",window_file);
+        project->addItem("./",ui_file);
 
         auto class_define = window_file->addClass("MainWindow","Widget");        
         class_define->setUiFile("./mainwindow.ui");
-        class_define->addFlow("ÊÂ¼þ");
         
         JZFunctionDefine define;
         define.name = "init";
@@ -87,9 +79,8 @@ bool JZProjectTemplate::initProject(QString path,QString name, QString temp)
         main_flow->addConnect(get_param->paramOutGemo(0), func_show->paramInGemo(0));
         
     }
-    projectUpdateLayout(&project);
-    project.save();
-    project.saveAllItem();
-
+    projectUpdateLayout(project);
+    project->save();
+    project->saveAllItem();
     return true;
 }

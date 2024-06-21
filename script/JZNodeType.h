@@ -33,8 +33,48 @@ enum
     Type_userObject = 10000,    // 用户注册起始
 };
 
+enum
+{
+    Event_none,
+    Event_paint,
+    Event_show,
+    Event_resize,
+    Event_close,
+    Event_keyPress,
+    Event_keyRelease,
+    Event_mousePress,
+    Event_mouseMove,
+    Event_mouseRelease,
+    Event_timeout,
+
+    Event_user = 65535,
+};
+
 typedef QVariant (*ConvertFunc)(const QVariant& v);
 typedef QSharedPointer<QVariant> QVariantPtr;
+
+class JZEnum
+{
+public:
+    JZEnum();
+    
+    int type;
+    int value;
+};
+QDataStream &operator<<(QDataStream &s, const JZEnum &param);
+QDataStream &operator>>(QDataStream &s, JZEnum &param);
+Q_DECLARE_METATYPE(JZEnum)
+
+class JZFunctionPointer
+{
+public:
+    bool operator==(const JZFunctionPointer &other);
+
+    QString functionName;
+};
+QDataStream &operator<<(QDataStream &s, const JZFunctionPointer &param);
+QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param);
+Q_DECLARE_METATYPE(JZFunctionPointer)
 
 class JZNodeVariantAny
 {
@@ -44,24 +84,27 @@ public:
 };
 Q_DECLARE_METATYPE(JZNodeVariantAny)
 
-class JZFunctionPointer
-{
-public:
-    QString functionName;
-};
-Q_DECLARE_METATYPE(JZFunctionPointer)
-
+/*
+    任意类型可以隐式转换为 any
+    any 必须显示转换为指定类型
+*/
 class JZNodeObject;
+class JZSingleDefine;
+class JZFunctionDefine;
 class JZNodeType
 {
 public:
     static void init();
+
+    static QString opName(int op);
     static QString typeToName(int id);
     static int nameToType(QString name);
-    static int variantType(const QVariant &v);    
-    static QVariant::Type typeToQMeta(int id);
+    static int variantType(const QVariant &v);
     static int typeidToType(QString name);
+
+    static bool canConvert(int from,int to);    //隐式转换
     static QVariant convertTo(int type,const QVariant &v); 
+    static void registConvert(int from, int to, ConvertFunc func);
     static QVariant clone(const QVariant &v);
         
     static bool isBase(int type);    
@@ -73,21 +116,22 @@ public:
    
     static bool isNullptr(const QVariant &v);
     static bool isWidget(const QVariant &v);
+    static bool isSameType(const QVariant &src_v,const QVariant &dst_v);
+    static bool isSameType(int src_type,int dst_type);
 
     static int isInherits(QString type1,QString type2);
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2);
-    static bool canConvert(int from,int to);    
+        
     static QString toString(const QVariant &v);
     static QString toString(JZNodeObject *obj);
     
     static int upType(int type1, int type2);  //提升类型
     static int upType(QList<int> types);
-    static QVariant matchValue(int type,const QVariant &v);
     static int matchType(QList<int> dst_types, QList<int> src_types);
-    static int matchType(QList<int> dst_types, const QString &v);
-    static QVariant initValue(int type, const QString &v);    
+    static int matchType(QList<int> dst_types, const QString &v);    
     static QVariant defaultValue(int type);
+    static QVariant initValue(int type, const QString &v);
 
     static bool isMatchValue(const QList<int> &dst_types, const QString &v);
     static QString dispString(const QString &text);
@@ -97,9 +141,8 @@ public:
     static QString addMark(const QString &text);
     static QString removeMark(const QString &text);
 
-    static QString opName(int op);
-
-    static void registConvert(int from, int to, ConvertFunc func);
+    static bool sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefine *slot);
+    static bool functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2);
 };
 
 #endif

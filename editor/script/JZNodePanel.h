@@ -38,7 +38,6 @@ protected:
     void init();
     void initData();
     void initBasicFlow();
-    void initEvent();
     void initFunction();
     void initEnums();
     void initClass();

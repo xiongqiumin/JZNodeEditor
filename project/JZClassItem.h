@@ -34,10 +34,6 @@ public:
     QStringList memberVariableList(bool hasUi);
     const JZParamDefine *memberVariable(QString name, bool hasUi);
 
-    JZScriptItem *addFlow(QString name);
-    void removeFlow(QString name);
-    JZScriptItem *flow(QString name);
-
     JZScriptItem *addMemberFunction(JZFunctionDefine func);
     void removeMemberFunction(QString func);
     JZScriptItem *memberFunction(QString func);    

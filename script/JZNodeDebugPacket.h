@@ -112,7 +112,7 @@ public:
 
     int stack;
     JZNodeParamCoor coor;
-    QVariant value;
+    QString value;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamInfo &param);
 QDataStream &operator >> (QDataStream &s, JZNodeSetDebugParamInfo &param);

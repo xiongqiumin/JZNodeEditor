@@ -17,6 +17,9 @@
 #include "JZNodeFunctionManager.h"
 #include "JZEvent.h"
 
+extern void JZScriptOnSlot(JZNodeObject *sender,const QString &function,const QVariantList &in, QVariantList &out);
+extern void JZScriptInvoke(const QString &function,const QVariantList &in, QVariantList &out);
+
 namespace jzbind
 {
 //copy from pybind11
@@ -95,13 +98,6 @@ using is_enum_or_qenum = bool_constant<is_enum_or_qenum_cond<T>()>;
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
 template<class T> void copyClass(void *src,void *dst){ *((T*)src) = *((T*)dst); }
-template<class T> void addEventFilter(void *ptr, int filter)
-{ 
-    JZNodeObject *jz_obj = (JZNodeObject*)ptr;
-    T *obj = (T*)jz_obj->cobj();
-    obj->setJZObject(jz_obj);
-    obj->addEventFilter(filter);    
-};
 
 void *createClassAssert();
 void destoryClassAssert(void *);
@@ -110,7 +106,7 @@ void copyClassAssert(void *,void *);
 template<class T>
 T getValueEnum(const QVariant &v, std::true_type)
 {
-    Q_ASSERT(v.type() == Type_int);
+    Q_ASSERT(v.type() == QVariant::Int);
     return (T)v.toInt();
 }
 
@@ -347,73 +343,79 @@ QSharedPointer<CFunction> createFuncion(Return(Class::*f)(Args...) const noexcep
 }
 #endif
 
-//signle
+//single
 template<class type>
-void createEvent(JZEvent &)
+void createSlotParams(QVariantList &)
 {
     return;
 }
 
 template <class type,typename T,typename... Args>
-void createEvent(JZEvent &event,const T &v,Args... args)
+void createSlotParams(QVariantList &params,const T &v,Args... args)
 {
-    event.params.push_back(getReturn(v,true));
-    if((sizeof ... (Args)) > 0 )
-        createEvent<type,Args...>(event,args...);
+    params.push_back(getReturn(v,true));
+    createSlotParams<type,Args...>(params,args...);
 }
 
 template<typename Class, typename... Args>
 class CSingleImpl : public CSingle
 {
 public:    
-    virtual void connect(JZNodeObject *obj)
+    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
     {
-        int event_type = this->eventType;
+        auto func = [recv,slot](Args... args){
+           QVariantList params;           
+           createSlotParams<int,Args...>(params,args...);
+           recv->onSig(slot,params);
+        };
+
         Class *cobj = (Class*)obj->cobj();
-        cobj->connect(cobj,single,[obj,event_type](Args... args){
-           JZEvent event;
-           event.sender = obj;
-           event.eventType = event_type;           
-           createEvent<int,Args...>(event,args...);
-           JZObjectSlot(&event);
-        });        
+        cobj->connect(cobj,single,recv,func);        
     }
 
-    virtual void disconnect(JZNodeObject *obj)
+    virtual void disconnect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
     {
         Class *cobj = (Class*)obj->cobj();
-        cobj->disconnect(cobj, single, nullptr, nullptr);
+        cobj->disconnect(cobj, single, recv, nullptr);
     }
 
-    void (Class::*single)(Args...);   
-    int eventType;
+    void (Class::*single)(Args...);
+
+protected:
+    struct ConnectInfo
+    {
+        JZNodeObject *recv;
+        QString slot;
+        std::function<void(Args...)> func;
+    };
+
+    std::function<void(Args...)> getSlot(JZNodeObject *recv,QString slot)
+    {
+        for(int i = 0; i < connects.size(); i++)
+        {
+            if(connects[i].recv == recv && connects[i].slot == slot)
+                return connects[i].func;
+        }
+
+        return std::function<void(Args...)>();
+    }
+    
+    QList<ConnectInfo> connects;    
 };
 
 template<typename Class,typename PrivateSingle,typename... Args>
 class CPrivateSingleImpl : public CSingle
 {
 public:    
-    virtual void connect(JZNodeObject *obj)
+    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
     {
-        int event_type = this->eventType;
-        Class *cobj = (Class*)obj->cobj();
-        cobj->connect(cobj, single, [obj, event_type](Args... args) {
-            JZEvent event;
-            event.sender = obj;
-            event.eventType = event_type;            
-            createEvent<int, Args...>(event, args...);
-            JZObjectSlot(&event);
-        });
     }
 
-    virtual void disconnect(JZNodeObject *obj)
+    virtual void disconnect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
     {
-        Class *cobj = (Class*)obj->cobj();
-        cobj->disconnect(cobj,single,nullptr, nullptr);
     }
 
     void (Class::*single)(PrivateSingle, Args...);
-    int eventType;    
 };
 
 template<typename T>
@@ -437,36 +439,21 @@ int registEnum(QString name,int id = -1)
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
-enum
-{
-    Event_none,
-    Event_paint,
-    Event_show,
-    Event_resize,
-    Event_close,
-    Event_keyPress,
-    Event_keyRelease,
-    Event_mousePress,
-    Event_mouseMove,
-    Event_mouseRelease,
-    Event_timeout,
-};
-
 //class regist
-#define DEFINE_EVENT(type,func,qevent)    \
-    void func(qevent *e){                 \
-        if (!eventFilter.contains(type))  \
-        {                                 \
-            Class::func(e);               \
-            return;                       \
-        }                                 \
-                                          \
-        JZEvent event;                                             \
-        event.eventType = type;                                    \
-        event.sender = jzobject;                                   \
-        event.params.push_back(QVariant::fromValue(event.sender)); \
-        event.params.push_back(getReturn(e, true));                \
-        JZObjectEvent(&event);                                     \
+#define DEFINE_EVENT(type,func,qevent)                     \
+    void func(qevent *e){                                  \
+        auto jzobj = toJZObject(this->property("JZObject"));    \
+        if (!jzobj || !jzobj->function(#func))             \
+        {                                                  \
+            Class::func(e);                                \
+            return;                                        \
+        }                                                  \
+                                                           \
+        auto func_def = jzobj->function(#func);            \
+        QVariantList input,output;                         \
+        input.push_back(QVariant::fromValue(jzobj));       \
+        input.push_back(getReturn(e, true));               \
+        JZScriptInvoke(func_def->fullName(),input,output);         \
     }                                                              \
                                                                    \
     void call_##func(qevent *event)                                \
@@ -486,11 +473,6 @@ class WidgetWrapper : public Class
 public:
     using T = WidgetWrapper<Class>;
 
-    WidgetWrapper()
-    {
-        jzobject = nullptr;
-    }
-
     DEFINE_EVENT(Event_paint, paintEvent, QPaintEvent)
     DEFINE_EVENT(Event_show, showEvent, QShowEvent)
     DEFINE_EVENT(Event_resize, resizeEvent, QResizeEvent)
@@ -500,20 +482,6 @@ public:
     DEFINE_EVENT(Event_mousePress, mousePressEvent, QMouseEvent)
     DEFINE_EVENT(Event_mouseMove, mouseMoveEvent, QMouseEvent)
     DEFINE_EVENT(Event_mouseRelease, mouseReleaseEvent, QMouseEvent)
-
-    void setJZObject(JZNodeObject *obj)
-    {
-        jzobject = obj;
-    }
-
-    void addEventFilter(int event)
-    {
-        eventFilter.insert(event);
-    }
-
-private:
-    JZNodeObject *jzobject;
-    QSet<int> eventFilter;
 };
 
 template<class T>
@@ -566,19 +534,16 @@ public:
     }       
 
     template<typename... Args>
-    void defSingle(QString name,int eventType,void (Class::*f)(Args...))
+    void defSingle(QString name, void (Class::*f)(Args...))
     {
         registFunction(name,true,createFuncion(f));
 
-        SingleDefine single;
+        JZSingleDefine single;
         single.name = name;
         single.className = m_define.className;
-        single.eventType = eventType;
 
         auto *impl = new CSingleImpl<Class,Args...>();        
         impl->single = f;
-        impl->eventType = eventType;
-        single.isCSingle = true;
         single.csingle = impl;
         
         JZParamDefine sender;
@@ -600,17 +565,14 @@ public:
     }
 
     template<typename... Args>
-    void defPrivateSingle(QString name, int eventType, void (Class::*f)(Args...))
+    void defPrivateSingle(QString name, void (Class::*f)(Args...))
     {                
-        SingleDefine single;
+        JZSingleDefine single;
         single.name = name;
         single.className = m_define.className;
-        single.eventType = eventType;
 
         auto *impl = new CPrivateSingleImpl<Class, Args...>();
         impl->single = f;
-        impl->eventType = eventType;
-        single.isCSingle = true;
         single.csingle = impl;
         
         JZParamDefine sender;
@@ -668,7 +630,6 @@ protected:
     {
         using T = WidgetWrapper<Class>;        
         m_define.cMeta.create = &createClass<T>;
-        m_define.cMeta.addEventFilter = &addEventFilter<T>;
 
         defEvent("paintEvent", Event_paint, &T::call_paintEvent_help);
         defEvent("showEvent",  Event_show, &T::call_showEvent_help);

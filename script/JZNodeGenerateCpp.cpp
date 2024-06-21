@@ -7,9 +7,6 @@
 #include "JZNodeBuilder.h"
 #include "JZUiFile.h"
 
-constexpr int Reg_Call_In = Reg_Call;
-constexpr int Reg_Call_Out = Reg_Call + 20;
-
 //CppFunction
 QString CppFunction::declare()
 {
@@ -224,12 +221,12 @@ QString JZNodeGenerateCpp::idName(int id)
 {   
     if(id == Reg_Cmp)
         return "Reg_Cmp";
-    else if(id >= Reg_Call)
+    else if(id >= Reg_CallIn)
     {   
-        if(id < Reg_Call_Out)
-            return "Reg_CallIn_" + QString::number(id - Reg_Call);
+        if(id < Reg_CallOut)
+            return "Reg_CallIn_" + QString::number(id - Reg_CallIn);
         else
-            return "Reg_CallOut_" + QString::number(id - Reg_Call_Out);
+            return "Reg_CallOut_" + QString::number(id - Reg_CallOut);
     }
     else if(id >= Reg_Start)
         return "Reg_" + QString::number(id - Reg_Start);
@@ -299,12 +296,12 @@ QString JZNodeGenerateCpp::irToCpp(JZNodeIR *op)
             }
 
             if(!is_func_input)
-                line = type + " " + ir_alloc->name + " = " + paramToString(ir_alloc->value);
+                line = type + " " + ir_alloc->name;
             else
                 line = "//" + ir_alloc->name;
         }
         else
-            line += type + " " + idName(ir_alloc->id) + " = " + paramToString(ir_alloc->value);
+            line += type + " " + idName(ir_alloc->id);
 
         line += ";";
         break;
@@ -314,7 +311,7 @@ QString JZNodeGenerateCpp::irToCpp(JZNodeIR *op)
         bool no_commt = false;
         JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
         QString src_name,dst_name;
-        if(ir_set->dst.isId() && ir_set->dst.id() >= Reg_Call)
+        if(ir_set->dst.isId() && ir_set->dst.id() >= Reg_CallIn)
         {
             if(m_callInReg.size() == 0)
                 m_tab++;
@@ -331,10 +328,10 @@ QString JZNodeGenerateCpp::irToCpp(JZNodeIR *op)
             dst_name = paramToString(ir_set->dst);
         }
 
-        if(ir_set->src.isId() && ir_set->src.id() >= Reg_Call)
+        if(ir_set->src.isId() && ir_set->src.id() >= Reg_CallIn)
         {
-            int reg_idx = ir_set->src.id() - Reg_Call;
-            src_name = paramToString(irId(Reg_Call_Out + reg_idx));
+            int reg_idx = ir_set->src.id() - Reg_CallIn;
+            src_name = paramToString(irId(Reg_CallIn + reg_idx));
             if(reg_idx == m_callOutReg.size() - 1)
             {
                 m_callOutReg.clear();
@@ -361,7 +358,7 @@ QString JZNodeGenerateCpp::irToCpp(JZNodeIR *op)
         {
             Q_ASSERT(func_def->paramOut.size() == 1);
 
-            QString ret_reg = paramToString(irId(Reg_Call_Out));
+            QString ret_reg = paramToString(irId(Reg_CallIn));
             line += "auto " + ret_reg + " = ";
             m_callOutReg.push_back(ret_reg);
         }
@@ -508,17 +505,15 @@ void JZNodeGenerateCpp::generate(JZProject *project,QString output)
         auto script = script_list[script_idx];
         
         QString file_path;
-        if(script->path == "__init__")
+        if(script->file == "__init__")
         {
             continue;
         }
         else
         {
-            auto script_item = m_project->getItem(script->path);
+            auto script_item = m_project->getItem(file_path);
             file_path = m_project->getItemFile(script_item)->itemPath();
         }
-
-        qDebug() << script->path << file_path << script->className;
 
         CppFile *cpp_file = m_cppProgram.getFile(file_path); 
         CppClass *cpp_class = nullptr;
@@ -539,7 +534,7 @@ void JZNodeGenerateCpp::generate(JZProject *project,QString output)
                     CppParam cpp_param;
                     cpp_param.name = param->name;
                     cpp_param.type = param->type;
-                    cpp_param.value = param->initValue(); 
+                    //cpp_param.value = param->initValue(); 
                     cpp_class->params.push_back(cpp_param);
                 }
 
@@ -639,7 +634,7 @@ bool JZNodeGenerateCpp::dumpProgram(QString output)
             for(int i = 0; i < global_list.size(); i++)
             {
                 auto param = m_project->globalVariable(global_list[i]);
-                out_cpp += param->type + " " + param->name + " = " + param->initValue() + ";\n";
+                //out_cpp += param->type + " " + param->name + " = " + param->initValue() + ";\n";
             }
 
             out_cpp += "\n";
@@ -654,12 +649,12 @@ bool JZNodeGenerateCpp::dumpProgram(QString output)
             out_h += func->declare() + ";\n";
             out_cpp += func->impl() + "\n\n";
 
-            if(func->name == "__main__")
+            if(func->name == "main")
             {
                 QString space = "    ";
                 out_cpp += "int main(int argc, char *argv[])\n{\n";
                 out_cpp += space + "QApplication app(argc, argv);\n\n";
-                out_cpp += space + "__main__();\n\n";
+                out_cpp += space + "main();\n\n";
                 out_cpp += space + "return app.exec();\n}\n\n";
             }
         }

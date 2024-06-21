@@ -51,12 +51,21 @@ QByteArray JZProject::magic()
     return result;
 }
 
+bool JZProject::initProject(QString temp)
+{
+    return JZProjectTemplate::instance()->initProject(this,temp);
+}
+
 bool JZProject::newProject(QString path,QString name, QString temp)
 {
-    if (!JZProjectTemplate::instance()->initProject(path, name, temp))
+    if (!initProject(temp))
         return false;
 
-    return open(path + "/" + name + "/" + name + ".jzproj");
+    m_filepath = path + "/" + name + "/" + name + ".jzproj";
+    if(!saveAllItem())
+        return false;
+    
+    return save();
 }
 
 void JZProject::registType()
@@ -237,15 +246,15 @@ QString JZProject::mainFile()
     return "./main.jz";
 }
 
-QString JZProject::mainScriptPath()
+QString JZProject::mainFunctionPath()
 {
-    return mainScript()->itemPath();
+    return mainFunction()->itemPath();
 }
 
-JZScriptItem *JZProject::mainScript()
+JZScriptItem *JZProject::mainFunction()
 {
     JZScriptFile *file = dynamic_cast<JZScriptFile*>(getItem(mainFile()));
-    return file->flow("main");
+    return file->getFunction("main");
 }
 
 JZParamItem *JZProject::globalDefine()
@@ -467,7 +476,19 @@ JZProjectItem *JZProject::getItemFile(JZProjectItem *item)
     {
         if (item->itemType() == ProjectItem_ui
             || item->itemType() == ProjectItem_scriptFile)
-            return (JZScriptClassItem*)item;
+            return item;
+
+        item = item->parent();
+    }
+    return nullptr;
+}
+
+JZScriptFile *JZProject::getScriptFile(JZProjectItem *item)
+{
+    while (item)
+    {
+        if (item->itemType() == ProjectItem_scriptFile)
+            return (JZScriptFile*)item;
 
         item = item->parent();
     }

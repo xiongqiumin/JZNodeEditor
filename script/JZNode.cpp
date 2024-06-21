@@ -507,7 +507,7 @@ void JZNode::setPinValue(int id,const QString &value)
     Q_ASSERT(!m_file || JZNodeType::isMatchValue(ptr->dataType(), value));
     ptr->setValue(value);
     if(m_file)
-        pinChanged(id);
+        onPinChanged(id);
     else
         m_notifyList << id;
 }
@@ -527,7 +527,7 @@ void JZNode::setPinName(int id,const QString &name)
 
     ptr->setName(name);
     if(m_file)
-        pinChanged(id);
+        onPinChanged(id);
     else
         m_notifyList << id;
 }
@@ -549,11 +549,11 @@ JZScriptItem *JZNode::file() const
 void JZNode::setFile(JZScriptItem *file)
 {
     m_file = file;
-    fileInitialized();
+    onFileInitialized();
 
     //delay notify
     for(int i = 0; i < m_notifyList.size(); i++)
-        pinChanged(m_notifyList[i]);
+        onPinChanged(m_notifyList[i]);
     m_notifyList.clear();
 }
 
@@ -655,22 +655,22 @@ bool JZNode::pinActionTriggered(int id, int index)
     return false;
 }
 
-void JZNode::fileInitialized()
+void JZNode::onFileInitialized()
 {
 
 }
 
-void JZNode::pinLinked(int id)
-{
-    Q_UNUSED(id);
-}
-
-void JZNode::pinUnlinked(int id)
+void JZNode::onPinLinked(int id)
 {
     Q_UNUSED(id);
 }
 
-void JZNode::pinChanged(int id)
+void JZNode::onPinUnlinked(int id)
+{
+    Q_UNUSED(id);
+}
+
+void JZNode::onPinChanged(int id)
 {
     Q_UNUSED(id);
 }
@@ -780,22 +780,20 @@ JZNodeReturn::JZNodeReturn()
     addFlowIn();
 }
 
-void JZNodeReturn::setFunction(const QString &name)
+void JZNodeReturn::onFileInitialized()
 {
-    auto def = JZNodeFunctionManager::instance()->function(name);
-    setFunction(def);
-}
+    if(m_file->itemType() != ProjectItem_scriptFunction)
+        return;
 
-void JZNodeReturn::setFunction(const JZFunctionDefine *def)
-{
+    auto def = m_file->function();
     auto inList = paramInList();
     for (int i = 0; i < inList.size(); i++)
         removePin(inList[i]);
 
-    for (int i = 0; i < def->paramOut.size(); i++)
+    for (int i = 0; i < def.paramOut.size(); i++)
     {
-        int in = addParamIn(def->paramOut[i].name, Pin_dispName | Pin_dispValue | Pin_editValue);
-        setPinType(in, { def->paramOut[i].dataType() });
+        int in = addParamIn(def.paramOut[i].name, Pin_dispName | Pin_dispValue | Pin_editValue);
+        setPinType(in, { def.paramOut[i].dataType() });
     }
 }
 
@@ -804,12 +802,15 @@ bool JZNodeReturn::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addFlowInput(m_id,error))
         return false;     
     
+    auto def = m_file->function();
+    c->setRegCallFunction(&def);
     auto inList = paramInList();
     for(int i = 0; i < inList.size(); i++)
     {
         int id = c->paramId(m_id,inList[i]);
-        c->addSetVariable(irId(Reg_Call+i),irId(id));
+        c->addSetVariable(irId(Reg_CallOut + i),irId(id));
     }
+    c->setRegCallFunction(nullptr);
     JZNodeIR *ir_return = new JZNodeIR(OP_return);    
     c->addStatement(JZNodeIRPtr(ir_return));
     return true;

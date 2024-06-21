@@ -17,7 +17,6 @@ public:
     void* (*create)();
     void (*copy)(void *dst,void *src);
     void (*destory)(void *);
-    void (*addEventFilter)(void *obj,int event_type);
 };
 
 class JZNodeObjectDefine
@@ -25,27 +24,26 @@ class JZNodeObjectDefine
 public:
     JZNodeObjectDefine();
 
-    void addParam(JZParamDefine def);
-    void removeParam(QString name);
+    void addParam(const JZParamDefine &def);
+    void removeParam(const QString &name);
     QStringList paramList(bool hasParent) const;
-    const JZParamDefine *param(QString name) const;
+    const JZParamDefine *param(const QString &name) const;
 
-    void addFunction(JZFunctionDefine def);
-    void removeFunction(QString function);    
-    int indexOfFunction(QString function) const;
+    void addFunction(const JZFunctionDefine &def);
+    void removeFunction(const QString &function);    
+    int indexOfFunction(const QString &function) const;
 
     QString fullname() const;
 
-    const JZFunctionDefine *function(QString function) const;
+    const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
     
-    const SingleDefine *single(int type) const;
-    const SingleDefine *single(QString function) const;
+    const JZSingleDefine *single(const QString &function) const;
     QStringList singleList() const;
     
     const EventDefine *event(int type) const;
-    const EventDefine *event(QString function) const;
-    QStringList eventList() const;
+    const EventDefine *event(const QString &name) const;
+    QList<int> eventList() const;
     
     const JZNodeObjectDefine *super() const;
     bool isInherits(int type) const;
@@ -58,11 +56,14 @@ public:
     QString superName;
     QMap<QString,JZParamDefine> params;
     QList<JZFunctionDefine> functions;
-    QList<SingleDefine> singles;
+    QList<JZSingleDefine> singles;
     QList<EventDefine> events;
-    bool isCObject;    
+
     bool isUiWidget;
-    QString widgteXml;
+    QString widgetXml;
+    QList<JZParamDefine> widgetParams;
+
+    bool isCObject;    
     CMeta cMeta;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param);
@@ -71,8 +72,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param);
 class JZObjectNull
 {
 public:
-    JZObjectNull(int t = Type_nullptr);
-    int type;
+    JZObjectNull();
 };
 QDataStream &operator<<(QDataStream &s, const JZObjectNull &param);
 QDataStream &operator>>(QDataStream &s, JZObjectNull &param);
@@ -87,6 +87,7 @@ public:
     JZNodeObject(JZNodeObjectDefine *def);
     virtual ~JZNodeObject();
     
+    bool isNull() const;
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
@@ -103,28 +104,50 @@ public:
 
     const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
+    QString relativeFunction(const QString &function) const;
     
-    const SingleDefine *single(int eventType) const;
-    const SingleDefine *single(QString function) const;
+    const JZSingleDefine *single(QString function) const;
     QStringList singleList() const;
+
+    void singleConnect(QString sig,JZNodeObject *recv,QString slot);
+    void singleDisconnect(QString sig,JZNodeObject *recv,QString slot);
+    void singleEmit(QString sig,const QVariantList &params);
 
     void *cobj() const;
     void setCObject(void *cobj,bool owner);        
     void setCOwner(bool owner);
 
-    void updateWidgetParam();    
+    void updateUiWidget(QWidget *widget);
+
+signals:
+    void sig(QString slot_function,const QVariantList &params);
+
+public slots:
+    void onSig(QString slot_function,const QVariantList &params);
+    void onRecvDestory(QObject *obj);
 
 protected:    
-    Q_DISABLE_COPY(JZNodeObject);    
+    Q_DISABLE_COPY(JZNodeObject);  
 
+    struct ConnectInfo
+    {
+        QString single;
+        JZNodeObject *recv;
+        QString slot;
+    };
+      
     friend JZNodeObjectManager;
 
     bool getParamRef(const QString &name,QVariant* &ref,QString &error);    
+    int singleConnectCount(JZNodeObject *recv);
 
+    bool m_isNull;
     JZNodeObjectDefine *m_define;    
     QMap<QString,QVariantPtr> m_params;    
     void *m_cobj;
     bool m_cowner;
+
+    QList<ConnectInfo> m_connectList;
 };
 typedef QSharedPointer<JZNodeObject> JZNodeObjectPtr;
 Q_DECLARE_METATYPE(JZNodeObject*)
@@ -136,11 +159,8 @@ JZObjectNull* toJZNullptr(const QVariant &v);
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
-void JZObjectEvent(JZEvent *event);
-void JZObjectSlot(JZEvent *event);
-void JZObjectConnect(JZNodeObject *sender, int single, JZNodeObject *recv, QString function);
-void JZObjectDisconnect(JZNodeObject *sender, int single, JZNodeObject *recv, QString function);
-int JZObjectType(const QVariant &v);
+void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer function);
+void JZObjectDisconnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer function);
 
 class JZNodeObjectManager
 {
@@ -167,7 +187,7 @@ public:
     int getEnumId(QString enumName);
     QStringList getEnumList();    
 
-    const SingleDefine *single(QString name);
+    const JZSingleDefine *single(QString name);
     
     int getClassIdByQObject(QString name);
     void declareQObject(int id,QString name);
@@ -175,19 +195,26 @@ public:
     int delcare(QString name, QString ctype_id, int id = -1);
     int regist(JZNodeObjectDefine define);    
     int registCClass(JZNodeObjectDefine define,QString type_id);
-    void replace(JZNodeObjectDefine define);
-    
-    int registEnum(JZNodeEnumDefine enumName);
-    int registCEnum(JZNodeEnumDefine enumName, QString ctype_id);
-    void unregist(int id);    
-    void clearUserReigst();    
+    void replace(JZNodeObjectDefine define);    
     
     JZNodeObject* create(int type_id);
     JZNodeObject* create(QString name);
     JZNodeObject* createCClass(QString ctype_id);
     JZNodeObject* createCClassRefrence(int type_id, void *cobj, bool owner);
     JZNodeObject* createCClassRefrence(QString ctype_id,void *cobj,bool owner);
+    
+    JZNodeObject* createNull(int type);
+    JZNodeObject* createNull(QString name);
+
     JZNodeObject* clone(JZNodeObject *other);
+
+    //enum
+    int registEnum(JZNodeEnumDefine enumName);
+    int registCEnum(JZNodeEnumDefine enumName, QString ctype_id);
+    void unregist(int id);    
+    void clearUserReigst();
+
+    JZEnum createEnum(int enumType);
 
 protected:
     void create(const JZNodeObjectDefine *define,JZNodeObject *obj);

@@ -48,15 +48,6 @@ enum
     Node_bitxor,
     Node_bitresver,
     Node_expr,
-    Node_stringAdd,
-    Node_stringEq,
-    Node_stringNe,
-    Node_stringLe,
-    Node_stringGe,
-    Node_stringLt,
-    Node_stringGt,
-    Node_floatEq,
-    Node_floatNe,
     Node_for,
     Node_foreach,
     Node_while,
@@ -71,9 +62,6 @@ enum
     Node_continue,
     Node_return,
     Node_exit,
-    Node_startEvent,
-    Node_singleEvent,
-    Node_qtEvent,
     Node_paramChangedEvent,
     Node_timeEvent,   
     Node_display,
@@ -236,6 +224,13 @@ protected:
     friend JZScriptItem;
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
+    
+    virtual void onFileInitialized();
+    virtual void onPinLinked(int id);
+    virtual void onPinUnlinked(int id);
+    virtual void onPinChanged(int id);
+
+    void propertyChangedNotify(const QByteArray &old);
 
     void setPinTypeAny(int id);
     void setPinTypeInt(int id);
@@ -244,12 +239,6 @@ protected:
     void setPinTypeString(int id);
     void setPinType(int id,const QList<int> &type);
     void clearPinType(int id);
-
-    virtual void fileInitialized();
-    virtual void pinLinked(int id);
-    virtual void pinUnlinked(int id);
-    virtual void pinChanged(int id);
-    void propertyChangedNotify(const QByteArray &old);
 
     int m_id;
     int m_type;
@@ -300,9 +289,8 @@ class JZNodeReturn : public JZNode
 {
 public:
     JZNodeReturn();
-
-    void setFunction(const QString &name);
-    void setFunction(const JZFunctionDefine *def);
+    
+    virtual void onFileInitialized() override;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
 protected:     

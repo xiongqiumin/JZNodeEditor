@@ -93,7 +93,7 @@ protected slots:
     void onLog(LogObjectPtr log);
 
     void onStackChanged(int stack);
-    void onWatchValueChanged(JZNodeParamCoor coor, QVariant value);
+    void onWatchValueChanged(JZNodeParamCoor coor, QString value);
     void onWatchNameChanged(JZNodeParamCoor coor);
     void onNodePropChanged(const JZNodeValueChanged &info);
 

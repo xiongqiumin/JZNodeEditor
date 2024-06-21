@@ -10,6 +10,8 @@ void JZNodeInit()
 {
     qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
     qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");
+    qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");
+    qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
 
     JZNodeType::init();
     JZNodeFactory::instance()->init();    

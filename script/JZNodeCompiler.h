@@ -144,6 +144,7 @@ public:
     static QString paramName(int id);
     static JZNodeGemo paramGemo(int id);    
     static VariableCoor variableCoor(JZScriptItem *file, QString name);
+    static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
 
     JZNodeCompiler();
     ~JZNodeCompiler();
@@ -152,7 +153,6 @@ public:
     bool build(JZScriptItem *file,JZNodeScript *result);
     CompilerInfo compilerInfo();
     
-    static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
     const JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(const QString &var, QString &error);
     bool checkVariableType(const QString &var, const QString &className, QString &error);    
@@ -169,6 +169,8 @@ public:
     bool hasPinType(int nodeId, int pinId);
     bool isPinLiteral(int nodeId, int pinId);
     QVariant pinLiteral(int nodeId, int pinId);
+
+    void setRegCallFunction(const JZFunctionDefine *func);
 
     /*
     节点数据传递规则:
@@ -191,8 +193,10 @@ public:
     void addNodeStart(int id);
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
-    int addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);    
-    void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst);
+    void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
+    void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
+
+    void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
     int addStatement(JZNodeIRPtr ir);    
     
     int addJumpNode(int pin);      //设置下一个flow,应当在执行完操作后增加
@@ -203,8 +207,7 @@ public:
     
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addAlloc(int allocType, QString name,int dataType,const QString &value = QString());
-    void addAlloc(int allocType, QString name,int dataType,const JZNodeIRParam &value);
+    void addAlloc(int allocType, QString name,int dataType);
     void addAssert(const JZNodeIRParam &tips);       
 
     JZNodeIR *lastStatment();
@@ -261,6 +264,7 @@ protected:
     void updateDispayNode();
     void updateDepend();
     void addNodeFlowPc(int node_id, int cond, int pc);
+    int irParamType(const JZNodeIRParam &param);
                     
     NodeCompilerInfo *currentNodeInfo();
 
@@ -268,6 +272,7 @@ protected:
     QVector<GraphPtr> m_graphList;
 
     QString m_className;    
+    const JZFunctionDefine *m_regCallFunction;
     JZNodeScript *m_script;
     JZScriptItem *m_scriptFile;         
     Graph *m_originGraph; //原始图
@@ -279,6 +284,7 @@ protected:
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
     QMap<int,NodeCompilerInfo> m_nodeInfo;
     int m_stackId;       //当前栈位置，用于分配内存    
+    QMap<int,int> m_stackType;
     ScriptDepend m_depend;
     CompilerInfo m_compilerInfo;
 

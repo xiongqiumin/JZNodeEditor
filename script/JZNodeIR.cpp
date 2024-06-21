@@ -22,6 +22,11 @@ bool JZNodeIRParam::isId() const
     return type == Id;
 }
 
+bool JZNodeIRParam::isRegId() const
+{
+    return type == Id && id() >= Reg_Start;
+}
+
 bool JZNodeIRParam::isRef() const
 {
     return type == Reference;
@@ -132,6 +137,8 @@ JZNodeIR *createNodeIR(int type)
         return new JZNodeIRExpr(type);    
     case OP_set:    
         return new JZNodeIRSet();
+    case OP_convert:
+        return new JZNodeIRConvert();
     case OP_jmp:
     case OP_je:
     case OP_jne:
@@ -223,13 +230,13 @@ JZNodeIRAlloc::~JZNodeIRAlloc()
 void JZNodeIRAlloc::saveToStream(QDataStream &s) const
 {
     JZNodeIR::saveToStream(s);
-    s << allocType << name << id << dataType << value;
+    s << allocType << name << id << dataType;
 }
 
 void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
-    s >> allocType >> name >> id >> dataType >> value;
+    s >> allocType >> name >> id >> dataType;
 }
 
 //JZNodeIRExpr
@@ -277,6 +284,28 @@ void JZNodeIRSet::loadFromStream(QDataStream &s)
     JZNodeIR::loadFromStream(s);
     s >> src >> dst;
 }
+
+//JZNodeIRConvert
+JZNodeIRConvert::JZNodeIRConvert()
+{
+    type = OP_convert;
+}
+
+JZNodeIRConvert::~JZNodeIRConvert()
+{
+}
+
+void JZNodeIRConvert::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << src << dst << dstType;
+}
+
+void JZNodeIRConvert::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> src >> dst >> dstType;
+}   
 
 //JZNodeIRJmp
 JZNodeIRJmp::JZNodeIRJmp(int type)

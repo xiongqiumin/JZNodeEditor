@@ -379,7 +379,7 @@ void initObjects()
     cls_timer.def("start",true, QOverload<int>::of(&QTimer::start));
     cls_timer.def("stop", true, &QTimer::stop);
     cls_timer.def("isActive", false, &QTimer::isActive);
-    cls_timer.defPrivateSingle("timeout", Event_timeout, &QTimer::timeout);
+    cls_timer.defPrivateSingle("timeout", &QTimer::timeout);
     cls_timer.regist();
 }
 
@@ -435,7 +435,7 @@ void initWidgets()
     cls_abs_button.def("setText", true, &QAbstractButton::setText);
     cls_abs_button.def("isChecked", false, &QAbstractButton::isChecked);
     cls_abs_button.def("setChecked", true, &QAbstractButton::setChecked);
-    cls_abs_button.defSingle("clicked", Event_buttonClicked, &QAbstractButton::clicked);
+    cls_abs_button.defSingle("clicked", &QAbstractButton::clicked);
     cls_abs_button.regist();
 
     jzbind::ClassBind<QPushButton> cls_button("PushButton", "Button");

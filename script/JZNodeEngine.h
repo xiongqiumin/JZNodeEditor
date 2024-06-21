@@ -144,10 +144,6 @@ public:
     void stepIn();
     void stepOver();
     void stepOut();        
-
-    void initGlobal(QString name, const QVariant &v);
-    void initLocal(QString name, const QVariant &v);
-    void initLocal(int id, const QVariant &v);
        
     Stack *stack();    
 
@@ -167,32 +163,13 @@ public:
 
     QVariant getThis();
     QVariant getSender();    
-     
-    void connectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
-    void disconnectEvent(JZNodeObject *sender, int event, JZNodeObject *recv, QString handle);
-    int connectCount(JZNodeObject *sender, int event);
-    void connectSelf(JZNodeObject *object);
-    void connectSingleLater(QVariant *v);
 
-    void widgetBind(QWidget *w,QVariant *ref,int dir);
-    void widgetUnBind(QWidget *w);
-    void widgetUnBindNotify(QWidget *w);
-    void watchNotify(int param_id);         //node display    
-
-    void dealEvent(JZEvent *event);    
-    void dealSlot(JZEvent *event);
+    void watchNotify(int param_id);         //node display
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
 
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const JZFunction *func,const QVariantList &in,QVariantList &out);
-    
-    void objectCreate(JZNodeObject *sender);
-    void objectDelete(JZNodeObject *sender);
-    void varaiantDeleteNotify(QVariant *v);
-
-    void widgetValueChanged(QWidget *w);
-    void valueChanged(QVariant *v);
-
+    bool onSlot(JZNodeObject *sender,const QString &function,const QVariantList &in,QVariantList &out);
     void print(const QString &log);
 
 signals:
@@ -207,61 +184,7 @@ protected:
         Command_pause,
         Command_resume,
         Command_stop,
-    };
-    
-    struct ConnectCache
-    {
-        int eventType;
-        QVariant *sender;
-        JZNodeObject *recv;        
-        QString handle;
-    };
-
-    class ParamChangeInfo
-    {
-    public:
-        ParamChangeInfo();
-
-        JZNodeObject *recv;
-        QString handle;
-    };
-
-    class VariantInfo
-    {
-    public:
-        VariantInfo();
-
-        QList<ConnectCache> connectQueue;
-        QList<ParamChangeInfo> paramChanges;
-        QWidget *bindWidget;        
-    };
-
-    class VariantBindCache
-    {
-    public:
-        QVariant *bindValue;
-        int dir;
-    };
-
-    class ConnectInfo
-    {
-    public:        
-        ConnectInfo();
-
-        int eventType;
-        JZNodeObject *sender;
-        JZNodeObject *receiver;
-        QString handle;
-    };
-
-    class JZObjectInfo
-    {
-    public:
-        JZObjectInfo();
-
-        QList<ConnectInfo> connects;
-        int connectQueue;
-    };    
+    };   
 
     virtual void customEvent(QEvent *event) override;
     void clear();
@@ -278,6 +201,10 @@ protected:
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
     QVariant dealSingleExpr(const QVariant &a, int op);
     void dealSet(QVariant *ref, const QVariant &value);
+
+    void initGlobal(QString name, const QVariant &v);
+    void initLocal(QString name, const QVariant &v);
+    void initLocal(int id, const QVariant &v);
 
     void pushStack(const JZFunction *define);
     void popStack();
@@ -311,7 +238,7 @@ protected:
 
     Stack m_stack;
     QMap<QString,QVariantPtr> m_global;
-    QMap<int,QVariantPtr> m_regs;
+    QMap<int,QVariant> m_regs;
     JZNodeObject *m_sender;
     qint64 m_watchTime;
            
@@ -322,14 +249,11 @@ protected:
     QWaitCondition m_waitCond;
     bool m_debug;
     JZNodeRuntimeError m_error;
-    
-    QMap<JZNodeObject*,JZObjectInfo> m_objectInfo;    
-    QMap<QVariant*, VariantInfo> m_variantInfo;
-    QMap<QVariant*, VariantBindCache> m_widgetBindCache;    
 };
 extern JZNodeEngine *g_engine;
 
 void JZScriptLog(const QString &name);
 void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out);
+void JZScriptOnSlot(JZNodeObject *sender,const QString &function,const QVariantList &in, QVariantList &out);
 
 #endif

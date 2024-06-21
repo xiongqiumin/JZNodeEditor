@@ -207,7 +207,6 @@ int JZProjectItemIsScript(JZProjectItem *item)
 {
     auto type = item->itemType();
     if (type == ProjectItem_scriptParamBinding
-        || type == ProjectItem_scriptFlow
         || type == ProjectItem_scriptFunction)
         return true;
 

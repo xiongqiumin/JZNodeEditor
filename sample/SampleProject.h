@@ -9,6 +9,7 @@ public:
     SampleProject();
     ~SampleProject();
 
+    void loadProject();
     void saveProject();
     bool run();
 
@@ -20,6 +21,7 @@ protected:
 
     QString loadUi(QString file);
 
+    QString m_root;
     QString m_name;
     QString m_resources;
     JZProject m_project;    

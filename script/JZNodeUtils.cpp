@@ -21,7 +21,7 @@ void projectUpdateLayout(JZProject *project)
     for (int i = 0; i < item_list.size(); i++)
     {
         int item_type = item_list[i]->itemType();
-        if (item_type == ProjectItem_scriptFlow || item_type == ProjectItem_scriptFunction
+        if (item_type == ProjectItem_scriptFunction
             || item_type == ProjectItem_scriptParamBinding)
         {
             JZNodeView *view = new JZNodeView();

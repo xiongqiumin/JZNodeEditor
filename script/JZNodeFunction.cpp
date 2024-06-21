@@ -98,22 +98,13 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         input_ret = c->addDataInput(m_id,error);
     if(!input_ret)        
         return false;
-            
+        
+    QList<JZNodeIRParam> in,out;
     for(int i = 0; i < in_list.size(); i++)
-    {
-        int id = c->paramId(m_id,in_list[i]);
-        c->addSetVariable(irId(Reg_Call+i),irId(id));
-    }
-
-    JZNodeIRCall *call = new JZNodeIRCall();
-    call->function = m_functionName;
-    c->addStatement(JZNodeIRPtr(call));
-
+        in << irId(c->paramId(m_id,in_list[i]));
     for(int i = 0; i < out_list.size(); i++)
-    {
-        int id = c->paramId(m_id,out_list[i]);
-        c->addSetVariable(irId(id),irId(Reg_Call+i));
-    }
+        out << irId(c->paramId(m_id,out_list[i]));
+    c->addCall(m_functionName,in,out);
 
     if (isFlowNode())
     {

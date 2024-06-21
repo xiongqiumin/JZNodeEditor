@@ -10,7 +10,11 @@
 
 SampleProject::SampleProject()
 {
-
+    QDir dir;
+    if(dir.exists("sample"))
+        m_root = ".";
+    else if(dir.exists("../sample"))
+        m_root = "..";
 }
 
 SampleProject::~SampleProject()
@@ -20,7 +24,7 @@ SampleProject::~SampleProject()
 
 QString SampleProject::loadUi(QString filename)
 {    
-    QString filepath = "sample/" + m_name + "/" + filename;
+    QString filepath = m_root + "/sample/" + m_name + "/" + filename;
     QFile file(filepath);
     if (!file.open(QFile::ReadOnly | QFile::Text))
     {
@@ -60,7 +64,7 @@ void SampleProject::addClassFile(QString class_name, QString super, QString ui_f
 
 void SampleProject::addResources(QString name)
 {
-    m_resources = "sample/" + m_name + "/" + name;
+    m_resources = m_root + "/sample/" + m_name + "/" + name;
 }
 
 bool SampleProject::copyDir(QString srcPath, QString dstPath)
@@ -93,6 +97,13 @@ bool SampleProject::copyDir(QString srcPath, QString dstPath)
 
     return !error;    
 }
+
+void SampleProject::loadProject()
+{
+    QString path = qApp->applicationDirPath() + "/sample/" + m_name + "/" + m_name + ".jzproj";
+    m_project.open(path);
+}
+
 
 void SampleProject::saveProject()
 {

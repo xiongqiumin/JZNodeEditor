@@ -33,9 +33,9 @@ SampleImageBatch::~SampleImageBatch()
 
 void SampleImageBatch::addEvent()
 {
-    auto flow_srcipt = m_project.getClass("MainWindow")->flow("ÊÂ¼þ");
+    auto flow_srcipt = m_project.getClass("MainWindow")->flow("ï¿½Â¼ï¿½");
     auto btn_meta = JZNodeObjectManager::instance()->meta("PushButton");
-    
+ /*   
     for (int i = 0; i < 2; i++)
     {
         QString btn_name = (i == 0)? "btnSelInput":"btnSelOutput";
@@ -187,6 +187,7 @@ void SampleImageBatch::addEvent()
     flow_srcipt->addNode(exit_clicked);
     flow_srcipt->addNode(func_exit);
     flow_srcipt->addConnect(exit_clicked->flowOutGemo(), func_exit->flowInGemo());
+*/
 }
 
 void SampleImageBatch::addProcessImage()
@@ -207,7 +208,6 @@ void SampleImageBatch::addProcessImage()
     JZNodeReturn *ret = new JZNodeReturn();
     input->setVariable("input");
 
-    ret->setFunction("MainWindow.processImage");
     script->addNode(input);
     script->addNode(ret);
 

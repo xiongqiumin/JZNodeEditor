@@ -347,7 +347,7 @@ int JZScriptItem::addConnect(JZNodeGemo from, JZNodeGemo to)
     m_connects.push_back(connect);
 
     JZNode *node_to = getNode(to.nodeId);
-    node_to->pinLinked(to.pinId);
+    node_to->onPinLinked(to.pinId);
     return connect.id;
 }
 
@@ -360,7 +360,7 @@ void JZScriptItem::insertConnect(const JZNodeConnect &connect)
     });
 
     JZNode *to = getNode(connect.to.nodeId);
-    to->pinLinked(connect.to.pinId);
+    to->onPinLinked(connect.to.pinId);
 }
 
 void JZScriptItem::removeConnect(int id)
@@ -374,7 +374,7 @@ void JZScriptItem::removeConnect(int id)
             int pin_id = line.to.pinId;
 
             m_connects.removeAt(i);            
-            to->pinUnlinked(pin_id);
+            to->onPinUnlinked(pin_id);
             return;
         }
     }

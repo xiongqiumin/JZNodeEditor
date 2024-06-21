@@ -131,29 +131,6 @@ const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
     return nullptr;
 }
 
-JZScriptItem *JZScriptClassItem::addFlow(QString name)
-{
-    JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFlow);
-    item->setName(name);
-    m_project->addItem(itemPath(), item);
-    return item;
-}
-
-void JZScriptClassItem::removeFlow(QString name)
-{
-    m_project->removeItem(getItem(name)->itemPath());
-}
-
-JZScriptItem *JZScriptClassItem::flow(QString name)
-{
-    for (int i = 0; i < m_childs.size(); i++)
-    {
-        if (m_childs[i]->name() == name && m_childs[i]->itemType() == ProjectItem_scriptFlow)
-            return (JZScriptItem *)m_childs[i].data();
-    }
-    return nullptr;
-}
-
 JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
 {
     Q_ASSERT(func.paramIn.size() > 0 && func.paramIn[0].name == "this");
@@ -245,7 +222,8 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
     {        
         auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
         define.isUiWidget = true;
-        define.widgteXml = ui_item->xml();
+        define.widgetXml = ui_item->xml();
+        define.widgetParams = ui_item->widgets();
             
         QList<JZParamDefine> widget_list = ui_item->widgets();
         for (int i = 0; i < widget_list.size(); i++)

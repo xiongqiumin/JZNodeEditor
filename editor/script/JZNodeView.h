@@ -241,8 +241,7 @@ protected:
     int addCreateGroupCommand(const JZNodeGroup &group);
     void addRemoveGroupCommand(int id);
     void addSetGroupCommand(int id, const JZNodeGroup &group);
-
-    int getVariableType(const QString &param_name);        
+     
     void autoCompiler();
     void autoRunning();
 

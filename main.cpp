@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
         //SampleImageBatch sample;
         SampleSmartHome sample;
         sample.saveProject();
+        //sample.loadProject();
         sample.run();
         return 0;
     }    

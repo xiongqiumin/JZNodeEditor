@@ -3,12 +3,13 @@
 
 #include <QString>
 
+class JZProject;
 class JZProjectTemplate
 {
 public:
     static JZProjectTemplate *instance();
 
-    bool initProject(QString path, QString name, QString temp);
+    bool initProject(JZProject *project, QString temp);
 };
 
 

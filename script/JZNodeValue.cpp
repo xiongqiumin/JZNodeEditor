@@ -49,19 +49,14 @@ void JZNodeLiteral::setDataType(int type)
 QVariant JZNodeLiteral::literal() const
 {
     auto ptr = pin(paramOut(0));
-    QVariant v = ptr->value();
+    QString v = ptr->value();
     int dataType = ptr->dataType()[0];
-    if (dataType == Type_nullptr)
-        v = QVariant::fromValue(JZObjectNull());
-    else
-        v = JZNodeType::matchValue(dataType, v);        
-
-    return v;
+    return JZNodeType::initValue(dataType, v);
 }
 
 void JZNodeLiteral::setLiteral(QVariant value)
 {
-    QString str = JZNodeType::matchValue(Type_string, value).toString();
+    QString str = JZNodeType::toString(value);
     setPinValue(paramOut(0), str);
 }
 
@@ -217,11 +212,13 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     JZNodeIRParam irIn = irId(in_id);
     JZNodeIRParam irOut = irId(out_id);
 
-    c->addCall("createObject", { irIn }, { irOut });        
+    int tmp_id = c->allocStack(Type_any);
+    c->addCall("createObject", { irIn }, { irId(tmp_id) });
+    c->addSetVariableConvert(irOut,irId(tmp_id));        
     return true;
 }
 
-void JZNodeCreate::pinChanged(int id)
+void JZNodeCreate::onPinChanged(int id)
 {
     if(id == paramIn(0))
     {
@@ -276,7 +273,7 @@ bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
 
 }
 
-void JZNodeCreateFromString::pinChanged(int id)
+void JZNodeCreateFromString::onPinChanged(int id)
 {
     if (id == paramIn(0))
     {
@@ -405,7 +402,7 @@ bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-void JZNodeThis::fileInitialized()
+void JZNodeThis::onFileInitialized()
 {
     auto class_file = m_file->project()->getItemClass(m_file);
     Q_ASSERT(class_file);
@@ -460,7 +457,7 @@ void JZNodeParam::drag(const QVariant &value)
     setVariable(value.toString());
 }
 
-void JZNodeParam::pinChanged(int id)
+void JZNodeParam::onPinChanged(int id)
 {
     if(id == paramOut(0))
     {
@@ -519,7 +516,7 @@ void JZNodeSetParam::drag(const QVariant &value)
     setVariable(value.toString());
 }
 
-void JZNodeSetParam::pinChanged(int id)
+void JZNodeSetParam::onPinChanged(int id)
 {
     if(id == paramIn(0))
     {
@@ -599,7 +596,7 @@ void JZNodeSetParamDataFlow::drag(const QVariant &value)
     setVariable(value.toString());
 }
 
-void JZNodeSetParamDataFlow::pinChanged(int id)
+void JZNodeSetParamDataFlow::onPinChanged(int id)
 {
     if(id == paramIn(0))
     {
@@ -701,7 +698,7 @@ QList<int> JZNodeAbstractMember::memberPinList()
     return pin_list;
 }
 
-void JZNodeAbstractMember::pinLinked(int id)
+void JZNodeAbstractMember::onPinLinked(int id)
 {
     if (id == paramIn(0))
         updateMemberType();

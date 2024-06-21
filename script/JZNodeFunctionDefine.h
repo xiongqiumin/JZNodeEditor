@@ -13,7 +13,6 @@ public:
     JZParamDefine(QString name, QString dataType, const QString &v = QString());    
 
     int dataType() const;
-    QString initValue() const;
 
     QString name;
     QString type;
@@ -86,30 +85,29 @@ public:
     CSingle();
     virtual ~CSingle();
 
-    virtual void connect(JZNodeObject *obj) = 0;
-    virtual void disconnect(JZNodeObject *obj) = 0;
+    virtual void connect(JZNodeObject *sender,JZNodeObject *recv,QString slot) = 0;
+    virtual void disconnect(JZNodeObject *sender,JZNodeObject *recv,QString slot) = 0;
 
 protected:
     Q_DISABLE_COPY(CSingle);       
 };
 
-class SingleDefine
+class JZSingleDefine
 {
 public:
-    SingleDefine();
+    JZSingleDefine();
 
     QString fullName() const;
+    bool isCSingle() const;
 
-    int eventType;
     QString name;
     QString className;
     QList<JZParamDefine> paramOut;
 
-    bool isCSingle;
     CSingle *csingle;
 };
-QDataStream &operator<<(QDataStream &s, const SingleDefine &param);
-QDataStream &operator>>(QDataStream &s, SingleDefine &param);
+QDataStream &operator<<(QDataStream &s, const JZSingleDefine &param);
+QDataStream &operator>>(QDataStream &s, JZSingleDefine &param);
 
 //event
 class EventDefine
@@ -118,7 +116,7 @@ public:
     EventDefine();
 
     int eventType;
-    QString name;        
+    QString name;
 };
 QDataStream &operator<<(QDataStream &s, const EventDefine &param);
 QDataStream &operator>>(QDataStream &s, EventDefine &param);
@@ -153,7 +151,8 @@ public:
     bool isCFunction() const;    
     bool isMemberFunction() const;
     bool isFlowFunction() const;
-
+    
+    QString path;
     QString name;
     QString className;
     QList<JZParam> paramIn;

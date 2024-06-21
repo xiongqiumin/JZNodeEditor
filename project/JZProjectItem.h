@@ -12,7 +12,6 @@ enum {
     ProjectItem_class,
     ProjectItem_scriptFile,
     ProjectItem_scriptParamBinding,
-    ProjectItem_scriptFlow,
     ProjectItem_scriptFunction,    
     ProjectItem_library,
 };

@@ -28,11 +28,7 @@ public:
     void removeParamDefine(QString name);
     JZParamItem *paramDefine(QString name);
 
-    JZScriptItem *addFlow(QString name);
-    void removeFlow(QString name);
-    JZScriptItem *flow(QString name);
-
-    JZScriptItem *addFunction(QString name, const JZFunctionDefine &func);
+    JZScriptItem *addFunction(const JZFunctionDefine &func);
     void removeFunction(QString name);
     JZScriptItem *getFunction(QString name);
 

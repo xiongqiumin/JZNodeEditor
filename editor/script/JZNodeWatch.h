@@ -27,7 +27,7 @@ public:
     void clear();
         
 signals:
-    void sigParamValueChanged(JZNodeParamCoor coor,QVariant value);
+    void sigParamValueChanged(JZNodeParamCoor coor,QString value);
     void sigParamNameChanged(JZNodeParamCoor coor);
     
 protected slots:   

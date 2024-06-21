@@ -191,33 +191,6 @@ JZNodeMod::JZNodeMod()
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
 }
-    
-
-//JZNodeFloatEQ
-JZNodeFloatEQ::JZNodeFloatEQ()
-{
-    m_name = "==";
-    addParamIn("");
-    addParamIn("");
-    addParamIn("eps", Pin_dispName | Pin_editValue);
-
-    setPinType(paramIn(0), {Type_double});
-    setPinType(paramIn(1), {Type_double});
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeFloatNE
-JZNodeFloatNE::JZNodeFloatNE()    
-{
-    m_name = "!=";
-    addParamIn("");
-    addParamIn("");
-    addParamIn("eps", Pin_dispName | Pin_editValue);
-    
-    setPinType(paramIn(0), { Type_double });
-    setPinType(paramIn(1), { Type_double });
-    setPinTypeBool(paramOut(0));
-}
 
 //JZNodeBitAnd
 JZNodeBitAnd::JZNodeBitAnd()
@@ -276,8 +249,8 @@ JZNodeLE::JZNodeLE()
     :JZNodeOperator(Node_le, OP_le)
 {
     m_name = "<=";
-    setPinType(paramIn(0), { Type_int,Type_double });
-    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
     setPinTypeBool(paramOut(0));
 }
 
@@ -286,8 +259,8 @@ JZNodeGE::JZNodeGE()
     :JZNodeOperator(Node_ge, OP_ge)
 {
     m_name = ">=";
-    setPinType(paramIn(0), { Type_int,Type_double });
-    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
     setPinTypeBool(paramOut(0));
 }
 
@@ -296,8 +269,8 @@ JZNodeLT::JZNodeLT()
     :JZNodeOperator(Node_lt, OP_lt)
 {
     m_name = "<";
-    setPinType(paramIn(0), { Type_int,Type_double });
-    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
     setPinTypeBool(paramOut(0));
 }
 
@@ -306,8 +279,8 @@ JZNodeGT::JZNodeGT()
     :JZNodeOperator(Node_gt, OP_gt)
 {
     m_name = ">";
-    setPinType(paramIn(0), { Type_int,Type_double });
-    setPinType(paramIn(1), { Type_int,Type_double });
+    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
     setPinTypeBool(paramOut(0));
 }
 
@@ -328,77 +301,6 @@ JZNodeNE::JZNodeNE()
     m_name = "!=";    
     setPinTypeAny(paramIn(0));
     setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeStringAdd
-JZNodeStringAdd::JZNodeStringAdd()
-    :JZNodeOperator(Node_stringAdd, OP_add)
-{
-    m_name = "+(string)";
-    setPinTypeString(paramIn(0));
-    setPinTypeString(paramIn(1));
-    setPinTypeString(paramOut(0));
-    addInputButton();
-}
-
-//JZNodeStringEQ
-JZNodeStringEQ::JZNodeStringEQ()
-    :JZNodeOperator(Node_stringEq, OP_eq)
-{
-    m_name = "==(string)";
-    setPinTypeString(paramIn(0));
-    setPinTypeString(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeStringNE
-JZNodeStringNE::JZNodeStringNE()
-    :JZNodeOperator(Node_stringNe, OP_ne)
-{
-    m_name = "!=(string)";
-    setPinTypeString(paramIn(0));
-    setPinTypeString(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeStringLE
-JZNodeStringLE::JZNodeStringLE()
-    :JZNodeOperator(Node_stringLe, OP_le)
-{
-    m_name = "<=(string)";
-    setPinTypeString(paramIn(0));
-    setPinTypeString(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeStringGE
-JZNodeStringGE::JZNodeStringGE()
-    :JZNodeOperator(Node_stringGe, OP_ge)
-{
-    m_name = ">=(string)";
-    setPinTypeString(paramIn(0));
-    setPinTypeString(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeStringLT
-JZNodeStringLT::JZNodeStringLT()
-    :JZNodeOperator(Node_stringLt, OP_lt)
-{
-    m_name = "<(string)";
-    setPinTypeString(paramIn(0));
-    setPinTypeString(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeStringGT
-JZNodeStringGT::JZNodeStringGT()
-    :JZNodeOperator(Node_stringGt, OP_gt)
-{
-    m_name = ">(string)";
-    setPinTypeString(paramIn(0));
-    setPinTypeString(paramIn(1));
     setPinTypeBool(paramOut(0));
 }
 

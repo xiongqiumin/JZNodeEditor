@@ -434,13 +434,19 @@ QString JZNodeGraphItem::getTip(QPointF pt)
     if (id != -1)
     {
         auto pin = m_node->pin(id);
-        QString tips = pin->name() + "\ntype:";
-        QStringList type_list;
-        auto dataTypes = pin->dataType();
-        for (int i = 0; i < dataTypes.size(); i++)
-            type_list << JZNodeType::typeToName(dataTypes[i]);
-        tips += type_list.join(",");
-        return tips;
+        if(pin->isParam())
+        {
+            QString tips;
+            if(pin->name().isEmpty())
+                tips += "name: " + pin->name() + "\n";
+            tips += "type: ";
+            QStringList type_list;
+            auto dataTypes = pin->dataType();
+            for (int i = 0; i < dataTypes.size(); i++)
+                type_list << JZNodeType::typeToName(dataTypes[i]);
+            tips += type_list.join(",");
+            return tips;
+        }
     }
 
     return QString();

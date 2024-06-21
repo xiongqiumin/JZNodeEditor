@@ -308,15 +308,15 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
 {
     if (param.type == JZNodeIRParam::Literal)
     {
-        if (param.value.type() == QVariant::String)
+        auto var_type = JZNodeType::variantType(param.value);
+        if (var_type == Type_string)
             return "\"" + param.value.toString() + "\"";
-        else if (JZNodeType::isNullptr(param.value))
+        else if (var_type == Type_object)
         {
-            auto v = toJZNullptr(param.value);
-            return "nullptr(" + JZNodeType::typeToName(v->type) +")";
+            return JZNodeType::typeToName(var_type) + "()";
         }
-        else
-            return "$" + JZNodeType::toString(param.value);
+        else 
+            return "$" + JZNodeType::toString(param.value) + "(" + JZNodeType::typeToName(var_type) + ")";
     }
     else if(param.type == JZNodeIRParam::Reference)
         return param.ref();
@@ -346,16 +346,24 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
     {
         JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
         QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "Global" : "Local";
+        alloc += " " + JZNodeType::typeToName(ir_alloc->dataType);
         if (ir_alloc->allocType == JZNodeIRAlloc::Heap || ir_alloc->allocType == JZNodeIRAlloc::Stack)
-            line += alloc + " " + ir_alloc->name + " = " + toString(ir_alloc->value);
+            line += alloc + " " + ir_alloc->name;
         else
-            line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id) + " = " + toString(ir_alloc->value);
+            line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id);
         break;
     }
     case OP_set:
     {
         JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
         line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
+        break;
+    }
+    case OP_convert:
+    {
+        JZNodeIRConvert *ir_cvt = (JZNodeIRConvert*)op;
+        line += "CONVERT " + JZNodeType::typeToName(ir_cvt->dstType) + " " + 
+            toString(ir_cvt->dst) + " = " + toString(ir_cvt->src);
         break;
     }
     case OP_call:
@@ -443,20 +451,17 @@ QString JZNodeProgram::dump()
         JZNodeScript *script = it.value().data();
         content += "// Script " + it.key() + "\n";
         auto &opList = script->statmentList;
-        for(int i = 0; i < opList.size(); i++)
-        {
-            //deal op            
-            content += irToString(opList[i].data()) + "\n";
-        }
-
         for(int i = 0; i < script->functionList.size(); i++)
         {
-            if(i == 0)
-                content += "functions:\n";
-
             auto &func = script->functionList[i];
-            QString line = func.name + " addr: " + QString::number(func.addr);
-            content += line + "\n";
+            QString line = "function " + func.fullName() + ":\n";
+            auto &opList = script->statmentList;
+            for(int i = func.addr; i < func.addrEnd; i++)
+            {
+                //deal op            
+                content += irToString(opList[i].data()) + "\n";
+            }
+            content += "\n";
         }
 
         it++;

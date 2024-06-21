@@ -22,6 +22,7 @@ public:
     bool isNull() const;
     void clear();
     
+    bool initProject(QString temp);
     bool newProject(QString path,QString name, QString temp);
     bool open(QString filepath);
     void close();
@@ -42,8 +43,8 @@ public:
     QString filePath();
 
     QString mainFile();
-    QString mainScriptPath();
-    JZScriptItem *mainScript();
+    QString mainFunctionPath();
+    JZScriptItem *mainFunction();
     
     JZParamItem *globalDefine();
     const JZParamDefine *globalVariable(QString name);
@@ -69,6 +70,7 @@ public:
 
     JZScriptClassItem *getItemClass(JZProjectItem *item);    
     JZProjectItem *getItemFile(JZProjectItem *item);
+    JZScriptFile *getScriptFile(JZProjectItem *item);
     
     const JZFunctionDefine *function(QString name);
     QStringList functionList();

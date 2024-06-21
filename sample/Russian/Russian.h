@@ -30,7 +30,6 @@ protected:
     int m_row = 20;
     int m_col = 10;
     int m_blockSize = 26;
-    JZScriptItem *m_script;
 };
 
 

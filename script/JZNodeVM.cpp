@@ -61,7 +61,7 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
     }
 
     QVariantList in, out;
-    m_engine.call("__main__", in, out);
+    m_engine.call("main", in, out);
     
     auto list = qApp->topLevelWidgets();
     if (list.size() == 0)

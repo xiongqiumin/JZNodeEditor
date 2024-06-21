@@ -9,16 +9,6 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
 
-enum{    
-    Stack_Node = 0,
-    Stack_User = 1000000,    
-
-    Reg_Start = 2000000,    
-    Reg_Pc,
-    Reg_Cmp,
-    Reg_Call,   //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User    
-};
-
 //NodeRange
 struct NodeRange
 {

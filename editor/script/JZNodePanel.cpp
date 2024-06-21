@@ -183,7 +183,6 @@ void JZNodePanel::init()
 
     initData();
     initBasicFlow();
-    initEvent();
     initFunction();
     initEnums();
     initClass();
@@ -236,18 +235,6 @@ QTreeWidgetItem * JZNodePanel::createClassEvent(QString className)
     QTreeWidgetItem *item_class = new QTreeWidgetItem();
     item_class->setText(0, className);
            
-    for (int i = 0; i < meta->singles.size(); i++)
-    {        
-        JZNodeSingleEvent node_event;
-        node_event.setName(meta->singles[i].fullName());
-        node_event.setSingle(&meta->singles[i]);
-
-        QTreeWidgetItem *sub_event = new QTreeWidgetItem();
-        sub_event->setData(0, TreeItem_type, "node_data");
-        sub_event->setText(0, meta->singles[i].name);
-        sub_event->setData(0, TreeItem_value, JZNodeFactory::instance()->saveNode(&node_event));
-        item_class->addChild(sub_event);                   
-    }
     return item_class;
 }
 
@@ -318,38 +305,6 @@ void JZNodePanel::initBasicFlow()
     QTreeWidgetItem *itemExpr = createFolder("运算符");
     itemFlow->addChild(itemExpr);
     initExpression(itemExpr);    
-}
-
-void JZNodePanel::initEvent()
-{
-    if (m_file->itemType() != ProjectItem_scriptFlow)
-        return;
-
-    QTreeWidgetItem *item_event = createFolder("信号");
-    m_tree->addTopLevelItem(item_event);
-
-    JZNodeSingleConnect connect;
-    item_event->addChild(createNode(&connect));
-
-    QTreeWidgetItem *item_widget_event = createFolder("控件信号");
-    item_event->addChild(item_widget_event);
-
-    QTreeWidgetItem *item_object_event = createFolder("其他信号");
-    item_event->addChild(item_object_event);
-
-    auto inst = JZNodeObjectManager::instance();
-    auto list = inst->getClassList();
-    for (int i = 0; i < list.size(); i++)
-    {        
-        QTreeWidgetItem *item_class = createClassEvent(list[i]);
-        if (item_class)
-        {
-            if (inst->isInherits(list[i], "Widget"))
-                item_widget_event->addChild(item_class);
-            else
-                item_object_event->addChild(item_class);
-        }
-    }
 }
 
 void JZNodePanel::initFunction()
@@ -465,16 +420,6 @@ void JZNodePanel::initThis(QTreeWidgetItem *root)
     QTreeWidgetItem *itemClassEvent = createFolder("事件");
     root->addChild(itemClassEvent);
 
-    auto event_list = def.eventList();
-    for (int i = 0; i < def.eventList().size(); i++)
-    {
-        auto event = def.event(event_list[i]);
-
-        JZNodeQtEvent node;
-        node.setEvent(def.className, event);
-        QTreeWidgetItem *item = createNode(&node);
-        itemClassEvent->addChild(item);
-    }
     updateClass();
 }
 
@@ -578,35 +523,13 @@ void JZNodePanel::initConvert(QTreeWidgetItem *root)
 
 void JZNodePanel::initExpression(QTreeWidgetItem *root)
 {        
-    auto item_number = createFolder("数字");
     for (int i = Node_add; i <= Node_expr; i++)
     {   
         auto node = JZNodeFactory::instance()->createNode(i);
         QTreeWidgetItem *sub = createNode(node);
-        item_number->addChild(sub);
+        root->addChild(sub);
         delete node;
     }
-
-    auto item_string = createFolder("字符串");
-    for (int i = Node_stringAdd; i <= Node_stringGt; i++)
-    {
-        auto node = JZNodeFactory::instance()->createNode(i);
-        QTreeWidgetItem *sub = createNode(node);
-        item_string->addChild(sub);
-        delete node;
-    }
-
-    auto item_object = createFolder("对象");
-    JZNodeEQ node_eq;
-    JZNodeNE node_ne;
-    JZNodeNot node_not;
-    item_object->addChild(createNode(&node_eq));
-    item_object->addChild(createNode(&node_ne));
-    item_object->addChild(createNode(&node_not));
-
-    root->addChild(item_number);
-    root->addChild(item_string);
-    root->addChild(item_object);
 }
 
 void JZNodePanel::initProcess(QTreeWidgetItem *root)
@@ -625,11 +548,7 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     JZNodeExit node_exit;
     JZNodeReturn node_return;
     JZNodeNop node_nop;
-    if (m_file->itemType() == ProjectItem_scriptFunction) 
-    {
-        node_return.setFunction(&m_file->function());
-    }
-    
+
     item_process->addChild(createNode(&node_branch));
     item_process->addChild(createNode(&node_if));
     item_process->addChild(createNode(&node_switch));

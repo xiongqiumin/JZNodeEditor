@@ -1,4 +1,4 @@
-#include <QVBoxLayout>
+ï»¿#include <QVBoxLayout>
 #include "JZNodeAutoRunWidget.h"
 
 //PropCoor
@@ -100,13 +100,13 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
     
     m_tree->clear();
     m_propList.clear();
-    auto item_input = new JZNodeProperty("ÊäÈëÒÀÀµ", NodeProprety_GroupId);    
+    auto item_input = new JZNodeProperty("è¾“å…¥ä¾èµ–", NodeProprety_GroupId);    
     m_tree->addProperty(item_input);    
 
     int param_start = (m_depend.function.isMemberFunction())? 1:0;
     if (m_depend.function.paramIn.size() > param_start)
     {
-        auto func_input = new JZNodeProperty("ÊäÈë²ÎÊý", NodeProprety_GroupId);
+        auto func_input = new JZNodeProperty("è¾“å…¥å‚æ•°", NodeProprety_GroupId);
         item_input->addSubProperty(func_input);
 
         for (int i = param_start; i < m_depend.function.paramIn.size(); i++)
@@ -114,7 +114,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             auto &p = m_depend.function.paramIn[i];
             auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
             sub_item->setDataType({ p.dataType()});
-            sub_item->setValue(m_depend.function.paramIn[i].initValue());
+            sub_item->setValue(m_depend.function.paramIn[i].value);
 
             func_input->addSubProperty(sub_item);
             addPin(sub_item, Pin_funcIn, i);
@@ -123,14 +123,14 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 
     if (m_depend.member.size() > 0)
     {
-        auto item_member = new JZNodeProperty("³ÉÔ±±äÁ¿", NodeProprety_GroupId);
+        auto item_member = new JZNodeProperty("æˆå‘˜å˜é‡", NodeProprety_GroupId);
         item_input->addSubProperty(item_member);
 
         for (int i = 0; i < m_depend.member.size(); i++)
         {
             auto sub_item = new JZNodeProperty(m_depend.member[i].name, NodeProprety_Value);
             sub_item->setDataType({ m_depend.member[i].dataType()} );
-            sub_item->setValue(m_depend.member[i].initValue());
+            sub_item->setValue(m_depend.member[i].value);
 
             item_member->addSubProperty(sub_item);
             addPin(sub_item, Pin_member, i);
@@ -139,14 +139,14 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 
     if (m_depend.global.size() > 0)
     {        
-        auto item_global = new JZNodeProperty("È«¾Ö±äÁ¿", NodeProprety_GroupId);
+        auto item_global = new JZNodeProperty("å…¨å±€å˜é‡", NodeProprety_GroupId);
         item_input->addSubProperty(item_global);
 
         for (int i = 0; i < m_depend.global.size(); i++)
         {
             auto sub_item = new JZNodeProperty(m_depend.global[i].name, NodeProprety_Value);
             sub_item->setDataType({ m_depend.global[i].dataType() });
-            sub_item->setValue(m_depend.global[i].initValue());
+            sub_item->setValue(m_depend.global[i].value);
 
             item_global->addSubProperty(sub_item);
             addPin(sub_item, Pin_global, i);
@@ -155,7 +155,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 
     if (m_depend.hook.size() > 0)
     {        
-        auto item_function_hook = new JZNodeProperty("º¯Êý·µ»Ø", NodeProprety_FunctionHook);        
+        auto item_function_hook = new JZNodeProperty("å‡½æ•°è¿”å›ž", NodeProprety_FunctionHook);        
         item_input->addSubProperty(item_function_hook);
 
         auto it = m_depend.hook.begin();
@@ -170,7 +170,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             {
                 auto sub_item = new JZNodeProperty(node_out[i].name, NodeProprety_Value);
                 sub_item->setDataType({ node_out[i].dataType() });
-                sub_item->setValue(node_out[i].initValue());
+                sub_item->setValue(node_out[i].value);
 
                 item_function->addSubProperty(sub_item);
                 addPin(sub_item, Pin_hook, i, it.key());
@@ -181,7 +181,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
     
     if (m_depend.function.paramOut.size() > 0)
     {        
-        auto item_output = new JZNodeProperty("ÔËÐÐÊä³ö", NodeProprety_GroupId);
+        auto item_output = new JZNodeProperty("è¿è¡Œè¾“å‡º", NodeProprety_GroupId);
         m_tree->addProperty(item_output);
         
         for (int i = 0; i < m_depend.function.paramOut.size(); i++)

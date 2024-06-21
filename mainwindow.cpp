@@ -770,7 +770,7 @@ bool MainWindow::openProject(QString filepath)
 JZEditor *MainWindow::createEditor(int type)
 {
     JZEditor *editor = nullptr;
-    if(type == ProjectItem_scriptFlow ||type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
+    if(type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
         editor = new JZNodeEditor();
     else if(type == ProjectItem_param)
         editor = new JZNodeParamEditor();
@@ -835,7 +835,10 @@ void MainWindow::dealRun()
 
     QVariantList in, out;
     for (int i = 0; i < depend.function.paramIn.size(); i++)
-        in << depend.function.paramIn[i].initValue();
+    {
+        auto &p = depend.function.paramIn[i];
+        in << JZNodeType::initValue(p.dataType(),p.value);
+    }
 
     QString unit_function = depend.function.fullName() + "__unittest__";
 
@@ -1081,7 +1084,7 @@ void MainWindow::onStackChanged(int stack_index)
     updateRuntime(stack_index, false);
 }
 
-void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QVariant value)
+void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QString value)
 {    
     JZNodeSetDebugParamInfo param_info;
     param_info.stack = m_stack->stackIndex();
@@ -1270,6 +1273,7 @@ void MainWindow::saveToFile(QString filepath,QString text)
     if(file.open(QFile::WriteOnly | QFile::Truncate))
     {
         QTextStream s(&file);
+        s.setCodec("utf-8");
         s << text;
         file.close();
     }

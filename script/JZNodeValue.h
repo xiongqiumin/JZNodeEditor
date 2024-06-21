@@ -96,7 +96,7 @@ public:
     ~JZNodeCreate();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void pinChanged(int id) override;
+    virtual void onPinChanged(int id) override;
 
     void setClassName(const QString &name);
     QString className() const;
@@ -110,7 +110,7 @@ public:
     ~JZNodeCreateFromString();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-    virtual void pinChanged(int id) override;
+    virtual void onPinChanged(int id) override;
 
     void setClassName(const QString &name);
     QString className() const;
@@ -127,7 +127,7 @@ public:
     ~JZNodeThis();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void fileInitialized() override;
+    virtual void onFileInitialized() override;
 };
 
 //JZNodeParam
@@ -138,7 +138,7 @@ public:
     ~JZNodeParam();        
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void pinChanged(int id) override;
+    virtual void onPinChanged(int id) override;
 
     void setVariable(const QString &name);
     QString variable() const;
@@ -157,7 +157,7 @@ public:
     ~JZNodeSetParam();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void pinChanged(int id) override;
+    virtual void onPinChanged(int id) override;
     
     void setVariable(const QString &name);
     QString variable() const;
@@ -179,7 +179,7 @@ public:
     ~JZNodeSetParamDataFlow();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void pinChanged(int id) override;
+    virtual void onPinChanged(int id) override;
     
     void setVariable(const QString &name);
     QString variable() const;
@@ -206,7 +206,7 @@ public:
     QStringList member();    
 
 protected:
-    virtual void pinLinked(int id);
+    virtual void onPinLinked(int id) override;
     void updateMemberType();
     void updateMemberType(int type);
     QList<int> memberPinList();

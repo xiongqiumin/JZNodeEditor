@@ -277,7 +277,7 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
 
     QTableWidgetItem *itemValue = new QTableWidgetItem();            
     m_table->setItem(row, 2, itemValue);
-    itemValue->setText(def->initValue());
+    itemValue->setText(def->value);
     
     QTableWidgetItem *itemBind = new QTableWidgetItem();
     m_table->setItem(row, 3, itemBind);        

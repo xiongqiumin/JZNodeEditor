@@ -130,7 +130,7 @@ QByteArray JZScriptFile::getItemData(JZProjectItem *item)
             buffer = param_item->toBuffer();
         }
         else if (item->itemType() == ProjectItem_scriptFunction
-            || item->itemType() == ProjectItem_scriptFlow)
+            || item->itemType() == ProjectItem_scriptParamBinding)
         {
             auto script = dynamic_cast<JZScriptItem*>(item);
             buffer = script->toBuffer();
@@ -153,7 +153,7 @@ void JZScriptFile::setItemData(JZProjectItem *item, const QByteArray &data)
         param_item->fromBuffer(data);
     }
     else if (item->itemType() == ProjectItem_scriptFunction
-        || item->itemType() == ProjectItem_scriptFlow)
+        || item->itemType() == ProjectItem_scriptParamBinding)
     {
         auto script = dynamic_cast<JZScriptItem*>(item);
         script->fromBuffer(data);
@@ -162,7 +162,7 @@ void JZScriptFile::setItemData(JZProjectItem *item, const QByteArray &data)
 
 void JZScriptFile::saveScript(QDataStream &s, JZProjectItem *parent)
 {        
-    QList<QByteArray> function_list, param_list, flow_list;
+    QList<QByteArray> function_list, param_list;
     auto items = parent->childs();
     for (int i = 0; i < items.size(); i++)
     {
@@ -173,23 +173,19 @@ void JZScriptFile::saveScript(QDataStream &s, JZProjectItem *parent)
             param_list << getItemData(item);        
         else if (item->itemType() == ProjectItem_scriptFunction)
             function_list << getItemData(item);
-        else if (item->itemType() == ProjectItem_scriptFlow)
-            flow_list << getItemData(item);
     }
     
     s << param_list;
     s << function_list;
-    s << flow_list;
 }
 
 void JZScriptFile::loadScript(QDataStream &s, JZProjectItem *parent)
 {    
     Q_ASSERT(parent->project());
 
-    QList<QByteArray> function_list, param_list, flow_list;
+    QList<QByteArray> function_list, param_list;
     s >> param_list;
-    s >> function_list;    
-    s >> flow_list;
+    s >> function_list;
 
     for (int i = 0; i < param_list.size(); i++)
     {
@@ -206,14 +202,6 @@ void JZScriptFile::loadScript(QDataStream &s, JZProjectItem *parent)
         m_project->addItem(parent->itemPath(), item);
         m_itemCache[item] = function_list[i];
     }
-
-    for (int i = 0; i < flow_list.size(); i++)
-    {
-        JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFlow);        
-        item->fromBuffer(flow_list[i]);
-        m_project->addItem(parent->itemPath(), item);
-        m_itemCache[item] = flow_list[i];
-    } 
 }
 
 JZParamItem *JZScriptFile::addParamDefine(QString name)
@@ -240,35 +228,11 @@ JZParamItem *JZScriptFile::paramDefine(QString name)
     return nullptr;
 }
 
-JZScriptItem *JZScriptFile::addFlow(QString name)
-{
-    JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFlow);
-    item->setName(name);
-    m_project->addItem(itemPath(), item);
-    return item;
-}
-
-void JZScriptFile::removeFlow(QString name)
-{
-    auto path = getItem(name)->itemPath();
-    m_project->removeItem(path);
-}
-
-JZScriptItem *JZScriptFile::flow(QString name)
-{
-    for (int i = 0; i < m_childs.size(); i++)
-    {
-        if (m_childs[i]->name() == name && m_childs[i]->itemType() == ProjectItem_scriptFlow)
-            return (JZScriptItem *)m_childs[i].data();
-    }
-    return nullptr;
-}
-
-JZScriptItem *JZScriptFile::addFunction(QString path, const JZFunctionDefine &define)
+JZScriptItem *JZScriptFile::addFunction(const JZFunctionDefine &define)
 {    
     JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    
     file->setFunction(define);
-    m_project->addItem(path, file);
+    m_project->addItem(itemPath(), file);
     return file;
 }
 
@@ -298,7 +262,7 @@ JZScriptClassItem *JZScriptFile::addClass(QString name, QString super)
     m_project->addItem(itemPath(), class_file);
 
     JZParamItem *data_page = new JZParamItem();            
-    data_page->setName("Ёит╠╠Да©");
+    data_page->setName("О©╫О©╫т╠О©╫О©╫О©╫О©╫");
     m_project->addItem(class_file->itemPath(), data_page);
 
     return class_file;

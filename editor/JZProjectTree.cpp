@@ -143,10 +143,9 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
 bool JZProjectTree::canOpenItem(JZProjectItem *item)
 {
     if (item->itemType() == ProjectItem_ui
-        || item->itemType() == ProjectItem_scriptFunction
         || item->itemType() == ProjectItem_param
-        || item->itemType() == ProjectItem_scriptParamBinding
-        || item->itemType() == ProjectItem_scriptFlow)
+        || item->itemType() == ProjectItem_scriptFunction
+        || item->itemType() == ProjectItem_scriptParamBinding)
         return true;
 
     return false;
@@ -356,16 +355,15 @@ void JZProjectTree::onContextMenu(QPoint pos)
         actCreateFunction = menu_new->addAction("成员函数");
         actCreateEvent = menu_new->addAction("事件处理");
     }
-    else if (item->itemType() == ProjectItem_scriptFunction
-        || item->itemType() == ProjectItem_param
-        || item->itemType() == ProjectItem_scriptParamBinding
-        || item->itemType() == ProjectItem_scriptFlow)
+    else if (item->itemType() == ProjectItem_param
+        || item->itemType() == ProjectItem_scriptFunction
+        || item->itemType() == ProjectItem_scriptParamBinding)
     {
         actOpen = menu.addAction("打开");
     }
 
     if(item->itemPath() == m_project->mainFile()
-        ||item->itemPath() == m_project->mainScriptPath()
+        ||item->itemPath() == m_project->mainFunctionPath()
         ||item->itemType() == ProjectItem_param)
     {
         canChanged = false;
@@ -477,13 +475,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     }    
     else if(act == actCreateEvent)
     {
-        QString name = "事件";
         
-        JZScriptItem *flow = new JZScriptItem(ProjectItem_scriptFlow);
-        flow->setName(name);
-        m_project->addItem(item->itemPath(), flow);
-        m_project->saveItem(item);
-        addItem(view_item, flow);
     }
     else if(act == actRemove)
     {

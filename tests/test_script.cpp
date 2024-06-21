@@ -20,7 +20,7 @@ ScriptTest::ScriptTest()
 void ScriptTest::call()
 {
     QVariantList in, out;
-    m_engine.call("__main__", in, out);
+    m_engine.call("main", in, out);
 }
 
 bool ScriptTest::build()
@@ -77,18 +77,10 @@ void ScriptTest::initTestCase()
 void ScriptTest::init()
 {
     m_project.clear();
-    JZScriptFile *file = new JZScriptFile();
-    file->setName("main.jz");
-    m_project.addItem("./", file);
+    m_project.initProject("console");
 
-    JZScriptItem *main_flow = file->addFlow("main");
-    JZNodeEvent *start = new JZNodeStartEvent();
-    main_flow->addNode(start);
-
-    file->addParamDefine("global");
-
-    m_file = file;
-    m_scriptFlow = m_project.mainScript();
+    m_file = m_project.getScriptFile(m_project.mainFunction());
+    m_scriptFlow = m_project.mainFunction();
     m_paramDef = m_project.globalDefine();
 }
 
@@ -253,7 +245,7 @@ void ScriptTest::testBranch()
     define.paramIn.push_back(JZParamDefine("b", Type_int));
     define.paramOut.push_back(JZParamDefine("c", Type_int));    
 
-    auto script = m_file->addFunction("./", define);
+    auto script = m_file->addFunction(define);
     auto node_start = script->getNode(0);
 
     JZNodeBranch *branch = new JZNodeBranch();
@@ -265,12 +257,7 @@ void ScriptTest::testBranch()
     b->setVariable("b");
 
     JZNodeReturn *r1 = new JZNodeReturn();
-    r1->setFunction(&define);
-    r1->setParamInValue(0, "1");
-    
     JZNodeReturn *r2 = new JZNodeReturn();
-    r2->setFunction(&define);
-    r2->setParamInValue(0, "0");
     
     script->addNode(branch);
     script->addNode(eq);
@@ -278,6 +265,9 @@ void ScriptTest::testBranch()
     script->addNode(b);
     script->addNode(r1);
     script->addNode(r2);
+
+    r1->setParamInValue(0, "1");
+    r2->setParamInValue(0, "0");
 
     script->addConnect(a->paramOutGemo(0), eq->paramInGemo(0));
     script->addConnect(b->paramOutGemo(0), eq->paramInGemo(1));
@@ -307,7 +297,7 @@ void ScriptTest::testIf()
     define.paramIn.push_back(JZParamDefine("a", Type_int));    
     define.paramOut.push_back(JZParamDefine("ret", Type_int));
 
-    auto script = m_file->addFunction("./", define);
+    auto script = m_file->addFunction(define);
     auto node_start = script->getNode(0);
 
     JZNodeIf *node_if = new JZNodeIf();
@@ -332,7 +322,6 @@ void ScriptTest::testIf()
         JZNodeReturn *ret = new JZNodeReturn();
         script->addNode(ret);
 
-        ret->setFunction(&define);
         ret->setParamInValue(0, QString::number(i));
 
         script->addConnect(a->paramOutGemo(0), eq->paramInGemo(0));
@@ -344,7 +333,6 @@ void ScriptTest::testIf()
 
     JZNodeReturn *ret_else = new JZNodeReturn();
     script->addNode(ret_else);
-    ret_else->setFunction(&define);
     ret_else->setParamInValue(0, "-1");
     script->addConnect(node_if->subFlowOutGemo(4), ret_else->flowInGemo());
 
@@ -372,7 +360,7 @@ void ScriptTest::testSwitch()
     define.paramIn.push_back(JZParamDefine("a", Type_int));
     define.paramOut.push_back(JZParamDefine("ret", Type_int));
 
-    auto script = m_file->addFunction("./", define);
+    auto script = m_file->addFunction(define);
     auto node_start = script->getNode(0);
 
     JZNodeSwitch *node_switch = new JZNodeSwitch();
@@ -397,7 +385,6 @@ void ScriptTest::testSwitch()
         JZNodeReturn *ret = new JZNodeReturn();
         script->addNode(ret);
 
-        ret->setFunction(&define);
         ret->setParamInValue(0, QString::number(i));
         
         script->addConnect(node_switch->subFlowOutGemo(i), ret->flowInGemo());
@@ -405,7 +392,6 @@ void ScriptTest::testSwitch()
 
     JZNodeReturn *ret_else = new JZNodeReturn();
     script->addNode(ret_else);
-    ret_else->setFunction(&define);
     ret_else->setParamInValue(0, "-1");
     script->addConnect(node_switch->subFlowOutGemo(4), ret_else->flowInGemo());
 
@@ -491,7 +477,7 @@ void ScriptTest::testFor()
         define.name = "ForTest" + QString::number(i);        
         define.paramOut.push_back(JZParamDefine("result", Type_int));
 
-        JZScriptItem *script = m_file->addFunction("./", define);
+        JZScriptItem *script = m_file->addFunction(define);
         script->addLocalVariable(JZParamDefine("sum", Type_int));
 
         JZNode *node_start = script->getNode(0);
@@ -511,7 +497,6 @@ void ScriptTest::testFor()
 
         node_sum->setVariable("sum");
         node_set->setVariable("sum");
-        node_ret->setFunction(&define);
 
         //start
         script->addConnect(JZNodeGemo(start_id, node_start->flowOut()), JZNodeGemo(for_id, node_for->flowIn()));
@@ -895,7 +880,7 @@ void ScriptTest::testFunction()
     fab.name = "fab";
     fab.paramIn.push_back(JZParamDefine("n", Type_int));
     fab.paramOut.push_back(JZParamDefine("result", Type_int));
-    JZScriptItem *script = m_file->addFunction("./",fab);
+    JZScriptItem *script = m_file->addFunction(fab);
 
     JZNode *node_start = script->getNode(0);
     JZNodeBranch *node_branch = new JZNodeBranch();    
@@ -916,8 +901,6 @@ void ScriptTest::testFunction()
 
     JZNodeReturn *ret1 = new JZNodeReturn();
     JZNodeReturn *ret2 = new JZNodeReturn();    
-    ret1->setFunction(&fab);
-    ret2->setFunction(&fab);
 
     script->addNode(node_branch);
     script->addNode(node_ge);

@@ -60,7 +60,9 @@ void JZNodeBuilder::initGlobal()
         for(int i = 0; i < global_params.size(); i++)
         {
             auto def = m_project->globalVariable(global_params[i]);
-            c->addAlloc(JZNodeIRAlloc::Heap, def->name, def->dataType(), def->value);
+            c->addAlloc(JZNodeIRAlloc::Heap, def->name, def->dataType());
+            if(!def->value.isEmpty())
+                c->addSetVariable(irRef(def->name),irLiteral(JZNodeType::initValue(def->dataType(),def->value)));
         }
         return true;
     };
@@ -148,14 +150,6 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             return false;        
     }
 
-    auto flow_list = m_project->itemList("./", ProjectItem_scriptFlow);
-    for(int i = 0; i < flow_list.size(); i++)
-    {
-        JZScriptItem *script = dynamic_cast<JZScriptItem*>(flow_list[i]);
-        if(!buildScript(script))
-            return false;
-    }
-
     if(!link())
         return false;
 
@@ -197,13 +191,6 @@ void JZNodeBuilder::buildProgram()
     for (int i = 0; i < function_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
-        buildScript(script);
-    }
-
-    auto flow_list = m_project->itemList("./", ProjectItem_scriptFlow);
-    for (int i = 0; i < flow_list.size(); i++)
-    {
-        JZScriptItem *script = dynamic_cast<JZScriptItem*>(flow_list[i]);
         buildScript(script);
     }
 }
@@ -377,13 +364,9 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
             ir_alloc->type = JZNodeIRAlloc::StackId;
             ir_alloc->id = i;
             ir_alloc->dataType = def.dataType();
-            ir_alloc->value = irLiteral(JZNodeType::defaultValue(def.dataType()));
+            //ir_alloc->value = irLiteral(JZNodeType::defaultValue(def.dataType()));
             c->addStatement(JZNodeIRPtr(ir_alloc));          
-            
-            if(def.dataType() != Type_string)
-                c->addConvert(irId(Reg_Call + i), def.dataType(), irId(i));
-            else
-                c->addSetVariable(irId(i), irId(Reg_Call + i));
+            //c->addSetVariable(irId(i), irId(Reg_Call + i));
         }
                                   
         for (int i = 0; i < depend->member.size(); i++)
@@ -400,7 +383,7 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
             {   
                 auto &def = depend->member[i];
                 auto v = JZNodeType::initValue(def.dataType(), def.value);
-                c->addAlloc(JZNodeIRAlloc::Heap, def.name, def.dataType(), irLiteral(v));
+                //c->addAlloc(JZNodeIRAlloc::Heap, def.name, def.dataType(), irLiteral(v));
             }
         }               
 
@@ -447,9 +430,8 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
     file.addNode(custom);
 
     JZNodeReturn *ret = new JZNodeReturn();
-    ret->setFunction(&func);
-
     file.addNode(ret);
+    
     file.addConnect(custom->flowOutGemo(), ret->flowInGemo());
     for (int i = 0; i < func.paramOut.size(); i++)
     {

@@ -23,7 +23,7 @@ void TestServer::init(JZProject *project)
     auto func_inst = JZNodeFunctionManager::instance();
 
     m_project->newProject(dirpath,"test","console");
-    JZScriptItem *script = m_project->mainScript();
+    JZScriptItem *script = m_project->mainFunction();
     JZParamItem *param_def = m_project->globalDefine();
     param_def->addVariable("timer", Type_timer);
 
@@ -78,7 +78,7 @@ void TestServer::init(JZProject *project)
     script->addConnect(start_timer->flowOutGemo(), create->flowInGemo());
     script->addConnect(create->flowOutGemo(), set_param->flowInGemo());
     script->addConnect(create->paramOutGemo(0), set_param->paramInGemo(0));
-    
+ /*   
     //timeout
     JZNodeSingleEvent *timeout = new  JZNodeSingleEvent();
     timeout->setSingle(time_meta->single("timeout"));
@@ -118,6 +118,7 @@ void TestServer::init(JZProject *project)
     projectUpdateLayout(m_project);
     m_project->saveAllItem();
     m_project->save();
+*/    
 }
 
 void TestServer::stop()
@@ -158,7 +159,7 @@ void TestServer::run()
     server.waitForAttach();       
         
     QVariantList in, out;
-    engine.call("__main__", in,out);
+    engine.call("main", in,out);
     exec();
     m_engine = nullptr;
 }

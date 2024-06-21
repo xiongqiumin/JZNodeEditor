@@ -469,12 +469,6 @@ bool JZNodeView::isModified()
     return !m_commandStack.isClean();
 }
 
-int JZNodeView::getVariableType(const QString &name)
-{
-    auto info = JZNodeCompiler::getVariableInfo(m_file, name);
-    return info? info->dataType() : Type_none;    
-}
-
 void JZNodeView::saveNodePos()
 {
     foreachNode([this](JZNodeGraphItem *node) {

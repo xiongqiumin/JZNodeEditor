@@ -14,6 +14,7 @@ enum
     OP_nop,            
     OP_alloc,    
     OP_set,    
+    OP_convert,
     OP_jmp,
     OP_je,
     OP_jne,      
@@ -41,6 +42,17 @@ enum
     OP_assert,
 };
 
+enum{    
+    Stack_Node = 0,
+    Stack_User = 1000000,    
+
+    Reg_Start = 2000000,    
+    Reg_Cmp,
+    Reg_CallIn,   //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User    
+    Reg_CallOut = Reg_CallIn + 100,
+    Reg_End = Reg_CallOut + 100,
+};
+
 class JZNodeIRParam
 {
 public:
@@ -57,6 +69,7 @@ public:
     bool isLiteral() const;
     bool isRef() const;
     bool isId() const;
+    bool isRegId() const;
     bool isThis() const;
 
     int id() const;
@@ -123,7 +136,6 @@ public:
     QString name;
     int id;
     int dataType;
-    JZNodeIRParam value;
 };
 
 class JZNodeIRExpr : public JZNodeIR
@@ -150,6 +162,20 @@ public:
     virtual void loadFromStream(QDataStream &s);   
 
     JZNodeIRParam dst;
+    JZNodeIRParam src;
+};
+
+class JZNodeIRConvert: public JZNodeIR
+{
+public:
+    JZNodeIRConvert();
+    virtual ~JZNodeIRConvert();
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);   
+
+    JZNodeIRParam dst;
+    int dstType;
     JZNodeIRParam src;
 };
 

@@ -39,9 +39,11 @@ void JZNodeParamBindEditDialog::init(JZScriptClassItem *item, QString variable)
         if (!JZNodeType::isInherits(def->type, "Widget"))
             continue;
 
+        /*
         auto info = JZNodeQtBind::BindSupport(def->type);               
         if (info.dataType.contains(var->type))
             ui->boxWidget->addItem(list[i]);
+        */
     }
 }
 

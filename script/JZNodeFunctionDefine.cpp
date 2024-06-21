@@ -26,33 +26,6 @@ int JZParamDefine::dataType() const
     return JZNodeType::nameToType(type);
 }
 
-QString JZParamDefine::initValue() const
-{
-    if (value.isEmpty())
-    {
-        int t = dataType();
-        if (t == Type_bool)
-            return "false";
-        else if (JZNodeType::isNumber(t))
-            return "0";
-        else if (JZNodeType::isEnum(t))
-        {
-            auto meta = JZNodeObjectManager::instance()->enumMeta(t);
-            return meta->defaultKey();
-        }
-        else if (JZNodeType::isObject(t))
-            return "null";
-        else if (t == Type_string)
-            return "\"\"";
-        else
-            return QString();
-    }
-    else
-    {
-        return value;
-    }
-}
-
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
 {
     s << param.name;
@@ -186,7 +159,6 @@ EventDefine::EventDefine()
 
 QDataStream &operator<<(QDataStream &s, const EventDefine &param)
 {
-    s << param.eventType;
     s << param.name;
     return s;
 }
