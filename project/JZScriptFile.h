@@ -28,6 +28,7 @@ public:
     void removeParamDefine(QString name);
     JZParamItem *paramDefine(QString name);
 
+    QStringList functionList() const;
     JZScriptItem *addFunction(const JZFunctionDefine &func);
     void removeFunction(QString name);
     JZScriptItem *getFunction(QString name);

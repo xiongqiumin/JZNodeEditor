@@ -75,7 +75,11 @@ CFunction::~CFunction()
 JZFunctionDefine::JZFunctionDefine()
 {
     isCFunction = false;
-    isFlowFunction = true;          
+    isFlowFunction = true;    
+    isVirtualFunction = false;
+    isProtected = false;  
+    isSlot = false;
+    isSingle = false;
 }
 
 bool JZFunctionDefine::isNull() const
@@ -118,6 +122,11 @@ void JZFunctionDefine::updateParam(CFunction *func)
     }
 }
 
+void JZFunctionDefine::setDefaultValue(int index, QString text)
+{
+    paramIn[index].value = text;
+}
+
 void JZFunctionDefine::setDefaultValue(int index, QStringList values)
 {
     for (int i = 0; i < values.size(); i++)
@@ -135,6 +144,10 @@ QDataStream &operator<<(QDataStream &s, const JZFunctionDefine &param)
     s << param.className;
     s << param.isCFunction;
     s << param.isFlowFunction;
+    s << param.isVirtualFunction;
+    s << param.isProtected;
+    s << param.isSingle;
+    s << param.isSlot;
     s << param.paramIn;
     s << param.paramOut;         
     return s;
@@ -145,27 +158,13 @@ QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param)
     s >> param.name;
     s >> param.className;
     s >> param.isCFunction;
-    s >> param.isFlowFunction;     
+    s >> param.isFlowFunction;
+    s >> param.isVirtualFunction;
+    s >> param.isProtected;
+    s >> param.isSingle;
+    s >> param.isSlot;
     s >> param.paramIn;
     s >> param.paramOut;          
-    return s;
-}
-
-//EventDefine
-EventDefine::EventDefine()
-{
-    eventType = Event_none;
-}
-
-QDataStream &operator<<(QDataStream &s, const EventDefine &param)
-{
-    s << param.name;
-    return s;
-}
-QDataStream &operator >> (QDataStream &s, EventDefine &param)
-{
-    s >> param.eventType;
-    s >> param.name;
     return s;
 }
 
@@ -223,53 +222,39 @@ JZFunction::~JZFunction()
 
 }
 
-bool JZFunction::isCFunction() const
+QString JZFunction::name() const
 {
-    return cfunc;
+    return define.name;
 }
 
-JZFunctionDefine JZFunction::define() const
+QString JZFunction::className() const
 {
-    JZFunctionDefine define;
-    define.name = this->name;
-    define.className = this->className;
-    define.isFlowFunction = this->flow;
-    define.isCFunction = this->isCFunction();
-
-    for (int i = 0; i < this->paramIn.size(); i++)
-        define.paramIn << this->paramIn[i].define();
-     
-    for (int i = 0; i < this->paramOut.size(); i++)
-        define.paramOut << this->paramOut[i].define();
-
-    return define;
+    return define.className;
 }
 
 QString JZFunction::fullName() const
 {
-    if (className.isEmpty())
-        return name;
-    else
-        return className + "." + name;
+    return define.fullName();
+}
+
+bool JZFunction::isCFunction() const
+{
+    return define.isCFunction;
 }
 
 bool JZFunction::isMemberFunction() const
 {
-    return paramIn.size() > 0 && paramIn[0].name == "this";
+    return define.isMemberFunction();
 }
 
 bool JZFunction::isFlowFunction() const
 {
-    return flow;
+    return define.isFlowFunction;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZFunction &param)
 {
-    s << param.name;
-    s << param.className;
-    s << param.paramIn;
-    s << param.paramOut;
-    s << param.flow;
+    s << param.define;
    
     s << param.addr;
     s << param.addrEnd;
@@ -280,11 +265,7 @@ QDataStream &operator<<(QDataStream &s, const JZFunction &param)
 
 QDataStream &operator >> (QDataStream &s, JZFunction &param)
 {
-    s >> param.name;
-    s >> param.className;
-    s >> param.paramIn;
-    s >> param.paramOut;
-    s >> param.flow;
+    s >> param.define;
 
     s >> param.addr;
     s >> param.addrEnd;

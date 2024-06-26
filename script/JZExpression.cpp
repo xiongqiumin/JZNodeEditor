@@ -1,6 +1,7 @@
-﻿#include "JZExpression.h"
-#include <QRegularExpression>
+﻿#include <QRegularExpression>
 #include <QStack>
+#include "JZExpression.h"
+#include "JZNodeType.h"
 
 enum{
     Token_Start,
@@ -359,17 +360,5 @@ QString JZExpression::dump()
 
 int JZExpression::tokenPri(const Token &tk)
 {
-    if(tk.word == "+" || tk.word == "-")
-        return 0;
-    else if(tk.word == "*" || tk.word == "/")
-        return 1;
-    else if(tk.word == "&" || tk.word == "|" || tk.word == "^")
-        return 2;
-    else if(tk.word == "(")
-        return 100;
-    else
-    {
-        Q_ASSERT(0);
-        return -1;
-    }
+    return JZNodeType::opPri(tk.word);
 }

@@ -15,8 +15,8 @@ public:
     int dataType() const;
     void setDataType(int type);
 
-    QVariant literal() const;
-    void setLiteral(QVariant value);    
+    QString literal() const;
+    void setLiteral(const QString &value);    
 
 protected:
 

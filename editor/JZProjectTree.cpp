@@ -362,7 +362,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         actOpen = menu.addAction("打开");
     }
 
-    if(item->itemPath() == m_project->mainFile()
+    if(item->itemPath() == m_project->mainFilePath()
         ||item->itemPath() == m_project->mainFunctionPath()
         ||item->itemType() == ProjectItem_param)
     {

@@ -61,7 +61,7 @@ bool JZProject::newProject(QString path,QString name, QString temp)
     if (!initProject(temp))
         return false;
 
-    m_filepath = path + "/" + name + "/" + name + ".jzproj";
+    m_filepath = path + "/"  + name + ".jzproj";
     if(!saveAllItem())
         return false;
     
@@ -241,7 +241,13 @@ QString JZProject::path()
     return info.path();
 }
 
-QString JZProject::mainFile()
+JZScriptFile *JZProject::mainFile()
+{
+    JZScriptFile *file = dynamic_cast<JZScriptFile*>(getItem(mainFilePath()));
+    return file;
+}
+
+QString JZProject::mainFilePath()
 {
     return "./main.jz";
 }
@@ -253,14 +259,12 @@ QString JZProject::mainFunctionPath()
 
 JZScriptItem *JZProject::mainFunction()
 {
-    JZScriptFile *file = dynamic_cast<JZScriptFile*>(getItem(mainFile()));
-    return file->getFunction("main");
+    return mainFile()->getFunction("main");
 }
 
 JZParamItem *JZProject::globalDefine()
 {
-    JZScriptFile *file = dynamic_cast<JZScriptFile*>(getItem(mainFile()));
-    return file->paramDefine("global");
+    return mainFile()->paramDefine("global");
 }
 
 JZProjectItem *JZProject::root()
@@ -391,7 +395,7 @@ JZProjectItem *JZProject::getItem(QString path)
     if(!path.startsWith("./"))
         path = "./" + path;
 
-    QStringList path_list = path.split("/",QString::KeepEmptyParts);
+    QStringList path_list = path.split("/",Qt::KeepEmptyParts);
     JZProjectItem *folder = &m_root;
     for(int i = 1; i < path_list.size(); i++)
     {        
@@ -493,6 +497,11 @@ JZScriptFile *JZProject::getScriptFile(JZProjectItem *item)
         item = item->parent();
     }
     return nullptr;
+}
+
+void JZProject::addGlobalVariable(const QString &name,int dataType,const QString &value)
+{
+    globalDefine()->addVariable(name,dataType,value);
 }
 
 const JZParamDefine *JZProject::globalVariable(QString name)

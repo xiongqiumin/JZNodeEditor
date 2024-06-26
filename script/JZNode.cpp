@@ -567,6 +567,11 @@ void JZNode::setName(const QString &name)
     m_name = name;
 }
 
+QString JZNode::idName() const
+{
+    return m_name + "(" + QString::number(m_id) + ")";
+}
+
 bool JZNode::canRemove()
 {
     return !(m_flag & NodeProp_noRemove);
@@ -982,6 +987,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     int op_id = pinValue(paramIn(3)).toInt();
     int op = m_condOp[op_id];
 
+    bool need_runtime_check = true;
     if (c->isPinLiteral(m_id, indexStart)
         && c->isPinLiteral(m_id, indexEnd)
         && c->isPinLiteral(m_id, indexStep))
@@ -997,6 +1003,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
             error = "dead loop,please check";
             return false;
         }
+        need_runtime_check = false;
     }
 
     int id_start = c->paramId(m_id,indexStart);
@@ -1005,9 +1012,12 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     int id_index = c->paramId(m_id,indexOut);     
     c->addSetVariable(irId(id_index), irId(id_start));       
 
-    QList<JZNodeIRParam> in, out;
-    in << irId(id_start) << irId(id_end) << irId(id_step) << irLiteral(op);
-    c->addCall("forRuntimeCheck", in, out);
+    if(need_runtime_check)
+    {
+        QList<JZNodeIRParam> in, out;
+        in << irId(id_start) << irId(id_end) << irId(id_step) << irLiteral(op);
+        c->addCall("forRuntimeCheck", in, out);
+    }
     
     //start 
     int start = c->addCompare(irId(id_index), irId(id_end), op);
@@ -1112,6 +1122,7 @@ JZNodeForEach::~JZNodeForEach()
 
 bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 {
+    Q_ASSERT(0);
     if(!c->addFlowInput(m_id,error))
         return false;
 
@@ -1513,6 +1524,7 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
 
     int in_id = c->paramId(m_id, paramIn(0));
     int out_id = c->paramId(m_id, paramOut(0));    
+    c->setPinType(m_id,paramOut(0),c->pinType(m_id,paramIn(0)));
     c->addSetVariable(irId(out_id), irId(in_id));
     c->addFlowOutput(m_id);
 
@@ -1553,7 +1565,6 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
         continuePc.push_back(out_pc);
     }
     c->setBreakContinue(breakPc, continuePc);
-    c->setPinType(m_id, paramOut(0), paramIn(0));
 
     return true;
 }

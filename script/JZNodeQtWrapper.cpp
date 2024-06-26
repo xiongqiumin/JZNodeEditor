@@ -416,6 +416,14 @@ void initWidgets()
     cls_widget.def("setLayout", true, &QWidget::setLayout);
     cls_widget.regist();
 
+    //QFrame
+    jzbind::ClassBind<QFrame> cls_frame("Frame", "Widget");
+    cls_frame.regist();
+
+    //QFrame
+    jzbind::ClassBind<QAbstractScrollArea> cls_abs_scroll("AbstractScrollArea", "Frame");
+    cls_abs_scroll.regist();
+
     //lineedit
     jzbind::ClassBind<QLineEdit> cls_lineEdit("LineEdit", "Widget");
     cls_lineEdit.def("text", false, &QLineEdit::text);
@@ -430,7 +438,7 @@ void initWidgets()
     cls_textEdit.regist();
 
     //abs_button
-    jzbind::ClassBind<QAbstractButton> cls_abs_button("Button", "Widget");
+    jzbind::ClassBind<QAbstractButton> cls_abs_button("AbstractButton", "Widget");
     cls_abs_button.def("text", false, &QAbstractButton::text);
     cls_abs_button.def("setText", true, &QAbstractButton::setText);
     cls_abs_button.def("isChecked", false, &QAbstractButton::isChecked);
@@ -438,16 +446,16 @@ void initWidgets()
     cls_abs_button.defSingle("clicked", &QAbstractButton::clicked);
     cls_abs_button.regist();
 
-    jzbind::ClassBind<QPushButton> cls_button("PushButton", "Button");
+    jzbind::ClassBind<QPushButton> cls_button("PushButton", "AbstractButton");
     cls_button.regist();
 
-    jzbind::ClassBind<QRadioButton> cls_radio_btn("RadioButton", "Button");
+    jzbind::ClassBind<QRadioButton> cls_radio_btn("RadioButton", "AbstractButton");
     cls_radio_btn.regist();
 
-    jzbind::ClassBind<QToolButton> cls_tool_btn("ToolButton", "Button");
+    jzbind::ClassBind<QToolButton> cls_tool_btn("ToolButton", "AbstractButton");
     cls_tool_btn.regist();
 
-    jzbind::ClassBind<QCheckBox> cls_check_box("CheckBox", "Button");
+    jzbind::ClassBind<QCheckBox> cls_check_box("CheckBox", "AbstractButton");
     cls_check_box.regist();
 
     //stack
@@ -564,22 +572,22 @@ void initFiles()
 QVariant colorEnum_to_color(const QVariant &v)
 {
     QColor *color = new QColor((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectRefrence(color);
+    auto ptr = JZObjectRefrence(color,true);
     return QVariant::fromValue(ptr);
 }
 
 QVariant colorEnum_to_brush(const QVariant &v)
 {
     QBrush *brush = new QBrush((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectRefrence(brush);
+    auto ptr = JZObjectRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 
 QVariant color_to_brush(const QVariant &v)
 {    
-    QColor *c = jzbind::getValue<QColor*>(v);
+    QColor *c = jzbind::fromVariant<QColor*>(v);
     QBrush *brush = new QBrush(*c);
-    auto ptr = JZObjectRefrence(brush);
+    auto ptr = JZObjectRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 

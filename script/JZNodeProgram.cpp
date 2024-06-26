@@ -316,7 +316,7 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
             return JZNodeType::typeToName(var_type) + "()";
         }
         else 
-            return "$" + JZNodeType::toString(param.value) + "(" + JZNodeType::typeToName(var_type) + ")";
+            return "$" + JZNodeType::toString(param.value) + ":" + JZNodeType::typeToName(var_type);
     }
     else if(param.type == JZNodeIRParam::Reference)
         return param.ref();

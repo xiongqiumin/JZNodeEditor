@@ -24,6 +24,8 @@ class JZNodeObjectDefine
 public:
     JZNodeObjectDefine();
 
+    QString fullname() const;
+
     void addParam(const JZParamDefine &def);
     void removeParam(const QString &name);
     QStringList paramList(bool hasParent) const;
@@ -32,18 +34,15 @@ public:
     void addFunction(const JZFunctionDefine &def);
     void removeFunction(const QString &function);    
     int indexOfFunction(const QString &function) const;
-
-    QString fullname() const;
-
+    bool checkFunction(const QString &function,QString &error) const;
     const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
     
     const JZSingleDefine *single(const QString &function) const;
     QStringList singleList() const;
-    
-    const EventDefine *event(int type) const;
-    const EventDefine *event(const QString &name) const;
-    QList<int> eventList() const;
+
+    const JZFunctionDefine *slot(const QString &function) const;
+    QStringList slotList() const;
     
     const JZNodeObjectDefine *super() const;
     bool isInherits(int type) const;
@@ -57,7 +56,6 @@ public:
     QMap<QString,JZParamDefine> params;
     QList<JZFunctionDefine> functions;
     QList<JZSingleDefine> singles;
-    QList<EventDefine> events;
 
     bool isUiWidget;
     QString widgetXml;
@@ -104,7 +102,6 @@ public:
 
     const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
-    QString relativeFunction(const QString &function) const;
     
     const JZSingleDefine *single(QString function) const;
     QStringList singleList() const;
@@ -239,7 +236,7 @@ JZNodeObjectPtr JZObjectCreate()
 }
 
 template<class T>
-JZNodeObjectPtr JZObjectRefrence(T ptr,bool owner = true)
+JZNodeObjectPtr JZObjectRefrence(T ptr,bool owner)
 {
     static_assert(std::is_pointer<T>(), "only support class pointer");
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();

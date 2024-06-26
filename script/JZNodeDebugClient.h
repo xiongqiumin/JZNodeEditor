@@ -18,13 +18,13 @@ public:
     void disconnectFromServer();
     bool isConnect();
 
-    JZNodeProgramInfo init(const JZNodeDebugInfo &info);
-    JZNodeRuntimeInfo runtimeInfo();
-    void addBreakPoint(QString file,int nodeId);
-    void removeBreakPoint(QString file,int nodeId);
-    void clearBreakPoint();    
-    JZNodeDebugParamInfo getVariable(JZNodeDebugParamInfo info);
-    JZNodeDebugParamInfo setVariable(JZNodeSetDebugParamInfo info);
+    bool init(const JZNodeDebugInfo &info,JZNodeProgramInfo &ret);
+    bool runtimeInfo(JZNodeRuntimeInfo &ret);
+    bool addBreakPoint(QString file,int nodeId);
+    bool removeBreakPoint(QString file,int nodeId);
+    bool clearBreakPoint();    
+    bool getVariable(const JZNodeDebugParamInfo &info,JZNodeDebugParamInfo &ret);
+    bool setVariable(const JZNodeSetDebugParamInfo &info,JZNodeDebugParamInfo &ret);
     
     void detach();
     void pause();       

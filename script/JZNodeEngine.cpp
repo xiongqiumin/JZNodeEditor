@@ -427,6 +427,12 @@ int JZNodeEngine::nodeIdByPc(int m_pc)
     return nodeIdByPc(m_script,m_pc);        
 }
 
+int JZNodeEngine::status()
+{
+    QMutexLocker lock(&m_mutex);
+    return m_status;
+}
+
 JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
 {   
     JZNodeRuntimeInfo info;
@@ -550,7 +556,6 @@ bool JZNodeEngine::checkIdlePause(const JZFunction *func)
 bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList &out)
 {    
     auto *func = function(name);
-    Q_ASSERT(func);
     return call(func,in,out);
 }
 
@@ -560,7 +565,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         return false;                    
 
     m_error = JZNodeRuntimeError();
-    Q_ASSERT(in.size() == func->paramIn.size());
+    Q_ASSERT(func && in.size() == func->define.paramIn.size());
     for (int i = 0; i < in.size(); i++)
         setReg(Reg_CallIn + i,in[i]);
     
@@ -609,7 +614,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
     }
 
     out.clear();    
-    for (int i = 0; i < func->paramOut.size(); i++)
+    for (int i = 0; i < func->define.paramOut.size(); i++)
         out.push_back(getReg(Reg_CallOut + i));    
 
     m_regs.clear();
@@ -736,8 +741,9 @@ QVariant *JZNodeEngine::getVariableRef(int id)
 
 QVariant *JZNodeEngine::getVariableRef(int id, int stack_level)
 {
+    Q_ASSERT(m_stack.size() > 0);
+    
     auto env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
-
     auto it = env->stacks.find(id);
     if (it == env->stacks.end())
         return nullptr;
@@ -1066,11 +1072,11 @@ void JZNodeEngine::stepOut()
 void JZNodeEngine::checkFunctionIn(const JZFunction *func)
 {
     // get input
-    auto &inList = func->paramIn;    
+    auto &inList = func->define.paramIn;    
     for (int i = 0; i < inList.size(); i++)
     {
         QVariant v = getReg(Reg_CallIn + i);
-        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(v),inList[i].dataType));        
+        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(v),inList[i].dataType()));        
         if (i == 0 && func->isMemberFunction() && JZNodeType::isNullptr(v))
             throw std::runtime_error("object is nullptr");
     }
@@ -1078,10 +1084,10 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
 
 void JZNodeEngine::checkFunctionOut(const JZFunction *func)
 {
-    auto &outList = func->paramOut;
+    auto &outList = func->define.paramOut;
     for (int i = 0; i < outList.size(); i++)
     {        
-        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(getReg(Reg_CallOut + i)),outList[i].dataType));
+        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(getReg(Reg_CallOut + i)),outList[i].dataType()));
     }
 }
 
@@ -1091,7 +1097,7 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
 
     QVariantList paramIn, paramOut;
     // get input
-    auto &inList = func->paramIn;
+    auto &inList = func->define.paramIn;
     for (int i = 0; i < inList.size(); i++)    
         paramIn.push_back(getReg(Reg_CallIn + i));      
 
@@ -1100,7 +1106,7 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
     func->cfunc->call(paramIn,paramOut);    
 
     // set output
-    auto &outList = func->paramOut;
+    auto &outList = func->define.paramOut;
     for (int i = 0; i < outList.size(); i++)
         setReg(Reg_CallOut + i,paramOut[i]);
 
@@ -1126,10 +1132,10 @@ void JZNodeEngine::unSupportSingleOp(int a, int op)
 
 void JZNodeEngine::unSupportOp(int a, int b, int op)
 {    
-    QString error = QString("不支持的操作,操作符%1,数据类型%2,%3").arg(JZNodeType::opName(op), 
+    QString error = QString("操作符%1,数据类型%2,%3").arg(JZNodeType::opName(op), 
         JZNodeType::typeToName(a), JZNodeType::typeToName(b));
 
-    throw std::runtime_error(qUtf8Printable(error));
+    Q_ASSERT_X(0,"unSupportOp:",qUtf8Printable(error));
 }
 
 QVariant JZNodeEngine::dealExprInt(const QVariant &va, const QVariant &vb, int op)

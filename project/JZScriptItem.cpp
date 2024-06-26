@@ -320,11 +320,13 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         }        
         if(!ok)
         {
-            QStringList inTypes;
+            QStringList inTypes,formTypes;
             for(int i = 0; i < in_type.size(); i++)
                 inTypes << JZNodeType::typeToName(in_type[i]);
+            for(int i = 0; i < from_type.size(); i++)
+                formTypes << JZNodeType::typeToName(from_type[i]);
 
-            error = "数据类型不匹配,需要" + inTypes.join(",");
+            error = "数据类型不匹配,需要" + inTypes.join(",") + ", 输入为" + formTypes.join(",");
             return false;
         }
     }
@@ -445,6 +447,11 @@ QList<JZNodeConnect> JZScriptItem::connectList()
 void JZScriptItem::addLocalVariable(const JZParamDefine &def)
 {
     m_variables[def.name] = def;
+}
+
+void JZScriptItem::addLocalVariable(const QString &name,int dataType,const QString &value)
+{
+    addLocalVariable(JZParamDefine(name,dataType,value));
 }
 
 void JZScriptItem::removeLocalVariable(QString name)

@@ -57,10 +57,10 @@ public:
 	bool TokenEquals(size_t pos, size_t len, const char *str);
 
 	QString         name;
-    QString         code;
-	size_t           codeLength;		
-	int              lineOffset;
-	QList<size_t>    linePositions;
+   QString         code;
+	size_t          codeLength;		
+	int             lineOffset;
+	QList<size_t>   linePositions;
 };
 
 END_AS_NAMESPACE

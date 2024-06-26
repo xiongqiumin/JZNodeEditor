@@ -42,11 +42,14 @@ public:
     void setFilePath(QString path);
     QString filePath();
 
-    QString mainFile();
+    JZScriptFile *mainFile();
+    QString mainFilePath();
+
+    JZScriptItem *mainFunction(); 
     QString mainFunctionPath();
-    JZScriptItem *mainFunction();
     
     JZParamItem *globalDefine();
+    void addGlobalVariable(const QString &name,int dataType,const QString &value = QString());
     const JZParamDefine *globalVariable(QString name);
     QStringList globalVariableList();
 

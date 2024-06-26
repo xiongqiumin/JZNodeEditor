@@ -192,6 +192,7 @@ protected:
 
     QList<asCScriptNode*> m_nodeList;
     asCTokenizer m_tok;
+	QString m_error;
 };
 
 END_AS_NAMESPACE

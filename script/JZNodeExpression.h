@@ -15,6 +15,7 @@ public:
 
     void addInput();
     void removeInput(int index);    
+    int op() const;
 
 protected:
     void addInputButton();    
@@ -169,15 +170,28 @@ public:
     bool setExpr(QString expr,QString &error);
     QString expr();
 
-protected:
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
     virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);        
+    virtual void loadFromStream(QDataStream &s);
+
+protected:
+    struct VarInfo
+    {
+        int type;
+        int stackId;
+    };
+
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    JZNodeIRParam toIr(const QString &name);
+
+    int getIrType(const QString &name);
+    void setIrType(const QString &name,int type);
 
     QString m_expression;
     QStringList m_exprList;
-    QMap<QString,int> m_opMap;
+    QMap<int,VarInfo> m_varMap;
+    QMap<QString,int> m_outType;
+    int m_stackIdx;
+    JZNodeCompiler *m_compiler;
 };
 
 #endif

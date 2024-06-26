@@ -89,21 +89,8 @@ void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSha
     Q_ASSERT(!m_funcMap.contains(define.fullName()) && define.isCFunction);
 
     JZFunction impl;
-    impl.name = define.name;
-    impl.className = define.className;
-    impl.flow = define.isFlowFunction;
-    impl.cfunc = func;
-
-    for (int i = 0; i < define.paramIn.size(); i++)
-    {
-        auto &p = define.paramIn[i];
-        impl.paramIn << JZParam(p.name, p.dataType());
-    }
-    for (int i = 0; i < define.paramOut.size(); i++)
-    {
-        auto &p = define.paramOut[i];
-        impl.paramOut << JZParam(p.name, p.dataType());
-    }    
+    impl.define = define;
+    impl.cfunc = func; 
     m_funcMap[define.fullName()].funcDefine = define;
     m_funcMap[define.fullName()].funcImpl = impl;
 }
@@ -159,7 +146,7 @@ void JZNodeFunctionManager::replaceFunction(const JZFunctionDefine &define)
 
 void JZNodeFunctionManager::registFunctionImpl(JZFunction &impl)
 {    
-    m_funcMap[impl.fullName()].funcDefine = impl.define();
+    m_funcMap[impl.fullName()].funcDefine = impl.define;
     m_funcMap[impl.fullName()].funcImpl = impl;
 }
 

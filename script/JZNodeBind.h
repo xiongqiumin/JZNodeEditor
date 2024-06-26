@@ -103,15 +103,16 @@ void *createClassAssert();
 void destoryClassAssert(void *);
 void copyClassAssert(void *,void *);
 
+// from QVariant
 template<class T>
-T getValueEnum(const QVariant &v, std::true_type)
+T fromVariantEnum(const QVariant &v, std::true_type)
 {
     Q_ASSERT(v.type() == QVariant::Int);
     return (T)v.toInt();
 }
 
 template<class T>
-T getValueEnum(const QVariant &v, std::false_type)
+T fromVariantEnum(const QVariant &v, std::false_type)
 {
     if(v.type() == QVariant::UserType)
     {
@@ -126,7 +127,7 @@ T getValueEnum(const QVariant &v, std::false_type)
 }
 
 template<class T>
-T getValue(const QVariant &v, std::true_type)
+T fromVariant(const QVariant &v, std::true_type)
 {
     JZNodeObject *obj = toJZObject(v);
     if (obj)
@@ -136,23 +137,90 @@ T getValue(const QVariant &v, std::true_type)
 }
 
 template<class T>
-T getValue(const QVariant &v, std::false_type)
+T fromVariant(const QVariant &v, std::false_type)
 {
-    return getValueEnum<T>(v, is_enum_or_qenum<T>());
+    return fromVariantEnum<T>(v, is_enum_or_qenum<T>());
+}
+
+template<>
+QString fromVariant<QString>(const QVariant &v, std::false_type);
+
+//为了调用QString 成员函数，比如 QString.size();
+template<>
+QString* fromVariant<QString*>(const QVariant &v, std::true_type);
+
+template<class T>
+remove_cvr_t<T> fromVariant(const QVariant &v)
+{
+    static_assert(!std::is_same<QVariant, remove_cvr_t<T>>::value, "use JZNodeVariantAny");
+    return fromVariant<remove_cvr_t<T>>(v, std::is_pointer<T>());
+}
+
+//to QVariant
+template<class T>
+QVariant toVariantEnum(T value, std::true_type)
+{
+    return (int)value;
 }
 
 template<class T>
-remove_cvr_t<T> getValue(QVariant v)
+QVariant toVariantEnum(T value, std::false_type)
 {
-    static_assert(!std::is_same<QVariant, remove_cvr_t<T>>::value, "use JZNodeVariantAny");
-    return getValue<remove_cvr_t<T>>(v, std::is_pointer<T>());
+    return value;
+}
+
+template<class T>
+QVariant toVariantClass(T value, std::true_type)
+{
+    JZNodeObjectPtr obj = JZObjectCreate<T>();
+    *((T*)obj->cobj()) = value;
+    return QVariant::fromValue(obj);
+}
+
+template<class T>
+QVariant toVariantClass(T value, std::false_type)
+{
+    return toVariantEnum(value, is_enum_or_qenum<T>());
+}
+
+template<class T>
+QVariant toVariantPointer(T value, std::true_type)
+{
+    static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
+    JZNodeObjectPtr obj = JZObjectRefrence<T>(value, false);
+    return QVariant::fromValue(obj);
+}
+
+template<class T>
+QVariant toVariantPointer(T value, std::false_type)
+{
+    return toVariantClass(value,std::is_class<T>());
+}
+
+template<class T>
+QVariant toVariant(T value)
+{
+    static_assert(!std::is_same<QVariant, T>::value, "use JZNodeVariantAny");
+    return toVariantPointer<remove_cvr_t<T>>(value,std::is_pointer<T>());
 }
 
 template<>
-QString getValue<QString>(const QVariant &v, std::false_type);
+QVariant toVariant(JZNodeVariantAny value);
 
 template<>
-QString* getValue<QString*>(const QVariant &v, std::true_type);
+QVariant toVariant(QString value);
+
+template <class type>
+void toVariantList(QVariantList &list)
+{
+}
+
+template <class type,typename T,typename... Args>
+void toVariantList(QVariantList &list,T t,Args... args)
+{
+    list.push_back(toVariant(t));
+    toVariantList<type,Args...>(list,args...);
+}
 
 //这里加一个空模板函数是为了编译可以通过，否则编译期间调用printAmt<int>(int&)就会找不到可匹配的函数
 //模板参数第一个类型实际上是用不到的，但是这里必须要加上，否则就是调用printAmt<>(int&)，模板实参为空，但是模板形参列表是不能为空的
@@ -170,60 +238,6 @@ void getFunctionParam(QStringList &list)
     getFunctionParam<type,Args...>(list);
 }
 
-template<class T>
-QVariant getReturnEnum(T value, std::true_type)
-{
-    return (int)value;
-}
-
-template<class T>
-QVariant getReturnEnum(T value, std::false_type)
-{
-    return value;
-}
-
-template<class T>
-QVariant getReturnClass(T value, std::true_type)
-{
-    JZNodeObjectPtr obj = JZObjectCreate<T>();
-    *((T*)obj->cobj()) = value;
-    return QVariant::fromValue(obj);
-}
-
-template<class T>
-QVariant getReturnClass(T value, std::false_type)
-{
-    return getReturnEnum(value, is_enum_or_qenum<T>());
-}
-
-template<class T>
-QVariant getReturnPointer(T value,bool isRef,std::true_type)
-{
-    static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    JZNodeObjectPtr obj = JZObjectRefrence<T>(value, !isRef);
-    return QVariant::fromValue(obj);
-}
-
-template<class T>
-QVariant getReturnPointer(T value, bool, std::false_type)
-{
-    return getReturnClass(value,std::is_class<T>());
-}
-
-// isRef 表示是否引用, false时, 才会自动管理
-template<class T>
-QVariant getReturn(T value,bool isRef)
-{
-    static_assert(!std::is_same<QVariant, T>::value, "use JZNodeVariantAny");
-    return getReturnPointer<remove_cvr_t<T>>(value,isRef,std::is_pointer<T>());
-}
-
-template<>
-QVariant getReturn(JZNodeVariantAny value, bool);
-
-template<>
-QVariant getReturn(QString value, bool);
-
 template<typename Func,typename Return, typename... Args>
 class CFunctionImpl : public CFunction
 {    
@@ -234,6 +248,7 @@ public:
         result = typeid(std::remove_pointer_t<Return>).name();
         getFunctionParam<int, Args...>(args);
         isRef = false;
+        isPointer = false;
     }
 
     virtual ~CFunctionImpl()
@@ -254,13 +269,20 @@ public:
     void dealCall(const QVariantList &in,QVariantList &out,std::false_type)
     {
         Return ret = callFunction(in,make_index_sequence<sizeof...(Args)>());
-        out.push_back(getReturn(ret,isRef));
+        auto v = toVariant(ret);
+        if(isPointer && !isRef)
+        {
+            auto obj = toJZObject(v);
+            obj->setCOwner(true);
+        }
+        out.push_back(v);
     }    
 
     template<typename U = Return>
     typename std::enable_if<std::is_pointer<U>::value,void>::type setRefrence(bool flag)
     {
         isRef = flag;
+        isPointer = true;
     }
 
     template<typename U = Return>
@@ -271,11 +293,12 @@ public:
     template <size_t... idx>
     Return callFunction(const QVariantList &list,index_sequence<idx...>)
     {                
-        return func((getValue<Args>(list[idx]))...);
+        return func((fromVariant<Args>(list[idx]))...);
     }
 
     Func func;
-    bool isRef;
+    bool isRef; //isRef 表示是否引用, false时, 才会自动管理
+    bool isPointer;
 };
 
 template <typename Func,typename Return, typename... Args>
@@ -353,12 +376,72 @@ void createSlotParams(QVariantList &)
 template <class type,typename T,typename... Args>
 void createSlotParams(QVariantList &params,const T &v,Args... args)
 {
-    params.push_back(getReturn(v,true));
+    params.push_back(toVariant(v));
     createSlotParams<type,Args...>(params,args...);
 }
 
 template<typename Class, typename... Args>
 class CSingleImpl : public CSingle
+{
+public:    
+    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
+    {
+        auto func_ptr = [recv,slot](Args... args){
+           QVariantList params;           
+           createSlotParams<int,Args...>(params,args...);
+           recv->onSig(slot,params);
+        };
+
+        Class *cobj = (Class*)obj->cobj();
+        auto conn = cobj->connect(cobj,single,recv,func_ptr);
+        cobj->disconnect(conn);
+
+        ConnectInfo info;
+        info.send = obj;
+        info.recv = recv;
+        info.slot = slot;
+        info.conn = conn;
+        m_connects.push_back(info);
+    }
+
+    virtual void disconnect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
+    {
+        int index = getConnectIndex(obj,recv,slot);
+        if(index == -1)
+            return;
+
+        Class *cobj = (Class*)obj->cobj();
+        cobj->disconnect(m_connects[index].conn);
+        m_connects.removeAt(index);
+    }
+
+    void (Class::*single)(Args...); 
+
+protected:
+    struct ConnectInfo
+    {
+        JZNodeObject *send;
+        JZNodeObject *recv;
+        QString slot;
+        QMetaObject::Connection conn;
+    };
+
+    int getConnectIndex(JZNodeObject *obj,JZNodeObject *recv,QString slot)
+    {
+        for(int i = 0; i < m_connects.size(); i++)
+        {
+            auto &info = m_connects[i];
+            if(obj == info.send && recv == info.recv && slot == info.slot)
+                return i;
+        }
+        return -1;
+    }
+
+    QList<ConnectInfo> m_connects;
+};
+
+template<typename Class,typename PrivateSingle,typename... Args>
+class CPrivateSingleImpl : public CSingle
 {
 public:    
     virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
@@ -370,49 +453,13 @@ public:
         };
 
         Class *cobj = (Class*)obj->cobj();
-        cobj->connect(cobj,single,recv,func);        
+        cobj->connect(cobj,single,recv,func);  
     }
 
     virtual void disconnect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
     {
         Class *cobj = (Class*)obj->cobj();
         cobj->disconnect(cobj, single, recv, nullptr);
-    }
-
-    void (Class::*single)(Args...);
-
-protected:
-    struct ConnectInfo
-    {
-        JZNodeObject *recv;
-        QString slot;
-        std::function<void(Args...)> func;
-    };
-
-    std::function<void(Args...)> getSlot(JZNodeObject *recv,QString slot)
-    {
-        for(int i = 0; i < connects.size(); i++)
-        {
-            if(connects[i].recv == recv && connects[i].slot == slot)
-                return connects[i].func;
-        }
-
-        return std::function<void(Args...)>();
-    }
-    
-    QList<ConnectInfo> connects;    
-};
-
-template<typename Class,typename PrivateSingle,typename... Args>
-class CPrivateSingleImpl : public CSingle
-{
-public:    
-    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
-    {
-    }
-
-    virtual void disconnect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
-    {
     }
 
     void (Class::*single)(PrivateSingle, Args...);
@@ -439,20 +486,27 @@ int registEnum(QString name,int id = -1)
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
+#define JZBIND_OVERRIDE_IMPL(ret_type, func, ...)            \
+    auto jzobj = toJZObject(this->property("JZObject"));     \
+    Q_ASSERT(!jzobj || !jzobj->function(#func));             \
+                                                             \
+    auto func_def = jzobj->function(#func);                  \
+    QVariantList input,output;                               \
+    input.push_back(QVariant::fromValue(jzobj));             \
+    toVariantList<int>(input,__VA_ARGS__);                   \
+    JZScriptInvoke(func_def->fullName(),input,output);       \
+    return getReturn<ret_type>(output); 
+/*
 //class regist
-#define DEFINE_EVENT(type,func,qevent)                     \
-    void func(qevent *e){                                  \
-        auto jzobj = toJZObject(this->property("JZObject"));    \
-        if (!jzobj || !jzobj->function(#func))             \
-        {                                                  \
-            Class::func(e);                                \
-            return;                                        \
-        }                                                  \
-                                                           \
-        auto func_def = jzobj->function(#func);            \
-        QVariantList input,output;                         \
-        input.push_back(QVariant::fromValue(jzobj));       \
-        input.push_back(getReturn(e, true));               \
+#define DEFINE_EVENT(func,qevent)                            \
+    void func(qevent *e){                                    \
+        auto jzobj = toJZObject(this->property("JZObject")); \
+        Q_ASSERT(!jzobj || !jzobj->function(#func));         \
+                                                             \
+        auto func_def = jzobj->function(#func);              \
+        QVariantList input,output;                           \
+        input.push_back(QVariant::fromValue(jzobj));         \
+        input.push_back(getReturn(e, true));                 \
         JZScriptInvoke(func_def->fullName(),input,output);         \
     }                                                              \
                                                                    \
@@ -466,6 +520,7 @@ int registEnum(QString name,int id = -1)
         auto ptr = (WidgetWrapper<Class>*)widget;                  \
         ptr->call_##func(event);                                   \
     }                                                              
+*/
 
 template<class Class>
 class WidgetWrapper : public Class
@@ -473,16 +528,40 @@ class WidgetWrapper : public Class
 public:
     using T = WidgetWrapper<Class>;
 
-    DEFINE_EVENT(Event_paint, paintEvent, QPaintEvent)
-    DEFINE_EVENT(Event_show, showEvent, QShowEvent)
-    DEFINE_EVENT(Event_resize, resizeEvent, QResizeEvent)
-    DEFINE_EVENT(Event_close, closeEvent, QCloseEvent)
-    DEFINE_EVENT(Event_keyPress, keyPressEvent, QKeyEvent)
-    DEFINE_EVENT(Event_keyRelease, keyReleaseEvent, QKeyEvent)
-    DEFINE_EVENT(Event_mousePress, mousePressEvent, QMouseEvent)
-    DEFINE_EVENT(Event_mouseMove, mouseMoveEvent, QMouseEvent)
-    DEFINE_EVENT(Event_mouseRelease, mouseReleaseEvent, QMouseEvent)
+    template<typename Return,typename FuncClass, typename... Args>
+	static bool isNewFunction(Return (FuncClass::*func)(Args...))
+	{
+		return std::is_same<Class,FuncClass>::value;
+	}
+
+    static bool isNewPaintEvent() { return isNewFunction(&WidgetWrapper::paintEvent); }
+    static decltype(WidgetWrapper::paintEvent) getPaintEvent() { return &WidgetWrapper::paintEvent; }
+
+    static bool isNewShowEvent() { return isNewFunction(&WidgetWrapper::showEvent); }
+    static decltype(WidgetWrapper::showEvent) getShowEvent() { return &WidgetWrapper::showEvent; }
+    
+    static bool isNewResizeEvent() { return isNewFunction(&WidgetWrapper::resizeEvent); }
+    static decltype(WidgetWrapper::resizeEvent) getResizeEvent() { return &WidgetWrapper::resizeEvent; }
+    
+    static bool isNewCloseEvent() { return isNewFunction(&WidgetWrapper::closeEvent); }
+    static decltype(WidgetWrapper::closeEvent) getCloseEvent() { return &WidgetWrapper::closeEvent; }
+    
+    static bool isNewKeyPressEvent() { return isNewFunction(&WidgetWrapper::keyPressEvent); }
+    static decltype(WidgetWrapper::keyPressEvent) getKeyPressEvent() { return &WidgetWrapper::keyPressEvent; }
+    
+    static bool isNewKeyReleaseEvent() { return isNewFunction(&WidgetWrapper::keyReleaseEvent); }
+    static decltype(WidgetWrapper::keyReleaseEvent) getKeyReleaseEvent() { return &WidgetWrapper::keyReleaseEvent; }
+    
+    static bool isNewMousePressEvent() { return isNewFunction(&WidgetWrapper::mousePressEvent); }
+    static decltype(WidgetWrapper::mousePressEvent) getMousePressEvent() { return &WidgetWrapper::mousePressEvent; }
+    
+    static bool isNewMouseMoveEvent() { return isNewFunction(&WidgetWrapper::mouseMoveEvent); }
+    static decltype(WidgetWrapper::mouseMoveEvent) getMouseMoveEvent() { return &WidgetWrapper::mouseMoveEvent; }
+
+    static bool isNewMouseReleaseEvent() { return isNewFunction(&WidgetWrapper::mouseReleaseEvent); }
+    static decltype(WidgetWrapper::mouseReleaseEvent) getMouseReleaseEvent() { return &WidgetWrapper::mouseReleaseEvent; }
 };
+
 
 template<class T>
 int ClassDelcare(QString name,int id)
@@ -616,30 +695,26 @@ public:
 
 protected:
     template<class Function>
-    void defEvent(QString name,int type, Function f)
+    void defEvent(QString name, Function f)
     {
-        def(name, true, f);
-
-        EventDefine event;
-        event.name = name;
-        event.eventType = type;
-        m_define.events.push_back(event);
+        auto func = def(name, true, f);
+        func->isVirtualFunction = true;
+        func->isProtected = true;
     }
 
     void defWidgetEvent(std::true_type)
     {
-        using T = WidgetWrapper<Class>;        
-        m_define.cMeta.create = &createClass<T>;
+        using W = WidgetWrapper<Class>;
 
-        defEvent("paintEvent", Event_paint, &T::call_paintEvent_help);
-        defEvent("showEvent",  Event_show, &T::call_showEvent_help);
-        defEvent("resizeEvent", Event_resize, &T::call_resizeEvent_help);
-        defEvent("closeEvent", Event_close, &T::call_closeEvent_help);
-        defEvent("keyPressEvent", Event_keyPress, &T::call_keyPressEvent_help);
-        defEvent("keyReleaseEvent", Event_keyRelease, &T::call_keyReleaseEvent_help);
-        defEvent("mousePressEvent", Event_mousePress, &T::call_mousePressEvent_help);
-        defEvent("mouseMoveEvent", Event_mouseMove, &T::call_mouseMoveEvent_help);
-        defEvent("mouseReleaseEvent", Event_mouseRelease, &T::call_mouseReleaseEvent_help);
+        if(W::isNewPaintEvent()) defEvent("paintEvent", W::getPaintEvent());
+        if(W::isNewShowEvent()) defEvent("showEvent", W::getShowEvent());
+        if(W::isNewResizeEvent()) defEvent("resizeEvent", W::getResizeEvent());
+        if(W::isNewCloseEvent()) defEvent("closeEvent", W::getCloseEvent());
+        if(W::isNewKeyPressEvent()) defEvent("keyPressEvent", W::getKeyPressEvent());
+        if(W::isNewKeyReleaseEvent()) defEvent("keyReleaseEvent", W::getKeyReleaseEvent());
+        if(W::isNewMousePressEvent()) defEvent("mousePressEvent", W::getMousePressEvent());
+        if(W::isNewMouseMoveEvent()) defEvent("mouseMoveEvent", W::getMouseMoveEvent());
+        if(W::isNewMouseReleaseEvent()) defEvent("mouseReleaseEvent", W::getMouseReleaseEvent());
     }
 
     void defWidgetEvent(std::false_type)

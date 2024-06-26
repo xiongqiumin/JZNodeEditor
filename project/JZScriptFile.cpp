@@ -228,6 +228,17 @@ JZParamItem *JZScriptFile::paramDefine(QString name)
     return nullptr;
 }
 
+QStringList JZScriptFile::functionList() const
+{
+    QStringList functions;
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        if (m_childs[i]->itemType() == ProjectItem_scriptFunction)
+            functions << m_childs[i]->name();
+    }
+    return functions;
+}
+
 JZScriptItem *JZScriptFile::addFunction(const JZFunctionDefine &define)
 {    
     JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    

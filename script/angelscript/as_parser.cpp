@@ -555,7 +555,7 @@ bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
 	// End with '>'
 	// Accept >> and >>> tokens too. But then force the tokenizer to move
 	// only 1 character ahead (thus splitting the token in two).
-	if (script->code[t.pos] != '>')
+	if (script->code[(int)t.pos] != '>')
 	{
 		if (required)
 		{
@@ -980,7 +980,7 @@ void asCParser::Error(const QString &text, sToken *token)
 	int row, col;
 	script->ConvertPosToRowCol(token->pos, &row, &col);
 
-    printf("Error %d,%d %s\n", row, col, qUtf8Printable(text));
+    m_error += QString().asprintf("Error :%d,%d %s\n", row, col, qUtf8Printable(text));
 }
 
 void asCParser::Warning(const QString &text, sToken *token)
@@ -3263,7 +3263,13 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 					accessorNode->AddChildLast(SuperficiallyParseStatementBlock());
 					if( isSyntaxError ) return node;
 				}
-				else if( t1.type != ttEndStatement )
+				else if (t1.type == ttEndStatement)
+				{
+					RewindTo(&t1);
+					accessorNode->AddChildLast(ParseToken(ttEndStatement));
+					if (isSyntaxError) return node;
+				}
+				else
 				{
 					Error(ExpectedTokens(";", "{"), &t1);
 					Error(InsteadFound(t1), &t1);
@@ -3273,7 +3279,13 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 			else
 			{
 				GetToken(&t1);
-				if( t1.type != ttEndStatement )
+				if (t1.type == ttEndStatement)
+				{
+					RewindTo(&t1);
+					accessorNode->AddChildLast(ParseToken(ttEndStatement));
+					if (isSyntaxError) return node;
+				}
+				else
 				{
 					Error(ExpectedToken(";"), &t1);
 					Error(InsteadFound(t1), &t1);
@@ -3670,6 +3682,8 @@ asCScriptNode *asCParser::SuperficiallyParseVarInit()
 
 asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 {
+	return ParseStatementBlock();
+
 	asCScriptNode *node = CreateNode(snStatementBlock);
 	if( node == 0 ) return 0;
 

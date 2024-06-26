@@ -32,39 +32,39 @@ void JZNodeLiteral::setDataType(int type)
         pin(out)->setFlag(Pin_out | Pin_param | Pin_dispName);
     
     if (type == Type_bool)
-        setLiteral(false);
+        setLiteral("false");
     else if (type == Type_int)
-        setLiteral(0);
+        setLiteral("0");
     else if (type == Type_double)
-        setLiteral(0.0);
+        setLiteral("0.0");
     else if (type == Type_string)
         setLiteral("");    
     else if (type == Type_nullptr)
     {
         setPinName(out, "null");
-        setLiteral(QVariant::fromValue(JZObjectNull()));
+        setLiteral("null");
     }
 }
 
-QVariant JZNodeLiteral::literal() const
+QString JZNodeLiteral::literal() const
 {
     auto ptr = pin(paramOut(0));
-    QString v = ptr->value();
-    int dataType = ptr->dataType()[0];
-    return JZNodeType::initValue(dataType, v);
+    return ptr->value();
 }
 
-void JZNodeLiteral::setLiteral(QVariant value)
+void JZNodeLiteral::setLiteral(const QString &value)
 {
-    QString str = JZNodeType::toString(value);
-    setPinValue(paramOut(0), str);
+    setPinValue(paramOut(0), value);
 }
 
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 {   
     int id = c->paramId(m_id,paramOut(0));
     c->addNodeStart(m_id);
-    c->addSetVariable(irId(id),irLiteral(literal()));
+
+    auto pin = this->pin(paramOut(0));
+    QVariant value = JZNodeType::initValue(pin->dataType()[0],pin->value());
+    c->addSetVariable(irId(id),irLiteral(value));
     return true;
 }
 
@@ -372,9 +372,18 @@ bool JZNodePrint::compiler(JZNodeCompiler *c,QString &error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
-    
+
+    auto in_id = irId(c->paramId(m_id, paramIn(0)));
+    bool need_format = false;
+
+    if(need_format)
+    {
+        QList<JZNodeIRParam> fmt_in, fmt_out;
+        c->addCall("format",fmt_in,fmt_out);
+    }
+
     QList<JZNodeIRParam> in, out;
-    in << irId(c->paramId(m_id, paramIn(0)));
+    in << in_id;
     c->addCall("print", in, out);    
     c->addJumpNode(flowOut());
 
@@ -438,7 +447,7 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
     int out_id = c->paramId(m_id,paramOut(0));
     JZNodeIRParam ref = c->paramRef(name);;
     c->addSetVariable(irId(out_id),ref);
-    c->setPinType(m_id, out_id, def->dataType());
+    c->setPinType(m_id, paramOut(0), def->dataType());
     return true;
 }
 

@@ -24,6 +24,23 @@ bool JZRegExpHelp::isBool(const QString &str)
     return (str == "true" || str == "false");
 }
 
+bool JZRegExpHelp::isWord(const QString &str)
+{
+    if(str.size() == 0)
+        return false;
+
+    QChar first = str[0];
+    if(first >= '0' && first <= '9')
+        return false;
+
+    for(int i = 0; i < str.size(); i++)
+    {
+        QChar c = str[i];
+    }
+
+    return true;
+}
+
 bool JZRegExpHelp::isString(const QString &text)
 {
     return (text.size() >= 2 && text.front() == '"' && text.back() == '"');

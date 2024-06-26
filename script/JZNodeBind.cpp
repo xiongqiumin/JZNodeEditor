@@ -20,28 +20,28 @@ void copyClassAssert(void *,void *)
 }
 
 template<>
-QString* getValue<QString*>(const QVariant &v, std::true_type)
+QString* fromVariant<QString*>(const QVariant &v, std::true_type)
 {
     if (v.type() != QVariant::String)
         return nullptr;
-
     return (QString*)v.data();
 }
 
 template<>
-QString getValue<QString>(const QVariant &v, std::false_type)
+QString fromVariant<QString>(const QVariant &v, std::false_type)
 {
+    Q_ASSERT(v.type() == QVariant::String);
     return v.toString();
 }
 
 template<>
-QVariant getReturn(JZNodeVariantAny value,bool)
+QVariant toVariant(JZNodeVariantAny value)
 {
     return QVariant::fromValue(value);
 }
 
 template<>
-QVariant getReturn(QString value,bool)
+QVariant toVariant(QString value)
 {
     return value;
 }

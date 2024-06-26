@@ -285,9 +285,9 @@ QString JZNodeGenerateCpp::irToCpp(JZNodeIR *op)
             bool is_func_input = false;
             if(ir_alloc->allocType == JZNodeIRAlloc::Stack)
             {
-                for(int i = 0; i < m_function->paramIn.size(); i++)
+                for(int i = 0; i < m_function->define.paramIn.size(); i++)
                 {
-                    if(m_function->paramIn[i].name == ir_alloc->name)
+                    if(m_function->define.paramIn[i].name == ir_alloc->name)
                     {
                         is_func_input = true;
                         break;
@@ -447,21 +447,21 @@ QString JZNodeGenerateCpp::irToCpp(JZNodeIR *op)
 bool JZNodeGenerateCpp::toCppFunction(JZFunction *func,CppFunction *cfunc)
 {
     m_function = func;
-    cfunc->name = func->name;
-    cfunc->className = func->className;
+    cfunc->name = func->name();
+    cfunc->className = func->className();
     m_tab = 1;
     
-    for(int i = 0; i < func->paramIn.size(); i++)
+    for(int i = 0; i < func->define.paramIn.size(); i++)
     {   
         CppParam param;
-        param.name = func->paramIn[i].name;
-        param.type = JZNodeType::typeToName(func->paramIn[i].dataType);
+        param.name = func->define.paramIn[i].name;
+        param.type = JZNodeType::typeToName(func->define.paramIn[i].dataType());
         cfunc->params.push_back(param);
     }
 
-    auto &paramOut = func->paramOut;
+    auto &paramOut = func->define.paramOut;
     if(paramOut.size() == 1)
-        cfunc->returnType = JZNodeType::typeToName(paramOut[0].dataType);
+        cfunc->returnType = JZNodeType::typeToName(paramOut[0].dataType());
     else
         cfunc->returnType = "void";
 
@@ -568,9 +568,9 @@ void JZNodeGenerateCpp::generate(JZProject *project,QString output)
             auto func = &funcs[func_idx];
             CppFunction *cpp_func = nullptr;
             if(cpp_class)
-                cpp_func = cpp_class->getFunction(func->name);
+                cpp_func = cpp_class->getFunction(func->name());
             else
-                cpp_func = cpp_file->getFunction(func->name);
+                cpp_func = cpp_file->getFunction(func->name());
             
             toCppFunction(func,cpp_func);
         }

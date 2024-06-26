@@ -8,6 +8,7 @@
 
 static QMap<QString,int> typeMap;
 static QMap<int64_t,ConvertFunc> convertMap;
+static QMap<int, QString> opNameMap;
 
 //JZEnum
 JZEnum::JZEnum()
@@ -55,14 +56,32 @@ int JZNodeVariantAny::type()
 //JZNodeType
 void JZNodeType::init()
 {
-     typeMap["any"]    = Type_any;
-     typeMap["bool"]   = Type_bool;
-     typeMap["int"]    = Type_int;
-     typeMap["int64"]  = Type_int64;
-     typeMap["double"] = Type_double;
-     typeMap["string"] = Type_string;
-     typeMap["null"] = Type_nullptr;
-     typeMap["function"] = Type_function;     
+    typeMap["any"]    = Type_any;
+    typeMap["bool"]   = Type_bool;
+    typeMap["int"]    = Type_int;
+    typeMap["int64"]  = Type_int64;
+    typeMap["double"] = Type_double;
+    typeMap["string"] = Type_string;
+    typeMap["null"] = Type_nullptr;
+    typeMap["function"] = Type_function;     
+
+    opNameMap[OP_add] = "+";
+    opNameMap[OP_sub] = "-";
+    opNameMap[OP_mul] = "*";
+    opNameMap[OP_div] = "/";
+    opNameMap[OP_mod] = "%";
+    opNameMap[OP_eq] = "==";
+    opNameMap[OP_ne] = "!=";
+    opNameMap[OP_le] = "<=";
+    opNameMap[OP_ge] = ">=";
+    opNameMap[OP_lt] = "<";
+    opNameMap[OP_gt] = ">";
+    opNameMap[OP_and] = "and";
+    opNameMap[OP_or] = "or";
+    opNameMap[OP_not] = "not";
+    opNameMap[OP_bitor] = "|";
+    opNameMap[OP_bitand] = "&";
+    opNameMap[OP_bitxor] = "~";
 }
 
 int64_t makeConvertId(int from, int to)
@@ -208,25 +227,35 @@ int JZNodeType::isInherits(int type1,int type2)
     return JZNodeObjectManager::instance()->isInherits(type1,type2);
 }
 
-int JZNodeType::calcExprType(int type1,int type2)
-{           
-    if (isEnum(type1) || isBool(type1))
-        type1 = Type_int;
-    if (isEnum(type2) || isBool(type2))
-        type2 = Type_int;
-    if (type1 == type2)
-        return type1;
-
-    if(type1 > type2)
-        qSwap(type1,type2);    
-    if (type1 == Type_any || type2 == Type_any)
-        return Type_double;
-    if(type1 == Type_int && type2 == Type_int64)
-        return Type_int64;
-    if((type1 == Type_int || type1 == Type_int64) && type2 == Type_double)    
-        return Type_double;
-            
-    return Type_none;
+int JZNodeType::calcExprType(int type1,int type2,int op)
+{   
+    switch (op)
+    {
+        case OP_add:
+        case OP_sub:
+        case OP_mul:
+        case OP_div:
+        case OP_mod:
+        {
+            return upType(type1,type2);
+        }
+        case OP_eq:
+        case OP_ne:
+        case OP_le:
+        case OP_ge:
+        case OP_lt:
+        case OP_gt:
+        case OP_and:
+        case OP_or:
+            return Type_bool;
+        case OP_bitand:
+        case OP_bitor:
+        case OP_bitxor:
+            return Type_int;
+        default:
+            Q_ASSERT(0);
+            return Type_none;
+    }    
 }
 
 bool JZNodeType::canConvert(int type1,int type2)
@@ -308,30 +337,65 @@ QString JZNodeType::toString(const QVariant &v)
 }
 
 QString JZNodeType::opName(int op)
+{   
+    Q_ASSERT(opNameMap.contains(op));
+    return opNameMap[op];
+}
+
+int JZNodeType::opType(const QString &name)
 {
-    QMap<int, QString> opNames;
-    opNames[OP_add] = "+";
-    opNames[OP_sub] = "-";
-    opNames[OP_mul] = "*";
-    opNames[OP_div] = "/";
-    opNames[OP_mod] = "%";
-    opNames[OP_eq] = "==";
-    opNames[OP_ne] = "!=";
-    opNames[OP_le] = "<=";
-    opNames[OP_ge] = ">=";
-    opNames[OP_lt] = "<";
-    opNames[OP_gt] = ">";
-    opNames[OP_and] = "and";
-    opNames[OP_or] = "or";
-    opNames[OP_not] = "not";
-    opNames[OP_bitor] = "|";
-    opNames[OP_bitand] = "&";
-    opNames[OP_bitxor] = "~";
-    
-    if (opNames.contains(op))
-        return opNames[op];
-    else
-        return QString();    
+    int ret = opNameMap.key(name,OP_none);
+    Q_ASSERT(ret != OP_none);
+    return ret;
+}
+
+int JZNodeType::opPri(const QString &op)
+{
+    if( op == "(")
+        return 100;
+
+    if( op == "*" || op == "/" || op == "%" )
+		return -1;
+
+	if( op == "+" || op == "-" )
+		return -2;
+
+	if( op == "<<" ||
+		op == ">>" )
+		return -3;
+
+	if( op == "&" )
+		return -4;
+
+	if( op == "^" )
+		return -5;
+
+	if( op == "|" )
+		return -6;
+
+	if( op == "<=" ||
+		op == "<" ||
+		op == ">=" ||
+		op == ">" )
+		return -7;
+
+	if( op == "==" || op == "!=")
+		return -8;
+
+	if( op == "&&" )
+		return -9;
+
+	if( op == "||" )
+		return -10;
+
+    qDebug() << op;
+    Q_ASSERT(0);
+    return -100;
+}
+
+bool JZNodeType::isDoubleOp(const QString &op)
+{
+    return false;
 }
 
 QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
@@ -344,7 +408,7 @@ QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
     {
         JZNodeVariantAny any;
         any.value = v;
-        return QVariant::fromValue(v);
+        return QVariant::fromValue(any);
     }   
     else if(src_type == Type_any)
     {
@@ -527,34 +591,8 @@ int JZNodeType::matchType(QList<int> dst_types, const QString &text)
     if (text.isEmpty())
         return upType(dst_types);
 
-    JZRegExpHelp help;
-    bool isInt = help.isInt(text);
-    bool isHex = help.isHex(text);
-    bool isFloat = help.isFloat(text);
-    if (dst_types.contains(Type_int) && (isInt || isHex))
-        return Type_int;    
-    if (dst_types.contains(Type_double) && (isInt || isHex || isFloat))    
-        return Type_double;    
-    if (dst_types.contains(Type_bool) && help.isBool(text))
-        return Type_bool;
-    if (dst_types.contains(Type_string) && text.front() == '"' && text.back() == '"')
-        return Type_string;
-    if (dst_types.contains(Type_any))    
-        return Type_any;
-
-    for (int i = 0; i < dst_types.size(); i++)
-    {
-        if (isEnum(dst_types[i]))
-        {
-            auto meta = JZNodeObjectManager::instance()->enumMeta(dst_types[i]);
-            if (meta->hasKey(text))
-                return dst_types[i];
-        }
-        if (isObject(dst_types[i]) && text == "null")
-            return dst_types[i];
-    }   
-
-    return Type_none;
+    int str_type = stringType(text);
+    return matchType(dst_types,QList<int>{str_type});
 }
 
 QVariant JZNodeType::initValue(int type, const QString &text)
@@ -661,7 +699,7 @@ int JZNodeType::stringType(const QString &text)
     bool isInt = JZRegExpHelp::isInt(text);
     bool isHex = JZRegExpHelp::isHex(text);
     bool isFloat = JZRegExpHelp::isFloat(text);
-    if (isHex || isHex)
+    if (isInt || isHex)
         return Type_int;
     else if(isFloat)
     {
@@ -748,12 +786,22 @@ bool JZNodeType::sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefi
 
 bool JZNodeType::functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2)
 {
-    if(func1->paramIn.size() != func2->paramIn.size())
+    if(func1->paramIn.size() != func2->paramIn.size() 
+        || func1->paramOut.size() != func2->paramOut.size())
+        return false;
+    if(func1->isVirtualFunction != func2->isVirtualFunction)
+        return false;
+    if(func1->isFlowFunction != func2->isFlowFunction)
         return false;
 
     for(int i = 0; i < func1->paramIn.size(); i++)
     {
         if(func1->paramIn[i].type != func2->paramIn[i].type)
+            return false;
+    }
+    for(int i = 0; i < func1->paramOut.size(); i++)
+    {
+        if(func1->paramOut[i].type != func2->paramOut[i].type)
             return false;
     }
     return true;

@@ -33,23 +33,6 @@ enum
     Type_userObject = 10000,    // 用户注册起始
 };
 
-enum
-{
-    Event_none,
-    Event_paint,
-    Event_show,
-    Event_resize,
-    Event_close,
-    Event_keyPress,
-    Event_keyRelease,
-    Event_mousePress,
-    Event_mouseMove,
-    Event_mouseRelease,
-    Event_timeout,
-
-    Event_user = 65535,
-};
-
 typedef QVariant (*ConvertFunc)(const QVariant& v);
 typedef QSharedPointer<QVariant> QVariantPtr;
 
@@ -97,6 +80,10 @@ public:
     static void init();
 
     static QString opName(int op);
+    static int opType(const QString &name);
+    static int opPri(const QString &op);
+    static bool isDoubleOp(const QString &op);
+
     static QString typeToName(int id);
     static int nameToType(QString name);
     static int variantType(const QVariant &v);
@@ -121,7 +108,7 @@ public:
 
     static int isInherits(QString type1,QString type2);
     static int isInherits(int type1,int type2);
-    static int calcExprType(int type1,int type2);
+    static int calcExprType(int type1,int type2,int op);
         
     static QString toString(const QVariant &v);
     static QString toString(JZNodeObject *obj);

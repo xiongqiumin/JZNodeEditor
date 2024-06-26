@@ -65,13 +65,19 @@ public:
     QString fullName() const;    
     bool isMemberFunction() const;    
     
+    void setDefaultValue(int index, QString text);
+    void setDefaultValue(int from, QStringList values);
+
     void updateParam(CFunction *func);
-    void setDefaultValue(int index, QStringList values);
-            
+        
     QString name;    
     QString className;
     bool isFlowFunction;
+    bool isVirtualFunction;
+    bool isProtected;
     bool isCFunction;
+    bool isSlot;
+    bool isSingle;
     QList<JZParamDefine> paramIn;
     QList<JZParamDefine> paramOut;       
 };
@@ -109,18 +115,6 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZSingleDefine &param);
 QDataStream &operator>>(QDataStream &s, JZSingleDefine &param);
 
-//event
-class EventDefine
-{
-public:
-    EventDefine();
-
-    int eventType;
-    QString name;
-};
-QDataStream &operator<<(QDataStream &s, const EventDefine &param);
-QDataStream &operator>>(QDataStream &s, EventDefine &param);
-
 //JZParam
 class JZParam
 {
@@ -145,22 +139,18 @@ public:
     JZFunction();
     ~JZFunction();
 
-    JZFunctionDefine define() const;
+    QString name() const;
+    QString className() const;
     QString fullName() const;
 
-    bool isCFunction() const;    
+    bool isCFunction() const;
     bool isMemberFunction() const;
     bool isFlowFunction() const;
-    
-    QString path;
-    QString name;
-    QString className;
-    QList<JZParam> paramIn;
-    QList<JZParam> paramOut;    
-    
-    bool flow;
 
+    JZFunctionDefine define;  
+    
     //script
+    QString path;
     int addr;
     int addrEnd;
     QString file;

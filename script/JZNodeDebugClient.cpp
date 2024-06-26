@@ -27,70 +27,67 @@ void JZNodeDebugClient::disconnectFromServer()
     m_client.disconnectFromHost();
 }
 
-JZNodeProgramInfo JZNodeDebugClient::init(const JZNodeDebugInfo &info)
+bool JZNodeDebugClient::init(const JZNodeDebugInfo &info,JZNodeProgramInfo &ret)
 {    
-    JZNodeProgramInfo program_info;
-
     QVariantList params, result;
     params << netDataPack(info);
-    if (sendCommand(Cmd_init, params, result))
-        program_info = netDataUnPack<JZNodeProgramInfo>(result[0].toByteArray());
-    
-    return program_info;
+    if (!sendCommand(Cmd_init, params, result))
+        return false;
+
+    ret = netDataUnPack<JZNodeProgramInfo>(result[0].toByteArray());
+    return true;
 }
 
-JZNodeRuntimeInfo JZNodeDebugClient::runtimeInfo()
-{
-    JZNodeRuntimeInfo info;
-    QVariantList params,result;
-    if(sendCommand(Cmd_runtimeInfo,params,result))
-        info = netDataUnPack<JZNodeRuntimeInfo>(result[0].toByteArray());
-
-    return info;
-}
-
-void JZNodeDebugClient::addBreakPoint(QString file,int nodeId)
+bool JZNodeDebugClient::runtimeInfo(JZNodeRuntimeInfo &ret)
 {
     QVariantList params,result;
-    params << file << nodeId;
-    sendCommand(Cmd_addBreakPoint,params,result);
+    if(!sendCommand(Cmd_runtimeInfo,params,result))
+        return false;
+        
+    ret = netDataUnPack<JZNodeRuntimeInfo>(result[0].toByteArray());
+    return true;
 }
 
-void JZNodeDebugClient::removeBreakPoint(QString file,int nodeId)
+bool JZNodeDebugClient::addBreakPoint(QString file,int nodeId)
 {
     QVariantList params,result;
     params << file << nodeId;
-    sendCommand(Cmd_removeBreakPoint,params,result);
+    return sendCommand(Cmd_addBreakPoint,params,result);
 }
 
-void JZNodeDebugClient::clearBreakPoint()
+bool JZNodeDebugClient::removeBreakPoint(QString file,int nodeId)
 {
     QVariantList params,result;
-    sendCommand(Cmd_clearBreakPoint,params,result);
+    params << file << nodeId;
+    return sendCommand(Cmd_removeBreakPoint,params,result);
 }
 
-JZNodeDebugParamInfo JZNodeDebugClient::getVariable(JZNodeDebugParamInfo info)
+bool JZNodeDebugClient::clearBreakPoint()
 {
-    JZNodeDebugParamInfo ret;
-    
+    QVariantList params,result;
+    return sendCommand(Cmd_clearBreakPoint,params,result);
+}
+
+bool JZNodeDebugClient::getVariable(const JZNodeDebugParamInfo &info,JZNodeDebugParamInfo &ret)
+{
     QVariantList params,result;
     params << netDataPack(info);
-    if (sendCommand(Cmd_getVariable, params, result))
-        ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
+    if (!sendCommand(Cmd_getVariable, params, result))
+        return false;
 
-    return ret;
+    ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
+    return true;
 }
 
-JZNodeDebugParamInfo JZNodeDebugClient::setVariable(JZNodeSetDebugParamInfo info)
+bool JZNodeDebugClient::setVariable(const JZNodeSetDebugParamInfo &info,JZNodeDebugParamInfo &ret)
 {
-    JZNodeDebugParamInfo ret;
-
     QVariantList params,result;
     params << netDataPack(info);
-    if (sendCommand(Cmd_setVariable,params,result))
-        ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
+    if (!sendCommand(Cmd_setVariable,params,result))
+        return false;
 
-    return ret;
+    ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
+    return true;
 }
 
 void JZNodeDebugClient::detach()

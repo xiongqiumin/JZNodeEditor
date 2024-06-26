@@ -56,7 +56,8 @@ public:
     QList<int> getConnectInput(int node_id, int pinId = -1);
     QList<JZNodeConnect> connectList();    
     
-    void addLocalVariable(const JZParamDefine &def);            
+    void addLocalVariable(const JZParamDefine &def);
+    void addLocalVariable(const QString &name,int dataType,const QString &value = QString());            
     void removeLocalVariable(QString name);    
     void setLocalVariable(QString name, const JZParamDefine &def);
     const JZParamDefine *localVariable(QString name);

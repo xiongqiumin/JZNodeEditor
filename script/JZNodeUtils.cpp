@@ -15,8 +15,6 @@ QString makeLink(QString tips, QString filename, int nodeId)
 
 void projectUpdateLayout(JZProject *project)
 {
-    TimerRecord r("projectUpdateLayout");
-
     auto item_list = project->itemList("./", ProjectItem_any);
     for (int i = 0; i < item_list.size(); i++)
     {
@@ -24,14 +22,36 @@ void projectUpdateLayout(JZProject *project)
         if (item_type == ProjectItem_scriptFunction
             || item_type == ProjectItem_scriptParamBinding)
         {
-            JZNodeView *view = new JZNodeView();
-            JZScriptItem *file = (JZScriptItem *)item_list[i];
-            view->setFile(file);
-            view->updateNodeLayout();
-            view->save();
-            delete view;
+            JZScriptItem *item = (JZScriptItem *)item_list[i];
+            jzScriptItemUpdateLayout(item);
         }
     }    
+}
+
+void jzScriptItemUpdateLayout(JZScriptItem *item)
+{
+    JZNodeView *view = new JZNodeView();
+    view->setFile(item);
+    view->updateNodeLayout();
+    view->save();
+    delete view;
+}
+
+void jzScriptItemDump(JZScriptItem *item,QString file)
+{
+    JZNodeView *view = new JZNodeView();
+    view->setFile(item);
+
+    QImage image(800,600,QImage::Format_RGB32);
+    image.fill(Qt::white);
+    view->resize(image.size());
+    view->fitNodeView();
+
+    QPainter pt(&image);
+    view->render(&pt);
+    delete view;
+
+    image.save(file);
 }
 
 TimerRecord::TimerRecord(QString name)

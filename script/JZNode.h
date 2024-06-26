@@ -40,13 +40,13 @@ enum
     Node_ge,  // >=
     Node_lt,  // <
     Node_gt,  // >
-    Node_and,
-    Node_or,
-    Node_not,
     Node_bitand,
     Node_bitor,    
     Node_bitxor,
+    Node_and,
+    Node_or,
     Node_bitresver,
+    Node_not,
     Node_expr,
     Node_for,
     Node_foreach,
@@ -129,6 +129,8 @@ public:
 
     const QString &name() const;
     void setName(const QString &name);
+
+    QString idName() const;
 
     int id() const;
     void setId(int id);

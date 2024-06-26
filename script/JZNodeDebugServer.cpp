@@ -220,7 +220,6 @@ void JZNodeDebugServer::onNodePropChanged(QString file, int id, QString value)
 QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
 {
     QVariant *ref = nullptr;
-    auto env = m_engine->stack()->env(stack);
     if (coor.type == JZNodeParamCoor::Name)
     {
         ref = m_engine->getVariableRef(coor.name, stack);
@@ -228,7 +227,7 @@ QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &co
     else if (coor.type == JZNodeParamCoor::Id)
     {
         if (coor.id < Stack_User)
-            ref = env->getRef(coor.id);
+            ref = m_engine->getVariableRef(coor.id,stack);
         else
             ref = m_engine->getRegRef(coor.id);
     }

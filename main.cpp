@@ -10,7 +10,14 @@
 #include "sample/ImageBatch/ImageBatch.h"
 #include "sample/SmartHome/SmartHome.h"
 
-extern void test_script();
+void run_testcase()
+{
+    extern void test_script();
+    extern void test_anglescript();
+
+    test_script();
+    test_anglescript();
+}   
 
 int main(int argc, char *argv[])
 {
@@ -20,10 +27,10 @@ int main(int argc, char *argv[])
 
     if(0)
     {
-        test_script();
+        run_testcase();
         return 0;
     }    
-    if(1 && argc == 1)
+    if(0 && argc == 1)
     {
         //SampleRussian sample;        
         //SampleImageBatch sample;

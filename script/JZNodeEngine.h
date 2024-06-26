@@ -129,6 +129,7 @@ public:
     void setProgram(JZNodeProgram *program);
     JZNodeProgram *program();        
 
+    int status();
     JZNodeRuntimeInfo runtimeInfo();    
     JZNodeRuntimeError runtimeError();
 

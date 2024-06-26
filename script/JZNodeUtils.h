@@ -6,6 +6,8 @@
 
 QString makeLink(QString tips, QString filename, int nodeId);
 void projectUpdateLayout(JZProject *project);
+void jzScriptItemUpdateLayout(JZScriptItem *item);
+void jzScriptItemDump(JZScriptItem *item,QString file);
 
 class TimerRecord
 {

@@ -24,6 +24,7 @@ HEADERS += \
     $$files(./widgets/*.h) \
     $$files(./project/*.h) \
     $$files(./script/*.h) \
+    $$files(./script/angelscript/*.h) \
     $$files(./editor/*.h) \
     $$files(./editor/script/*.h) \
     $$files(./editor/ui/*.h) \
@@ -37,6 +38,7 @@ SOURCES += \
     $$files(./widgets/*.cpp) \
     $$files(./project/*.cpp) \
     $$files(./script/*.cpp) \
+    $$files(./script/angelscript/*.cpp) \
     $$files(./editor/*.cpp) \
     $$files(./editor/script/*.cpp) \
     $$files(./editor/ui/*.cpp) \

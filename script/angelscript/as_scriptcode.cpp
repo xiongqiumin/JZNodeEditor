@@ -61,7 +61,7 @@ int asCScriptCode::SetCode(const QString &in_name, const QString &in_code)
     int in_length = in_code.size();
 	// Find the positions of each line
 	linePositions.push_back(0);
-	for( size_t n = 0; n < in_length; n++ )
+	for( int n = 0; n < in_length; n++ )
 		if( in_code[n] == '\n' ) linePositions.push_back(n+1);
 	linePositions.push_back(in_length);
 

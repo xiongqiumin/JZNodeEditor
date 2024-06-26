@@ -169,6 +169,8 @@ public:
     bool hasPinType(int nodeId, int pinId);
     bool isPinLiteral(int nodeId, int pinId);
     QVariant pinLiteral(int nodeId, int pinId);
+    
+    int irParamType(const JZNodeIRParam &param);
 
     void setRegCallFunction(const JZFunctionDefine *func);
 
@@ -180,7 +182,8 @@ public:
     data 依赖 data 节点, 节点计算前主动获取.
 
     addFlowInput，addDataInput 后，会自动插入JZNodeIRNodeId, 表示一个节点的开始, 用于断点
-    */    
+    */   
+    int pinInputType(int node_id, int pin_id);  //计算pin输入的type, 不进行pin允许的type转换
     bool checkPinInType(int nodeId, int prop_id, QString &error); //计算输入类型
 
     bool addFlowInput(int nodeId,QString &error);
@@ -192,7 +195,9 @@ public:
     int addNop();
     void addNodeStart(int id);
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
+    void addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
+    void addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
 
@@ -207,6 +212,8 @@ public:
     
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+    void addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+    void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAlloc(int allocType, QString name,int dataType);
     void addAssert(const JZNodeIRParam &tips);       
 
@@ -264,7 +271,7 @@ protected:
     void updateDispayNode();
     void updateDepend();
     void addNodeFlowPc(int node_id, int cond, int pc);
-    int irParamType(const JZNodeIRParam &param);
+    bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
                     
     NodeCompilerInfo *currentNodeInfo();
 

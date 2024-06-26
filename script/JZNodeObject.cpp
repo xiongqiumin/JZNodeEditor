@@ -222,6 +222,50 @@ int JZNodeObjectDefine::indexOfFunction(const QString &function) const
     return -1;
 }
 
+bool JZNodeObjectDefine::checkFunction(const QString &function,QString &error) const
+{
+    int count = 0;
+    const JZFunctionDefine *func = nullptr;
+    for (int i = 0; i < functions.size(); i++)        
+    {
+        if(function == functions[i].name)
+        {
+            func = &functions[i];
+            count++;
+        }
+    }
+    if(count > 1)
+    {
+        error = "存在重名函数";
+        return false;
+    }
+
+    const JZNodeObjectDefine *def = this->super();
+    while (def)
+    {
+        for (int i = 0; i < def->functions.size(); i++)  
+        {
+            if(def->functions[i].name == function)
+            {
+                const JZFunctionDefine *super_func = &def->functions[i];
+                if(!func->isVirtualFunction)
+                {
+                    error = "父类存在重名函数";
+                    return false;
+                }
+
+                if(!JZNodeType::functionTypeMatch(func,super_func))
+                {
+                    error = "函数签名不匹配";
+                    return false;
+                }
+            }
+        }         
+        def = def->super();        
+    }    
+    return true;
+}
+
 const JZFunctionDefine *JZNodeObjectDefine::function(const QString &name) const
 {
     int index = indexOfFunction(name);
@@ -278,48 +322,25 @@ const JZSingleDefine *JZNodeObjectDefine::single(const QString &function) const
         return nullptr;
 }
 
-QList<int> JZNodeObjectDefine::eventList() const
+QStringList JZNodeObjectDefine::slotList() const
 {
-    QSet<int> set;
+    QSet<QString> set;
     auto def = this;
     while (def)
     {
-        for (int i = 0; i < def->events.size(); i++)
-            set << def->events[i].eventType;
-
-        def = def->super();
-    }
+        for (int i = 0; i < def->functions.size(); i++)
+        {
+            if(def->functions[i].isSlot)
+                set << def->functions[i].name;
+        } 
+        def = def->super();        
+    }    
     return set.toList();
 }
 
-const EventDefine *JZNodeObjectDefine::event(int type) const
+const JZFunctionDefine *JZNodeObjectDefine::slot(const QString &name) const
 {
-    for (int i = 0; i < events.size(); i++)
-    {
-        if (events[i].eventType == type)
-            return &events[i];
-    }
-
-    auto def = super();
-    if (def)
-        return def->event(type);
-    else
-        return nullptr;
-}
-
-const EventDefine *JZNodeObjectDefine::event(const QString &function) const
-{
-    for (int i = 0; i < events.size(); i++)
-    {
-        if (events[i].name == function)
-            return &events[i];
-    }
-
-    auto def = super();
-    if (def)
-        return def->event(function);
-    else
-        return nullptr;
+    return function(name);
 }
 
 const JZNodeObjectDefine *JZNodeObjectDefine::super() const
@@ -372,7 +393,6 @@ QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param)
     s << param.params;
     s << param.functions;
     s << param.singles;
-    s << param.events;
 
     s << param.isCObject;
     s << param.isUiWidget;
@@ -391,7 +411,6 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
     s >> param.params;
     s >> param.functions;
     s >> param.singles;
-    s >> param.events;
     
     s >> param.isCObject;
     s >> param.isUiWidget;
@@ -546,14 +565,6 @@ const JZFunctionDefine *JZNodeObject::function(const QString &name) const
 QStringList JZNodeObject::functionList() const
 {
     return m_define->functionList();
-}
-
-QString JZNodeObject::relativeFunction(const QString &function) const
-{
-    if(function.startsWith(className() + "."))
-        return function.mid(className().size() + 1);
-    else
-        return function;
 }
 
 const JZSingleDefine *JZNodeObject::single(QString function) const

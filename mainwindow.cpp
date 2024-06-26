@@ -477,7 +477,7 @@ void MainWindow::onActionNewProject()
         m_projectTree->setProject(&m_project);
         m_setting.addRecentProject(m_project.filePath());
     }
-
+    
     updateActionStatus();
 }
 
@@ -1092,9 +1092,11 @@ void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QString value)
     param_info.value = value;
     
     JZNodeWatch *watch = qobject_cast<JZNodeWatch*>(sender());
-    JZNodeDebugParamInfo result = m_debuger.setVariable(param_info);
-    watch->updateParamInfo(&result);
+    JZNodeDebugParamInfo result;
+    if(!m_debuger.setVariable(param_info,result))
+        return;
 
+    watch->updateParamInfo(&result);
     if (coor.type == JZNodeParamCoor::Id)
     {
         auto stack_info = m_runtime.stacks[param_info.stack];
@@ -1113,8 +1115,11 @@ void MainWindow::onWatchNameChanged(JZNodeParamCoor coor)
     param_info.stack = m_stack->stackIndex();
     param_info.coors << coor;
     
-    param_info = m_debuger.getVariable(param_info);
-    m_watchManual->updateParamInfo(&param_info);        
+    JZNodeDebugParamInfo ret; 
+    if(!m_debuger.getVariable(param_info,ret))
+        return;
+
+    m_watchManual->updateParamInfo(&ret);        
 }
 
 void MainWindow::onNodePropChanged(const JZNodeValueChanged &info)
@@ -1177,9 +1182,10 @@ void MainWindow::updateAutoWatch(int stack_index)
         param_info.coors << coor;
     }
 
-    param_info = m_debuger.getVariable(param_info);
-    m_watchAuto->setParamInfo(&param_info);
+    if(!m_debuger.getVariable(param_info,param_info))
+        return;
 
+    m_watchAuto->setParamInfo(&param_info);
     for (int i = node_prop_index; i < param_info.coors.size(); i++)
     {
         JZNodeValueChanged info;
@@ -1233,7 +1239,9 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         coor.name = watch_list[i];
         param_info_watch.coors << coor;
     }
-    param_info_watch = m_debuger.getVariable(param_info_watch);
+    if(!m_debuger.getVariable(param_info_watch,param_info_watch))
+        return;
+        
     m_watchManual->setParamInfo(&param_info_watch); 
 }
 
@@ -1320,8 +1328,12 @@ void MainWindow::start(bool startPause)
 
     JZNodeDebugInfo info;
     info.breakPoints = m_project.breakPoints();
-    auto program_info = m_debuger.init(info);
-    if (!m_program.load(program_info.appPath))
+    JZNodeProgramInfo program_info; 
+    if(!m_debuger.init(info,program_info))
+    {
+        m_log->addLog(Log_Runtime, "load debug info failed.");
+    }
+    if(!m_program.load(program_info.appPath))
     {
         m_log->addLog(Log_Runtime, "load debug info failed.");
     }
@@ -1373,7 +1385,13 @@ void MainWindow::onRuntimeStatus(int status)
 
     if (is_pause)
     {
-        auto new_runtime = m_debuger.runtimeInfo();
+        JZNodeRuntimeInfo new_runtime;
+        if(!m_debuger.runtimeInfo(new_runtime))
+        {
+
+            return;
+        }
+
         bool isNew = true;
         if (new_runtime.stacks.size() > 0 && new_runtime.stacks.size() == m_runtime.stacks.size()
             && new_runtime.stacks.back().file == m_runtime.stacks.back().file
