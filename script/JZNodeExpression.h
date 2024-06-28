@@ -2,8 +2,6 @@
 #define JZNODE_EXPRESSION_H_
 
 #include "JZNode.h"
-#include <QVector>
-#include "JZExpression.h"
 
 class JZNodeOperator: public JZNode
 {
@@ -180,6 +178,7 @@ protected:
         int stackId;
     };
 
+    bool updateExpr(QString &error);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     JZNodeIRParam toIr(const QString &name);
 
@@ -188,6 +187,7 @@ protected:
 
     QString m_expression;
     QStringList m_exprList;
+
     QMap<int,VarInfo> m_varMap;
     QMap<QString,int> m_outType;
     int m_stackIdx;

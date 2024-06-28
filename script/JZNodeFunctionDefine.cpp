@@ -1,4 +1,5 @@
-﻿#include "JZNodeFunctionDefine.h"
+﻿#include <QDebug>
+#include "JZNodeFunctionDefine.h"
 #include "JZEvent.h"
 #include "JZNodeObject.h"
 
@@ -75,7 +76,7 @@ CFunction::~CFunction()
 JZFunctionDefine::JZFunctionDefine()
 {
     isCFunction = false;
-    isFlowFunction = true;    
+    isFlowFunction = false;    
     isVirtualFunction = false;
     isProtected = false;  
     isSlot = false;
@@ -85,6 +86,21 @@ JZFunctionDefine::JZFunctionDefine()
 bool JZFunctionDefine::isNull() const
 {
     return name.isEmpty();
+}
+
+void JZFunctionDefine::setFullName(const QString &full_name)
+{
+    int idx = full_name.lastIndexOf(".");
+    if(idx >= 0)
+    {
+        className = full_name.left(idx);
+        name = full_name.mid(idx + 1);
+    }
+    else
+    {
+        className.clear();
+        name = full_name;
+    }
 }
 
 QString JZFunctionDefine::fullName() const

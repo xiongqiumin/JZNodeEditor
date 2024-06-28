@@ -33,9 +33,10 @@ SampleImageBatch::~SampleImageBatch()
 
 void SampleImageBatch::addEvent()
 {
+    /*
     auto flow_srcipt = m_project.getClass("MainWindow")->flow("�¼�");
     auto btn_meta = JZNodeObjectManager::instance()->meta("PushButton");
- /*   
+    
     for (int i = 0; i < 2; i++)
     {
         QString btn_name = (i == 0)? "btnSelInput":"btnSelOutput";
@@ -244,7 +245,7 @@ void SampleImageBatch::addProcessGetImage()
     JZNodeBranch *branch = new JZNodeBranch();    
     JZNodeFor *node_for = new JZNodeFor();
     JZNodeFunction *list_size = new JZNodeFunction();
-    JZNodeStringAdd *op_add_in = new JZNodeStringAdd();    
+    JZNodeAdd *op_add_in = new JZNodeAdd();    
     JZNodeFunction *list_at = new JZNodeFunction();
     JZNodeFunction *fileinfo_create = new JZNodeFunction();
     JZNodeParam *out_list = new JZNodeParam();    

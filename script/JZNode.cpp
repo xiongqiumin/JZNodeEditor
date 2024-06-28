@@ -158,6 +158,11 @@ int JZNode::addPin(const JZNodePin &pin)
     return max_id;
 }
 
+void JZNode::clearPin()
+{
+    m_pinList.clear();
+}
+
 int JZNode::addParamIn(QString name,int extFlag)
 {
     JZNodePin pin;
@@ -1110,7 +1115,7 @@ JZNodeForEach::JZNodeForEach()
 
     int out1 = addParamOut("key",Pin_dispName);
     int out2 = addParamOut("value",Pin_dispName);
-    pin(in)->setDataType({Type_list,Type_map});
+    pin(in)->setDataType({Type_any});
     setPinTypeAny(out1);
     setPinTypeAny(out2);
 }
@@ -1122,7 +1127,6 @@ JZNodeForEach::~JZNodeForEach()
 
 bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 {
-    Q_ASSERT(0);
     if(!c->addFlowInput(m_id,error))
         return false;
 

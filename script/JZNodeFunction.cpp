@@ -22,7 +22,7 @@ void JZNodeFunction::saveToStream(QDataStream &s) const
 void JZNodeFunction::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
-    s  >> m_functionName;
+    s >> m_functionName;
 }
 
 void JZNodeFunction::setFunction(const QString &name)
@@ -69,6 +69,31 @@ QString JZNodeFunction::function() const
     return m_functionName;
 }
 
+JZFunctionDefine JZNodeFunction::functionDefine()
+{
+    JZFunctionDefine def;
+    def.setFullName(m_functionName);
+    def.isFlowFunction = isFlowNode();
+
+    auto in_list = paramInList();
+    for(int i = 0; i < in_list.size(); i++)
+    {
+        auto in = pin(in_list[i]);
+        QString in_type = JZNodeType::typeToName(in->dataType()[0]);
+        def.paramIn.push_back(JZParamDefine(in->name(),in_type));
+    }
+
+    auto out_list = paramOutList();
+    for(int i = 0; i < out_list.size(); i++)
+    {
+        auto out = pin(in_list[i]);
+        QString out_type = JZNodeType::typeToName(out->dataType()[0]);
+        def.paramOut.push_back(JZParamDefine(out->name(),out_type));
+    } 
+    
+    return def;
+}
+
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
 {
     auto def = c->function(m_functionName);
@@ -78,18 +103,16 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         return false;
     }
 
+    JZFunctionDefine cur_def = functionDefine();
+    if(!JZNodeType::functionTypeMatch(def,&cur_def))
+    {
+        error = "函数定义已改变,请更新";
+        return false;
+    }
+
     QList<int> in_list = pinInList(Pin_param);
     QList<int> out_list = pinOutList(Pin_param);
-    if (def->paramIn.size() != in_list.size())
-    {
-        error = QString("函数不接受%1个输入").arg(in_list.size());
-        return false;
-    }
-    if (def->paramOut.size() != out_list.size())
-    {
-        error = QString("函数不接受%1个输出").arg(out_list.size());
-        return false;
-    }
+    Q_ASSERT(def->paramIn.size() == in_list.size() && def->paramOut.size() == out_list.size());
 
     bool input_ret = false;
     if(isFlowNode())

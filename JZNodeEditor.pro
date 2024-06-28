@@ -28,8 +28,7 @@ HEADERS += \
     $$files(./editor/*.h) \
     $$files(./editor/script/*.h) \
     $$files(./editor/ui/*.h) \
-    $$files(./sample/*.h) \
-    $$files(./sample/SmartHome/*.h) \
+    $$files(./sample/*.h,true) \
     $$files(./3rd/jznet/*.h) \
     $$files(./tests/*.h)
 
@@ -42,8 +41,7 @@ SOURCES += \
     $$files(./editor/*.cpp) \
     $$files(./editor/script/*.cpp) \
     $$files(./editor/ui/*.cpp) \
-    $$files(./sample/*.cpp) \
-    $$files(./sample/SmartHome/*.cpp) \
+    $$files(./sample/*.cpp,true) \
     $$files(./3rd/qtpropertybrowser/*.cpp) \
     $$files(./3rd/jznet/*.cpp) \
     $$files(./tests/*.cpp)

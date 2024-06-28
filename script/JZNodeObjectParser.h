@@ -2,6 +2,7 @@
 #define JZNODE_OBJECT_PARSER_H_
 
 #include "JZNodeObject.h"
+#include "JZContainer.h"
 
 class JZNodeObjectParser
 {
@@ -9,7 +10,8 @@ public:
     JZNodeObjectParser();
     ~JZNodeObjectParser();
 
-    JZNodeObject *parse(const QString &text);    
+    JZNodeObject *parse(const QString &text);
+    JZNodeObject *parseToType(QString type,const QString &text);       
     QString error();
 
 protected:
@@ -17,14 +19,19 @@ protected:
 
     QChar nextChar();
     QChar readChar();
-    QString readWord();    
+    QString readWord();
+
     QVariant readVariable();    
-    QVariantList *readList();
-    QVariantMap *readMap();    
+    JZList *readList(QString valueType,QChar start);
+    JZMap *readMap(QString keyType,QString valueType);    
     JZNodeObject *readObject();
+    
     bool readString(QString &text);
     bool readBkt(QString &context);
     bool checkIsEnd();
+    bool checkVariable(int type,const QVariant &v);
+    void makeError(const QString &error);
+    void makeExpectError(QString expect,QString give);
 
     QList<QChar> m_gapList;
     QString m_content;
@@ -43,10 +50,10 @@ public:
     QString format(JZNodeObject *obj);
 
 protected:
-    QString listToString(const QVariantList *list);
-    QString mapToString(const QVariantMap *map);
+    QString listToString(const JZList *list);
+    QString mapToString(const JZMap *map);
     QString objectToString(JZNodeObject *obj);
-    QString variantToString(const QVariant *v);
+    QString variantToString(const QVariant &v);
 };
 
 #endif // ! JZNODE_OBJECT_PARSER_H_

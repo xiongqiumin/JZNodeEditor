@@ -19,7 +19,7 @@ void TestServer::init(JZProject *project)
         QDir().mkdir(dirpath);
 
     m_project = project;    
-
+ /* 
     auto func_inst = JZNodeFunctionManager::instance();
 
     m_project->newProject(dirpath,"test","console");
@@ -78,7 +78,7 @@ void TestServer::init(JZProject *project)
     script->addConnect(start_timer->flowOutGemo(), create->flowInGemo());
     script->addConnect(create->flowOutGemo(), set_param->flowInGemo());
     script->addConnect(create->paramOutGemo(0), set_param->paramInGemo(0));
- /*   
+  
     //timeout
     JZNodeSingleEvent *timeout = new  JZNodeSingleEvent();
     timeout->setSingle(time_meta->single("timeout"));

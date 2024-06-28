@@ -30,16 +30,16 @@ public:
     void initVariable(QString name, const QVariant &value);
     void initVariable(int id, const QVariant &value);
 
-    QVariant *getRef(int id);
-    QVariant *getRef(QString name);
+    JZVariant *getRef(int id);
+    JZVariant *getRef(QString name);
 
     const JZFunction *func;
-    QVariant object;      //this    
+    JZVariant object;      //this    
     JZNodeScript *script;    
     int pc;
     
-    QMap<QString,QVariantPtr> locals;
-    QMap<int,QVariantPtr> stacks;
+    QMap<QString,JZVariantPtr> locals;
+    QMap<int,JZVariantPtr> stacks;
 };
 
 class Stack
@@ -85,6 +85,8 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param);
 class JZNodeRuntimeError
 {
 public:
+    QString errorReport();
+
     QString error;
     JZNodeRuntimeInfo info;
 };
@@ -148,18 +150,18 @@ public:
        
     Stack *stack();    
 
-    QVariant *getVariableRef(int id);
-    QVariant *getVariableRef(int id, int stack_level);
+    JZVariant *getVariableRef(int id);
+    JZVariant *getVariableRef(int id, int stack_level);
     QVariant getVariable(int id);
     void setVariable(int id, const QVariant &value);
 
-    QVariant *getVariableRef(const QString &name);        
-    QVariant *getVariableRef(const QString &name,int stack_level);
+    JZVariant *getVariableRef(const QString &name);        
+    JZVariant *getVariableRef(const QString &name,int stack_level);
     QVariant getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
 
     QVariant getReg(int id);
-    QVariant *getRegRef(int id);
+    JZVariant *getRegRef(int id);
     void setReg(int id, const QVariant &value);
 
     QVariant getThis();
@@ -201,7 +203,7 @@ protected:
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
     QVariant dealSingleExpr(const QVariant &a, int op);
-    void dealSet(QVariant *ref, const QVariant &value);
+    void dealSet(JZVariant *ref, const QVariant &value);
 
     void initGlobal(QString name, const QVariant &v);
     void initLocal(QString name, const QVariant &v);
@@ -214,7 +216,7 @@ protected:
         
     QVariant getParam(const JZNodeIRParam &param);    
     void setParam(const JZNodeIRParam &param,const QVariant &value);
-    QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
+    JZVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
         
     int nodeIdByPc(int pc);        
     int nodeIdByPc(JZNodeScript *script, int pc);
@@ -238,8 +240,8 @@ protected:
     int m_breakNodeId;    
 
     Stack m_stack;
-    QMap<QString,QVariantPtr> m_global;
-    QMap<int,QVariant> m_regs;
+    QMap<QString,JZVariantPtr> m_global;
+    QMap<int,JZVariantPtr> m_regs;
     JZNodeObject *m_sender;
     qint64 m_watchTime;
            
@@ -254,7 +256,7 @@ protected:
 extern JZNodeEngine *g_engine;
 
 void JZScriptLog(const QString &name);
-void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out);
+bool JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out);
 void JZScriptOnSlot(JZNodeObject *sender,const QString &function,const QVariantList &in, QVariantList &out);
 
 #endif

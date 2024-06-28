@@ -1,4 +1,4 @@
-#include <QApplication>
+﻿#include <QApplication>
 #include <QDir>
 #include "Russian.h"
 #include "JZNodeBuilder.h"
@@ -20,12 +20,12 @@ SampleRussian::SampleRussian()
 
     auto class_file = m_project.getClass("MainWindow");
 
-    class_file->addMemberVariable("map", Type_list);
-    class_file->addMemberVariable("colors", Type_list);
+    class_file->addMemberVariable("map", "List<List<int>>");
+    class_file->addMemberVariable("colors", Type_intList);
     class_file->addMemberVariable("timer", Type_timer);
     class_file->addMemberVariable("isRect", Type_bool);
     
-    class_file->addMemberVariable("shape", Type_list);
+    class_file->addMemberVariable("shape", Type_intList);
     class_file->addMemberVariable("shape_index", Type_int);
     class_file->addMemberVariable("shape_row", Type_int);
     class_file->addMemberVariable("shape_col", Type_int);
@@ -74,7 +74,7 @@ void SampleRussian::addInitGame()
     define.isFlowFunction = true;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_meta->id));
     auto script = class_file->addMemberFunction(define);
-    script->addLocalVariable(JZParamDefine("col_list", Type_list));
+    script->addLocalVariable(JZParamDefine("col_list", Type_intList));
 
     JZNode *func_start = script->getNode(0);
 
@@ -263,7 +263,6 @@ void SampleRussian::addMapGet()
     col_get->setFunction(func_inst->function("List.get"));
 
     JZNodeReturn *node_return = new JZNodeReturn();
-    node_return->setFunction(&define);
 
     script->addNode(node_row);
     script->addNode(node_col);
@@ -335,17 +334,18 @@ void SampleRussian::addMapSet()
 void SampleRussian::addPaintEvent()
 {
     auto func_inst = JZNodeFunctionManager::instance();
+    auto class_file = m_project.getClass("MainWindow");
 
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
     auto rect_meta = JZNodeObjectManager::instance()->meta("Rect");
     auto widget = JZNodeObjectManager::instance()->meta("Widget");    
     auto painter = JZNodeObjectManager::instance()->meta("Painter");
 
-    JZFunctionDefine define;
-    *define = meta->function(("paintEvent");
-
+    JZFunctionDefine define = meta->initVirtualFunction("paintEvent");
     auto script = class_file->addMemberFunction(define);
     script->addLocalVariable(JZParamDefine("painter", "Painter"));
+
+    auto node_paint = script->getNode(0);
 
     JZNodeFunction *rect_create = new JZNodeFunction();
     rect_create->setFunction(rect_meta->function("create"));
@@ -615,13 +615,12 @@ void SampleRussian::addButtonClicked()
 {
     auto btn_meta = JZNodeObjectManager::instance()->meta("PushButton");
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
-/*
+    auto class_file = m_project.getClass("MainWindow");
+    
     //btnStart
-    JZNodeSingleEvent *btnStart = new JZNodeSingleEvent();
-    btnStart->setSingle(btn_meta->single("clicked"));
-    btnStart->setVariable("this.btnStart");
-
-    script->addNode(btnStart);    
+    JZFunctionDefine func_btnStart = meta->initSlotFunction("btnStart","clicked");
+    auto script = class_file->addMemberFunction(func_btnStart);
+    auto btnStart = script->getNode(0);
 
     JZNodeFunction *init_game = new JZNodeFunction();
     init_game->setFunction(meta->function("initGame"));
@@ -642,19 +641,17 @@ void SampleRussian::addButtonClicked()
     script->addConnect(init_game->flowOutGemo(), start->flowInGemo());
 
     //*btnStop
-    JZNodeSingleEvent *btnStop = new JZNodeSingleEvent();
-    btnStop->setSingle(btn_meta->single("clicked"));
-    btnStop->setVariable("this.btnStop");
+    JZFunctionDefine func_btnStop = meta->initSlotFunction("btnStop","clicked");
+    script = class_file->addMemberFunction(func_btnStop);
+    auto btnStop = script->getNode(0);
 
     JZNodeFunction *stop = new JZNodeFunction();
     stop->setFunction(JZNodeFunctionManager::instance()->function("Timer.stop"));
 
-    script->addNode(btnStop);
     script->addNode(stop);
 
     script->addConnect(timer->paramOutGemo(0), stop->paramInGemo(0));
-    script->addConnect(btnStop->flowOutGemo(), stop->flowInGemo());
-*/   
+    script->addConnect(btnStop->flowOutGemo(), stop->flowInGemo());   
 }
 
 void SampleRussian::addCreateRect()
@@ -969,7 +966,6 @@ void SampleRussian::addMoveFunction()
             shape_index->setVariable("this.shape_index");
 
             JZNodeReturn *node_return = new JZNodeReturn();
-            node_return->setFunction(meta->function(functions[i]));
 
             JZNodeFunction *can_place = new JZNodeFunction();
             can_place->setFunction(meta->function("canPlace"));
@@ -1059,13 +1055,13 @@ void SampleRussian::addMoveFunction()
 
 void SampleRussian::addGameLoop()
 {
-/*    
     auto timer_meta = JZNodeObjectManager::instance()->meta("Timer");
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
+    auto class_file = m_project.getClass("MainWindow");
 
-    JZNodeSingleEvent *onTimer = new JZNodeSingleEvent();
-    onTimer->setSingle(timer_meta->single("timeout"));
-    onTimer->setVariable("this.timer");
+    JZFunctionDefine func_onTimer = meta->initMemberFunction("onTimer");
+    auto script = class_file->addMemberFunction(func_onTimer);
+    auto onTimer = script->getNode(0);
 
     script->addNode(onTimer);
 
@@ -1130,7 +1126,6 @@ void SampleRussian::addGameLoop()
     script->addConnect(is_game_end->flowOutGemo(), stop_timer->flowInGemo());
     script->addConnect(node_this->paramOutGemo(0), message->paramInGemo(0));
     script->addConnect(stop_timer->flowOutGemo(), message->flowInGemo());
-*/      
 }
 
 void SampleRussian::addKeyEvent()
@@ -1138,11 +1133,14 @@ void SampleRussian::addKeyEvent()
     auto func_inst = JZNodeFunctionManager::instance();
 
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");    
-    auto key_meta = JZNodeObjectManager::instance()->meta("KeyEvent");    
-    
-    JZFunctionDefine define;
-    *define = meta->function(("keyPressEvent");
+    auto key_meta = JZNodeObjectManager::instance()->meta("KeyEvent"); 
+    auto class_file = m_project.getClass("MainWindow");   
+
+    JZFunctionDefine define = meta->initVirtualFunction("keyPressEvent");
     auto script = class_file->addMemberFunction(define);
+
+    JZNodeParam *node_keyPress = new JZNodeParam();
+    node_keyPress->setVariable("event");;
     
     JZNodeFunction *canRight = new JZNodeFunction();
     canRight->setFunction(meta->function("canMoveRight"));
@@ -1203,6 +1201,7 @@ void SampleRussian::addKeyEvent()
 
     JZNodeEQ *key_eqSpace = new JZNodeEQ(); 
         
+    script->addNode(node_keyPress);
     script->addNode(canRight);
     script->addNode(moveRight);
     script->addNode(canLeft);
@@ -1237,7 +1236,7 @@ void SampleRussian::addKeyEvent()
 
     script->addConnect(node_keyPress->paramOutGemo(0), key_code->paramInGemo(0));        
     
-    auto connectKey = [this](JZNodeEQ *eq, int key_code){
+    auto connectKey = [script](JZNodeEQ *eq, int key_code){
         JZNodeEnum *key = new JZNodeEnum();
         key->setEnum("Key");
         key->setValue(key_code);
@@ -1343,7 +1342,6 @@ void SampleRussian::addRotate()
         shape_index->setVariable("this.shape_index");
 
         JZNodeReturn *node_return = new JZNodeReturn();
-        node_return->setFunction(&def_can);
 
         JZNodeFunction *can_place = new JZNodeFunction();
         can_place->setFunction(meta->function("canPlace"));
@@ -1481,14 +1479,14 @@ void SampleRussian::addCreateShape()
     define.isFlowFunction = false;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramIn.push_back(JZParamDefine("type", Type_int));    
-    define.paramOut.push_back(JZParamDefine("shape", Type_list));
+    define.paramOut.push_back(JZParamDefine("shape", Type_intList));
 
     auto func_inst = JZNodeFunctionManager::instance();
     auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
     
     auto script = class_file->memberFunction("createShape");
-    script->addLocalVariable(JZParamDefine("shape", Type_list));
+    script->addLocalVariable(JZParamDefine("shape", Type_intList));
 
     JZNodeParam *shape = new JZNodeParam();
     shape->setVariable("shape");
@@ -1497,7 +1495,6 @@ void SampleRussian::addCreateShape()
     type->setVariable("type");
     
     JZNodeReturn *node_return = new JZNodeReturn();
-    node_return->setFunction(&define);    
 
     JZNode *node_start = script->getNode(0);
     script->addNode(type);
@@ -1583,12 +1580,8 @@ void SampleRussian::addCanPlaceShape()
     JZNode *node_start = script->getNode(0);
 
     JZNodeReturn *ret_true = new JZNodeReturn();
-    ret_true->setFunction(&define);
-    ret_true->setParamInValue(0, "true");
 
     JZNodeReturn *ret_false = new JZNodeReturn();
-    ret_false->setFunction(&define);
-    ret_false->setParamInValue(0, "false");
 
     JZNodeFor *node_for = new JZNodeFor();
 
@@ -1636,8 +1629,8 @@ void SampleRussian::addCanPlaceShape()
     JZNodeParam *col = new JZNodeParam();
     col->setVariable("pt_col");
 
-    JZNodeOr *or = new JZNodeOr();
-    or->addInput();
+    JZNodeOr *node_or = new JZNodeOr();
+    node_or->addInput();
 
     JZNodeOr *or_row = new JZNodeOr();
 
@@ -1670,7 +1663,7 @@ void SampleRussian::addCanPlaceShape()
     script->addNode(index);
     script->addNode(row);
     script->addNode(col);
-    script->addNode(or);
+    script->addNode(node_or);
     script->addNode(or_row);
     script->addNode(or_col);
     script->addNode(eq_map);
@@ -1680,6 +1673,9 @@ void SampleRussian::addCanPlaceShape()
     script->addNode(col_ge);
     script->addNode(add_row);
     script->addNode(add_col);        
+
+    ret_true->setParamInValue(0, "true");
+    ret_false->setParamInValue(0, "false");
 
     script->addConnect(row->paramOutGemo(0), row_lt->paramInGemo(0));
     row_lt->setParamInValue(1, "0");
@@ -1705,9 +1701,9 @@ void SampleRussian::addCanPlaceShape()
     eq_map->setParamInValue(1, QString::number(-1));
 
     // row or col or getMap
-    script->addConnect(or_row->paramOutGemo(0), or->paramInGemo(0));
-    script->addConnect(or_col->paramOutGemo(0), or->paramInGemo(1));
-    script->addConnect(eq_map->paramOutGemo(0), or->paramInGemo(2));
+    script->addConnect(or_row->paramOutGemo(0), node_or->paramInGemo(0));
+    script->addConnect(or_col->paramOutGemo(0), node_or->paramInGemo(1));
+    script->addConnect(eq_map->paramOutGemo(0), node_or->paramInGemo(2));
 
     node_for->setParamInValue(0, QString::number(0));
     node_for->setParamInValue(1, QString::number(1));
@@ -1739,7 +1735,7 @@ void SampleRussian::addCanPlaceShape()
     script->addConnect(set_row->flowOutGemo(0), set_col->flowInGemo());        
     script->addConnect(set_col->flowOutGemo(0), branch->flowInGemo());
 
-    script->addConnect(or->paramOutGemo(0), branch->paramInGemo(0));
+    script->addConnect(node_or->paramOutGemo(0), branch->paramInGemo(0));
     script->addConnect(branch->flowOutGemo(0), ret_false->flowInGemo());
 
     //return true;

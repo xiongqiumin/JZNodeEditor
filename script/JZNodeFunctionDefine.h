@@ -62,6 +62,7 @@ public:
     
     bool isNull() const;
 
+    void setFullName(const QString &name);
     QString fullName() const;    
     bool isMemberFunction() const;    
     

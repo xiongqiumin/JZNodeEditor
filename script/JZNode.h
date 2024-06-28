@@ -150,6 +150,7 @@ public:
 
     int addPin(const JZNodePin &pin);         
     void removePin(int id);
+    void clearPin();
     JZNodePin *pin(int id);
     const JZNodePin *pin(int id) const;
     JZNodePin *pin(QString name);

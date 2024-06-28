@@ -2,7 +2,6 @@
 #include "JZEvent.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodeName.h"
 
 // JZNodeEvent
 JZNodeEvent::JZNodeEvent()

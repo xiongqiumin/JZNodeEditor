@@ -293,21 +293,6 @@ bool JZNodeType::canConvert(int type1,int type2)
 QString JZNodeType::toString(JZNodeObject *obj)
 {
     QString text = obj->className();
-    if (obj->type() == Type_list)
-    {        
-        auto list = JZObjectCast<QVariantList>(obj);
-        text = "list";
-    }
-    else if (obj->type() == Type_map)
-    {
-        auto map = JZObjectCast<QVariantMap>(obj);
-        text = "map";
-    }
-    else
-    {
-
-    }
-
 
     return text;
 }
@@ -627,7 +612,7 @@ QVariant JZNodeType::initValue(int type, const QString &text)
         if(text == "null")
         {
             auto obj = JZNodeObjectManager::instance()->createNull(type);
-            return QVariant::fromValue(JZNodeObjectPtr(obj));        
+            return QVariant::fromValue(obj);        
         }
     }
     else if (type == Type_int || type == Type_int64 || type == Type_double)
@@ -755,7 +740,7 @@ QVariant JZNodeType::defaultValue(int type)
     else if(type >= Type_object)
     {
         JZNodeObject *ptr = JZNodeObjectManager::instance()->createNull(type);
-        return QVariant::fromValue(JZNodeObjectPtr(ptr));
+        return QVariant::fromValue(ptr);
     }
     else
     {
@@ -805,4 +790,63 @@ bool JZNodeType::functionTypeMatch(const JZFunctionDefine *func1,const JZFunctio
             return false;
     }
     return true;
+}
+
+//JZVariant
+JZVariant::JZVariant()
+{
+
+}
+
+JZVariant::~JZVariant()
+{
+    clearVariant();
+}
+
+void JZVariant::init(const QVariant &v)
+{
+    m_variant = v;
+    auto obj = toObject();
+    if(obj)
+        obj->addRef();
+}
+
+JZNodeObject *JZVariant::toObject()
+{
+    auto &v = m_variant;
+    
+    JZNodeObject *obj = nullptr;
+    int v_type = JZNodeType::variantType(v);
+    if(v_type > Type_object)
+        obj = toJZObject(v);
+    else if(v_type == Type_any)
+    {
+        JZNodeVariantAny *any = (JZNodeVariantAny*)v.data();
+        if(isJZObject(any->value))
+            obj = toJZObject(any->value);
+    }
+    return obj;
+}
+
+void JZVariant::clearVariant()
+{
+    auto obj = toObject();
+    if(!obj)
+        return;
+    obj->release();
+    if(obj->refCount() == 0)
+        delete obj;
+}
+
+void JZVariant::setVariant(const QVariant &v)
+{
+    Q_ASSERT(JZNodeType::isSameType(m_variant,v));
+
+    clearVariant();
+    init(v);
+}
+
+const QVariant &JZVariant::getVariant()
+{
+    return m_variant;
 }

@@ -340,7 +340,7 @@ int JZScriptItem::addConnect(JZNodeGemo from, JZNodeGemo to)
     auto pin_from = getPin(from);
     auto pin_to = getPin(to);
     Q_ASSERT(pin_from && pin_to);
-    Q_ASSERT(canConnect(from,to,error));
+    Q_ASSERT_X(canConnect(from,to,error),"Error:",qUtf8Printable(error));
 
     JZNodeConnect connect;
     connect.id = m_nodeId++;

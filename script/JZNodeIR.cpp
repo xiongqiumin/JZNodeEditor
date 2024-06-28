@@ -113,6 +113,7 @@ JZNodeIR *createNodeIR(int type)
     case OP_nop:
     case OP_return:
     case OP_exit:
+    case OP_clearRegCall:
         return new JZNodeIR(type);
     case OP_alloc:
         return new JZNodeIRAlloc();

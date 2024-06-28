@@ -247,6 +247,7 @@ protected:
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
     bool buildDataFlow(const QList<GraphNode*> &list);
+    
     /*
     先编译各个flow节点，最后连接，分开编译是因为out的时候无法确定对应输入节点的类型
     */
@@ -259,6 +260,7 @@ protected:
     QString pinName(JZNodePin *pin);     
 
     void updateBuildGraph(const QList<GraphNode*> &root_list);
+    bool checkFunction();
     
     bool compilerNode(JZNode *node);
     void pushCompilerNode(int id);

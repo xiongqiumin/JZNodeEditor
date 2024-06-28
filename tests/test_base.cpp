@@ -40,7 +40,7 @@ void BaseTest::cleanup()
 void BaseTest::onRuntimeError(JZNodeRuntimeError error)
 {        
     qDebug().noquote() << m_program.dump();
-    qDebug() << error.error;    
+    qDebug().noquote() << error.errorReport();    
     Q_ASSERT(0);
 }
 

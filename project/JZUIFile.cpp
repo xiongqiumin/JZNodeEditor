@@ -102,7 +102,7 @@ void JZUiFile::updateDefine()
         QString name = widgets[i]->objectName();
         QString class_name = widgets[i]->metaObject()->className();
 
-        int type = JZNodeObjectManager::instance()->getClassIdByQObject(class_name);
+        int type = JZNodeObjectManager::instance()->getQObjectType(class_name);
         if (!name.isEmpty() && type != Type_none)
         {
             JZParamDefine def;

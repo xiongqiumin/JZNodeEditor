@@ -90,8 +90,8 @@ void AngleScriptTest::testFab()
     }
 }
 
-void test_anglescript()
+void test_anglescript(int argc, char *argv[])
 {
     AngleScriptTest test;
-    QTest::qExec(&test);
+    QTest::qExec(&test,argc,argv);
 }

@@ -324,7 +324,7 @@ QString JZNodeCompiler::paramName(int id)
         return QString().asprintf("Stack%d",id - Stack_User);
     else if(id == Reg_Cmp)
         return "Reg_Cmp";    
-    else if(id >= Reg_CallIn)
+    else if(id >= Reg_CallIn && id < Reg_CallOut)
         return "Reg_CallIn_" + QString::number(id - Reg_CallIn);
     else if(id >= Reg_CallOut)
         return "Reg_CallOut_" + QString::number(id - Reg_CallOut);
@@ -474,6 +474,36 @@ void JZNodeCompiler::updateBuildGraph(const QList<GraphNode*> &root_list)
     }
 }
 
+bool JZNodeCompiler::checkFunction()
+{
+    auto class_file = m_scriptFile->getClassFile();
+    if(class_file)
+    {
+        auto meta = JZNodeObjectManager::instance()->meta(class_file->className()); 
+        QString check_error;
+        if(!meta->checkFunction(m_scriptFile->function().name,check_error))
+        {
+            m_error = check_error;
+            return false;
+        }
+    }
+
+    QStringList list = m_scriptFile->localVariableList(true);
+    for(int i = 0; i < list.size(); i++)
+    {
+        for(int j = 0; j < list.size(); j++)
+        {
+            if(i != j && list[i] == list[j])
+            {
+                m_error = list[i] + "重定义";
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
 {        
     init(scriptFile);
@@ -502,9 +532,10 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
 
         int buildType = m_scriptFile->itemType();        
         bool ret = true;
+
+        resetStack();
         if (buildType == ProjectItem_scriptParamBinding)
         {
-            resetStack();
             ret = buildParamBinding();
         }
         else if (buildType == ProjectItem_scriptFunction)
@@ -512,24 +543,17 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
             //未连接的语句
             JZNode *start_node = m_originGraph->topolist[0]->node;
             if(start_node->type() != Node_functionStart)
-                continue;
+                goto buildEnd;
 
             QList<GraphNode*> event_list;            
             event_list.push_back(m_originGraph->topolist[0]);
 
-            if(class_file)
+            if(!checkFunction())
             {
-                auto meta = JZNodeObjectManager::instance()->meta(class_file->className()); 
-                QString check_error;
-                ret = meta->checkFunction(m_scriptFile->function().name,check_error);
-                if(!ret)
-                {
-                    buildRet = false;
-                    continue;
-                }
+                ret = false;
+                goto buildEnd;
             }
 
-            resetStack();
             for(int i = 0; i < m_originGraph->topolist.size(); i++)
             {
                 auto graph_node = m_originGraph->topolist[i];
@@ -544,23 +568,24 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
             }
 
             ret = checkBuildResult();
-            if(ret)
-            {
-                updateBuildGraph(event_list);
-                if (m_buildGraph->topolist.isEmpty())
-                    continue;
+            if(!ret)
+                goto buildEnd;
 
-                int start_pc = m_script->statmentList.size();
-                ret = bulidControlFlow();
-                if (!ret)
-                    break;
-                
-                JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(event_list[0]->node);
-                JZFunctionDefine define = node_event->function();
-                addFunction(define, start_pc);
-            }
-        }                            
-        
+            updateBuildGraph(event_list);
+            if (m_buildGraph->topolist.isEmpty())
+                goto buildEnd;
+
+            int start_pc = m_script->statmentList.size();
+            ret = bulidControlFlow();
+            if (!ret)
+                goto buildEnd;
+
+            JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(event_list[0]->node);
+            JZFunctionDefine define = node_event->function();
+            addFunction(define, start_pc);
+        }                        
+
+buildEnd:        
         buildRet = (buildRet && ret);
     }
     
@@ -1696,6 +1721,7 @@ void JZNodeCompiler::addCall(const JZFunctionDefine *func, const QList<JZNodeIRP
 
     for(int i = 0; i < paramOut.size(); i++)
         addSetVariable(paramOut[i],irId(Reg_CallOut + i));
+    addStatement(JZNodeIRPtr(new JZNodeIR(OP_clearRegCall)));
     setRegCallFunction(nullptr);    
 }
 
@@ -1797,6 +1823,7 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
             addSetVariable(irRef(define.paramIn[i].name),irId(Reg_CallIn + i));
         }
     }
+    addStatement(JZNodeIRPtr(new JZNodeIR(OP_clearRegCall)));
     setRegCallFunction(nullptr);
 
     auto list = m_scriptFile->localVariableList(false);

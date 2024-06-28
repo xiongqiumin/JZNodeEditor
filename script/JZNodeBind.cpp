@@ -45,6 +45,11 @@ QVariant toVariant(QString value)
 {
     return value;
 }
+
+template<>
+void getReturn(const QVariantList &)
+{
+
 }
 
-
+}

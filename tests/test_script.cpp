@@ -44,21 +44,40 @@ void ScriptTest::testRegExp()
     QCOMPARE(help.isFloat("23534.6xc"), false);
 }
 
+void ScriptTest::testContainer()
+{
+    m_project.addGlobalVariable("list_int","List<int>","1,2,3,4,5,6,7,8");
+    m_project.addGlobalVariable("list_double","List<double>","1,2,3,4,5,6,7,8");
+    m_project.addGlobalVariable("map_int_int","Map<int,int>","1:19,2:4");
+    m_project.addGlobalVariable("map_int_string","Map<int,string>",R"(1:"hello",2:"57575")");
+    m_project.addGlobalVariable("map_string_int","Map<string,int>",R"("a":200,"b":400)");
+    m_project.addGlobalVariable("map_string_string","Map<string,string>",R"("a":"aa","b":"bbb")");
+
+    if(!build())
+        return;
+
+    QVariantList in,out;
+    auto list_int = m_engine.getVariable("list_int");
+    in << list_int << 0;
+    m_engine.call("List<int>.get",in,out);
+    QCOMPARE(out[0].toInt(),1);
+}
+
 void ScriptTest::testObjectParse()
 {
     QList<JZNodeObjectPtr> cache;
 
     JZNodeObjectParser parser;
     auto obj_list = parser.parse("[1,2,3,4,5,6,7,8]");
-    QVERIFY(obj_list && obj_list->type() == Type_list);
+    QVERIFY2(obj_list, qUtf8Printable(parser.error()));
     cache << JZNodeObjectPtr(obj_list);
 
     auto obj_map = parser.parse(R"({"a":1,"b":998})");
-    QVERIFY(obj_map && obj_map->type() == Type_map);
+    QVERIFY2(obj_map, qUtf8Printable(parser.error()));
     cache << JZNodeObjectPtr(obj_map);
 
     obj_list = parser.parse("[ Point{1,2},Point{3,4},Point{5,6},Point{7,8}]");
-    QVERIFY(obj_list && obj_list->type() == Type_list);
+    QVERIFY2(obj_list, qUtf8Printable(parser.error()));
     cache << JZNodeObjectPtr(obj_list);
 }
 
@@ -446,7 +465,7 @@ void ScriptTest::testForEach()
     node_set->setVariable("sum");
 
     JZNodeFunction *node_create = new JZNodeFunction();
-    node_create->setFunction(JZNodeFunctionManager::instance()->function("List.createFromString"));
+    node_create->setFunction(JZNodeFunctionManager::instance()->function("List.__fromString__"));
     node_create->setParamInValue(0, "\"1,2,3,4,5,6,7,8,9,10\"");
 
     int start_id = node_start->id();
@@ -536,7 +555,8 @@ void ScriptTest::testWhileLoop()
     script->addConnect(JZNodeGemo(add_id,node_add->paramOut(0)),JZNodeGemo(set_id,node_set->paramIn(1)));
         
     if(!build())
-        return;    
+        return;
+    dumpAsm("testWhileLoop.jsm");
 
     QVariantList in,out;
     call("main",in,out);
@@ -964,8 +984,8 @@ void ScriptTest::testCClass()
     QCOMPARE(out[0],a.replace(b,c));
 }
 
-void test_script()
+void test_script(int argc, char *argv[])
 {    
     ScriptTest s; 
-    QTest::qExec(&s);
+    QTest::qExec(&s,argc,argv);
 }

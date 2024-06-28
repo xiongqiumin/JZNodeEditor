@@ -13,6 +13,7 @@ public:
 
 private slots:
     void testMatchType();
+    void testContainer();
 
     void testClass();
     void testCClass();

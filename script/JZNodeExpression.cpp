@@ -440,12 +440,22 @@ JZNodeExpression::JZNodeExpression()
 
 bool JZNodeExpression::setExpr(QString expr,QString &error)
 {
-    setName(expr);
-    m_pinList.clear();
-    m_exprList.clear();
     m_expression = expr;
-    JZExpression parser;   
-    if(!parser.parse(expr))
+    return updateExpr(error);
+}
+
+QString JZNodeExpression::expr()
+{
+    return m_expression;
+}
+
+bool JZNodeExpression::updateExpr(QString &error)
+{
+    setName(m_expression);
+    clearPin();
+
+    JZExpressionParser parser;   
+    if(!parser.parse(m_expression))
     {
         error = parser.error();
         return false;
@@ -465,23 +475,16 @@ bool JZNodeExpression::setExpr(QString expr,QString &error)
     return true;
 }
 
-QString JZNodeExpression::expr()
-{
-    return m_expression;
-}
-
 void JZNodeExpression::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
     s << m_expression;
-    s << m_exprList;
 }
 
 void JZNodeExpression::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
     s >> m_expression;
-    s >> m_exprList;
 }
 
 JZNodeIRParam JZNodeExpression::toIr(const QString &name)
@@ -574,6 +577,9 @@ void JZNodeExpression::setIrType(const QString &name,int type)
 
 bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
 {            
+    if(!updateExpr(error))
+        return false;
+
     m_compiler = c;
     if(!c->addDataInput(m_id,error))
         return false;

@@ -268,7 +268,7 @@ bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
     in << irId(in_id) << irId(c->paramId(m_id, paramIn(1)));
     out << irId(out_id);
 
-    c->addCall("createObjectFromString", in, out);    
+    c->addCall("__fromString__", in, out);    
     return true;
 
 }
@@ -379,7 +379,12 @@ bool JZNodePrint::compiler(JZNodeCompiler *c,QString &error)
     if(need_format)
     {
         QList<JZNodeIRParam> fmt_in, fmt_out;
-        c->addCall("format",fmt_in,fmt_out);
+        auto in_list = paramInList();
+        for(int i = 0; i < in_list.size(); i++)
+        {
+            fmt_in << irId(c->paramId(m_id,in_list[i]));
+        }
+        c->addCallConvert("format",fmt_in,fmt_out);
     }
 
     QList<JZNodeIRParam> in, out;

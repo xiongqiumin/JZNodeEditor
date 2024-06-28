@@ -29,9 +29,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeBind.h"
 #include "JZRegExpHelp.h"
-
-typedef QList<JZNodeVariantAny>         JZVariantList;
-typedef QMap<QString, JZNodeVariantAny> JZVariantMap;
+#include "JZContainer.h"
 
 void checkSize(int index, int size)
 {
@@ -41,32 +39,6 @@ void checkSize(int index, int size)
         throw std::runtime_error(qPrintable(error));
     }
 }
-
-//JZNodeListIterator
-class JZNodeListIterator
-{
-public:
-    void next() { it++; }
-    bool atEnd() { return (it == list->end()); }
-    int key() { return (it - list->begin()); }
-    JZNodeVariantAny value() { return *it; }
-
-    JZVariantList *list;
-    JZVariantList::iterator it;
-};
-
-//JZNodeMapIterator
-class JZNodeMapIterator
-{
-public:
-    void next() { it++; }
-    bool atEnd() { return (it == map->end()); }
-    QString key() { return it.key(); }
-    JZNodeVariantAny value() { return it.value(); }
-
-    JZVariantMap *map;
-    JZVariantMap::iterator it;
-};
 
 
 void initEnum()
@@ -103,7 +75,17 @@ void initEnum()
 
 void initBase()
 {
-    JZNodeObjectManager::instance()->delcare("StringList",typeid(QStringList).name() ,Type_stringList);
+    JZNodeObjectManager::instance()->delcareCClass("StringList",typeid(QStringList).name() ,Type_stringList);
+
+    registList("int",Type_intList);
+    registList("double",Type_doubleList);
+    registList("any",Type_varList);
+
+    registMap("int","int",Type_intIntMap);
+    registMap("int","string",Type_intStringMap);
+    registMap("string","int",Type_StringIntMap);
+    registMap("string","string",Type_StringStringMap);
+    registMap("string","any",Type_varMap);
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
@@ -124,25 +106,19 @@ void initBase()
     cls_string.def("isEmpty", false, &QString::isEmpty);
     cls_string.regist();
 
+    //Point
     jzbind::ClassBind<QPoint> cls_pt("Point");
     cls_pt.def("create", false, [](int x, int y)->QPoint { return QPoint(x, y); });
-    cls_pt.def("fromString", false, [](QPoint *pt,const QString &text){
-        bool ok1, ok2;
+    cls_pt.def("__fromString__", false, [](const QString &text)->QPoint{
+        QPoint pt;
         QStringList list = text.split(",");
-        if (list.size() != 2)
-            return;
-
-        int x = list[0].toInt(&ok1);
-        if (!ok1)
-            return;
-        int y = list[1].toInt(&ok2);
-        if (!ok2)
-            return;
-
-        pt->setX(x);
-        pt->setY(y);
+        int x = list[0].toInt();
+        int y = list[1].toInt();
+        pt.setX(x);
+        pt.setY(y);
+        return pt;
     });
-    cls_pt.def("toString", false, [](QPoint *pt)->QString{ 
+    cls_pt.def("__toString__", false, [](QPoint *pt)->QString{ 
         return QString::number(pt->x()) + "," + QString::number(pt->y());
     });
     cls_pt.def("x", false, &QPoint::x);
@@ -153,23 +129,16 @@ void initBase()
 
     jzbind::ClassBind<QPointF> cls_ptf("PointF");
     cls_ptf.def("create", false, [](double x, double y)->QPointF { return QPointF(x, y); });
-    cls_ptf.def("fromString", false, [](QPointF *pt, const QString &text) {
-        bool ok1, ok2;
+    cls_ptf.def("__fromString__", false, [](const QString &text)->QPointF {
+        QPointF pt;
         QStringList list = text.split(",");
-        if (list.size() != 2)
-            return;
-
-        double x = list[0].toDouble(&ok1);
-        if (!ok1)
-            return;
-        double y = list[1].toDouble(&ok2);
-        if (!ok2)
-            return;
-
-        pt->setX(x);
-        pt->setY(y);
+        int x = list[0].toDouble();
+        int y = list[1].toDouble();
+        pt.setX(x);
+        pt.setY(y);
+        return pt;
     });
-    cls_ptf.def("toString", false, [](QPointF *pt)->QString {
+    cls_ptf.def("__toString__", false, [](QPointF *pt)->QString {
         return QString::number(pt->x()) + "," + QString::number(pt->y());
     });
     cls_ptf.def("x", false, &QPointF::x);
@@ -182,21 +151,21 @@ void initBase()
     cls_rect.def("create", false, [](int x, int y, int w, int h)->QRect {
         return QRect(x, y, w, h);
     });
-    cls_rect.def("createFromString", false, [](const QString &text)->QRect { return QRect(); });
+    cls_rect.def("__fromString__", false, [](const QString &text)->QRect { return QRect(); });
     cls_rect.regist();
 
     jzbind::ClassBind<QRectF> cls_rectf("RectF");
     cls_rectf.def("create", false, [](double x, double y, double w, double h)->QRectF {
         return QRectF(x, y, w, h);
     });
-    cls_rectf.def("createFromString", false, [](const QString &text)->QRectF { return QRectF(); });
+    cls_rectf.def("__fromString__", false, [](const QString &text)->QRectF { return QRectF(); });
     cls_rectf.regist();
 
     jzbind::ClassBind<QColor> cls_color("Color");
     cls_color.def("create", false, [](int r, int g, int b)->QColor {
         return QColor(r, g, b);
     });
-    cls_color.def("createFromString", false, [](const QString &text)->QColor { return QColor(); });
+    cls_color.def("__fromString__", false, [](const QString &text)->QColor { return QColor(); });
     cls_color.def("red", false, &QColor::red);
     cls_color.def("green", false, &QColor::green);
     cls_color.def("blue", false, &QColor::blue);    
@@ -214,20 +183,43 @@ void initCore()
     cls_app.def("setStyleSheet", true, [](const QString &style) { qApp->setStyleSheet(style); });
     cls_app.regist();
 
-    //stringlist
+    //stringlist , 这里需要全部使用 lambda 因为 QList<QString> 未定义
     jzbind::ClassBind<QStringList> cls_string_list(Type_stringList,"StringList");
     cls_string_list.def("create", false, []()->QStringList {        
         return QStringList();
     });
-    cls_string_list.def("createFromString", false, [](const QString &text)->QStringList {
+    cls_string_list.def("__fromString__", false, [](const QString &text)->QStringList {
         QStringList list = text.split(",");
         return list;
     });
     cls_string_list.def("join", false, [](const QStringList *list, const QString &sep)->QString {
         return (*list).join(sep);
     });
-    cls_string_list.def("push_back", true, [](QStringList *list, const QString &str){
-        list->push_back(str);
+    cls_string_list.def("push_back", true,[](QStringList *list,const QString &text){ 
+        list->push_back(text); 
+    });
+    cls_string_list.def("pop_back", true, [](QStringList *list){
+        if(list->size() > 0)
+            list->pop_back();
+    });
+    cls_string_list.def("push_front", true, [](QStringList *list,const QString &text){ 
+        list->push_front(text); 
+    });
+    cls_string_list.def("pop_front", true, [](QStringList *list){
+        if(list->size() > 0)
+            list->pop_back();
+    });
+    cls_string_list.def("removeAt", true, [](QStringList *list,int index){
+        list->removeAt(index);
+    });
+    cls_string_list.def("removeOne",true, [](QStringList *list,const QString &text){
+        list->removeOne(text);
+    });
+    cls_string_list.def("removeAll",true, [](QStringList *list,const QString &text){
+        list->removeAll(text);
+    });
+    cls_string_list.def("indexOf", false, [](const QStringList *list, const QString &text)->int{
+        return list->indexOf(text);
     });
     cls_string_list.def("set", true, [](QStringList *list, int index, const QString &str){
         checkSize(index, list->size());
@@ -237,111 +229,13 @@ void initCore()
         checkSize(index, list->size());
         return (*list)[index];
     });
-    cls_string_list.def("size", false, [](const QStringList *list)->int { return list->size(); });
+    cls_string_list.def("size", false, [](QStringList *list)->int{
+        return list->size();
+    });
+    cls_string_list.def("clear",true, [](QStringList *list){
+        list->clear();
+    });
     cls_string_list.regist();    
-
-    //list
-    jzbind::ClassBind<JZNodeListIterator> cls_list_it("ListIterator");
-    cls_list_it.def("next", true, &JZNodeListIterator::next);
-    cls_list_it.def("atEnd", true, &JZNodeListIterator::atEnd);
-    cls_list_it.def("key", true, &JZNodeListIterator::key);
-    cls_list_it.def("value", true, &JZNodeListIterator::value);
-    cls_list_it.regist();
-
-    jzbind::ClassBind<JZVariantList> cls_list(Type_list,"List");
-    cls_list.def("createFromString", false, [](const QString &text)->JZVariantList {
-        JZVariantList ret;
-        QStringList list = text.split(",");
-        for (int i = 0; i < list.size(); i++)
-        {
-            JZNodeVariantAny var;
-            if (JZRegExpHelp::isInt(list[i]))
-                var.value = list[i].toInt();
-            else if (JZRegExpHelp::isHex(list[i]))
-                var.value = list[i].toInt(nullptr, 16);
-            else if (JZRegExpHelp::isFloat(list[i]))
-                var.value = list[i].toDouble();
-            else
-                var.value = list[i];
-            ret.push_back(var);
-        }
-        return ret;
-    });
-    cls_list.def("iterator", true, [](JZVariantList *list)->JZNodeListIterator* {        
-        JZNodeListIterator *list_it = new JZNodeListIterator();
-        list_it->it = list->begin();
-        list_it->list = list;
-        return list_it;
-    }, true);
-    cls_list.def("set", true, [](JZVariantList *list, int index, const JZNodeVariantAny &value)
-    {
-        checkSize(index, list->size());
-        (*list)[index] = value;
-    });
-    cls_list.def("get", false, [](JZVariantList *list, int index)->JZNodeVariantAny {
-        checkSize(index, list->size());
-        return list->at(index);
-    });
-    cls_list.def("push_front", true, &JZVariantList::push_front);
-    cls_list.def("pop_front", true, [](JZVariantList *list)
-    {
-        if (list->size() == 0)
-            throw std::runtime_error("list is empty");
-        list->pop_front();
-    });
-    cls_list.def("push_back", true, &JZVariantList::push_back);
-    cls_list.def("pop_back", true, [](JZVariantList *list) {
-        if (list->size() == 0)
-            throw std::runtime_error("list is empty");
-        list->pop_back();
-    });
-    cls_list.def("resize", true, [](JZVariantList *list, int size) {
-        while (list->size() > size)
-            list->pop_back();
-        while (list->size() < size)
-            list->push_back(JZNodeVariantAny());
-    });
-    cls_list.def("size", false, &JZVariantList::size);
-    cls_list.def("clear", true, &JZVariantList::clear);
-    cls_list.regist();
-
-    //map
-    jzbind::ClassBind<JZNodeMapIterator> map_it(Type_map,"MapIterator");
-    map_it.def("next", true, &JZNodeListIterator::next);
-    map_it.def("atEnd", true, &JZNodeListIterator::atEnd);
-    map_it.def("key", true, &JZNodeListIterator::key);
-    map_it.def("value", true, &JZNodeListIterator::value);
-    map_it.regist();
-
-    jzbind::ClassBind<JZVariantMap> cls_map("Map");
-    cls_map.def("createFromString", false, [](const QString &text)->JZVariantMap {
-        JZVariantMap ret;
-        QStringList list = text.split(",");
-        for (int i = 0; i < list.size(); i++)
-        {        
-        }
-        return ret;
-    });
-    cls_map.def("iterator", true, [](JZVariantMap *map)->JZNodeMapIterator*{
-        JZNodeMapIterator *map_it = new JZNodeMapIterator();        
-        map_it->it = map->begin();
-        map_it->map = map;
-        return map_it;
-    },true);    
-    cls_map.def("set", true, [](JZVariantMap *map, const QString &key, const JZNodeVariantAny &value) { map->insert(key, value); });
-    cls_map.def("get", false, [](JZVariantMap *map, const QString &key)->JZNodeVariantAny {
-        auto it = map->find(key);
-        if (it == map->end())
-        {
-            QString error = "no such element, key = " + key;
-            throw std::runtime_error(qPrintable(error));
-        }
-
-        return it.value();
-    });
-    cls_map.def("size", false, &JZVariantMap::size);
-    cls_map.def("clear", true, &JZVariantMap::clear);
-    cls_map.regist();    
 }
 
 void initEvent()
@@ -385,7 +279,7 @@ void initObjects()
 
 void initLayout()
 {
-    JZNodeObjectManager::instance()->delcare("Widget", typeid(QWidget).name(), Type_widget);
+    JZNodeObjectManager::instance()->delcareCClass("Widget", typeid(QWidget).name(), Type_widget);
 
     jzbind::ClassBind<QLayout> cls_layout("Layout", "Object");    
     cls_layout.def("setContentsMargins", true,QOverload<int,int,int,int>::of(&QLayout::setContentsMargins));

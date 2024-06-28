@@ -10,13 +10,13 @@
 #include "sample/ImageBatch/ImageBatch.h"
 #include "sample/SmartHome/SmartHome.h"
 
-void run_testcase()
+void run_testcase(int argc, char *argv[])
 {
-    extern void test_script();
-    extern void test_anglescript();
+    extern void test_script(int argc, char *argv[]);
+    extern void test_anglescript(int argc, char *argv[]);
 
-    test_script();
-    test_anglescript();
+    test_script(argc,argv);
+    test_anglescript(argc,argv);
 }   
 
 int main(int argc, char *argv[])
@@ -25,20 +25,20 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();           
 
-    if(0)
+    if(1)
     {
-        run_testcase();
+        run_testcase(argc,argv);
         return 0;
     }    
     if(0 && argc == 1)
     {
-        //SampleRussian sample;        
+        SampleRussian sample;        
         //SampleImageBatch sample;
-        SampleSmartHome sample;
+        //SampleSmartHome sample;
         sample.saveProject();
         //sample.loadProject();
         sample.run();
-        return 0;
+        return 1;
     }    
 
     if(argc == 1)

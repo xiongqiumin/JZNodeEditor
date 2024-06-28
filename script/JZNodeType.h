@@ -22,10 +22,16 @@ enum
 
     Type_internalEnum = 1100,
 
-    Type_object = 5000,    
-    Type_list,
+    Type_object = 5000,
     Type_stringList,
-    Type_map,
+    Type_varList,    
+    Type_intList,
+    Type_doubleList,
+    Type_varMap,
+    Type_intIntMap,
+    Type_intStringMap,
+    Type_StringIntMap,
+    Type_StringStringMap,
     Type_timer,
     Type_widget,
 
@@ -34,7 +40,6 @@ enum
 };
 
 typedef QVariant (*ConvertFunc)(const QVariant& v);
-typedef QSharedPointer<QVariant> QVariantPtr;
 
 class JZEnum
 {
@@ -131,5 +136,23 @@ public:
     static bool sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefine *slot);
     static bool functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2);
 };
+
+class JZVariant
+{
+public:
+    JZVariant();
+    ~JZVariant();
+
+    void init(const QVariant &v);
+    void setVariant(const QVariant &v);
+    const QVariant &getVariant();
+
+protected:
+    void clearVariant();
+    JZNodeObject *toObject();
+
+    QVariant m_variant;
+};
+typedef QSharedPointer<JZVariant> JZVariantPtr;
 
 #endif

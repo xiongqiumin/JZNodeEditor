@@ -217,9 +217,9 @@ void JZNodeDebugServer::onNodePropChanged(QString file, int id, QString value)
     m_server.sendPack(m_client, &status_pack);
 }
 
-QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
+JZVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
 {
-    QVariant *ref = nullptr;
+    JZVariant *ref = nullptr;
     if (coor.type == JZNodeParamCoor::Name)
     {
         ref = m_engine->getVariableRef(coor.name, stack);
@@ -241,9 +241,9 @@ QVariant JZNodeDebugServer::getVariable(const JZNodeDebugParamInfo &info)
     for (int i = 0; i < info.coors.size(); i++)
     {
         JZNodeDebugParamValue param;
-        QVariant *ref = getVariableRef(info.stack,info.coors[i]);
+        JZVariant *ref = getVariableRef(info.stack,info.coors[i]);
         if (ref)
-            param = toDebugParam(*ref);
+            param = toDebugParam(ref->getVariant());
         else
             param.type = Type_none;
         
@@ -254,13 +254,6 @@ QVariant JZNodeDebugServer::getVariable(const JZNodeDebugParamInfo &info)
 
 QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParamInfo &info)
 {    
-    auto stack = m_engine->stack();    
-    QVariant *ref = getVariableRef(info.stack, info.coor);
-    if (ref && !isJZObject(*ref))
-        *ref = JZNodeType::initValue(JZNodeType::variantType(*ref), info.value);
-    if (info.coor.type == JZNodeParamCoor::Id)
-        m_engine->watchNotify(info.coor.id);
-
     JZNodeDebugParamInfo result;
     result.coors << info.coor;
     result.stack = info.stack;    
@@ -280,7 +273,8 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
             ret.type = JZNodeType::variantType(value);
             ret.value = "null";
         }
-        else if (obj->type() == Type_list)
+        /*
+        else if (obj->type() == Type_intList)
         {
             ret.type = obj->type();            
             
@@ -330,6 +324,7 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
                 func_next->call(it, out);
             }
         }
+        */
         else 
         {
             ret.type = obj->type();            

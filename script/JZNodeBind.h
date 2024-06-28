@@ -18,7 +18,7 @@
 #include "JZEvent.h"
 
 extern void JZScriptOnSlot(JZNodeObject *sender,const QString &function,const QVariantList &in, QVariantList &out);
-extern void JZScriptInvoke(const QString &function,const QVariantList &in, QVariantList &out);
+extern bool JZScriptInvoke(const QString &function,const QVariantList &in, QVariantList &out);
 
 namespace jzbind
 {
@@ -172,7 +172,7 @@ QVariant toVariantEnum(T value, std::false_type)
 template<class T>
 QVariant toVariantClass(T value, std::true_type)
 {
-    JZNodeObjectPtr obj = JZObjectCreate<T>();
+    JZNodeObject* obj = JZObjectCreate<T>();
     *((T*)obj->cobj()) = value;
     return QVariant::fromValue(obj);
 }
@@ -187,7 +187,7 @@ template<class T>
 QVariant toVariantPointer(T value, std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    JZNodeObjectPtr obj = JZObjectRefrence<T>(value, false);
+    JZNodeObject* obj = JZObjectRefrence<T>(value, false);
     return QVariant::fromValue(obj);
 }
 
@@ -394,7 +394,6 @@ public:
 
         Class *cobj = (Class*)obj->cobj();
         auto conn = cobj->connect(cobj,single,recv,func_ptr);
-        cobj->disconnect(conn);
 
         ConnectInfo info;
         info.send = obj;
@@ -486,88 +485,111 @@ int registEnum(QString name,int id = -1)
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
-#define JZBIND_OVERRIDE_IMPL(ret_type, func, ...)            \
-    auto jzobj = toJZObject(this->property("JZObject"));     \
-    Q_ASSERT(!jzobj || !jzobj->function(#func));             \
-                                                             \
-    auto func_def = jzobj->function(#func);                  \
-    QVariantList input,output;                               \
-    input.push_back(QVariant::fromValue(jzobj));             \
-    toVariantList<int>(input,__VA_ARGS__);                   \
-    JZScriptInvoke(func_def->fullName(),input,output);       \
-    return getReturn<ret_type>(output); 
-/*
-//class regist
-#define DEFINE_EVENT(func,qevent)                            \
-    void func(qevent *e){                                    \
-        auto jzobj = toJZObject(this->property("JZObject")); \
-        Q_ASSERT(!jzobj || !jzobj->function(#func));         \
-                                                             \
-        auto func_def = jzobj->function(#func);              \
-        QVariantList input,output;                           \
-        input.push_back(QVariant::fromValue(jzobj));         \
-        input.push_back(getReturn(e, true));                 \
-        JZScriptInvoke(func_def->fullName(),input,output);         \
-    }                                                              \
-                                                                   \
-    void call_##func(qevent *event)                                \
-    {                                                              \
-        Class::func(event);                                        \
-    }                                                              \
-                                                                   \
-    static void call_##func##_help(Class *widget, qevent *event)   \
-    {                                                              \
-        auto ptr = (WidgetWrapper<Class>*)widget;                  \
-        ptr->call_##func(event);                                   \
-    }                                                              
-*/
-
 template<class Class>
-class WidgetWrapper : public Class
+class WidgetEventHelper : public Class
 {
 public:
-    using T = WidgetWrapper<Class>;
+    using T = WidgetEventHelper<Class>;
 
     template<typename Return,typename FuncClass, typename... Args>
 	static bool isNewFunction(Return (FuncClass::*func)(Args...))
 	{
+        Q_UNUSED(func);
 		return std::is_same<Class,FuncClass>::value;
 	}
 
-    static bool isNewPaintEvent() { return isNewFunction(&WidgetWrapper::paintEvent); }
-    static decltype(WidgetWrapper::paintEvent) getPaintEvent() { return &WidgetWrapper::paintEvent; }
+    static bool isNewPaintEvent() { return isNewFunction(&WidgetEventHelper::paintEvent); }
+    static decltype(WidgetEventHelper::paintEvent) getPaintEvent() { return &WidgetEventHelper::paintEvent; }
 
-    static bool isNewShowEvent() { return isNewFunction(&WidgetWrapper::showEvent); }
-    static decltype(WidgetWrapper::showEvent) getShowEvent() { return &WidgetWrapper::showEvent; }
+    static bool isNewShowEvent() { return isNewFunction(&WidgetEventHelper::showEvent); }
+    static decltype(WidgetEventHelper::showEvent) getShowEvent() { return &WidgetEventHelper::showEvent; }
     
-    static bool isNewResizeEvent() { return isNewFunction(&WidgetWrapper::resizeEvent); }
-    static decltype(WidgetWrapper::resizeEvent) getResizeEvent() { return &WidgetWrapper::resizeEvent; }
+    static bool isNewResizeEvent() { return isNewFunction(&WidgetEventHelper::resizeEvent); }
+    static decltype(WidgetEventHelper::resizeEvent) getResizeEvent() { return &WidgetEventHelper::resizeEvent; }
     
-    static bool isNewCloseEvent() { return isNewFunction(&WidgetWrapper::closeEvent); }
-    static decltype(WidgetWrapper::closeEvent) getCloseEvent() { return &WidgetWrapper::closeEvent; }
+    static bool isNewCloseEvent() { return isNewFunction(&WidgetEventHelper::closeEvent); }
+    static decltype(WidgetEventHelper::closeEvent) getCloseEvent() { return &WidgetEventHelper::closeEvent; }
     
-    static bool isNewKeyPressEvent() { return isNewFunction(&WidgetWrapper::keyPressEvent); }
-    static decltype(WidgetWrapper::keyPressEvent) getKeyPressEvent() { return &WidgetWrapper::keyPressEvent; }
+    static bool isNewKeyPressEvent() { return isNewFunction(&WidgetEventHelper::keyPressEvent); }
+    static decltype(WidgetEventHelper::keyPressEvent) getKeyPressEvent() { return &WidgetEventHelper::keyPressEvent; }
     
-    static bool isNewKeyReleaseEvent() { return isNewFunction(&WidgetWrapper::keyReleaseEvent); }
-    static decltype(WidgetWrapper::keyReleaseEvent) getKeyReleaseEvent() { return &WidgetWrapper::keyReleaseEvent; }
+    static bool isNewKeyReleaseEvent() { return isNewFunction(&WidgetEventHelper::keyReleaseEvent); }
+    static decltype(WidgetEventHelper::keyReleaseEvent) getKeyReleaseEvent() { return &WidgetEventHelper::keyReleaseEvent; }
     
-    static bool isNewMousePressEvent() { return isNewFunction(&WidgetWrapper::mousePressEvent); }
-    static decltype(WidgetWrapper::mousePressEvent) getMousePressEvent() { return &WidgetWrapper::mousePressEvent; }
+    static bool isNewMousePressEvent() { return isNewFunction(&WidgetEventHelper::mousePressEvent); }
+    static decltype(WidgetEventHelper::mousePressEvent) getMousePressEvent() { return &WidgetEventHelper::mousePressEvent; }
     
-    static bool isNewMouseMoveEvent() { return isNewFunction(&WidgetWrapper::mouseMoveEvent); }
-    static decltype(WidgetWrapper::mouseMoveEvent) getMouseMoveEvent() { return &WidgetWrapper::mouseMoveEvent; }
+    static bool isNewMouseMoveEvent() { return isNewFunction(&WidgetEventHelper::mouseMoveEvent); }
+    static decltype(WidgetEventHelper::mouseMoveEvent) getMouseMoveEvent() { return &WidgetEventHelper::mouseMoveEvent; }
 
-    static bool isNewMouseReleaseEvent() { return isNewFunction(&WidgetWrapper::mouseReleaseEvent); }
-    static decltype(WidgetWrapper::mouseReleaseEvent) getMouseReleaseEvent() { return &WidgetWrapper::mouseReleaseEvent; }
+    static bool isNewMouseReleaseEvent() { return isNewFunction(&WidgetEventHelper::mouseReleaseEvent); }
+    static decltype(WidgetEventHelper::mouseReleaseEvent) getMouseReleaseEvent() { return &WidgetEventHelper::mouseReleaseEvent; }
 };
 
-
-template<class T>
-int ClassDelcare(QString name,int id)
+template<class ret_type>
+ret_type getReturn(const QVariantList &list)
 {
-    return JZNodeObjectManager::instance()->delcare(name, typeid(T).name(), id);
+    return fromVariant<ret_type>(list[0]);
 }
+
+template<>
+void getReturn(const QVariantList &);
+
+#define JZBIND_OVERRIDE_IMPL(ret_type, func, ...)              \
+    do                                                         \
+    {                                                          \
+        auto jzobj = toJZObject(this->property("JZObject"));   \
+        Q_ASSERT(!jzobj || !jzobj->function(#func));           \
+                                                               \
+        auto func_def = jzobj->function(#func);                \
+        QVariantList input,output;                             \
+        input.push_back(QVariant::fromValue(jzobj));           \
+        toVariantList<int>(input,__VA_ARGS__);                 \
+        JZScriptInvoke(func_def->fullName(),input,output);     \
+        return getReturn<ret_type>(output);                    \
+    } while (0)
+    
+template<class Class>
+class WidgetWrapper : public Class
+{  
+public:
+    void paintEvent(QPaintEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,paintEvent,event);
+    }
+    void showEvent(QShowEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,showEvent,event);
+    }
+    void resizeEvent(QResizeEvent *event)override
+    {
+        JZBIND_OVERRIDE_IMPL(void,resizeEvent,event);
+    }
+    void closeEvent(QCloseEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,closeEvent,event);
+    }
+    void keyPressEvent(QKeyEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,keyPressEvent,event);
+    }
+    void keyReleaseEvent(QKeyEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,keyReleaseEvent,event);
+    }
+    void mousePressEvent(QMouseEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,mousePressEvent,event);
+    }
+    void mouseMoveEvent(QMouseEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,mouseMoveEvent,event);
+    }
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+        JZBIND_OVERRIDE_IMPL(void,mouseReleaseEvent,event);
+    }
+};
 
 template<class Class>
 class ClassBind
@@ -579,7 +601,7 @@ public:
         m_define.className = name;
         m_define.superName = super;
         m_define.isCObject = true;
-        m_define.id = JZNodeObjectManager::instance()->delcare(m_define.className, typeid(Class).name(), typeId);
+        m_define.id = JZNodeObjectManager::instance()->delcareCClass(m_define.className, typeid(Class).name(), typeId);
 
         initCreate(std::is_abstract<Class>());
         initCopy(std::is_copy_constructible<Class>());
@@ -690,7 +712,7 @@ public:
         }
         //regist
         JZNodeObjectManager::instance()->replace(m_define);
-        declareQObject(std::is_base_of<QObject, Class>());
+        setQObjectType(std::is_base_of<QObject, Class>());
     }
 
 protected:
@@ -704,7 +726,10 @@ protected:
 
     void defWidgetEvent(std::true_type)
     {
-        using W = WidgetWrapper<Class>;
+        using W = WidgetEventHelper<Class>;
+
+        m_define.cMeta.create = &createClass<WidgetWrapper<Class>>;
+        m_define.cMeta.destory = &destoryClass<WidgetWrapper<Class>>;
 
         if(W::isNewPaintEvent()) defEvent("paintEvent", W::getPaintEvent());
         if(W::isNewShowEvent()) defEvent("showEvent", W::getShowEvent());
@@ -731,18 +756,19 @@ protected:
     void initCreate(std::false_type)
     {
         initCreateDefault(std::is_default_constructible<Class>());
-        m_define.cMeta.destory = &destoryClass<Class>;
     }
 
     void initCreateDefault(std::true_type)
     {
         m_define.cMeta.create = &createClass<Class>;
+        m_define.cMeta.destory = &destoryClass<Class>;
         defWidgetEvent(std::is_base_of<QWidget, Class>());
     }
 
     void initCreateDefault(std::false_type)
     {
         m_define.cMeta.create = createClassAssert;
+        m_define.cMeta.destory = &destoryClass<Class>;
     }
 
     void initCopy(std::true_type)
@@ -773,14 +799,13 @@ protected:
         return f;
     }
 
-    void declareQObject(std::true_type)
+    void setQObjectType(std::true_type)
     {
-        int id = JZNodeObjectManager::instance()->getIdByCType(typeid(Class).name());
         QString className = Class::staticMetaObject.className();
-        JZNodeObjectManager::instance()->declareQObject(id,className);
+        JZNodeObjectManager::instance()->setQObjectType(className,m_define.id);
     }
 
-    void declareQObject(std::false_type)
+    void setQObjectType(std::false_type)
     {
 
     }

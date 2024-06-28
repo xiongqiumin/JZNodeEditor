@@ -16,7 +16,7 @@ enum{
     Token_Comma,
 };
 
-JZExpression::JZExpression()
+JZExpressionParser::JZExpressionParser()
 {
     m_opList = QStringList({"+","-","*","/"});
 
@@ -31,12 +31,12 @@ JZExpression::JZExpression()
     m_tokenMap[Token_Comma] << Token_LBkt << Token_Number << Token_ID << Token_Func;
 }
 
-QString JZExpression::error()
+QString JZExpressionParser::error()
 {
     return m_error;
 }
 
-bool JZExpression::parse(const QString &expr)
+bool JZExpressionParser::parse(const QString &expr)
 {
     m_tokenExpr.clear();
 
@@ -106,12 +106,12 @@ bool JZExpression::parse(const QString &expr)
     return true;
 }
 
-QStringList JZExpression::opList()
+QStringList JZExpressionParser::opList()
 {
     return m_tokenExpr;
 }
 
-QStringList JZExpression::readToken(const QString &line)
+QStringList JZExpressionParser::readToken(const QString &line)
 {
     QStringList ret;
     QString pre;
@@ -137,7 +137,7 @@ QStringList JZExpression::readToken(const QString &line)
     return ret;
 }
 
-bool JZExpression::isTokenEnd(const QList<Token> &tokens)
+bool JZExpressionParser::isTokenEnd(const QList<Token> &tokens)
 {
     if(bktNum(tokens) != 0)
         return false;
@@ -147,7 +147,7 @@ bool JZExpression::isTokenEnd(const QList<Token> &tokens)
     return true;
 }
 
-int JZExpression::bktNum(const QList<Token> &tokens)
+int JZExpressionParser::bktNum(const QList<Token> &tokens)
 {
     int bkt = 0;
     for(int i = 0; i < tokens.size(); i++)
@@ -162,7 +162,7 @@ int JZExpression::bktNum(const QList<Token> &tokens)
     return bkt;
 }
 
-bool JZExpression::paresToken(const QList<Token> &tokens)
+bool JZExpressionParser::paresToken(const QList<Token> &tokens)
 {
     if(tokens.size() < 3 || tokens[0].type != Token_ID || tokens[1].type != Token_EQ)
     {
@@ -347,7 +347,7 @@ bool JZExpression::paresToken(const QList<Token> &tokens)
     return true;
 }
 
-QString JZExpression::dump()
+QString JZExpressionParser::dump()
 {
     QString log = "input:  " + inList.join(" ") + "\n";
     log += "output: " + outList.join(" ") + "\n";
@@ -358,7 +358,7 @@ QString JZExpression::dump()
     return log;
 }
 
-int JZExpression::tokenPri(const Token &tk)
+int JZExpressionParser::tokenPri(const Token &tk)
 {
     return JZNodeType::opPri(tk.word);
 }

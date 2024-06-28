@@ -13,10 +13,10 @@
     #reg  reg
     @func
 */
-class JZExpression
+class JZExpressionParser
 {
 public:
-    JZExpression();
+    JZExpressionParser();
     bool parse(const QString &expr);
     QStringList opList();
     QString error();

@@ -18,6 +18,7 @@ public:
     void setFunction(const QString &name);
     void setFunction(const JZFunctionDefine *define);
     QString function() const;
+    JZFunctionDefine functionDefine();
 
 protected:
     QString m_functionName;

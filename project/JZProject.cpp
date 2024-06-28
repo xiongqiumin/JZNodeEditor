@@ -499,6 +499,11 @@ JZScriptFile *JZProject::getScriptFile(JZProjectItem *item)
     return nullptr;
 }
 
+void JZProject::addGlobalVariable(const QString &name,QString dataType,const QString &value)
+{
+    globalDefine()->addVariable(name,dataType,value);
+}
+
 void JZProject::addGlobalVariable(const QString &name,int dataType,const QString &value)
 {
     globalDefine()->addVariable(name,dataType,value);

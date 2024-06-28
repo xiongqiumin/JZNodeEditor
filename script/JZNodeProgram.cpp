@@ -375,6 +375,9 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
     case OP_return:
         line += "RETURN";
         break;
+    case OP_clearRegCall:
+        line += "CLEAR REG CALL";
+        break;
     case OP_exit:
         line += "EXIT";
         break;

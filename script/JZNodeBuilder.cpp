@@ -62,7 +62,18 @@ void JZNodeBuilder::initGlobal()
             auto def = m_project->globalVariable(global_params[i]);
             c->addAlloc(JZNodeIRAlloc::Heap, def->name, def->dataType());
             if(!def->value.isEmpty())
-                c->addSetVariable(irRef(def->name),irLiteral(JZNodeType::initValue(def->dataType(),def->value)));
+            {
+                if(!JZNodeType::isObject(def->dataType()))
+                    c->addSetVariable(irRef(def->name),irLiteral(JZNodeType::initValue(def->dataType(),def->value)));
+                else
+                {
+                    QString function = def->type + ".__fromString__";
+                    QList<JZNodeIRParam> in,out;
+                    in << irLiteral(def->value);
+                    out << irRef(def->name);
+                    c->addCall(function,in,out);
+                }
+            }
         }
         return true;
     };
