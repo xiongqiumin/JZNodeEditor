@@ -40,6 +40,7 @@ enum
 };
 
 typedef QVariant (*ConvertFunc)(const QVariant& v);
+typedef QSharedPointer<QVariant> QVariantPtr;
 
 class JZEnum
 {
@@ -71,6 +72,13 @@ public:
     QVariant value;
 };
 Q_DECLARE_METATYPE(JZNodeVariantAny)
+
+class QVariantPointer
+{
+public:
+    QVariant *value;
+};
+Q_DECLARE_METATYPE(QVariantPointer)
 
 /*
     任意类型可以隐式转换为 any
@@ -105,54 +113,39 @@ public:
     static bool isBool(int type);
     static bool isNumber(int type);
     static bool isObject(int type);
-   
+ 
+    static bool isNullObject(const QVariant &v);   
     static bool isNullptr(const QVariant &v);
     static bool isWidget(const QVariant &v);
     static bool isSameType(const QVariant &src_v,const QVariant &dst_v);
     static bool isSameType(int src_type,int dst_type);
+    static bool isLiteralType(int type);
+
+    static bool isPointer(const QVariant &v);
+    static QVariant *getPointer(const QVariant &v);
 
     static int isInherits(QString type1,QString type2);
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2,int op);
         
-    static QString toString(const QVariant &v);
-    static QString toString(JZNodeObject *obj);
+    static QString debugString(const QVariant &v);
+    static QString debugString(const JZNodeObject *obj);
     
     static int upType(int type1, int type2);  //提升类型
     static int upType(QList<int> types);
-    static int matchType(QList<int> dst_types, QList<int> src_types);
-    static int matchType(QList<int> dst_types, const QString &v);    
+    static int matchType(QList<int> src_types,QList<int> dst_types);
     static QVariant defaultValue(int type);
     static QVariant initValue(int type, const QString &v);
 
-    static bool isMatchValue(const QList<int> &dst_types, const QString &v);
     static QString dispString(const QString &text);
     static QString storgeString(const QString &text);
     static int stringType(const QString &text);
     
-    static QString addMark(const QString &text);
-    static QString removeMark(const QString &text);
+    static QString addQuote(const QString &text);
+    static QString removeQuote(const QString &text);
 
     static bool sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefine *slot);
     static bool functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2);
 };
-
-class JZVariant
-{
-public:
-    JZVariant();
-    ~JZVariant();
-
-    void init(const QVariant &v);
-    void setVariant(const QVariant &v);
-    const QVariant &getVariant();
-
-protected:
-    void clearVariant();
-    JZNodeObject *toObject();
-
-    QVariant m_variant;
-};
-typedef QSharedPointer<JZVariant> JZVariantPtr;
 
 #endif

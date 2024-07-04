@@ -35,7 +35,7 @@ void listSet(const QVariantList &in, QVariantList &out)
 {
     auto obj = (JZList *)toJZObject(in[0])->cobj();
     listCheckSize(in[1].toInt(),obj->list.size());
-    obj->list[in[1].toInt()] = in;
+    obj->list[in[1].toInt()] = in[2];
 }
 void listGet(const QVariantList &in, QVariantList &out)
 {
@@ -126,7 +126,7 @@ void listMid(const QVariantList &in, QVariantList &out)
     auto ptr = JZObjectCreate<JZList>();
     auto ret = (JZList *)ptr->cobj();
     ret->list = obj->list.mid(in[1].toInt(),in[2].toInt());
-    out << QVariant::fromValue(ptr);
+    out << QVariant::fromValue(JZNodeObjectPtr(ptr,true));
 }
 void listAppend(const QVariantList &in, QVariantList &out)
 {
@@ -182,8 +182,10 @@ void registList(QString type,int type_id)
 
     QString list_name = "List<" + type + ">";
     QString it_name = "ListIterator<" + type + ">";
-    JZFunctionDefine func_def;
+    if(inst->meta(list_name) && inst->meta(list_name)->functions.size() > 0)
+        return;
 
+    JZFunctionDefine func_def;
     int it_id = inst->delcare(it_name);
 
     auto create_list = [type]()->void*{
@@ -197,7 +199,7 @@ void registList(QString type,int type_id)
         auto obj = parser.parseToType(list_name,in[0].toString());
         if(!obj)
             throw std::runtime_error(qUtf8Printable(parser.error()));
-        out << QVariant::fromValue(obj);
+        out << QVariant::fromValue(JZNodeObjectPtr(obj,true));
     };
 
     // list
@@ -241,6 +243,7 @@ void registList(QString type,int type_id)
     func_def = list.initMemberFunction("size");
     func_def.isCFunction = true;
     func_def.isFlowFunction = false;
+    func_def.paramOut.push_back(JZParamDefine("size", Type_int));
     list.addFunction(func_def);
     registFunction(func_def, listSize);
 
@@ -363,6 +366,7 @@ void registList(QString type,int type_id)
     JZNodeObjectDefine list_it;
     list_it.className = it_name;
     list_it.id = it_id;
+    list_it.isCObject = true;
     inst->regist(list_it);
 }
 
@@ -393,15 +397,15 @@ void mapSet(const QVariantList &in, QVariantList &out)
 {
     auto obj = (JZMap *)toJZObject(in[0])->cobj();
     JZMap::Key key;
-    key.v = in[0];
-    obj->map.insert(key,in[1]);
+    key.v = in[1];
+    obj->map.insert(key,in[2]);
 }
 
 void mapGet(const QVariantList &in, QVariantList &out)
 {
     auto obj = (JZMap *)toJZObject(in[0])->cobj();
     JZMap::Key key;
-    key.v = in[0];
+    key.v = in[1];
 
     auto it = obj->map.find(key);
     if(it == obj->map.end())
@@ -432,11 +436,12 @@ void mapContains(const QVariantList &in, QVariantList &out)
 void registMap(QString key_type, QString value_type,int type_id)
 {
     auto inst = JZNodeObjectManager::instance();
-
     QString map_name = "Map<" + key_type + "," + value_type + ">";
     QString it_name = "MapIterator<" + key_type + "," + value_type + ">";
-    JZFunctionDefine func_def;
+    if(inst->meta(map_name) && inst->meta(map_name)->functions.size() > 0)
+        return;
 
+    JZFunctionDefine func_def;
     int it_id = inst->delcare(it_name);
 
     auto create_map = [key_type,value_type]()->void*{
@@ -451,7 +456,7 @@ void registMap(QString key_type, QString value_type,int type_id)
         auto obj = parser.parseToType(map_name,in[0].toString());
         if(!obj)
             throw std::runtime_error(qUtf8Printable(parser.error()));
-        out << QVariant::fromValue(obj);
+        out << QVariant::fromValue(JZNodeObjectPtr(obj,true));
     };
 
     // list
@@ -495,6 +500,7 @@ void registMap(QString key_type, QString value_type,int type_id)
     func_def = map.initMemberFunction("size");
     func_def.isCFunction = true;
     func_def.isFlowFunction = false;
+    func_def.paramOut.push_back(JZParamDefine("size", Type_int));
     map.addFunction(func_def);
     registFunction(func_def, mapSize);
 
@@ -517,6 +523,30 @@ void registMap(QString key_type, QString value_type,int type_id)
 
     JZNodeObjectDefine map_it;
     map_it.className = it_name;
+    map_it.isCObject = true;
     map_it.id = it_id;
     inst->regist(map_it);
+}
+
+
+void registContainer(QString type,int type_id)
+{
+    int end_idx = type.lastIndexOf(">");
+    if(type.startsWith("List<"))
+    {
+        QString value_type = type.mid(5,end_idx - 5);
+        registList(value_type,type_id);
+    }
+    else if(type.startsWith("Map<"))
+    {
+        QString type_str = type.mid(4,end_idx - 4);
+        QStringList type_list = type_str.split(",");
+        QString key_type = type_list[0];
+        QString value_type = type_list[1];
+        registMap(key_type,value_type,type_id);
+    }
+    else
+    {
+        Q_ASSERT(0);
+    }
 }

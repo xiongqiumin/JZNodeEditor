@@ -80,6 +80,7 @@ void JZNodeBuilder::initGlobal()
 
     JZFunctionDefine global_func;
     global_func.name = "__init__";
+    global_func.isFlowFunction = true;
     buildCustom(global_func, func);
 }
 
@@ -130,11 +131,12 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         m_program->m_variables[name] = *m_project->globalVariable(name);
     }
     
+    JZNodeTypeMeta type_meta;
     auto class_list = m_project->itemList("./",ProjectItem_class);
     for(int i = 0; i < class_list.size(); i++)
     {
         JZScriptClassItem *script = dynamic_cast<JZScriptClassItem*>(class_list[i]);        
-        m_program->m_objectDefines << script->objectDefine();
+        type_meta.objectList << script->objectDefine();
                 
         auto params = script->itemList(ProjectItem_param);
         Q_ASSERT(params.size() == 0 || params.size() == 1);
@@ -143,6 +145,16 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             auto param = dynamic_cast<JZParamItem*>(params[0]);
             m_program->m_binds[script->className()] = param->bindVariables();
         }
+    }
+
+    auto container_list = m_project->containerList();
+    for(int i = 0; i < container_list.size(); i++)
+    {
+        auto meta = JZNodeObjectManager::instance()->meta(container_list[i]);
+        JZNodeCObjectDelcare cobj;
+        cobj.className = meta->className;
+        cobj.id = meta->id;
+        type_meta.cobjectList << cobj;
     }
 
     auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);
@@ -158,52 +170,18 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
         if (!buildScript(script))
-            return false;        
+            return false;
+
+        auto func_def = script->function();
+        if(!func_def.isMemberFunction())
+            type_meta.functionList << func_def;        
     }
 
+    m_program->m_typeMeta = type_meta;
     if(!link())
         return false;
 
     return true;
-}
-
-void JZNodeBuilder::buildProgram()
-{
-    auto list = m_project->globalVariableList();
-    for (int i = 0; i < list.size(); i++)
-    {
-        QString name = list[i];
-        m_program->m_variables[name] = *m_project->globalVariable(name);
-    }
-
-    auto class_list = m_project->itemList("./", ProjectItem_class);
-    for (int i = 0; i < class_list.size(); i++)
-    {
-        JZScriptClassItem *script = dynamic_cast<JZScriptClassItem*>(class_list[i]);
-        m_program->m_objectDefines << script->objectDefine();
-
-        auto params = script->itemList(ProjectItem_param);
-        Q_ASSERT(params.size() == 0 || params.size() == 1);
-        if (params.size() == 1)
-        {
-            auto param = dynamic_cast<JZParamItem*>(params[0]);
-            m_program->m_binds[script->className()] = param->bindVariables();
-        }
-    }
-
-    auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);
-    for (int i = 0; i < bind_list.size(); i++)
-    {
-        JZScriptItem *script = dynamic_cast<JZScriptItem*>(bind_list[i]);
-        buildScript(script);
-    }
-
-    auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
-    for (int i = 0; i < function_list.size(); i++)
-    {
-        JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
-        buildScript(script);
-    }
 }
 
 void JZNodeBuilder::replaceNopStatment(JZNodeScript *script, int index)
@@ -337,12 +315,7 @@ void JZNodeBuilder::replaceUnitTestFunction(JZScriptItem *file, ScriptDepend *de
 
 bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNodeProgram *program)
 {
-    clear();    
-    m_program = program;
-    m_program->clear();
-    m_scripts.clear();
-
-    buildProgram();
+    build(program);
     m_scripts.remove(file->itemPath());
     if (!buildScript(file))
         return false;        
@@ -428,9 +401,9 @@ bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNo
 bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNodeCompiler*, QString&)> buildFunction, const QList<JZParamDefine> &local)
 {
     JZNodeScriptPtr boot = JZNodeScriptPtr(new JZNodeScript());    
-    boot->file = func.name;
 
     JZScriptItem file(ProjectItem_scriptFunction);
+    file.setName(func.name);
     file.setFunction(func);
     file.setProject(m_project);
     for(int i = 0; i < local.size(); i++)
@@ -466,16 +439,12 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
         boot->statmentList[i]->isBreak = false;    
 
     m_program->m_scripts[boot->file] = boot;
+    m_program->m_typeMeta.functionList << file.function();
     return true;
 }
 
 bool JZNodeBuilder::link()
 {       
-    std::sort(m_program->m_objectDefines.begin(),m_program->m_objectDefines.end(),
-        [](const JZNodeObjectDefine &d1,const JZNodeObjectDefine &d2)->bool{
-            return d1.id < d2.id;
-        });
-
     auto it_s = m_scripts.begin();
     while (it_s != m_scripts.end())
     {

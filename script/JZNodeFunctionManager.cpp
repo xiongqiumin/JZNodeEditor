@@ -44,23 +44,24 @@ void JZNodeFunctionManager::init()
 }
 
 const JZFunctionDefine *JZNodeFunctionManager::function(QString funcName)
-{
-    auto it = m_funcMap.find(funcName);
-    if (it != m_funcMap.end())
-        return &it->funcDefine;
+{    
+    int index = funcName.indexOf(".");
+    if (index >= 0)
+    {
+        QString base_name = funcName.mid(0, index);
+        QString function_name = funcName.mid(index + 1);
+        auto meta = JZNodeObjectManager::instance()->meta(base_name);
+        if (meta)
+            return meta->function(function_name);
+    }
     else
     {
-        int index = funcName.indexOf(".");
-        if (index >= 0)
-        {
-            QString base_name = funcName.mid(0, index);
-            QString function_name = funcName.mid(index + 1);
-            auto meta = JZNodeObjectManager::instance()->meta(base_name);
-            if (meta)
-                return meta->function(function_name);
-        }        
-        return nullptr;
+        auto it = m_funcDefine.find(funcName);
+        if (it != m_funcDefine.end())
+            return &it.value();
     }
+
+    return nullptr;
 }
 
 void JZNodeFunctionManager::loadLibrary(QString filename)
@@ -75,10 +76,10 @@ void JZNodeFunctionManager::setUserRegist(bool flag)
 QList<const JZFunctionDefine*> JZNodeFunctionManager::functionList()
 {
     QList<const JZFunctionDefine*>  list;
-    auto it = m_funcMap.begin();
-    while(it != m_funcMap.end())
+    auto it = m_funcDefine.begin();
+    while(it != m_funcDefine.end())
     {
-        list << &it->funcDefine;
+        list << &it.value();
         it++;
     }
     return list;
@@ -86,13 +87,13 @@ QList<const JZFunctionDefine*> JZNodeFunctionManager::functionList()
 
 void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func)
 {
-    Q_ASSERT(!m_funcMap.contains(define.fullName()) && define.isCFunction);
+    Q_ASSERT(define.isCFunction);
 
     JZFunction impl;
     impl.define = define;
     impl.cfunc = func; 
-    m_funcMap[define.fullName()].funcDefine = define;
-    m_funcMap[define.fullName()].funcImpl = impl;
+    registFunction(define);
+    m_funcImpl[define.fullName()] = impl;
 }
 
 void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> cfunc)
@@ -116,45 +117,48 @@ void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QShare
 
 void JZNodeFunctionManager::unregistFunction(QString name)
 {
-    auto it = m_funcMap.find(name);
-    if(it == m_funcMap.end())
+    auto it = m_funcDefine.find(name);
+    if(it == m_funcDefine.end())
         return;
 
-    m_funcMap.erase(it);
+    m_funcDefine.erase(it);
 }
 
 void JZNodeFunctionManager::clearUserReigst()
 {
     for(int i = 0; i < m_userFuncs.size(); i++)
-        m_funcMap.remove(m_userFuncs[i]);
+    {
+        m_funcDefine.remove(m_userFuncs[i]);
+        m_funcImpl.remove(m_userFuncs[i]);
+    }
 }
 
 void JZNodeFunctionManager::registFunction(const JZFunctionDefine &define)
 {
     QString fullName = define.fullName();
-    Q_ASSERT(!m_funcMap.contains(fullName));
+    Q_ASSERT_X(!m_funcDefine.contains(fullName),"Error",qUtf8Printable(fullName + " already regist"));
 
-    m_funcMap[fullName].funcDefine = define;
+    m_funcDefine[fullName] = define;
     if(m_userRegist)
         m_userFuncs << fullName;
 }
 
 void JZNodeFunctionManager::replaceFunction(const JZFunctionDefine &define)
 {
-    m_funcMap[define.fullName()].funcDefine = define;
+    m_funcDefine[define.fullName()] = define;
 }
 
 void JZNodeFunctionManager::registFunctionImpl(JZFunction &impl)
 {    
-    m_funcMap[impl.fullName()].funcDefine = impl.define;
-    m_funcMap[impl.fullName()].funcImpl = impl;
+    Q_ASSERT(!m_funcImpl.contains(impl.fullName()));
+    m_funcImpl[impl.fullName()] = impl;
 }
 
 const JZFunction *JZNodeFunctionManager::functionImpl(QString funcName)
 {
-    auto it = m_funcMap.find(funcName);
-    if (it == m_funcMap.end())
+    auto it = m_funcImpl.find(funcName);
+    if (it == m_funcImpl.end())
         return nullptr; 
 
-    return &it->funcImpl;
+    return &it.value();
 }

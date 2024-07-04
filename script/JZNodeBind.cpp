@@ -35,9 +35,29 @@ QString fromVariant<QString>(const QVariant &v, std::false_type)
 }
 
 template<>
+JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type)
+{
+    Q_ASSERT(v.userType() == qMetaTypeId<JZNodeVariantAny>());
+    return v.value<JZNodeVariantAny>();
+}
+
+template<>
+JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type)
+{
+    Q_ASSERT(v.userType() == qMetaTypeId<JZFunctionPointer>());
+    return v.value<JZFunctionPointer>();
+}
+
+template<>
 QVariant toVariant(JZNodeVariantAny value)
 {
     return QVariant::fromValue(value);
+}
+
+template<>
+QVariant toVariant(JZFunctionPointer ptr)
+{
+    return QVariant::fromValue(ptr);
 }
 
 template<>

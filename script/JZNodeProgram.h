@@ -71,17 +71,34 @@ public:
     void loadFromStream(QDataStream &s);
 
     QString file;
-    QString className;
-    QMap<int, NodeInfo> nodeInfo;    
-    QList<JZNodeIRPtr> statmentList;            
+    QString className; 
+    QList<JZNodeIRPtr> statmentList;
 
     QList<JZFunction> functionList;    
-    QList<NodeWatch> watchList;    //display node        
+    QList<NodeWatch> watchList;           //display node        
+    QMap<int,NodeInfo> nodeInfo;   
+    QList<JZParamDefine> localVariables;
 
 protected:
     Q_DISABLE_COPY(JZNodeScript);    
 };
 typedef QSharedPointer<JZNodeScript> JZNodeScriptPtr;
+
+class JZNodeTypeMeta
+{
+public:
+    void clear();
+
+    const JZFunctionDefine *function(QString name) const;
+    const JZNodeObjectDefine *object(QString name) const;
+
+    QList<JZFunctionDefine> functionList;
+    QList<JZNodeObjectDefine> objectList;       
+    QList<JZNodeCObjectDelcare> cobjectList;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param);
+QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param);
+void JZNodeRegistType(const JZNodeTypeMeta &type_info);
 
 //JZNodeProgram
 class JZNodeBuilder;
@@ -95,16 +112,15 @@ public:
     bool load(QString file);
     bool save(QString file);
     void clear();
+
+    const JZNodeTypeMeta &typeMeta() const;   
+    void registType();
+
     QString applicationFilePath();
     
-    QStringList functionList();
-    JZFunction *function(QString name);
-    JZNodeScript *script(QString path);    
-
-    QList<JZNodeScript*> scriptList();    
-    QMap<QString, JZNodeParamBind> bindInfo(QString className);
-    
-    QList<JZNodeObjectDefine> objectDefines();       
+    QList<JZNodeScript*> scriptList();
+    JZNodeScript *script(QString path);        
+    QMap<QString, JZNodeParamBind> bindInfo(QString className);    
 
     QString irToString(JZNodeIR *ir);
     QString dump();   
@@ -119,9 +135,9 @@ protected:
     QString m_filePath;
     QString m_error;
 
+    JZNodeTypeMeta m_typeMeta;
     QMap<QString,JZNodeScriptPtr> m_scripts; 
     QMap<QString,JZParamDefine> m_variables;        
-    QList<JZNodeObjectDefine> m_objectDefines;        
     QMap<QString, QMap<QString, JZNodeParamBind>> m_binds;    
 };
 

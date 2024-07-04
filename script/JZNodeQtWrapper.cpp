@@ -77,15 +77,15 @@ void initBase()
 {
     JZNodeObjectManager::instance()->delcareCClass("StringList",typeid(QStringList).name() ,Type_stringList);
 
-    registList("int",Type_intList);
-    registList("double",Type_doubleList);
-    registList("any",Type_varList);
+    registContainer("List<int>",Type_intList);
+    registContainer("List<double>",Type_doubleList);
+    registContainer("List<any>",Type_varList);
 
-    registMap("int","int",Type_intIntMap);
-    registMap("int","string",Type_intStringMap);
-    registMap("string","int",Type_StringIntMap);
-    registMap("string","string",Type_StringStringMap);
-    registMap("string","any",Type_varMap);
+    registContainer("Map<int,int>",Type_intIntMap);
+    registContainer("Map<int,string>",Type_intStringMap);
+    registContainer("Map<string,int>",Type_StringIntMap);
+    registContainer("Map<string,string>",Type_StringStringMap);
+    registContainer("Map<string,any>",Type_varMap);
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
@@ -466,14 +466,14 @@ void initFiles()
 QVariant colorEnum_to_color(const QVariant &v)
 {
     QColor *color = new QColor((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectRefrence(color,true);
+    auto ptr = JZObjectCreateRefrence(color,true);
     return QVariant::fromValue(ptr);
 }
 
 QVariant colorEnum_to_brush(const QVariant &v)
 {
     QBrush *brush = new QBrush((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectRefrence(brush,true);
+    auto ptr = JZObjectCreateRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 
@@ -481,7 +481,7 @@ QVariant color_to_brush(const QVariant &v)
 {    
     QColor *c = jzbind::fromVariant<QColor*>(v);
     QBrush *brush = new QBrush(*c);
-    auto ptr = JZObjectRefrence(brush,true);
+    auto ptr = JZObjectCreateRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 

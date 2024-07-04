@@ -25,12 +25,12 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();           
 
-    if(1)
+    if(0)
     {
         run_testcase(argc,argv);
         return 0;
     }    
-    if(0 && argc == 1)
+    if(1 && argc == 1)
     {
         SampleRussian sample;        
         //SampleImageBatch sample;

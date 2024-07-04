@@ -58,6 +58,8 @@ public:
     ~JZNodeFunctionPointer();
 
     void setFucntion(QString name);
+    QString fucntion();
+    
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
         
 protected:

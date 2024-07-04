@@ -11,6 +11,8 @@
 #include "JZNodeEvent.h"
 #include "JZNodeValue.h"
 #include "JZProjectTemplate.h"
+#include "JZContainer.h"
+#include "JZNodeProgram.h"
 
 // JZProject
 JZProject::JZProject()    
@@ -35,20 +37,29 @@ void JZProject::clear()
     m_filepath.clear();
     m_root.removeChlids();
     m_root.setName(".");    
+    m_containers.clear();
     
     JZNodeFunctionManager::instance()->clearUserReigst();
     JZNodeObjectManager::instance()->clearUserReigst();
 }
 
-QByteArray JZProject::magic()
+QStringList JZProject::containerList() const
 {
-    QString magic = "1234567";
+    return m_containers;
+}
 
-    QByteArray result;
-    QDataStream s(&result, QIODevice::WriteOnly);
-    s << QString(magic);
+void JZProject::registContainer(QString type)
+{
+    if(m_containers.contains(type))
+        return;
 
-    return result;
+    m_containers.push_back(type);
+    ::registContainer(type);
+}
+
+void JZProject::unregistContainer(QString type)
+{
+    m_containers.removeAll(type);
 }
 
 bool JZProject::initProject(QString temp)
@@ -70,27 +81,40 @@ bool JZProject::newProject(QString path,QString name, QString temp)
 
 void JZProject::registType()
 {
-    JZNodeFunctionManager::instance()->clearUserReigst();
-    JZNodeObjectManager::instance()->clearUserReigst();
+    JZNodeTypeMeta meta;
 
-    // regist type
+    QList<JZProjectItem *> class_list = itemList("./",ProjectItem_class);
+    for(int i = 0; i < class_list.size(); i++)    
+    {
+        auto class_item = dynamic_cast<JZScriptClassItem*>(class_list[i]);
+        meta.objectList << class_item->objectDefine();
+    }
+
+    for(int i = 0; i < m_containers.size(); i++)
+    {
+        JZNodeCObjectDelcare cobj;
+        cobj.className = m_containers[i];
+        meta.cobjectList << cobj;
+    }
+
     QList<JZProjectItem *> function_list = itemList("./",ProjectItem_scriptFunction);
     for (int i = 0; i < function_list.size(); i++)
     {
         if(!function_list[i]->getClassFile())
-            regist(function_list[i]);
+        {
+            auto script_item = dynamic_cast<JZScriptItem*>(function_list[i]);
+            meta.functionList << script_item->function();
+        }
     }
 
-    QList<JZProjectItem *> class_list = itemList("./",ProjectItem_class);
-    for(int i = 0; i < class_list.size(); i++)    
-        regist(class_list[i]);    
+    JZNodeRegistType(meta);    
 }
 
 bool JZProject::open(QString filepath)
 {
     clear();
     JZProjectFile file;    
-    if (!file.load(filepath))
+    if (!file.openLoad(filepath))
     {
         m_error = file.error();
         return false;
@@ -98,7 +122,9 @@ bool JZProject::open(QString filepath)
 
     QStringList file_list;
     auto &pro_s = file.stream();
-    pro_s["filelist"] >> file_list;
+    pro_s >> m_containers;
+    pro_s >> file_list;
+    file.close();
 
     m_blockRegist = true;        
     m_filepath = filepath;
@@ -126,7 +152,7 @@ bool JZProject::open(QString filepath)
             auto item = dynamic_cast<JZScriptItem*>(script_list[i]);
             item->loadFinish();
         }
-    }    
+    }
 
     loadCache();
     return true;
@@ -143,16 +169,24 @@ bool JZProject::save()
     if (m_filepath.isEmpty())
         return false;
 
+    JZProjectFile file;    
+    if(!file.openSave(m_filepath))
+    {
+        m_error = file.error();
+        return false;
+    }
+
     auto item_list = m_root.itemList({ProjectItem_scriptFile, ProjectItem_ui});
     QStringList file_list;
     for (int i = 0; i < item_list.size(); i++)    
         file_list << item_list[i]->itemPath();    
-    
-    JZProjectFile file;
-    auto &pro_s = file.stream();
-    pro_s["filelist"] << file_list;
 
-    return file.save(m_filepath);        
+    auto &pro_s = file.stream();
+    pro_s << m_containers;
+    pro_s << file_list;
+
+    file.close();
+    return true;
 }
 
 void JZProject::saveTransaction()
@@ -183,7 +217,7 @@ void JZProject::saveCache()
         return;
 
     QDataStream s(&file);
-    s << magic();
+    s << NodeMagic();
     s << breakPoints();
     file.close();
 }
@@ -201,7 +235,7 @@ void JZProject::loadCache()
     QByteArray pre_magic;
     QDataStream s(&file);
     s >> pre_magic;
-    if (pre_magic == magic())
+    if (pre_magic == NodeMagic())
     {
         QMap<QString, QList<int>> breakPoints;
         s >> breakPoints;        

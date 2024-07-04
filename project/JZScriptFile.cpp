@@ -168,7 +168,6 @@ void JZScriptFile::saveScript(QDataStream &s, JZProjectItem *parent)
     {
         auto item = items[i];
 
-        JZProjectStream s;
         if (item->itemType() == ProjectItem_param)
             param_list << getItemData(item);        
         else if (item->itemType() == ProjectItem_scriptFunction)

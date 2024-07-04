@@ -9,6 +9,7 @@
 #include "JZUiFile.h"
 #include "JZNodeView.h"
 #include "JZNodeUtils.h"
+#include "JZContainer.h"
 
 SampleRussian::SampleRussian()
 {
@@ -21,11 +22,11 @@ SampleRussian::SampleRussian()
     auto class_file = m_project.getClass("MainWindow");
 
     class_file->addMemberVariable("map", "List<List<int>>");
-    class_file->addMemberVariable("colors", Type_intList);
+    class_file->addMemberVariable("colors", "List<Color>");
     class_file->addMemberVariable("timer", Type_timer);
     class_file->addMemberVariable("isRect", Type_bool);
     
-    class_file->addMemberVariable("shape", Type_intList);
+    class_file->addMemberVariable("shape", "List<List<Point>>");
     class_file->addMemberVariable("shape_index", Type_int);
     class_file->addMemberVariable("shape_row", Type_int);
     class_file->addMemberVariable("shape_col", Type_int);
@@ -38,6 +39,10 @@ SampleRussian::SampleRussian()
     info.dir = JZNodeParamBind::DataToUi;
     class_file->getParamFile()->addBind(info);
     
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
+    JZFunctionDefine func_onTimer = meta->initMemberFunction("onTimer");
+    class_file->addMemberFunction(func_onTimer);
+
     addInitGame();
     addInitFunction();
     addMapGet();
@@ -62,9 +67,12 @@ SampleRussian::~SampleRussian()
 
 void SampleRussian::addInitGame()
 {
-    auto func_inst = JZNodeFunctionManager::instance();
+    m_project.registContainer("List<List<int>>");
+    m_project.registContainer("List<Point>");
+    m_project.registContainer("List<List<Point>>");
+    m_project.registContainer("List<Color>");
+
     auto color_meta = JZNodeObjectManager::instance()->meta("Color");
-    auto list_meta = JZNodeObjectManager::instance()->meta("List");
 
     auto class_file = m_project.getClass("MainWindow");
     auto mainwindow_meta = JZNodeObjectManager::instance()->meta("MainWindow");
@@ -85,10 +93,10 @@ void SampleRussian::addInitGame()
     set_color_list->setVariable("this.colors");
 
     JZNodeCreate *create_map = new JZNodeCreate();
-    create_map->setClassName("List");
+    create_map->setClassName("List<List<int>>");
 
     JZNodeCreate *create_color_list = new JZNodeCreate();
-    create_color_list->setClassName("List");
+    create_color_list->setClassName("List<Color>");
 
     JZNodeParam *node_color_list = new JZNodeParam();
     node_color_list->setVariable("this.colors");
@@ -111,7 +119,7 @@ void SampleRussian::addInitGame()
     script->addConnect(create_color_list->paramOutGemo(0), set_color_list->paramInGemo(1));
 
     JZNodeFunction *color_resize = new JZNodeFunction();
-    color_resize->setFunction(func_inst->function("List.resize"));
+    color_resize->setFunction("List<Color>.resize");
     script->addNode(color_resize);
 
     script->addConnect(node_color_list->paramOutGemo(0), color_resize->paramInGemo(0));
@@ -134,7 +142,7 @@ void SampleRussian::addInitGame()
         color_create->setPinValue(color_create->paramIn(2), QString::number(b));
 
         JZNodeFunction *list_set = new JZNodeFunction();
-        list_set->setFunction(list_meta->function("set"));
+        list_set->setFunction("List<Color>.set");
         script->addNode(color_create);
         script->addNode(list_set);
 
@@ -155,10 +163,10 @@ void SampleRussian::addInitGame()
     for_col->setRange(0, m_col);
 
     JZNodeFunction *row_push = new JZNodeFunction();
-    row_push->setFunction(func_inst->function("List.push_back"));
+    row_push->setFunction("List<List<int>>.push_back");
 
     JZNodeCreate *create_col = new JZNodeCreate();
-    create_col->setClassName("List");
+    create_col->setClassName("List<int>");
 
     JZNodeSetParam *set_col = new JZNodeSetParam();
     JZNodeParam *get_col = new JZNodeParam();
@@ -166,7 +174,7 @@ void SampleRussian::addInitGame()
     get_col->setVariable("col_list");
 
     JZNodeFunction *col_push = new JZNodeFunction();
-    col_push->setFunction(func_inst->function("List.push_back"));
+    col_push->setFunction("List<int>.push_back");
     col_push->setPinValue(col_push->paramIn(1), QString::number(-1));
 
     script->addNode(node_map);
@@ -201,10 +209,6 @@ void SampleRussian::addInitGame()
 
 void SampleRussian::addInitFunction()
 {
-    auto func_inst = JZNodeFunctionManager::instance();
-    auto color_meta = JZNodeObjectManager::instance()->meta("Color");
-    auto list_meta = JZNodeObjectManager::instance()->meta("List");
-
     auto class_file = m_project.getClass("MainWindow");
     auto mainwindow_meta = JZNodeObjectManager::instance()->meta("MainWindow");
     
@@ -228,11 +232,28 @@ void SampleRussian::addInitFunction()
     script->addConnect(func_start->flowOutGemo(0), init_game->flowInGemo());
     script->addConnect(init_game->flowOutGemo(0), set_timer->flowInGemo());
     script->addConnect(create_timer->paramOutGemo(0), set_timer->paramInGemo(1));
+
+    JZNodeSignalConnect *node_connect = new JZNodeSignalConnect();
+    JZNodeThis *node_this = new JZNodeThis();
+    JZNodeFunctionPointer *node_timeout = new JZNodeFunctionPointer();
+    JZNodeFunctionPointer *node_slot = new JZNodeFunctionPointer();
+    script->addNode(node_connect);
+    script->addNode(node_this);
+    script->addNode(node_timeout);
+    script->addNode(node_slot);
+
+    node_timeout->setFucntion("Timer.timeout");
+    node_slot->setFucntion("MainWindow.onTimer");
+
+    script->addConnect(set_timer->flowOutGemo(0),node_connect->flowInGemo());
+    script->addConnect(set_timer->paramOutGemo(0), node_connect->paramInGemo(0));
+    script->addConnect(node_timeout->paramOutGemo(0), node_connect->paramInGemo(1));
+    script->addConnect(node_this->paramOutGemo(0), node_connect->paramInGemo(2));
+    script->addConnect(node_slot->paramOutGemo(0), node_connect->paramInGemo(3));
 }
 
 void SampleRussian::addMapGet()
 {
-    auto func_inst = JZNodeFunctionManager::instance();
     auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
     auto class_file = m_project.getClass("MainWindow");
 
@@ -257,10 +278,10 @@ void SampleRussian::addMapGet()
     node_map->setVariable("this.map");
 
     JZNodeFunction *row_get = new JZNodeFunction();
-    row_get->setFunction(func_inst->function("List.get"));
+    row_get->setFunction("List<List<int>>.get");
 
     JZNodeFunction *col_get = new JZNodeFunction();
-    col_get->setFunction(func_inst->function("List.get"));
+    col_get->setFunction("List<int>.get");
 
     JZNodeReturn *node_return = new JZNodeReturn();
 
@@ -282,7 +303,6 @@ void SampleRussian::addMapGet()
 
 void SampleRussian::addMapSet()
 {
-    auto func_inst = JZNodeFunctionManager::instance();
     auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
     auto class_file = m_project.getClass("MainWindow");
 
@@ -310,10 +330,10 @@ void SampleRussian::addMapSet()
     node_map->setVariable("this.map");
 
     JZNodeFunction *row_get = new JZNodeFunction();
-    row_get->setFunction(func_inst->function("List.get"));
+    row_get->setFunction("List<List<int>>.get");
 
     JZNodeFunction *col_set = new JZNodeFunction();
-    col_set->setFunction(func_inst->function("List.set"));
+    col_set->setFunction("List<int>.set");
     
     script->addNode(node_row);
     script->addNode(node_col);
@@ -333,12 +353,10 @@ void SampleRussian::addMapSet()
 
 void SampleRussian::addPaintEvent()
 {
-    auto func_inst = JZNodeFunctionManager::instance();
     auto class_file = m_project.getClass("MainWindow");
 
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
     auto rect_meta = JZNodeObjectManager::instance()->meta("Rect");
-    auto widget = JZNodeObjectManager::instance()->meta("Widget");    
     auto painter = JZNodeObjectManager::instance()->meta("Painter");
 
     JZFunctionDefine define = meta->initVirtualFunction("paintEvent");
@@ -414,7 +432,7 @@ void SampleRussian::addPaintEvent()
     node_color_list->setVariable("this.colors");
 
     JZNodeFunction *color_get = new JZNodeFunction();
-    color_get->setFunction(func_inst->function("List.get"));
+    color_get->setFunction("List<Color>.get");
 
     script->addNode(node_color_list);
     script->addNode(color_get);    
@@ -423,10 +441,10 @@ void SampleRussian::addPaintEvent()
     node_map->setVariable("this.map");
 
     JZNodeFunction *row_get = new JZNodeFunction();
-    row_get->setFunction(func_inst->function("List.get"));
+    row_get->setFunction("List<List<int>>.get");
 
     JZNodeFunction *col_get = new JZNodeFunction();
-    col_get->setFunction(func_inst->function("List.get"));
+    col_get->setFunction("List<int>.get");
 
     JZNodeBranch *branch = new JZNodeBranch();
 
@@ -486,19 +504,19 @@ void SampleRussian::addPaintEvent()
     JZNodeFor *node_for = new JZNodeFor();
 
     JZNodeFunction *get_list = new JZNodeFunction();
-    get_list->setFunction(func_inst->function("List.get"));
+    get_list->setFunction("List<List<Point>>.get");
 
     JZNodeFunction *get_point = new JZNodeFunction();
-    get_point->setFunction(func_inst->function("List.get"));
+    get_point->setFunction("List<Point>.get");
 
     JZNodeFunction *get_list_size = new JZNodeFunction();
-    get_list_size->setFunction(func_inst->function("List.size"));
+    get_list_size->setFunction("List<Point>.size");
 
     JZNodeFunction *point_row = new JZNodeFunction();
-    point_row->setFunction(func_inst->function("Point.x"));
+    point_row->setFunction("Point.x");
 
     JZNodeFunction *point_col = new JZNodeFunction();
-    point_col->setFunction(func_inst->function("Point.y"));    
+    point_col->setFunction("Point.y");    
 
     JZNodeParam *shape_row = new JZNodeParam();
     shape_row->setVariable("this.shape_row");
@@ -570,7 +588,7 @@ void SampleRussian::addPaintEvent()
     JZNodeExpression *pt_expr_col = new JZNodeExpression();
 
     JZNodeFunction *pt_color_get = new JZNodeFunction();
-    pt_color_get->setFunction(func_inst->function("List.get"));
+    pt_color_get->setFunction("List<Color>.get");
 
     JZNodeFunction *pt_rect_create = new JZNodeFunction();
     pt_rect_create->setFunction(rect_meta->function("create"));
@@ -613,45 +631,52 @@ void SampleRussian::addPaintEvent()
 
 void SampleRussian::addButtonClicked()
 {
-    auto btn_meta = JZNodeObjectManager::instance()->meta("PushButton");
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
     auto class_file = m_project.getClass("MainWindow");
     
     //btnStart
-    JZFunctionDefine func_btnStart = meta->initSlotFunction("btnStart","clicked");
-    auto script = class_file->addMemberFunction(func_btnStart);
-    auto btnStart = script->getNode(0);
+    {
+        JZFunctionDefine func_btnStart = meta->initSlotFunction("btnStart","clicked");
+        auto script = class_file->addMemberFunction(func_btnStart);
+        auto btnStart = script->getNode(0);
 
-    JZNodeFunction *init_game = new JZNodeFunction();
-    init_game->setFunction(meta->function("initGame"));
-    script->addNode(init_game);
+        JZNodeFunction *init_game = new JZNodeFunction();
+        init_game->setFunction(meta->function("initGame"));
+        script->addNode(init_game);
 
-    JZNodeParam *timer = new JZNodeParam();
-    timer->setVariable("this.timer");
+        JZNodeParam *timer = new JZNodeParam();
+        timer->setVariable("this.timer");
 
-    JZNodeFunction *start = new JZNodeFunction();
-    start->setFunction(JZNodeFunctionManager::instance()->function("Timer.start"));
-    start->setPinValue(start->paramIn(1), "500");
+        JZNodeFunction *start = new JZNodeFunction();
+        start->setFunction(JZNodeFunctionManager::instance()->function("Timer.start"));
+        start->setPinValue(start->paramIn(1), "500");
 
-    script->addNode(timer);
-    script->addNode(start);
+        script->addNode(timer);
+        script->addNode(start);
 
-    script->addConnect(timer->paramOutGemo(0), start->paramInGemo(0));
-    script->addConnect(btnStart->flowOutGemo(), init_game->flowInGemo());
-    script->addConnect(init_game->flowOutGemo(), start->flowInGemo());
+        script->addConnect(timer->paramOutGemo(0), start->paramInGemo(0));
+        script->addConnect(btnStart->flowOutGemo(), init_game->flowInGemo());
+        script->addConnect(init_game->flowOutGemo(), start->flowInGemo());
+    }
 
     //*btnStop
-    JZFunctionDefine func_btnStop = meta->initSlotFunction("btnStop","clicked");
-    script = class_file->addMemberFunction(func_btnStop);
-    auto btnStop = script->getNode(0);
+    {
+        JZFunctionDefine func_btnStop = meta->initSlotFunction("btnStop","clicked");
+        auto script = class_file->addMemberFunction(func_btnStop);
+        auto btnStop = script->getNode(0);
 
-    JZNodeFunction *stop = new JZNodeFunction();
-    stop->setFunction(JZNodeFunctionManager::instance()->function("Timer.stop"));
+        JZNodeParam *timer = new JZNodeParam();
+        timer->setVariable("this.timer");
 
-    script->addNode(stop);
+        JZNodeFunction *stop = new JZNodeFunction();
+        stop->setFunction("Timer.stop");
 
-    script->addConnect(timer->paramOutGemo(0), stop->paramInGemo(0));
-    script->addConnect(btnStop->flowOutGemo(), stop->flowInGemo());   
+        script->addNode(timer);
+        script->addNode(stop);
+
+        script->addConnect(timer->paramOutGemo(0), stop->paramInGemo(0));
+        script->addConnect(btnStop->flowOutGemo(), stop->flowInGemo());
+    }
 }
 
 void SampleRussian::addCreateRect()
@@ -681,8 +706,6 @@ void SampleRussian::addCreateRect()
     script->addNode(node_ret_over);
     script->addNode(node_isRect);
 
-    auto func_inst = JZNodeFunctionManager::instance();
-   
     JZNodeFunction *create_shape = new JZNodeFunction();
     create_shape->setFunction(meta->function("createShape"));    
 
@@ -701,8 +724,6 @@ void SampleRussian::addCreateRect()
     JZNodeSetParam *shape_color = new JZNodeSetParam();
     shape_color->setVariable("this.shape_color");
 
-    JZNodeFor *shape_for = new JZNodeFor();    
-
     script->addNode(create_shape);
     script->addNode(set_shape);
     script->addNode(shape_index);
@@ -714,7 +735,7 @@ void SampleRussian::addCreateRect()
     shape_index->setParamInValue(1, "0");
     
     JZNodeFunction *node_rand = new JZNodeFunction();
-    node_rand->setFunction(func_inst->function("rand"));
+    node_rand->setFunction("rand");
 
     JZNodeMod *color_mod = new JZNodeMod();
     JZNodeMod *shape_col_mod = new JZNodeMod();
@@ -780,7 +801,6 @@ void SampleRussian::addCreateRect()
 void SampleRussian::addRectDown()
 {
     auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
-    auto func_inst = JZNodeFunctionManager::instance();
 
     JZFunctionDefine define;
     define.name = "rectDown";
@@ -839,19 +859,19 @@ void SampleRussian::addRectDown()
     JZNodeFor *node_for = new JZNodeFor();
 
     JZNodeFunction *get_list = new JZNodeFunction();
-    get_list->setFunction(func_inst->function("List.get"));
+    get_list->setFunction("List<List<Point>>.get");
 
     JZNodeFunction *get_point = new JZNodeFunction();
-    get_point->setFunction(func_inst->function("List.get"));
+    get_point->setFunction("List<Point>.get");
 
     JZNodeFunction *get_list_size = new JZNodeFunction();
-    get_list_size->setFunction(func_inst->function("List.size"));
+    get_list_size->setFunction("List<Point>.size");
 
     JZNodeFunction *point_row = new JZNodeFunction();
-    point_row->setFunction(func_inst->function("Point.x"));
+    point_row->setFunction("Point.x");
 
     JZNodeFunction *point_col = new JZNodeFunction();
-    point_col->setFunction(func_inst->function("Point.y"));
+    point_col->setFunction("Point.y");
 
     JZNodeParam *shape_row = new JZNodeParam();
     shape_row->setVariable("this.shape_row");
@@ -947,7 +967,6 @@ void SampleRussian::addMoveFunction()
         class_file->addMemberFunction(define);
     }   
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
-    auto func_inst = JZNodeFunctionManager::instance();
 
     for (int i = 0; i < functions.size(); i++)
     {
@@ -1055,15 +1074,11 @@ void SampleRussian::addMoveFunction()
 
 void SampleRussian::addGameLoop()
 {
-    auto timer_meta = JZNodeObjectManager::instance()->meta("Timer");
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
     auto class_file = m_project.getClass("MainWindow");
 
-    JZFunctionDefine func_onTimer = meta->initMemberFunction("onTimer");
-    auto script = class_file->addMemberFunction(func_onTimer);
+    auto script = class_file->memberFunction("onTimer");
     auto onTimer = script->getNode(0);
-
-    script->addNode(onTimer);
 
     JZNodeThis *node_this = new JZNodeThis();
 
@@ -1130,8 +1145,6 @@ void SampleRussian::addGameLoop()
 
 void SampleRussian::addKeyEvent()
 {
-    auto func_inst = JZNodeFunctionManager::instance();
-
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");    
     auto key_meta = JZNodeObjectManager::instance()->meta("KeyEvent"); 
     auto class_file = m_project.getClass("MainWindow");   
@@ -1139,8 +1152,10 @@ void SampleRussian::addKeyEvent()
     JZFunctionDefine define = meta->initVirtualFunction("keyPressEvent");
     auto script = class_file->addMemberFunction(define);
 
+    auto node_start = script->getNode(0);
+
     JZNodeParam *node_keyPress = new JZNodeParam();
-    node_keyPress->setVariable("event");;
+    node_keyPress->setVariable("event");
     
     JZNodeFunction *canRight = new JZNodeFunction();
     canRight->setFunction(meta->function("canMoveRight"));
@@ -1255,7 +1270,7 @@ void SampleRussian::addKeyEvent()
     connectKey(key_eqL2, Qt::Key_Left);
     connectKey(key_eqR2, Qt::Key_Right);    
 
-    script->addConnect(node_keyPress->flowOutGemo(0), key_if->flowInGemo());
+    script->addConnect(node_start->flowOutGemo(0), key_if->flowInGemo());
     script->addConnect(key_code->paramOutGemo(0), key_eqL->paramInGemo(0));
     script->addConnect(key_code->paramOutGemo(0), key_eqD->paramInGemo(0));
     script->addConnect(key_code->paramOutGemo(0), key_eqR->paramInGemo(0));    
@@ -1321,7 +1336,6 @@ void SampleRussian::addRotate()
     class_file->addMemberFunction(def_rotate);
 
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
-    auto func_inst = JZNodeFunctionManager::instance();
 
     //can
     {
@@ -1334,7 +1348,7 @@ void SampleRussian::addRotate()
         JZNodeParam *shape = new JZNodeParam();
 
         JZNodeFunction *shape_size = new JZNodeFunction();
-        shape_size->setFunction(JZNodeFunctionManager::instance()->function("List.size"));
+        shape_size->setFunction(JZNodeFunctionManager::instance()->function("List<List<Point>>.size"));
 
         shape->setVariable("this.shape");
         shape_row->setVariable("this.shape_row");
@@ -1388,7 +1402,7 @@ void SampleRussian::addRotate()
 
         JZNodeParam *shape = new JZNodeParam();
         JZNodeFunction *shape_size = new JZNodeFunction();
-        shape_size->setFunction(JZNodeFunctionManager::instance()->function("List.size"));
+        shape_size->setFunction(JZNodeFunctionManager::instance()->function("List<List<Point>>.size"));
 
         shape->setVariable("this.shape");
         shape_index->setVariable("this.shape_index");
@@ -1479,14 +1493,13 @@ void SampleRussian::addCreateShape()
     define.isFlowFunction = false;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramIn.push_back(JZParamDefine("type", Type_int));    
-    define.paramOut.push_back(JZParamDefine("shape", Type_intList));
+    define.paramOut.push_back(JZParamDefine("shape", "List<List<Point>>"));
 
-    auto func_inst = JZNodeFunctionManager::instance();
     auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
     
     auto script = class_file->memberFunction("createShape");
-    script->addLocalVariable(JZParamDefine("shape", Type_intList));
+    script->addLocalVariable(JZParamDefine("shape", "List<List<Point>>"));
 
     JZNodeParam *shape = new JZNodeParam();
     shape->setVariable("shape");
@@ -1521,12 +1534,12 @@ void SampleRussian::addCreateShape()
 
         JZNodeCreateFromString *create_from_string = new JZNodeCreateFromString();
         script->addNode(create_from_string);        
-        create_from_string->setClassName("List");
+        create_from_string->setClassName("List<List<Point>>");
 
         QString context;
         for (int type_idx = 0; type_idx < ptGroup[shape_type].size(); type_idx++)
         {
-            context += "[";
+            context += "List<Point>{";
             auto ptList = ptGroup[shape_type][type_idx];
             for (int i = 0; i < ptList.size(); i++)
             {
@@ -1534,7 +1547,7 @@ void SampleRussian::addCreateShape()
                 if (i != ptList.size() - 1)
                     context += ",";
             }
-            context += "]";
+            context += "}";
             if (type_idx != ptGroup[shape_type].size() - 1)
                 context += ",";
             context += "\n";
@@ -1570,7 +1583,6 @@ void SampleRussian::addCanPlaceShape()
     auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
 
-    auto func_inst = JZNodeFunctionManager::instance();
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
     auto script = class_file->memberFunction("canPlace");
@@ -1586,19 +1598,19 @@ void SampleRussian::addCanPlaceShape()
     JZNodeFor *node_for = new JZNodeFor();
 
     JZNodeFunction *get_list = new JZNodeFunction();
-    get_list->setFunction(func_inst->function("List.get"));
+    get_list->setFunction("List<List<Point>>.get");
 
     JZNodeFunction *get_point = new JZNodeFunction();
-    get_point->setFunction(func_inst->function("List.get"));
+    get_point->setFunction("List<Point>.get");
     
     JZNodeFunction *get_list_size = new JZNodeFunction();
-    get_list_size->setFunction(func_inst->function("List.size"));
+    get_list_size->setFunction("List<Point>.size");
 
     JZNodeFunction *point_row = new JZNodeFunction();
-    point_row->setFunction(func_inst->function("Point.x"));
+    point_row->setFunction("Point.x");
 
     JZNodeFunction *point_col = new JZNodeFunction();
-    point_col->setFunction(func_inst->function("Point.y"));
+    point_col->setFunction("Point.y");
 
     JZNodeFunction *get_map = new JZNodeFunction();
     get_map->setFunction(meta->function("getMap"));
@@ -1754,7 +1766,6 @@ void SampleRussian::addClearLine()
     auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
 
-    auto func_inst = JZNodeFunctionManager::instance();
     auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
     auto script = class_file->memberFunction("clearLine");

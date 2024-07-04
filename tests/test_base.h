@@ -30,7 +30,6 @@ protected:
         QVariantList output;
     };
     
-
     bool build();
     bool call(QString name,const QVariantList &in,QVariantList &out);
     void callAsync(QString name,const QVariantList &in);

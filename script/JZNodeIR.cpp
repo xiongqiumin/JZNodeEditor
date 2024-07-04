@@ -80,6 +80,7 @@ JZNodeIRParam irRef(const QString &id)
 JZNodeIRParam irId(int id)
 {
     Q_ASSERT(id >= 0);    
+
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Id;
     param.value = id;
@@ -88,8 +89,8 @@ JZNodeIRParam irId(int id)
 
 JZNodeIRParam irLiteral(const QVariant &value)
 {
-    Q_ASSERT(JZNodeType::isBase(JZNodeType::variantType(value)) || JZNodeType::isNullptr(value));
-
+    Q_ASSERT(JZNodeType::isLiteralType(JZNodeType::variantType(value)));
+    
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Literal;
     param.value = value;

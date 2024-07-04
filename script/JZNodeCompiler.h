@@ -94,6 +94,7 @@ struct NodeCompilerInfo
     int node_id;
     int node_type;    
     QMap<int,int> pinType;   //pin 类型
+    QMap<int,QVariant> pinLiteral;
 
     int start;
     QList<NodeRange> ranges; //用于断点信息   
@@ -167,8 +168,10 @@ public:
     int pinType(int nodeId, int pinId);
     int pinType(JZNodeGemo gemo);
     bool hasPinType(int nodeId, int pinId);
+
     bool isPinLiteral(int nodeId, int pinId);
     QVariant pinLiteral(int nodeId, int pinId);
+    void setPinLiteral(int nodeId, int pinId,const QVariant &v);
     
     int irParamType(const JZNodeIRParam &param);
 

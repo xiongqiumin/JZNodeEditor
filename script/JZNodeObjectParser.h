@@ -29,7 +29,7 @@ protected:
     bool readString(QString &text);
     bool readBkt(QString &context);
     bool checkIsEnd();
-    bool checkVariable(int type,const QVariant &v);
+    bool checkVariable(const QVariant &v,int type);
     void makeError(const QString &error);
     void makeExpectError(QString expect,QString give);
 

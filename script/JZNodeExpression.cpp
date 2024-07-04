@@ -79,10 +79,13 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
     {
         QList<int> in_types;
         for(int i = 0; i < input_list.size(); i++)
+        {
             in_types << c->pinInputType(m_id,input_list[i]);
-        
+        }
+
         int in_type = JZNodeType::upType(in_types);
-        if(in_type == Type_any || in_type == Type_any)
+        qDebug() << "JZNodeOperator" << in_type << in_types;
+        if(in_type == Type_none || in_type == Type_any)
         {
             error = "无法确定输入类型";
             return false;

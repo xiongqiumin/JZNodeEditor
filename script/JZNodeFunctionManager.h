@@ -30,16 +30,11 @@ public:
     const JZFunction *functionImpl(QString name);
 
 protected:
-    struct Function
-    {
-        JZFunctionDefine funcDefine;
-        JZFunction funcImpl;
-    };
-
     JZNodeFunctionManager();
     ~JZNodeFunctionManager();           
     
-    QMap<QString, Function> m_funcMap;
+    QMap<QString, JZFunctionDefine> m_funcDefine;
+    QMap<QString, JZFunction> m_funcImpl;
     bool m_userRegist;
     QStringList m_userFuncs;
 };

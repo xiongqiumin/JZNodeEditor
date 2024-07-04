@@ -56,6 +56,7 @@ int JZNodeVariantAny::type()
 //JZNodeType
 void JZNodeType::init()
 {
+    typeMap["none"]   = Type_none;
     typeMap["any"]    = Type_any;
     typeMap["bool"]   = Type_bool;
     typeMap["int"]    = Type_int;
@@ -97,7 +98,7 @@ QString JZNodeType::typeToName(int id)
     else if (id >= Type_object)
         return JZNodeObjectManager::instance()->getClassName(id);
     else
-        return typeMap.key(id, QString());
+        return typeMap.key(id, "unknown type " + QString::number(id));
 }
 
 int JZNodeType::nameToType(QString name)
@@ -140,11 +141,11 @@ int JZNodeType::variantType(const QVariant &v)
         return Type_string;
     else if(v.type() == QVariant::UserType)
     {
-        if(v.type() == qMetaTypeId<JZEnum>())
+        if(v.userType() == qMetaTypeId<JZEnum>())
             return ((JZEnum*)v.data())->type;
-        else if(v.type() == qMetaTypeId<JZObjectNull>())
+        else if(v.userType() == qMetaTypeId<JZObjectNull>())
             return Type_nullptr;
-        else if(v.type() == qMetaTypeId<JZFunctionPointer>())
+        else if(v.userType() == qMetaTypeId<JZFunctionPointer>())
             return Type_function;
         else if (isJZObject(v))
             return toJZObject(v)->type();
@@ -174,7 +175,12 @@ bool JZNodeType::isEnum(int type)
 
 bool JZNodeType::isBaseOrEnum(int type)
 {
-    return (type >= Type_none && type <= Type_string || isEnum(type));
+    return isBase(type) || isEnum(type);
+}
+
+bool JZNodeType::isNullObject(const QVariant &v)
+{
+    return toJZObject(v)->isNull();
 }
 
 bool JZNodeType::isNullptr(const QVariant &v)
@@ -190,7 +196,7 @@ bool JZNodeType::isWidget(const QVariant &v)
 
 bool JZNodeType::isBase(int type)
 {
-    return (type >= Type_none && type <= Type_string);
+    return (type >= Type_none) && (type <= Type_string);
 }
 
 bool JZNodeType::isObject(int type)
@@ -216,10 +222,33 @@ bool JZNodeType::isSameType(int type1,int type2)
 {
     if(type1 == type2)
         return true;
+    else if((isEnum(type1) && type2 == Type_int) || (type1 == Type_int && isEnum(type2))) 
+        return true;
     else if(type1 >= Type_object && type2 >= Type_object)
         return isInherits(type1,type2);
 
     return false;
+}
+
+bool JZNodeType::isLiteralType(int type)
+{
+    if(isBaseOrEnum(type) || type == Type_nullptr || type == Type_function)
+        return true;
+    
+    return false;
+}
+
+bool JZNodeType::isPointer(const QVariant &v)
+{
+    return v.userType() == qMetaTypeId<QVariantPointer>();
+}
+
+QVariant *JZNodeType::getPointer(const QVariant &v)
+{
+    Q_ASSERT(isPointer(v));
+
+    QVariantPointer *ptr = (QVariantPointer *)v.data();
+    return ptr->value;
 }
 
 int JZNodeType::isInherits(int type1,int type2)
@@ -290,14 +319,14 @@ bool JZNodeType::canConvert(int type1,int type2)
     return false;
 }
 
-QString JZNodeType::toString(JZNodeObject *obj)
+QString JZNodeType::debugString(const JZNodeObject *obj)
 {
     QString text = obj->className();
 
     return text;
 }
 
-QString JZNodeType::toString(const QVariant &v)
+QString JZNodeType::debugString(const QVariant &v)
 {
     int v_type = variantType(v);
     if (isJZObject(v))
@@ -305,7 +334,7 @@ QString JZNodeType::toString(const QVariant &v)
         auto obj = toJZObject(v);
         if (obj)
         {
-            return toString(obj);            
+            return debugString(obj);            
         }
         else
             return "null";
@@ -313,7 +342,7 @@ QString JZNodeType::toString(const QVariant &v)
     else if (v_type == Type_any)
     {
         JZNodeVariantAny *ptr = (JZNodeVariantAny*)v.data();
-        return "Variant{" + toString(ptr->value) + "}";   
+        return "Variant{" + debugString(ptr->value) + "}";   
     }
     else
     {
@@ -403,7 +432,7 @@ QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
     else if (src_type == Type_nullptr && dst_type >= Type_object)
     {        
         auto null_obj = JZNodeObjectManager::instance()->createNull(dst_type);
-        return QVariant::fromValue(null_obj);
+        return QVariant::fromValue(JZNodeObjectPtr(null_obj,true));
     }
     else if(src_type >= Type_object && dst_type >= Type_object)
     {
@@ -459,8 +488,7 @@ QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
     if (it != convertMap.end())
         return it.value()(v);
 
-    qDebug() << src_type << "->" << dst_type;
-    Q_ASSERT(0);
+    Q_ASSERT_X(0,"Error",qUtf8Printable(typeToName(src_type) + " -> " + typeToName(dst_type)));
     return QVariant();
 }
 
@@ -474,16 +502,18 @@ QVariant JZNodeType::clone(const QVariant &v)
         ret.value = clone(ptr->value);
         return QVariant::fromValue(ret);
     }
-    else if (JZNodeType::isBase(v_type))
+    else if (JZNodeType::isBaseOrEnum(v_type))
         return v;
+    else if(v_type > Type_object)
+    {
+        auto obj = toJZObject(v);
+        auto new_obj = JZNodeObjectManager::instance()->clone(obj);
+        return QVariant::fromValue(JZNodeObjectPtr(new_obj,true));
+    }
     else
     {
-        if (JZNodeType::isNullptr(v))
-            return v;
-
-        auto obj = toJZObject(v);
-        auto ptr = JZNodeObjectManager::instance()->clone(obj);
-        return QVariant::fromValue(ptr);
+        Q_ASSERT(0);
+        return QVariant();
     }
 }
 
@@ -491,10 +521,25 @@ int JZNodeType::upType(int type1, int type2)
 {
     if (type1 > type2)
         std::swap(type1, type2);
-
+    
+    if (type1 == type2)
+        return type1;
+        
     if (type1 >= Type_bool && type1 <= Type_double
         && type2 >= Type_bool && type2 <= Type_double)
         return type2;
+
+    if(type1 == Type_int && isEnum(type2)) 
+        return Type_int;
+
+    if(type1 == Type_nullptr && type2 >= Type_object)
+        return type2;
+
+    if(type1 >= Type_object && type2 >= Type_object)
+    {
+        if(isInherits(type2,type1))
+            return type1;
+    }
 
     return Type_none;
 }
@@ -511,7 +556,7 @@ int JZNodeType::upType(QList<int> types)
     return type;
 }
 
-int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
+int JZNodeType::matchType(QList<int> src_types,QList<int> dst_types)
 {   
     QList<int> dst_allow_type;    
     //在dst中选择能被所有src转换到的类型
@@ -571,15 +616,6 @@ int JZNodeType::matchType(QList<int> dst_types, QList<int> src_types)
     return upType(dst_near_type);
 }
 
-int JZNodeType::matchType(QList<int> dst_types, const QString &text)
-{    
-    if (text.isEmpty())
-        return upType(dst_types);
-
-    int str_type = stringType(text);
-    return matchType(dst_types,QList<int>{str_type});
-}
-
 QVariant JZNodeType::initValue(int type, const QString &text)
 {
     if (text.isEmpty())
@@ -607,12 +643,24 @@ QVariant JZNodeType::initValue(int type, const QString &text)
     {
         return QVariant::fromValue(JZObjectNull());
     }
+    else if(type == Type_function)
+    {   
+        JZFunctionPointer func;
+        func.functionName = text;
+        return QVariant::fromValue(JZFunctionPointer());
+    }
+    else if(type >= Type_enum && type < Type_object)
+    {
+        auto enum_meta = JZNodeObjectManager::instance()->enumMeta(type);
+        if(enum_meta->hasKey(text))
+            return enum_meta->keyToValue(text);
+    }
     else if(type >= Type_object)
     {
         if(text == "null")
         {
             auto obj = JZNodeObjectManager::instance()->createNull(type);
-            return QVariant::fromValue(obj);        
+            return QVariant::fromValue(JZNodeObjectPtr(obj,true));        
         }
     }
     else if (type == Type_int || type == Type_int64 || type == Type_double)
@@ -651,11 +699,6 @@ QVariant JZNodeType::initValue(int type, const QString &text)
     return QVariant();
 }
 
-bool JZNodeType::isMatchValue(const QList<int> &dst_types, const QString &v)
-{
-    return matchType(dst_types, v) != Type_none;
-}
-
 QString JZNodeType::dispString(const QString &text)
 {
     if (text.size() < 2 || !(text.front() == '"' && text.back() == '"'))
@@ -687,27 +730,17 @@ int JZNodeType::stringType(const QString &text)
     if (isInt || isHex)
         return Type_int;
     else if(isFloat)
-    {
         return Type_double;
-    }
-
-    auto enum_list = JZNodeObjectManager::instance()->getEnumList();
-    for (int i = 0; i < enum_list.size(); i++)
-    {
-        auto meta = JZNodeObjectManager::instance()->enumMeta(enum_list[i]);
-        if (meta->hasKey(text))
-            return meta->type();
-    }
 
     return Type_none;
 }
 
-QString JZNodeType::addMark(const QString &text)
+QString JZNodeType::addQuote(const QString &text)
 {
     return '"' + text + '"';
 }
 
-QString JZNodeType::removeMark(const QString &text)
+QString JZNodeType::removeQuote(const QString &text)
 {
     if (text.isEmpty())
         return QString();
@@ -732,6 +765,8 @@ QVariant JZNodeType::defaultValue(int type)
         return QString();
     else if(type == Type_function)
         return QVariant::fromValue(JZFunctionPointer());
+    else if(type == Type_nullptr)
+        return QVariant::fromValue(JZObjectNull());
     else if(type >= Type_enum && type < Type_object)
     {
         auto e = JZNodeObjectManager::instance()->createEnum(type);
@@ -739,8 +774,8 @@ QVariant JZNodeType::defaultValue(int type)
     }
     else if(type >= Type_object)
     {
-        JZNodeObject *ptr = JZNodeObjectManager::instance()->createNull(type);
-        return QVariant::fromValue(ptr);
+        JZNodeObject *obj = JZNodeObjectManager::instance()->createNull(type);
+        return QVariant::fromValue(JZNodeObjectPtr(obj,true));
     }
     else
     {
@@ -757,13 +792,14 @@ void JZNodeType::registConvert(int from, int to, ConvertFunc func)
 
 bool JZNodeType::sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefine *slot)
 {
-    if(sig->paramOut.size() < slot->paramIn.size())
+    int slot_param = slot->paramIn.size() - 1; 
+    if(sig->paramOut.size() < slot_param)
         return false;
 
-    for(int i = 1; i < slot->paramIn.size(); i++)
+    for(int i = 0; i < slot_param; i++)
     {
-        qDebug() << sig->paramOut[i].type << slot->fullName() << slot->paramIn[i].type; 
-        if(sig->paramOut[i].type != slot->paramIn[i].type)
+        int slot_idx = i + 1;
+        if(sig->paramOut[i].type != slot->paramIn[slot_idx].type)
             return false;
     }
     return true;
@@ -790,63 +826,4 @@ bool JZNodeType::functionTypeMatch(const JZFunctionDefine *func1,const JZFunctio
             return false;
     }
     return true;
-}
-
-//JZVariant
-JZVariant::JZVariant()
-{
-
-}
-
-JZVariant::~JZVariant()
-{
-    clearVariant();
-}
-
-void JZVariant::init(const QVariant &v)
-{
-    m_variant = v;
-    auto obj = toObject();
-    if(obj)
-        obj->addRef();
-}
-
-JZNodeObject *JZVariant::toObject()
-{
-    auto &v = m_variant;
-    
-    JZNodeObject *obj = nullptr;
-    int v_type = JZNodeType::variantType(v);
-    if(v_type > Type_object)
-        obj = toJZObject(v);
-    else if(v_type == Type_any)
-    {
-        JZNodeVariantAny *any = (JZNodeVariantAny*)v.data();
-        if(isJZObject(any->value))
-            obj = toJZObject(any->value);
-    }
-    return obj;
-}
-
-void JZVariant::clearVariant()
-{
-    auto obj = toObject();
-    if(!obj)
-        return;
-    obj->release();
-    if(obj->refCount() == 0)
-        delete obj;
-}
-
-void JZVariant::setVariant(const QVariant &v)
-{
-    Q_ASSERT(JZNodeType::isSameType(m_variant,v));
-
-    clearVariant();
-    init(v);
-}
-
-const QVariant &JZVariant::getVariant()
-{
-    return m_variant;
 }

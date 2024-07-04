@@ -65,6 +65,8 @@ public:
     void setFullName(const QString &name);
     QString fullName() const;    
     bool isMemberFunction() const;    
+
+    QString delcare() const;
     
     void setDefaultValue(int index, QString text);
     void setDefaultValue(int from, QStringList values);
@@ -105,6 +107,7 @@ public:
     JZSingleDefine();
 
     QString fullName() const;
+    QString delcare() const;
     bool isCSingle() const;
 
     QString name;
@@ -154,8 +157,6 @@ public:
     QString path;
     int addr;
     int addrEnd;
-    QString file;
-    QList<JZParamDefine> localVariables;
 
     //c
     QSharedPointer<CFunction> cfunc;

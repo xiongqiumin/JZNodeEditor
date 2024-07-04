@@ -75,6 +75,17 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param);
 QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param);
 
+class JZNodeCObjectDelcare
+{
+public:
+    JZNodeCObjectDelcare();
+    
+    QString className;
+    int id;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeCObjectDelcare &param);
+QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param);
+
 class JZObjectNull
 {
 public:
@@ -91,15 +102,8 @@ class JZNodeObject : public QObject
 
 public:    
     JZNodeObject(JZNodeObjectDefine *def);
-    virtual ~JZNodeObject();
+    ~JZNodeObject();
 
-    void addRef();
-    void release();
-    int refCount() const;
-
-    void setEngineOwner(bool flag); //是否由JZEngine管理
-    bool isEngineOwner() const;
-    
     bool isNull() const;
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
@@ -112,7 +116,7 @@ public:
     bool hasParam(const QString &name) const;
     const QVariant &param(const QString &name) const;
     void setParam(const QString &name,const QVariant &value);
-    JZVariant *paramRef(const QString &name);
+    QVariant *paramRef(const QString &name);
     QStringList paramList() const;
 
     const JZFunctionDefine *function(const QString &function) const;
@@ -150,25 +154,48 @@ protected:
       
     friend JZNodeObjectManager;
 
-    bool getParamRef(const QString &name,JZVariant* &ref,QString &error);    
+    bool getParamRef(const QString &name,QVariant* &ref,QString &error);    
     int singleConnectCount(JZNodeObject *recv);
 
     bool m_isNull;
-    int m_refCount;
-    bool m_engineOwner;
     JZNodeObjectDefine *m_define;    
-    QMap<QString,JZVariantPtr> m_params;    
+    QMap<QString,QVariantPtr> m_params;    
     void *m_cobj;
     bool m_cobjOwner;
 
     QList<ConnectInfo> m_connectList;
 };
-typedef QSharedPointer<JZNodeObject> JZNodeObjectPtr;
-Q_DECLARE_METATYPE(JZNodeObject*)
+
+class JZNodeObjectPtr
+{
+public:
+    JZNodeObjectPtr();
+    JZNodeObjectPtr(JZNodeObject *obj,bool isOwner);
+    ~JZNodeObjectPtr();
+
+    JZNodeObject *object() const;
+    void releaseOwner();
+
+protected:
+    class JZNodeObjectPtrData
+    {
+    public:
+        JZNodeObjectPtrData();
+        ~JZNodeObjectPtrData();
+
+        bool isOwner;
+        JZNodeObject *object;
+    };
+
+    QSharedPointer<JZNodeObjectPtrData> data;
+};
+Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
 bool isJZObject(const QVariant &v);
-JZNodeObject* toJZObject(const QVariant &v); //对于空 object 返回 nullptr
+JZNodeObject* toJZObject(const QVariant &v);
+JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
 JZObjectNull* toJZNullptr(const QVariant &v);
+JZNodeObject* qobjectToJZObject(QObject *obj);
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
@@ -258,7 +285,7 @@ JZNodeObject *JZObjectCreate()
 }
 
 template<class T>
-JZNodeObject *JZObjectRefrence(T ptr,bool owner)
+JZNodeObject *JZObjectCreateRefrence(T ptr,bool owner)
 {
     static_assert(std::is_pointer<T>(), "only support class pointer");
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();

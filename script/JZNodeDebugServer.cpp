@@ -4,6 +4,7 @@
 #include "JZNodeDebugPacket.h"
 #include "JZNodeEngine.h"
 #include "JZNodeVM.h"
+#include "JZContainer.h"
 
 JZNodeDebugServer::JZNodeDebugServer()
 {
@@ -217,9 +218,9 @@ void JZNodeDebugServer::onNodePropChanged(QString file, int id, QString value)
     m_server.sendPack(m_client, &status_pack);
 }
 
-JZVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
+QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
 {
-    JZVariant *ref = nullptr;
+    QVariant *ref = nullptr;
     if (coor.type == JZNodeParamCoor::Name)
     {
         ref = m_engine->getVariableRef(coor.name, stack);
@@ -241,9 +242,9 @@ QVariant JZNodeDebugServer::getVariable(const JZNodeDebugParamInfo &info)
     for (int i = 0; i < info.coors.size(); i++)
     {
         JZNodeDebugParamValue param;
-        JZVariant *ref = getVariableRef(info.stack,info.coors[i]);
+        QVariant *ref = getVariableRef(info.stack,info.coors[i]);
         if (ref)
-            param = toDebugParam(ref->getVariant());
+            param = toDebugParam(*ref);
         else
             param.type = Type_none;
         
@@ -268,63 +269,33 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
     if (isJZObject(value))
     {
         auto obj = toJZObject(value);
-        if (!obj)
+        if (obj->isNull())
         {
             ret.type = JZNodeType::variantType(value);
             ret.value = "null";
         }
-        /*
-        else if (obj->type() == Type_intList)
+        else if(JZObjectIsList(obj))
         {
             ret.type = obj->type();            
             
-            QVariantList in, out;
-            in << value;
-            func_inst->functionImpl(obj->className() + ".size")->cfunc->call(in, out);
-                        
-            int size = out[0].toInt();            
-            in << 0;
-
-            auto list_at = func_inst->functionImpl(obj->className() + ".get")->cfunc;
-            for (int i = 0; i < size; i++)
-            {
-                in[1] = i;
-                list_at->call(in, out);
-                ret.params[QString::number(i)] = toDebugParam(out[0]);
-            }
+            JZList *list = (JZList*)obj->cobj();
+            for (int i = 0; i < list->list.size(); i++)
+                ret.params[QString::number(i)] = toDebugParam(list->list[i]);
         }
-        else if (obj->type() == Type_map)
+        else if(JZObjectIsMap(obj))
         {
             ret.type = obj->type();
             
-            QVariantList in, out;
-            in << value;            
+            JZMap *map = (JZMap*)obj->cobj();          
                         
-            func_inst->functionImpl(obj->className() + ".iterator")->cfunc->call(in, out);
-            QVariantList it = out;
-            auto it_meta = toJZObject(it[0])->meta();
-
-            auto func_end = func_inst->functionImpl(it_meta->className + ".atEnd")->cfunc;
-            auto func_next = func_inst->functionImpl(it_meta->className + ".next")->cfunc;
-            auto func_key = func_inst->functionImpl(it_meta->className + ".key")->cfunc;
-            auto func_value = func_inst->functionImpl(it_meta->className + ".value")->cfunc;
-
-            while (true)
+            auto it = map->map.begin();
+            while (it != map->map.end())
             {
-                func_end->call(it, out);
-                if (out[0].toBool())
-                    break;
-
-                func_next->call(it, out);
-                QString key = out[0].toString();
-
-                func_value->call(it, out);
-                ret.params[key] = toDebugParam(out[0]);
-
-                func_next->call(it, out);
+                QString key = JZNodeType::debugString(it.key().v);
+                ret.params[key] = toDebugParam(it.value());
+                it++;
             }
         }
-        */
         else 
         {
             ret.type = obj->type();            
@@ -341,7 +312,8 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
     else
     {
         ret.type = JZNodeType::variantType(value);
-        ret.value = JZNodeType::toString(value);
+        ret.value = JZNodeType::debugString(value);
     }
+
     return  ret;
 }

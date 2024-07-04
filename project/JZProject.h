@@ -1,8 +1,9 @@
 ﻿#ifndef JZNODE_PROJECT_H_
 #define JZNODE_PROJECT_H_
 
-#include "JZNode.h"
+#include <QSet>
 #include <QMap>
+#include "JZNode.h"
 #include "JZNodeObject.h"
 #include "JZProjectItem.h"
 #include "JZParamItem.h"
@@ -26,13 +27,17 @@ public:
     bool newProject(QString path,QString name, QString temp);
     bool open(QString filepath);
     void close();
-    bool save();        
+    bool save();
 
     void saveTransaction();
     void saveCommit();
 
     void saveCache(); //保存 breakpoint 之类的设置信息
     void loadCache();
+
+    void registContainer(QString type);
+    void unregistContainer(QString type);
+    QStringList containerList() const;
 
     QString error();
 
@@ -93,7 +98,6 @@ signals:
 protected:
     Q_DISABLE_COPY(JZProject)
 
-    QByteArray magic();
     QList<JZProjectItem *> paramDefineList();    
 
     QString domain(JZProjectItem *item);        
@@ -112,6 +116,7 @@ protected:
 
     bool m_isSaveCache;
     QList<JZProjectItem*> m_saveCache;
+    QStringList m_containers;
 };
 
 #endif

@@ -133,7 +133,7 @@ const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
 
 JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
 {
-    Q_ASSERT(func.paramIn.size() > 0 && func.paramIn[0].name == "this");
+    Q_ASSERT(!func.isCFunction && !func.name.isEmpty());
 
     JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);
     func.className = m_name;

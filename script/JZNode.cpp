@@ -509,7 +509,6 @@ void JZNode::setPinValue(int id,const QString &value)
     auto ptr = pin(id);
     Q_ASSERT(ptr);
     
-    Q_ASSERT(!m_file || JZNodeType::isMatchValue(ptr->dataType(), value));
     ptr->setValue(value);
     if(m_file)
         onPinChanged(id);

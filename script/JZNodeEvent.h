@@ -29,12 +29,12 @@ protected:
 
 };
 
-//JZNodeSingleConnect
-class JZNodeSingleConnect : public JZNode
+//JZNodeSignalConnect
+class JZNodeSignalConnect : public JZNode
 {
 public:
-    JZNodeSingleConnect();
-    virtual ~JZNodeSingleConnect();
+    JZNodeSignalConnect();
+    virtual ~JZNodeSignalConnect();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };

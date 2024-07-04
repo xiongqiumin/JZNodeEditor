@@ -34,15 +34,15 @@ void JZNodeObjectParser::makeExpectError(QString text,QString give)
     makeError(error);
 }
 
-bool JZNodeObjectParser::checkVariable(int type,const QVariant &v)
+bool JZNodeObjectParser::checkVariable(const QVariant &v,int type)
 {
     int v_type = JZNodeType::variantType(v);
-    if(v_type == Type_none)
+    if(v_type == Type_none)  //前面解析已经出错，直接返回
         return false;
 
     if(!JZNodeType::canConvert(v_type,type))
     {
-        QString error = "type error need " + JZNodeType::typeToName(type) + ", but give " + JZNodeType::typeToName(v_type);
+        QString error = "type error, need " + JZNodeType::typeToName(type) + ", but give " + JZNodeType::typeToName(v_type);
         makeError(error);
         return false;
     }
@@ -142,7 +142,7 @@ JZList *JZNodeObjectParser::readList(QString valueType,QChar gap)
     while (1)
     {
         QVariant v = readVariable();
-        if(!checkVariable(data_type,v))
+        if(!checkVariable(v,data_type))
             return nullptr;
 
         v = JZNodeType::convertTo(data_type,v);
@@ -176,7 +176,7 @@ JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
     while (1)
     {
         QVariant key = readVariable();
-        if(!checkVariable(key_type,key))
+        if(!checkVariable(key,key_type))
             return nullptr;
         key = JZNodeType::convertTo(key_type,key);
         
@@ -188,7 +188,7 @@ JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
         }
 
         QVariant value = readVariable();
-        if(!checkVariable(value_type,value))
+        if(!checkVariable(value,value_type))
             return nullptr;
         value = JZNodeType::convertTo(key_type,value);
 
@@ -252,8 +252,8 @@ JZNodeObject *JZNodeObjectParser::readObject()
 
     if(type.startsWith("List<"))
     {
-        int index = type.indexOf(">");
-        QString value_type = type.mid(5,index - 5);
+        int end_idx = type.lastIndexOf(">");
+        QString value_type = type.mid(5,end_idx - 5);
         auto list = readList(value_type,'{');
         if(list)
             return inst->createRefrence(list->type(),list,true);
@@ -261,8 +261,8 @@ JZNodeObject *JZNodeObjectParser::readObject()
     }
     else if(type.startsWith("Map<"))
     {
-        int index = type.indexOf(">");
-        QStringList type_list = type.mid(4,index - 4).split(",");
+        int end_idx = type.lastIndexOf(">");
+        QStringList type_list = type.mid(4,end_idx - 4).split(",");
         QString key_type = type_list[0];
         QString value_type = type_list[1];
         auto map = readMap(key_type,value_type);
@@ -280,10 +280,11 @@ JZNodeObject *JZNodeObjectParser::readObject()
 
         QVariantList in,out;
         in << create_string;
-        if(!JZScriptInvoke(func_def->fullName(), in, out))
-            return nullptr;
+        JZScriptInvoke(func_def->fullName(), in, out);
 
-        return toJZObject(out[0]);
+        auto ptr = toJZObjectPtr(out[0]);
+        ptr.releaseOwner();
+        return ptr.object();
     }
     else
     {
@@ -305,7 +306,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
             }
 
             int param_type = param_def->dataType();
-            if (!checkVariable(param_type, it.value()))
+            if (!checkVariable(it.value(),param_type))
                 return nullptr;
             
             obj->setParam(param_name,JZNodeType::convertTo(param_type, it.value()));
@@ -345,7 +346,7 @@ QVariant JZNodeObjectParser::readVariable()
         obj = readObject();
         if (!obj)
             return QVariant();
-        return QVariant::fromValue(obj);
+        return QVariant::fromValue(JZNodeObjectPtr(obj,true));
     }    
    
 }
@@ -532,7 +533,7 @@ QString JZNodeObjectFormat::objectToString(JZNodeObject *obj)
         if (func_def)
         {        
             QVariantList in, out;
-            in << QVariant::fromValue(obj);;
+            in << QVariant::fromValue(JZNodeObjectPtr(obj,false));
             JZScriptInvoke(func_def->fullName(), in, out);
             text += out[0].toString();
         }

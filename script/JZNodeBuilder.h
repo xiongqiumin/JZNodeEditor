@@ -49,7 +49,6 @@ protected:
     bool buildCustom(JZFunctionDefine define,std::function<bool(JZNodeCompiler*, QString&)> func,const QList<JZParamDefine> &local = QList<JZParamDefine>());
     bool link();        
     void initGlobal();
-    void buildProgram();
 
     void replaceNopStatment(JZNodeScript *script, int index);
     void replaceUnitTestParam(JZScriptItem *file, ScriptDepend *depend);

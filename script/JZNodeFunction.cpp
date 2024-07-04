@@ -86,7 +86,7 @@ JZFunctionDefine JZNodeFunction::functionDefine()
     auto out_list = paramOutList();
     for(int i = 0; i < out_list.size(); i++)
     {
-        auto out = pin(in_list[i]);
+        auto out = pin(out_list[i]);
         QString out_type = JZNodeType::typeToName(out->dataType()[0]);
         def.paramOut.push_back(JZParamDefine(out->name(),out_type));
     } 
@@ -106,7 +106,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     JZFunctionDefine cur_def = functionDefine();
     if(!JZNodeType::functionTypeMatch(def,&cur_def))
     {
-        error = "函数定义已改变,请更新";
+        error = "函数定义已改变,请更新," + def->delcare() + "," + cur_def.delcare();
         return false;
     }
 

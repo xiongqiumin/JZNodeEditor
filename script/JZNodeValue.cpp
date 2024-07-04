@@ -3,6 +3,7 @@
 #include "JZProject.h"
 #include "JZNodeFactory.h"
 #include "JZClassItem.h"
+#include "JZNodeFunctionManager.h"
 
 //JZNodeLiteral
 JZNodeLiteral::JZNodeLiteral()
@@ -40,10 +41,7 @@ void JZNodeLiteral::setDataType(int type)
     else if (type == Type_string)
         setLiteral("");    
     else if (type == Type_nullptr)
-    {
-        setPinName(out, "null");
         setLiteral("null");
-    }
 }
 
 QString JZNodeLiteral::literal() const
@@ -64,6 +62,7 @@ bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 
     auto pin = this->pin(paramOut(0));
     QVariant value = JZNodeType::initValue(pin->dataType()[0],pin->value());
+    
     c->addSetVariable(irId(id),irLiteral(value));
     return true;
 }
@@ -182,12 +181,12 @@ JZNodeCreate::~JZNodeCreate()
 
 void JZNodeCreate::setClassName(const QString &name)
 {
-    setPinValue(paramIn(0), JZNodeType::addMark(name));
+    setPinValue(paramIn(0), JZNodeType::addQuote(name));
 }
 
 QString JZNodeCreate::className() const
 {
-    return JZNodeType::removeMark(pinValue(paramIn(0)));    
+    return JZNodeType::removeQuote(pinValue(paramIn(0)));    
 }
 
 bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
@@ -247,28 +246,35 @@ JZNodeCreateFromString::~JZNodeCreateFromString()
 
 bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
 {
-    if (className().isEmpty())
+    QString class_name = className();
+    if (class_name.isEmpty())
     {
         error = "没有设置类型";
         return false;
     }
 
-    auto meta = JZNodeObjectManager::instance()->meta(className());
+    auto meta = JZNodeObjectManager::instance()->meta(class_name);
     if (!meta)
     {
-        error = "没有此类型:" + className();
+        error = "没有此类型:" + class_name;
         return false;
     }
+    auto func = meta->function("__fromString__");
+    if(!func)
+    {
+        error = class_name + "未实现__fromString__";
+        return false;
+    }
+
     if (!c->addDataInput(m_id, error))
         return false;
 
-    int in_id = c->paramId(m_id, paramIn(0));
     int out_id = c->paramId(m_id, paramOut(0));
     QList<JZNodeIRParam> in, out;
-    in << irId(in_id) << irId(c->paramId(m_id, paramIn(1)));
+    in << irId(c->paramId(m_id, paramIn(1)));
     out << irId(out_id);
 
-    c->addCall("__fromString__", in, out);    
+    c->addCall(func, in, out);    
     return true;
 
 }
@@ -284,12 +290,12 @@ void JZNodeCreateFromString::onPinChanged(int id)
 
 void JZNodeCreateFromString::setClassName(const QString &name)
 {
-    setPinValue(paramIn(0), JZNodeType::addMark(name));
+    setPinValue(paramIn(0), JZNodeType::addQuote(name));
 }
 
 QString JZNodeCreateFromString::className() const
 {
-    return JZNodeType::removeMark(pinValue(paramIn(0)));
+    return JZNodeType::removeQuote(pinValue(paramIn(0)));
 }
 
 void JZNodeCreateFromString::setContext(const QString &text)
@@ -307,8 +313,8 @@ JZNodeFunctionPointer::JZNodeFunctionPointer()
 {
     m_type = Node_functionPointer;
 
-    int out = addParamOut("",Pin_dispValue | Pin_editValue);
-    setPinTypeString(Type_function);
+    int out = addParamOut("",Pin_dispValue | Pin_editValue | Pin_literal);
+    setPinType(out, {Type_function});
 }
 
 JZNodeFunctionPointer::~JZNodeFunctionPointer()
@@ -318,16 +324,30 @@ JZNodeFunctionPointer::~JZNodeFunctionPointer()
 
 void JZNodeFunctionPointer::setFucntion(QString name)
 {
-    setParamOutValue(paramOut(0), name);
+    setParamOutValue(0, name);
+}
+
+QString JZNodeFunctionPointer::fucntion()
+{
+    return paramOutValue(0);
 }
 
 bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
 {
     int id = c->paramId(m_id, paramOut(0));
-    
     QString function_name = paramOutValue(0);
+
+    auto func = JZNodeFunctionManager::instance()->function(function_name);
+    if(!func)
+    {
+        error = "no such function " + function_name;
+        return false;
+    }
+
+    JZFunctionPointer ptr;
+    ptr.functionName = function_name;
     c->addNodeStart(m_id);
-    c->addSetVariable(irId(id), irLiteral(function_name));
+    c->addSetVariable(irId(id), irLiteral(QVariant::fromValue(ptr)));
     return true;
 }
 
@@ -507,12 +527,12 @@ JZNodeSetParam::~JZNodeSetParam()
 
 void JZNodeSetParam::setVariable(const QString &name)
 {
-    setPinValue(paramIn(0), JZNodeType::addMark(name));
+    setPinValue(paramIn(0), JZNodeType::addQuote(name));
 }
 
 QString JZNodeSetParam::variable() const
 {
-    return JZNodeType::removeMark(pinValue(paramIn(0)));
+    return JZNodeType::removeQuote(pinValue(paramIn(0)));
 }
 
 void JZNodeSetParam::setValue(const QString &name)
@@ -587,12 +607,12 @@ JZNodeSetParamDataFlow::~JZNodeSetParamDataFlow()
 
 void JZNodeSetParamDataFlow::setVariable(const QString &name)
 {
-    setPinValue(paramIn(0),JZNodeType::addMark(name));
+    setPinValue(paramIn(0),JZNodeType::addQuote(name));
 }
 
 QString JZNodeSetParamDataFlow::variable() const
 {
-    return JZNodeType::removeMark(pinValue(paramIn(0)));
+    return JZNodeType::removeQuote(pinValue(paramIn(0)));
 }
 
 void JZNodeSetParamDataFlow::setValue(const QString &name)

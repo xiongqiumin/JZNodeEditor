@@ -14,7 +14,7 @@ enum
     OP_nop,            
     OP_alloc, 
     OP_clearRegCall,   
-    OP_set,   
+    OP_set, 
     OP_convert,
     OP_jmp,
     OP_je,

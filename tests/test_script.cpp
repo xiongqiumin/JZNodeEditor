@@ -23,6 +23,22 @@ void ScriptTest::testMatchType()
 {
     int ret = JZNodeType::matchType({ Type_bool,Type_double,Type_int }, QList<int>{Type_bool});
     QVERIFY(ret == Type_bool);
+
+    QVariant vb = true;
+    QVariant vi = 1999;
+    QVariant vd = 8.34;
+    QVariant vs = "true";
+    QVariant vnull = QVariant::fromValue(JZObjectNull());
+    QVariant vfunc = QVariant::fromValue(JZFunctionPointer());
+    QVariant vany = QVariant::fromValue(JZNodeVariantAny());
+
+    QCOMPARE(JZNodeType::variantType(vb),Type_bool);
+    QCOMPARE(JZNodeType::variantType(vi),Type_int);
+    QCOMPARE(JZNodeType::variantType(vd),Type_double);
+    QCOMPARE(JZNodeType::variantType(vs),Type_string);
+    QCOMPARE(JZNodeType::variantType(vnull),Type_nullptr);
+    QCOMPARE(JZNodeType::variantType(vfunc),Type_function);
+    QCOMPARE(JZNodeType::variantType(vany),Type_any);
 }
 
 void ScriptTest::testRegExp()
@@ -61,6 +77,29 @@ void ScriptTest::testContainer()
     in << list_int << 0;
     m_engine.call("List<int>.get",in,out);
     QCOMPARE(out[0].toInt(),1);
+
+    in.clear();
+    in << list_int << 0 << 5;
+    m_engine.call("List<int>.set",in,out);
+
+    in.clear();
+    in << list_int << 0;
+    m_engine.call("List<int>.get",in,out);
+    QCOMPARE(out[0].toInt(),5);
+
+    in.clear();
+    in << list_int << 500;
+    m_engine.call("List<int>.push_back",in,out);  
+
+    in.clear();
+    in << list_int;
+    m_engine.call("List<int>.size",in,out);
+    QCOMPARE(out[0].toInt(),9);
+
+    m_engine.call("List<int>.clear",in,out);
+    
+    m_engine.call("List<int>.size",in,out);
+    QCOMPARE(out[0].toInt(),0);
 }
 
 void ScriptTest::testObjectParse()
@@ -70,15 +109,15 @@ void ScriptTest::testObjectParse()
     JZNodeObjectParser parser;
     auto obj_list = parser.parse("[1,2,3,4,5,6,7,8]");
     QVERIFY2(obj_list, qUtf8Printable(parser.error()));
-    cache << JZNodeObjectPtr(obj_list);
+    cache << JZNodeObjectPtr(obj_list,true);
 
     auto obj_map = parser.parse(R"({"a":1,"b":998})");
     QVERIFY2(obj_map, qUtf8Printable(parser.error()));
-    cache << JZNodeObjectPtr(obj_map);
+    cache << JZNodeObjectPtr(obj_map,true);
 
     obj_list = parser.parse("[ Point{1,2},Point{3,4},Point{5,6},Point{7,8}]");
     QVERIFY2(obj_list, qUtf8Printable(parser.error()));
-    cache << JZNodeObjectPtr(obj_list);
+    cache << JZNodeObjectPtr(obj_list,true);
 }
 
 void ScriptTest::testParamBinding()

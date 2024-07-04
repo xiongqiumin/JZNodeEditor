@@ -11,14 +11,14 @@
 #include <QCloseEvent>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QDebug>
 
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
 #include "JZNodeFunctionManager.h"
 #include "JZEvent.h"
 
-extern void JZScriptOnSlot(JZNodeObject *sender,const QString &function,const QVariantList &in, QVariantList &out);
-extern bool JZScriptInvoke(const QString &function,const QVariantList &in, QVariantList &out);
+extern void JZScriptInvoke(const QString &function,const QVariantList &in, QVariantList &out);
 
 namespace jzbind
 {
@@ -149,6 +149,12 @@ QString fromVariant<QString>(const QVariant &v, std::false_type);
 template<>
 QString* fromVariant<QString*>(const QVariant &v, std::true_type);
 
+template<>
+JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type);
+
+template<>
+JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type);
+
 template<class T>
 remove_cvr_t<T> fromVariant(const QVariant &v)
 {
@@ -174,7 +180,8 @@ QVariant toVariantClass(T value, std::true_type)
 {
     JZNodeObject* obj = JZObjectCreate<T>();
     *((T*)obj->cobj()) = value;
-    return QVariant::fromValue(obj);
+    JZNodeObjectPtr ptr(obj,true);
+    return QVariant::fromValue(ptr);
 }
 
 template<class T>
@@ -187,8 +194,9 @@ template<class T>
 QVariant toVariantPointer(T value, std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    JZNodeObject* obj = JZObjectRefrence<T>(value, false);
-    return QVariant::fromValue(obj);
+    JZNodeObject* obj = JZObjectCreateRefrence<T>(value, false);
+    JZNodeObjectPtr ptr(obj,true);
+    return QVariant::fromValue(ptr);
 }
 
 template<class T>
@@ -206,6 +214,9 @@ QVariant toVariant(T value)
 
 template<>
 QVariant toVariant(JZNodeVariantAny value);
+
+template<>
+QVariant toVariant(JZFunctionPointer ptr);
 
 template<>
 QVariant toVariant(QString value);
@@ -485,47 +496,6 @@ int registEnum(QString name,int id = -1)
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
-template<class Class>
-class WidgetEventHelper : public Class
-{
-public:
-    using T = WidgetEventHelper<Class>;
-
-    template<typename Return,typename FuncClass, typename... Args>
-	static bool isNewFunction(Return (FuncClass::*func)(Args...))
-	{
-        Q_UNUSED(func);
-		return std::is_same<Class,FuncClass>::value;
-	}
-
-    static bool isNewPaintEvent() { return isNewFunction(&WidgetEventHelper::paintEvent); }
-    static decltype(WidgetEventHelper::paintEvent) getPaintEvent() { return &WidgetEventHelper::paintEvent; }
-
-    static bool isNewShowEvent() { return isNewFunction(&WidgetEventHelper::showEvent); }
-    static decltype(WidgetEventHelper::showEvent) getShowEvent() { return &WidgetEventHelper::showEvent; }
-    
-    static bool isNewResizeEvent() { return isNewFunction(&WidgetEventHelper::resizeEvent); }
-    static decltype(WidgetEventHelper::resizeEvent) getResizeEvent() { return &WidgetEventHelper::resizeEvent; }
-    
-    static bool isNewCloseEvent() { return isNewFunction(&WidgetEventHelper::closeEvent); }
-    static decltype(WidgetEventHelper::closeEvent) getCloseEvent() { return &WidgetEventHelper::closeEvent; }
-    
-    static bool isNewKeyPressEvent() { return isNewFunction(&WidgetEventHelper::keyPressEvent); }
-    static decltype(WidgetEventHelper::keyPressEvent) getKeyPressEvent() { return &WidgetEventHelper::keyPressEvent; }
-    
-    static bool isNewKeyReleaseEvent() { return isNewFunction(&WidgetEventHelper::keyReleaseEvent); }
-    static decltype(WidgetEventHelper::keyReleaseEvent) getKeyReleaseEvent() { return &WidgetEventHelper::keyReleaseEvent; }
-    
-    static bool isNewMousePressEvent() { return isNewFunction(&WidgetEventHelper::mousePressEvent); }
-    static decltype(WidgetEventHelper::mousePressEvent) getMousePressEvent() { return &WidgetEventHelper::mousePressEvent; }
-    
-    static bool isNewMouseMoveEvent() { return isNewFunction(&WidgetEventHelper::mouseMoveEvent); }
-    static decltype(WidgetEventHelper::mouseMoveEvent) getMouseMoveEvent() { return &WidgetEventHelper::mouseMoveEvent; }
-
-    static bool isNewMouseReleaseEvent() { return isNewFunction(&WidgetEventHelper::mouseReleaseEvent); }
-    static decltype(WidgetEventHelper::mouseReleaseEvent) getMouseReleaseEvent() { return &WidgetEventHelper::mouseReleaseEvent; }
-};
-
 template<class ret_type>
 ret_type getReturn(const QVariantList &list)
 {
@@ -538,21 +508,51 @@ void getReturn(const QVariantList &);
 #define JZBIND_OVERRIDE_IMPL(ret_type, func, ...)              \
     do                                                         \
     {                                                          \
-        auto jzobj = toJZObject(this->property("JZObject"));   \
-        Q_ASSERT(!jzobj || !jzobj->function(#func));           \
+        QVariant v = this->property("JZObject");               \
+        auto jzobj = (JZNodeObject*)(v.value<void*>());        \
+        Q_ASSERT(jzobj && jzobj->function(#func));             \
                                                                \
         auto func_def = jzobj->function(#func);                \
         QVariantList input,output;                             \
-        input.push_back(QVariant::fromValue(jzobj));           \
+        JZNodeObjectPtr ptr(jzobj,false);                      \
+        input.push_back(QVariant::fromValue(ptr));             \
         toVariantList<int>(input,__VA_ARGS__);                 \
         JZScriptInvoke(func_def->fullName(),input,output);     \
         return getReturn<ret_type>(output);                    \
     } while (0)
-    
+
+
 template<class Class>
 class WidgetWrapper : public Class
 {  
 public:
+    template<typename Return,typename FuncClass, typename... Args>
+	static bool isNewFunction(Return (FuncClass::*func)(Args...))
+	{
+        Q_UNUSED(func);
+		return std::is_same<Class,FuncClass>::value;
+	}
+
+    void callPaintEvent(QPaintEvent *e) { Class::paintEvent(e); }
+    void callShowEvent(QShowEvent *e) { Class::showEvent(e); }
+    void callResizeEvent(QResizeEvent *e) { Class::resizeEvent(e); }
+    void callCloseEvent(QCloseEvent *e) { Class::closeEvent(e); }
+    void callKeyPressEvent(QKeyEvent *e) { Class::keyPressEvent(e); }
+    void callKeyReleaseEvent(QKeyEvent *e) { Class::keyReleaseEvent(e); }
+    void callMousePressEvent(QMouseEvent *e) { Class::mousePressEvent(e); }
+    void callMouseMoveEvent(QMouseEvent *e) { Class::mouseMoveEvent(e); }
+    void callMouseReleaseEvent(QMouseEvent *e) { Class::mouseReleaseEvent(e); }
+
+    static void callPaintEventHelp(Class *w,QPaintEvent *e) { ((WidgetWrapper*)w)->callPaintEvent(e); }
+    static void callShowEventHelp(Class *w,QShowEvent *e) { ((WidgetWrapper*)w)->callShowEvent(e); }
+    static void callResizeEventHelp(Class *w,QResizeEvent *e) { ((WidgetWrapper*)w)->callResizeEvent(e); }
+    static void callCloseEventHelp(Class *w,QCloseEvent *e) { ((WidgetWrapper*)w)->callCloseEvent(e); }
+    static void callKeyPressEventHelp(Class *w,QKeyEvent *e) { ((WidgetWrapper*)w)->callKeyPressEvent(e); }
+    static void callKeyReleaseEventHelp(Class *w,QKeyEvent *e) { ((WidgetWrapper*)w)->callKeyReleaseEvent(e); }
+    static void callMousePressEventHelp(Class *w,QMouseEvent *e) { ((WidgetWrapper*)w)->callMousePressEvent(e);}
+    static void callMouseMoveEventHelp(Class *w,QMouseEvent *e) { ((WidgetWrapper*)w)->callMouseMoveEvent(e); }
+    static void callMouseReleaseEventHelp(Class *w,QMouseEvent *e) { ((WidgetWrapper*)w)->callMouseReleaseEvent(e); }
+
     void paintEvent(QPaintEvent *event) override
     {
         JZBIND_OVERRIDE_IMPL(void,paintEvent,event);
@@ -646,10 +646,6 @@ public:
         auto *impl = new CSingleImpl<Class,Args...>();        
         impl->single = f;
         single.csingle = impl;
-        
-        JZParamDefine sender;
-        sender.name = "sender";
-        single.paramOut.push_back(sender);
 
         QStringList args;
         getFunctionParam<int, Args...>(args);
@@ -667,7 +663,9 @@ public:
 
     template<typename... Args>
     void defPrivateSingle(QString name, void (Class::*f)(Args...))
-    {                
+    {
+        m_privateSingleList << name;
+
         JZSingleDefine single;
         single.name = name;
         single.className = m_define.className;
@@ -675,10 +673,6 @@ public:
         auto *impl = new CPrivateSingleImpl<Class, Args...>();
         impl->single = f;
         single.csingle = impl;
-        
-        JZParamDefine sender;
-        sender.name = "sender";         
-        single.paramOut.push_back(sender);
 
         QStringList args;
         getFunctionParam<int, Args...>(args);
@@ -697,19 +691,19 @@ public:
     void regist()
     {
         auto func_inst = JZNodeFunctionManager::instance();
-        //replace with real id
-        for (int i = 0; i < m_define.singles.size(); i++)
-        {
-            auto &single = m_define.singles[i];
-            if (single.paramOut[0].dataType() == Type_none)
-                single.paramOut[0].type = JZNodeType::typeToName(m_define.id);
-        }
         for (int func_idx = 0; func_idx < m_funcList.size(); func_idx++)
         {
             auto f = m_funcList[func_idx].data();
             func_inst->registCFunction(*f, m_funcImplList[func_idx]);
             m_define.functions.push_back(*f);
         }
+
+        for (int i = 0; i < m_privateSingleList.size(); i++)
+        {
+            auto f = m_define.initMemberFunction(m_privateSingleList[i]);
+            m_define.functions.push_back(f);
+        }
+
         //regist
         JZNodeObjectManager::instance()->replace(m_define);
         setQObjectType(std::is_base_of<QObject, Class>());
@@ -720,26 +714,26 @@ protected:
     void defEvent(QString name, Function f)
     {
         auto func = def(name, true, f);
+        func->paramIn[1].name = "event";
         func->isVirtualFunction = true;
         func->isProtected = true;
     }
 
     void defWidgetEvent(std::true_type)
     {
-        using W = WidgetEventHelper<Class>;
+        using W = WidgetWrapper<Class>;
 
-        m_define.cMeta.create = &createClass<WidgetWrapper<Class>>;
-        m_define.cMeta.destory = &destoryClass<WidgetWrapper<Class>>;
-
-        if(W::isNewPaintEvent()) defEvent("paintEvent", W::getPaintEvent());
-        if(W::isNewShowEvent()) defEvent("showEvent", W::getShowEvent());
-        if(W::isNewResizeEvent()) defEvent("resizeEvent", W::getResizeEvent());
-        if(W::isNewCloseEvent()) defEvent("closeEvent", W::getCloseEvent());
-        if(W::isNewKeyPressEvent()) defEvent("keyPressEvent", W::getKeyPressEvent());
-        if(W::isNewKeyReleaseEvent()) defEvent("keyReleaseEvent", W::getKeyReleaseEvent());
-        if(W::isNewMousePressEvent()) defEvent("mousePressEvent", W::getMousePressEvent());
-        if(W::isNewMouseMoveEvent()) defEvent("mouseMoveEvent", W::getMouseMoveEvent());
-        if(W::isNewMouseReleaseEvent()) defEvent("mouseReleaseEvent", W::getMouseReleaseEvent());
+        m_define.cMeta.create = &createClass<W>;
+        
+        defEvent("paintEvent", &W::callPaintEventHelp);
+        defEvent("showEvent", &W::callShowEventHelp);
+        defEvent("resizeEvent", &W::callResizeEventHelp);
+        defEvent("closeEvent", &W::callCloseEventHelp);
+        defEvent("keyPressEvent", &W::callKeyPressEventHelp);
+        defEvent("keyReleaseEvent", &W::callKeyReleaseEventHelp);
+        defEvent("mousePressEvent", &W::callMousePressEventHelp);
+        defEvent("mouseMoveEvent", &W::callMouseMoveEventHelp);
+        defEvent("mouseReleaseEvent", &W::callMouseReleaseEventHelp);
     }
 
     void defWidgetEvent(std::false_type)
@@ -814,6 +808,7 @@ protected:
     JZNodeObjectDefine m_define;    
     QList<QSharedPointer<JZFunctionDefine>> m_funcList;
     QList<QSharedPointer<CFunction>> m_funcImplList;
+    QStringList m_privateSingleList;
 };
 
 

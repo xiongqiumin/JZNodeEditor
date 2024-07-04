@@ -246,7 +246,7 @@ QString JZNodeGenerateCpp::paramToString(JZNodeIRParam param)
             return "nullptr";
         }
         else
-            return JZNodeType::toString(param.value);
+            return "param.value";
     }
     else if(param.type == JZNodeIRParam::Reference)
     {

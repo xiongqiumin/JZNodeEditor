@@ -56,9 +56,7 @@ public:
     QMap<JZMap::Key,QVariant>::Iterator it;
 };
 
-void registList(QString type,int type_id = -1);
-void registMap(QString key_type,QString value_type,int type_id = -1);
-
+void registContainer(QString type,int type_id = -1);
 
 
 

@@ -101,6 +101,8 @@ void BaseTest::stop()
     m_engine.stop();
     if(m_thread.joinable())
         m_thread.join();
+        
+    m_engine.deinit();
 }
 
 void BaseTest::asyncThread(QString name,QVariantList in)

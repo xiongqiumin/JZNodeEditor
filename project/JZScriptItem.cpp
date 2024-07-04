@@ -282,9 +282,9 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
             return false;
         }
     }
-    if(pin_to->isLiteral() /*&& node_from->type() != Node_literal*/)
+    if(!pin_from->isLiteral() && pin_to->isLiteral())
     {
-        error = "常量,无法连接数据";
+        error = "输入需为常量";
         return false;
     }
     //检测数据类型
@@ -325,7 +325,7 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
                 inTypes << JZNodeType::typeToName(in_type[i]);
             for(int i = 0; i < from_type.size(); i++)
                 formTypes << JZNodeType::typeToName(from_type[i]);
-
+            
             error = "数据类型不匹配,需要" + inTypes.join(",") + ", 输入为" + formTypes.join(",");
             return false;
         }
@@ -340,7 +340,7 @@ int JZScriptItem::addConnect(JZNodeGemo from, JZNodeGemo to)
     auto pin_from = getPin(from);
     auto pin_to = getPin(to);
     Q_ASSERT(pin_from && pin_to);
-    Q_ASSERT_X(canConnect(from,to,error),"Error:",qUtf8Printable(error));
+    Q_ASSERT_X(canConnect(from,to,error),"Error",qUtf8Printable(error));
 
     JZNodeConnect connect;
     connect.id = m_nodeId++;

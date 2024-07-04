@@ -65,7 +65,7 @@ public:
 
     const QString &value() const;
     void setValue(const QString &value);
-
+    
 protected:
     friend void operator<<(QDataStream &s, const JZNodePin &param);
     friend void operator>>(QDataStream &s, JZNodePin &param);    

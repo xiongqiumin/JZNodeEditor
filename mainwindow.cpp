@@ -1143,7 +1143,7 @@ void MainWindow::updateAutoWatch(int stack_index)
     JZNodeDebugParamInfo param_info;
     param_info.stack = stack_index;
     
-    auto func = m_program.function(stack.function);
+    auto func = m_program.typeMeta().function(stack.function);
     if (func->isMemberFunction())
     {
         JZNodeParamCoor coor;
@@ -1151,7 +1151,7 @@ void MainWindow::updateAutoWatch(int stack_index)
         coor.name = "this";
         param_info.coors << coor;
     }
-
+/*
     //local    
     for (int i = 0; i < func->localVariables.size(); i++)
     {
@@ -1162,7 +1162,7 @@ void MainWindow::updateAutoWatch(int stack_index)
         coor.name = local.name;
         param_info.coors << coor;
     }
-
+*/
     auto &node_info = m_program.script(stack.file)->nodeInfo[stack.nodeId];
     int node_prop_index = param_info.coors.size();
     for (int i = 0; i < node_info.paramIn.size(); i++)

@@ -111,6 +111,23 @@ QString JZFunctionDefine::fullName() const
     return result;
 }
 
+QString JZFunctionDefine::delcare() const
+{
+    QString text;
+    QStringList in_list,out_list;
+    for(int i = 0; i < paramIn.size(); i++)
+        in_list << paramIn[i].type;
+    for(int i = 0; i < paramOut.size(); i++)
+        out_list << paramOut[i].type;
+    if(out_list.size() == 0)
+        text = "void";
+    else
+        text = out_list.join(",");
+
+    text += " " + fullName() + "(" + in_list.join(",") + ")";
+    return text;
+}
+
 bool JZFunctionDefine::isMemberFunction() const
 {
     return (paramIn.size() > 0 && paramIn[0].name == "this");
@@ -124,7 +141,7 @@ void JZFunctionDefine::updateParam(CFunction *func)
     {
         QString name = "input" + QString::number(i);
         int dataType = JZNodeType::typeidToType(func->args[i]);
-        Q_ASSERT(dataType != Type_none);
+        Q_ASSERT_X(dataType != Type_none,"Error",qUtf8Printable(func->args[i]));
 
         paramIn.push_back(JZParamDefine(name, dataType));
     }
@@ -132,7 +149,7 @@ void JZFunctionDefine::updateParam(CFunction *func)
     {
         QString name = "output";
         int dataType = JZNodeType::typeidToType(func->result);
-        Q_ASSERT(dataType != Type_none);
+        Q_ASSERT_X(dataType != Type_none,"Error",qUtf8Printable(func->result));
 
         paramOut.push_back(JZParamDefine(name, dataType));
     }
@@ -148,7 +165,7 @@ void JZFunctionDefine::setDefaultValue(int index, QStringList values)
     for (int i = 0; i < values.size(); i++)
     {
         if (paramIn[i + index].dataType() == Type_string)
-            paramIn[i + index].value = JZNodeType::addMark(values[i]);
+            paramIn[i + index].value = JZNodeType::addQuote(values[i]);
         else
             paramIn[i + index].value = values[i];
     }
@@ -181,6 +198,59 @@ QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param)
     s >> param.isSlot;
     s >> param.paramIn;
     s >> param.paramOut;          
+    return s;
+}
+
+//CSingle
+CSingle::CSingle()
+{    
+}
+
+CSingle::~CSingle()
+{
+
+}
+
+//JZSingleDefine
+JZSingleDefine::JZSingleDefine()
+{
+    csingle = nullptr;
+}
+
+QString JZSingleDefine::fullName() const
+{
+    return className + "." + name;
+}
+
+QString JZSingleDefine::delcare() const
+{
+    QString text;
+    QStringList out_list;
+    for(int i = 0; i < paramOut.size(); i++)
+        out_list << paramOut[i].type;
+    text += "void " + fullName() + "(" + out_list.join(",") + ")";
+    return text;
+}
+
+bool JZSingleDefine::isCSingle() const
+{
+    return (csingle != nullptr);
+}
+
+QDataStream &operator<<(QDataStream &s, const JZSingleDefine &param)
+{
+    Q_ASSERT(!param.isCSingle());
+    s << param.name;
+    s << param.className;
+    s << param.paramOut;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZSingleDefine &param)
+{
+    s >> param.name;
+    s >> param.className;
+    s >> param.paramOut;
     return s;
 }
 
@@ -271,21 +341,17 @@ bool JZFunction::isFlowFunction() const
 QDataStream &operator<<(QDataStream &s, const JZFunction &param)
 {
     s << param.define;
-   
+    s << param.path;
     s << param.addr;
     s << param.addrEnd;
-    s << param.file;
-    s << param.localVariables;
     return s;
 }
 
 QDataStream &operator >> (QDataStream &s, JZFunction &param)
 {
     s >> param.define;
-
+    s >> param.path;
     s >> param.addr;
     s >> param.addrEnd;
-    s >> param.file;
-    s >> param.localVariables;
     return s;
 }

@@ -45,8 +45,8 @@ bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-//JZNodeSingleConnect
-JZNodeSingleConnect::JZNodeSingleConnect()
+//JZNodeSignalConnect
+JZNodeSignalConnect::JZNodeSignalConnect()
 {
     addFlowIn();
     addFlowOut();
@@ -57,18 +57,50 @@ JZNodeSingleConnect::JZNodeSingleConnect()
     int in4 = addParamIn("slot", Pin_dispName | Pin_literal);
 
     setPinType(in1, { Type_object });
-    setPinTypeString(in2);
+    setPinType(in2, { Type_function });
     setPinType(in3, { Type_object });
-    setPinTypeString(in4);
+    setPinType(in4, { Type_function });
 }
 
-JZNodeSingleConnect::~JZNodeSingleConnect()
+JZNodeSignalConnect::~JZNodeSignalConnect()
 {
 
 }
 
-bool JZNodeSingleConnect::compiler(JZNodeCompiler *compiler, QString &error)
+bool JZNodeSignalConnect::compiler(JZNodeCompiler *c, QString &error)
 {
+    if(!c->addFlowInput(m_id,error))
+        return false;
+
+    JZFunctionPointer sig,slot;
+    sig = c->pinLiteral(m_id,paramIn(1)).value<JZFunctionPointer>();
+    slot = c->pinLiteral(m_id,paramIn(3)).value<JZFunctionPointer>();
+
+    auto sig_func = JZNodeObjectManager::instance()->single(sig.functionName);
+    auto slot_func = JZNodeFunctionManager::instance()->function(slot.functionName);
+    if(!sig_func)
+    {
+        error = "no signal " + sig.functionName;
+        return false;
+    }
+    if(!slot_func)
+    {
+        error = "no slot " + slot.functionName;
+        return false;
+    }
+    if(!JZNodeType::sigSlotTypeMatch(sig_func,slot_func))
+    {
+        error = "signal slot not match " + sig_func->delcare() + "," + slot_func->delcare();
+        return false;
+    }
+
+    int send_id = c->paramId(m_id,paramIn(0));
+    int recv_id = c->paramId(m_id,paramIn(2));
+    QList<JZNodeIRParam> in,out;
+    in << irId(send_id) << irLiteral(QVariant::fromValue(sig)) << irId(recv_id) << irLiteral(QVariant::fromValue(slot));
+    c->addCall("connect",in,out);
+    c->addJumpNode(flowOut());
+    
     return true;
 }
 

@@ -325,7 +325,7 @@ void JZNodeGraphItem::updateNode()
     {
         auto pin = m_node->pin(pinList[i]);
         if(pin->isParam() && pin->isEditValue())
-            setPinValue(pin->id(), JZNodeType::toString(pin->value()));
+            setPinValue(pin->id(), pin->value());
     }
 
     int w = qMax(100,in_x + out_x + 30);
@@ -479,7 +479,7 @@ void JZNodeGraphItem::resetPropValue()
     {
         auto pin = m_node->pin(pinList[i]);
         if (pin->isParam() && pin->isEditValue())
-            setPinValue(pin->id(), JZNodeType::toString(pin->value()));
+            setPinValue(pin->id(), pin->value());
     }
 }
 

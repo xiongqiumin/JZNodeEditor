@@ -2,6 +2,8 @@
 #include "JZNodeCompiler.h"
 #include <QFile>
 #include <QDebug>
+#include "JZNodeFunctionManager.h"
+#include "JZContainer.h"
 
 //NodeRange
 NodeRange::NodeRange()
@@ -156,6 +158,79 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     s >> watchList;
 }
 
+//JZNodeTypeMeta
+void JZNodeTypeMeta::clear()
+{
+    functionList.clear();
+    objectList.clear();       
+    cobjectList.clear();
+}
+
+const JZFunctionDefine *JZNodeTypeMeta::function(QString name) const
+{
+    for(int i = 0; i < functionList.size(); i++)
+    {
+        if(functionList[i].name == name)
+            return &functionList[i];
+    }
+    return nullptr;
+}
+
+const JZNodeObjectDefine *JZNodeTypeMeta::object(QString name) const
+{
+    for(int i = 0; i < objectList.size(); i++)
+    {
+        if(objectList[i].className == name)
+            return &objectList[i];
+    }
+    return nullptr;
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param)
+{
+    s << param.functionList;
+    s << param.objectList;
+    s << param.cobjectList;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param)
+{
+    s >> param.functionList;
+    s >> param.objectList;
+    s >> param.cobjectList;
+    return s;
+}
+
+void JZNodeRegistType(const JZNodeTypeMeta &type_info)
+{
+    JZNodeFunctionManager::instance()->clearUserReigst();
+    JZNodeObjectManager::instance()->clearUserReigst();
+    
+    auto &define_list = type_info.objectList;
+    auto &cobj_list = type_info.cobjectList;
+    auto &function_list = type_info.functionList;
+
+    //delcare
+    for(int i = 0; i < define_list.size(); i++)
+        JZNodeObjectManager::instance()->delcare(define_list[i].className,define_list[i].id);
+    for(int i = 0; i < cobj_list.size(); i++)
+        JZNodeObjectManager::instance()->delcare(cobj_list[i].className,cobj_list[i].id);  
+
+    //regist
+    for(int i = 0; i < define_list.size(); i++)
+        JZNodeObjectManager::instance()->regist(define_list[i]);
+    for(int i = 0; i < cobj_list.size(); i++)
+    {
+        QString class_name = cobj_list[i].className;
+        int cls_id = cobj_list[i].id;
+        registContainer(class_name,cls_id);
+    }
+
+    for (int i = 0; i < function_list.size(); i++)
+        JZNodeFunctionManager::instance()->registFunction(function_list[i]);
+}
+
 //JZNodeProgram
 JZNodeProgram::JZNodeProgram()
 {    
@@ -174,7 +249,7 @@ void JZNodeProgram::clear()
 {
     m_scripts.clear();    
     m_variables.clear();    
-    m_objectDefines.clear();        
+    m_typeMeta.clear();        
 }
 
 QString JZNodeProgram::error()
@@ -216,7 +291,7 @@ bool JZNodeProgram::load(QString filepath)
         m_scripts[path] = JZNodeScriptPtr(script);       
     }
     s >> m_variables;    
-    s >> m_objectDefines;
+    s >> m_typeMeta;
     s >> m_binds;
 
     m_filePath = filepath;
@@ -240,7 +315,7 @@ bool JZNodeProgram::save(QString filepath)
         it++;
     }        
     s << m_variables;        
-    s << m_objectDefines;
+    s << m_typeMeta;
     s << m_binds;
     
     m_filePath = filepath;
@@ -252,34 +327,19 @@ JZNodeScript *JZNodeProgram::script(QString path)
     return m_scripts.value(path, JZNodeScriptPtr()).data();
 }
 
-QStringList JZNodeProgram::functionList()
+void JZNodeProgram::registType()
 {
-    QStringList list;
+    JZNodeRegistType(m_typeMeta);
 
     auto it = m_scripts.begin();
     while (it != m_scripts.end())
     {
         auto &sub_list = it.value()->functionList;
         for (int i = 0; i < sub_list.size(); i++)
-            list << sub_list[i].fullName();
-
+            JZNodeFunctionManager::instance()->registFunctionImpl(sub_list[i]);    
+        
         it++;
     }
-    return list;
-}
-
-JZFunction *JZNodeProgram::function(QString name)
-{    
-    auto it = m_scripts.begin();
-    while (it != m_scripts.end())
-    {
-        JZFunction *def = it->data()->function(name);
-        if (def)
-            return def;
-
-        it++;
-    }
-    return nullptr;
 }
 
 QList<JZNodeScript*> JZNodeProgram::scriptList()
@@ -299,9 +359,9 @@ QMap<QString, JZNodeParamBind> JZNodeProgram::bindInfo(QString className)
     return m_binds.value(className);
 }
 
-QList<JZNodeObjectDefine> JZNodeProgram::objectDefines()
+const JZNodeTypeMeta &JZNodeProgram::typeMeta() const
 {
-    return m_objectDefines;
+    return m_typeMeta;
 }
 
 QString JZNodeProgram::toString(JZNodeIRParam param)
@@ -316,7 +376,7 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
             return JZNodeType::typeToName(var_type) + "()";
         }
         else 
-            return "$" + JZNodeType::toString(param.value) + ":" + JZNodeType::typeToName(var_type);
+            return "$" + JZNodeType::debugString(param.value) + ":" + JZNodeType::typeToName(var_type);
     }
     else if(param.type == JZNodeIRParam::Reference)
         return param.ref();
