@@ -3,6 +3,7 @@
 #include "JZNode.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeParamWidget.h"
 
 // JZNodeGemo
 JZNodeGemo::JZNodeGemo()
@@ -85,6 +86,8 @@ JZNode::~JZNode()
 
 QByteArray JZNode::toBuffer()
 {
+    Q_ASSERT(m_type != Node_none);
+
     QByteArray buffer;
     QDataStream s(&buffer, QIODevice::WriteOnly);
     saveToStream(s);
@@ -596,49 +599,49 @@ void JZNode::setId(int id)
     m_id = id;
 }
 
-bool JZNode::update()
+QList<int> JZNode::pinTypeInt(int id) const
 {
-    return false;
+    return pin(id)->dataTypeInt();
 }
 
-QList<int> JZNode::pinType(int id)
+const QStringList &JZNode::pinType(int id) const
 {
     return pin(id)->dataType();
 }
 
 void JZNode::setPinTypeAny(int id)
 {
-    pin(id)->setDataType({Type_any});
+    pin(id)->setDataTypeInt({Type_any});
 }
 
 void JZNode::setPinTypeInt(int id)
 {
-    pin(id)->setDataType({Type_int});
+    pin(id)->setDataTypeInt({Type_int});
 }
 
 void JZNode::setPinTypeNumber(int id)
 {
-    pin(id)->setDataType({Type_bool,Type_int,Type_double});
+    pin(id)->setDataTypeInt({Type_bool,Type_int,Type_double});
 }
 
 void JZNode::setPinTypeBool(int id)
 {
-    pin(id)->setDataType({Type_bool});
+    pin(id)->setDataTypeInt({Type_bool});
 }
 
 void JZNode::setPinTypeString(int id)
 {
-    pin(id)->setDataType({Type_string});
+    pin(id)->setDataTypeInt({Type_string});
 }
 
 void JZNode::setPinType(int id,const QList<int> &type)
 {
-    pin(id)->setDataType(type);
+    pin(id)->setDataTypeInt(type);
 }
 
 void JZNode::clearPinType(int id)
 {
-    QList<int> type;
+    QStringList type;
     pin(id)->setDataType(type);
 }
 
@@ -647,7 +650,7 @@ void JZNode::drag(const QVariant &v)
     Q_UNUSED(v);
 }
 
-QWidget *JZNode::createWidget(int id)
+JZNodePinWidget *JZNode::createWidget(int id)
 {
     return nullptr;
 }
@@ -728,7 +731,7 @@ JZNodeNop::JZNodeNop()
    
 bool JZNodeNop::compiler(JZNodeCompiler *c, QString &error)
 {
-    c->addNodeStart(m_id);
+    c->addNodeDebug(m_id);
     c->addNop();
     c->addJumpNode(flowOut());
     return true;
@@ -775,7 +778,7 @@ bool JZNodeBreak::compiler(JZNodeCompiler *c,QString &error)
         error = "无效的break";
         return false;
     }    
-    c->addNodeStart(m_id);
+    c->addNodeDebug(m_id);
     c->addBreak();
     return true;
 }
@@ -835,7 +838,7 @@ JZNodeExit::JZNodeExit()
 
 bool JZNodeExit::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->addNodeStart(m_id);
+    c->addNodeDebug(m_id);
     JZNodeIR *ir_exit = new JZNodeIR(Node_exit);
     c->addStatement(JZNodeIRPtr(ir_exit));
     return true;
@@ -904,7 +907,7 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
     QList<int> breakList;
     QList<int> continueList;
 
-    c->addNodeStart(m_id);
+    c->addNodeDebug(m_id);
     //设置continue, 最后一个是跳出
     auto list = subFlowList();
     for(int i = 0; i < list.size(); i++)
@@ -920,15 +923,17 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-QWidget *JZNodeSequence::createWidget(int id)
+JZNodePinWidget *JZNodeSequence::createWidget(int id)
 {
-    QPushButton *btn = new QPushButton("Add Input");
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    QPushButton *btn = w->button();
+    btn->setText("Add Input");
     btn->connect(btn, &QPushButton::clicked, [this] {
         QByteArray old = toBuffer();
         addSequeue();
         propertyChangedNotify(old);
     });        
-    return btn;
+    return w;
 }
 
 // JZNodeParallel
@@ -946,11 +951,11 @@ JZNodeFor::JZNodeFor()
     addSubFlowOut("loop body",Pin_dispName);
     addFlowOut("complete",Pin_dispName);
 
-    int id_start = addParamIn("First index",Pin_editValue | Pin_dispName | Pin_dispValue);
+    int id_start = addParamIn("Index",Pin_editValue | Pin_dispName | Pin_dispValue);
     int id_step = addParamIn("Step", Pin_editValue | Pin_dispName | Pin_dispValue);
     int id_end = addParamIn("End index",Pin_editValue | Pin_dispName | Pin_dispValue);
     int id_op = addParamIn("Cond", Pin_dispName | Pin_widget | Pin_noValue);
-    int id_index = addParamOut("index", Pin_dispName);    
+    int id_index = addParamOut("Index", Pin_dispName);
     setPinTypeInt(id_start);
     setPinTypeInt(id_step);
     setPinTypeInt(id_index);
@@ -963,12 +968,12 @@ JZNodeFor::JZNodeFor()
     setPinValue(id_op, "0");
 
     QStringList list;
-    list << "First < Last";
-    list << "First <= Last";
-    list << "First > Last";
-    list << "First >= Last";
-    list << "First == Last";
-    list << "First != Last";
+    list << "Index < End";
+    list << "Index <= End";
+    list << "Index > End";
+    list << "Index >= End";
+    list << "Index == End";
+    list << "Index != End";
     m_condTip = list;
 
     m_condOp.push_back(OP_lt);
@@ -981,9 +986,10 @@ JZNodeFor::JZNodeFor()
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 {
-    if(!c->addFlowInput(m_id,error))
-        return false;
-    
+    c->setAutoAddNodeDebug(m_id, false);
+    if (!c->addFlowInput(m_id, error))    
+        return false;        
+
     int indexStart = paramIn(0);
     int indexStep = paramIn(1);
     int indexEnd = paramIn(2);
@@ -1010,29 +1016,29 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
         need_runtime_check = false;
     }
 
-    int id_start = c->paramId(m_id,indexStart);
+    int id_index = c->paramId(m_id,indexStart);
     int id_end = c->paramId(m_id,indexEnd);
-    int id_step = c->paramId(m_id, indexStep);
-    int id_index = c->paramId(m_id,indexOut);     
-    c->addSetVariable(irId(id_index), irId(id_start));       
-
+    int id_step = c->paramId(m_id, indexStep);    
+    int id_out_index = c->paramId(m_id,indexOut);         
     if(need_runtime_check)
     {
         QList<JZNodeIRParam> in, out;
-        in << irId(id_start) << irId(id_end) << irId(id_step) << irLiteral(op);
+        in << irId(id_index) << irId(id_end) << irId(id_step) << irLiteral(op);
         c->addCall("forRuntimeCheck", in, out);
     }
-    
+    c->addSetVariable(irId(id_out_index), irId(id_index));
+
     //start 
-    int start = c->addCompare(irId(id_index), irId(id_end), op);
+    int start = c->addNodeDebug(m_id);
+    c->addCompare(irId(id_index), irId(id_end), op);
     JZNodeIRJmp *jmp_cond_break = new JZNodeIRJmp(OP_jne);
-    c->addStatement(JZNodeIRPtr(jmp_cond_break));
-    
-    c->lastStatment()->memo = "body";
+    c->addStatement(JZNodeIRPtr(jmp_cond_break));    
+    c->lastStatment()->memo = "body";    
     c->addFlowOutput(m_id);
     c->addJumpSubNode(subFlowOut(0));    
 
     int continue_pc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_add);
+    c->addSetVariable(irId(id_out_index), irId(id_index));
     JZNodeIRJmp *jmp_to_start = new JZNodeIRJmp(OP_jmp);    
     c->addStatement(JZNodeIRPtr(jmp_to_start));
     jmp_to_start->jmpPc = start;
@@ -1044,19 +1050,16 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-QWidget* JZNodeFor::createWidget(int id)
+JZNodePinWidget* JZNodeFor::createWidget(int id)
 {
-    QComboBox *comboBox = new QComboBox();
+    JZNodeParamValueWidget *w = new JZNodeParamValueWidget();
+    w->initWidget(Type_int, "QComboBox");
+    QComboBox *comboBox = qobject_cast<QComboBox*>(w->widget());
     comboBox->addItems(m_condTip);      ;
     comboBox->setCurrentIndex(paramInValue(3).toInt());    
-    comboBox->setMinimumSize(comboBox->sizeHint());
-    comboBox->connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index){        
-        QByteArray old = toBuffer();
-        setParamInValue(3, QString::number(index));
-        propertyChangedNotify(old);
-    });
 
-    return comboBox;
+
+    return w;
 }
 
 void JZNodeFor::loadFromStream(QDataStream &s)
@@ -1114,7 +1117,7 @@ JZNodeForEach::JZNodeForEach()
 
     int out1 = addParamOut("key",Pin_dispName);
     int out2 = addParamOut("value",Pin_dispName);
-    pin(in)->setDataType({Type_any});
+    pin(in)->setDataTypeInt({Type_any});
     setPinTypeAny(out1);
     setPinTypeAny(out2);
 }
@@ -1290,10 +1293,13 @@ int JZNodeIf::btnElseId()
     return widgetIn(1);
 }
 
-QWidget* JZNodeIf::createWidget(int id)
+JZNodePinWidget* JZNodeIf::createWidget(int id)
 {
     Q_UNUSED(id);
-    QPushButton *btn = new QPushButton(pinName(id));
+
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    QPushButton *btn = w->button();
+    btn->setText(pinName(id));
     if (id == btnCondId())
     {
         btn->connect(btn, &QPushButton::clicked, [this] {
@@ -1313,7 +1319,7 @@ QWidget* JZNodeIf::createWidget(int id)
             propertyChangedNotify(old);
         });
     }
-    return btn;
+    return w;
 }
 
 QStringList JZNodeIf::pinActionList(int id)
@@ -1455,9 +1461,11 @@ void JZNodeSwitch::setCaseValue(int index, const QString &v)
     pin(subFlowOut(index))->setValue(v);
 }
 
-QWidget* JZNodeSwitch::createWidget(int id)
+JZNodePinWidget* JZNodeSwitch::createWidget(int id)
 {    
-    QPushButton *btn = new QPushButton(pinName(id));
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    QPushButton *btn = w->button();
+    btn->setText(pinName(id));
     if (id == widgetOut(0))
     {
         btn->connect(btn, &QPushButton::clicked, [this] {
@@ -1481,7 +1489,7 @@ QWidget* JZNodeSwitch::createWidget(int id)
         });
     }
 
-    return btn;
+    return w;
 }
 
 QStringList JZNodeSwitch::pinActionList(int id)

@@ -48,7 +48,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         JZNodePin pin;
         pin.setName(define->paramIn[i].name);    
         pin.setFlag(Pin_param | Pin_in | Pin_dispName);
-        pin.setDataType({define->paramIn[i].dataType() });
+        pin.setDataType({define->paramIn[i].type });
         if (JZNodeType::isBaseOrEnum(define->paramIn[i].dataType()))        
             pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);        
         pin.setValue(define->paramIn[i].value);
@@ -59,7 +59,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         JZNodePin pin;
         pin.setName(define->paramOut[i].name);
         pin.setFlag(Pin_param | Pin_out | Pin_dispName);
-        pin.setDataType({define->paramOut[i].dataType()});
+        pin.setDataType({define->paramOut[i].type});
         addPin(pin);
     }            
 }
@@ -79,7 +79,7 @@ JZFunctionDefine JZNodeFunction::functionDefine()
     for(int i = 0; i < in_list.size(); i++)
     {
         auto in = pin(in_list[i]);
-        QString in_type = JZNodeType::typeToName(in->dataType()[0]);
+        QString in_type = in->dataType()[0];
         def.paramIn.push_back(JZParamDefine(in->name(),in_type));
     }
 
@@ -87,7 +87,7 @@ JZFunctionDefine JZNodeFunction::functionDefine()
     for(int i = 0; i < out_list.size(); i++)
     {
         auto out = pin(out_list[i]);
-        QString out_type = JZNodeType::typeToName(out->dataType()[0]);
+        QString out_type = out->dataType()[0];
         def.paramOut.push_back(JZParamDefine(out->name(),out_type));
     } 
     

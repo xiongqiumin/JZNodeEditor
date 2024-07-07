@@ -111,4 +111,6 @@ void JZNodeFactory::init()
     registNode(Node_expr,createFunc<JZNodeExpression>);
 
     registNode(Node_paramChangedEvent,createFunc<JZNodeParamChangedEvent>);
+    registNode(Node_functionPointer, createFunc<JZNodeFunctionPointer>);
+    registNode(Node_signalConnect, createFunc<JZNodeSignalConnect>);
 }

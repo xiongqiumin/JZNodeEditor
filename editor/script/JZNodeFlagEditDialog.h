@@ -25,20 +25,3 @@ private:
     QString m_flagKey;
     QList<QCheckBox*> m_boxList;
 };
-
-
-class JZNodeNumberStringEditDialog : public JZBaseDialog
-{
-public:
-    JZNodeNumberStringEditDialog(QWidget *parent = Q_NULLPTR);
-    ~JZNodeNumberStringEditDialog();
-    
-    void setValue(QString flag);
-    QString value();
-
-private:
-    virtual bool onOk() override;
-
-    QComboBox *m_box;
-    QLineEdit *m_line;
-};

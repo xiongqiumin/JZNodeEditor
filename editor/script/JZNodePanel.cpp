@@ -499,23 +499,7 @@ void JZNodePanel::initConstParam(QTreeWidgetItem *root)
 }
 
 void JZNodePanel::initConvert(QTreeWidgetItem *root)
-{
-    QStringList funcList = { "toInt","toString","toDouble","toBool" };
-
-    for (int i = 0; i < funcList.size(); i++)
-    {
-        QString function = funcList[i];
-        auto func_ptr = JZNodeFunctionManager::instance()->function(function);
-        
-        JZNodeFunction node_func;
-        node_func.setName(function);
-        node_func.setFunction(func_ptr);
-
-        auto function_node = createNode(&node_func);
-        function_node->setText(0, function);
-        root->addChild(function_node);
-    }
-    
+{    
 }
 
 void JZNodePanel::initExpression(QTreeWidgetItem *root)

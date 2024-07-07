@@ -40,6 +40,7 @@ JZFunctionDefine JZNodeFunctionStart::function()
 bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
 {
     c->addFunctionAlloc(m_file->function());
+    c->addNodeDebug(m_id);
     c->addFlowOutput(m_id);
     c->addJumpNode(flowOut());
     return true;
@@ -48,6 +49,8 @@ bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
 //JZNodeSignalConnect
 JZNodeSignalConnect::JZNodeSignalConnect()
 {
+    m_type = Node_signalConnect;
+
     addFlowIn();
     addFlowOut();
     

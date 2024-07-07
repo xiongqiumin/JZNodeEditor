@@ -39,7 +39,7 @@ void SampleProject::newProject(QString name)
 {
     m_name = name;
 
-    QString dir = qApp->applicationDirPath() + "/sample";
+    QString dir = qApp->applicationDirPath() + "/sample/" + m_name;
     if (!QDir().exists(dir))
         QDir().mkdir(dir);
         

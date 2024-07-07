@@ -89,7 +89,8 @@ public:
         
         QString text = index.data().toString();
         auto edit = new JZNodeParamValueWidget(parent);
-        edit->setDataType(prop->dataType());
+        int up_type = JZNodeType::upType(prop->dataType());
+        edit->initWidget(up_type);
         edit->setValue(option.text);
         return edit;
     }

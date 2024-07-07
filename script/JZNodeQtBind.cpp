@@ -165,7 +165,7 @@ void LineEditBind::bind(QWidget *widget,QObject *object,QString path)
     BindObject::bind(widget,object,path);
 
     auto edit = qobject_cast<QLineEdit*>(widget);
-    connect(edit,&QLineEdit::editingFinished,this,onWidgetChanged);
+    connect(edit,&QLineEdit::editingFinished,this,&LineEditBind::onWidgetChanged);
 }
 
 void LineEditBind::uiToData(QWidget *widget,QObject *content,QString path)
@@ -203,7 +203,7 @@ void SliderBind::bind(QWidget *widget,QObject *object,QString path)
     BindObject::bind(widget,object,path);
 
     auto edit = qobject_cast<QSlider*>(widget);
-    connect(edit,&QSlider::valueChanged,this,onWidgetChanged);
+    connect(edit,&QSlider::valueChanged,this,&SliderBind::onWidgetChanged);
 }
 
 void SliderBind::uiToData(QWidget *widget,QObject *content,QString path)
@@ -241,7 +241,7 @@ void ComboBoxBind::bind(QWidget *widget,QObject *object,QString path)
     BindObject::bind(widget,object,path);
 
     auto edit = qobject_cast<QComboBox*>(widget);
-    connect(edit,QOverload<int>::of(&QComboBox::currentIndexChanged),this,onWidgetChanged);
+    connect(edit,QOverload<int>::of(&QComboBox::currentIndexChanged),this,&ComboBoxBind::onWidgetChanged);
 }
 
 void ComboBoxBind::uiToData(QWidget *widget,QObject *content,QString path)

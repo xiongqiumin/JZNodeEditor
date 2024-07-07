@@ -54,7 +54,7 @@ public:
     QString mainFunctionPath();
     
     JZParamItem *globalDefine();
-    void addGlobalVariable(const QString &name,QString dataType,const QString &value);
+    void addGlobalVariable(const QString &name,QString dataType,const QString &value = QString());
     void addGlobalVariable(const QString &name,int dataType,const QString &value = QString());
     const JZParamDefine *globalVariable(QString name);
     QStringList globalVariableList();

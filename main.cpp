@@ -37,8 +37,8 @@ int main(int argc, char *argv[])
         //SampleSmartHome sample;
         sample.saveProject();
         //sample.loadProject();
-        sample.run();
-        return 1;
+        //sample.run();
+        //return 1;
     }    
 
     if(argc == 1)

@@ -72,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_builder(&m_project)
 {    
     m_editor = nullptr;
-    m_processVaild = false;    
+    m_processMode = Process_none;
     m_compilerTiemr = new QTimer(this);
     connect(m_compilerTiemr, &QTimer::timeout, this, &MainWindow::onCompilerTimer);
     m_compilerTiemr->start(100);
@@ -92,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
     initUi();     
     updateActionStatus();    
     
-    initLocalProcessTest(0);    
+    //initLocalProcessTest();
 }
 
 MainWindow::~MainWindow()
@@ -374,7 +374,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (m_processVaild)
+    if (m_processMode != Process_none)
     {
         int ret = QMessageBox::question(this, "", "是否停止调试", QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::No) 
@@ -396,16 +396,16 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::updateActionStatus()
 {
-    int status = m_runtime.status;
+    using as = ActionStatus;    
 
     bool isProject = !m_project.isNull();
     bool isEditor = (m_editor != nullptr);
     bool isEditorModify = (m_editor && m_editor->isModified());    
     bool isEditorScript = (m_editor && m_editor->type() == Editor_script);
     bool hasModifyFile = false;
-    bool isProcess = m_processVaild;
-    bool canPause = isProcess && (status  == Status_running || status == Status_none);
-    bool canResume = isProcess && (status == Status_pause || status == Status_idlePause);
+    bool isProcess = m_processMode != Process_none;
+    bool canPause = (m_processMode == Process_running);
+    bool canResume = (m_processMode == Process_pause);
     for (auto v : m_editors)
     {
         if (v->isModified())
@@ -415,28 +415,34 @@ void MainWindow::updateActionStatus()
         }
     }
 
-    QVector<bool> cond;
-    cond << isProject << isEditor << isEditorModify << isEditorScript << hasModifyFile
-        << !isProcess << isProcess << canPause << canResume;
+    QMap<int,bool> cond;
+    cond[as::ProjectVaild] = isProject;
+    cond[as::FileOpen] = isEditor;
+    cond[as::FileIsModify] = isEditorModify;
+    cond[as::FileIsScript] = isEditorScript;
+    cond[as::HasModifyFile] = hasModifyFile;
+    cond[as::ProcessIsEmpty] = !isProcess;
+    cond[as::ProcessIsVaild] = isProcess;
+    cond[as::ProcessCanPause] = canPause;
+    cond[as::ProcessCanResume] = canResume;
+    cond[as::ProcessCanStartResume] = canResume || (isProject && !isProcess);
     
     Q_ASSERT(cond.size() == ActionStatus::Count);
     for (int i = 0; i < m_actionStatus.size(); i++)
     {
         auto act = m_actionStatus[i].action;
         auto &flags = m_actionStatus[i].flags;
-        bool enabled = true;
-        for (int j = 0; j < ActionStatus::Count; j++)
+        int enabled_count = 0;        
+        for (int flg_idx = 0; flg_idx < flags.size(); flg_idx++)
         {
-            if (flags.contains(j) && !cond[j])
-            {
-                enabled = false;
-                break;
-            }
-        }        
+            if (cond[flags[flg_idx]])
+                enabled_count++;             
+        }       
+
+        bool enabled = (enabled_count == flags.size());
         act->setEnabled(enabled);
     }
-
-    m_toolDebug->setVisible(isProcess);
+    
     for (auto act : m_debugActions)
         act->setVisible(isProcess);
 
@@ -611,12 +617,9 @@ void MainWindow::onActionBuild()
     build();
 }
 
-void MainWindow::initLocalProcessTest(bool flag)
+void MainWindow::initLocalProcessTest()
 {   
-    m_useTestProcess = flag;
-    if (!m_useTestProcess)
-        return;
-    
+    m_useTestProcess = true;    
     connect(&m_testProcess, &QThread::finished, this, &MainWindow::onTestProcessFinish);
 
     m_testProcess.init(&m_project);
@@ -632,9 +635,9 @@ void MainWindow::onActionRun()
 
 void MainWindow::onActionDetach()
 {
-    m_debuger.detach();
+    m_debuger.detach();    
     updateActionStatus();
-    m_processVaild = false;
+    m_processMode = Process_none;
 }
 
 void MainWindow::onActionPause()
@@ -651,7 +654,7 @@ void MainWindow::onActionResume()
 
 void MainWindow::onActionStop()
 {        
-    if (!m_processVaild)
+    if (m_processMode == Process_none)
         return;
 
     if (!m_useTestProcess)
@@ -951,7 +954,7 @@ bool MainWindow::openEditor(QString filepath)
             connect(node_edit, &JZNodeEditor::sigAutoCompiler, this, &MainWindow::onAutoCompiler);
             connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
 
-            node_edit->setRunning(m_processVaild);
+            node_edit->setRunningMode(m_processMode);
         }
         m_editors[file] = editor;
         m_editorStack->addTab(editor, filepath);        
@@ -1144,6 +1147,7 @@ void MainWindow::updateAutoWatch(int stack_index)
     param_info.stack = stack_index;
     
     auto func = m_program.typeMeta().function(stack.function);
+    auto func_debug = m_program.script(stack.file)->functionDebug(stack.function);
     if (func->isMemberFunction())
     {
         JZNodeParamCoor coor;
@@ -1151,20 +1155,20 @@ void MainWindow::updateAutoWatch(int stack_index)
         coor.name = "this";
         param_info.coors << coor;
     }
-/*
+
     //local    
-    for (int i = 0; i < func->localVariables.size(); i++)
+    for (int i = 0; i < func_debug->localVariables.size(); i++)
     {
-        auto &local = func->localVariables[i];
+        auto &local = func_debug->localVariables[i];
 
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Name;
         coor.name = local.name;
         param_info.coors << coor;
     }
-*/
-    auto &node_info = m_program.script(stack.file)->nodeInfo[stack.nodeId];
+    
     int node_prop_index = param_info.coors.size();
+    const auto &node_info = func_debug->nodeInfo[stack.nodeId];
     for (int i = 0; i < node_info.paramIn.size(); i++)
     {
         JZNodeParamCoor coor;
@@ -1247,11 +1251,16 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
 
 bool MainWindow::build()
 {
+    QString build_path = m_project.path() + "/build";
+    QString build_exe = build_path + "/" + m_project.name() + ".program";
+
     QElapsedTimer timer;
     timer.start();
 
     m_log->clearLog(Log_Compiler);
     m_log->addLog(Log_Compiler, "开始编译");
+
+    QFile::remove(build_path);
 
     JZNodeProgram program;
     if(!m_builder.build(&program))
@@ -1259,8 +1268,7 @@ bool MainWindow::build()
         m_log->addLog(Log_Compiler, "编译失败\n");
         return false;
     }
-    QString build_path = m_project.path() + "/build";
-    QString build_exe = build_path + "/" + m_project.name() + ".program";
+    
     QDir dir;
     if (!dir.exists(build_path))
         dir.mkdir(build_path);
@@ -1315,8 +1323,7 @@ void MainWindow::start(bool startPause)
     {
         m_log->addLog(Log_Runtime, "start program");
         m_testProcess.start();
-    }
-    m_processVaild = true;
+    }    
 
     QThread::msleep(500);
     if(!m_debuger.connectToServer("127.0.0.1",19888))
@@ -1338,7 +1345,7 @@ void MainWindow::start(bool startPause)
         m_log->addLog(Log_Runtime, "load debug info failed.");
     }
 
-    setRunning(true);    
+    setRunningMode(Process_running);
 }
 
 void MainWindow::onTabContextMenu(QPoint pos)
@@ -1380,40 +1387,13 @@ void MainWindow::onLog(LogObjectPtr log)
 
 void MainWindow::onRuntimeStatus(int status)
 {        
-    bool is_pause = statusIsPause(status);
-    setWatchStatus(status);
+    ProcessStatus process_status;
+    if (status == Status_idlePause || status == Status_pause)
+        process_status = Process_pause;
+    else    
+        process_status = Process_running;    
 
-    if (is_pause)
-    {
-        JZNodeRuntimeInfo new_runtime;
-        if(!m_debuger.runtimeInfo(new_runtime))
-        {
-
-            return;
-        }
-
-        bool isNew = true;
-        if (new_runtime.stacks.size() > 0 && new_runtime.stacks.size() == m_runtime.stacks.size()
-            && new_runtime.stacks.back().file == m_runtime.stacks.back().file
-            && new_runtime.stacks.back().function == m_runtime.stacks.back().function)
-        {
-            isNew = false;
-        }
-
-        m_runtime = new_runtime;
-        m_log->stack()->setRuntime(m_runtime);
-        updateRuntime(m_runtime.stacks.size() - 1, isNew);
-    }
-    else
-    {
-        m_runtime.status = status;
-        m_log->stack()->setRuntime(m_runtime);
-    }
-
-    if (!is_pause)
-        clearRuntimeNode();
-
-    updateActionStatus();
+    setRunningMode(process_status);    
 }
 
 void MainWindow::onRuntimeLog(QString log)
@@ -1452,9 +1432,8 @@ void MainWindow::onNetError()
 
 void MainWindow::onTestProcessFinish()
 {
-    m_log->addLog(Log_Runtime, "local server test finish.");    
-    m_processVaild = false;
-    setRunning(false);
+    m_log->addLog(Log_Runtime, "local server test finish.");        
+    setRunningMode(Process_none);
     updateActionStatus();
 }
 
@@ -1469,8 +1448,8 @@ void MainWindow::onRuntimeFinish(int code,QProcess::ExitStatus status)
     }
     else
         m_log->addLog(Log_Runtime, "process finish, exit code " + QString::number(code));
-    m_processVaild = false;
-    setRunning(false);
+
+    setRunningMode(Process_none);
     updateActionStatus();
 }
 
@@ -1555,10 +1534,14 @@ bool MainWindow::closeAll(JZEditor *except)
     return true;
 }
 
-void MainWindow::setRunning(bool flag)
+void MainWindow::setRunningMode(ProcessStatus flag)
 {
-    setWatchRunning(flag);    
-    m_stack->setRunning(flag);
+    if (flag == m_processMode)
+        return;
+
+    m_processMode = flag;
+    setWatchStatus(flag);
+    m_stack->setRunningMode(flag);
 
     auto it = m_editors.begin();
     while (it != m_editors.end())
@@ -1566,16 +1549,44 @@ void MainWindow::setRunning(bool flag)
         if (it.value()->type() == Editor_script)
         {
             auto node_edit = (JZNodeEditor*)it.value();
-            node_edit->setRunning(flag);
+            node_edit->setRunningMode(flag);
         }        
         it++;
     }
 
-    if (!flag)
+    if (m_processMode == Process_none)
     {
         m_program.clear();
         m_runtime = JZNodeRuntimeInfo();
     }
+
+    //update
+    if (m_processMode == Process_pause)
+    {
+        JZNodeRuntimeInfo new_runtime;
+        if (!m_debuger.runtimeInfo(new_runtime))
+        {
+            m_log->addLog(Log_Runtime, "获取信息失败");
+            return;
+        }
+
+        bool isNew = true;
+        if (new_runtime.stacks.size() > 0 && new_runtime.stacks.size() == m_runtime.stacks.size()
+            && new_runtime.stacks.back().file == m_runtime.stacks.back().file
+            && new_runtime.stacks.back().function == m_runtime.stacks.back().function)
+        {
+            isNew = false;
+        }
+
+        m_runtime = new_runtime;
+        m_log->stack()->setRuntime(m_runtime);
+        updateRuntime(m_runtime.stacks.size() - 1, isNew);
+    }
+    else
+    {                
+        clearRuntimeNode();
+    }    
+    updateActionStatus();
 }
 
 void MainWindow::clearRuntimeNode()
@@ -1606,14 +1617,8 @@ void MainWindow::clearWatchs()
         w->clear();
 }
 
-void MainWindow::setWatchStatus(int status)
+void MainWindow::setWatchStatus(ProcessStatus status)
 {
     for (auto w : m_debugWidgets)
-        w->setRuntimeStatus(status);
-}
-
-void MainWindow::setWatchRunning(bool flag)
-{
-    for (auto w : m_debugWidgets)
-        w->setRunning(flag);
+        w->setRunningMode(status);
 }

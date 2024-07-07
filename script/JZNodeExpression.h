@@ -9,7 +9,7 @@ public:
     JZNodeOperator(int node_type,int op_type);
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual QWidget* createWidget(int id) override;
+    virtual JZNodePinWidget* createWidget(int id) override;
 
     void addInput();
     void removeInput(int index);    

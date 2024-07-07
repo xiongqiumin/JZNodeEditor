@@ -54,7 +54,7 @@ public:
             return nullptr;
 
         auto edit = new JZNodeParamValueWidget(parent);
-        edit->setDataType({ dataType });
+        edit->initWidget(dataType);
         edit->setValue(option.text);
         return edit;
     }

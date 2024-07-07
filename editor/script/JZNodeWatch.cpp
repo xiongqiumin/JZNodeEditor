@@ -29,8 +29,7 @@ public:
 JZNodeWatch::JZNodeWatch(QWidget *parent)
     :QWidget(parent)
 {
-    m_status = Status_none;
-    m_running = false;         
+    m_status = Process_none;
     m_readOnly = false;
     m_editColumn = 0;
     m_editItem = nullptr;
@@ -60,18 +59,15 @@ JZNodeWatch::~JZNodeWatch()
 
 void JZNodeWatch::updateStatus()
 {
-    if (m_running)
-    {
-        if (statusIsPause(m_status))
-            this->setEnabled(true);
-        else
-            this->setEnabled(false);
-    }
-    else
+    if (m_status == Process_none)
     {
         this->setEnabled(true);
         clear();
     }
+    else if (m_status == Process_running)
+        this->setEnabled(false);
+    else
+        this->setEnabled(true);
 }
 
 void JZNodeWatch::updateWatchItem()
@@ -100,24 +96,15 @@ void JZNodeWatch::setReadOnly(bool flag)
     updateWatchItem();
 }
 
-void JZNodeWatch::setRunning(bool isRun)
-{
-    m_running = isRun;    
-    if (!m_running)
-        m_status = Status_none;
-    updateStatus();
-}
-
-void JZNodeWatch::setRuntimeStatus(int status)
+void JZNodeWatch::setRunningMode(ProcessStatus status)
 {
     m_status = status;
     updateStatus();
 }
 
-
 void JZNodeWatch::onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column)
 {
-    if (!m_running)
+    if (m_status != Process_pause)
         return;
 
     QString name = item->text(0);
@@ -186,9 +173,9 @@ void JZNodeWatch::keyPressEvent(QKeyEvent *e)
     }
 }
 
-int JZNodeWatch::indexOfItem(QTreeWidgetItem *root, const QString &name)
+int JZNodeWatch::indexOfItem(QTreeWidgetItem *root, const QString &name,int start)
 {
-    for (int i = 0; i < root->childCount(); i++)
+    for (int i = start; i < root->childCount(); i++)
     {
         auto sub = root->child(i);
         if (sub->text(0) == name)
@@ -202,7 +189,7 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
     QString preValue;
     QTreeWidgetItem *item;
     //设置item位置
-    int cur_index = indexOfItem(root, name);
+    int cur_index = indexOfItem(root, name, index);
     if (cur_index >= 0)
     {
         item = root->child(cur_index);
@@ -276,6 +263,7 @@ JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
 
 void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info)
 {       
+    m_view->blockSignals(true);
     auto root = m_view->invisibleRootItem();        
     for (int i = 0; i < info->coors.size(); i++)                      
         setItem(root, i, info->coors[i], info->values[i]);    
@@ -283,6 +271,7 @@ void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info)
         delete root->takeChild(i);
     
     updateWatchItem();
+    m_view->blockSignals(false);
 }
 
 void JZNodeWatch::updateParamInfo(JZNodeDebugParamInfo *info)

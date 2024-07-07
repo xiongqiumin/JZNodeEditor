@@ -290,14 +290,14 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
     //检测数据类型
     if(pin_from->isParam())
     {
-        QList<int> from_type = node_from->pinType(from.pinId);
+        QList<int> from_type = node_from->pinTypeInt(from.pinId);
         if (from_type.size() == 0)
         {
             error = "输出数据未设置类型";
             return false;
         }
 
-        QList<int> in_type = node_to->pinType(to.pinId);
+        QList<int> in_type = node_to->pinTypeInt(to.pinId);
         if (in_type.size() == 0) 
         {
             error = "输入数据未设置类型";

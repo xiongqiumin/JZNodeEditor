@@ -7,6 +7,7 @@
 #include <QScrollArea>
 #include <QTableWidget>
 #include "JZNodeEngine.h"
+#include "JZProcess.h"
 
 class JZNodeStack : public QWidget
 {
@@ -16,12 +17,11 @@ public:
     JZNodeStack(QWidget *parent = nullptr);
     ~JZNodeStack();
     
-    void setRuntime(JZNodeRuntimeInfo info);
+    void setRuntime(const JZNodeRuntimeInfo &info);
     void setStackIndex(int stack);
     int stackIndex();
 
-    void setRunning(bool isRun);
-    void enterPressed();
+    void setRunningMode(ProcessStatus flag);    
 
 signals:
     void sigStackChanged(int level);
@@ -34,9 +34,8 @@ protected:
 
     void updateStatus();
     void stackChanged(int level);
-
-    bool m_running;
-    int m_status;
+    
+    ProcessStatus m_status;
     int m_stackIndex;
 
     QTableWidget *m_table;

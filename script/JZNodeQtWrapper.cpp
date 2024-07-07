@@ -30,6 +30,7 @@
 #include "JZNodeBind.h"
 #include "JZRegExpHelp.h"
 #include "JZContainer.h"
+#include "JZNodeObjectParser.h"
 
 void checkSize(int index, int size)
 {

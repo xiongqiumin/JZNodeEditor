@@ -5,6 +5,7 @@
 #include "JZNodeCompiler.h"
 #include "JZExpression.h"
 #include "JZRegExpHelp.h"
+#include "JZNodeParamWidget.h"
 
 JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {
@@ -44,16 +45,19 @@ void JZNodeOperator::removeInput(int index)
     removePin(id);
 }
 
-QWidget* JZNodeOperator::createWidget(int id)
+JZNodePinWidget* JZNodeOperator::createWidget(int id)
 {
     Q_UNUSED(id);    
-    QPushButton *btn = new QPushButton("Add Input");
+
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    QPushButton *btn = w->button();
+    btn->setText("Add Input");
     btn->connect(btn, &QPushButton::clicked, [this] {
         QByteArray old = toBuffer();
         addInput();
         propertyChangedNotify(old);        
     });                
-    return btn;
+    return w;
 }
 
 QStringList JZNodeOperator::pinActionList(int id)
@@ -84,7 +88,6 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
         }
 
         int in_type = JZNodeType::upType(in_types);
-        qDebug() << "JZNodeOperator" << in_type << in_types;
         if(in_type == Type_none || in_type == Type_any)
         {
             error = "无法确定输入类型";
@@ -343,8 +346,7 @@ JZNodeAnd::JZNodeAnd()
 
 bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
 {
-    auto input_list = paramInList();
-    c->addNodeStart(m_id);
+    auto input_list = paramInList();    
 
     QVector<JZNodeIRJmp*> jmpList;
     int out = c->paramId(m_id, paramOut(0));
@@ -353,6 +355,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
     {
         if (!c->addFlowInput(m_id, input_list[i], error))
             return false;
+        c->addNodeDebug(m_id);
 
         int in_id = c->paramId(m_id, input_list[i]);
         c->addCompare(irId(in_id), irLiteral(false), OP_eq);
@@ -384,8 +387,7 @@ JZNodeOr::JZNodeOr()
 
 bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
 {
-    auto input_list = paramInList();
-    c->addNodeStart(m_id);
+    auto input_list = paramInList();    
 
     QVector<JZNodeIRJmp*> jmpList;
     int out = c->paramId(m_id, paramOut(0));
@@ -394,6 +396,7 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
     {
         if (!c->addFlowInput(m_id, input_list[i], error))
             return false;
+        c->addNodeDebug(m_id);
 
         int in_id = c->paramId(m_id, input_list[i]);
         c->addCompare(irId(in_id), irLiteral(true), OP_eq);
@@ -467,12 +470,12 @@ bool JZNodeExpression::updateExpr(QString &error)
     m_exprList = parser.opList();
     for(int i = 0; i < parser.inList.size(); i++)
     {     
-        int id = addParamIn(parser.inList[i]);
+        int id = addParamIn(parser.inList[i], Pin_dispName | Pin_editValue);
         setPinTypeNumber(id);
     }    
     for(int i = 0; i < parser.outList.size(); i++)
     {
-        int id = addParamOut(parser.outList[i]);
+        int id = addParamOut(parser.outList[i], Pin_dispName);
         setPinTypeNumber(id);
     }
     return true;

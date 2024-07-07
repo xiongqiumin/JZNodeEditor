@@ -97,14 +97,36 @@ bool JZNodePin::isLiteral() const
     return (m_flag & Pin_literal);
 }
 
-void JZNodePin::setDataType(const QList<int> &type)
+void JZNodePin::setDataType(const QStringList &type)
 {
     m_dataType = type;
 }
 
-const QList<int> &JZNodePin::dataType() const
+const QStringList &JZNodePin::dataType() const
 {
     return m_dataType;
+}
+
+void JZNodePin::setDataTypeInt(const QList<int> &type)
+{    
+    m_dataType.clear();
+    for (int i = 0; i < type.size(); i++)
+    {
+        QString name = JZNodeType::typeToName(type[i]);
+        Q_ASSERT(name != "none");
+        m_dataType << name;
+    }
+}
+
+QList<int> JZNodePin::dataTypeInt() const
+{
+    QList<int> ret;
+    for (int i = 0; i < m_dataType.size(); i++)
+    {
+        int type = JZNodeType::nameToType(m_dataType[i]);
+        ret << type;
+    }
+    return ret;
 }
 
 const QString &JZNodePin::value() const

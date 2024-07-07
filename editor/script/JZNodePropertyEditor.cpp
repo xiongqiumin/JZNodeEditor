@@ -74,12 +74,12 @@ void JZNodePropertyEditor::setPropEditable(int prop_id,bool editable)
 
 JZNodeProperty *JZNodePropertyEditor::createProp(JZNodePin *pin)
 {
-    int type = JZNodeType::upType(pin->dataType());
+    int type = JZNodeType::upType(pin->dataTypeInt());
     if (type == Type_none && pin->dataType().size() > 0)
         type = Type_any;
 
     auto pin_prop = new JZNodeProperty(pin->name(), NodeProprety_GroupId);
-    pin_prop->setDataType(pin->dataType());
+    //pin_prop->setDataType(pin->dataType());
     pin_prop->setValue(pin->value());
     if(type == Type_none || !(pin->flag() & Pin_editValue))
         pin_prop->setEnabled(false);

@@ -65,6 +65,7 @@ enum
     Node_paramChangedEvent,
     Node_timeEvent,   
     Node_display,
+    Node_signalConnect,
     Node_custom,
 };
 
@@ -115,6 +116,7 @@ void operator>>(QDataStream &s, JZNodeGroup &param);
 
 class JZNodeCompiler;
 class JZScriptItem;
+class JZNodePinWidget;
 class JZNode
 {
 public:
@@ -211,13 +213,13 @@ public:
     bool canRemove();
     bool canDragVariable();    
 
-    virtual QList<int> pinType(int id);
-    virtual bool update();              //返回属性是否变化
+    QList<int> pinTypeInt(int id) const;
+    const QStringList &pinType(int id) const;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     
     virtual void drag(const QVariant &value);
 
-    virtual QWidget *createWidget(int id);    
+    virtual JZNodePinWidget *createWidget(int id);
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id,int index);
 
@@ -318,7 +320,7 @@ public:
     JZNodeSequence();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual QWidget *createWidget(int id) override;
+    virtual JZNodePinWidget *createWidget(int id) override;
 
     int addSequeue();
     void removeSequeue(int id);    
@@ -346,7 +348,7 @@ public:
     JZNodeFor();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual QWidget* createWidget(int id) override;
+    virtual JZNodePinWidget* createWidget(int id) override;
 
     void setRange(int start, int end);
     void setRange(int start, int step, int end);
@@ -399,7 +401,7 @@ public:
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
-    virtual QWidget* createWidget(int id) override;
+    virtual JZNodePinWidget* createWidget(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
     void updateCondName();
@@ -424,7 +426,7 @@ public:
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
-    virtual QWidget* createWidget(int id) override;
+    virtual JZNodePinWidget* createWidget(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
     virtual int pinPri(int id);

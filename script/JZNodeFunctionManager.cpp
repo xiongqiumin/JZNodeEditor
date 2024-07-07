@@ -131,6 +131,7 @@ void JZNodeFunctionManager::clearUserReigst()
         m_funcDefine.remove(m_userFuncs[i]);
         m_funcImpl.remove(m_userFuncs[i]);
     }
+    m_userFuncs.clear();
 }
 
 void JZNodeFunctionManager::registFunction(const JZFunctionDefine &define)
@@ -150,8 +151,12 @@ void JZNodeFunctionManager::replaceFunction(const JZFunctionDefine &define)
 
 void JZNodeFunctionManager::registFunctionImpl(JZFunction &impl)
 {    
-    Q_ASSERT(!m_funcImpl.contains(impl.fullName()));
-    m_funcImpl[impl.fullName()] = impl;
+    QString full_name = impl.fullName();
+    Q_ASSERT(!m_funcImpl.contains(full_name));
+
+    m_funcImpl[full_name] = impl;
+    if (m_userRegist && !m_userFuncs.contains(full_name))
+        m_userFuncs << full_name;
 }
 
 const JZFunction *JZNodeFunctionManager::functionImpl(QString funcName)

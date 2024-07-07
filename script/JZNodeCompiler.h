@@ -100,6 +100,7 @@ struct NodeCompilerInfo
     QList<NodeRange> ranges; //用于断点信息   
     QMap<int, QList<NodeRange>> dataRanges;
     QList<JZNodeIRPtr> statmentList;
+    bool autoAddDebugStart;
 
     //调转信息    
     int parentId;           //用于subFlow 指明父节点
@@ -175,7 +176,7 @@ public:
     
     int irParamType(const JZNodeIRParam &param);
 
-    void setRegCallFunction(const JZFunctionDefine *func);
+    void setRegCallFunction(const JZFunctionDefine *func);    
 
     /*
     节点数据传递规则:
@@ -196,7 +197,8 @@ public:
     void addFlowOutput(int nodeId);         
 
     int addNop();
-    void addNodeStart(int id);
+    int addNodeDebug(int id);
+    void setAutoAddNodeDebug(int m_id,bool flag);
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     void addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
@@ -237,6 +239,8 @@ public:
 protected:    
     struct NodeCompilerStack
     {
+        NodeCompilerStack();
+
         NodeCompilerInfo *nodeInfo;
         bool isFlow;
         int start;
@@ -291,7 +295,7 @@ protected:
     GraphPtr m_buildGraph;  //当前处理的图
         
     QList<NodeCompilerStack> m_compilerNodeStack;       //编译时node栈
-    QList<JZNodeIRPtr> *m_statmentList;
+    QList<JZNodeIRPtr> *m_statmentList;   
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
     QMap<int,NodeCompilerInfo> m_nodeInfo;

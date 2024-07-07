@@ -281,9 +281,9 @@ BreakPointTriggerResult JZNodeEditor::breakPointTrigger()
     return m_view->breakPointTrigger();
 }
 
-void JZNodeEditor::setRunning(bool status)
+void JZNodeEditor::setRunningMode(ProcessStatus status)
 {
-    m_view->setRunning(status);
+    m_view->setRunningMode(status);
 }
 
 int JZNodeEditor::runtimeNode()

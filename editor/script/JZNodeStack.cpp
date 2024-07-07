@@ -24,9 +24,8 @@ JZNodeStack::JZNodeStack(QWidget *parent)
     QVBoxLayout *sub_layout = new QVBoxLayout();
     sub_layout->addWidget(m_table);
     this->setLayout(sub_layout);
-
-    m_running = false;
-    m_status = Status_none;
+    
+    m_status = Process_none;
     connect(m_table, &QTableWidget::itemDoubleClicked, this, &JZNodeStack::onItemDoubleClicked);
 }
 
@@ -37,27 +36,26 @@ JZNodeStack::~JZNodeStack()
 
 void JZNodeStack::updateStatus()
 {
-    if (m_running)
-    {
-        if (statusIsPause(m_status))
-            this->setEnabled(true);
-        else
-            this->setEnabled(false);
-    }
-    else
-    {
+    if (m_status == Process_none)
+    {     
         this->setEnabled(true);
         m_table->clearContents();
         m_table->setRowCount(0);
         m_stackIndex = -1;
     }
+    else if (m_status == Process_pause)
+    {
+        this->setEnabled(true);
+    }
+    else
+    {
+        this->setEnabled(false);
+    }
 }
 
-void JZNodeStack::setRuntime(JZNodeRuntimeInfo info)
-{
-    m_status = info.status;
-    updateStatus();
-    if (!statusIsPause(m_status))
+void JZNodeStack::setRuntime(const JZNodeRuntimeInfo &info)
+{    
+    if (m_status == Process_none)
         return;
 
     m_table->blockSignals(true);
@@ -83,9 +81,9 @@ void JZNodeStack::setRuntime(JZNodeRuntimeInfo info)
         m_table->setItem(row, 0, itemSeq);
         m_table->setItem(row, 1, itemName);
     }
-    m_table->setCurrentCell(0, 0);
+    m_table->setCurrentCell(0, 0);    
+    m_stackIndex = 0;
     m_table->blockSignals(false);  
-    stackChanged(0);
 }
 
 void JZNodeStack::setStackIndex(int stack)
@@ -98,25 +96,15 @@ int JZNodeStack::stackIndex()
     return m_stackIndex;
 }
 
-void JZNodeStack::setRunning(bool isRun)
+void JZNodeStack::setRunningMode(ProcessStatus flag)
 {
-    m_running = isRun;
-    if (!m_running)
-        m_status = Status_none;
+    m_status = flag;    
     updateStatus();
-}
-
-void JZNodeStack::enterPressed()
-{
-    if (!m_running || m_table->currentRow() == -1)
-        return;
-
-    stackChanged(m_table->currentRow());
 }
 
 void JZNodeStack::onItemDoubleClicked(QTableWidgetItem *item)
 {
-    if (!m_running)
+    if (m_status != Process_pause)
         return;
 
     stackChanged(item->row());    
@@ -132,7 +120,7 @@ void JZNodeStack::keyPressEvent(QKeyEvent *e)
 {
     if (e->key() == Qt::Key_Enter)
     {
-        if (!m_running || m_table->currentRow() == -1)
+        if (m_status != Process_pause || m_table->currentRow() == -1)
             return;
         
         stackChanged(m_table->currentRow());

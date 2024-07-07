@@ -160,7 +160,6 @@ JZNodeIR *createNodeIR(int type)
 JZNodeIR::JZNodeIR()
 {
     type = OP_none;
-    isBreak = false;
     pc = -1;
 }
 
@@ -179,7 +178,6 @@ void JZNodeIR::saveToStream(QDataStream &s) const
 {
     s << type;    
     s << pc;    
-    s << isBreak;
     s << memo;
 }
 
@@ -187,7 +185,6 @@ void JZNodeIR::loadFromStream(QDataStream &s)
 {
     s >> type;    
     s >> pc;  
-    s >> isBreak;
     s >> memo;
 }
 

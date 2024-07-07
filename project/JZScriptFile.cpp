@@ -1,4 +1,4 @@
-#include <QFileInfo>
+﻿#include <QFileInfo>
 #include "JZScriptFile.h"
 #include "JZProject.h"
 
@@ -272,7 +272,7 @@ JZScriptClassItem *JZScriptFile::addClass(QString name, QString super)
     m_project->addItem(itemPath(), class_file);
 
     JZParamItem *data_page = new JZParamItem();            
-    data_page->setName("��Ա����");
+    data_page->setName("param");
     m_project->addItem(class_file->itemPath(), data_page);
 
     return class_file;

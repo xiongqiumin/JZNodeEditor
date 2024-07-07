@@ -18,6 +18,9 @@ protected slots:
 
 protected:
     virtual void run() override;    
+
+    void addInitFunction();
+    void addTimeoutFunction();
     
     JZProject *m_project;
     JZNodeProgram m_program;     

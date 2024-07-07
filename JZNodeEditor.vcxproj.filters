@@ -83,6 +83,9 @@
     <Filter Include="Header Files\widgets">
       <UniqueIdentifier>{fd170a4b-564a-4631-8669-b97e2c893e6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\script\as">
+      <UniqueIdentifier>{576ec8a3-c5c8-4ebe-b6a7-33b573c2d24b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -289,9 +292,6 @@
     <ClCompile Include="LogManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="script\JZNodeName.cpp">
-      <Filter>Source Files\script</Filter>
-    </ClCompile>
     <ClCompile Include="script\JZNodeQtBind.cpp">
       <Filter>Source Files\script</Filter>
     </ClCompile>
@@ -375,6 +375,33 @@
     </ClCompile>
     <ClCompile Include="sample\SmartHome\SmartHome.cpp">
       <Filter>Source Files\sample</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZContainer.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_anglescript.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_base.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="script\angelscript\as_parser.cpp">
+      <Filter>Source Files\script\as</Filter>
+    </ClCompile>
+    <ClCompile Include="script\angelscript\as_scriptcode.cpp">
+      <Filter>Source Files\script\as</Filter>
+    </ClCompile>
+    <ClCompile Include="script\angelscript\as_scriptnode.cpp">
+      <Filter>Source Files\script\as</Filter>
+    </ClCompile>
+    <ClCompile Include="script\angelscript\as_tojzscript.cpp">
+      <Filter>Source Files\script\as</Filter>
+    </ClCompile>
+    <ClCompile Include="script\angelscript\as_tokenizer.cpp">
+      <Filter>Source Files\script\as</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZProcess.cpp">
+      <Filter>Source Files\editor\script</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -519,6 +546,12 @@
     <QtMoc Include="script\JZNodeObject.h">
       <Filter>Header Files\script</Filter>
     </QtMoc>
+    <QtMoc Include="tests\test_anglescript.h">
+      <Filter>Header Files\tests</Filter>
+    </QtMoc>
+    <QtMoc Include="tests\test_base.h">
+      <Filter>Header Files\tests</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="script\JZEvent.h">
@@ -626,9 +659,6 @@
     <ClInclude Include="script\JZNodeQtWrapper.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
-    <ClInclude Include="script\JZNodeName.h">
-      <Filter>Header Files\script</Filter>
-    </ClInclude>
     <ClInclude Include="script\JZNodeObjectParser.h">
       <Filter>Header Files\editor\script</Filter>
     </ClInclude>
@@ -670,6 +700,12 @@
     </ClInclude>
     <ClInclude Include="sample\SmartHome\SmartHome.h">
       <Filter>Header Files\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZContainer.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZProcess.h">
+      <Filter>Header Files\editor\script</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -930,17 +930,21 @@ int JZNodeObjectManager::delcareCClass(QString name, QString c_typeid, int id)
 
 int JZNodeObjectManager::regist(JZNodeObjectDefine info)
 {
-    Q_ASSERT(!info.className.isEmpty() && (info.superName.isEmpty() || getClassId(info.superName) != -1));
+    Q_ASSERT(!info.className.isEmpty() && (info.superName.isEmpty() || getClassId(info.superName) != -1));    
+    
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;
     if(info.id != -1)
     {
-        Q_ASSERT(getClassName(info.id).isEmpty() || getClassName(info.id) == info.className);
+        Q_ASSERT(!meta(info.className) || meta(info.className)->id == info.id);
         def->id = info.id;
         m_objectId = qMax(m_objectId,def->id + 1);
     }
     else
+    {
+        Q_ASSERT(!meta(info.className));
         def->id = m_objectId++;
+    }
 
     m_metas.insert(def->id ,QSharedPointer<JZNodeObjectDefine>(def));
     return def->id;

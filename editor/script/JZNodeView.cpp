@@ -1,5 +1,4 @@
-﻿#include "JZNodeView.h"
-#include <QMouseEvent>
+﻿#include <QMouseEvent>
 #include <QDebug>
 #include <QMimeData>
 #include <QMenu>
@@ -19,6 +18,7 @@
 #include <QComboBox>
 #include <QInputDialog>
 #include <QToolTip>
+
 #include "JZNodeFactory.h"
 #include "JZNodeValue.h"
 #include "JZNodeCompiler.h"
@@ -29,6 +29,7 @@
 #include "JZNodeGroupEditDialog.h"
 #include "JZNodeBuilder.h"
 #include "LogManager.h"
+#include "JZNodeView.h"
 
 enum ViewCommand {
     CreateNode,
@@ -338,7 +339,7 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_loadFlag = false;    
     m_file = nullptr;    
     m_recordMove = true;    
-    m_runningMode = false;
+    m_runningMode = Process_none;
     m_runNode = -1;        
     m_groupIsMoving = false;
     m_autoRunning = false;
@@ -1240,15 +1241,17 @@ void JZNodeView::setAutoRunning(bool flag)
     autoRunning();
 }
 
-void JZNodeView::setRunning(bool flag)
+void JZNodeView::setRunningMode(ProcessStatus status)
 {
-    m_runningMode = flag;
-    setInteractive(!m_runningMode);
+    m_runningMode = status;
+        
+    bool flag = (status == Process_none);    
+    setInteractive(flag);
     foreachNode([flag](JZNodeGraphItem *node) {
-        node->setFlag(QGraphicsItem::ItemIsMovable, !flag);
+        node->setFlag(QGraphicsItem::ItemIsMovable, flag);
     });    
 
-    if (!m_runningMode)
+    if (m_runningMode == Process_none)
     {
         m_runNode = -1;
         foreachNode([flag](JZNodeGraphItem *node) {
@@ -1375,7 +1378,7 @@ QList<JZNodeGraphItem*> JZNodeView::selectNodeItems()
 
 void JZNodeView::onContextMenu(const QPoint &pos)
 {
-    if (m_runningMode)
+    if (m_runningMode != Process_none)
         return;
 
     QMenu menu(this);    
@@ -1659,7 +1662,7 @@ void JZNodeView::dragMoveEvent(QDragMoveEvent *event)
 
 void JZNodeView::dropEvent(QDropEvent *event)
 {
-    if (m_runningMode)
+    if (m_runningMode != Process_none)
         return;
 
     auto factory = JZNodeFactory::instance();
@@ -1762,16 +1765,13 @@ void JZNodeView::mousePressEvent(QMouseEvent *event)
     viewport()->setCursor(QCursor());
     if (event->button() == Qt::LeftButton)
         m_downPoint = mapToScene(event->pos());
-
-    if (m_runningMode)
-    {        
-        auto item = nodeItemAt(event->pos());
-        if (item)
-        {
-            m_scene->clearSelection();
-            item->setSelected(true);
-        }        
-    }
+    
+    auto item = nodeItemAt(event->pos());
+    if (item)
+    {
+        m_scene->clearSelection();
+        item->setSelected(true);
+    }        
 }
 
 void JZNodeView::mouseMoveEvent(QMouseEvent *event)
@@ -1935,7 +1935,7 @@ void JZNodeView::onScriptNodeChanged(JZScriptItem *file, int node_id, const QByt
 
 void JZNodeView::onPropUpdate(int id,int pinId,const QString &value)
 {
-    QVariant oldValue = getNode(id)->pinValue(pinId);
+    QString oldValue = getNode(id)->pinValue(pinId);
     if(oldValue == value)
         return;
         
@@ -2049,9 +2049,6 @@ void JZNodeView::onMapSceneScaled(bool flag)
 
 void JZNodeView::setCompierResult(const CompilerInfo &compilerInfo)
 {
-    if (m_runningMode)
-        return;
-
     foreachNode([](JZNodeGraphItem *node) {
         node->clearError();
     });

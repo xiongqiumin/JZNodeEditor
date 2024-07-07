@@ -60,8 +60,10 @@ public:
     bool isDispValue() const;
     bool isLiteral() const;
 
-    void setDataType(const QList<int> &type);
-    const QList<int> &dataType() const;
+    void setDataType(const QStringList &type);
+    const QStringList &dataType() const;
+    void setDataTypeInt(const QList<int> &type);
+    QList<int> dataTypeInt() const;
 
     const QString &value() const;
     void setValue(const QString &value);
@@ -73,7 +75,7 @@ protected:
     int m_id;
     int m_flag;    
     QString m_name;      
-    QList<int> m_dataType;
+    QStringList m_dataType;
     QString m_value;
 };
 void operator<<(QDataStream &s, const JZNodePin &param);

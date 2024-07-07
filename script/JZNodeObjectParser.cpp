@@ -451,6 +451,54 @@ JZNodeObject *JZNodeObjectParser::parseToType(QString type,const QString &text)
     return parse(type_text);
 }
 
+QStringList JZNodeObjectParser::parseStringList(const QString &format, const QString &text)
+{
+    QStringList ret;
+    iniContext(text);
+
+    for (int i = 0; i < format.size(); i++)
+    {
+        QChar c = format[i];
+        QString word = readWord();
+        if (c == 's')
+        {
+            if (!JZRegExpHelp::isString(word))
+            {
+                makeExpectError("string", word);
+                break;
+            }
+            ret.push_back(word);
+        }
+        else if (c == 'i')
+        {
+            if (!JZRegExpHelp::isInt(word) && !JZRegExpHelp::isHex(word))
+            {
+                makeExpectError("int", word);
+                break;
+            }
+            ret.push_back(word);
+        }
+        else if (c == 'd')
+        {
+            if (!JZRegExpHelp::isFloat(word))
+            {
+                makeExpectError("float", word);
+                break;
+            }
+            ret.push_back(word);
+        }
+        else
+        {
+            if (QString(c) != word)
+            {
+                makeExpectError(QString(c), word);
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
 //JZNodeObjectFormat
 JZNodeObjectFormat::JZNodeObjectFormat()
 {

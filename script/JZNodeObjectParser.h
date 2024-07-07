@@ -9,9 +9,10 @@ class JZNodeObjectParser
 public:
     JZNodeObjectParser();
     ~JZNodeObjectParser();
-
+    
     JZNodeObject *parse(const QString &text);
-    JZNodeObject *parseToType(QString type,const QString &text);       
+    JZNodeObject *parseToType(QString type,const QString &text);
+    QStringList parseStringList(const QString &format, const QString &text);
     QString error();
 
 protected:

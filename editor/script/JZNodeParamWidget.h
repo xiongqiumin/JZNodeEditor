@@ -4,26 +4,19 @@
 #include <QWidget>
 #include <QComboBox>
 
-class JZNodeParamEditWidget : public QWidget
+class JZNodeFlagEditWidget : public QWidget
 {
     Q_OBJECT
 
-public:
-    enum {
-        Edit_none,
-        Edit_flag,
-        Edit_number_string,
-    };
+public:    
+    JZNodeFlagEditWidget(QWidget *parent = nullptr);
+    ~JZNodeFlagEditWidget();
 
-    JZNodeParamEditWidget(QWidget *parent = nullptr);
-
-    void setType(int type);
+    void setFlagType(QString flag);
+    QString flagType();
 
     QString value();
-    void setValue(QString text);
-
-    void setExt(QString param);
-    QString ext();
+    void setValue(QString text);    
 
 signals:
     void sigValueChanged();
@@ -33,8 +26,7 @@ protected slots:
 
 protected:
     QLineEdit *m_line;
-    QString m_ext;
-    int m_type;
+    QString m_flagType;    
 };
 
 class JZNodeParamTypeWidget : public QComboBox
@@ -53,8 +45,40 @@ signals:
 protected:
 };
 
+class JZNode;
+class JZNodePinWidget : public QWidget
+{
+    Q_OBJECT
+        
+public:
+    JZNodePinWidget(QWidget *parent = nullptr);
+    ~JZNodePinWidget();
+    
+    virtual QString value() const;
+    virtual void setValue(const QString &value);
 
-class JZNodeParamValueWidget : public QWidget
+signals:
+    void sigValueChanged(const QString &value);
+};
+
+//JZNodePinButtonWidget
+class QPushButton;
+class JZNodePinButtonWidget : public JZNodePinWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodePinButtonWidget();
+    ~JZNodePinButtonWidget();
+
+    QPushButton *button();
+
+protected:
+    QPushButton *m_btn;
+};
+
+//JZNodeParamValueWidget
+class JZNodeParamValueWidget : public JZNodePinWidget
 {
     Q_OBJECT
 
@@ -62,29 +86,23 @@ public:
     JZNodeParamValueWidget(QWidget *parent = nullptr);
     ~JZNodeParamValueWidget();
 
-    void setWidgetType(QString widget);
-    void setDataType(const QList<int> &type_list);    
+    void initWidget(int data_type, QString widget_type = QString());
+    QWidget *widget();
 
-    QString value() const;
-    void setValue(const QString &value);
-    
-    void setEditable(bool flag);
-
-signals:
-    void sigValueChanged(const QString &value);
+    virtual QString value() const override;
+    virtual void setValue(const QString &value) override;
 
 protected slots:
     void onValueChanged();
 
 protected:
-    void createWidget(QString widget_type);    
     QString getWidgetType(int data_type);
+    void createWidget();        
     void clearWidget();    
-    void initWidget();
 
     QWidget *m_widget;
 
-    QList<int> m_dataType;
+    int m_dataType;
     QString m_widgetType;
 };
 

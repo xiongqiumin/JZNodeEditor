@@ -120,11 +120,12 @@ private:
             ProcessIsVaild,
             ProcessCanPause,
             ProcessCanResume,  
+            ProcessCanStartResume,
             Count,
         };
         ActionStatus(QAction *act, QVector<int> flag);
 
-        QVector<int> flags;
+        QVector<int> flags; //同时满足才enable
         QAction *action;
     };
 
@@ -167,13 +168,12 @@ private:
     void initUi();        
     void switchEditor(JZEditor *editor);    
     void gotoNode(QString file, int nodeId);
-    void setRunning(bool flag);    
+    void setRunningMode(ProcessStatus flag);
     void setRuntimeNode(QString file, int nodeId);
     void clearRuntimeNode();
     void updateRuntime(int stack_index, bool isNew);    
     void clearWatchs();
-    void setWatchStatus(int status);
-    void setWatchRunning(bool flag);
+    void setWatchStatus(ProcessStatus status);
     void updateAutoWatch(int stack_index);
 
     bool build();
@@ -182,7 +182,7 @@ private:
     void saveAll();
     bool closeAll(JZEditor *except = nullptr);
     void resetEditor(JZEditor *editor);
-    void initLocalProcessTest(bool flag);
+    void initLocalProcessTest();
     QIcon menuIcon(const QString &name);
     void dealCompiler();
     void dealRun();
@@ -206,7 +206,7 @@ private:
 
     JZNodeDebugClient m_debuger;
     QProcess m_process;           
-    bool m_processVaild;
+    ProcessStatus m_processMode;
 
     bool m_useTestProcess;
     TestServer m_testProcess;

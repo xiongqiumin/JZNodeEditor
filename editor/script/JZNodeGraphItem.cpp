@@ -220,7 +220,7 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
 
     if (!gemo->widget)
     {
-        QWidget *widget = nullptr;
+        JZNodePinWidget *widget = nullptr;
         if (pin->isWidget())
         {
             QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
@@ -230,18 +230,19 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
         else if(pin->isEditValue() || pin->isDispValue())
         {            
             JZNodeParamValueWidget *param_widget = new JZNodeParamValueWidget();
-            param_widget->setDataType(pin->dataType());
-            param_widget->connect(param_widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
+            int up_type = JZNodeType::upType(pin->dataTypeInt());
+            param_widget->initWidget(up_type);            
 
-            widget = param_widget;            
-            widget->setProperty("node_id", m_id);
-            widget->setProperty("prop_id", pin_id);
+            widget = param_widget;                        
         }
 
         if (widget)
         {
-            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();      
-            
+            QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();   
+            widget->connect(widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
+            widget->setProperty("node_id", m_id);
+            widget->setProperty("prop_id", pin_id);
+
             gemo->widget = widget;
             gemo->proxy = proxy;           
             auto w = widget->sizeHint().width();
@@ -249,10 +250,10 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
             w = qMax(w, 60);
             h = qMax(h, 24);
             gemo->valueRect = QRect(x, y, w, h);
-
-            widget->resize(w, h);
+            
             proxy->setWidget(widget);                      
-            proxy->setParentItem(this);            
+            proxy->setParentItem(this);
+            proxy->resize(w, h);
         }        
     }
 
@@ -262,21 +263,21 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
         if (pin->isEditValue() || pin->isDispValue())
         {
             bool editable = editor()->isPropEditable(m_id, pin_id);
-            JZNodeParamValueWidget *w = qobject_cast<JZNodeParamValueWidget*>(gemo->widget);            
-            w->setEditable(editable);
+            JZNodePinWidget *w = qobject_cast<JZNodePinWidget*>(gemo->widget);
+            w->setEnabled(editable);
         }
     }
 }
 
 void JZNodeGraphItem::setWidgetValue(int prop_id, const QString &value)
 {    
-    auto *widget = qobject_cast<JZNodeParamValueWidget*>(m_pinRects[prop_id].widget);
+    auto *widget = qobject_cast<JZNodePinWidget*>(m_pinRects[prop_id].widget);
     widget->setValue(value);
 }
 
 QString JZNodeGraphItem::getWidgetValue(int prop_id)
 {
-    auto *widget = qobject_cast<JZNodeParamValueWidget*>(m_pinRects[prop_id].widget);
+    auto *widget = qobject_cast<JZNodePinWidget*>(m_pinRects[prop_id].widget);
     return widget->value();
 }
 
@@ -324,7 +325,7 @@ void JZNodeGraphItem::updateNode()
     for (int i = 0; i < pinList.size(); i++)
     {
         auto pin = m_node->pin(pinList[i]);
-        if(pin->isParam() && pin->isEditValue())
+        if(pin->isParam())
             setPinValue(pin->id(), pin->value());
     }
 
@@ -443,7 +444,7 @@ QString JZNodeGraphItem::getTip(QPointF pt)
             QStringList type_list;
             auto dataTypes = pin->dataType();
             for (int i = 0; i < dataTypes.size(); i++)
-                type_list << JZNodeType::typeToName(dataTypes[i]);
+                type_list << dataTypes[i];
             tips += type_list.join(",");
             return tips;
         }
@@ -478,7 +479,7 @@ void JZNodeGraphItem::resetPropValue()
     for (int i = 0; i < pinList.size(); i++)
     {
         auto pin = m_node->pin(pinList[i]);
-        if (pin->isParam() && pin->isEditValue())
+        if (pin->isParam())
             setPinValue(pin->id(), pin->value());
     }
 }

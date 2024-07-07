@@ -58,7 +58,7 @@ void JZNodeLocalParamEditDialog::setParam(JZParamDefine define)
 {    
     m_lineName->setText(define.name);
     m_typeWidget->setType(define.type);    
-    m_valueWidget->setDataType({ define.dataType() });
+    m_valueWidget->initWidget(define.dataType());
     m_valueWidget->setValue(define.value);
 }
 
@@ -70,7 +70,7 @@ JZParamDefine JZNodeLocalParamEditDialog::param()
 void JZNodeLocalParamEditDialog::onTypeChanged()
 {
     int data_type = JZNodeType::nameToType(m_typeWidget->type());
-    m_valueWidget->setDataType({ data_type });
+    m_valueWidget->initWidget(data_type);
 }
 
 void JZNodeLocalParamEditDialog::onBtnOkClicked()

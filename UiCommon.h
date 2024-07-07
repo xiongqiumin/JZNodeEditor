@@ -20,5 +20,4 @@ public:
     static void updateEnumBox(QComboBox *box,int dataType,int value = 0xfafa);
 };
 
-
 #endif

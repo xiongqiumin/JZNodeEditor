@@ -20,6 +20,8 @@ public:
     std::function<void(void*)> destory;
 };
 
+/* 对于虚函数，this 参数应当为基类指针
+*/
 class JZNodeObjectDefine
 {
 public:

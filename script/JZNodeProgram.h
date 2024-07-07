@@ -57,6 +57,16 @@ public:
 QDataStream &operator<<(QDataStream &s, const NodeWatch &param);
 QDataStream &operator>>(QDataStream &s, NodeWatch &param);
 
+//JZFunctionDebugInfo
+class JZFunctionDebugInfo
+{
+public:
+    QMap<int, NodeInfo> nodeInfo;
+    QList<JZParamDefine> localVariables;
+};
+QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param);
+QDataStream &operator>>(QDataStream &s, JZFunctionDebugInfo &param);
+
 //JZNodeScript
 class JZNodeScript
 {    
@@ -65,6 +75,7 @@ public:
     void clear();    
 
     JZFunction *function(QString name);
+    JZFunctionDebugInfo *functionDebug(QString name);
     
     JZNodeScript *clone();
     void saveToStream(QDataStream &s);
@@ -73,11 +84,10 @@ public:
     QString file;
     QString className; 
     QList<JZNodeIRPtr> statmentList;
+    QList<JZFunction> functionList;        
+    QList<NodeWatch> watchList;           //display node    
 
-    QList<JZFunction> functionList;    
-    QList<NodeWatch> watchList;           //display node        
-    QMap<int,NodeInfo> nodeInfo;   
-    QList<JZParamDefine> localVariables;
+    QList<JZFunctionDebugInfo> functionDebugList;
 
 protected:
     Q_DISABLE_COPY(JZNodeScript);    

@@ -7,6 +7,7 @@
 #include <QTextEdit>
 #include <QShortcut>
 #include <QUndoStack>
+#include <QGraphicsRectItem>
 #include "JZNodeScene.h"
 #include "JZNodeGraphItem.h"
 #include "JZNodeLineItem.h"
@@ -14,9 +15,9 @@
 #include "JZNodePropertyEditor.h"
 #include "JZNodeAutoRunWidget.h"
 #include "JZScriptItem.h"
-#include <QGraphicsRectItem>
 #include "JZNodeProgram.h"
 #include "JZNodeViewMap.h"
+#include "JZProcess.h"
 
 class JZNodeView;
 class JZProject;
@@ -161,7 +162,7 @@ public:
     void selectNode(int id);
     BreakPointTriggerResult breakPointTrigger();
 
-    void setRunning(bool flag);
+    void setRunningMode(ProcessStatus mode);
     void setAutoRunning(bool flag);
 
     int runtimeNode();
@@ -266,7 +267,7 @@ protected:
     QTimer *m_nodeTimer;
     NodeTimerInfo m_nodeTimeInfo;
 
-    bool m_runningMode;
+    ProcessStatus m_runningMode;
     bool m_autoRunning;
     int m_runNode;
 };

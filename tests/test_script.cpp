@@ -104,6 +104,9 @@ void ScriptTest::testContainer()
 
 void ScriptTest::testObjectParse()
 {
+    if (!build())
+        return;
+
     QList<JZNodeObjectPtr> cache;
 
     JZNodeObjectParser parser;
@@ -805,14 +808,14 @@ void ScriptTest::testExpr()
     QCOMPARE(ret[2],a * b); //Node_mul
     QCOMPARE(ret[3],a / b); //Node_div
     QCOMPARE(ret[4],a % b); //Node_mod
-    QCOMPARE(ret[5],a == b); //Node_eq
-    QCOMPARE(ret[6],a != b); //Node_ne
-    QCOMPARE(ret[7],a <= b); //Node_le
-    QCOMPARE(ret[8],a >= b); //Node_ge
-    QCOMPARE(ret[9],a < b);  //Node_lt
-    QCOMPARE(ret[10],a > b); //Node_gt
-    QCOMPARE(ret[11],a && b); //Node_and
-    QCOMPARE(ret[12],a || b); //Node_or
+    QCOMPARE((bool)ret[5],a == b); //Node_eq
+    QCOMPARE((bool)ret[6],a != b); //Node_ne
+    QCOMPARE((bool)ret[7],a <= b); //Node_le
+    QCOMPARE((bool)ret[8],a >= b); //Node_ge
+    QCOMPARE((bool)ret[9],a < b);  //Node_lt
+    QCOMPARE((bool)ret[10],a > b); //Node_gt
+    QCOMPARE((bool)ret[11],a && b); //Node_and
+    QCOMPARE((bool)ret[12],a || b); //Node_or
     QCOMPARE(ret[13],a & b); //Node_bitand
     QCOMPARE(ret[14],a | b); //Node_bitor
     QCOMPARE(ret[15],a ^ b); //Node_bitxor
@@ -958,30 +961,59 @@ void ScriptTest::testFunction()
 void ScriptTest::testClass()
 {       
     JZProject *project = &m_project;
-/*
-    auto classBase = project->addClass("./", "ClassBase");
-    project->addClass("ClassA","ClassBase");
-    project->addClass("ClassB","ClassBase");
 
-    classBase->addMemberVariable("a",Type_int,50);
-    script->addLocalVariable("a",JZNodeObjectManager::instance()->getClassId("ClassA"));
-    script->addLocalVariable("b",JZNodeObjectManager::instance()->getClassId("ClassB"));
+    auto classBase = m_file->addClass("ClassBase");
+    auto classA = m_file->addClass("ClassA","ClassBase");
+    auto classB = m_file->addClass("ClassB","ClassBase");
+
+    auto addReturn = [](JZScriptItem *script,int num) {
+        auto node_start = script->getNode(0);
+        JZNodeReturn *node_ret = new JZNodeReturn();
+        script->addNode(node_ret);
+        node_ret->setParamInValue(0, QString::number(num));
+        script->addConnect(node_start->flowOutGemo(),node_ret->flowInGemo());
+    };
+
+    JZFunctionDefine define;
+    define.className = classBase->className();
+    define.isVirtualFunction = true;
+    define.name = "getValue";
+    define.paramIn.push_back(JZParamDefine("this", "classBase"));
+    define.paramOut.push_back(JZParamDefine("ret",Type_int));
+    auto func_base = classBase->addMemberFunction(define);
+    addReturn(func_base, 0);
+
+    define.className = classA->className();
+    auto func_a = classA->addMemberFunction(define);
+    addReturn(func_a, 1);
+
+    define.className = classB->className();
+    auto func_b = classB->addMemberFunction(define);
+    addReturn(func_b, 2);
 
     if(!build())
         return;
 
-    QVariant value;
-    value = m_engine.getVariable("a.a");
-    QCOMPARE(value,50);
+    auto inst = JZNodeObjectManager::instance();
+    auto obj_base = JZNodeObjectPtr(inst->create("ClassBase"),true);
+    auto obj_a = JZNodeObjectPtr(inst->create("ClassA"), true);
+    auto obj_b = JZNodeObjectPtr(inst->create("ClassB"), true);
 
-    m_engine.setVariable("a.a",100);
-    value = m_engine.getVariable("a.a");
-    QCOMPARE(value,100);
+    QVariantList in, out;
+    in.clear();
+    in << QVariant::fromValue(obj_base);
+    m_engine.call("ClassBase.getValue", in, out);
+    QCOMPARE(out[0].toInt(),0);
 
-    m_engine.setVariable("b.a",200);
-    value = m_engine.getVariable("b.a");
-    QCOMPARE(value,200);
-*/
+    in.clear();
+    in << QVariant::fromValue(obj_a);
+    m_engine.call("ClassBase.getValue", in, out);
+    QCOMPARE(out[0].toInt(), 1);
+
+    in.clear();
+    in << QVariant::fromValue(obj_b);
+    m_engine.call("ClassBase.getValue", in, out);
+    QCOMPARE(out[0].toInt(), 2);
 }
 
 void ScriptTest::testBind()

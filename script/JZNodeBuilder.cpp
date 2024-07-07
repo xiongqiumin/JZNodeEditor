@@ -20,7 +20,7 @@ JZNodeCustomBuild::JZNodeCustomBuild()
 
 bool JZNodeCustomBuild::compiler(JZNodeCompiler *c, QString &error)
 {
-    c->addNodeStart(m_id);
+    c->addNodeDebug(m_id);
     if (!buildFunction(c, error))
         return false;
 
@@ -188,7 +188,6 @@ void JZNodeBuilder::replaceNopStatment(JZNodeScript *script, int index)
 {
     auto ir_nop = new JZNodeIR(OP_nop);
     ir_nop->pc = script->statmentList[index]->pc;
-    ir_nop->isBreak = script->statmentList[index]->isBreak;
     script->statmentList[index] = JZNodeIRPtr(ir_nop);
 }
 
@@ -272,7 +271,7 @@ void JZNodeBuilder::replaceUnitTestParam(JZScriptItem *file,ScriptDepend *depend
 void JZNodeBuilder::replaceUnitTestFunction(JZScriptItem *file, ScriptDepend *depend)
 {
     auto script = m_scripts[file->itemPath()].script.data();
-
+/*
     auto it = depend->hook.begin();
     while (it != depend->hook.end())
     {
@@ -311,6 +310,7 @@ void JZNodeBuilder::replaceUnitTestFunction(JZScriptItem *file, ScriptDepend *de
         }
         it++;
     }
+*/
 }
 
 bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNodeProgram *program)
@@ -420,7 +420,7 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
     for (int i = 0; i < func.paramOut.size(); i++)
     {
         auto id = custom->addParamOut("");
-        custom->pin(id)->setDataType({ func.paramOut[i].dataType()});
+        custom->pin(id)->setDataType({ func.paramOut[i].type });
         file.addConnect(custom->paramOutGemo(0), ret->paramInGemo(i));
     }
 
@@ -434,9 +434,6 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
         LOGE(Log_Compiler, compiler.error());
         return false;
     }
-
-    for (int i = 0; i < boot->statmentList.size(); i++)    
-        boot->statmentList[i]->isBreak = false;    
 
     m_program->m_scripts[boot->file] = boot;
     m_program->m_typeMeta.functionList << file.function();

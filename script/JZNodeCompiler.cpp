@@ -268,6 +268,7 @@ NodeCompilerInfo::NodeCompilerInfo()
     start = -1;
     parentId = -1;    
     allSubReturn = -1;    
+    autoAddDebugStart = true;
 }
 
 //ScriptDepend
@@ -302,6 +303,15 @@ JZParamDefine *ScriptDepend::param(bool isMember, QString name)
 
     QList<JZParamDefine> *list = isMember? &member : &global;
     return &(*list)[index];
+}
+
+//NodeCompilerStack
+JZNodeCompiler::NodeCompilerStack::NodeCompilerStack()
+{
+    nodeInfo = nullptr;
+    isFlow = false;
+    start = -1;
+    debugStart = -1;
 }
 
 // JZNodeCompiler
@@ -383,7 +393,9 @@ void JZNodeCompiler::init(JZScriptItem *scriptFile)
     m_scriptFile = scriptFile;
     m_project = scriptFile->project();        
     m_script = nullptr;    
+    m_originGraph = nullptr;
     m_statmentList = nullptr;
+    m_regCallFunction = nullptr;    
 
     m_nodeGraph.clear();
     m_nodeInfo.clear();
@@ -618,7 +630,7 @@ void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
         int pin_id = list[i];
         auto pin = node->pin(pin_id);
         if(pin->dataType().size() == 1)
-            m_nodeInfo[node->id()].pinType[pin_id] = pin->dataType().front();
+            m_nodeInfo[node->id()].pinType[pin_id] = pin->dataTypeInt().front();
     }
 }
 
@@ -741,18 +753,6 @@ void JZNodeCompiler::linkNodes()
 
 void JZNodeCompiler::updateDebugInfo()
 {
-    auto it = m_nodeInfo.begin();
-    while (it != m_nodeInfo.end())
-    {
-        auto &rg_list = it->ranges;
-        for (int i = 0; i < rg_list.size(); i++)
-        {
-            auto &rg = rg_list[i];
-            for (int j = rg.start; j < rg.end; j++)
-                m_script->statmentList[j]->isBreak = true;
-        }
-        it++;
-    }
 }
 
 void JZNodeCompiler::updateDispayNode()
@@ -966,12 +966,11 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
     bool ret = node->compiler(this,error);    
     if (ret)
     {                   
-        auto &env = m_compilerNodeStack.back();
+        auto &env = m_compilerNodeStack.back();        
         Q_ASSERT(env.debugStart != -1);
 
         NodeRange range;
-        range.start = env.start;
-        range.debugStart = env.debugStart;
+        range.start = env.start;        
         range.end = nextPc();        
         if (m_compilerNodeStack.size() > 1 && m_compilerNodeStack[0].isFlow)
         {
@@ -1012,8 +1011,7 @@ void JZNodeCompiler::pushCompilerNode(int id)
     }
 
     NodeCompilerStack stack;
-    stack.nodeInfo = &m_nodeInfo[id];
-    stack.debugStart = -1;
+    stack.nodeInfo = &m_nodeInfo[id];    
     stack.isFlow = node->isFlowNode();
     m_compilerNodeStack.push_back(stack);    
 
@@ -1155,6 +1153,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
     updateDepend();
     m_compilerInfo.depend[define.fullName()] = m_depend;
 
+    JZFunctionDebugInfo func_debug;
     //编译结果    
     auto it = m_nodeInfo.begin();
     while (it != m_nodeInfo.end())
@@ -1192,7 +1191,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
             param_info.id = paramId(node->id(), out_list[i]);
             info.paramOut.push_back(param_info);
         }
-        m_script->nodeInfo[it.key()] = info;
+        func_debug.nodeInfo[it.key()] = info;
 
         it++;
     }
@@ -1204,6 +1203,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
     impl.path = m_script->file;
 
     m_script->functionList.push_back(impl);
+    m_script->functionDebugList.push_back(func_debug);
 }
 
 int JZNodeCompiler::pinInputType(int node_id, int pin_id)
@@ -1273,9 +1273,6 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
             continue;
 
         auto pin = graph->node->pin(prop_in_id);
-        if (pin->flag() & Pin_noValue)
-            continue;
-
         QString pin_name = "输入节点" + graph->node->pinName(prop_in_id);            
         int pin_type = Type_none;
         if (graph->paramIn.contains(prop_in_id))  //有输入
@@ -1293,7 +1290,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
 
                 from_type.push_back(pinType(from_gemo));
             }
-            pin_type = JZNodeType::matchType(from_type, pin->dataType());            
+            pin_type = JZNodeType::matchType(from_type, pin->dataTypeInt());
             if (pin_type == Type_none)
             {
                 error = pin_name + "无法确定输入类型";
@@ -1305,11 +1302,11 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
             if (!pin->value().isEmpty()) //默认值
             {         
                 if(pin->dataType().size() == 1)        
-                    pin_type = pin->dataType()[0];   
+                    pin_type = pin->dataTypeInt()[0];   
                 else if(pin->dataType().size() > 1)
                 {
                     int pin_value_type = JZNodeType::stringType(pin->value());
-                    pin_type = JZNodeType::matchType( {pin_value_type} , pin->dataType());
+                    pin_type = JZNodeType::matchType( {pin_value_type} , pin->dataTypeInt());
                 }
 
                 if (pin_type == Type_none)
@@ -1886,8 +1883,7 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
                 continue;
             addStatement(JZNodeIRPtr(new JZNodeIRStackInit(node->id(), out_list[j])));
         }
-    }    
-    addNodeStart(currentNode()->id());
+    }        
 }
 
 const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QString &name)
@@ -2048,11 +2044,24 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
             else
             {
                 int match_type = pinType(nodeId,in_prop);
-                addSetVariable(irId(to_id), irLiteral(JZNodeType::initValue(match_type,pin->value())));
+                auto v = JZNodeType::initValue(match_type, pin->value());
+                if (!v.isValid())
+                {
+                    error = "无效的输入:" + pin->value();
+                    return false;
+                }
+                if (JZNodeType::variantType(v) == Type_any)
+                {
+                    auto any = v.value<JZNodeVariantAny>();
+                    addSetVariableConvert(irId(to_id),irLiteral(any.value));
+                }
+                else
+                    addSetVariable(irId(to_id), irLiteral(v));
             }
         }
     }
-    addNodeStart(nodeId);
+    if(m_compilerNodeStack.back().debugStart == -1 && m_nodeInfo[nodeId].autoAddDebugStart)
+        addNodeDebug(nodeId);
     return true;
 }
 
@@ -2193,16 +2202,19 @@ int JZNodeCompiler::addNop()
     return addStatement(JZNodeIRPtr(nop));
 }
 
-void JZNodeCompiler::addNodeStart(int id)
+int JZNodeCompiler::addNodeDebug(int id)
 {
-    auto node = m_scriptFile->getNode(id);
-    if (m_compilerNodeStack.back().debugStart == -1)
-    {        
-        JZNodeIRNodeId *node_ir = new JZNodeIRNodeId();
-        node_ir->id = id;
-        node_ir->memo = node->name() + "(" + QString::number(node->id()) + ")";
-        m_compilerNodeStack.back().debugStart = addStatement(JZNodeIRPtr(node_ir));
-    }
+    auto node = m_scriptFile->getNode(id);    
+    JZNodeIRNodeId *node_ir = new JZNodeIRNodeId();
+    node_ir->id = id;
+    node_ir->memo = node->name() + "(" + QString::number(node->id()) + ")";
+    m_compilerNodeStack.back().debugStart = addStatement(JZNodeIRPtr(node_ir));
+    return node_ir->pc;    
+}
+
+void JZNodeCompiler::setAutoAddNodeDebug(int m_id,bool flag)
+{
+    m_nodeInfo[m_id].autoAddDebugStart = flag;
 }
 
 int JZNodeCompiler::addExpr(const JZNodeIRParam &dst,const JZNodeIRParam &p1,const JZNodeIRParam &p2,int op)
@@ -2305,6 +2317,7 @@ bool JZNodeCompiler::irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRPara
 {
     int t1 = irParamType(p1);
     int t2 = irParamType(p2);
+    qDebug() << JZNodeType::typeToName(t1) << JZNodeType::typeToName(t2);
     if(isSet)
         return JZNodeType::isSameType(t1,t2);
     else  //compare

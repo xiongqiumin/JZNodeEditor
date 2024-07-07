@@ -47,7 +47,7 @@ public:
     void ensureNodeVisible(int nodeId);
     void selectNode(int nodeId);
 
-    void setRunning(bool staus);
+    void setRunningMode(ProcessStatus staus);
     int runtimeNode();
     void setRuntimeNode(int nodeId);
 

@@ -60,7 +60,7 @@ protected:
 
         int widgetType;
         QGraphicsProxyWidget *proxy;
-        QWidget *widget;
+        JZNodePinWidget *widget;
     };    
 
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;

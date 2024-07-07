@@ -9,8 +9,7 @@
 JZNodeLiteral::JZNodeLiteral()
 {
     m_type = Node_literal;
-    addParamOut("out", Pin_dispValue | Pin_editValue);
-    pin(paramOut(0))->setDataType({Type_none});
+    addParamOut("out", Pin_dispValue | Pin_editValue);    
 }
 
 JZNodeLiteral::~JZNodeLiteral()
@@ -19,13 +18,13 @@ JZNodeLiteral::~JZNodeLiteral()
 
 int JZNodeLiteral::dataType() const
 {
-    return pin(paramOut(0))->dataType()[0];
+    return pin(paramOut(0))->dataTypeInt()[0];
 }
 
 void JZNodeLiteral::setDataType(int type)
 {
     int out = paramOut(0);
-    pin(out)->setDataType({type});
+    pin(out)->setDataTypeInt({type});
     setName(JZNodeType::typeToName(type));
     if(JZNodeType::isBaseOrEnum(type))
         pin(out)->setFlag(Pin_out | Pin_param | Pin_dispValue | Pin_editValue);
@@ -57,13 +56,13 @@ void JZNodeLiteral::setLiteral(const QString &value)
 
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 {   
-    int id = c->paramId(m_id,paramOut(0));
-    c->addNodeStart(m_id);
+    int id = c->paramId(m_id,paramOut(0));    
 
     auto pin = this->pin(paramOut(0));
-    QVariant value = JZNodeType::initValue(pin->dataType()[0],pin->value());
+    QVariant value = JZNodeType::initValue(pin->dataTypeInt()[0],pin->value());
     
     c->addSetVariable(irId(id),irLiteral(value));
+    c->addNodeDebug(m_id);
     return true;
 }
 
@@ -84,12 +83,12 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
     QString key = pin(paramOut(0))->value();
     auto def = JZNodeObjectManager::instance()->enumMeta(m_name);
     int v = def->keyToValue(key);
-
-    c->addNodeStart(m_id);
+    
     int id = c->paramId(m_id, paramOut(0));
     c->addSetVariable(irId(id), irLiteral(v));
     c->lastStatment()->memo = key;
-        
+    c->addNodeDebug(m_id);
+
     c->setPinType(m_id,paramOut(0),def->type());
     return true;
 }
@@ -130,11 +129,11 @@ bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
     QString key = pin(paramOut(0))->value();
     auto def = JZNodeObjectManager::instance()->enumMeta(m_name);    
     int v = def->keyToValue(key);
-
-    c->addNodeStart(m_id);
+    
     int id = c->paramId(m_id, paramOut(0));
     c->addSetVariable(irId(id), irLiteral(v));
     c->lastStatment()->memo = key;
+    c->addNodeDebug(m_id);
 
     c->setPinType(m_id, paramOut(0), def->type());
     return true;
@@ -167,7 +166,7 @@ JZNodeCreate::JZNodeCreate()
     m_name = "createObject";
     m_type = Node_create;    
 
-    int id = addParamIn("Class",Pin_editValue | Pin_dispName | Pin_dispValue | Pin_literal);
+    int id = addParamIn("Class",Pin_editValue | Pin_dispName | Pin_dispValue | Pin_literal | Pin_noValue);
     setPinTypeString(id);
     addParamOut("Return", Pin_dispName);
 
@@ -206,10 +205,11 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addDataInput(m_id,error))
         return false;
 
-    int in_id = c->paramId(m_id,paramIn(0));
+    QString class_type = c->pinLiteral(m_id,paramIn(0)).toString();    
     int out_id = c->paramId(m_id,paramOut(0));
-    JZNodeIRParam irIn = irId(in_id);
+    JZNodeIRParam irIn = irLiteral(class_type);
     JZNodeIRParam irOut = irId(out_id);
+    c->setPinType(m_id, paramOut(0), meta->id);
 
     int tmp_id = c->allocStack(Type_any);
     c->addCall("createObject", { irIn }, { irId(tmp_id) });
@@ -345,9 +345,10 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
     }
 
     JZFunctionPointer ptr;
-    ptr.functionName = function_name;
-    c->addNodeStart(m_id);
+    ptr.functionName = function_name;    
     c->addSetVariable(irId(id), irLiteral(QVariant::fromValue(ptr)));
+    c->addNodeDebug(m_id);
+
     return true;
 }
 
@@ -368,7 +369,7 @@ JZNodeDisplay::~JZNodeDisplay()
 
 bool JZNodeDisplay::compiler(JZNodeCompiler *c, QString &error)
 {
-    c->addNodeStart(m_id);
+    c->addNodeDebug(m_id);
     return true;
 }
 
@@ -431,7 +432,7 @@ JZNodeThis::~JZNodeThis()
 bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
 {
     int out_id = c->paramId(m_id, paramOut(0));
-    c->addNodeStart(m_id);    
+    c->addNodeDebug(m_id);    
     c->addSetVariable(irId(out_id),irThis());    
     return true;
 }
@@ -468,11 +469,11 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
         return false;
     auto def = c->getVariableInfo(name);
     
-    c->addNodeStart(m_id);
+    c->addNodeDebug(m_id);
     int out_id = c->paramId(m_id,paramOut(0));
-    JZNodeIRParam ref = c->paramRef(name);;
-    c->addSetVariable(irId(out_id),ref);
+    JZNodeIRParam ref = c->paramRef(name);    
     c->setPinType(m_id, paramOut(0), def->dataType());
+    c->addSetVariable(irId(out_id), ref);
     return true;
 }
 
@@ -495,7 +496,7 @@ void JZNodeParam::onPinChanged(int id)
 {
     if(id == paramOut(0))
     {
-        auto def = JZNodeCompiler::getVariableInfo(m_file, variable());
+        auto def = JZNodeCompiler::getVariableInfo(m_file, variable());        
         int dataType = def? def->dataType() : Type_none;        
         if (dataType != Type_none)
             setPinType(id, { dataType });
@@ -745,7 +746,7 @@ void JZNodeAbstractMember::updateMemberType()
         return;
 
     auto gemo = m_file->getConnect(pin_id[0]);
-    auto type = m_file->getNode(gemo->from.nodeId)->pinType(gemo->from.pinId);
+    auto type = m_file->getNode(gemo->from.nodeId)->pinTypeInt(gemo->from.pinId);
     if (type.size() == 1)
         updateMemberType(type[0]);
 }

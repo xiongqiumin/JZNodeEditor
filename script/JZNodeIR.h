@@ -98,8 +98,7 @@ public:
     virtual void loadFromStream(QDataStream &s);    
 
     int type;    
-    int pc;    
-    bool isBreak;             //断点是否停留
+    int pc;        
     QString memo;
 };
 typedef QSharedPointer<JZNodeIR> JZNodeIRPtr;

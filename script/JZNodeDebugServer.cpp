@@ -256,6 +256,16 @@ QVariant JZNodeDebugServer::getVariable(const JZNodeDebugParamInfo &info)
 QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParamInfo &info)
 {    
     JZNodeDebugParamInfo result;
+
+    auto ref = getVariableRef(info.stack, info.coor);
+    if (ref)
+    {
+        int ref_type = JZNodeType::variantType(*ref);
+        QVariant initValue = JZNodeType::initValue(ref_type,info.value);
+        if (initValue.isValid())
+            *ref = initValue;
+    }
+
     result.coors << info.coor;
     result.stack = info.stack;    
     return getVariable(result);

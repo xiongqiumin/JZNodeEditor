@@ -20,7 +20,6 @@ enum{
     Status_idlePause,
     Status_error,
 };
-bool statusIsPause(int status);
 
 class RunnerEnv
 {
@@ -33,7 +32,7 @@ public:
     QVariant *getRef(int id);
     QVariant *getRef(QString name);
 
-    const JZFunction *func;
+    const JZFunction *function;
     QVariant object;      //this    
     JZNodeScript *script;    
     int pc;
@@ -98,9 +97,9 @@ class BreakPoint
 public: 
     enum{
         none,
-        nodeEnter,
-        stepOver,     //step over
-        stackEqual,   //step in/out     
+        nodeEnter,    //为nodeId中断
+        stepOver,     //不为nodeId中断
+        stackEqual,   
     };
 
     BreakPoint();
@@ -108,9 +107,8 @@ public:
 
     int type;
     QString file;
-    int nodeId;    
-    int stack;    
-    NodeRange pcRange;
+    int nodeId;            
+    int stack;
 };
 
 //JZNodeEngine
@@ -220,9 +218,10 @@ protected:
     QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
         
     int nodeIdByPc(int pc);        
-    int nodeIdByPc(JZNodeScript *script, int pc);
+    int nodeIdByPc(JZNodeScript *script,QString func, int pc);    
     NodeRange nodeDebugRange(int node_id, int pc);
     int breakNodeId();
+    JZFunctionDebugInfo *currentFunctionDebugInfo();
 
     JZNodeScript *getScript(QString path); 
         
@@ -236,9 +235,8 @@ protected:
     QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
-    BreakPoint m_breakStep;
-    BreakPoint m_breakResume; //避免断点在node，按F5后重复停止到当前node。
-    int m_breakNodeId;    
+    BreakPoint m_breakStep; 
+    int m_breakNodeId;
 
     Stack m_stack;
     QMap<QString,QVariantPtr> m_global;

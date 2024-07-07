@@ -334,7 +334,7 @@ QString JZNodeType::debugString(const QVariant &v)
         auto obj = toJZObject(v);
         if (obj)
         {
-            return debugString(obj);            
+            return debugString(obj);
         }
         else
             return "null";
@@ -342,7 +342,12 @@ QString JZNodeType::debugString(const QVariant &v)
     else if (v_type == Type_any)
     {
         JZNodeVariantAny *ptr = (JZNodeVariantAny*)v.data();
-        return "Variant{" + debugString(ptr->value) + "}";   
+        return "Variant{" + debugString(ptr->value) + "}";
+    }
+    else if (v_type == Type_function)
+    {
+        JZFunctionPointer *ptr = (JZFunctionPointer*)v.data();
+        return ptr->functionName;
     }
     else
     {
@@ -695,7 +700,6 @@ QVariant JZNodeType::initValue(int type, const QString &text)
         }
     }
 
-    Q_ASSERT(0);    
     return QVariant();
 }
 
@@ -778,8 +782,7 @@ QVariant JZNodeType::defaultValue(int type)
         return QVariant::fromValue(JZNodeObjectPtr(obj,true));
     }
     else
-    {
-        Q_ASSERT(0);
+    {        
         return QVariant();
     }
 }
