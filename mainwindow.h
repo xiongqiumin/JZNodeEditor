@@ -18,6 +18,9 @@
 #include "JZNodeBreakPoint.h"
 #include "LogManager.h"
 #include "tests/test_server.h"
+#include "JZNodeAutoRunThread.h"
+#include "JZNodeBuildThread.h"
+#include "JZNodeEditor.h"
 
 class Setting
 {
@@ -106,7 +109,9 @@ protected slots:
     void onNetError();
     void onTabContextMenu(QPoint pos);
 
-    void onCompilerTimer();
+    void onAutoCompilerTimer();
+    void onBuildFinish(bool flag);
+    void onAutoRunResult(QSharedPointer<UnitTestResult> result);
 
 private:
     struct ActionStatus{
@@ -129,20 +134,19 @@ private:
         QAction *action;
     };
 
-    struct AutoBuildInfo
+    struct BuildInfo
     {
-        enum BuildFlag{
-            Build_None,
-            Build_Compiler,
-            Build_Run,
-        };
+        BuildInfo();
 
-        AutoBuildInfo();
+        bool isUnitTest();
         void clear();
+        void clearTask();
 
-        qint64 timestamp;
-        QString itemPath;
-        BuildFlag flag;
+        qint64 changeTimestamp;
+        qint64 buildTimestamp;
+        QString runItemPath;
+        bool save;
+        bool start;
     };
 
     virtual void resizeEvent(QResizeEvent *event) override;
@@ -162,6 +166,7 @@ private:
     bool openEditor(QString filepath);    
     void closeEditor(JZEditor *editor);
     JZEditor *editor(QString filepath);
+    JZNodeEditor *nodeEditor(QString filepath);
     void updateActionStatus();    
 
     void initMenu();    
@@ -176,15 +181,15 @@ private:
     void setWatchStatus(ProcessStatus status);
     void updateAutoWatch(int stack_index);
 
-    bool build();
-    void start(bool startPause);    
+    void build();
+    void saveProgram();
+    void startProgram();
     void saveToFile(QString file,QString text);
     void saveAll();
     bool closeAll(JZEditor *except = nullptr);
     void resetEditor(JZEditor *editor);
     void initLocalProcessTest();
     QIcon menuIcon(const QString &name);
-    void dealCompiler();
     void dealRun();
     
     JZProject m_project;    
@@ -216,9 +221,10 @@ private:
     QList<QAction*> m_debugActions;
     QToolBar *m_toolDebug;    
 
-    JZNodeBuilder m_builder;
     QTimer *m_compilerTiemr;
-    AutoBuildInfo m_buildInfo;
+    BuildInfo m_buildInfo;
+    JZNodeAutoRunThread m_runThread;
+    JZNodeBuildThread m_buildThread;
 
     JZNodeProgram m_program;
     JZNodeRuntimeInfo m_runtime;

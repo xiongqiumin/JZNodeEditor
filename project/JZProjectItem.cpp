@@ -22,7 +22,7 @@ void JZProjectItem::setProject(JZProject *project)
     m_project = project;
 }
 
-JZProject *JZProjectItem::project() const
+JZProject *JZProjectItem::project() 
 {
     return m_project;
 }
@@ -32,14 +32,14 @@ void JZProjectItem::setEditor(JZEditor *editor)
     m_editor = editor;
 }
 
-JZEditor *JZProjectItem::editor() const
+JZEditor *JZProjectItem::editor() 
 {
     return m_editor;
 }
 
 void JZProjectItem::sort()
 {
-    std::sort(m_childs.begin(),m_childs.end(),[](const JZProjectItemPtr &i1_ptr,const JZProjectItemPtr &i2_ptr){
+    std::sort(m_childs.begin(),m_childs.end(),[]( JZProjectItemPtr &i1_ptr, JZProjectItemPtr &i2_ptr){
         auto i1 = i1_ptr.data();
         auto i2 = i2_ptr.data();
         if(i1->m_pri != i2->m_pri)
@@ -58,7 +58,7 @@ void JZProjectItem::setName(QString name)
     m_name = name;
 }
 
-QString JZProjectItem::path()
+QString JZProjectItem::path() 
 {
     if(m_parent)
         return m_parent->itemPath();
@@ -66,7 +66,7 @@ QString JZProjectItem::path()
         return QString();
 }
 
-QString JZProjectItem::itemPath()
+QString JZProjectItem::itemPath() 
 {
     if(m_parent)
         return m_parent->itemPath() + "/" + m_name;
@@ -84,12 +84,12 @@ void JZProjectItem::setItemType(int type)
     m_itemType = type;
 }
 
-JZProjectItem *JZProjectItem::parent()
+JZProjectItem *JZProjectItem::parent() 
 {
     return m_parent;
 }
 
-JZScriptClassItem *JZProjectItem::getClassFile()
+JZScriptClassItem *JZProjectItem::getClassFile() 
 {
     if (!m_project)
         return nullptr;
@@ -97,7 +97,7 @@ JZScriptClassItem *JZProjectItem::getClassFile()
     return m_project->getItemClass(this);
 }
 
-QString JZProjectItem::className()
+QString JZProjectItem::className() 
 {
     auto class_file = getClassFile();
     if (class_file)
@@ -118,7 +118,7 @@ void JZProjectItem::removeItem(int index)
     m_childs.removeAt(index);
 }
 
-JZProjectItem *JZProjectItem::getItem(QString name)
+JZProjectItem *JZProjectItem::getItem(QString name) 
 {
     for(int i = 0; i < m_childs.size(); i++)
     {
@@ -128,12 +128,12 @@ JZProjectItem *JZProjectItem::getItem(QString name)
     return nullptr;
 }
 
-bool JZProjectItem::hasItem(QString name)
+bool JZProjectItem::hasItem(QString name) 
 {
     return getItem(name) != nullptr;
 }
 
-QList<JZProjectItem *> JZProjectItem::childs()
+QList<JZProjectItem *> JZProjectItem::childs() 
 {
     QList<JZProjectItem *> result;
     for(int i = 0; i < m_childs.size(); i++)
@@ -146,7 +146,7 @@ void JZProjectItem::removeChlids()
     m_childs.clear();
 }
 
-int JZProjectItem::indexOfItem(JZProjectItem *item)
+int JZProjectItem::indexOfItem(JZProjectItem *item) 
 {
     for(int i = 0; i < m_childs.size(); i++)
     {
@@ -156,7 +156,7 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
     return -1;
 }
 
-QList<JZProjectItem *> JZProjectItem::itemList(int type)
+QList<JZProjectItem *> JZProjectItem::itemList(int type) 
 {
     QList<int> type_list = { type };
     return itemList(type_list);

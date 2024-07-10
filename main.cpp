@@ -16,8 +16,8 @@ void run_testcase(int argc, char *argv[])
     extern void test_anglescript(int argc, char *argv[]);
     extern void test_benchmark(int argc, char *argv[]);
 
-    //test_script(argc,argv);
-    //test_anglescript(argc,argv);
+    test_script(argc,argv);
+    test_anglescript(argc,argv);
     test_benchmark(argc,argv);
 }   
 
@@ -61,9 +61,6 @@ int main(int argc, char *argv[])
         QCommandLineOption debugOption("debug");
         parser.addOption(debugOption);
 
-        //start-pause
-        QCommandLineOption pauseOption("start-pause");
-        parser.addOption(pauseOption);
         parser.process(a);        
 
         QString error;

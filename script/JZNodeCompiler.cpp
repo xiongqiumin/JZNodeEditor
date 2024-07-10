@@ -1,12 +1,13 @@
-﻿#include "JZNodeCompiler.h"
-#include "JZNodeValue.h"
-#include <QVector>
+﻿#include <QVector>
 #include <QSet>
 #include <QDebug>
+#include "JZNodeCompiler.h"
+#include "JZNodeValue.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
 #include "JZClassItem.h"
 #include "JZNodeUtils.h"
+#include "JZNodeBuilder.h"
 
 // GraphNode
 GraphNode::GraphNode()
@@ -346,6 +347,7 @@ JZNodeCompiler::JZNodeCompiler()
     m_originGraph = nullptr;
     m_statmentList = nullptr;
     m_regCallFunction = nullptr;
+    m_builder = nullptr;
 
     m_buildGraph = GraphPtr(new Graph());
 }
@@ -368,6 +370,11 @@ void JZNodeCompiler::init(JZScriptItem *scriptFile)
     m_className.clear();    
     m_graphList.clear();        
     resetStack();
+}
+
+void JZNodeCompiler::setBuilder(JZNodeBuilder *builder)
+{
+    m_builder = builder;
 }
 
 bool JZNodeCompiler::genGraphs(JZScriptItem *scriptFile, QVector<GraphPtr> &list)
@@ -912,6 +919,9 @@ QVariant JZNodeCompiler::pinLiteral(int nodeId, int pinId)
 
 bool JZNodeCompiler::compilerNode(JZNode *node)
 {     
+    if(checkBuildStop())
+        return false;
+
     pushCompilerNode(node->id());
     
     int build_start_pc = nextPc();    
@@ -1100,6 +1110,14 @@ bool JZNodeCompiler::checkBuildResult()
     }
 
     return ok;
+}
+
+bool JZNodeCompiler::checkBuildStop()
+{
+    if(m_builder)
+        return m_builder->isBuildInterrupt();
+
+    return false;
 }
 
 void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)

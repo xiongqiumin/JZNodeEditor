@@ -1,4 +1,5 @@
-﻿#include "JZNodeBuilder.h"
+﻿#include <QScopeGuard>
+#include "JZNodeBuilder.h"
 #include "JZParamItem.h"
 #include "JZUiFile.h"
 #include "JZClassItem.h"
@@ -33,6 +34,8 @@ bool JZNodeCustomBuild::compiler(JZNodeCompiler *c, QString &error)
 JZNodeBuilder::JZNodeBuilder()
 {
     m_project = nullptr;
+    m_build = false;
+    m_stopBuild = false;
 }
 
 JZNodeBuilder::~JZNodeBuilder()
@@ -58,12 +61,14 @@ QString JZNodeBuilder::error() const
 
 void JZNodeBuilder::clear()
 {
-    m_connects.clear();
+    m_build = false;
+    m_stopBuild = false;
+    
     m_error.clear();
     m_scripts.clear();
 }
 
-void JZNodeBuilder::initGlobal()
+bool JZNodeBuilder::initGlobal()
 {            
     // init variable
     auto func = [this](JZNodeCompiler *c, QString&)->bool{
@@ -92,7 +97,10 @@ void JZNodeBuilder::initGlobal()
     JZFunctionDefine global_func;
     global_func.name = "__init__";
     global_func.isFlowFunction = true;
-    buildCustom(global_func, func);
+    if(!buildCustom(global_func, func))
+        return false;
+
+    return true;
 }
 
 CompilerInfo JZNodeBuilder::compilerInfo(JZScriptItem *file) const
@@ -106,23 +114,24 @@ CompilerInfo JZNodeBuilder::compilerInfo(JZScriptItem *file) const
 
 bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
 {
+    if(m_stopBuild)
+    {
+        m_error += "Cancled";
+        return false;
+    }
+
     QString path = scriptFile->itemPath();
-    m_scripts[path].script = JZNodeScriptPtr(new JZNodeScript());
-
-    auto classFile = m_project->getItemClass(scriptFile);
-    JZNodeScript *script = m_scripts[path].script.data();
-    script->clear();
-    if (classFile)
-        script->className = classFile->className();
-
     LOGI(Log_Compiler, "build " + scriptFile->itemPath());
-    JZNodeCompiler compiler;
-    bool ret = compiler.build(scriptFile, script);
-    m_scripts[path].compilerInfo = compiler.compilerInfo();
+
+    m_scripts[path].script = JZNodeScriptPtr(new JZNodeScript());
+    JZNodeScript *script = m_scripts[path].script.data();
+
+    bool ret = m_compiler.build(scriptFile, script);
+    m_scripts[path].compilerInfo = m_compiler.compilerInfo();
     if(!ret)
     {
-        m_error += compiler.error();
-        LOGE(Log_Compiler, compiler.error());
+        m_error += m_compiler.error();
+        LOGE(Log_Compiler, m_compiler.error());
         return false;
     }
 
@@ -131,6 +140,18 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
 
 bool JZNodeBuilder::build(JZNodeProgram *program)
 {    
+    {
+        QMutexLocker locker(&m_mutex);
+        m_build = true;
+        m_stopBuild = false;
+    }
+
+    auto cleanup = qScopeGuard([this]{ 
+        QMutexLocker locker(&m_mutex);
+        m_build = false;
+        m_stopBuild = false;
+    });
+
     clear();    
     m_program = program;        
     m_program->clear();    
@@ -195,7 +216,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     return true;
 }
 
-bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNodeCompiler*, QString&)> buildFunction, const QList<JZParamDefine> &local)
+bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNodeCompiler*, QString&)> buildFunction)
 {
     JZNodeScriptPtr boot = JZNodeScriptPtr(new JZNodeScript());    
 
@@ -203,42 +224,57 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNode
     file.setName(func.name);
     file.setFunction(func);
     file.setProject(m_project);
-    for(int i = 0; i < local.size(); i++)
-        file.addLocalVariable(local[i]);
     
+    auto start = file.getNode(0);
     JZNodeCustomBuild *custom = new JZNodeCustomBuild();
     custom->buildFunction = buildFunction;
     file.addNode(custom);
-
-    JZNodeReturn *ret = new JZNodeReturn();
-    file.addNode(ret);
-    
-    file.addConnect(custom->flowOutGemo(), ret->flowInGemo());
-    for (int i = 0; i < func.paramOut.size(); i++)
-    {
-        auto id = custom->addParamOut("");
-        custom->pin(id)->setDataType({ func.paramOut[i].type });
-        file.addConnect(custom->paramOutGemo(0), ret->paramInGemo(i));
-    }
-
-    auto start = file.getNode(0);
     file.addConnect(start->flowOutGemo(), custom->flowInGemo());
-
-    JZNodeCompiler compiler;
-    if (!compiler.build(&file, boot.data()))
-    {
-        m_error += compiler.error();
-        LOGE(Log_Compiler, compiler.error());
+ 
+    if(!buildScript(&file))
         return false;
-    }
-
-    m_program->m_scripts[boot->file] = boot;
+    
     m_program->m_typeMeta.functionList << file.function();
     return true;
 }
 
+void JZNodeBuilder::stopBuild()
+{   
+    {
+        QMutexLocker locker(&m_mutex);
+        if(!m_build)
+            return;
+    
+        m_stopBuild = true;
+    }
+
+    //wait
+    while(true)
+    {
+        {
+            QMutexLocker locker(&m_mutex);
+            if(!m_build)
+                return;
+        }
+        
+        QThread::msleep(10);
+    }
+}
+
+bool JZNodeBuilder::isBuildInterrupt()
+{
+    QMutexLocker locker(&m_mutex);
+    return m_stopBuild;
+}
+
 bool JZNodeBuilder::link()
-{       
+{    
+    if(!initGlobal())
+    {   
+        m_error = "initGlobal failed";
+        return false;
+    }
+
     auto it_s = m_scripts.begin();
     while (it_s != m_scripts.end())
     {
@@ -246,9 +282,6 @@ bool JZNodeBuilder::link()
         it_s++;
     }
 
-    JZFunctionDefine func;
-    func.name = "__init__";    
-    initGlobal();
-
     return true;
 }
+

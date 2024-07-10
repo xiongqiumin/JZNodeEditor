@@ -584,6 +584,18 @@ const JZFunctionDefine *JZProject::function(QString name)
     return nullptr;
 }
 
+JZScriptItem *JZProject::functionItem(QString name)
+{
+    auto list = itemList("./",ProjectItem_scriptFunction);
+    for(int i = 0; i < list.size(); i++)
+    {
+        JZScriptItem *file = (JZScriptItem*)list[i];
+        if(file->function().fullName() == name)
+            return file;
+    }
+    return nullptr;
+}
+
 QStringList JZProject::functionList()
 {
     QStringList ret;

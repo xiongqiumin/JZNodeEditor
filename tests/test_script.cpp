@@ -470,6 +470,7 @@ void ScriptTest::testFor()
     
     if(!build())
         return;
+    dumpAsm("testFor.jsm");
 
     QVariantList in,out;
     m_engine.call("ForTest0", in, out);

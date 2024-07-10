@@ -1,8 +1,9 @@
 ﻿#ifndef JZ_NODE_BUILDER_H_
 #define JZ_NODE_BUILDER_H_
 
-#include "JZNodeCompiler.h"
+#include <QMutex>
 #include <functional>
+#include "JZNodeCompiler.h"
 
 class JZNodeBuilder;
 class JZNodeCustomBuild: public JZNode
@@ -25,7 +26,8 @@ public:
     JZProject *project();
 
     bool build(JZNodeProgram *program);
-    bool buildScript(JZScriptItem *file);
+    void stopBuild();
+    bool isBuildInterrupt();
 
     QString error() const;
     CompilerInfo compilerInfo(JZScriptItem *file) const;
@@ -39,26 +41,22 @@ protected:
         CompilerInfo compilerInfo;
     };
 
-    struct ConnectInfo
-    {
-        QString sender;
-        int event;
-        QString recv;
-        QString handle;
-    };
-
     void clear();      
-    bool buildCustom(JZFunctionDefine define,std::function<bool(JZNodeCompiler*, QString&)> func,const QList<JZParamDefine> &local = QList<JZParamDefine>());
+    bool buildScript(JZScriptItem *file);
+    bool buildCustom(JZFunctionDefine define,std::function<bool(JZNodeCompiler*, QString&)> func);
     bool link();        
-    void initGlobal();
+    bool initGlobal();
 
     JZNodeProgram *m_program;    
     JZProject *m_project;    
 
     QMap<QString, ScriptInfo> m_scripts;
+    JZNodeCompiler m_compiler;
 
-    QList<ConnectInfo> m_connects;
     QString m_error;
+    QMutex m_mutex;
+    bool m_build;
+    bool m_stopBuild;
 };
 
 #endif

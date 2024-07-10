@@ -26,10 +26,10 @@ public:
     virtual ~JZProjectItem();
 
     void setProject(JZProject *project);
-    JZProject *project() const;
+    JZProject *project();
 
     void setEditor(JZEditor *editor);
-    JZEditor *editor() const;  
+    JZEditor *editor();  
 
     QString name() const;
     void setName(QString name);    

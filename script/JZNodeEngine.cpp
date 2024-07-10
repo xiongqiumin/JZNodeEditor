@@ -260,7 +260,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param)
 //UnitTestResult
 UnitTestResult::UnitTestResult()
 {
-    result = false;
+    result = None;
 }
 
 //BreakPoint
@@ -1495,7 +1495,7 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
         }
     }
     else if((dataType1 >= Type_bool && dataType1 <= Type_int64)
-            && (dataType2 >= Type_bool && dataType2 == Type_int64))
+            && (dataType2 >= Type_bool && dataType2 <= Type_int64))
     {
         if(dataType1 == Type_int64 || dataType2 == Type_int64)
             return dealExprInt64(a, b, op);

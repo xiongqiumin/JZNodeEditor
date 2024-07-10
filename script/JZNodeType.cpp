@@ -230,6 +230,7 @@ bool JZNodeType::isSameType(int type1,int type2)
     else if(type1 >= Type_object && type2 >= Type_object)
         return isInherits(type1,type2);
 
+    qDebug() << JZNodeType::typeToName(type1) << JZNodeType::typeToName(type2);
     return false;
 }
 

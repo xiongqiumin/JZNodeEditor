@@ -843,6 +843,7 @@ bool JZNodeReturn::compiler(JZNodeCompiler *c,QString &error)
         c->addSetVariable(irId(Reg_CallOut + i),irId(id));
     }
     c->setRegCallFunction(nullptr);
+    
     JZNodeIR *ir_return = new JZNodeIR(OP_return);    
     c->addStatement(JZNodeIRPtr(ir_return));
     return true;

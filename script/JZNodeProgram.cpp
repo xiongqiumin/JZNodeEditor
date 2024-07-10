@@ -437,7 +437,7 @@ void JZNodeProgram::registType()
         auto &sub_list = it.value()->functionList;
         for (int i = 0; i < sub_list.size(); i++)
             JZNodeFunctionManager::instance()->registFunctionImpl(sub_list[i]);    
-        
+
         it++;
     }
 }

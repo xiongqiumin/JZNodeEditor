@@ -13,7 +13,6 @@
 #include <QCloseEvent>
 #include <QElapsedTimer>
 #include <QToolBar>
-#include "JZNodeEditor.h"
 #include "JZUiEditor.h"
 #include "JZNodeParamEditor.h"
 #include "JZNewProjectDialog.h"
@@ -46,18 +45,35 @@ QDataStream &operator >> (QDataStream &s, Setting &param)
     return s;
 }
 
+
 //AutoBuildInfo
-MainWindow::AutoBuildInfo::AutoBuildInfo()
+MainWindow::BuildInfo::BuildInfo()
 {
-    flag = Build_None;
-    timestamp = 0;
+    clear();
 }
 
-void MainWindow::AutoBuildInfo::clear()
+void MainWindow::BuildInfo::clear()
 {
-    flag = Build_None;
-    itemPath.clear();
-    timestamp = 0;
+    changeTimestamp = 0;
+    buildTimestamp = 0;
+    save = false;
+    start = false;
+    runItemPath.clear();
+}
+
+void MainWindow::BuildInfo::clearTask()
+{
+    save = false;
+    start = false;
+    runItemPath.clear();
+}
+
+bool MainWindow::BuildInfo::isUnitTest()
+{
+    if(!runItemPath.isEmpty() && !start)
+        return true;
+    
+    return false;
 }
 
 //ActionStatus
@@ -72,10 +88,9 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
     m_editor = nullptr;
-    m_builder.setProject(&m_project);
     m_processMode = Process_none;
     m_compilerTiemr = new QTimer(this);
-    connect(m_compilerTiemr, &QTimer::timeout, this, &MainWindow::onCompilerTimer);
+    connect(m_compilerTiemr, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
     m_compilerTiemr->start(100);
 
     connect(LogManager::instance(), &LogManager::sigLog, this, &MainWindow::onLog);
@@ -88,6 +103,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
     connect(&m_project,&JZProject::sigFileChanged, this, &MainWindow::onProjectChanged);
+
+    connect(&m_runThread,&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
+    connect(&m_buildThread,&JZNodeBuildThread::sigResult,this, &MainWindow::onBuildFinish);
+    m_buildThread.init(&m_project,&m_program);
 
     loadSetting();    
     initUi();     
@@ -461,7 +480,7 @@ void MainWindow::updateActionStatus()
 
 void MainWindow::onActionNewProject()
 {
-    if (!closeAll())
+    if (!closeProject())
         return;
 
     JZNewProjectDialog dialog(this);
@@ -479,13 +498,11 @@ void MainWindow::onActionNewProject()
     else
         project_tmp = "console";
 
-    if (m_project.newProject(project_dir, name, project_tmp))
-    {
-        m_projectTree->setProject(&m_project);
-        m_setting.addRecentProject(m_project.filePath());
-    }
+    JZProject project;
+    if (!project.newProject(project_dir, name, project_tmp))
+        return;
     
-    updateActionStatus();
+    openProject(project.filePath());
 }
 
 void MainWindow::onActionOpenProject()
@@ -615,6 +632,7 @@ void MainWindow::onActionSelectAll()
 
 void MainWindow::onActionBuild()
 {
+    m_buildInfo.save = true;
     build();
 }
 
@@ -630,8 +648,9 @@ void MainWindow::initLocalProcessTest()
 
 void MainWindow::onActionRun()
 {    
-    start(false);
-    updateActionStatus();    
+    m_buildInfo.save = true;
+    m_buildInfo.start = true;
+    build();    
 }
 
 void MainWindow::onActionDetach()
@@ -764,6 +783,7 @@ bool MainWindow::openProject(QString filepath)
         return false;
     }
 
+    m_buildInfo.clear();
     m_projectTree->setProject(&m_project);
     m_setting.addRecentProject(m_project.filePath());
     m_breakPoint->updateBreakPoint(&m_project);     
@@ -797,101 +817,82 @@ void MainWindow::gotoNode(QString file, int nodeId)
 
 void MainWindow::onFunctionOpen(QString functionName)
 {
-    //auto file = m_project.getFunction(functionName);
-    //openEditor(file->itemPath());
-}
-
-void MainWindow::dealCompiler()
-{
-    auto edit = editor(m_buildInfo.itemPath);
-    if (!edit)
-        return;
-
-    auto node_editor = qobject_cast<JZNodeEditor*>(edit);
-    auto script = node_editor->script();
-
-    JZNodeScript result;
-    m_builder.buildScript(script);
-        
-    auto compilerInfo = m_builder.compilerInfo(script);
-    node_editor->setCompierResult(compilerInfo);
-}
-
-void MainWindow::dealRun()
-{
-    auto widget = editor(m_buildInfo.itemPath);
-    if (!widget)
-        return;    
-
-    auto edit = qobject_cast<JZNodeEditor*>(widget);
-    auto script = edit->script();
-
-    dealCompiler();
-
-    ScriptDepend depend = edit->scriptTestDepend();
-    
-    JZNodeProgram program;
-
-    JZNodeEngine engine;
-    engine.setProgram(&program);
-    engine.init();
-
-    UnitTestResult ret;
-
-    QVariantList out;
-    if (engine.callUnitTest(&depend, out))
-    {
-        ret.result = true;
-        ret.out = out;
-    }
-    else
-    {
-        ret.result = false;
-        ret.runtimeError = engine.runtimeError();
-    }
-
-RunFinish:
-    edit->setAutoRunResult(ret);
+    auto file = m_project.functionItem(functionName);
+    openEditor(file->itemPath());
 }
 
 void MainWindow::onAutoCompiler()
 {
-    auto edit = qobject_cast<JZNodeEditor*>(sender());    
-    if (m_buildInfo.itemPath == edit->item()->itemPath() && m_buildInfo.flag == AutoBuildInfo::Build_Run)
-    {
-        m_buildInfo.timestamp = QDateTime::currentMSecsSinceEpoch();
-        return;
-    }
-
-    m_buildInfo.timestamp = QDateTime::currentMSecsSinceEpoch();
-    m_buildInfo.flag = AutoBuildInfo::Build_Compiler;
-    m_buildInfo.itemPath = edit->item()->itemPath();
+    m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
 }
 
 void MainWindow::onAutoRun()
 {
     auto edit = qobject_cast<JZNodeEditor*>(sender());
-    m_buildInfo.timestamp = QDateTime::currentMSecsSinceEpoch();    
-    m_buildInfo.flag = AutoBuildInfo::Build_Run;
-    m_buildInfo.itemPath = edit->item()->itemPath();    
+    if(m_editor != edit)
+        return;
+    
+    if(m_processMode == Process_none)
+    {
+        m_buildInfo.runItemPath = edit->script()->itemPath();
+        build();
+    }
 }
 
-void MainWindow::onCompilerTimer()
+void MainWindow::onAutoCompilerTimer()
 {
-    if (m_buildInfo.flag == AutoBuildInfo::Build_None)
-        return;
-
     qint64 cur = QDateTime::currentMSecsSinceEpoch();
-    if (cur - m_buildInfo.timestamp <= 1000)
+    if (cur - m_buildInfo.changeTimestamp <= 1000)
         return;
 
-    if (m_buildInfo.flag == AutoBuildInfo::Build_Compiler)
-        dealCompiler();
-    else if (m_buildInfo.flag == AutoBuildInfo::Build_Run)
-        dealRun();
+    if (m_project.isNull())
+        return;
 
-    m_buildInfo.clear();
+    if(m_buildInfo.changeTimestamp >= m_buildInfo.buildTimestamp)
+        build();
 }
+
+void MainWindow::onBuildFinish(bool flag)
+{
+    auto builder = m_buildThread.builder();
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
+    {
+        if (it.value()->type() == Editor_script)
+        {
+            auto node_edit = (JZNodeEditor*)it.value();
+            auto cmp_info = builder->compilerInfo(node_edit->script());
+            node_edit->setCompierResult(cmp_info);
+        }        
+        it++;
+    }
+
+    if(m_buildInfo.isUnitTest())
+    {
+        auto e = nodeEditor(m_buildInfo.runItemPath);
+        m_runThread.startRun(&m_program,e->scriptTestDepend());
+    }
+    if(m_buildInfo.save)
+        saveProgram();
+    if(m_buildInfo.start)
+        startProgram();
+
+    m_buildInfo.clearTask();
+}
+
+void MainWindow::onAutoRunResult(QSharedPointer<UnitTestResult> result)
+{
+    if(result->result == UnitTestResult::Cancel)
+        return;
+
+    auto script_item = m_project.functionItem(result->function);
+    JZEditor *e = editor(script_item->itemPath());
+    if(!e)
+        return;
+
+    JZNodeEditor *node_e = qobject_cast<JZNodeEditor*>(e);
+    node_e->setAutoRunResult(*result);
+}   
 
 JZEditor *MainWindow::editor(QString filepath)
 {
@@ -900,6 +901,15 @@ JZEditor *MainWindow::editor(QString filepath)
         return nullptr;
 
     return it.value();
+}
+
+JZNodeEditor *MainWindow::nodeEditor(QString filepath)
+{
+    JZEditor *e = editor(filepath);
+    if(!e)
+        return nullptr;
+
+    return qobject_cast<JZNodeEditor*>(e);
 }
 
 void MainWindow::switchEditor(JZEditor *editor)
@@ -1249,38 +1259,18 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
     m_watchManual->setParamInfo(&param_info_watch); 
 }
 
-bool MainWindow::build()
+void MainWindow::build()
 {
-    QString build_path = m_project.path() + "/build";
-    QString build_exe = build_path + "/" + m_project.name() + ".program";
-
-    QElapsedTimer timer;
-    timer.start();
-
-    m_log->clearLog(Log_Compiler);
-    m_log->addLog(Log_Compiler, "开始编译");
-
-    QFile::remove(build_path);
-
-    JZNodeProgram program;
-    if(!m_builder.build(&program))
-    {        
-        m_log->addLog(Log_Compiler, "编译失败\n");
-        return false;
+    m_runThread.stopRun();
+    m_buildThread.stopBuild();
+    if(m_buildInfo.changeTimestamp < m_buildInfo.buildTimestamp)
+    {
+        onBuildFinish(true);
+        return;
     }
     
-    QDir dir;
-    if (!dir.exists(build_path))
-        dir.mkdir(build_path);
-    if (!program.save(build_exe))
-    {
-        m_log->addLog(Log_Compiler, "generate program failed");
-        return false;
-    }
-    saveToFile(build_path + "/" + m_project.name() + ".jsm", program.dump());
-
-    m_log->addLog(Log_Compiler, "编译完成 -> " + build_exe + ", 用时" + QString::number(timer.elapsed()) + "ms");
-    return true;
+    m_buildThread.startBuild();
+    m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
 }
 
 void MainWindow::saveToFile(QString filepath,QString text)
@@ -1295,10 +1285,28 @@ void MainWindow::saveToFile(QString filepath,QString text)
     }
 }
 
-void MainWindow::start(bool startPause)
+void MainWindow::saveProgram()
+{
+    QString build_path = m_project.path() + "/build";
+    QString build_exe = build_path + "/" + m_project.name() + ".program";
+
+    QElapsedTimer timer;
+    timer.start();
+
+    QDir dir;
+    if (!dir.exists(build_path))
+        dir.mkdir(build_path);
+    if (!m_program.save(build_exe))
+    {
+        m_log->addLog(Log_Compiler, "generate program failed");
+        return;
+    }
+    saveToFile(build_path + "/" + m_project.name() + ".jsm", m_program.dump());
+}
+
+void MainWindow::startProgram()
 {    
-    if(!build())
-        return;       
+    m_runThread.stopRun();
 
     m_log->clearLog(Log_Runtime);
     if (!m_useTestProcess)
@@ -1307,8 +1315,6 @@ void MainWindow::start(bool startPause)
         QString build_exe = m_project.path() + "/build/" + m_project.name() + ".program";
         QStringList params;
         params << "--run" << build_exe << "--debug";
-        if (startPause)
-            params << "--start-pause";
 
         m_log->addLog(Log_Runtime, "start program");
         m_process.setWorkingDirectory(m_project.path());

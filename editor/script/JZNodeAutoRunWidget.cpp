@@ -205,8 +205,8 @@ void JZNodeAutoRunWidget::setResult(QVariantList params)
     for (int i = 0; i < params.size(); i++)
     {
         auto coor = propCoor(Pin_funcOut, i);
-        //QString text = JZNodeType::toString(params[i]);
-        //coor->pin->setValue(text);
+        QString text = JZNodeType::debugString(params[i]);
+        coor->pin->setValue(text);
     }
     m_tree->blockSignals(false);
 }

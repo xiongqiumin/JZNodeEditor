@@ -96,9 +96,17 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
 class UnitTestResult
 {
 public:
+    enum{
+        None,
+        Finish,
+        Error,
+        Cancel,
+    };
+
     UnitTestResult();
     
-    bool result;
+    int result;
+    QString function;
     QVariantList out;
     JZNodeRuntimeError runtimeError;
 };

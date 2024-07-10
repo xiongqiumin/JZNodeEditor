@@ -124,6 +124,7 @@ public:
     QMap<QString,ScriptDepend> depend;
 };
 
+class JZNodeBuilder;
 class JZNodeCompiler
 {
 public:
@@ -136,6 +137,8 @@ public:
 
     JZNodeCompiler();
     ~JZNodeCompiler();
+
+    void setBuilder(JZNodeBuilder *builder);
 
     bool genGraphs(JZScriptItem *file, QVector<GraphPtr> &result);
     bool build(JZScriptItem *file,JZNodeScript *result);
@@ -237,6 +240,7 @@ protected:
     bool genGraphs();
     bool checkGraphs();
     bool checkBuildResult();
+    bool checkBuildStop();
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
     bool buildDataFlow(const QList<GraphNode*> &list);
@@ -290,6 +294,7 @@ protected:
     CompilerInfo m_compilerInfo;
 
     JZProject *m_project;
+    JZNodeBuilder *m_builder;
     QString m_error;
 };
 
