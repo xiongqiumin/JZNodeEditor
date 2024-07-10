@@ -101,7 +101,7 @@ QString JZNodeType::typeToName(int id)
         return typeMap.key(id, "unknown type " + QString::number(id));
 }
 
-int JZNodeType::nameToType(QString name)
+int JZNodeType::nameToType(const QString &name)
 {
     if(typeMap.contains(name))
         return typeMap[name];
@@ -109,7 +109,7 @@ int JZNodeType::nameToType(QString name)
     return JZNodeObjectManager::instance()->getId(name);
 }
 
-int JZNodeType::typeidToType(QString name)
+int JZNodeType::typeidToType(const QString &name)
 {
     if(name == typeid(QVariant).name())
         return Type_any;
@@ -129,29 +129,32 @@ int JZNodeType::typeidToType(QString name)
 
 int JZNodeType::variantType(const QVariant &v)
 {
-    if(v.type() == QVariant::Bool)
+    int v_type = v.type(); 
+    if(v_type == QVariant::Bool)
         return Type_bool;
-    else if(v.type() == QVariant::Int)
+    else if(v_type == QVariant::Int)
         return Type_int;
-    else if(v.type() == QVariant::LongLong)
+    else if(v_type == QVariant::LongLong)
         return Type_int64;
-    else if(v.type() == QVariant::Double)
+    else if(v_type == QVariant::Double)
         return Type_double;
-    else if(v.type() == QVariant::String)
+    else if(v_type == QVariant::String)
         return Type_string;
-    else if(v.type() == QVariant::UserType)
+    else if(v_type == QVariant::UserType)
     {
-        if(v.userType() == qMetaTypeId<JZEnum>())
+        int v_usertype = v.userType(); 
+        if(v_usertype == qMetaTypeId<JZEnum>())
             return ((JZEnum*)v.data())->type;
-        else if(v.userType() == qMetaTypeId<JZObjectNull>())
+        else if(v_usertype == qMetaTypeId<JZObjectNull>())
             return Type_nullptr;
-        else if(v.userType() == qMetaTypeId<JZFunctionPointer>())
+        else if(v_usertype == qMetaTypeId<JZFunctionPointer>())
             return Type_function;
-        else if (isJZObject(v))
-            return toJZObject(v)->type();
-        else if (v.userType() == qMetaTypeId<JZNodeVariantAny>())
+        else if (v_usertype == qMetaTypeId<JZNodeObjectPtr>())
+            return ((JZNodeObjectPtr*)v.data())->object()->type();
+        else if (v_usertype == qMetaTypeId<JZNodeVariantAny>())
             return Type_any;
     }
+    
     return Type_none;
 }
 
@@ -204,7 +207,7 @@ bool JZNodeType::isObject(int type)
     return (type == Type_nullptr || type >= Type_object);
 }
 
-int JZNodeType::isInherits(QString type1, QString type2)
+int JZNodeType::isInherits(const QString &type1,const QString &type2)
 {
     int t1 = JZNodeType::nameToType(type1);
     int t2 = JZNodeType::nameToType(type2);
@@ -299,8 +302,8 @@ bool JZNodeType::canConvert(int type1,int type2)
     {
         auto meta1 = JZNodeObjectManager::instance()->enumMeta(type1);
         auto meta2 = JZNodeObjectManager::instance()->enumMeta(type2);
-        if (meta1->isFlag() && meta1->flagEnum() == type2
-            || meta2->isFlag() && meta2->flagEnum() == type1)
+        if ((meta1->isFlag() && meta1->flagEnum() == type2)
+            || (meta2->isFlag() && meta2->flagEnum() == type1))
             return true;
         
         return false;

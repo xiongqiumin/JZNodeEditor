@@ -556,7 +556,9 @@ JZScriptItem *JZNode::file() const
 void JZNode::setFile(JZScriptItem *file)
 {
     m_file = file;
-    onFileInitialized();
+
+    QString error;
+    update(error);
 
     //delay notify
     for(int i = 0; i < m_notifyList.size(); i++)
@@ -601,7 +603,7 @@ void JZNode::setId(int id)
 
 QList<int> JZNode::pinTypeInt(int id) const
 {
-    return pin(id)->dataTypeInt();
+    return pin(id)->dataTypeId();
 }
 
 const QStringList &JZNode::pinType(int id) const
@@ -611,32 +613,32 @@ const QStringList &JZNode::pinType(int id) const
 
 void JZNode::setPinTypeAny(int id)
 {
-    pin(id)->setDataTypeInt({Type_any});
+    pin(id)->setDataTypeId({Type_any});
 }
 
 void JZNode::setPinTypeInt(int id)
 {
-    pin(id)->setDataTypeInt({Type_int});
+    pin(id)->setDataTypeId({Type_int});
 }
 
 void JZNode::setPinTypeNumber(int id)
 {
-    pin(id)->setDataTypeInt({Type_bool,Type_int,Type_double});
+    pin(id)->setDataTypeId({Type_bool,Type_int,Type_int64,Type_double});
 }
 
 void JZNode::setPinTypeBool(int id)
 {
-    pin(id)->setDataTypeInt({Type_bool});
+    pin(id)->setDataTypeId({Type_bool});
 }
 
 void JZNode::setPinTypeString(int id)
 {
-    pin(id)->setDataTypeInt({Type_string});
+    pin(id)->setDataTypeId({Type_string});
 }
 
 void JZNode::setPinType(int id,const QList<int> &type)
 {
-    pin(id)->setDataTypeInt(type);
+    pin(id)->setDataTypeId(type);
 }
 
 void JZNode::clearPinType(int id)
@@ -667,9 +669,9 @@ bool JZNode::pinActionTriggered(int id, int index)
     return false;
 }
 
-void JZNode::onFileInitialized()
+bool JZNode::update(QString &error)
 {
-
+    return true;
 }
 
 void JZNode::onPinLinked(int id)
@@ -792,20 +794,38 @@ JZNodeReturn::JZNodeReturn()
     addFlowIn();
 }
 
-void JZNodeReturn::onFileInitialized()
+bool JZNodeReturn::update(QString &error)
 {
-    if(m_file->itemType() != ProjectItem_scriptFunction)
-        return;
+    auto inList = paramInList();
+    QList<JZParamDefine> ret_list;
+    if(m_file->itemType() == ProjectItem_scriptFunction)
+        ret_list = m_file->function().paramOut;
+
+    if(inList.size() != ret_list.size())
+    {
+        error = "function not return " + QString::number(inList.size()) + " param";
+        return false;
+    }
 
     auto def = m_file->function();
+    for (int i = 0; i < ret_list.size(); i++)
+    {
+        int in = inList[i];
+        setPinType(in, { ret_list[i].dataType() });
+    }
+    return true;
+}
+
+void JZNodeReturn::setFunction(const JZFunctionDefine *def)
+{
     auto inList = paramInList();
     for (int i = 0; i < inList.size(); i++)
         removePin(inList[i]);
 
-    for (int i = 0; i < def.paramOut.size(); i++)
+    for (int i = 0; i < def->paramOut.size(); i++)
     {
-        int in = addParamIn(def.paramOut[i].name, Pin_dispName | Pin_dispValue | Pin_editValue);
-        setPinType(in, { def.paramOut[i].dataType() });
+        int in = addParamIn(def->paramOut[i].name, Pin_dispName | Pin_dispValue | Pin_editValue);
+        setPinType(in, { def->paramOut[i].dataType() });
     }
 }
 
@@ -1117,7 +1137,7 @@ JZNodeForEach::JZNodeForEach()
 
     int out1 = addParamOut("key",Pin_dispName);
     int out2 = addParamOut("value",Pin_dispName);
-    pin(in)->setDataTypeInt({Type_any});
+    pin(in)->setDataTypeId({Type_any});
     setPinTypeAny(out1);
     setPinTypeAny(out2);
 }

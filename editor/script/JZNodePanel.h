@@ -7,6 +7,16 @@
 #include "JZScriptItem.h"
 #include "JZNodePropertyEditor.h"
 
+class JZNodeCreateInfo
+{
+public:
+    static JZNodeCreateInfo fromBuffer(const QByteArray &buffer);
+    QByteArray toBuffer() const;
+
+    int nodeType;
+    QStringList args;
+};
+
 class JZNodeTreeWidget : public QTreeWidget
 {
     Q_OBJECT
@@ -55,7 +65,7 @@ protected:
     void updateInput();
 
     QTreeWidgetItem *createFolder(QString name);
-    QTreeWidgetItem *createNode(JZNode *node);
+    QTreeWidgetItem *createNode(QString name,int node_type,const QStringList &args = QStringList());
     QTreeWidgetItem *createParam(QString name);    
     QTreeWidgetItem *createClassEvent(QString name);
 

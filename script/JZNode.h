@@ -217,6 +217,7 @@ public:
     const QStringList &pinType(int id) const;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     
+    virtual bool update(QString &error);
     virtual void drag(const QVariant &value);
 
     virtual JZNodePinWidget *createWidget(int id);
@@ -230,7 +231,6 @@ protected:
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
     
-    virtual void onFileInitialized();
     virtual void onPinLinked(int id);
     virtual void onPinUnlinked(int id);
     virtual void onPinChanged(int id);
@@ -295,10 +295,12 @@ class JZNodeReturn : public JZNode
 public:
     JZNodeReturn();
     
-    virtual void onFileInitialized() override;
+    virtual bool update(QString &error) override;
+    void setFunction(const JZFunctionDefine *def);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
 protected:     
+
 };
 
 //JZNodeExit

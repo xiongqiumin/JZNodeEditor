@@ -4,17 +4,28 @@
 #include "JZNodeBind.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeObjectParser.h"
+#include "JZNodeEngine.h"
 
-class ContainerFunction : public CFunction
+class ContainerFunction : public BuiltInFunction
 {
 public:
-    virtual void call(const QVariantList &in, QVariantList &out) override
+    virtual void call(JZNodeEngine *engine) override
     {
-        func(in, out);
+        func(engine);
     }
 
-    std::function<void(const QVariantList &, QVariantList &)> func;
+    std::function<void(JZNodeEngine*)> func;
 };
+
+void registFunction(JZFunctionDefine &def, std::function<void(JZNodeEngine*)> ptr)
+{
+    auto func_inst = JZNodeFunctionManager::instance();
+    def.isCFunction = true;
+
+    ContainerFunction *func = new ContainerFunction();
+    func->func = ptr;
+    func_inst->registBuiltInFunction(def, QSharedPointer<BuiltInFunction>(func));
+}
 
 // JZList
 QString JZList::type() const
@@ -31,33 +42,35 @@ void listCheckSize(int index, int size)
     }
 }
 
-void listSet(const QVariantList &in, QVariantList &out)
+void listSet(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    listCheckSize(in[1].toInt(),obj->list.size());
-    obj->list[in[1].toInt()] = in[2];
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    int index = engine->getReg(Reg_CallIn + 1).toInt();
+    listCheckSize(index,obj->list.size());
+    obj->list[index] = engine->getReg(Reg_CallIn + 2);
 }
-void listGet(const QVariantList &in, QVariantList &out)
+void listGet(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    listCheckSize(in[1].toInt(),obj->list.size());
-    out << obj->list[in[1].toInt()];
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    int index = engine->getReg(Reg_CallIn + 1).toInt();
+    listCheckSize(index,obj->list.size());
+    engine->setReg(Reg_CallOut,obj->list[index]);
 }
-void listSize(const QVariantList &in, QVariantList &out)
+void listSize(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    out << obj->list.size();
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    engine->setReg(Reg_CallOut,obj->list.size());
 }
-void listClear(const QVariantList &in, QVariantList &out)
+void listClear(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     obj->list.clear();
 }
-void listResize(const QVariantList &in, QVariantList &out)
+void listResize(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     int cur_size = obj->list.size();
-    int size = in[1].toInt();
+    int size = engine->getReg(Reg_CallIn + 1).toInt();
     int data_type = JZNodeType::nameToType(obj->valueType);
 
     if(cur_size < size)
@@ -71,109 +84,70 @@ void listResize(const QVariantList &in, QVariantList &out)
             obj->list.pop_back();
     }
 }
-void listPushBack(const QVariantList &in, QVariantList &out)
+void listPushBack(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    obj->list.push_back(in[1]);
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    obj->list.push_back(engine->getReg(Reg_CallIn + 1));
 }
-void listPopBack(const QVariantList &in, QVariantList &out)
+void listPopBack(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     obj->list.pop_back();
 }
-void listPushFront(const QVariantList &in, QVariantList &out)
+void listPushFront(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    obj->list.push_front(in[1]);
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    obj->list.push_front(engine->getReg(Reg_CallIn + 1));
 }
-void listPopFront(const QVariantList &in, QVariantList &out)
+void listPopFront(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     obj->list.pop_front();
 }
-void listIterator(const QVariantList &in, QVariantList &out)
+void listRemoveAt(JZNodeEngine *engine)
 {
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    obj->list.removeAt(engine->getReg(Reg_CallIn + 1).toInt());
 }
-void listRemoveAt(const QVariantList &in, QVariantList &out)
+void listRemoveOne(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    obj->list.removeAt(in[1].toInt());
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    obj->list.removeOne(engine->getReg(Reg_CallIn + 1));
 }
-void listRemoveOne(const QVariantList &in, QVariantList &out)
+void listRemoveAll(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    obj->list.removeOne(in[1]);
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    obj->list.removeAll(engine->getReg(Reg_CallIn + 1));
 }
-void listRemoveAll(const QVariantList &in, QVariantList &out)
+void listIndexOf(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    obj->list.removeAll(in[1]);
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    int from = engine->getReg(Reg_CallIn + 2).toInt();
+    int index = obj->list.indexOf(engine->getReg(Reg_CallIn + 1), from);
+    engine->setReg(Reg_CallOut,index);
 }
-void listIndexOf(const QVariantList &in, QVariantList &out)
+void listLastIndexOf(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    out << obj->list.indexOf(in[1],in[2].toInt());
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    int from = engine->getReg(Reg_CallIn + 2).toInt();
+    int index = obj->list.lastIndexOf(engine->getReg(Reg_CallIn + 1), from);
+    engine->setReg(Reg_CallOut,index);
 }
-void listLastIndexOf(const QVariantList &in, QVariantList &out)
+void listMid(JZNodeEngine *engine)
 {
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-    out << obj->list.lastIndexOf(in[1],in[2].toInt());
-}
-void listMid(const QVariantList &in, QVariantList &out)
-{
-    auto obj = (JZList *)toJZObject(in[0])->cobj();
-
+    auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     auto ptr = JZObjectCreate<JZList>();
     auto ret = (JZList *)ptr->cobj();
-    ret->list = obj->list.mid(in[1].toInt(),in[2].toInt());
-    out << QVariant::fromValue(JZNodeObjectPtr(ptr,true));
+    int index = engine->getReg(Reg_CallIn + 1).toInt();
+    int size = engine->getReg(Reg_CallIn + 2).toInt();
+    ret->list = obj->list.mid(index,size);
+    engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectPtr(ptr,true)));
 }
-void listAppend(const QVariantList &in, QVariantList &out)
+void listAppend(JZNodeEngine *engine)
 {
-    auto obj1 = (JZList *)toJZObject(in[0])->cobj();
-    auto obj2 = (JZList *)toJZObject(in[0])->cobj();
+    auto obj1 = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    auto obj2 = (JZList *)toJZObject(engine->getReg(Reg_CallIn+1))->cobj();
     obj1->list.append(obj2->list);
-}
-
-// JZListIterator
-JZListIterator::JZListIterator()
-{
-    index = 0;
-    list = nullptr;
-}
-
-void listIteratorNext(const QVariantList &in, QVariantList &out)
-{
-    auto it = (JZListIterator *)toJZObject(in[0])->cobj();
-    it->index++;
-}
-
-bool listIteratorAtEnd(const QVariantList &in, QVariantList &out)
-{
-    auto it = (JZListIterator *)toJZObject(in[0])->cobj();
-    return (it->index == it->list->list.size());
-}
-
-int listIteratorKey(const QVariantList &in, QVariantList &out)
-{
-    auto it = (JZListIterator *)toJZObject(in[0])->cobj();
-    return it->index;
-}
-
-const QVariant &listIteratorValue(const QVariantList &in, QVariantList &out)
-{
-    auto it = (JZListIterator *)toJZObject(in[0])->cobj();
-    listCheckSize(it->index, it->list->list.size());
-    return it->list->list[it->index];
-}
-
-void registFunction(const JZFunctionDefine &def, std::function<void(const QVariantList &, QVariantList &)> ptr)
-{
-    auto func_inst = JZNodeFunctionManager::instance();
-
-    ContainerFunction *func = new ContainerFunction();
-    func->func = ptr;
-    func_inst->registCFunction(def, QSharedPointer<CFunction>(func));
 }
 
 void registList(QString type,int type_id)
@@ -181,25 +155,23 @@ void registList(QString type,int type_id)
     auto inst = JZNodeObjectManager::instance();
 
     QString list_name = "List<" + type + ">";
-    QString it_name = "ListIterator<" + type + ">";
     if(inst->meta(list_name) && inst->meta(list_name)->functions.size() > 0)
         return;
 
     JZFunctionDefine func_def;
-    int it_id = inst->delcare(it_name);
-
     auto create_list = [type]()->void*{
         JZList *list = new JZList();
         list->valueType = type;
         return list;
     };
 
-    auto from_string = [list_name](const QVariantList &in, QVariantList &out){
+    auto from_string = [list_name](JZNodeEngine *engine){
         JZNodeObjectParser parser;
-        auto obj = parser.parseToType(list_name,in[0].toString());
+        QString text = engine->getReg(Reg_CallIn).toString();
+        auto obj = parser.parseToType(list_name,text);
         if(!obj)
             throw std::runtime_error(qUtf8Printable(parser.error()));
-        out << QVariant::fromValue(JZNodeObjectPtr(obj,true));
+        engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectPtr(obj,true)));
     };
 
     // list
@@ -214,7 +186,6 @@ void registList(QString type,int type_id)
 
     // __fromString__
     func_def = list.initStaticFunction("__fromString__");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", Type_string));
     func_def.paramOut.push_back(JZParamDefine("object", list_name));
@@ -223,7 +194,6 @@ void registList(QString type,int type_id)
 
     // set
     func_def = list.initMemberFunction("set");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     func_def.paramIn.push_back(JZParamDefine("value", type));
@@ -232,7 +202,6 @@ void registList(QString type,int type_id)
 
     // get
     func_def = list.initMemberFunction("get");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     func_def.paramOut.push_back(JZParamDefine("value", type));
@@ -241,7 +210,6 @@ void registList(QString type,int type_id)
 
     // size
     func_def = list.initMemberFunction("size");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramOut.push_back(JZParamDefine("size", Type_int));
     list.addFunction(func_def);
@@ -249,14 +217,12 @@ void registList(QString type,int type_id)
 
     // clear
     func_def = list.initMemberFunction("clear");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     list.addFunction(func_def);
     registFunction(func_def, listClear);
 
     // resize
     func_def = list.initMemberFunction("resize");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     list.addFunction(func_def);
@@ -264,7 +230,6 @@ void registList(QString type,int type_id)
 
     // push_back
     func_def = list.initMemberFunction("push_back");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
@@ -272,14 +237,12 @@ void registList(QString type,int type_id)
 
     // pop_back
     func_def = list.initMemberFunction("pop_back");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     list.addFunction(func_def);
     registFunction(func_def, listPopBack);
 
     // push_front
     func_def = list.initMemberFunction("push_front");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
@@ -287,22 +250,12 @@ void registList(QString type,int type_id)
 
     // pop_front
     func_def = list.initMemberFunction("pop_front");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     list.addFunction(func_def);
     registFunction(func_def, listPopFront);
 
-    // iterator
-    func_def = list.initMemberFunction("iterator");
-    func_def.isCFunction = true;
-    func_def.isFlowFunction = false;
-    func_def.paramOut.push_back(JZParamDefine("iterator", it_name));
-    list.addFunction(func_def);
-    registFunction(func_def, listIterator);
-
     // removeAt
     func_def = list.initMemberFunction("removeAt");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     list.addFunction(func_def);
@@ -310,7 +263,6 @@ void registList(QString type,int type_id)
 
     // removeOne
     func_def = list.initMemberFunction("removeOne");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
@@ -318,7 +270,6 @@ void registList(QString type,int type_id)
 
     // removeAll
     func_def = list.initMemberFunction("removeAll");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
@@ -326,7 +277,6 @@ void registList(QString type,int type_id)
 
     // indexOf
     func_def = list.initMemberFunction("indexOf");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     func_def.paramIn.push_back(JZParamDefine("start", Type_int, "0"));
@@ -336,7 +286,6 @@ void registList(QString type,int type_id)
 
     // lastIndexOf
     func_def = list.initMemberFunction("lastIndexOf");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     func_def.paramOut.push_back(JZParamDefine("start", Type_int, "-1"));
@@ -345,7 +294,6 @@ void registList(QString type,int type_id)
 
     // mid
     func_def = list.initMemberFunction("mid");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("start", Type_int));
     func_def.paramIn.push_back(JZParamDefine("length", Type_int));
@@ -355,19 +303,12 @@ void registList(QString type,int type_id)
 
     // append
     func_def = list.initMemberFunction("append");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("list", list_name));
     list.addFunction(func_def);
     registFunction(func_def, listAppend);
 
     inst->regist(list);
-
-    JZNodeObjectDefine list_it;
-    list_it.className = it_name;
-    list_it.id = it_id;
-    list_it.isCObject = true;
-    inst->regist(list_it);
 }
 
 //JZMap
@@ -393,44 +334,44 @@ QString JZMap::type() const
     return "Map<" + keyType + "," + valueType + ">";
 }
 
-void mapSet(const QVariantList &in, QVariantList &out)
+void mapSet(JZNodeEngine *engine)
 {
-    auto obj = (JZMap *)toJZObject(in[0])->cobj();
+    auto obj = (JZMap *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     JZMap::Key key;
-    key.v = in[1];
-    obj->map.insert(key,in[2]);
+    key.v = engine->getReg(Reg_CallIn+1);
+    obj->map.insert(key,engine->getReg(Reg_CallIn+2));
 }
 
-void mapGet(const QVariantList &in, QVariantList &out)
+void mapGet(JZNodeEngine *engine)
 {
-    auto obj = (JZMap *)toJZObject(in[0])->cobj();
+    auto obj = (JZMap *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     JZMap::Key key;
-    key.v = in[1];
+    key.v = engine->getReg(Reg_CallIn+1);
 
     auto it = obj->map.find(key);
     if(it == obj->map.end())
         throw std::runtime_error("no element");
 
-    out << obj->map[key];
+    engine->setReg(Reg_CallOut,obj->map[key]);
 }
-void mapSize(const QVariantList &in, QVariantList &out)
+void mapSize(JZNodeEngine *engine)
 {
-    auto obj = (JZMap *)toJZObject(in[0])->cobj();
-    out << obj->map.size();
+    auto obj = (JZMap *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
+    engine->setReg(Reg_CallOut,obj->map.size());
 }
 
-void mapClear(const QVariantList &in, QVariantList &out)
+void mapClear(JZNodeEngine *engine)
 {
-    auto obj = (JZMap *)toJZObject(in[0])->cobj();
+    auto obj = (JZMap *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     obj->map.clear();
 }
 
-void mapContains(const QVariantList &in, QVariantList &out)
+void mapContains(JZNodeEngine *engine)
 {
-    auto obj = (JZMap *)toJZObject(in[0])->cobj();
+    auto obj = (JZMap *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     JZMap::Key key;
-    key.v = in[0];
-    out << obj->map.contains(key);
+    key.v = engine->getReg(Reg_CallIn+1);
+    engine->setReg(Reg_CallOut,obj->map.contains(key));
 }
 
 void registMap(QString key_type, QString value_type,int type_id)
@@ -451,12 +392,13 @@ void registMap(QString key_type, QString value_type,int type_id)
         return map;
     };
 
-    auto from_string = [map_name](const QVariantList &in, QVariantList &out){
+    auto from_string = [map_name](JZNodeEngine *engine){
         JZNodeObjectParser parser;
-        auto obj = parser.parseToType(map_name,in[0].toString());
+        QString text = engine->getReg(Reg_CallIn).toString();
+        auto obj = parser.parseToType(map_name,text);
         if(!obj)
             throw std::runtime_error(qUtf8Printable(parser.error()));
-        out << QVariant::fromValue(JZNodeObjectPtr(obj,true));
+        engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectPtr(obj,true)));
     };
 
     // list
@@ -471,7 +413,6 @@ void registMap(QString key_type, QString value_type,int type_id)
 
     // __fromString__
     func_def = map.initStaticFunction("__fromString__");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", Type_string));
     func_def.paramOut.push_back(JZParamDefine("object", map_name));
@@ -480,7 +421,6 @@ void registMap(QString key_type, QString value_type,int type_id)
 
     // set
     func_def = map.initMemberFunction("set");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("index", key_type));
     func_def.paramIn.push_back(JZParamDefine("value", value_type));
@@ -489,7 +429,6 @@ void registMap(QString key_type, QString value_type,int type_id)
 
     // get
     func_def = map.initMemberFunction("get");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("index", key_type));
     func_def.paramOut.push_back(JZParamDefine("value", value_type));
@@ -498,7 +437,6 @@ void registMap(QString key_type, QString value_type,int type_id)
 
     // size
     func_def = map.initMemberFunction("size");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = false;
     func_def.paramOut.push_back(JZParamDefine("size", Type_int));
     map.addFunction(func_def);
@@ -506,18 +444,10 @@ void registMap(QString key_type, QString value_type,int type_id)
 
     // clear
     func_def = map.initMemberFunction("clear");
-    func_def.isCFunction = true;
     func_def.isFlowFunction = true;
     map.addFunction(func_def);
     registFunction(func_def, mapClear);
 
-    // iterator
-    func_def = map.initMemberFunction("iterator");
-    func_def.isCFunction = true;
-    func_def.isFlowFunction = false;
-    func_def.paramOut.push_back(JZParamDefine("iterator", it_name));
-    map.addFunction(func_def);
-    registFunction(func_def, listIterator);
 
     inst->regist(map);
 

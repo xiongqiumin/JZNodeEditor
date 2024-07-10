@@ -30,14 +30,25 @@ bool JZNodeCustomBuild::compiler(JZNodeCompiler *c, QString &error)
 }
 
 //JZNodeBuilder
-JZNodeBuilder::JZNodeBuilder(JZProject *project)
+JZNodeBuilder::JZNodeBuilder()
 {
-    m_project = project;
+    m_project = nullptr;
 }
 
 JZNodeBuilder::~JZNodeBuilder()
 {
 
+}
+
+void JZNodeBuilder::setProject(JZProject *project)
+{
+    m_project = project;
+    clear();
+}
+
+JZProject *JZNodeBuilder::project()
+{
+    return m_project;
 }
 
 QString JZNodeBuilder::error() const
@@ -181,220 +192,6 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     if(!link())
         return false;
 
-    return true;
-}
-
-void JZNodeBuilder::replaceNopStatment(JZNodeScript *script, int index)
-{
-    auto ir_nop = new JZNodeIR(OP_nop);
-    ir_nop->pc = script->statmentList[index]->pc;
-    script->statmentList[index] = JZNodeIRPtr(ir_nop);
-}
-
-void JZNodeBuilder::replaceUnitTestParam(JZScriptItem *file,ScriptDepend *depend)
-{
-    auto isDstVaild = [file](JZNodeIRParam *param, ScriptDepend *depend)->bool
-    {
-        if (!param->isRef())
-            return true;
-
-        auto type = JZNodeCompiler::variableCoor(file, param->ref());
-        if (type == Variable_local)
-            return true;
-
-        return depend->indexOf(type == Variable_member, param->ref()) >= 0;
-    };
-
-    auto replaceParam = [file](JZNodeIRParam *param, ScriptDepend *depend)
-    {
-        if (!param->isRef())
-            return;
-
-        auto type = JZNodeCompiler::variableCoor(file, param->ref());
-        if (type == Variable_local)
-            return;
-
-        auto def = depend->param(type == Variable_member, param->ref());
-        *param = irLiteral(JZNodeType::initValue(def->dataType(), def->value));
-    };
-
-    auto script = m_scripts[file->itemPath()].script.data();
-    for (int i = 0; i < script->statmentList.size(); i++)
-    {
-        auto *stmt = script->statmentList[i].data();
-        switch (stmt->type)
-        {
-        case OP_set:
-        {
-            JZNodeIRSet *set = dynamic_cast<JZNodeIRSet*>(stmt);
-            if (isDstVaild(&set->dst, depend))
-                replaceParam(&set->src, depend);
-            else
-                replaceNopStatment(script, i);
-            break;
-        }
-        case OP_add:
-        case OP_sub:
-        case OP_mul:
-        case OP_div:
-        case OP_mod:
-        case OP_eq:
-        case OP_ne:
-        case OP_le:
-        case OP_ge:
-        case OP_lt:
-        case OP_gt:
-        case OP_and:
-        case OP_or:
-        case OP_bitand:
-        case OP_bitor:
-        case OP_bitxor:
-        {
-            JZNodeIRExpr *expr = dynamic_cast<JZNodeIRExpr*>(stmt);
-            if (isDstVaild(&expr->dst, depend))
-            {
-                replaceParam(&expr->src1, depend);
-                replaceParam(&expr->src2, depend);
-            }
-            else
-            {
-                replaceNopStatment(script, i);
-            }
-            break;
-        }
-        default:
-            break;
-        }
-    }
-}
-
-void JZNodeBuilder::replaceUnitTestFunction(JZScriptItem *file, ScriptDepend *depend)
-{
-    auto script = m_scripts[file->itemPath()].script.data();
-/*
-    auto it = depend->hook.begin();
-    while (it != depend->hook.end())
-    {
-        auto rg_list = script->nodeInfo[it.key()].pcRanges;
-        auto &param_list = it.value();
-        auto &node_info = script->nodeInfo[it.key()];
-        for (int rg_idx = 0; rg_idx < rg_list.size(); rg_idx++)
-        {
-            auto rg = rg_list[rg_idx];
-            for (int pc = rg.start; pc < rg.end; pc++)
-            {
-                bool replace = true;
-                auto *stmt = script->statmentList[pc].data();
-                if (stmt->type == OP_set)
-                {
-                    JZNodeIRSet *set = dynamic_cast<JZNodeIRSet*>(stmt);
-                    if (set->dst.isId())
-                    {
-                        int out_id = set->dst.id();
-                        for (int out_idx = 0; out_idx < node_info.paramOut.size(); out_idx++)
-                        {
-                            if (node_info.paramOut[out_idx].id == out_id)
-                            {
-                                auto param = param_list[out_idx];
-                                set->src = irLiteral(JZNodeType::initValue(param.dataType(), param.value));
-                                replace = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (replace)
-                    replaceNopStatment(script, pc);
-            }
-        }
-        it++;
-    }
-*/
-}
-
-bool JZNodeBuilder::buildUnitTest(JZScriptItem *file, ScriptDepend *depend, JZNodeProgram *program)
-{
-    build(program);
-    m_scripts.remove(file->itemPath());
-    if (!buildScript(file))
-        return false;        
-
-    auto script = m_scripts[file->itemPath()].script.data();
-    JZNodeScriptPtr tmp_script = JZNodeScriptPtr(script->clone());
-    
-    replaceUnitTestParam(file, depend);
-    replaceUnitTestFunction(file, depend);
-    
-    JZFunctionDefine unit_func;
-    unit_func.name = depend->function.fullName() + "__unittest__";
-    for (int i = 0; i < depend->function.paramIn.size(); i++)
-        unit_func.paramIn.push_back(JZParamDefine("in" + QString::number(i), Type_string));
-    unit_func.paramOut = depend->function.paramOut;    
-
-    auto build_unit = [this, depend](JZNodeCompiler *c, QString&)->bool {        
-        int param_start = 0;
-        if (depend->function.isMemberFunction())
-        {            
-            JZNodeIRParam irIn = irLiteral(depend->function.className);
-            JZNodeIRParam irOut = irRef("__inst__");
-            c->addCall("createObject", { irIn }, { irOut });
-            param_start = 1;
-        }
-        for (int i = param_start; i < depend->function.paramIn.size(); i++)
-        {
-            auto &def = depend->function.paramIn[i];
-            JZNodeIRAlloc *ir_alloc = new JZNodeIRAlloc();
-            ir_alloc->type = JZNodeIRAlloc::StackId;
-            ir_alloc->id = i;
-            ir_alloc->dataType = def.dataType();
-            //ir_alloc->value = irLiteral(JZNodeType::defaultValue(def.dataType()));
-            c->addStatement(JZNodeIRPtr(ir_alloc));          
-            //c->addSetVariable(irId(i), irId(Reg_Call + i));
-        }
-                                  
-        for (int i = 0; i < depend->member.size(); i++)
-        {
-            auto &def = depend->member[i];
-            auto ref = irRef("__inst__." + def.name);
-            auto v = JZNodeType::initValue(def.dataType(),def.value);
-            c->addSetVariable(ref, irLiteral(v));
-        }
-
-        if (depend->global.size() > 0)
-        {
-            for (int i = 0; i < depend->global.size(); i++)
-            {   
-                auto &def = depend->member[i];
-                auto v = JZNodeType::initValue(def.dataType(), def.value);
-                //c->addAlloc(JZNodeIRAlloc::Heap, def.name, def.dataType(), irLiteral(v));
-            }
-        }               
-
-        int node_id = c->currentNode()->id();
-
-        QList<JZNodeIRParam> in, out;
-        if (depend->function.isMemberFunction())
-            in << irRef("__inst__");
-        for (int i = param_start; i < depend->function.paramIn.size(); i++)
-            in << irId(i);        
-        for (int i = 0; i < depend->function.paramOut.size(); i++)
-        {
-            int out_id = c->currentNode()->paramOut(i);
-            out << irId(c->paramId(node_id, out_id));
-        }        
-
-        c->addCall(depend->function.fullName(), in, out);
-        return true;
-    };            
-
-    QList<JZParamDefine> local_list;
-    if (depend->function.isMemberFunction())
-        local_list << JZParamDefine("__inst__", depend->function.className);
-    if (!buildCustom(unit_func, build_unit, local_list))
-        return false;
-
-    link();    
     return true;
 }
 

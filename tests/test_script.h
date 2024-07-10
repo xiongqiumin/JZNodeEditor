@@ -38,6 +38,8 @@ private slots:
     void testFunction();    
     void testBreakPoint();
     void testDebugServer();
+    void testUnitTest();
+    void testUnitTestClass();
 
 protected:
     bool initWhileCase(QList<int> &nodeId,QList<int> &value);

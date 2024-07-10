@@ -92,6 +92,18 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeError &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
 
+//UnitTestResult
+class UnitTestResult
+{
+public:
+    UnitTestResult();
+    
+    bool result;
+    QVariantList out;
+    JZNodeRuntimeError runtimeError;
+};
+
+//BreakPoint
 class BreakPoint
 {
 public: 
@@ -126,6 +138,8 @@ public:
     void init();
     void deinit();
 
+    void statReport();
+
     void setProgram(JZNodeProgram *program);
     JZNodeProgram *program();        
 
@@ -150,19 +164,19 @@ public:
 
     QVariant *getVariableRef(int id);
     QVariant *getVariableRef(int id, int stack_level);
-    QVariant getVariable(int id);
+    const QVariant &getVariable(int id);
     void setVariable(int id, const QVariant &value);
 
     QVariant *getVariableRef(const QString &name);        
     QVariant *getVariableRef(const QString &name,int stack_level);
-    QVariant getVariable(const QString &name);
+    const QVariant &getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
 
-    QVariant getReg(int id);
+    const QVariant &getReg(int id);
     QVariant *getRegRef(int id);
     void setReg(int id, const QVariant &value);
 
-    QVariant getThis();
+    const QVariant &getThis();
     QVariant getSender();    
 
     void watchNotify(int param_id);         //node display
@@ -170,6 +184,7 @@ public:
 
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const JZFunction *func,const QVariantList &in,QVariantList &out);
+    bool callUnitTest(ScriptDepend *depend,QVariantList &out);
     void invoke(const QString &function,const QVariantList &in,QVariantList &out);
     void onSlot(const QString &function,const QVariantList &in,QVariantList &out);
     void print(const QString &log);
@@ -186,7 +201,21 @@ protected:
         Command_pause,
         Command_resume,
         Command_stop,
-    };   
+    };
+
+    struct Stat
+    {
+        Stat();
+
+        void clear();
+        void report();
+
+        int statmentTime;
+        int callTime;
+        int exprTime;
+        int getTime;
+        int setTime;
+    };
 
     virtual void customEvent(QEvent *event) override;
     void clear();
@@ -196,10 +225,13 @@ protected:
     void updateStatus(int status);
 
     const JZFunction *function(QString name,const QVariantList *list);
+    const JZFunction *function(JZNodeIRCall *ir_call);
+
     void checkFunctionIn(const JZFunction *func);
     void checkFunctionOut(const JZFunction *func);
     void callCFunction(const JZFunction *func);    
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
+    QVariant dealExprInt64(const QVariant &va, const QVariant &vb, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
     QVariant dealSingleExpr(const QVariant &a, int op);
     void dealSet(QVariant *ref, const QVariant &value);
@@ -213,7 +245,7 @@ protected:
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
         
-    QVariant getParam(const JZNodeIRParam &param);    
+    const QVariant &getParam(const JZNodeIRParam &param);    
     void setParam(const JZNodeIRParam &param,const QVariant &value);
     QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
         
@@ -251,6 +283,10 @@ protected:
     QWaitCondition m_waitCond;
     bool m_debug;
     JZNodeRuntimeError m_error;
+    ScriptDepend *m_depend;
+    QMap<int,QVariantList> m_dependHook;
+    
+    Stat m_stat;
 };
 extern JZNodeEngine *g_engine;
 

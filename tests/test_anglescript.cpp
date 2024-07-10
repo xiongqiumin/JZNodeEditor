@@ -78,7 +78,6 @@ void AngleScriptTest::testFab()
     if(!buildAs(code))
         return;
     
-    dumpImage("testIf","testIf.png");
     for(int i = 0; i < 10; i++)
     {
         QVariantList in,out;

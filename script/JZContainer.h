@@ -15,16 +15,6 @@ public:
     QVariantList list;
 };
 
-//JZListIterator
-class JZListIterator
-{
-public:
-    JZListIterator();
-
-    JZList *list;
-    int index;
-};
-
 //JZMap
 class JZMap
 {

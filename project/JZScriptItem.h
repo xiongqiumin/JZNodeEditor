@@ -42,7 +42,8 @@ public:
     void setNodePos(int id,QPointF pos);
     QPointF getNodePos(int id);
 
-    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error); 
+    bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error);
+    bool checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &error); 
     int parentNode(int id);
 
     int addConnect(JZNodeGemo from, JZNodeGemo to);

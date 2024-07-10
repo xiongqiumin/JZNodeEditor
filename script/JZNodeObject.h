@@ -198,6 +198,7 @@ JZNodeObject* toJZObject(const QVariant &v);
 JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
 JZObjectNull* toJZNullptr(const QVariant &v);
 JZNodeObject* qobjectToJZObject(QObject *obj);
+JZNodeObject *objectFromString(const QString &className,const QString &text);
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
@@ -215,50 +216,50 @@ public:
     ~JZNodeObjectManager();     
 
     void init();
-    int getId(QString type_name);
-    int getIdByCType(QString type_name);
+    int getId(const QString &type_name);
+    int getIdByCType(const QString &type_name);
 
-    JZNodeObjectDefine *meta(QString className);
+    JZNodeObjectDefine *meta(const QString &className);
     JZNodeObjectDefine *meta(int type_id);
     QString getClassName(int type_id);
-    int getClassId(QString class_name);    
-    bool isInherits(QString class_name, QString super_name);
+    int getClassId(const QString &class_name);    
+    bool isInherits(const QString &class_name, const QString &super_name);
     bool isInherits(int class_name,int super_name);
     QStringList getClassList();
 
     JZNodeEnumDefine *enumMeta(int type_id);
-    JZNodeEnumDefine *enumMeta(QString enumName);
+    JZNodeEnumDefine *enumMeta(const QString &enumName);
     QString getEnumName(int type_id);
-    int getEnumId(QString enumName);
+    int getEnumId(const QString &enumName);
     QStringList getEnumList();    
 
-    const JZSingleDefine *single(QString name);
+    const JZSingleDefine *single(const QString &name);
     
-    int getQObjectType(QString name);
-    void setQObjectType(QString name,int id);
+    int getQObjectType(const QString &name);
+    void setQObjectType(const QString &name,int id);
 
-    int delcare(QString name, int id = -1);
-    int delcareCClass(QString name, QString ctype_id, int id = -1);
+    int delcare(const QString &name, int id = -1);
+    int delcareCClass(const QString &name, const QString &ctype_id, int id = -1);
 
-    int regist(JZNodeObjectDefine define);    
-    int registCClass(JZNodeObjectDefine define,QString type_id);
-    void replace(JZNodeObjectDefine define);    
+    int regist(const JZNodeObjectDefine &define);    
+    int registCClass(const JZNodeObjectDefine &define,const QString &type_id);
+    void replace(const JZNodeObjectDefine &define);    
     
     JZNodeObject* create(int type_id);
-    JZNodeObject* create(QString name);
-    JZNodeObject* createByTypeid(QString ctype_id);
+    JZNodeObject* create(const QString &name);
+    JZNodeObject* createByTypeid(const QString &ctype_id);
     JZNodeObject* createRefrence(int type_id, void *cobj, bool owner);
-    JZNodeObject* createRefrence(QString type_name,void *cobj,bool owner);
-    JZNodeObject* createRefrenceByTypeid(QString ctype_id,void *cobj,bool owner);
+    JZNodeObject* createRefrence(const QString &type_name,void *cobj,bool owner);
+    JZNodeObject* createRefrenceByTypeid(const QString &ctype_id,void *cobj,bool owner);
     
     JZNodeObject* createNull(int type);
-    JZNodeObject* createNull(QString name);
+    JZNodeObject* createNull(const QString &name);
 
     JZNodeObject* clone(JZNodeObject *other);
 
     //enum
-    int registEnum(JZNodeEnumDefine enumName);
-    int registCEnum(JZNodeEnumDefine enumName, QString ctype_id);
+    int registEnum(const JZNodeEnumDefine &enumName);
+    int registCEnum(const JZNodeEnumDefine &enumName, const QString &ctype_id);
     void unregist(int id);    
     void clearUserReigst();
 

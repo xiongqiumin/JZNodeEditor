@@ -5,6 +5,7 @@
 #include <thread>
 #include "JZProject.h"
 #include "JZNodeEngine.h"
+#include "JZNodeBuilder.h"
 
 class BaseTest : public QObject
 {
@@ -35,14 +36,16 @@ protected:
     void callAsync(QString name,const QVariantList &in);
     void stop();
     void asyncThread(QString name,QVariantList in);  
-    void dumpImage(QString name,QString file);
+    void dumpImage(JZScriptItem *item,QString file);
     void dumpAsm(QString file);
     void msleep(int ms);
+    void makeDump();
     
     JZProject m_project;
     JZNodeProgram m_program;
     JZNodeEngine m_engine;
     JZScriptFile *m_file;
+    JZNodeBuilder m_builder;
     Promise m_callResult;
     std::thread m_thread;
 };

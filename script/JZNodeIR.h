@@ -6,6 +6,7 @@
 #include <QVariant>
 #include <QSharedPointer>
 #include <QDataStream>
+#include "JZNodeFunctionDefine.h"
 
 enum
 {
@@ -75,10 +76,11 @@ public:
 
     int id() const;
     QString ref() const;
-    QVariant literal() const;
+    const QVariant &literal() const;
 
     int type;
     QVariant value;
+    QVariant *cache;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param);
@@ -203,6 +205,7 @@ public:
     QString function;
     QList<JZNodeIRParam> paramIn;
     QList<JZNodeIRParam> paramOut;
+    const JZFunction *cache;
 };
 
 

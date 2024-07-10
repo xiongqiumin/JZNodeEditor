@@ -284,6 +284,7 @@ void SampleRussian::addMapGet()
     col_get->setFunction("List<int>.get");
 
     JZNodeReturn *node_return = new JZNodeReturn();
+    node_return->setFunction(&script->function());
 
     script->addNode(node_row);
     script->addNode(node_col);
@@ -531,6 +532,8 @@ void SampleRussian::addPaintEvent()
 
     JZNodeBranch *shape_null = new JZNodeBranch();
     JZNodeReturn *shape_null_return = new JZNodeReturn();
+    shape_null_return->setFunction(&script->function());
+
     script->addNode(shape_null_cmp);
     script->addNode(shape_null);
     script->addNode(shape_null_return);
@@ -701,6 +704,8 @@ void SampleRussian::addCreateRect()
 
     JZNodeReturn *node_ret = new JZNodeReturn();
     JZNodeReturn *node_ret_over = new JZNodeReturn();
+    node_ret->setFunction(&script->function());
+    node_ret_over->setFunction(&script->function());
 
     script->addNode(node_ret);
     script->addNode(node_ret_over);
@@ -818,6 +823,7 @@ void SampleRussian::addRectDown()
     JZNode *node_start = script->getNode(0);
 
     JZNodeReturn *node_ret = new JZNodeReturn();
+    node_ret->setFunction(&script->function());
 
     JZNodeFunction *canDown = new JZNodeFunction();
     canDown->setFunction(meta->function("canMoveDown"));
@@ -985,6 +991,7 @@ void SampleRussian::addMoveFunction()
             shape_index->setVariable("this.shape_index");
 
             JZNodeReturn *node_return = new JZNodeReturn();
+            node_return->setFunction(&script->function());
 
             JZNodeFunction *can_place = new JZNodeFunction();
             can_place->setFunction(meta->function("canPlace"));
@@ -1356,6 +1363,7 @@ void SampleRussian::addRotate()
         shape_index->setVariable("this.shape_index");
 
         JZNodeReturn *node_return = new JZNodeReturn();
+        node_return->setFunction(&script->function());
 
         JZNodeFunction *can_place = new JZNodeFunction();
         can_place->setFunction(meta->function("canPlace"));
@@ -1508,6 +1516,7 @@ void SampleRussian::addCreateShape()
     type->setVariable("type");
     
     JZNodeReturn *node_return = new JZNodeReturn();
+    node_return->setFunction(&script->function());
 
     JZNode *node_start = script->getNode(0);
     script->addNode(type);
@@ -1592,8 +1601,10 @@ void SampleRussian::addCanPlaceShape()
     JZNode *node_start = script->getNode(0);
 
     JZNodeReturn *ret_true = new JZNodeReturn();
+    ret_true->setFunction(&script->function());
 
     JZNodeReturn *ret_false = new JZNodeReturn();
+    ret_false->setFunction(&script->function());
 
     JZNodeFor *node_for = new JZNodeFor();
 

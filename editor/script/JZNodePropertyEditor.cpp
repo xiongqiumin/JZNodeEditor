@@ -74,7 +74,7 @@ void JZNodePropertyEditor::setPropEditable(int prop_id,bool editable)
 
 JZNodeProperty *JZNodePropertyEditor::createProp(JZNodePin *pin)
 {
-    int type = JZNodeType::upType(pin->dataTypeInt());
+    int type = JZNodeType::upType(pin->dataTypeId());
     if (type == Type_none && pin->dataType().size() > 0)
         type = Type_any;
 

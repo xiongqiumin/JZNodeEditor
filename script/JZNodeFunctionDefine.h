@@ -55,6 +55,18 @@ protected:
     Q_DISABLE_COPY(CFunction);
 };
 
+class JZNodeEngine;
+class BuiltInFunction
+{
+public:
+    BuiltInFunction();
+    virtual ~BuiltInFunction();
+    virtual void call(JZNodeEngine *engine) = 0;
+
+protected:
+    Q_DISABLE_COPY(BuiltInFunction);
+};
+
 class JZFunctionDefine
 {
 public:
@@ -75,10 +87,10 @@ public:
         
     QString name;    
     QString className;
+    bool isCFunction;
     bool isFlowFunction;
     bool isVirtualFunction;
     bool isProtected;
-    bool isCFunction;
     bool isSlot;
     bool isSingle;
     QList<JZParamDefine> paramIn;
@@ -150,6 +162,7 @@ public:
     bool isCFunction() const;
     bool isMemberFunction() const;
     bool isFlowFunction() const;
+    bool isVirtualFunction() const;
 
     JZFunctionDefine define;  
     
@@ -160,6 +173,7 @@ public:
 
     //c
     QSharedPointer<CFunction> cfunc;
+    QSharedPointer<BuiltInFunction> builtIn;
 };
 QDataStream &operator<<(QDataStream &s, const JZFunction &param);
 QDataStream &operator>>(QDataStream &s, JZFunction &param);

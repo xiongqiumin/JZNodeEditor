@@ -29,6 +29,25 @@ enum{
     TreeItem_isClass,
 };
 
+//JZNodeCreateInfo
+JZNodeCreateInfo JZNodeCreateInfo::fromBuffer(const QByteArray &buffer)
+{
+    QDataStream s(buffer);
+    JZNodeCreateInfo info;
+    s >> info.nodeType;
+    s >> info.args;
+    return info;
+}
+
+QByteArray JZNodeCreateInfo::toBuffer() const
+{
+    QByteArray buffer;
+    QDataStream s(&buffer,QIODevice::WriteOnly);
+    s << nodeType;
+    s << args;
+    return buffer;
+}
+
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
 {
@@ -123,10 +142,10 @@ void JZNodePanel::updateClass()
     UiHelper::clearTreeItem(m_memberFunction);    
     for (int i = 0; i < def.functions.size(); i++)
     {
-        JZNodeFunction node;
-        node.setFunction(&def.functions[i]);
+        QString function_name = def.functions[i].name;
+        QString full_name = def.functions[i].fullName();
 
-        QTreeWidgetItem *item = createNode(&node);
+        QTreeWidgetItem *item = createNode(function_name,Node_function,{full_name});
         item->setText(0, def.functions[i].name);        
         m_memberFunction->addChild(item);
     }
@@ -137,8 +156,7 @@ void JZNodePanel::updateClass()
     UiHelper::treeUpdate(m_memberParam, params, [this, &def, params](int index)->QTreeWidgetItem* {
         if (index == 0)
         {
-            JZNodeThis node_this;
-            return createNode(&node_this);
+            return createNode("this",Node_this);
         }
         else
         {
@@ -203,13 +221,18 @@ QTreeWidgetItem *JZNodePanel::createFolder(QString name)
     return item;
 }
 
-QTreeWidgetItem *JZNodePanel::createNode(JZNode *node)
+QTreeWidgetItem *JZNodePanel::createNode(QString node_name,int node_type,const QStringList &args)
 {
+    JZNodeCreateInfo info;
+    info.nodeType = node_type;
+    info.args = args;
+
     QTreeWidgetItem *item = new QTreeWidgetItem();
-    item->setText(0, node->name());
+    item->setText(0, node_name);
     item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
     item->setData(0, TreeItem_type, "node_data");
-    item->setData(0, TreeItem_value, JZNodeFactory::instance()->saveNode(node));
+    item->setData(0,TreeItem_value,info.toBuffer());
+
     return item;
 }
 
@@ -257,35 +280,23 @@ void JZNodePanel::initData()
 
     QTreeWidgetItem *itemOp = createFolder("操作");
     itemDataFolder->addChild(itemOp);    
-
-    JZNodeParam get;
-    JZNodeSetParam set;
-    JZNodeSetParamDataFlow set_data;
-
-    JZNodeMemberParam getMember;
-    JZNodeSetMemberParam setMember;    
-
-    JZNodeCreate create;
-    JZNodeCreateFromString create_from_string;
-
-    JZNodeClone swap;
-    JZNodeSwap clone;    
-    itemOp->addChild(createNode(&get));
+ 
+    itemOp->addChild(createNode("get",Node_param));
     if (m_file->itemType() == ProjectItem_scriptParamBinding)
     {
-        itemOp->addChild(createNode(&set_data));
+        itemOp->addChild(createNode("set",Node_setParamData));
     }
     else
     {
-        itemOp->addChild(createNode(&set));
-        itemOp->addChild(createNode(&create));
-        itemOp->addChild(createNode(&create_from_string));
+        itemOp->addChild(createNode("set",Node_setParam));
+        itemOp->addChild(createNode("createObject",Node_create));
+        itemOp->addChild(createNode("createFromString",Node_createFromString));
     }   
-    itemOp->addChild(createNode(&getMember));
-    itemOp->addChild(createNode(&setMember));
+    itemOp->addChild(createNode("getMember",Node_memberParam));
+    itemOp->addChild(createNode("setMember",Node_setMemberParam));
 
-    itemOp->addChild(createNode(&swap));
-    itemOp->addChild(createNode(&clone));
+    itemOp->addChild(createNode("swap",Node_swap));
+    itemOp->addChild(createNode("clone",Node_clone));
 
     QTreeWidgetItem *itemParam = createFolder("全局变量");
     itemDataFolder->addChild(itemParam);
@@ -316,11 +327,7 @@ void JZNodePanel::initFunction()
             auto *func = JZNodeFunctionManager::instance()->function(functions[i]);
             Q_ASSERT(func);
 
-            JZNodeFunction node_func;
-            node_func.setName(functions[i]);
-            node_func.setFunction(func);
-
-            auto function_node = createNode(&node_func);
+            auto function_node = createNode(func->name,Node_function,{func->fullName()});
             item->addChild(function_node);
             use.insert(functions[i]);
         }
@@ -362,10 +369,7 @@ void JZNodePanel::initEnums()
     enum_list.sort();
     for (int i = 0; i < enum_list.size(); i++)
     {        
-        JZNodeEnum node_enum;
-        node_enum.setEnum(enum_list[i]);
-
-        QTreeWidgetItem *item_enum = createNode(&node_enum);        
+        QTreeWidgetItem *item_enum = createNode(enum_list[i],Node_enum,{enum_list[i]});        
         item_enum_root->addChild(item_enum);        
     }
 }
@@ -398,7 +402,7 @@ void JZNodePanel::initClass()
             JZNodeFunction node_func;
             node_func.setFunction(func);
 
-            auto function_node = createNode(&node_func);
+            auto function_node = createNode(func->name,Node_function,{ func->fullName()});
             function_node->setText(0, func->name);
             item_class->addChild(function_node);
         }        
@@ -468,34 +472,14 @@ void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
 
 void JZNodePanel::initConstParam(QTreeWidgetItem *root)
 {
-    JZNodeLiteral node_int,node_bool,node_string,node_double,node_null;
-    node_int.setName("整数");
-    node_int.setDataType(Type_int);
-    node_int.setLiteral("0");    
-
-    node_bool.setName("Bool");
-    node_bool.setDataType(Type_bool);
-    node_bool.setLiteral("false");    
-
-    node_string.setName("字符串");
-    node_string.setDataType(Type_string);
-    node_string.setLiteral("");    
-
-    node_double.setName("浮点数");
-    node_double.setDataType(Type_double);
-    node_double.setLiteral("0.0");    
-
-    node_null.setName("null");   
-    node_null.setDataType(Type_nullptr);    
-
-    root->addChild(createNode(&node_int));    
-    root->addChild(createNode(&node_string));
-    root->addChild(createNode(&node_double));
-    root->addChild(createNode(&node_bool));
-    root->addChild(createNode(&node_null));
+    root->addChild(createNode("bool",Node_literal,{"bool"}));    
+    root->addChild(createNode("int",Node_literal,{"int"}));
+    root->addChild(createNode("int64",Node_literal,{"int64"}));
+    root->addChild(createNode("double",Node_literal,{"double"}));
+    root->addChild(createNode("null",Node_literal,{"null"}));
 
     JZNodeDisplay node_disp;
-    root->addChild(createNode(&node_disp));
+    root->addChild(createNode("display",Node_display));
 }
 
 void JZNodePanel::initConvert(QTreeWidgetItem *root)
@@ -507,7 +491,7 @@ void JZNodePanel::initExpression(QTreeWidgetItem *root)
     for (int i = Node_add; i <= Node_expr; i++)
     {   
         auto node = JZNodeFactory::instance()->createNode(i);
-        QTreeWidgetItem *sub = createNode(node);
+        QTreeWidgetItem *sub = createNode(node->name(),i);
         root->addChild(sub);
         delete node;
     }
@@ -515,36 +499,23 @@ void JZNodePanel::initExpression(QTreeWidgetItem *root)
 
 void JZNodePanel::initProcess(QTreeWidgetItem *root)
 {
-    QTreeWidgetItem *item_process = createFolder("过程");    
+    QTreeWidgetItem *item_process = createFolder("过程");    ;
 
-    JZNodeFor node_for;
-    JZNodeWhile node_while;
-    JZNodeSequence node_seq;
-    JZNodeBranch node_branch;
-    JZNodeIf node_if;
-    JZNodeSwitch node_switch;
-    JZNodeForEach node_foreach;
-    JZNodeBreak node_break;
-    JZNodeContinue node_continue;
-    JZNodeExit node_exit;
-    JZNodeReturn node_return;
-    JZNodeNop node_nop;
-
-    item_process->addChild(createNode(&node_branch));
-    item_process->addChild(createNode(&node_if));
-    item_process->addChild(createNode(&node_switch));
-    item_process->addChild(createNode(&node_seq));
+    item_process->addChild(createNode("branch",Node_branch));
+    item_process->addChild(createNode("if",Node_if));
+    item_process->addChild(createNode("switch",Node_switch));
+    item_process->addChild(createNode("sequence",Node_sequence));
     
-    item_process->addChild(createNode(&node_while));
-    item_process->addChild(createNode(&node_for));
-    item_process->addChild(createNode(&node_foreach));
-    item_process->addChild(createNode(&node_continue));
-    item_process->addChild(createNode(&node_break));    
+    item_process->addChild(createNode("while",Node_while));
+    item_process->addChild(createNode("for",Node_for));
+    item_process->addChild(createNode("foreach",Node_foreach));
+    item_process->addChild(createNode("continue",Node_continue));
+    item_process->addChild(createNode("break",Node_break));    
 
-    item_process->addChild(createNode(&node_nop));
+    item_process->addChild(createNode("nop",Node_nop));
 
-    item_process->addChild(createNode(&node_return));
-    item_process->addChild(createNode(&node_exit));        
+    item_process->addChild(createNode("return",Node_return));
+    item_process->addChild(createNode("exit",Node_exit));        
     root->addChild(item_process);
 }
 

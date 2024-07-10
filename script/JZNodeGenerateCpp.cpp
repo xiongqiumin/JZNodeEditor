@@ -488,7 +488,9 @@ void JZNodeGenerateCpp::generate(JZProject *project,QString output)
 {
     m_project = project;
 
-    JZNodeBuilder builder(m_project);
+    JZNodeBuilder builder;
+    builder.setProject(m_project);
+    
     JZNodeProgram program;
     if(!builder.build(&program))
     {

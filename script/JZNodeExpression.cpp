@@ -13,8 +13,8 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
     m_op = op_type;
     int in1 = addParamIn("",Pin_editValue | Pin_dispValue);
     int in2 = addParamIn("",Pin_editValue | Pin_dispValue);
-    setPinTypeInt(in1);
-    setPinTypeInt(in2);
+    setPinTypeNumber(in1);
+    setPinTypeNumber(in2);
     pin(in1)->setValue("0");
     pin(in2)->setValue("0");
     addParamOut("out");    
@@ -81,20 +81,17 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
     auto input_list = paramInList();
     if(m_type == Node_eq || m_type == Node_ne)
     {
-        QList<int> in_types;
-        for(int i = 0; i < input_list.size(); i++)
-        {
-            in_types << c->pinInputType(m_id,input_list[i]);
-        }
+        int t1 = c->pinInputType(m_id,input_list[0]);
+        int t2 = c->pinInputType(m_id,input_list[1]);
 
-        int in_type = JZNodeType::upType(in_types);
+        int in_type = JZNodeType::upType(t1,t2);
         if(in_type == Type_none || in_type == Type_any)
         {
-            error = "无法确定输入类型";
+            error = "无法对" + JZNodeType::typeToName(t1) + "," +  JZNodeType::typeToName(t2) + "进行比较";
             return false;
         }
-        for(int i = 0; i < input_list.size(); i++)
-            c->setPinType(m_id,input_list[i],in_type);
+        c->setPinType(m_id,t1,in_type);
+        c->setPinType(m_id,t2,in_type);
     }
     
     if(!c->addDataInput(m_id,error))
@@ -115,7 +112,7 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
         int r1 = c->paramId(m_id,in1);
         int r2 = c->paramId(m_id,in2);
         int r3 = c->paramId(m_id,out);
-        c->addExpr(irId(r3),irId(r1),irId(r2),m_op);
+        c->addExprConvert(irId(r3),irId(r1),irId(r2),m_op);
     }
     return true;
 }
@@ -130,6 +127,9 @@ void JZNodeOperator::calcPropOutType(JZNodeCompiler *c)
         case OP_mul:
         case OP_div:
         case OP_mod:
+        case OP_bitand:
+        case OP_bitor:
+        case OP_bitxor:
         {
             auto list = paramInList();
             QList<int> in_types;
@@ -151,11 +151,6 @@ void JZNodeOperator::calcPropOutType(JZNodeCompiler *c)
         case OP_and:
         case OP_or:
             out_type = Type_bool;
-            break;
-        case OP_bitand:
-        case OP_bitor:
-        case OP_bitxor:
-            out_type = Type_int;
             break;
         default:
             Q_ASSERT(0);

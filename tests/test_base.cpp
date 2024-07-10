@@ -1,14 +1,26 @@
 #include <QFile>
 #include <QTest>
 #include <QTextStream>
+#include <QApplication>
+#include <QDir>
 #include "test_base.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeUtils.h"
 
 BaseTest::BaseTest()
 {
+    makeDump();
     m_file = nullptr;
+    m_builder.setProject(&m_project);
     connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &BaseTest::onRuntimeError);
+}
+
+void BaseTest::makeDump()
+{
+    QString path = qApp->applicationDirPath() + "/dump";
+    QDir dir;
+    if(!dir.exists(path))
+        dir.mkdir(path);
 }
 
 void BaseTest::callTest(QString function)
@@ -52,7 +64,7 @@ void BaseTest::msleep(int ms)
 void BaseTest::dumpAsm(QString path)
 {
     QString text = m_program.dump();
-    QFile file(path);
+    QFile file(qApp->applicationDirPath() + "/dump/" + path);
     if(file.open(QFile::WriteOnly | QFile::Truncate))
     {
         QTextStream s(&file);
@@ -61,21 +73,20 @@ void BaseTest::dumpAsm(QString path)
     }
 }
 
-void BaseTest::dumpImage(QString func_name,QString file)
+void BaseTest::dumpImage(JZScriptItem *func,QString file)
 {   
-    auto script_file = m_project.getScriptFile(m_project.mainFunction());
-    auto func = script_file->getFunction(func_name);
-    Q_ASSERT(func);
+    if(!file.endsWith(".png"))
+        file += ".png";
+
     jzScriptItemUpdateLayout(func);
-    jzScriptItemDump(func,file);
+    jzScriptItemDump(func,qApp->applicationDirPath() + "/dump/" + file);
 }
 
 bool BaseTest::build()
 {
-    JZNodeBuilder builder(&m_project);
-    if(!builder.build(&m_program))
+    if(!m_builder.build(&m_program))
     {        
-        QTest::qVerify(false, "build", builder.error().toLocal8Bit().data(), __FILE__, __LINE__);
+        QTest::qVerify(false, "build", m_builder.error().toLocal8Bit().data(), __FILE__, __LINE__);
         return false;
     }        
 

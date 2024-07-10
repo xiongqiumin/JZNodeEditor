@@ -115,6 +115,17 @@ void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QShare
     registCFunction(define, cfunc);       
 }
 
+void JZNodeFunctionManager::registBuiltInFunction(const JZFunctionDefine &define, QSharedPointer<BuiltInFunction> func)
+{
+    Q_ASSERT(define.isCFunction);
+
+    JZFunction impl;
+    impl.define = define;
+    impl.builtIn = func; 
+    registFunction(define);
+    m_funcImpl[define.fullName()] = impl;
+}
+
 void JZNodeFunctionManager::unregistFunction(QString name)
 {
     auto it = m_funcDefine.find(name);

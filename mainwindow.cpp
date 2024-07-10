@@ -69,9 +69,10 @@ MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> flags)
 
 //MainWindow
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_builder(&m_project)
+    : QMainWindow(parent)
 {    
     m_editor = nullptr;
+    m_builder.setProject(&m_project);
     m_processMode = Process_none;
     m_compilerTiemr = new QTimer(this);
     connect(m_compilerTiemr, &QTimer::timeout, this, &MainWindow::onCompilerTimer);
@@ -828,25 +829,17 @@ void MainWindow::dealRun()
     dealCompiler();
 
     ScriptDepend depend = edit->scriptTestDepend();
-    JZNodeProgram program;
-    if(!m_builder.buildUnitTest(script, &depend, &program))
-        return;
     
+    JZNodeProgram program;
+
     JZNodeEngine engine;
     engine.setProgram(&program);
     engine.init();
 
-    QVariantList in, out;
-    for (int i = 0; i < depend.function.paramIn.size(); i++)
-    {
-        auto &p = depend.function.paramIn[i];
-        in << JZNodeType::initValue(p.dataType(),p.value);
-    }
-
-    QString unit_function = depend.function.fullName() + "__unittest__";
-
     UnitTestResult ret;
-    if (engine.call(unit_function, in, out))
+
+    QVariantList out;
+    if (engine.callUnitTest(&depend, out))
     {
         ret.result = true;
         ret.out = out;
@@ -857,6 +850,7 @@ void MainWindow::dealRun()
         ret.runtimeError = engine.runtimeError();
     }
 
+RunFinish:
     edit->setAutoRunResult(ret);
 }
 
@@ -1146,7 +1140,13 @@ void MainWindow::updateAutoWatch(int stack_index)
     JZNodeDebugParamInfo param_info;
     param_info.stack = stack_index;
     
-    auto func = m_program.typeMeta().function(stack.function);
+    auto func = m_program.function(stack.function);
+    if(func->isCFunction)
+    {
+        m_watchAuto->clear();
+        return;
+    }
+
     auto func_debug = m_program.script(stack.file)->functionDebug(stack.function);
     if (func->isMemberFunction())
     {

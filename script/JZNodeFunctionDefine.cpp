@@ -72,6 +72,15 @@ CFunction::~CFunction()
 
 }
 
+//BuiltInFunction
+BuiltInFunction::BuiltInFunction()
+{    
+}
+
+BuiltInFunction::~BuiltInFunction()
+{
+}
+
 //JZFunctionDefine
 JZFunctionDefine::JZFunctionDefine()
 {
@@ -336,6 +345,11 @@ bool JZFunction::isMemberFunction() const
 bool JZFunction::isFlowFunction() const
 {
     return define.isFlowFunction;
+}
+
+bool JZFunction::isVirtualFunction() const
+{
+    return define.isVirtualFunction;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZFunction &param)

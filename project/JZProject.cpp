@@ -578,7 +578,7 @@ const JZFunctionDefine *JZProject::function(QString name)
     for(int i = 0; i < list.size(); i++)
     {
         JZScriptItem *file = (JZScriptItem*)list[i];
-        if(file->function().name == name)
+        if(file->function().fullName() == name)
             return &file->function();
     }
     return nullptr;

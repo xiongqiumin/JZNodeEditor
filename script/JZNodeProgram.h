@@ -94,6 +94,33 @@ protected:
 };
 typedef QSharedPointer<JZNodeScript> JZNodeScriptPtr;
 
+//Depends
+class ScriptDepend
+{
+public:
+    struct FunctionHook
+    {
+        FunctionHook();
+        
+        bool enable;
+        int nodeId;
+        int pc;
+        QList<JZParamDefine> params;
+    };
+    
+
+    void clear();
+    int indexOf(bool isMember, QString name);
+    JZParamDefine *param(bool isMember, QString name);
+    FunctionHook *getHook(int node_id);
+
+    JZFunctionDefine function;
+    QList<JZParamDefine> member;
+    QList<JZParamDefine> global;
+    QList<FunctionHook> hook;
+};
+
+//JZNodeTypeMeta
 class JZNodeTypeMeta
 {
 public:
@@ -131,6 +158,8 @@ public:
     QList<JZNodeScript*> scriptList();
     JZNodeScript *script(QString path);        
     QMap<QString, JZNodeParamBind> bindInfo(QString className);    
+
+    const JZFunctionDefine *function(QString name);
 
     QString irToString(JZNodeIR *ir);
     QString dump();   

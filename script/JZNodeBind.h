@@ -337,8 +337,7 @@ QSharedPointer<CFunction> createFuncionImpl(Func func,Extra... extra)
 template <typename Return, typename... Args,typename... Extra>
 QSharedPointer<CFunction> createFuncion(Return (*f)(Args...),Extra... extra)
 {
-    auto func = [f](Args... args)->Return{ return f(args...);};
-    return createFuncionImpl<decltype(func),Extra...>(func,extra...);
+    return createFuncionImpl<decltype(f),Extra...>(f,extra...);
 }
 
 template <typename Func,typename... Extra>
@@ -782,8 +781,8 @@ protected:
         JZFunctionDefine *f = new JZFunctionDefine();
         f->name = name;
         f->className = m_define.className;
-        f->isFlowFunction = isflow;        
         f->isCFunction = true;
+        f->isFlowFunction = isflow;
         f->updateParam(cfunc.data());
         if (cfunc->args.size() > 0 && JZNodeType::typeidToType(cfunc->args[0]) == m_define.id)
             f->paramIn[0].name = "this";        

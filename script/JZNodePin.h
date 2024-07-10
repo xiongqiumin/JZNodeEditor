@@ -62,8 +62,8 @@ public:
 
     void setDataType(const QStringList &type);
     const QStringList &dataType() const;
-    void setDataTypeInt(const QList<int> &type);
-    QList<int> dataTypeInt() const;
+    void setDataTypeId(const QList<int> &type);
+    QList<int> dataTypeId() const;
 
     const QString &value() const;
     void setValue(const QString &value);

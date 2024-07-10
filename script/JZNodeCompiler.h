@@ -115,20 +115,6 @@ struct NodeCompilerInfo
     QString error;
 };
 
-//Depends
-class ScriptDepend
-{
-public:
-    void clear();
-    int indexOf(bool isMember, QString name);
-    JZParamDefine *param(bool isMember, QString name);
-
-    JZFunctionDefine function;
-    QList<JZParamDefine> member;
-    QList<JZParamDefine> global;
-    QMap<int, QList<JZParamDefine>> hook;
-};
-
 //CompilerInfo
 class CompilerInfo
 {
@@ -278,7 +264,7 @@ protected:
     void linkNodes();
     void updateDebugInfo();
     void updateDispayNode();
-    void updateDepend();
+    void updateDepend(const JZFunction *define);
     void addNodeFlowPc(int node_id, int cond, int pc);
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
                     
@@ -301,7 +287,6 @@ protected:
     QMap<int,NodeCompilerInfo> m_nodeInfo;
     int m_stackId;       //当前栈位置，用于分配内存    
     QMap<int,int> m_stackType;
-    ScriptDepend m_depend;
     CompilerInfo m_compilerInfo;
 
     JZProject *m_project;

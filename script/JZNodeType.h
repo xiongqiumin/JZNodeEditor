@@ -98,9 +98,10 @@ public:
     static bool isDoubleOp(const QString &op);
 
     static QString typeToName(int id);
-    static int nameToType(QString name);
+    static int nameToType(const QString &name);
+    static int typeidToType(const QString &name);
     static int variantType(const QVariant &v);
-    static int typeidToType(QString name);
+    static int stringType(const QString &text);
 
     static bool canConvert(int from,int to);    //隐式转换
     static QVariant convertTo(int type,const QVariant &v); 
@@ -124,7 +125,7 @@ public:
     static bool isPointer(const QVariant &v);
     static QVariant *getPointer(const QVariant &v);
 
-    static int isInherits(QString type1,QString type2);
+    static int isInherits(const QString &type1,const QString &type2);
     static int isInherits(int type1,int type2);
     static int calcExprType(int type1,int type2,int op);
         
@@ -139,7 +140,6 @@ public:
 
     static QString dispString(const QString &text);
     static QString storgeString(const QString &text);
-    static int stringType(const QString &text);
     
     static QString addQuote(const QString &text);
     static QString removeQuote(const QString &text);

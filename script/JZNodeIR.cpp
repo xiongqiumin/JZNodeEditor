@@ -5,6 +5,7 @@
 JZNodeIRParam::JZNodeIRParam()
 {
     type = None;
+    cache = nullptr;
 }
 
 bool JZNodeIRParam::isNull() const
@@ -49,7 +50,7 @@ QString JZNodeIRParam::ref() const
     return value.toString();
 }
 
-QVariant JZNodeIRParam::literal() const
+const QVariant &JZNodeIRParam::literal() const
 {
     Q_ASSERT(type == Literal);
     return value;
@@ -335,6 +336,7 @@ void JZNodeIRJmp::loadFromStream(QDataStream &s)
 JZNodeIRCall::JZNodeIRCall()
 {
     type = OP_call;
+    cache = nullptr;
 }
 
 JZNodeIRCall::~JZNodeIRCall()

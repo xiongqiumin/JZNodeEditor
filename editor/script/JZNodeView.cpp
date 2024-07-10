@@ -30,6 +30,7 @@
 #include "JZNodeBuilder.h"
 #include "LogManager.h"
 #include "JZNodeView.h"
+#include "JZNodePanel.h"
 
 enum ViewCommand {
     CreateNode,
@@ -145,7 +146,44 @@ void JZNodeViewCommand::redo()
 {
     if(command == CreateNode)
     {        
-        auto node = JZNodeFactory::instance()->loadNode(newValue.toByteArray());
+        JZNodeCreateInfo info = JZNodeCreateInfo::fromBuffer(newValue.toByteArray());
+        auto node = JZNodeFactory::instance()->createNode(info.nodeType);
+        if(info.nodeType == Node_function)
+        {
+            auto node_function = dynamic_cast<JZNodeFunction*>(node);
+            node_function->setFunction(info.args[0]);
+        }
+        else if(info.nodeType == Node_enum)
+        {
+            auto node_enum = dynamic_cast<JZNodeEnum*>(node);
+            node_enum->setEnum(info.args[0]);
+        }
+        else if(info.nodeType == Node_return)
+        {
+            auto node_return = dynamic_cast<JZNodeReturn*>(node);
+            if(m_view->file()->itemType() == ProjectItem_scriptFunction)
+            {
+                auto func = m_view->file()->function();
+                node_return->setFunction(&func);
+            }
+        }
+        else if(info.nodeType == Node_literal)
+        {
+            auto node_literal = dynamic_cast<JZNodeLiteral*>(node);
+            if(info.args[0] == "int")
+                node_literal->setDataType(Type_int);
+            else if(info.args[0] == "int64")
+                node_literal->setDataType(Type_int64);
+            else if(info.args[0] == "bool")
+                node_literal->setDataType(Type_bool);
+            else if(info.args[0] == "string")
+                node_literal->setDataType(Type_string);
+            else if(info.args[0] == "double")
+                node_literal->setDataType(Type_double);
+            else if(info.args[0] == "null")
+                node_literal->setDataType(Type_nullptr);
+        }
+
         JZNodeGraphItem *item = nullptr;
         if(itemId == -1)
         {
@@ -1669,23 +1707,6 @@ void JZNodeView::dropEvent(QDropEvent *event)
     if(event->mimeData()->hasFormat("node_data"))
     {
         QByteArray data = event->mimeData()->data("node_data");
-        QDataStream s(&data,QIODevice::ReadOnly);
-        int node_type;
-        s >> node_type;
-        if(node_type == Node_expr)
-        {
-            QString text = getExpr();
-            if(text.isEmpty())
-                return;
-
-            JZNode *node = factory->loadNode(data);
-            QString error;
-            JZNodeExpression *expr = dynamic_cast<JZNodeExpression *>(node);
-            if(!expr->setExpr(text,error))
-                return;
-
-            data = factory->saveNode(node);
-        }
         addCreateNodeCommand(data,mapToScene(event->pos()));
         event->accept();
     }

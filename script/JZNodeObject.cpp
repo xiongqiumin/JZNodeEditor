@@ -174,7 +174,6 @@ JZFunctionDefine JZNodeObjectDefine::initVirtualFunction(QString name)
 
     JZFunctionDefine new_def = *func_def;
     new_def.className = className;
-    new_def.isCFunction = false;
     return new_def;
 }
 
@@ -852,6 +851,19 @@ JZNodeObject* qobjectToJZObject(QObject *obj)
         return (JZNodeObject*)ptr;
 }
 
+JZNodeObject *objectFromString(const QString &className,const QString &text)
+{
+    QString func = className + "." + "__fromString__";
+    QVariantList in,out;
+    in << text;
+    if(!g_engine->call(func,in,out))
+        return nullptr;
+
+    JZNodeObjectPtr ptr = out[0].value<JZNodeObjectPtr>();
+    ptr.releaseOwner();
+    return ptr.object();
+}   
+
 
 //JZNodeObjectManager
 JZNodeObjectManager *JZNodeObjectManager::instance()
@@ -894,7 +906,7 @@ void JZNodeObjectManager::initFunctions()
     JZNodeFunctionManager::instance()->registCFunction("clone", true, jzbind::createFuncion(JZObjectClone));
 }
 
-int JZNodeObjectManager::getId(QString type_name)
+int JZNodeObjectManager::getId(const QString &type_name)
 {
     int type = getClassId(type_name);
     if (type != Type_none)
@@ -907,12 +919,12 @@ int JZNodeObjectManager::getId(QString type_name)
     return type;
 }
 
-int JZNodeObjectManager::getIdByCType(QString type_name)
+int JZNodeObjectManager::getIdByCType(const QString &type_name)
 {
     return m_typeidMetas.value(type_name, Type_none);
 }
 
-int JZNodeObjectManager::delcare(QString name, int id)
+int JZNodeObjectManager::delcare(const QString &name, int id)
 {
     JZNodeObjectDefine def;
     def.className = name;
@@ -920,7 +932,7 @@ int JZNodeObjectManager::delcare(QString name, int id)
     return regist(def);    
 }
 
-int JZNodeObjectManager::delcareCClass(QString name, QString c_typeid, int id)
+int JZNodeObjectManager::delcareCClass(const QString &name, const QString &c_typeid, int id)
 {    
     JZNodeObjectDefine def;
     def.className = name;
@@ -928,7 +940,7 @@ int JZNodeObjectManager::delcareCClass(QString name, QString c_typeid, int id)
     return registCClass(def, c_typeid);    
 }
 
-int JZNodeObjectManager::regist(JZNodeObjectDefine info)
+int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
     Q_ASSERT(!info.className.isEmpty() && (info.superName.isEmpty() || getClassId(info.superName) != -1));    
     
@@ -950,7 +962,7 @@ int JZNodeObjectManager::regist(JZNodeObjectDefine info)
     return def->id;
 }
 
-void JZNodeObjectManager::replace(JZNodeObjectDefine define)
+void JZNodeObjectManager::replace(const JZNodeObjectDefine &define)
 {
     Q_ASSERT(m_metas.contains(define.id));
         
@@ -958,14 +970,14 @@ void JZNodeObjectManager::replace(JZNodeObjectDefine define)
     *ptr = define;
 }
 
-int JZNodeObjectManager::registCClass(JZNodeObjectDefine define,QString ctype_id)
+int JZNodeObjectManager::registCClass(const JZNodeObjectDefine &define,const QString &ctype_id)
 {
     int id = regist(define);
     m_typeidMetas[ctype_id] = id;
     return id;
 }
 
-int JZNodeObjectManager::registEnum(JZNodeEnumDefine define)
+int JZNodeObjectManager::registEnum(const JZNodeEnumDefine &define)
 {
     int id = -1;
     if (define.type() == -1)
@@ -978,7 +990,7 @@ int JZNodeObjectManager::registEnum(JZNodeEnumDefine define)
     return id;
 }
 
-int JZNodeObjectManager::registCEnum(JZNodeEnumDefine define, QString ctype_id)
+int JZNodeObjectManager::registCEnum(const JZNodeEnumDefine &define, const QString &ctype_id)
 {
     int id = registEnum(define);
     m_typeidMetas[ctype_id] = id;    
@@ -990,7 +1002,7 @@ void JZNodeObjectManager::unregist(int name)
     m_metas.remove(name);
 }
 
-void JZNodeObjectManager::setQObjectType(QString name,int id)
+void JZNodeObjectManager::setQObjectType(const QString &name,int id)
 {
     m_qobjectId[name] = id;
 }
@@ -1021,7 +1033,7 @@ JZNodeObjectDefine *JZNodeObjectManager::meta(int id)
     return m_metas.value(id,nullptr).data();
 }
 
-JZNodeObjectDefine *JZNodeObjectManager::meta(QString className)
+JZNodeObjectDefine *JZNodeObjectManager::meta(const QString &className)
 {
     if(className.isEmpty())
         return nullptr;
@@ -1029,7 +1041,7 @@ JZNodeObjectDefine *JZNodeObjectManager::meta(QString className)
     return meta(getClassId(className));
 }
 
-const JZSingleDefine *JZNodeObjectManager::single(QString name)
+const JZSingleDefine *JZNodeObjectManager::single(const QString &name)
 {
     QStringList list = name.split(".");
     if (list.size() != 2)
@@ -1042,12 +1054,12 @@ const JZSingleDefine *JZNodeObjectManager::single(QString name)
     return cls->single(list[1]);
 }
 
-int JZNodeObjectManager::getQObjectType(QString name)
+int JZNodeObjectManager::getQObjectType(const QString &name)
 {
     return m_qobjectId.value(name,Type_none);
 }
 
-int JZNodeObjectManager::getClassId(QString class_name)
+int JZNodeObjectManager::getClassId(const QString &class_name)
 {
     auto it = m_metas.begin();
     while(it != m_metas.end())
@@ -1060,7 +1072,7 @@ int JZNodeObjectManager::getClassId(QString class_name)
     return Type_none;
 }
 
-bool JZNodeObjectManager::isInherits(QString class_name, QString super_name)
+bool JZNodeObjectManager::isInherits(const QString &class_name, const QString &super_name)
 {
     int class_type = getClassId(class_name);
     int super_type = getClassId(super_name);    
@@ -1117,7 +1129,7 @@ JZNodeEnumDefine *JZNodeObjectManager::enumMeta(int type_id)
     return &it.value();
 }
 
-JZNodeEnumDefine *JZNodeObjectManager::enumMeta(QString enumName)
+JZNodeEnumDefine *JZNodeObjectManager::enumMeta(const QString &enumName)
 {
     auto it = m_enums.begin();
     while (it != m_enums.end())
@@ -1138,7 +1150,7 @@ QString JZNodeObjectManager::getEnumName(int type_id)
     return it->name();
 }
 
-int JZNodeObjectManager::getEnumId(QString enumName)
+int JZNodeObjectManager::getEnumId(const QString &enumName)
 {
     auto it = m_enums.begin();
     while (it != m_enums.end())
@@ -1235,7 +1247,7 @@ JZNodeObject* JZNodeObjectManager::createNull(int type)
     return obj;
 }
 
-JZNodeObject* JZNodeObjectManager::createNull(QString name)
+JZNodeObject* JZNodeObjectManager::createNull(const QString &name)
 {
     int id = getClassId(name);
     return create(id);
@@ -1252,13 +1264,13 @@ JZNodeObject* JZNodeObjectManager::create(int type)
     return obj;
 }
 
-JZNodeObject* JZNodeObjectManager::create(QString name)
+JZNodeObject* JZNodeObjectManager::create(const QString &name)
 {
     int id = getClassId(name);
     return create(id);
 }
 
-JZNodeObject* JZNodeObjectManager::createByTypeid(QString type_id)
+JZNodeObject* JZNodeObjectManager::createByTypeid(const QString &type_id)
 {
     Q_ASSERT(m_typeidMetas.contains(type_id));
 
@@ -1274,13 +1286,13 @@ JZNodeObject* JZNodeObjectManager::createRefrence(int type_id, void *ptr, bool o
     return obj;
 }
 
-JZNodeObject* JZNodeObjectManager::createRefrence(QString type_name,void *ptr, bool owner)
+JZNodeObject* JZNodeObjectManager::createRefrence(const QString &type_name,void *ptr, bool owner)
 {
     int type_id = getId(type_name);
     return createRefrence(type_id,ptr,owner);
 }
 
-JZNodeObject* JZNodeObjectManager::createRefrenceByTypeid(QString ctype_id,void *ptr, bool owner)
+JZNodeObject* JZNodeObjectManager::createRefrenceByTypeid(const QString &ctype_id,void *ptr, bool owner)
 {
     if(!m_typeidMetas.contains(ctype_id))
         return nullptr;

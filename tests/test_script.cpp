@@ -188,6 +188,8 @@ void ScriptTest::testBranch()
 
     JZNodeReturn *r1 = new JZNodeReturn();
     JZNodeReturn *r2 = new JZNodeReturn();
+    r1->setFunction(&define);
+    r2->setFunction(&define);
     
     script->addNode(branch);
     script->addNode(eq);
@@ -250,6 +252,7 @@ void ScriptTest::testIf()
         script->addNode(eq);
 
         JZNodeReturn *ret = new JZNodeReturn();
+        ret->setFunction(&define);
         script->addNode(ret);
 
         ret->setParamInValue(0, QString::number(i));
@@ -262,6 +265,7 @@ void ScriptTest::testIf()
     }
 
     JZNodeReturn *ret_else = new JZNodeReturn();
+    ret_else->setFunction(&define);
     script->addNode(ret_else);
     ret_else->setParamInValue(0, "-1");
     script->addConnect(node_if->subFlowOutGemo(4), ret_else->flowInGemo());
@@ -313,6 +317,7 @@ void ScriptTest::testSwitch()
     for (int i = 0; i < 4; i++)
     {
         JZNodeReturn *ret = new JZNodeReturn();
+        ret->setFunction(&define);
         script->addNode(ret);
 
         ret->setParamInValue(0, QString::number(i));
@@ -321,6 +326,7 @@ void ScriptTest::testSwitch()
     }
 
     JZNodeReturn *ret_else = new JZNodeReturn();
+    ret_else->setFunction(&define);
     script->addNode(ret_else);
     ret_else->setParamInValue(0, "-1");
     script->addConnect(node_switch->subFlowOutGemo(4), ret_else->flowInGemo());
@@ -418,6 +424,7 @@ void ScriptTest::testFor()
         JZNodeParam *node_sum = new JZNodeParam();
         JZNodeSetParam *node_set = new JZNodeSetParam();
         JZNodeReturn *node_ret = new JZNodeReturn();
+        node_ret->setFunction(&define);
 
         int start_id = node_start->id();
         int for_id = script->addNode(node_for);
@@ -747,6 +754,105 @@ void ScriptTest::testDebugServer()
     server.stopServer();
 }
 
+void ScriptTest::testUnitTest()
+{
+    JZFunctionDefine def;
+    def.name = "unitTest";
+    def.isFlowFunction = false;
+    def.paramOut.push_back(JZParamDefine("result", Type_int));
+    
+    JZScriptItem *script = m_file->addFunction(def);
+    auto start = script->getNode(0);
+
+    JZNodeFunction *func = new JZNodeFunction();
+    func->setFunction("pow");
+    func->setParamInValue(0,"2");
+    func->setParamInValue(1,"2");
+
+    JZNodeReturn *node_ret = new JZNodeReturn();
+    node_ret->setFunction(&def);
+    script->addNode(func);
+    script->addNode(node_ret);
+
+    script->addConnect(start->flowOutGemo(0),node_ret->flowInGemo());
+    script->addConnect(func->paramOutGemo(0),node_ret->paramInGemo(0));
+
+    if(!build())
+        return;
+
+    QVariantList in,out;    
+    bool ret = m_engine.call("unitTest",in,out);
+    QVERIFY(ret);
+    QCOMPARE(out[0].toInt(),4);
+
+    auto depend = m_builder.compilerInfo(script).depend["unitTest"];
+    QCOMPARE(depend.function.fullName(),"unitTest");
+    QCOMPARE(depend.hook.size(),1);
+    QCOMPARE(depend.hook[0].params.size(),1);
+
+    ret = m_engine.callUnitTest(&depend,out);
+    QVERIFY(ret);
+    QCOMPARE(out[0].toInt(),4);
+
+    depend.hook[0].enable = true;
+    depend.hook[0].params[0].value = "180";
+    ret = m_engine.callUnitTest(&depend,out);
+    QVERIFY(ret);
+    QCOMPARE(out[0].toInt(),180);
+}
+
+void ScriptTest::testUnitTestClass()
+{   
+    auto class_file = m_file->addClass("unitTestClass");
+    
+    JZFunctionDefine def = class_file->objectDefine().initMemberFunction("unitTest");
+    def.isFlowFunction = false;
+    def.paramOut.push_back(JZParamDefine("result", Type_int));
+    
+    JZScriptItem *script = class_file->addMemberFunction(def);
+    auto start = script->getNode(0);
+
+    JZNodeFunction *func = new JZNodeFunction();
+    func->setFunction("pow");
+    func->setParamInValue(0,"2");
+    func->setParamInValue(1,"2");
+
+    JZNodeReturn *node_ret = new JZNodeReturn();
+    node_ret->setFunction(&def);
+    script->addNode(func);
+    script->addNode(node_ret);
+
+    script->addConnect(start->flowOutGemo(0),node_ret->flowInGemo());
+    script->addConnect(func->paramOutGemo(0),node_ret->paramInGemo(0));
+
+    if(!build())
+        return;    
+
+    auto obj = JZNodeObjectManager::instance()->create("unitTestClass");
+    JZNodeObjectPtr ptr(obj,true);
+
+    QVariantList in,out;    
+    in << QVariant::fromValue(ptr);
+    bool ret = m_engine.call(def.fullName(),in,out);
+    QVERIFY(ret);
+    QCOMPARE(out[0].toInt(),4);
+
+    auto depend = m_builder.compilerInfo(script).depend[def.fullName()];
+    QCOMPARE(depend.function.fullName(),def.fullName());
+    QCOMPARE(depend.hook.size(),1);
+    QCOMPARE(depend.hook[0].params.size(),1);
+
+    ret = m_engine.callUnitTest(&depend,out);
+    QVERIFY(ret);
+    QCOMPARE(out[0].toInt(),4);
+
+    depend.hook[0].enable = true;
+    depend.hook[0].params[0].value = "180";
+    ret = m_engine.callUnitTest(&depend,out);
+    QVERIFY(ret);
+    QCOMPARE(out[0].toInt(),180);
+}
+
 void ScriptTest::testExpr()
 {    
     JZScriptItem *script = m_project.mainFunction();
@@ -910,6 +1016,8 @@ void ScriptTest::testFunction()
 
     JZNodeReturn *ret1 = new JZNodeReturn();
     JZNodeReturn *ret2 = new JZNodeReturn();    
+    ret1->setFunction(&fab);
+    ret2->setFunction(&fab);
 
     script->addNode(node_branch);
     script->addNode(node_ge);
@@ -969,6 +1077,8 @@ void ScriptTest::testClass()
     auto addReturn = [](JZScriptItem *script,int num) {
         auto node_start = script->getNode(0);
         JZNodeReturn *node_ret = new JZNodeReturn();
+        node_ret->setFunction(&script->function());
+
         script->addNode(node_ret);
         node_ret->setParamInValue(0, QString::number(num));
         script->addConnect(node_start->flowOutGemo(),node_ret->flowInGemo());

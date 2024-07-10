@@ -129,7 +129,7 @@ public:
     ~JZNodeThis();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void onFileInitialized() override;
+    virtual bool update(QString &error) override;
 };
 
 //JZNodeParam

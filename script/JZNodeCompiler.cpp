@@ -271,40 +271,6 @@ NodeCompilerInfo::NodeCompilerInfo()
     autoAddDebugStart = true;
 }
 
-//ScriptDepend
-void ScriptDepend::clear()
-{
-    function = JZFunctionDefine();
-    member.clear();
-    global.clear();
-    hook.clear();
-}
-
-int ScriptDepend::indexOf(bool isMember, QString name)
-{
-    if (name.startsWith("this."))
-        name = name.mid(5);
-
-    QList<JZParamDefine> *list = isMember ? &member : &global;
-    for (int i = 0; i < list->size(); i++)
-    {
-        if (list->value(i).name == name)
-            return i;
-    }
-
-    return -1;
-}
-
-JZParamDefine *ScriptDepend::param(bool isMember, QString name)
-{
-    int index = indexOf(isMember, name);
-    if (index == -1)
-        return nullptr;
-
-    QList<JZParamDefine> *list = isMember? &member : &global;
-    return &(*list)[index];
-}
-
 //NodeCompilerStack
 JZNodeCompiler::NodeCompilerStack::NodeCompilerStack()
 {
@@ -566,6 +532,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
                 goto buildEnd;
             }
 
+            //确保每个flowIn 都被连接
             for(int i = 0; i < m_originGraph->topolist.size(); i++)
             {
                 auto graph_node = m_originGraph->topolist[i];
@@ -576,6 +543,45 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
                     info.node_id = graph_node->node->id();
                     info.error = "需要连接输入";
                     m_nodeInfo[info.node_id] = info;
+                }
+            }
+
+            for(int i = 0; i < m_originGraph->topolist.size(); i++)
+            {
+                QString error;
+                auto graph_node = m_originGraph->topolist[i];
+                if(!graph_node->node->update(error))
+                {
+                    NodeCompilerInfo info;
+                    info.node_id = graph_node->node->id();
+                    info.error = error;
+                    m_nodeInfo[info.node_id] = info;
+                }
+            }
+
+            for(int i = 0; i < m_originGraph->topolist.size(); i++)
+            {
+                QString error;
+                auto graph_node = m_originGraph->topolist[i];
+
+                auto in_it = graph_node->paramIn.begin();
+                while(in_it != graph_node->paramIn.end())
+                {
+                    JZNodeGemo to = JZNodeGemo(graph_node->node->id(),in_it.key());
+
+                    auto &in_list = in_it.value();
+                    for(int in_idx = 0; in_idx < in_list.size(); in_idx++)
+                    {
+                        JZNodeGemo from = in_list[in_idx];
+                        if(!m_scriptFile->checkConnectType(from,to,error))
+                        {
+                            NodeCompilerInfo info;
+                            info.node_id = graph_node->node->id();
+                            info.error = error;
+                            m_nodeInfo[info.node_id] = info;
+                        }
+                    }
+                    in_it++;
                 }
             }
 
@@ -630,7 +636,7 @@ void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
         int pin_id = list[i];
         auto pin = node->pin(pin_id);
         if(pin->dataType().size() == 1)
-            m_nodeInfo[node->id()].pinType[pin_id] = pin->dataTypeInt().front();
+            m_nodeInfo[node->id()].pinType[pin_id] = pin->dataTypeId().front();
     }
 }
 
@@ -779,81 +785,37 @@ void JZNodeCompiler::updateDispayNode()
     }
 }
 
-void JZNodeCompiler::updateDepend()
+void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
 {
-    if (m_script->functionList.size() == 0)
-        return;
-
-    auto addParam = [this](ScriptDepend &depend, const JZNodeIRParam &ir_param) 
-    {
-        if (!ir_param.isRef())
-            return;
-
-        QString ref = ir_param.ref();
-        auto param_ref = this->getVariableInfo(ref);
-        Q_ASSERT(param_ref);
-
-        JZParamDefine param = *param_ref;
-        bool isMember = true;
-        if (ref.startsWith("this."))
-        {
-            isMember = true;
-            param.name = ref.mid(5);
-        }
-        else
-        {
-            param.name = ref;
-
-            QString base_name = param.name.split(".")[0];
-            if (m_scriptFile->localVariable(base_name))
-                return;
-
-            if (m_scriptFile->project()->globalVariable(base_name))
-                isMember = false;
-            else            
-                isMember = true;            
-        }
-
-        int index = depend.indexOf(isMember, param.name);
-        if (index != -1)
-            return;
-
-        QList<JZParamDefine> *list = isMember ? &depend.member : &depend.global;               
-        list->push_back(param);        
-    };
-
-    m_depend.function = m_script->functionList[0].define;
-    for (int i = 0; i < m_script->statmentList.size(); i++)
+    ScriptDepend depend;
+    depend.function = jzfunc->define;
+    for (int i = jzfunc->addr; i < jzfunc->addrEnd; i++)
     {
         auto *stmt = m_script->statmentList[i].data();
         switch (stmt->type)
         {
-            case OP_set:
+            case OP_call:
             {
-                JZNodeIRSet *set = dynamic_cast<JZNodeIRSet*>(stmt);
-                addParam(m_depend,set->src);
-                break;
-            }
-            case OP_add:
-            case OP_sub:
-            case OP_mul:
-            case OP_div:
-            case OP_mod:
-            case OP_eq:
-            case OP_ne:
-            case OP_le:
-            case OP_ge:
-            case OP_lt:
-            case OP_gt:
-            case OP_and:
-            case OP_or:
-            case OP_bitand:
-            case OP_bitor:
-            case OP_bitxor:
-            {
-                JZNodeIRExpr *expr = dynamic_cast<JZNodeIRExpr*>(stmt);
-                addParam(m_depend, expr->src1);
-                addParam(m_depend, expr->src2);
+                JZNodeIRCall *ir_call = dynamic_cast<JZNodeIRCall*>(stmt);
+                auto func = JZNodeFunctionManager::instance()->function(ir_call->function);
+                int node_id = -1;
+                int pre_count = func->paramIn.size() + 1;
+                if(i >= pre_count && m_script->statmentList[i - pre_count]->type == OP_nodeId)
+                {
+                    auto ir_node = dynamic_cast<JZNodeIRNodeId*>(m_script->statmentList[i - pre_count].data());
+                    if(m_scriptFile->getNode(ir_node->id)->type() == Node_function)
+                        node_id = ir_node->id;
+                }
+
+                if(node_id != -1)
+                {
+                    ScriptDepend::FunctionHook hook;
+                    hook.nodeId = node_id;
+                    hook.pc = i;
+
+                    hook.params = func->paramOut; 
+                    depend.hook.push_back(hook);
+                }
                 break;
             }            
             default:
@@ -861,14 +823,7 @@ void JZNodeCompiler::updateDepend()
         }
     }
 
-    for (int i = 0; i < m_buildGraph->topolist.size(); i++)
-    {
-        auto node = m_buildGraph->topolist[i]->node;
-        if (node->type() == Node_function)
-        {
-            auto *func_node = dynamic_cast<JZNodeFunction*>(node);            
-        }
-    }
+    m_compilerInfo.depend[depend.function.fullName()] = depend;
 }
 
 JZNode* JZNodeCompiler::currentNode()
@@ -1150,8 +1105,6 @@ bool JZNodeCompiler::checkBuildResult()
 void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
 {    
     updateDispayNode();
-    updateDepend();
-    m_compilerInfo.depend[define.fullName()] = m_depend;
 
     JZFunctionDebugInfo func_debug;
     //编译结果    
@@ -1201,6 +1154,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
     impl.addr = start_addr;
     impl.addrEnd = m_script->statmentList.size();
     impl.path = m_script->file;
+    updateDepend(&impl);
 
     m_script->functionList.push_back(impl);
     m_script->functionDebugList.push_back(func_debug);
@@ -1290,7 +1244,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
 
                 from_type.push_back(pinType(from_gemo));
             }
-            pin_type = JZNodeType::matchType(from_type, pin->dataTypeInt());
+            pin_type = JZNodeType::matchType(from_type, pin->dataTypeId());
             if (pin_type == Type_none)
             {
                 error = pin_name + "无法确定输入类型";
@@ -1302,11 +1256,11 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
             if (!pin->value().isEmpty()) //默认值
             {         
                 if(pin->dataType().size() == 1)        
-                    pin_type = pin->dataTypeInt()[0];   
+                    pin_type = pin->dataTypeId()[0];   
                 else if(pin->dataType().size() > 1)
                 {
                     int pin_value_type = JZNodeType::stringType(pin->value());
-                    pin_type = JZNodeType::matchType( {pin_value_type} , pin->dataTypeInt());
+                    pin_type = JZNodeType::matchType( {pin_value_type} , pin->dataTypeId());
                 }
 
                 if (pin_type == Type_none)
@@ -1813,7 +1767,6 @@ void JZNodeCompiler::resetStack()
 {
     m_stackId = Stack_User;
     m_nodeInfo.clear();
-    m_depend.clear();
     m_stackType.clear();
     m_statmentList = nullptr;
     m_regCallFunction = nullptr;
@@ -2252,7 +2205,7 @@ void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRPara
         addConvert(p2,upType,irId(id));
         tmp_p2 = irId(id);
     }
-    if(t2 != upType)
+    if(tDst != dstType)
     {
         int id = allocStack(dstType);
         tmp_dst = irId(id);
@@ -2317,7 +2270,6 @@ bool JZNodeCompiler::irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRPara
 {
     int t1 = irParamType(p1);
     int t2 = irParamType(p2);
-    qDebug() << JZNodeType::typeToName(t1) << JZNodeType::typeToName(t2);
     if(isSet)
         return JZNodeType::isSameType(t1,t2);
     else  //compare

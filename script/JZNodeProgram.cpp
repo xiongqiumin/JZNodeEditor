@@ -183,6 +183,58 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     s >> functionDebugList;
 }
 
+//ScriptDepend
+ScriptDepend::FunctionHook::FunctionHook()
+{
+    enable = false;
+    nodeId = -1;
+    pc = -1;
+}
+
+void ScriptDepend::clear()
+{
+    function = JZFunctionDefine();
+    member.clear();
+    global.clear();
+    hook.clear();
+}
+
+int ScriptDepend::indexOf(bool isMember, QString name)
+{
+    if (name.startsWith("this."))
+        name = name.mid(5);
+
+    QList<JZParamDefine> *list = isMember ? &member : &global;
+    for (int i = 0; i < list->size(); i++)
+    {
+        if (list->value(i).name == name)
+            return i;
+    }
+
+    return -1;
+}
+
+JZParamDefine *ScriptDepend::param(bool isMember, QString name)
+{
+    int index = indexOf(isMember, name);
+    if (index == -1)
+        return nullptr;
+
+    QList<JZParamDefine> *list = isMember? &member : &global;
+    return &(*list)[index];
+}
+
+ScriptDepend::FunctionHook *ScriptDepend::getHook(int node_id)
+{
+    for(int i = 0; i < hook.size(); i++)
+    {
+        if(hook[i].nodeId == node_id)
+            return &hook[i];
+    }
+
+    return nullptr;
+}
+
 //JZNodeTypeMeta
 void JZNodeTypeMeta::clear()
 {
@@ -200,7 +252,7 @@ const JZFunctionDefine *JZNodeTypeMeta::function(QString name) const
         QString func_name = name.mid(index + 1);
         auto obj = object(class_name);
         if (!obj)
-            return false;
+            return nullptr;
 
         return obj->function(func_name);
     }
@@ -366,6 +418,15 @@ JZNodeScript *JZNodeProgram::script(QString path)
     return m_scripts.value(path, JZNodeScriptPtr()).data();
 }
 
+const JZFunctionDefine *JZNodeProgram::function(QString name)
+{
+    auto func = m_typeMeta.function(name);
+    if(func)
+        return func;
+
+    return JZNodeFunctionManager::instance()->function(name);
+}
+
 void JZNodeProgram::registType()
 {
     JZNodeRegistType(m_typeMeta);
@@ -415,7 +476,7 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
             return JZNodeType::typeToName(var_type) + "()";
         }
         else 
-            return "$" + JZNodeType::debugString(param.value) + ":" + JZNodeType::typeToName(var_type);
+            return JZNodeType::debugString(param.value) + ":" + JZNodeType::typeToName(var_type);
     }
     else if(param.type == JZNodeIRParam::Reference)
         return param.ref();

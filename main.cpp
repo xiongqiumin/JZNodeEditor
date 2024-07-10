@@ -14,9 +14,11 @@ void run_testcase(int argc, char *argv[])
 {
     extern void test_script(int argc, char *argv[]);
     extern void test_anglescript(int argc, char *argv[]);
+    extern void test_benchmark(int argc, char *argv[]);
 
-    test_script(argc,argv);
-    test_anglescript(argc,argv);
+    //test_script(argc,argv);
+    //test_anglescript(argc,argv);
+    test_benchmark(argc,argv);
 }   
 
 int main(int argc, char *argv[])
@@ -25,7 +27,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();           
 
-    if(0)
+    if(1)
     {
         run_testcase(argc,argv);
         return 0;

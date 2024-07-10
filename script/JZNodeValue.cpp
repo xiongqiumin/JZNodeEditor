@@ -18,13 +18,13 @@ JZNodeLiteral::~JZNodeLiteral()
 
 int JZNodeLiteral::dataType() const
 {
-    return pin(paramOut(0))->dataTypeInt()[0];
+    return pin(paramOut(0))->dataTypeId()[0];
 }
 
 void JZNodeLiteral::setDataType(int type)
 {
     int out = paramOut(0);
-    pin(out)->setDataTypeInt({type});
+    pin(out)->setDataTypeId({type});
     setName(JZNodeType::typeToName(type));
     if(JZNodeType::isBaseOrEnum(type))
         pin(out)->setFlag(Pin_out | Pin_param | Pin_dispValue | Pin_editValue);
@@ -59,7 +59,7 @@ bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
     int id = c->paramId(m_id,paramOut(0));    
 
     auto pin = this->pin(paramOut(0));
-    QVariant value = JZNodeType::initValue(pin->dataTypeInt()[0],pin->value());
+    QVariant value = JZNodeType::initValue(pin->dataTypeId()[0],pin->value());
     
     c->addSetVariable(irId(id),irLiteral(value));
     c->addNodeDebug(m_id);
@@ -437,15 +437,19 @@ bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-void JZNodeThis::onFileInitialized()
+bool JZNodeThis::update(QString &error) 
 {
     auto class_file = m_file->project()->getItemClass(m_file);
-    Q_ASSERT(class_file);
+    if(!class_file){
+        error = "this not define";
+        return false;
+    }
 
     QString className = class_file->className();
     int data_type = JZNodeObjectManager::instance()->getClassId(className);
     Q_ASSERT(data_type != Type_none);
     setPinType(paramOut(0),{data_type});
+    return false;
 }
 
 //JZNodeParam

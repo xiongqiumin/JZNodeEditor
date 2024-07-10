@@ -257,6 +257,12 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param)
     return s;
 }
 
+//UnitTestResult
+UnitTestResult::UnitTestResult()
+{
+    result = false;
+}
+
 //BreakPoint
 BreakPoint::BreakPoint()
 {    
@@ -288,6 +294,32 @@ public:
 };
 int JZNodeEngineIdlePauseEvent::Event = 0;
 
+
+JZNodeEngine::Stat::Stat()
+{
+    clear();
+}
+
+void JZNodeEngine::Stat::clear()
+{   
+    getTime = 0;
+    setTime = 0;
+    statmentTime = 0;
+    callTime = 0;
+    exprTime = 0;
+}
+
+void JZNodeEngine::Stat::report()
+{
+    QString text;
+    text += "statmentTime:" + QString::number(statmentTime) + "\n"; 
+    text += "callTime:" + QString::number(callTime) + "\n";
+    text += "exprTime:" + QString::number(exprTime) + "\n"; 
+    text += "getTime:" + QString::number(getTime) + "\n"; 
+    text += "setTime:" + QString::number(setTime) + "\n"; 
+    qDebug().noquote() << text;
+}
+
 // JZNodeEngine
 JZNodeEngine *g_engine = nullptr;
 
@@ -308,6 +340,7 @@ JZNodeEngine::JZNodeEngine()
     m_program = nullptr;
     m_script = nullptr;
     m_sender = nullptr;
+    m_depend = nullptr;
     m_pc = -1;        
     m_debug = false;
     m_status = Status_none;
@@ -339,6 +372,7 @@ void JZNodeEngine::clear()
     m_regs.clear();      
 
     m_sender = nullptr;
+    m_depend = nullptr;
     m_statusCommand = Status_none;
     m_status = Status_none;
     m_breakNodeId = -1;    
@@ -364,6 +398,11 @@ void JZNodeEngine::init()
 void JZNodeEngine::deinit()
 {
     clear();    
+}
+
+void JZNodeEngine::statReport()
+{
+    m_stat.report();
 }
 
 JZFunctionDebugInfo *JZNodeEngine::currentFunctionDebugInfo()
@@ -654,8 +693,10 @@ void JZNodeEngine::onSlot(const QString &function,const QVariantList &in,QVarian
     m_sender = nullptr;
 }
 
-QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
+const QVariant &JZNodeEngine::getParam(const JZNodeIRParam &param)
 {       
+    m_stat.getTime++;
+
     if(param.isLiteral())    
         return param.value;
     else if(param.isRef())
@@ -679,6 +720,8 @@ QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
 
 void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
 {
+    m_stat.setTime++;
+
     if (param.isId())
     {        
         if (param.id() >= Reg_Start)
@@ -688,6 +731,7 @@ void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
             QVariant *ref = m_stack.currentEnv()->getRef(param.id());
             if (!ref)
                 throw std::runtime_error("no such variable " + to_string(param.id()));
+
             dealSet(ref, value);
             watchNotify(param.id());
         }
@@ -720,6 +764,91 @@ void JZNodeEngine::initLocal(int id, const QVariant &v)
 Stack *JZNodeEngine::stack()
 {
     return &m_stack;
+}
+
+bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
+{
+    auto toVariant = [this](const JZParamDefine &param,QVariant &v)->bool
+    {
+        if(param.dataType() >= Type_object)
+        {
+            auto obj = objectFromString(param.type, param.value);
+            if(!obj)
+                return false;
+            v = QVariant::fromValue(JZNodeObjectPtr(obj,true));
+        }
+        else
+        {
+            v = JZNodeType::initValue(param.dataType(),param.value);
+        }
+        return true;
+    };
+
+    //init hook function
+    m_dependHook.clear();
+
+    for (int i = 0; i < depend->hook.size(); i++)
+    {
+        if(!depend->hook[i].enable)
+            continue;
+
+        QVariantList value_list;
+        auto &hook_list = depend->hook[i].params;
+        for(int i = 0; i < hook_list.size(); i++)
+        {
+            QVariant v; 
+            if(!toVariant(hook_list[i],v))
+                return false;
+            
+            value_list << v;
+        }
+        m_dependHook[depend->hook[i].pc] = value_list;
+    }
+
+    //global
+    for (int i = 0; i < depend->global.size(); i++)
+    {
+        QVariant v; 
+        if(!toVariant(depend->global[i],v))
+            return false;
+        
+        setVariable(depend->global[i].name,v);
+    }
+
+    //init input
+    QVariantList in;
+    for (int i = 0; i < depend->function.paramIn.size(); i++)
+    {
+        auto &p = depend->function.paramIn[i];
+        if(depend->function.isMemberFunction() && i == 0)
+        {
+            auto obj = JZNodeObjectManager::instance()->create(depend->function.className);
+            JZNodeObjectPtr ptr(obj,true);
+            in << QVariant::fromValue(ptr);
+
+            for(int mem_idx = 0; mem_idx < depend->member.size(); i++)
+            {   
+                QVariant v; 
+                if(!toVariant(depend->member[mem_idx],v))
+                    return false;
+                
+                obj->setParam(depend->member[mem_idx].name,v);
+            }
+        }
+        else
+        {
+            QVariant v; 
+            if(!toVariant(p,v))
+                return false;
+            in << v;
+        }
+    }
+
+    //call
+    m_depend = depend; 
+    bool ret = call(depend->function.fullName(),in,out);
+    m_depend = nullptr;
+    return ret;
 }
 
 void JZNodeEngine::splitMember(const QString &fullName, QStringList &objName,QString &memberName)
@@ -765,7 +894,7 @@ QVariant *JZNodeEngine::getVariableRef(int id, int stack_level)
     return it->data();
 }
 
-QVariant JZNodeEngine::getVariable(int id)
+const QVariant &JZNodeEngine::getVariable(int id)
 {
     QVariant *ref = getVariableRef(id);
     if (!ref)
@@ -828,7 +957,7 @@ QVariant *JZNodeEngine::getVariableRef(const QString &name, int stack_level)
     }
 }
 
-QVariant JZNodeEngine::getVariable(const QString &name)
+const QVariant &JZNodeEngine::getVariable(const QString &name)
 {    
     QVariant *ref = getVariableRef(name);
     if(!ref)
@@ -861,11 +990,8 @@ void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
     *ref = value;
 }
 
-QVariant JZNodeEngine::getThis()
+const QVariant &JZNodeEngine::getThis()
 {    
-    if (m_stack.size() == 0)
-        return QVariant::fromValue(JZObjectNull());
-
     return m_stack.currentEnv()->object;
 }
 
@@ -879,7 +1005,7 @@ void JZNodeEngine::print(const QString &log)
     emit sigLog(log);
 }
 
-QVariant JZNodeEngine::getReg(int id)
+const QVariant &JZNodeEngine::getReg(int id)
 {               
     auto *ref = getRegRef(id);
     if (!ref)
@@ -1099,7 +1225,7 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
     auto &inList = func->define.paramIn;    
     for (int i = 0; i < inList.size(); i++)
     {
-        QVariant v = getReg(Reg_CallIn + i);
+        const QVariant &v = getReg(Reg_CallIn + i);
         Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(v),inList[i].dataType()));        
         if (i == 0 && func->isMemberFunction() && (v.type() != QVariant::String && JZNodeType::isNullObject(v)))
             throw std::runtime_error("object is nullptr");
@@ -1117,6 +1243,12 @@ void JZNodeEngine::checkFunctionOut(const JZFunction *func)
 
 void JZNodeEngine::callCFunction(const JZFunction *func)
 {    
+    if(func->builtIn)
+    {
+        func->builtIn->call(this);
+        return;
+    }
+
     checkFunctionIn(func);
 
     QVariantList paramIn, paramOut;
@@ -1144,7 +1276,7 @@ const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
     auto func_ptr = JZNodeFunctionManager::instance()->functionImpl(name);
     if(!func_ptr)
         return nullptr;
-    if(!func_ptr->isMemberFunction())
+    if(!func_ptr->isVirtualFunction())
         return func_ptr;
         
     QVariant v;
@@ -1162,6 +1294,19 @@ const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
     auto func = obj->function(func_name);
     Q_ASSERT_X(func,"Error",qUtf8Printable("no function " + func_name));
     return JZNodeFunctionManager::instance()->functionImpl(func->fullName());
+}
+
+const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
+{
+    if(ir_call->cache)
+        return ir_call->cache;
+
+    auto func = function(ir_call->function,nullptr);
+    if(func->isMemberFunction())
+        return func;
+
+    ir_call->cache = func;
+    return func;
 }
 
 void JZNodeEngine::unSupportSingleOp(int a, int op)
@@ -1184,6 +1329,57 @@ QVariant JZNodeEngine::dealExprInt(const QVariant &va, const QVariant &vb, int o
 {
     int a = va.toInt();
     int b = vb.toInt();
+    switch (op)
+    {
+    case OP_add:
+        return a + b;
+    case OP_sub:
+        return a - b;
+    case OP_mul:
+        return a * b;
+    case OP_div:
+    {
+        if(b == 0)
+            throw std::runtime_error("divide zero");
+        return a / b;
+    }
+    case OP_mod:
+        return a % b;
+    case OP_eq:
+        return a == b;
+    case OP_ne:
+        return a != b;
+    case OP_le:
+        return a <= b;
+    case OP_ge:
+        return a >= b;
+    case OP_lt:
+        return a < b;
+    case OP_gt:
+        return a > b;
+    case OP_and:
+        return a && b;
+    case OP_or:
+        return a || b;
+    case OP_not:
+        return !a;
+    case OP_bitand:
+        return a & b;
+    case OP_bitor:
+        return a | b;
+    case OP_bitxor:
+        return a ^ b;
+    default:
+        unSupportOp(Type_int, Type_int,op);
+        break;
+    }
+    return QVariant();
+}
+
+QVariant JZNodeEngine::dealExprInt64(const QVariant &va, const QVariant &vb, int op)
+{
+    qint64 a = va.toLongLong();
+    qint64 b = vb.toLongLong();
     switch (op)
     {
     case OP_add:
@@ -1298,12 +1494,13 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
                 break;
         }
     }
-    else if((dataType1 == Type_bool && dataType2 == Type_bool)
-            || (dataType1 == Type_int && dataType2 == Type_bool)
-            || (dataType1 == Type_bool && dataType2 == Type_int)
-            || (dataType1 == Type_int && dataType2 == Type_int))
+    else if((dataType1 >= Type_bool && dataType1 <= Type_int64)
+            && (dataType2 >= Type_bool && dataType2 == Type_int64))
     {
-        return dealExprInt(a, b, op);        
+        if(dataType1 == Type_int64 || dataType2 == Type_int64)
+            return dealExprInt64(a, b, op);
+        else
+            return dealExprInt(a, b, op);
     }
     else if(JZNodeType::isNumber(dataType1) && JZNodeType::isNumber(dataType2))
     {
@@ -1461,11 +1658,10 @@ void JZNodeEngine::updateStatus(int status)
 
 bool JZNodeEngine::run()
 {    
+    bool hook_enable = (m_depend && m_depend->function.fullName() == m_stack.currentEnv()->function->fullName());
     int in_stack_size = m_stack.size();
     while (true)
     {                   
-        Q_ASSERT(m_script);
-        
         if(checkPauseStop())
             return false;
 
@@ -1473,6 +1669,7 @@ bool JZNodeEngine::run()
         //deal op
         JZNodeIR *op = op_list[m_pc].data();           
         int op_type = op->type;
+        m_stat.statmentTime++;
         switch (op_type)
         {
         case OP_nodeId:
@@ -1496,10 +1693,12 @@ bool JZNodeEngine::run()
         case OP_bitor:
         case OP_bitxor:
         {
+            m_stat.exprTime++;
+
             JZNodeIRExpr *ir_expr =  dynamic_cast<JZNodeIRExpr*>(op);
-            QVariant a,b,c;
-            a = getParam(ir_expr->src1);
-            b = getParam(ir_expr->src2);
+            QVariant c;
+            auto &a = getParam(ir_expr->src1);
+            auto &b = getParam(ir_expr->src2);
             c = dealExpr(a,b,ir_expr->type);
             setParam(ir_expr->dst,c);
             break; 
@@ -1507,9 +1706,11 @@ bool JZNodeEngine::run()
         case OP_not:
         case OP_bitresver:
         {
+            m_stat.exprTime++;
+
             JZNodeIRExpr *ir_expr = dynamic_cast<JZNodeIRExpr*>(op);
-            QVariant a, c;
-            a = getParam(ir_expr->src1);
+            QVariant c;
+            auto &a = getParam(ir_expr->src1);
             c = dealSingleExpr(a, ir_expr->type);
             setParam(ir_expr->dst, c);
             break;
@@ -1559,18 +1760,29 @@ bool JZNodeEngine::run()
             break;   
         }
         case OP_call:
-        {            
+        {           
+            m_stat.callTime++;
+
             JZNodeIRCall *ir_call = (JZNodeIRCall*)op;            
-            const JZFunction *func = function(ir_call->function,nullptr);
+            const JZFunction *func = function(ir_call);
             Q_ASSERT(func);            
 
-            if(func->isCFunction())
-                callCFunction(func);
+            if(hook_enable && m_dependHook.contains(m_pc))
+            {
+                auto &hook_list = m_dependHook[m_pc];
+                for(int i = 0; i < hook_list.size(); i++)
+                    setReg(Reg_CallOut + i, hook_list[i]);
+            }
             else
             {
-                checkFunctionIn(func);
-                pushStack(func);
-                continue;
+                if(func->isCFunction())
+                    callCFunction(func);
+                else
+                {
+                    checkFunctionIn(func);
+                    pushStack(func);
+                    continue;
+                }
             }
             break;
         }

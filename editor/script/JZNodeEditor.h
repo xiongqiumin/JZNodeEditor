@@ -10,14 +10,6 @@
 #include "JZNodePropertyEditor.h"
 #include "JZNodeEngine.h"
 
-class UnitTestResult
-{
-public:
-    bool result;
-    QVariantList out;
-    JZNodeRuntimeError runtimeError;
-};
-
 class JZNodeEditor : public JZEditor
 {
     Q_OBJECT

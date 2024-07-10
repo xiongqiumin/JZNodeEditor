@@ -169,6 +169,7 @@ JZNode *ASConvert::toReturn(asCScriptNode *node)
 	Q_ASSERT(node->nodeType == snReturn);
 
 	JZNodeReturn *ret = createNode<JZNodeReturn>();
+	ret->setFunction(&m_script->function());
 	if(node->firstChild)
 	{
 		JZNode *data = toAssignment(node->firstChild);

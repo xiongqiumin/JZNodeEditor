@@ -230,7 +230,7 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
         else if(pin->isEditValue() || pin->isDispValue())
         {            
             JZNodeParamValueWidget *param_widget = new JZNodeParamValueWidget();
-            int up_type = JZNodeType::upType(pin->dataTypeInt());
+            int up_type = JZNodeType::upType(pin->dataTypeId());
             param_widget->initWidget(up_type);            
 
             widget = param_widget;                        

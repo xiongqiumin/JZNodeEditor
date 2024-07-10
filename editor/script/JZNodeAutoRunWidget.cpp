@@ -79,16 +79,14 @@ void JZNodeAutoRunWidget::copyDependValue(ScriptDepend &old, ScriptDepend &dst)
         }
     }
 
-    auto old_it = old.hook.begin();
-    while(old_it != old.hook.end())    
+    for (int i = 0; i < old.hook.size(); i++)    
     {
-        auto new_it = dst.hook.find(old_it.key());
-        if (new_it != dst.hook.end())
+        auto ptr = dst.getHook(old.hook[i].nodeId);
+        if (ptr)
         {
-            if (typeEqual(new_it.value(),old_it.value()))
-                new_it.value() = old_it.value();
+            if (typeEqual(ptr->params, old.hook[i].params))
+                ptr->params = old.hook[i].params;
         }
-        old_it++;
     }
 }
 
@@ -158,14 +156,13 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         auto item_function_hook = new JZNodeProperty("函数返回", NodeProprety_FunctionHook);        
         item_input->addSubProperty(item_function_hook);
 
-        auto it = m_depend.hook.begin();
-        while(it != m_depend.hook.end())
+        for (int i = 0; i < m_depend.hook.size(); i++)
         {
-            QString id = "(" + QString::number(it.key()) + ")";
+            QString id = "(" + QString::number(m_depend.hook[i].nodeId) + ")";
             auto item_function = new JZNodeProperty(id, NodeProprety_GroupId);
             item_function_hook->addSubProperty(item_function);
 
-            auto &node_out = it.value();
+            auto &node_out = m_depend.hook[i].params;
             for (int i = 0; i < node_out.size(); i++)
             {
                 auto sub_item = new JZNodeProperty(node_out[i].name, NodeProprety_Value);
@@ -173,9 +170,8 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
                 sub_item->setValue(node_out[i].value);
 
                 item_function->addSubProperty(sub_item);
-                addPin(sub_item, Pin_hook, i, it.key());
+                addPin(sub_item, Pin_hook, i, m_depend.hook[i].nodeId);
             }
-            it++;
         }
     }
     
@@ -245,7 +241,7 @@ void JZNodeAutoRunWidget::onValueChanged(JZNodeProperty *pin, const QString &val
     else if(coor->type == Pin_global)
         m_depend.global[coor->index].value = value;    
     else if(coor->type == Pin_hook)
-        m_depend.hook[coor->nodeId][coor->index].value = value;
+        m_depend.hook[coor->nodeId].params[coor->index].value = value;
 
     emit sigDependChanged();
 }

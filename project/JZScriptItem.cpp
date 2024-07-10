@@ -220,6 +220,58 @@ int JZScriptItem::parentNode(int id)
         return parentNode(line->from.nodeId);
 }
 
+bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &error)
+{
+    JZNodePin *pin_from = getPin(from);
+    JZNodePin *pin_to = getPin(to);
+
+    //检测数据类型
+    if(pin_from->isParam())
+    {
+        QList<int> from_type = pin_from->dataTypeId();
+        if (from_type.size() == 0)
+        {
+            error = pin_from->name() + "输出数据未设置类型";
+            return false;
+        }
+
+        QList<int> in_type = pin_to->dataTypeId();
+        if (in_type.size() == 0) 
+        {
+            error = "输入数据未设置类型";
+            return false;
+        }
+
+        bool ok = false;
+        for (int i = 0; i < from_type.size(); i++)
+        {
+            for (int j = 0; j < in_type.size(); j++)
+            {
+                if (JZNodeType::canConvert(from_type[i], in_type[j]))
+                {
+                    ok = true;
+                    break;
+                }
+            }
+            if (ok)
+                break; 
+        }        
+        if(!ok)
+        {
+            QStringList inTypes,formTypes;
+            for(int i = 0; i < in_type.size(); i++)
+                inTypes << JZNodeType::typeToName(in_type[i]);
+            for(int i = 0; i < from_type.size(); i++)
+                formTypes << JZNodeType::typeToName(from_type[i]);
+            
+            error = "数据类型不匹配,需要" + inTypes.join(",") + ", 输入为" + formTypes.join(",");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
 {        
     JZNode *node_from = getNode(from.nodeId);
@@ -288,49 +340,9 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         return false;
     }
     //检测数据类型
-    if(pin_from->isParam())
-    {
-        QList<int> from_type = node_from->pinTypeInt(from.pinId);
-        if (from_type.size() == 0)
-        {
-            error = "输出数据未设置类型";
-            return false;
-        }
-
-        QList<int> in_type = node_to->pinTypeInt(to.pinId);
-        if (in_type.size() == 0) 
-        {
-            error = "输入数据未设置类型";
-            return false;
-        }
-
-        bool ok = false;
-        for (int i = 0; i < from_type.size(); i++)
-        {
-            for (int j = 0; j < in_type.size(); j++)
-            {
-                if (JZNodeType::canConvert(from_type[i], in_type[j]))
-                {
-                    ok = true;
-                    break;
-                }
-            }
-            if (ok)
-                break; 
-        }        
-        if(!ok)
-        {
-            QStringList inTypes,formTypes;
-            for(int i = 0; i < in_type.size(); i++)
-                inTypes << JZNodeType::typeToName(in_type[i]);
-            for(int i = 0; i < from_type.size(); i++)
-                formTypes << JZNodeType::typeToName(from_type[i]);
-            
-            error = "数据类型不匹配,需要" + inTypes.join(",") + ", 输入为" + formTypes.join(",");
-            return false;
-        }
-    }
-
+    if(!checkConnectType(from,to,error))
+        return false;
+        
     return true;
 }
 
