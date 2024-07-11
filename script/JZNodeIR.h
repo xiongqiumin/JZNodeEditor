@@ -14,7 +14,7 @@ enum
     OP_nodeId,
     OP_nop,            
     OP_alloc, 
-    OP_clearRegCall,   
+    OP_clearReg,
     OP_set, 
     OP_convert,
     OP_jmp,
@@ -49,10 +49,10 @@ enum{
     Stack_User = 1000000,    
 
     Reg_Start = 2000000,    
-    Reg_Cmp,
+    Reg_Cmp = Reg_Start,
     Reg_CallIn,   //函数传递参数, 调用函数时将 RegCall 数据拷贝到 Stack_User    
-    Reg_CallOut = Reg_CallIn + 100,
-    Reg_End = Reg_CallOut + 100,
+    Reg_CallOut = Reg_CallIn + 16,
+    Reg_End = Reg_CallOut + 16,
 };
 
 class JZNodeIRParam
@@ -71,7 +71,7 @@ public:
     bool isLiteral() const;
     bool isRef() const;
     bool isId() const;
-    bool isRegId() const;
+    bool isReg() const;
     bool isThis() const;
 
     int id() const;

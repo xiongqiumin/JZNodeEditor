@@ -3,6 +3,7 @@
 #include <QTextStream>
 #include <QApplication>
 #include <QDir>
+#include <QTest>
 #include "test_base.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeUtils.h"
@@ -25,10 +26,13 @@ void BaseTest::makeDump()
 
 void BaseTest::callTest(QString function)
 {
-    initTestCase();
-    init();
-    metaObject()->invokeMethod(this,qPrintable(function));
-    cleanup();
+    int argc = 2;
+    QVector<char*> argv;
+    std::string std_func = function.toStdString();
+    argv.push_back(nullptr);
+    argv.push_back(&std_func[0]);
+
+    QTest::qExec(this,argc,argv.data());
 }
 
 

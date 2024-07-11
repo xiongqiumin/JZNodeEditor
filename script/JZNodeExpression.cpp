@@ -90,8 +90,8 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
             error = "无法对" + JZNodeType::typeToName(t1) + "," +  JZNodeType::typeToName(t2) + "进行比较";
             return false;
         }
-        c->setPinType(m_id,t1,in_type);
-        c->setPinType(m_id,t2,in_type);
+        c->setPinType(m_id,input_list[0],in_type);
+        c->setPinType(m_id,input_list[1],in_type);
     }
     
     if(!c->addDataInput(m_id,error))

@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();           
 
-    if(1)
+    if(0)
     {
         run_testcase(argc,argv);
         return 0;
@@ -39,8 +39,8 @@ int main(int argc, char *argv[])
         //SampleSmartHome sample;
         sample.saveProject();
         //sample.loadProject();
-        //sample.run();
-        //return 1;
+        sample.run();
+        return 1;
     }    
 
     if(argc == 1)

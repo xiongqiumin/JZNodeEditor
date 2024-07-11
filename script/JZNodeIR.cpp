@@ -23,7 +23,7 @@ bool JZNodeIRParam::isId() const
     return type == Id;
 }
 
-bool JZNodeIRParam::isRegId() const
+bool JZNodeIRParam::isReg() const
 {
     return type == Id && id() >= Reg_Start;
 }
@@ -115,7 +115,7 @@ JZNodeIR *createNodeIR(int type)
     case OP_nop:
     case OP_return:
     case OP_exit:
-    case OP_clearRegCall:
+    case OP_clearReg:
         return new JZNodeIR(type);
     case OP_alloc:
         return new JZNodeIRAlloc();

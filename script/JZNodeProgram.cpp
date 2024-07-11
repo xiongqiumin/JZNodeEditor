@@ -513,6 +513,9 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
             line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id);
         break;
     }
+    case OP_clearReg:
+        line += "CLEAR REG";
+        break;
     case OP_set:
     {
         JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
@@ -534,9 +537,6 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
     }
     case OP_return:
         line += "RETURN";
-        break;
-    case OP_clearRegCall:
-        line += "CLEAR REG CALL";
         break;
     case OP_exit:
         line += "EXIT";

@@ -25,12 +25,16 @@ class RunnerEnv
 {
 public:
     RunnerEnv();
+    ~RunnerEnv();
     
     void initVariable(QString name, const QVariant &value);
     void initVariable(int id, const QVariant &value);
 
     QVariant *getRef(int id);
     QVariant *getRef(QString name);
+
+    void clearIrCache();
+    void applyIrCache();
 
     const JZFunction *function;
     QVariant object;      //this    
@@ -39,6 +43,7 @@ public:
     
     QMap<QString,QVariantPtr> locals;
     QMap<int,QVariantPtr> stacks;
+    QMap<JZNodeIRParam*,QVariant*> irParamCache;
 };
 
 class Stack
@@ -177,6 +182,7 @@ public:
 
     QVariant *getVariableRef(const QString &name);        
     QVariant *getVariableRef(const QString &name,int stack_level);
+    QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
     const QVariant &getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
 
@@ -196,6 +202,7 @@ public:
     void invoke(const QString &function,const QVariantList &in,QVariantList &out);
     void onSlot(const QString &function,const QVariantList &in,QVariantList &out);
     void print(const QString &log);
+    void printMemory();
 
 signals:
     void sigNodePropChanged(QString file,int id,QString value);
@@ -247,15 +254,16 @@ protected:
     void initGlobal(QString name, const QVariant &v);
     void initLocal(QString name, const QVariant &v);
     void initLocal(int id, const QVariant &v);
+    void clearReg();
 
     void pushStack(const JZFunction *define);
     void popStack();
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
         
-    const QVariant &getParam(const JZNodeIRParam &param);    
-    void setParam(const JZNodeIRParam &param,const QVariant &value);
-    QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
+    const QVariant &getParam(JZNodeIRParam &param);    
+    void setParam(JZNodeIRParam &param,const QVariant &value);
+    QVariant *getParamRef(JZNodeIRParam &param);
         
     int nodeIdByPc(int pc);        
     int nodeIdByPc(JZNodeScript *script,QString func, int pc);    
@@ -280,7 +288,7 @@ protected:
 
     Stack m_stack;
     QMap<QString,QVariantPtr> m_global;
-    QMap<int,QVariantPtr> m_regs;
+    QVector<QVariant> m_regs;
     JZNodeObject *m_sender;
     qint64 m_watchTime;
            

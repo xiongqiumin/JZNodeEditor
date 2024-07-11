@@ -101,6 +101,7 @@ public:
     static int nameToType(const QString &name);
     static int typeidToType(const QString &name);
     static int variantType(const QVariant &v);
+    static QString variantTypeName(const QVariant &v);
     static int stringType(const QString &text);
 
     static bool canConvert(int from,int to);    //隐式转换

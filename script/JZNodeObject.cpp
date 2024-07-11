@@ -173,6 +173,7 @@ JZFunctionDefine JZNodeObjectDefine::initVirtualFunction(QString name)
     Q_ASSERT(func_def);
 
     JZFunctionDefine new_def = *func_def;
+    new_def.isCFunction = false;
     new_def.className = className;
     return new_def;
 }
@@ -467,7 +468,15 @@ JZNodeObject::JZNodeObject(JZNodeObjectDefine *def)
 JZNodeObject::~JZNodeObject()
 {    
     if(m_cobjOwner && m_define->isCObject)
+    {
+        if (isInherits("Object"))
+        {
+            auto obj = (QObject*)m_cobj;
+            if(obj->parent())
+                return;
+        }
         m_define->cMeta.destory(m_cobj);
+    }
 }
 
 bool JZNodeObject::isNull() const

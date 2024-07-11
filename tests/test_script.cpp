@@ -211,6 +211,7 @@ void ScriptTest::testBranch()
 
     if (!build())
         return;
+    dumpAsm("testBranch.jsm");
 
     QVariantList in, out;
     in = { 0 ,1 };

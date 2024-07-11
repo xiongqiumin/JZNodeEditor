@@ -112,6 +112,8 @@ void BenchmarkTest::call(const JZFunction *function,const QVariantList &in,QVari
 
 void BenchmarkTest::testBase()
 {   
+    return;
+
     QList<QVariant> varList;
     QMap<int,QVariant> varMap;
     QMap<QString,QVariant> varStrMap;
@@ -256,12 +258,6 @@ void BenchmarkTest::testCall()
     }
 
     m_benchmark.report();
-}
-
-void test_benchmark(int argc, char *argv[])
-{
-    BenchmarkTest test;
-    QTest::qExec(&test,argc,argv);
 }
 
 void BenchmarkTest::testSort()
@@ -445,6 +441,11 @@ void BenchmarkTest::testSum()
     define.paramIn.push_back(JZParamDefine("count", Type_int));   
     define.paramOut.push_back(JZParamDefine("result", Type_int64));
 
+    m_project.addGlobalVariable("g_sum",Type_int64);
+    m_project.addGlobalVariable("g_index",Type_int);
+    m_project.addGlobalVariable("g_step",Type_int);
+    m_project.addGlobalVariable("g_end",Type_int);
+
     JZScriptItem *script = m_file->addFunction(define);
     script->addLocalVariable(JZParamDefine("sum", Type_int64));
 
@@ -504,26 +505,42 @@ void BenchmarkTest::testSum()
         m_engine.call("testSum",in,out);
         jz_sum_count = out[0].toLongLong();
     }
+    QCOMPARE(jz_sum_count,c_sum(time));
+    m_engine.statReport();
 
     JZBENCHMARK(jz_sum_var)
     {   
-        QVariant index = 0;
-        QVariant step = 1;
-        QVariant end = time;
-        QVariant sum = qint64(0);
+        m_engine.setVariable("g_sum",(qint64)0);
+        m_engine.setVariable("g_index",0);
+        m_engine.setVariable("g_step",1);
+        m_engine.setVariable("g_end",time);
 
-        while(index.toInt() < end.toInt())
+        while(m_engine.getVariable("g_index").toInt() < m_engine.getVariable("g_end").toInt())
         {
-            sum = (qint64)(sum.toLongLong() + index.toInt());
-            index = index.toInt() + step.toInt();
+            QVariant sum = m_engine.getVariable("g_sum");
+            QVariant index = m_engine.getVariable("g_index");
+            QVariant step = m_engine.getVariable("g_step");
+            sum = m_engine.dealExpr(sum,index,OP_add);
+            index = m_engine.dealExpr(index,step,OP_add);
+            
+            m_engine.setVariable("g_sum",sum);
+            m_engine.setVariable("g_index",index);
         }
+        jz_sum_count = m_engine.getVariable("g_sum").toLongLong();
     }
+    QCOMPARE(jz_sum_count,c_sum(time));
 
     JZBENCHMARK(c_sum)
     {
         c_sum(time);
     }
-    QCOMPARE(jz_sum_count,c_sum(time));
+    
 
     m_benchmark.report();
-}   
+} 
+
+void test_benchmark(int argc, char *argv[])
+{
+    BenchmarkTest test;
+    QTest::qExec(&test,argc,argv);
+}

@@ -158,6 +158,11 @@ int JZNodeType::variantType(const QVariant &v)
     return Type_none;
 }
 
+QString JZNodeType::variantTypeName(const QVariant &v)
+{
+    return typeToName(variantType(v));
+}
+
 bool JZNodeType::isBool(int type)
 {
     return (type == Type_bool);

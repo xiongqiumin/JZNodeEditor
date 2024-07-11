@@ -74,10 +74,7 @@ public:
 class JZNodeIRStackInit : public JZNodeIR
 {
 public:
-    JZNodeIRStackInit(int node_id,int prop_id);
-
-    int nodeId;
-    int pinId;
+    JZNodeIRStackInit();
 };
 
 //NodeCompilerInfo
@@ -212,6 +209,7 @@ public:
     void addAssert(const JZNodeIRParam &tips);       
 
     JZNodeIR *lastStatment();
+    void removeStatement(int pc);
     void replaceStatement(int pc,JZNodeIRPtr ir);
     void replaceStatement(int pc,QList<JZNodeIRPtr> ir_list);    
     
@@ -265,7 +263,7 @@ protected:
     
     void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
     void updateFlowOut();    
-    void linkNodes();
+    void linkNodes(QList<GraphNode *> flow_list);
     void updateDebugInfo();
     void updateDispayNode();
     void updateDepend(const JZFunction *define);
