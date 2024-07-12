@@ -384,7 +384,7 @@ bool JZNodeCompiler::genGraphs(JZScriptItem *scriptFile, QVector<GraphPtr> &list
     return true;
 }
 
-CompilerInfo JZNodeCompiler::compilerInfo()
+CompilerResult JZNodeCompiler::compilerResult()
 {    
     return m_compilerInfo;
 }
@@ -498,7 +498,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     m_script->clear();
     m_script->file = scriptFile->itemPath();    
     m_script->className = scriptFile->className();
-    m_compilerInfo = CompilerInfo();
+    m_compilerInfo = compilerResult();
     m_compilerInfo.result = false;
 
     JZScriptClassItem *class_file = m_project->getItemClass(scriptFile);

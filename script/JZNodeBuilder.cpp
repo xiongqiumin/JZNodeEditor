@@ -103,13 +103,13 @@ bool JZNodeBuilder::initGlobal()
     return true;
 }
 
-CompilerInfo JZNodeBuilder::compilerInfo(JZScriptItem *file) const
+const CompilerResult *JZNodeBuilder::compilerInfo(JZScriptItem *file) const
 {
     auto it = m_scripts.find(file->itemPath());
     if (it == m_scripts.end())
-        return CompilerInfo();
+        return nullptr;
 
-    return it->compilerInfo;
+    return &it->compilerInfo;
 }
 
 bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
@@ -127,7 +127,7 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
     JZNodeScript *script = m_scripts[path].script.data();
 
     bool ret = m_compiler.build(scriptFile, script);
-    m_scripts[path].compilerInfo = m_compiler.compilerInfo();
+    m_scripts[path].compilerInfo = m_compiler.compilerResult();
     if(!ret)
     {
         m_error += m_compiler.error();

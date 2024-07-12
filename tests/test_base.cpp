@@ -46,6 +46,7 @@ void BaseTest::init()
     m_project.clear();
     m_project.initProject("console");
     m_file = m_project.mainFile();
+    m_engine.setDebug(false);
 }
 
 void BaseTest::cleanup()

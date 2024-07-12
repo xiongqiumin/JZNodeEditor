@@ -2068,13 +2068,13 @@ void JZNodeView::onMapSceneScaled(bool flag)
     sceneScale(rect().center(), flag);
 }
 
-void JZNodeView::setCompierResult(const CompilerInfo &compilerInfo)
+void JZNodeView::setCompilerResult(const CompilerResult *compilerInfo)
 {
     foreachNode([](JZNodeGraphItem *node) {
         node->clearError();
     });
         
-    auto &nodeError = compilerInfo.nodeError;
+    auto &nodeError = compilerInfo->nodeError;
     auto it = nodeError.begin();
     while (it != nodeError.end())
     {
@@ -2084,6 +2084,6 @@ void JZNodeView::setCompierResult(const CompilerInfo &compilerInfo)
     }   
     m_map->updateMap();
 
-    if(compilerInfo.result)
+    if(compilerInfo->result)
         autoRunning();
 }

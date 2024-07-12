@@ -95,7 +95,7 @@ QString JZNodeType::typeToName(int id)
 {            
     if(isEnum(id))
         return JZNodeObjectManager::instance()->getEnumName(id);
-    else if (id >= Type_object)
+    else if (id >= Type_class)
         return JZNodeObjectManager::instance()->getClassName(id);
     else
         return typeMap.key(id, "unknown type " + QString::number(id));
@@ -209,7 +209,7 @@ bool JZNodeType::isBase(int type)
 
 bool JZNodeType::isObject(int type)
 {
-    return (type == Type_nullptr || type >= Type_object);
+    return (type == Type_nullptr || type >= Type_class);
 }
 
 int JZNodeType::isInherits(const QString &type1,const QString &type2)
@@ -232,7 +232,7 @@ bool JZNodeType::isSameType(int type1,int type2)
         return true;
     else if((isEnum(type1) && type2 == Type_int) || (type1 == Type_int && isEnum(type2))) 
         return true;
-    else if(type1 >= Type_object && type2 >= Type_object)
+    else if(type1 >= Type_class && type2 >= Type_class)
         return isInherits(type1,type2);
 
     qDebug() << JZNodeType::typeToName(type1) << JZNodeType::typeToName(type2);
@@ -314,9 +314,9 @@ bool JZNodeType::canConvert(int type1,int type2)
         
         return false;
     }
-    if (type1 == Type_nullptr && type2 >= Type_object)
+    if (type1 == Type_nullptr && type2 >= Type_class)
         return true;
-    if(type1 >= Type_object && type2 >= Type_object)
+    if(type1 >= Type_class && type2 >= Type_class)
     {
         auto inst = JZNodeObjectManager::instance();        
         return inst->isInherits(type1,type2);
@@ -443,12 +443,12 @@ QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
         auto *ptr = (const JZNodeVariantAny*)v.data();
         return convertTo(dst_type,ptr->value);
     }
-    else if (src_type == Type_nullptr && dst_type >= Type_object)
+    else if (src_type == Type_nullptr && dst_type >= Type_class)
     {        
         auto null_obj = JZNodeObjectManager::instance()->createNull(dst_type);
         return QVariant::fromValue(JZNodeObjectPtr(null_obj,true));
     }
-    else if(src_type >= Type_object && dst_type >= Type_object)
+    else if(src_type >= Type_class && dst_type >= Type_class)
     {
         if(JZNodeObjectManager::instance()->isInherits(src_type,dst_type))
             return v;
@@ -518,7 +518,7 @@ QVariant JZNodeType::clone(const QVariant &v)
     }
     else if (JZNodeType::isBaseOrEnum(v_type))
         return v;
-    else if(v_type > Type_object)
+    else if(v_type > Type_class)
     {
         auto obj = toJZObject(v);
         auto new_obj = JZNodeObjectManager::instance()->clone(obj);
@@ -546,10 +546,10 @@ int JZNodeType::upType(int type1, int type2)
     if(type1 == Type_int && isEnum(type2)) 
         return Type_int;
 
-    if(type1 == Type_nullptr && type2 >= Type_object)
+    if(type1 == Type_nullptr && type2 >= Type_class)
         return type2;
 
-    if(type1 >= Type_object && type2 >= Type_object)
+    if(type1 >= Type_class && type2 >= Type_class)
     {
         if(isInherits(type2,type1))
             return type1;
@@ -663,13 +663,13 @@ QVariant JZNodeType::initValue(int type, const QString &text)
         func.functionName = text;
         return QVariant::fromValue(JZFunctionPointer());
     }
-    else if(type >= Type_enum && type < Type_object)
+    else if(type >= Type_enum && type < Type_class)
     {
         auto enum_meta = JZNodeObjectManager::instance()->enumMeta(type);
         if(enum_meta->hasKey(text))
             return enum_meta->keyToValue(text);
     }
-    else if(type >= Type_object)
+    else if(type >= Type_class)
     {
         if(text == "null")
         {
@@ -780,12 +780,12 @@ QVariant JZNodeType::defaultValue(int type)
         return QVariant::fromValue(JZFunctionPointer());
     else if(type == Type_nullptr)
         return QVariant::fromValue(JZObjectNull());
-    else if(type >= Type_enum && type < Type_object)
+    else if(type >= Type_enum && type < Type_class)
     {
         auto e = JZNodeObjectManager::instance()->createEnum(type);
         return QVariant::fromValue(e);
     }
-    else if(type >= Type_object)
+    else if(type >= Type_class)
     {
         JZNodeObject *obj = JZNodeObjectManager::instance()->createNull(type);
         return QVariant::fromValue(JZNodeObjectPtr(obj,true));

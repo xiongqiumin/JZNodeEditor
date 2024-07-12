@@ -33,7 +33,7 @@ QString JZList::type() const
     return "List<" + valueType + ">";
 }
 
-void listCheckSize(int index, int size)
+inline void listCheckSize(int index, int size)
 {
     if (index < 0 || index >= size)
     {
@@ -320,7 +320,7 @@ bool JZMap::Key::operator<(const JZMap::Key &other) const
         return v.toInt() < other.v.toInt();
     else if(type == Type_string)
         return v.toString() < other.v.toString();
-    else if(type > Type_object)
+    else if(type >= Type_class)
         return toJZObject(v) < toJZObject(other.v);
     else
     {
@@ -447,7 +447,6 @@ void registMap(QString key_type, QString value_type,int type_id)
     func_def.isFlowFunction = true;
     map.addFunction(func_def);
     registFunction(func_def, mapClear);
-
 
     inst->regist(map);
 

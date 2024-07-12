@@ -17,7 +17,7 @@ public:
     void stopRun();
 
 signals:
-    void sigResult(QSharedPointer<UnitTestResult> result);
+    void sigResult(UnitTestResultPtr result);
 
 protected:
     virtual void run() override;
@@ -26,6 +26,7 @@ protected:
     JZNodeProgram *m_program;
     ScriptDepend m_depend;
     UnitTestResult ret;
+    bool m_cancel;
 };
 
 #endif

@@ -665,7 +665,7 @@ bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
 JZNodeAbstractMember::JZNodeAbstractMember()
 {
     addParamIn("Object",Pin_dispName);
-    setPinType(paramIn(0), { Type_object });
+    setPinType(paramIn(0), { Type_class });
 }
 
 JZNodeAbstractMember::~JZNodeAbstractMember()

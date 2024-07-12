@@ -3,9 +3,13 @@
 #include "JZNodeEngine.h"
 #include "JZNodeObjectParser.h"
 
+JZNodeObjectParser::Token::Token()
+{
+    index = -1;
+}
+
 JZNodeObjectParser::JZNodeObjectParser()
 {
-    m_col = m_line = -1;
     m_currentIndex = 0;
     m_gapList << ',' << ':' << '[' << ']' << '{' << '}';
 }
@@ -14,18 +18,142 @@ JZNodeObjectParser::~JZNodeObjectParser()
 {        
 }
 
-void JZNodeObjectParser::iniContext(const QString &text)
+bool JZNodeObjectParser::iniContext(const QString &text)
 {
     m_content = text;
-    m_col = 0;
-    m_line = 0;
     m_currentIndex = 0;
     m_error.clear();
+    m_tokenList.clear();
+
+    QString pre;
+    int pre_idx = -1;
+
+    auto pushPre = [this,&pre,&pre_idx] 
+    {
+        if(pre.size() != 0)
+        {
+            Token tk;
+            tk.index = pre_idx;
+            tk.word = pre;
+            m_tokenList << tk;
+
+            pre.clear();
+            pre_idx = -1;
+        }
+    };
+
+    for(int i = 0; i < m_content.size(); i++)
+    {
+        QChar c = m_content[i];
+        if(m_gapList.contains(c) || c.isSpace())
+        {
+            pushPre();
+            if(!c.isSpace())
+            {
+                Token tk;
+                tk.index = i;
+                tk.word = QString(c);
+                m_tokenList << tk;
+            }
+        }
+        else if(c == '"')
+        {
+            pushPre();
+
+            bool find = true;
+            i++;
+
+            QString str;
+            str.push_back(c);
+            while (i < m_content.size())
+            {
+                QChar c = m_content[i];
+                str.push_back(c);
+
+                if (c == '\\')
+                {
+                }
+                else if (c == '"')
+                {
+                    find = true;
+                    break;
+                }
+                i++;
+            }
+
+            if(!find)
+            {
+                m_error = "string not end";
+                return false;
+            }
+
+            Token tk;
+            tk.index = i;
+            tk.word = str;
+            m_tokenList << tk;
+        }
+        else
+        {
+            if(pre.isEmpty())
+                pre_idx = i;
+
+            pre.push_back(c);
+            if(c == '<')
+            {   
+                i++;
+
+                bool find = false;
+                int bkt_num = 1;
+                while(i < m_content.size())
+                {
+                    pre.push_back(m_content[i]);
+                    if(m_content[i] == '<')
+                        bkt_num++;
+                    if(m_content[i] == '>')
+                    {
+                        bkt_num--;
+                        if(bkt_num == 0)
+                        {
+                            find = true;
+                            break;
+                        }
+                    }
+                    i++;
+                }
+
+                if(!find)
+                {
+                    m_error = "> not end";
+                    return false;
+                }
+            }
+        }
+    }
+    pushPre();
+
+    return true;
+}
+
+void JZNodeObjectParser::getRowCol(int index,int &row,int &col)
+{
+    row = 0;
+    col = 0;
+    for(int i = 0; i < index; i++)
+    {   
+        col++;
+        if(m_content[i] == '\n')
+        {
+            row++;
+            col = 0;
+        }
+    }
 }
 
 void JZNodeObjectParser::makeError(const QString &error)
 {
-    m_error = "row: " + QString::number(m_line + 1) + ",col: " + QString::number(m_col + 1) + " " + error; 
+    int line,col;
+    getRowCol(m_currentIndex,line,col);
+    m_error = "row: " + QString::number(line + 1) + ",col: " + QString::number(col + 1) + " " + error; 
 }
 
 void JZNodeObjectParser::makeExpectError(QString text,QString give)
@@ -55,86 +183,41 @@ QString JZNodeObjectParser::error()
     return m_error;
 }
 
-QChar JZNodeObjectParser::nextChar()
+JZNodeObjectParser::Token JZNodeObjectParser::nextToken()
 {
-    int index = m_currentIndex;
-    while (index < m_content.size())
+    if(m_currentIndex  < m_tokenList.size())
+        return m_tokenList[m_currentIndex];
+    else
     {
-        QChar c = m_content[index++];        
-        if (!c.isSpace())        
-            return c;        
+        return Token();
     }
-    return EOF;
 }
 
-QChar JZNodeObjectParser::readChar()
+JZNodeObjectParser::Token JZNodeObjectParser::readToken()
 {
-    while (m_currentIndex < m_content.size())
+    if(m_currentIndex < m_tokenList.size())
     {
-        QChar c = m_content[m_currentIndex++];
-        m_col++;
-
-        if (!c.isSpace())
-        {
-            return c;
-        }
-        else if (c == '\r')
-        {
-            m_col = 0;
-            m_line++;
-        }                
+        int index = m_currentIndex;
+        m_currentIndex++;
+        return m_tokenList[index];
     }
-    return EOF;
+    else
+    {
+        return Token();
+    }
 }
 
-QString JZNodeObjectParser::readWord()
+void JZNodeObjectParser::pushToken()
 {
-    QString word;
-    while (m_currentIndex < m_content.size())
-    {
-        QChar c = m_content[m_currentIndex++];
-        if (c.isSpace())
-        {
-            if (c == '\n')
-            {
-                m_col = 0;
-                m_line++;
-            }
-            if (!word.isEmpty())
-                break;
-        }
-        else if (c == '<')
-        {
-            word.push_back(c);
-            while(true)
-            {
-                c = readChar();
-                word.push_back(c);
-                if(c == '>')
-                    break;
-                if(m_currentIndex == m_content.size())
-                    return word;
-            }
-        }
-        else if (m_gapList.contains(c))
-        {
-            m_currentIndex--;
-            break;
-        }
-        else
-        {
-            word.push_back(c);
-        }
-        m_col++;
-    }
-    return word;
+    Q_ASSERT(m_currentIndex > 0);
+    m_currentIndex--;
 }
 
-JZList *JZNodeObjectParser::readList(QString valueType,QChar gap)
+JZList *JZNodeObjectParser::readList(QString valueType,QString gap)
 {    
-    QChar c = readChar();
-    Q_ASSERT(c == gap);
-    gap = (gap == '[')? ']':'}';
+    Token c = readToken();
+    Q_ASSERT(c.word == gap);
+    gap = (gap == "[")? "]":"}";
 
     int data_type = JZNodeType::nameToType(valueType);
     QScopedPointer<JZList> ptr(new JZList());
@@ -148,13 +231,13 @@ JZList *JZNodeObjectParser::readList(QString valueType,QChar gap)
         v = JZNodeType::convertTo(data_type,v);
         ptr->list.push_back(v);
 
-        c = readChar();
-        if (c == gap)
+        c = readToken();
+        if (c.word == gap)
             break;
        
-        if (c != ',')
+        if (c.word != ",")
         {
-            makeExpectError(",",c);
+            makeExpectError(",",c.word);
             return nullptr;
         }
     }
@@ -164,8 +247,8 @@ JZList *JZNodeObjectParser::readList(QString valueType,QChar gap)
 
 JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
 {
-    QChar c = readChar();
-    Q_ASSERT(c == '{');
+    Token c = readToken();
+    Q_ASSERT(c.word == "{");
 
     int key_type = JZNodeType::nameToType(keyType);
     int value_type = JZNodeType::nameToType(valueType);
@@ -178,12 +261,12 @@ JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
         QVariant key = readVariable();
         if(!checkVariable(key,key_type))
             return nullptr;
+
         key = JZNodeType::convertTo(key_type,key);
-        
-        c = readChar();
-        if (c != ':')
+        c = readToken();
+        if (c.word != ":")
         {
-            makeExpectError(":",c);
+            makeExpectError(":",c.word);
             return nullptr;        
         }
 
@@ -196,12 +279,12 @@ JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
         map_key.v = key;
         ptr->map.insert(map_key, value);
 
-        c = readChar();
-        if (c == '}')
+        c = readToken();
+        if (c.word == "}")
             break;
-        if (c != ',')
+        if (c.word != ",")
         {
-            makeExpectError(",",c);
+            makeExpectError(",",c.word);
             return nullptr;
         }
     }
@@ -212,34 +295,21 @@ JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
 JZNodeObject *JZNodeObjectParser::readObject()
 {    
     auto inst = JZNodeObjectManager::instance();
-    QString type = readWord();
-    if (type.isEmpty())
-    {
-        QChar c = nextChar();
-        if(c == '{')
-        {
-            auto map = readMap("string","any");
-            if(map)
-                return inst->createRefrence(map->type(),map,true);
-        }
-        else if(c == '[')
-        {
-            auto list = readList("any",'[');
-            if(list)
-                return inst->createRefrence(list->type(),list,true);
-        }
+    Token tk = nextToken();
+    QString type = tk.word;
 
+    if (type == "{")
+    {
+        auto map = readMap("string","any");
+        if(map)
+            return inst->createRefrence(map->type(),map,true);
         return nullptr;
     }
-
-    if(!JZRegExpHelp::isWord(type))
+    else if(type == "[")
     {
-        m_error = "error format " + type;
-        return nullptr;
-    }
-    if(nextChar() != '{')
-    {
-        makeExpectError("{", nextChar());
+        auto list = readList("any","[");
+        if(list)
+            return inst->createRefrence(list->type(),list,true);
         return nullptr;
     }
     
@@ -250,11 +320,17 @@ JZNodeObject *JZNodeObjectParser::readObject()
         return nullptr;
     }
 
+    readToken();
+    if(nextToken().word != "{")
+    {
+        makeExpectError("{", nextToken().word);
+        return nullptr;
+    }
     if(type.startsWith("List<"))
     {
         int end_idx = type.lastIndexOf(">");
         QString value_type = type.mid(5,end_idx - 5);
-        auto list = readList(value_type,'{');
+        auto list = readList(value_type,"{");
         if(list)
             return inst->createRefrence(list->type(),list,true);
         return nullptr;
@@ -318,12 +394,13 @@ JZNodeObject *JZNodeObjectParser::readObject()
 
 QVariant JZNodeObjectParser::readVariable()
 {
-    QChar c = nextChar();
+    Token tk = readToken();
 
+    QChar c = tk.word[0];
     JZNodeObject *obj = nullptr;
     if (c.isDigit() || c == '-')
     {
-        QString text = readWord();
+        QString text = tk.word;
         if (JZRegExpHelp::isInt(text))
             return text.toInt();
         else if (JZRegExpHelp::isHex(text))
@@ -335,14 +412,11 @@ QVariant JZNodeObjectParser::readVariable()
     }
     else if(c == '"')
     {
-        QString text;
-        if(readString(text))
-            return text;
-        else
-            return QVariant();
+        return JZNodeType::removeQuote(tk.word);
     }
     else
     {
+        pushToken();
         obj = readObject();
         if (!obj)
             return QVariant();
@@ -353,76 +427,33 @@ QVariant JZNodeObjectParser::readVariable()
 
 bool JZNodeObjectParser::checkIsEnd()
 {    
-    return (nextChar() == EOF);
-}
-
-bool JZNodeObjectParser::readString(QString &text)
-{
-    QChar c = readChar();
-    Q_ASSERT(c == '\"');
-
-    QString word;
-    while (m_currentIndex < m_content.size())
-    {
-        QChar c = m_content[m_currentIndex++];
-        m_col++;
-
-        if (c == '\\')
-        {
-            if (m_currentIndex < m_content.size() - 2
-                && m_content[m_currentIndex] == '0'
-                && m_content[m_currentIndex].toLower() == 'x')
-            {                
-            }
-            else if (m_currentIndex < m_content.size())
-            {                
-            }
-        }
-        else if (c == '\"')
-        {
-            text = word;
-            return true;
-        }
-
-        word.push_back(c);
-    }
-
-    makeError("except '\"'");
-    return false;
+    return (m_currentIndex == m_tokenList.size());
 }
 
 bool JZNodeObjectParser::readBkt(QString &context)
 {
-    if (readChar() != '{')
+    if (readToken().word != "{")
         return false;
 
-    int start = m_currentIndex;
+    int start = nextToken().index;
     int bkt_num = 1;
-    QString word;
-    while (m_currentIndex < m_content.size())
+    while (m_currentIndex < m_tokenList.size())
     {
-        QChar c = m_content[m_currentIndex++];
-        m_col++;
+        Token c = m_tokenList[m_currentIndex++];
 
-        if (c == '{')
+        if (c.word == "{")
             bkt_num++;
-        else if (c == '}')
+        else if (c.word == "}")
         {
             bkt_num--;
             if (bkt_num == 0)
             {
-                context = word;
+                context = m_content.mid(start,c.index - start);
                 return true;
             }
         }
-        else if (c == '\"')
-        {
-            QString tmp;
-            if (!readString(tmp))
-                return false;
-        }        
-        word.push_back(c);
     }
+
     return false;
 
 }
@@ -437,7 +468,7 @@ JZNodeObject *JZNodeObjectParser::parse(const QString &text)
     
     if (!checkIsEnd())
     {   
-        m_error = "no expect char '" + QString(nextChar()) + "'";
+        m_error = "no expect char '" + nextToken().word + "'";
         delete obj;
         return nullptr;
     }
@@ -451,21 +482,23 @@ JZNodeObject *JZNodeObjectParser::parseToType(QString type,const QString &text)
     return parse(type_text);
 }
 
-QStringList JZNodeObjectParser::parseStringList(const QString &format, const QString &text)
+bool JZNodeObjectParser::parseVariantList(const QString &format, const QString &text,QVariantList &result)
 {
-    QStringList ret;
+    QVariantList ret;
     iniContext(text);
 
     for (int i = 0; i < format.size(); i++)
     {
-        QChar c = format[i];
-        QString word = readWord();
+        QString c = format[i];
+        Token tk = readToken();
+        QString word = tk.word;
+        
         if (c == 's')
         {
             if (!JZRegExpHelp::isString(word))
             {
                 makeExpectError("string", word);
-                break;
+                return false;
             }
             ret.push_back(word);
         }
@@ -474,29 +507,30 @@ QStringList JZNodeObjectParser::parseStringList(const QString &format, const QSt
             if (!JZRegExpHelp::isInt(word) && !JZRegExpHelp::isHex(word))
             {
                 makeExpectError("int", word);
-                break;
+                return false;
             }
-            ret.push_back(word);
+            ret.push_back(word.toInt());
         }
         else if (c == 'd')
         {
             if (!JZRegExpHelp::isFloat(word))
             {
                 makeExpectError("float", word);
-                break;
+                return false;
             }
-            ret.push_back(word);
+            ret.push_back(word.toDouble());
         }
         else
         {
-            if (QString(c) != word)
+            if (c != word)
             {
-                makeExpectError(QString(c), word);
-                break;
+                makeExpectError(c, word);
+                return false;
             }
         }
     }
-    return ret;
+    result = ret;
+    return true;
 }
 
 //JZNodeObjectFormat

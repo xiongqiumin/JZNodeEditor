@@ -12,34 +12,41 @@ public:
     
     JZNodeObject *parse(const QString &text);
     JZNodeObject *parseToType(QString type,const QString &text);
-    QStringList parseStringList(const QString &format, const QString &text);
+    bool parseVariantList(const QString &format, const QString &text,QVariantList &result);
     QString error();
 
 protected:
-    void iniContext(const QString &text);
+    struct Token
+    {
+        Token();
 
-    QChar nextChar();
-    QChar readChar();
-    QString readWord();
+        int index;
+        QString word;
+    };
+
+    bool iniContext(const QString &text);
+    
+    Token nextToken();
+    Token readToken();
+    void pushToken();
 
     QVariant readVariable();    
-    JZList *readList(QString valueType,QChar start);
+    JZList *readList(QString valueType,QString start);
     JZMap *readMap(QString keyType,QString valueType);    
     JZNodeObject *readObject();
     
-    bool readString(QString &text);
     bool readBkt(QString &context);
     bool checkIsEnd();
     bool checkVariable(const QVariant &v,int type);
     void makeError(const QString &error);
     void makeExpectError(QString expect,QString give);
+    void getRowCol(int index,int &row,int &col);
 
-    QList<QChar> m_gapList;
     QString m_content;
+    QList<QChar> m_gapList;
+    QList<Token> m_tokenList;
     QString m_error;
-    int m_currentIndex;
-    int m_line;
-    int m_col;    
+    int m_currentIndex;  
 };
 
 class JZNodeObjectFormat

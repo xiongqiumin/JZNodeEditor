@@ -46,7 +46,7 @@ public:
     JZScriptItem *script();
     ScriptDepend scriptTestDepend();
 
-    void setCompierResult(const CompilerInfo &info);
+    void setCompilerResult(const CompilerResult *info);
     void setAutoRunResult(const UnitTestResult &result);
 
     void setNodeValue(int nodeId, int prop_id, const QString &value);

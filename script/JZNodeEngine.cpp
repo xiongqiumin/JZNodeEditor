@@ -365,6 +365,7 @@ JZNodeEngine::JZNodeEngine()
     m_status = Status_none;
     m_statusCommand = Command_none;
     m_regs.resize(Reg_End - Reg_Start);
+    m_hookEnable = false;
 }
 
 JZNodeEngine::~JZNodeEngine()
@@ -391,7 +392,9 @@ void JZNodeEngine::clear()
     m_global.clear();   
     m_sender = nullptr;
     m_depend = nullptr;
-    m_statusCommand = Status_none;
+    m_hookEnable = false;
+    m_dependHook.clear();
+    m_statusCommand = Command_none;
     m_status = Status_none;
     m_breakNodeId = -1;    
     m_watchTime = 0;
@@ -444,7 +447,7 @@ int JZNodeEngine::nodeIdByPc(JZNodeScript *script,QString function, int pc)
         }
     }
     
-    Q_ASSERT(node_id != -1);
+    Q_ASSERT_X(node_id != -1,qUtf8Printable(function),qUtf8Printable("pc = " + QString::number(pc)));
     return node_id;
 }
 
@@ -522,6 +525,7 @@ void JZNodeEngine::pushStack(const JZFunction *func)
 
     m_stack.push();    
     m_stack.currentEnv()->function = func;
+    updateHook();
     if(!func->isCFunction())
     {                
         m_pc = func->addr;
@@ -543,6 +547,8 @@ void JZNodeEngine::pushStack(const JZFunction *func)
 void JZNodeEngine::popStack()
 {       
     m_stack.pop();
+    updateHook();
+
     if(m_stack.size() > 0)
     {
         m_pc = m_stack.currentEnv()->pc;
@@ -795,7 +801,7 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
 {
     auto toVariant = [this](const JZParamDefine &param,QVariant &v)->bool
     {
-        if(param.dataType() >= Type_object)
+        if(param.dataType() >= Type_class)
         {
             auto obj = objectFromString(param.type, param.value);
             if(!obj)
@@ -811,7 +817,6 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
 
     //init hook function
     m_dependHook.clear();
-
     for (int i = 0; i < depend->hook.size(); i++)
     {
         if(!depend->hook[i].enable)
@@ -1114,13 +1119,24 @@ void JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
         if(m_breakPoints[i].file == filepath && m_breakPoints[i].nodeId == nodeId)
             return;
     }
-    auto script = m_program->script(filepath);
 
-    BreakPoint pt;    
+    BreakPoint pt;
     pt.type = BreakPoint::nodeEnter;
+    pt.nodeId = nodeId;
     pt.file = filepath;
-    pt.nodeId = nodeId;    
-    m_breakPoints.push_back(pt);    
+    m_breakPoints.push_back(pt);
+
+    auto script = m_program->script(filepath);
+    for(int i = 0; i < script->statmentList.size(); i++)
+    {
+        auto ir = script->statmentList[i].data();
+        if(ir->type == OP_nodeId)
+        {
+            JZNodeIRNodeId *ir_id = dynamic_cast<JZNodeIRNodeId*>(ir);
+            if(ir_id->id == nodeId)
+                ir_id->isBreakPoint = true;
+        }
+    }    
 }
 
 void JZNodeEngine::removeBreakPoint(QString filepath,int nodeId)
@@ -1130,7 +1146,17 @@ void JZNodeEngine::removeBreakPoint(QString filepath,int nodeId)
     if(idx == -1)
         return;
     
-    m_breakPoints.removeAt(idx);
+    auto script = m_program->script(filepath);
+    for(int i = 0; i < script->statmentList.size(); i++)
+    {
+        auto ir = script->statmentList[i].data();
+        if(ir->type == OP_nodeId)
+        {
+            JZNodeIRNodeId *ir_id = dynamic_cast<JZNodeIRNodeId*>(ir);
+            if(ir_id->id == nodeId)
+                ir_id->isBreakPoint = false;
+        }
+    }
 }
 
 int JZNodeEngine::indexOfBreakPoint(QString filepath,int nodeId)
@@ -1158,6 +1184,9 @@ void JZNodeEngine::waitCommand()
 
 void JZNodeEngine::clearBreakPoint()
 {
+    for(int i = 0; i < m_breakPoints.size(); i++)
+        removeBreakPoint(m_breakPoints[i].file,m_breakPoints[i].nodeId);
+    
     QMutexLocker lock(&m_mutex);
     m_breakPoints.clear();
 }
@@ -1341,14 +1370,13 @@ const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
 
 const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
 {
-    if(ir_call->cache)
-        return ir_call->cache;
+    //if(ir_call->cache)
+    //    return ir_call->cache;
 
     auto func = function(ir_call->function,nullptr);
-    if(func->isMemberFunction())
-        return func;
+    if(!func->isVirtualFunction())
+        ir_call->cache = func;
 
-    ir_call->cache = func;
     return func;
 }
 
@@ -1588,100 +1616,59 @@ QVariant JZNodeEngine::dealSingleExpr(const QVariant &a, int op)
 }
 
 // check stop,pause
-bool JZNodeEngine::checkPauseStop()
+bool JZNodeEngine::checkPause(int node_id)
 {
-    bool wait = false;
-    auto &op_list = m_script->statmentList;
-    m_mutex.lock();
-    if(m_statusCommand == Command_stop)
-    {
-        m_mutex.unlock();
-        return true;
-    }
-    if (op_list[m_pc]->type != OP_nodeId)
-    {
-        m_mutex.unlock();
-        return false;
-    }
-
-    int node_id = ((JZNodeIRNodeId*)(op_list[m_pc].data()))->id;
     if(m_statusCommand == Command_pause)
-    {
-        m_statusCommand = Command_none;
-        wait = true;
-    }
+        return true;
     else
-    {                   
+    {                 
         int stack = m_stack.size();
-        auto breakTriggred = [this](BreakPoint &pt,const QString &file,int stack,int node_id)->bool
+        if (m_breakStep.type == BreakPoint::stepOver)
+        {                
+            if (stack < m_breakStep.stack)
+                return true;
+            else if (m_breakStep.file != m_script->file)
+                return true;
+            else if (m_breakStep.stack == stack)
+            {                    
+                return (m_breakStep.nodeId != node_id);
+            }
+            return false;
+        }
+        else if (m_breakStep.type == BreakPoint::stackEqual)
         {
-            if (pt.type == BreakPoint::nodeEnter)
-            {
-                return (pt.file == file && pt.nodeId == node_id);
-            }
-            else if (pt.type == BreakPoint::stepOver)
-            {                
-                if (stack < pt.stack)
-                    return true;
-                else if (pt.file != file)
-                    return true;
-                else if (pt.stack == stack)
-                {                    
-                    return (pt.nodeId != node_id);
-                }
-                return false;
-            }
-            else if (pt.type == BreakPoint::stackEqual)
-            {
-                return (stack == pt.stack);
-            }
-            else
-            {
-                return false;
-            }
-        };
-        
-        if(breakTriggred(m_breakStep, m_script->file, stack, node_id))
-        {                        
-            wait = true;
-        }   
+            return (stack == m_breakStep.stack);
+        }
         else
         {
-            for (int i = 0; i < m_breakPoints.size(); i++)
-            {
-                auto &pt = m_breakPoints[i];
-                if (breakTriggred(pt, m_script->file, stack, node_id))
-                {
-                    wait = true;
-                    break;
-                }
-            }
-        }
+            return false;
+        }   
     }
-    if (wait)
-    {        
-        m_breakNodeId = node_id;
-        m_breakStep.clear();
-        m_stack.currentEnv()->pc = m_pc;
-        m_statusCommand = Command_none;
-        updateStatus(Status_pause);
-        m_waitCond.wait(&m_mutex);
-        m_breakNodeId = -1;
 
-        int cmd = m_statusCommand;
-        if (m_statusCommand == Command_resume) //stop 等到最外层设置
-        {
-            updateStatus(Status_running);
-            m_statusCommand = Command_none;
-        }
-        m_mutex.unlock();
-        if (cmd == Command_stop)
-            return true;                            
-    }
-    else
+    return false;
+}
+
+bool JZNodeEngine::breakPointTrigger(int node_id)
+{
+    m_mutex.lock();
+    m_breakNodeId = node_id;
+    m_breakStep.clear();
+    m_stack.currentEnv()->pc = m_pc;
+    m_statusCommand = Command_none;
+    updateStatus(Status_pause);
+    m_waitCond.wait(&m_mutex);
+    m_breakNodeId = -1;
+
+    int cmd = m_statusCommand;
+    if (m_statusCommand == Command_resume) //stop 等到最外层设置
     {
-        m_mutex.unlock();
+        updateStatus(Status_running);
+        m_statusCommand = Command_none;
     }
+    m_mutex.unlock();
+    if (cmd == Command_stop)
+        return true;
+
     return false;
 }
 
@@ -1699,23 +1686,43 @@ void JZNodeEngine::updateStatus(int status)
     }
 }
 
+void JZNodeEngine::updateHook()
+{
+    if(m_stack.size() > 0)
+        m_hookEnable = (m_depend && m_depend->function.fullName() == m_stack.currentEnv()->function->fullName());
+    else
+        m_hookEnable = false;
+}
+
 bool JZNodeEngine::run()
 {    
-    bool hook_enable = (m_depend && m_depend->function.fullName() == m_stack.currentEnv()->function->fullName());
+    updateHook();
+
     int in_stack_size = m_stack.size();
     while (true)
     {                   
-        if(checkPauseStop())
+        if(m_statusCommand == Command_stop)
             return false;
 
-        auto &op_list = m_script->statmentList;
-        JZNodeIR *op = op_list[m_pc].data();           
-        int op_type = op->type;
         m_stat.statmentTime++;
-        switch (op_type)
+
+        auto &op_list = m_script->statmentList;
+        JZNodeIR *op = op_list[m_pc].data();
+        switch (op->type)
         {
         case OP_nodeId:
+        {
+            if(m_debug)
+            {
+                JZNodeIRNodeId *ir_id =  dynamic_cast<JZNodeIRNodeId*>(op);
+                if(ir_id->isBreakPoint || checkPause(ir_id->id))
+                {
+                    if(breakPointTrigger(ir_id->id))
+                        return false;
+                }
+            }
             break;
+        }
         case OP_nop:
             break;
         case OP_add:
@@ -1764,12 +1771,12 @@ bool JZNodeEngine::run()
             JZNodeIRJmp *ir_jmp = (JZNodeIRJmp*)op;
             int jmpPc = ir_jmp->jmpPc;
             Q_ASSERT(jmpPc >= 0 && jmpPc < op_list.size());
-            if(op_type == OP_jmp)
+            if(op->type == OP_jmp)
                 m_pc = jmpPc;
             else
             {
                 bool flag = getReg(Reg_Cmp).toBool();
-                if(op_type == OP_je)
+                if(op->type == OP_je)
                     m_pc = flag? jmpPc : m_pc+1;
                 else
                     m_pc = flag? m_pc+1 : jmpPc;
@@ -1814,7 +1821,7 @@ bool JZNodeEngine::run()
             const JZFunction *func = function(ir_call);
             Q_ASSERT(func);            
 
-            if(hook_enable && m_dependHook.contains(m_pc))
+            if(m_hookEnable && m_dependHook.contains(m_pc))
             {
                 auto &hook_list = m_dependHook[m_pc];
                 for(int i = 0; i < hook_list.size(); i++)

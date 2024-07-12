@@ -169,7 +169,7 @@ public:
     void setRuntimeNode(int nodeId);
     bool isBreakPoint(int nodeId);
 
-    void setCompierResult(const CompilerInfo &info);
+    void setCompilerResult(const CompilerResult *info);
 
 signals:
     void redoAvailable(bool available);

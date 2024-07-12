@@ -471,7 +471,7 @@ QString JZNodeProgram::toString(JZNodeIRParam param)
         auto var_type = JZNodeType::variantType(param.value);
         if (var_type == Type_string)
             return "\"" + param.value.toString() + "\"";
-        else if (var_type == Type_object)
+        else if (var_type == Type_class)
         {
             return JZNodeType::typeToName(var_type) + "()";
         }

@@ -22,7 +22,7 @@ enum
 
     Type_internalEnum = 1100,
 
-    Type_object = 5000,
+    Type_class = 5000,
     Type_stringList,
     Type_varList,    
     Type_intList,
@@ -32,8 +32,42 @@ enum
     Type_intStringMap,
     Type_StringIntMap,
     Type_StringStringMap,
+    
+    Type_object,
     Type_timer,
+
+    Type_event,
+    Type_resizeEvent,
+    Type_showEvent,
+    Type_paintEvent,
+    Type_closeEvent,
+    Type_keyEvent,
+    Type_mouseEvent,
+
+    Type_layout,
+    Type_boxLayout,
+    Type_hBoxLayout,
+    Type_vBoxLayout,
+    Type_gridLayout,
+
     Type_widget,
+    Type_frame,
+    Type_label,
+    Type_lineEdit,
+    Type_textEdit,
+    Type_pushButton,
+    Type_toolButton,
+    Type_radioButton,
+    Type_checkBox,
+    Type_comboBox,
+    Type_spin,
+    Type_doubleSpin,
+    Type_listWidget,
+    Type_listWidgetItem,
+    Type_tableWidget,
+    Type_tableWidgetItem,
+    Type_treeWidget,
+    Type_treeWidgetItem,
 
     Type_internalObject = 8000, // 内部注册起始
     Type_userObject = 10000,    // 用户注册起始

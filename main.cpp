@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         run_testcase(argc,argv);
         return 0;
     }    
-    if(1 && argc == 1)
+    if(0 && argc == 1)
     {
         SampleRussian sample;        
         //SampleImageBatch sample;

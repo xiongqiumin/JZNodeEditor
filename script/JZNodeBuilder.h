@@ -30,7 +30,7 @@ public:
     bool isBuildInterrupt();
 
     QString error() const;
-    CompilerInfo compilerInfo(JZScriptItem *file) const;
+    const CompilerResult *compilerInfo(JZScriptItem *file) const;
 
 protected:    
     friend JZNodeCustomBuild;
@@ -38,7 +38,7 @@ protected:
     struct ScriptInfo
     {
         JZNodeScriptPtr script;
-        CompilerInfo compilerInfo;
+        CompilerResult compilerInfo;
     };
 
     void clear();      

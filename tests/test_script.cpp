@@ -662,27 +662,33 @@ void ScriptTest::testBreakPoint()
     QList<int> id_list,value_list;
     if(!initWhileCase(id_list,value_list))
         return;
-    
+
+    m_engine.setDebug(true);
     QVariantList in;
     callAsync("main",in);
     msleep(200);
+    
+    dumpAsm("testBreakPoint.jsm");
 
     QString main_function = m_project.mainFunctionPath();
     for(int i = 0; i < 5; i++)
     {
-        int cur_id = rand()%id_list.size();
-
-        m_engine.addBreakPoint(main_function, id_list[cur_id]);
+        int id_index = rand()%id_list.size();
+        int cur_id = id_list[id_index];
+        int cur_value = value_list[id_index];
+        
+        m_engine.addBreakPoint(main_function, cur_id);
         msleep(50);
         QVERIFY(m_engine.status() == Status_pause);
 
         m_engine.stepOver();
         msleep(20);
+        QVERIFY(m_engine.status() == Status_pause);
 
         int value = m_engine.getVariable("i").toInt();
-        QCOMPARE(value, value_list[cur_id]);
+        QCOMPARE(value, cur_value);
 
-        m_engine.removeBreakPoint(main_function, id_list[cur_id]);
+        m_engine.removeBreakPoint(main_function, cur_id);
         m_engine.resume();
     }
 
@@ -695,6 +701,7 @@ void ScriptTest::testDebugServer()
     if(!initWhileCase(id_list,value_list))
         return;
 
+    m_engine.setDebug(true);
     bool cmd_ret;
     QVariantList in;
     callAsync("main",in);
@@ -787,7 +794,7 @@ void ScriptTest::testUnitTest()
     QVERIFY(ret);
     QCOMPARE(out[0].toInt(),4);
 
-    auto depend = m_builder.compilerInfo(script).depend["unitTest"];
+    auto depend = m_builder.compilerInfo(script)->depend["unitTest"];
     QCOMPARE(depend.function.fullName(),"unitTest");
     QCOMPARE(depend.hook.size(),1);
     QCOMPARE(depend.hook[0].params.size(),1);
@@ -839,7 +846,7 @@ void ScriptTest::testUnitTestClass()
     QVERIFY(ret);
     QCOMPARE(out[0].toInt(),4);
 
-    auto depend = m_builder.compilerInfo(script).depend[def.fullName()];
+    auto depend = m_builder.compilerInfo(script)->depend[def.fullName()];
     QCOMPARE(depend.function.fullName(),def.fullName());
     QCOMPARE(depend.hook.size(),1);
     QCOMPARE(depend.hook[0].params.size(),1);
@@ -1070,8 +1077,6 @@ void ScriptTest::testFunction()
 
 void ScriptTest::testClass()
 {       
-    JZProject *project = &m_project;
-
     auto classBase = m_file->addClass("ClassBase");
     auto classA = m_file->addClass("ClassA","ClassBase");
     auto classB = m_file->addClass("ClassB","ClassBase");

@@ -23,6 +23,9 @@
 #include <QProgressDialog>
 #include <QApplication>
 #include <QStackedWidget>
+#include <QTreeWidget>
+#include <QTableWidget>
+#include <QListWidget>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -110,13 +113,17 @@ void initBase()
     //Point
     jzbind::ClassBind<QPoint> cls_pt("Point");
     cls_pt.def("create", false, [](int x, int y)->QPoint { return QPoint(x, y); });
-    cls_pt.def("__fromString__", false, [](const QString &text)->QPoint{
+    cls_pt.def("__fromString__", false, [](const QString &text)->QPoint
+    {
+        JZNodeObjectParser parser;
+        QVariantList list;
+        if(!parser.parseVariantList("i,i",text,list)){
+            throw std::runtime_error(qUtf8Printable(parser.error()));
+        }
+
         QPoint pt;
-        QStringList list = text.split(",");
-        int x = list[0].toInt();
-        int y = list[1].toInt();
-        pt.setX(x);
-        pt.setY(y);
+        pt.setX(list[0].toInt());
+        pt.setY(list[0].toInt());
         return pt;
     });
     cls_pt.def("__toString__", false, [](QPoint *pt)->QString{ 
@@ -131,12 +138,15 @@ void initBase()
     jzbind::ClassBind<QPointF> cls_ptf("PointF");
     cls_ptf.def("create", false, [](double x, double y)->QPointF { return QPointF(x, y); });
     cls_ptf.def("__fromString__", false, [](const QString &text)->QPointF {
+        JZNodeObjectParser parser;
+        QVariantList list;
+        if(!parser.parseVariantList("i,i",text,list)){
+            throw std::runtime_error(qUtf8Printable(parser.error()));
+        }
+
         QPointF pt;
-        QStringList list = text.split(",");
-        int x = list[0].toDouble();
-        int y = list[1].toDouble();
-        pt.setX(x);
-        pt.setY(y);
+        pt.setX(list[0].toDouble());
+        pt.setY(list[0].toDouble());
         return pt;
     });
     cls_ptf.def("__toString__", false, [](QPointF *pt)->QString {
@@ -152,21 +162,56 @@ void initBase()
     cls_rect.def("create", false, [](int x, int y, int w, int h)->QRect {
         return QRect(x, y, w, h);
     });
-    cls_rect.def("__fromString__", false, [](const QString &text)->QRect { return QRect(); });
+    cls_rect.def("__fromString__", false, [](const QString &text)->QRect { 
+        JZNodeObjectParser parser;
+        QVariantList list;
+        if(!parser.parseVariantList("i,i,i,i",text,list)){
+            throw std::runtime_error(qUtf8Printable(parser.error()));
+        }
+
+        auto x = list[0].toInt();
+        auto y = list[1].toInt();
+        auto w = list[2].toInt();
+        auto h = list[3].toInt();
+        return QRect(x,y,w,h);
+    });
     cls_rect.regist();
 
     jzbind::ClassBind<QRectF> cls_rectf("RectF");
     cls_rectf.def("create", false, [](double x, double y, double w, double h)->QRectF {
         return QRectF(x, y, w, h);
     });
-    cls_rectf.def("__fromString__", false, [](const QString &text)->QRectF { return QRectF(); });
+    cls_rectf.def("__fromString__", false, [](const QString &text)->QRectF {  
+        JZNodeObjectParser parser;
+        QVariantList list;
+        if(!parser.parseVariantList("i,i,i,i",text,list)){
+            throw std::runtime_error(qUtf8Printable(parser.error()));
+        }
+
+        auto x = list[0].toDouble();
+        auto y = list[1].toDouble();
+        auto w = list[2].toDouble();
+        auto h = list[3].toDouble();
+        return QRectF(x,y,w,h);    
+    });
     cls_rectf.regist();
 
     jzbind::ClassBind<QColor> cls_color("Color");
     cls_color.def("create", false, [](int r, int g, int b)->QColor {
         return QColor(r, g, b);
     });
-    cls_color.def("__fromString__", false, [](const QString &text)->QColor { return QColor(); });
+    cls_color.def("__fromString__", false, [](const QString &text)->QColor { 
+        JZNodeObjectParser parser;
+        QVariantList list;
+        if(!parser.parseVariantList("i,i,i",text,list)){
+            throw std::runtime_error(qUtf8Printable(parser.error()));
+        } 
+
+        auto r = list[0].toInt();
+        auto g = list[1].toInt();
+        auto b = list[2].toInt();
+        return QColor(r, g, b);
+    });
     cls_color.def("red", false, &QColor::red);
     cls_color.def("green", false, &QColor::green);
     cls_color.def("blue", false, &QColor::blue);    
@@ -241,27 +286,27 @@ void initCore()
 
 void initEvent()
 {    
-    jzbind::ClassBind<QEvent> cls_event("Event");
+    jzbind::ClassBind<QEvent> cls_event(Type_event,"Event");
     cls_event.regist();
 
-    jzbind::ClassBind<QResizeEvent> cls_resize_event("ResizeEvent");
+    jzbind::ClassBind<QResizeEvent> cls_resize_event(Type_resizeEvent,"ResizeEvent");
     cls_resize_event.regist();
 
-    jzbind::ClassBind<QShowEvent> cls_show_event("ShowEvent");
+    jzbind::ClassBind<QShowEvent> cls_show_event(Type_showEvent,"ShowEvent");
     cls_show_event.regist();
 
-    jzbind::ClassBind<QPaintEvent> cls_paint_event("PaintEvent");
+    jzbind::ClassBind<QPaintEvent> cls_paint_event(Type_paintEvent,"PaintEvent");
     cls_paint_event.regist();
 
-    jzbind::ClassBind<QCloseEvent> cls_close_event("CloseEvent");
+    jzbind::ClassBind<QCloseEvent> cls_close_event(Type_closeEvent,"CloseEvent");
     cls_close_event.regist();
 
-    jzbind::ClassBind<QKeyEvent> cls_key_event("KeyEvent");
+    jzbind::ClassBind<QKeyEvent> cls_key_event(Type_keyEvent,"KeyEvent");
     cls_key_event.def("key", false, &QKeyEvent::key);
     cls_key_event.def("modifiers", false, &QKeyEvent::modifiers);
     cls_key_event.regist();
 
-    jzbind::ClassBind<QMouseEvent> cls_mouse_event("MouseEvent");
+    jzbind::ClassBind<QMouseEvent> cls_mouse_event(Type_mouseEvent,"MouseEvent");
     cls_mouse_event.def("pos", false, &QMouseEvent::pos);
     cls_mouse_event.def("x", false, &QMouseEvent::x);
     cls_mouse_event.def("y", false, &QMouseEvent::y);
@@ -282,20 +327,23 @@ void initLayout()
 {
     JZNodeObjectManager::instance()->delcareCClass("Widget", typeid(QWidget).name(), Type_widget);
 
-    jzbind::ClassBind<QLayout> cls_layout("Layout", "Object");    
+    jzbind::ClassBind<QLayout> cls_layout("Type_layout,Layout", "Object");    
     cls_layout.def("setContentsMargins", true,QOverload<int,int,int,int>::of(&QLayout::setContentsMargins));
     cls_layout.regist();
 
-    jzbind::ClassBind<QBoxLayout> cls_box_layout("BoxLayout", "Layout");
+    jzbind::ClassBind<QBoxLayout> cls_box_layout(Type_boxLayout,"BoxLayout", "Layout");
     cls_box_layout.def("addLayout", true, [](QBoxLayout *l, QLayout *sub) { l->addLayout(sub); });
     cls_box_layout.def("addWidget", true, [](QBoxLayout *l, QWidget *w) { l->addWidget(w); });
     cls_box_layout.regist();
 
-    jzbind::ClassBind<QHBoxLayout> cls_hbox_layout("HBoxLayout", "BoxLayout");     
+    jzbind::ClassBind<QHBoxLayout> cls_hbox_layout(Type_hBoxLayout,"HBoxLayout", "BoxLayout");     
     cls_hbox_layout.regist();
 
-    jzbind::ClassBind<QVBoxLayout> cls_vbox_layout("VBoxLayout", "BoxLayout");    
+    jzbind::ClassBind<QVBoxLayout> cls_vbox_layout(Type_vBoxLayout,"VBoxLayout", "BoxLayout");    
     cls_vbox_layout.regist();
+
+    jzbind::ClassBind<QGridLayout> cls_gird_layout(Type_gridLayout,"GridLayout", "BoxLayout");    
+    cls_gird_layout.regist();
 }
 
 void initWidgets()
@@ -312,7 +360,7 @@ void initWidgets()
     cls_widget.regist();
 
     //QFrame
-    jzbind::ClassBind<QFrame> cls_frame("Frame", "Widget");
+    jzbind::ClassBind<QFrame> cls_frame(Type_frame,"Frame", "Widget");
     cls_frame.regist();
 
     //QFrame
@@ -320,13 +368,13 @@ void initWidgets()
     cls_abs_scroll.regist();
 
     //lineedit
-    jzbind::ClassBind<QLineEdit> cls_lineEdit("LineEdit", "Widget");
+    jzbind::ClassBind<QLineEdit> cls_lineEdit(Type_lineEdit,"LineEdit", "Widget");
     cls_lineEdit.def("text", false, &QLineEdit::text);
     cls_lineEdit.def("setText", true, &QLineEdit::setText);;
     cls_lineEdit.regist();
 
     //textedit
-    jzbind::ClassBind<QTextEdit> cls_textEdit("QTextEdit", "Widget");
+    jzbind::ClassBind<QTextEdit> cls_textEdit(Type_textEdit,"QTextEdit", "Widget");
     cls_textEdit.def("toPlainText", false, &QTextEdit::toPlainText);
     cls_textEdit.def("setText", true, &QTextEdit::setText);
     cls_textEdit.def("append", true, &QTextEdit::append);
@@ -341,16 +389,16 @@ void initWidgets()
     cls_abs_button.defSingle("clicked", &QAbstractButton::clicked);
     cls_abs_button.regist();
 
-    jzbind::ClassBind<QPushButton> cls_button("PushButton", "AbstractButton");
+    jzbind::ClassBind<QPushButton> cls_button(Type_pushButton,"PushButton", "AbstractButton");
     cls_button.regist();
 
-    jzbind::ClassBind<QRadioButton> cls_radio_btn("RadioButton", "AbstractButton");
+    jzbind::ClassBind<QRadioButton> cls_radio_btn(Type_radioButton,"RadioButton", "AbstractButton");
     cls_radio_btn.regist();
 
-    jzbind::ClassBind<QToolButton> cls_tool_btn("ToolButton", "AbstractButton");
+    jzbind::ClassBind<QToolButton> cls_tool_btn(Type_toolButton,"ToolButton", "AbstractButton");
     cls_tool_btn.regist();
 
-    jzbind::ClassBind<QCheckBox> cls_check_box("CheckBox", "AbstractButton");
+    jzbind::ClassBind<QCheckBox> cls_check_box(Type_checkBox,"CheckBox", "AbstractButton");
     cls_check_box.regist();
 
     //stack
@@ -363,6 +411,27 @@ void initWidgets()
     cls_stacked.def("currentWidget", true, &QStackedWidget::currentWidget, false);
     cls_stacked.def("setCurrentWidget", true, &QStackedWidget::setCurrentWidget);
     cls_stacked.regist();
+
+    //table
+    jzbind::ClassBind<QTableWidgetItem> cls_table_item(Type_tableWidgetItem,"TableWidgetItem");
+    cls_table_item.regist();
+
+    jzbind::ClassBind<QTableWidget> cls_table(Type_tableWidget,"TableWidget", "Widget");
+    cls_table.regist();
+
+    //list
+    jzbind::ClassBind<QListWidgetItem> cls_list_item(Type_listWidgetItem,"ListWidgetItem");
+    cls_list_item.regist();
+
+    jzbind::ClassBind<QListWidget> cls_list(Type_listWidget,"ListWidget", "Widget");
+    cls_list.regist();
+
+    //tree
+    jzbind::ClassBind<QTreeWidgetItem> cls_tree_item(Type_tableWidgetItem,"TreeWidgetItem");
+    cls_tree_item.regist();
+
+    jzbind::ClassBind<QTreeWidget> cls_tree(Type_treeWidget,"TreeWidget", "Widget");
+    cls_tree.regist(); 
 }
 
 void initDialogs()

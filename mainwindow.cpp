@@ -54,10 +54,12 @@ MainWindow::BuildInfo::BuildInfo()
 
 void MainWindow::BuildInfo::clear()
 {
-    changeTimestamp = 0;
+    changeTimestamp = QDateTime::currentMSecsSinceEpoch();
     buildTimestamp = 0;
+    saveTimestamp = 0;
     save = false;
     start = false;
+    success = false;
     runItemPath.clear();
 }
 
@@ -414,6 +416,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
+const CompilerResult *MainWindow::compilerResult(const QString &path)
+{
+    auto s = (JZScriptItem*)m_project.getItem(path);
+    return m_buildThread.builder()->compilerInfo(s);
+}
+
 void MainWindow::updateActionStatus()
 {
     using as = ActionStatus;    
@@ -648,9 +656,16 @@ void MainWindow::initLocalProcessTest()
 
 void MainWindow::onActionRun()
 {    
-    m_buildInfo.save = true;
-    m_buildInfo.start = true;
-    build();    
+    if(m_buildInfo.buildTimestamp >= m_buildInfo.saveTimestamp)
+    {
+        m_buildInfo.save = true;
+        m_buildInfo.start = true;
+        build();
+    }
+    else
+    {
+        startProgram();
+    }    
 }
 
 void MainWindow::onActionDetach()
@@ -834,8 +849,15 @@ void MainWindow::onAutoRun()
     
     if(m_processMode == Process_none)
     {
-        m_buildInfo.runItemPath = edit->script()->itemPath();
-        build();
+        if(m_buildInfo.changeTimestamp >= m_buildInfo.buildTimestamp)
+        {
+            m_buildInfo.runItemPath = edit->script()->itemPath();
+            build();
+        }
+        else
+        {
+            startUnitTest(edit->script()->itemPath());
+        }
     }
 }
 
@@ -854,6 +876,8 @@ void MainWindow::onAutoCompilerTimer()
 
 void MainWindow::onBuildFinish(bool flag)
 {
+    qDebug() << "onBuildFinish";
+
     auto builder = m_buildThread.builder();
     auto it = m_editors.begin();
     while (it != m_editors.end())
@@ -862,30 +886,40 @@ void MainWindow::onBuildFinish(bool flag)
         {
             auto node_edit = (JZNodeEditor*)it.value();
             auto cmp_info = builder->compilerInfo(node_edit->script());
-            node_edit->setCompierResult(cmp_info);
+            node_edit->setCompilerResult(cmp_info);
         }        
         it++;
     }
-
-    if(m_buildInfo.isUnitTest())
+    
+    m_buildInfo.success = flag;
+    if(m_buildInfo.success)
     {
-        auto e = nodeEditor(m_buildInfo.runItemPath);
-        m_runThread.startRun(&m_program,e->scriptTestDepend());
+        if(m_buildInfo.isUnitTest())
+        {
+            startUnitTest(m_buildInfo.runItemPath);
+        }
+        if(m_buildInfo.save)
+        {
+            saveProgram();
+            m_buildInfo.saveTimestamp = QDateTime::currentMSecsSinceEpoch();
+        }
+        if(m_buildInfo.start)
+            startProgram();
     }
-    if(m_buildInfo.save)
-        saveProgram();
-    if(m_buildInfo.start)
-        startProgram();
-
     m_buildInfo.clearTask();
 }
 
-void MainWindow::onAutoRunResult(QSharedPointer<UnitTestResult> result)
+void MainWindow::onAutoRunResult(UnitTestResultPtr result)
 {
+    qDebug() << "onAutoRunResult" << result->function << result->result;
+
     if(result->result == UnitTestResult::Cancel)
         return;
 
     auto script_item = m_project.functionItem(result->function);
+    if(!script_item)
+        return;
+    
     JZEditor *e = editor(script_item->itemPath());
     if(!e)
         return;
@@ -959,13 +993,15 @@ bool MainWindow::openEditor(QString filepath)
             connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
 
             node_edit->setRunningMode(m_processMode);
+            auto cmp_ret = compilerResult(file);
+            if(cmp_ret)
+                node_edit->setCompilerResult(cmp_ret);
         }
         m_editors[file] = editor;
         m_editorStack->addTab(editor, filepath);        
     }
     switchEditor(m_editors[file]);
     
-
     return true;
 }
 
@@ -1059,6 +1095,7 @@ void MainWindow::onEditorActivite(int index)
 
     JZEditor *editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
     editor->active();
+    switchEditor(editor);
 }
 
 void MainWindow::onNodeClicked(QString file, int nodeId)
@@ -1261,14 +1298,10 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
 
 void MainWindow::build()
 {
+    qDebug() << "build:" << m_buildInfo.buildTimestamp << m_buildInfo.changeTimestamp;
+    
     m_runThread.stopRun();
     m_buildThread.stopBuild();
-    if(m_buildInfo.changeTimestamp < m_buildInfo.buildTimestamp)
-    {
-        onBuildFinish(true);
-        return;
-    }
-    
     m_buildThread.startBuild();
     m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
 }
@@ -1304,8 +1337,19 @@ void MainWindow::saveProgram()
     saveToFile(build_path + "/" + m_project.name() + ".jsm", m_program.dump());
 }
 
+void MainWindow::startUnitTest(QString runItemPath)
+{
+    qDebug() << "start unit test" << runItemPath;
+
+    auto e = nodeEditor(runItemPath);
+    if(e)
+        m_runThread.startRun(&m_program,e->scriptTestDepend());
+}
+
 void MainWindow::startProgram()
 {    
+    qDebug() << "startProgram";
+    
     m_runThread.stopRun();
 
     m_log->clearLog(Log_Runtime);

@@ -112,8 +112,8 @@ struct NodeCompilerInfo
     QString error;
 };
 
-//CompilerInfo
-class CompilerInfo
+//CompilerResult
+class CompilerResult
 {
 public:
     bool result;
@@ -139,7 +139,7 @@ public:
 
     bool genGraphs(JZScriptItem *file, QVector<GraphPtr> &result);
     bool build(JZScriptItem *file,JZNodeScript *result);
-    CompilerInfo compilerInfo();
+    CompilerResult compilerResult();
     
     const JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(const QString &var, QString &error);
@@ -289,7 +289,7 @@ protected:
     QMap<int,NodeCompilerInfo> m_nodeInfo;
     int m_stackId;       //当前栈位置，用于分配内存    
     QMap<int,int> m_stackType;
-    CompilerInfo m_compilerInfo;
+    CompilerResult m_compilerInfo;
 
     JZProject *m_project;
     JZNodeBuilder *m_builder;

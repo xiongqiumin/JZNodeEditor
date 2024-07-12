@@ -317,15 +317,15 @@ void JZNodeEditor::setNodeValue(int nodeId, int prop_id, const QString &value)
     m_view->setNodePropValue(nodeId, prop_id, value);
 }
 
-void JZNodeEditor::setCompierResult(const CompilerInfo &info)
+void JZNodeEditor::setCompilerResult(const CompilerResult *info)
 {
-    m_view->setCompierResult(info);
+    m_view->setCompilerResult(info);
 
     auto s = script();
     if (s->itemType() == ProjectItem_scriptFunction)
     {
         QString function = script()->function().fullName();
-        m_runProp->setDepend(info.depend[function]);
+        m_runProp->setDepend(info->depend[function]);
     }
 }
 

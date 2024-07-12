@@ -8,6 +8,7 @@
 #include <QException>
 #include <QWaitCondition>
 #include <QSet>
+#include <QAtomicInt>
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeFunctionManager.h"
@@ -115,6 +116,7 @@ public:
     QVariantList out;
     JZNodeRuntimeError runtimeError;
 };
+typedef QSharedPointer<UnitTestResult> UnitTestResultPtr;
 
 //BreakPoint
 class BreakPoint
@@ -235,7 +237,7 @@ protected:
     virtual void customEvent(QEvent *event) override;
     void clear();
     bool checkIdlePause(const JZFunction *func);  //return is stop
-    bool checkPauseStop();  //return is stop
+    bool checkPause(int node_id);
     bool run();         
     void updateStatus(int status);
 
@@ -260,6 +262,7 @@ protected:
     void popStack();
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
+    bool breakPointTrigger(int node_id);
         
     const QVariant &getParam(JZNodeIRParam &param);    
     void setParam(JZNodeIRParam &param,const QVariant &value);
@@ -277,6 +280,8 @@ protected:
     void unSupportSingleOp(int a,int op);
     void unSupportOp(int a,int b,int op);
 
+    void updateHook();
+    
     int m_pc;    
     JZNodeProgram *m_program;    
     JZNodeScript *m_script;
@@ -293,14 +298,16 @@ protected:
     qint64 m_watchTime;
            
     JZFunction m_idleFunc;
-    int m_statusCommand;
+    QAtomicInt m_statusCommand;
     int m_status;     
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
     bool m_debug;
     JZNodeRuntimeError m_error;
+
     ScriptDepend *m_depend;
     QMap<int,QVariantList> m_dependHook;
+    bool m_hookEnable;
     
     Stat m_stat;
 };

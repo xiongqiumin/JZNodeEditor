@@ -39,6 +39,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    const CompilerResult *compilerResult(const QString &path);
+
 protected slots:    
     void onActionNewProject();
     void onActionOpenProject();
@@ -111,7 +113,7 @@ protected slots:
 
     void onAutoCompilerTimer();
     void onBuildFinish(bool flag);
-    void onAutoRunResult(QSharedPointer<UnitTestResult> result);
+    void onAutoRunResult(UnitTestResultPtr result);
 
 private:
     struct ActionStatus{
@@ -142,8 +144,10 @@ private:
         void clear();
         void clearTask();
 
+        bool success;
         qint64 changeTimestamp;
         qint64 buildTimestamp;
+        qint64 saveTimestamp;
         QString runItemPath;
         bool save;
         bool start;
@@ -184,13 +188,13 @@ private:
     void build();
     void saveProgram();
     void startProgram();
+    void startUnitTest(QString testItemPath);
     void saveToFile(QString file,QString text);
     void saveAll();
     bool closeAll(JZEditor *except = nullptr);
     void resetEditor(JZEditor *editor);
     void initLocalProcessTest();
     QIcon menuIcon(const QString &name);
-    void dealRun();
     
     JZProject m_project;    
 
