@@ -292,7 +292,7 @@ void SampleImageBatch::addProcessGetImage()
     script->addConnect(in_dir->paramOutGemo(0), create_dir->paramInGemo(0));
     script->addConnect(node_start->flowOutGemo(0), set_list->flowInGemo());
     script->addConnect(create_dir->paramOutGemo(0), entry_info->paramInGemo(0));
-    entry_info->setParamInValue(1, JZNodeType::storgeString("*.jpg;*.png;*.bmp"));
+    entry_info->setParamInValue(1, "*.jpg;*.png;*.bmp");
     script->addConnect(dir_flag->paramOutGemo(0), entry_info->paramInGemo(2));
     script->addConnect(entry_info->paramOutGemo(0), set_list->paramInGemo(1));
     script->addConnect(set_list->flowOutGemo(0), node_for->flowInGemo());
@@ -304,7 +304,7 @@ void SampleImageBatch::addProcessGetImage()
     script->addConnect(list_size->paramOutGemo(0), node_for->paramInGemo(2));
     op_add_in->addInput();
     script->addConnect(in_dir->paramOutGemo(0), op_add_in->paramInGemo(0));
-    op_add_in->setParamInValue(1, JZNodeType::storgeString("/"));
+    op_add_in->setParamInValue(1, "/");
     script->addConnect(get_list->paramOutGemo(0), list_at->paramInGemo(0));
     script->addConnect(list_at->paramOutGemo(0), op_add_in->paramInGemo(2));
     script->addConnect(op_add_in->paramOutGemo(0), set_in_file->paramInGemo(1));
@@ -507,7 +507,7 @@ void SampleImageBatch::addProcessDir()
         
     script->addConnect(set_out_path->flowOutGemo(0), set_dir->flowInGemo());
     script->addConnect(dir_create->paramOutGemo(0), set_dir->paramInGemo(1));
-    dir_create->setParamInValue(0, JZNodeType::storgeString(""));
+    dir_create->setParamInValue(0, "");
 
     script->addConnect(set_dir->flowOutGemo(0), if_exist->flowInGemo());
     script->addConnect(if_not_exist->paramOutGemo(0), if_exist->paramInGemo(0));

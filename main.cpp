@@ -16,17 +16,17 @@ void run_testcase(int argc, char *argv[])
     extern void test_anglescript(int argc, char *argv[]);
     extern void test_benchmark(int argc, char *argv[]);
 
-    test_script(argc,argv);
-    test_anglescript(argc,argv);
-    test_benchmark(argc,argv);
-}   
+    test_script(argc, argv);
+    test_anglescript(argc, argv);
+    test_benchmark(argc, argv);
+}
 
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
-
+    
     if(0)
     {
         run_testcase(argc,argv);

@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <math.h>
 #include <QDateTime>
+#include <QTimer>
 #include "JZNodeVM.h"
 #include "JZNodeBind.h"
 #include "JZNodeQtBind.h"
@@ -79,6 +80,21 @@ JZNodeVariantAny JZObjectCreate(QString name)
     return any;
 }
 
+class JZPrint: public BuiltInFunction
+{
+public:
+    void call(JZNodeEngine *engine)
+    {
+        QStringList list;
+        int count = engine->stack()->currentEnv()->inCount;
+        for (int i = 0; i < count; i++)
+        {
+            list << JZNodeType::debugString(engine->getReg(Reg_CallIn + i));
+        }
+        engine->print(list.join(" "));
+    }
+};
+
 void JZScriptLog(const QString &log)
 {
     g_engine->print(log);
@@ -101,6 +117,7 @@ RunnerEnv::RunnerEnv()
     function = nullptr;
     script = nullptr;
     pc = -1;
+    inCount = 0;
 }
 
 RunnerEnv::~RunnerEnv()
@@ -347,6 +364,15 @@ void JZNodeEngine::regist()
 {
     JZNodeEngineIdlePauseEvent::Event = QEvent::registerEventType();
 
+    JZFunctionDefine print;
+    print.name = "print";
+    print.isCFunction = true;
+    print.isFlowFunction = true;    
+    print.paramIn.push_back(JZParamDefine("args", Type_args));
+    
+    auto print_func = BuiltInFunctionPtr(new JZPrint());
+    JZNodeFunctionManager::instance()->registBuiltInFunction(print, print_func);
+
     JZNodeFunctionManager::instance()->registCFunction("createObject", false, jzbind::createFuncion(QOverload<QString>::of(JZObjectCreate)));
     JZNodeFunctionManager::instance()->registCFunction("connect", false, jzbind::createFuncion(QObjectConnect));
     JZNodeFunctionManager::instance()->registCFunction("disconnect", false, jzbind::createFuncion(QObjectDisconnect));
@@ -366,6 +392,9 @@ JZNodeEngine::JZNodeEngine()
     m_statusCommand = Command_none;
     m_regs.resize(Reg_End - Reg_Start);
     m_hookEnable = false;
+
+    m_watchTimer = new QTimer(this);
+    connect(m_watchTimer, &QTimer::timeout, this, &JZNodeEngine::onWatchTimer);
 }
 
 JZNodeEngine::~JZNodeEngine()
@@ -385,6 +414,7 @@ JZNodeProgram *JZNodeEngine::program()
 
 void JZNodeEngine::clear()
 {    
+    m_watchTimer->stop();
     m_breakPoints.clear();
     m_breakStep.clear();    
 
@@ -414,6 +444,9 @@ void JZNodeEngine::init()
     g_engine = this;
     QVariantList in, out;
     call("__init__", in,out);
+
+    if(m_debug)
+        m_watchTimer->start(50);
 }   
 
 void JZNodeEngine::deinit()
@@ -620,7 +653,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
     try
     {
         m_error = JZNodeRuntimeError();
-        Q_ASSERT(func && in.size() == func->define.paramIn.size());
+        Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
         for (int i = 0; i < in.size(); i++)
             setReg(Reg_CallIn + i,in[i]);
 
@@ -687,7 +720,7 @@ void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantLis
     }
 
     const JZFunction *func = function(name,&in);
-    Q_ASSERT(func && in.size() == func->define.paramIn.size());
+    Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
     for (int i = 0; i < in.size(); i++)
         setReg(Reg_CallIn + i,in[i]);
     
@@ -1031,6 +1064,7 @@ QVariant JZNodeEngine::getSender()
 
 void JZNodeEngine::print(const QString &log)
 {
+    qDebug() << log;
     emit sigLog(log);
 }
 
@@ -1085,25 +1119,18 @@ JZNodeScript *JZNodeEngine::getScript(QString path)
     return m_program->script(path);
 }
 
-void JZNodeEngine::watchNotify(int id)
+void JZNodeEngine::watchNotify()
 {
-    if (!m_debug || !m_script)
+    if (!m_debug)
         return;
 
-    qint64 cur = QDateTime::currentMSecsSinceEpoch();
-    if (cur - m_watchTime < 50)
-        return;
-    m_watchTime = cur;
+    emit sigWatchNotify();
+    m_stack.currentEnv()->watchMap.clear();
+}
 
-    for (int i = 0; i < m_script->watchList.size(); i++)
-    {
-        auto &w = m_script->watchList[i];
-        if (w.source.contains(id))
-        {
-            //QString text = getVariable(id);
-            //sigNodePropChanged(m_script->file, w.traget, text);
-        }
-    }
+void JZNodeEngine::onWatchTimer()
+{
+    watchNotify();
 }
 
 void JZNodeEngine::setDebug(bool flag)
@@ -1806,6 +1833,13 @@ bool JZNodeEngine::run()
             setParam(ir_set->dst,getParam(ir_set->src));
             break;
         }
+        case OP_watch:
+        {
+            JZNodeIRWatch *ir_watch = (JZNodeIRWatch*)op;
+            int id = ir_watch->traget.id();
+            m_stack.currentEnv()->watchMap[id] = getParam(ir_watch->source);            
+            break;
+        }
         case OP_convert:
         {
             JZNodeIRConvert *ir_convert = (JZNodeIRConvert*)op;
@@ -1835,6 +1869,7 @@ bool JZNodeEngine::run()
                 {
                     checkFunctionIn(func);
                     pushStack(func);
+                    m_stack.currentEnv()->inCount = ir_call->inCount;
                     continue;
                 }
             }

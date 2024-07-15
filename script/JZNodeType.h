@@ -16,6 +16,7 @@ enum
     Type_nullptr,    
     Type_any,
     Type_function,
+    Type_args,      //变长参数
 
     Type_enum = 1000,    
     Type_keyCode,   //Qt::Key
@@ -172,12 +173,6 @@ public:
     static int matchType(QList<int> src_types,QList<int> dst_types);
     static QVariant defaultValue(int type);
     static QVariant initValue(int type, const QString &v);
-
-    static QString dispString(const QString &text);
-    static QString storgeString(const QString &text);
-    
-    static QString addQuote(const QString &text);
-    static QString removeQuote(const QString &text);
 
     static bool sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefine *slot);
     static bool functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2);

@@ -23,6 +23,14 @@ protected slots:
     void onLogContextMenu(QPoint pos);
 
 protected:
+    struct TagInfo {
+        QString name;
+        QString text;
+        QVariantMap params;
+    };
+
+    TagInfo parseTag(QString line);
+
     QTextCharFormat m_baseForamt;
 };
 
@@ -49,7 +57,7 @@ signals:
 protected slots:    
     void onAchorClicked(QUrl url);
 
-protected:
+protected:    
     QList<LogBrowser*> m_logs;
     QTabWidget *m_tabWidget;
     JZNodeStack *m_stack;    

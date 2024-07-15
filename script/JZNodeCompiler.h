@@ -112,6 +112,14 @@ struct NodeCompilerInfo
     QString error;
 };
 
+//NodeWatch
+class NodeWatch
+{
+public:
+    int traget;
+    int source;
+};
+
 //CompilerResult
 class CompilerResult
 {
@@ -119,6 +127,7 @@ public:
     bool result;
     QMap<int, QString> nodeError;    
     QMap<QString,ScriptDepend> depend;
+    QList<NodeWatch> watchList;
 };
 
 class JZNodeBuilder;

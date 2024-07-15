@@ -140,6 +140,8 @@ JZNodeIR *createNodeIR(int type)
         return new JZNodeIRExpr(type);    
     case OP_set:    
         return new JZNodeIRSet();
+    case OP_watch:
+        return new JZNodeIRWatch();
     case OP_convert:
         return new JZNodeIRConvert();
     case OP_jmp:
@@ -286,6 +288,29 @@ void JZNodeIRSet::loadFromStream(QDataStream &s)
     s >> src >> dst;
 }
 
+//JZNodeIRWatch
+JZNodeIRWatch::JZNodeIRWatch()
+{
+    type = OP_watch;
+}
+
+JZNodeIRWatch::~JZNodeIRWatch()
+{
+
+}
+
+void JZNodeIRWatch::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << source << traget;
+}
+
+void JZNodeIRWatch::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> source >> traget;
+}
+
 //JZNodeIRConvert
 JZNodeIRConvert::JZNodeIRConvert()
 {
@@ -337,6 +362,7 @@ void JZNodeIRJmp::loadFromStream(QDataStream &s)
 JZNodeIRCall::JZNodeIRCall()
 {
     type = OP_call;
+    inCount = 0;
     cache = nullptr;
 }
 
@@ -348,13 +374,13 @@ JZNodeIRCall::~JZNodeIRCall()
 void JZNodeIRCall::saveToStream(QDataStream &s) const
 {
     JZNodeIR::saveToStream(s);
-    s << function << paramIn << paramOut;
+    s << function << inCount;
 }
 
 void JZNodeIRCall::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
-    s >> function >> paramIn >> paramOut;
+    s >> function >> inCount;
 }
 
 //JZNodeIRAssert

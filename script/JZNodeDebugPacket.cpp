@@ -55,6 +55,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param)
 {
     s << param.type;
     s << param.value;
+    s << param.binValue;
     s << param.params;
     return s;
 }
@@ -63,6 +64,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param)
 {
     s >> param.type;
     s >> param.value;
+    s >> param.binValue;
     s >> param.params;
     return s;
 }
@@ -177,18 +179,18 @@ QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param)
 }
 
 //JZNodeValueChanged
-JZNodeValueChanged::JZNodeValueChanged()
-{    
-    id = -1;    
-};
-QDataStream &operator<<(QDataStream &s, const JZNodeValueChanged &param)
+JZNodeRuntimeWatch::JZNodeRuntimeWatch()
+{        
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param)
 {
-    s << param.file << param.id << param.value;
+    s << param.runtimInfo << param.values;
     return s;
 }
 
-QDataStream &operator >> (QDataStream &s, JZNodeValueChanged &param)
+QDataStream &operator >> (QDataStream &s, JZNodeRuntimeWatch &param)
 {
-    s >> param.file >> param.id >> param.value;
+    s >> param.runtimInfo >> param.values;
     return s;
 }

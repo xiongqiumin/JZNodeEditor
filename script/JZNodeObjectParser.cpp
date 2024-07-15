@@ -412,7 +412,7 @@ QVariant JZNodeObjectParser::readVariable()
     }
     else if(c == '"')
     {
-        return JZNodeType::removeQuote(tk.word);
+        return tk.word;
     }
     else
     {

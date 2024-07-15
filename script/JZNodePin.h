@@ -18,7 +18,7 @@ enum
     Pin_widget = 0x20,
     Pin_dispName = 0x40,    
     Pin_dispValue = 0x80,
-    Pin_editValue = 0x100,
+    Pin_editValue = Pin_dispValue | 0x100,
     Pin_noValue = 0x200,   //不在运行时起作用
     Pin_literal = 0x400,    
 };

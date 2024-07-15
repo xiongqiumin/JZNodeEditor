@@ -16,6 +16,7 @@ enum
     OP_alloc, 
     OP_clearReg,
     OP_set, 
+    OP_watch,
     OP_convert,
     OP_jmp,
     OP_je,
@@ -168,6 +169,19 @@ public:
     JZNodeIRParam src;
 };
 
+class JZNodeIRWatch : public JZNodeIR
+{
+public:
+    JZNodeIRWatch();
+    virtual ~JZNodeIRWatch();
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
+
+    JZNodeIRParam source;
+    JZNodeIRParam traget;
+};
+
 class JZNodeIRConvert: public JZNodeIR
 {
 public:
@@ -204,8 +218,7 @@ public:
     virtual void loadFromStream(QDataStream &s);   
 
     QString function;
-    QList<JZNodeIRParam> paramIn;
-    QList<JZNodeIRParam> paramOut;
+    int inCount;
     const JZFunction *cache;
 };
 

@@ -50,6 +50,7 @@ public:
     void setAutoRunResult(const UnitTestResult &result);
 
     void setNodeValue(int nodeId, int prop_id, const QString &value);
+    void resetPropValue();
     void updateNode();
 
 signals:

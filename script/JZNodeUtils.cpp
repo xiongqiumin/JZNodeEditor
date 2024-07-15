@@ -5,9 +5,10 @@
 
 QString makeLink(QString tips, QString filename, int nodeId)
 {
+    QString href = filename + "?id=" + QString::number(nodeId);
     QString link;
     if (!filename.isEmpty())
-        link = "link:" + tips + "(" + filename + ",id=" + QString::number(nodeId) + ")";
+        link = tips + "<link href=" + href + ">(" + filename + ",id=" + QString::number(nodeId) + ")</link>";
     else
         link = tips;
     return link;

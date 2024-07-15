@@ -403,6 +403,15 @@
     <ClCompile Include="editor\script\JZProcess.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
+    <ClCompile Include="editor\script\JZNodeAutoRunThread.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeBuildThread.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_benchmark.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -550,6 +559,15 @@
       <Filter>Header Files\tests</Filter>
     </QtMoc>
     <QtMoc Include="tests\test_base.h">
+      <Filter>Header Files\tests</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeAutoRunThread.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeBuildThread.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="tests\test_benchmark.h">
       <Filter>Header Files\tests</Filter>
     </QtMoc>
   </ItemGroup>

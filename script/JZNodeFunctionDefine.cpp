@@ -142,6 +142,11 @@ bool JZFunctionDefine::isMemberFunction() const
     return (paramIn.size() > 0 && paramIn[0].name == "this");
 }
 
+bool JZFunctionDefine::isVariadicFunction() const
+{
+    return (paramIn.size() > 0 && paramIn.back().dataType() == Type_args);
+}
+
 void JZFunctionDefine::updateParam(CFunction *func)
 {
     paramIn.clear();
@@ -173,10 +178,7 @@ void JZFunctionDefine::setDefaultValue(int index, QStringList values)
 {
     for (int i = 0; i < values.size(); i++)
     {
-        if (paramIn[i + index].dataType() == Type_string)
-            paramIn[i + index].value = JZNodeType::addQuote(values[i]);
-        else
-            paramIn[i + index].value = values[i];
+        paramIn[i + index].value = values[i];
     }
 }
 

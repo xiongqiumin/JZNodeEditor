@@ -73,19 +73,6 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
     return s;
 }
 
-//NodeWatch
-QDataStream &operator<<(QDataStream &s, const NodeWatch &param)
-{
-    s << param.source << param.traget;
-    return s;
-}
-
-QDataStream &operator >> (QDataStream &s, NodeWatch &param)
-{
-    s >> param.source >> param.traget;
-    return s;
-}
-
 //JZFunctionDebugInfo
 QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param)
 {
@@ -112,8 +99,7 @@ void JZNodeScript::clear()
     file.clear();
     className.clear();    
     statmentList.clear();
-    functionList.clear();
-    watchList.clear();
+    functionList.clear();    
     functionDebugList.clear();
 }
 
@@ -159,8 +145,7 @@ void JZNodeScript::saveToStream(QDataStream &s)
         s << statmentList[i]->type;
         statmentList[i]->saveToStream(s);
     }    
-    s << functionList;    
-    s << watchList;
+    s << functionList;        
     s << functionDebugList;
 }
 
@@ -178,8 +163,7 @@ void JZNodeScript::loadFromStream(QDataStream &s)
         ir->loadFromStream(s);
         statmentList.push_back(JZNodeIRPtr(ir));
     }
-    s >> functionList;    
-    s >> watchList;
+    s >> functionList;        
     s >> functionDebugList;
 }
 
@@ -199,29 +183,27 @@ void ScriptDepend::clear()
     hook.clear();
 }
 
-int ScriptDepend::indexOf(bool isMember, QString name)
+JZParamDefine *ScriptDepend::getGlobal(QString name)
+{        
+    for (int i = 0; i < global.size(); i++)
+    {
+        if (global[i].name == name)
+            return &global[i];
+    }
+    return nullptr;
+}
+
+JZParamDefine *ScriptDepend::getMember(QString name)
 {
     if (name.startsWith("this."))
         name = name.mid(5);
 
-    QList<JZParamDefine> *list = isMember ? &member : &global;
-    for (int i = 0; i < list->size(); i++)
+    for (int i = 0; i < member.size(); i++)
     {
-        if (list->value(i).name == name)
-            return i;
+        if (member[i].name == name)
+            return &member[i];
     }
-
-    return -1;
-}
-
-JZParamDefine *ScriptDepend::param(bool isMember, QString name)
-{
-    int index = indexOf(isMember, name);
-    if (index == -1)
-        return nullptr;
-
-    QList<JZParamDefine> *list = isMember? &member : &global;
-    return &(*list)[index];
+    return nullptr;
 }
 
 ScriptDepend::FunctionHook *ScriptDepend::getHook(int node_id)
@@ -520,6 +502,12 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
     {
         JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
         line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
+        break;
+    }
+    case OP_watch:
+    {
+        JZNodeIRWatch *ir_watch = (JZNodeIRWatch*)op;
+        line += "WATCH " + toString(ir_watch->traget) + " = " + toString(ir_watch->source);
         break;
     }
     case OP_convert:

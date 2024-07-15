@@ -72,14 +72,15 @@ void JZNodePropertyEditor::setPropEditable(int prop_id,bool editable)
     m_propMap[prop_id]->setEnabled(editable);
 }
 
-JZNodeProperty *JZNodePropertyEditor::createProp(JZNodePin *pin)
+JZNodeProperty *JZNodePropertyEditor::createPropValue(JZNodePin *pin)
 {
     int type = JZNodeType::upType(pin->dataTypeId());
     if (type == Type_none && pin->dataType().size() > 0)
         type = Type_any;
 
-    auto pin_prop = new JZNodeProperty(pin->name(), NodeProprety_GroupId);
-    //pin_prop->setDataType(pin->dataType());
+    int up_type = JZNodeType::upType(pin->dataTypeId());
+    auto pin_prop = new JZNodeProperty(pin->name(), NodeProprety_Value);
+    pin_prop->setDataType(up_type);
     pin_prop->setValue(pin->value());
     if(type == Type_none || !(pin->flag() & Pin_editValue))
         pin_prop->setEnabled(false);
@@ -102,7 +103,7 @@ void JZNodePropertyEditor::addPropList(QString name,const QList<int> &list)
         if(prop_group == nullptr)
             prop_group = new JZNodeProperty(name, NodeProprety_GroupId);
         
-        auto pin_prop = createProp(pin);
+        auto pin_prop = createPropValue(pin);
         prop_group->addSubProperty(pin_prop);        
     }
 
@@ -138,9 +139,9 @@ void JZNodePropertyEditor::updateNode()
     prop_id->setEnabled(false);
     m_tree->addProperty(prop_base);            
 
-    auto in_list = m_node->pinInList(Pin_param);
+    auto in_list = m_node->pinInList(Pin_param | Pin_editValue);
     addPropList("输入",in_list);
-    auto out_list = m_node->pinOutList(Pin_param);
+    auto out_list = m_node->pinOutList(Pin_param | Pin_editValue);    
     addPropList("输出",out_list);
 
     m_editing = false;

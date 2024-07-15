@@ -47,16 +47,6 @@ struct NodeInfo
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 
-//NodeWatch
-class NodeWatch
-{
-public:
-    int traget;
-    QList<int> source;
-};
-QDataStream &operator<<(QDataStream &s, const NodeWatch &param);
-QDataStream &operator>>(QDataStream &s, NodeWatch &param);
-
 //JZFunctionDebugInfo
 class JZFunctionDebugInfo
 {
@@ -84,8 +74,7 @@ public:
     QString file;
     QString className; 
     QList<JZNodeIRPtr> statmentList;
-    QList<JZFunction> functionList;        
-    QList<NodeWatch> watchList;           //display node    
+    QList<JZFunction> functionList;
 
     QList<JZFunctionDebugInfo> functionDebugList;
 
@@ -108,10 +97,9 @@ public:
         QList<JZParamDefine> params;
     };
     
-
-    void clear();
-    int indexOf(bool isMember, QString name);
-    JZParamDefine *param(bool isMember, QString name);
+    void clear();    
+    JZParamDefine *getGlobal(QString name);
+    JZParamDefine *getMember(QString name);
     FunctionHook *getHook(int node_id);
 
     JZFunctionDefine function;

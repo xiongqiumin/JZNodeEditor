@@ -84,6 +84,30 @@ JZNodeGraphItem::~JZNodeGraphItem()
     m_pinRects.clear();
 }
 
+void JZNodeGraphItem::clear()
+{
+    auto it = m_pinRects.begin();
+    while (it != m_pinRects.end())
+    {
+        if(it->widget)
+            it->widget->disconnect(it->widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
+
+        it++;
+    }
+}
+
+void JZNodeGraphItem::setRunningMode(ProcessStatus mode)
+{
+    auto it = m_pinRects.begin();
+    while (it != m_pinRects.end())
+    {
+        if (it->widget)
+            it->widget->setRuntime(mode);
+
+        it++;
+    }
+}
+
 void JZNodeGraphItem::updatePropGemo()
 {
     //remove
@@ -264,7 +288,7 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
         {
             bool editable = editor()->isPropEditable(m_id, pin_id);
             JZNodePinWidget *w = qobject_cast<JZNodePinWidget*>(gemo->widget);
-            w->setEnabled(editable);
+            w->setEditable(editable);
         }
     }
 }

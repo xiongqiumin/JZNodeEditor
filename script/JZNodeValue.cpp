@@ -180,12 +180,12 @@ JZNodeCreate::~JZNodeCreate()
 
 void JZNodeCreate::setClassName(const QString &name)
 {
-    setPinValue(paramIn(0), JZNodeType::addQuote(name));
+    setPinValue(paramIn(0), name);
 }
 
 QString JZNodeCreate::className() const
 {
-    return JZNodeType::removeQuote(pinValue(paramIn(0)));    
+    return pinValue(paramIn(0));    
 }
 
 bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
@@ -290,12 +290,12 @@ void JZNodeCreateFromString::onPinChanged(int id)
 
 void JZNodeCreateFromString::setClassName(const QString &name)
 {
-    setPinValue(paramIn(0), JZNodeType::addQuote(name));
+    setPinValue(paramIn(0), name);
 }
 
 QString JZNodeCreateFromString::className() const
 {
-    return JZNodeType::removeQuote(pinValue(paramIn(0)));
+    return pinValue(paramIn(0));
 }
 
 void JZNodeCreateFromString::setContext(const QString &text)
@@ -381,7 +381,7 @@ JZNodePrint::JZNodePrint()
 
     addFlowIn();
     addFlowOut();
-    int in = addParamIn("text", Pin_dispName);
+    int in = addParamIn("var", Pin_dispName | Pin_editValue);
     setPinTypeAny(in);
 }
 
@@ -532,12 +532,12 @@ JZNodeSetParam::~JZNodeSetParam()
 
 void JZNodeSetParam::setVariable(const QString &name)
 {
-    setPinValue(paramIn(0), JZNodeType::addQuote(name));
+    setPinValue(paramIn(0), name);
 }
 
 QString JZNodeSetParam::variable() const
 {
-    return JZNodeType::removeQuote(pinValue(paramIn(0)));
+    return pinValue(paramIn(0));
 }
 
 void JZNodeSetParam::setValue(const QString &name)
@@ -612,12 +612,12 @@ JZNodeSetParamDataFlow::~JZNodeSetParamDataFlow()
 
 void JZNodeSetParamDataFlow::setVariable(const QString &name)
 {
-    setPinValue(paramIn(0),JZNodeType::addQuote(name));
+    setPinValue(paramIn(0),name);
 }
 
 QString JZNodeSetParamDataFlow::variable() const
 {
-    return JZNodeType::removeQuote(pinValue(paramIn(0)));
+    return pinValue(paramIn(0));
 }
 
 void JZNodeSetParamDataFlow::setValue(const QString &name)

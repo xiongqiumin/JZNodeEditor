@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QPlainTextEdit>
 #include <QApplication>
+#include <QCheckBox>
 #include "JZNodeObject.h"
 #include "JZNodeParamWidget.h"
 #include "JZNodeType.h"
@@ -106,34 +107,6 @@ void JZNodeParamTypeWidget::setType(QString type)
     setCurrentText(type);
 }
 
-//https://stackoverflow.com/questions/12145522/why-pressing-of-tab-key-emits-only-qeventshortcutoverride-event
-class JZNodeParamValueEventFilter : public QObject
-{
-public:
-    JZNodeParamValueEventFilter(QObject *parent)
-        :QObject(parent)
-    {
-    }
-
-    virtual bool eventFilter(QObject *object, QEvent *event) override
-    {
-        switch (event->type())
-        {
-        case QEvent::FocusIn:
-        case QEvent::FocusOut:
-        case QEvent::FocusAboutToChange:
-            // Forward focus events to editor because the QStyledItemDelegate relies on them
-            QCoreApplication::sendEvent(main, event);
-            break;
-        default:
-            break;
-        }
-        return QObject::eventFilter(object, event);
-    }
-
-    QWidget *main;
-};
-
 //JZNodePinWidget
 JZNodePinWidget::JZNodePinWidget(QWidget *parent)
     :QWidget(parent)
@@ -151,6 +124,21 @@ QString JZNodePinWidget::value() const
 
 void JZNodePinWidget::setValue(const QString &value)
 {
+}
+
+void JZNodePinWidget::setEditable(bool flag)
+{
+
+}
+
+void JZNodePinWidget::setRuntime(ProcessStatus status)
+{
+
+}
+
+void JZNodePinWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
+{
+
 }
 
 //JZNodePinButtonWidget
@@ -172,6 +160,11 @@ JZNodePinButtonWidget::~JZNodePinButtonWidget()
 QPushButton *JZNodePinButtonWidget::button()
 {
     return m_btn;
+}
+
+void JZNodePinButtonWidget::setRuntime(ProcessStatus status)
+{
+    setEnabled(status == Process_none);
 }
 
 //JZNodeParamValueWidget
@@ -205,7 +198,7 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
 {
     QString type;
     if (data_type == Type_bool)
-        type = "QComboBox";
+        type = "QCheckBox";
     else if (JZNodeType::isEnum(data_type))
     {
         auto meta = JZNodeObjectManager::instance()->enumMeta(data_type);
@@ -226,7 +219,16 @@ void JZNodeParamValueWidget::createWidget()
     clearWidget();
 
     QString widget = m_widgetType;
-    if (widget == "QComboBox")
+    if (widget == "QCheckBox")
+    {
+        QCheckBox *box = new QCheckBox();
+        box->connect(box, &QCheckBox::stateChanged, this, &JZNodeParamValueWidget::onValueChanged);
+        connect(box, &QCheckBox::toggled, [box] {
+            box->setText(box->isChecked() ? "true" : "false");
+        });
+        m_widget = box;
+    }
+    else if (widget == "QComboBox")
     {
         QComboBox *box = new QComboBox();
         box->connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onValueChanged()));
@@ -252,9 +254,6 @@ void JZNodeParamValueWidget::createWidget()
     }
     m_widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
-    JZNodeParamValueEventFilter *w = new JZNodeParamValueEventFilter(this);
-    w->main = this;
-    m_widget->installEventFilter(w);
     setFocusProxy(m_widget);
     layout()->addWidget(m_widget);        
 
@@ -319,13 +318,36 @@ QWidget *JZNodeParamValueWidget::widget()
     return m_widget;
 }
 
+void JZNodeParamValueWidget::setEditable(bool flag)
+{
+    m_widget->setVisible(flag);
+    setEnabled(flag);
+}
+
+void JZNodeParamValueWidget::setRuntime(ProcessStatus status)
+{
+    bool flag = (status == Process_none);
+    m_widget->setVisible(flag);
+    m_runtimeValue->setVisible(!flag);    
+}
+
+void JZNodeParamValueWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
+{
+    m_runtimeValue->setText(value.value);
+}
+
 QString JZNodeParamValueWidget::value() const
 {
     if (!m_widget)
         return QString();
 
     QString text;
-    if (m_widget->inherits("QComboBox"))
+    if (m_widget->inherits("QCheckBox"))
+    {
+        QCheckBox *box = qobject_cast<QCheckBox*>(m_widget);
+        text = box->text();
+    }
+    else if (m_widget->inherits("QComboBox"))
     {
         QComboBox *box = qobject_cast<QComboBox*>(m_widget);
         if (m_dataType == Type_int)
@@ -336,10 +358,7 @@ QString JZNodeParamValueWidget::value() const
     else if (m_widget->inherits("QLineEdit"))
     {        
         QLineEdit *edit = qobject_cast<QLineEdit*>(m_widget);
-        if (m_dataType == Type_string)
-            text = JZNodeType::storgeString(edit->text());
-        else
-            text = edit->text();
+        text = edit->text();
     }
     else if (m_widget->inherits("QPlainTextEdit"))
     {
@@ -364,7 +383,14 @@ void JZNodeParamValueWidget::setValue(const QString &value)
     if (!m_widget)
         return;
     
-    if (m_widget->inherits("QComboBox"))
+    if (m_widget->inherits("QCheckBox"))
+    {
+        QCheckBox *box = qobject_cast<QCheckBox*>(m_widget);
+        bool flag = value == "true";
+        box->setChecked(flag);
+        box->setText(flag? "true":"false");
+    }
+    else if (m_widget->inherits("QComboBox"))
     {
         QComboBox *box = qobject_cast<QComboBox*>(m_widget);
         if(m_dataType == Type_int)
@@ -375,10 +401,7 @@ void JZNodeParamValueWidget::setValue(const QString &value)
     else if (m_widget->inherits("QLineEdit"))
     {        
         QLineEdit *edit = qobject_cast<QLineEdit*>(m_widget);
-        if (m_dataType == Type_string)
-            edit->setText(JZNodeType::dispString(value));
-        else
-            edit->setText(value);
+        edit->setText(value);
         edit->setCursorPosition(0);
         edit->setToolTip(value);
     }

@@ -38,7 +38,7 @@ protected slots:
 
     void onRuntimeError(JZNodeRuntimeError error);    
     void onStatusChanged(int status);
-    void onNodePropChanged(QString file,int id,QString value);
+    void onWatchNotify();
     void onLog(const QString &log);
 
 protected:        

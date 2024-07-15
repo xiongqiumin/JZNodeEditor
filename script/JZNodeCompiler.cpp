@@ -366,6 +366,7 @@ void JZNodeCompiler::init(JZScriptItem *scriptFile)
     m_nodeInfo.clear();
     m_className.clear();    
     m_graphList.clear();        
+    m_error.clear();
     resetStack();
 }
 
@@ -498,7 +499,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     m_script->clear();
     m_script->file = scriptFile->itemPath();    
     m_script->className = scriptFile->className();
-    m_compilerInfo = compilerResult();
+    m_compilerInfo = CompilerResult();
     m_compilerInfo.result = false;
 
     JZScriptClassItem *class_file = m_project->getItemClass(scriptFile);
@@ -857,8 +858,8 @@ void JZNodeCompiler::updateDispayNode()
             {
                 NodeWatch watch;
                 watch.traget = paramId(graph_node->node->id(), it.key());
-                watch.source << paramId(in_list[0]);
-                m_script->watchList.push_back(watch);
+                watch.source = paramId(in_list[0]);
+                m_compilerInfo.watchList.push_back(watch);
             }            
             it++;
         }
@@ -1194,9 +1195,7 @@ bool JZNodeCompiler::checkBuildStop()
 }
 
 void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
-{    
-    updateDispayNode();
-
+{        
     JZFunctionDebugInfo func_debug;
     //编译结果    
     auto it = m_nodeInfo.begin();
@@ -1398,6 +1397,8 @@ calc_end:
 
 bool JZNodeCompiler::bulidControlFlow()
 {        
+    updateDispayNode();
+
     //build node
     QList<GraphNode *> graph_list = m_buildGraph->topolist;
     QList<GraphNode *> flow_list;
@@ -1774,7 +1775,7 @@ void JZNodeCompiler::addCall(const QString &function, const QList<JZNodeIRParam>
 
 void JZNodeCompiler::addCall(const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut)
 {
-    Q_ASSERT(func && func->paramIn.size() == paramIn.size() && func->paramOut.size() >= paramOut.size());
+    Q_ASSERT(func && (func->isVariadicFunction() || func->paramIn.size() == paramIn.size()) && func->paramOut.size() >= paramOut.size());
 
     setRegCallFunction(func);
     for(int i = 0; i < paramIn.size(); i++)
@@ -1782,6 +1783,7 @@ void JZNodeCompiler::addCall(const JZFunctionDefine *func, const QList<JZNodeIRP
 
     JZNodeIRCall *call = new JZNodeIRCall();
     call->function = func->fullName();
+    call->inCount = paramIn.size();
     addStatement(JZNodeIRPtr(call));
 
     for(int i = 0; i < paramOut.size(); i++)
@@ -2345,6 +2347,20 @@ void JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst, const JZNodeIRPara
     op->dst = dst;
     op->src = src;
     addStatement(JZNodeIRPtr(op));
+
+    if (dst.isId())
+    {
+        for (int i = 0; i < m_compilerInfo.watchList.size(); i++)
+        {
+            auto &watch = m_compilerInfo.watchList[i];
+            if (watch.source == dst.id())
+            {
+                JZNodeIRWatch *ir_watch = new JZNodeIRWatch();
+                ir_watch->source = irId(watch.source);
+                ir_watch->traget = irId(watch.traget);
+            }
+        }
+    }
 }
 
 void JZNodeCompiler::addSetVariableConvert(const JZNodeIRParam &dst,const JZNodeIRParam &src)

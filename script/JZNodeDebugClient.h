@@ -41,7 +41,7 @@ signals:
 
     void sigRuntimeStatus(int stauts);    
     void sigRuntimeError(JZNodeRuntimeError error);    
-    void sigNodePropChanged(const JZNodeValueChanged &info);
+    void sigRuntimeWatch(const JZNodeRuntimeWatch &info);
     void sigLog(QString log);
 
 protected slots:    

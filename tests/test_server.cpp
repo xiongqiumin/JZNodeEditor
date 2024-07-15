@@ -102,7 +102,7 @@ void TestServer::addTimeoutFunction()
     node_for->setRange(0, 1, 10);
 
     JZNodePrint *node_print = new JZNodePrint();
-    node_print->setParamInValue(0, JZNodeType::addQuote("hello"));
+    node_print->setParamInValue(0, "hello");
 
     JZNodeDisplay *node_display = new JZNodeDisplay();
 

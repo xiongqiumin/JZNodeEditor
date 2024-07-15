@@ -1,10 +1,42 @@
 #include <QApplication>
 #include <QPainter>
 #include <QStyle>
-#include <QStyledItemDelegate>
+#include <QItemDelegate>
+#include <QHeaderView>
+#include <QDebug>
 #include "JZNodePropertyBrowser.h"
-#include "JZNodeType.h"
 #include "JZNodeParamWidget.h"
+#include "JZNodeType.h"
+#include "JZNodeObject.h"
+
+static QIcon drawCheckBox(bool value)
+{
+    QStyleOptionButton opt;
+    opt.state |= value ? QStyle::State_On : QStyle::State_Off;
+    opt.state |= QStyle::State_Enabled;
+    const QStyle *style = QApplication::style();
+    // Figure out size of an indicator and make sure it is not scaled down in a list view item
+    // by making the pixmap as big as a list view icon and centering the indicator in it.
+    // (if it is smaller, it can't be helped)
+    const int indicatorWidth = style->pixelMetric(QStyle::PM_IndicatorWidth, &opt);
+    const int indicatorHeight = style->pixelMetric(QStyle::PM_IndicatorHeight, &opt);
+    const int listViewIconSize = indicatorWidth;
+    const int pixmapWidth = indicatorWidth;
+    const int pixmapHeight = qMax(indicatorHeight, listViewIconSize);
+
+    opt.rect = QRect(0, 0, indicatorWidth, indicatorHeight);
+    QPixmap pixmap = QPixmap(pixmapWidth, pixmapHeight);
+    pixmap.fill(Qt::transparent);
+    {
+        // Center?
+        const int xoff = (pixmapWidth  > indicatorWidth) ? (pixmapWidth - indicatorWidth) / 2 : 0;
+        const int yoff = (pixmapHeight > indicatorHeight) ? (pixmapHeight - indicatorHeight) / 2 : 0;
+        QPainter painter(&pixmap);
+        painter.translate(xoff, yoff);
+        style->drawPrimitive(QStyle::PE_IndicatorCheckBox, &opt, &painter);
+    }
+    return QIcon(pixmap);
+}
 
 JZNodeProperty::JZNodeProperty(QString name, NodePropretyType type)
 {    
@@ -56,12 +88,17 @@ const QString &JZNodeProperty::value() const
     return m_value;
 }
 
-void JZNodeProperty::setDataType(QList<int> data_type)
+void JZNodeProperty::setDataType(int data_type)
 {
     m_dataType = data_type;
+    if (m_item)
+    {
+        auto tree = qobject_cast<JZNodePropertyBrowser*>(m_item->treeWidget());
+        tree->updateItem(m_item);
+    }
 }
 
-QList<int> JZNodeProperty::dataType()
+int JZNodeProperty::dataType()
 {
     return m_dataType;
 }
@@ -73,25 +110,29 @@ void JZNodeProperty::setValue(const QString &value)
         m_item->setText(1,value);
 }
 
-class PinValueItemDelegate : public QStyledItemDelegate
+class PinValueItemDelegate : public QItemDelegate
 {
 public:
     PinValueItemDelegate(QObject *parent)
-        :QStyledItemDelegate(parent)
+        :QItemDelegate(parent)
     {
     }
 
     virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
+        if (index.column() == 0)
+            return nullptr;
+
         auto prop = browser->property(index);
         if (prop->type() != NodeProprety_Value)
             return nullptr;
         
         QString text = index.data().toString();
         auto edit = new JZNodeParamValueWidget(parent);
-        int up_type = JZNodeType::upType(prop->dataType());
+        int up_type = prop->dataType();
         edit->initWidget(up_type);
-        edit->setValue(option.text);
+        edit->setValue(text);
+        edit->setAutoFillBackground(true);
         return edit;
     }
 
@@ -102,6 +143,46 @@ public:
         auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
         model->setData(index, edit->value());
         edit->deleteLater();
+
+        auto prop = browser->property(index);
+        emit browser->valueChanged(prop, edit->value());
+    }
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+        const QModelIndex &index) const
+    {
+        QItemDelegate::paint(painter, option, index);
+
+        QColor color = static_cast<QRgb>(QApplication::style()->styleHint(QStyle::SH_Table_GridLineColor, &option));
+        painter->save();
+        painter->setPen(QPen(color));
+        if (index.column() == 0) {
+            int right = (option.direction == Qt::LeftToRight) ? option.rect.right() : option.rect.left();
+            painter->drawLine(right, option.rect.y(), right, option.rect.bottom());
+        }
+        painter->restore();
+    }
+
+    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+        const QModelIndex &index) const
+    {
+        editor->setGeometry(option.rect.adjusted(0, 0, 0, -1));
+    }
+
+    virtual bool eventFilter(QObject *object, QEvent *event) override
+    {
+        switch (event->type())
+        {
+        case QEvent::FocusIn:
+        case QEvent::FocusOut:
+        case QEvent::FocusAboutToChange:
+            // Forward focus events to editor because the QStyledItemDelegate relies on them
+            QCoreApplication::sendEvent(object, event);
+            break;
+        default:
+            break;
+        }
+        return QItemDelegate::eventFilter(object, event);
     }
 
     JZNodePropertyBrowser *browser;
@@ -110,29 +191,22 @@ public:
 //JZNodePropertyBrowser
 JZNodePropertyBrowser::JZNodePropertyBrowser()
     :m_root("root", NodeProprety_GroupId)
-{
+{    
     this->setColumnCount(2);
     this->setHeaderLabels({ "name","value" });
     this->setAlternatingRowColors(true);
-    connect(this, &QTreeWidget::itemChanged, this, &JZNodePropertyBrowser::onItemChanged);
-    this->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
-
+    this->header()->setSectionsMovable(false);
+    this->header()->setSectionResizeMode(QHeaderView::Stretch);        
+    this->setEditTriggers(QAbstractItemView::AllEditTriggers);
+    
     PinValueItemDelegate *delegate = new PinValueItemDelegate(this);
     delegate->browser = this;
-    this->setItemDelegateForColumn(1, delegate);
+    this->setItemDelegate(delegate);
 }
 
 JZNodePropertyBrowser::~JZNodePropertyBrowser()
 {
 
-}
-
-
-void JZNodePropertyBrowser::onItemChanged(QTreeWidgetItem *item, int column)
-{    
-    auto text = item->text(column);
-    auto prop = m_propMap[item];    
-    emit valueChanged(prop, text);
 }
 
 void JZNodePropertyBrowser::clear()
@@ -154,13 +228,11 @@ JZNodeProperty *JZNodePropertyBrowser::property(const QModelIndex &index)
 }
 
 void JZNodePropertyBrowser::setItemEnabled(QTreeWidgetItem *item, bool flag)
-{
-    this->blockSignals(true);
+{    
     if (flag)
         item->setFlags(item->flags() | Qt::ItemIsEditable);
     else
-        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-    this->blockSignals(false);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);    
 }
 
 void JZNodePropertyBrowser::createPropItem(QTreeWidgetItem *parent, JZNodeProperty *prop)
@@ -179,6 +251,7 @@ void JZNodePropertyBrowser::createPropItem(QTreeWidgetItem *parent, JZNodeProper
     for (int i = 0; i < prop->m_childs.size(); i++)    
         createPropItem(prop->m_item, prop->m_childs[i].data());    
     prop->m_item->setExpanded(true);
+    updateItem(prop->m_item);
 }
 
 void JZNodePropertyBrowser::drawRow(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -186,23 +259,82 @@ void JZNodePropertyBrowser::drawRow(QPainter *painter, const QStyleOptionViewIte
     QTreeWidgetItem *item = this->itemFromIndex(index);
 
     QStyleOptionViewItem opt = option;  
+    /*
     bool hasValue = (m_propMap[item]->m_type != NodeProprety_GroupId);
     if (!hasValue) {
         const QColor c = option.palette.color(QPalette::Dark);
         painter->fillRect(option.rect, c);
         opt.palette.setColor(QPalette::AlternateBase, c);
     }
-    else {
-        const QColor c = QColor();
+    else {        
+        QColor c;
         if (c.isValid()) {
             painter->fillRect(option.rect, c);
             opt.palette.setColor(QPalette::AlternateBase, c.lighter(112));
         }
-    }    
+    }
+    */
     QTreeWidget::drawRow(painter, opt, index);
     QColor color = static_cast<QRgb>(QApplication::style()->styleHint(QStyle::SH_Table_GridLineColor, &opt));
     painter->save();
     painter->setPen(QPen(color));
     painter->drawLine(opt.rect.x(), opt.rect.bottom(), opt.rect.right(), opt.rect.bottom());
     painter->restore();    
+}
+
+void JZNodePropertyBrowser::updateItem(QTreeWidgetItem *item)
+{
+    int type = m_propMap[item]->dataType();
+
+    QIcon icon;
+    if (type == Type_bool)
+    {
+        bool flag = m_propMap[item]->value() == "true";
+        icon = drawCheckBox(flag);
+        if (item->text(1).isEmpty())
+            item->setText(1, "false");
+    }
+    item->setIcon(1, icon);
+}
+
+void test_prop_browser()
+{
+    JZNodePropertyBrowser *w = new JZNodePropertyBrowser();
+
+    for (int i = 0; i < 3; i++)
+    {
+        QString group_name = "group" + QString::number(i + 1);
+        JZNodeProperty *gropp1 = new JZNodeProperty(group_name, NodeProprety_GroupId);
+        w->addProperty(gropp1);
+
+        JZNodeProperty *p_bool = new JZNodeProperty("bool", NodeProprety_Value);
+        p_bool->setDataType({ Type_bool });
+        gropp1->addSubProperty(p_bool);
+
+        JZNodeProperty *p_int = new JZNodeProperty("int", NodeProprety_Value);
+        p_int->setDataType({ Type_int });
+        gropp1->addSubProperty(p_int);
+
+        JZNodeProperty *p_int64 = new JZNodeProperty("int64", NodeProprety_Value);
+        p_int64->setDataType({ Type_int64 });
+        gropp1->addSubProperty(p_int64);
+
+        JZNodeProperty *p_double = new JZNodeProperty("double", NodeProprety_Value);
+        p_double->setDataType({ Type_double });
+        gropp1->addSubProperty(p_double);
+
+        JZNodeProperty *p_string = new JZNodeProperty("string", NodeProprety_Value);
+        p_string->setDataType({ Type_string });
+        gropp1->addSubProperty(p_string);
+
+        JZNodeProperty *p_enum = new JZNodeProperty("enum", NodeProprety_Value);
+        p_enum->setDataType( {Type_keyCode});
+
+        auto meta = JZNodeObjectManager::instance()->enumMeta(Type_keyCode);
+        p_enum->setValue(meta->defaultKey());
+        gropp1->addSubProperty(p_enum);
+    }
+
+    w->resize(600, 480);
+    w->show();
 }

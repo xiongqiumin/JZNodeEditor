@@ -93,6 +93,10 @@ void initBase()
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
+    cls_string.def("format", false, [](const QString &format,const QVariantList &params)->QString {
+        QString fmt = format;
+        return fmt;
+    });
     cls_string.def("append", false, [](const QString &a, const QString &b)->QString {
         return a + b;
     });

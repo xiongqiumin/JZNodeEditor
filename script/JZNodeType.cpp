@@ -65,6 +65,7 @@ void JZNodeType::init()
     typeMap["string"] = Type_string;
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;     
+    typeMap["args"] = Type_args;
 
     opNameMap[OP_add] = "+";
     opNameMap[OP_sub] = "-";
@@ -712,22 +713,6 @@ QVariant JZNodeType::initValue(int type, const QString &text)
     return QVariant();
 }
 
-QString JZNodeType::dispString(const QString &text)
-{
-    if (text.size() < 2 || !(text.front() == '"' && text.back() == '"'))
-        return QString();
-
-    if (text.size() == 2 || text.indexOf(' ') >= 0)
-        return text;
-    
-    return text.mid(1, text.size() - 2);
-}
-
-QString JZNodeType::storgeString(const QString &text)
-{
-    return '"' + text + '"';
-}
-
 int JZNodeType::stringType(const QString &text)
 {
     if (text == "false" || text == "true")
@@ -746,20 +731,6 @@ int JZNodeType::stringType(const QString &text)
         return Type_double;
 
     return Type_none;
-}
-
-QString JZNodeType::addQuote(const QString &text)
-{
-    return '"' + text + '"';
-}
-
-QString JZNodeType::removeQuote(const QString &text)
-{
-    if (text.isEmpty())
-        return QString();
-
-    Q_ASSERT(text.size() >= 2 && text.front() == '"' && text.back() == '"');
-    return text.mid(1,text.size() - 2);
 }
 
 QVariant JZNodeType::defaultValue(int type)

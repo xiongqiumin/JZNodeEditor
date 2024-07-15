@@ -160,7 +160,7 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
     }
     else if (packet->cmd == Cmd_nodePropChanged)
     {
-        emit sigNodePropChanged(netDataUnPack<JZNodeValueChanged>(packet->params[0].toByteArray()));
+        emit sigRuntimeWatch(netDataUnPack<JZNodeRuntimeWatch>(packet->params[0].toByteArray()));
     }
 }
 

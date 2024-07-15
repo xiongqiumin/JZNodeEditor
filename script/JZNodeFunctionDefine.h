@@ -66,6 +66,7 @@ public:
 protected:
     Q_DISABLE_COPY(BuiltInFunction);
 };
+typedef QSharedPointer<BuiltInFunction> BuiltInFunctionPtr;
 
 class JZFunctionDefine
 {
@@ -77,6 +78,7 @@ public:
     void setFullName(const QString &name);
     QString fullName() const;    
     bool isMemberFunction() const;    
+    bool isVariadicFunction() const;
 
     QString delcare() const;
     

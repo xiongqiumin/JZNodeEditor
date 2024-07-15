@@ -37,6 +37,9 @@ public:
     bool isError() const;
     
     void onTimerEvent(int event);
+    void clear();
+
+    void setRunningMode(ProcessStatus mode);
 
 protected:
     enum

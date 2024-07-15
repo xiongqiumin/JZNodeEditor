@@ -100,7 +100,7 @@ protected slots:
     void onStackChanged(int stack);
     void onWatchValueChanged(JZNodeParamCoor coor, QString value);
     void onWatchNameChanged(JZNodeParamCoor coor);
-    void onNodePropChanged(const JZNodeValueChanged &info);
+    void onRuntimeWatch(const JZNodeRuntimeWatch &info);
 
     void onRuntimeLog(QString log);    
     void onRuntimeError(JZNodeRuntimeError error);    

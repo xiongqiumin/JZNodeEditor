@@ -478,8 +478,9 @@ void JZNodePanel::initConstParam(QTreeWidgetItem *root)
     root->addChild(createNode("double",Node_literal,{"double"}));
     root->addChild(createNode("null",Node_literal,{"null"}));
 
-    JZNodeDisplay node_disp;
+    
     root->addChild(createNode("display",Node_display));
+    root->addChild(createNode("print", Node_print));
 }
 
 void JZNodePanel::initConvert(QTreeWidgetItem *root)

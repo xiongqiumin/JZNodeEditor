@@ -4,6 +4,7 @@
 #include "JZNetPack.h"
 #include "JZProject.h"
 #include "JZNodeProgram.h"
+#include "JZNodeEngine.h"
 
 const int NetPack_debugPacket = NetPack_user;
 
@@ -86,6 +87,7 @@ class JZNodeDebugParamValue
 public:
     int type;
     QString value;
+    QByteArray binValue;
     QMap<QString, JZNodeDebugParamValue> params;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param);
@@ -155,17 +157,16 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param);
 
-//JZNodeValueChanged
-class JZNodeValueChanged
+//JZNodeRuntimeWatch
+class JZNodeRuntimeWatch
 {
 public:
-    JZNodeValueChanged();
+    JZNodeRuntimeWatch();
 
-    QString file;
-    int id;
-    QString value;
+    JZNodeRuntimeInfo runtimInfo;
+    QMap<int, QVariant> values;
 };
-QDataStream &operator<<(QDataStream &s, const JZNodeValueChanged &param);
-QDataStream &operator>>(QDataStream &s, JZNodeValueChanged &param);
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param);
+QDataStream &operator>>(QDataStream &s, JZNodeRuntimeWatch &param);
 
 #endif

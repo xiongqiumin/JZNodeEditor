@@ -97,9 +97,11 @@
     <ClCompile Include="editor\JZNewFileDialog.cpp" />
     <ClCompile Include="editor\JZNewProjectDialog.cpp" />
     <ClCompile Include="editor\JZProjectTree.cpp" />
+    <ClCompile Include="editor\script\JZNodeAutoRunThread.cpp" />
     <ClCompile Include="editor\script\JZNodeAutoRunWidget.cpp" />
     <ClCompile Include="editor\script\JZNodeBaseItem.cpp" />
     <ClCompile Include="editor\script\JZNodeBreakPoint.cpp" />
+    <ClCompile Include="editor\script\JZNodeBuildThread.cpp" />
     <ClCompile Include="editor\script\JZNodeClassEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeFlagEditDialog.cpp" />
@@ -188,6 +190,7 @@
     <ClCompile Include="script\JZRegExpHelp.cpp" />
     <ClCompile Include="tests\test_anglescript.cpp" />
     <ClCompile Include="tests\test_base.cpp" />
+    <ClCompile Include="tests\test_benchmark.cpp" />
     <ClCompile Include="tests\test_script.cpp" />
     <ClCompile Include="tests\test_server.cpp" />
     <ClCompile Include="UiCommon.cpp" />
@@ -211,6 +214,8 @@
     <QtMoc Include="editor\JZNewFileDialog.h" />
     <QtMoc Include="editor\script\JZNodeClassEditDialog.h" />
     <QtMoc Include="editor\script\JZNodeAutoRunWidget.h" />
+    <QtMoc Include="editor\script\JZNodeAutoRunThread.h" />
+    <QtMoc Include="editor\script\JZNodeBuildThread.h" />
     <ClInclude Include="editor\script\JZNodeFlagEditDialog.h" />
     <ClInclude Include="editor\script\JZNodeGroupItem.h" />
     <ClInclude Include="editor\script\JZNodeLayout.h" />
@@ -240,6 +245,7 @@
     <ClInclude Include="script\JZNodeValue.h" />
     <QtMoc Include="tests\test_anglescript.h" />
     <QtMoc Include="tests\test_base.h" />
+    <QtMoc Include="tests\test_benchmark.h" />
     <ClInclude Include="tests\test_server.h" />
     <QtMoc Include="editor\script\JZNodeWatch.h" />
     <QtMoc Include="editor\script\JZNodeStack.h" />

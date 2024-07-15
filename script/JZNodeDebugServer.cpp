@@ -68,7 +68,7 @@ void JZNodeDebugServer::setEngine(JZNodeEngine *eng)
     connect(m_engine,&JZNodeEngine::sigRuntimeError,this,&JZNodeDebugServer::onRuntimeError);
     connect(m_engine,&JZNodeEngine::sigLog, this, &JZNodeDebugServer::onLog);
     connect(m_engine,&JZNodeEngine::sigStatusChanged, this, &JZNodeDebugServer::onStatusChanged);
-    connect(m_engine,&JZNodeEngine::sigNodePropChanged, this, &JZNodeDebugServer::onNodePropChanged);
+    connect(m_engine,&JZNodeEngine::sigWatchNotify, this, &JZNodeDebugServer::onWatchNotify);
 }
 
 void JZNodeDebugServer::setVM(JZNodeVM *vm)
@@ -202,19 +202,18 @@ void JZNodeDebugServer::onStatusChanged(int status)
     m_server.sendPack(m_client, &status_pack);
 }
 
-void JZNodeDebugServer::onNodePropChanged(QString file, int id, QString value)
+void JZNodeDebugServer::onWatchNotify()
 {
     if (m_client == -1)
         return;
-
-    JZNodeValueChanged info;    
-    info.file = file;
-    info.id = id;    
-    info.value = value;
+        
+    JZNodeRuntimeWatch info;
+    info.runtimInfo = m_engine->runtimeInfo();
+    info.values = m_engine->stack()->currentEnv()->watchMap;
 
     JZNodeDebugPacket status_pack;
     status_pack.cmd = Cmd_nodePropChanged;
-    status_pack.params << netDataPack<JZNodeValueChanged>(info);
+    status_pack.params << netDataPack<JZNodeRuntimeWatch>(info);
     m_server.sendPack(m_client, &status_pack);
 }
 

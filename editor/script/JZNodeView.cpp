@@ -545,8 +545,9 @@ void JZNodeView::removeNode(int id)
 
     if(m_propEditor->node() == item->node())
         setSelectNode(-1);
-
+            
     Q_ASSERT(m_file->getConnectPin(id).size() == 0);
+    item->clear();
     m_scene->removeItem(item);
     delete item;
     m_file->removeNode(id);
@@ -1291,11 +1292,12 @@ void JZNodeView::setRunningMode(ProcessStatus status)
 
     if (m_runningMode == Process_none)
     {
-        m_runNode = -1;
-        foreachNode([flag](JZNodeGraphItem *node) {
-            node->resetPropValue();
-        });
+        m_runNode = -1;    
     }
+
+    foreachNode([flag](JZNodeGraphItem *node) {
+        node->setRunningMode(status);
+    });
 }
 
 int JZNodeView::runtimeNode()
@@ -2079,7 +2081,11 @@ void JZNodeView::setCompilerResult(const CompilerResult *compilerInfo)
     while (it != nodeError.end())
     {
         if (!it->isEmpty())
-            getNodeItem(it.key())->setError(it.value());
+        {
+            auto item = getNodeItem(it.key());
+            if(item)
+                item->setError(it.value());
+        }
         it++;
     }   
     m_map->updateMap();

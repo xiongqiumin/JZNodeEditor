@@ -81,7 +81,7 @@ QWidget *JZNodeEditor::createMidBar()
 
     if (script()->isFunction())
     {        
-        QCheckBox *boxAuto = new QCheckBox("开启测试");
+        QCheckBox *boxAuto = new QCheckBox("自动运行");
         connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);
 
         QPushButton *btnAutoRun = new QPushButton("运行");
@@ -130,7 +130,7 @@ void JZNodeEditor::init()
 
     m_tabProp = new QTabWidget();
     m_tabProp->addTab(m_nodeProp, "属性");
-    m_tabProp->addTab(m_runProp, "运行配置");
+    m_tabProp->addTab(m_runProp, "运行");
     m_tabProp->setTabPosition(QTabWidget::South);    
 
     //init widgets
@@ -312,6 +312,11 @@ ScriptDepend JZNodeEditor::scriptTestDepend()
     return m_runProp->depend();
 }
 
+void JZNodeEditor::resetPropValue()
+{
+    m_view->resetPropValue();
+}
+
 void JZNodeEditor::setNodeValue(int nodeId, int prop_id, const QString &value)
 {
     m_view->setNodePropValue(nodeId, prop_id, value);
@@ -333,6 +338,10 @@ void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
 {
     if(info.result)
     {
+        QStringList out_list;        
+        for (int i = 0; i < info.out.size(); i++)        
+            out_list << JZNodeType::debugString(info.out[i]);        
+
         LOGI(Log_Runtime, "运行完毕.");
         m_runProp->setResult(info.out);
     }

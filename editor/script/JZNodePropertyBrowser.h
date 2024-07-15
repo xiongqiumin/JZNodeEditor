@@ -7,8 +7,7 @@
 enum NodePropretyType{
     NodeProprety_GroupId,
     NodeProprety_NodeId,
-    NodeProprety_Value,    
-    NodeProprety_FunctionHook,
+    NodeProprety_Value,        
     NodeProprety_Count,
 };
 
@@ -25,8 +24,8 @@ public:
 
     void addSubProperty(JZNodeProperty *prop);    
 
-    void setDataType(QList<int> data_type);
-    QList<int> dataType();
+    void setDataType(int data_type);
+    int dataType();
 
     void setValue(const QString &value);
     const QString &value() const;
@@ -43,7 +42,7 @@ protected:
     QTreeWidgetItem *m_item;    
     JZNodeProperty *m_parent;
     QList<QSharedPointer<JZNodeProperty>> m_childs;
-    QList<int> m_dataType;
+    int m_dataType;
 };
 
 class JZNodePropertyBrowser : public QTreeWidget
@@ -62,9 +61,6 @@ public:
 signals:
     void valueChanged(JZNodeProperty *prop,const QString &value);
 
-protected slots:
-    void onItemChanged(QTreeWidgetItem *item, int column);
-
 protected:
     friend JZNodeProperty;
 
@@ -72,6 +68,7 @@ protected:
 
     void createPropItem(QTreeWidgetItem *parent, JZNodeProperty *prop);
     void setItemEnabled(QTreeWidgetItem *item,bool flag);
+    void updateItem(QTreeWidgetItem *item);
 
     JZNodeProperty m_root;
     QMap<QTreeWidgetItem*, JZNodeProperty*> m_propMap;

@@ -62,12 +62,6 @@ bool JZObjectIsSet(JZNodeObject *obj)
     return obj->className().startsWith("Set<");
 }
 
-void JZNodeDisp(const JZNodeVariantAny &v)
-{    
-    QString str = JZNodeType::debugString(v.value);
-    JZScriptLog(str);    
-}
-
 //CMeta
 CMeta::CMeta()
 {
@@ -910,8 +904,7 @@ void JZNodeObjectManager::init()
 }
 
 void JZNodeObjectManager::initFunctions()
-{    
-    JZNodeFunctionManager::instance()->registCFunction("print",true,jzbind::createFuncion(JZNodeDisp));
+{        
     JZNodeFunctionManager::instance()->registCFunction("clone", true, jzbind::createFuncion(JZObjectClone));
 }
 

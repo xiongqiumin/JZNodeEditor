@@ -90,6 +90,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
     m_editor = nullptr;
+    m_useTestProcess = false;
     m_processMode = Process_none;
     m_compilerTiemr = new QTimer(this);
     connect(m_compilerTiemr, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
@@ -101,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeStatus, this, &MainWindow::onRuntimeStatus);    
     connect(&m_debuger,&JZNodeDebugClient::sigNetError, this, &MainWindow::onNetError);
-    connect(&m_debuger,&JZNodeDebugClient::sigNodePropChanged, this, &MainWindow::onNodePropChanged);
+    connect(&m_debuger,&JZNodeDebugClient::sigRuntimeWatch, this, &MainWindow::onRuntimeWatch);
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
     connect(&m_project,&JZProject::sigFileChanged, this, &MainWindow::onProjectChanged);
@@ -876,7 +877,8 @@ void MainWindow::onAutoCompilerTimer()
 
 void MainWindow::onBuildFinish(bool flag)
 {
-    qDebug() << "onBuildFinish";
+    QString result = flag ? "successed" : "failed";
+    m_log->addLog(Log_Compiler, "build finish:" + result);
 
     auto builder = m_buildThread.builder();
     auto it = m_editors.begin();
@@ -886,7 +888,8 @@ void MainWindow::onBuildFinish(bool flag)
         {
             auto node_edit = (JZNodeEditor*)it.value();
             auto cmp_info = builder->compilerInfo(node_edit->script());
-            node_edit->setCompilerResult(cmp_info);
+            if(cmp_info)
+                node_edit->setCompilerResult(cmp_info);
         }        
         it++;
     }
@@ -1145,11 +1148,7 @@ void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QString value)
     {
         auto stack_info = m_runtime.stacks[param_info.stack];
 
-        JZNodeValueChanged info;
-        info.file = stack_info.file;
-        info.id = coor.id;
-        info.value = result.values[0].value;
-        onNodePropChanged(info);
+
     }
 }
 
@@ -1166,15 +1165,20 @@ void MainWindow::onWatchNameChanged(JZNodeParamCoor coor)
     m_watchManual->updateParamInfo(&ret);        
 }
 
-void MainWindow::onNodePropChanged(const JZNodeValueChanged &info)
+void MainWindow::onRuntimeWatch(const JZNodeRuntimeWatch &info)
 {
-    auto edit = editor(info.file);
+    auto edit = nodeEditor(info.runtimInfo.stacks.back().file);
     if (!edit)
         return;
 
-    auto gemo = JZNodeCompiler::paramGemo(info.id);
-    JZNodeEditor *node_editor = qobject_cast<JZNodeEditor*>(edit);
-    node_editor->setNodeValue(gemo.nodeId, gemo.pinId,info.value);
+    auto it = info.values.begin();
+    while (it != info.values.end())
+    {
+        auto gemo = JZNodeCompiler::paramGemo(it.key());
+        //JZNodeEditor *node_editor = qobject_cast<JZNodeEditor*>(edit);
+        //node_editor->setNodeValue(gemo.nodeId, gemo.pinId, info.value);
+        it++;
+    }    
 }
 
 void MainWindow::updateAutoWatch(int stack_index)
@@ -1237,13 +1241,17 @@ void MainWindow::updateAutoWatch(int stack_index)
         return;
 
     m_watchAuto->setParamInfo(&param_info);
-    for (int i = node_prop_index; i < param_info.coors.size(); i++)
+
+    auto edit = nodeEditor(stack.file);
+    if (edit)
     {
-        JZNodeValueChanged info;
-        info.file = stack.file;
-        info.id = param_info.coors[i].id;
-        info.value = param_info.values[i].value;
-        onNodePropChanged(info);
+        //edit->setRunningMode
+        for (int i = node_prop_index; i < param_info.coors.size(); i++)
+        {
+            auto &coor = param_info.coors[i];
+            
+           // edit->setNodeValue(coor.)''
+        }
     }
 }
 
@@ -1297,8 +1305,9 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
 }
 
 void MainWindow::build()
-{
-    qDebug() << "build:" << m_buildInfo.buildTimestamp << m_buildInfo.changeTimestamp;
+{    
+    m_log->clearLog(Log_Compiler);
+    m_log->addLog(Log_Compiler, "start build");    
     
     m_runThread.stopRun();
     m_buildThread.stopBuild();

@@ -41,6 +41,8 @@ public:
     QVariant object;      //this    
     JZNodeScript *script;    
     int pc;
+    int inCount;          //传入参数数量
+    QMap<int, QVariant> watchMap;
     
     QMap<QString,QVariantPtr> locals;
     QMap<int,QVariantPtr> stacks;
@@ -195,7 +197,7 @@ public:
     const QVariant &getThis();
     QVariant getSender();    
 
-    void watchNotify(int param_id);         //node display
+    void watchNotify();         //node display
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
 
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
@@ -206,11 +208,14 @@ public:
     void print(const QString &log);
     void printMemory();
 
-signals:
-    void sigNodePropChanged(QString file,int id,QString value);
+signals:    
     void sigRuntimeError(JZNodeRuntimeError error);
     void sigLog(const QString &log);
     void sigStatusChanged(int status);
+    void sigWatchNotify();
+
+protected slots:
+    void onWatchTimer();
 
 protected:
     enum{
@@ -308,6 +313,7 @@ protected:
     ScriptDepend *m_depend;
     QMap<int,QVariantList> m_dependHook;
     bool m_hookEnable;
+    QTimer *m_watchTimer;
     
     Stat m_stat;
 };

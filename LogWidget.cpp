@@ -35,38 +35,67 @@ void LogBrowser::onLogContextMenu(QPoint pos)
         this->copy();
 }
 
+LogBrowser::TagInfo LogBrowser::parseTag(QString text)
+{
+    LogBrowser::TagInfo tg;
+
+    int s1 = text.indexOf("<");
+    int e1 = text.indexOf(" ");
+    tg.name = text.mid(s1 + 1, e1 - (s1 + 1));
+    s1 = e1 + 1;
+    e1 = text.indexOf(">");
+
+    QString param_line = text.mid(s1, e1 - s1);
+    QStringList lines = param_line.split(" ");
+    for (int i = 0; i < lines.size(); i++)
+    {
+        QString attr = lines[i];
+        int idx = attr.indexOf("=");
+        tg.params[attr.left(idx)] = attr.mid(idx+1);
+    }
+
+    int s2 = text.indexOf("<", e1);
+    tg.text = text.mid(e1 + 1, s2 - (e1 + 1));
+
+    return tg;
+}
+
 void LogBrowser::addLog(QString log)
 {
     QStringList list  = log.split("\n");
     for (int i = 0; i < list.size(); i++)
     {
-        if (list[i].startsWith("link:"))
+        QString link_text = "<link";
+        if (list[i].contains(link_text))
         {
             QString line = list[i];
-            int s = line.indexOf("(");
-            int e = line.indexOf(")");
-            QString link = line.mid(s+1, e - s-1);
+            int s = line.indexOf(link_text);
+            int e = line.indexOf("</link>");
+            QString link = line.mid(s, e - s + 7);
             
             auto tc = textCursor();            
             tc.movePosition(QTextCursor::End);
             tc.setCharFormat(m_baseForamt);
 
+            auto tg = parseTag(link);
+
+            QString pre_text = line.left(s);
             tc.insertBlock();
-            tc.insertText(line.mid(5,s-5));                        
+            tc.insertText(pre_text);
 
             QTextCharFormat fmt;
             fmt.setForeground(QColor("blue"));
             fmt.setAnchor(true);
-            fmt.setAnchorHref(link);
+            fmt.setAnchorHref(tg.params["href"].toString());
             fmt.setToolTip("address");
             fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);                        
-            tc.insertText(line.mid(s), fmt);            
+            tc.insertText(tg.text, fmt);            
                         
-            setCurrentCharFormat(m_baseForamt);
-                        
+            setCurrentCharFormat(m_baseForamt);                        
         }
         else
         {
+            setCurrentCharFormat(m_baseForamt);
             append(list[i]);
         }
     }
@@ -157,12 +186,8 @@ void LogWidget::onAchorClicked(QUrl url)
 {
     QString link = url.toString();    
 
-    int index_file = link.indexOf(",");    
-    QString file = link.mid(0,index_file);    
-
-    int id_s = link.indexOf("id=") + 3;
-    int id_e = link.indexOf(")");
-    QString node_id_text = link.mid(id_s, id_e - id_s);
-    int node_id = node_id_text.toInt();
+    int idx = link.indexOf("?id=");    
+    QString file = link.left(idx);
+    int node_id = link.mid(idx+4).toInt();
     sigNodeClicked(file, node_id);
 }
