@@ -23,11 +23,15 @@ public:
     bool isNull() const;
     void clear();
     
+    bool initConsole();
     bool initProject(QString temp);
     bool newProject(QString path,QString name, QString temp);
     bool open(QString filepath);
     void close();
     bool save();
+
+    void addTmp(JZProjectItem *item);
+    void removeTmp(JZProjectItem *item);
 
     void saveTransaction();
     void saveCommit();
@@ -38,6 +42,10 @@ public:
     void registContainer(QString type);
     void unregistContainer(QString type);
     QStringList containerList() const;
+
+    void importModule(QString module);
+    void unimportModule(QString module);
+    QStringList moduleList() const;
 
     QString error();
 
@@ -66,6 +74,7 @@ public:
     void renameFile(QString oldPath,QString newPath);    
 
     JZScriptClassItem *getClass(QString class_name);
+    QStringList classList();
 
     bool addItem(QString path, JZProjectItem *item);
     void removeItem(QString path);
@@ -106,8 +115,6 @@ protected:
     QString dir(const QString &filepath);    
             
     JZProjectItemRoot m_root;
-    JZProjectItemRoot m_temp;
-    
     bool m_windowSystem;        
 
     QMap<JZProjectItem*, QList<int>> m_breakPoints;
@@ -115,9 +122,12 @@ protected:
     bool m_blockRegist;
     QString m_error;
 
+    QList<JZProjectItem*> m_temps;
+
     bool m_isSaveCache;
-    QList<JZProjectItem*> m_saveCache;
+    QList<JZProjectItem*> m_saveCache;  //为了避免每次save写文件
     QStringList m_containers;
+    QStringList m_modules;
 };
 
 #endif

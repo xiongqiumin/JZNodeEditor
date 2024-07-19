@@ -6,7 +6,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-QMAKE_CXXFLAGS += -Werror=return-type
+QMAKE_CXXFLAGS += -Werror=return-type -Werror=maybe-uninitialized -Werror=shadow
 
 LIBS += -L$$[QT_INSTALL_LIBS] -lQt5DesignerComponents
 

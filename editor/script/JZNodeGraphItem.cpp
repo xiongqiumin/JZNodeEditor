@@ -98,14 +98,7 @@ void JZNodeGraphItem::clear()
 
 void JZNodeGraphItem::setRunningMode(ProcessStatus mode)
 {
-    auto it = m_pinRects.begin();
-    while (it != m_pinRects.end())
-    {
-        if (it->widget)
-            it->widget->setRuntime(mode);
-
-        it++;
-    }
+    updateRuntimeStatus();
 }
 
 void JZNodeGraphItem::updatePropGemo()
@@ -251,7 +244,7 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
             if (!gemo->widget)
                 widget = m_node->createWidget(pin_id);
         }
-        else if(pin->isEditValue() || pin->isDispValue())
+        else if(pin->isDispValue())
         {            
             JZNodeParamValueWidget *param_widget = new JZNodeParamValueWidget();
             int up_type = JZNodeType::upType(pin->dataTypeId());
@@ -284,11 +277,11 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
     if (gemo->widget)
     {
         gemo->valueRect.moveTo(QPoint(x, y));
-        if (pin->isEditValue() || pin->isDispValue())
+        if (pin->isEditValue())
         {
             bool editable = editor()->isPropEditable(m_id, pin_id);
-            JZNodePinWidget *w = qobject_cast<JZNodePinWidget*>(gemo->widget);
-            w->setEditable(editable);
+            gemo->widget->setEnabled(editable);
+            gemo->widget->setVisible(editable);
         }
     }
 }
@@ -349,8 +342,7 @@ void JZNodeGraphItem::updateNode()
     for (int i = 0; i < pinList.size(); i++)
     {
         auto pin = m_node->pin(pinList[i]);
-        if(pin->isParam())
-            setPinValue(pin->id(), pin->value());
+        setPinValue(pin->id(), pin->value());
     }
 
     int w = qMax(100,in_x + out_x + 30);
@@ -384,13 +376,60 @@ void JZNodeGraphItem::updateNode()
     updateErrorGemo();
 }
 
+void JZNodeGraphItem::updateRuntimeStatus()
+{
+    ProcessStatus status = editor()->runningMode();
+
+    auto it = m_pinRects.begin();
+    while(it != m_pinRects.end())
+    {
+        if (it->widget)
+        {
+            int pin_id = it.key();
+            auto pin = m_node->pin(pin_id);
+            if(status == Process_none)
+            {
+                if (pin->isEditValue())
+                {
+                    bool editable = editor()->isPropEditable(m_id, pin_id);
+                    it->widget->setVisible(editable);
+                    it->widget->setEnabled(editable);
+                }
+                else
+                {
+                    it->widget->setEnabled(true);
+                }
+            }
+            else
+            {
+                it->widget->setEnabled(false);
+                if (pin->isEditValue())
+                {   
+                    if(editor()->runtimeNode() == m_id)
+                    {
+                        it->widget->setVisible(true);
+                        it->widget->setEnabled(true);
+                    }
+                    else
+                    {
+                        bool editable = editor()->isPropEditable(m_id, pin_id);
+                        it->widget->setVisible(editable);
+                    }
+                }
+            }
+        }
+        it++;
+    }
+}
+
 void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {    
     auto pin_id = propAt(event->pos());
     if (pin_id >= 0)
     {        
         auto pin = m_node->pin(pin_id);
-        if ((event->buttons() & Qt::LeftButton) && pin->isOutput() && !pin->isWidget())
+        if ((event->buttons() & Qt::LeftButton) && pin->isOutput() && 
+            (pin->isParam() || pin->isFlow() || pin->isSubFlow()))
             m_downPin = pin_id;
         else
             m_downPin = -1;
@@ -398,7 +437,7 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
     else
     {
         m_longPress = 1;
-        editor()->setNodeTimer(200,m_node->id(),Timer_longPress);
+        editor()->setNodeTimer(500,m_node->id(),Timer_longPress);
     }
     return JZNodeBaseItem::mousePressEvent(event);
 }
@@ -415,7 +454,7 @@ void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         }
     }
 
-    if (m_longPress == 2)
+    if(isSelected() && m_downPin == -1)
         JZNodeBaseItem::mouseMoveEvent(event);
 }
 
@@ -495,6 +534,15 @@ QString JZNodeGraphItem::pinValue(int prop_id)
         return QString();
 
     return getWidgetValue(prop_id);
+}
+
+void JZNodeGraphItem::setPinRuntimeValue(int pin_id,const JZNodeDebugParamValue &value)
+{
+    auto widget = m_pinRects[pin_id].widget;
+    if (!widget)
+        return;
+
+    widget->setValue(value.value);
 }
 
 void JZNodeGraphItem::resetPropValue()
@@ -614,11 +662,11 @@ void JZNodeGraphItem::drawIcon(QPainter *painter,QRectF rect, IconType type, boo
     {
         painter->fillRect(QRectF(p1,p2),c);
     };
-    auto AddConvexPolyFilled = [painter](const QPainterPath &path,QColor c)
+    auto AddConvexPolyFilled = [painter](const QPainterPath &poly_path,QColor c)
     {
         painter->setPen(Qt::NoPen);
         painter->setBrush(c);
-        painter->drawPath(path);
+        painter->drawPath(poly_path);
     };
     auto AddTriangleFilled = [painter](QPointF p1,QPointF p2,QPointF p3,QColor c)
     {

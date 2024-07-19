@@ -23,8 +23,8 @@ public:
     bool addBreakPoint(QString file,int nodeId);
     bool removeBreakPoint(QString file,int nodeId);
     bool clearBreakPoint();    
-    bool getVariable(const JZNodeDebugParamInfo &info,JZNodeDebugParamInfo &ret);
-    bool setVariable(const JZNodeSetDebugParamInfo &info,JZNodeDebugParamInfo &ret);
+    bool getVariable(const JZNodeGetDebugParam &info,JZNodeGetDebugParamResp &ret);
+    bool setVariable(const JZNodeSetDebugParam &info,JZNodeSetDebugParamResp &ret);
     
     void detach();
     void pause();       

@@ -1,5 +1,6 @@
 ﻿#include <QVBoxLayout>
 #include "JZNodeAutoRunWidget.h"
+#include "JZNodeEditor.h"
 
 //PropCoor
 JZNodeAutoRunWidget::PropCoor::PropCoor()
@@ -23,11 +24,17 @@ JZNodeAutoRunWidget::JZNodeAutoRunWidget(QWidget *p)
     l->addWidget(m_tree);
     setLayout(l);
 
+    m_editor = nullptr;
     setDepend(ScriptDepend());
 }
 
 JZNodeAutoRunWidget::~JZNodeAutoRunWidget()
 {
+}
+
+void JZNodeAutoRunWidget::setEditor(JZNodeEditor *editor)
+{
+    m_editor = editor;
 }
 
 void JZNodeAutoRunWidget::clear()
@@ -121,7 +128,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         {
             auto &p = m_depend.function.paramIn[i];
             auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
-            sub_item->setDataType({ p.dataType()});
+            sub_item->setDataType(p.dataType());
             sub_item->setValue(m_depend.function.paramIn[i].value);
 
             func_input->addSubProperty(sub_item);
@@ -137,7 +144,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         for (int i = 0; i < m_depend.member.size(); i++)
         {
             auto sub_item = new JZNodeProperty(m_depend.member[i].name, NodeProprety_Value);
-            sub_item->setDataType({ m_depend.member[i].dataType()} );
+            sub_item->setDataType(m_depend.member[i].dataType());
             sub_item->setValue(m_depend.member[i].value);
 
             item_member->addSubProperty(sub_item);
@@ -153,7 +160,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         for (int i = 0; i < m_depend.global.size(); i++)
         {
             auto sub_item = new JZNodeProperty(m_depend.global[i].name, NodeProprety_Value);
-            sub_item->setDataType({ m_depend.global[i].dataType() });
+            sub_item->setDataType(m_depend.global[i].dataType());
             sub_item->setValue(m_depend.global[i].value);
 
             item_global->addSubProperty(sub_item);
@@ -166,27 +173,30 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         auto item_function_hook = new JZNodeProperty("函数返回", NodeProprety_GroupId);
         item_input->addSubProperty(item_function_hook);
 
-        for (int i = 0; i < m_depend.hook.size(); i++)
+        for (int hook_idx = 0; hook_idx < m_depend.hook.size(); hook_idx++)
         {
-            QString id = "(" + QString::number(m_depend.hook[i].nodeId) + ")";
+            auto &hook = m_depend.hook[hook_idx];
+            auto node = m_editor->script()->getNode(hook.nodeId);
+
+            QString id = node->name() + "(" + QString::number(hook.nodeId) + ")";
             auto item_function = new JZNodeProperty(id, NodeProprety_Value);
             item_function_hook->addSubProperty(item_function);                        
 
             auto enable_item = new JZNodeProperty("hook enable", NodeProprety_Value);
-            enable_item->setDataType({ Type_bool });
-            enable_item->setValue(m_depend.hook[i].enable? "true" : "false");
+            enable_item->setDataType(Type_bool);
+            enable_item->setValue(hook.enable? "true" : "false");
             item_function->addSubProperty(enable_item);
-            addPin(enable_item, Pin_hook, 0, m_depend.hook[i].nodeId);
+            addPin(enable_item, Pin_hook, 0, hook.nodeId);
 
-            auto &node_out = m_depend.hook[i].params;
+            auto &node_out = hook.params;
             for (int i = 0; i < node_out.size(); i++)
             {
                 auto sub_item = new JZNodeProperty(node_out[i].name, NodeProprety_Value);
-                sub_item->setDataType({ node_out[i].dataType() });
+                sub_item->setDataType(node_out[i].dataType());
                 sub_item->setValue(node_out[i].value);
 
                 item_function->addSubProperty(sub_item);
-                addPin(sub_item, Pin_hook, i+1, m_depend.hook[i].nodeId);
+                addPin(sub_item, Pin_hook, i+1, hook.nodeId);
             }
         }
     }
@@ -200,7 +210,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         {
             auto &p = m_depend.function.paramOut[i];
             auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
-            sub_item->setDataType({ Type_string });
+            sub_item->setDataType(Type_string);
             sub_item->setEnabled(false);
 
             item_output->addSubProperty(sub_item);       
@@ -211,7 +221,6 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 
 const ScriptDepend &JZNodeAutoRunWidget::depend() const
 {
-    Q_ASSERT(!m_depend.function.isNull());
     return m_depend;
 }
 
@@ -260,7 +269,7 @@ void JZNodeAutoRunWidget::onValueChanged(JZNodeProperty *pin, const QString &val
     {
         auto ptr = m_depend.getHook(coor->nodeId);
         if (coor->index == 0)
-            ptr->enable = true;   
+            ptr->enable = (value == "true");   
         else
             ptr->params[coor->index - 1].value = value;
     }

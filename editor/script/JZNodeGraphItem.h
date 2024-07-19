@@ -28,8 +28,10 @@ public:
     
     QString getTip(QPointF pt);
 
-    void setPinValue(int prop_id,const QString &value);
-    QString pinValue(int prop_id);
+    void setPinValue(int pin_id,const QString &value);
+    QString pinValue(int pin_id);
+    void setPinRuntimeValue(int pin_id,const JZNodeDebugParamValue &value);
+    void updateRuntimeStatus();
     void resetPropValue();
 
     void setError(const QString &error);

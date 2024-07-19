@@ -1141,7 +1141,7 @@ void SampleRussian::addGameLoop()
 
     JZNodeFunction *message = new JZNodeFunction();
     message->setFunction(JZNodeFunctionManager::instance()->function("MessageBox.information"));
-    message->setPinValue(message->paramIn(1), "\"Game over\"");
+    message->setPinValue(message->paramIn(1), "Game over");
     script->addNode(message);
 
     script->addConnect(timer->paramOutGemo(0), stop_timer->paramInGemo(0));
@@ -1258,10 +1258,10 @@ void SampleRussian::addKeyEvent()
 
     script->addConnect(node_keyPress->paramOutGemo(0), key_code->paramInGemo(0));        
     
-    auto connectKey = [script](JZNodeEQ *eq, int key_code){
+    auto connectKey = [script](JZNodeEQ *eq, int in_key_code){
         JZNodeEnum *key = new JZNodeEnum();
         key->setEnum("Key");
-        key->setValue(key_code);
+        key->setValue(in_key_code);
         script->addNode(key);
         script->addConnect(key->paramOutGemo(0), eq->paramInGemo(1));
     };
@@ -1561,7 +1561,7 @@ void SampleRussian::addCreateShape()
                 context += ",";
             context += "\n";
         }
-        create_from_string->setContext("\"" + context + "\"");
+        create_from_string->setContext(context);
 
         JZNodeSetParam *set_shape = new JZNodeSetParam();
         set_shape->setVariable("shape");
@@ -1571,7 +1571,6 @@ void SampleRussian::addCreateShape()
         script->addConnect(create_from_string->paramOutGemo(0), set_shape->paramInGemo(1));
     }
         
-    
     script->addConnect(shape->paramOutGemo(0), node_return->paramInGemo(0));
     script->addConnect(node_if->flowOutGemo(0), node_return->flowInGemo());
 }

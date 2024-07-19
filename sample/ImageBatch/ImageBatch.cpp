@@ -110,8 +110,8 @@ void SampleImageBatch::addEvent()
     JZNodeFunction *msg_noExist = new JZNodeFunction();
     msg_empty->setFunction("MessageBox.information");
     msg_noExist->setFunction("MessageBox.information");
-    msg_empty->setParamInValue(1, "\"input or output is empty\"");
-    msg_noExist->setParamInValue(1, "\"input or output not exists\"");
+    msg_empty->setParamInValue(1, "input or output is empty");
+    msg_noExist->setParamInValue(1, "input or output not exists");
     flow_srcipt->addNode(node_this);
     flow_srcipt->addNode(msg_empty);
     flow_srcipt->addNode(msg_noExist);

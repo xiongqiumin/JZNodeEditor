@@ -42,16 +42,16 @@ CppClass::~CppClass()
 
 }
 
-CppFunction *CppClass::getFunction(QString name)
+CppFunction *CppClass::getFunction(QString func_name)
 {
     for(int i = 0; i < functions.size(); i++)
     {
-        if(functions[i]->name == name)
+        if(functions[i]->name == func_name)
             return functions[i];
     }
 
     CppFunction *func = new CppFunction();
-    func->name = name;
+    func->name = func_name;
     functions.push_back(func);
     return functions.back();
 }

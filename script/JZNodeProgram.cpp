@@ -1,9 +1,11 @@
-﻿#include "JZNodeProgram.h"
-#include "JZNodeCompiler.h"
-#include <QFile>
+﻿#include <QFile>
 #include <QDebug>
+#include "JZNodeProgram.h"
+#include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
 #include "JZContainer.h"
+#include "JZModule.h"
+#include "JZNodeDefine.h"
 
 //NodeRange
 NodeRange::NodeRange()
@@ -280,10 +282,14 @@ void JZNodeRegistType(const JZNodeTypeMeta &type_info)
     JZNodeFunctionManager::instance()->clearUserReigst();
     JZNodeObjectManager::instance()->clearUserReigst();
     
+    auto &module_list = type_info.moduleList;
     auto &define_list = type_info.objectList;
     auto &cobj_list = type_info.cobjectList;
     auto &function_list = type_info.functionList;
     QList<int> cobj_id;
+
+    for(int i = 0; i < module_list.size(); i++)
+        JZModuleManager::instance()->loadModule(module_list[i]);
 
     //delcare
     for(int i = 0; i < define_list.size(); i++)
@@ -504,6 +510,12 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
         line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
         break;
     }
+    case OP_clone:
+    {
+        JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
+        line += "CLONE " + toString(ir_set->dst) + " = " + toString(ir_set->src);
+        break;
+    }
     case OP_watch:
     {
         JZNodeIRWatch *ir_watch = (JZNodeIRWatch*)op;
@@ -602,11 +614,11 @@ QString JZNodeProgram::dump()
         JZNodeScript *script = it.value().data();
         content += "// Script " + it.key() + "\n";
         auto &opList = script->statmentList;
-        for(int i = 0; i < script->functionList.size(); i++)
+        for(int func_idx = 0; func_idx < script->functionList.size(); func_idx++)
         {
-            auto &func = script->functionList[i];
+            auto &func = script->functionList[func_idx];
+            
             QString line = "function " + func.fullName() + ":\n";
-            auto &opList = script->statmentList;
             for(int i = func.addr; i < func.addrEnd; i++)
             {
                 //deal op            

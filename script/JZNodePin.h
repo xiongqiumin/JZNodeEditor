@@ -4,7 +4,6 @@
 #include <QVariant>
 #include <QPointF>
 #include <QDataStream>
-#include "JZNodeDefine.h"
 #include "JZNodeType.h"
 
 enum

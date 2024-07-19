@@ -58,6 +58,8 @@ public:
 	int ParseDataType(asCScriptCode *script, bool isReturnType);
 	int ParseTemplateDecl(asCScriptCode *script);
 
+	QString Error();
+
 #ifndef AS_NO_COMPILER
 	int ParseScript(asCScriptCode *script);
 

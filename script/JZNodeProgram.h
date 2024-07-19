@@ -94,6 +94,7 @@ public:
         bool enable;
         int nodeId;
         int pc;
+        QString function;
         QList<JZParamDefine> params;
     };
     
@@ -120,6 +121,7 @@ public:
     QList<JZFunctionDefine> functionList;
     QList<JZNodeObjectDefine> objectList;       
     QList<JZNodeCObjectDelcare> cobjectList;
+    QStringList moduleList;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param);
 QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param);

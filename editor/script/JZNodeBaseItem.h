@@ -2,7 +2,6 @@
 #define JZNODE_BASE_ITEM_H_
 
 #include <QGraphicsItem>
-#include "JZNodeDefine.h"
 
 enum
 {

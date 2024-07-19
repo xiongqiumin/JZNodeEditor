@@ -17,6 +17,7 @@ public:
     bool isCopyable;
     std::function<void*()> create;
     std::function<void(void*,void*)> copy;
+    std::function<bool(void*,void*)> equal;
     std::function<void(void*)> destory;
 };
 
@@ -28,6 +29,7 @@ public:
     JZNodeObjectDefine();
 
     QString fullname() const;
+    int baseId() const;
 
     void addParam(const JZParamDefine &def);
     void removeParam(const QString &name);
@@ -45,6 +47,7 @@ public:
     bool checkFunction(const QString &function,QString &error) const;
     const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
+    QStringList virtualFunctionList() const;
     
     const JZSingleDefine *single(const QString &function) const;
     QStringList singleList() const;
@@ -66,6 +69,7 @@ public:
     QMap<QString,JZParamDefine> params;
     QList<JZFunctionDefine> functions;
     QList<JZSingleDefine> singles;
+    QStringList enums;
 
     bool isUiWidget;
     QString widgetXml;
@@ -111,8 +115,10 @@ public:
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
     bool isCObject() const;
+    bool isValueType() const;
     const QString &className() const;
     int type() const;
+    int baseType() const;
     const JZNodeObjectDefine *meta() const;
 
     bool hasParam(const QString &name) const;
@@ -177,6 +183,9 @@ public:
 
     JZNodeObject *object() const;
     void releaseOwner();
+
+    bool operator ==(const JZNodeObjectPtr &other) const;
+    bool operator !=(const JZNodeObjectPtr &other) const;
 
 protected:
     class JZNodeObjectPtrData
@@ -256,6 +265,7 @@ public:
     JZNodeObject* createNull(const QString &name);
 
     JZNodeObject* clone(JZNodeObject *other);
+    bool equal(JZNodeObject* o1,JZNodeObject *o2);
 
     //enum
     int registEnum(const JZNodeEnumDefine &enumName);
@@ -267,7 +277,7 @@ public:
 
 protected:
     void create(const JZNodeObjectDefine *define,JZNodeObject *obj);
-    void copy(JZNodeObject *src,JZNodeObject *dst);
+    void copy(JZNodeObject *dst,JZNodeObject *src);
     void initFunctions();
     
     QMap<QString, int> m_typeidMetas;
@@ -294,6 +304,13 @@ JZNodeObject *JZObjectCreateRefrence(T ptr,bool owner)
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();
     auto obj = JZNodeObjectManager::instance()->createRefrenceByTypeid(c_typeid, ptr, owner);
     return obj;
+}
+
+template<class T>
+JZNodeObjectPtr JZObjectPtrCreate()
+{
+    auto ptr = JZNodeObjectManager::instance()->createByTypeid(typeid(T).name());
+    return JZNodeObjectPtr(ptr,true);
 }
 
 template<class T>

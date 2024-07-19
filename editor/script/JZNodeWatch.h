@@ -20,8 +20,8 @@ public:
     void setReadOnly(bool flag);
     void setRunningMode(ProcessStatus status);
     
-    void setParamInfo(JZNodeDebugParamInfo *info);
-    void updateParamInfo(JZNodeDebugParamInfo *info);
+    void setParamInfo(JZNodeGetDebugParamResp *info);
+    void updateParamInfo(JZNodeGetDebugParamResp *info);
     QStringList watchList();
 
     void clear();

@@ -50,6 +50,22 @@ public:
     void setValue(int value);
 };
 
+//JZNodeConvert
+class JZNodeConvert : public JZNode
+{
+public:
+    JZNodeConvert();
+    ~JZNodeConvert();
+
+    void setOutputType(int type);
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:
+    virtual JZNodePinWidget* createWidget(int id) override;
+    virtual void onPinChanged(int id) override;
+};
+
 //JZNodeFunctionPointer
 class JZNodeFunctionPointer : public JZNode
 {
@@ -63,7 +79,6 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
         
 protected:
-
 };
 
 //JZNodeDisplay
@@ -73,7 +88,14 @@ public:
     JZNodeDisplay();
     ~JZNodeDisplay();
 
+    void addInput();
+    void removeInput(int index);
+
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+    virtual JZNodePinWidget* createWidget(int id) override;
+    virtual QStringList pinActionList(int id) override;
+    virtual bool pinActionTriggered(int id, int index) override;
+
 protected:
 
 };

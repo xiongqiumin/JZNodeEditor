@@ -39,6 +39,16 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };
 
+//JZNodeSignalDisconnect
+class JZNodeSignalDisconnect : public JZNode
+{
+public:
+    JZNodeSignalDisconnect();
+    virtual ~JZNodeSignalDisconnect();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error);
+};
+
 //JZNodeParamChangedEvent
 class JZNodeParamChangedEvent : public JZNodeEvent
 {

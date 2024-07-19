@@ -162,13 +162,16 @@ public:
     void selectNode(int id);
     BreakPointTriggerResult breakPointTrigger();
 
+    ProcessStatus runningMode();
     void setRunningMode(ProcessStatus mode);
     void setAutoRunning(bool flag);
 
     int runtimeNode();
     void setRuntimeNode(int nodeId);
-    bool isBreakPoint(int nodeId);
+    void resetPropValue();
+    void setRuntimeValue(int node_id,int pin_id,const JZNodeDebugParamValue &value);
 
+    bool isBreakPoint(int nodeId);
     void setCompilerResult(const CompilerResult *info);
 
 signals:
@@ -179,18 +182,20 @@ signals:
     void sigFunctionOpen(QString name);
     void sigAutoCompiler();
     void sigAutoRun();
+    void sigRuntimeValueChanged(int id,QString value);
 
 protected slots:
     void onContextMenu(const QPoint &pos);
     void onItemPropChanged();        
     void onNodeTimer();
+    void onMouseMoveTimer();
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
     void onMapSceneChanged(QRectF rc);
     void onMapSceneScaled(bool flag);
 
     void onScriptNodeChanged(JZScriptItem *file, int nodeId, const QByteArray &buffer);
-    void onPropUpdate(int nodeId, int pinId, const QString &value);
+    void onPropChanged(int nodeId, int pinId, const QString &value);
     void onDependChanged();
 
 protected:
@@ -203,6 +208,7 @@ protected:
     };
     
     virtual bool event(QEvent *event) override;
+    virtual void showEvent(QShowEvent *event) override;
     virtual void resizeEvent(QResizeEvent *event) override;
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
@@ -219,6 +225,7 @@ protected:
     virtual void drawBackground(QPainter* painter, const QRectF& r) override;
 
     JZNodeGraphItem *nodeItemAt(QPoint pos);
+    JZNodeGemo pinAt(QPoint pos);
     void foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType = -1);
     void foreachLine(std::function<void(JZNodeLineItem *)> func);    
     void copyItems(QList<QGraphicsItem*> item);
@@ -230,7 +237,8 @@ protected:
     void updatePropEditable(const JZNodeGemo &gemo);
     void saveNodePos();
     void sceneScale(QPoint center, bool up);
-    QRectF mapRect();
+    void sceneTranslate(int x,int y);
+    void sceneCenter(QPointF pt);
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
@@ -263,8 +271,10 @@ protected:
     bool m_recordMove;
     bool m_groupIsMoving;    
 
-    QPointF m_downPoint;    
+    QPoint m_downPoint;    
+    QPointF m_downCenter;
     QTimer *m_nodeTimer;
+    QTimer *m_mouseMoveTimer;
     NodeTimerInfo m_nodeTimeInfo;
 
     ProcessStatus m_runningMode;

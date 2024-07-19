@@ -79,10 +79,10 @@ bool MainWindow::BuildInfo::isUnitTest()
 }
 
 //ActionStatus
-MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> flags)
+MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> act_flags)
 {
     this->action = act;
-    this->flags = flags;
+    this->flags = act_flags;
 }
 
 //MainWindow
@@ -110,6 +110,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_runThread,&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
     connect(&m_buildThread,&JZNodeBuildThread::sigResult,this, &MainWindow::onBuildFinish);
     m_buildThread.init(&m_project,&m_program);
+
+    auto engine = m_runThread.engine();
+    connect(engine,&JZNodeEngine::sigWatchNotify,this,&MainWindow::onWatchNotify,Qt::BlockingQueuedConnection);
 
     loadSetting();    
     initUi();     
@@ -862,9 +865,24 @@ void MainWindow::onAutoRun()
     }
 }
 
+void MainWindow::showTopLevel()
+{   
+    if(isActiveWindow())
+        return;
+        
+    Qt::WindowFlags flags = windowFlags();
+    this->setWindowFlags((flags | Qt::WindowStaysOnTopHint));
+    this->show();
+
+    this->setWindowFlags(flags);
+    this->show();
+    raise();
+    activateWindow();
+}
+
 void MainWindow::onAutoCompilerTimer()
-{
-    qint64 cur = QDateTime::currentMSecsSinceEpoch();
+{   
+    qint64 cur = QDateTime::currentMSecsSinceEpoch();    
     if (cur - m_buildInfo.changeTimestamp <= 1000)
         return;
 
@@ -914,8 +932,6 @@ void MainWindow::onBuildFinish(bool flag)
 
 void MainWindow::onAutoRunResult(UnitTestResultPtr result)
 {
-    qDebug() << "onAutoRunResult" << result->function << result->result;
-
     if(result->result == UnitTestResult::Cancel)
         return;
 
@@ -962,6 +978,7 @@ void MainWindow::switchEditor(JZEditor *editor)
         m_editorStack->setCurrentWidget(m_editor);
         m_editor->addMenuBar(this->menuBar());
         m_editor->active();
+        m_editor->setFocus();
     }
     else
         m_editorStack->setCurrentIndex(0);
@@ -983,6 +1000,8 @@ bool MainWindow::openEditor(QString filepath)
         if (!editor)
             return false;
 
+        m_editors[file] = editor;
+        m_editorStack->addTab(editor, filepath);
         connect(editor, &JZEditor::redoAvailable, this, &MainWindow::onRedoAvailable);
         connect(editor, &JZEditor::undoAvailable, this, &MainWindow::onUndoAvailable);
         connect(editor, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);        
@@ -994,14 +1013,13 @@ bool MainWindow::openEditor(QString filepath)
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
             connect(node_edit, &JZNodeEditor::sigAutoCompiler, this, &MainWindow::onAutoCompiler);
             connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
+            connect(node_edit, &JZNodeEditor::sigRuntimeValueChanged, this, &MainWindow::onEditorValueChanged);
 
             node_edit->setRunningMode(m_processMode);
             auto cmp_ret = compilerResult(file);
             if(cmp_ret)
                 node_edit->setCompilerResult(cmp_ret);
         }
-        m_editors[file] = editor;
-        m_editorStack->addTab(editor, filepath);        
     }
     switchEditor(m_editors[file]);
     
@@ -1131,43 +1149,81 @@ void MainWindow::onStackChanged(int stack_index)
     updateRuntime(stack_index, false);
 }
 
+void MainWindow::onEditorValueChanged(int id,QString value)
+{
+    JZNodeParamCoor coor;
+    coor.type = JZNodeParamCoor::Id;
+    coor.id = id;
+    onWatchValueChanged(coor,value);
+}
+
 void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QString value)
 {    
-    JZNodeSetDebugParamInfo param_info;
+    JZNodeSetDebugParam param_info;
     param_info.stack = m_stack->stackIndex();
     param_info.coor = coor;
     param_info.value = value;
     
-    JZNodeWatch *watch = qobject_cast<JZNodeWatch*>(sender());
-    JZNodeDebugParamInfo result;
+    JZNodeSetDebugParamResp result;
     if(!m_debuger.setVariable(param_info,result))
         return;
 
-    watch->updateParamInfo(&result);
-    if (coor.type == JZNodeParamCoor::Id)
+    JZNodeGetDebugParamResp get_resp;
+    get_resp.stack = result.stack;
+    get_resp.coors << result.coor;
+    get_resp.values << result.value;
+    
+    for(auto w : m_debugWidgets)
+        w->updateParamInfo(&get_resp);
+    if (coor.isNodeId())
     {
         auto stack_info = m_runtime.stacks[param_info.stack];
-
-
+        auto gemo = JZNodeCompiler::paramGemo(coor.id);
+        setRuntimeValue(stack_info.file,gemo.nodeId,gemo.pinId,result.value);
     }
 }
 
 void MainWindow::onWatchNameChanged(JZNodeParamCoor coor)
 {    
-    JZNodeDebugParamInfo param_info;
+    JZNodeGetDebugParam param_info;
     param_info.stack = m_stack->stackIndex();
     param_info.coors << coor;
     
-    JZNodeDebugParamInfo ret; 
+    JZNodeGetDebugParamResp ret; 
     if(!m_debuger.getVariable(param_info,ret))
         return;
 
     m_watchManual->updateParamInfo(&ret);        
 }
 
+void MainWindow::onWatchNotify()
+{
+    if(m_runThread.engine()->stack()->size() != 1)
+        return;
+
+    QString file = m_runThread.engine()->stack()->currentEnv()->script->file;
+    auto e = nodeEditor(file);
+    if(!e || e != m_editor)
+        return;
+
+    auto &watchMap = m_runThread.engine()->stack()->currentEnv()->watchMap;
+    auto it = watchMap.begin();
+    while(it != watchMap.end())
+    {
+        JZNodeGemo gemo = JZNodeCompiler::paramGemo(it.key());
+        JZNodeDebugParamValue value;
+        value.type = JZNodeType::variantType(it.value());
+        value.value = JZNodeType::debugString(it.value());
+        value.ptrValue = &it.value();
+        e->setRuntimeValue(gemo.nodeId,gemo.pinId,value);
+        it++;
+    }
+}
+
 void MainWindow::onRuntimeWatch(const JZNodeRuntimeWatch &info)
 {
-    auto edit = nodeEditor(info.runtimInfo.stacks.back().file);
+    QString file = info.runtimInfo.stacks.back().file;
+    auto edit = nodeEditor(file);
     if (!edit)
         return;
 
@@ -1175,8 +1231,7 @@ void MainWindow::onRuntimeWatch(const JZNodeRuntimeWatch &info)
     while (it != info.values.end())
     {
         auto gemo = JZNodeCompiler::paramGemo(it.key());
-        //JZNodeEditor *node_editor = qobject_cast<JZNodeEditor*>(edit);
-        //node_editor->setNodeValue(gemo.nodeId, gemo.pinId, info.value);
+        setRuntimeValue(file,gemo.nodeId,gemo.pinId,it.value());
         it++;
     }    
 }
@@ -1188,7 +1243,7 @@ void MainWindow::updateAutoWatch(int stack_index)
 
     auto &stack = m_runtime.stacks[stack_index];
 
-    JZNodeDebugParamInfo param_info;
+    JZNodeGetDebugParam param_info;
     param_info.stack = stack_index;
     
     auto func = m_program.function(stack.function);
@@ -1237,22 +1292,34 @@ void MainWindow::updateAutoWatch(int stack_index)
         param_info.coors << coor;
     }
 
-    if(!m_debuger.getVariable(param_info,param_info))
+    JZNodeGetDebugParamResp param_info_resp;
+    if(!m_debuger.getVariable(param_info,param_info_resp))
         return;
 
-    m_watchAuto->setParamInfo(&param_info);
+    m_watchAuto->setParamInfo(&param_info_resp);
 
     auto edit = nodeEditor(stack.file);
     if (edit)
     {
-        //edit->setRunningMode
-        for (int i = node_prop_index; i < param_info.coors.size(); i++)
+        for (int i = node_prop_index; i < param_info_resp.coors.size(); i++)
         {
-            auto &coor = param_info.coors[i];
-            
-           // edit->setNodeValue(coor.)''
+            auto &coor = param_info_resp.coors[i];
+            if(coor.isNodeId())
+            {
+                auto gemo = JZNodeCompiler::paramGemo(coor.id);
+                edit->setRuntimeValue(gemo.nodeId,gemo.pinId,param_info_resp.values[i]);
+            }
         }
     }
+}
+
+void MainWindow::setRuntimeValue(QString file,int node_id,int pin_id,const JZNodeDebugParamValue &value)
+{
+    auto editor = nodeEditor(file);
+    if(!editor)
+        return;
+
+    editor->setRuntimeValue(node_id,pin_id,value);
 }
 
 void MainWindow::updateRuntime(int stack_index,bool isNew)
@@ -1287,7 +1354,7 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
     updateAutoWatch(stack_index);
 
     //watch manual    
-    JZNodeDebugParamInfo param_info_watch;
+    JZNodeGetDebugParam param_info_watch;
     param_info_watch.stack = stack_index;
 
     QStringList watch_list = m_watchManual->watchList();
@@ -1298,16 +1365,20 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
         coor.name = watch_list[i];
         param_info_watch.coors << coor;
     }
-    if(!m_debuger.getVariable(param_info_watch,param_info_watch))
+
+    JZNodeGetDebugParamResp param_info_watch_resp;
+    if(!m_debuger.getVariable(param_info_watch,param_info_watch_resp))
         return;
         
-    m_watchManual->setParamInfo(&param_info_watch); 
+    m_watchManual->setParamInfo(&param_info_watch_resp); 
 }
 
 void MainWindow::build()
 {    
+    QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
+
     m_log->clearLog(Log_Compiler);
-    m_log->addLog(Log_Compiler, "start build");    
+    m_log->addLog(Log_Compiler, "[" + time + "] ===== start build =====");    
     
     m_runThread.stopRun();
     m_buildThread.stopBuild();
@@ -1463,7 +1534,6 @@ void MainWindow::onRuntimeLog(QString log)
 void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
     QString error_msg = "Runtime Error: " + error.error + "\n\n";
-    m_log->addLog(Log_Runtime, error_msg);
     
     int stack_size = error.info.stacks.size();
     for (int i = 0; i < stack_size; i++)
@@ -1478,13 +1548,13 @@ void MainWindow::onRuntimeError(JZNodeRuntimeError error)
         error_msg += line + "\n";
     }    
 
-    activateWindow();    
+    m_log->addLog(Log_Runtime, error_msg);
+    showTopLevel();    
     QMessageBox::information(this, "", error_msg);    
 }
 
 void MainWindow::onNetError()
 {
-    return;
     m_log->addLog(Log_Runtime, "调试连接中断");
     onActionStop();
 }
@@ -1636,6 +1706,8 @@ void MainWindow::setRunningMode(ProcessStatus flag)
         {
             isNew = false;
         }
+
+        showTopLevel();
 
         m_runtime = new_runtime;
         m_log->stack()->setRuntime(m_runtime);

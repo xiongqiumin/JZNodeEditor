@@ -4,6 +4,7 @@
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeExpression.h"
+#include "JZNodeOperator.h"
 #include "JZScriptItem.h"
 #include "JZProject.h"
 
@@ -160,6 +161,7 @@ public:
     
     JZNodeIRParam paramRef(QString name);
 
+    int pinInputCount(int nodeId, int pinId);
     void setPinType(int nodeId, int pinId, int type);    
     int pinType(int nodeId, int pinId);
     int pinType(JZNodeGemo gemo);
@@ -182,7 +184,6 @@ public:
 
     addFlowInput，addDataInput 后，会自动插入JZNodeIRNodeId, 表示一个节点的开始, 用于断点
     */   
-    int pinInputType(int node_id, int pin_id);  //计算pin输入的type, 不进行pin允许的type转换
     bool checkPinInType(int nodeId, int prop_id, QString &error); //计算输入类型
 
     bool addFlowInput(int nodeId,QString &error);
@@ -200,6 +201,7 @@ public:
     void addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
+    void addWatchDisplay(const JZNodeIRParam &dst);
 
     void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
     int addStatement(JZNodeIRPtr ir);    
@@ -246,6 +248,7 @@ protected:
     void init(JZScriptItem *file);
     bool genGraphs();
     bool checkGraphs();
+    bool isBuildError();
     bool checkBuildResult();
     bool checkBuildStop();
     Graph *getGraph(JZNode *node);

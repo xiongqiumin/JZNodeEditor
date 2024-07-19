@@ -6,8 +6,16 @@
 class ImageModule : public JZModule
 {
 public:
+    static void init();
+
     ImageModule();
     ~ImageModule();
+
+    virtual void regist() override;
+    virtual void unregist() override;
+
+protected:
+    QStringList m_functions;
 };
 
 

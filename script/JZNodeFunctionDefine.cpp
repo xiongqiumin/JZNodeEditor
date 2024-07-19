@@ -8,16 +8,16 @@ JZParamDefine::JZParamDefine()
 {    
 }
 
-JZParamDefine::JZParamDefine(QString name, int dataType, const QString &v)
+JZParamDefine::JZParamDefine(QString param_name, int dataType, const QString &v)
 {
-    this->name = name;
+    this->name = param_name;
     this->type = JZNodeType::typeToName(dataType);
     this->value = v;
 }
 
-JZParamDefine::JZParamDefine(QString name, QString dataType, const QString &v)
+JZParamDefine::JZParamDefine(QString param_name, QString dataType, const QString &v)
 {
-    this->name = name;
+    this->name = param_name;
     this->type = dataType;
     this->value = v;
 }
@@ -153,19 +153,19 @@ void JZFunctionDefine::updateParam(CFunction *func)
     paramOut.clear();
     for (int i = 0; i < func->args.size(); i++)
     {
-        QString name = "input" + QString::number(i);
+        QString param_name = "input" + QString::number(i);
         int dataType = JZNodeType::typeidToType(func->args[i]);
-        Q_ASSERT_X(dataType != Type_none,"Error",qUtf8Printable(func->args[i]));
+        Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->args[i]));
 
-        paramIn.push_back(JZParamDefine(name, dataType));
+        paramIn.push_back(JZParamDefine(param_name, dataType));
     }
     if (func->result != typeid(void).name())
     {
-        QString name = "output";
+        QString param_name = "output";
         int dataType = JZNodeType::typeidToType(func->result);
-        Q_ASSERT_X(dataType != Type_none,"Error",qUtf8Printable(func->result));
+        Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->result));
 
-        paramOut.push_back(JZParamDefine(name, dataType));
+        paramOut.push_back(JZParamDefine(param_name, dataType));
     }
 }
 
@@ -279,9 +279,9 @@ JZParam::JZParam()
     dataType = Type_none;
 }
 
-JZParam::JZParam(const QString &name, int type)
+JZParam::JZParam(const QString &param_name, int type)
 {
-    this->name = name;
+    this->name = param_name;
     this->dataType = type;
 }
 

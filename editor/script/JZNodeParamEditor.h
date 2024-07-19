@@ -64,6 +64,7 @@ protected slots:
 
     void onCleanChanged(bool modify);
     void onItemChanged(QTableWidgetItem *item);
+    void onUiItemChanged(QTableWidgetItem *item);
 
 protected:
     friend JZNodeParamEditorCommand;

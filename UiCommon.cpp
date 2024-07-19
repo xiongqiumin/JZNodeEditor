@@ -32,10 +32,10 @@ void UiHelper::clearTreeItem(QTreeWidgetItem *root)
 
 void UiHelper::treeUpdate(QTreeWidgetItem *root, const QStringList &names, std::function<QTreeWidgetItem*(int)> func)
 {    
-    auto indexOfItem = [](QTreeWidgetItem *root,const QString &name)->int{
-        for (int i = 0; i < root->childCount(); i++)
+    auto indexOfItem = [](QTreeWidgetItem *node,const QString &name)->int{
+        for (int i = 0; i < node->childCount(); i++)
         {
-            auto sub = root->child(i);
+            auto sub = node->child(i);
             if (sub->text(0) == name)
                 return i;
         }

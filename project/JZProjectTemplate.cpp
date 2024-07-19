@@ -25,7 +25,6 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
     main_def.name = "main";
     auto *main_flow = main_file->addFunction(main_def);
     auto *global_def = main_file->addParamDefine("global");
-    JZNode *start = main_flow->getNode(0);
 
     if (temp == "ui")
     {  
@@ -55,12 +54,12 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         JZNodeCreate *create = new JZNodeCreate();
         JZNodeFunction *func_init = new JZNodeFunction();
         JZNodeFunction *func_show = new JZNodeFunction();
-        int node_start = main_flow->nodeList()[0];
-        int node_create = main_flow->addNode(create);
-        int node_set = main_flow->addNode(set_param);
-        int node_get = main_flow->addNode(get_param);
-        int node_init = main_flow->addNode(func_init);
-        int node_show = main_flow->addNode(func_show);
+
+        main_flow->addNode(create);
+        main_flow->addNode(set_param);
+        main_flow->addNode(get_param);
+        main_flow->addNode(func_init);
+        main_flow->addNode(func_show);
 
         get_param->setVariable("MainWindow");
         set_param->setVariable("MainWindow");

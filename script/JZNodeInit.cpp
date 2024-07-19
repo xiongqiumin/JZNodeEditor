@@ -5,6 +5,7 @@
 #include "JZNodeObject.h"
 #include "JZNodeEngine.h"
 #include "LogManager.h"
+#include "sample/ImageModule/ImageModule.h"
 
 void JZNodeInit()
 {
@@ -13,6 +14,8 @@ void JZNodeInit()
     qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");
     qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
+
+    ImageModule::init();
 
     JZNodeType::init();
     JZNodeFactory::instance()->init();    

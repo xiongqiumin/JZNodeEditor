@@ -140,6 +140,8 @@ JZNodeIR *createNodeIR(int type)
         return new JZNodeIRExpr(type);    
     case OP_set:    
         return new JZNodeIRSet();
+    case OP_clone:
+        return new JZNodeIRClone();
     case OP_watch:
         return new JZNodeIRWatch();
     case OP_convert:
@@ -243,8 +245,8 @@ void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 }
 
 //JZNodeIRExpr
-JZNodeIRExpr::JZNodeIRExpr(int type)
-    :JZNodeIR(type)
+JZNodeIRExpr::JZNodeIRExpr(int ir_type)
+    :JZNodeIR(ir_type)
 {    
 }
 
@@ -283,6 +285,29 @@ void JZNodeIRSet::saveToStream(QDataStream &s) const
 }
 
 void JZNodeIRSet::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> src >> dst;
+}
+
+//JZNodeIRClone
+JZNodeIRClone::JZNodeIRClone()    
+{
+    type = OP_clone;
+}
+
+JZNodeIRClone::~JZNodeIRClone()
+{
+    
+}
+
+void JZNodeIRClone::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << src << dst;
+}
+
+void JZNodeIRClone::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
     s >> src >> dst;
@@ -334,10 +359,10 @@ void JZNodeIRConvert::loadFromStream(QDataStream &s)
 }   
 
 //JZNodeIRJmp
-JZNodeIRJmp::JZNodeIRJmp(int type)
-    :JZNodeIR(type)
+JZNodeIRJmp::JZNodeIRJmp(int ir_type)
+    :JZNodeIR(ir_type)
 {
-    Q_ASSERT(type == OP_je || type == OP_jne || type == OP_jmp);    
+    Q_ASSERT(ir_type == OP_je || ir_type == OP_jne || ir_type == OP_jmp);    
     jmpPc = -1;
 }
 

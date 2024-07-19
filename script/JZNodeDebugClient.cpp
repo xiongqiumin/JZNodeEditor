@@ -68,25 +68,25 @@ bool JZNodeDebugClient::clearBreakPoint()
     return sendCommand(Cmd_clearBreakPoint,params,result);
 }
 
-bool JZNodeDebugClient::getVariable(const JZNodeDebugParamInfo &info,JZNodeDebugParamInfo &ret)
+bool JZNodeDebugClient::getVariable(const JZNodeGetDebugParam &info,JZNodeGetDebugParamResp &ret)
 {
     QVariantList params,result;
     params << netDataPack(info);
     if (!sendCommand(Cmd_getVariable, params, result))
         return false;
 
-    ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
+    ret = netDataUnPack<JZNodeGetDebugParamResp>(result[0].toByteArray());
     return true;
 }
 
-bool JZNodeDebugClient::setVariable(const JZNodeSetDebugParamInfo &info,JZNodeDebugParamInfo &ret)
+bool JZNodeDebugClient::setVariable(const JZNodeSetDebugParam &info,JZNodeSetDebugParamResp &ret)
 {
     QVariantList params,result;
     params << netDataPack(info);
     if (!sendCommand(Cmd_setVariable,params,result))
         return false;
 
-    ret = netDataUnPack<JZNodeDebugParamInfo>(result[0].toByteArray());
+    ret = netDataUnPack<JZNodeSetDebugParamResp>(result[0].toByteArray());
     return true;
 }
 

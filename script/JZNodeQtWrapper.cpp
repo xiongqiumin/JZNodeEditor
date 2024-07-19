@@ -17,8 +17,9 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
-#include <QFileInfo>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QFileDialog>
 #include <QProgressDialog>
 #include <QApplication>
@@ -26,6 +27,7 @@
 #include <QTreeWidget>
 #include <QTableWidget>
 #include <QListWidget>
+#include <QComboBox>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -56,9 +58,6 @@ void initEnum()
     jzbind::registEnum<Qt::GlobalColor>("GlobalColor");
 
     jzbind::registEnum<Qt::Key>("Key", Type_keyCode);
-    int file_dlg_option = jzbind::registEnum<QFileDialog::Option>("FileDialog.Option");
-    int file_dlg_options = jzbind::registEnum<QFileDialog::Options>("FileDialog.Options");
-    JZNodeObjectManager::instance()->enumMeta(file_dlg_options)->setFlag(true, file_dlg_option);
         
     QStringList filter_key_list;
     QVector<int> filter_value_list;
@@ -87,13 +86,13 @@ void initBase()
 
     registContainer("Map<int,int>",Type_intIntMap);
     registContainer("Map<int,string>",Type_intStringMap);
-    registContainer("Map<string,int>",Type_StringIntMap);
-    registContainer("Map<string,string>",Type_StringStringMap);
+    registContainer("Map<string,int>",Type_stringIntMap);
+    registContainer("Map<string,string>",Type_stringStringMap);
     registContainer("Map<string,any>",Type_varMap);
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
-    cls_string.def("format", false, [](const QString &format,const QVariantList &params)->QString {
+    cls_string.def("format", false, [](const QString &format)->QString {
         QString fmt = format;
         return fmt;
     });
@@ -115,7 +114,8 @@ void initBase()
     cls_string.regist();
 
     //Point
-    jzbind::ClassBind<QPoint> cls_pt("Point");
+    jzbind::ClassBind<QPoint> cls_pt(Type_point,"Point");
+    cls_pt.setValueType(true);
     cls_pt.def("create", false, [](int x, int y)->QPoint { return QPoint(x, y); });
     cls_pt.def("__fromString__", false, [](const QString &text)->QPoint
     {
@@ -127,7 +127,7 @@ void initBase()
 
         QPoint pt;
         pt.setX(list[0].toInt());
-        pt.setY(list[0].toInt());
+        pt.setY(list[1].toInt());
         return pt;
     });
     cls_pt.def("__toString__", false, [](QPoint *pt)->QString{ 
@@ -139,7 +139,8 @@ void initBase()
     cls_pt.def("setY", true, &QPoint::setY);
     cls_pt.regist();
 
-    jzbind::ClassBind<QPointF> cls_ptf("PointF");
+    jzbind::ClassBind<QPointF> cls_ptf(Type_pointF,"PointF");
+    cls_ptf.setValueType(true);
     cls_ptf.def("create", false, [](double x, double y)->QPointF { return QPointF(x, y); });
     cls_ptf.def("__fromString__", false, [](const QString &text)->QPointF {
         JZNodeObjectParser parser;
@@ -150,7 +151,7 @@ void initBase()
 
         QPointF pt;
         pt.setX(list[0].toDouble());
-        pt.setY(list[0].toDouble());
+        pt.setY(list[1].toDouble());
         return pt;
     });
     cls_ptf.def("__toString__", false, [](QPointF *pt)->QString {
@@ -162,7 +163,8 @@ void initBase()
     cls_ptf.def("setY", true, &QPointF::setY);
     cls_ptf.regist();
 
-    jzbind::ClassBind<QRect> cls_rect("Rect");
+    jzbind::ClassBind<QRect> cls_rect(Type_rect,"Rect");
+    cls_rect.setValueType(true);
     cls_rect.def("create", false, [](int x, int y, int w, int h)->QRect {
         return QRect(x, y, w, h);
     });
@@ -181,7 +183,8 @@ void initBase()
     });
     cls_rect.regist();
 
-    jzbind::ClassBind<QRectF> cls_rectf("RectF");
+    jzbind::ClassBind<QRectF> cls_rectf(Type_rectF,"RectF");
+    cls_rectf.setValueType(true);
     cls_rectf.def("create", false, [](double x, double y, double w, double h)->QRectF {
         return QRectF(x, y, w, h);
     });
@@ -224,8 +227,9 @@ void initBase()
 
 void initCore()
 {
-    auto funcInst = JZNodeFunctionManager::instance();
     jzbind::ClassBind<QObject> cls_object(Type_object,"Object");
+    cls_object.def("setObjectName",true,&QObject::setObjectName);
+    cls_object.def("objectName",false,&QObject::objectName);
     cls_object.regist();    
     
     //app
@@ -286,6 +290,12 @@ void initCore()
         list->clear();
     });
     cls_string_list.regist();    
+
+    jzbind::ClassBind<QByteArray> cls_byte_array(Type_byteArray,"ByteArray");
+    cls_byte_array.regist();
+
+    jzbind::ClassBind<QDataStream> cls_data_stream(Type_dataStream,"DataStream");
+    cls_data_stream.regist();
 }
 
 void initEvent()
@@ -367,9 +377,15 @@ void initWidgets()
     jzbind::ClassBind<QFrame> cls_frame(Type_frame,"Frame", "Widget");
     cls_frame.regist();
 
-    //QFrame
+    //AbstractScrollArea
     jzbind::ClassBind<QAbstractScrollArea> cls_abs_scroll("AbstractScrollArea", "Frame");
     cls_abs_scroll.regist();
+
+    //QLabel
+    jzbind::ClassBind<QLabel> cls_label("Label", "Widget");
+    cls_label.def("text", false, &QLabel::text);
+    cls_label.def("setText", true, &QLabel::setText);;
+    cls_label.regist();
 
     //lineedit
     jzbind::ClassBind<QLineEdit> cls_lineEdit(Type_lineEdit,"LineEdit", "Widget");
@@ -378,11 +394,19 @@ void initWidgets()
     cls_lineEdit.regist();
 
     //textedit
-    jzbind::ClassBind<QTextEdit> cls_textEdit(Type_textEdit,"QTextEdit", "Widget");
+    jzbind::ClassBind<QTextEdit> cls_textEdit(Type_textEdit,"TextEdit", "Widget");
     cls_textEdit.def("toPlainText", false, &QTextEdit::toPlainText);
     cls_textEdit.def("setText", true, &QTextEdit::setText);
     cls_textEdit.def("append", true, &QTextEdit::append);
     cls_textEdit.regist();
+
+    //combobox
+    jzbind::ClassBind<QComboBox> cls_comboBox(Type_comboBox,"ComboBox", "Widget");
+    cls_comboBox.def("setCurrentIndex", false, &QComboBox::setCurrentIndex);
+    cls_comboBox.def("currentIndex", false, &QComboBox::currentIndex);
+    cls_comboBox.def("addItem", true, [](QComboBox *box,const QString &item){ box->addItem(item); });
+    cls_comboBox.def("addItems", true, &QComboBox::addItems);
+    cls_comboBox.regist();
 
     //abs_button
     jzbind::ClassBind<QAbstractButton> cls_abs_button("AbstractButton", "Widget");
@@ -450,6 +474,10 @@ void initDialogs()
     });
     cls_msg_box.regist();    
     
+    int file_dlg_option = jzbind::registEnum<QFileDialog::Option>("FileDialog.Option");
+    int file_dlg_options = jzbind::registEnum<QFileDialog::Options>("FileDialog.Options");
+    JZNodeObjectManager::instance()->enumMeta(file_dlg_options)->setFlag(true, file_dlg_option);
+
     jzbind::ClassBind<QFileDialog> cls_file_dlg("FileDialog", "Dialog");
     auto open_file_def = cls_file_dlg.def("getOpenFileName", true, [](QWidget *parent,QString caption,QString dir,QString filter)->QString 
     {
@@ -505,9 +533,30 @@ void initPainter()
 }
 
 void initFiles()
-{
+{   
+    auto obj_inst = JZNodeObjectManager::instance();
+
+    QStringList file_mode_key_list;
+    QVector<int> file_mode_value_list;
+    file_mode_key_list << "ReadOnly" << "WriteOnly" << "ReadWrite" << "Append" << "Truncate" << "Text";
+    file_mode_value_list << QFile::ReadOnly << QFile::WriteOnly << QFile::ReadWrite << QFile::Append << QFile::Truncate << QFile::Text;
+    
+    JZNodeEnumDefine file_mode_define; 
+    file_mode_define.init("File.OpenModeFlag", file_mode_key_list, file_mode_value_list);
+    int file_mode_enum = obj_inst->registCEnum(file_mode_define,typeid(QFile::OpenModeFlag).name());
+
+    JZNodeEnumDefine file_flag_define; 
+    file_flag_define.init("File.OpenMode",{},{});
+    int file_mode_flag = obj_inst->registCEnum(file_mode_define,typeid(QFile::OpenMode).name());
+    obj_inst->enumMeta(file_mode_enum)->setFlag(true, file_mode_flag);
+
     jzbind::ClassBind<QFile> cls_file("File");
     cls_file.def("exists", false, QOverload<const QString&>::of(&QFile::exists));
+    cls_file.def("open", true, [](QFile *file,QFile::OpenMode mode)->bool{ return file->open(mode); });
+    cls_file.def("close", true, [](QFile *file){ file->close(); });
+    cls_file.def("read", true, [](QFile *file,qint64 size){ file->read(size); });
+    cls_file.def("readAll", true, [](QFile *file)->QByteArray{ return file->readAll(); });
+    cls_file.def("write", true, [](QFile *file,const QByteArray &buffer){ file->write(buffer); });
     cls_file.regist();
 
     jzbind::ClassBind<QFileInfo> cls_fileInfo("FileInfo");

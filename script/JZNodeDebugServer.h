@@ -42,8 +42,8 @@ protected slots:
     void onLog(const QString &log);
 
 protected:        
-    QVariant getVariable(const JZNodeDebugParamInfo &list);
-    QVariant setVariable(const JZNodeSetDebugParamInfo &list);
+    QVariant getVariable(const JZNodeGetDebugParam &list);
+    QVariant setVariable(const JZNodeSetDebugParam &list);
     JZNodeDebugParamValue toDebugParam(const QVariant &value);      
     QVariant *getVariableRef(int stack,const JZNodeParamCoor &coor);
 

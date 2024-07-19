@@ -1,6 +1,7 @@
 ﻿#include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeParamWidget.h"
 
 //JZNodeFunction
 JZNodeFunction::JZNodeFunction()
@@ -11,6 +12,40 @@ JZNodeFunction::JZNodeFunction()
 JZNodeFunction::~JZNodeFunction()
 {
 
+}
+
+void JZNodeFunction::updateName()
+{
+    setName(m_functionName);
+    auto meta = JZNodeFunctionManager::instance()->function(m_functionName);
+    if(meta && meta->isMemberFunction())
+    {
+        QString v = variable();
+        if(!v.isEmpty())
+        {
+            auto idx = m_functionName.indexOf(".");
+            QString name = v + "." + m_functionName.mid(idx + 1);
+            setName(name);
+        }
+    }
+}
+
+JZNodePinWidget *JZNodeFunction::createWidget(int id)
+{
+    auto w = new JZNodeParamValueWidget();
+    w->initWidget(Type_string);
+    return w;
+}
+
+void JZNodeFunction::setVariable(const QString &name)
+{
+    setPinValue(paramIn(0),name);
+    updateName();
+}
+
+QString JZNodeFunction::variable() const
+{
+    return pinValue(paramIn(0));
 }
 
 void JZNodeFunction::saveToStream(QDataStream &s) const
@@ -35,8 +70,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 {
     Q_ASSERT(define);            
     m_functionName = define->fullName();
-    setName(m_functionName);
-
+    
     if(define->isFlowFunction)
     {
         addFlowIn();
@@ -50,10 +84,11 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         pin.setFlag(Pin_param | Pin_in | Pin_dispName);
         pin.setDataType({define->paramIn[i].type });
         if (JZNodeType::isBaseOrEnum(define->paramIn[i].dataType()))        
-            pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);        
+            pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);
         pin.setValue(define->paramIn[i].value);
         addPin(pin);
     }
+
     for(int i = 0; i < define->paramOut.size(); i++)
     {
         JZNodePin pin;
@@ -61,7 +96,16 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         pin.setFlag(Pin_param | Pin_out | Pin_dispName);
         pin.setDataType({define->paramOut[i].type});
         addPin(pin);
-    }            
+    }
+
+    if(define->isMemberFunction())
+    {
+        auto pin = this->pin(paramIn(0));
+        pin->setFlag(pin->flag() | Pin_widget | Pin_editValue);
+        m_flag &= NodeProp_dragVariable; 
+    }
+
+    updateName();
 }
 
 QString JZNodeFunction::function() const
@@ -92,6 +136,12 @@ JZFunctionDefine JZNodeFunction::functionDefine()
     } 
     
     return def;
+}
+
+void JZNodeFunction::onPinChanged(int id)
+{
+    if(id == paramIn(0))
+        updateName();
 }
 
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)

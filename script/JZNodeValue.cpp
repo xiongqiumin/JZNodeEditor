@@ -1,9 +1,13 @@
-﻿#include "JZNodeValue.h"
+﻿#include <QPushButton>
+#include <QHBoxLayout>
+#include <QLineEdit>
+#include "JZNodeValue.h"
 #include "JZNodeCompiler.h"
 #include "JZProject.h"
 #include "JZNodeFactory.h"
 #include "JZClassItem.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeParamWidget.h"
 
 //JZNodeLiteral
 JZNodeLiteral::JZNodeLiteral()
@@ -160,6 +164,69 @@ void JZNodeFlag::setValue(int value)
     setPinValue(paramOut(0), key);
 }
 
+//JZNodeConvert
+JZNodeConvert::JZNodeConvert()
+{
+    m_name = "convert";
+    m_type = Node_convert;   
+
+    int in = addParamIn("var", Pin_param | Pin_dispName);
+    setPinTypeArg(in);
+    addParamOut("", Pin_param | Pin_widget);
+}
+
+JZNodeConvert::~JZNodeConvert()
+{
+}
+
+void JZNodeConvert::setOutputType(int type)
+{
+    QString name = JZNodeType::typeToName(type);
+    setPinValue(paramOut(0), name);
+    onPinChanged(paramOut(0));
+}
+
+bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
+{
+    if(!c->addDataInput(m_id,error))
+        return false;
+
+    int in_type = c->pinType(m_id,paramIn(0));
+    int out_type = pinTypeId(paramOut(0))[0];
+    if(!JZNodeType::canConvertExplicitly(in_type,out_type))
+    {   
+        error = "无法将类型" + JZNodeType::typeToName(in_type) + "转换到" + JZNodeType::typeToName(out_type);
+        return false;
+    }
+
+    int in_id = c->paramId(m_id,paramIn(0));
+    int out_id = c->paramId(m_id,paramOut(0));
+    c->addConvert(irId(in_id),out_type,irId(out_id));
+    return true;
+}
+
+JZNodePinWidget* JZNodeConvert::createWidget(int id)
+{
+    auto w = new JZNodeParamValueWidget();
+    w->initWidget(Type_string);
+    return w;
+}
+
+void JZNodeConvert::onPinChanged(int id)
+{
+    if(id == paramOut(0))
+    {
+        QString name = pinValue(id);
+        setName("convert to " + name + "");
+        int type = JZNodeType::nameToType(name);
+        
+        if(type != Type_none)
+            setPinType(paramOut(0), { type });
+        else
+            clearPinType(paramOut(0));
+    }
+}
+
 //JZNodeCreate
 JZNodeCreate::JZNodeCreate()
 {
@@ -211,9 +278,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     JZNodeIRParam irOut = irId(out_id);
     c->setPinType(m_id, paramOut(0), meta->id);
 
-    int tmp_id = c->allocStack(Type_any);
-    c->addCall("createObject", { irIn }, { irId(tmp_id) });
-    c->addSetVariableConvert(irOut,irId(tmp_id));        
+    c->addCall("createObject", { irIn }, { irOut });
     return true;
 }
 
@@ -312,6 +377,7 @@ QString JZNodeCreateFromString::context() const
 JZNodeFunctionPointer::JZNodeFunctionPointer()
 {
     m_type = Node_functionPointer;
+    m_name = "FunctionPointer";
 
     int out = addParamOut("",Pin_dispValue | Pin_editValue | Pin_literal);
     setPinType(out, {Type_function});
@@ -352,14 +418,40 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
+class JZNodeDisplayWidget : public JZNodePinWidget
+{
+public:
+    JZNodeDisplayWidget()
+    {
+        QHBoxLayout *l = new QHBoxLayout();
+        l->setContentsMargins(0, 0, 0, 0);
+        setLayout(l);    
+        
+        m_line = new QLineEdit();
+        l->addWidget(m_line);
+        m_line->setReadOnly(true);
+        m_line->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    }
+
+    void setRuntimeValue(const JZNodeDebugParamValue &value)
+    {
+        m_line->setText(value.value);
+    }
+
+protected:
+    QLineEdit *m_line;
+};
+
 //JZNodeDisplay
 JZNodeDisplay::JZNodeDisplay()
 {
     m_type = Node_display;
     m_name = "display";
 
-    int in = addParamIn("value",Pin_dispValue);
-    setPinTypeAny(in);
+    int in = addParamIn("value",Pin_dispValue | Pin_widget);
+    setPinTypeArg(in);
+
+    addWidgetIn("Add input");
 }
 
 JZNodeDisplay::~JZNodeDisplay()
@@ -373,6 +465,60 @@ bool JZNodeDisplay::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
+void JZNodeDisplay::addInput()
+{
+    auto pin0 = pin(paramIn(0));
+    int in = addParamIn("", pin0->flag());    
+    pin(in)->setDataType(pin0->dataType());
+    if(pin0->isEditValue())
+        pin(in)->setValue(0);
+}
+
+void JZNodeDisplay::removeInput(int index)
+{
+    int id = paramInList()[index];
+    removePin(id);
+}
+
+JZNodePinWidget* JZNodeDisplay::createWidget(int id)
+{
+    Q_UNUSED(id);    
+
+    auto in_list = paramInList();
+    if(in_list.contains(id))
+    {
+        return new JZNodeDisplayWidget();
+    }
+    else
+    {
+        JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+        QPushButton *btn = w->button();
+        btn->setText("Add Input");
+        btn->connect(btn, &QPushButton::clicked, [this] {
+            QByteArray old = toBuffer();
+            addInput();
+            propertyChangedNotify(old);        
+        });                
+        return w;
+    }
+}
+
+QStringList JZNodeDisplay::pinActionList(int id)
+{
+    QStringList ret;
+    if (paramInCount() > 2)
+        ret.push_back("删除");
+
+    return ret;
+}
+
+bool JZNodeDisplay::pinActionTriggered(int id, int index)
+{
+    int pin_index = paramInList().indexOf(id);
+    removeInput(pin_index);
+    return true;
+}
+
 //JZNodePrint
 JZNodePrint::JZNodePrint()
 {
@@ -382,7 +528,7 @@ JZNodePrint::JZNodePrint()
     addFlowIn();
     addFlowOut();
     int in = addParamIn("var", Pin_dispName | Pin_editValue);
-    setPinTypeAny(in);
+    setPinTypeArg(in);
 }
 
 JZNodePrint::~JZNodePrint()
@@ -391,22 +537,13 @@ JZNodePrint::~JZNodePrint()
 
 bool JZNodePrint::compiler(JZNodeCompiler *c,QString &error)
 {
+    if (c->pinInputCount(m_id,paramIn(0)) == 0 && !pin(paramIn(0))->value().isEmpty())
+        c->setPinType(m_id,paramIn(0),Type_string);
+
     if (!c->addFlowInput(m_id, error))
         return false;
 
     auto in_id = irId(c->paramId(m_id, paramIn(0)));
-    bool need_format = false;
-
-    if(need_format)
-    {
-        QList<JZNodeIRParam> fmt_in, fmt_out;
-        auto in_list = paramInList();
-        for(int i = 0; i < in_list.size(); i++)
-        {
-            fmt_in << irId(c->paramId(m_id,in_list[i]));
-        }
-        c->addCallConvert("format",fmt_in,fmt_out);
-    }
 
     QList<JZNodeIRParam> in, out;
     in << in_id;
@@ -750,7 +887,7 @@ void JZNodeAbstractMember::updateMemberType()
         return;
 
     auto gemo = m_file->getConnect(pin_id[0]);
-    auto type = m_file->getNode(gemo->from.nodeId)->pinTypeInt(gemo->from.pinId);
+    auto type = m_file->getNode(gemo->from.nodeId)->pinTypeId(gemo->from.pinId);
     if (type.size() == 1)
         updateMemberType(type[0]);
 }
@@ -888,8 +1025,8 @@ JZNodeClone::JZNodeClone()
 
     auto in = addParamIn("");
     auto out = addParamOut("");
-    setPinTypeAny(in);
-    setPinTypeAny(out);
+    setPinTypeArg(in);
+    setPinTypeArg(out);
 }
 
 JZNodeClone::~JZNodeClone()
@@ -902,10 +1039,12 @@ bool JZNodeClone::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addDataInput(m_id, error))
         return false;
 
+    int in_type = c->pinType(m_id, paramIn(0));
     QList<JZNodeIRParam> in;
     QList<JZNodeIRParam> out;
     in << irId(c->paramId(m_id, paramIn(0)));
     out << irId(c->paramId(m_id, paramOut(0)));
+    c->setPinType(m_id,paramOut(0),in_type);
     c->addCall("clone", in, out);
     return true;
 }
@@ -921,8 +1060,8 @@ JZNodeSwap::JZNodeSwap()
 
     int in1 = addParamIn("");
     int in2 = addParamIn("");
-    setPinTypeAny(in1);
-    setPinTypeAny(in2);
+    setPinTypeArg(in1);
+    setPinTypeArg(in2);
 }
 
 JZNodeSwap::~JZNodeSwap()

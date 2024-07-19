@@ -7,7 +7,6 @@
 #pragma execution_character_set("utf-8")
 #endif
 
-constexpr int INVALID_ID = -1; 
 QByteArray NodeMagic();
 
 #endif

@@ -601,7 +601,7 @@ void JZNode::setId(int id)
     m_id = id;
 }
 
-QList<int> JZNode::pinTypeInt(int id) const
+QList<int> JZNode::pinTypeId(int id) const
 {
     return pin(id)->dataTypeId();
 }
@@ -611,9 +611,9 @@ const QStringList &JZNode::pinType(int id) const
     return pin(id)->dataType();
 }
 
-void JZNode::setPinTypeAny(int id)
+void JZNode::setPinTypeArg(int id)
 {
-    pin(id)->setDataTypeId({Type_any});
+    pin(id)->setDataTypeId({Type_arg});
 }
 
 void JZNode::setPinTypeInt(int id)
@@ -657,15 +657,23 @@ JZNodePinWidget *JZNode::createWidget(int id)
     return nullptr;
 }
 
-QStringList JZNode::pinActionList(int id)
+QStringList JZNode::actionList()
+{   
+    return QStringList();    
+}
+
+bool JZNode::actionTriggered(int)
 {
-    Q_UNUSED(id);
+    return false;
+}
+
+QStringList JZNode::pinActionList(int)
+{
     return QStringList();
 }
 
-bool JZNode::pinActionTriggered(int id, int index)
+bool JZNode::pinActionTriggered(int, int)
 {
-    Q_UNUSED(id);
     return false;
 }
 
@@ -1028,12 +1036,10 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
         int start = c->pinLiteral(m_id, indexStart).toInt();
         int end = c->pinLiteral(m_id, indexEnd).toInt();
         int step = c->pinLiteral(m_id, indexStep).toInt();
-        QString error;
+
         if (!JZForCheck(start,end,step,op,error))
-        {
-            error = "dead loop,please check";
             return false;
-        }
+        
         need_runtime_check = false;
     }
 
@@ -1078,7 +1084,6 @@ JZNodePinWidget* JZNodeFor::createWidget(int id)
     QComboBox *comboBox = qobject_cast<QComboBox*>(w->widget());
     comboBox->addItems(m_condTip);      ;
     comboBox->setCurrentIndex(paramInValue(3).toInt());    
-
 
     return w;
 }
@@ -1138,9 +1143,6 @@ JZNodeForEach::JZNodeForEach()
 
     int out1 = addParamOut("key",Pin_dispName);
     int out2 = addParamOut("value",Pin_dispName);
-    pin(in)->setDataTypeId({Type_any});
-    setPinTypeAny(out1);
-    setPinTypeAny(out2);
 }
 
 JZNodeForEach::~JZNodeForEach()
@@ -1280,7 +1282,7 @@ void JZNodeIf::addElsePin()
     updateCondName();
 }
 
-int JZNodeIf::pinPri(int id)
+int JZNodeIf::pinPri(int id) const
 {
     if (pin(id)->name() == "else")
         return Pri_sub_flow + 1;
@@ -1445,7 +1447,7 @@ void JZNodeSwitch::addDefault()
     addSubFlowOut("default", Pin_dispName);    
 }
 
-int JZNodeSwitch::pinPri(int id)
+int JZNodeSwitch::pinPri(int id) const
 {
     if(pin(id)->name() == "default")
         return Pri_sub_flow + 1;
@@ -1482,12 +1484,12 @@ void JZNodeSwitch::setCaseValue(int index, const QString &v)
     pin(subFlowOut(index))->setValue(v);
 }
 
-JZNodePinWidget* JZNodeSwitch::createWidget(int id)
+JZNodePinWidget* JZNodeSwitch::createWidget(int pin_id)
 {    
     JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
     QPushButton *btn = w->button();
-    btn->setText(pinName(id));
-    if (id == widgetOut(0))
+    btn->setText(pinName(pin_id));
+    if (pin_id == widgetOut(0))
     {
         btn->connect(btn, &QPushButton::clicked, [this] {
             QByteArray old = toBuffer();

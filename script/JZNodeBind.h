@@ -85,10 +85,35 @@ using function_signature_t = conditional_t<
     >::type
 >;
 
+template <typename T>
+class is_qflag {
+    template <typename U>
+    static std::true_type test(const QFlags<U>&, ...); // 这里使用省略号代表模板参数包，目的是让函数接受任意数量和类型的参数
+ 
+    static std::false_type test(...); // 这个重载是为了处理不匹配的情况
+ 
+    typedef decltype(test(std::declval<T>(), 0)) type; // decltype将基于test的重载解决方案选择合适的类型
+ 
+public:
+    enum { value = type::value }; // 使用枚举类型的value成员来获取结果
+};
+
+template<class T>
+struct is_operator_equal
+{
+    template<class U, class V>
+    static auto test(U*) -> decltype(std::declval<U>() == std::declval<V>());
+    template<typename, typename>
+    static auto test(...) -> std::false_type;
+
+    using type = typename std::is_same<bool, decltype(test<T, T>(0))>::type;
+};
+
+
 template<class T>
 constexpr bool is_enum_or_qenum_cond()
 {
-    return std::is_enum<T>() || QtPrivate::IsQEnumHelper<T>::Value;
+    return std::is_enum<T>() || QtPrivate::IsQEnumHelper<T>::Value || is_qflag<T>::value;
 }
 
 template<class T>
@@ -98,10 +123,12 @@ using is_enum_or_qenum = bool_constant<is_enum_or_qenum_cond<T>()>;
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
 template<class T> void copyClass(void *src,void *dst){ *((T*)src) = *((T*)dst); }
+template<class T> bool equalClass(void *src,void *dst){ return *((T*)src) == *((T*)dst); }
 
 void *createClassAssert();
 void destoryClassAssert(void *);
 void copyClassAssert(void *,void *);
+bool equalClassAssert(void *src,void *dst);
 
 // from QVariant
 template<class T>
@@ -489,7 +516,7 @@ int registEnum(QString name,int id = -1)
     }
 
     JZNodeEnumDefine define;
-    define.init(meta.name(),keys,values);
+    define.init(name,keys,values);
     if(id != -1)
         define.setType(id);
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
@@ -604,6 +631,7 @@ public:
 
         initCreate(std::is_abstract<Class>());
         initCopy(std::is_copy_constructible<Class>());
+        initEqual(typename is_operator_equal<Class>::type());
         m_define.cMeta.isAbstract = std::is_abstract<Class>();        
     }
 
@@ -611,6 +639,11 @@ public:
         :ClassBind(-1, name, super)
     {        
     }    
+
+    void setValueType(bool flag)
+    {
+        m_define.valueType = flag;
+    }
 
     template<typename Return, typename... Args,typename... Extra>
     JZFunctionDefine *def(QString name,bool isflow,Return (Class::*f)(Args...),Extra ...extra)
@@ -775,6 +808,18 @@ protected:
         m_define.cMeta.copy = &copyClassAssert;
         m_define.cMeta.isCopyable = false;
     }    
+
+    void initEqual(std::true_type)
+    {
+        m_define.cMeta.equal = &equalClass<Class>;
+        m_define.cMeta.isCopyable = true;
+    }
+
+    void initEqual(std::false_type)
+    {
+        m_define.cMeta.equal = &equalClassAssert;
+        m_define.cMeta.isCopyable = false;
+    }  
 
     JZFunctionDefine *registFunction(QString name,bool isflow,QSharedPointer<CFunction> cfunc)
     {

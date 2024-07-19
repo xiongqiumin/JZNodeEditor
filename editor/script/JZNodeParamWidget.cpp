@@ -122,23 +122,8 @@ QString JZNodePinWidget::value() const
     return QString();
 }
 
-void JZNodePinWidget::setValue(const QString &value)
+void JZNodePinWidget::setValue(const QString &)
 {
-}
-
-void JZNodePinWidget::setEditable(bool flag)
-{
-
-}
-
-void JZNodePinWidget::setRuntime(ProcessStatus status)
-{
-
-}
-
-void JZNodePinWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
-{
-
 }
 
 //JZNodePinButtonWidget
@@ -150,6 +135,7 @@ JZNodePinButtonWidget::JZNodePinButtonWidget()
     m_btn = new QPushButton();    
     lay->addWidget(m_btn);
     this->setLayout(lay);
+    m_btn->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 }
 
 JZNodePinButtonWidget::~JZNodePinButtonWidget()
@@ -160,11 +146,6 @@ JZNodePinButtonWidget::~JZNodePinButtonWidget()
 QPushButton *JZNodePinButtonWidget::button()
 {
     return m_btn;
-}
-
-void JZNodePinButtonWidget::setRuntime(ProcessStatus status)
-{
-    setEnabled(status == Process_none);
 }
 
 //JZNodeParamValueWidget
@@ -189,7 +170,6 @@ void JZNodeParamValueWidget::clearWidget()
     if (m_widget)
     {
         delete m_widget;
-        m_widgetType.clear();
         m_widget = nullptr;
     }
 }
@@ -251,6 +231,10 @@ void JZNodeParamValueWidget::createWidget()
         JZNodeFlagEditWidget *edit = new JZNodeFlagEditWidget();        
         edit->connect(edit, &JZNodeFlagEditWidget::sigValueChanged, this, &JZNodeParamValueWidget::onValueChanged);
         m_widget = edit;
+    }
+    else
+    {
+        Q_ASSERT(0);
     }
     m_widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
@@ -316,24 +300,6 @@ void JZNodeParamValueWidget::initWidget(int data_type, QString widget_type)
 QWidget *JZNodeParamValueWidget::widget()
 {
     return m_widget;
-}
-
-void JZNodeParamValueWidget::setEditable(bool flag)
-{
-    m_widget->setVisible(flag);
-    setEnabled(flag);
-}
-
-void JZNodeParamValueWidget::setRuntime(ProcessStatus status)
-{
-    bool flag = (status == Process_none);
-    m_widget->setVisible(flag);
-    m_runtimeValue->setVisible(!flag);    
-}
-
-void JZNodeParamValueWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
-{
-    m_runtimeValue->setText(value.value);
 }
 
 QString JZNodeParamValueWidget::value() const

@@ -6,6 +6,7 @@
 #include "JZNodeValue.h"
 #include "JZNodeUtils.h"
 #include "JZNodeFunction.h"
+#include "JZNodeOperator.h"
 
 ASConvert::ASConvert()
 {
@@ -33,7 +34,10 @@ bool ASConvert::convert(QString code,JZScriptFile *file)
     asCParser parser;
     int ret = parser.ParseScript(&script);
     if (ret != 0)
+	{
+		m_error = parser.Error();
         return false;
+	}
 
     auto root = parser.GetScriptNode();
     auto child = root->firstChild;
@@ -88,7 +92,6 @@ QString ASConvert::printNode(asCScriptNode *node)
 	printNode(node,line,0);
 	return line;
 }
-
 
 QString ASConvert::nodeText(asCScriptNode *node)
 {
@@ -176,7 +179,7 @@ JZNode *ASConvert::toReturn(asCScriptNode *node)
 		if(!data)
 			return nullptr;
 
-		m_script->addConnect(data->paramOutGemo(0),ret->paramInGemo(0));
+		m_script->addConnectForce(data->paramOutGemo(0),ret->paramInGemo(0));
 	}	
 	return ret;
 }
@@ -190,7 +193,7 @@ void ASConvert::setNodeIf(JZNodeIf *node_if,asCScriptNode *as_node,int cond)
 		node_if->addCondPin();
 
 	auto jz_cond = toAssignment(child[0]);
-	m_script->addConnect(jz_cond->paramOutGemo(0),node_if->paramInGemo(cond));
+	m_script->addConnectForce(jz_cond->paramOutGemo(0),node_if->paramInGemo(cond));
 
 	QList<JZNode*> stmt = toStatementBlock(child[1]);
 	m_script->addConnect(node_if->subFlowOutGemo(cond),stmt[0]->flowInGemo());
@@ -225,8 +228,29 @@ JZNode *ASConvert::toAssignment(asCScriptNode *node)
 {
 	Q_ASSERT(node->nodeType == snAssignment);
 
-	auto node_expr = node->firstChild->firstChild;
-	return toExpression(node_expr);
+	auto list = childList(node);
+	if(list.size() == 1)
+		return toExpression(list[0]->firstChild);
+	else if(list.size() == 3)
+	{
+		if(list[1]->nodeType == snExprOperator)
+		{
+			QString op = nodeText(list[1]);
+			if(op == "=")
+			{
+				auto node_set = createNode<JZNodeSetParam>();
+				node_set->setVariable(nodeText(list[0]));
+
+				auto node_value = toAssignment(list[2]);
+				m_script->addConnectForce(node_value->paramOutGemo(0),node_set->paramInGemo(1));
+				return node_set;
+			}
+		}
+	}
+
+	qDebug().noquote() << printNode(node);
+	Q_ASSERT(0);
+	return nullptr;
 }
 
 JZNode *ASConvert::toFunctionCall(asCScriptNode *node)
@@ -241,7 +265,7 @@ JZNode *ASConvert::toExprTerm(asCScriptNode *root)
 {
 	Q_ASSERT(root->nodeType == snExprTerm);
 	
-	JZNode *ret;
+	JZNode *ret = nullptr;
 	auto node_value = root->firstChild;
 	auto node = node_value->firstChild;
 	if(node->nodeType == snConstant)
@@ -277,8 +301,11 @@ JZNode *ASConvert::toStatement(asCScriptNode *node)
 		return toFor(node);
 	else if(node_type == snFunctionCall)
 		return toFunctionCall(node);
+	else if(node_type == snExpressionStatement)
+		return toAssignment(node->firstChild);
 
-	Q_ASSERT(0);
+	qDebug() << node_type;
+	Q_ASSERT_X(0,"Error",qUtf8Printable(nodeText(node)));
 	return nullptr;
 }
 
@@ -352,6 +379,7 @@ JZNode *ASConvert::toExpression(asCScriptNode *node)
 		else if(sub_node->nodeType == snExprOperator)
 		{
 			QString op = nodeText(sub_node);
+
 			int pri = JZNodeType::opPri(op);
 			int top_pri = jz_stack.size() > 0? opPri(jz_stack.top()): -1;
 			if(pri <= top_pri)
@@ -389,8 +417,8 @@ JZNode *ASConvert::toExpression(asCScriptNode *node)
             auto b = jz_stack.pop();
             auto a = jz_stack.pop();
 
-			m_script->addConnect(a.node->paramOutGemo(0),token_expr[i].node->paramInGemo(0));
-			m_script->addConnect(b.node->paramOutGemo(0),token_expr[i].node->paramInGemo(1));
+			m_script->addConnectForce(a.node->paramOutGemo(0),token_expr[i].node->paramInGemo(0));
+			m_script->addConnectForce(b.node->paramOutGemo(0),token_expr[i].node->paramInGemo(1));
           
 			ExprToken tk;
 			tk.type = ExprToken::Value;

@@ -92,5 +92,5 @@ void JZNodeVM::quit()
 void JZNodeVM::onRuntimeError(JZNodeRuntimeError error)
 {    
     QMessageBox::information(nullptr,"", error.errorReport());    
-    quitLater();
+    ::exit(1);
 }

@@ -43,10 +43,12 @@ public:
     QPointF getNodePos(int id);
 
     bool canConnect(JZNodeGemo from, JZNodeGemo to,QString &error);
+    bool checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &error);
     bool checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &error); 
     int parentNode(int id);
 
     int addConnect(JZNodeGemo from, JZNodeGemo to);
+    int addConnectForce(JZNodeGemo from, JZNodeGemo to);     // 不检测类型是否匹配
     bool hasConnect(JZNodeGemo from, JZNodeGemo to);
     void insertConnect(const JZNodeConnect &connect);
     void removeConnect(int id);

@@ -4,10 +4,17 @@
 JZNodeAutoRunThread::JZNodeAutoRunThread()
 {
      m_cancel = false;
+     m_engine.setDebug(true);
+     m_engine.moveToThread(this);
 }
 
 JZNodeAutoRunThread::~JZNodeAutoRunThread()
 {
+}
+
+JZNodeEngine *JZNodeAutoRunThread::engine()
+{
+    return &m_engine;
 }
 
 void JZNodeAutoRunThread::startRun(JZNodeProgram *program,const ScriptDepend &depend)

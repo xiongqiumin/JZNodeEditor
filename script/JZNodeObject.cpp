@@ -8,13 +8,6 @@
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
 
-JZNodeVariantAny JZObjectClone(const JZNodeVariantAny &v)
-{
-    JZNodeVariantAny ret;
-    ret.value = JZNodeType::clone(v.value);
-    return ret;
-}
-
 int JZClassId(const QString &name)
 {
     return JZNodeObjectManager::instance()->getClassId(name);
@@ -89,6 +82,14 @@ QString JZNodeObjectDefine::fullname() const
         name = nameSpace + "::";
     name += className;
     return name;
+}
+
+int JZNodeObjectDefine::baseId() const
+{
+    auto def = this;
+    if(!def->superName.isEmpty())
+        def = def->super();
+    return def->id;
 }
 
 void JZNodeObjectDefine::addParam(const JZParamDefine &def)
@@ -284,6 +285,23 @@ QStringList JZNodeObjectDefine::functionList() const
     return set.toList();
 }
 
+QStringList JZNodeObjectDefine::virtualFunctionList() const
+{
+    QSet<QString> set;
+    auto def = this;
+    while (def)
+    {
+        for (int i = 0; i < def->functions.size(); i++)
+        {
+            if(def->functions[i].isVirtualFunction)
+                set << def->functions[i].name;
+        }
+
+        def = def->super();        
+    }    
+    return set.toList();
+}
+
 QStringList JZNodeObjectDefine::JZNodeObjectDefine::singleList() const
 {
     QSet<QString> set;
@@ -389,6 +407,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param)
     s << param.params;
     s << param.functions;
     s << param.singles;
+    s << param.enums;
 
     s << param.isCObject;
     s << param.isUiWidget;
@@ -408,6 +427,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
     s >> param.params;
     s >> param.functions;
     s >> param.singles;
+    s >> param.enums;
     
     s >> param.isCObject;
     s >> param.isUiWidget;
@@ -498,6 +518,11 @@ bool JZNodeObject::isCObject() const
     return m_define->isCObject;
 }
 
+bool JZNodeObject::isValueType() const
+{
+    return m_define->isValueType();
+}
+
 const QString &JZNodeObject::className() const
 {
     return m_define->className;
@@ -506,6 +531,11 @@ const QString &JZNodeObject::className() const
 int JZNodeObject::type() const
 {
     return m_define->id;
+}
+
+int JZNodeObject::baseType() const
+{
+    return m_define->baseId();
 }
 
 const JZNodeObjectDefine *JZNodeObject::meta() const
@@ -693,14 +723,14 @@ void JZNodeObject::updateUiWidget(QWidget *widget)
         }
 
         QString sig = func.mid(idx2 + 1);
-        auto obj = toJZObject(param(param_name));
-        if(!obj)
+        auto jz_obj = toJZObject(param(param_name));
+        if(!jz_obj)
         {
             qDebug() << "connect slot by name object not init";
             continue;
         }
 
-        auto sig_func = obj->single(sig);
+        auto sig_func = jz_obj->single(sig);
         if(!sig_func)
         {
             qDebug() << "connect slot by name no single: " + sig;
@@ -719,7 +749,7 @@ void JZNodeObject::updateUiWidget(QWidget *widget)
 
         JZFunctionPointer slot_func_ptr;
         slot_func_ptr.functionName = slot_func->fullName();
-        JZObjectConnect(obj,sig_func_ptr,this,slot_func_ptr);
+        JZObjectConnect(jz_obj,sig_func_ptr,this,slot_func_ptr);
     }
 }
 
@@ -796,6 +826,18 @@ JZNodeObject *JZNodeObjectPtr::object() const
 void JZNodeObjectPtr::releaseOwner()
 {
     data->isOwner = false;
+}
+
+bool JZNodeObjectPtr::operator ==(const JZNodeObjectPtr &other) const
+{
+    JZNodeObject *o1 = object();
+    JZNodeObject *o2 = other.object();
+    return JZNodeObjectManager::instance()->equal(o1,o2);
+}
+
+bool JZNodeObjectPtr::operator !=(const JZNodeObjectPtr &other) const
+{
+    return !(this->operator==(other));
 }
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectPtr ptr)
@@ -905,7 +947,6 @@ void JZNodeObjectManager::init()
 
 void JZNodeObjectManager::initFunctions()
 {        
-    JZNodeFunctionManager::instance()->registCFunction("clone", true, jzbind::createFuncion(JZObjectClone));
 }
 
 int JZNodeObjectManager::getId(const QString &type_name)
@@ -1187,18 +1228,21 @@ void JZNodeObjectManager::copy(JZNodeObject *dst,JZNodeObject *src)
         return;
     }
 
-    auto list = dst->paramList();
-    for(int i = 0; i < list.size(); i++)
-    {        
-        QVariant v = dst->param(list[i]);
-        if(isJZObject(v))
+    auto it = dst->m_params.begin();
+    while(it != dst->m_params.end())
+    {
+        QVariant *v1 = it.value().data();
+        QVariant *v2 = src->m_params[it.key()].data();
+        if(isJZObject(*v1))
         {
-            JZNodeObject *src_ptr = toJZObject(src->param(list[i]));
-            JZNodeObject *dst_ptr = toJZObject(v);
+            JZNodeObject *src_ptr = toJZObject(*v1);
+            JZNodeObject *dst_ptr = toJZObject(*v2);
             copy(dst_ptr,src_ptr);
         }
         else
-            dst->setParam(list[i],v);        
+            *v1 = *v2;
+
+        it++;
     }
 }
 
@@ -1302,11 +1346,38 @@ JZNodeObject* JZNodeObjectManager::createRefrenceByTypeid(const QString &ctype_i
     return createRefrence(m_typeidMetas[ctype_id],ptr,owner);
 }
 
-JZNodeObject* JZNodeObjectManager::clone(JZNodeObject *other)
+JZNodeObject* JZNodeObjectManager::clone(JZNodeObject *src)
 {
-    Q_ASSERT(other->isCopyable());
+    Q_ASSERT(src->isCopyable());
 
-    JZNodeObject* ret = create(other->type());
-    copy(ret,other);    
-    return ret;
+    JZNodeObject* dst = create(src->type());
+    copy(dst,src);    
+    return dst;
+}
+
+bool JZNodeObjectManager::equal(JZNodeObject* o1,JZNodeObject *o2)
+{
+    Q_ASSERT(JZNodeType::isSameType(o1->baseType(),o2->baseType()));
+
+    if(o1->isValueType())
+    {
+        if(o1->isCObject())
+            return o1->meta()->cMeta.equal(o1->cobj(),o2->cobj());
+        else
+        {
+            auto it = o1->m_params.begin();
+            while(it != o1->m_params.end())
+            {
+                if(*it.value().data() != *o2->m_params[it.key()].data())
+                    return false;
+
+                it++;
+            }
+            return true;
+        }
+    }
+    else
+    {
+        return o1 == o2;
+    }
 }

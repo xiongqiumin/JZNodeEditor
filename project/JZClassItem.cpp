@@ -201,9 +201,9 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
     define.id = m_classId;
 
     auto item_list = itemList(ProjectItem_any);
-    for (int i = 0; i < item_list.size(); i++)
+    for (int item_idx = 0; item_idx < item_list.size(); item_idx++)
     {
-        auto item = item_list[i];
+        auto item = item_list[item_idx];
         if (item->itemType() == ProjectItem_param)
         {
             auto param_item = dynamic_cast<JZParamItem*>(item);

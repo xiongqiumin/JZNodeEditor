@@ -4,6 +4,7 @@
 #include <QItemDelegate>
 #include <QHeaderView>
 #include <QDebug>
+#include <QFocusEvent>
 #include "JZNodePropertyBrowser.h"
 #include "JZNodeParamWidget.h"
 #include "JZNodeType.h"
@@ -44,6 +45,7 @@ JZNodeProperty::JZNodeProperty(QString name, NodePropretyType type)
     m_enabled = true;
     m_name = name;
     m_type = type;
+    m_dataType = Type_none;
     m_parent = nullptr;
 }
 
@@ -107,7 +109,11 @@ void JZNodeProperty::setValue(const QString &value)
 {
     m_value = value;
     if(m_item)
+    {
+        auto tree = qobject_cast<JZNodePropertyBrowser*>(m_item->treeWidget());
         m_item->setText(1,value);
+        tree->updateItem(m_item);
+    }
 }
 
 class PinValueItemDelegate : public QItemDelegate
@@ -124,15 +130,15 @@ public:
             return nullptr;
 
         auto prop = browser->property(index);
-        if (prop->type() != NodeProprety_Value)
+        if (prop->type() != NodeProprety_Value || prop->dataType() == Type_none)
             return nullptr;
         
         QString text = index.data().toString();
         auto edit = new JZNodeParamValueWidget(parent);
-        int up_type = prop->dataType();
-        edit->initWidget(up_type);
+        edit->initWidget(prop->dataType());
         edit->setValue(text);
         edit->setAutoFillBackground(true);
+        edit->widget()->installEventFilter(const_cast<PinValueItemDelegate*>(this));
         return edit;
     }
 
@@ -141,10 +147,10 @@ public:
         const QModelIndex &index) const override
     {
         auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
-        model->setData(index, edit->value());
         edit->deleteLater();
 
         auto prop = browser->property(index);
+        prop->setValue(edit->value());
         emit browser->valueChanged(prop, edit->value());
     }
 
@@ -169,18 +175,12 @@ public:
         editor->setGeometry(option.rect.adjusted(0, 0, 0, -1));
     }
 
-    virtual bool eventFilter(QObject *object, QEvent *event) override
+    bool eventFilter(QObject *object, QEvent *event)
     {
-        switch (event->type())
-        {
-        case QEvent::FocusIn:
-        case QEvent::FocusOut:
-        case QEvent::FocusAboutToChange:
-            // Forward focus events to editor because the QStyledItemDelegate relies on them
-            QCoreApplication::sendEvent(object, event);
-            break;
-        default:
-            break;
+        if (event->type() == QEvent::FocusOut) {
+            QFocusEvent *fe = static_cast<QFocusEvent *>(event);
+            if (fe->reason() == Qt::ActiveWindowFocusReason)
+                return false;
         }
         return QItemDelegate::eventFilter(object, event);
     }

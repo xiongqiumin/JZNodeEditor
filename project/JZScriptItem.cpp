@@ -272,18 +272,20 @@ bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &erro
     return true;
 }
 
-bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
-{        
+bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &error)
+{
     JZNode *node_from = getNode(from.nodeId);
     JZNode *node_to = getNode(to.nodeId);
+    Q_ASSERT(node_from && node_to);
     if (node_from == node_to)
     {
         error = "输入输出不能是同一节点";
         return false;
     }
     
-    JZNodePin *pin_from = getPin(from);
-    JZNodePin *pin_to = getPin(to);
+    JZNodePin *pin_from = node_from->pin(from.pinId);
+    JZNodePin *pin_to = node_to->pin(to.pinId);
+    Q_ASSERT(pin_from && pin_to);
     if(!(pin_from->isOutput() && pin_to->isInput())){
         error = "只能连接输入节点";
         return false;
@@ -339,6 +341,14 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
         error = "输入需为常量";
         return false;
     }
+    return true;
+}
+
+bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
+{        
+    if(!checkConnectNormal(from,to,error))
+        return false;
+
     //检测数据类型
     if(!checkConnectType(from,to,error))
         return false;
@@ -348,11 +358,18 @@ bool JZScriptItem::canConnect(JZNodeGemo from, JZNodeGemo to,QString &error)
 
 int JZScriptItem::addConnect(JZNodeGemo from, JZNodeGemo to)
 {
+    int id = addConnectForce(from,to);
+
     QString error;
-    auto pin_from = getPin(from);
-    auto pin_to = getPin(to);
-    Q_ASSERT(pin_from && pin_to);
-    Q_ASSERT_X(canConnect(from,to,error),"Error",qUtf8Printable(error));
+    Q_ASSERT_X(checkConnectType(from,to,error),"Error",qUtf8Printable(error));
+
+    return id;
+}
+
+int JZScriptItem::addConnectForce(JZNodeGemo from, JZNodeGemo to)
+{
+    QString error;
+    Q_ASSERT_X(checkConnectNormal(from,to,error),"Error",qUtf8Printable(error));
 
     JZNodeConnect connect;
     connect.id = m_nodeId++;
@@ -538,7 +555,6 @@ QByteArray JZScriptItem::toBuffer()
 
 bool JZScriptItem::fromBuffer(const QByteArray &buffer)
 {
-    int node_type;
     QDataStream s(buffer);    
 
     s >> m_name;
@@ -548,13 +564,13 @@ bool JZScriptItem::fromBuffer(const QByteArray &buffer)
     s >> node_list;
     for (int i = 0; i < node_list.size(); i++)
     {
-        QByteArray buffer = node_list[i];
-        QDataStream node_s(buffer);
+        QByteArray node_buffer = node_list[i];
+        QDataStream node_s(node_buffer);
         int node_type;
         node_s >> node_type;
                 
         JZNode *node = JZNodeFactory::instance()->createNode(node_type);
-        node->fromBuffer(buffer);
+        node->fromBuffer(node_buffer);
         m_nodes.insert(node->id(), node);
     }    
     s >> m_connects;

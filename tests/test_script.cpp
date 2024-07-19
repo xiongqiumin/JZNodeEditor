@@ -14,6 +14,7 @@
 #include "JZNodeDebugServer.h"
 #include "JZNodeDebugClient.h"
 #include "JZNodeBind.h"
+#include "JZContainer.h"
 
 ScriptTest::ScriptTest()
 {
@@ -39,6 +40,31 @@ void ScriptTest::testMatchType()
     QCOMPARE(JZNodeType::variantType(vnull),Type_nullptr);
     QCOMPARE(JZNodeType::variantType(vfunc),Type_function);
     QCOMPARE(JZNodeType::variantType(vany),Type_any);
+}
+
+void ScriptTest::testClone()
+{
+    auto obj1 = JZObjectPtrCreate<QObject>();
+    auto obj2 = JZObjectPtrCreate<QObject>();
+    QVERIFY(obj1 != obj2);
+
+    QVariant v_obj1 = QVariant::fromValue(obj1);
+    QVariant v_obj2 = QVariant::fromValue(obj2);
+    QVariant v_obj3 = QVariant::fromValue(obj1);
+    QVERIFY(v_obj1 != v_obj2);
+    QVERIFY(v_obj1 == v_obj3);
+
+    auto pt1 = JZObjectPtrCreate<QPoint>();
+    auto pt2 = JZObjectPtrCreate<QPoint>();
+    QVERIFY(pt1 == pt2);
+
+    QVariant v_pt1 = QVariant::fromValue(pt1);
+    QVariant v_pt2 = QVariant::fromValue(pt2);
+    QVERIFY(pt1 == pt2);
+
+    auto p_pt1 = JZObjectCast<QPoint>(v_pt1);
+    p_pt1->setX(150);
+    QVERIFY(pt1 != pt2);
 }
 
 void ScriptTest::testRegExp()
@@ -121,6 +147,16 @@ void ScriptTest::testObjectParse()
     obj_list = parser.parse("[ Point{1,2},Point{3,4},Point{5,6},Point{7,8}]");
     QVERIFY2(obj_list, qUtf8Printable(parser.error()));
     cache << JZNodeObjectPtr(obj_list,true);
+
+    JZList *list = (JZList*)obj_list->cobj();
+    QCOMPARE(list->list.size(),4);
+
+    JZNodeVariantAny v = list->list[0].value<JZNodeVariantAny>();
+    QCOMPARE(v.type(),Type_point);
+
+    QPoint *pt = (QPoint*)(toJZObject(v.value)->cobj());
+    QCOMPARE(pt->x(),1);
+    QCOMPARE(pt->y(),2);
 }
 
 void ScriptTest::testParamBinding()
@@ -517,7 +553,7 @@ void ScriptTest::testForEach()
 
     JZNodeFunction *node_create = new JZNodeFunction();
     node_create->setFunction(JZNodeFunctionManager::instance()->function("List.__fromString__"));
-    node_create->setParamInValue(0, "\"1,2,3,4,5,6,7,8,9,10\"");
+    node_create->setParamInValue(0, "1,2,3,4,5,6,7,8,9,10");
 
     int start_id = node_start->id();
     script->addNode(node_for);    
@@ -743,16 +779,17 @@ void ScriptTest::testDebugServer()
         client.stepOver();
         msleep(10);
 
-        JZNodeDebugParamInfo info,ret;
+        JZNodeGetDebugParam get_param;
+        JZNodeGetDebugParamResp get_param_resp;
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Name;
         coor.name = "i";
-        info.coors << coor;
+        get_param.coors << coor;
         
-        cmd_ret = client.getVariable(info,ret);
+        cmd_ret = client.getVariable(get_param,get_param_resp);
         QVERIFY(cmd_ret);
 
-        int value = ret.values[0].value.toInt();
+        int value = get_param_resp.values[0].value.toInt();
         QCOMPARE(value, value_list[cur_id]);
 
         client.removeBreakPoint(main_function, id_list[cur_id]);
@@ -862,6 +899,17 @@ void ScriptTest::testUnitTestClass()
     QCOMPARE(out[0].toInt(),180);
 }
 
+void ScriptTest::testModule()
+{
+    m_project.importModule("ImageModuleSample");
+
+    JZNodeObjectPtr obj = JZObjectPtrCreate<QImage>();
+    QVariantList in,out;    
+    in << QVariant::fromValue(obj);
+    bool ret = m_engine.call("ImageThreshold",in,out);
+    QVERIFY(ret);
+}
+
 void ScriptTest::testExpr()
 {    
     JZScriptItem *script = m_project.mainFunction();
@@ -958,7 +1006,7 @@ void ScriptTest::testCustomExpr()
     script->addNode(node_b);
 
     QString error;
-    if(!node_expr->setExpr("c = pow(a,b) - pow(b,a)",error))
+    if(!node_expr->setExpr("c = pow(a,b) - pow(b,a);",error))
     {
         QVERIFY2(false,qUtf8Printable(error));
         return;
@@ -985,6 +1033,11 @@ void ScriptTest::testCustomExpr()
     int b = engine->getVariable("b").toInt();
     QVariant c = engine->getVariable("c");
     QVERIFY(c.toInt() == pow(a,b) - pow(b,a));
+
+
+    JZNodeExpression expr2;
+    bool ret = expr2.setExpr("ret = x >=0 && x < 20 && y >=0 && y < 20;",error);
+    QVERIFY2(ret,qUtf8Printable(error));
 }
 
 void ScriptTest::testFunction()
@@ -1095,7 +1148,7 @@ void ScriptTest::testClass()
     define.className = classBase->className();
     define.isVirtualFunction = true;
     define.name = "getValue";
-    define.paramIn.push_back(JZParamDefine("this", "classBase"));
+    define.paramIn.push_back(JZParamDefine("this", "ClassBase"));
     define.paramOut.push_back(JZParamDefine("ret",Type_int));
     auto func_base = classBase->addMemberFunction(define);
     addReturn(func_base, 0);
@@ -1170,6 +1223,42 @@ void ScriptTest::testCClass()
 
     engine->call("string.replace",{a,b,c},out);
     QCOMPARE(out[0],a.replace(b,c));
+}
+
+class JZSumTest: public BuiltInFunction
+{
+public:
+    void call(JZNodeEngine *engine)
+    {
+        int sum = 0;
+        int count = engine->regInCount();
+        for (int i = 0; i < count; i++)
+        {
+            sum += engine->getReg(Reg_CallIn + i).toInt();
+        }
+        engine->setReg(Reg_CallOut,sum);
+    }
+};
+
+void ScriptTest::testArgs()
+{
+    if(!build())
+        return;
+
+    JZFunctionDefine sum_func;
+    sum_func.name = "JZSumTest";
+    sum_func.isCFunction = true;
+    sum_func.paramIn.push_back(JZParamDefine("args", Type_args));
+    sum_func.paramOut.push_back(JZParamDefine("sum", Type_int));
+    
+    auto sum_ptr = BuiltInFunctionPtr(new JZSumTest());
+    JZNodeFunctionManager::instance()->registBuiltInFunction(sum_func, sum_ptr);
+
+    QVariantList in,out;
+    in << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10;
+    bool ret = m_engine.call("JZSumTest",in,out);
+    QVERIFY(ret);
+    QCOMPARE(out[0].toInt(),55);
 }
 
 void test_script(int argc, char *argv[])

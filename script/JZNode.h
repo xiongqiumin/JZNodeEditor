@@ -23,6 +23,7 @@ enum
     Node_literal,
     Node_enum,
     Node_flag,
+    Node_convert,
     Node_functionPointer,
     Node_functionStart,
     Node_function,      
@@ -213,16 +214,18 @@ public:
     bool canRemove();
     bool canDragVariable();    
 
-    QList<int> pinTypeInt(int id) const;
     const QStringList &pinType(int id) const;
+    QList<int> pinTypeId(int id) const;
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     
     virtual bool update(QString &error);
     virtual void drag(const QVariant &value);
 
     virtual JZNodePinWidget *createWidget(int id);
+    virtual QStringList actionList();
+    virtual bool actionTriggered(int actIndex);
     virtual QStringList pinActionList(int id);
-    virtual bool pinActionTriggered(int id,int index);
+    virtual bool pinActionTriggered(int id,int actIndex);
 
 protected:     
     Q_DISABLE_COPY(JZNode)
@@ -237,7 +240,7 @@ protected:
 
     void propertyChangedNotify(const QByteArray &old);
 
-    void setPinTypeAny(int id);
+    void setPinTypeArg(int id);
     void setPinTypeInt(int id);
     void setPinTypeNumber(int id);
     void setPinTypeBool(int id);
@@ -406,8 +409,9 @@ protected:
     virtual JZNodePinWidget* createWidget(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
+    virtual int pinPri(int id) const override;
+    
     void updateCondName();
-    int pinPri(int id);
 
     int btnCondId();
     int btnElseId();    
@@ -431,7 +435,7 @@ protected:
     virtual JZNodePinWidget* createWidget(int id) override;
     virtual QStringList pinActionList(int id);
     virtual bool pinActionTriggered(int id, int index);
-    virtual int pinPri(int id);
+    virtual int pinPri(int id) const override;
 
     int m_btnCase;
     int m_btnDefault;

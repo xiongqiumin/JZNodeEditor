@@ -6,6 +6,12 @@
 class JZModule;
 typedef JZModule *(*JZModuleCreateFunc)();
 
+template<class T>
+JZModule *createModule()
+{
+    return new T();
+}
+
 class JZModuleInfo
 {
 public:
@@ -47,7 +53,7 @@ public:
     JZModuleInfo *moduleInfo(QString name);
     JZModule *module(QString name);
 
-    void loadModule(QString name);
+    bool loadModule(QString name);
     void unloadModule(QString name);
 
 protected:

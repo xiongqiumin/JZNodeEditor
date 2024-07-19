@@ -1,7 +1,8 @@
-﻿#include "JZNodeDefine.h"
-#include <QDataStream>
+﻿#include <QDataStream>
+#include "JZNodeDefine.h"
 #include "JZNode.h"
 #include "JZNodeExpression.h"
+#include "JZNodeOperator.h"
 #include "JZNodeValue.h"
 #include "JZNodeIR.h"
 #include "JZNodeFunction.h"

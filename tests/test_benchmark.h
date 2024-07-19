@@ -48,8 +48,6 @@ protected:
         QString m_name;
     };
 
-    void call(const JZFunction *function,const QVariantList &in,QVariantList &out);
-
     Benchmark m_benchmark;
 };
 

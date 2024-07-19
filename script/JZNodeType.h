@@ -5,6 +5,8 @@
 #include <QDataStream>
 #include <QSharedPointer>
 
+constexpr int INVALID_ID = -1; 
+
 enum
 {
     Type_none = -1,
@@ -16,6 +18,7 @@ enum
     Type_nullptr,    
     Type_any,
     Type_function,
+    Type_arg,       //泛型,任意参数
     Type_args,      //变长参数
 
     Type_enum = 1000,    
@@ -31,11 +34,15 @@ enum
     Type_varMap,
     Type_intIntMap,
     Type_intStringMap,
-    Type_StringIntMap,
-    Type_StringStringMap,
-    
-    Type_object,
-    Type_timer,
+    Type_stringIntMap,
+    Type_stringStringMap,
+
+    Type_byteArray,
+    Type_dataStream,
+    Type_point,
+    Type_pointF,
+    Type_rect,
+    Type_rectF,
 
     Type_event,
     Type_resizeEvent,
@@ -51,6 +58,9 @@ enum
     Type_vBoxLayout,
     Type_gridLayout,
 
+    Type_object,  //qobject
+    Type_timer,
+    
     Type_widget,
     Type_frame,
     Type_label,
@@ -140,6 +150,7 @@ public:
     static int stringType(const QString &text);
 
     static bool canConvert(int from,int to);    //隐式转换
+    static bool canConvertExplicitly(int from,int to);    //被 convertTo 支持的
     static QVariant convertTo(int type,const QVariant &v); 
     static void registConvert(int from, int to, ConvertFunc func);
     static QVariant clone(const QVariant &v);

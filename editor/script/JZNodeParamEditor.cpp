@@ -1,13 +1,13 @@
 ﻿#include <QVBoxLayout>
 #include <QSplitter>
 #include <QShortcut>
-#include <JZNodeType.h>
 #include <QComboBox>
 #include <QStyledItemDelegate>
 #include <QLineEdit>
 #include <QKeyEvent>
 #include <QPushButton>
 
+#include "JZNodeType.h"
 #include "JZNodeParamEditor.h"
 #include "ui_JZNodeParamEditor.h"
 #include "JZProject.h"
@@ -197,7 +197,7 @@ int JZNodeParamEditorCommand::id() const
     return -1;
 }
 
-bool JZNodeParamEditorCommand::mergeWith(const QUndoCommand *command)
+bool JZNodeParamEditorCommand::mergeWith(const QUndoCommand *cmd)
 {
     return false;
 }
@@ -206,21 +206,21 @@ bool JZNodeParamEditorCommand::mergeWith(const QUndoCommand *command)
 JZNodeParamEditor::JZNodeParamEditor()
     :ui(new Ui::JZNodeParamEditor())
 {
-    ui->setupUi(this);        
+    ui->setupUi(this);
     m_isClass = false;
 
     ui->boxParamType->addItem("成员");
     ui->boxParamType->addItem("控件成员");
 
     m_table = ui->tableWidget;    
-    m_table->setColumnCount(4);
-    m_table->setHorizontalHeaderLabels({"名称","类型","默认值","参数绑定"});
+    m_table->setColumnCount(3);
+    m_table->setHorizontalHeaderLabels({"名称","类型","默认值"});
     m_table->setSelectionBehavior(QTableWidget::SelectItems);
     m_table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);    
 
     m_tableUi = ui->tableWidgetUi;
-    m_tableUi->setColumnCount(2);
-    m_tableUi->setHorizontalHeaderLabels({ "名称","类型" });
+    m_tableUi->setColumnCount(3);
+    m_tableUi->setHorizontalHeaderLabels({ "名称","类型","参数绑定" });
     m_tableUi->setSelectionBehavior(QTableWidget::SelectItems);
     m_tableUi->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -236,6 +236,7 @@ JZNodeParamEditor::JZNodeParamEditor()
     m_table->setItemDelegateForColumn(1, type_delegate);
     
     connect(m_table, &QTableWidget::itemChanged, this, &JZNodeParamEditor::onItemChanged);
+    connect(m_tableUi, &QTableWidget::itemChanged, this, &JZNodeParamEditor::onUiItemChanged);
     connect(&m_commandStack, &QUndoStack::cleanChanged, this, &JZNodeParamEditor::onCleanChanged);
     connect(&m_commandStack, &QUndoStack::canRedoChanged, this, &JZNodeParamEditor::redoAvailable);
     connect(&m_commandStack, &QUndoStack::canUndoChanged, this, &JZNodeParamEditor::undoAvailable);
@@ -302,7 +303,6 @@ void JZNodeParamEditor::open(JZProjectItem *item)
     JZScriptClassItem *class_file = m_project->getItemClass(item);
     if (class_file)
     {
-        m_table->setColumnHidden(3, false);
         m_isClass = true;
 
         auto widgets = class_file->uiWidgets();
@@ -320,7 +320,6 @@ void JZNodeParamEditor::open(JZProjectItem *item)
     }
     else
     {
-        m_table->setColumnHidden(3, true);
         m_isClass = false;
     }
     
@@ -367,20 +366,27 @@ void JZNodeParamEditor::onCleanChanged(bool clean)
 
 void JZNodeParamEditor::onItemChanged(QTableWidgetItem *item)
 {
-    QString varName = m_table->item(item->row(), 0)->data(Qt::UserRole).toString();
+    int row = item->row();
+    QString varName = m_table->item(row, 0)->data(Qt::UserRole).toString();
     if (item->column() == 0)
     {        
         QString newName = item->text();
         addRenameCommand(varName, newName);
     }
-    else if (item->column() == 2)
+    else
     {
         QString value = item->text();
         JZParamDefine info = *m_file->variable(varName);
-        info.value = value;
+        info.type = m_table->item(row,1)->text();
+        info.value = m_table->item(row,2)->text();
         addChangeCommand(varName, info);
     }
-    else if (item->column() == 3)
+}
+
+void JZNodeParamEditor::onUiItemChanged(QTableWidgetItem *item)
+{
+    QString varName = m_tableUi->item(item->row(), 0)->data(Qt::UserRole).toString();
+    if (item->column() == 2)
     {
         QStringList value = item->text().split("|");        
         JZNodeParamBind info;

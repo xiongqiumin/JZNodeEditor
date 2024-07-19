@@ -101,6 +101,8 @@ protected slots:
     void onWatchValueChanged(JZNodeParamCoor coor, QString value);
     void onWatchNameChanged(JZNodeParamCoor coor);
     void onRuntimeWatch(const JZNodeRuntimeWatch &info);
+    void onWatchNotify();
+    void onEditorValueChanged(int id,QString value);
 
     void onRuntimeLog(QString log);    
     void onRuntimeError(JZNodeRuntimeError error);    
@@ -180,7 +182,8 @@ private:
     void setRunningMode(ProcessStatus flag);
     void setRuntimeNode(QString file, int nodeId);
     void clearRuntimeNode();
-    void updateRuntime(int stack_index, bool isNew);    
+    void updateRuntime(int stack_index, bool isNew);
+    void setRuntimeValue(QString file,int node_id,int pin_id,const JZNodeDebugParamValue &value);
     void clearWatchs();
     void setWatchStatus(ProcessStatus status);
     void updateAutoWatch(int stack_index);
@@ -195,6 +198,7 @@ private:
     void resetEditor(JZEditor *editor);
     void initLocalProcessTest();
     QIcon menuIcon(const QString &name);
+    void showTopLevel();
     
     JZProject m_project;    
 

@@ -42,7 +42,6 @@ public:
 
     JZProjectItem *parent();
     JZScriptClassItem *getClassFile();
-    QString className();
     
     void addItem(QSharedPointer<JZProjectItem> child);
     void removeItem(int index);    

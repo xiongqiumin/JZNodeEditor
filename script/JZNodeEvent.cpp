@@ -39,6 +39,24 @@ JZFunctionDefine JZNodeFunctionStart::function()
 
 bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
 {
+    auto &func = m_file->function();
+    for(int i = 0; i < func.paramIn.size(); i++)
+    {
+        if(func.paramIn[i].dataType() == Type_none)
+        {
+            error = "输入" + func.paramIn[i].name + "类型错误," + func.paramIn[i].type;
+            return false;
+        }
+    }
+    for(int i = 0; i < func.paramOut.size(); i++)
+    {
+        if(func.paramOut[i].dataType() == Type_none)
+        {
+            error = "输入" + func.paramOut[i].name + "类型错误," + func.paramIn[i].type;
+            return false;
+        }
+    }
+
     c->addFunctionAlloc(m_file->function());
     c->addNodeDebug(m_id);
     c->addFlowOutput(m_id);
@@ -50,7 +68,8 @@ bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
 JZNodeSignalConnect::JZNodeSignalConnect()
 {
     m_type = Node_signalConnect;
-
+    m_name = "connect";
+    
     addFlowIn();
     addFlowOut();
     
@@ -105,6 +124,20 @@ bool JZNodeSignalConnect::compiler(JZNodeCompiler *c, QString &error)
     c->addJumpNode(flowOut());
     
     return true;
+}
+
+//JZNodeSignalDisconnect
+JZNodeSignalDisconnect::JZNodeSignalDisconnect()
+{
+}
+
+JZNodeSignalDisconnect::~JZNodeSignalDisconnect()
+{
+}
+
+bool JZNodeSignalDisconnect::compiler(JZNodeCompiler *c, QString &error)
+{
+    return false;
 }
 
 //JZNodeParamChangedEvent

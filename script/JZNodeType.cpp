@@ -64,7 +64,8 @@ void JZNodeType::init()
     typeMap["double"] = Type_double;
     typeMap["string"] = Type_string;
     typeMap["null"] = Type_nullptr;
-    typeMap["function"] = Type_function;     
+    typeMap["function"] = Type_function;
+    typeMap["arg"] = Type_arg;     
     typeMap["args"] = Type_args;
 
     opNameMap[OP_add] = "+";
@@ -78,9 +79,9 @@ void JZNodeType::init()
     opNameMap[OP_ge] = ">=";
     opNameMap[OP_lt] = "<";
     opNameMap[OP_gt] = ">";
-    opNameMap[OP_and] = "and";
-    opNameMap[OP_or] = "or";
-    opNameMap[OP_not] = "not";
+    opNameMap[OP_and] = "&&";
+    opNameMap[OP_or] = "||";
+    opNameMap[OP_not] = "!";
     opNameMap[OP_bitor] = "|";
     opNameMap[OP_bitand] = "&";
     opNameMap[OP_bitxor] = "~";
@@ -231,6 +232,8 @@ bool JZNodeType::isSameType(int type1,int type2)
 {
     if(type1 == type2)
         return true;
+    else if(type1 == Type_arg || type2 == Type_arg)
+        return true;
     else if((isEnum(type1) && type2 == Type_int) || (type1 == Type_int && isEnum(type2))) 
         return true;
     else if(type1 >= Type_class && type2 >= Type_class)
@@ -298,7 +301,9 @@ int JZNodeType::calcExprType(int type1,int type2,int op)
 }
 
 bool JZNodeType::canConvert(int type1,int type2)
-{
+{   
+    if(type1 == Type_arg || type2 == Type_arg)
+        return true;
     if(type1 == type2 || type2 == Type_any)
         return true;
     if(isNumber(type1) && isNumber(type2))
@@ -329,11 +334,32 @@ bool JZNodeType::canConvert(int type1,int type2)
     return false;
 }
 
+bool JZNodeType::canConvertExplicitly(int from,int to)
+{
+    if(canConvert(from,to))
+        return true;
+
+    if(from == Type_any)
+        return true;
+    if(from == Type_string && isNumber(to))
+        return true;
+    if(isNumber(from) && to == Type_string)
+        return true;
+
+    return false;
+}
+
 QString JZNodeType::debugString(const JZNodeObject *obj)
 {
-    QString text = obj->className();
-
-    return text;
+    if(obj->type() == Type_point)
+    {
+        QPoint *pt = (QPoint *)obj->cobj();
+        return "{" + QString::number(pt->x()) + "," + QString::number(pt->y()) + "}";
+    }
+    else
+    {
+        return QString::asprintf("%p",obj);
+    }
 }
 
 QString JZNodeType::debugString(const QVariant &v)
@@ -432,7 +458,6 @@ QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
     int src_type = variantType(v);
     if (src_type == dst_type)
         return v;
-
     if (dst_type == Type_any)
     {
         JZNodeVariantAny any;
@@ -454,7 +479,7 @@ QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
         if(JZNodeObjectManager::instance()->isInherits(src_type,dst_type))
             return v;
     }
-    else if(isNumber(src_type) || isNumber(dst_type))
+    else if(isNumber(src_type) && isNumber(dst_type))
     {
         if(src_type == Type_bool)
         {
@@ -497,13 +522,36 @@ QVariant JZNodeType::convertTo(int dst_type,const QVariant &v)
                 return (qint64)d;
         }
     }
+    else if(src_type == Type_string && isNumber(dst_type))
+    {
+        QString str = v.toString();
+        if(dst_type == Type_bool)
+            return str == "true";
+        else if(dst_type == Type_int)
+            return str.toInt();
+        else if(dst_type == Type_int64)
+            return str.toLongLong();
+        else
+            return str.toDouble();
+    }
+    else if(isNumber(src_type) && dst_type == Type_string)
+    {
+        if(src_type == Type_bool)
+            return v.toBool()? "true" : "false";
+        else if(src_type == Type_int)
+            return QString::number(v.toInt());
+        else if(src_type == Type_int64)
+            return QString::number(v.toLongLong());
+        else
+            return QString::number(v.toDouble(),'f');
+    }
 
     int64_t cvt_id = makeConvertId(src_type, dst_type);
     auto it = convertMap.find(cvt_id);
     if (it != convertMap.end())
         return it.value()(v);
 
-    Q_ASSERT_X(0,"Error",qUtf8Printable(typeToName(src_type) + " -> " + typeToName(dst_type)));
+    Q_ASSERT_X(0,"Convert Failed",qUtf8Printable(typeToName(src_type) + " -> " + typeToName(dst_type)));
     return QVariant();
 }
 
@@ -519,7 +567,7 @@ QVariant JZNodeType::clone(const QVariant &v)
     }
     else if (JZNodeType::isBaseOrEnum(v_type))
         return v;
-    else if(v_type > Type_class)
+    else if(v_type >= Type_class)
     {
         auto obj = toJZObject(v);
         auto new_obj = JZNodeObjectManager::instance()->clone(obj);
@@ -573,6 +621,9 @@ int JZNodeType::upType(QList<int> types)
 
 int JZNodeType::matchType(QList<int> src_types,QList<int> dst_types)
 {   
+    if(dst_types.size() == 1 && dst_types[0] == Type_arg)
+        return upType(src_types);
+
     QList<int> dst_allow_type;    
     //在dst中选择能被所有src转换到的类型
     for (int i = 0; i < dst_types.size(); i++)
@@ -644,8 +695,7 @@ QVariant JZNodeType::initValue(int type, const QString &text)
     }
     else if (type == Type_string)
     {
-        if(text.front() == '"' && text.back() == '"')
-            return text.mid(1, text.size() - 2);
+        return text;
     }
     else if (type == Type_bool)
     {
@@ -719,8 +769,6 @@ int JZNodeType::stringType(const QString &text)
         return Type_bool;
     else if (text == "null")
         return Type_nullptr;
-    else if (text.size() >= 2 && text.front() == '"' && text.back() == '"')
-        return Type_string;
 
     bool isInt = JZRegExpHelp::isInt(text);
     bool isHex = JZRegExpHelp::isHex(text);
@@ -730,7 +778,7 @@ int JZNodeType::stringType(const QString &text)
     else if(isFloat)
         return Type_double;
 
-    return Type_none;
+    return Type_string;
 }
 
 QVariant JZNodeType::defaultValue(int type)

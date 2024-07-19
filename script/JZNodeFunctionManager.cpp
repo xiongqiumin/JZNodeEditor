@@ -149,6 +149,7 @@ void JZNodeFunctionManager::registFunction(const JZFunctionDefine &define)
 {
     QString fullName = define.fullName();
     Q_ASSERT_X(!m_funcDefine.contains(fullName),"Error",qUtf8Printable(fullName + " already regist"));
+    Q_ASSERT(define.paramIn.size() <= 16 && define.paramOut.size() <= 16);
 
     m_funcDefine[fullName] = define;
     if(m_userRegist)

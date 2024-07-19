@@ -94,6 +94,11 @@ void asCParser::Reset()
     m_nodeList.clear();
 }
 
+QString asCParser::Error()
+{
+	return m_error;
+}
+
 asCScriptNode *asCParser::GetScriptNode()
 {
 	return scriptNode;

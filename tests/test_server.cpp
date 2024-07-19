@@ -1,10 +1,11 @@
+#include <QApplication>
+#include <QDir>
 #include "test_server.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeValue.h"
 #include "JZNodeFunction.h"
 #include "JZNodeUtils.h"
-#include <QApplication>
-#include <QDir>
+#include "LogManager.h"
 
 TestServer::TestServer()
 {    
@@ -139,7 +140,7 @@ void TestServer::run()
 
     JZNodeEngine engine;
     connect(&engine, &JZNodeEngine::sigRuntimeError, this, &TestServer::onRuntimeError);
-
+    
     m_engine = &engine;
     engine.setProgram(&m_program);
     engine.setDebug(true);

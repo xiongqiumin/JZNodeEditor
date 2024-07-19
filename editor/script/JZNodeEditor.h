@@ -3,13 +3,13 @@
 
 #include "JZEditor.h"
 #include "JZNodeView.h"
-#include "JZNodePanel.h"
 #include "JZNodeViewPanel.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeAutoRunWidget.h"
 #include "JZNodePropertyEditor.h"
 #include "JZNodeEngine.h"
 
+class JZNodePanel;
 class JZNodeEditor : public JZEditor
 {
     Q_OBJECT
@@ -50,6 +50,7 @@ public:
     void setAutoRunResult(const UnitTestResult &result);
 
     void setNodeValue(int nodeId, int prop_id, const QString &value);
+    void setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value);
     void resetPropValue();
     void updateNode();
 
@@ -57,13 +58,15 @@ signals:
     void sigFunctionOpen(QString name);
     void sigAutoCompiler();
     void sigAutoRun();
+    void sigRuntimeValueChanged(int id,QString value);
 
 protected slots:
     void onActionLayout();
     void onActionFitInView();
     void onAutoRunChecked();    
     void onAutoRuning();
-
+    void onScaleOne();
+    
 protected:
     void init();
     QWidget *createMidBar();
@@ -73,6 +76,7 @@ protected:
     JZNodeViewPanel *m_nodeViewPanel;
     JZNodePropertyEditor *m_nodeProp;
     JZNodeAutoRunWidget* m_runProp;
+    QTabWidget *m_tabLeft;
     QTabWidget *m_tabProp;
     JZNodeCompiler *m_compiler;
     QList<QAction*> m_actionList;    

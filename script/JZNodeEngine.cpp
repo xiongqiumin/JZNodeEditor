@@ -28,10 +28,24 @@ bool JZForCheck(int first,int last,int step,int op,QString &error)
         if ((first != last) || (step != 0))
             return true;
     }
-    else
+    else if(op == OP_lt)
     {
-        if(!((first < last && step <= 0 && (op == OP_lt || op == OP_le))
-            || (first > last && step >= 0 && (op == OP_gt || op == OP_ge))))
+        if((first < last && step > 0) || (first >= last))
+            return true;
+    }
+    else if(op == OP_le)
+    {
+        if((first <= last && step > 0) || (first > last))
+            return true;
+    }
+    else if(op == OP_gt)
+    {
+        if((first > last && step < 0) || (first <= last))
+            return true;
+    }
+    else if(op == OP_ge)
+    {
+        if((first >= last && step < 0) || (first < last))
             return true;
     }
 
@@ -71,22 +85,33 @@ QString JZObjectToString(JZNodeObject *obj)
     return format.format(obj);
 }
 
-JZNodeVariantAny JZObjectCreate(QString name)
+class JZCreate: public BuiltInFunction
 {
-    int id = JZNodeObjectManager::instance()->getClassId(name);
-    JZNodeObject *obj = JZNodeObjectManager::instance()->create(id);
-    JZNodeVariantAny any;
-    any.value = QVariant::fromValue(JZNodeObjectPtr(obj,true));
-    return any;
-}
+public:
+    virtual void call(JZNodeEngine *engine) override
+    {
+        QString type = engine->getReg(Reg_CallIn).toString();    
+        JZNodeObject *obj = JZNodeObjectManager::instance()->create(type);
+        engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectPtr(obj,true)));
+    }
+};
+
+class JZClone: public BuiltInFunction
+{
+public:
+    virtual void call(JZNodeEngine *engine) override
+    {
+        engine->setReg(Reg_CallOut,JZNodeType::clone(engine->getReg(Reg_CallIn)));
+    }
+};
 
 class JZPrint: public BuiltInFunction
 {
 public:
-    void call(JZNodeEngine *engine)
+    virtual void call(JZNodeEngine *engine) override
     {
         QStringList list;
-        int count = engine->stack()->currentEnv()->inCount;
+        int count = engine->regInCount();
         for (int i = 0; i < count; i++)
         {
             list << JZNodeType::debugString(engine->getReg(Reg_CallIn + i));
@@ -117,7 +142,6 @@ RunnerEnv::RunnerEnv()
     function = nullptr;
     script = nullptr;
     pc = -1;
-    inCount = 0;
 }
 
 RunnerEnv::~RunnerEnv()
@@ -223,6 +247,11 @@ void Stack::push()
 }
 
 //JZNodeRuntimeError
+bool JZNodeRuntimeError::isError()
+{
+    return !error.isEmpty();
+}
+
 QString JZNodeRuntimeError::errorReport()
 {
     QString text = "Error: " + error + "\n\n";
@@ -369,14 +398,30 @@ void JZNodeEngine::regist()
     print.isCFunction = true;
     print.isFlowFunction = true;    
     print.paramIn.push_back(JZParamDefine("args", Type_args));
-    
     auto print_func = BuiltInFunctionPtr(new JZPrint());
     JZNodeFunctionManager::instance()->registBuiltInFunction(print, print_func);
 
-    JZNodeFunctionManager::instance()->registCFunction("createObject", false, jzbind::createFuncion(QOverload<QString>::of(JZObjectCreate)));
-    JZNodeFunctionManager::instance()->registCFunction("connect", false, jzbind::createFuncion(QObjectConnect));
-    JZNodeFunctionManager::instance()->registCFunction("disconnect", false, jzbind::createFuncion(QObjectDisconnect));
+    JZFunctionDefine create;
+    create.name = "createObject";
+    create.isCFunction = true;
+    create.isFlowFunction = false;    
+    create.paramIn.push_back(JZParamDefine("type", Type_string));
+    create.paramOut.push_back(JZParamDefine("arg", Type_arg));
+    auto create_func = BuiltInFunctionPtr(new JZCreate());
+    JZNodeFunctionManager::instance()->registBuiltInFunction(create, create_func);
+ 
+    JZFunctionDefine clone;
+    clone.name = "clone";
+    clone.isCFunction = true;
+    clone.isFlowFunction = false;    
+    clone.paramIn.push_back(JZParamDefine("in", Type_arg));
+    clone.paramOut.push_back(JZParamDefine("out", Type_arg));
+    auto clone_func = BuiltInFunctionPtr(new JZClone());
+    JZNodeFunctionManager::instance()->registBuiltInFunction(clone, clone_func);
 
+
+    JZNodeFunctionManager::instance()->registCFunction("connect", true, jzbind::createFuncion(QObjectConnect));
+    JZNodeFunctionManager::instance()->registCFunction("disconnect", true, jzbind::createFuncion(QObjectDisconnect));
     JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
 }
 
@@ -392,6 +437,7 @@ JZNodeEngine::JZNodeEngine()
     m_statusCommand = Command_none;
     m_regs.resize(Reg_End - Reg_Start);
     m_hookEnable = false;
+    m_regInCount = 0;
 
     m_watchTimer = new QTimer(this);
     connect(m_watchTimer, &QTimer::timeout, this, &JZNodeEngine::onWatchTimer);
@@ -428,6 +474,7 @@ void JZNodeEngine::clear()
     m_status = Status_none;
     m_breakNodeId = -1;    
     m_watchTime = 0;
+    m_regInCount = 0;
 
     clearReg();
     if (g_engine == this)
@@ -452,6 +499,11 @@ void JZNodeEngine::init()
 void JZNodeEngine::deinit()
 {
     clear();    
+}
+
+void JZNodeEngine::statClear()
+{
+    m_stat.clear();
 }
 
 void JZNodeEngine::statReport()
@@ -504,10 +556,10 @@ int JZNodeEngine::breakNodeId()
         return nodeIdByPc(m_pc);
 }
 
-int JZNodeEngine::nodeIdByPc(int m_pc)
+int JZNodeEngine::nodeIdByPc(int pc)
 {
     QString func = m_stack.currentEnv()->function->fullName();
-    return nodeIdByPc(m_script, func, m_pc);
+    return nodeIdByPc(m_script, func, pc);
 }
 
 int JZNodeEngine::status()
@@ -553,14 +605,22 @@ JZNodeRuntimeError JZNodeEngine::runtimeError()
 
 void JZNodeEngine::pushStack(const JZFunction *func)
 {
+    checkFunctionIn(func);
+    if (func->isMemberFunction())
+    {
+        auto &v_this = getReg(Reg_CallIn);
+        if(v_this.type() != QVariant::String && JZNodeType::isNullObject(v_this))
+            throw std::runtime_error("object is nullptr");
+    } 
     if (m_stack.size() > 0)    
         m_stack.currentEnv()->pc = m_pc;
 
     m_stack.push();    
     m_stack.currentEnv()->function = func;
-    updateHook();
     if(!func->isCFunction())
-    {                
+    {          
+        updateHook();
+
         m_pc = func->addr;
         m_script = getScript(func->path);
         Q_ASSERT_X(m_script,"Error",qUtf8Printable(func->path));
@@ -579,6 +639,7 @@ void JZNodeEngine::pushStack(const JZFunction *func)
 
 void JZNodeEngine::popStack()
 {       
+    checkFunctionOut(m_stack.currentEnv()->function);
     m_stack.pop();
     updateHook();
 
@@ -648,7 +709,9 @@ bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList 
 bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantList &out)
 {    
     if (checkIdlePause(func))
-        return false;                    
+        return false;    
+    if (m_error.isError())
+        return false;                
     
     try
     {
@@ -656,7 +719,8 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
         for (int i = 0; i < in.size(); i++)
             setReg(Reg_CallIn + i,in[i]);
-
+        m_regInCount = in.size();
+        
         if(func->isCFunction())
         {
             callCFunction(func);
@@ -723,7 +787,8 @@ void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantLis
     Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
     for (int i = 0; i < in.size(); i++)
         setReg(Reg_CallIn + i,in[i]);
-    
+    m_regInCount = in.size();
+
     if(func->isCFunction())
     {
         callCFunction(func);
@@ -823,6 +888,7 @@ void JZNodeEngine::clearReg()
         setReg(Reg_CallIn + i,QVariant());
         setReg(Reg_CallOut + i,QVariant());
     }
+    m_regInCount = 0;
 }
 
 Stack *JZNodeEngine::stack()
@@ -850,13 +916,14 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
 
     //init hook function
     m_dependHook.clear();
-    for (int i = 0; i < depend->hook.size(); i++)
+    for (int hook_idx = 0; hook_idx < depend->hook.size(); hook_idx++)
     {
-        if(!depend->hook[i].enable)
+        auto &hook = depend->hook[hook_idx]; 
+        if(!hook.enable)
             continue;
 
         QVariantList value_list;
-        auto &hook_list = depend->hook[i].params;
+        auto &hook_list = hook.params;
         for(int i = 0; i < hook_list.size(); i++)
         {
             QVariant v; 
@@ -865,7 +932,8 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
             
             value_list << v;
         }
-        m_dependHook[depend->hook[i].pc] = value_list;
+        
+        m_dependHook[hook.pc] = value_list;
     }
 
     //global
@@ -1068,6 +1136,11 @@ void JZNodeEngine::print(const QString &log)
     emit sigLog(log);
 }
 
+int JZNodeEngine::regInCount()
+{
+    return m_regInCount;
+}
+
 void JZNodeEngine::printMemory()
 {
     QString text;
@@ -1121,7 +1194,10 @@ JZNodeScript *JZNodeEngine::getScript(QString path)
 
 void JZNodeEngine::watchNotify()
 {
-    if (!m_debug)
+    if (!m_debug || m_stack.size() == 0)
+        return;
+
+    if(m_stack.currentEnv()->watchMap.size() == 0)
         return;
 
     emit sigWatchNotify();
@@ -1327,8 +1403,6 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
     {
         const QVariant &v = getReg(Reg_CallIn + i);
         Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(v),inList[i].dataType()));        
-        if (i == 0 && func->isMemberFunction() && (v.type() != QVariant::String && JZNodeType::isNullObject(v)))
-            throw std::runtime_error("object is nullptr");
     }
 }
 
@@ -1346,28 +1420,27 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
     if(func->builtIn)
     {
         func->builtIn->call(this);
-        return;
     }
+    else
+    {
+        pushStack(func);
 
-    checkFunctionIn(func);
+        QVariantList paramIn, paramOut;
+        // get input
+        auto &inList = func->define.paramIn;
+        for (int i = 0; i < inList.size(); i++)    
+            paramIn.push_back(getReg(Reg_CallIn + i));
+        
+        // call function
+        func->cfunc->call(paramIn,paramOut);
 
-    QVariantList paramIn, paramOut;
-    // get input
-    auto &inList = func->define.paramIn;
-    for (int i = 0; i < inList.size(); i++)    
-        paramIn.push_back(getReg(Reg_CallIn + i));
-    
-    // call function
-    pushStack(func);
-    func->cfunc->call(paramIn,paramOut);    
-
-    // set output
-    auto &outList = func->define.paramOut;
-    for (int i = 0; i < outList.size(); i++)
-        setReg(Reg_CallOut + i,paramOut[i]);
-
-    checkFunctionOut(func);
-    popStack();
+        // set output
+        auto &outList = func->define.paramOut;
+        for (int i = 0; i < outList.size(); i++)
+            setReg(Reg_CallOut + i,paramOut[i]);
+   
+        popStack();
+    }
 }
 
 const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
@@ -1397,9 +1470,6 @@ const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
 
 const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
 {
-    //if(ir_call->cache)
-    //    return ir_call->cache;
-
     auto func = function(ir_call->function,nullptr);
     if(!func->isVirtualFunction())
         ir_call->cache = func;
@@ -1713,6 +1783,14 @@ void JZNodeEngine::updateStatus(int status)
     }
 }
 
+bool JZNodeEngine::isWidgetFunction(const JZFunction *function)
+{
+    if(!function->isCFunction() || !function->isMemberFunction())
+        return false;
+
+    return JZNodeType::isInherits(function->className(),"Widget");
+}
+
 void JZNodeEngine::updateHook()
 {
     if(m_stack.size() > 0)
@@ -1833,10 +1911,19 @@ bool JZNodeEngine::run()
             setParam(ir_set->dst,getParam(ir_set->src));
             break;
         }
+        case OP_clone:
+        {
+            JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
+            auto obj = JZNodeObjectManager::instance()->clone(toJZObject(getParam(ir_set->src)));
+            auto ptr = JZNodeObjectPtr(obj,true);
+            setParam(ir_set->dst,QVariant::fromValue(ptr));
+            break;
+        }
         case OP_watch:
         {
             JZNodeIRWatch *ir_watch = (JZNodeIRWatch*)op;
             int id = ir_watch->traget.id();
+
             m_stack.currentEnv()->watchMap[id] = getParam(ir_watch->source);            
             break;
         }
@@ -1863,13 +1950,15 @@ bool JZNodeEngine::run()
             }
             else
             {
+                if(m_depend && isWidgetFunction(func))
+                    throw std::runtime_error("can't use widget function in test,please hook first");
+
+                m_regInCount = ir_call->inCount;
                 if(func->isCFunction())
                     callCFunction(func);
                 else
                 {
-                    checkFunctionIn(func);
                     pushStack(func);
-                    m_stack.currentEnv()->inCount = ir_call->inCount;
                     continue;
                 }
             }
@@ -1877,7 +1966,9 @@ bool JZNodeEngine::run()
         }
         case OP_return:
         {            
-            checkFunctionOut(m_stack.currentEnv()->function);
+            if(m_depend && m_stack.size() == 1)
+                watchNotify();
+                
             popStack();                  
             if(m_stack.size() < in_stack_size)
                 goto RunEnd;
@@ -1902,6 +1993,6 @@ bool JZNodeEngine::run()
         m_pc++;
     }
 
-RunEnd:        
+RunEnd:
     return true;
 }

@@ -12,6 +12,7 @@
 #include "JZNodeFactory.h"
 #include "JZNodeMemberSelectDialog.h"
 #include "LogManager.h"
+#include "JZNodePanel.h"
 
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
@@ -63,6 +64,7 @@ bool JZMemberEdit(JZNode *node)
 JZNodeEditor::JZNodeEditor()
 {
     m_type = Editor_script;    
+    init();
 }
 
 JZNodeEditor::~JZNodeEditor()
@@ -79,18 +81,23 @@ QWidget *JZNodeEditor::createMidBar()
     mid_bar->setLayout(midbar_layout);
     midbar_layout->setContentsMargins(0, 0, 0, 0);
 
-    if (script()->isFunction())
-    {        
-        QCheckBox *boxAuto = new QCheckBox("自动运行");
-        connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);
+    QCheckBox *boxAuto = new QCheckBox("自动运行");
+    connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);
 
-        QPushButton *btnAutoRun = new QPushButton("运行");
-        connect(btnAutoRun, &QPushButton::clicked, this, &JZNodeEditor::onAutoRuning);
+    QPushButton *btnAutoRun = new QPushButton("运行");
+    connect(btnAutoRun, &QPushButton::clicked, this, &JZNodeEditor::onAutoRuning);
 
-        midbar_layout->addWidget(boxAuto);
-        midbar_layout->addWidget(btnAutoRun);
-        midbar_layout->addStretch();                
-    }
+    QPushButton *btnScaleOne = new QPushButton("1:1");
+    connect(btnScaleOne, &QPushButton::clicked, this, &JZNodeEditor::onScaleOne);
+
+    QPushButton *btnScaleAll = new QPushButton("showAll");
+    connect(btnScaleAll, &QPushButton::clicked, this, &JZNodeEditor::onActionFitInView);
+
+    midbar_layout->addWidget(boxAuto);
+    midbar_layout->addWidget(btnAutoRun);
+    midbar_layout->addStretch();
+    midbar_layout->addWidget(btnScaleOne);
+    midbar_layout->addWidget(btnScaleAll);
 
     return mid_bar;
 }
@@ -105,6 +112,7 @@ void JZNodeEditor::init()
     tabView->addTab(m_nodePanel, "编辑");
     tabView->addTab(m_nodeViewPanel, "节点");
     tabView->setTabPosition(QTabWidget::South);
+    m_tabLeft = tabView;
 
     //mid
     QWidget *mid_bar = createMidBar();
@@ -116,6 +124,7 @@ void JZNodeEditor::init()
     connect(m_view, &JZNodeView::sigFunctionOpen, this, &JZNodeEditor::sigFunctionOpen);
     connect(m_view, &JZNodeView::sigAutoCompiler, this, &JZNodeEditor::sigAutoCompiler);
     connect(m_view, &JZNodeView::sigAutoRun, this, &JZNodeEditor::sigAutoRun);
+    connect(m_view, &JZNodeView::sigRuntimeValueChanged, this, &JZNodeEditor::sigRuntimeValueChanged);
 
     QWidget *mid_widget = new QWidget();
     QVBoxLayout *mid_layout = new QVBoxLayout();
@@ -127,6 +136,7 @@ void JZNodeEditor::init()
     //right
     m_nodeProp = new JZNodePropertyEditor();
     m_runProp = new JZNodeAutoRunWidget();
+    m_runProp->setEditor(this);
 
     m_tabProp = new QTabWidget();
     m_tabProp->addTab(m_nodeProp, "属性");
@@ -155,15 +165,10 @@ void JZNodeEditor::init()
     //m_nodeProp->setMaximumWidth(200);
     m_view->setPropertyEditor(m_nodeProp);    
     m_view->setRunEditor(m_runProp);
-
-    //todo:
-    //m_tabProp->setTabVisible(1, false);
 }    
 
 void JZNodeEditor::open(JZProjectItem *item)
 {
-    init();
-
     JZScriptItem* file = dynamic_cast<JZScriptItem*>(item);    
     m_view->setFile(file);    
     m_nodePanel->setFile(file);    
@@ -243,7 +248,6 @@ void JZNodeEditor::selectAll()
 void JZNodeEditor::onAutoRunChecked()
 {
     auto *box = qobject_cast<QCheckBox*>(sender());
-    m_tabProp->setTabVisible(1, box->isChecked());
     m_view->setAutoRunning(box->isChecked());   
 }
 
@@ -254,6 +258,11 @@ void JZNodeEditor::onAutoRuning()
         return;
 
     emit sigAutoRun();
+}
+
+void JZNodeEditor::onScaleOne()
+{
+    m_view->resetTransform();
 }
 
 void JZNodeEditor::onActionLayout()
@@ -283,6 +292,7 @@ BreakPointTriggerResult JZNodeEditor::breakPointTrigger()
 
 void JZNodeEditor::setRunningMode(ProcessStatus status)
 {
+    m_tabLeft->setVisible(status == Process_none);
     m_view->setRunningMode(status);
 }
 
@@ -320,6 +330,11 @@ void JZNodeEditor::resetPropValue()
 void JZNodeEditor::setNodeValue(int nodeId, int prop_id, const QString &value)
 {
     m_view->setNodePropValue(nodeId, prop_id, value);
+}
+
+void JZNodeEditor::setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value)
+{
+    m_view->setRuntimeValue(nodeId, prop_id, value);
 }
 
 void JZNodeEditor::setCompilerResult(const CompilerResult *info)

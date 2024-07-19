@@ -89,31 +89,9 @@ BenchmarkTest::BenchmarkTest()
 
 }
 
-void BenchmarkTest::call(const JZFunction *function,const QVariantList &in,QVariantList &out)
-{
-    QVariantList regIn,callIn;
-    QVariantList regOut,callOut;
-
-    for(int i = 0; i < in.size(); i++)
-        regIn << in[i];
-
-    for(int i = 0; i < regIn.size(); i++)
-        callIn << std::move(regIn[i]);
-
-    Q_ASSERT(function->cfunc);
-    function->cfunc->call(callIn,callOut);
-
-    for(int i = 0; i < callOut.size(); i++)
-        regOut << std::move(callOut[i]);
-
-    for(int i = 0; i < regOut.size(); i++)
-        out << std::move(regOut[i]);
-}
-
 void BenchmarkTest::testBase()
 {   
     return;
-
     QList<QVariant> varList;
     QMap<int,QVariant> varMap;
     QMap<QString,QVariant> varStrMap;
@@ -210,13 +188,6 @@ void BenchmarkTest::testCall()
         m_engine.call(pow_func,in,out);
     }
 
-    JZBENCHMARK(jz_call_pow)
-    {
-        QVariantList in,out;
-        in << 0.5 << 0.6;
-        call(pow_func,in,out);
-    }
-
     JZBENCHMARK(jz_cfunc_pow)
     {
         QVariantList in,out;
@@ -274,7 +245,7 @@ void BenchmarkTest::testSort()
     int list_len = 200;
     qsrand(150);
     for(int i = 0; i < list_len; i++)
-        base_list << qrand();
+        base_list << i;
 
     auto script = m_file->addFunction(def);
     script->addLocalVariable("tmp",Type_int);
@@ -370,20 +341,24 @@ void BenchmarkTest::testSort()
     {
         list->list = base_list;
 
+        m_engine.statClear();
+
         QVariantList in,out;
         in << QVariant::fromValue(ptr);
         m_engine.call("testSort",in,out);
+
+        
+        m_engine.statReport();
     }
 
-
-    auto clist_get = [](const QVariantList &list, int idx)->QVariant
+    auto clist_get = [](const QVariantList &vlist, int idx)->QVariant
     {
-        return list[idx];
+        return vlist[idx];
     };
 
-    auto clist_set = [](QVariantList &list, int idx,const QVariant &value)
+    auto clist_set = [](QVariantList &vlist, int idx,const QVariant &value)
     {
-        list[idx] = value;
+        vlist[idx] = value;
     };
 
     JZBENCHMARK(c_list_sort)
@@ -434,6 +409,7 @@ void BenchmarkTest::testSort()
 
 void BenchmarkTest::testSum()
 {
+    return;
     JZFunctionDefine define;
     define.name = "testSum";     
     define.paramIn.push_back(JZParamDefine("count", Type_int));   

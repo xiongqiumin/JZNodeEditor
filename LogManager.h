@@ -9,6 +9,7 @@
 #include <QSharedPointer>
 
 enum {
+    LOG_DEBUG,
     LOG_INFO,
     LOG_WARNING,
     LOG_ERROR,

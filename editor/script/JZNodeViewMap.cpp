@@ -154,23 +154,37 @@ void JZNodeViewMap::paintEvent(QPaintEvent *event)
     painter.drawRect(back_rc.adjusted(0,0,-1,-1));
 }
 
+void JZNodeViewMap::wheelEvent(QWheelEvent *event)
+{
+    emit mapSceneScaled(event->angleDelta().y() > 0);
+    event->accept();
+}
+
 void JZNodeViewMap::mousePressEvent(QMouseEvent *event)
 {
     m_downPoint = event->pos();
 
     QRectF view_rc = m_view->mapToScene(m_view->rect()).boundingRect();
-    view_rc = m_drawInfo.toImage(view_rc);
-    if (view_rc.contains(m_downPoint))
+    QRectF image_rc = m_drawInfo.toImage(view_rc);
+    if (image_rc.contains(m_downPoint))
     {
         m_down = true;
-        m_downViewCenter = view_rc.center().toPoint();
+        m_downViewCenter = image_rc.center().toPoint();
     }
-}
+    else
+    {
+        int w = view_rc.width();
+        int h = view_rc.height();
 
-void JZNodeViewMap::wheelEvent(QWheelEvent *event)
-{
-    emit mapSceneScaled(event->angleDelta().y() > 0);
-    event->accept();
+        QPointF pt = m_drawInfo.toScene(m_downPoint);
+        QRectF rc(pt.x() - w/2,pt.y() - h/2,w,h);
+        mapSceneChanged(rc);
+
+        m_down = true;
+        view_rc = m_view->mapToScene(m_view->rect()).boundingRect();
+        image_rc = m_drawInfo.toImage(view_rc);
+        m_downViewCenter = image_rc.center().toPoint();
+    }
 }
 
 void JZNodeViewMap::mouseMoveEvent(QMouseEvent *event)
@@ -190,17 +204,6 @@ void JZNodeViewMap::mouseMoveEvent(QMouseEvent *event)
 
 void JZNodeViewMap::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (m_drawInfo.imageRect.contains(m_downPoint) && 
-        (m_downPoint - event->pos()).manhattanLength() < 10)
-    {
-        QRectF view_rc = m_view->mapToScene(m_view->rect()).boundingRect();
-        int w = view_rc.width();
-        int h = view_rc.height();
-
-        QPointF pt = m_drawInfo.toScene(m_downPoint);
-        QRectF rc(pt.x() - w/2,pt.y() - h/2,w,h);
-        mapSceneChanged(rc);
-    }
     m_downPoint = QPoint();
     m_downViewCenter = QPoint();
     m_down = true;

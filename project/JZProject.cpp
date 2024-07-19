@@ -13,6 +13,8 @@
 #include "JZProjectTemplate.h"
 #include "JZContainer.h"
 #include "JZNodeProgram.h"
+#include "JZModule.h"
+#include "JZNodeDefine.h"
 
 // JZProject
 JZProject::JZProject()    
@@ -36,9 +38,11 @@ void JZProject::clear()
     m_isSaveCache = false;
     m_filepath.clear();
     m_root.removeChlids();
-    m_root.setName(".");    
+    m_root.setName(".");
+    m_temps.clear();
     m_containers.clear();
-    
+    m_modules.clear();
+
     JZNodeFunctionManager::instance()->clearUserReigst();
     JZNodeObjectManager::instance()->clearUserReigst();
 }
@@ -60,6 +64,31 @@ void JZProject::registContainer(QString type)
 void JZProject::unregistContainer(QString type)
 {
     m_containers.removeAll(type);
+}
+
+void JZProject::importModule(QString module)
+{
+    if(m_modules.contains(module))
+        return;
+
+    m_modules.push_back(module);
+    JZModuleManager::instance()->loadModule(module);
+}
+
+void JZProject::unimportModule(QString module)
+{
+    m_modules.removeAll(module);
+    JZModuleManager::instance()->unloadModule(module);
+}
+
+QStringList JZProject::moduleList() const
+{
+    return m_modules;
+}
+
+bool JZProject::initConsole()
+{
+    return initProject("console");
 }
 
 bool JZProject::initProject(QString temp)
@@ -106,7 +135,7 @@ void JZProject::registType()
             meta.functionList << script_item->function();
         }
     }
-
+    meta.moduleList = m_modules;
     JZNodeRegistType(meta);    
 }
 
@@ -187,6 +216,18 @@ bool JZProject::save()
 
     file.close();
     return true;
+}
+
+void JZProject::addTmp(JZProjectItem *item)
+{
+    item->setProject(this);
+    m_temps.push_back(item);
+}
+
+void JZProject::removeTmp(JZProjectItem *item)
+{
+    item->setProject(nullptr);
+    m_temps.removeAll(item);
 }
 
 void JZProject::saveTransaction()
@@ -494,6 +535,19 @@ JZScriptClassItem *JZProject::getClass(QString class_name)
             return dynamic_cast<JZScriptClassItem*>(list[i]);
     }
     return nullptr;
+}
+
+QStringList JZProject::classList()
+{
+    QStringList ret;
+
+    auto list = itemList("./", ProjectItem_class);
+    for (int i = 0; i < list.size(); i++)
+    {
+        JZScriptClassItem *file = (JZScriptClassItem*)list[i];
+        ret << file->className();
+    }
+    return ret;
 }
 
 JZScriptClassItem *JZProject::getItemClass(JZProjectItem *item)

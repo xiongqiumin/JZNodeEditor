@@ -67,7 +67,7 @@ bool JZNodeObjectParser::iniContext(const QString &text)
             str.push_back(c);
             while (i < m_content.size())
             {
-                QChar c = m_content[i];
+                c = m_content[i];
                 str.push_back(c);
 
                 if (c == '\\')

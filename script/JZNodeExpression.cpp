@@ -3,432 +3,13 @@
 #include "JZNodeExpression.h"
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
-#include "JZExpression.h"
 #include "JZRegExpHelp.h"
 #include "JZNodeParamWidget.h"
-
-JZNodeOperator::JZNodeOperator(int node_type,int op_type)
-{
-    m_type = node_type;
-    m_op = op_type;
-    int in1 = addParamIn("",Pin_editValue | Pin_dispValue);
-    int in2 = addParamIn("",Pin_editValue | Pin_dispValue);
-    setPinTypeNumber(in1);
-    setPinTypeNumber(in2);
-    pin(in1)->setValue("0");
-    pin(in2)->setValue("0");
-    addParamOut("out");    
-}
-
-int JZNodeOperator::op() const
-{
-    return m_op;
-}
-
-void JZNodeOperator::addInputButton()
-{
-    addWidgetIn("Add input");
-}
-
-void JZNodeOperator::addInput()
-{
-    auto pin0 = pin(paramIn(0));
-    int in = addParamIn("", pin0->flag());    
-    pin(in)->setDataType(pin0->dataType());
-    if(pin0->isEditValue())
-        pin(in)->setValue(0);
-}
-
-void JZNodeOperator::removeInput(int index)
-{
-    int id = paramInList()[index];
-    removePin(id);
-}
-
-JZNodePinWidget* JZNodeOperator::createWidget(int id)
-{
-    Q_UNUSED(id);    
-
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
-    QPushButton *btn = w->button();
-    btn->setText("Add Input");
-    btn->connect(btn, &QPushButton::clicked, [this] {
-        QByteArray old = toBuffer();
-        addInput();
-        propertyChangedNotify(old);        
-    });                
-    return w;
-}
-
-QStringList JZNodeOperator::pinActionList(int id)
-{
-    QStringList ret;
-    if (paramInCount() > 2)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeOperator::pinActionTriggered(int id, int index)
-{
-    int pin_index = paramInList().indexOf(id);
-    removeInput(pin_index);
-    return true;
-}
-
-bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
-{
-    auto input_list = paramInList();
-    if(m_type == Node_eq || m_type == Node_ne)
-    {
-        int t1 = c->pinInputType(m_id,input_list[0]);
-        int t2 = c->pinInputType(m_id,input_list[1]);
-
-        int in_type = JZNodeType::upType(t1,t2);
-        if(in_type == Type_none || in_type == Type_any)
-        {
-            error = "无法对" + JZNodeType::typeToName(t1) + "," +  JZNodeType::typeToName(t2) + "进行比较";
-            return false;
-        }
-        c->setPinType(m_id,input_list[0],in_type);
-        c->setPinType(m_id,input_list[1],in_type);
-    }
-    
-    if(!c->addDataInput(m_id,error))
-        return false;
-
-    calcPropOutType(c);
-    for(int i = 0; i < input_list.size() - 1; i++)
-    {
-        int in1 = 0;
-        if(i == 0)
-            in1 = paramIn(i);
-        else
-            in1 = paramOut(0);
-
-        int in2 = paramIn(i+1);
-        int out = paramOut(0);
-
-        int r1 = c->paramId(m_id,in1);
-        int r2 = c->paramId(m_id,in2);
-        int r3 = c->paramId(m_id,out);
-        c->addExprConvert(irId(r3),irId(r1),irId(r2),m_op);
-    }
-    return true;
-}
-
-void JZNodeOperator::calcPropOutType(JZNodeCompiler *c)
-{        
-    int out_type = Type_none;    
-    switch (m_op)
-    {
-        case OP_add:
-        case OP_sub:
-        case OP_mul:
-        case OP_div:
-        case OP_mod:
-        case OP_bitand:
-        case OP_bitor:
-        case OP_bitxor:
-        {
-            auto list = paramInList();
-            QList<int> in_types;
-            for (int i = 0; i < list.size(); i++)            
-                in_types << c->pinType(m_id, list[i]);
-
-            if (m_op == OP_add && in_types[0] == Type_string)
-                out_type = Type_string;
-            else
-                out_type = JZNodeType::upType(in_types);
-            break;
-        }
-        case OP_eq:
-        case OP_ne:
-        case OP_le:
-        case OP_ge:
-        case OP_lt:
-        case OP_gt:
-        case OP_and:
-        case OP_or:
-            out_type = Type_bool;
-            break;
-        default:
-            Q_ASSERT(0);
-            break;
-    }    
-    c->setPinType(m_id, paramOut(0), out_type);
-}
-
-//JZNodeAdd
-JZNodeAdd::JZNodeAdd()
-    :JZNodeOperator(Node_add,OP_add)
-{
-    m_name = "+";        
-    setPinTypeNumber(paramIn(0));
-    setPinTypeNumber(paramIn(1));
-    setPinTypeNumber(paramOut(0));
-    addInputButton();
-}
-
-//JZNodeSub
-JZNodeSub::JZNodeSub()
-    :JZNodeOperator(Node_sub,OP_sub)
-{
-    m_name = "-";    
-    setPinTypeNumber(paramIn(0));
-    setPinTypeNumber(paramIn(1));
-    setPinTypeNumber(paramOut(0));
-    addInputButton();
-}
-    
-//JZNodeMul
-JZNodeMul::JZNodeMul()
-    :JZNodeOperator(Node_mul,OP_mul)
-{
-    m_name = "*";
-    setPinTypeNumber(paramIn(0));
-    setPinTypeNumber(paramIn(1));
-    setPinTypeNumber(paramOut(0));
-    addInputButton();
-}
-
-//JZNodeDiv
-JZNodeDiv::JZNodeDiv()
-    :JZNodeOperator(Node_div,OP_div)
-{
-    m_name = "/";
-    setPinTypeNumber(paramIn(0));
-    setPinTypeNumber(paramIn(1));
-    setPinTypeNumber(paramOut(0));
-    setParamInValue(1, "1");
-    addInputButton();
-}
-
-//JZNodeMod
-JZNodeMod::JZNodeMod()
-    :JZNodeOperator(Node_mod,OP_mod)
-{
-    m_name = "%";
-    setPinTypeNumber(paramIn(0));
-    setPinTypeNumber(paramIn(1));
-    setPinTypeNumber(paramOut(0));
-}
-
-//JZNodeBitAnd
-JZNodeBitAnd::JZNodeBitAnd()
-    :JZNodeOperator(Node_bitand,OP_bitand)
-{
-    m_name = "bit and";
-    setPinTypeInt(paramIn(0));
-    setPinTypeInt(paramIn(1));
-    setPinTypeInt(paramOut(0));
-}
-
-//JZNodeBitOr
-JZNodeBitOr::JZNodeBitOr()
-    :JZNodeOperator(Node_bitor,OP_bitor)
-{
-    m_name = "bit or";
-    setPinTypeInt(paramIn(0));
-    setPinTypeInt(paramIn(1));
-    setPinTypeInt(paramOut(0));
-}
-
-//JZNodeBitXor
-JZNodeBitXor::JZNodeBitXor()
-    :JZNodeOperator(Node_bitxor,OP_bitxor)
-{
-    m_name = "bit xor";
-    setPinTypeInt(paramIn(0));
-    setPinTypeInt(paramIn(1));
-    setPinTypeInt(paramOut(0));
-}
-
-//JZNodeBitResver
-JZNodeBitResver::JZNodeBitResver()
-{
-    m_name = "~";
-    m_type = Node_bitresver;
-    int in = addParamIn("", Pin_editValue | Pin_dispValue);
-    int out = addParamOut("");
-    setPinTypeInt(in);
-    setPinTypeInt(out);
-}
-
-bool JZNodeBitResver::compiler(JZNodeCompiler *c, QString &error)
-{
-    if (!c->addDataInput(m_id, error))
-        return false;
-
-    int id_in = c->paramId(m_id, paramIn(0));
-    int id_out = c->paramId(m_id, paramOut(0));
-    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_bitresver);
-    return true;
-}
-
-//JZNodeLE
-JZNodeLE::JZNodeLE()
-    :JZNodeOperator(Node_le, OP_le)
-{
-    m_name = "<=";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeGE
-JZNodeGE::JZNodeGE()
-    :JZNodeOperator(Node_ge, OP_ge)
-{
-    m_name = ">=";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeLT
-JZNodeLT::JZNodeLT()
-    :JZNodeOperator(Node_lt, OP_lt)
-{
-    m_name = "<";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeGT
-JZNodeGT::JZNodeGT()
-    :JZNodeOperator(Node_gt, OP_gt)
-{
-    m_name = ">";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeEQ
-JZNodeEQ::JZNodeEQ()
-    :JZNodeOperator(Node_eq, OP_eq)
-{    
-    m_name = "==";    
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeNE
-JZNodeNE::JZNodeNE()
-    :JZNodeOperator(Node_ne, OP_ne)
-{    
-    m_name = "!=";    
-    setPinTypeAny(paramIn(0));
-    setPinTypeAny(paramIn(1));
-    setPinTypeBool(paramOut(0));
-}
-
-//JZNodeAnd
-JZNodeAnd::JZNodeAnd()
-    :JZNodeOperator(Node_and, OP_and)
-{
-    m_name = "and";
-    setPinTypeBool(paramIn(0));
-    setPinTypeBool(paramIn(1));
-    setPinTypeBool(paramOut(0));
-    pin(paramIn(0))->setFlag(Pin_in | Pin_param);
-    pin(paramIn(1))->setFlag(Pin_in | Pin_param);
-    addInputButton();
-}
-
-bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
-{
-    auto input_list = paramInList();    
-
-    QVector<JZNodeIRJmp*> jmpList;
-    int out = c->paramId(m_id, paramOut(0));
-    c->addSetVariable(irId(out), irLiteral(false));
-    for (int i = 0; i < input_list.size(); i++)
-    {
-        if (!c->addFlowInput(m_id, input_list[i], error))
-            return false;
-        c->addNodeDebug(m_id);
-
-        int in_id = c->paramId(m_id, input_list[i]);
-        c->addCompare(irId(in_id), irLiteral(false), OP_eq);
-        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_je);
-        c->addStatement(JZNodeIRPtr(jmp));
-        jmpList.push_back(jmp);
-
-        if (i == input_list.size() - 1)
-            c->addSetVariable(irId(out), irLiteral(true));
-    }
-    int ret = c->addNop();
-    for (int i = 0; i < jmpList.size(); i++)
-        jmpList[i]->jmpPc = ret;
-    return true;
-}
-
-//JZNodeOr
-JZNodeOr::JZNodeOr()
-    :JZNodeOperator(Node_or, OP_or)
-{
-    m_name = "or";
-    setPinTypeBool(paramIn(0));
-    setPinTypeBool(paramIn(1));
-    setPinTypeBool(paramOut(0));
-    pin(paramIn(0))->setFlag(Pin_in | Pin_param);
-    pin(paramIn(1))->setFlag(Pin_in | Pin_param);
-    addInputButton();
-}
-
-bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
-{
-    auto input_list = paramInList();    
-
-    QVector<JZNodeIRJmp*> jmpList;
-    int out = c->paramId(m_id, paramOut(0));
-    c->addSetVariable(irId(out), irLiteral(true));
-    for (int i = 0; i < input_list.size(); i++)
-    {
-        if (!c->addFlowInput(m_id, input_list[i], error))
-            return false;
-        c->addNodeDebug(m_id);
-
-        int in_id = c->paramId(m_id, input_list[i]);
-        c->addCompare(irId(in_id), irLiteral(true), OP_eq);
-        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_je);
-        c->addStatement(JZNodeIRPtr(jmp));
-        jmpList.push_back(jmp);
-
-        if (i == input_list.size() - 1)
-            c->addSetVariable(irId(out), irLiteral(false));
-    }
-    int ret = c->addNop();
-    for (int i = 0; i < jmpList.size(); i++)
-        jmpList[i]->jmpPc = ret;
-    return true;
-}
-
-//JZNodeNot
-JZNodeNot::JZNodeNot()
-{
-    m_name = "not";
-    m_type = Node_not;
-    int in = addParamIn("input",Pin_dispName);
-    int out = addParamOut("invert", Pin_dispName);
-    setPinTypeBool(in);
-    setPinTypeBool(out);
-}
-
-bool JZNodeNot::compiler(JZNodeCompiler *c, QString &error)
-{
-    if (!c->addDataInput(m_id, error))
-        return false;
-
-    int id_in = c->paramId(m_id, paramIn(0));
-    int id_out = c->paramId(m_id, paramOut(0));
-    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_not);
-    return true;
-}
+#include "angelscript/as_tojzscript.h"
+#include "JZNodeValue.h"
+#include "JZProject.h"
+#include "JZNodeOperator.h"
+#include "JZNodeFunction.h"
 
 //JZNodeExpression
 JZNodeExpression::JZNodeExpression()
@@ -455,22 +36,122 @@ bool JZNodeExpression::updateExpr(QString &error)
     setName(m_expression);
     clearPin();
 
-    JZExpressionParser parser;   
-    if(!parser.parse(m_expression))
+    QString code = "void func(){\n" + m_expression + "\n}";
+
+    JZProject project;
+    project.initConsole();
+
+    auto file = project.mainFile();
+    ASConvert convert;
+    if(!convert.convert(code,file))
     {
-        error = parser.error();
+        error = convert.error();
         return false;
     }
 
-    m_exprList = parser.opList();
-    for(int i = 0; i < parser.inList.size(); i++)
+    auto func = file->getFunction("func");
+    
+    JZNodeCompiler c;
+    QVector<GraphPtr> graph_list;
+    if(!c.genGraphs(func, graph_list))
+    {
+        error = c.error();
+        return false;
+    }
+    if(graph_list.size() != 1 || graph_list[0]->topolist.size() < 1)
+    {
+        error = "gen graph failed";
+        return false;
+    }
+    GraphPtr graph = graph_list[0];
+
+    auto reg_name = [](int node_id,int pin_id)->QString{
+        return "#Reg" + QString::number(JZNodeCompiler::paramId(node_id,pin_id));
+    };
+
+    auto get_input = [graph](GraphNode *node,int pin_id)->QString{
+        Q_ASSERT(node->paramIn.contains(pin_id));
+
+        auto in_gemo = node->paramIn[pin_id][0];
+        auto in_node = graph->node(in_gemo.nodeId);
+        if(in_node->type() == Node_param)
+        {
+            JZNodeParam *param = dynamic_cast<JZNodeParam*>(in_node); 
+            return param->variable();
+        }
+        else if(in_node->type() == Node_literal)
+            return in_node->paramOutValue(0);
+        else
+            return "#Reg" + QString::number(JZNodeCompiler::paramId(in_gemo));
+    };
+
+    QStringList params;
+    QStringList inList,outList;
+    for(int node_idx = 1; node_idx < graph->topolist.size(); node_idx++)
+    {
+        auto graph_node = graph->topolist[node_idx];
+        auto node = graph->topolist[node_idx]->node;
+        if(node->type() == Node_param)
+        {
+            JZNodeParam *param = dynamic_cast<JZNodeParam*>(node);
+            if(!params.contains(param->variable()))
+            {
+                params << param->variable();
+                inList << param->variable();
+            }
+        }
+        else if(node->type() == Node_setParam)
+        {
+            JZNodeSetParam *param = dynamic_cast<JZNodeSetParam*>(node);
+            if(!params.contains(param->variable()))
+            {
+                params << param->variable();
+                outList << param->variable();
+            }
+
+            int in = node->paramIn(1);
+            m_exprList += param->variable() + " = " + get_input(graph_node,in);
+        }
+        else if(node->type() >= Node_add && node->type() <= Node_or)
+        {
+            int in1 = node->paramIn(0);
+            int in2 = node->paramIn(1);
+            int out = node->paramOut(0);
+
+            auto node_op = dynamic_cast<JZNodeOperator*>(node);
+            QString op = JZNodeType::opName(node_op->op());
+            QString line = reg_name(node->id(),out) + " = ";
+            line += get_input(graph_node,in1) + " " + op + " " + get_input(graph_node,in2);
+
+            m_exprList += line;
+        }
+        else if(node->type() == Node_function)
+        {
+            JZNodeFunction *node_func = dynamic_cast<JZNodeFunction*>(node);
+            auto in_list = node_func->paramInList();
+            auto out_list = node_func->paramOutList();
+
+            QString line = reg_name(node->id(),out_list[0]) + " = @" + node_func->function() + "(";
+            for(int i = 0; i < in_list.size(); i++)
+            {
+                line += get_input(graph_node,in_list[i]);
+                if(i != in_list.size() - 1)
+                    line += ",";
+            }
+            line += ")";
+            m_exprList += line;
+        }
+    }
+    
+    qDebug().noquote() << m_exprList.join("\n");
+    for(int i = 0; i < inList.size(); i++)
     {     
-        int id = addParamIn(parser.inList[i], Pin_dispName | Pin_editValue);
+        int id = addParamIn(inList[i], Pin_dispName | Pin_editValue);
         setPinTypeNumber(id);
     }    
-    for(int i = 0; i < parser.outList.size(); i++)
+    for(int i = 0; i < outList.size(); i++)
     {
-        int id = addParamOut(parser.outList[i], Pin_dispName);
+        int id = addParamOut(outList[i], Pin_dispName);
         setPinTypeNumber(id);
     }
     return true;

@@ -209,6 +209,8 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             type_meta.functionList << func_def;        
     }
 
+    type_meta.moduleList = m_project->moduleList();
+
     m_program->m_typeMeta = type_meta;
     if(!link())
         return false;
@@ -218,8 +220,6 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
 
 bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNodeCompiler*, QString&)> buildFunction)
 {
-    JZNodeScriptPtr boot = JZNodeScriptPtr(new JZNodeScript());    
-
     JZScriptItem file(ProjectItem_scriptFunction);
     file.setName(func.name);
     file.setFunction(func);

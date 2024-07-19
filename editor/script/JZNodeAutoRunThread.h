@@ -13,6 +13,8 @@ public:
     JZNodeAutoRunThread();
     ~JZNodeAutoRunThread();
 
+    JZNodeEngine *engine();
+    
     void startRun(JZNodeProgram *program,const ScriptDepend &dpend);
     void stopRun();
 
@@ -25,7 +27,6 @@ protected:
     JZNodeEngine m_engine;
     JZNodeProgram *m_program;
     ScriptDepend m_depend;
-    UnitTestResult ret;
     bool m_cancel;
 };
 

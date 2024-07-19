@@ -13,6 +13,7 @@ public:
 
 private slots:
     void testMatchType();
+    void testClone();
     void testContainer();
 
     void testClass();
@@ -40,6 +41,9 @@ private slots:
     void testDebugServer();
     void testUnitTest();
     void testUnitTestClass();
+
+    void testModule();
+    void testArgs();
 
 protected:
     bool initWhileCase(QList<int> &nodeId,QList<int> &value);

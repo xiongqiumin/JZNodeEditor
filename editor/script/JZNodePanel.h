@@ -7,16 +7,6 @@
 #include "JZScriptItem.h"
 #include "JZNodePropertyEditor.h"
 
-class JZNodeCreateInfo
-{
-public:
-    static JZNodeCreateInfo fromBuffer(const QByteArray &buffer);
-    QByteArray toBuffer() const;
-
-    int nodeType;
-    QStringList args;
-};
-
 class JZNodeTreeWidget : public QTreeWidget
 {
     Q_OBJECT
@@ -45,12 +35,19 @@ protected slots:
     void onContextMenu(const QPoint &pos);
 
 protected:
+    struct Module
+    {
+        QString name;
+        QStringList typeList;
+        QStringList functionList;
+    };
+    
+
     void init();
     void initData();
     void initBasicFlow();
-    void initFunction();
-    void initEnums();
-    void initClass();
+    void initModule();
+    void initLocalDefine();
     
     void initThis(QTreeWidgetItem *root);
     void initConstParam(QTreeWidgetItem *root);    
@@ -61,13 +58,13 @@ protected:
     void initExpression(QTreeWidgetItem *root);
     void initConvert(QTreeWidgetItem *root);
 
-    void updateClass();    
-    void updateInput();
+    void updateClass();
+    void updateLocalVariable();
 
     QTreeWidgetItem *createFolder(QString name);
-    QTreeWidgetItem *createNode(QString name,int node_type,const QStringList &args = QStringList());
+    QTreeWidgetItem *createNode(JZNode *node);
     QTreeWidgetItem *createParam(QString name);    
-    QTreeWidgetItem *createClassEvent(QString name);
+    QTreeWidgetItem *createClass(QString name);
 
     bool filterItem(QTreeWidgetItem *root,QString name);    
     bool isClassItem(QTreeWidgetItem *item);
@@ -79,10 +76,8 @@ protected:
     
     QTreeWidgetItem *m_memberFunction;
     QTreeWidgetItem *m_memberParam;
-    QTreeWidgetItem *m_itemLocal;
-    QTreeWidgetItem *m_itemInput;
-
-    QMap<QString, QStringList> m_functionMap;
+    QTreeWidgetItem *m_itemLocalParam;
+    QList<Module> m_modules;
 };
 
 #endif

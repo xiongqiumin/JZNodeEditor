@@ -73,6 +73,7 @@ public:
     };
 
     JZNodeParamCoor();
+    bool isNodeId() const;
 
     int type;        
     QString name;
@@ -85,40 +86,67 @@ QDataStream &operator>>(QDataStream &s, JZNodeParamCoor &param);
 class JZNodeDebugParamValue
 {
 public:
+    JZNodeDebugParamValue();
+
     int type;
     QString value;
     QByteArray binValue;
+    QVariant *ptrValue;     //本地传输使用
     QMap<QString, JZNodeDebugParamValue> params;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param);
 
-//JZNodeDebugParamInfo
-class JZNodeDebugParamInfo
+//JZNodeGetDebugParam
+class JZNodeGetDebugParam
 {
 public:
-    JZNodeDebugParamInfo();
+    JZNodeGetDebugParam();
+
+    int stack;
+    QList<JZNodeParamCoor> coors;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParam &param);
+QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParam &param);
+
+//JZNodeGetDebugParamResp
+class JZNodeGetDebugParamResp
+{
+public:
+    JZNodeGetDebugParamResp();
 
     int stack;
     QList<JZNodeParamCoor> coors;
     QList<JZNodeDebugParamValue> values;
 };
-QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamInfo &param);
-QDataStream &operator>>(QDataStream &s, JZNodeDebugParamInfo &param);
+QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param);
+QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParamResp &param);
 
-//JZNodeSetDebugParamInfo
-class JZNodeSetDebugParamInfo
+//JZNodeSetDebugParam
+class JZNodeSetDebugParam
 {
 public:
-    JZNodeSetDebugParamInfo();
+    JZNodeSetDebugParam();
 
     int stack;
     JZNodeParamCoor coor;
     QString value;
 };
-QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamInfo &param);
-QDataStream &operator >> (QDataStream &s, JZNodeSetDebugParamInfo &param);
+QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParam &param);
+QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParam &param);
 
+//JZNodeSetDebugParamResp
+class JZNodeSetDebugParamResp
+{
+public:
+    JZNodeSetDebugParamResp();
+
+    int stack;
+    JZNodeParamCoor coor;
+    JZNodeDebugParamValue value;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamResp &param);
+QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamResp &param);
 
 //JZNodeScriptInfo
 class JZNodeScriptInfo
@@ -164,7 +192,7 @@ public:
     JZNodeRuntimeWatch();
 
     JZNodeRuntimeInfo runtimInfo;
-    QMap<int, QVariant> values;
+    QMap<int, JZNodeDebugParamValue> values;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeWatch &param);

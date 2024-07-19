@@ -19,6 +19,11 @@ void copyClassAssert(void *,void *)
     Q_ASSERT(0);
 }
 
+bool equalClassAssert(void *,void *)
+{
+    Q_ASSERT(0);
+}
+
 template<>
 QString* fromVariant<QString*>(const QVariant &v, std::true_type)
 {

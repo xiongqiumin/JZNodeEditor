@@ -39,7 +39,8 @@ int JZModule::refCount()
 //JZModuleManager
 JZModuleManager *JZModuleManager::instance()
 {
-    return nullptr;
+    static JZModuleManager inst;
+    return &inst;
 }
 
 JZModuleManager::JZModuleManager()
@@ -88,7 +89,7 @@ JZModule *JZModuleManager::module(QString name)
     return nullptr;
 }
 
-void JZModuleManager::loadModule(QString name)
+bool JZModuleManager::loadModule(QString name)
 {
     JZModule *m = module(name);
     if(m)
@@ -98,14 +99,20 @@ void JZModuleManager::loadModule(QString name)
     else
     {
         JZModuleInfo *info = moduleInfo(name);
+        if(!info)
+            return false;
         if(info->createFunc)
             m = info->createFunc();
 
         m->addRef();
         for(int i = 0; i < info->depends.size(); i++)
-            loadModule(info->depends[i]);
+        {
+            if(!loadModule(info->depends[i]))
+                return false;
+        }
         m->regist();
     }
+    return true;
 }
 
 void JZModuleManager::unloadModule(QString name)

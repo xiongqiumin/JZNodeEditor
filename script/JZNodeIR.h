@@ -15,7 +15,8 @@ enum
     OP_nop,            
     OP_alloc, 
     OP_clearReg,
-    OP_set, 
+    OP_set,
+    OP_clone,
     OP_watch,
     OP_convert,
     OP_jmp,
@@ -161,6 +162,19 @@ class JZNodeIRSet : public JZNodeIR
 public:
     JZNodeIRSet();
     virtual ~JZNodeIRSet();
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);   
+
+    JZNodeIRParam dst;
+    JZNodeIRParam src;
+};
+
+class JZNodeIRClone : public JZNodeIR
+{
+public:
+    JZNodeIRClone();
+    virtual ~JZNodeIRClone();
 
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);   

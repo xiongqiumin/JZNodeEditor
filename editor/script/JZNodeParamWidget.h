@@ -58,10 +58,6 @@ public:
     
     virtual QString value() const;
     virtual void setValue(const QString &value);
-    virtual void setEditable(bool flag);
-
-    virtual void setRuntime(ProcessStatus status);
-    virtual void setRuntimeValue(const JZNodeDebugParamValue &value);
 
 signals:
     void sigValueChanged(const QString &value);
@@ -78,7 +74,6 @@ public:
     ~JZNodePinButtonWidget();
 
     QPushButton *button();
-    virtual void setRuntime(ProcessStatus status) override;
 
 protected:
     QPushButton *m_btn;
@@ -98,10 +93,6 @@ public:
 
     virtual QString value() const override;
     virtual void setValue(const QString &value) override;
-    virtual void setEditable(bool flag) override;
-
-    virtual void setRuntime(ProcessStatus status) override;
-    virtual void setRuntimeValue(const JZNodeDebugParamValue &value) override;
 
 protected slots:
     void onValueChanged();
@@ -112,7 +103,6 @@ protected:
     void clearWidget();    
 
     QWidget *m_widget;
-    QLineEdit *m_runtimeValue;
 
     int m_dataType;
     QString m_widgetType;

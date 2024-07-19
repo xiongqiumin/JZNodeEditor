@@ -159,12 +159,12 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         result << netDataPack(m_engine->runtimeInfo());    
     else if (cmd == Cmd_getVariable)
     {
-        JZNodeDebugParamInfo info = netDataUnPack<JZNodeDebugParamInfo>(params[0].toByteArray());        
+        JZNodeGetDebugParam info = netDataUnPack<JZNodeGetDebugParam>(params[0].toByteArray());        
         result << getVariable(info);
     }
     else if (cmd == Cmd_setVariable)
     {
-        JZNodeSetDebugParamInfo info = netDataUnPack<JZNodeSetDebugParamInfo>(params[0].toByteArray());
+        JZNodeSetDebugParam info = netDataUnPack<JZNodeSetDebugParam>(params[0].toByteArray());
         result << setVariable(info);
     }
 
@@ -209,7 +209,13 @@ void JZNodeDebugServer::onWatchNotify()
         
     JZNodeRuntimeWatch info;
     info.runtimInfo = m_engine->runtimeInfo();
-    info.values = m_engine->stack()->currentEnv()->watchMap;
+    auto &watchMap = m_engine->stack()->currentEnv()->watchMap;
+    auto it = watchMap.begin();
+    while(it != watchMap.end())
+    {
+        info.values[it.key()] = toDebugParam(it.value());
+        it++;
+    }
 
     JZNodeDebugPacket status_pack;
     status_pack.cmd = Cmd_nodePropChanged;
@@ -234,9 +240,12 @@ QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &co
     return ref;
 }
 
-QVariant JZNodeDebugServer::getVariable(const JZNodeDebugParamInfo &info)
+QVariant JZNodeDebugServer::getVariable(const JZNodeGetDebugParam &info)
 {        
-    JZNodeDebugParamInfo result = info;
+    JZNodeGetDebugParamResp result;
+    result.stack = info.stack;
+    result.coors = info.coors;
+
     auto stack = m_engine->stack();    
     for (int i = 0; i < info.coors.size(); i++)
     {
@@ -252,22 +261,22 @@ QVariant JZNodeDebugServer::getVariable(const JZNodeDebugParamInfo &info)
     return netDataPack(result);
 }
 
-QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParamInfo &info)
+QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParam &info)
 {    
-    JZNodeDebugParamInfo result;
-
+    JZNodeSetDebugParamResp result;
     auto ref = getVariableRef(info.stack, info.coor);
+    result.coor = info.coor;
+    result.stack = info.stack;    
     if (ref)
     {
         int ref_type = JZNodeType::variantType(*ref);
         QVariant initValue = JZNodeType::initValue(ref_type,info.value);
         if (initValue.isValid())
             *ref = initValue;
-    }
 
-    result.coors << info.coor;
-    result.stack = info.stack;    
-    return getVariable(result);
+        result.value = toDebugParam(*ref);
+    }
+    return netDataPack(result);
 }
 
 JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
@@ -315,7 +324,7 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
                 QString name = params[i];
                 ret.params[name] = toDebugParam(obj->param(name));
             }
-            ret.value = "0x" + QString::number((quint64)obj,16);
+            ret.value = JZNodeType::debugString(obj);
         }                  
     }
     else

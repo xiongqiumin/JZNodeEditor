@@ -261,7 +261,7 @@ JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
     return value;
 }
 
-void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info)
+void JZNodeWatch::setParamInfo(JZNodeGetDebugParamResp *info)
 {       
     m_view->blockSignals(true);
     auto root = m_view->invisibleRootItem();        
@@ -274,7 +274,7 @@ void JZNodeWatch::setParamInfo(JZNodeDebugParamInfo *info)
     m_view->blockSignals(false);
 }
 
-void JZNodeWatch::updateParamInfo(JZNodeDebugParamInfo *info)
+void JZNodeWatch::updateParamInfo(JZNodeGetDebugParamResp *info)
 {    
     auto root = m_view->invisibleRootItem();
     QStringList sub_params;

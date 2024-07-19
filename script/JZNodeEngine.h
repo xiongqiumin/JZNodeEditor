@@ -92,6 +92,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param);
 class JZNodeRuntimeError
 {
 public:
+    bool isError();
     QString errorReport();
 
     QString error;
@@ -155,6 +156,7 @@ public:
     void init();
     void deinit();
 
+    void statClear();
     void statReport();
 
     void setProgram(JZNodeProgram *program);
@@ -207,6 +209,7 @@ public:
     void onSlot(const QString &function,const QVariantList &in,QVariantList &out);
     void print(const QString &log);
     void printMemory();
+    int regInCount();
 
 signals:    
     void sigRuntimeError(JZNodeRuntimeError error);
@@ -285,6 +288,7 @@ protected:
     void unSupportSingleOp(int a,int op);
     void unSupportOp(int a,int b,int op);
 
+    bool isWidgetFunction(const JZFunction *function);
     void updateHook();
     
     int m_pc;    
@@ -297,6 +301,7 @@ protected:
     int m_breakNodeId;
 
     Stack m_stack;
+    int m_regInCount;
     QMap<QString,QVariantPtr> m_global;
     QVector<QVariant> m_regs;
     JZNodeObject *m_sender;

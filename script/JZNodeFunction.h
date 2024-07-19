@@ -10,8 +10,10 @@ public:
     JZNodeFunction();
     virtual ~JZNodeFunction();
 
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
+    void setVariable(const QString &name);
+    QString variable() const;
 
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
 
@@ -21,6 +23,10 @@ public:
     JZFunctionDefine functionDefine();
 
 protected:
+    virtual void onPinChanged(int id) override;
+
+    JZNodePinWidget *createWidget(int id);
+    void updateName();
     QString m_functionName;
 };
 

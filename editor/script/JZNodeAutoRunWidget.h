@@ -8,6 +8,7 @@
 #include "JZNodePropertyBrowser.h"
 
 //JZNodeAutoRunWidget
+class JZNodeEditor;
 class JZNodeAutoRunWidget : public QWidget
 {
     Q_OBJECT
@@ -15,6 +16,8 @@ class JZNodeAutoRunWidget : public QWidget
 public:
     JZNodeAutoRunWidget(QWidget *p = nullptr);
     ~JZNodeAutoRunWidget();
+
+    void setEditor(JZNodeEditor *editor);
     
     void setDepend(const ScriptDepend &depend);
     const ScriptDepend &depend() const;
@@ -58,6 +61,7 @@ protected:
     ScriptDepend m_depend;
     JZNodePropertyBrowser *m_tree;        
     QList<PropCoor> m_propList;
+    JZNodeEditor *m_editor;
 };
 
 #endif
