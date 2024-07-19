@@ -700,6 +700,7 @@ void MainWindow::onActionStop()
     {
         m_process.setProperty("userKill", 1);
         m_process.kill();
+        m_process.waitForFinished();
     }
     else
         m_testProcess.stop();
@@ -999,9 +1000,7 @@ bool MainWindow::openEditor(QString filepath)
         JZEditor *editor = createEditor(item->itemType());
         if (!editor)
             return false;
-
-        m_editors[file] = editor;
-        m_editorStack->addTab(editor, filepath);
+        
         connect(editor, &JZEditor::redoAvailable, this, &MainWindow::onRedoAvailable);
         connect(editor, &JZEditor::undoAvailable, this, &MainWindow::onUndoAvailable);
         connect(editor, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);        
@@ -1020,6 +1019,9 @@ bool MainWindow::openEditor(QString filepath)
             if(cmp_ret)
                 node_edit->setCompilerResult(cmp_ret);
         }
+
+        m_editors[file] = editor;
+        m_editorStack->addTab(editor, filepath);
     }
     switchEditor(m_editors[file]);
     

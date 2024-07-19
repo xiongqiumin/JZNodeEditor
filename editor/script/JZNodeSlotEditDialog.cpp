@@ -15,3 +15,13 @@ JZNodeSlotEditDialog::JZNodeSlotEditDialog(QWidget *parent)
 JZNodeSlotEditDialog::~JZNodeSlotEditDialog()
 {
 }
+
+QString JZNodeSlotEditDialog::param()
+{
+    return QString();
+}
+
+QString JZNodeSlotEditDialog::single()
+{
+    return QString();
+}

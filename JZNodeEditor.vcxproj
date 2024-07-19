@@ -96,6 +96,7 @@
     <ClCompile Include="editor\JZEditor.cpp" />
     <ClCompile Include="editor\JZNewFileDialog.cpp" />
     <ClCompile Include="editor\JZNewProjectDialog.cpp" />
+    <ClCompile Include="editor\JZProjectSettingDialog.cpp" />
     <ClCompile Include="editor\JZProjectTree.cpp" />
     <ClCompile Include="editor\script\JZNodeAutoRunThread.cpp" />
     <ClCompile Include="editor\script\JZNodeAutoRunWidget.cpp" />
@@ -119,6 +120,7 @@
     <ClCompile Include="editor\script\JZNodePropertyBrowser.cpp" />
     <ClCompile Include="editor\script\JZNodePropertyEditor.cpp" />
     <ClCompile Include="editor\script\JZNodeScene.cpp" />
+    <ClCompile Include="editor\script\JZNodeSlotEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeStack.cpp" />
     <ClCompile Include="editor\script\JZNodeTypeHelper.cpp" />
     <ClCompile Include="editor\script\JZNodeView.cpp" />
@@ -146,6 +148,7 @@
     <ClCompile Include="project\JZScriptItem.cpp" />
     <ClCompile Include="project\JZUiFile.cpp" />
     <ClCompile Include="sample\ImageBatch\ImageBatch.cpp" />
+    <ClCompile Include="sample\ImageModule\ImageModule.cpp" />
     <ClCompile Include="sample\Russian\Russian.cpp" />
     <ClCompile Include="sample\SampleProject.cpp" />
     <ClCompile Include="sample\SmartHome\SmartHome.cpp" />
@@ -156,7 +159,6 @@
     <ClCompile Include="script\angelscript\as_tokenizer.cpp" />
     <ClCompile Include="script\JZContainer.cpp" />
     <ClCompile Include="script\JZEvent.cpp" />
-    <ClCompile Include="script\JZExpression.cpp" />
     <ClCompile Include="script\JZNode.cpp" />
     <ClCompile Include="script\JZNodeBind.cpp" />
     <ClCompile Include="script\JZNodeBuilder.cpp" />
@@ -178,6 +180,7 @@
     <ClCompile Include="script\JZNodeMeta.cpp" />
     <ClCompile Include="script\JZNodeObject.cpp" />
     <ClCompile Include="script\JZNodeObjectParser.cpp" />
+    <ClCompile Include="script\JZNodeOperator.cpp" />
     <ClCompile Include="script\JZNodePin.cpp" />
     <ClCompile Include="script\JZNodeProgram.cpp" />
     <ClCompile Include="script\JZNodeQtBind.cpp" />
@@ -188,6 +191,8 @@
     <ClCompile Include="script\JZNodeVM.cpp" />
     <ClCompile Include="script\JZNodeUiLoader.cpp" />
     <ClCompile Include="script\JZRegExpHelp.cpp" />
+    <ClCompile Include="script\modules\JZModule.cpp" />
+    <ClCompile Include="script\modules\JZModuleNetwok.cpp" />
     <ClCompile Include="tests\test_anglescript.cpp" />
     <ClCompile Include="tests\test_base.cpp" />
     <ClCompile Include="tests\test_benchmark.cpp" />
@@ -216,6 +221,7 @@
     <QtMoc Include="editor\script\JZNodeAutoRunWidget.h" />
     <QtMoc Include="editor\script\JZNodeAutoRunThread.h" />
     <QtMoc Include="editor\script\JZNodeBuildThread.h" />
+    <QtMoc Include="editor\JZProjectSettingDialog.h" />
     <ClInclude Include="editor\script\JZNodeFlagEditDialog.h" />
     <ClInclude Include="editor\script\JZNodeGroupItem.h" />
     <ClInclude Include="editor\script\JZNodeLayout.h" />
@@ -234,18 +240,22 @@
     <ClInclude Include="project\JZProjectTemplate.h" />
     <ClInclude Include="project\JZScriptFile.h" />
     <ClInclude Include="sample\ImageBatch\ImageBatch.h" />
+    <ClInclude Include="sample\ImageModule\ImageModule.h" />
     <ClInclude Include="sample\Russian\Russian.h" />
     <ClInclude Include="sample\SampleProject.h" />
     <ClInclude Include="sample\SmartHome\SmartHome.h" />
     <QtMoc Include="script\JZNodeQtBind.h" />
     <ClInclude Include="script\JZContainer.h" />
     <ClInclude Include="script\JZNodeObjectParser.h" />
+    <ClInclude Include="script\JZNodeOperator.h" />
     <ClInclude Include="script\JZNodeQtWrapper.h" />
     <ClInclude Include="script\JZNodeUtils.h" />
     <ClInclude Include="script\JZNodeValue.h" />
     <QtMoc Include="tests\test_anglescript.h" />
     <QtMoc Include="tests\test_base.h" />
     <QtMoc Include="tests\test_benchmark.h" />
+    <ClInclude Include="script\modules\JZModule.h" />
+    <ClInclude Include="script\modules\JZModuleNetwok.h" />
     <ClInclude Include="tests\test_server.h" />
     <QtMoc Include="editor\script\JZNodeWatch.h" />
     <QtMoc Include="editor\script\JZNodeStack.h" />
@@ -285,7 +295,6 @@
     <ClInclude Include="project\JZScriptItem.h" />
     <ClInclude Include="project\JZUiFile.h" />
     <ClInclude Include="script\JZEvent.h" />
-    <ClInclude Include="script\JZExpression.h" />
     <ClInclude Include="script\JZNode.h" />
     <ClInclude Include="script\JZNodeBind.h" />
     <ClInclude Include="script\JZNodeBuilder.h" />

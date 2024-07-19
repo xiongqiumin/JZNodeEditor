@@ -1,4 +1,4 @@
-#include <QTest>
+﻿#include <QTest>
 #include <math.h>
 #include <functional>
 #include "test_benchmark.h"

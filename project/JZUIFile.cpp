@@ -44,6 +44,8 @@ bool JZUiFile::save(QString filepath)
     QTextStream s(&file);
     s.setCodec("utf-8");
     s << m_xml;
+
+    regist();
     return true;
 }
 
@@ -57,6 +59,8 @@ bool JZUiFile::load(QString filepath)
     QTextStream s(&file);
     s.setCodec("utf-8");
     setXml(s.readAll());
+
+    regist();
     return true;
 }
 

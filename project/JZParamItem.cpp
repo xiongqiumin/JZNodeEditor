@@ -76,6 +76,7 @@ void JZParamItem::setVariable(QString name, JZParamDefine define)
         }
     }
     m_variables[define.name] = define;
+    regist();
 }
 
 const JZParamDefine *JZParamItem::variable(QString name) const

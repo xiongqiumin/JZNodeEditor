@@ -182,36 +182,36 @@ JZNode *JZNodeGraphItem::node()
     return m_node;
 }
 
-int JZNodeGraphItem::propAt(QPointF pos)
+int JZNodeGraphItem::pinAt(QPointF pos)
 {    
     auto list = m_node->pinList();
     for (int i = 0; i < list.size(); i++)
     {                    
-        auto rc = propRect(list[i]);
+        auto rc = pinRect(list[i]);
         if (rc.contains(pos))
             return list[i];
     }
     return -1;    
 }
 
-int JZNodeGraphItem::propAtInName(QPointF pos)
+int JZNodeGraphItem::pinAtInName(QPointF pos)
 {
     auto list = m_node->pinList();
     for (int i = 0; i < list.size(); i++)
     {
-        auto rc = propRect(list[i]) | propNameRect(list[i]);
+        auto rc = pinRect(list[i]) | pinNameRect(list[i]);
         if (rc.contains(pos))
             return list[i];
     }
     return -1;
 }
 
-QRectF JZNodeGraphItem::propRect(int pin)
+QRectF JZNodeGraphItem::pinRect(int pin)
 {
     return m_pinRects[pin].iconRect;
 }
 
-QRectF JZNodeGraphItem::propNameRect(int pin)
+QRectF JZNodeGraphItem::pinNameRect(int pin)
 {
     return m_pinRects[pin].nameRect;
 }
@@ -280,8 +280,7 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
         if (pin->isEditValue())
         {
             bool editable = editor()->isPropEditable(m_id, pin_id);
-            gemo->widget->setEnabled(editable);
-            gemo->widget->setVisible(editable);
+            gemo->widget->setEnabled(editable);            
         }
     }
 }
@@ -391,8 +390,7 @@ void JZNodeGraphItem::updateRuntimeStatus()
             {
                 if (pin->isEditValue())
                 {
-                    bool editable = editor()->isPropEditable(m_id, pin_id);
-                    it->widget->setVisible(editable);
+                    bool editable = editor()->isPropEditable(m_id, pin_id);                    
                     it->widget->setEnabled(editable);
                 }
                 else
@@ -406,15 +404,9 @@ void JZNodeGraphItem::updateRuntimeStatus()
                 if (pin->isEditValue())
                 {   
                     if(editor()->runtimeNode() == m_id)
-                    {
-                        it->widget->setVisible(true);
+                    {                        
                         it->widget->setEnabled(true);
-                    }
-                    else
-                    {
-                        bool editable = editor()->isPropEditable(m_id, pin_id);
-                        it->widget->setVisible(editable);
-                    }
+                    }                    
                 }
             }
         }
@@ -424,7 +416,7 @@ void JZNodeGraphItem::updateRuntimeStatus()
 
 void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {    
-    auto pin_id = propAt(event->pos());
+    auto pin_id = pinAt(event->pos());
     if (pin_id >= 0)
     {        
         auto pin = m_node->pin(pin_id);
@@ -494,7 +486,7 @@ QString JZNodeGraphItem::getTip(QPointF pt)
     if (m_errorRect.contains(pt))
         return m_error;
 
-    int id = propAtInName(pt);
+    int id = pinAtInName(pt);
     if (id != -1)
     {
         auto pin = m_node->pin(id);

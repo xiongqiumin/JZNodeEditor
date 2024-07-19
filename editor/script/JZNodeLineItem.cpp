@@ -62,12 +62,12 @@ void JZNodeLineItem::updateNode()
 
     JZNodeView *view = editor();
     JZNodeGraphItem *node_from = view->getNodeItem(m_from.nodeId);
-    auto from = node_from->mapToScene(node_from->propRect(m_from.pinId).center());
+    auto from = node_from->mapToScene(node_from->pinRect(m_from.pinId).center());
     m_startPoint = mapFromScene(from);
     if (m_to.nodeId != -1)
     {
         JZNodeGraphItem *node_to = view->getNodeItem(m_to.nodeId);
-        auto to = node_to->mapToScene(node_to->propRect(m_to.pinId).center());
+        auto to = node_to->mapToScene(node_to->pinRect(m_to.pinId).center());
         m_endPoint = mapFromScene(to);
     }
 }

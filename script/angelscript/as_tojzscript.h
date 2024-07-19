@@ -22,8 +22,9 @@ protected:
         return node;
     }
 
-    void printNode(asCScriptNode *root,QString &result,int level);
-    QString printNode(asCScriptNode *node);
+    void nodeDebug(asCScriptNode *root,QString &result,int level);
+    QString nodeDebug(asCScriptNode *node);
+    void printNode(asCScriptNode *node);
     QString nodeText(asCScriptNode *node);
     asCScriptNode *nextNode(asCScriptNode *node,int count);
     QList<asCScriptNode*> childList(asCScriptNode *node);

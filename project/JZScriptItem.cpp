@@ -67,6 +67,7 @@ void JZScriptItem::setFunction(JZFunctionDefine def)
 {
     m_name = def.name;
     m_function = def;
+    regist();
 }
 
 int JZScriptItem::addNode(JZNode *node)

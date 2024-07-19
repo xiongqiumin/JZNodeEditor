@@ -65,7 +65,7 @@ bool ASConvert::convert(QString code,JZScriptFile *file)
     return true;
 }
 
-void ASConvert::printNode(asCScriptNode *root,QString &result,int level)
+void ASConvert::nodeDebug(asCScriptNode *root,QString &result,int level)
 {
 	QString type = asCScriptNode::GetDefinition(root->nodeType);
 	QString space = QString().leftJustified(level * 2); 
@@ -78,7 +78,7 @@ void ASConvert::printNode(asCScriptNode *root,QString &result,int level)
 	auto child = root->firstChild;
 	while (child)
 	{
-		printNode(child,result,level + 1);
+        nodeDebug(child,result,level + 1);
 		child = child->next;
 	}
 	
@@ -86,11 +86,16 @@ void ASConvert::printNode(asCScriptNode *root,QString &result,int level)
 		result += space + "}\n";
 }
 
-QString ASConvert::printNode(asCScriptNode *node)
+QString ASConvert::nodeDebug(asCScriptNode *node)
 {
 	QString line;
-	printNode(node,line,0);
+    nodeDebug(node,line,0);
 	return line;
+}
+
+void ASConvert::printNode(asCScriptNode *node)
+{
+    qDebug().noquote() << nodeDebug(node);
 }
 
 QString ASConvert::nodeText(asCScriptNode *node)
@@ -248,16 +253,26 @@ JZNode *ASConvert::toAssignment(asCScriptNode *node)
 		}
 	}
 
-	qDebug().noquote() << printNode(node);
+	printNode(node);
 	Q_ASSERT(0);
 	return nullptr;
 }
 
 JZNode *ASConvert::toFunctionCall(asCScriptNode *node)
 {
-	Q_ASSERT(node->nodeType == snFunctionCall);
+	Q_ASSERT(node->nodeType == snFunctionCall);    
 
-	JZNodeFunction *func = createNode<JZNodeFunction>(); 
+    auto node_name = node->firstChild;
+	JZNodeFunction *func = createNode<JZNodeFunction>();
+    func->setFunction(nodeText(node_name));    
+
+    auto arg_list = childList(node_name->next);
+    for (int i = 0; i < arg_list.size(); i++)
+    {
+        auto param = toAssignment(arg_list[i]);
+        m_script->addConnectForce(param->paramOutGemo(0), func->paramInGemo(i));
+    }
+
 	return func;
 }
 
@@ -286,6 +301,14 @@ JZNode *ASConvert::toExprTerm(asCScriptNode *root)
 		param->setVariable(nodeText(node));
 		ret = param;
 	}
+    else if (node->nodeType == snFunctionCall)
+    {
+        ret = toFunctionCall(node);
+    }
+    else
+    {
+        Q_ASSERT(0);
+    }
 
 	return ret;
 }

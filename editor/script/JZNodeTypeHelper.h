@@ -52,4 +52,24 @@ protected:
     Ui::JZNodeTypeDialog *ui;
 };
 
+class JZNodeTypeHelper : public QObject
+{
+    Q_OBJECT
+
+public:
+    static JZNodeTypeHelper *instance();
+
+    QCompleter *typeCompleter();
+    QCompleter *boolCompleter();
+    QCompleter *enumCompleter(int type);
+
+protected:
+    JZNodeTypeHelper();
+    ~JZNodeTypeHelper();
+
+    QCompleter *m_typeCompleter;
+    QCompleter *m_boolCompleter;
+    QMap<int, QCompleter*> m_enumCompleter;
+};
+
 #endif

@@ -59,9 +59,7 @@ QWidget *TypeItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
     box->addItems(type_list);
     box->setCurrentText(type_text);
 
-    QCompleter *comp = new QCompleter(type_list, box);
-    comp->setCaseSensitivity(Qt::CaseInsensitive);
-
+    QCompleter *comp = JZNodeTypeHelper::instance()->typeCompleter();
     box->setCompleter(comp);
     return box;
 }
@@ -155,4 +153,60 @@ void JZNodeTypeDialog::on_btnOk_clicked()
 void JZNodeTypeDialog::on_btnCancel_clicked()
 {
     QDialog::reject();
+}
+
+//JZNodeTypeHelper();
+JZNodeTypeHelper * JZNodeTypeHelper::instance()
+{
+    static JZNodeTypeHelper inst;
+    return &inst;
+}
+
+JZNodeTypeHelper::JZNodeTypeHelper()
+{
+    QStringList type_list;
+    type_list << "bool" << "int" << "double" << "string";
+    type_list << JZNodeObjectManager::instance()->getClassList();
+    type_list << JZNodeObjectManager::instance()->getEnumList();    
+
+    m_typeCompleter = new QCompleter(type_list,this);
+    m_typeCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+
+    QStringList bool_list = { "true","false" };
+    m_boolCompleter = new QCompleter(bool_list, this);
+    m_boolCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+}
+
+JZNodeTypeHelper::~JZNodeTypeHelper()
+{
+}
+
+QCompleter *JZNodeTypeHelper::boolCompleter()
+{
+    return m_boolCompleter;
+}
+
+QCompleter *JZNodeTypeHelper::typeCompleter()
+{
+    return m_typeCompleter;
+}
+
+QCompleter *JZNodeTypeHelper::enumCompleter(int type)
+{
+    if (!m_enumCompleter.contains(type))
+    {
+        auto meta = JZNodeObjectManager::instance()->enumMeta(type);
+        if (!meta)
+            return nullptr;
+
+        QStringList type_list;
+        for (int i = 0; i < meta->count(); i++)
+            type_list << meta->key(i);
+
+        QCompleter *comp = new QCompleter(type_list, this);
+        comp->setCaseSensitivity(Qt::CaseInsensitive);
+        m_enumCompleter[type] = comp;
+    }
+
+    return m_enumCompleter.value(type, nullptr);
 }

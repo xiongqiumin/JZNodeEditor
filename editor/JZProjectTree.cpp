@@ -11,8 +11,8 @@
 #include "JZNewFileDialog.h"
 #include "JZNodeClassEditDialog.h"
 #include "JZUIFile.h"
-#include "JZNodeModuleDialog.h"
 #include "JZProjectSettingDialog.h"
+#include "JZNodeSlotEditDialog.h"
 
 enum{
     Item_none,
@@ -342,10 +342,15 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actOpen = nullptr;
     QAction *actBuild = nullptr, *actRebuild = nullptr, *actClearBuild = nullptr;
     QAction *actNewFile = nullptr, *actExistFile = nullptr;
+    QAction *actSlot = nullptr;
 
     bool canChanged = true;
     auto item_class = m_project->getItemClass(item);
-    if (item->itemType() == ProjectItem_root)
+    JZNodeObjectDefine *meta = nullptr;
+    if(item_class)
+        meta = JZNodeObjectManager::instance()->meta(item_class->className());
+
+    if(item->itemType() == ProjectItem_root)
     {
         actBuild = menu.addAction("编译");
         actRebuild = menu.addAction("重新编译");
@@ -380,8 +385,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     {
         QMenu *menu_new = menu.addMenu("添加");
         actCreateFunction = menu_new->addAction("成员函数");
-
-        auto meta = JZNodeObjectManager::instance()->meta(item_class->className());
+        
         auto virtual_list = meta->virtualFunctionList();
         if(virtual_list.size() > 0)
         {        
@@ -389,6 +393,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
             for(int i = 0; i < virtual_list.size(); i++)
                 actCreateVirtual << menu_virtual->addAction(virtual_list[i]);
         }
+        actSlot = menu_new->addAction("槽函数");
     }
     else if (item->itemType() == ProjectItem_param
         || item->itemType() == ProjectItem_scriptFunction
@@ -462,22 +467,35 @@ void JZProjectTree::onContextMenu(QPoint pos)
             addItem(new_item);            
         }
     }
-    else if(act == actCreateFunction)
+    else if(act == actCreateFunction || act == actSlot || actCreateVirtual.contains(act))
     {        
-        JZFunctionDefine function;        
-        if (item_class)
+        JZFunctionDefine function;
+        if (act == actCreateFunction)
         {
-            function.className = item_class->className();
-            function.name = JZRegExpHelp::uniqueString("newFunction", item_class->memberFunctionList());
+            if (item_class)
+            {
+                function.className = item_class->className();
+                function.name = JZRegExpHelp::uniqueString("newFunction", item_class->memberFunctionList());
 
-            JZParamDefine def;
-            def.name = "this";
-            def.type = function.className;
-            function.paramIn.push_back(def);
+                JZParamDefine def;
+                def.name = "this";
+                def.type = function.className;
+                function.paramIn.push_back(def);
+            }
+            else            
+                function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());            
+        }
+        else if (act == actSlot)
+        {
+            JZNodeSlotEditDialog dlg(this);
+            if (dlg.exec() != QDialog::Accepted)
+                return;
+
+            function = meta->initSlotFunction(dlg.param(), dlg.single());
         }
         else
         {
-            function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());
+            function = meta->initVirtualFunction(act->text());
         }
 
         JZNodeFuctionEditDialog dialog(this);
@@ -492,18 +510,6 @@ void JZProjectTree::onContextMenu(QPoint pos)
         m_project->saveItem(item);
         
         addItem(view_item, func_item);        
-    }
-    else if(actCreateVirtual.contains(act))
-    {
-        auto meta = JZNodeObjectManager::instance()->meta(item_class->className());
-        JZFunctionDefine def = meta->initVirtualFunction(act->text());
-        
-        JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptFunction);
-        func_item->setFunction(def);
-        m_project->addItem(item->itemPath(), func_item);
-        m_project->saveItem(item);
-
-        addItem(view_item, func_item); 
     }
     else if (act == actCreateClass)
     {
@@ -592,23 +598,9 @@ void JZProjectTree::onModuleMenu(QTreeWidgetItem *item,QPoint pos)
         return;
 
     if(act == actAdd)
-    {
-        JZNodeModuleDialog dlg(this);
-        if(dlg.exec() != QDialog::Accepted)
-            return;
-
-        QString module;
-        m_project->importModule(module);
-
-        QTreeWidgetItem *new_item = new QTreeWidgetItem();
-        new_item->setText(0,module);
-        new_item->setData(0,Qt::UserRole,Item_module);
-        item->addChild(new_item);
+    {        
     }
     else if(act == actRemove)
-    {
-        QString module;
-        m_project->unimportModule(module);
-        delete item;
+    {        
     }
 }

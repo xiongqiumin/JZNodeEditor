@@ -23,8 +23,8 @@ JZProjectSettingDialog::JZProjectSettingDialog(QWidget *parent)
 
     auto btn1 = new QPushButton("container");
     auto btn2 = new QPushButton("module");
-    connect(btn1,&QPushButton::clicked,this, &onBtnNagtiveClicked);
-    connect(btn2,&QPushButton::clicked,this, &onBtnNagtiveClicked);
+    connect(btn1,&QPushButton::clicked,this, &JZProjectSettingDialog::onBtnNagtiveClicked);
+    connect(btn2,&QPushButton::clicked,this, &JZProjectSettingDialog::onBtnNagtiveClicked);
 
     btn1->setProperty("index",0);
     btn2->setProperty("index",1);

@@ -2069,9 +2069,9 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
                 {
                     QString param_name = pin->value();
                     auto param_def = getVariableInfo(param_name);
-                    if(!param_def || param_def->dataType() != pin_type)
+                    if(!param_def || !JZNodeType::isInherits(param_def->dataType(),pin_type))
                     {
-                        error = "无效的参数:" + param_name;
+                        error = param_name + "不是类型" + JZNodeType::typeToName(pin_type);
                         return false;
                     }
                     addSetVariable(irId(to_id),irRef(param_name));

@@ -143,7 +143,6 @@ bool JZNodeExpression::updateExpr(QString &error)
         }
     }
     
-    qDebug().noquote() << m_exprList.join("\n");
     for(int i = 0; i < inList.size(); i++)
     {     
         int id = addParamIn(inList[i], Pin_dispName | Pin_editValue);

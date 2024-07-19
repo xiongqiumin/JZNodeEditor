@@ -20,10 +20,10 @@ public:
     virtual void updateNode() override;
 
     JZNode *node();
-    int propAt(QPointF pos);        //连接框
-    int propAtInName(QPointF pos);  //包含连接框和名称矩形  
-    QRectF propRect(int pin);
-    QRectF propNameRect(int pin);
+    int pinAt(QPointF pos);        //连接框
+    int pinAtInName(QPointF pos);  //包含连接框和名称矩形  
+    QRectF pinRect(int pin);
+    QRectF pinNameRect(int pin);
     QSize size() const;
     
     QString getTip(QPointF pt);

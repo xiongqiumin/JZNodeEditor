@@ -13,7 +13,7 @@
 #include "JZProjectTemplate.h"
 #include "JZContainer.h"
 #include "JZNodeProgram.h"
-#include "JZModule.h"
+#include "modules/JZModule.h"
 #include "JZNodeDefine.h"
 
 // JZProject

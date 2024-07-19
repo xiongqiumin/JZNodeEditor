@@ -13,6 +13,8 @@ public:
     JZNodeSlotEditDialog(QWidget *parent = Q_NULLPTR);
     ~JZNodeSlotEditDialog();
         
-protected:
+    QString param();
+    QString single();
 
+protected:    
 };

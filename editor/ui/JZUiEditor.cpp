@@ -11,6 +11,7 @@
 JZUiEditor::JZUiEditor()
 {    
     m_type = Editor_ui;    
+    m_form = nullptr;
 
     QVBoxLayout *l = new QVBoxLayout();
     l->setContentsMargins(0,0,0,0);

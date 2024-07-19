@@ -4,7 +4,7 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
 #include "JZContainer.h"
-#include "JZModule.h"
+#include "modules/JZModule.h"
 #include "JZNodeDefine.h"
 
 //NodeRange

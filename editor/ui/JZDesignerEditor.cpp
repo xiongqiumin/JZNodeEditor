@@ -126,7 +126,7 @@ void JZDesignerEditor::close(JZDesignerFormWindow *window)
 void JZDesignerEditor::showForm(JZDesignerFormWindow *form)
 {    
     m_view->setCurrentWidget(form);
-    core()->formWindowManager()->setActiveFormWindow(form->editor());
+    m_core->formWindowManager()->setActiveFormWindow(form->editor());
     m_active = form;
 }
 

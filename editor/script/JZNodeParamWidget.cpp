@@ -11,6 +11,7 @@
 #include "JZNodeParamWidget.h"
 #include "JZNodeType.h"
 #include "JZNodeFlagEditDialog.h"
+#include "JZNodeTypeHelper.h"
 
 //JZNodeFlagEditWidget
 JZNodeFlagEditWidget::JZNodeFlagEditWidget(QWidget *parent)
@@ -178,7 +179,7 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
 {
     QString type;
     if (data_type == Type_bool)
-        type = "QCheckBox";
+        type = "QComboBox";
     else if (JZNodeType::isEnum(data_type))
     {
         auto meta = JZNodeObjectManager::instance()->enumMeta(data_type);
@@ -210,8 +211,13 @@ void JZNodeParamValueWidget::createWidget()
     }
     else if (widget == "QComboBox")
     {
-        QComboBox *box = new QComboBox();
-        box->connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onValueChanged()));
+        QComboBox *box = new QComboBox();        
+        box->setEditable(true);
+
+        auto line = box->findChild<QLineEdit*>();
+        connect(line, &QLineEdit::editingFinished, this, &JZNodeParamValueWidget::onValueChanged);
+        connect(line, &QLineEdit::returnPressed, this, &JZNodeParamValueWidget::onValueChanged);
+        box->connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onValueChanged()));        
         m_widget = box;
     }
     else if (widget == "QPlainTextEdit")
@@ -252,6 +258,8 @@ void JZNodeParamValueWidget::createWidget()
         {
             box->addItem("true");
             box->addItem("false");
+
+            box->setCompleter(JZNodeTypeHelper::instance()->boolCompleter());
         }
         else if(m_dataType == Type_int)
         {
@@ -261,9 +269,11 @@ void JZNodeParamValueWidget::createWidget()
         {
             auto meta = JZNodeObjectManager::instance()->enumMeta(m_dataType);
             Q_ASSERT(!meta->isFlag());
-
+            
             for (int i = 0; i < meta->count(); i++)
-                box->addItem(meta->key(i), meta->value(i));            
+                box->addItem(meta->key(i), meta->value(i));
+
+            box->setCompleter(JZNodeTypeHelper::instance()->enumCompleter(m_dataType));
         }
     }
     else if (m_widget->inherits("QLineEdit"))
@@ -283,7 +293,8 @@ void JZNodeParamValueWidget::createWidget()
 
 void JZNodeParamValueWidget::onValueChanged()
 {
-    emit sigValueChanged(value());
+    clearFocus();
+    emit sigValueChanged(value());    
 }
 
 void JZNodeParamValueWidget::initWidget(int data_type, QString widget_type)

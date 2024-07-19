@@ -717,7 +717,7 @@ void JZNodeView::startLine(JZNodeGemo from)
         return;
 
     JZNodeGraphItem *node_from = getNodeItem(from.nodeId);
-    auto pt = node_from->mapToScene(node_from->propRect(from.pinId).center());
+    auto pt = node_from->mapToScene(node_from->pinRect(from.pinId).center());
 
     m_selLine = new JZNodeLineItem(from);
     m_selLine->setZValue(1);
@@ -873,7 +873,7 @@ JZNodeGemo JZNodeView::pinAt(QPoint pos)
 
     auto scene_pos = mapToScene(pos);
     auto item_pos = node_item->mapFromScene(scene_pos);            
-    int pin_id = node_item->propAtInName(item_pos);
+    int pin_id = node_item->pinAt(item_pos);
     if(pin_id == -1)
         return JZNodeGemo();
     
@@ -1215,14 +1215,23 @@ void JZNodeView::fitNodeView()
 {        
     setSceneRect(QRectF());
 
-    QRectF scene_rc = scene()->itemsBoundingRect();
-    this->fitInView(scene_rc, Qt::KeepAspectRatio);    
+    QRectF scene_rc = scene()->itemsBoundingRect();        
+    if (scene_rc.width() > width() || scene_rc.height() > height())
+    {
+        //两次处理，保留边距
+        this->fitInView(scene_rc, Qt::KeepAspectRatio);
 
-    //扩大scene
-    QPointF pt = mapToScene(QPoint(20,20));
-    scene_rc.adjust(-pt.x(), -pt.y(), pt.x(), pt.y());
-    setSceneRect(scene_rc);  //要先设置scene大小， fitInView 是在scene大小中处理
-    this->fitInView(scene_rc, Qt::KeepAspectRatio);  
+        //缩小scene
+        QPointF pt = mapToScene(QPoint(20, 20));
+        scene_rc.adjust(-pt.x(), -pt.y(), pt.x(), pt.y());
+        setSceneRect(scene_rc);  //要先设置scene大小， fitInView 是在scene大小中处理
+        this->fitInView(scene_rc, Qt::KeepAspectRatio);        
+    }
+    else
+    {
+        resetTransform();
+        sceneTranslate(-20, -20);
+    }
 }
 
 void JZNodeView::ensureNodeVisible(int id)
@@ -1484,7 +1493,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
 
             auto scene_pos = mapToScene(pos);
             auto item_pos = node_item->mapFromScene(scene_pos);            
-            pin_id = node_item->propAtInName(item_pos);
+            pin_id = node_item->pinAtInName(item_pos);
 
             QStringList actions_list;
             if(pin_id >= 0)
@@ -1959,7 +1968,7 @@ void JZNodeView::mouseMoveEvent(QMouseEvent *event)
         {
             auto scene_pos = mapToScene(event->pos());
             auto item_pos = node_item->mapFromScene(scene_pos);
-            auto pin_id = node_item->propAt(item_pos);
+            auto pin_id = node_item->pinAt(item_pos);
             if(pin_id >= 0)
             {
                 JZNodeGemo to(node_item->id(), pin_id);
@@ -2019,7 +2028,7 @@ void JZNodeView::mouseReleaseEvent(QMouseEvent *event)
         if (node_item && m_selLine->startTraget().nodeId != node_item->id())
         {            
             auto pos = node_item->mapFromScene(mapToScene(event->pos()));
-            auto pin_id = node_item->propAt(pos);
+            auto pin_id = node_item->pinAt(pos);
             if(pin_id >= 0)
             {                
                 QString error;
@@ -2142,9 +2151,7 @@ void JZNodeView::onItemPropChanged()
     int prop_id = obj->property("prop_id").toInt();    
     
     QString value = getNodeItem(node_id)->pinValue(prop_id);
-    onPropChanged(node_id,prop_id,value);
-    
-    scene()->clearFocus();
+    onPropChanged(node_id,prop_id,value);    
 }
 
 void JZNodeView::onScriptNodeChanged(JZScriptItem *file, int node_id, const QByteArray &old)

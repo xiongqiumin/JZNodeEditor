@@ -22,6 +22,7 @@ void copyClassAssert(void *,void *)
 bool equalClassAssert(void *,void *)
 {
     Q_ASSERT(0);
+    return false;
 }
 
 template<>
