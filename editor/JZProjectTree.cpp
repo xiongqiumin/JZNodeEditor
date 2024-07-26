@@ -481,31 +481,35 @@ void JZProjectTree::onContextMenu(QPoint pos)
                 def.name = "this";
                 def.type = function.className;
                 function.paramIn.push_back(def);
+                function.isFlowFunction = true;
             }
             else            
-                function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());            
+                function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());
+
+            JZNodeFuctionEditDialog dialog(this);
+            dialog.setFunctionInfo(function,true);
+            dialog.init();
+            if (dialog.exec() != QDialog::Accepted)
+                return;
+
+            function = dialog.functionInfo();
         }
         else if (act == actSlot)
         {
             JZNodeSlotEditDialog dlg(this);
+            dlg.setClass(item_class);
             if (dlg.exec() != QDialog::Accepted)
                 return;
 
-            function = meta->initSlotFunction(dlg.param(), dlg.single());
+            function = meta->initSlotFunction(dlg.param(), dlg.signal());
         }
         else
         {
             function = meta->initVirtualFunction(act->text());
         }
 
-        JZNodeFuctionEditDialog dialog(this);
-        dialog.setFunctionInfo(function,true);
-        dialog.init();
-        if (dialog.exec() != QDialog::Accepted)
-            return;
-
         JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptFunction);
-        func_item->setFunction(dialog.functionInfo());
+        func_item->setFunction(function);
         m_project->addItem(item->itemPath(), func_item);
         m_project->saveItem(item);
         

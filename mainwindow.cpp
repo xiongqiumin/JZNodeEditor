@@ -18,6 +18,7 @@
 #include "JZNewProjectDialog.h"
 #include "JZDesignerEditor.h"
 #include "JZNodeUtils.h"
+#include "JZNodeCppGenerater.h"
 
 //Setting
 Setting::Setting()
@@ -92,9 +93,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_editor = nullptr;
     m_useTestProcess = false;
     m_processMode = Process_none;
-    m_compilerTiemr = new QTimer(this);
-    connect(m_compilerTiemr, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
-    m_compilerTiemr->start(100);
+    m_compilerTimer = new QTimer(this);
+    connect(m_compilerTimer, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
+    m_compilerTimer->start(100);
 
     connect(LogManager::instance(), &LogManager::sigLog, this, &MainWindow::onLog);
 
@@ -105,7 +106,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeWatch, this, &MainWindow::onRuntimeWatch);
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
-    connect(&m_project,&JZProject::sigFileChanged, this, &MainWindow::onProjectChanged);
+    connect(&m_project,&JZProject::sigItemChanged, this, &MainWindow::onProjectChanged);
 
     connect(&m_runThread,&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
     connect(&m_buildThread,&JZNodeBuildThread::sigResult,this, &MainWindow::onBuildFinish);
@@ -118,6 +119,7 @@ MainWindow::MainWindow(QWidget *parent)
     initUi();     
     updateActionStatus();    
     
+    JZProject::setActive(&m_project);
     //initLocalProcessTest();
 }
 
@@ -246,7 +248,9 @@ void MainWindow::initMenu()
 
     QMenu *menu_build = menubar->addMenu("构建");
     auto actBuild = menu_build->addAction("编译");
+    auto actExport = menu_build->addAction("导出");
     connect(actBuild,&QAction::triggered,this,&MainWindow::onActionBuild);
+    connect(actExport,&QAction::triggered,this,&MainWindow::onActionExport);
     m_actionStatus << ActionStatus(actBuild, { as::ProjectVaild, as::ProcessIsEmpty });
 
     QMenu *menu_debug = menubar->addMenu("调试");    
@@ -326,7 +330,7 @@ void MainWindow::initUi()
     initMenu();    
 
     m_log = new LogWidget();
-    connect(m_log, &LogWidget::sigNodeClicked, this, &MainWindow::onNodeClicked);
+    connect(m_log, &LogWidget::sigNavigate, this, &MainWindow::onNavigate);
 
     m_stack = m_log->stack();    
     connect(m_stack, &JZNodeStack::sigStackChanged, this, &MainWindow::onStackChanged);
@@ -415,6 +419,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }    
+
+    m_runThread.stopRun();
+    m_buildThread.stopBuild();
 
     JZDesigner::instance()->closeEditor();
     QMainWindow::closeEvent(event);
@@ -648,6 +655,16 @@ void MainWindow::onActionBuild()
     build();
 }
 
+void MainWindow::onActionExport()
+{
+    JZNodeCppGenerater gen;
+
+    QString output = m_project.path() + "/build/cpp";
+    gen.generate(&m_project,output);
+
+    m_log->addLog(Log_Compiler, "export to: " + output);
+}
+
 void MainWindow::initLocalProcessTest()
 {   
     m_useTestProcess = true;    
@@ -716,9 +733,9 @@ void MainWindow::onActionBreakPoint()
         if(m_debuger.isConnect())
         {
             if(ret.type == BreakPointTriggerResult::add)
-                m_debuger.addBreakPoint(ret.filename,ret.nodeId);
+                m_debuger.addBreakPoint(ret.pt);
             else if(ret.type == BreakPointTriggerResult::remove)
-                m_debuger.removeBreakPoint(ret.filename,ret.nodeId);
+                m_debuger.removeBreakPoint(ret.pt.file,ret.pt.nodeId);
         }
         m_breakPoint->updateBreakPoint(&m_project);
     }
@@ -1059,9 +1076,6 @@ void MainWindow::closeEditor(JZEditor *editor)
     editor->close();
     editor->setItem(nullptr);
 
-    int index = m_editorStack->indexOf(editor);
-    m_editorStack->removeTab(index);    
-
     QString path = m_editors.key(editor);
     if(!path.isEmpty())
         m_editors.remove(path);
@@ -1072,6 +1086,9 @@ void MainWindow::closeEditor(JZEditor *editor)
         else
             switchEditor(nullptr);
     }
+
+    int index = m_editorStack->indexOf(editor);
+    m_editorStack->removeTab(index);
     delete editor;
 }
 
@@ -1121,17 +1138,27 @@ void MainWindow::onEditorActivite(int index)
     switchEditor(editor);
 }
 
-void MainWindow::onNodeClicked(QString file, int nodeId)
+void MainWindow::onNavigate(QString file, int nodeId)
 {
     if(openEditor(file))
     {
-        JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
-        editor->selectNode(nodeId);
+        if(m_editor->type() == Editor_script)
+        {
+            JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
+            editor->selectNode(nodeId);
+        }
+        else if(m_editor->type() == Editor_param)
+        {
+            
+        }
     }
 }
 
-void MainWindow::onProjectChanged()
-{
+void MainWindow::onProjectChanged(JZProjectItem *item)
+{   
+    m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
+
+    //editor
     auto it = m_editors.begin();
     while (it != m_editors.end())
     {
@@ -1274,7 +1301,7 @@ void MainWindow::updateAutoWatch(int stack_index)
         coor.name = local.name;
         param_info.coors << coor;
     }
-    
+
     int node_prop_index = param_info.coors.size();
     const auto &node_info = func_debug->nodeInfo[stack.nodeId];
     for (int i = 0; i < node_info.paramIn.size(); i++)
@@ -1282,7 +1309,7 @@ void MainWindow::updateAutoWatch(int stack_index)
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Id;
         coor.name = node_info.paramIn[i].define.name;
-        coor.id = node_info.paramIn[i].id;
+        coor.id = JZNodeCompiler::paramId(node_info.id,node_info.paramIn[i].id);
         param_info.coors << coor;
     }
     for (int i = 0; i < node_info.paramOut.size(); i++)
@@ -1290,7 +1317,7 @@ void MainWindow::updateAutoWatch(int stack_index)
         JZNodeParamCoor coor;
         coor.type = JZNodeParamCoor::Id;
         coor.name = node_info.paramOut[i].define.name;
-        coor.id = node_info.paramOut[i].id;
+        coor.id = JZNodeCompiler::paramId(node_info.id,node_info.paramOut[i].id);
         param_info.coors << coor;
     }
 

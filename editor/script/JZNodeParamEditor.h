@@ -71,6 +71,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent *e) override;
 
     void updateItem(int row,const JZParamDefine *define);
+    void updateUiItem(int row,const JZParamDefine *define);
     void addNewCommand(QString name, QString type);
     void addRemoveCommand(QString name);
     void addRenameCommand(QString oldName,QString newName);

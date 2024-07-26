@@ -22,7 +22,7 @@ void TestServer::init(JZProject *project)
     m_project = project;    
     m_project->newProject(dirpath, "test", "console");
 
-    JZScriptClassItem *class_file = m_project->mainFile()->addClass("TestClass", "Object");
+    JZScriptClassItem *class_file = m_project->mainFile()->addClass("TestClass", "QObject");
     class_file->addMemberVariable("timer", Type_timer);
 
     m_project->addGlobalVariable("t", "TestClass");
@@ -80,7 +80,7 @@ void TestServer::addInitFunction()
     script->addNode(node_timeout);
     script->addNode(node_slot);
 
-    node_timeout->setFucntion("Timer.timeout");
+    node_timeout->setFucntion("QTimer.timeout");
     node_slot->setFucntion("TestClass.onTimer");
 
     script->addConnect(start_timer->flowOutGemo(0), node_connect->flowInGemo());

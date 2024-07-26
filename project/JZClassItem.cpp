@@ -42,7 +42,7 @@ void JZScriptClassItem::setClass(QString className, QString super)
 {
     m_name = className;    
     m_super = super;
-    regist();
+    itemChangedNotify();
 }
 
 QString JZScriptClassItem::className() const
@@ -53,7 +53,7 @@ QString JZScriptClassItem::className() const
 void JZScriptClassItem::setUiFile(QString uiFile)
 {
     m_uiFile = uiFile;
-    regist();
+    itemChangedNotify();
 }
 
 QString JZScriptClassItem::uiFile() const
@@ -83,24 +83,24 @@ bool JZScriptClassItem::addMemberVariable(QString name,int dataType,const QStrin
 
 bool JZScriptClassItem::addMemberVariable(QString name, QString dataType, const QString &v)
 {
-    getParamFile()->addVariable(name, dataType, v);    
+    paramFile()->addVariable(name, dataType, v);    
     return true;
 }
 
 bool JZScriptClassItem::addMemberVariable(JZParamDefine param)
 {
-    getParamFile()->addVariable(param);
+    paramFile()->addVariable(param);
     return true;
 }
 
 void JZScriptClassItem::removeMemberVariable(QString name)
 {
-    getParamFile()->removeVariable(name);       
+    paramFile()->removeVariable(name);       
 }
 
 QStringList JZScriptClassItem::memberVariableList(bool hasUi)
 {
-    QStringList list = getParamFile()->variableList();
+    QStringList list = paramFile()->variableList();
     if (hasUi && !m_uiFile.isEmpty())
     {
         auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
@@ -117,7 +117,7 @@ QStringList JZScriptClassItem::memberVariableList(bool hasUi)
 
 const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
 {
-    auto def = getParamFile()->variable(name);
+    auto def = paramFile()->variable(name);
     if (def)
         return def;
 
@@ -181,7 +181,7 @@ QList<JZParamDefine> JZScriptClassItem::uiWidgets()
     return list;
 }
 
-JZParamItem *JZScriptClassItem::getParamFile()
+JZParamItem *JZScriptClassItem::paramFile()
 {
     for(int i = 0; i < m_childs.size(); i++)
     {

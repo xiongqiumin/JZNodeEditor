@@ -111,6 +111,7 @@ void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QShare
         define.name = name_list[1];
     }
     define.updateParam(cfunc.data());
+    define.isFlowFunction = isFlow;
     define.isCFunction = true;
     registCFunction(define, cfunc);       
 }
@@ -157,7 +158,8 @@ void JZNodeFunctionManager::registFunction(const JZFunctionDefine &define)
 }
 
 void JZNodeFunctionManager::replaceFunction(const JZFunctionDefine &define)
-{
+{   
+    Q_ASSERT(m_funcDefine.contains(define.name));
     m_funcDefine[define.fullName()] = define;
 }
 

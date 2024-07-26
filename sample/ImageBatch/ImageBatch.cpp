@@ -52,7 +52,7 @@ void SampleImageBatch::addEvent()
         func_clicked->setSingle(btn_meta->single("clicked"));
         func_clicked->setVariable(btn_name);
         func_open_dialog->setFunction("FileDialog.getExistingDirectory");
-        func_isEmpty->setFunction("string.isEmpty");
+        func_isEmpty->setFunction("QString.isEmpty");
         param_line->setVariable(line_name);
         set_text->setFunction("LineEdit.setText");
 
@@ -98,8 +98,8 @@ void SampleImageBatch::addEvent()
     func_deal->setFunction("MainWindow.processDir");
     lineInput_text->setFunction("LineEdit.text");
     lineOutput_text->setFunction("LineEdit.text");
-    input_empty->setFunction("string.isEmpty");
-    output_empty->setFunction("string.isEmpty");
+    input_empty->setFunction("QString.isEmpty");
+    output_empty->setFunction("QString.isEmpty");
     input_exist->setFunction("File.exists");
     output_exist->setFunction("File.exists");
     flow_srcipt->addNode(deal_clicked);
@@ -226,9 +226,9 @@ void SampleImageBatch::addProcessGetImage()
     define_dir.isFlowFunction = true;
     define_dir.paramIn.push_back(JZParamDefine("this", "MainWindow"));
     define_dir.paramIn.push_back(JZParamDefine("inputDir", Type_string));
-    define_dir.paramIn.push_back(JZParamDefine("outList","StringList"));
+    define_dir.paramIn.push_back(JZParamDefine("outList","QStringList"));
     auto script = class_file->addMemberFunction(define_dir);    
-    script->addLocalVariable(JZParamDefine("list", "StringList"));
+    script->addLocalVariable(JZParamDefine("list", "QStringList"));
     script->addLocalVariable(JZParamDefine("in", Type_string));
 
     auto node_start = script->getNode(0);
@@ -253,10 +253,10 @@ void SampleImageBatch::addProcessGetImage()
     create_dir->setFunction("Dir.create");
     entry_info->setFunction("Dir.entryList");
     fileinfo_isFile->setFunction("FileInfo.isFile");
-    outlist_push->setFunction("StringList.push_back");
+    outlist_push->setFunction("QStringList.push_back");
     dir_process->setFunction("MainWindow.walkDir");    
-    list_at->setFunction("StringList.get");
-    list_size->setFunction("StringList.size");
+    list_at->setFunction("QStringList.get");
+    list_size->setFunction("QStringList.size");
     fileinfo_create->setFunction("FileInfo.create");
     out_list->setVariable("outList");
 
@@ -336,7 +336,7 @@ void SampleImageBatch::addProcessDir()
     define_dir.paramIn.push_back(JZParamDefine("outputDir", Type_string));
     define_dir.isFlowFunction = true;
     auto script = class_file->addMemberFunction(define_dir);
-    script->addLocalVariable(JZParamDefine("list", "StringList"));
+    script->addLocalVariable(JZParamDefine("list", "QStringList"));
     script->addLocalVariable(JZParamDefine("in", Type_string));
     script->addLocalVariable(JZParamDefine("out", Type_string));    
     script->addLocalVariable(JZParamDefine("out_dir", Type_string));
@@ -363,9 +363,9 @@ void SampleImageBatch::addProcessDir()
     file_process->setFunction("MainWindow.processImage");    
     image_load->setFunction("Image.create");
     image_save->setFunction("Image.save");    
-    list_at->setFunction("StringList.get");
-    list_size->setFunction("StringList.size");    
-    list_create->setFunction("StringList.create");
+    list_at->setFunction("QStringList.get");
+    list_size->setFunction("QStringList.size");    
+    list_create->setFunction("QStringList.create");
     
     in_dir->setVariable("inputDir");
     out_dir->setVariable("outputDir");
@@ -396,7 +396,7 @@ void SampleImageBatch::addProcessDir()
     JZNodeFunction *str_replace = new JZNodeFunction();
     JZNodeFunction *walk_dir = new JZNodeFunction();    
     walk_dir->setFunction("MainWindow.walkDir");
-    str_replace->setFunction("string.replace");
+    str_replace->setFunction("QString.replace");
     script->addNode(walk_dir);
     script->addNode(str_replace);
     script->addNode(list_create);

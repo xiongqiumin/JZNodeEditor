@@ -347,6 +347,7 @@ JZNodeCompiler::JZNodeCompiler()
     m_builder = nullptr;
 
     m_buildGraph = GraphPtr(new Graph());
+    m_ignoreError = "#IGNORE_ERROR#";
 }
 
 JZNodeCompiler::~JZNodeCompiler()
@@ -479,12 +480,21 @@ bool JZNodeCompiler::checkFunction()
                 if(i != j && list[i] == list[j])
                 {
                     check_error = list[i] + "重定义";
-                    return false;
+                    goto check_end;
                 }
+            }
+
+            auto def = m_scriptFile->localVariable(list[i]);
+            QString error;
+            if(!checkVariable(def,error))
+            {
+                check_error = error;
+                goto check_end;
             }
         }
     }
 
+check_end:
     if(!check_error.isEmpty())
     {
         NodeCompilerInfo info;
@@ -993,29 +1003,21 @@ bool JZNodeCompiler::isPinLiteral(int nodeId, int pinId)
     }
 }
 
-void JZNodeCompiler::setPinLiteral(int node_id, int pin_id,const QVariant &v)
-{
-    Q_ASSERT(m_originGraph->pin(node_id,pin_id));
-    m_nodeInfo[node_id].pinLiteral[pin_id] = v;
-}
-
-QVariant JZNodeCompiler::pinLiteral(int nodeId, int pinId)
+QString JZNodeCompiler::pinLiteral(int nodeId, int pinId)
 {
     int data_type = pinType(nodeId, pinId);
     if (m_buildGraph->graphNode(nodeId)->paramIn.contains(pinId))
     {
         auto it = m_buildGraph->graphNode(nodeId)->paramIn.find(pinId);
         if(it->size() != 1)
-            return false;
+            return QString();
 
         auto in_gemo = it->at(0);
-        Q_ASSERT(m_nodeInfo[in_gemo.nodeId].pinLiteral.contains(in_gemo.pinId));
-        return m_nodeInfo[in_gemo.nodeId].pinLiteral[in_gemo.pinId];
+        return m_scriptFile->getNode(in_gemo.nodeId)->pinValue(in_gemo.pinId);
     }
     else
     {
-        QString value = m_buildGraph->node(nodeId)->pinValue(pinId);
-        return JZNodeType::initValue(data_type, value);
+        return m_buildGraph->node(nodeId)->pinValue(pinId);
     }
 }
 
@@ -1058,8 +1060,12 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
         }        
     }
     else
-        currentNodeInfo()->error = error;
-            
+    {
+        Q_ASSERT(!error.isEmpty());
+        if(error != m_ignoreError)
+            currentNodeInfo()->error = error;
+    }
+
     popCompilerNode();
 
     return ret;
@@ -1246,8 +1252,9 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
         auto node = m_scriptFile->getNode(it->node_id);
 
         NodeInfo info;
-        info.node_id = it->node_id;
-        info.node_type = it->node_type;
+        info.name = node->name();
+        info.id = it->node_id;
+        info.type = it->node_type;
         info.isFlow = node->isFlowNode();
         info.pcRanges << it->ranges;
 
@@ -1260,7 +1267,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
             NodeParamInfo param_info;
             param_info.define.name = node->pin(in_list[i])->name();
             param_info.define.dataType = pinType(node->id(), in_list[i]);
-            param_info.id = paramId(node->id(), in_list[i]);
+            param_info.id = in_list[i];
             info.paramIn.push_back(param_info);
         }
 
@@ -1273,7 +1280,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
             NodeParamInfo param_info;
             param_info.define.name = node->pin(out_list[i])->name();
             param_info.define.dataType = pinType(node->id(), out_list[i]);
-            param_info.id = paramId(node->id(), out_list[i]);
+            param_info.id = out_list[i];
             info.paramOut.push_back(param_info);
         }
         func_debug.nodeInfo[it.key()] = info;
@@ -1897,7 +1904,7 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
         auto param = m_scriptFile->localVariable(list[i]);                
         addAlloc(JZNodeIRAlloc::Stack, param->name,param->dataType());
         if(!param->value.isEmpty())
-            addSetVariable(irRef(param->name),irLiteral(JZNodeType::initValue(param->dataType(), param->value)));
+            addInitVariable(irRef(param->name),param->dataType(), param->value);
     }
 
     addStatement(JZNodeIRPtr(new JZNodeIRStackInit()));
@@ -1981,27 +1988,24 @@ bool JZNodeCompiler::checkVariableExist(const QString &name,QString &error)
         error = "no such element " + name;
         return false;
     }
-    if (info->dataType() == Type_none)
-    {
-        error = name + " param define is out of date";
-        return false;
-    }
 
     return true;
 }
 
-bool JZNodeCompiler::checkVariableType(const QString &name,const QString &className,QString &error)
+bool JZNodeCompiler::checkVariable(const JZParamDefine *def,QString &error)
 {        
-    if(!checkVariableExist(name,error))
-        return false;
-
-    auto info = getVariableInfo(name);
-    int needType = JZNodeObjectManager::instance()->getClassId(className);
-    if(!JZNodeType::isInherits(info->dataType(),needType))
+    if (def->dataType() == Type_none)
     {
-        error = name + " is not " + className;
+        error = "no such type " + def->type;
         return false;
     }
+
+    if(!JZNodeType::canInitValue(def->dataType(),def->value))
+    {
+        error = "无法初始化" + def->type + ", value = " + def->value;
+        return false;
+    }
+    
     return true;    
 }
 
@@ -2079,19 +2083,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
                 else
                 {
                     int match_type = pinType(nodeId,in_prop);
-                    auto v = JZNodeType::initValue(match_type, pin->value());
-                    if (!v.isValid())
-                    {
-                        error = "无效的输入:" + pin->value() + ",需要" + JZNodeType::typeToName(match_type);
-                        return false;
-                    }
-                    if (JZNodeType::variantType(v) == Type_any)
-                    {
-                        auto any = v.value<JZNodeVariantAny>();
-                        addSetVariableConvert(irId(to_id),irLiteral(any.value));
-                    }
-                    else
-                        addSetVariable(irId(to_id), irLiteral(v));
+                    addInitVariable(irId(to_id),match_type,pin->value());
                 }
             }
         }
@@ -2181,7 +2173,10 @@ bool JZNodeCompiler::addFlowInput(int nodeId, int prop_id, QString &error)
             graph_list.push_back(node);
     }
     if (!buildDataFlow(graph_list))
+    {
+        error = m_ignoreError;
         return false;
+    }
     if (!addDataInput(nodeId, prop_id, error))
         return false;
 
@@ -2265,6 +2260,14 @@ int JZNodeCompiler::addExpr(const JZNodeIRParam &dst,const JZNodeIRParam &p1,con
     JZNodeIRExpr *expr = new JZNodeIRExpr(op);
     expr->src1 = p1;
     expr->src2 = p2;
+    expr->dst = dst;
+    return addStatement(JZNodeIRPtr(expr));
+}
+
+int JZNodeCompiler::addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1,int op)
+{
+    JZNodeIRExpr *expr = new JZNodeIRExpr(op);
+    expr->src1 = p1;
     expr->dst = dst;
     return addStatement(JZNodeIRPtr(expr));
 }
@@ -2386,22 +2389,52 @@ void JZNodeCompiler::addWatchDisplay(const JZNodeIRParam &dst)
     }
 }
 
+void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value)
+{
+    if(dataType < Type_class)
+        addSetVariable(dst,irLiteral(JZNodeType::initValue(dataType,value)));
+    else
+    {   
+        if(value == "null")
+            addSetVariable(dst,irLiteral(JZNodeType::defaultValue(Type_nullptr)));
+        else if(value.startsWith("{") && value.endsWith("}"))
+        {
+            QString init_text = value.mid(1,value.size() - 2);
+            QList<JZNodeIRParam> in,out;
+            if(init_text.isEmpty())
+            {
+                in << irLiteral(JZNodeType::typeToName(dataType));
+                out << dst;
+                addCall("CreateObject",in,out);
+            }
+            else
+            {
+                in << irLiteral(init_text);
+                out << dst;
+
+                auto meta = JZNodeObjectManager::instance()->meta(dataType);
+                auto func = meta->function("__fromString__");
+                addCall(func,in,out);
+            }
+        }
+    }
+}
+
 void JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src)
 {
     Q_ASSERT(irParamTypeMatch(src,dst,true));
-    if(dst.isId() && dst.id() < Stack_User && src.isLiteral())
-    {
-        auto gemo = paramGemo(dst.id());
-        setPinLiteral(gemo.nodeId,gemo.pinId, src.value);
-    }
-    
     bool clone = false;
     int dst_type = irParamType(dst);
     if(dst_type >= Type_class)
     {
         auto meta = JZNodeObjectManager::instance()->meta(dst_type);
         if(meta->isValueType())
-            clone = true;
+        {
+            if(dst.isReg() && (dst.id() != Reg_CallIn || !m_regCallFunction->isMemberFunction()))
+                clone = true;
+            if(dst.isRef())
+                clone = true;
+        }
     }
     if(!clone)
     {

@@ -43,22 +43,24 @@ public:
     JZProjectItem *parent();
     JZScriptClassItem *getClassFile();
     
-    void addItem(QSharedPointer<JZProjectItem> child);
-    void removeItem(int index);    
     JZProjectItem *getItem(QString name);     
     bool hasItem(QString name);
     int indexOfItem(JZProjectItem *item);
     QList<JZProjectItem *> childs();
-    void removeChlids();
 
     void sort();
     QList<JZProjectItem *> itemList(int type);
     QList<JZProjectItem *> itemList(QList<int> type);
     
 protected:
+    friend JZProject;
+    
     Q_DISABLE_COPY(JZProjectItem)
 
-    void regist();
+    void addItem(QSharedPointer<JZProjectItem> child);
+    void removeItem(int index);    
+    void removeChlids();
+    void itemChangedNotify();
 
     JZProjectItem *m_parent;
     QList<QSharedPointer<JZProjectItem>> m_childs;

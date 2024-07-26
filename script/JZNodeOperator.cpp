@@ -453,6 +453,6 @@ bool JZNodeNot::compiler(JZNodeCompiler *c, QString &error)
 
     int id_in = c->paramId(m_id, paramIn(0));
     int id_out = c->paramId(m_id, paramOut(0));
-    c->addExpr(irId(id_out), irId(id_in), irLiteral(0), OP_not);
+    c->addSingleExpr(irId(id_out), irId(id_in), OP_not);
     return true;
 }

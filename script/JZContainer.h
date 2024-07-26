@@ -5,6 +5,14 @@
 #include <QVariant>
 #include "JZNodeObject.h"
 
+class TemplateInfo
+{
+public:
+    QString name;
+    QStringList args;
+    QString error;
+};
+
 //JZList
 class JZList
 {
@@ -46,8 +54,9 @@ public:
     QMap<JZMap::Key,QVariant>::Iterator it;
 };
 
+TemplateInfo parseTemplate(QString type);
+bool checkContainer(QString type,QString &error);
 void registContainer(QString type,int type_id = -1);
-
 
 
 #endif

@@ -214,7 +214,7 @@ void BenchmarkTest::testCall()
     list->list << 1 << 2 << 3 << 4 << 5;
     JZNodeObjectPtr ptr(obj,true);
 
-    auto list_func = JZNodeFunctionManager::instance()->functionImpl("List<int>.get");
+    auto list_func = JZNodeFunctionManager::instance()->functionImpl("QList<int>.get");
     JZBENCHMARK(jz_list_get)
     {
         QVariantList in,out;
@@ -256,13 +256,13 @@ void BenchmarkTest::testSort()
     JZNodeFor *for_j = new JZNodeFor();
 
     JZNodeFunction *list_size = new JZNodeFunction();
-    list_size->setFunction("List<int>.size");
+    list_size->setFunction("QList<int>.size");
 
     JZNodeFunction *list_getI = new JZNodeFunction();
-    list_getI->setFunction("List<int>.get");
+    list_getI->setFunction("QList<int>.get");
 
     JZNodeFunction *list_getJ = new JZNodeFunction();
-    list_getJ->setFunction("List<int>.get");
+    list_getJ->setFunction("QList<int>.get");
 
     JZNodeAdd *add = new JZNodeAdd();
 
@@ -279,8 +279,8 @@ void BenchmarkTest::testSort()
     JZNodeFunction *set_i = new JZNodeFunction();
     JZNodeFunction *set_j = new JZNodeFunction();
     set_tmp->setVariable("tmp");
-    set_i->setFunction("List<int>.set");
-    set_j->setFunction("List<int>.set");
+    set_i->setFunction("QList<int>.set");
+    set_j->setFunction("QList<int>.set");
 
     script->addNode(for_i);
     script->addNode(for_j);

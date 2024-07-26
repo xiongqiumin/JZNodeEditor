@@ -36,7 +36,7 @@ void JZNodeParamBindEditDialog::init(JZScriptClassItem *item, QString variable)
     for (int i = 0; i < list.size(); i++)
     { 
         auto def = item->memberVariable(list[i],true);
-        if (!JZNodeType::isInherits(def->type, "Widget"))
+        if (!JZNodeType::isInherits(def->type, "QWidget"))
             continue;
 
         /*

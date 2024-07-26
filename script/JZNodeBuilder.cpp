@@ -4,6 +4,8 @@
 #include "JZUiFile.h"
 #include "JZClassItem.h"
 #include "LogManager.h"
+#include "JZNodeUtils.h"
+#include "JZContainer.h"
 
 enum {
     build_global,
@@ -71,7 +73,7 @@ void JZNodeBuilder::clear()
 bool JZNodeBuilder::initGlobal()
 {            
     // init variable
-    auto func = [this](JZNodeCompiler *c, QString&)->bool{
+    auto func = [this](JZNodeCompiler *c, QString &ret_error)->bool{
         auto global_params = m_project->globalVariableList();
         for(int i = 0; i < global_params.size(); i++)
         {
@@ -79,19 +81,10 @@ bool JZNodeBuilder::initGlobal()
             c->addAlloc(JZNodeIRAlloc::Heap, def->name, def->dataType());
             if(!def->value.isEmpty())
             {
-                if(!JZNodeType::isObject(def->dataType()))
-                    c->addSetVariable(irRef(def->name),irLiteral(JZNodeType::initValue(def->dataType(),def->value)));
-                else
-                {
-                    QString function = def->type + ".__fromString__";
-                    QList<JZNodeIRParam> in,out;
-                    in << irLiteral(def->value);
-                    out << irRef(def->name);
-                    c->addCall(function,in,out);
-                }
+                m_compiler.addInitVariable(irRef(def->name),def->dataType(),def->value);
             }
         }
-        return true;
+        return ret_error.isEmpty();
     };
 
     JZFunctionDefine global_func;
@@ -131,7 +124,6 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
     if(!ret)
     {
         m_error += m_compiler.error();
-        LOGE(Log_Compiler, m_compiler.error());
         return false;
     }
 
@@ -140,6 +132,7 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
 
 bool JZNodeBuilder::build(JZNodeProgram *program)
 {    
+    Q_ASSERT(JZProject::active() == m_project);
     {
         QMutexLocker locker(&m_mutex);
         m_build = true;
@@ -156,38 +149,57 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     m_program = program;        
     m_program->clear();    
     
+    JZNodeTypeMeta type_meta;
+    auto container_list = m_project->containerList();
+    for(int i = 0; i < container_list.size(); i++)
+    {
+        QString error;
+        if(!checkContainer(container_list[i],error))
+            m_error += error + "\n";
+        else
+        {
+            auto meta = JZNodeObjectManager::instance()->meta(container_list[i]);
+            Q_ASSERT_X(meta,"Error container:",qUtf8Printable(container_list[i]));
+
+            JZNodeCObjectDelcare cobj;
+            cobj.className = meta->className;
+            cobj.id = meta->id;
+            type_meta.cobjectList << cobj;
+        }
+    }
+
+    auto global_item = m_project->globalDefine();
     auto list = m_project->globalVariableList();
     for(int i = 0; i < list.size(); i++)
     {
         QString name = list[i];
-        m_program->m_variables[name] = *m_project->globalVariable(name);
+        auto def = m_project->globalVariable(name);
+        m_program->m_variables[name] = *def;
+
+        QString error;
+        if(!m_compiler.checkVariable(def,error))
+            m_error += makeLink(error,global_item->path(), i);
     }
     
-    JZNodeTypeMeta type_meta;
     auto class_list = m_project->itemList("./",ProjectItem_class);
-    for(int i = 0; i < class_list.size(); i++)
+    for(int cls_idx = 0; cls_idx < class_list.size(); cls_idx++)
     {
-        JZScriptClassItem *script = dynamic_cast<JZScriptClassItem*>(class_list[i]);        
-        type_meta.objectList << script->objectDefine();
+        JZScriptClassItem *class_item = dynamic_cast<JZScriptClassItem*>(class_list[cls_idx]);
+        auto obj_def = class_item->objectDefine();        
+        type_meta.objectList << obj_def;
                 
-        auto params = script->itemList(ProjectItem_param);
-        Q_ASSERT(params.size() == 0 || params.size() == 1);
-        if(params.size() == 1)
+        JZParamItem *param = class_item->paramFile();
+        auto var_list = param->variableList();
+        for(int i = 0; i < var_list.size(); i++)
         {
-            auto param = dynamic_cast<JZParamItem*>(params[0]);
-            m_program->m_binds[script->className()] = param->bindVariables();
+            auto var_def = param->variable(var_list[i]);
+            QString error;
+            if(!m_compiler.checkVariable(var_def,error))
+                m_error += makeLink(error,param->itemPath(),i);
         }
     }
-
-    auto container_list = m_project->containerList();
-    for(int i = 0; i < container_list.size(); i++)
-    {
-        auto meta = JZNodeObjectManager::instance()->meta(container_list[i]);
-        JZNodeCObjectDelcare cobj;
-        cobj.className = meta->className;
-        cobj.id = meta->id;
-        type_meta.cobjectList << cobj;
-    }
+    if(!m_error.isEmpty())
+        return false;
 
     auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);
     for(int i = 0; i < bind_list.size(); i++)
@@ -208,7 +220,6 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         if(!func_def.isMemberFunction())
             type_meta.functionList << func_def;        
     }
-
     type_meta.moduleList = m_project->moduleList();
 
     m_program->m_typeMeta = type_meta;
@@ -270,10 +281,7 @@ bool JZNodeBuilder::isBuildInterrupt()
 bool JZNodeBuilder::link()
 {    
     if(!initGlobal())
-    {   
-        m_error = "initGlobal failed";
         return false;
-    }
 
     auto it_s = m_scripts.begin();
     while (it_s != m_scripts.end())

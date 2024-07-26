@@ -83,7 +83,7 @@ JZNodeParamTypeWidget::JZNodeParamTypeWidget(QWidget *parent)
     setEditable(true);
     
     QStringList type_list;
-    type_list << "bool" << "int" << "double" << "string";
+    type_list << "bool" << "int" << "double" << "QString";
     type_list << JZNodeObjectManager::instance()->getClassList();
     type_list << JZNodeObjectManager::instance()->getEnumList();
     addItems(type_list);    
@@ -180,6 +180,8 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
     QString type;
     if (data_type == Type_bool)
         type = "QComboBox";
+    else if(data_type == Type_hookEnable)
+        type = "QCheckBox";
     else if (JZNodeType::isEnum(data_type))
     {
         auto meta = JZNodeObjectManager::instance()->enumMeta(data_type);
@@ -187,7 +189,7 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
             type = "JZNodeFlagEditWidget";
         else
             type = "QComboBox";         
-    }    
+    }
     else
     {
         type = "QLineEdit";        

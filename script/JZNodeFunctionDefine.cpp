@@ -85,7 +85,7 @@ BuiltInFunction::~BuiltInFunction()
 JZFunctionDefine::JZFunctionDefine()
 {
     isCFunction = false;
-    isFlowFunction = false;    
+    isFlowFunction = true;    
     isVirtualFunction = false;
     isProtected = false;  
     isSlot = false;
@@ -212,52 +212,42 @@ QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param)
     return s;
 }
 
-//CSingle
-CSingle::CSingle()
+//CSignal
+CSignal::CSignal()
 {    
 }
 
-CSingle::~CSingle()
+CSignal::~CSignal()
 {
 
 }
 
-//JZSingleDefine
-JZSingleDefine::JZSingleDefine()
+//JZSignalDefine
+JZSignalDefine::JZSignalDefine()
 {
-    csingle = nullptr;
+    csignal = nullptr;
 }
 
-QString JZSingleDefine::fullName() const
+QString JZSignalDefine::fullName() const
 {
     return className + "." + name;
 }
 
-QString JZSingleDefine::delcare() const
+bool JZSignalDefine::isCSignal() const
 {
-    QString text;
-    QStringList out_list;
-    for(int i = 0; i < paramOut.size(); i++)
-        out_list << paramOut[i].type;
-    text += "void " + fullName() + "(" + out_list.join(",") + ")";
-    return text;
+    return (csignal != nullptr);
 }
 
-bool JZSingleDefine::isCSingle() const
+QDataStream &operator<<(QDataStream &s, const JZSignalDefine &param)
 {
-    return (csingle != nullptr);
-}
-
-QDataStream &operator<<(QDataStream &s, const JZSingleDefine &param)
-{
-    Q_ASSERT(!param.isCSingle());
+    Q_ASSERT(!param.isCSignal());
     s << param.name;
     s << param.className;
     s << param.paramOut;
     return s;
 }
 
-QDataStream &operator>>(QDataStream &s, JZSingleDefine &param)
+QDataStream &operator>>(QDataStream &s, JZSignalDefine &param)
 {
     s >> param.name;
     s >> param.className;

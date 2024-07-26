@@ -300,7 +300,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
 
     if (type == "{")
     {
-        auto map = readMap("string","any");
+        auto map = readMap("QString","any");
         if(map)
             return inst->createRefrence(map->type(),map,true);
         return nullptr;
@@ -326,19 +326,22 @@ JZNodeObject *JZNodeObjectParser::readObject()
         makeExpectError("{", nextToken().word);
         return nullptr;
     }
-    if(type.startsWith("List<"))
+
+    QString list_pre = "QList<";
+    QString map_pre = "QMap<";
+    if(type.startsWith(list_pre))
     {
         int end_idx = type.lastIndexOf(">");
-        QString value_type = type.mid(5,end_idx - 5);
+        QString value_type = type.mid(list_pre.size(),end_idx - list_pre.size());
         auto list = readList(value_type,"{");
         if(list)
             return inst->createRefrence(list->type(),list,true);
         return nullptr;
     }
-    else if(type.startsWith("Map<"))
+    else if(type.startsWith(map_pre))
     {
         int end_idx = type.lastIndexOf(">");
-        QStringList type_list = type.mid(4,end_idx - 4).split(",");
+        QStringList type_list = type.mid(map_pre.size(),end_idx - map_pre.size()).split(",");
         QString key_type = type_list[0];
         QString value_type = type_list[1];
         auto map = readMap(key_type,value_type);
@@ -366,7 +369,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
     {
         JZNodeObject *obj = JZNodeObjectManager::instance()->create(meta->id);
         QScopedPointer<JZNodeObject> ptr(obj);
-        QScopedPointer<JZMap> map(readMap("string","any"));        
+        QScopedPointer<JZMap> map(readMap("QString","any"));        
         if (!map)
             return nullptr;
 
@@ -555,7 +558,7 @@ QString JZNodeObjectFormat::variantToString(const QVariant &v)
 QString JZNodeObjectFormat::listToString(const JZList *list)
 {
     QString context;
-    if(list->type() != "Map<string,any>")
+    if(list->type() != "QMap<string,any>")
         context = list->type() + "{";
     else
         context = "[";
@@ -565,7 +568,7 @@ QString JZNodeObjectFormat::listToString(const JZList *list)
         if (i != list->list.size() - 1)
             context += ",";
     }
-    if(list->type() != "Map<string,any>")
+    if(list->type() != "QMap<string,any>")
         context += "}";
     else
         context += "]";
@@ -576,7 +579,7 @@ QString JZNodeObjectFormat::listToString(const JZList *list)
 QString JZNodeObjectFormat::mapToString(const JZMap *map)
 {
     QString context;
-    if(map->type() != "Map<string,any>")
+    if(map->type() != "QMap<string,any>")
         context += map->type();
 
     context += "{";

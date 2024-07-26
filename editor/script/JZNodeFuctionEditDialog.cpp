@@ -115,6 +115,12 @@ void JZNodeFuctionEditDialog::on_btnOk_clicked()
 {
     uiToData();
 
+    if (!m_functionDefine.isFlowFunction && m_functionDefine.paramOut.size() == 0)
+    {
+        QMessageBox::information(this, "", "纯函数应当具有返回值");
+        return;
+    }
+
     if (m_newFunction)
     {
         auto func = JZNodeFunctionManager::instance()->function(m_functionDefine.fullName());

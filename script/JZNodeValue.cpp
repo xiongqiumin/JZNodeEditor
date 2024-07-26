@@ -8,6 +8,8 @@
 #include "JZClassItem.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeParamWidget.h"
+#include "JZNodeFunction.h"
+#include "JZNodeUtils.h"
 
 //JZNodeLiteral
 JZNodeLiteral::JZNodeLiteral()
@@ -272,7 +274,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     if(!c->addDataInput(m_id,error))
         return false;
 
-    QString class_type = c->pinLiteral(m_id,paramIn(0)).toString();    
+    QString class_type = c->pinLiteral(m_id,paramIn(0));    
     int out_id = c->paramId(m_id,paramOut(0));
     JZNodeIRParam irIn = irLiteral(class_type);
     JZNodeIRParam irOut = irId(out_id);
@@ -287,7 +289,10 @@ void JZNodeCreate::onPinChanged(int id)
     if(id == paramIn(0))
     {
         int type = JZNodeObjectManager::instance()->getClassId(className());
-        setPinType(paramOut(0),{type});
+        if(type != Type_none)
+            setPinType(paramOut(0),{type});
+        else
+            clearPinType(paramOut(0));
     }
 }
 
@@ -1083,9 +1088,12 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
             return swap_param;
         else if (node->type() == Node_function)
         {
-            if (node->name() == "List.get")
+            JZNodeFunction *node_func = dynamic_cast<JZNodeFunction*>(node);
+            auto func_info = jzSplitMember(node_func->function());
+
+            if (func_info.className.startsWith("QList<") && func_info.name == "get")
                 return swap_list;
-            else if (node->name() == "Map.get")
+            else if (func_info.className.startsWith("QMap<") && func_info.name == "get")
                 return swap_param;
         }
         return swap_none;
@@ -1103,19 +1111,15 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
             }
             else
             {
+                JZNodeFunction *node_func = dynamic_cast<JZNodeFunction*>(node);
+                auto func_info = jzSplitMember(node_func->function());
+
                 QList<JZNodeIRParam> in;
                 QList<JZNodeIRParam> out;
                 in << irId(c->paramId(node->id(), node->paramIn(0)));
                 in << irId(c->paramId(node->id(), node->paramIn(1)));
                 in << irId(id);
-                if (type == swap_list)
-                {
-                    c->addCall("List.set", in, out);
-                }
-                else if (type == swap_map)
-                {
-                    c->addCall("Map.set", in, out);
-                }
+                c->addCall(func_info.className + ".set", in, out);
             }
         }
         return swap_none;

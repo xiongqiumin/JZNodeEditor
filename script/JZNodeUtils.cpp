@@ -3,6 +3,17 @@
 #include <QDateTime>
 #include <QDebug>
 
+MemberInfo jzSplitMember(QString fullName)
+{
+    MemberInfo info;
+    QStringList list = fullName.split(".");
+    if (list.size() > 1)
+        info.className = list[0];
+    
+    info.name = list.back();
+    return info;
+}
+
 QString makeLink(QString tips, QString filename, int nodeId)
 {
     QString href = filename + "?id=" + QString::number(nodeId);

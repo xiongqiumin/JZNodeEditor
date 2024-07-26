@@ -119,17 +119,11 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     
     if(cmd == Cmd_init)
     {
-        m_debugInfo = netDataUnPack<JZNodeDebugInfo>(params[0].toByteArray());                                               
+        m_debugInfo = netDataUnPack<JZNodeDebugInfo>(params[0]);                                               
         for (int i = 0; i < m_debugInfo.breakPoints.size(); i++)
         {
-            auto it = m_debugInfo.breakPoints.begin();
-            while (it != m_debugInfo.breakPoints.end())
-            {
-                auto &break_list = it.value();
-                for(int bk_idx = 0; bk_idx < break_list.size(); bk_idx++)
-                    m_engine->addBreakPoint(it.key(), break_list[bk_idx]);
-                it++;
-            }
+            auto &pt = m_debugInfo.breakPoints[i];
+            m_engine->addBreakPoint(pt);
         }
 
         JZNodeProgramInfo info;
@@ -138,7 +132,10 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         m_init = true;
     }
     else if(cmd == Cmd_addBreakPoint)
-        m_engine->addBreakPoint(params[0].toString(),params[1].toInt());
+    {
+        auto pt = netDataUnPack<BreakPoint>(params[0]);
+        m_engine->addBreakPoint(pt);
+    }
     else if(cmd == Cmd_removeBreakPoint)    
         m_engine->removeBreakPoint(params[0].toString(),params[1].toInt());
     else if(cmd == Cmd_clearBreakPoint)
@@ -159,12 +156,12 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         result << netDataPack(m_engine->runtimeInfo());    
     else if (cmd == Cmd_getVariable)
     {
-        JZNodeGetDebugParam info = netDataUnPack<JZNodeGetDebugParam>(params[0].toByteArray());        
+        JZNodeGetDebugParam info = netDataUnPack<JZNodeGetDebugParam>(params[0]);        
         result << getVariable(info);
     }
     else if (cmd == Cmd_setVariable)
     {
-        JZNodeSetDebugParam info = netDataUnPack<JZNodeSetDebugParam>(params[0].toByteArray());
+        JZNodeSetDebugParam info = netDataUnPack<JZNodeSetDebugParam>(params[0]);
         result << setVariable(info);
     }
 

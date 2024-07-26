@@ -214,7 +214,7 @@ JZNodeParamEditor::JZNodeParamEditor()
 
     m_table = ui->tableWidget;    
     m_table->setColumnCount(3);
-    m_table->setHorizontalHeaderLabels({"名称","类型","默认值"});
+    m_table->setHorizontalHeaderLabels({"名称","类型","初始值"});
     m_table->setSelectionBehavior(QTableWidget::SelectItems);
     m_table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);    
 
@@ -224,16 +224,16 @@ JZNodeParamEditor::JZNodeParamEditor()
     m_tableUi->setSelectionBehavior(QTableWidget::SelectItems);
     m_tableUi->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    ValueItemDelegate *delegate = new ValueItemDelegate(this);
-    delegate->setTable(m_table);
-    m_table->setItemDelegateForColumn(2, delegate);    
+    TypeItemDelegate *type_delegate = new TypeItemDelegate(this);    
+    m_table->setItemDelegateForColumn(1, type_delegate);
+
+    ValueItemDelegate *value_delegate = new ValueItemDelegate(this);
+    value_delegate->setTable(m_table);
+    m_table->setItemDelegateForColumn(2, value_delegate);    
 
     BindItemDelegate *bind_delegate = new BindItemDelegate(this);    
     bind_delegate->m_editor = this;
-    m_table->setItemDelegateForColumn(3, bind_delegate);
-
-    TypeItemDelegate *type_delegate = new TypeItemDelegate(this);    
-    m_table->setItemDelegateForColumn(1, type_delegate);
+    m_tableUi->setItemDelegateForColumn(2, bind_delegate);
     
     connect(m_table, &QTableWidget::itemChanged, this, &JZNodeParamEditor::onItemChanged);
     connect(m_tableUi, &QTableWidget::itemChanged, this, &JZNodeParamEditor::onUiItemChanged);
@@ -279,18 +279,24 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
     QTableWidgetItem *itemValue = new QTableWidgetItem();            
     m_table->setItem(row, 2, itemValue);
     itemValue->setText(def->value);
-    
+}
+
+void JZNodeParamEditor::updateUiItem(int row,const JZParamDefine *def)
+{
+    QTableWidgetItem *itemName = new QTableWidgetItem(def->name);                        
+    m_tableUi->setItem(row, 0, itemName);
+
+    QTableWidgetItem *itemType = new QTableWidgetItem(def->type);            
+    m_tableUi->setItem(row, 1, itemType);
+
     QTableWidgetItem *itemBind = new QTableWidgetItem();
-    m_table->setItem(row, 3, itemBind);        
+    m_table->setItem(row, 2, itemBind);        
 
     auto bind = m_file->bindVariable(def->name);
     if (bind)
     {
         itemBind->setText(bind->widget + "|" + bindText(bind->dir));
     }
-
-    if(!JZNodeType::isBaseOrEnum(def->dataType()))
-        itemValue->setFlags(itemValue->flags() & ~Qt::ItemIsEditable);        
 }
 
 void JZNodeParamEditor::open(JZProjectItem *item)
@@ -310,12 +316,7 @@ void JZNodeParamEditor::open(JZProjectItem *item)
         for (int i = 0; i < widgets.size(); i++)
         {            
             auto &def = widgets[i];
-
-            QTableWidgetItem *itemName = new QTableWidgetItem(def.name);                        
-            m_tableUi->setItem(i, 0, itemName);
-
-            QTableWidgetItem *itemType = new QTableWidgetItem(def.type);            
-            m_tableUi->setItem(i, 1, itemType);
+            updateUiItem(i,&def);
         }        
     }
     else

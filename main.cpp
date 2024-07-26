@@ -9,6 +9,7 @@
 #include "sample/Russian/Russian.h"
 #include "sample/ImageBatch/ImageBatch.h"
 #include "sample/SmartHome/SmartHome.h"
+#include "JZNodeCppGenerater.h"
 
 void run_testcase(int argc, char *argv[])
 {
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
-    
+
     if(0)
     {
         run_testcase(argc,argv);
@@ -40,6 +41,9 @@ int main(int argc, char *argv[])
         sample.saveProject();
         //sample.loadProject();
         sample.run();
+
+        //JZNodeCppGenerater cpp;
+        //cpp.generate(sample.project(),"cpp");
         return 1;
     }    
 

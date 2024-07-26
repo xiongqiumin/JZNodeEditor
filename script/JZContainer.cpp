@@ -30,7 +30,7 @@ void registFunction(JZFunctionDefine &def, std::function<void(JZNodeEngine*)> pt
 // JZList
 QString JZList::type() const
 {
-    return "List<" + valueType + ">";
+    return "QList<" + valueType + ">";
 }
 
 inline void listCheckSize(int index, int size)
@@ -76,7 +76,7 @@ void listResize(JZNodeEngine *engine)
     if(cur_size < size)
     {
         for(int i = cur_size; i < size; i++)
-            obj->list.push_back(JZNodeType::defaultValue(data_type));
+            obj->list.push_back(engine->createVariable(data_type));
     }
     else
     {
@@ -142,7 +142,7 @@ void listContains(JZNodeEngine *engine)
 void listMid(JZNodeEngine *engine)
 {
     auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
-    auto ptr = JZObjectCreate<JZList>();
+    auto ptr = JZNodeObjectManager::instance()->create(obj->type());
     auto ret = (JZList *)ptr->cobj();
     int index = engine->getReg(Reg_CallIn + 1).toInt();
     int size = engine->getReg(Reg_CallIn + 2).toInt();
@@ -165,8 +165,9 @@ void listAppend(JZNodeEngine *engine)
 void registList(QString type,int type_id)
 {
     auto inst = JZNodeObjectManager::instance();
+    Q_ASSERT(JZNodeType::isVaildType(type));
 
-    QString list_name = "List<" + type + ">";
+    QString list_name = "QList<" + type + ">";
     if(inst->meta(list_name) && inst->meta(list_name)->functions.size() > 0)
         return;
 
@@ -308,7 +309,8 @@ void registList(QString type,int type_id)
     func_def = list.initMemberFunction("lastIndexOf");
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", type));
-    func_def.paramOut.push_back(JZParamDefine("start", Type_int, "-1"));
+    func_def.paramIn.push_back(JZParamDefine("start", Type_int, "-1"));
+    func_def.paramOut.push_back(JZParamDefine("index", Type_int));
     list.addFunction(func_def);
     registFunction(func_def, listLastIndexOf);
 
@@ -359,7 +361,7 @@ bool JZMap::Key::operator<(const JZMap::Key &other) const
 
 QString JZMap::type() const
 {
-    return "Map<" + keyType + "," + valueType + ">";
+    return "QMap<" + keyType + "," + valueType + ">";
 }
 
 void mapSet(JZNodeEngine *engine)
@@ -405,8 +407,10 @@ void mapContains(JZNodeEngine *engine)
 void registMap(QString key_type, QString value_type,int type_id)
 {
     auto inst = JZNodeObjectManager::instance();
-    QString map_name = "Map<" + key_type + "," + value_type + ">";
-    QString it_name = "MapIterator<" + key_type + "," + value_type + ">";
+    Q_ASSERT(JZNodeType::isVaildType(key_type) && JZNodeType::isVaildType(value_type));
+
+    QString map_name = "QMap<" + key_type + "," + value_type + ">";
+    QString it_name = "QMapIterator<" + key_type + "," + value_type + ">";
     if(inst->meta(map_name) && inst->meta(map_name)->functions.size() > 0)
         return;
 
@@ -492,29 +496,82 @@ void registSet(QString value_type,int type_id)
     QString it_name = "SetIterator<" + value_type + ">";
     if(inst->meta(map_name) && inst->meta(map_name)->functions.size() > 0)
         return;
+}
 
-    
+TemplateInfo parseTemplate(QString type)
+{
+    TemplateInfo info;
+    int start_idx = type.indexOf("<");
+    int end_idx = type.lastIndexOf(">");
+    if(start_idx == -1 || end_idx == -1)
+    {
+        info.error = type + " format error";
+        return info;
+    }
+
+    info.name = type.left(start_idx); 
+    start_idx++;
+
+    QString arg = type.mid(start_idx,end_idx - start_idx);
+    info.args = arg.split(",");
+    return info;
+}   
+
+bool checkContainer(QString type,QString &error)
+{
+    QString list_pre = "QList<";
+    QString map_pre = "QMap<";
+    QString set_pre = "QSet<";
+
+    TemplateInfo info = parseTemplate(type);
+    if(!info.error.isEmpty())
+    {
+        error = info.error;
+        return false;
+    }
+
+    if((info.name == "QList" && info.args.size() == 1)
+        || (info.name == "QMap" && info.args.size() == 2)
+        || (info.name == "QSet" && info.args.size() == 1))
+    {
+        for(int i = 0; i < info.args.size(); i++)
+        {
+            if(!JZNodeType::isVaildType(info.args[i]))
+            {
+                error = "no such type " + info.args[i];
+                return false;
+            }
+        }
+        return true;
+    }   
+
+    error = type + " format error";
+    return false;
 }
 
 void registContainer(QString type,int type_id)
 {
+    QString list_pre = "QList<";
+    QString map_pre = "QMap<";
+    QString set_pre = "QSet<";
+
     int end_idx = type.lastIndexOf(">");
-    if(type.startsWith("List<"))
+    if(type.startsWith(list_pre))
     {
-        QString value_type = type.mid(5,end_idx - 5);
+        QString value_type = type.mid(list_pre.size(),end_idx - list_pre.size());
         registList(value_type,type_id);
     }
-    else if(type.startsWith("Map<"))
+    else if(type.startsWith(map_pre))
     {
-        QString type_str = type.mid(4,end_idx - 4);
+        QString type_str = type.mid(map_pre.size(),end_idx - map_pre.size());
         QStringList type_list = type_str.split(",");
         QString key_type = type_list[0];
         QString value_type = type_list[1];
         registMap(key_type,value_type,type_id);
     }
-    else if(type.startsWith("Set<"))
+    else if(type.startsWith(set_pre))
     {
-        QString type_str = type.mid(4,end_idx - 4);
+        QString type_str = type.mid(set_pre.size(),end_idx - set_pre.size());
         registSet(type_str,type_id);
     }   
 }

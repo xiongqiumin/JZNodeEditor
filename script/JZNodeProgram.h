@@ -35,13 +35,13 @@ struct NodeInfo
 {        
     NodeInfo();    
     
-    int node_id;
-    int node_type;
+    QString name;
+    int id;
+    int type;
     bool isFlow;       
     
     QList<NodeParamInfo> paramIn;
     QList<NodeParamInfo> paramOut;
-
     QList<NodeRange> pcRanges;
 };
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
@@ -51,6 +51,9 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 class JZFunctionDebugInfo
 {
 public:
+    JZParamDefine *localParam(QString name);
+    JZParam *nodeParam(int id);
+
     QMap<int, NodeInfo> nodeInfo;
     QList<JZParamDefine> localVariables;
 };
@@ -146,8 +149,7 @@ public:
     QString applicationFilePath();
     
     QList<JZNodeScript*> scriptList();
-    JZNodeScript *script(QString path);        
-    QMap<QString, JZNodeParamBind> bindInfo(QString className);    
+    JZNodeScript *script(QString path);   
 
     const JZFunctionDefine *function(QString name);
 
@@ -166,8 +168,7 @@ protected:
 
     JZNodeTypeMeta m_typeMeta;
     QMap<QString,JZNodeScriptPtr> m_scripts; 
-    QMap<QString,JZParamDefine> m_variables;        
-    QMap<QString, QMap<QString, JZNodeParamBind>> m_binds;    
+    QMap<QString,JZParamDefine> m_variables;
 };
 
 #endif

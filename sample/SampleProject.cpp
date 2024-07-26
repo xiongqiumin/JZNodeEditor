@@ -98,6 +98,11 @@ bool SampleProject::copyDir(QString srcPath, QString dstPath)
     return !error;    
 }
 
+JZProject *SampleProject::project()
+{
+    return &m_project;
+}
+
 void SampleProject::loadProject()
 {
     QString path = qApp->applicationDirPath() + "/sample/" + m_name + "/" + m_name + ".jzproj";

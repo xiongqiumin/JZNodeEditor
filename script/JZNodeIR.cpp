@@ -198,7 +198,7 @@ JZNodeIRNodeId::JZNodeIRNodeId()
 {
     type = OP_nodeId;
     id = -1;
-    isBreakPoint = false;
+    breakPointType = 0;
 }
 
 JZNodeIRNodeId::~JZNodeIRNodeId()

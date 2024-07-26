@@ -65,6 +65,7 @@ protected slots:
     void onActionSelectAll();
 
     void onActionBuild();
+    void onActionExport();
 
     void onActionRun();
     void onActionDetach();
@@ -88,8 +89,8 @@ protected slots:
 
     void onEditorClose(int index);
     void onEditorActivite(int index);
-    void onNodeClicked(QString file, int nodeId);
-    void onProjectChanged();
+    void onNavigate(QString file, int nodeId);
+    void onProjectChanged(JZProjectItem *item);
     
     void onFunctionOpen(QString filepath);    
     void onAutoCompiler();
@@ -229,7 +230,7 @@ private:
     QList<QAction*> m_debugActions;
     QToolBar *m_toolDebug;    
 
-    QTimer *m_compilerTiemr;
+    QTimer *m_compilerTimer;
     BuildInfo m_buildInfo;
     JZNodeAutoRunThread m_runThread;
     JZNodeBuildThread m_buildThread;

@@ -40,6 +40,7 @@ void JZUiEditor::close()
 {
     auto designer = JZDesigner::instance()->editor();    
     designer->close(m_form);
+    m_form = nullptr;
 
     if (designer->parent() == this)
     {
@@ -53,6 +54,7 @@ void JZUiEditor::save()
     JZUiFile *file = (JZUiFile*)m_item;    
     QString xml = m_form->editor()->contents();    
     file->setXml(xml);
+    m_project->saveItem(file);
     m_form->editor()->setDirty(false);    
 }
 

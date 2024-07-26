@@ -35,24 +35,18 @@ void JZNodeBreakPoint::updateBreakPoint(JZProject *project)
 {
     clear();
 
-    auto breakPoints = project->breakPoints();
-    auto it = breakPoints.begin();
-    while (it != breakPoints.end())
+    auto pt_list = project->breakPoints();
+    for (int i = 0; i < pt_list.size(); i++)
     {
-        auto &pt_list = it.value();
-        for (int i = 0; i < pt_list.size(); i++)
-        {
-            QTableWidgetItem *itemName = new QTableWidgetItem();
-            QTableWidgetItem *itemNode = new QTableWidgetItem();
-            itemName->setText(it.key());
-            itemNode->setText(QString::number(pt_list[i]));
+        QTableWidgetItem *itemName = new QTableWidgetItem();
+        QTableWidgetItem *itemNode = new QTableWidgetItem();
+        itemName->setText(pt_list[i].file);
+        itemNode->setText(QString::number(pt_list[i].nodeId));
 
-            int row = m_table->rowCount();
-            m_table->setRowCount(row + 1);
-            m_table->setItem(row, 0, itemName);
-            m_table->setItem(row, 1, itemNode);
-        }
-        it++;
+        int row = m_table->rowCount();
+        m_table->setRowCount(row + 1);
+        m_table->setItem(row, 0, itemName);
+        m_table->setItem(row, 1, itemNode);
     }
 }
 

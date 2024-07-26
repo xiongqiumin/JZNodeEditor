@@ -94,32 +94,36 @@ bool JZNodeSignalConnect::compiler(JZNodeCompiler *c, QString &error)
     if(!c->addFlowInput(m_id,error))
         return false;
 
-    JZFunctionPointer sig,slot;
-    sig = c->pinLiteral(m_id,paramIn(1)).value<JZFunctionPointer>();
-    slot = c->pinLiteral(m_id,paramIn(3)).value<JZFunctionPointer>();
+    QString sig = c->pinLiteral(m_id,paramIn(1));
+    QString slot = c->pinLiteral(m_id,paramIn(3));
 
-    auto sig_func = JZNodeObjectManager::instance()->single(sig.functionName);
-    auto slot_func = JZNodeFunctionManager::instance()->function(slot.functionName);
+    auto sig_func = JZNodeObjectManager::instance()->signal(sig);
+    auto slot_func = JZNodeFunctionManager::instance()->function(slot);
     if(!sig_func)
     {
-        error = "no signal " + sig.functionName;
+        error = "no signal " + sig;
         return false;
     }
     if(!slot_func)
     {
-        error = "no slot " + slot.functionName;
+        error = "no slot " + slot;
         return false;
     }
     if(!JZNodeType::sigSlotTypeMatch(sig_func,slot_func))
     {
-        error = "signal slot not match " + sig_func->delcare() + "," + slot_func->delcare();
+        error = "signal slot not match " + sig_func->fullName() + "," + slot_func->delcare();
         return false;
     }
+
+    JZFunctionPointer sig_ptr;
+    sig_ptr.functionName = sig;
+    JZFunctionPointer slot_ptr;
+    slot_ptr.functionName = slot;
 
     int send_id = c->paramId(m_id,paramIn(0));
     int recv_id = c->paramId(m_id,paramIn(2));
     QList<JZNodeIRParam> in,out;
-    in << irId(send_id) << irLiteral(QVariant::fromValue(sig)) << irId(recv_id) << irLiteral(QVariant::fromValue(slot));
+    in << irId(send_id) << irLiteral(QVariant::fromValue(sig_ptr)) << irId(recv_id) << irLiteral(QVariant::fromValue(slot_ptr));
     c->addCall("connect",in,out);
     c->addJumpNode(flowOut());
     

@@ -14,6 +14,7 @@ void JZNodeInit()
     qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");
     qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
+    QMetaType::registerEqualsComparator<JZNodeObjectPtr>();
 
     ImageModule::init();
 

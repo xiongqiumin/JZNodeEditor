@@ -183,7 +183,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             item_function_hook->addSubProperty(item_function);                        
 
             auto enable_item = new JZNodeProperty("hook enable", NodeProprety_Value);
-            enable_item->setDataType(Type_bool);
+            enable_item->setDataType(Type_hookEnable);
             enable_item->setValue(hook.enable? "true" : "false");
             item_function->addSubProperty(enable_item);
             addPin(enable_item, Pin_hook, 0, hook.nodeId);

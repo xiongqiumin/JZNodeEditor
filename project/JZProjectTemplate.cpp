@@ -38,7 +38,7 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         project->addItem("./",window_file);
         project->addItem("./",ui_file);
 
-        auto class_define = window_file->addClass("MainWindow","Widget");        
+        auto class_define = window_file->addClass("MainWindow","QWidget");        
         class_define->setUiFile("./mainwindow.ui");
         
         JZFunctionDefine define;
@@ -65,7 +65,7 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         set_param->setVariable("MainWindow");
         create->setClassName("MainWindow");
         func_init->setFunction(func_inst->function("MainWindow.init"));
-        func_show->setFunction(func_inst->function("Widget.show"));
+        func_show->setFunction(func_inst->function("QWidget.show"));
 
         JZNode *start = main_flow->getNode(0);
         main_flow->addConnect(start->flowOutGemo(), set_param->flowInGemo());

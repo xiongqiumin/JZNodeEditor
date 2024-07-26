@@ -92,7 +92,6 @@ struct NodeCompilerInfo
     int node_id;
     int node_type;    
     QMap<int,int> pinType;   //pin 类型
-    QMap<int,QVariant> pinLiteral;
 
     int start;
     QList<NodeRange> ranges; //用于断点信息   
@@ -153,7 +152,7 @@ public:
     
     const JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(const QString &var, QString &error);
-    bool checkVariableType(const QString &var, const QString &className, QString &error);    
+    bool checkVariable(const JZParamDefine *def, QString &error);    
 
     void resetStack();
     int allocStack(int dataType);
@@ -168,8 +167,7 @@ public:
     bool hasPinType(int nodeId, int pinId);
 
     bool isPinLiteral(int nodeId, int pinId);
-    QVariant pinLiteral(int nodeId, int pinId);
-    void setPinLiteral(int nodeId, int pinId,const QVariant &v);
+    QString pinLiteral(int nodeId, int pinId);
     
     int irParamType(const JZNodeIRParam &param);
 
@@ -197,8 +195,10 @@ public:
     void setAutoAddNodeDebug(int m_id,bool flag);
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     void addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
+    int addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1,int op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
     void addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
+    void addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value);
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
     void addWatchDisplay(const JZNodeIRParam &dst);
@@ -306,6 +306,7 @@ protected:
     JZProject *m_project;
     JZNodeBuilder *m_builder;
     QString m_error;
+    QString m_ignoreError;  // 由于buildData 错误引起, 后续节点不在记录错误
 };
 
 #endif

@@ -45,6 +45,7 @@ void BaseTest::init()
 {
     m_project.clear();
     m_project.initProject("console");
+    JZProject::setActive(&m_project);
     m_file = m_project.mainFile();
     m_engine.setDebug(false);
 }
@@ -52,12 +53,13 @@ void BaseTest::init()
 void BaseTest::cleanup()
 {
     stop();
+    JZProject::setActive(nullptr);
 }
 
 void BaseTest::onRuntimeError(JZNodeRuntimeError error)
 {        
     qDebug().noquote() << m_program.dump();
-    qDebug().noquote() << error.errorReport();    
+    qDebug().noquote() << "Stack:\n" << error.errorReport();    
     Q_ASSERT(0);
 }
 

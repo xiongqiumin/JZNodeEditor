@@ -130,7 +130,7 @@ void destoryClassAssert(void *);
 void copyClassAssert(void *,void *);
 bool equalClassAssert(void *src,void *dst);
 
-// from QVariant
+// from QVariant, 运行时，所有enum 擦除类型信息, 使用 int 保存
 template<class T>
 T fromVariantEnum(const QVariant &v, std::true_type)
 {
@@ -205,10 +205,10 @@ QVariant toVariantEnum(T value, std::false_type)
 template<class T>
 QVariant toVariantClass(T value, std::true_type)
 {
-    JZNodeObject* obj = JZObjectCreate<T>();
-    *((T*)obj->cobj()) = value;
-    JZNodeObjectPtr ptr(obj,true);
-    return QVariant::fromValue(ptr);
+    QVariant v = JZObjectCreate<T>();
+    T *ptr = JZObjectCast<T>(v);
+    *ptr = value;
+    return v;
 }
 
 template<class T>
@@ -221,9 +221,8 @@ template<class T>
 QVariant toVariantPointer(T value, std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    JZNodeObject* obj = JZObjectCreateRefrence<T>(value, false);
-    JZNodeObjectPtr ptr(obj,true);
-    return QVariant::fromValue(ptr);
+    QVariant v = JZObjectCreateRefrence<T>(value, false);
+    return v;
 }
 
 template<class T>
@@ -418,7 +417,7 @@ void createSlotParams(QVariantList &params,const T &v,Args... args)
 }
 
 template<typename Class, typename... Args>
-class CSingleImpl : public CSingle
+class CSingleImpl : public CSignal
 {
 public:    
     virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
@@ -477,7 +476,7 @@ protected:
 };
 
 template<typename Class,typename PrivateSingle,typename... Args>
-class CPrivateSingleImpl : public CSingle
+class CPrivateSingleImpl : public CSignal
 {
 public:    
     virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
@@ -671,13 +670,13 @@ public:
     {
         registFunction(name,true,createFuncion(f));
 
-        JZSingleDefine single;
+        JZSignalDefine single;
         single.name = name;
         single.className = m_define.className;
 
         auto *impl = new CSingleImpl<Class,Args...>();        
         impl->single = f;
-        single.csingle = impl;
+        single.csignal = impl;
 
         QStringList args;
         getFunctionParam<int, Args...>(args);
@@ -698,13 +697,13 @@ public:
     {
         m_privateSingleList << name;
 
-        JZSingleDefine single;
+        JZSignalDefine single;
         single.name = name;
         single.className = m_define.className;
 
         auto *impl = new CPrivateSingleImpl<Class, Args...>();
         impl->single = f;
-        single.csingle = impl;
+        single.csignal = impl;
 
         QStringList args;
         getFunctionParam<int, Args...>(args);

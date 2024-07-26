@@ -52,7 +52,7 @@ public:
     JZNodeBreakPoint *breakpoint();
 
 signals:
-    void sigNodeClicked(QString file,int id);
+    void sigNavigate(QString file,int id);
 
 protected slots:    
     void onAchorClicked(QUrl url);

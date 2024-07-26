@@ -9,6 +9,7 @@ public:
     SampleProject();
     ~SampleProject();
 
+    JZProject *project();
     void loadProject();
     void saveProject();
     bool run();

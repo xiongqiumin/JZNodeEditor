@@ -166,10 +166,10 @@ QList<JZProjectItem *> JZProjectItem::itemList(QList<int> type_list)
     return result;
 }
 
-void JZProjectItem::regist()
+void JZProjectItem::itemChangedNotify()
 {
     if (m_project)
-        m_project->regist(this);
+        m_project->onItemChanged(this);
 }
 
 //JZProjectItemRoot

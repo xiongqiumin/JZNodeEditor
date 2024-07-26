@@ -20,7 +20,7 @@ public:
 
     bool init(const JZNodeDebugInfo &info,JZNodeProgramInfo &ret);
     bool runtimeInfo(JZNodeRuntimeInfo &ret);
-    bool addBreakPoint(QString file,int nodeId);
+    bool addBreakPoint(const BreakPoint &pt);
     bool removeBreakPoint(QString file,int nodeId);
     bool clearBreakPoint();    
     bool getVariable(const JZNodeGetDebugParam &info,JZNodeGetDebugParamResp &ret);

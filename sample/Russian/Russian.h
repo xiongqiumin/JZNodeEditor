@@ -1,4 +1,4 @@
-#ifndef JZNODE_RUSSIAN_H_
+﻿#ifndef JZNODE_RUSSIAN_H_
 #define JZNODE_RUSSIAN_H_
 
 #include "../SampleProject.h"

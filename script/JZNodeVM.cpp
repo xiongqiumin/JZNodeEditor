@@ -30,7 +30,6 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
         return false;
     }
 
-    m_engine.init();
     if (m_debug)
     {
         m_debugServer.setEngine(&m_engine);
@@ -45,20 +44,14 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
         }
 
         auto debug_info = m_debugServer.debugInfo();
-        auto it = debug_info.breakPoints.begin();
-        while (it != debug_info.breakPoints.end())
-        {
-            auto filepath = it.key();
-            auto list = it.value();
-            for (int i = 0; i < list.size(); i++)
-                m_engine.addBreakPoint(filepath, list[i]);
-            it++;
-        }
+        for (int i = 0; i < debug_info.breakPoints.size(); i++)
+            m_engine.addBreakPoint(debug_info.breakPoints[i]);
     }
     else
     {
         connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &JZNodeVM::onRuntimeError);
     }
+    m_engine.init();
 
     QVariantList in, out;
     m_engine.call("main", in, out);

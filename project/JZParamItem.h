@@ -21,7 +21,6 @@ public:
     void removeVariable(QString name);
     void setVariable(QString name, JZParamDefine define);
     const JZParamDefine *variable(QString name) const;
-
     QStringList variableList();
 
     void addBind(JZNodeParamBind widget);

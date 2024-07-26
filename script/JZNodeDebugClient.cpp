@@ -34,7 +34,7 @@ bool JZNodeDebugClient::init(const JZNodeDebugInfo &info,JZNodeProgramInfo &ret)
     if (!sendCommand(Cmd_init, params, result))
         return false;
 
-    ret = netDataUnPack<JZNodeProgramInfo>(result[0].toByteArray());
+    ret = netDataUnPack<JZNodeProgramInfo>(result[0]);
     return true;
 }
 
@@ -44,14 +44,16 @@ bool JZNodeDebugClient::runtimeInfo(JZNodeRuntimeInfo &ret)
     if(!sendCommand(Cmd_runtimeInfo,params,result))
         return false;
         
-    ret = netDataUnPack<JZNodeRuntimeInfo>(result[0].toByteArray());
+    ret = netDataUnPack<JZNodeRuntimeInfo>(result[0]);
     return true;
 }
 
-bool JZNodeDebugClient::addBreakPoint(QString file,int nodeId)
+bool JZNodeDebugClient::addBreakPoint(const BreakPoint &pt)
 {
+    Q_ASSERT(pt.type != BreakPoint::none);
+
     QVariantList params,result;
-    params << file << nodeId;
+    params << netDataPack(pt);
     return sendCommand(Cmd_addBreakPoint,params,result);
 }
 
@@ -75,7 +77,7 @@ bool JZNodeDebugClient::getVariable(const JZNodeGetDebugParam &info,JZNodeGetDeb
     if (!sendCommand(Cmd_getVariable, params, result))
         return false;
 
-    ret = netDataUnPack<JZNodeGetDebugParamResp>(result[0].toByteArray());
+    ret = netDataUnPack<JZNodeGetDebugParamResp>(result[0]);
     return true;
 }
 
@@ -86,7 +88,7 @@ bool JZNodeDebugClient::setVariable(const JZNodeSetDebugParam &info,JZNodeSetDeb
     if (!sendCommand(Cmd_setVariable,params,result))
         return false;
 
-    ret = netDataUnPack<JZNodeSetDebugParamResp>(result[0].toByteArray());
+    ret = netDataUnPack<JZNodeSetDebugParamResp>(result[0]);
     return true;
 }
 
@@ -156,11 +158,11 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
     }
     else if (packet->cmd == Cmd_runtimeError)
     {   
-        emit sigRuntimeError(netDataUnPack<JZNodeRuntimeError>(packet->params[0].toByteArray()));
+        emit sigRuntimeError(netDataUnPack<JZNodeRuntimeError>(packet->params[0]));
     }
     else if (packet->cmd == Cmd_nodePropChanged)
     {
-        emit sigRuntimeWatch(netDataUnPack<JZNodeRuntimeWatch>(packet->params[0].toByteArray()));
+        emit sigRuntimeWatch(netDataUnPack<JZNodeRuntimeWatch>(packet->params[0]));
     }
 }
 

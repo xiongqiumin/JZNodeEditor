@@ -99,13 +99,14 @@ JZNodePanel::JZNodePanel(QWidget *widget)
 
     Module core;
     core.name = "core";
-    core.typeList << "Object" << "Timer" << "Point" << "PointF" << "Rect" << "RectF" << "Color" << "File";
+    core.typeList << "QObject" << "QTimer" << "QPoint" << "QPointF" << "QRect" << "QRectF" << "QColor" << "QFile";
+    core.typeList << "QList<int>" << "QList<double>" << "QStringList" << "QMap<int,int>" << "QMap<int,QString>" << "QMap<QString,QString>" << "QMap<QString,int>";  
     m_modules.push_back(core);
 
     Module gui;
     gui.name = "gui";
-    gui.typeList << "Widget" << "Label" << "LineEdit" << "TextEdit" << "PushButton" << "RadioButton" << "ToolButton" << "CheckBox" << "ComboBox"
-        << "Painter" << "Pen" << "Brush" << "KeyEvent" << "MouseEvent" << "ShowEvent" << "PaintEvent" << "ResizeEvent" << "Key"; 
+    gui.typeList << "QWidget" << "QLabel" << "QLineEdit" << "QTextEdit" << "QPushButton" << "QRadioButton" << "QToolButton" << "QCheckBox" << "QComboBox"
+        << "QPainter" << "QPen" << "QBrush" << "QKeyEvent" << "QMouseEvent" << "QShowEvent" << "QPaintEvent" << "QResizeEvent" << "Qt::Key"; 
     m_modules.push_back(gui);
 }
 

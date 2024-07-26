@@ -26,7 +26,7 @@ public:
 
     JZNodeObjectDefine objectDefine();
     
-    JZParamItem *getParamFile();
+    JZParamItem *paramFile();
     bool addMemberVariable(QString name,int dataType,const QString &v = QString());
     bool addMemberVariable(QString name,QString dataType, const QString &v = QString());
     bool addMemberVariable(JZParamDefine param);

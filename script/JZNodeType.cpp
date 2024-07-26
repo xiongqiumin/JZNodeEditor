@@ -62,7 +62,7 @@ void JZNodeType::init()
     typeMap["int"]    = Type_int;
     typeMap["int64"]  = Type_int64;
     typeMap["double"] = Type_double;
-    typeMap["string"] = Type_string;
+    typeMap["QString"] = Type_string;
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;
     typeMap["arg"] = Type_arg;     
@@ -219,6 +219,15 @@ int JZNodeType::isInherits(const QString &type1,const QString &type2)
     int t1 = JZNodeType::nameToType(type1);
     int t2 = JZNodeType::nameToType(type2);
     return JZNodeObjectManager::instance()->isInherits(t1, t2);
+}
+
+bool JZNodeType::isVaildType(QString type)
+{
+    if(typeMap.contains(type))
+        return true;
+
+    return JZNodeObjectManager::instance()->meta(type)
+        || JZNodeObjectManager::instance()->enumMeta(type);
 }
 
 bool JZNodeType::isSameType(const QVariant &v1,const QVariant &v2)
@@ -682,15 +691,122 @@ int JZNodeType::matchType(QList<int> src_types,QList<int> dst_types)
     return upType(dst_near_type);
 }
 
+int JZNodeType::stringType(const QString &text)
+{
+    if (text == "false" || text == "true")
+        return Type_bool;
+    else if (text == "null")
+        return Type_nullptr;
+
+    bool isInt = JZRegExpHelp::isInt(text);
+    bool isHex = JZRegExpHelp::isHex(text);
+    bool isFloat = JZRegExpHelp::isFloat(text);
+    if (isInt || isHex)
+        return Type_int;
+    else if(isFloat)
+        return Type_double;
+
+    return Type_string;
+}
+
+QVariant JZNodeType::defaultValue(int type)
+{
+    if(type == Type_any)
+    {
+        JZNodeVariantAny any;
+        return QVariant::fromValue(any);
+    }
+    else if(type == Type_bool)
+        return false;
+    else if(type == Type_int)
+        return 0;
+    else if(type == Type_int64)
+        return (qint64)0;
+    else if(type == Type_double)
+        return (double)0.0;
+    else if(type == Type_string)
+        return QString();
+    else if(type == Type_function)
+        return QVariant::fromValue(JZFunctionPointer());
+    else if(type == Type_nullptr)
+        return QVariant::fromValue(JZObjectNull());
+    else if(type >= Type_enum && type < Type_class)
+    {
+        auto meta = JZNodeObjectManager::instance()->enumMeta(type);
+        return meta->defaultValue();
+    }
+
+    Q_ASSERT_X(0,"Type ",qUtf8Printable(typeToName(type)));
+    return QVariant();
+}
+
+bool JZNodeType::canInitValue(int type,const QString &text)
+{
+    if(text.isEmpty())
+        return true;
+    
+    if (type == Type_any)
+    {
+        return canInitValue(JZNodeType::stringType(text),text);
+    }
+    else if (type == Type_string)
+    {
+        return true;
+    }
+    else if (type == Type_bool)
+    {
+        return (text == "false" || text == "true");
+    }
+    else if(type == Type_function)
+    {   
+        return true;
+    }
+    else if(type == Type_nullptr)
+    {
+        return text == "null";
+    }
+    else if(type >= Type_enum && type < Type_class)
+    {
+        auto meta = JZNodeObjectManager::instance()->enumMeta(type);
+        return meta->hasKey(text);
+    }
+    else if(type >= Type_class)
+    {
+        if(text.isEmpty() || text == "null")
+            return true;
+        if(text.startsWith("{") || text.endsWith("}"))
+            return true;
+
+        return false;
+    }
+    else if (type == Type_int || type == Type_int64 || type == Type_double)
+    {        
+        bool isInt = JZRegExpHelp::isInt(text);
+        bool isHex = JZRegExpHelp::isHex(text);
+        bool isFloat = JZRegExpHelp::isFloat(text);
+        
+        if (isInt || isHex || isFloat)
+            return true;
+        
+        return false;
+    }
+
+    return false;
+}
+
 QVariant JZNodeType::initValue(int type, const QString &text)
 {
     if (text.isEmpty())
-        return defaultValue(type);
+        return JZNodeType::defaultValue(type);
 
     if (type == Type_any)
     {
+        QVariant v = initValue(JZNodeType::stringType(text),text);
+        if(v.isNull())
+            return v;
+
         JZNodeVariantAny any;
-        any.value = initValue(stringType(text),text);
+        any.value = v;
         return QVariant::fromValue(any);
     }
     else if (type == Type_string)
@@ -704,29 +820,35 @@ QVariant JZNodeType::initValue(int type, const QString &text)
         else if (text == "true")
             return true;
     }
-    else if(type == Type_nullptr)
-    {
-        return QVariant::fromValue(JZObjectNull());
-    }
     else if(type == Type_function)
     {   
         JZFunctionPointer func;
         func.functionName = text;
-        return QVariant::fromValue(JZFunctionPointer());
+        return QVariant::fromValue(func);
+    }
+    else if(type == Type_nullptr)
+    {
+        if(text == "null")
+            return QVariant::fromValue(JZObjectNull());
     }
     else if(type >= Type_enum && type < Type_class)
     {
         auto enum_meta = JZNodeObjectManager::instance()->enumMeta(type);
-        if(enum_meta->hasKey(text))
-            return enum_meta->keyToValue(text);
+        if(!enum_meta->hasKey(text))
+            return QVariant();
+
+        return enum_meta->keyToValue(text);
     }
     else if(type >= Type_class)
     {
-        if(text == "null")
-        {
-            auto obj = JZNodeObjectManager::instance()->createNull(type);
-            return QVariant::fromValue(JZNodeObjectPtr(obj,true));        
-        }
+        JZNodeObject *obj = nullptr;
+        if(text.isEmpty() || text == "null")
+            obj = JZNodeObjectManager::instance()->createNull(type);
+        else
+            obj = JZNodeObjectManager::instance()->create(type);
+        
+        if(obj)
+            return QVariant::fromValue(JZNodeObjectPtr(obj,true));
     }
     else if (type == Type_int || type == Type_int64 || type == Type_double)
     {        
@@ -760,59 +882,8 @@ QVariant JZNodeType::initValue(int type, const QString &text)
         }
     }
 
-    return QVariant();
-}
-
-int JZNodeType::stringType(const QString &text)
-{
-    if (text == "false" || text == "true")
-        return Type_bool;
-    else if (text == "null")
-        return Type_nullptr;
-
-    bool isInt = JZRegExpHelp::isInt(text);
-    bool isHex = JZRegExpHelp::isHex(text);
-    bool isFloat = JZRegExpHelp::isFloat(text);
-    if (isInt || isHex)
-        return Type_int;
-    else if(isFloat)
-        return Type_double;
-
-    return Type_string;
-}
-
-QVariant JZNodeType::defaultValue(int type)
-{
-    if(type == Type_any)
-        return QVariant::fromValue(JZNodeVariantAny());
-    else if(type == Type_bool)
-        return false;
-    else if(type == Type_int)
-        return 0;
-    else if(type == Type_int64)
-        return (qint64)0;
-    else if(type == Type_double)
-        return (double)0.0;
-    else if(type == Type_string)
-        return QString();
-    else if(type == Type_function)
-        return QVariant::fromValue(JZFunctionPointer());
-    else if(type == Type_nullptr)
-        return QVariant::fromValue(JZObjectNull());
-    else if(type >= Type_enum && type < Type_class)
-    {
-        auto e = JZNodeObjectManager::instance()->createEnum(type);
-        return QVariant::fromValue(e);
-    }
-    else if(type >= Type_class)
-    {
-        JZNodeObject *obj = JZNodeObjectManager::instance()->createNull(type);
-        return QVariant::fromValue(JZNodeObjectPtr(obj,true));
-    }
-    else
-    {        
-        return QVariant();
-    }
+    Q_ASSERT(0);
+    return true;
 }
 
 void JZNodeType::registConvert(int from, int to, ConvertFunc func)
@@ -821,7 +892,7 @@ void JZNodeType::registConvert(int from, int to, ConvertFunc func)
     convertMap[id] = func;
 }
 
-bool JZNodeType::sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefine *slot)
+bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot)
 {
     int slot_param = slot->paramIn.size() - 1; 
     if(sig->paramOut.size() < slot_param)

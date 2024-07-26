@@ -11,24 +11,47 @@
 #include "JZClassItem.h"
 #include "JZScriptFile.h"
 
+//BreakPoint
+class BreakPoint
+{
+public: 
+    enum Type{
+        none,
+        nodeEnter,    //为nodeId中断
+        print,  
+    };
+
+    BreakPoint();
+
+    Type type;
+    QString file;
+    int nodeId;
+};
+void operator<<(QDataStream &s, const BreakPoint &param);
+void operator>>(QDataStream &s, BreakPoint &param);
+
 //JZProject
 class JZProject : public QObject
 {
     Q_OBJECT
 
 public:
+    static void setActive(JZProject *project);
+    static JZProject* active();
+
     JZProject();
     ~JZProject();
 
     bool isNull() const;
     void clear();
     
+    void initEmpty();
     bool initConsole();
     bool initProject(QString temp);
     bool newProject(QString path,QString name, QString temp);
     bool open(QString filepath);
     void close();
-    bool save();
+    bool save();    //只保存工程自身，不保存项目文件
 
     void addTmp(JZProjectItem *item);
     void removeTmp(JZProjectItem *item);
@@ -83,7 +106,6 @@ public:
     bool saveItem(JZProjectItem *item);
     bool saveItems(QList<JZProjectItem*> item);
     bool saveAllItem();
-    bool loadItem(JZProjectItem *item);
     void renameItem(JZProjectItem *item, QString name);    
 
     JZScriptClassItem *getItemClass(JZProjectItem *item);    
@@ -94,30 +116,32 @@ public:
     JZScriptItem *functionItem(QString function_name);
     QStringList functionList();
 
-    bool hasBreakPoint(QString file,int id);
-    void addBreakPoint(QString file,int id);
+    void addBreakPoint(const BreakPoint &pt);
     void removeBreakPoint(QString file,int id);
-    QMap<QString, QList<int>> breakPoints();
+    bool hasBreakPoint(QString file,int id);
+    QList<BreakPoint> breakPoints();
 
-    void regist(JZProjectItem *item);     
+    void onItemChanged(JZProjectItem *item);     
 
 signals:
-    void sigFileChanged();
-    void sigScriptNodeChanged(JZScriptItem *file, int nodId,const QByteArray &buffer);
+    void sigItemChanged(JZProjectItem *item);
+    void sigScriptNodeChanged(JZScriptItem *file, int nodeId,const QByteArray &buffer);
 
 protected:
     Q_DISABLE_COPY(JZProject)
 
-    QList<JZProjectItem *> paramDefineList();    
+    QList<JZProjectItem *> paramDefineList();
 
     QString domain(JZProjectItem *item);        
-    void registType();
     QString dir(const QString &filepath);    
+    int indexOfBreakPoint(QString file,int id);
+
+    void registType();
             
     JZProjectItemRoot m_root;
     bool m_windowSystem;        
 
-    QMap<JZProjectItem*, QList<int>> m_breakPoints;
+    QMap<JZProjectItem*, QList<BreakPoint>> m_breakPoints;
     QString m_filepath;    
     bool m_blockRegist;
     QString m_error;
@@ -128,6 +152,8 @@ protected:
     QList<JZProjectItem*> m_saveCache;  //为了避免每次save写文件
     QStringList m_containers;
     QStringList m_modules;
+
+    static JZProject *m_active;
 };
 
 #endif

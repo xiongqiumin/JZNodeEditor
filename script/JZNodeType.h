@@ -25,6 +25,9 @@ enum
     Type_arg,       //泛型,任意参数
     Type_args,      //变长参数
 
+    Type_editParamName,
+    Type_hookEnable,  
+
     Type_enum = 1000,    
     Type_keyCode,   //Qt::Key
 
@@ -47,6 +50,12 @@ enum
     Type_pointF,
     Type_rect,
     Type_rectF,
+    Type_color,
+
+    Type_image,
+    Type_painter,
+    Type_pen,
+    Type_brush,
 
     Type_event,
     Type_resizeEvent,
@@ -110,9 +119,9 @@ public:
 
     QString functionName;
 };
+Q_DECLARE_METATYPE(JZFunctionPointer)
 QDataStream &operator<<(QDataStream &s, const JZFunctionPointer &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param);
-Q_DECLARE_METATYPE(JZFunctionPointer)
 
 class JZNodeVariantAny
 {
@@ -134,7 +143,7 @@ Q_DECLARE_METATYPE(QVariantPointer)
     any 必须显示转换为指定类型
 */
 class JZNodeObject;
-class JZSingleDefine;
+class JZSignalDefine;
 class JZFunctionDefine;
 class JZNodeType
 {
@@ -165,6 +174,7 @@ public:
     static bool isBool(int type);
     static bool isNumber(int type);
     static bool isObject(int type);
+    static bool isVaildType(QString type);
  
     static bool isNullObject(const QVariant &v);   
     static bool isNullptr(const QVariant &v);
@@ -186,10 +196,11 @@ public:
     static int upType(int type1, int type2);  //提升类型
     static int upType(QList<int> types);
     static int matchType(QList<int> src_types,QList<int> dst_types);
+    static bool canInitValue(int type,const QString &v);
     static QVariant defaultValue(int type);
     static QVariant initValue(int type, const QString &v);
 
-    static bool sigSlotTypeMatch(const JZSingleDefine *sig,const JZFunctionDefine *slot);
+    static bool sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot);
     static bool functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2);
 };
 

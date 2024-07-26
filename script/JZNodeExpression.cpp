@@ -39,7 +39,7 @@ bool JZNodeExpression::updateExpr(QString &error)
     QString code = "void func(){\n" + m_expression + "\n}";
 
     JZProject project;
-    project.initConsole();
+    project.initEmpty();
 
     auto file = project.mainFile();
     ASConvert convert;
@@ -140,6 +140,15 @@ bool JZNodeExpression::updateExpr(QString &error)
             }
             line += ")";
             m_exprList += line;
+        }
+        else if(node->type() == Node_literal)
+        {
+
+        }
+        else
+        {
+            error = "unknown token " + node->name();
+            return false;
         }
     }
     

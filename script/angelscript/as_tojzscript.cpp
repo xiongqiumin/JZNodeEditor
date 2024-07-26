@@ -507,7 +507,6 @@ bool ASConvert::addFunction(asCScriptNode *node)
 		return false;
 	m_script->addConnect(node_start->flowOutGemo(),jz_node_list[0]->flowInGemo());
 
-	jzScriptItemUpdateLayout(m_script);
 	return true;
 }
 

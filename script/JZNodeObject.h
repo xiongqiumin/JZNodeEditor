@@ -49,8 +49,8 @@ public:
     QStringList functionList() const;
     QStringList virtualFunctionList() const;
     
-    const JZSingleDefine *single(const QString &function) const;
-    QStringList singleList() const;
+    const JZSignalDefine *signal(const QString &function) const;
+    QStringList signalList() const;
 
     const JZFunctionDefine *slot(const QString &function) const;
     QStringList slotList() const;
@@ -68,7 +68,7 @@ public:
     bool valueType;
     QMap<QString,JZParamDefine> params;
     QList<JZFunctionDefine> functions;
-    QList<JZSingleDefine> singles;
+    QList<JZSignalDefine> singles;
     QStringList enums;
 
     bool isUiWidget;
@@ -130,8 +130,8 @@ public:
     const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
     
-    const JZSingleDefine *single(QString function) const;
-    QStringList singleList() const;
+    const JZSignalDefine *signal(QString function) const;
+    QStringList signalList() const;
 
     void singleConnect(QString sig,JZNodeObject *recv,QString slot);
     void singleDisconnect(QString sig,JZNodeObject *recv,QString slot);
@@ -148,6 +148,7 @@ signals:
 
 public slots:
     void onSig(QString slot_function,const QVariantList &params);
+    void onDestory(QObject *obj);
     void onRecvDestory(QObject *obj);
 
 protected:    
@@ -162,8 +163,9 @@ protected:
       
     friend JZNodeObjectManager;
 
-    bool getParamRef(const QString &name,QVariant* &ref,QString &error);    
+    bool getParamRef(const QString &name,QVariant* &ref,QString &error);
     int singleConnectCount(JZNodeObject *recv);
+    void clearCObj();
 
     bool m_isNull;
     JZNodeObjectDefine *m_define;    
@@ -205,9 +207,8 @@ Q_DECLARE_METATYPE(JZNodeObjectPtr)
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
 JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
-JZObjectNull* toJZNullptr(const QVariant &v);
 JZNodeObject* qobjectToJZObject(QObject *obj);
-JZNodeObject *objectFromString(const QString &className,const QString &text);
+JZNodeObject* objectFromString(int data_name,const QString &text);
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
@@ -242,7 +243,7 @@ public:
     int getEnumId(const QString &enumName);
     QStringList getEnumList();    
 
-    const JZSingleDefine *single(const QString &name);
+    const JZSignalDefine *signal(const QString &name);
     
     int getQObjectType(const QString &name);
     void setQObjectType(const QString &name,int id);
@@ -291,40 +292,28 @@ protected:
 };
 
 template<class T>
-JZNodeObject *JZObjectCreate()
+QVariant JZObjectCreate()
 {
-    auto ptr = JZNodeObjectManager::instance()->createByTypeid(typeid(T).name());
-    return ptr;
+    auto obj = JZNodeObjectManager::instance()->createByTypeid(typeid(T).name());
+    return QVariant::fromValue(JZNodeObjectPtr(obj,true));
 }
 
 template<class T>
-JZNodeObject *JZObjectCreateRefrence(T ptr,bool owner)
+QVariant JZObjectCreateRefrence(T ptr,bool owner)
 {
     static_assert(std::is_pointer<T>(), "only support class pointer");
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();
     auto obj = JZNodeObjectManager::instance()->createRefrenceByTypeid(c_typeid, ptr, owner);
-    return obj;
-}
-
-template<class T>
-JZNodeObjectPtr JZObjectPtrCreate()
-{
-    auto ptr = JZNodeObjectManager::instance()->createByTypeid(typeid(T).name());
-    return JZNodeObjectPtr(ptr,true);
-}
-
-template<class T>
-T *JZObjectCast(JZNodeObject *obj)
-{
-    int c_type = JZNodeObjectManager::instance()->getIdByCType(typeid(T).name());
-    Q_ASSERT(obj->isInherits(c_type));
-    return (T*)obj->cobj();
+    return QVariant::fromValue(JZNodeObjectPtr(obj,true));
 }
 
 template<class T>
 T *JZObjectCast(const QVariant &v)
 {
-    return JZObjectCast<T>(toJZObject(v));
+    int c_type = JZNodeObjectManager::instance()->getIdByCType(typeid(T).name());
+    auto obj = toJZObject(v);
+    Q_ASSERT(obj->isInherits(c_type));
+    return (T*)obj->cobj();
 }
 
 #endif

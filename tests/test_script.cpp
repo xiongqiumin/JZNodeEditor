@@ -44,27 +44,47 @@ void ScriptTest::testMatchType()
 
 void ScriptTest::testClone()
 {
-    auto obj1 = JZObjectPtrCreate<QObject>();
-    auto obj2 = JZObjectPtrCreate<QObject>();
+    auto obj1 = JZObjectCreate<QObject>();
+    auto obj2 = JZObjectCreate<QObject>();
+    QVariant obj3 = obj1;
     QVERIFY(obj1 != obj2);
+    QVERIFY(obj1 == obj3);
 
-    QVariant v_obj1 = QVariant::fromValue(obj1);
-    QVariant v_obj2 = QVariant::fromValue(obj2);
-    QVariant v_obj3 = QVariant::fromValue(obj1);
-    QVERIFY(v_obj1 != v_obj2);
-    QVERIFY(v_obj1 == v_obj3);
-
-    auto pt1 = JZObjectPtrCreate<QPoint>();
-    auto pt2 = JZObjectPtrCreate<QPoint>();
+    auto pt1 = JZObjectCreate<QPoint>();
+    auto pt2 = JZObjectCreate<QPoint>();
     QVERIFY(pt1 == pt2);
 
-    QVariant v_pt1 = QVariant::fromValue(pt1);
-    QVariant v_pt2 = QVariant::fromValue(pt2);
-    QVERIFY(pt1 == pt2);
-
-    auto p_pt1 = JZObjectCast<QPoint>(v_pt1);
+    auto p_pt1 = JZObjectCast<QPoint>(pt1);
     p_pt1->setX(150);
     QVERIFY(pt1 != pt2);
+
+    registContainer("QList<QPoint>");
+
+    auto obj_list = JZNodeObjectManager::instance()->create("QList<QPoint>");
+    QVariant list = QVariant::fromValue(JZNodeObjectPtr(obj_list,true));
+
+    QVariantList in,out;
+    for(int i = 0; i < 5; i++)
+    {
+        QVariant pt = JZObjectCreate<QPoint>();
+        QPoint *p_pt = JZObjectCast<QPoint>(pt);
+        p_pt->setX(i);
+        p_pt->setY(0);
+
+        in.clear();
+        in << list << pt;
+        m_engine.call("QList<QPoint>.push_back",in,out);
+
+        QVariant pt_other = JZObjectCreate<QPoint>();
+        QPoint *p_pt_other = JZObjectCast<QPoint>(pt_other);
+        p_pt_other->setX(i);
+        p_pt_other->setY(0);
+
+        in.clear();
+        in << list << pt_other << 0;
+        m_engine.call("QList<QPoint>.indexOf",in,out);
+        QCOMPARE(out[0].toInt(),i);
+    }
 }
 
 void ScriptTest::testRegExp()
@@ -88,12 +108,12 @@ void ScriptTest::testRegExp()
 
 void ScriptTest::testContainer()
 {
-    m_project.addGlobalVariable("list_int","List<int>","1,2,3,4,5,6,7,8");
-    m_project.addGlobalVariable("list_double","List<double>","1,2,3,4,5,6,7,8");
-    m_project.addGlobalVariable("map_int_int","Map<int,int>","1:19,2:4");
-    m_project.addGlobalVariable("map_int_string","Map<int,string>",R"(1:"hello",2:"57575")");
-    m_project.addGlobalVariable("map_string_int","Map<string,int>",R"("a":200,"b":400)");
-    m_project.addGlobalVariable("map_string_string","Map<string,string>",R"("a":"aa","b":"bbb")");
+    m_project.addGlobalVariable("list_int","QList<int>","{1,2,3,4,5,6,7,8}");
+    m_project.addGlobalVariable("list_double","QList<double>","{1,2,3,4,5,6,7,8}");
+    m_project.addGlobalVariable("map_int_int","QMap<int,int>","{1:19,2:4}");
+    m_project.addGlobalVariable("map_int_string","QMap<int,QString>",R"({1:"hello",2:"57575"})");
+    m_project.addGlobalVariable("map_string_int","QMap<QString,int>",R"({"a":200,"b":400})");
+    m_project.addGlobalVariable("map_string_string","QMap<QString,QString>",R"({"a":"aa","b":"bbb"})");
 
     if(!build())
         return;
@@ -101,30 +121,30 @@ void ScriptTest::testContainer()
     QVariantList in,out;
     auto list_int = m_engine.getVariable("list_int");
     in << list_int << 0;
-    m_engine.call("List<int>.get",in,out);
+    m_engine.call("QList<int>.get",in,out);
     QCOMPARE(out[0].toInt(),1);
 
     in.clear();
     in << list_int << 0 << 5;
-    m_engine.call("List<int>.set",in,out);
+    m_engine.call("QList<int>.set",in,out);
 
     in.clear();
     in << list_int << 0;
-    m_engine.call("List<int>.get",in,out);
+    m_engine.call("QList<int>.get",in,out);
     QCOMPARE(out[0].toInt(),5);
 
     in.clear();
     in << list_int << 500;
-    m_engine.call("List<int>.push_back",in,out);  
+    m_engine.call("QList<int>.push_back",in,out);  
 
     in.clear();
     in << list_int;
-    m_engine.call("List<int>.size",in,out);
+    m_engine.call("QList<int>.size",in,out);
     QCOMPARE(out[0].toInt(),9);
 
-    m_engine.call("List<int>.clear",in,out);
+    m_engine.call("QList<int>.clear",in,out);
     
-    m_engine.call("List<int>.size",in,out);
+    m_engine.call("QList<int>.size",in,out);
     QCOMPARE(out[0].toInt(),0);
 }
 
@@ -144,7 +164,7 @@ void ScriptTest::testObjectParse()
     QVERIFY2(obj_map, qUtf8Printable(parser.error()));
     cache << JZNodeObjectPtr(obj_map,true);
 
-    obj_list = parser.parse("[ Point{1,2},Point{3,4},Point{5,6},Point{7,8}]");
+    obj_list = parser.parse("[ QPoint{1,2},QPoint{3,4},QPoint{5,6},QPoint{7,8}]");
     QVERIFY2(obj_list, qUtf8Printable(parser.error()));
     cache << JZNodeObjectPtr(obj_list,true);
 
@@ -768,7 +788,11 @@ void ScriptTest::testDebugServer()
     {
         int cur_id = rand()%id_list.size();
 
-        client.addBreakPoint(main_function, id_list[cur_id]);
+        BreakPoint pt;
+        pt.file = main_function;
+        pt.nodeId = id_list[cur_id];
+        pt.type = BreakPoint::nodeEnter;
+        client.addBreakPoint(pt);
         msleep(50);
 
         JZNodeRuntimeInfo runtime;
@@ -823,6 +847,7 @@ void ScriptTest::testUnitTest()
     script->addConnect(start->flowOutGemo(0),node_ret->flowInGemo());
     script->addConnect(func->paramOutGemo(0),node_ret->paramInGemo(0));
 
+    dumpImage(script,"unitTest.png");
     if(!build())
         return;
 
@@ -903,9 +928,9 @@ void ScriptTest::testModule()
 {
     m_project.importModule("ImageModuleSample");
 
-    JZNodeObjectPtr obj = JZObjectPtrCreate<QImage>();
+    QVariant obj = JZObjectCreate<QImage>();
     QVariantList in,out;    
-    in << QVariant::fromValue(obj);
+    in << obj;
     bool ret = m_engine.call("ImageThreshold",in,out);
     QVERIFY(ret);
 }
@@ -1215,13 +1240,13 @@ void ScriptTest::testCClass()
     QString c = "money";
     
     QVariantList out;
-    engine->call("string.left",{a,6},out);
+    engine->call("QString.left",{a,6},out);
     QCOMPARE(out[0],a.left(6));
 
-    engine->call("string.size",{out[0]},out);
+    engine->call("QString.size",{out[0]},out);
     QCOMPARE(out[0],a.left(6).size());
 
-    engine->call("string.replace",{a,b,c},out);
+    engine->call("QString.replace",{a,b,c},out);
     QCOMPARE(out[0],a.replace(b,c));
 }
 

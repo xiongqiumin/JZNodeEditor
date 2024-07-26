@@ -1,4 +1,4 @@
-#include "LogWidget.h"
+ï»¿#include "LogWidget.h"
 #include <QTabWidget>
 #include <QTextEdit>
 #include <QVBoxLayout>
@@ -22,9 +22,9 @@ LogBrowser::LogBrowser()
 void LogBrowser::onLogContextMenu(QPoint pos)
 {
     QMenu menu(this);
-    QAction *actCopy = menu.addAction("¸´ÖÆ");
+    QAction *actCopy = menu.addAction("å¤åˆ¶");
     menu.addSeparator();
-    QAction *actClear = menu.addAction("È«²¿Çå³ı");
+    QAction *actClear = menu.addAction("å…¨éƒ¨æ¸…é™¤");
     QAction *act = menu.exec(this->mapToGlobal(pos));
     if (!act)
         return;
@@ -112,7 +112,7 @@ LogWidget::LogWidget()
     l->addWidget(m_tabWidget);
     this->setLayout(l);
 
-    QStringList domains = { "±àÒëÊä³ö","ÔËĞĞÊä³ö" };
+    QStringList domains = { "ç¼–è¯‘è¾“å‡º","è¿è¡Œè¾“å‡º" };
     for (int i = 0; i < domains.size(); i++)
     {
         LogBrowser *edit = new LogBrowser();
@@ -128,17 +128,17 @@ LogWidget::LogWidget()
     }
 
     m_breakPoint = new JZNodeBreakPoint();
-    m_tabWidget->addTab(m_breakPoint, "¶Ïµã");
+    m_tabWidget->addTab(m_breakPoint, "æ–­ç‚¹");
 
     m_stack = new JZNodeStack();
-    m_tabWidget->addTab(m_stack, "¶ÑÕ»");
+    m_tabWidget->addTab(m_stack, "å †æ ˆ");
 
     m_watchManual = new JZNodeWatch();
-    m_tabWidget->addTab(m_watchManual, "¼à¿Ø");
+    m_tabWidget->addTab(m_watchManual, "ç›‘æ§");
 
     m_watchAuto = new JZNodeWatch();
     m_watchAuto->setReadOnly(true);
-    m_tabWidget->addTab(m_watchAuto, "×Ô¶¯´°¿Ú");
+    m_tabWidget->addTab(m_watchAuto, "è‡ªåŠ¨çª—å£");
 }
 
 LogWidget::~LogWidget()
@@ -189,5 +189,5 @@ void LogWidget::onAchorClicked(QUrl url)
     int idx = link.indexOf("?id=");    
     QString file = link.left(idx);
     int node_id = link.mid(idx+4).toInt();
-    sigNodeClicked(file, node_id);
+    sigNavigate(file, node_id);
 }

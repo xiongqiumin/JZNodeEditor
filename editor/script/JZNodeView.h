@@ -79,8 +79,7 @@ public:
     BreakPointTriggerResult();
 
     int type;
-    QString filename;
-    int nodeId;
+    BreakPoint pt;
 };
 
 class JZNodeView : public QGraphicsView
@@ -254,7 +253,7 @@ protected:
     void autoCompiler();
     void autoRunning();
 
-    QString getExpr();
+    QString getExpr(const QString &text = QString());
     int popMenu(QStringList list);
     QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);    
 

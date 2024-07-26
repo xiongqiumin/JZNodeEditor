@@ -46,7 +46,7 @@ public:
 };
 
 template<class T>
-QByteArray netDataPack(const T &param)
+QVariant netDataPack(const T &param)
 {
     QByteArray buffer;
     QDataStream s(&buffer,QIODevice::WriteOnly);
@@ -55,8 +55,11 @@ QByteArray netDataPack(const T &param)
 }
 
 template<class T>
-T netDataUnPack(const QByteArray &buffer)
+T netDataUnPack(const QVariant &v)
 {
+    Q_ASSERT(v.type() == QVariant::ByteArray);
+    
+    QByteArray buffer = v.toByteArray();
     T param;
     QDataStream s(buffer);
     s >> param;
@@ -177,10 +180,10 @@ QDataStream &operator>>(QDataStream &s, JZNodeProgramInfo &param);
 //JZNodeDebugInfo
 class JZNodeDebugInfo
 {
-public:
+public:    
     JZNodeDebugInfo();
 
-    QMap<QString,QList<int>> breakPoints;
+    QList<BreakPoint> breakPoints;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param);

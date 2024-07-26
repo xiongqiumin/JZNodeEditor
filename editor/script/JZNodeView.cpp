@@ -33,6 +33,7 @@
 #include "JZNodeBuilder.h"
 #include "LogManager.h"
 #include "JZNodeView.h"
+#include "JZNodeExprEditDialog.h"
 
 enum ViewCommand {
     CreateNode,
@@ -330,7 +331,6 @@ CopyData unpack(const QByteArray &buffer)
 BreakPointTriggerResult::BreakPointTriggerResult()
 {
     type = none;
-    nodeId = 0;
 }
 
 //JZNodeView
@@ -713,7 +713,7 @@ JZNodeLineItem *JZNodeView::getLineItem(int id)
 
 void JZNodeView::startLine(JZNodeGemo from)
 {
-    if (m_selLine)
+    if (m_selLine || m_runningMode != Process_none)
         return;
 
     JZNodeGraphItem *node_from = getNodeItem(from.nodeId);
@@ -1268,8 +1268,10 @@ BreakPointTriggerResult JZNodeView::breakPointTrigger()
             auto project = m_file->project();
             QString filepath = m_file->itemPath();
 
-            ret.filename = filepath;
-            ret.nodeId = node_item->id();
+            ret.pt.file = filepath;
+            ret.pt.nodeId = node_item->id();
+            //ret.pt.type = BreakPoint::nodeEnter;
+            ret.pt.type = BreakPoint::print;
             if(project->hasBreakPoint(filepath,node_id))
             {
                 ret.type = BreakPointTriggerResult::remove;
@@ -1279,7 +1281,7 @@ BreakPointTriggerResult JZNodeView::breakPointTrigger()
             else
             {
                 ret.type = BreakPointTriggerResult::add;
-                project->addBreakPoint(filepath,node_id);
+                project->addBreakPoint(ret.pt);
                 node_item->update();
             }
             break;
@@ -1305,7 +1307,7 @@ void JZNodeView::setRunningMode(ProcessStatus status)
     m_runningMode = status;
         
     bool flag = (status == Process_none);    
-    setInteractive(flag);
+    //setInteractive(flag);
     foreachNode([flag](JZNodeGraphItem *node) {
         node->setFlag(QGraphicsItem::ItemIsMovable, flag);
     });    
@@ -1615,7 +1617,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     {
         auto node_item = dynamic_cast<JZNodeGraphItem*>(item); 
         auto node_expr = dynamic_cast<JZNodeExpression*>(node_item->node());
-        QString expr = getExpr();
+        QString expr = getExpr(node_expr->expr());
         if(expr.isEmpty() || expr == node_expr->expr())
             return;
 
@@ -2265,10 +2267,14 @@ void JZNodeView::autoRunning()
         emit sigAutoRun();
 }
 
-QString JZNodeView::getExpr()
+QString JZNodeView::getExpr(const QString &text)
 {
-    QString text = QInputDialog::getText(this,"请输入表达式","");
-    return text;
+    JZNodeExprEditDialog dlg(this);
+    dlg.setExpr(text);
+    if(dlg.exec() != QDialog::Accepted)
+        return QString();
+
+    return dlg.expr();
 }
 
 int JZNodeView::popMenu(QStringList list)

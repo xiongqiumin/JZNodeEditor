@@ -48,15 +48,16 @@ QDataStream &operator>>(QDataStream &s, NodeParamInfo &param)
 //NodeInfo
 NodeInfo::NodeInfo()
 {
-    node_id = -1;
-    node_type = Node_none;
+    id = -1;
+    type = Node_none;
     isFlow = false;
 }
 
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
 {
-    s << param.node_id;
-    s << param.node_type;
+    s << param.name;
+    s << param.id;
+    s << param.type;
     s << param.isFlow;
     s << param.paramIn;    
     s << param.paramOut;
@@ -66,8 +67,9 @@ QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
 
 QDataStream &operator>>(QDataStream &s, NodeInfo &param)
 {
-    s >> param.node_id;
-    s >> param.node_type;
+    s >> param.name;
+    s >> param.id;
+    s >> param.type;
     s >> param.isFlow;
     s >> param.paramIn;    
     s >> param.paramOut;    
@@ -76,6 +78,42 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
 }
 
 //JZFunctionDebugInfo
+JZParamDefine *JZFunctionDebugInfo::localParam(QString name)
+{
+    for(int i = 0; i < localVariables.size(); i++)
+    {
+        if(localVariables[i].name == name)
+            return &localVariables[i];
+    }
+    return nullptr;
+}
+
+JZParam *JZFunctionDebugInfo::nodeParam(int id)
+{
+    auto gemo = JZNodeCompiler::paramGemo(id);
+    qDebug() << id << gemo.nodeId << gemo.pinId;
+    auto it = nodeInfo.find(gemo.nodeId);
+    if(it == nodeInfo.end())
+        return nullptr;
+
+    auto &info = it.value();
+    for(int i = 0; i < info.paramIn.size(); i++)
+    {
+        qDebug() << "in" << info.paramIn[i].id;
+        if(info.paramIn[i].id == gemo.pinId)
+            return &info.paramIn[i].define;
+    }
+    for(int i = 0; i < info.paramOut.size(); i++)
+    {
+        qDebug() << "paramOut" << info.paramOut[i].id;
+        if(info.paramOut[i].id == gemo.pinId)
+            return &info.paramOut[i].define;
+    }
+
+    qDebug() << "not find" << gemo.nodeId << gemo.pinId;
+    return nullptr;
+}   
+
 QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param)
 {
     s << param.localVariables;
@@ -294,18 +332,15 @@ void JZNodeRegistType(const JZNodeTypeMeta &type_info)
     //delcare
     for(int i = 0; i < define_list.size(); i++)
         JZNodeObjectManager::instance()->delcare(define_list[i].className,define_list[i].id);
-    for (int i = 0; i < cobj_list.size(); i++)
-    {
-        int id = JZNodeObjectManager::instance()->delcare(cobj_list[i].className, cobj_list[i].id);
-        cobj_id << id;
-    }
+    
 
+    for(int i = 0; i < cobj_list.size(); i++)
+    {
+        registContainer(cobj_list[i].className);    
+    }
     //regist
     for(int i = 0; i < define_list.size(); i++)
         JZNodeObjectManager::instance()->regist(define_list[i]);
-    for(int i = 0; i < cobj_list.size(); i++)
-        registContainer(cobj_list[i].className, cobj_id[i]);    
-
     for (int i = 0; i < function_list.size(); i++)
         JZNodeFunctionManager::instance()->registFunction(function_list[i]);
 }
@@ -371,7 +406,6 @@ bool JZNodeProgram::load(QString filepath)
     }
     s >> m_variables;    
     s >> m_typeMeta;
-    s >> m_binds;
 
     m_filePath = filepath;
     return true;
@@ -395,8 +429,7 @@ bool JZNodeProgram::save(QString filepath)
     }        
     s << m_variables;        
     s << m_typeMeta;
-    s << m_binds;
-    
+
     m_filePath = filepath;
     return true;
 }
@@ -440,11 +473,6 @@ QList<JZNodeScript*> JZNodeProgram::scriptList()
         it++;
     }
     return list;
-}
-
-QMap<QString, JZNodeParamBind> JZNodeProgram::bindInfo(QString className)
-{
-    return m_binds.value(className);
 }
 
 const JZNodeTypeMeta &JZNodeProgram::typeMeta() const

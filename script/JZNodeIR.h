@@ -118,7 +118,7 @@ public:
     virtual void loadFromStream(QDataStream &s);     
 
     int id;   
-    bool isBreakPoint;
+    int breakPointType;
 };
 
 class JZNodeIRAlloc : public JZNodeIR

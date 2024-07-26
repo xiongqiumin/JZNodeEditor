@@ -42,11 +42,12 @@ public:
     JZNodeScript *script;    
     int pc;
     int inCount;          //传入参数数量
+    int printNode;
     QMap<int, QVariant> watchMap;
     
     QMap<QString,QVariantPtr> locals;
     QMap<int,QVariantPtr> stacks;
-    QMap<JZNodeIRParam*,QVariant*> irParamCache;
+    QMap<JZNodeIRParam*,QVariant*> irParamCache; //为了加速JZNodeIRParam访问的缓存
 };
 
 class Stack
@@ -121,21 +122,20 @@ public:
 };
 typedef QSharedPointer<UnitTestResult> UnitTestResultPtr;
 
-//BreakPoint
-class BreakPoint
+//BreakStep
+class BreakStep
 {
 public: 
-    enum{
+    enum Type{
         none,
-        nodeEnter,    //为nodeId中断
         stepOver,     //不为nodeId中断
-        stackEqual,   
+        stackEqual,  
     };
 
-    BreakPoint();
+    BreakStep();
     void clear();
 
-    int type;
+    Type type;
     QString file;
     int nodeId;            
     int stack;
@@ -169,6 +169,7 @@ public:
     void setDebug(bool flag);    
 
     void addBreakPoint(QString filepath,int nodeId);
+    void addBreakPoint(const BreakPoint &pt);
     void removeBreakPoint(QString filepath,int nodeId);
     void clearBreakPoint();    
 
@@ -180,6 +181,8 @@ public:
     void stepOut();        
        
     Stack *stack();    
+    
+    QVariant createVariable(int type,const QString &value = QString());
 
     QVariant *getVariableRef(int id);
     QVariant *getVariableRef(int id, int stack_level);
@@ -200,6 +203,7 @@ public:
     QVariant getSender();    
 
     void watchNotify();         //node display
+    void printNode();
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
 
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
@@ -297,7 +301,7 @@ protected:
     QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
-    BreakPoint m_breakStep; 
+    BreakStep m_breakStep; 
     int m_breakNodeId;
 
     Stack m_stack;

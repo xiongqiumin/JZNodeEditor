@@ -101,37 +101,35 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZFunctionDefine &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param);
 
-//single
-class CSingle
+//signal
+class CSignal
 {
 public:
-    CSingle();
-    virtual ~CSingle();
+    CSignal();
+    virtual ~CSignal();
 
     virtual void connect(JZNodeObject *sender,JZNodeObject *recv,QString slot) = 0;
     virtual void disconnect(JZNodeObject *sender,JZNodeObject *recv,QString slot) = 0;
 
 protected:
-    Q_DISABLE_COPY(CSingle);       
+    Q_DISABLE_COPY(CSignal);       
 };
 
-class JZSingleDefine
+class JZSignalDefine
 {
 public:
-    JZSingleDefine();
+    JZSignalDefine();
 
     QString fullName() const;
-    QString delcare() const;
-    bool isCSingle() const;
+    bool isCSignal() const;
 
     QString name;
     QString className;
     QList<JZParamDefine> paramOut;
-
-    CSingle *csingle;
+    CSignal *csignal;
 };
-QDataStream &operator<<(QDataStream &s, const JZSingleDefine &param);
-QDataStream &operator>>(QDataStream &s, JZSingleDefine &param);
+QDataStream &operator<<(QDataStream &s, const JZSignalDefine &param);
+QDataStream &operator>>(QDataStream &s, JZSignalDefine &param);
 
 //JZParam
 class JZParam
