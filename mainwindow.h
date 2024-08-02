@@ -64,6 +64,8 @@ protected slots:
     void onActionPaste();
     void onActionSelectAll();
 
+    void onActionProjectProp();
+
     void onActionBuild();
     void onActionExport();
 
@@ -77,6 +79,8 @@ protected slots:
     void onActionStepOver();
     void onActionStepIn();
     void onActionStepOut();    
+
+    void onActionModbus();
 
     void onActionHelp();
     void onActionCheckUpdate();
@@ -117,6 +121,9 @@ protected slots:
     void onAutoCompilerTimer();
     void onBuildFinish(bool flag);
     void onAutoRunResult(UnitTestResultPtr result);
+
+    void onBreakPointClicked(QString file, int id);
+    void onBreakPointChanged(BreakPointChange reason,QString file, int id);
 
 private:
     struct ActionStatus{
@@ -195,7 +202,7 @@ private:
     void startUnitTest(QString testItemPath);
     void saveToFile(QString file,QString text);
     void saveAll();
-    bool closeAll(JZEditor *except = nullptr);
+    bool closeAllEditor(JZEditor *except = nullptr);
     void resetEditor(JZEditor *editor);
     void initLocalProcessTest();
     QIcon menuIcon(const QString &name);

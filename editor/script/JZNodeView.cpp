@@ -34,6 +34,9 @@
 #include "LogManager.h"
 #include "JZNodeView.h"
 #include "JZNodeExprEditDialog.h"
+#include "JZNodePanel.h"
+#include "JZNodeViewPanel.h"
+#include "3rd/jzprofiler/JZTx.h"
 
 enum ViewCommand {
     CreateNode,
@@ -327,16 +330,11 @@ CopyData unpack(const QByteArray &buffer)
     return param;
 }
 
-//BreakPointTriggerResult
-BreakPointTriggerResult::BreakPointTriggerResult()
-{
-    type = none;
-}
-
 //JZNodeView
 JZNodeView::JZNodeView(QWidget *widget)
     : QGraphicsView(widget)
 {
+    m_panel = nullptr;
     m_selLine = nullptr;        
     m_propEditor = nullptr;
     m_loadFlag = false;    
@@ -346,6 +344,7 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_runNode = -1;        
     m_groupIsMoving = false;
     m_autoRunning = false;
+    m_isUpdateFlowPanel = false;
     
     connect(&m_commandStack,&QUndoStack::cleanChanged, this, &JZNodeView::onCleanChanged);
     connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
@@ -462,6 +461,28 @@ JZScriptItem *JZNodeView::file()
     return m_file;
 }
 
+void JZNodeView::setPanel(JZNodePanel *panel)
+{
+    m_panel = panel;
+}
+
+void JZNodeView::setFlowPanel(JZNodeViewPanel *panel)
+{
+    m_flowPanel = panel;
+}
+
+void JZNodeView::udpateFlowPanel()
+{
+    if (m_isUpdateFlowPanel)
+        return;
+
+    m_isUpdateFlowPanel = true;
+    QTimer::singleShot(0, this, [this]{
+        m_flowPanel->updateFlow(m_file);
+        m_isUpdateFlowPanel = false;
+    });
+}
+
 void JZNodeView::setFile(JZScriptItem *file)
 {
     m_file = file;    
@@ -568,7 +589,7 @@ bool JZNodeView::isPropEditable(int id,int prop_id)
 }
 
 JZNodeGraphItem *JZNodeView::createNodeItem(int id)
-{
+{        
     JZNodeGraphItem *item = new JZNodeGraphItem(m_file->getNode(id));
     m_scene->addItem(item);
     item->updateNode();
@@ -664,6 +685,7 @@ JZNodeLineItem *JZNodeView::createLine(JZNodeGemo from, JZNodeGemo to)
 {
     int id = m_file->addConnect(from, to);    
     updatePropEditable(to);    
+    udpateFlowPanel();
     return createLineItem(id);
 }
 
@@ -671,6 +693,7 @@ JZNodeLineItem *JZNodeView::insertLine(const JZNodeConnect &connect)
 {
     m_file->insertConnect(connect);
     updatePropEditable(connect.to);
+    udpateFlowPanel();
     return createLineItem(connect.id);
 }
 
@@ -681,9 +704,10 @@ void JZNodeView::removeLine(int id)
         return;
 
     m_file->removeConnect(id);
-    JZNodeGemo to = item->endTraget();    
-    updatePropEditable(to);
-
+    JZNodeGemo to = item->endTraget();
+    if(m_file->getPin(to))       //节点内部事件处理先删除pin, 外面再删除线条，会存在to 不存在的情况
+        updatePropEditable(to);
+    udpateFlowPanel();
     m_scene->removeItem(item);
     delete item;
 }
@@ -968,7 +992,7 @@ QVariant JZNodeView::onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsI
 }
 
 void JZNodeView::initGraph()
-{
+{    
     m_loadFlag = true;
     m_scene->clear();
 
@@ -992,6 +1016,7 @@ void JZNodeView::initGraph()
 
     sceneTranslate(-20,-20);
     m_map->updateMap();
+    udpateFlowPanel();
 }
 
 void JZNodeView::clear()
@@ -1254,10 +1279,8 @@ void JZNodeView::selectNode(int id)
     getNodeItem(id)->setSelected(true);
 }
 
-BreakPointTriggerResult JZNodeView::breakPointTrigger()
-{
-    BreakPointTriggerResult ret;
-
+void JZNodeView::breakPointTrigger()
+{    
     auto items = m_scene->selectedItems();
     for(int i = 0; i < items.size(); i++)
     {
@@ -1266,29 +1289,24 @@ BreakPointTriggerResult JZNodeView::breakPointTrigger()
             auto node_item = (JZNodeGraphItem*)items[i];
             int node_id = node_item->id();
             auto project = m_file->project();
-            QString filepath = m_file->itemPath();
-
-            ret.pt.file = filepath;
-            ret.pt.nodeId = node_item->id();
-            //ret.pt.type = BreakPoint::nodeEnter;
-            ret.pt.type = BreakPoint::print;
+            QString filepath = m_file->itemPath();            
             if(project->hasBreakPoint(filepath,node_id))
-            {
-                ret.type = BreakPointTriggerResult::remove;
+            {                
                 project->removeBreakPoint(filepath,node_id);
                 node_item->update();
             }
             else
             {
-                ret.type = BreakPointTriggerResult::add;
-                project->addBreakPoint(ret.pt);
+                BreakPoint pt;
+                pt.file = filepath;
+                pt.nodeId = node_item->id();
+                pt.type = BreakPoint::nodeEnter;
+                project->addBreakPoint(pt);
                 node_item->update();
             }
             break;
         }
     }
-
-    return ret;
 }
 
 void JZNodeView::setAutoRunning(bool flag)
@@ -1466,7 +1484,8 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QMenu menu(this);    
 
     auto item = itemAt(pos);
-    QAction *actAdd = nullptr;
+    QList<QAction*> actAddList;
+    QList<QTreeWidgetItem*> actAddItemList;
     QAction *actCpy = nullptr;
     QAction *actDel = nullptr;
     QAction *actPaste = nullptr;
@@ -1478,7 +1497,25 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QList<QAction*> node_actions;
     if (!item)
     {
-        actAdd = menu.addAction("添加节点");
+        QMenu* addMenu = menu.addMenu("添加节点");
+        QMenu* menu_op = addMenu->addMenu("操作符");
+        auto item_op = m_panel->itemOp();
+        for (int i = 0; i < item_op->childCount(); i++)
+        {
+            auto child = item_op->child(i);
+            actAddItemList << child;
+            actAddList << menu_op->addAction(child->text(0));
+        }
+
+        QMenu* menu_stat = addMenu->addMenu("流程");
+        auto item_process = m_panel->itemProcess();
+        for (int i = 0; i < item_process->childCount(); i++)
+        {
+            auto child = item_process->child(i);
+            actAddItemList << child;
+            actAddList << menu_stat->addAction(child->text(0));
+        }
+
         actPaste = menu.addAction("粘贴");                
     }
     else
@@ -1577,8 +1614,12 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     if(!ret)
         return;
 
-    if (ret == actAdd)
+    if (actAddList.contains(ret))
     {       
+        int idx = actAddList.indexOf(ret);
+        QByteArray buffer = actAddItemList[idx]->data(0,TreeItem_value).toByteArray();
+        QPointF node_pos = mapToScene(pos);
+        addCreateNodeCommand(buffer, node_pos);
     }
     else if(ret == actCpy)
     {

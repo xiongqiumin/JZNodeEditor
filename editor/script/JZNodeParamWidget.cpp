@@ -272,8 +272,11 @@ void JZNodeParamValueWidget::createWidget()
             auto meta = JZNodeObjectManager::instance()->enumMeta(m_dataType);
             Q_ASSERT(!meta->isFlag());
             
-            for (int i = 0; i < meta->count(); i++)
-                box->addItem(meta->key(i), meta->value(i));
+            if (meta->count() < 24)
+            {
+                for (int i = 0; i < meta->count(); i++)
+                    box->addItem(meta->key(i), meta->value(i));
+            }
 
             box->setCompleter(JZNodeTypeHelper::instance()->enumCompleter(m_dataType));
         }

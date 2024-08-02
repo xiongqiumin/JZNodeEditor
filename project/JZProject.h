@@ -11,6 +11,12 @@
 #include "JZClassItem.h"
 #include "JZScriptFile.h"
 
+enum BreakPointChange
+{
+    BreakPoint_add,
+    BreakPoint_remove,
+};
+
 //BreakPoint
 class BreakPoint
 {
@@ -119,12 +125,14 @@ public:
     void addBreakPoint(const BreakPoint &pt);
     void removeBreakPoint(QString file,int id);
     bool hasBreakPoint(QString file,int id);
+    BreakPoint breakPoint(QString file, int id);
     QList<BreakPoint> breakPoints();
 
     void onItemChanged(JZProjectItem *item);     
 
 signals:
     void sigItemChanged(JZProjectItem *item);
+    void sigBreakPointChanged(BreakPointChange reason,QString file, int id);
     void sigScriptNodeChanged(JZScriptItem *file, int nodeId,const QByteArray &buffer);
 
 protected:

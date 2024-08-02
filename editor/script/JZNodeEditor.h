@@ -35,7 +35,7 @@ public:
     virtual void paste() override;
     virtual void selectAll() override;
     
-    BreakPointTriggerResult breakPointTrigger();
+    void breakPointTrigger();
     void ensureNodeVisible(int nodeId);
     void selectNode(int nodeId);
 

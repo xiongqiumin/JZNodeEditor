@@ -1,5 +1,5 @@
-#ifndef HHNEWPROJECTDLG_H
-#define HHNEWPROJECTDLG_H
+#ifndef JZ_NEW_PROJECT_DIALOG_H_
+#define JZ_NEW_PROJECT_DIALOG_H_
 
 #include <QDialog>
 #include "UiCommon.h"

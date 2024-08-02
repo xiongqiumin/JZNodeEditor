@@ -87,7 +87,7 @@ QString JZNodeObjectDefine::fullname() const
 int JZNodeObjectDefine::baseId() const
 {
     auto def = this;
-    if(!def->superName.isEmpty())
+    while(def->super())
         def = def->super();
     return def->id;
 }
@@ -214,47 +214,56 @@ int JZNodeObjectDefine::indexOfFunction(const QString &function) const
     return -1;
 }
 
-bool JZNodeObjectDefine::checkFunction(const QString &function,QString &error) const
+bool JZNodeObjectDefine::check(QString &error) const
 {
     int count = 0;
-    const JZFunctionDefine *func = nullptr;
-    for (int i = 0; i < functions.size(); i++)        
+    if (!superName.isEmpty() && !super())
     {
-        if(function == functions[i].name)
-        {
-            func = &functions[i];
-            count++;
-        }
-    }
-    if(count > 1)
-    {
-        error = "存在重名函数";
+        error = "super class " + superName + " not define";
         return false;
     }
-
-    const JZNodeObjectDefine *def = this->super();
-    while (def)
+    const JZFunctionDefine *func = nullptr;
+    for (int i = 0; i < functions.size(); i++)
     {
-        for (int i = 0; i < def->functions.size(); i++)  
+        for (int j = 0; j < functions.size(); j++)
         {
-            if(def->functions[i].name == function)
+            if (i != j && functions[i].name == functions[j].name)
             {
-                const JZFunctionDefine *super_func = &def->functions[i];
-                if(!func->isVirtualFunction)
+                func = &functions[i];
+                error = "存在重名函数" + functions[i].name;
+                return false;
+            }
+        }
+    }
+    
+    if(!superName.isEmpty())
+    {
+        auto def = this->super();
+        QStringList super_functions = def->functionList();
+        for (int funx_idx = 0; funx_idx < functions.size(); funx_idx++)
+        {
+            auto func = &functions[funx_idx];
+            for (int i = 0; i < super_functions.size(); i++)
+            {
+                if (func->name == super_functions[i])
                 {
-                    error = "父类存在重名函数";
-                    return false;
-                }
+                    const JZFunctionDefine *super_func = def->function(func->name);
+                    if (!func->isVirtualFunction)
+                    {
+                        error = "父类存在重名函数";
+                        return false;
+                    }
 
-                if(!JZNodeType::functionTypeMatch(func,super_func))
-                {
-                    error = "函数签名不匹配";
-                    return false;
+                    if (!JZNodeType::functionTypeMatch(func, super_func))
+                    {
+                        error = "函数签名不匹配" + func->delcare() + "," + super_func->delcare();
+                        return false;
+                    }
                 }
             }
-        }         
-        def = def->super();        
-    }    
+        } 
+    }
+
     return true;
 }
 
@@ -1004,7 +1013,7 @@ int JZNodeObjectManager::delcareCClass(const QString &name, const QString &c_typ
 
 int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
-    Q_ASSERT(!info.className.isEmpty() && (info.superName.isEmpty() || getClassId(info.superName) != -1));    
+    Q_ASSERT(!info.className.isEmpty());    
     
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;
@@ -1266,7 +1275,8 @@ void JZNodeObjectManager::copy(JZNodeObject *dst,JZNodeObject *src)
 }
 
 void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj)
-{
+{    
+    Q_ASSERT(def);
     if (def->isCObject)
     {
         auto cobj = def->cMeta.create();

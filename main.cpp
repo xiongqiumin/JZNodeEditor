@@ -10,6 +10,7 @@
 #include "sample/ImageBatch/ImageBatch.h"
 #include "sample/SmartHome/SmartHome.h"
 #include "JZNodeCppGenerater.h"
+#include "3rd/jzupdate/JZUpdateClient.h"
 
 void run_testcase(int argc, char *argv[])
 {
@@ -22,12 +23,20 @@ void run_testcase(int argc, char *argv[])
     test_benchmark(argc, argv);
 }
 
+QtMessageHandler g_defaultMessageHandle = nullptr;
+void outputLogMessage(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    g_defaultMessageHandle(type, context, msg);
+}
+
 int main(int argc, char *argv[])
 {
+    g_defaultMessageHandle = qInstallMessageHandler(outputLogMessage);
+
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
-
+    
     if(0)
     {
         run_testcase(argc,argv);
@@ -47,36 +56,47 @@ int main(int argc, char *argv[])
         return 1;
     }    
 
-    if(argc == 1)
-    {
-        MainWindow w;
-        w.showMaximized();
-        return a.exec();
+    QCommandLineParser parser;
+
+    //run
+    QCommandLineOption runOption("run", "", "file");
+    parser.addOption(runOption);    
+
+    //debug
+    QCommandLineOption debugOption("debug");
+    parser.addOption(debugOption);
+
+    parser.process(a);
+
+    JZUpdateClient client(qApp->applicationDirPath());
+    if (client.isDownloadFinish())
+    {        
+        if (!client.dealUpdate())
+            return false;
+
+        QString exe_path = qApp->applicationFilePath();
+        QProcess::startDetached(exe_path);
+        return 0;
     }
-    else
-    {  
-        QCommandLineParser parser;
+    client.clearCache();     
 
-        //run
-        QCommandLineOption runOption("run","","file");
-        parser.addOption(runOption);
-
-        //debug
-        QCommandLineOption debugOption("debug");
-        parser.addOption(debugOption);
-
-        parser.process(a);        
-
+    if(parser.isSet(runOption))
+    {   
         QString error;
         QString program_path = parser.value(runOption);
         bool debug = parser.isSet(debugOption);
-        JZNodeVM vm;        
-        if(!vm.init(program_path,debug, error))
+        JZNodeVM vm;
+        if (!vm.init(program_path, debug, error))
         {
-            QMessageBox::information(nullptr,"","init program \"" + program_path + "\" failed.\n" + error);
+            QMessageBox::information(nullptr, "", "init program \"" + program_path + "\" failed.\n" + error);
             return 1;
         }
-
-        return a.exec();            
+        return a.exec();        
+    }
+    else
+    {                  
+        MainWindow w;
+        w.showMaximized();
+        return a.exec();                  
     }            
 }

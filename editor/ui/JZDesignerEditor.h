@@ -34,6 +34,8 @@ protected slots:
 protected:                
     Qt::WindowFlags windowFlag();            
 
+    void initWidgetBox(QDesignerWidgetBoxInterface *box);
+
     QList<JZDesignerFormWindow*> m_windows;    
     QWidget *m_empty;
     QStackedWidget *m_view;

@@ -11,7 +11,6 @@ using namespace std;
 enum{
 	NetPack_none,
 	NetPack_variant,
-	NetPack_byteArray,
 	NetPack_user = 0x100,
 };
 
@@ -34,6 +33,27 @@ private:
 typedef QSharedPointer<JZNetPack> JZNetPackPtr;
 
 //JZNetPackVariant
+template<class T>
+QVariant netDataPack(const T &param)
+{
+    QByteArray buffer;
+    QDataStream s(&buffer, QIODevice::WriteOnly);
+    s << param;
+    return buffer;
+}
+
+template<class T>
+T netDataUnPack(const QVariant &v)
+{
+    Q_ASSERT(v.type() == QVariant::ByteArray);
+
+    QByteArray buffer = v.toByteArray();
+    T param;
+    QDataStream s(buffer);
+    s >> param;
+    return param;
+}
+
 class JZNetPackVariant : public JZNetPack
 {
 public:
@@ -45,20 +65,6 @@ public:
 	virtual void loadFromStream(QDataStream &s);	
 
 	QVariantMap params;	
-};
-
-//JZNetPackByteArray
-class JZNetPackByteArray : public JZNetPack
-{
-public:
-    JZNetPackByteArray();
-    virtual ~JZNetPackByteArray();
-		
-    virtual int type() const;
-	virtual void saveToStream(QDataStream &s) const;
-	virtual void loadFromStream(QDataStream &s);
-
-	QByteArray buffer;	
 };
 
 //JZNetPackManager
@@ -77,6 +83,6 @@ protected:
 	QMap<int, CreatePackFunc> m_packFactory;	
 };
 template<class T> 
-JZNetPack *createNetPackFunc(){ return new T();}
+JZNetPack *JZNetPackCreate(){ return new T();}
 
 #endif

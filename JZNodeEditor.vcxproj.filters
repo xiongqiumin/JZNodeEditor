@@ -86,6 +86,30 @@
     <Filter Include="Source Files\script\as">
       <UniqueIdentifier>{576ec8a3-c5c8-4ebe-b6a7-33b573c2d24b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\3rd\jzupdate">
+      <UniqueIdentifier>{0e976487-6aec-46f8-bc8b-406ae1223e48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rd\jzupdate">
+      <UniqueIdentifier>{26f7ccdc-ff71-4d7d-8aa7-5ba7146a2dd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rd\jzprofiler">
+      <UniqueIdentifier>{6d63d985-4054-4018-bbf2-8e3cef4740bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rd\jzprofiler">
+      <UniqueIdentifier>{111618a5-de31-4b58-a0d3-1af92f15d5b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\editor\tools">
+      <UniqueIdentifier>{092b050f-1535-4328-94a1-9c05f9dbe4ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\editor\tools">
+      <UniqueIdentifier>{e34d0229-6f8a-4f2b-b98e-e0dd36c56527}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rd\jzmodbus">
+      <UniqueIdentifier>{ac9a4121-5bce-4d9e-b49b-d8368e7a395b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rd\jzmodbus">
+      <UniqueIdentifier>{0bba7a06-a935-4614-8703-7960d40b8c93}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -427,6 +451,69 @@
     <ClCompile Include="editor\script\JZNodeSlotEditDialog.cpp">
       <Filter>Source Files\editor\script</Filter>
     </ClCompile>
+    <ClCompile Include="editor\script\JZNodeExprEditDialog.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeCppGenerater.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzupdate\JZUpdateClient.cpp">
+      <Filter>Source Files\3rd\jzupdate</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzupdate\JZUpdateServer.cpp">
+      <Filter>Source Files\3rd\jzupdate</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzupdate\JZUpdatePack.cpp">
+      <Filter>Source Files\3rd\jzupdate</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzupdate\JZUpdateUtils.cpp">
+      <Filter>Source Files\3rd\jzupdate</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzupdate\JZUpdateTest.cpp">
+      <Filter>Source Files\3rd\jzupdate</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzupdate\JZUpdateDialog.cpp">
+      <Filter>Source Files\3rd\jzupdate</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\JZAboutDialog.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzprofiler\JZTx.cpp">
+      <Filter>Source Files\3rd\jzprofiler</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\tools\JZModbusSimulator.cpp">
+      <Filter>Source Files\editor\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusClient.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusContext.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusDefine.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusMaster.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusParam.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusRtu.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusServer.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusSlaver.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\jzmodbus\JZModbusTcp.cpp">
+      <Filter>Source Files\3rd\jzmodbus</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\QImageLabel.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -587,6 +674,39 @@
     </QtMoc>
     <QtMoc Include="editor\JZProjectSettingDialog.h">
       <Filter>Header Files\editor</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeSlotEditDialog.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\script\JZNodeExprEditDialog.h">
+      <Filter>Header Files\editor\script</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jzupdate\JZUpdateClient.h">
+      <Filter>Header Files\3rd\jzupdate</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jzupdate\JZUpdateServer.h">
+      <Filter>Header Files\3rd\jzupdate</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jzupdate\JZUpdateDialog.h">
+      <Filter>Header Files\3rd\jzupdate</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\tools\JZModbusSimulator.h">
+      <Filter>Header Files\editor\tools</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jzmodbus\JZModbusClient.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jzmodbus\JZModbusMaster.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jzmodbus\JZModbusServer.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\jzmodbus\JZModbusSlaver.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </QtMoc>
+    <QtMoc Include="widgets\QImageLabel.h">
+      <Filter>Header Files\widgets</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -752,6 +872,39 @@
     <ClInclude Include="sample\ImageModule\ImageModule.h">
       <Filter>Header Files\sample</Filter>
     </ClInclude>
+    <ClInclude Include="script\JZNodeCppGenerater.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzupdate\JZUpdatePack.h">
+      <Filter>Header Files\3rd\jzupdate</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzupdate\JZUpdateUtils.h">
+      <Filter>Header Files\3rd\jzupdate</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzupdate\JZUpdateTest.h">
+      <Filter>Header Files\3rd\jzupdate</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\JZAboutDialog.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzprofiler\JZTx.h">
+      <Filter>Header Files\3rd\jzprofiler</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzmodbus\JZModbusContext.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzmodbus\JZModbusDefine.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzmodbus\JZModbusParam.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzmodbus\JZModbusRtu.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\jzmodbus\JZModbusTcp.h">
+      <Filter>Header Files\3rd\jzmodbus</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="editor\JZNewProjectDialog.ui">
@@ -779,6 +932,9 @@
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="editor\script\JZNodeParamBindEditDialog.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="editor\tools\JZModbusSimulator.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

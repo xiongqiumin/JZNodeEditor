@@ -167,8 +167,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             type_meta.cobjectList << cobj;
         }
     }
-
-    auto global_item = m_project->globalDefine();
+    
     auto list = m_project->globalVariableList();
     for(int i = 0; i < list.size(); i++)
     {
@@ -177,8 +176,11 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         m_program->m_variables[name] = *def;
 
         QString error;
-        if(!m_compiler.checkVariable(def,error))
-            m_error += makeLink(error,global_item->path(), i);
+        if (!m_compiler.checkVariable(def, error))
+        {
+            auto global_item = m_project->globalDefine();
+            m_error += makeLink(error, global_item->path(), i);
+        }
     }
     
     auto class_list = m_project->itemList("./",ProjectItem_class);
@@ -188,12 +190,15 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         auto obj_def = class_item->objectDefine();        
         type_meta.objectList << obj_def;
                 
+        QString error;
+        if(!obj_def.check(error))        
+            m_error += error;        
+
         JZParamItem *param = class_item->paramFile();
         auto var_list = param->variableList();
         for(int i = 0; i < var_list.size(); i++)
         {
-            auto var_def = param->variable(var_list[i]);
-            QString error;
+            auto var_def = param->variable(var_list[i]);            
             if(!m_compiler.checkVariable(var_def,error))
                 m_error += makeLink(error,param->itemPath(),i);
         }

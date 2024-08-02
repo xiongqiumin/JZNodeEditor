@@ -19,6 +19,11 @@
 #include "JZDesignerEditor.h"
 #include "JZNodeUtils.h"
 #include "JZNodeCppGenerater.h"
+#include "3rd/jzupdate/JZUpdateClient.h"
+#include "3rd/jzupdate/JZUpdateDialog.h"
+#include "JZAboutDialog.h"
+#include "JZProjectSettingDialog.h"
+#include "editor/tools/JZModbusSimulator.h"
 
 //Setting
 Setting::Setting()
@@ -107,6 +112,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
     connect(&m_project,&JZProject::sigItemChanged, this, &MainWindow::onProjectChanged);
+    connect(&m_project,&JZProject::sigBreakPointChanged, this, &MainWindow::onBreakPointChanged);
 
     connect(&m_runThread,&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
     connect(&m_buildThread,&JZNodeBuildThread::sigResult,this, &MainWindow::onBuildFinish);
@@ -246,12 +252,20 @@ void MainWindow::initMenu()
     menu_view->addAction("显示窗口");
     menu_view->addAction("恢复默认");
 
+    QMenu *menu_project = menubar->addMenu("项目");
+    QAction *actProject = menu_project->addAction("属性");
+    connect(actProject, &QAction::triggered, this, &MainWindow::onActionProjectProp);
+
     QMenu *menu_build = menubar->addMenu("构建");
     auto actBuild = menu_build->addAction("编译");
     auto actExport = menu_build->addAction("导出");
     connect(actBuild,&QAction::triggered,this,&MainWindow::onActionBuild);
     connect(actExport,&QAction::triggered,this,&MainWindow::onActionExport);
     m_actionStatus << ActionStatus(actBuild, { as::ProjectVaild, as::ProcessIsEmpty });
+
+    QMenu *menu_tool = menubar->addMenu("工具");
+    auto actModbus = menu_tool->addAction("Modbus");
+    connect(actModbus, &QAction::triggered, this, &MainWindow::onActionModbus);
 
     QMenu *menu_debug = menubar->addMenu("调试");    
     auto actRun = menu_debug->addAction(menuIcon("iconRun.png"), "开始调试");
@@ -344,8 +358,10 @@ void MainWindow::initUi()
     connect(m_watchManual, &JZNodeWatch::sigParamValueChanged, this, &MainWindow::onWatchValueChanged);
 
     connect(m_watchAuto, &JZNodeWatch::sigParamValueChanged, this, &MainWindow::onWatchValueChanged);
-
+    
     m_breakPoint = m_log->breakpoint();    
+    m_breakPoint->setProject(&m_project);
+    connect(m_breakPoint, &JZNodeBreakPoint::sigBreakPointClicked, this, &MainWindow::onBreakPointClicked);    
 
     m_projectTree = new JZProjectTree();    
     connect(m_projectTree,&JZProjectTree::sigActionTrigged,this,&MainWindow::onProjectTreeAction);
@@ -597,12 +613,12 @@ void MainWindow::onActionSaveAllFile()
 
 void MainWindow::onActionCloseAllFile()
 {
-    closeAll();    
+    closeAllEditor();
 }
 
 void MainWindow::onActionCloseAllFileExcept()
 {
-    closeAll(m_editor);    
+    closeAllEditor(m_editor);
 }
 
 void MainWindow::onActionUndo()
@@ -647,6 +663,13 @@ void MainWindow::onActionSelectAll()
     {
         m_editor->selectAll();        
     }
+}
+
+void MainWindow::onActionProjectProp()
+{
+    JZProjectSettingDialog dlg(this);
+    dlg.setProject(&m_project);
+    dlg.exec();
 }
 
 void MainWindow::onActionBuild()
@@ -729,15 +752,8 @@ void MainWindow::onActionBreakPoint()
     if(m_editor && m_editor->type() == Editor_script)
     {
         JZNodeEditor *node_editor = (JZNodeEditor*)m_editor;
-        auto ret = node_editor->breakPointTrigger();
-        if(m_debuger.isConnect())
-        {
-            if(ret.type == BreakPointTriggerResult::add)
-                m_debuger.addBreakPoint(ret.pt);
-            else if(ret.type == BreakPointTriggerResult::remove)
-                m_debuger.removeBreakPoint(ret.pt.file,ret.pt.nodeId);
-        }
-        m_breakPoint->updateBreakPoint(&m_project);
+        node_editor->breakPointTrigger();        
+        m_breakPoint->updateBreakPoint();
     }
 }
 
@@ -759,21 +775,55 @@ void MainWindow::onActionStepOut()
     updateActionStatus();
 }
 
+void MainWindow::onActionModbus()
+{
+    JZModbusSimulator *sim = new JZModbusSimulator();
+    sim->setAttribute(Qt::WA_DeleteOnClose);
+    sim->show();
+}
+
 void MainWindow::onActionHelp()
 {
-    QString text = "欢迎试用\nQQ群:598601341";
-    QMessageBox::information(this, "", text);
+    onActionAbout();
 }
 
 void MainWindow::onActionCheckUpdate()
 {
-    QMessageBox::information(this, "", "这个功能还没做");
+    JZUpdateClient client(qApp->applicationDirPath());
+    if (!client.init("120.77.183.99", 8888))
+    {
+        QMessageBox::information(this, "", "连接服务器失败");
+        return;
+    }
+
+    if (!client.checkUpdate())
+    {
+        QMessageBox::information(this, "", "当前已经是最新版本");
+        return;
+    }
+    else
+    {
+        if (QMessageBox::question(this, "", "发现新版本，是否更新", QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
+            return;
+
+        if (!closeProject())
+            return;
+        
+        JZUpdateDialog dlg(this);
+        dlg.setClient(&client);
+        if (dlg.exec() != QDialog::Accepted)        
+            return;        
+        
+        QString exe_path = qApp->applicationFilePath();        
+        QProcess::startDetached(exe_path);
+        close();         
+    }
 }
 
 void MainWindow::onActionAbout()
 {
-    QString text = "欢迎试用\nQQ群:598601341";
-    QMessageBox::information(this, "关于" + windowTitle(), text);
+    JZAboutDialog dlg(this);
+    dlg.exec();    
 }
 
 void MainWindow::onModifyChanged(bool flag)
@@ -802,7 +852,7 @@ void MainWindow::onUndoAvailable(bool flag)
 
 bool MainWindow::closeProject()
 {
-    if (!closeAll())
+    if (!closeAllEditor())
         return false;
     
     m_projectTree->clear();
@@ -823,7 +873,7 @@ bool MainWindow::openProject(QString filepath)
     m_buildInfo.clear();
     m_projectTree->setProject(&m_project);
     m_setting.addRecentProject(m_project.filePath());
-    m_breakPoint->updateBreakPoint(&m_project);     
+    m_breakPoint->updateBreakPoint();     
     updateActionStatus();
     return true;
 }
@@ -1535,7 +1585,7 @@ void MainWindow::onTabContextMenu(QPoint pos)
     {        
         int index = bar->tabAt(pos);
         auto editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
-        closeAll(editor);
+        closeAllEditor(editor);
     }
 }
 
@@ -1626,7 +1676,7 @@ void MainWindow::saveAll()
     m_project.saveCommit();
 }
 
-bool MainWindow::closeAll(JZEditor *except)
+bool MainWindow::closeAllEditor(JZEditor *except)
 {
     QList<JZEditor*> close_list;
     QStringList close_file_list;
@@ -1781,4 +1831,23 @@ void MainWindow::setWatchStatus(ProcessStatus status)
 {
     for (auto w : m_debugWidgets)
         w->setRunningMode(status);
+}
+
+void MainWindow::onBreakPointClicked(QString file, int id)
+{
+    onNavigate(file, id);
+}
+
+void MainWindow::onBreakPointChanged(BreakPointChange reason, QString file, int id)
+{    
+    if (m_debuger.isConnect())
+    {
+        if (reason == BreakPoint_add)
+        {
+            auto bt = m_project.breakPoint(file, id);
+            m_debuger.addBreakPoint(bt);
+        } 
+        else if(reason == BreakPoint_remove)
+            m_debuger.removeBreakPoint(file, id);
+    }
 }

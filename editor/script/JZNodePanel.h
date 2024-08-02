@@ -7,6 +7,12 @@
 #include "JZScriptItem.h"
 #include "JZNodePropertyEditor.h"
 
+enum {
+    TreeItem_type = Qt::UserRole,
+    TreeItem_value,
+    TreeItem_isClass,
+};
+
 class JZNodeTreeWidget : public QTreeWidget
 {
     Q_OBJECT
@@ -28,6 +34,9 @@ public:
     void setFile(JZScriptItem *file);        
     void updateNode();
 
+    QTreeWidgetItem *itemOp();
+    QTreeWidgetItem *itemProcess();
+
 protected slots:
     void onSearch();
     void onTreeItemClicked(QTreeWidgetItem *current,int col);
@@ -42,7 +51,6 @@ protected:
         QStringList functionList;
     };
     
-
     void init();
     void initData();
     void initBasicFlow();
@@ -74,6 +82,8 @@ protected:
     JZScriptClassItem *m_classFile;
     QLineEdit *m_lineSearch;    
     
+    QTreeWidgetItem *m_itemOp;
+    QTreeWidgetItem *m_itemProcess;
     QTreeWidgetItem *m_memberFunction;
     QTreeWidgetItem *m_memberParam;
     QTreeWidgetItem *m_itemLocalParam;

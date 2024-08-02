@@ -46,32 +46,6 @@ void JZNetPackVariant::loadFromStream(QDataStream &s)
 	s >> params;
 }
 
-//JZNetPackByteArray
-JZNetPackByteArray::JZNetPackByteArray()
-{
-
-}
-	
-JZNetPackByteArray::~JZNetPackByteArray()
-{
-
-}
-		
-int JZNetPackByteArray::type() const
-{
-	return NetPack_byteArray;
-}
-
-void JZNetPackByteArray::saveToStream(QDataStream &s) const
-{
-	s << buffer;
-}
-
-void JZNetPackByteArray::loadFromStream(QDataStream &s)
-{
-	s >> buffer;
-}
-
 //JZNetPackManager
 JZNetPackManager *JZNetPackManager::instance()
 {
@@ -94,8 +68,7 @@ JZNetPack *JZNetPackManager::createPack(int id)
 
 void JZNetPackManager::init()
 {
-    registPack(NetPack_variant,createNetPackFunc<JZNetPackVariant>);
-    registPack(NetPack_byteArray,createNetPackFunc<JZNetPackByteArray>);
+    registPack(NetPack_variant, JZNetPackCreate<JZNetPackVariant>);
 }
 
 void JZNetPackManager::registPack(int type,CreatePackFunc func)

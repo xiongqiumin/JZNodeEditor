@@ -656,11 +656,17 @@ void JZProject::addGlobalVariable(const QString &name,int dataType,const QString
 
 const JZParamDefine *JZProject::globalVariable(QString name)
 {   
+    if (!mainFile())
+        return nullptr;
+
     return globalDefine()->variable(name);
 }
 
 QStringList JZProject::globalVariableList()
 {    
+    if (!mainFile())
+        return QStringList();
+
     return globalDefine()->variableList();
 }
 
@@ -732,6 +738,16 @@ bool JZProject::hasBreakPoint(QString file,int id)
     return indexOfBreakPoint(file,id) >= 0;
 }
 
+BreakPoint JZProject::breakPoint(QString file, int id)
+{
+    int idx = indexOfBreakPoint(file, id);
+    if (idx == -1)
+        return BreakPoint();
+
+    auto item = getItem(file);
+    return m_breakPoints[item][idx];
+}
+
 void JZProject::addBreakPoint(const BreakPoint &pt)
 {
     if(hasBreakPoint(pt.file,pt.nodeId))
@@ -739,6 +755,7 @@ void JZProject::addBreakPoint(const BreakPoint &pt)
 
     auto item = getItem(pt.file);
     m_breakPoints[item].push_back(pt);
+    sigBreakPointChanged(BreakPoint_add, pt.file, pt.nodeId);
 }
 
 int JZProject::indexOfBreakPoint(QString file,int id)
@@ -766,6 +783,8 @@ void JZProject::removeBreakPoint(QString file,int id)
     m_breakPoints[item].removeAt(idx);
     if (m_breakPoints[item].size() == 0)
         m_breakPoints.remove(item);
+
+    sigBreakPointChanged(BreakPoint_remove, file, id);
 }
 
 QList<BreakPoint> JZProject::breakPoints()

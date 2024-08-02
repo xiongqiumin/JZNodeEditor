@@ -330,18 +330,22 @@ void JZNodeRegistType(const JZNodeTypeMeta &type_info)
         JZModuleManager::instance()->loadModule(module_list[i]);
 
     //delcare
-    for(int i = 0; i < define_list.size(); i++)
-        JZNodeObjectManager::instance()->delcare(define_list[i].className,define_list[i].id);
-    
-
-    for(int i = 0; i < cobj_list.size(); i++)
+    for (int i = 0; i < define_list.size(); i++)
     {
-        registContainer(cobj_list[i].className);    
+        QString error;
+        JZNodeObjectManager::instance()->delcare(define_list[i].className, define_list[i].id);
     }
+    
+    for(int i = 0; i < cobj_list.size(); i++)    
+        registContainer(cobj_list[i].className);
+
     //regist
-    for(int i = 0; i < define_list.size(); i++)
+    for (int i = 0; i < define_list.size(); i++)
+    {
+        QString error;
         JZNodeObjectManager::instance()->regist(define_list[i]);
-    for (int i = 0; i < function_list.size(); i++)
+    }
+    for (int i = 0; i < function_list.size(); i++)        
         JZNodeFunctionManager::instance()->registFunction(function_list[i]);
 }
 

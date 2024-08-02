@@ -21,9 +21,9 @@ public:
     bool isConnect();
 	
     bool sendPack(JZNetPack *pack);
-	JZNetPackPtr waitPackAny(int timeout = -1);	
-	JZNetPackPtr waitPackByType(int type,int timeout = -1);
-	JZNetPackPtr waitPackBySeq(int seq,int timeout = -1);
+	JZNetPackPtr waitPackAny(int timeout = 30 * 1000);	
+	JZNetPackPtr waitPackByType(int type,int timeout = 30 * 1000);
+	JZNetPackPtr waitPackBySeq(int seq,int timeout = 30 * 1000);
 
 signals:
     void sigConnect();
@@ -40,7 +40,7 @@ private:
 	JZNetPackPtr waitPack(int type,int param,int timeout);
     void dispatchPack();
 
-	QTcpSocket *tcpSocket;
+	QTcpSocket *m_socket;
     int m_net;
     bool m_waitRecv;
     bool m_userDisconnect;

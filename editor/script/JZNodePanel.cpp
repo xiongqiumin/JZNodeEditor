@@ -23,12 +23,6 @@
 #include "JZNodeLocalParamEditDialog.h"
 #include "UiCommon.h"
 
-enum{
-    TreeItem_type = Qt::UserRole,
-    TreeItem_value,
-    TreeItem_isClass,
-};
-
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
 {
@@ -247,7 +241,7 @@ QTreeWidgetItem * JZNodePanel::createClass(QString class_name)
     item_class->setText(0, class_name);
     item_class->setData(0, TreeItem_isClass, true);
 
-    if(!meta->superName.isEmpty())
+    if(meta->super())
     {
         auto item_super = createClass(meta->superName);
         item_class->addChild(item_super);
@@ -337,15 +331,22 @@ void JZNodePanel::initData()
     itemOp->addChild(createNode(&node_print));
 }
 
+QTreeWidgetItem *JZNodePanel::itemOp()
+{
+    return m_itemOp;
+}
+
+QTreeWidgetItem *JZNodePanel::itemProcess()
+{
+    return m_itemProcess;
+}
+
 void JZNodePanel::initBasicFlow()
 {
-    QTreeWidgetItem *itemFlow = createFolder("操作");
+    QTreeWidgetItem *itemFlow = createFolder("语句");
     m_tree->addTopLevelItem(itemFlow);
-    initProcess(itemFlow);
-
-    QTreeWidgetItem *itemExpr = createFolder("运算符");
-    itemFlow->addChild(itemExpr);
-    initExpression(itemExpr);    
+    initProcess(itemFlow);           
+    initExpression(itemFlow);
 }
 
 /*
@@ -508,19 +509,24 @@ void JZNodePanel::initConvert(QTreeWidgetItem *root)
 
 void JZNodePanel::initExpression(QTreeWidgetItem *root)
 {        
+    QTreeWidgetItem *itemExpr = createFolder("运算符");
+    m_itemOp = itemExpr;    
+
     for (int i = Node_add; i <= Node_expr; i++)
     {   
         auto node = JZNodeFactory::instance()->createNode(i);
         QTreeWidgetItem *sub = createNode(node);
-        root->addChild(sub);
+        itemExpr->addChild(sub);
         delete node;
     }
+    root->addChild(itemExpr);
 }
 
 void JZNodePanel::initProcess(QTreeWidgetItem *root)
 {
     QTreeWidgetItem *item_process = createFolder("过程");    ;
-    
+    m_itemProcess = item_process;
+
     JZNodeBranch node_branch;
     JZNodeIf node_if;
     JZNodeSwitch node_switch;

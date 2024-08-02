@@ -589,46 +589,6 @@
     </widget>
    </ui>
   </categoryentry>
-  <categoryentry name="Horizontal Scroll Bar" icon="widgets/hscrollbar.png" type="default">
-   <ui>
-    <widget class="QScrollBar">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>126</y>
-       <width>160</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="objectName">
-      <string notr="true">horizontalScrollBar</string>
-     </property>
-    </widget>
-   </ui>
-  </categoryentry>
-  <categoryentry name="Vertical Scroll Bar" icon="widgets/vscrollbar.png" type="default">
-   <ui>
-    <widget class="QScrollBar">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>126</y>
-       <width>16</width>
-       <height>160</height>
-      </rect>
-     </property>
-     <property name="objectName">
-      <string notr="true">verticalScrollBar</string>
-     </property>
-    </widget>
-   </ui>
-  </categoryentry>
   <categoryentry name="Horizontal Slider" icon="widgets/hslider.png" type="default">
    <ui>
     <widget class="QSlider">

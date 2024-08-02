@@ -463,13 +463,7 @@ bool JZNodeCompiler::checkFunction()
     JZNode *start_node = m_originGraph->topolist[0]->node;
 
     QString check_error;
-    auto class_file = m_scriptFile->getClassFile(); 
-    if(class_file)
-    {
-        auto meta = JZNodeObjectManager::instance()->meta(class_file->className()); 
-        meta->checkFunction(m_scriptFile->function().name,check_error);
-    }
-
+    auto class_file = m_scriptFile->getClassFile();     
     if(check_error.isEmpty())
     {
         QStringList list = m_scriptFile->localVariableList(true);

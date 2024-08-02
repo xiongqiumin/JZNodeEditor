@@ -20,6 +20,8 @@
 #include "JZProcess.h"
 
 class JZNodeView;
+class JZNodePanel;
+class JZNodeViewPanel;
 class JZProject;
 class JZNodeViewCommand : public QUndoCommand
 {
@@ -67,21 +69,6 @@ protected:
     JZNodeView *m_view;
 };
 
-class BreakPointTriggerResult
-{
-public:
-    enum{
-        none,
-        add,
-        remove,
-    };
-
-    BreakPointTriggerResult();
-
-    int type;
-    BreakPoint pt;
-};
-
 class JZNodeView : public QGraphicsView
 {
     Q_OBJECT
@@ -93,6 +80,9 @@ public:
     void setPropertyEditor(JZNodePropertyEditor *propEditor);
     void setRunEditor(JZNodeAutoRunWidget *runEditor);
     
+    void setPanel(JZNodePanel *panel);
+    void setFlowPanel(JZNodeViewPanel *panel);
+
     void setFile(JZScriptItem *file);
     JZScriptItem *file();
 
@@ -159,7 +149,7 @@ public:
     void fitNodeView();
     void ensureNodeVisible(int id);
     void selectNode(int id);
-    BreakPointTriggerResult breakPointTrigger();
+    void breakPointTrigger();
 
     ProcessStatus runningMode();
     void setRunningMode(ProcessStatus mode);
@@ -238,6 +228,7 @@ protected:
     void sceneScale(QPoint center, bool up);
     void sceneTranslate(int x,int y);
     void sceneCenter(QPointF pt);
+    void udpateFlowPanel();
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
     void addPropChangedCommand(int id,const QByteArray &oldValue);
@@ -256,6 +247,10 @@ protected:
     QString getExpr(const QString &text = QString());
     int popMenu(QStringList list);
     QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);    
+
+    JZNodePanel *m_panel;
+    JZNodeViewPanel *m_flowPanel;
+    bool m_isUpdateFlowPanel;
 
     JZNodeViewMap *m_map;
     JZNodeScene *m_scene;
@@ -277,7 +272,7 @@ protected:
     NodeTimerInfo m_nodeTimeInfo;
 
     ProcessStatus m_runningMode;
-    bool m_autoRunning;
+    bool m_autoRunning;    
     int m_runNode;
 };
 

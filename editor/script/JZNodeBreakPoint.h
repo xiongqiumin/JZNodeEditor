@@ -8,7 +8,6 @@
 #include <QTreeWidget>
 #include "JZProject.h"
 
-class MainWindow;
 class JZNodeBreakPoint : public QWidget
 {
     Q_OBJECT
@@ -17,20 +16,20 @@ public:
     JZNodeBreakPoint(QWidget *parent = nullptr);
     ~JZNodeBreakPoint();
     
-    void updateBreakPoint(JZProject *project);
+    void setProject(JZProject *project);
+    void updateBreakPoint();
     void clear();
 
 signals:    
-    void sigBreakPointClicked();    
+    void sigBreakPointClicked(QString file,int id);        
 
 protected slots:       
     void onItemDoubleClicked();
+    void onContexMenu(QPoint pt);
 
-protected:       
-    void updateStatus();    
-    
+protected:               
     QTableWidget *m_table;
-    MainWindow *m_window;
+    JZProject *m_project;
 };
 
 

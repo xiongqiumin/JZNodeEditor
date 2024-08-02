@@ -45,27 +45,6 @@ public:
     QVariantList params;
 };
 
-template<class T>
-QVariant netDataPack(const T &param)
-{
-    QByteArray buffer;
-    QDataStream s(&buffer,QIODevice::WriteOnly);
-    s << param;
-    return buffer;
-}
-
-template<class T>
-T netDataUnPack(const QVariant &v)
-{
-    Q_ASSERT(v.type() == QVariant::ByteArray);
-    
-    QByteArray buffer = v.toByteArray();
-    T param;
-    QDataStream s(buffer);
-    s >> param;
-    return param;
-}
-
 //JZNodeParamCoor
 class JZNodeParamCoor
 {

@@ -51,7 +51,7 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="QtSettings">
     <QtInstall>Qt5.15.2_64</QtInstall>
-    <QtModules>core;gui;widgets;network;testlib;designer;uitools</QtModules>
+    <QtModules>core;gui;widgets;network;testlib;designer;uitools;serialport</QtModules>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="QtSettings">
     <QtInstall>Qt5.15.2_64</QtInstall>
@@ -93,6 +93,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="3rd\jzmodbus\JZModbusClient.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusContext.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusDefine.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusMaster.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusParam.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusRtu.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusServer.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusSlaver.cpp" />
+    <ClCompile Include="3rd\jzmodbus\JZModbusTcp.cpp" />
+    <ClCompile Include="3rd\jzprofiler\JZTx.cpp" />
+    <ClCompile Include="3rd\jzupdate\JZUpdateClient.cpp" />
+    <ClCompile Include="3rd\jzupdate\JZUpdateDialog.cpp" />
+    <ClCompile Include="3rd\jzupdate\JZUpdatePack.cpp" />
+    <ClCompile Include="3rd\jzupdate\JZUpdateServer.cpp" />
+    <ClCompile Include="3rd\jzupdate\JZUpdateTest.cpp" />
+    <ClCompile Include="3rd\jzupdate\JZUpdateUtils.cpp" />
     <ClCompile Include="editor\JZEditor.cpp" />
     <ClCompile Include="editor\JZNewFileDialog.cpp" />
     <ClCompile Include="editor\JZNewProjectDialog.cpp" />
@@ -105,6 +121,7 @@
     <ClCompile Include="editor\script\JZNodeBuildThread.cpp" />
     <ClCompile Include="editor\script\JZNodeClassEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeEditor.cpp" />
+    <ClCompile Include="editor\script\JZNodeExprEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeFlagEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeFuctionEditDialog.cpp" />
     <ClCompile Include="editor\script\JZNodeGraphItem.cpp" />
@@ -129,6 +146,7 @@
     <ClCompile Include="editor\script\JZNodeWatch.cpp" />
     <ClCompile Include="editor\script\JZNodeParamEditor.cpp" />
     <ClCompile Include="editor\script\JZProcess.cpp" />
+    <ClCompile Include="editor\tools\JZModbusSimulator.cpp" />
     <ClCompile Include="editor\ui\JZDesignerEditor.cpp" />
     <ClCompile Include="editor\ui\JZDesignerFormWindow.cpp" />
     <ClCompile Include="editor\ui\JZDesinger.cpp" />
@@ -163,6 +181,7 @@
     <ClCompile Include="script\JZNodeBind.cpp" />
     <ClCompile Include="script\JZNodeBuilder.cpp" />
     <ClCompile Include="script\JZNodeCompiler.cpp" />
+    <ClCompile Include="script\JZNodeCppGenerater.cpp" />
     <ClCompile Include="script\JZNodeDebugClient.cpp" />
     <ClCompile Include="script\JZNodeDebugPacket.cpp" />
     <ClCompile Include="script\JZNodeDebugServer.cpp" />
@@ -205,14 +224,29 @@
     <ClCompile Include="3rd\jznet\JZNetServer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
+    <ClCompile Include="widgets\JZAboutDialog.cpp" />
     <ClCompile Include="widgets\JZBaseDialog.cpp" />
+    <ClCompile Include="widgets\QImageLabel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="widgets\QImageLabel.h" />
+    <QtMoc Include="3rd\jzmodbus\JZModbusClient.h" />
+    <ClInclude Include="3rd\jzmodbus\JZModbusContext.h" />
+    <ClInclude Include="3rd\jzmodbus\JZModbusDefine.h" />
+    <QtMoc Include="3rd\jzmodbus\JZModbusMaster.h" />
+    <ClInclude Include="3rd\jzmodbus\JZModbusParam.h" />
+    <ClInclude Include="3rd\jzmodbus\JZModbusRtu.h" />
+    <QtMoc Include="3rd\jzmodbus\JZModbusServer.h" />
+    <QtMoc Include="3rd\jzmodbus\JZModbusSlaver.h" />
+    <ClInclude Include="3rd\jzmodbus\JZModbusTcp.h" />
     <ClInclude Include="3rd\jznet\JZNetDataManager.h" />
     <ClInclude Include="3rd\jznet\JZNetPack.h" />
+    <ClInclude Include="3rd\jzprofiler\JZTx.h" />
+    <QtMoc Include="editor\tools\JZModbusSimulator.h" />
+    <ClInclude Include="widgets\JZAboutDialog.h" />
     <QtMoc Include="widgets\JZBaseDialog.h" />
     <QtMoc Include="editor\script\JZNodeBreakPoint.h" />
     <QtMoc Include="editor\script\JZNodeGroupEditDialog.h" />
@@ -222,6 +256,13 @@
     <QtMoc Include="editor\script\JZNodeAutoRunThread.h" />
     <QtMoc Include="editor\script\JZNodeBuildThread.h" />
     <QtMoc Include="editor\JZProjectSettingDialog.h" />
+    <QtMoc Include="editor\script\JZNodeExprEditDialog.h" />
+    <QtMoc Include="3rd\jzupdate\JZUpdateClient.h" />
+    <QtMoc Include="3rd\jzupdate\JZUpdateServer.h" />
+    <QtMoc Include="3rd\jzupdate\JZUpdateDialog.h" />
+    <ClInclude Include="3rd\jzupdate\JZUpdatePack.h" />
+    <ClInclude Include="3rd\jzupdate\JZUpdateTest.h" />
+    <ClInclude Include="3rd\jzupdate\JZUpdateUtils.h" />
     <ClInclude Include="editor\script\JZNodeFlagEditDialog.h" />
     <ClInclude Include="editor\script\JZNodeGroupItem.h" />
     <ClInclude Include="editor\script\JZNodeLayout.h" />
@@ -233,6 +274,7 @@
     <QtMoc Include="editor\script\JZNodePropertyBrowser.h" />
     <QtMoc Include="editor\script\JZNodeParamWidget.h" />
     <QtMoc Include="editor\script\JZNodeParamBindEditDialog.h" />
+    <QtMoc Include="editor\script\JZNodeSlotEditDialog.h" />
     <ClInclude Include="editor\script\JZProcess.h" />
     <ClInclude Include="project\JZClassItem.h" />
     <ClInclude Include="project\JZProjectItemStream.h" />
@@ -246,6 +288,7 @@
     <ClInclude Include="sample\SmartHome\SmartHome.h" />
     <QtMoc Include="script\JZNodeQtBind.h" />
     <ClInclude Include="script\JZContainer.h" />
+    <ClInclude Include="script\JZNodeCppGenerater.h" />
     <ClInclude Include="script\JZNodeObjectParser.h" />
     <ClInclude Include="script\JZNodeOperator.h" />
     <ClInclude Include="script\JZNodeQtWrapper.h" />
@@ -328,6 +371,7 @@
     <QtUic Include="editor\script\JZNodeParamBindEditDialog.ui" />
     <QtUic Include="editor\script\JZNodeTypeDialog.ui" />
     <QtUic Include="editor\script\JZNodeParamEditor.ui" />
+    <QtUic Include="editor\tools\JZModbusSimulator.ui" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="JZNodeEditor.qrc" />

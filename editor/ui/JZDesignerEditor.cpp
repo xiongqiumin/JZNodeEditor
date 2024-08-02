@@ -41,7 +41,7 @@ void JZDesignerEditor::init(QDesignerFormEditorInterface *core)
         this, &JZDesignerEditor::slotSubWindowActivated);
 
     auto panel = QDesignerComponents::createWidgetBox(core, this); 
-    panel->setFileName(":/JZNodeEditor/Resources/widgetBox.xml");
+    initWidgetBox(panel);    
 
     auto objectInspector = QDesignerComponents::createObjectInspector(core, this);
     auto propEditor = QDesignerComponents::createPropertyEditor(core, this);
@@ -87,6 +87,24 @@ void JZDesignerEditor::init(QDesignerFormEditorInterface *core)
     splitter->setSizes({ 150,300,150 });
     l->addWidget(splitter);       
     this->setLayout(l);
+}
+
+void JZDesignerEditor::initWidgetBox(QDesignerWidgetBoxInterface *panel)
+{
+    using Category = QDesignerWidgetBoxInterface::Category;
+    using Widget = QDesignerWidgetBoxInterface::Widget;
+
+    int count = panel->categoryCount();
+    for (int i = 0; i < count; i++)
+        panel->removeCategory(0);
+
+    Category cate_btn("Buttons");
+    Widget pushbutton("QPushButton");
+    cate_btn.addWidget(pushbutton);
+
+    Widget imagelabel("QImageLabel");
+    cate_btn.addWidget(imagelabel);
+    panel->addCategory(cate_btn);
 }
 
 JZDesignerFormWindow *JZDesignerEditor::open(JZUiFile *file)

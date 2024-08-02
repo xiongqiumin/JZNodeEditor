@@ -6,6 +6,7 @@
 #include "JZNodeEngine.h"
 #include "LogManager.h"
 #include "sample/ImageModule/ImageModule.h"
+#include "3rd/jzupdate/JZUpdatePack.h"
 
 void JZNodeInit()
 {
@@ -16,6 +17,7 @@ void JZNodeInit()
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
     QMetaType::registerEqualsComparator<JZNodeObjectPtr>();
 
+    JZUpdatePackRegist();
     ImageModule::init();
 
     JZNodeType::init();
@@ -25,7 +27,7 @@ void JZNodeInit()
     JZNodeEngine::regist();    
 
     JZNetPackManager::instance()->init();
-    JZNetPackManager::instance()->registPack(NetPack_debugPacket,createNetPackFunc<JZNodeDebugPacket>);
+    JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);
 
     JZNodeFunctionManager::instance()->setUserRegist(true);
 }

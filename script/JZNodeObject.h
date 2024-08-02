@@ -44,7 +44,7 @@ public:
     void addFunction(const JZFunctionDefine &def);
     void removeFunction(const QString &function);    
     int indexOfFunction(const QString &function) const;
-    bool checkFunction(const QString &function,QString &error) const;
+    bool check(QString &error) const;
     const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
     QStringList virtualFunctionList() const;

@@ -17,6 +17,7 @@ JZBaseDialog::JZBaseDialog(QWidget *parent)
     QPushButton *btnCancel = new QPushButton("Cancel");
     connect(btnOk, &QPushButton::clicked, this, &JZBaseDialog::onBtnOkClicked);
     connect(btnCancel, &QPushButton::clicked, this, &JZBaseDialog::onBtnCancelClicked);
+    m_buttons << btnOk << btnCancel;
 
     btnLayout->addStretch();
     btnLayout->addWidget(btnOk);
@@ -29,6 +30,19 @@ JZBaseDialog::JZBaseDialog(QWidget *parent)
 
 JZBaseDialog::~JZBaseDialog()
 {
+}
+
+void JZBaseDialog::setCentralWidget(QWidget *w)
+{
+    delete m_mainWidget;
+    QVBoxLayout *l = qobject_cast<QVBoxLayout*>(layout());
+    l->insertWidget(0, w);
+    m_mainWidget = w;
+}
+
+void JZBaseDialog::showButton(int btn, bool show)
+{
+    m_buttons[btn]->setVisible(show);
 }
 
 bool JZBaseDialog::onCancel()

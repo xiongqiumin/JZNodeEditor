@@ -1248,7 +1248,8 @@ void JZNodeEngine::printNode()
     for(int i = 0; i < node_info.paramIn.size(); i++)
     {
         QString name = node_info.paramIn[i].define.name;
-        auto ref = env->getRef(node_info.paramIn[i].id);
+        int param_id = JZNodeGemo::paramId(node_info.id, node_info.paramIn[i].id);
+        auto ref = env->getRef(param_id);
         line += name + " " + JZNodeType::debugString(*ref);
     }
 
@@ -1257,7 +1258,8 @@ void JZNodeEngine::printNode()
     for(int i = 0; i < node_info.paramOut.size(); i++)
     {
         QString name = node_info.paramOut[i].define.name;
-        auto ref = env->getRef(node_info.paramOut[i].id);
+        int param_id = JZNodeGemo::paramId(node_info.id, node_info.paramOut[i].id);
+        auto ref = env->getRef(param_id);
         line += name + " " + JZNodeType::debugString(*ref);
     }
     line += ")";

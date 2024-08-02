@@ -1,5 +1,4 @@
-﻿#include <QTcpServer>
-#include <QTcpSocket>
+﻿#include <QTcpSocket>
 #include <QTimer>
 #include <QThread>
 #include <QElapsedTimer>
@@ -9,23 +8,22 @@
 JZNetClient::JZNetClient(QObject * parent) 
 	: QObject(parent)	
 {
-	tcpSocket = new QTcpSocket();
+	m_socket = new QTcpSocket(this);
 
     m_net = -1;
     m_waitRecv = false;
     m_userDisconnect = false;
 
 	//建立连接    
-    connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
-    connect(tcpSocket, SIGNAL(connected()), this, SLOT(onConnected()));
-    connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(onDisConnected()));
-    connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SIGNAL(sigError()));
+    connect(m_socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+    connect(m_socket, SIGNAL(connected()), this, SLOT(onConnected()));
+    connect(m_socket, SIGNAL(disconnected()), this, SLOT(onDisConnected()));
+    connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SIGNAL(sigError()));
 }
 
 JZNetClient::~JZNetClient()
 {	
-	disconnectFromHost();	
-	delete tcpSocket;
+	disconnectFromHost();		
 }
 
 void JZNetClient::disconnectFromHost()
@@ -34,11 +32,11 @@ void JZNetClient::disconnectFromHost()
 	if(isConnect())
 	{
         m_userDisconnect = true;
-		tcpSocket->disconnectFromHost();
-		if(tcpSocket->state() != QAbstractSocket::UnconnectedState)
+		m_socket->disconnectFromHost();
+		if(m_socket->state() != QAbstractSocket::UnconnectedState)
 		{
-			if(!tcpSocket->waitForDisconnected(1000))
-				tcpSocket->abort();
+			if(!m_socket->waitForDisconnected(1000))
+				m_socket->abort();
 		}
 	}
 }
@@ -46,15 +44,15 @@ void JZNetClient::disconnectFromHost()
 bool JZNetClient::connectToHost(QString host,int port)
 {
 	//连接服务器
-	tcpSocket->connectToHost(host, port);	
+	m_socket->connectToHost(host, port);	
     m_userDisconnect = false;
 	
 	//等待连接成功
-	bool ret = tcpSocket->waitForConnected();
+	bool ret = m_socket->waitForConnected();
 	if(ret)
 	{
 		//创建新的网络会话
-        m_dataManager.newSession(m_net,tcpSocket);
+        m_dataManager.newSession(m_net,m_socket);
 	}
 	return ret;
 }
@@ -62,20 +60,20 @@ bool JZNetClient::connectToHost(QString host,int port)
 void JZNetClient::connectToHostAsync(QString host, int port)
 {
     //连接异步服务器
-    tcpSocket->abort();
-    tcpSocket->connectToHost(host, port);
+    m_socket->abort();
+    m_socket->connectToHost(host, port);
 }
 
 bool JZNetClient::isConnect()
 {
 	//判断连接状态
-    return tcpSocket->state() == QTcpSocket::ConnectedState;
+    return m_socket->state() == QTcpSocket::ConnectedState;
 }
 
 void JZNetClient::onConnected()
 {
     m_net = 1;
-    m_dataManager.newSession(m_net, tcpSocket);
+    m_dataManager.newSession(m_net, m_socket);
     emit sigConnect();
 }
 

@@ -6,6 +6,20 @@
 #include "JZNodeParamWidget.h"
 
 // JZNodeGemo
+int JZNodeGemo::paramId(int nodeId,int pinId)
+{
+    Q_ASSERT(nodeId >= 0 && pinId >= 0);
+    return nodeId * 100 + pinId;
+}
+
+JZNodeGemo JZNodeGemo::paramGemo(int id)
+{
+    if (id < Stack_User)
+        return JZNodeGemo(id / 100, id % 100);
+    else
+        return JZNodeGemo();
+}
+
 JZNodeGemo::JZNodeGemo()
 {
     nodeId = -1;

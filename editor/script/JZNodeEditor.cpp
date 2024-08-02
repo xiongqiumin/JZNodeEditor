@@ -110,7 +110,7 @@ void JZNodeEditor::init()
 
     QTabWidget *tabView = new QTabWidget();
     tabView->addTab(m_nodePanel, "编辑");
-    tabView->addTab(m_nodeViewPanel, "节点");
+    tabView->addTab(m_nodeViewPanel, "流程");
     tabView->setTabPosition(QTabWidget::South);
     m_tabLeft = tabView;
 
@@ -165,6 +165,10 @@ void JZNodeEditor::init()
     //m_nodeProp->setMaximumWidth(200);
     m_view->setPropertyEditor(m_nodeProp);    
     m_view->setRunEditor(m_runProp);
+    m_view->setPanel(m_nodePanel);
+    m_view->setFlowPanel(m_nodeViewPanel);
+
+    m_nodeViewPanel->setView(m_view);
 }    
 
 void JZNodeEditor::open(JZProjectItem *item)
@@ -285,9 +289,9 @@ void JZNodeEditor::selectNode(int nodeId)
     m_view->selectNode(nodeId);
 }
 
-BreakPointTriggerResult JZNodeEditor::breakPointTrigger()
+void JZNodeEditor::breakPointTrigger()
 {
-    return m_view->breakPointTrigger();
+    m_view->breakPointTrigger();
 }
 
 void JZNodeEditor::setRunningMode(ProcessStatus status)
