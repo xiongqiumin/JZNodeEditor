@@ -45,25 +45,6 @@ public:
     QVariantList params;
 };
 
-//JZNodeParamCoor
-class JZNodeParamCoor
-{
-public:
-    enum {
-        Name,
-        Id,
-    };
-
-    JZNodeParamCoor();
-    bool isNodeId() const;
-
-    int type;        
-    QString name;
-    int id;        //节点id
-};
-QDataStream &operator<<(QDataStream &s, const JZNodeParamCoor &param);
-QDataStream &operator>>(QDataStream &s, JZNodeParamCoor &param);
-
 //JZNodeDebugParamValue
 class JZNodeDebugParamValue
 {
@@ -86,7 +67,7 @@ public:
     JZNodeGetDebugParam();
 
     int stack;
-    QList<JZNodeParamCoor> coors;
+    QList<JZNodeIRParam> coors;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParam &param);
@@ -98,7 +79,7 @@ public:
     JZNodeGetDebugParamResp();
 
     int stack;
-    QList<JZNodeParamCoor> coors;
+    QList<JZNodeIRParam> coors;
     QList<JZNodeDebugParamValue> values;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param);
@@ -111,7 +92,7 @@ public:
     JZNodeSetDebugParam();
 
     int stack;
-    JZNodeParamCoor coor;
+    JZNodeIRParam coor;
     QString value;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParam &param);
@@ -124,7 +105,7 @@ public:
     JZNodeSetDebugParamResp();
 
     int stack;
-    JZNodeParamCoor coor;
+    JZNodeIRParam coor;
     JZNodeDebugParamValue value;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamResp &param);

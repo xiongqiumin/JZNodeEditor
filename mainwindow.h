@@ -103,8 +103,8 @@ protected slots:
     void onLog(LogObjectPtr log);
 
     void onStackChanged(int stack);
-    void onWatchValueChanged(JZNodeParamCoor coor, QString value);
-    void onWatchNameChanged(JZNodeParamCoor coor);
+    void onWatchValueChanged(JZNodeIRParam coor, QString value);
+    void onWatchNameChanged(JZNodeIRParam coor);
     void onRuntimeWatch(const JZNodeRuntimeWatch &info);
     void onWatchNotify();
     void onEditorValueChanged(int id,QString value);

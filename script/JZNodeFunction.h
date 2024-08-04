@@ -23,10 +23,26 @@ public:
     JZFunctionDefine functionDefine();
 
 protected:
-    virtual void onPinChanged(int id) override;
-
-    JZNodePinWidget *createWidget(int id);
+    virtual bool update(QString &error) override;    
     void updateName();
+    bool isMemberCall();
+
+    QString m_functionName;
+};
+
+class JZNodeFunctionCustom : public JZNode
+{
+public:
+    JZNodeFunctionCustom();
+    ~JZNodeFunctionCustom();
+
+public:
+    void setFunction(const QString &name);    
+    QString function() const;
+
+protected:
+    virtual void initFunction() = 0;
+
     QString m_functionName;
 };
 

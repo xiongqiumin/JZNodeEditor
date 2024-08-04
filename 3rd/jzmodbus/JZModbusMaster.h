@@ -18,13 +18,16 @@ public:
     bool isOpen();
     bool isBusy();
 
-    bool openRtu(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
-    bool openTcp(QString ip, int port);
+    void initRtu(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
+    void initTcp(QString ip, int port);
+    bool open();
     void close();    
     
     JZModbusParamMap *map();
     void setStrategy(int addr, JZModbusStrategy s);
     void removeStrategy(int addr);
+
+    JZModbusParam *param(int addr);
 
     void writeParam(int addr, QVariant value);
     QVariant readParam(int addr);
@@ -37,7 +40,7 @@ public:
 
 signals:
     void sigParamChanged(int addr);
-    void sigParamRecv(int addr);
+    void sigParamReceived(int addr);
 
 protected slots:
     void onModbusReply(const JZModebusReply &reply);
@@ -70,6 +73,6 @@ protected:
     QMap<int, Strategy> m_strategyMap;
     QList<Command> m_commandList;
 };
-
+void modbusMasterSetConfig(JZModbusMaster *master, const JZModbusConfig *config);
 
 #endif

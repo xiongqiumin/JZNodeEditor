@@ -9,10 +9,17 @@ JZModbusServer::JZModbusServer(QObject *parent)
     m_tcpServer = nullptr;
     m_ctx = new JZModbusContext();    
     m_mapping = new JZModbusMapping();
+
+    m_baud = 9600;
+    m_dataBit = QSerialPort::Data8;
+    m_stopBit = QSerialPort::OneStop;
+    m_parityBit = QSerialPort::NoParity;
+    m_port = 0;
 }
 
 JZModbusServer::~JZModbusServer()
 {
+    clear();
     delete m_ctx;
     delete m_mapping;
 }
@@ -33,54 +40,79 @@ void JZModbusServer::setSlave(int slave)
     m_ctx->setSlave(slave);
 }
 
-bool JZModbusServer::startRtuServer(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
+void JZModbusServer::clear()
 {
-    if (m_com || m_tcpServer)
-        return false;
+    stop();
+
+    if (m_com)
+    {
+        delete m_com;
+        m_com = nullptr;
+    }
+
+    if (m_tcpServer)
+    {
+        delete m_tcpServer;
+        m_tcpServer = nullptr;
+    }
+}
+
+void JZModbusServer::initRtu(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
+{   
+    clear();
 
     m_com = new QSerialPort(this);
     connect(m_com, &QSerialPort::readyRead, this, &JZModbusServer::onComRead);
     initRtuContext(m_ctx);
 
-    m_com->setPortName(com);
-    if (!m_com->open(QIODevice::ReadWrite))
-    {
-        delete m_com;
-        m_com = nullptr;
-        return false;
-    }
-
-    m_com->setBaudRate(baud);//波特率
-    m_com->setDataBits(data_bit);  //数据位
-    m_com->setStopBits(stop_bit);  //停止位      
-    m_com->setParity(parity_bit);  //校验位
-    return true;
+    m_comName = com;
+    m_baud = baud;
+    m_dataBit = data_bit;
+    m_stopBit = stop_bit;
+    m_parityBit = parity_bit;
 }
 
-bool JZModbusServer::startTcpServer(int port)
+void JZModbusServer::initTcp(int port)
 {
-    if (m_com || m_tcpServer)
-        return false;
-
+    clear();
+        
     initTcpContext(m_ctx);
     m_tcpServer = new QTcpServer(this);
     connect(m_tcpServer, SIGNAL(newConnection()), this, SLOT(onNewConnect()));
 
-    if (!m_tcpServer->listen(QHostAddress::AnyIPv4, port)) {
-        delete m_tcpServer;
-        m_tcpServer = nullptr;
-        return false;
-    }    
-    return true;
+    m_port = port;
+}
+
+bool JZModbusServer::start()
+{
+    if (m_com)
+    {
+        m_com->setPortName(m_comName);
+        if (!m_com->open(QIODevice::ReadWrite))        
+            return false;        
+
+        m_com->setBaudRate(m_baud);
+        m_com->setDataBits(m_dataBit);
+        m_com->setStopBits(m_stopBit);
+        m_com->setParity(m_parityBit);
+        return true;
+    }
+    else if(m_tcpServer)
+    {
+        if (!m_tcpServer->listen(QHostAddress::AnyIPv4, m_port))
+            return false;
+
+        return true;
+    }
+
+    return false;
 }
 
 void JZModbusServer::stop()
 {
     if (m_com)
     {
-        m_com->close();
-        m_com = nullptr;        
-        delete m_com;
+        m_com->close();        
         m_comBuffer.clear();
     }
 
@@ -95,9 +127,7 @@ void JZModbusServer::stop()
             socket->deleteLater();
             it++;
         }
-        m_tcpClients.clear();
-        m_tcpServer->deleteLater();
-        m_tcpServer = nullptr;
+        m_tcpClients.clear();        
     }
 }
 

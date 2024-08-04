@@ -46,6 +46,14 @@ bool JZRegExpHelp::isString(const QString &text)
     return (text.size() >= 2 && text.front() == '"' && text.back() == '"');
 }
 
+bool JZRegExpHelp::isIdentify(const QString &str)
+{
+    if (str.isEmpty())
+        return false;
+
+    return true;
+}
+
 QString JZRegExpHelp::uniqueString(const QString &text, const QStringList &list)
 {
     QString result = text;

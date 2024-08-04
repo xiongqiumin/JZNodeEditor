@@ -14,6 +14,21 @@ JZNodeFunction::~JZNodeFunction()
 
 }
 
+bool JZNodeFunction::isMemberCall()
+{
+    if (!m_file)
+        return false;
+    auto class_item = m_file->getClassFile();
+    if (!class_item)
+        return false;
+
+    auto meta = JZNodeFunctionManager::instance()->function(m_functionName);
+    if (meta && meta->isMemberFunction() && JZNodeType::isInherits(class_item->className(),meta->className))
+        return true;
+
+    return false;
+}
+
 void JZNodeFunction::updateName()
 {
     setName(m_functionName);
@@ -21,20 +36,17 @@ void JZNodeFunction::updateName()
     if(meta && meta->isMemberFunction())
     {
         QString v = variable();
-        if(!v.isEmpty())
+        if (v.isEmpty())
         {
-            auto idx = m_functionName.indexOf(".");
-            QString name = v + "." + m_functionName.mid(idx + 1);
-            setName(name);
-        }
-    }
-}
+            if (!isMemberCall())
+                return;
 
-JZNodePinWidget *JZNodeFunction::createWidget(int id)
-{
-    auto w = new JZNodeParamValueWidget();
-    w->initWidget(Type_string);
-    return w;
+            v = "this";
+        }
+
+        QString name = v + "." + meta->name;
+        setName(name);       
+    }
 }
 
 void JZNodeFunction::setVariable(const QString &name)
@@ -71,6 +83,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
     Q_ASSERT(define);            
     m_functionName = define->fullName();
     
+    clearPin();
     if(define->isFlowFunction)
     {
         addFlowIn();
@@ -101,7 +114,8 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
     if(define->isMemberFunction())
     {
         auto pin = this->pin(paramIn(0));
-        pin->setFlag(pin->flag() | Pin_widget | Pin_editValue);
+        pin->setFlag(pin->flag() | Pin_editValue);
+        pin->setEditType(Type_paramName);
         m_flag &= NodeProp_dragVariable; 
     }
 
@@ -138,10 +152,10 @@ JZFunctionDefine JZNodeFunction::functionDefine()
     return def;
 }
 
-void JZNodeFunction::onPinChanged(int id)
+bool JZNodeFunction::update(QString &error)
 {
-    if(id == paramIn(0))
-        updateName();
+    updateName();
+    return true;
 }
 
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
@@ -163,6 +177,9 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     QList<int> in_list = pinInList(Pin_param);
     QList<int> out_list = pinOutList(Pin_param);
     Q_ASSERT(def->paramIn.size() == in_list.size() && def->paramOut.size() == out_list.size());
+    
+    if (def->isMemberFunction() && c->isPinLiteral(m_id, paramIn(0)))
+        c->setPinType(m_id, paramIn(0), Type_ignore);
 
     bool input_ret = false;
     if(isFlowNode())
@@ -171,6 +188,27 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         input_ret = c->addDataInput(m_id,error);
     if(!input_ret)        
         return false;
+
+    if (def->isMemberFunction() && c->isPinLiteral(m_id, paramIn(0)))
+    {
+        int this_type = def->paramIn[0].dataType();
+        c->setPinType(m_id, paramIn(0), this_type);
+        QString name = c->pinLiteral(m_id, paramIn(0));
+        if (name.isEmpty())
+        {
+            if (!isMemberCall())
+            {
+                error = "input1未设置";
+                return false;
+            }
+            name = "this";
+        }        
+        if (!c->checkVariableType(name, this_type, error))
+            return false;
+
+        int this_id = JZNodeGemo::paramId(m_id, paramIn(0));
+        c->addSetVariable(irId(this_id), irRef(name));
+    }
         
     QList<JZNodeIRParam> in,out;
     for(int i = 0; i < in_list.size(); i++)
@@ -185,4 +223,24 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         c->addJumpNode(flowOut());
     }
     return true;
+}
+
+//JZNodeFunctionCustom
+JZNodeFunctionCustom::JZNodeFunctionCustom()
+{
+}
+
+JZNodeFunctionCustom::~JZNodeFunctionCustom()
+{
+}
+
+void JZNodeFunctionCustom::setFunction(const QString &name)
+{
+    m_functionName = name;
+    initFunction();
+}
+
+QString JZNodeFunctionCustom::function() const
+{
+    return m_functionName;
 }

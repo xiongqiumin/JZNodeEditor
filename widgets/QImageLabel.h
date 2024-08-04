@@ -8,11 +8,13 @@ class QImageLabel : public QWidget
     Q_OBJECT
 
 public:
-    QImageLabel(QWidget *parent);
+    QImageLabel(QWidget *parent = nullptr);
     ~QImageLabel();
 
+    virtual QSize sizeHint() const override;
+
 protected:
-    virtual void paintEvent(QPaintEvent *event) override;
+    virtual void paintEvent(QPaintEvent *event) override;    
 };
 
 

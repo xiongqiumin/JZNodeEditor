@@ -163,9 +163,6 @@
     <ClCompile Include="script\JZNodeDebugServer.cpp">
       <Filter>Source Files\script</Filter>
     </ClCompile>
-    <ClCompile Include="script\JZNodeDefine.cpp">
-      <Filter>Source Files\script</Filter>
-    </ClCompile>
     <ClCompile Include="script\JZNodeEngine.cpp">
       <Filter>Source Files\script</Filter>
     </ClCompile>
@@ -514,6 +511,18 @@
     <ClCompile Include="widgets\QImageLabel.cpp">
       <Filter>Source Files\widgets</Filter>
     </ClCompile>
+    <ClCompile Include="editor\ui\JZWidgetCollectionInterface.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\ui\JZMenuExtension.cpp">
+      <Filter>Source Files\editor\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="script\modules\JZModuleModbus.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\script\JZNodeEditorManager.cpp">
+      <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -708,6 +717,12 @@
     <QtMoc Include="widgets\QImageLabel.h">
       <Filter>Header Files\widgets</Filter>
     </QtMoc>
+    <QtMoc Include="editor\ui\JZMenuExtension.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\ui\JZWidgetCollectionInterface.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="script\JZEvent.h">
@@ -726,9 +741,6 @@
       <Filter>Header Files\script</Filter>
     </ClInclude>
     <ClInclude Include="script\JZNodeDebugPacket.h">
-      <Filter>Header Files\script</Filter>
-    </ClInclude>
-    <ClInclude Include="script\JZNodeDefine.h">
       <Filter>Header Files\script</Filter>
     </ClInclude>
     <ClInclude Include="script\JZNodeEvent.h">
@@ -904,6 +916,15 @@
     </ClInclude>
     <ClInclude Include="3rd\jzmodbus\JZModbusTcp.h">
       <Filter>Header Files\3rd\jzmodbus</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\ui\widgethostconstants.h">
+      <Filter>Header Files\editor\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="script\modules\JZModuleModbus.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="editor\script\JZNodeEditorManager.h">
+      <Filter>Header Files\editor\script</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

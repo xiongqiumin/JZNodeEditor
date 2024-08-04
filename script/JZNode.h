@@ -251,6 +251,8 @@ protected:
     void setPinType(int id,const QList<int> &type);
     void clearPinType(int id);
 
+    void setPinEditType(int id, int edit_type);
+
     int m_id;
     int m_type;
     int m_flag;
@@ -261,6 +263,7 @@ protected:
     JZScriptItem *m_file;
     QList<int> m_notifyList;
 };
+QByteArray NodeMagic();
 
 //JZNodeNop
 class JZNodeNop : public JZNode

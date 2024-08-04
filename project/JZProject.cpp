@@ -14,7 +14,6 @@
 #include "JZContainer.h"
 #include "JZNodeProgram.h"
 #include "modules/JZModule.h"
-#include "JZNodeDefine.h"
 
 BreakPoint::BreakPoint()
 {
@@ -511,13 +510,9 @@ bool JZProject::saveAllItem()
 }
 
 void JZProject::renameItem(JZProjectItem *item, QString newname)
-{
-    QString newPath = item->path() + "/" + newname;
-    QString oldPath = item->itemPath();
+{    
     item->setName(newname);
     item->parent()->sort();
-
-    oldPath += "/";
 }
 
 JZProjectItem *JZProject::getItem(QString path)

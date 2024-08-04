@@ -12,6 +12,7 @@ public:
     static bool isBool(const QString &str);
     static bool isWord(const QString &str);
     static bool isString(const QString &str);
+    static bool isIdentify(const QString &str);
     static QString uniqueString(const QString &text,const QStringList &list);
 };
 

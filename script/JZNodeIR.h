@@ -16,6 +16,7 @@ enum
     OP_alloc, 
     OP_clearReg,
     OP_set,
+    OP_buffer,
     OP_clone,
     OP_watch,
     OP_convert,
@@ -62,7 +63,8 @@ class JZNodeIRParam
 public:
     enum{
         None,
-        Id,
+        StackId,
+        RegId,
         Literal,
         Reference,
         This,
@@ -72,7 +74,7 @@ public:
     bool isNull() const;
     bool isLiteral() const;
     bool isRef() const;
-    bool isId() const;
+    bool isStack() const;
     bool isReg() const;
     bool isThis() const;
 
@@ -81,6 +83,7 @@ public:
     const QVariant &literal() const;
 
     int type;
+    QString member;
     QVariant value;
     QVariant *cache;
 };
@@ -183,6 +186,19 @@ public:
     JZNodeIRParam src;
 };
 
+class JZNodeIRBuffer : public JZNodeIR
+{
+public:
+    JZNodeIRBuffer();
+    virtual ~JZNodeIRBuffer();
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
+
+    JZNodeIRParam id;
+    QByteArray buffer;
+};
+
 class JZNodeIRWatch : public JZNodeIR
 {
 public:
@@ -236,7 +252,6 @@ public:
     const JZFunction *cache;
 };
 
-
 class JZNodeIRAssert : public JZNodeIR
 {
 public:
@@ -248,5 +263,6 @@ public:
 
     JZNodeIRParam tips;
 };
+QByteArray NodeIRMagic();
 
 #endif

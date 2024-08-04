@@ -26,8 +26,9 @@ public:
     JZModbusClient(QObject *parent = nullptr);
     ~JZModbusClient();
    
-    bool openRtu(QString com,int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
-    bool openTcp(QString ip, int port);
+    void initRtu(QString com,int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
+    void initTcp(QString ip, int port);
+    bool open();
     void close();
     bool isOpen();
     bool setSlave(int salve);
@@ -75,7 +76,8 @@ protected:
     };
 
     virtual void timerEvent(QTimerEvent *e) override;
-    bool checkInitBusy();
+    void clear();
+    bool checkOpenBusy();
     void sendPacket(uint8_t *req, int req_length);
     JZModebusReply waitPacket();        
     int dealBuffer(JZModebusReply &info);    
@@ -86,6 +88,15 @@ protected:
     QString m_error;
     bool m_waitRecv;
     int m_timeId;
+
+    QString m_comName;
+    int m_baud; //波特率
+    QSerialPort::DataBits m_dataBit;  //数据位
+    QSerialPort::StopBits m_stopBit;  //停止位      
+    QSerialPort::Parity m_parityBit;  //校验位
+
+    QString m_ip;
+    int m_port;
 
     QSerialPort *m_com;
     QTcpSocket *m_socket;

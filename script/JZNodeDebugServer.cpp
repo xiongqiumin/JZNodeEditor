@@ -220,59 +220,25 @@ void JZNodeDebugServer::onWatchNotify()
     m_server.sendPack(m_client, &status_pack);
 }
 
-QVariant *JZNodeDebugServer::getVariableRef(int stack, const JZNodeParamCoor &coor)
-{
-    QVariant *ref = nullptr;
-    if (coor.type == JZNodeParamCoor::Name)
-    {
-        ref = m_engine->getVariableRef(coor.name, stack);
-    }
-    else if (coor.type == JZNodeParamCoor::Id)
-    {
-        if (coor.id < Stack_User)
-            ref = m_engine->getVariableRef(coor.id,stack);
-        else
-            ref = m_engine->getRegRef(coor.id);
-    }
-    return ref;
-}
-
 QVariant JZNodeDebugServer::getVariable(const JZNodeGetDebugParam &info)
 {        
     JZNodeGetDebugParamResp result;
     result.stack = info.stack;
     result.coors = info.coors;
 
-    auto stack = m_engine->stack();    
     for (int i = 0; i < info.coors.size(); i++)
     {
-        JZNodeDebugParamValue param;
-        QVariant *ref = getVariableRef(info.stack,info.coors[i]);
-        if (ref)
-            param = toDebugParam(*ref);
-        else
-            param.type = Type_none;
-        
-        result.values.push_back(param);
+        auto v= m_engine->getParam(info.stack, info.coors[i]);
+        result.values[i] = toDebugParam(v);
     }
+    
     return netDataPack(result);
 }
 
 QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParam &info)
 {    
     JZNodeSetDebugParamResp result;
-    auto ref = getVariableRef(info.stack, info.coor);
-    result.coor = info.coor;
-    result.stack = info.stack;    
-    if (ref)
-    {
-        int ref_type = JZNodeType::variantType(*ref);
-        QVariant initValue = JZNodeType::initValue(ref_type,info.value);
-        if (initValue.isValid())
-            *ref = initValue;
-
-        result.value = toDebugParam(*ref);
-    }
+    m_engine->setParam(info.stack,info.coor, info.value);    
     return netDataPack(result);
 }
 

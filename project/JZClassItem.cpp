@@ -131,6 +131,13 @@ const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
     return nullptr;
 }
 
+const JZParamDefine *JZScriptClassItem::memberThis()
+{
+    m_this.name = "this";
+    m_this.type = m_name;
+    return &m_this;
+}
+
 JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
 {
     Q_ASSERT(!func.isCFunction && !func.name.isEmpty());

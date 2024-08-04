@@ -146,7 +146,7 @@ RunnerEnv::RunnerEnv()
 }
 
 RunnerEnv::~RunnerEnv()
-{   
+{       
     clearIrCache();
 }
 
@@ -235,7 +235,7 @@ RunnerEnv *Stack::env(int index)
 void Stack::pop()
 {       
     m_env.back().clearIrCache();
-    m_env.pop_back();
+    m_env.pop_back();    
     if(m_env.size() > 0)
         m_env.back().applyIrCache();
 }
@@ -815,54 +815,103 @@ void JZNodeEngine::onSlot(const QString &function,const QVariantList &in,QVarian
     m_sender = nullptr;
 }
 
-QVariant *JZNodeEngine::getParamRef(JZNodeIRParam &param)
+QVariant *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
 {
     QVariant *ref = nullptr;
-    if(param.isId())
+    if (m_stack.size() == 0)
     {
-        if (param.id() >= Reg_Start)
-            ref = getRegRef(param.id());
-        else
-            ref = m_stack.currentEnv()->getRef(param.id());
+        auto it = m_global.find(param.ref());
+        if (it != m_global.end())
+            ref = it->data();
     }
-    else if(param.isLiteral())    
-        ref = (QVariant *)&param.value;
-    else if(param.isRef())
-        ref = getVariableRef(param.ref());
-    else if(param.isThis())
-        ref = &m_stack.currentEnv()->object;
-
-    m_stack.currentEnv()->irParamCache[&param] = ref;
-    param.cache = ref;
+    else
+    {
+        RunnerEnv *env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
+        if (param.isStack())
+            ref = env->getRef(param.id());
+        else if (param.isThis())
+            ref = &env->object;
+        else
+        {
+            ref = env->getRef(param.ref());
+            if (!ref)
+            {
+                auto it = m_global.find(param.ref());
+                if (it != m_global.end())
+                    ref = it->data();
+            }
+        }
+    }
+    Q_ASSERT(ref);
     return ref;
 }
 
-const QVariant &JZNodeEngine::getParam(JZNodeIRParam &param)
-{       
+QVariant JZNodeEngine::getParam(int stack_level, const JZNodeIRParam &param)
+{
     m_stat.getTime++;
-    if(param.cache)
-        return *param.cache;
 
-    auto ref = getParamRef(param);
-    Q_ASSERT(ref);
-    return *ref;
+    if (param.isReg())
+        return getReg(param.id());
+    else if (param.isLiteral())
+        return param.literal();
+    else    
+    {                
+        auto ref = getParamRef(stack_level,param);
+        if (param.member.isEmpty())
+            return *ref;
+        else
+        {
+            QStringList obj_list;
+            QString param_name;
+            splitMember(param.member, obj_list, param_name);
+
+            JZNodeObject *obj = getVariableObject(ref, obj_list);
+            return obj->param(param_name);
+        }
+    }
 }
 
-void JZNodeEngine::setParam(JZNodeIRParam &param,const QVariant &value)
+void JZNodeEngine::setParam(int stack_level, const JZNodeIRParam &param, const QVariant &value)
 {
-    m_stat.setTime++;
-    Q_ASSERT(param.isId() || param.isRef());
+    m_stat.setTime++;    
 
-    QVariant *ref = nullptr;
-    if(param.cache)
-        ref = param.cache;
+    if (param.isReg())
+        setReg(param.id(), value);
     else
-        ref = getParamRef(param);
-        
-    if(param.isReg())
-        *ref = value;
-    else
-        dealSet(ref, value);
+    {
+        auto ref = getParamRef(stack_level, param);
+        if (param.member.isEmpty())
+            dealSet(ref, value);
+        else
+        {
+            QStringList obj_list;
+            QString param_name;
+            splitMember(param.member, obj_list, param_name);
+
+            JZNodeObject *obj = getVariableObject(ref, obj_list);
+            return obj->setParam(param_name,value);
+        }
+    }
+}
+
+QVariant JZNodeEngine::getParam(const JZNodeIRParam &param)
+{       
+    return getParam(-1, param);
+}
+
+void JZNodeEngine::setParam(const JZNodeIRParam &param,const QVariant &value)
+{
+    setParam(-1, param, value);
+}
+
+QVariant JZNodeEngine::getVariable(const QString &name)
+{
+    return getParam(irRef(name));
+}
+
+void JZNodeEngine::setVariable(const QString &name, const QVariant &value)
+{
+    setParam(irRef(name),value);
 }
 
 void JZNodeEngine::initGlobal(QString name, const QVariant &v)
@@ -993,23 +1042,6 @@ void JZNodeEngine::splitMember(const QString &fullName, QStringList &objName,QSt
     memberName = list.back();
 }
 
-QVariant *JZNodeEngine::getVariableRefSingle(RunnerEnv *env, const QString &name)
-{
-    QVariant *obj = nullptr;
-    if (env)
-    {
-        obj = env->getRef(name);
-        if (obj)
-            return obj;
-    }
-
-    auto it = m_global.find(name);
-    if (it == m_global.end())
-        return nullptr;
-
-    return it->data();
-}
-
 QVariant JZNodeEngine::createVariable(int type,const QString &value)
 {
     auto inst = JZNodeObjectManager::instance();
@@ -1036,121 +1068,28 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     return v;
 }
 
-QVariant *JZNodeEngine::getVariableRef(int id)
-{
-    return getVariableRef(id, -1);
-}
+JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &obj_list)
+{        
+    JZNodeObject *obj = toJZObject(*ref);
+    Q_ASSERT(obj);
+    if(obj->isNull())
+        throw std::runtime_error("object is nullptr");
 
-QVariant *JZNodeEngine::getVariableRef(int id, int stack_level)
-{
-    Q_ASSERT(m_stack.size() > 0);
-    
-    auto env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
-    auto it = env->stacks.find(id);
-    if (it == env->stacks.end())
-        return nullptr;
-
-    return it->data();
-}
-
-const QVariant &JZNodeEngine::getVariable(int id)
-{
-    QVariant *ref = getVariableRef(id);
-    if (!ref)
-        throw std::runtime_error("no such variable " + to_string(id));
-
-    return *ref;
-}
-
-void JZNodeEngine::setVariable(int id, const QVariant &value)
-{
-    QVariant *ref = getVariableRef(id);
-    if (!ref)
-        throw std::runtime_error("no such variable " + to_string(id));
-
-    dealSet(ref, value);
-}
-
-QVariant *JZNodeEngine::getVariableRef(const QString &name)
-{
-    return getVariableRef(name, -1);
-}
-
-QVariant *JZNodeEngine::getVariableRef(const QString &name, int stack_level)
-{
-    RunnerEnv *env = nullptr;
-    if(m_stack.size() > 0)
-        env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
-
-    if (name == "this")
-        return env? &env->object : nullptr;
-
-    QStringList obj_list;
-    QString param_name;
-    splitMember(name, obj_list, param_name);
-
-    if (obj_list.size() > 0)
+    for (int i = 0; i < obj_list.size(); i++)
     {
-        QVariant *ref = nullptr;
-        if (obj_list[0] == "this")
-            ref = env? &env->object : nullptr;
-        else
-            ref = getVariableRefSingle(env,obj_list[0]);
-
-        if (!ref)
-            return nullptr;
-
-        JZNodeObject *obj = nullptr;
-        for (int i = 1; i < obj_list.size(); i++)
-        {
-            obj = toJZObject(*ref);
-            ref = obj->paramRef(obj_list[i]);
-        }
-
-        obj = toJZObject(*ref);
-        return obj->paramRef(param_name);
-    }
-    else
-    {
-        return getVariableRefSingle(env, param_name);
-    }
-}
-
-const QVariant &JZNodeEngine::getVariable(const QString &name)
-{    
-    QVariant *ref = getVariableRef(name);
-    if(!ref)
-        throw std::runtime_error("no such variable " + name.toStdString());
-
-    if(JZNodeType::isPointer(*ref))
-        return *JZNodeType::getPointer(*ref);
-
-    return *ref;        
-}
-
-void JZNodeEngine::setVariable(const QString &name, const QVariant &value)
-{    
-    QVariant *ref = getVariableRef(name);
-    if(!ref)
-        throw std::runtime_error("no such variable " + name.toStdString());
-
-    if(JZNodeType::isPointer(*ref))
-    {
-        ref = JZNodeType::getPointer(*ref);
+        obj = toJZObject(obj->param(obj_list[i]));
+        Q_ASSERT(obj);
+        if (obj->isNull())
+            throw std::runtime_error("object is nullptr");
     }
 
-    dealSet(ref, value);
+    return obj;
 }
 
 void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
 {
     Q_ASSERT(JZNodeType::isSameType(value,*ref));
     *ref = value;
-}
-
-const QVariant &JZNodeEngine::getThis()
-{    
-    return m_stack.currentEnv()->object;
 }
 
 QVariant JZNodeEngine::getSender()
@@ -1195,19 +1134,11 @@ void JZNodeEngine::printMemory()
 }
 
 const QVariant &JZNodeEngine::getReg(int id)
-{               
-    auto *ref = getRegRef(id);
-    if (!ref)
-        throw std::runtime_error("no such reg " + to_string(id));
-
-    return *ref;
+{   
+    id = id - Reg_Start;    
+    return m_regs[id];
 }
 
-QVariant *JZNodeEngine::getRegRef(int id)
-{
-    id = id - Reg_Start; 
-    return &m_regs[id];    
-}
 
 void JZNodeEngine::setReg(int id, const QVariant &value)
 {   
@@ -1993,6 +1924,15 @@ bool JZNodeEngine::run()
             auto obj = JZNodeObjectManager::instance()->clone(toJZObject(getParam(ir_set->src)));
             auto ptr = JZNodeObjectPtr(obj,true);
             setParam(ir_set->dst,QVariant::fromValue(ptr));
+            break;
+        }
+        case OP_buffer:
+        {
+            JZNodeIRBuffer *ir_buffer = (JZNodeIRBuffer*)op;
+            auto v = JZObjectCreate<QByteArray>();
+            QByteArray *buffer = JZObjectCast<QByteArray>(v);
+            *buffer = ir_buffer->buffer;
+            setParam(ir_buffer->id, v);
             break;
         }
         case OP_watch:

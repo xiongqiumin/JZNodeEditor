@@ -12,6 +12,11 @@ QImageLabel::~QImageLabel()
 
 }
 
+QSize QImageLabel::sizeHint() const
+{
+    return QSize(100, 100);
+}
+
 void QImageLabel::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);

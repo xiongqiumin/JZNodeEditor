@@ -66,14 +66,8 @@ void jzScriptItemDump(JZScriptItem *item,QString file)
     image.save(file);
 }
 
-TimerRecord::TimerRecord(QString name)
+QString JZNodeUtils::className(QString name)
 {
-    m_name = name;
-    m_time = QDateTime::currentMSecsSinceEpoch();
-}
-
-TimerRecord::~TimerRecord()
-{
-    qint64 time = QDateTime::currentMSecsSinceEpoch();
-    qDebug().noquote() << m_name + ": " + QString::number(time - m_time) + "ms";
+    MemberInfo ret = jzSplitMember(name);
+    return ret.className;
 }

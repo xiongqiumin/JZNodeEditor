@@ -1,3 +1,4 @@
+#include <QDataStream>
 #include "JZModbusParam.h"
 
 //JZModbusTrans
@@ -85,6 +86,18 @@ JZModbusStrategy::JZModbusStrategy()
     autoReadTime = 1000;
 }
 
+QDataStream &operator<<(QDataStream &s, const JZModbusStrategy &param)
+{
+    s << param.autoRead << param.autoReadTime << param.recvNotify;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZModbusStrategy &param)
+{
+    s >> param.autoRead >> param.autoReadTime >> param.recvNotify;    
+    return s;
+}
+
 //JZModbusParam
 QStringList JZModbusParam::addrTypeList()
 {
@@ -162,6 +175,28 @@ int JZModbusParam::byteSize() const
     return size;
 }
 
+QDataStream &operator<<(QDataStream &s, const JZModbusParam &param)
+{
+    s << param.name;
+    s << param.addr;
+    s << param.addrType;
+    s << param.dataType;
+    s << param.value;
+    s << param.memo;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZModbusParam &param)
+{
+    s >> param.name;
+    s >> param.addr;
+    s >> param.addrType;
+    s >> param.dataType;
+    s >> param.value;
+    s >> param.memo;
+    return s;
+}
+
 //JZModbusParamMap
 void JZModbusParamMap::clear()
 {
@@ -192,7 +227,7 @@ void JZModbusParamMap::remove(int addr)
     int idx = indexOf(addr);
     if (idx == -1)
         return;
-
+    
     m_params.removeAt(idx);
 }
 
@@ -226,4 +261,47 @@ QList<int> JZModbusParamMap::paramList()
 int JZModbusParamMap::count()
 {
     return m_params.size();
+}
+
+bool JZModbusParamMap::contains(int addr)
+{
+    return indexOf(addr) >= 0;
+}
+
+//JZModbusConfig
+JZModbusConfig::JZModbusConfig()
+{    
+    isRtu = true;
+    portName = "COM1";
+    baud = 9600;
+    dataBit = 3;
+    parityBit = 0;
+    stopBit = 0;
+    slave = 1;    
+    ip = "127.0.0.1";
+    port = 502;
+}
+
+QDataStream &operator<<(QDataStream &s, const JZModbusConfig &param)
+{
+    s << param.strategyMap;
+    s << param.paramList;
+    s << param.slave;
+    s << param.portName;
+    s << param.baud << param.dataBit << param.parityBit << param.stopBit;
+    s << param.ip;
+    s << param.port;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZModbusConfig &param)
+{
+    s >> param.strategyMap;
+    s >> param.paramList;
+    s >> param.slave;
+    s >> param.portName;
+    s >> param.baud >> param.dataBit >> param.parityBit >> param.stopBit;
+    s >> param.ip;
+    s >> param.port;
+    return s;
 }

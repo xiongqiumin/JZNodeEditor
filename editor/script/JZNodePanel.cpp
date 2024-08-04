@@ -22,6 +22,7 @@
 #include "JZNodeEvent.h"
 #include "JZNodeLocalParamEditDialog.h"
 #include "UiCommon.h"
+#include "JZNodeEditorManager.h"
 
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
@@ -100,8 +101,16 @@ JZNodePanel::JZNodePanel(QWidget *widget)
     Module gui;
     gui.name = "gui";
     gui.typeList << "QWidget" << "QLabel" << "QLineEdit" << "QTextEdit" << "QPushButton" << "QRadioButton" << "QToolButton" << "QCheckBox" << "QComboBox"
-        << "QPainter" << "QPen" << "QBrush" << "QKeyEvent" << "QMouseEvent" << "QShowEvent" << "QPaintEvent" << "QResizeEvent" << "Qt::Key"; 
+        << "QPainter" << "QPen" << "QBrush" << "QKeyEvent" << "QMouseEvent" << "QShowEvent" << "QPaintEvent" << "QResizeEvent" << "Qt::Key" 
+        << "QTableWidget" << "QTableWidgetItem";
     m_modules.push_back(gui);
+    
+    Module modbus;
+    modbus.name = "modbus";
+    modbus.functionList << "initModbusMaster" << "initModbusSlaver";
+    modbus.typeList << "QSerialPort::BaudRate" << "QSerialPort::StopBits" << "QSerialPort::Parity" << "QSerialPort::DataBits" << 
+        "JZModbusParam" << "JZModbusSlaver" << "JZModbusMaster";
+    m_modules.push_back(modbus);
 }
 
 JZNodePanel::~JZNodePanel()
@@ -130,14 +139,8 @@ void JZNodePanel::updateClass()
     //function
     UiHelper::clearTreeItem(m_memberFunction);    
     for (int i = 0; i < def.functions.size(); i++)
-    {
-        QString function_name = def.functions[i].name;
-        QString full_name = def.functions[i].fullName();
-
-        JZNodeFunction node_function;
-        node_function.setFunction(full_name);
-        QTreeWidgetItem *item = createNode(&node_function);
-        item->setText(0, def.functions[i].name);        
+    {        
+        auto item = createFunction(def.functions[i].fullName());
         m_memberFunction->addChild(item);
     }
 
@@ -150,8 +153,7 @@ void JZNodePanel::updateClass()
         QTreeWidgetItem *item = nullptr;
         if (i == 0)
         {   
-            JZNodeThis node_this;
-            item = createNode(&node_this);
+            item = createParam("this");
         }
         else
         {
@@ -213,13 +215,53 @@ QTreeWidgetItem *JZNodePanel::createNode(JZNode *node)
 
 QTreeWidgetItem *JZNodePanel::createParam(QString name)
 {
+    QStringList names = name.split(".");
+
     QString full_name = name;
     QTreeWidgetItem *item = new QTreeWidgetItem();
-    item->setText(0, name);
+    item->setText(0, names.back());
     item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
     item->setData(0,TreeItem_type,"node_param");    
     item->setData(0,TreeItem_value,full_name);
 
+    return item;
+}
+
+QTreeWidgetItem *JZNodePanel::createMemberParam(QString name)
+{
+    QStringList names = name.split(".");
+
+    QString full_name = name;
+    QTreeWidgetItem *item = new QTreeWidgetItem();
+    item->setText(0, names.back());
+    item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
+    item->setData(0, TreeItem_type, "node_memberParam");
+    item->setData(0, TreeItem_value, full_name);
+
+    return item;
+}
+
+QTreeWidgetItem *JZNodePanel::createFunction(QString name)
+{
+    QTreeWidgetItem *item = nullptr;
+    auto func_def = JZNodeFunctionManager::instance()->function(name);
+    int node_type = JZNodeEditorManager::instance()->customFunctionNode(name);
+    if(node_type != Node_none)
+    { 
+        auto node = JZNodeFactory::instance()->createNode(node_type);
+        auto node_custom = dynamic_cast<JZNodeFunctionCustom*>(node);
+        node_custom->setFunction(name);
+        item = createNode(node_custom);
+        delete node_custom;
+    }
+    else
+    {
+        JZNodeFunction func_node;
+        func_node.setFunction(name);
+        item = createNode(&func_node);        
+    }
+
+    item->setText(0, func_def->name);
     return item;
 }
 
@@ -254,18 +296,22 @@ QTreeWidgetItem * JZNodePanel::createClass(QString class_name)
         QTreeWidgetItem *item_enum = createNode(&node_enum);        
         item_class->addChild(item_enum);        
     }
+
+    auto it = meta->params.begin();
+    while(it != meta->params.end())
+    {
+        QTreeWidgetItem *item_param = createMemberParam(class_name + "." + it->name);
+        item_class->addChild(item_param);
+        it++;
+    }
     
     for (int func_idx = 0; func_idx < meta->functions.size(); func_idx++)
     {
         auto func = &meta->functions[func_idx];
         if(func->isProtected)
             continue;
-
-        JZNodeFunction node_func;
-        node_func.setFunction(func);
-
-        auto function_node = createNode(&node_func);
-        function_node->setText(0, func->name);
+        
+        auto function_node = createFunction(func->fullName());
         item_class->addChild(function_node);
     }
            
@@ -380,10 +426,8 @@ void JZNodePanel::initLocalDefine()
     QStringList function_list = m_file->project()->functionList();
     auto item_local_func = createFolder("函数");
     for(int i = 0; i < function_list.size(); i++)
-    {
-        JZNodeFunction node_function;
-        node_function.setFunction(function_list[i]);
-        QTreeWidgetItem *func_item = createNode(&node_function);
+    {        
+        QTreeWidgetItem *func_item = createFunction(function_list[i]);
         item_local_func->addChild(func_item);
     }
 }
@@ -408,11 +452,8 @@ void JZNodePanel::initModule()
             QString func_name = m.functionList[func_idx];
             auto *func = JZNodeFunctionManager::instance()->function(func_name);
             Q_ASSERT_X(func,"Error Function",qUtf8Printable(func_name));
-
-            JZNodeFunction node_func;
-            node_func.setFunction(func);
         
-            auto function_node = createNode(&node_func);
+            auto function_node = createFunction(func->fullName());
             item_module->addChild(function_node);
         }
 

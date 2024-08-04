@@ -25,4 +25,11 @@ protected:
     QMap<int,JZNodeCreateFunc> m_nodes;
     QMap<int,JZNodeFactoryEdit> m_edits;
 };
+
+template<class T>
+JZNode *createJZNode() 
+{ 
+    return new T(); 
+}
+
 #endif

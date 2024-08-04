@@ -176,7 +176,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         m_program->m_variables[name] = *def;
 
         QString error;
-        if (!m_compiler.checkVariable(def, error))
+        if (!m_compiler.checkParamDefine(def, error))
         {
             auto global_item = m_project->globalDefine();
             m_error += makeLink(error, global_item->path(), i);
@@ -199,7 +199,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         for(int i = 0; i < var_list.size(); i++)
         {
             auto var_def = param->variable(var_list[i]);            
-            if(!m_compiler.checkVariable(var_def,error))
+            if(!m_compiler.checkParamDefine(var_def,error))
                 m_error += makeLink(error,param->itemPath(),i);
         }
     }

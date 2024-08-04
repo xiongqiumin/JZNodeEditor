@@ -436,6 +436,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }    
 
+    JZModbusSimulatorManager::instance()->closeAll();
     m_runThread.stopRun();
     m_buildThread.stopBuild();
 
@@ -778,8 +779,7 @@ void MainWindow::onActionStepOut()
 void MainWindow::onActionModbus()
 {
     JZModbusSimulator *sim = new JZModbusSimulator();
-    sim->setAttribute(Qt::WA_DeleteOnClose);
-    sim->show();
+    sim->run();
 }
 
 void MainWindow::onActionHelp()
@@ -1230,13 +1230,10 @@ void MainWindow::onStackChanged(int stack_index)
 
 void MainWindow::onEditorValueChanged(int id,QString value)
 {
-    JZNodeParamCoor coor;
-    coor.type = JZNodeParamCoor::Id;
-    coor.id = id;
-    onWatchValueChanged(coor,value);
+    onWatchValueChanged(irId(id),value);
 }
 
-void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QString value)
+void MainWindow::onWatchValueChanged(JZNodeIRParam coor, QString value)
 {    
     JZNodeSetDebugParam param_info;
     param_info.stack = m_stack->stackIndex();
@@ -1254,15 +1251,15 @@ void MainWindow::onWatchValueChanged(JZNodeParamCoor coor, QString value)
     
     for(auto w : m_debugWidgets)
         w->updateParamInfo(&get_resp);
-    if (coor.isNodeId())
+    if (coor.isStack())
     {
         auto stack_info = m_runtime.stacks[param_info.stack];
-        auto gemo = JZNodeCompiler::paramGemo(coor.id);
+        auto gemo = JZNodeCompiler::paramGemo(coor.id());
         setRuntimeValue(stack_info.file,gemo.nodeId,gemo.pinId,result.value);
     }
 }
 
-void MainWindow::onWatchNameChanged(JZNodeParamCoor coor)
+void MainWindow::onWatchNameChanged(JZNodeIRParam coor)
 {    
     JZNodeGetDebugParam param_info;
     param_info.stack = m_stack->stackIndex();
@@ -1334,41 +1331,28 @@ void MainWindow::updateAutoWatch(int stack_index)
 
     auto func_debug = m_program.script(stack.file)->functionDebug(stack.function);
     if (func->isMemberFunction())
-    {
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Name;
-        coor.name = "this";
-        param_info.coors << coor;
+    {        
+        param_info.coors << irThis();
     }
 
     //local    
     for (int i = 0; i < func_debug->localVariables.size(); i++)
     {
-        auto &local = func_debug->localVariables[i];
-
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Name;
-        coor.name = local.name;
-        param_info.coors << coor;
+        auto &local = func_debug->localVariables[i];        
+        param_info.coors << irRef(local.name);
     }
 
     int node_prop_index = param_info.coors.size();
     const auto &node_info = func_debug->nodeInfo[stack.nodeId];
     for (int i = 0; i < node_info.paramIn.size(); i++)
     {
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Id;
-        coor.name = node_info.paramIn[i].define.name;
-        coor.id = JZNodeCompiler::paramId(node_info.id,node_info.paramIn[i].id);
-        param_info.coors << coor;
+        int param_id = JZNodeCompiler::paramId(node_info.id,node_info.paramIn[i].id);
+        param_info.coors << irId(param_id);
     }
     for (int i = 0; i < node_info.paramOut.size(); i++)
     {
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Id;
-        coor.name = node_info.paramOut[i].define.name;
-        coor.id = JZNodeCompiler::paramId(node_info.id,node_info.paramOut[i].id);
-        param_info.coors << coor;
+        int param_id = JZNodeCompiler::paramId(node_info.id,node_info.paramOut[i].id);
+        param_info.coors << irId(param_id);
     }
 
     JZNodeGetDebugParamResp param_info_resp;
@@ -1383,9 +1367,9 @@ void MainWindow::updateAutoWatch(int stack_index)
         for (int i = node_prop_index; i < param_info_resp.coors.size(); i++)
         {
             auto &coor = param_info_resp.coors[i];
-            if(coor.isNodeId())
+            if(coor.isStack())
             {
-                auto gemo = JZNodeCompiler::paramGemo(coor.id);
+                auto gemo = JZNodeCompiler::paramGemo(coor.id());
                 edit->setRuntimeValue(gemo.nodeId,gemo.pinId,param_info_resp.values[i]);
             }
         }
@@ -1438,11 +1422,8 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
 
     QStringList watch_list = m_watchManual->watchList();
     for (int i = 0; i < watch_list.size(); i++)
-    {
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Name;        
-        coor.name = watch_list[i];
-        param_info_watch.coors << coor;
+    {        
+        param_info_watch.coors << irRef(watch_list[i]);
     }
 
     JZNodeGetDebugParamResp param_info_watch_resp;

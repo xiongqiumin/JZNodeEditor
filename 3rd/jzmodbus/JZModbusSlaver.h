@@ -15,9 +15,10 @@ public:
 
     void setSlave(int slave);
 
-    bool startRtuServer(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
-    bool startTcpServer(int port);
-    void stopSever();
+    void initRtu(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
+    void initTcp(int port);
+    bool startServer();
+    void stopServer();
 
     JZModbusParamMap *map();
     void initMapping();
@@ -36,6 +37,6 @@ protected:
     JZModbusServer *m_server;
 
 };
-
+void modbusSlaverSetConfig(JZModbusSlaver *slaver, const JZModbusConfig *cfg);
 
 #endif

@@ -32,7 +32,7 @@ public:
     void initVariable(int id, const QVariant &value);
 
     QVariant *getRef(int id);
-    QVariant *getRef(QString name);
+    QVariant *getRef(QString name);    
 
     void clearIrCache();
     void applyIrCache();
@@ -46,7 +46,7 @@ public:
     QMap<int, QVariant> watchMap;
     
     QMap<QString,QVariantPtr> locals;
-    QMap<int,QVariantPtr> stacks;
+    QMap<int,QVariantPtr> stacks;    
     QMap<JZNodeIRParam*,QVariant*> irParamCache; //为了加速JZNodeIRParam访问的缓存
 };
 
@@ -184,22 +184,18 @@ public:
     
     QVariant createVariable(int type,const QString &value = QString());
 
-    QVariant *getVariableRef(int id);
-    QVariant *getVariableRef(int id, int stack_level);
-    const QVariant &getVariable(int id);
-    void setVariable(int id, const QVariant &value);
+    QVariant getParam(int stack_level,const JZNodeIRParam &param);
+    void setParam(int stack_level, const JZNodeIRParam &param, const QVariant &value);
 
-    QVariant *getVariableRef(const QString &name);        
-    QVariant *getVariableRef(const QString &name,int stack_level);
-    QVariant *getVariableRefSingle(RunnerEnv *env,const QString &name);
-    const QVariant &getVariable(const QString &name);
+    QVariant getParam(const JZNodeIRParam &param);
+    void setParam(const JZNodeIRParam &param, const QVariant &value);
+            
+    QVariant getVariable(const QString &name);
     void setVariable(const QString &name, const QVariant &value);
+    
+    const QVariant &getReg(int reg);
+    void setReg(int reg, const QVariant &value);
 
-    const QVariant &getReg(int id);
-    QVariant *getRegRef(int id);
-    void setReg(int id, const QVariant &value);
-
-    const QVariant &getThis();
     QVariant getSender();    
 
     void watchNotify();         //node display
@@ -274,11 +270,10 @@ protected:
     void popStack();
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
-    bool breakPointTrigger(int node_id);
-        
-    const QVariant &getParam(JZNodeIRParam &param);    
-    void setParam(JZNodeIRParam &param,const QVariant &value);
-    QVariant *getParamRef(JZNodeIRParam &param);
+    bool breakPointTrigger(int node_id);    
+    
+    QVariant *getParamRef(int stack_level,const JZNodeIRParam &param);
+    JZNodeObject *getVariableObject(QVariant *ref, const QStringList &name);        
         
     int nodeIdByPc(int pc);        
     int nodeIdByPc(JZNodeScript *script,QString func, int pc);    

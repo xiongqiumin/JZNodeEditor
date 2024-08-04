@@ -5,9 +5,6 @@
 #include "JZNodeFunction.h"
 #include "JZNodeOperator.h"
 
-template<class T> 
-JZNode *createFunc(){ return new T();}
-
 JZNodeFactory *JZNodeFactory::instance()
 {
     static JZNodeFactory inst;
@@ -56,63 +53,63 @@ QByteArray JZNodeFactory::saveNode(JZNode *node)
 
 void JZNodeFactory::init()
 {   
-    registNode(Node_display, createFunc<JZNodeDisplay>);
-    registNode(Node_print,createFunc<JZNodePrint>);  
-    registNode(Node_nop, createFunc<JZNodeNop>);
-    registNode(Node_assert, createFunc<JZNodeAssert>);
+    registNode(Node_display, createJZNode<JZNodeDisplay>);
+    registNode(Node_print,createJZNode<JZNodePrint>);  
+    registNode(Node_nop, createJZNode<JZNodeNop>);
+    registNode(Node_assert, createJZNode<JZNodeAssert>);
 
-    registNode(Node_literal,createFunc<JZNodeLiteral>);    
-    registNode(Node_enum,createFunc<JZNodeEnum>);
-    registNode(Node_flag,createFunc<JZNodeFlag>);
-    registNode(Node_create,createFunc<JZNodeCreate>);
-    registNode(Node_createFromString, createFunc<JZNodeCreateFromString>);
-    registNode(Node_this,createFunc<JZNodeThis>);
-    registNode(Node_param,createFunc<JZNodeParam>);
-    registNode(Node_setParam,createFunc<JZNodeSetParam>);
-    registNode(Node_setParamData,createFunc<JZNodeSetParamDataFlow>);
-    registNode(Node_memberParam, createFunc<JZNodeMemberParam>);
-    registNode(Node_setMemberParam, createFunc<JZNodeSetMemberParam>);
-    registNode(Node_setMemberParamData, createFunc<JZNodeSetMemberParamData>);
-    registNode(Node_clone, createFunc<JZNodeClone>);
-    registNode(Node_swap, createFunc<JZNodeSwap>);    
-    registNode(Node_convert, createFunc<JZNodeConvert>);    
+    registNode(Node_literal,createJZNode<JZNodeLiteral>);    
+    registNode(Node_enum,createJZNode<JZNodeEnum>);
+    registNode(Node_flag,createJZNode<JZNodeFlag>);
+    registNode(Node_create,createJZNode<JZNodeCreate>);
+    registNode(Node_createFromString, createJZNode<JZNodeCreateFromString>);
+    registNode(Node_this,createJZNode<JZNodeThis>);
+    registNode(Node_param,createJZNode<JZNodeParam>);
+    registNode(Node_setParam,createJZNode<JZNodeSetParam>);
+    registNode(Node_setParamData,createJZNode<JZNodeSetParamDataFlow>);
+    registNode(Node_memberParam, createJZNode<JZNodeMemberParam>);
+    registNode(Node_setMemberParam, createJZNode<JZNodeSetMemberParam>);
+    registNode(Node_setMemberParamData, createJZNode<JZNodeSetMemberParamData>);
+    registNode(Node_clone, createJZNode<JZNodeClone>);
+    registNode(Node_swap, createJZNode<JZNodeSwap>);    
+    registNode(Node_convert, createJZNode<JZNodeConvert>);    
     
-    registNode(Node_functionStart, createFunc<JZNodeFunctionStart>);
-    registNode(Node_function,createFunc<JZNodeFunction>);
-    registNode(Node_while,createFunc<JZNodeWhile>);
-    registNode(Node_for,createFunc<JZNodeFor>);
-    registNode(Node_foreach,createFunc<JZNodeForEach>);
-    registNode(Node_sequence,createFunc<JZNodeSequence>);
-    registNode(Node_branch,createFunc<JZNodeBranch>);
-    registNode(Node_break,createFunc<JZNodeBreak>);
-    registNode(Node_continue,createFunc<JZNodeContinue>);
-    registNode(Node_return,createFunc<JZNodeReturn>);
-    registNode(Node_exit,createFunc<JZNodeExit>);
-    registNode(Node_switch,createFunc<JZNodeSwitch>);
-    registNode(Node_if,createFunc<JZNodeIf>);
+    registNode(Node_functionStart, createJZNode<JZNodeFunctionStart>);
+    registNode(Node_function,createJZNode<JZNodeFunction>);
+    registNode(Node_while,createJZNode<JZNodeWhile>);
+    registNode(Node_for,createJZNode<JZNodeFor>);
+    registNode(Node_foreach,createJZNode<JZNodeForEach>);
+    registNode(Node_sequence,createJZNode<JZNodeSequence>);
+    registNode(Node_branch,createJZNode<JZNodeBranch>);
+    registNode(Node_break,createJZNode<JZNodeBreak>);
+    registNode(Node_continue,createJZNode<JZNodeContinue>);
+    registNode(Node_return,createJZNode<JZNodeReturn>);
+    registNode(Node_exit,createJZNode<JZNodeExit>);
+    registNode(Node_switch,createJZNode<JZNodeSwitch>);
+    registNode(Node_if,createJZNode<JZNodeIf>);
 
-    registNode(Node_add,createFunc<JZNodeAdd>);
-    registNode(Node_sub,createFunc<JZNodeSub>);
-    registNode(Node_mul,createFunc<JZNodeMul>);
-    registNode(Node_div,createFunc<JZNodeDiv>);
-    registNode(Node_mod,createFunc<JZNodeMod>);
-    registNode(Node_eq,createFunc<JZNodeEQ>);
-    registNode(Node_ne,createFunc<JZNodeNE>);
-    registNode(Node_le,createFunc<JZNodeLE>);
-    registNode(Node_ge,createFunc<JZNodeGE>);
-    registNode(Node_lt,createFunc<JZNodeLT>);
-    registNode(Node_gt,createFunc<JZNodeGT>);
-    registNode(Node_bitand, createFunc<JZNodeBitAnd>);
-    registNode(Node_bitor, createFunc<JZNodeBitOr>);
-    registNode(Node_bitxor, createFunc<JZNodeBitXor>);
-    registNode(Node_bitresver, createFunc<JZNodeBitResver>);
-    registNode(Node_and,createFunc<JZNodeAnd>);
-    registNode(Node_or,createFunc<JZNodeOr>);
-    registNode(Node_not, createFunc<JZNodeNot>);
+    registNode(Node_add,createJZNode<JZNodeAdd>);
+    registNode(Node_sub,createJZNode<JZNodeSub>);
+    registNode(Node_mul,createJZNode<JZNodeMul>);
+    registNode(Node_div,createJZNode<JZNodeDiv>);
+    registNode(Node_mod,createJZNode<JZNodeMod>);
+    registNode(Node_eq,createJZNode<JZNodeEQ>);
+    registNode(Node_ne,createJZNode<JZNodeNE>);
+    registNode(Node_le,createJZNode<JZNodeLE>);
+    registNode(Node_ge,createJZNode<JZNodeGE>);
+    registNode(Node_lt,createJZNode<JZNodeLT>);
+    registNode(Node_gt,createJZNode<JZNodeGT>);
+    registNode(Node_bitand, createJZNode<JZNodeBitAnd>);
+    registNode(Node_bitor, createJZNode<JZNodeBitOr>);
+    registNode(Node_bitxor, createJZNode<JZNodeBitXor>);
+    registNode(Node_bitresver, createJZNode<JZNodeBitResver>);
+    registNode(Node_and,createJZNode<JZNodeAnd>);
+    registNode(Node_or,createJZNode<JZNodeOr>);
+    registNode(Node_not, createJZNode<JZNodeNot>);
     
-    registNode(Node_expr,createFunc<JZNodeExpression>);
+    registNode(Node_expr,createJZNode<JZNodeExpression>);
 
-    registNode(Node_paramChangedEvent,createFunc<JZNodeParamChangedEvent>);
-    registNode(Node_functionPointer, createFunc<JZNodeFunctionPointer>);
-    registNode(Node_signalConnect, createFunc<JZNodeSignalConnect>);
+    registNode(Node_paramChangedEvent,createJZNode<JZNodeParamChangedEvent>);
+    registNode(Node_functionPointer, createJZNode<JZNodeFunctionPointer>);
+    registNode(Node_signalConnect, createJZNode<JZNodeSignalConnect>);
 }

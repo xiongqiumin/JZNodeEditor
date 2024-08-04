@@ -24,7 +24,7 @@ bool equalClassAssert(void *,void *)
     Q_ASSERT(0);
     return false;
 }
-
+// 函数调用
 template<>
 QString* fromVariant<QString*>(const QVariant &v, std::true_type)
 {
@@ -41,6 +41,14 @@ QString fromVariant<QString>(const QVariant &v, std::false_type)
 }
 
 template<>
+QVariant fromVariant<QVariant>(const QVariant &v, std::false_type)
+{
+    Q_ASSERT(v.userType() == qMetaTypeId<JZNodeVariantAny>());
+    auto ptr = (JZNodeVariantAny*)v.data();
+    return ptr->value;    
+}
+
+template<>
 JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.userType() == qMetaTypeId<JZNodeVariantAny>());
@@ -52,6 +60,16 @@ JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_t
 {
     Q_ASSERT(v.userType() == qMetaTypeId<JZFunctionPointer>());
     return v.value<JZFunctionPointer>();
+}
+
+// 函数返回
+template<>
+QVariant toVariant(QVariant v)
+{
+    Q_ASSERT(v.userType() != qMetaTypeId<JZNodeVariantAny>());
+    JZNodeVariantAny any;
+    any.value = v;
+    return QVariant::fromValue(any);
 }
 
 template<>

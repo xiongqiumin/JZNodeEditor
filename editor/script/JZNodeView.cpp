@@ -37,6 +37,7 @@
 #include "JZNodePanel.h"
 #include "JZNodeViewPanel.h"
 #include "3rd/jzprofiler/JZTx.h"
+#include "JZNodeUtils.h"
 
 enum ViewCommand {
     CreateNode,
@@ -1489,12 +1490,14 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     QAction *actCpy = nullptr;
     QAction *actDel = nullptr;
     QAction *actPaste = nullptr;
-    QAction *actGoto = nullptr;
+    QAction *actFuncGoto = nullptr;
+    QAction *actFuncRename = nullptr;
     QAction *actEditGroup = nullptr;
     QAction *actSetExpr = nullptr;
     int pin_id = -1;
     QList<QAction*> pin_actions;    
     QList<QAction*> node_actions;
+    JZNode *node = nullptr;
     if (!item)
     {
         QMenu* addMenu = menu.addMenu("添加节点");
@@ -1528,7 +1531,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         if (item->type() == Item_node)
         {
             JZNodeGraphItem* node_item = (JZNodeGraphItem*)item;
-            auto node = ((JZNodeGraphItem*)item)->node();
+            node = ((JZNodeGraphItem*)item)->node();
 
             auto scene_pos = mapToScene(pos);
             auto item_pos = node_item->mapFromScene(scene_pos);            
@@ -1556,9 +1559,11 @@ void JZNodeView::onContextMenu(const QPoint &pos)
                     if (func_def && !func_def->isCFunction)
                     {
                         QString fullName = func->function();
-                        actGoto = menu.addAction("跳转到");
-                        actGoto->setProperty("filePath",fullName);
+                        actFuncGoto = menu.addAction("跳转到");
+                        actFuncGoto->setData(fullName);
                     }
+                    actFuncRename = menu.addAction("修改");
+                    actFuncRename->setData(func->function());
                 }
                 else if (node->type() == Node_expr)
                 {
@@ -1649,20 +1654,37 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         if (node->actionTriggered(index))
             onScriptNodeChanged(m_file, node->id(), old);  
     }
-    else if(ret == actGoto)
+    else if(ret == actFuncGoto)
     {
-        QString filePath = actGoto->property("filePath").toString();
+        QString filePath = actFuncGoto->data().toString();
         emit sigFunctionOpen(filePath);
     }
-    else if(ret == actSetExpr)
+    else if (ret == actFuncRename)
     {
-        auto node_item = dynamic_cast<JZNodeGraphItem*>(item); 
-        auto node_expr = dynamic_cast<JZNodeExpression*>(node_item->node());
+        QString function = actFuncRename->data().toString();
+        bool ok;
+        auto text = QInputDialog::getText(this, "", "函数名:", QLineEdit::Normal, function, &ok);
+        if (!ok || text == function)
+            return;
+        if (!JZNodeFunctionManager::instance()->function(text))
+        {
+            QMessageBox::information(this, "", "函数不存在");
+            return;
+        }
+
+        auto node_func = dynamic_cast<JZNodeFunction*>(node);
+        auto old = getNodeData(node_func->id());        
+        node_func->setFunction(text);
+        onScriptNodeChanged(m_file,node_func->id(), old);
+    }
+    else if(ret == actSetExpr)
+    {        
+        auto node_expr = dynamic_cast<JZNodeExpression*>(node);
         QString expr = getExpr(node_expr->expr());
         if(expr.isEmpty() || expr == node_expr->expr())
             return;
 
-        auto old = getNodeData(node_expr->id());      
+        auto old = getNodeData(node_expr->id());
         QString error;
         node_expr->setExpr(expr,error);
         onScriptNodeChanged(m_file,node_expr->id(),old);
@@ -1805,7 +1827,8 @@ void JZNodeView::addSetGroupCommand(int id, const JZNodeGroup &new_group)
 void JZNodeView::dragEnterEvent(QDragEnterEvent *event)
 {    
     if (event->mimeData()->hasFormat("node_data")
-        || event->mimeData()->hasFormat("node_param"))
+        || event->mimeData()->hasFormat("node_param")
+        || event->mimeData()->hasFormat("node_memberParam"))
         event->acceptProposedAction();
 }
 
@@ -1838,7 +1861,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
             node_expr.setExpr(expr,error);
 
             node_data = factory->saveNode(&node_expr);
-        }
+        }        
         
         addCreateNodeCommand(node_data,mapToScene(event->pos()));
         event->accept();
@@ -1849,11 +1872,14 @@ void JZNodeView::dropEvent(QDropEvent *event)
         JZNodeGraphItem *node_item = nodeItemAt(event->pos());
         if(!node_item)
         {
-            QMenu menu;
+            QMenu menu(this);
+            QAction *actSet = nullptr;
             auto actGet = menu.addAction("Get");
-            auto actSet = menu.addAction("Set");
+            if(param_name != "this")                
+                actSet = menu.addAction("Set");
 
             auto def = JZNodeCompiler::getVariableInfo(m_file,param_name);
+            Q_ASSERT(def);
             if(def->dataType() >= Type_class || def->dataType() == Type_string)
             {
                 auto meta = JZNodeObjectManager::instance()->meta(def->type);
@@ -1877,28 +1903,28 @@ void JZNodeView::dropEvent(QDropEvent *event)
             }
 
             auto act = menu.exec(QCursor::pos());
-            if(act)
+            if (!act)
+                return;
+            
+            if (act == actGet)
             {
-                if (act == actGet)
-                {
-                    JZNodeParam node_param;
-                    node_param.setVariable(param_name);
-                    addCreateNodeCommand(factory->saveNode(&node_param), mapToScene(event->pos()));
-                }
-                else if(act == actSet)
-                {
-                    JZNodeSetParam set_param;
-                    set_param.setVariable(param_name);
-                    addCreateNodeCommand(factory->saveNode(&set_param), mapToScene(event->pos()));
-                }
-                else
-                {
-                    JZNodeFunction function;
-                    function.setFunction(act->data().toString());
-                    function.setVariable(param_name);
-                    addCreateNodeCommand(factory->saveNode(&function), mapToScene(event->pos()));
-                }
+                JZNodeParam node_param;
+                node_param.setVariable(param_name);
+                addCreateNodeCommand(factory->saveNode(&node_param), mapToScene(event->pos()));
             }
+            else if(act == actSet)
+            {
+                JZNodeSetParam set_param;
+                set_param.setVariable(param_name);
+                addCreateNodeCommand(factory->saveNode(&set_param), mapToScene(event->pos()));
+            }
+            else
+            {
+                JZNodeFunction function;
+                function.setFunction(act->data().toString());
+                function.setVariable(param_name);
+                addCreateNodeCommand(factory->saveNode(&function), mapToScene(event->pos()));
+            }            
         }
         else if(node_item->node()->canDragVariable())
         {
@@ -1907,6 +1933,33 @@ void JZNodeView::dropEvent(QDropEvent *event)
             addPropChangedCommand(node_item->id(),old);
         }
         event->accept();
+    }
+    else if (event->mimeData()->hasFormat("node_memberParam"))
+    {
+        QMenu menu(this);        
+        auto actGet = menu.addAction("Get");
+        QAction *actSet = menu.addAction("Set");
+
+        auto act = menu.exec(QCursor::pos());
+        if (!act)
+            return;
+
+        QString param_name = QString::fromUtf8(event->mimeData()->data("node_memberParam"));
+        QStringList list = param_name.split(".");
+        if (act == actGet)
+        {
+            JZNodeMemberParam node_param;
+            node_param.setClassName(list[0]);
+            node_param.setMember(list[1]);
+            addCreateNodeCommand(factory->saveNode(&node_param), mapToScene(event->pos()));
+        }
+        else if (act == actSet)
+        {
+            JZNodeSetMemberParam set_param;
+            set_param.setClassName(list[0]);
+            set_param.setMember(list[1]);
+            addCreateNodeCommand(factory->saveNode(&set_param), mapToScene(event->pos()));
+        }
     }
 }
 

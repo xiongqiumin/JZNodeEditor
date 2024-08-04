@@ -65,8 +65,10 @@ void JZNodeType::init()
     typeMap["QString"] = Type_string;
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;
+    
     typeMap["arg"] = Type_arg;     
     typeMap["args"] = Type_args;
+    typeMap["paramName"] = Type_paramName;
 
     opNameMap[OP_add] = "+";
     opNameMap[OP_sub] = "-";
@@ -113,9 +115,7 @@ int JZNodeType::nameToType(const QString &name)
 
 int JZNodeType::typeidToType(const QString &name)
 {
-    if(name == typeid(QVariant).name())
-        return Type_any;
-    else if(name == typeid(bool).name())
+    if(name == typeid(bool).name())
         return Type_bool;
     else if(name == typeid(int).name())
         return Type_int;
@@ -126,7 +126,7 @@ int JZNodeType::typeidToType(const QString &name)
     else if(name == typeid(QString).name())
         return Type_string;
     else    
-        return JZNodeObjectManager::instance()->getIdByCType(name);
+        return JZNodeObjectManager::instance()->getIdByCTypeid(name);
 }
 
 int JZNodeType::variantType(const QVariant &v)

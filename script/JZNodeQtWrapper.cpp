@@ -137,7 +137,7 @@ void initBase()
     cls_pt.def("y", false, &QPoint::y);
     cls_pt.def("setX", true, &QPoint::setX);
     cls_pt.def("setY", true, &QPoint::setY);
-    cls_pt.regist();
+    cls_pt.regist();            
 
     jzbind::ClassBind<QPointF> cls_ptf(Type_pointF,"QPointF");
     cls_ptf.setValueType(true);
@@ -437,15 +437,24 @@ void initWidgets()
     cls_stacked.def("removeWidget", true, &QStackedWidget::removeWidget);
     cls_stacked.def("currentIndex", true, &QStackedWidget::currentIndex);
     cls_stacked.def("setCurrentIndex", true, &QStackedWidget::setCurrentIndex);
-    cls_stacked.def("currentWidget", true, &QStackedWidget::currentWidget, false);
+    cls_stacked.def("currentWidget", true, &QStackedWidget::currentWidget, true);
     cls_stacked.def("setCurrentWidget", true, &QStackedWidget::setCurrentWidget);
     cls_stacked.regist();
 
     //table
     jzbind::ClassBind<QTableWidgetItem> cls_table_item(Type_tableWidgetItem,"QTableWidgetItem");
+    cls_table_item.def("setText", true, &QTableWidgetItem::setText);
+    cls_table_item.def("text", false, &QTableWidgetItem::text);
     cls_table_item.regist();
 
     jzbind::ClassBind<QTableWidget> cls_table(Type_tableWidget,"QTableWidget", "QWidget");
+    cls_table.def("setColumnCount", true, &QTableWidget::setColumnCount);
+    cls_table.def("setHorizontalHeaderLabels", true, &QTableWidget::setHorizontalHeaderLabels);
+    cls_table.def("setRowCount", true, &QTableWidget::setRowCount);
+    cls_table.def("rowCount", false, &QTableWidget::rowCount);
+    cls_table.def("currentRow", false, &QTableWidget::currentRow);
+    cls_table.def("setItem", true, &QTableWidget::setItem);
+    cls_table.def("item", false, &QTableWidget::item, false);
     cls_table.regist();
 
     //list
@@ -456,7 +465,7 @@ void initWidgets()
     cls_list.regist();
 
     //tree
-    jzbind::ClassBind<QTreeWidgetItem> cls_tree_item(Type_tableWidgetItem,"QTreeWidgetItem");
+    jzbind::ClassBind<QTreeWidgetItem> cls_tree_item(Type_treeWidgetItem,"QTreeWidgetItem");
     cls_tree_item.regist();
 
     jzbind::ClassBind<QTreeWidget> cls_tree(Type_treeWidget,"QTreeWidget", "QWidget");

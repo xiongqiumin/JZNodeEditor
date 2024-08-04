@@ -661,6 +661,11 @@ void JZNode::clearPinType(int id)
     pin(id)->setDataType(type);
 }
 
+void JZNode::setPinEditType(int id, int edit_type)
+{
+    pin(id)->setEditType(edit_type);
+}
+
 void JZNode::drag(const QVariant &v)
 {
     Q_UNUSED(v);
@@ -697,18 +702,17 @@ bool JZNode::update(QString &error)
 }
 
 void JZNode::onPinLinked(int id)
-{
-    Q_UNUSED(id);
+{    
 }
 
 void JZNode::onPinUnlinked(int id)
-{
-    Q_UNUSED(id);
+{    
 }
 
 void JZNode::onPinChanged(int id)
 {
-    Q_UNUSED(id);
+    QString error;
+    update(error);
 }
 
 void JZNode::propertyChangedNotify(const QByteArray &old)
@@ -1690,4 +1694,19 @@ JZNodeTryCatch::JZNodeTryCatch()
 bool JZNodeTryCatch::compiler(JZNodeCompiler *compiler, QString &error)
 {
     return true;
+}
+
+//NodeMagic
+QByteArray NodeMagic()
+{
+    QByteArray result;
+    QDataStream s(&result, QIODevice::WriteOnly);
+    s << QString("12345678");
+    //node
+    s << sizeof(JZNodePin);
+    s << sizeof(JZNodeGemo);
+    s << sizeof(JZNodeConnect);
+    s << sizeof(JZNode);
+
+    return result;
 }

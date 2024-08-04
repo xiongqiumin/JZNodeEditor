@@ -18,14 +18,14 @@ bool JZNodeIRParam::isLiteral() const
     return type == Literal;
 }
 
-bool JZNodeIRParam::isId() const
+bool JZNodeIRParam::isStack() const
 {
-    return type == Id;
+    return type == StackId;
 }
 
 bool JZNodeIRParam::isReg() const
 {
-    return type == Id && id() >= Reg_Start;
+    return type == RegId;
 }
 
 bool JZNodeIRParam::isRef() const
@@ -40,7 +40,7 @@ bool JZNodeIRParam::isThis() const
 
 int JZNodeIRParam::id() const
 {
-    Q_ASSERT(type == Id);
+    Q_ASSERT(type == StackId || type == RegId);
     return value.toInt();
 }
 
@@ -60,6 +60,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param)
 {
     s << param.type;
     s << param.value;
+    s << param.member;
     return s;
 }
 
@@ -67,14 +68,24 @@ QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param)
 {
     s >> param.type;
     s >> param.value;
+    s >> param.member;
     return s;
 }
 
 JZNodeIRParam irRef(const QString &id)
-{
+{    
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Reference;
-    param.value = id;
+    int dot_idx = id.indexOf(".");
+    if(dot_idx == -1)
+        param.value = id;
+    else
+    {
+        param.value = id.left(dot_idx);
+        param.member = id.mid(dot_idx+1);
+    }
+    if (param.value == "this")
+        param.type = JZNodeIRParam::This;
     return param;        
 }
 
@@ -83,7 +94,10 @@ JZNodeIRParam irId(int id)
     Q_ASSERT(id >= 0);    
 
     JZNodeIRParam param;
-    param.type = JZNodeIRParam::Id;
+    if(id < Reg_Start)
+        param.type = JZNodeIRParam::StackId;
+    else
+        param.type = JZNodeIRParam::RegId;
     param.value = id;
     return param;
 }
@@ -146,6 +160,8 @@ JZNodeIR *createNodeIR(int type)
         return new JZNodeIRWatch();
     case OP_convert:
         return new JZNodeIRConvert();
+    case OP_buffer:
+        return new JZNodeIRBuffer();
     case OP_jmp:
     case OP_je:
     case OP_jne:
@@ -313,6 +329,28 @@ void JZNodeIRClone::loadFromStream(QDataStream &s)
     s >> src >> dst;
 }
 
+//JZNodeIRBuffer
+JZNodeIRBuffer::JZNodeIRBuffer()
+{
+    type = OP_buffer;
+}
+
+JZNodeIRBuffer::~JZNodeIRBuffer()
+{
+}
+
+void JZNodeIRBuffer::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << id << buffer;
+}
+
+void JZNodeIRBuffer::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> id >> buffer;
+}
+
 //JZNodeIRWatch
 JZNodeIRWatch::JZNodeIRWatch()
 {
@@ -429,4 +467,22 @@ void JZNodeIRAssert::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
     s >> tips;
+}
+
+QByteArray NodeIRMagic()
+{
+    QByteArray result;
+    QDataStream s(&result, QIODevice::WriteOnly);
+
+    //node ir
+    s << sizeof(JZNodeIRParam);
+    s << sizeof(JZNodeIR);
+    s << sizeof(JZNodeIRNodeId);
+    s << sizeof(JZNodeIRCall);
+    s << sizeof(JZNodeIRJmp);
+    s << sizeof(JZNodeIRExpr);
+    s << sizeof(JZNodeIRSet);
+    s << (int)OP_assert;
+
+    return result;
 }

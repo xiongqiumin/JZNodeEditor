@@ -27,8 +27,8 @@ public:
     void clear();
         
 signals:
-    void sigParamValueChanged(JZNodeParamCoor coor,QString value);
-    void sigParamNameChanged(JZNodeParamCoor coor);
+    void sigParamValueChanged(JZNodeIRParam coor,QString value);
+    void sigParamNameChanged(JZNodeIRParam coor);
     
 protected slots:   
     void onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column);
@@ -41,7 +41,7 @@ protected:
     void updateWatchItem();
     int indexOfItem(QTreeWidgetItem *root, const QString &name,int start);
 
-    void setItem(QTreeWidgetItem *root, int index,const JZNodeParamCoor &coor, const JZNodeDebugParamValue &info);
+    void setItem(QTreeWidgetItem *root, int index,const JZNodeIRParam &coor, const JZNodeDebugParamValue &info);
     QTreeWidgetItem *updateItem(QTreeWidgetItem *root,int index,const QString &name,const JZNodeDebugParamValue &info);
     
     JZNodeDebugParamValue getParamValue(QTreeWidgetItem *item);    

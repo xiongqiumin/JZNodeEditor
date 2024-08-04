@@ -33,6 +33,7 @@ public:
     void removeMemberVariable(QString name);    
     QStringList memberVariableList(bool hasUi);
     const JZParamDefine *memberVariable(QString name, bool hasUi);
+    const JZParamDefine *memberThis();
 
     JZScriptItem *addMemberFunction(JZFunctionDefine func);
     void removeMemberFunction(QString func);
@@ -43,10 +44,11 @@ public:
     void setUiFile(QString file);
     QList<JZParamDefine> uiWidgets();
 
-protected:           
+protected:               
     QString m_super;
     QString m_uiFile;
     int m_classId;
+    JZParamDefine m_this;
 };
 
 #endif

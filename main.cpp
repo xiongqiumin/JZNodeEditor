@@ -11,6 +11,7 @@
 #include "sample/SmartHome/SmartHome.h"
 #include "JZNodeCppGenerater.h"
 #include "3rd/jzupdate/JZUpdateClient.h"
+#include "editor/tools/JZModbusSimulator.h"
 
 void run_testcase(int argc, char *argv[])
 {
@@ -23,6 +24,18 @@ void run_testcase(int argc, char *argv[])
     test_benchmark(argc, argv);
 }
 
+void runProgram(QString program_path)
+{        
+    QString error;
+    JZNodeVM vm;
+    if (!vm.init(program_path, false, error))
+    {
+        QMessageBox::information(nullptr, "", "init program \"" + program_path + "\" failed.\n" + error);
+        return;
+    }
+    qApp->exec();
+}
+
 QtMessageHandler g_defaultMessageHandle = nullptr;
 void outputLogMessage(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
@@ -31,12 +44,14 @@ void outputLogMessage(QtMsgType type, const QMessageLogContext& context, const Q
 
 int main(int argc, char *argv[])
 {
-    g_defaultMessageHandle = qInstallMessageHandler(outputLogMessage);
+    g_defaultMessageHandle = qInstallMessageHandler(outputLogMessage);    
 
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
     
+    
+    //runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\x64\Debug\project\projectUi7788\build\projectUi7788.program)");
     if(0)
     {
         run_testcase(argc,argv);

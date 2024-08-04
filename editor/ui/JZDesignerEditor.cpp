@@ -49,6 +49,12 @@ void JZDesignerEditor::init(QDesignerFormEditorInterface *core)
     core->setObjectInspector(objectInspector);
     core->setPropertyEditor(propEditor);
 
+    auto ex = core->extensionManager();
+    ex->registerExtensions(&m_menuFactor, "org.qt-project.Qt.Designer.TaskMenu");
+
+    initializeCorePlugins();
+    QDesignerComponents::initializePlugins(core);
+
     //right
     QWidget *right_widget = new QWidget();
     QVBoxLayout *r_v = new QVBoxLayout();
@@ -91,20 +97,64 @@ void JZDesignerEditor::init(QDesignerFormEditorInterface *core)
 
 void JZDesignerEditor::initWidgetBox(QDesignerWidgetBoxInterface *panel)
 {
-    using Category = QDesignerWidgetBoxInterface::Category;
-    using Widget = QDesignerWidgetBoxInterface::Widget;
+    QStringList list;
+    list.push_back("Buttons,Command Link Button");
+    list.push_back("Buttons,Dialog Button Box");
+    list.push_back("Item Views (Model-Based),*");
 
-    int count = panel->categoryCount();
-    for (int i = 0; i < count; i++)
-        panel->removeCategory(0);
+    auto getCatIndex = [panel](QString name)->int 
+    {
+        int count = panel->categoryCount();
+        for (int i = 0; i < count; i++)
+        {
+            if (panel->category(i).name() == name)
+                return i;
+        }
+        return -1;
+    };
 
-    Category cate_btn("Buttons");
-    Widget pushbutton("QPushButton");
-    cate_btn.addWidget(pushbutton);
+    auto getCatWidgetIndex = [panel](int cat_idx, QString widget_name)->int 
+    {        
+        auto c = panel->category(cat_idx);
+        for (int j = 0; j < c.widgetCount(); j++)
+        {
+            if (c.widget(j).name() == widget_name)
+                return j;
+        }        
+        return -1;
+    };
 
-    Widget imagelabel("QImageLabel");
-    cate_btn.addWidget(imagelabel);
-    panel->addCategory(cate_btn);
+    for (int i = 0; i < list.size(); i++)
+    {
+        QStringList pair = list[i].split(",");
+        int cat_idx = getCatIndex(pair[0]);
+        if(pair[1] == "*")
+            panel->removeCategory(cat_idx);
+        else
+        {
+            int widget_idx = getCatWidgetIndex(cat_idx, pair[1]);
+            panel->removeWidget(cat_idx, widget_idx);
+        }
+    }
+
+    //删除后会有空洞， 折叠再产开
+    auto box = panel->findChild<QTreeWidget*>();
+    box->collapseAll();
+    QTimer::singleShot(0, [box] {
+        box->expandAll();
+    });
+}
+
+void JZDesignerEditor::initializeCorePlugins()
+{
+    QList<QObject*> plugins = QPluginLoader::staticInstances();        
+
+    foreach(QObject *plugin, plugins) {
+        if (QDesignerFormEditorPluginInterface *formEditorPlugin = qobject_cast<QDesignerFormEditorPluginInterface*>(plugin)) {
+            if (!formEditorPlugin->isInitialized())
+                formEditorPlugin->initialize(core());
+        }
+    }
 }
 
 JZDesignerFormWindow *JZDesignerEditor::open(JZUiFile *file)

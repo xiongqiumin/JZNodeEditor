@@ -132,27 +132,22 @@ void JZNodeWatch::onItemChanged(QTreeWidgetItem *item, int column)
             delete m_view->takeTopLevelItem(row);
         }
         else
-        {
-            JZNodeParamCoor coor;
-            coor.type = JZNodeParamCoor::Name;
-            coor.name = item->text(0);
-            sigParamNameChanged(coor);
+        {            
+            sigParamNameChanged(irRef(item->text(0)));
         }
     }
     else
     {
         auto vid = item->data(0, Qt::UserRole);
 
-        JZNodeParamCoor coor;
+        JZNodeIRParam coor;
         if (vid.isValid())
         {
-            coor.type = JZNodeParamCoor::Id;
-            coor.id = vid.toInt();
+            coor = irId(vid.toInt());
         }
         else
         {
-            coor.type = JZNodeParamCoor::Name;
-            coor.name = item->text(0);
+            coor = irRef(item->text(0));
         }        
         sigParamValueChanged(coor, item->text(1));
     }    
@@ -248,11 +243,11 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
     return item;
 }
 
-void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const JZNodeParamCoor &coor, const JZNodeDebugParamValue &info)
+void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const JZNodeIRParam &coor, const JZNodeDebugParamValue &info)
 {
-    auto item = updateItem(root, index, coor.name, info);
-    if(coor.type == JZNodeParamCoor::Id)
-        item->setData(0, Qt::UserRole, coor.id);
+    auto item = updateItem(root, index, "coor.name", info);
+    if(coor.isStack())
+        item->setData(0, Qt::UserRole, coor.id());
 }
 
 JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
@@ -287,12 +282,14 @@ void JZNodeWatch::updateParamInfo(JZNodeGetDebugParamResp *info)
         for (int j = 0; j < info->coors.size(); j++)
         {
             auto &c = info->coors[j];
+            /*
             if (c.name == item->text(0))
             {
                 sub_params << c.name;
                 setItem(root, i, c, info->values[j]);
                 break;
             }
+            */
         }
     }    
 }

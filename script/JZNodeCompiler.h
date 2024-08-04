@@ -130,6 +130,12 @@ public:
     QList<NodeWatch> watchList;
 };
 
+enum CompilerTip{
+    Error_noClass,
+    Error_noVariable,
+    Error_classNoMember,
+};
+
 class JZNodeBuilder;
 class JZNodeCompiler
 {
@@ -140,6 +146,7 @@ public:
     static JZNodeGemo paramGemo(int id);    
     static VariableCoor variableCoor(JZScriptItem *file, QString name);
     static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
+    static QString errorString(CompilerTip tip,QStringList args);
 
     JZNodeCompiler();
     ~JZNodeCompiler();
@@ -150,9 +157,10 @@ public:
     bool build(JZScriptItem *file,JZNodeScript *result);
     CompilerResult compilerResult();
     
+    bool checkParamDefine(const JZParamDefine *def, QString &error);
     const JZParamDefine *getVariableInfo(const QString &name);
-    bool checkVariableExist(const QString &var, QString &error);
-    bool checkVariable(const JZParamDefine *def, QString &error);    
+    bool checkVariableExist(const QString &var, QString &error);    
+    bool checkVariableType(const QString &var,int data_type, QString &error);
 
     void resetStack();
     int allocStack(int dataType);
@@ -201,6 +209,7 @@ public:
     void addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value);
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
+    void addSetBuffer(const JZNodeIRParam &dst, const QByteArray &buffer);
     void addWatchDisplay(const JZNodeIRParam &dst);
 
     void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
@@ -215,8 +224,7 @@ public:
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addAlloc(int allocType, QString name,int dataType);
+    void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);    
     void addAssert(const JZNodeIRParam &tips);       
 
     JZNodeIR *lastStatment();
@@ -235,6 +243,8 @@ public:
     QString error();    
 
 protected:    
+    friend JZNodeBuilder;
+
     struct NodeCompilerStack
     {
         NodeCompilerStack();
@@ -263,8 +273,9 @@ protected:
     void replaceSubNode(int id,int parentId,int flow_index);
     int isAllFlowReturn(int id,bool root);
     void addFunction(const JZFunctionDefine &define,int start_addr);
+    void addAlloc(int allocType, QString name, int dataType);
     QString nodeName(JZNode *node);
-    QString pinName(JZNodePin *pin);     
+    QString pinName(JZNodePin *pin);         
 
     void updateBuildGraph(const QList<GraphNode*> &root_list);
     bool checkFunction();

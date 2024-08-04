@@ -122,12 +122,12 @@ using is_enum_or_qenum = bool_constant<is_enum_or_qenum_cond<T>()>;
 
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
-template<class T> void copyClass(void *src,void *dst){ *((T*)src) = *((T*)dst); }
+template<class T> void copyClass(void *src,void *dst){ *((T*)dst) = *((T*)src); }
 template<class T> bool equalClass(void *src,void *dst){ return *((T*)src) == *((T*)dst); }
 
 void *createClassAssert();
 void destoryClassAssert(void *);
-void copyClassAssert(void *,void *);
+void copyClassAssert(void *src,void *dst);
 bool equalClassAssert(void *src,void *dst);
 
 // from QVariant, 运行时，所有enum 擦除类型信息, 使用 int 保存
@@ -177,6 +177,9 @@ template<>
 QString* fromVariant<QString*>(const QVariant &v, std::true_type);
 
 template<>
+QVariant fromVariant<QVariant>(const QVariant &v, std::false_type);
+
+template<>
 JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type);
 
 template<>
@@ -184,8 +187,7 @@ JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_t
 
 template<class T>
 remove_cvr_t<T> fromVariant(const QVariant &v)
-{
-    static_assert(!std::is_same<QVariant, remove_cvr_t<T>>::value, "use JZNodeVariantAny");
+{    
     return fromVariant<remove_cvr_t<T>>(v, std::is_pointer<T>());
 }
 
@@ -233,10 +235,12 @@ QVariant toVariantPointer(T value, std::false_type)
 
 template<class T>
 QVariant toVariant(T value)
-{
-    static_assert(!std::is_same<QVariant, T>::value, "use JZNodeVariantAny");
+{    
     return toVariantPointer<remove_cvr_t<T>>(value,std::is_pointer<T>());
 }
+
+template<>
+QVariant toVariant(QVariant value);
 
 template<>
 QVariant toVariant(JZNodeVariantAny value);
@@ -269,8 +273,7 @@ void getFunctionParam(QStringList &)
 
 template <class type,typename T,typename... Args>
 void getFunctionParam(QStringList &list)
-{
-    static_assert(!std::is_same<QVariant, T>::value, "use JZNodeVariantAny");
+{    
     list.push_back(typeid(typename std::remove_pointer<T>::type).name());
     getFunctionParam<type,Args...>(list);
 }
@@ -355,6 +358,7 @@ template <typename Func,typename... Extra>
 QSharedPointer<CFunction> createFuncionImpl(Func func,Extra... extra)
 {
     extra_check((function_signature_t<Func>*) nullptr,extra...);
+
     auto impl = createCFunction(func,(function_signature_t<Func>*) nullptr);
     impl->setRefrence(extra...);
     return QSharedPointer<CFunction>(impl);
@@ -500,6 +504,12 @@ public:
     void (Class::*single)(PrivateSingle, Args...);
 };
 
+template<typename Func>
+void registFunction(QString name, bool is_flow, Func f)
+{
+    JZNodeFunctionManager::instance()->registCFunction(name, is_flow, createFuncion(f));    
+}
+
 template<typename T>
 int registEnum(QString name,int id = -1)
 {    
@@ -517,7 +527,7 @@ int registEnum(QString name,int id = -1)
     JZNodeEnumDefine define;
     define.init(name,keys,values);
     if(id != -1)
-        define.setType(id);
+        define.setId(id);
     return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
 }
 
@@ -616,6 +626,10 @@ public:
     }
 };
 
+#define JZBIND_PROPERTY_IMPL(Class,prop) \
+    [](Class *obj)->decltype(Class::prop){ return obj->prop; }, \
+    [](Class *obj, decltype(Class::prop) v) { obj->prop = v; }
+
 template<class Class>
 class ClassBind
 {
@@ -643,7 +657,8 @@ public:
     {
         m_define.valueType = flag;
     }
-
+    
+    // extre isRef 为ture 不管理内存
     template<typename Return, typename... Args,typename... Extra>
     JZFunctionDefine *def(QString name,bool isflow,Return (Class::*f)(Args...),Extra ...extra)
     {
@@ -717,6 +732,26 @@ public:
             single.paramOut.push_back(def);
         }
         m_define.singles.push_back(single);
+    }
+
+    template<typename FuncRead, typename FuncWrite>
+    void defProperty(QString name, FuncRead read, FuncWrite write)
+    {        
+        auto func_read = createFuncion(read);
+        auto func_write = createFuncion(write);
+     
+        auto inst = JZNodeObjectManager::instance();
+        int ret_type = inst->getIdByCTypeid(func_read->result);
+
+        JZParamDefine def;
+        def.name = name;
+        def.type = inst->getClassName(ret_type);
+        m_define.params[def.name] = def;
+
+        JZCParamDefine cdef;
+        cdef.read = func_read;
+        cdef.write = func_write;
+        m_define.cparams[def.name] = cdef;
     }
 
     void regist()

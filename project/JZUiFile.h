@@ -1,6 +1,7 @@
 ﻿#ifndef JZNODE_UI_FILE_H_
 #define JZNODE_UI_FILE_H_
 
+#include <QDomElement>
 #include "JZProjectItem.h"
 #include "JZNode.h"
 #include "JZNodeObject.h"
@@ -23,6 +24,7 @@ public:
     
 protected:
     void updateDefine();
+    void walkChild(const QDomElement &root);
 
     QString m_xml;
     QList<JZParamDefine> m_widgets;

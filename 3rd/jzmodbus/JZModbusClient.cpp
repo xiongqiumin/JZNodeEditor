@@ -28,11 +28,17 @@ JZModbusClient::JZModbusClient(QObject *parent)
     m_socket = nullptr;
     m_timeId = 0;
     m_req.clear();
+
+    m_baud = 9600;
+    m_dataBit = QSerialPort::Data8;
+    m_stopBit = QSerialPort::OneStop;
+    m_parityBit = QSerialPort::NoParity;
+    m_port = 0;
 }
 
 JZModbusClient::~JZModbusClient()
 {
-    close();
+    clear();
     delete m_ctx;
 }
 
@@ -46,54 +52,74 @@ bool JZModbusClient::isOpen()
     return m_io && m_io->isOpen();
 }
 
-bool JZModbusClient::openRtu(QString com, int baud,QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
+void JZModbusClient::clear()
 {
-    if (m_io)
-        return false;
-
-    m_com = new QSerialPort(this);    
-    connect(m_com, &QSerialPort::readyRead, this, &JZModbusClient::onReadyRead);
-    initRtuContext(m_ctx);
-
-    m_com->setPortName(com);
-    if (!m_com->open(QIODevice::ReadWrite))
+    close();
+    if (m_com)
     {
         delete m_com;
         m_com = nullptr;
-        return false;
     }
-
-    m_io = m_com;
-    m_com->setBaudRate(baud);//波特率
-    m_com->setDataBits(data_bit);  //数据位
-    m_com->setStopBits(stop_bit);  //停止位      
-    m_com->setParity(parity_bit);  //校验位
-    if(m_timeId != 0)
-        m_timeId = startTimer(500);
-    return true;
-}
-
-bool JZModbusClient::openTcp(QString ip, int port)
-{
-    if (m_io)
-        return false;
-
-    m_socket = new QTcpSocket(this);    
-    connect(m_socket, &QTcpSocket::readyRead, this, &JZModbusClient::onReadyRead);
-    initTcpContext(m_ctx);
-
-    if (m_timeId != 0)
-        m_timeId = startTimer(500);
-    
-    m_socket->connectToHost(ip, port);    
-    bool ret = m_socket->waitForConnected();
-    if (!ret)
+    if (m_socket)
     {
         delete m_socket;
         m_socket = nullptr;
     }
+    m_io = nullptr;
+}
 
+void JZModbusClient::initRtu(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
+{
+    clear();
+    m_com = new QSerialPort(this);
+    m_io = m_com;
+    connect(m_com, &QSerialPort::readyRead, this, &JZModbusClient::onReadyRead);
+    initRtuContext(m_ctx);    
+
+    m_comName = com;
+    m_baud = baud;
+    m_dataBit = data_bit;
+    m_stopBit = stop_bit;
+    m_parityBit = parity_bit;
+}
+
+void JZModbusClient::initTcp(QString ip, int port)
+{
+    clear();
+    m_socket = new QTcpSocket(this);
     m_io = m_socket;
+    connect(m_socket, &QTcpSocket::readyRead, this, &JZModbusClient::onReadyRead);
+    initTcpContext(m_ctx);
+
+    m_ip = ip;
+    m_port = port;
+}
+
+bool JZModbusClient::open()
+{    
+    if (!m_io)
+        return false;
+
+    if (m_io == m_com)
+    {
+        m_com->setPortName(m_comName);
+        if (!m_com->open(QIODevice::ReadWrite))
+            return false;
+
+        m_com->setBaudRate(m_baud);//波特率
+        m_com->setDataBits(m_dataBit);  //数据位
+        m_com->setStopBits(m_stopBit);  //停止位      
+        m_com->setParity(m_parityBit);  //校验位
+    }
+    else
+    {
+        m_socket->connectToHost(m_ip, m_port);
+        if (!m_socket->waitForConnected())
+            return false;
+    }
+
+    if(m_timeId != 0)
+        m_timeId = startTimer(500);
     return true;
 }
 
@@ -105,20 +131,11 @@ void JZModbusClient::close()
         m_timeId = 0;
     }
 
-    if (m_com)
-    {
-        m_com->close();
-        delete m_com;
-        m_com = nullptr;
-    }
-
-    if (m_socket)
-    {
-        m_socket->disconnectFromHost();
-        delete m_socket;
-        m_socket = nullptr;
-    }
-    m_io = nullptr;
+    if (m_com)    
+        m_com->close();            
+    if (m_socket)    
+        m_socket->disconnectFromHost();        
+        
     m_req.clear();
     m_buffer.clear();
 }
@@ -196,9 +213,9 @@ void JZModbusClient::timerEvent(QTimerEvent *e)
     }
 }
 
-bool JZModbusClient::checkInitBusy()
+bool JZModbusClient::checkOpenBusy()
 {
-    if (m_io == NULL) {
+    if (m_io == NULL || !m_io->isOpen()) {
         errno = EINVAL;
         return false;
     }
@@ -258,7 +275,7 @@ bool JZModbusClient::readInputRegisters(int addr, int nb, QVector<uint16_t> &des
 
 bool JZModbusClient::readBitsAsync(int addr, int nb)
 {
-    if (!checkInitBusy()) 
+    if (!checkOpenBusy()) 
         return false;    
 
     if (nb > MODBUS_MAX_READ_BITS) {
@@ -277,7 +294,7 @@ bool JZModbusClient::readBitsAsync(int addr, int nb)
 
 bool JZModbusClient::readInputBitsAsync(int addr, int nb)
 {
-    if (!checkInitBusy())
+    if (!checkOpenBusy())
         return false;
 
     if (nb > MODBUS_MAX_READ_BITS) {        
@@ -296,7 +313,7 @@ bool JZModbusClient::readInputBitsAsync(int addr, int nb)
 
 bool JZModbusClient::readRegistersAsync(int addr, int nb)
 {
-    if (!checkInitBusy())
+    if (!checkOpenBusy())
         return false;
 
     if (nb > MODBUS_MAX_READ_REGISTERS) {
@@ -315,7 +332,7 @@ bool JZModbusClient::readRegistersAsync(int addr, int nb)
 
 bool JZModbusClient::readInputRegistersAsync(int addr, int nb)
 {
-    if (!checkInitBusy())
+    if (!checkOpenBusy())
         return false;
 
     if (nb > MODBUS_MAX_READ_REGISTERS) {        
@@ -370,7 +387,7 @@ bool JZModbusClient::writeRegisters(int addr, const QVector<uint16_t> &dest)
 
 bool JZModbusClient::writeBitAsync(int coil_addr, int status)
 {
-    if (!checkInitBusy())
+    if (!checkOpenBusy())
         return false;
 
     uint8_t req[_MIN_REQ_LENGTH];
@@ -384,7 +401,7 @@ bool JZModbusClient::writeBitAsync(int coil_addr, int status)
 
 bool JZModbusClient::writeBitsAsync(int addr, const QVector<uint8_t> &dest)
 {
-    if (!checkInitBusy())
+    if (!checkOpenBusy())
         return false;
 
     if (dest.size() > MODBUS_MAX_WRITE_BITS) {        
@@ -430,7 +447,7 @@ bool JZModbusClient::writeBitsAsync(int addr, const QVector<uint8_t> &dest)
 
 bool JZModbusClient::writeRegisterAsync(int addr,int value)
 {
-    if (!checkInitBusy())
+    if (!checkOpenBusy())
         return false;
 
     uint8_t req[_MIN_REQ_LENGTH];    
@@ -444,7 +461,7 @@ bool JZModbusClient::writeRegisterAsync(int addr,int value)
 
 bool JZModbusClient::writeRegistersAsync(int addr, const QVector<uint16_t> &dest)
 {    
-    if (!checkInitBusy())
+    if (!checkOpenBusy())
         return false;
 
     if (dest.size() > MODBUS_MAX_WRITE_REGISTERS) {        

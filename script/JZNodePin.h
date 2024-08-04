@@ -59,6 +59,9 @@ public:
     bool isDispValue() const;
     bool isLiteral() const;
 
+    void setEditType(int edit_type);
+    int editType() const;
+
     void setDataType(const QStringList &type);
     const QStringList &dataType() const;
     void setDataTypeId(const QList<int> &type);
@@ -73,6 +76,7 @@ protected:
 
     int m_id;
     int m_flag;    
+    int m_editType;
     QString m_name;      
     QStringList m_dataType;
     QString m_value;

@@ -99,7 +99,8 @@ public:
             comboBoxBotelv->addItem("56000");
             comboBoxBotelv->addItem("57600");
             comboBoxBotelv->addItem("115200");
-            comboBoxBotelv->setCurrentIndex(0);           
+            comboBoxBotelv->setCurrentIndex(0);        
+            comboBoxBotelv->setEditable(true);
 
             comboBoxData = new QComboBox();
             comboBoxData->addItem("5");
@@ -119,6 +120,9 @@ public:
             comboBoxChk->addItem("ODD奇");            
             comboBoxChk->setCurrentIndex(0);
 
+            QLineEdit *line = new QLineEdit();
+            lineSlaveList << line;
+            l->addRow("slave:", line);
             l->addRow("串口号:", comboBoxCom);
             l->addRow("波特率:", comboBoxBotelv);
             l->addRow("数据位:", comboBoxData);
@@ -140,6 +144,9 @@ public:
             auto line_port = new QLineEdit();
             line_port->setText("502");            
 
+            QLineEdit *line = new QLineEdit();
+            lineSlaveList << line;
+            l->addRow("slave:", line);
             l->addRow("ip:", line_ip);
             l->addRow("port:", line_port);
             lineIp = line_ip;
@@ -157,6 +164,9 @@ public:
             auto line_port = new QLineEdit();
             line_port->setText("502");
             
+            QLineEdit *line = new QLineEdit();
+            lineSlaveList << line;
+            l->addRow("slave:", line);
             l->addRow("port:", line_port);
             linePortServer = line_port;
 
@@ -174,6 +184,7 @@ public:
     QStackedWidget *m_stack;
     QComboBox *comboBoxCom, *comboBoxBotelv, *comboBoxData, *comboBoxStop, *comboBoxChk;
     QLineEdit *lineIp, *linePort, *linePortServer;
+    QList<QLineEdit*> lineSlaveList;
 };
 
 
@@ -227,7 +238,7 @@ protected:
 };
 
 JZModbusSimulator::JZModbusSimulator(QWidget *parent)
-    :QMainWindow(parent)
+    :QDialog(parent)
 {
     ui.setupUi(this);
 
@@ -236,20 +247,21 @@ JZModbusSimulator::JZModbusSimulator(QWidget *parent)
     m_stopBitsList << QSerialPort::OneStop << QSerialPort::TwoStop;
     m_parityList << QSerialPort::NoParity << QSerialPort::EvenParity << QSerialPort::OddParity;
 
-    m_baud = 0;
+    m_baud = 9600;
     m_dataBit = 3;
     m_parityBit = 0;
     m_stopBit= 0;
-    
+    m_rtuSlave = 1;
+    m_tcpSlave = 255;
     m_portName = "COM1";
     m_ip = "127.0.0.1";
-    m_port = m_serverPort = 502;
+    m_port = 502;
 
     m_run = false;
-    ui.boxType->addItem("RtuClient");
-    ui.boxType->addItem("TcpClient");
-    ui.boxType->addItem("RtuServer");    
-    ui.boxType->addItem("TcpServer");    
+    ui.boxType->addItem("RtuClient", Modbus_rtuClient);
+    ui.boxType->addItem("TcpClient", Modbus_tcpClient);
+    ui.boxType->addItem("RtuServer", Modbus_rtuServer);
+    ui.boxType->addItem("TcpServer", Modbus_tcpServer);
 
     QStringList headers = { "地址","功能","类型","值","操作","策略","备注" };
     ui.tableModbus->setColumnCount(headers.size());
@@ -282,13 +294,13 @@ void JZModbusSimulator::init()
     if (m_slaver)
     {
         map = *m_slaver->map();
-        m_slaver->stopSever();
+        m_slaver->stopServer();
         m_slaver->deleteLater();
         m_slaver = nullptr;
     }
 
-    int type = ui.boxType->currentIndex();
-    if (type == 0 || type == 1)
+    int type = currentModbusType();
+    if (type == Modbus_rtuClient || type == Modbus_tcpClient)
     {
         m_master = new JZModbusMaster();
         connect(m_master, &JZModbusMaster::sigParamChanged, this, &JZModbusSimulator::onParamChanged);
@@ -300,6 +312,111 @@ void JZModbusSimulator::init()
         connect(m_slaver, &JZModbusSlaver::sigParamChanged, this, &JZModbusSimulator::onParamChanged);
         *m_slaver->map() = map;
     }
+}
+
+void JZModbusSimulator::run()
+{
+    JZModbusSimulatorManager::instance()->addSimulator(this);
+    setAttribute(Qt::WA_DeleteOnClose);
+    show();
+}
+
+int JZModbusSimulator::currentModbusType()
+{
+    return ui.boxType->currentData().toInt();
+}
+
+void JZModbusSimulator::setModbusType(int type)
+{
+    int idx = ui.boxType->findData(type);
+    if (idx >= 0)
+        ui.boxType->setCurrentIndex(idx);
+}
+
+void JZModbusSimulator::setConfigMode(bool isServer)
+{
+    ui.boxType->blockSignals(true);
+    ui.boxType->clear();
+    if (isServer)
+    {
+        ui.boxType->addItem("RtuClient", Modbus_rtuClient);
+        ui.boxType->addItem("TcpClient", Modbus_tcpClient);
+    }
+    else
+    {
+        ui.boxType->addItem("RtuServer", Modbus_rtuServer);
+        ui.boxType->addItem("TcpServer", Modbus_tcpServer);
+    }
+    ui.boxType->blockSignals(false);
+    ui.btnStart->hide();
+    ui.btnClose->setText("确定");
+    updateStatus();
+}
+
+void JZModbusSimulator::setConfig(const JZModbusConfig &cfg)
+{    
+    if (m_master)
+        modbusMasterSetConfig(m_master, &cfg);
+    if (m_slaver)
+        modbusSlaverSetConfig(m_slaver, &cfg);  
+
+    m_portName = cfg.portName;
+    m_baud = cfg.baud;
+    m_dataBit = cfg.dataBit;
+    m_parityBit = cfg.parityBit;
+    m_stopBit = cfg.stopBit;
+
+    if (cfg.isRtu)
+    {
+        ui.boxType->setCurrentIndex(0);
+        m_rtuSlave = cfg.slave;
+    }
+    else
+    {
+        ui.boxType->setCurrentIndex(1);
+        m_tcpSlave = cfg.slave;
+    }
+
+    m_ip = cfg.ip;
+    m_port = cfg.port;
+
+    m_strategyMap = cfg.strategyMap;
+    updateStatus();
+    updateTable();
+}
+
+JZModbusConfig JZModbusSimulator::config()
+{    
+    JZModbusConfig cfg;
+
+    auto map = mapping();
+    auto addrList = map->paramList();
+    for (int i = 0; i < addrList.size(); i++)
+        cfg.paramList.push_back(*map->param(addrList[i]));
+
+    int type = currentModbusType();
+    if (type == Modbus_rtuClient || type == Modbus_rtuServer)
+    {
+        cfg.slave = m_rtuSlave;
+        cfg.isRtu = true;
+    }
+    else
+    {
+        cfg.slave = m_tcpSlave;
+        cfg.isRtu = false;
+    }
+
+    cfg.portName = m_portName;
+    cfg.baud = m_baud;
+    cfg.dataBit = m_dataBit;
+    cfg.parityBit = m_parityBit;
+    cfg.stopBit = m_stopBit;
+
+    cfg.ip = m_ip;
+    cfg.port = m_port;    
+
+    cfg.strategyMap = m_strategyMap;
+    return cfg;
 }
 
 JZModbusParamMap *JZModbusSimulator::mapping()
@@ -318,21 +435,23 @@ void JZModbusSimulator::onBoxTypeChanged()
 
 void JZModbusSimulator::on_btnSetting_clicked()
 {
-    int type = ui.boxType->currentIndex();
+    int type = currentModbusType();
     ModbusSettingDialog dlg(this);
-    if (type == 0 || type == 2)
+    if (type == Modbus_rtuClient || type == Modbus_rtuServer)
     {
         dlg.m_stack->setCurrentIndex(0);
+        dlg.lineSlaveList[0]->setText(QString::number(m_rtuSlave));
 
         dlg.comboBoxCom->setCurrentText(m_portName);
-        dlg.comboBoxBotelv->setCurrentIndex(m_baud);
+        dlg.comboBoxBotelv->setCurrentText(QString::number(m_baud));
         dlg.comboBoxData->setCurrentIndex(m_dataBit);
         dlg.comboBoxChk->setCurrentIndex(m_parityBit);
         dlg.comboBoxStop->setCurrentIndex(m_stopBit);
     }
-    else if (type == 1)
+    else if (type == Modbus_tcpClient)
     {
        dlg.m_stack->setCurrentIndex(1);
+       dlg.lineSlaveList[1]->setText(QString::number(m_tcpSlave));
 
        dlg.lineIp->setText(m_ip);
        dlg.linePort->setText(QString::number(m_port));
@@ -340,70 +459,81 @@ void JZModbusSimulator::on_btnSetting_clicked()
     else 
     {
         dlg.m_stack->setCurrentIndex(2);
+        dlg.lineSlaveList[2]->setText(QString::number(m_tcpSlave));
 
-        dlg.linePortServer->setText(QString::number(m_serverPort));
+        dlg.linePortServer->setText(QString::number(m_port));
     }
     if (dlg.exec() != QDialog::Accepted)
         return;
 
-    if (type == 0 || type == 2)
+    if (type == Modbus_rtuClient || type == Modbus_rtuServer)
     {
         m_portName = dlg.comboBoxCom->currentText();
-        m_baud = dlg.comboBoxBotelv->currentIndex();
+        m_baud = dlg.comboBoxBotelv->currentText().toInt();
         m_dataBit = dlg.comboBoxData->currentIndex();
         m_parityBit = dlg.comboBoxChk->currentIndex();
         m_stopBit = dlg.comboBoxStop->currentIndex();
+        m_rtuSlave = dlg.lineSlaveList[0]->text().toInt();
     }
-    else if (type == 1)
+    else if (type == Modbus_tcpClient)
     {
         m_ip = dlg.lineIp->text();
         m_port = dlg.linePort->text().toInt();
+        m_tcpSlave = dlg.lineSlaveList[1]->text().toInt();
     }
     else
     {
-        m_serverPort = dlg.linePortServer->text().toInt();
+        m_port = dlg.linePortServer->text().toInt();
+        m_tcpSlave = dlg.lineSlaveList[2]->text().toInt();
     }
 }
 
 void JZModbusSimulator::on_btnStart_clicked()
 {    
-    int type = ui.boxType->currentIndex();
+    int type = currentModbusType();
     if (!m_run)
     {
-        auto baud = m_baudRateList[m_baud];
+        auto baud = m_baud;
         auto dataBit = m_dataBitsList[m_dataBit];
         auto parityBit = m_parityList[m_parityBit];
         auto stopBit = m_stopBitsList[m_stopBit];
         
-        bool ret = false;
-        int slave = ui.lineSlave->text().toInt();
-        if (type == 0 || type == 1)
+        bool ret = false;        
+        if (type == Modbus_rtuClient || type == Modbus_tcpClient)
         {                        
-            if (type == 0)
+            if (type == Modbus_rtuClient)
             {
-                ret = m_master->openRtu(m_portName, baud, dataBit, stopBit, parityBit);
-                m_master->setSlave(slave);
+                m_master->initRtu(m_portName, baud, dataBit, stopBit, parityBit);
+                m_master->setSlave(m_rtuSlave);
             }
             else
-                ret = m_master->openTcp(m_ip,m_port);
-
-            auto it = m_strategy.begin();
-            while (it != m_strategy.end())
+            {
+                m_master->setSlave(m_tcpSlave);
+                m_master->initTcp(m_ip, m_port);
+            }            
+            auto it = m_strategyMap.begin();
+            while (it != m_strategyMap.end())
             {
                 m_master->setStrategy(it.key(), it.value());
                 it++;
             }            
+
+            ret = m_master->open();
         }
-        else if (type == 2 || type == 3)
+        else if (type == Modbus_rtuServer || type == Modbus_tcpServer)
         {                        
             m_slaver->initMapping();
-            if (type == 2)
+            if (type == Modbus_rtuServer)
             {
-                ret = m_slaver->startRtuServer(m_portName, baud, dataBit, stopBit, parityBit);
-                m_slaver->setSlave(slave);
+                m_slaver->initRtu(m_portName, baud, dataBit, stopBit, parityBit);
+                m_slaver->setSlave(m_rtuSlave);
             }
             else
-                ret = m_slaver->startTcpServer(m_port);            
+            {
+                m_slaver->setSlave(m_tcpSlave);
+                m_slaver->initTcp(m_port);
+            }
+            ret = m_slaver->startServer();
         }
         if (!ret)
         {
@@ -419,7 +549,7 @@ void JZModbusSimulator::on_btnStart_clicked()
         if (m_master)
             m_master->close();
         if (m_slaver)
-            m_slaver->stopSever();
+            m_slaver->stopServer();
 
         m_run = false;
         updateStatus();
@@ -463,7 +593,7 @@ void JZModbusSimulator::on_btnEdit_clicked()
         return;
     }
     if (addr != dlg.info().addr)
-        m_strategy.remove(addr);
+        m_strategyMap.remove(addr);
     updateTable();
 }
 
@@ -475,14 +605,19 @@ void JZModbusSimulator::on_btnRemove_clicked()
 
     int addr = ui.tableModbus->item(row, 0)->data(Qt::UserRole).toInt();
     mapping()->remove(addr);
-    m_strategy.remove(addr);
+    m_strategyMap.remove(addr);
     updateTable();
+}
+
+void JZModbusSimulator::on_btnClose_clicked()
+{
+    accept();
 }
 
 void JZModbusSimulator::updateStatus()
 {
-    int type = ui.boxType->currentIndex();
-    if (type == 0 || type == 1)
+    int type = currentModbusType();
+    if (type == Modbus_rtuClient || type == Modbus_tcpClient)
     {
         ui.tableModbus->setColumnHidden(4, false);
         ui.tableModbus->setColumnHidden(5, false);
@@ -647,10 +782,35 @@ void JZModbusSimulator::onProtoStrategyClicked()
     int addr = btn->property("addr").toInt();
 
     ModeStargeDialog dlg(this);
-    if(m_strategy.contains(addr))
-        dlg.setInfo(m_strategy[addr]);
+    if(m_strategyMap.contains(addr))
+        dlg.setInfo(m_strategyMap[addr]);
     if (dlg.exec() != QDialog::Accepted)
         return;
 
-    m_strategy[addr] = dlg.info();
+    m_strategyMap[addr] = dlg.info();
+}
+
+//JZModbusSimulatorManager
+JZModbusSimulatorManager *JZModbusSimulatorManager::instance()
+{
+    static JZModbusSimulatorManager inst;
+    return &inst;
+}
+
+void JZModbusSimulatorManager::addSimulator(JZModbusSimulator *simulator)
+{
+    m_modbusList.push_back(simulator);        
+    connect(simulator, &JZModbusSimulator::destroyed, this, &JZModbusSimulatorManager::onSimulatorClose);
+}
+
+void JZModbusSimulatorManager::closeAll()
+{
+    for (int i = 0; i < m_modbusList.size(); i++)
+        m_modbusList[i]->close();
+}
+
+void JZModbusSimulatorManager::onSimulatorClose()
+{        
+    JZModbusSimulator *w = (JZModbusSimulator*)sender();    
+    m_modbusList.removeAll(w);
 }

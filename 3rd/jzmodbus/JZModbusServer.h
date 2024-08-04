@@ -23,8 +23,9 @@ public:
 
     void setSlave(int slave);
 
-    bool startRtuServer(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
-    bool startTcpServer(int port);
+    void initRtu(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
+    void initTcp(int port);
+    bool start();
     void stop();
 
 protected slots:
@@ -38,9 +39,17 @@ signals:
 
 protected:    
     int dealBuffer(uint8_t *req,QByteArray &buffer);
+    void clear();
 
     JZModbusContext *m_ctx;
     
+    QString m_comName;
+    int m_baud;
+    QSerialPort::DataBits m_dataBit;
+    QSerialPort::StopBits m_stopBit;
+    QSerialPort::Parity m_parityBit;
+    int m_port;
+
     QSerialPort *m_com;
     QByteArray m_comBuffer;
     

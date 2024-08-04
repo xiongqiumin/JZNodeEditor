@@ -12,12 +12,12 @@ void JZNodeEnumDefine::init(QString name, QStringList keys, QVector<int> values)
     m_default = -1;
 }
 
-void JZNodeEnumDefine::setType(int type)
+void JZNodeEnumDefine::setId(int type)
 {
     m_type = type;
 }
 
-int JZNodeEnumDefine::type() const
+int JZNodeEnumDefine::id() const
 {
     return m_type;
 }

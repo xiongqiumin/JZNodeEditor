@@ -5,7 +5,6 @@
 #include "JZNodeFunctionManager.h"
 #include "JZContainer.h"
 #include "modules/JZModule.h"
-#include "JZNodeDefine.h"
 
 //NodeRange
 NodeRange::NodeRange()
@@ -393,7 +392,7 @@ bool JZNodeProgram::load(QString filepath)
     QDataStream s(&file);
     int script_size;
     s >> magic;
-    if(magic != NodeMagic())
+    if(magic != NodeIRMagic())
     {
         m_error = "version not support";
         return false;
@@ -422,7 +421,7 @@ bool JZNodeProgram::save(QString filepath)
         return false;
 
     QDataStream s(&file);    
-    s << NodeMagic();
+    s << NodeIRMagic();
     s << m_scripts.size();
     auto it = m_scripts.begin();
     while (it != m_scripts.end())
@@ -546,6 +545,12 @@ QString JZNodeProgram::irToString(JZNodeIR *op)
     {
         JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
         line += "CLONE " + toString(ir_set->dst) + " = " + toString(ir_set->src);
+        break;
+    }
+    case OP_buffer:
+    {
+        JZNodeIRBuffer *ir_set = (JZNodeIRBuffer*)op;
+        line += "BUFFER " + toString(ir_set->id) + ", size = " + QString::number(ir_set->buffer.size());
         break;
     }
     case OP_watch:

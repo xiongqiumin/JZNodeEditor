@@ -27,34 +27,6 @@ void JZNodeDebugPacket::loadFromStream(QDataStream &s)
     s >> cmd >> params;
 }
 
-//JZNodeParamCoor
-JZNodeParamCoor::JZNodeParamCoor()
-{
-    type = Name;
-    id = -1;    
-}
-
-bool JZNodeParamCoor::isNodeId() const
-{
-    return (type == Id && id < Stack_User);
-}
-
-QDataStream &operator<<(QDataStream &s, const JZNodeParamCoor &param)
-{
-    s << param.type;    
-    s << param.name;
-    s << param.id;
-    return s;
-}
-
-QDataStream &operator >> (QDataStream &s, JZNodeParamCoor &param)
-{
-    s >> param.type;    
-    s >> param.name;
-    s >> param.id;
-    return s;
-}
-
 //JZNodeDebugParamValue
 JZNodeDebugParamValue::JZNodeDebugParamValue()
 {

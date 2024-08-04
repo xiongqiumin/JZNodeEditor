@@ -52,8 +52,7 @@ void JZNodeMemberSelectDialog::init(JZNode *node)
             class_name = class_file->className();
     }
     ui->lineName->setText(class_name);
-    updateTree();
-    ui->listWidget->addItems(m_node->member());
+    updateTree();    
 }
 
 void JZNodeMemberSelectDialog::updateTree()
@@ -145,17 +144,7 @@ void JZNodeMemberSelectDialog::on_btnOk_clicked()
     QStringList params;
     int n = ui->listWidget->count();
     for (int i = 0; i < n; i++)
-        params << ui->listWidget->item(i)->text();
-
-    if (m_className != m_node->className() || params != m_node->member())
-    {
-        m_node->setMember(params);
-        QDialog::accept();
-    }
-    else
-    {
-        QDialog::reject();
-    }
+        params << ui->listWidget->item(i)->text();    
 }
 
 void JZNodeMemberSelectDialog::on_btnCancel_clicked()

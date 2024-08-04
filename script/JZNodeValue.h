@@ -63,7 +63,7 @@ public:
 
 protected:
     virtual JZNodePinWidget* createWidget(int id) override;
-    virtual void onPinChanged(int id) override;
+    virtual bool update(QString &error) override;
 };
 
 //JZNodeFunctionPointer
@@ -119,11 +119,12 @@ public:
     JZNodeCreate();
     ~JZNodeCreate();
 
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void onPinChanged(int id) override;
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
+    virtual bool update(QString &error) override;
 
     void setClassName(const QString &name);
     QString className() const;
+
 };
 
 //JZNodeCreateFromString
@@ -134,7 +135,7 @@ public:
     ~JZNodeCreateFromString();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-    virtual void onPinChanged(int id) override;
+    virtual bool update(QString &error) override;
 
     void setClassName(const QString &name);
     QString className() const;
@@ -162,7 +163,7 @@ public:
     ~JZNodeParam();        
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void onPinChanged(int id) override;
+    virtual bool update(QString &error) override;
 
     void setVariable(const QString &name);
     QString variable() const;
@@ -181,7 +182,7 @@ public:
     ~JZNodeSetParam();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void onPinChanged(int id) override;
+    virtual bool update(QString &error) override;
     
     void setVariable(const QString &name);
     QString variable() const;
@@ -203,7 +204,7 @@ public:
     ~JZNodeSetParamDataFlow();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual void onPinChanged(int id) override;
+    virtual bool update(QString &error) override;
     
     void setVariable(const QString &name);
     QString variable() const;
@@ -225,15 +226,16 @@ public:
     ~JZNodeAbstractMember();
 
     QString className();
+    void setClassName(QString className);
 
-    void setMember(QStringList params);    
-    QStringList member();    
+    QString member();
+    void setMember(QString params);    
 
 protected:
-    virtual void onPinLinked(int id) override;
-    void updateMemberType();
-    void updateMemberType(int type);
-    QList<int> memberPinList();
+    bool update(QString &error);
+    int m_classType;
+    int m_memberId;
+    int m_memberType;
 };
 
 //JZNodeMemberParam
@@ -244,6 +246,7 @@ public:
     ~JZNodeMemberParam();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+    bool update(QString &error);
 };
 
 //JZNodeSetMemberParam
@@ -253,7 +256,8 @@ public:
     JZNodeSetMemberParam();
     ~JZNodeSetMemberParam();
 
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+    bool update(QString &error);
 };
 
 //JZNodeSetMemberParamData

@@ -16,15 +16,10 @@ void projectUpdateLayout(JZProject *project);
 void jzScriptItemUpdateLayout(JZScriptItem *item);
 void jzScriptItemDump(JZScriptItem *item,QString file);
 
-class TimerRecord
+class JZNodeUtils
 {
-public:
-    TimerRecord(QString name);
-    ~TimerRecord();
-
-protected:
-    QString m_name;
-    qint64 m_time;
+public:    
+    static QString className(QString name);
 };
 
 #endif // !JZNODE_UTILS_H_

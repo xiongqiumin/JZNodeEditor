@@ -22,17 +22,22 @@ JZModbusParamMap *JZModbusSlaver::map()
     return &m_map;
 }
 
-bool JZModbusSlaver::startRtuServer(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
+void JZModbusSlaver::initRtu(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
 {
-    return m_server->startRtuServer(com,baud,data_bit,stop_bit,parity_bit);
+    m_server->initRtu(com,baud,data_bit,stop_bit,parity_bit);
 }
 
-bool JZModbusSlaver::startTcpServer(int port)
+void JZModbusSlaver::initTcp(int port)
 {
-    return m_server->startTcpServer(port);
+    m_server->initTcp(port);
 }
 
-void JZModbusSlaver::stopSever()
+bool JZModbusSlaver::startServer()
+{
+    return m_server->start();
+}
+
+void JZModbusSlaver::stopServer()
 {
     m_server->stop();
 }
@@ -174,5 +179,25 @@ void JZModbusSlaver::onMappingChanged(int in_addr, int nb)
                     emit sigParamChanged(addr);
             }
         }
+    }
+}
+
+void modbusSlaverSetConfig(JZModbusSlaver *slaver, const JZModbusConfig *c)
+{
+    auto map = slaver->map();
+    map->clear();
+    for (int i = 0; i < c->paramList.size(); i++)
+        map->add(c->paramList[i]);
+    slaver->initMapping();
+
+    if (c->isRtu)
+    {
+        slaver->initRtu(c->portName, c->baud, (QSerialPort::DataBits)c->dataBit, (QSerialPort::StopBits)c->stopBit, (QSerialPort::Parity)c->parityBit);
+        slaver->setSlave(c->slave);
+    }
+    else
+    {
+        slaver->initTcp(c->port);
+        slaver->setSlave(c->slave);
     }
 }

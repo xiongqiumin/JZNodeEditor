@@ -9,8 +9,8 @@ class JZNodeEnumDefine
 public:
     void init(QString name, QStringList keys, QVector<int> values);
 
-    void setType(int type);
-    int type() const;
+    void setId(int type);
+    int id() const;
 
     void setFlag(bool isFlag,int enumId);
     bool isFlag() const;

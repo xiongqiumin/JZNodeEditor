@@ -6,6 +6,7 @@
 #include "JZDesinger.h"
 #include <QStackedWidget>
 #include <QtDesigner/QDesignerFormEditorInterface>
+#include "JZMenuExtension.h"
 
 class JZDesignerFormWindow;
 class JZDesignerEditor : public QWidget
@@ -35,12 +36,14 @@ protected:
     Qt::WindowFlags windowFlag();            
 
     void initWidgetBox(QDesignerWidgetBoxInterface *box);
+    void initializeCorePlugins();
 
     QList<JZDesignerFormWindow*> m_windows;    
     QWidget *m_empty;
     QStackedWidget *m_view;
     QDesignerFormEditorInterface *m_core;
     static JZDesignerFormWindow *m_active;
+    JZMenuExtensionFactory m_menuFactor;
 };
 
 #endif

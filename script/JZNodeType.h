@@ -25,8 +25,11 @@ enum
     Type_arg,       //泛型,任意参数
     Type_args,      //变长参数
 
-    Type_editParamName,
-    Type_hookEnable,  
+    Type_internalUse,
+    Type_paramName,
+    Type_hookEnable,
+    Type_ignore,
+    Type_internalUseEnd,
 
     Type_enum = 1000,    
     Type_keyCode,   //Qt::Key

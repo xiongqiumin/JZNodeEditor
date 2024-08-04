@@ -2,6 +2,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
+#include <QDomDocument>
 #include "JZUiFile.h"
 #include "JZNodeObject.h"
 #include "JZNodeUiLoader.h"
@@ -92,33 +93,49 @@ QList<JZParamDefine> JZUiFile::widgets()
     return m_widgets;
 }
 
+void JZUiFile::walkChild(const QDomElement &root)
+{
+    auto ele_list = root.childNodes();
+    for (int ele_idx = 0; ele_idx < ele_list.size(); ele_idx++)
+    {
+        auto sub_ele = ele_list.at(ele_idx).toElement();
+        if (sub_ele.nodeName() == "widget")
+        {
+            QString class_name = sub_ele.attribute("class");
+            QString obj_name = sub_ele.attribute("name");
+
+            auto meta = JZNodeObjectManager::instance()->meta(class_name);
+            if (meta)
+            {
+                JZParamDefine def;
+                def.name = obj_name;
+                def.type = class_name;
+                m_widgets.push_back(def);
+            }
+        }
+    }
+}
+
 void JZUiFile::updateDefine()
 {
     QList<JZParamDefine> list;
 
-    JZNodeUiLoader loader;
-    QWidget *root = loader.create(m_xml);
-    Q_ASSERT(root);
+    QDomDocument doc;
+    bool ret = doc.setContent(m_xml);
+    Q_ASSERT(ret);
 
-    QList<QWidget*> widgets = root->findChildren<QWidget*>();    
-    for (int i = 0; i < widgets.size(); i++)
+    m_widgets.clear();
+
+    auto root = doc.documentElement();
+    auto ele_list = root.childNodes();
+    for (int ele_idx = 0; ele_idx < ele_list.size(); ele_idx++)
     {
-        QString name = widgets[i]->objectName();
-        QString class_name = widgets[i]->metaObject()->className();
-
-        int type = JZNodeObjectManager::instance()->getQObjectType(class_name);
-        if (!name.isEmpty() && type != Type_none)
-        {
-            JZParamDefine def;
-            def.name = name;
-            def.type = JZNodeType::typeToName(type);
-            list << def;
-        }
+        auto sub_ele = ele_list.at(ele_idx).toElement();
+        if (sub_ele.nodeName() == "widget")        
+            walkChild(sub_ele);
     }
-    std::sort(list.begin(), list.end(), [](const JZParamDefine &def1,const JZParamDefine &def2)->bool {
+    
+    std::sort(m_widgets.begin(), m_widgets.end(), [](const JZParamDefine &def1,const JZParamDefine &def2)->bool {
         return def1.name < def2.name;
     });
-
-    m_widgets = list;
-    delete root;
 }

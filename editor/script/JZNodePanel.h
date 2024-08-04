@@ -71,8 +71,10 @@ protected:
 
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
-    QTreeWidgetItem *createParam(QString name);    
+    QTreeWidgetItem *createParam(QString name);
+    QTreeWidgetItem *createMemberParam(QString name);
     QTreeWidgetItem *createClass(QString name);
+    QTreeWidgetItem *createFunction(QString name);
 
     bool filterItem(QTreeWidgetItem *root,QString name);    
     bool isClassItem(QTreeWidgetItem *item);

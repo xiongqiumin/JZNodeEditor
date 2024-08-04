@@ -16,7 +16,7 @@ public:
     bool isAbstract;
     bool isCopyable;
     std::function<void*()> create;
-    std::function<void(void*,void*)> copy;
+    std::function<void(void*,void*)> copy;  //src->dst
     std::function<bool(void*,void*)> equal;
     std::function<void(void*)> destory;
 };
@@ -29,7 +29,7 @@ public:
     JZNodeObjectDefine();
 
     QString fullname() const;
-    int baseId() const;
+    int baseId() const;    
 
     void addParam(const JZParamDefine &def);
     void removeParam(const QString &name);
@@ -56,6 +56,7 @@ public:
     QStringList slotList() const;
     
     const JZNodeObjectDefine *super() const;
+    const JZNodeObjectDefine *cBase() const; //最近的c定义
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
@@ -67,6 +68,7 @@ public:
     QString superName;
     bool valueType;
     QMap<QString,JZParamDefine> params;
+    QMap<QString,JZCParamDefine> cparams;
     QList<JZFunctionDefine> functions;
     QList<JZSignalDefine> singles;
     QStringList enums;
@@ -122,9 +124,8 @@ public:
     const JZNodeObjectDefine *meta() const;
 
     bool hasParam(const QString &name) const;
-    const QVariant &param(const QString &name) const;
-    void setParam(const QString &name,const QVariant &value);
-    QVariant *paramRef(const QString &name);
+    QVariant param(const QString &name) const;
+    void setParam(const QString &name,const QVariant &value);    
     QStringList paramList() const;
 
     const JZFunctionDefine *function(const QString &function) const;
@@ -142,6 +143,7 @@ public:
     void setCOwner(bool owner);
 
     void updateUiWidget(QWidget *widget);
+    void autoConnect();
 
 signals:
     void sig(QString slot_function,const QVariantList &params);
@@ -154,22 +156,22 @@ public slots:
 protected:    
     Q_DISABLE_COPY(JZNodeObject);  
 
+    friend JZNodeObjectManager;
+
     struct ConnectInfo
     {
         QString single;
         JZNodeObject *recv;
         QString slot;
-    };
-      
-    friend JZNodeObjectManager;
-
-    bool getParamRef(const QString &name,QVariant* &ref,QString &error);
+    };         
+   
+    const JZCParamDefine *cparam(const QString &name) const;
     int singleConnectCount(JZNodeObject *recv);
     void clearCObj();
 
     bool m_isNull;
     JZNodeObjectDefine *m_define;    
-    QMap<QString,QVariantPtr> m_params;    
+    QMap<QString, QVariantPtr> m_params;
     void *m_cobj;
     bool m_cobjOwner;
 
@@ -227,7 +229,9 @@ public:
 
     void init();
     int getId(const QString &type_name);
-    int getIdByCType(const QString &type_name);
+    int getIdByCTypeid(const QString &ctypeid);
+
+    void setUserRegist(bool flag);
 
     JZNodeObjectDefine *meta(const QString &className);
     JZNodeObjectDefine *meta(int type_id);
@@ -257,15 +261,15 @@ public:
     
     JZNodeObject* create(int type_id);
     JZNodeObject* create(const QString &name);
-    JZNodeObject* createByTypeid(const QString &ctype_id);
+    JZNodeObject* createByCTypeid(const QString &ctype_id);
     JZNodeObject* createRefrence(int type_id, void *cobj, bool owner);
     JZNodeObject* createRefrence(const QString &type_name,void *cobj,bool owner);
-    JZNodeObject* createRefrenceByTypeid(const QString &ctype_id,void *cobj,bool owner);
+    JZNodeObject* createRefrenceByCTypeid(const QString &ctype_id,void *cobj,bool owner);
     
     JZNodeObject* createNull(int type);
     JZNodeObject* createNull(const QString &name);
 
-    JZNodeObject* clone(JZNodeObject *other);
+    JZNodeObject* clone(JZNodeObject *src);
     bool equal(JZNodeObject* o1,JZNodeObject *o2);
 
     //enum
@@ -281,7 +285,7 @@ protected:
     void copy(JZNodeObject *dst,JZNodeObject *src);
     void initFunctions();
     
-    QMap<QString, int> m_typeidMetas;
+    QMap<QString, int> m_ctypeidMap;
     
     QMap<int,JZNodeEnumDefine> m_enums;
     int m_enumId;
@@ -294,7 +298,7 @@ protected:
 template<class T>
 QVariant JZObjectCreate()
 {
-    auto obj = JZNodeObjectManager::instance()->createByTypeid(typeid(T).name());
+    auto obj = JZNodeObjectManager::instance()->createByCTypeid(typeid(T).name());
     return QVariant::fromValue(JZNodeObjectPtr(obj,true));
 }
 
@@ -303,14 +307,14 @@ QVariant JZObjectCreateRefrence(T ptr,bool owner)
 {
     static_assert(std::is_pointer<T>(), "only support class pointer");
     QString c_typeid = typeid(std::remove_pointer_t<T>).name();
-    auto obj = JZNodeObjectManager::instance()->createRefrenceByTypeid(c_typeid, ptr, owner);
+    auto obj = JZNodeObjectManager::instance()->createRefrenceByCTypeid(c_typeid, ptr, owner);
     return QVariant::fromValue(JZNodeObjectPtr(obj,true));
 }
 
 template<class T>
 T *JZObjectCast(const QVariant &v)
 {
-    int c_type = JZNodeObjectManager::instance()->getIdByCType(typeid(T).name());
+    int c_type = JZNodeObjectManager::instance()->getIdByCTypeid(typeid(T).name());
     auto obj = toJZObject(v);
     Q_ASSERT(obj->isInherits(c_type));
     return (T*)obj->cobj();

@@ -804,11 +804,8 @@ void ScriptTest::testDebugServer()
         msleep(10);
 
         JZNodeGetDebugParam get_param;
-        JZNodeGetDebugParamResp get_param_resp;
-        JZNodeParamCoor coor;
-        coor.type = JZNodeParamCoor::Name;
-        coor.name = "i";
-        get_param.coors << coor;
+        JZNodeGetDebugParamResp get_param_resp;        
+        get_param.coors << irRef("i");
         
         cmd_ret = client.getVariable(get_param,get_param_resp);
         QVERIFY(cmd_ret);

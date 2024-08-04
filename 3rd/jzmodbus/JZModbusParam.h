@@ -37,6 +37,8 @@ public:
     bool autoRead;
     int autoReadTime;
 };
+QDataStream &operator<<(QDataStream &s, const JZModbusStrategy &param);
+QDataStream &operator>>(QDataStream &s, JZModbusStrategy &param);
 
 class JZModbusParam
 {
@@ -67,6 +69,8 @@ public:
     QVariant value;
     QString memo;        
 };
+QDataStream &operator<<(QDataStream &s, const JZModbusParam &param);
+QDataStream &operator>>(QDataStream &s, JZModbusParam &param);
 
 class JZModbusParamMap
 {
@@ -75,16 +79,36 @@ public:
 
     bool add(const JZModbusParam &value);
     void remove(int addr);
-    JZModbusParam *param(int addr);
-    int indexOf(int addr);
+    JZModbusParam *param(int addr);    
     QList<int> paramList();
-    int count();    
-
-    bool save(QString file);
-    bool load(QString file);    
+    bool contains(int addr);
+    int count();        
 
 protected:
+    int indexOf(int addr);
+
     QList<JZModbusParam> m_params;
 };
+
+//JZModbusConfig
+class JZModbusConfig
+{
+public:
+    JZModbusConfig();
+
+    QMap<int,JZModbusStrategy> strategyMap;
+    QList<JZModbusParam> paramList;
+
+    bool isRtu;
+    int slave;    
+
+    QString portName;
+    int baud, dataBit, parityBit, stopBit;
+
+    QString ip;
+    int port;
+};
+QDataStream &operator<<(QDataStream &s, const JZModbusConfig &param);
+QDataStream &operator>>(QDataStream &s, JZModbusConfig &param);
 
 #endif // !JZ_MODBUS_VALUE_H_

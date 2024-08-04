@@ -199,7 +199,7 @@ bool JZNodeCppGenerater::isRef(JZNodeIRParam param)
     else if(param.isLiteral())
         return false;
 
-    if(param.isId())
+    if(param.isStack())
     {
         Q_ASSERT_X(m_nodeType.contains(param.id()),"Id",qUtf8Printable(QString::number(param.id())));
         return m_nodeType[param.id()].isRef;

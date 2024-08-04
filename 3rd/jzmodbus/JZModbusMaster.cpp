@@ -14,6 +14,11 @@ JZModbusMaster::~JZModbusMaster()
 {
 }
 
+JZModbusParam *JZModbusMaster::param(int addr)
+{
+    return m_map.param(addr);
+}
+
 void JZModbusMaster::writeParam(int addr, QVariant value)
 {
     auto p = m_map.param(addr);
@@ -133,18 +138,19 @@ bool JZModbusMaster::isBusy()
     return m_client->isBusy();
 }
 
-bool JZModbusMaster::openRtu(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
+void JZModbusMaster::initRtu(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
 {
-    bool ret = m_client->openRtu(com, baud, data_bit, stop_bit, parity_bit);
-    if (ret && m_timeId == 0)
-        m_timeId = startTimer(20);
-
-    return ret;
+    m_client->initRtu(com, baud, data_bit, stop_bit, parity_bit);        
 }
 
-bool JZModbusMaster::openTcp(QString ip, int port)
+void JZModbusMaster::initTcp(QString ip, int port)
 {
-    bool ret = m_client->openTcp(ip, port);
+    m_client->initTcp(ip, port);    
+}
+
+bool JZModbusMaster::open()
+{
+    bool ret = m_client->open();
     if (ret && m_timeId == 0)
         m_timeId = startTimer(20);
 
@@ -165,7 +171,7 @@ JZModbusParamMap *JZModbusMaster::map()
 
 void JZModbusMaster::setStrategy(int addr, JZModbusStrategy s)
 {
-    if (m_map.indexOf(addr) == -1)
+    if (!m_map.contains(addr))
         return;
 
     Strategy info;
@@ -214,7 +220,7 @@ void JZModbusMaster::onModbusReply(const JZModebusReply &reply)
                     if (it != m_strategyMap.end())
                     {
                         if (it->s.recvNotify)
-                            emit sigParamRecv(addr);                                                                    
+                            emit sigParamReceived(addr);
                     }
 
                     if (pre != param->value)
@@ -293,4 +299,31 @@ void JZModbusMaster::dealCommand()
         }
         it++;
     }    
+}
+
+void modbusMasterSetConfig(JZModbusMaster *master, const JZModbusConfig *c)
+{
+    auto map = master->map();
+    map->clear();
+
+    for (int i = 0; i < c->paramList.size(); i++)
+        map->add(c->paramList[i]);
+
+    if (c->isRtu)
+    {
+        master->initRtu(c->portName, c->baud, (QSerialPort::DataBits)c->dataBit, (QSerialPort::StopBits)c->stopBit, (QSerialPort::Parity)c->parityBit);
+        master->setSlave(c->slave);
+    }
+    else
+    {
+        master->initTcp(c->ip, c->port);
+        master->setSlave(c->slave);
+    }
+
+    auto it = c->strategyMap.begin();
+    while (it != c->strategyMap.end())
+    {
+        master->setStrategy(it.key(), it.value());
+        it++;
+    }
 }

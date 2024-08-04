@@ -54,6 +54,7 @@ public:
 protected:
     Q_DISABLE_COPY(CFunction);
 };
+typedef QSharedPointer<CFunction> CFunctionPtr;
 
 class JZNodeEngine;
 class BuiltInFunction
@@ -67,6 +68,14 @@ protected:
     Q_DISABLE_COPY(BuiltInFunction);
 };
 typedef QSharedPointer<BuiltInFunction> BuiltInFunctionPtr;
+
+//JZCParamDefine
+class JZCParamDefine
+{
+public:
+    CFunctionPtr read;
+    CFunctionPtr write;
+};
 
 class JZFunctionDefine
 {

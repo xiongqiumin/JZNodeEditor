@@ -32,7 +32,7 @@ JZNodeIntegration::JZNodeIntegration(QDesignerFormEditorInterface *core, QObject
 {
     setResourceFileWatcherBehaviour(ReloadResourceFileSilently);
     Feature f = features();
-    f |= SlotNavigationFeature;
+    f &= ~SlotNavigationFeature;
     f &= ~ResourceEditorFeature;
     setFeatures(f);
 }

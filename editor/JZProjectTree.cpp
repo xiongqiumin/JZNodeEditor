@@ -523,11 +523,12 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
         QString def = dialog.className();
         QString super = dialog.super();
-        bool isUi = dialog.isUi();        
+        QString file = dialog.uiFile();
         
         auto file_item = dynamic_cast<JZScriptFile*>(item);
         auto class_item = file_item->addClass(def, super);
-        addItem(view_item, class_item);        
+        addItem(view_item, class_item);
+        class_item->setUiFile(file);
         m_project->saveItem(class_item);
     }    
     else if(act == actRemove)
@@ -563,15 +564,20 @@ void JZProjectTree::onContextMenu(QPoint pos)
                 m_project->renameItem(func_item, def.name);
                 view_item->setText(0, def.name);
             }
+            m_project->saveItem(func_item);
         }
         else if (item->itemType() == ProjectItem_class)
         {
-            JZNodeClassEditDialog dialog(this);
-            if (dialog.exec() != QDialog::Accepted)
-                return;
-
             JZScriptClassItem *class_item = (JZScriptClassItem*)item;
-            //m_project->updateClass(class_item);
+            
+            JZNodeClassEditDialog dlg(this);
+            dlg.setClass(class_item);
+            if (dlg.exec() != QDialog::Accepted)
+                return;
+             
+            class_item->setClass(dlg.className(), dlg.super());
+            class_item->setUiFile(dlg.uiFile());
+            m_project->saveItem(class_item);
         } 
         else if(item->itemType() == ProjectItem_root)
         {
