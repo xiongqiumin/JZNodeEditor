@@ -132,6 +132,11 @@ QList<JZProjectItem *> JZProjectItem::childs()
     return result;
 }
 
+int JZProjectItem::childCount()
+{
+    return m_childs.size();
+}
+
 void JZProjectItem::removeChlids()
 {
     m_childs.clear();

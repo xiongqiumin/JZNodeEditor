@@ -32,6 +32,11 @@ void JZModbusSlaver::initTcp(int port)
     m_server->initTcp(port);
 }
 
+bool JZModbusSlaver::isStart() const
+{
+    return m_server->isStart();
+}
+
 bool JZModbusSlaver::startServer()
 {
     return m_server->start();
@@ -190,7 +195,7 @@ void modbusSlaverSetConfig(JZModbusSlaver *slaver, const JZModbusConfig *c)
         map->add(c->paramList[i]);
     slaver->initMapping();
 
-    if (c->isRtu)
+    if (c->isRtu())
     {
         slaver->initRtu(c->portName, c->baud, (QSerialPort::DataBits)c->dataBit, (QSerialPort::StopBits)c->stopBit, (QSerialPort::Parity)c->parityBit);
         slaver->setSlave(c->slave);

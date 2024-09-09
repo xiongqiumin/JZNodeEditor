@@ -14,6 +14,7 @@ public:
     ~JZModbusMaster();    
     
     void setSlave(int slave);
+    void setPlcMode(bool mode);
 
     bool isOpen();
     bool isBusy();

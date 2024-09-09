@@ -19,7 +19,7 @@ public:
     JZNodeParamBindEditDialog(QWidget *p = nullptr);
     ~JZNodeParamBindEditDialog();
 
-    void init(JZScriptClassItem *item,QString variable);
+    void init(QString widget);
     void setParamBind(JZNodeParamBind bind);
     JZNodeParamBind paramBind();
 

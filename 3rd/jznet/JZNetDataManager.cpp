@@ -86,7 +86,7 @@ bool JZNetDataManager::sendPack(int sessionId, JZNetPack *pack)
 
 	QByteArray send_buffer = packData(pack);
 	QTcpSocket *socket = m_sessionInfo[sessionId].socket;
-	Q_ASSERT(socket);
+	Q_ASSERT(socket);    
         
     const char *ptr = send_buffer.data();
     int size = send_buffer.size();    
@@ -163,6 +163,13 @@ void JZNetDataManager::parsePack(int sessionId)
         int pack_seq = *((int*)(buffer.data() + start));
         int pack_type = *((int*)(buffer.data() + start + 4));
         int body_size = *((int*)(buffer.data() + start + 8));
+        //放外网被攻击
+        if (body_size < 0 || pack_type < 0 || pack_seq < 0)
+        {
+            buffer_start = buffer.length(); //全是无用数据，清除
+            break;
+        }
+
         start += 12;
         if (buffer.length() < start + body_size + 1)
 			break;
@@ -176,8 +183,15 @@ void JZNetDataManager::parsePack(int sessionId)
 		
 		QByteArray pack_buffer = buffer.mid(start, body_size);
 		QDataStream s(&pack_buffer,QIODevice::ReadOnly);
-
+		
+		//放外网被攻击
 		JZNetPack *pack = JZNetPackManager::instance()->createPack(pack_type);
+		if(!pack)
+        {
+            buffer_start = start + body_size + 1;
+			break;
+        }
+		
         pack->setSeq(pack_seq);
 		pack->loadFromStream(s);
 		m_sessionInfo[sessionId].packList.push_back(JZNetPackPtr(pack));

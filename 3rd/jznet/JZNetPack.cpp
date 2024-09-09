@@ -61,8 +61,7 @@ JZNetPack *JZNetPackManager::createPack(int id)
 {
 	if (m_packFactory.contains(id))
 		return m_packFactory[id]();
-
-	Q_ASSERT(0);
+	
 	return nullptr;
 }
 

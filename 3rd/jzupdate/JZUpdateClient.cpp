@@ -97,7 +97,7 @@ QString JZUpdateClient::downloadPath()
     return m_path + "/update/download";
 }
 
-bool JZUpdateClient::checkUpdate()
+bool JZUpdateClient::checkUpdate(bool &isUpadte)
 {
     JZUpdateFileMapReq req;    
     m_client->sendPack(&req);
@@ -113,11 +113,16 @@ bool JZUpdateClient::checkUpdate()
     while (it != m_remoteFile.end())
     {
         if (!m_localFile.contains(it.key()) || it.value() != m_localFile[it.key()])
+        {
+            isUpadte = true;
             return true;
+        }
 
         it++;
     }
-    return false;
+
+    isUpadte = true;
+    return true;
 }
 
 bool JZUpdateClient::isDownloadFinish()

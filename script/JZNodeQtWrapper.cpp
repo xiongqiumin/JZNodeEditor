@@ -453,6 +453,7 @@ void initWidgets()
     cls_table.def("setRowCount", true, &QTableWidget::setRowCount);
     cls_table.def("rowCount", false, &QTableWidget::rowCount);
     cls_table.def("currentRow", false, &QTableWidget::currentRow);
+    cls_table.def("clearContents", true, &QTableWidget::clearContents);
     cls_table.def("setItem", true, &QTableWidget::setItem);
     cls_table.def("item", false, &QTableWidget::item, false);
     cls_table.regist();

@@ -47,6 +47,11 @@ bool JZModbusClient::setSlave(int slave)
     return m_ctx->setSlave(slave);    
 }
 
+void JZModbusClient::setPlcMode(bool slave)
+{
+    m_ctx->setPlcMode(slave);
+}
+
 bool JZModbusClient::isOpen()
 {
     return m_io && m_io->isOpen();

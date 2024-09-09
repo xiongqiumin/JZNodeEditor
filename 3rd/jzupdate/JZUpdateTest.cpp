@@ -38,7 +38,8 @@ void test_update()
         return;
     }
     
-    if (!client.checkUpdate())
+    bool flag;
+    if (!client.checkUpdate(flag))
     {
         qDebug() << "no need update";
         return;

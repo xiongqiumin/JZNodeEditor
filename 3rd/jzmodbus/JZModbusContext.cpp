@@ -78,6 +78,7 @@ JZModbusContext::JZModbusContext()
     t_id = 0;
     backend = 0;
     slave = -1;
+    m_plcMode = false;
 }
 
 JZModbusContext::~JZModbusContext()
@@ -93,6 +94,11 @@ bool JZModbusContext::setSlave(int s)
         this->slave = s;
         return true;
     }
+}
+
+void JZModbusContext::setPlcMode(bool flag)
+{
+    m_plcMode = flag;
 }
 
 int JZModbusContext::buildRequestBasis(int function, int addr, int nb, uint8_t *req)

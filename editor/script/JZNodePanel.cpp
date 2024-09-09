@@ -107,9 +107,9 @@ JZNodePanel::JZNodePanel(QWidget *widget)
     
     Module modbus;
     modbus.name = "modbus";
-    modbus.functionList << "initModbusMaster" << "initModbusSlaver";
+    modbus.functionList << "initModbusMaster" << "initModbusSlaver" << "initPlotConfig";
     modbus.typeList << "QSerialPort::BaudRate" << "QSerialPort::StopBits" << "QSerialPort::Parity" << "QSerialPort::DataBits" << 
-        "JZModbusParam" << "JZModbusSlaver" << "JZModbusMaster";
+        "JZModbusParam" << "JZModbusSlaver" << "JZModbusMaster" << "JZPlotWidget";
     m_modules.push_back(modbus);
 }
 

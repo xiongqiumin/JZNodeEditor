@@ -271,7 +271,7 @@ bool JZModbusParamMap::contains(int addr)
 //JZModbusConfig
 JZModbusConfig::JZModbusConfig()
 {    
-    isRtu = true;
+    modbusType = Modbus_rtuClient;
     portName = "COM1";
     baud = 9600;
     dataBit = 3;
@@ -280,6 +280,16 @@ JZModbusConfig::JZModbusConfig()
     slave = 1;    
     ip = "127.0.0.1";
     port = 502;
+}
+
+bool JZModbusConfig::isRtu() const
+{
+    return (modbusType == Modbus_rtuClient || modbusType == Modbus_rtuServer);
+}
+
+bool JZModbusConfig::isMaster() const
+{
+    return (modbusType == Modbus_rtuClient || modbusType == Modbus_tcpClient);
 }
 
 QDataStream &operator<<(QDataStream &s, const JZModbusConfig &param)

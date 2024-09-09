@@ -6,10 +6,12 @@
 class JZRegExpHelp
 {
 public:
+    static bool isBool(const QString &str);
     static bool isInt(const QString &str);
     static bool isHex(const QString &str);
     static bool isFloat(const QString &str);
-    static bool isBool(const QString &str);
+    static bool isNumber(const QString &str);
+    
     static bool isWord(const QString &str);
     static bool isString(const QString &str);
     static bool isIdentify(const QString &str);

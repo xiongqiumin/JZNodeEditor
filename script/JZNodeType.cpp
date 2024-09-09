@@ -66,7 +66,8 @@ void JZNodeType::init()
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;
     
-    typeMap["arg"] = Type_arg;     
+    typeMap["auto"] = Type_arg;
+    typeMap["arg"] = Type_arg;
     typeMap["args"] = Type_args;
     typeMap["paramName"] = Type_paramName;
 

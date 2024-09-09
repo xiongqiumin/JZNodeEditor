@@ -44,6 +44,7 @@ public:
     virtual void close() = 0;
     virtual void save() = 0;
     virtual void active();
+    virtual void navigate(QUrl url);
 
     virtual bool isModified();    
     virtual void undo();
@@ -52,7 +53,7 @@ public:
     virtual void cut();
     virtual void copy();
     virtual void paste();
-    virtual void selectAll();
+    virtual void selectAll();    
 
 signals:
     void redoAvailable(bool available);
@@ -66,12 +67,5 @@ protected:
     JZProject *m_project;
     int m_type;    
 };
-
-
-
-
-
-
-
 
 #endif

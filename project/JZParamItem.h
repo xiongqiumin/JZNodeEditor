@@ -22,12 +22,12 @@ public:
     void setVariable(QString name, JZParamDefine define);
     const JZParamDefine *variable(QString name) const;
     QStringList variableList();
-
-    void addBind(JZNodeParamBind widget);
+    
+    void addBind(JZNodeParamBind info);
     void removeBind(QString name);    
     JZNodeParamBind *bindVariable(QString name);
-    QMap<QString, JZNodeParamBind> bindVariables();
-    
+    QStringList bindVariableList();    
+
 protected:        
     QMap<QString, JZParamDefine> m_variables;
     QMap<QString, JZNodeParamBind> m_binds;

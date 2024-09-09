@@ -23,7 +23,7 @@ QByteArray JZScriptClassItem::toBuffer()
     s << m_name;    
     s << m_super;
     s << m_uiFile;
-    s << m_classId;
+    s << m_classId;    
     return buffer;
 }
 
@@ -33,7 +33,7 @@ bool JZScriptClassItem::fromBuffer(const QByteArray &buffer)
     s >> m_name;
     s >> m_super;
     s >> m_uiFile;
-    s >> m_classId;
+    s >> m_classId;    
     return true;
 }
 
@@ -237,6 +237,14 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
         {
             define.params[widget_list[i].name] = widget_list[i];
         }
+
+        auto param_file = paramFile();
+        auto bind_list = param_file->bindVariableList();
+        for (int i = 0; i < bind_list.size(); i++)
+        {
+            auto bind = param_file->bindVariable(bind_list[i]);
+            define.widgetBind[bind->widget] = *bind;
+        }       
     }    
     return define;
 }

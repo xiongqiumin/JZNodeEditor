@@ -1,4 +1,5 @@
-﻿#include "JZEditor.h"
+﻿#include <QUrl>
+#include "JZEditor.h"
 
 JZEditor::JZEditor()
 {
@@ -52,6 +53,11 @@ void JZEditor::removeMenuBar(QMenuBar *menubar)
 }
 
 void JZEditor::active()
+{
+
+}
+
+void JZEditor::navigate(QUrl url)
 {
 
 }

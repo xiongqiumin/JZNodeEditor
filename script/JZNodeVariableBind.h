@@ -1,5 +1,5 @@
-#ifndef JZNODE_QT_BIND_H_
-#define JZNODE_QT_BIND_H_
+#ifndef JZNODE_VARIABLE_BIND_H_
+#define JZNODE_VARIABLE_BIND_H_
 
 #include <QWidget>
 #include <QMap>
@@ -7,14 +7,9 @@
 #include <functional>
 #include "JZNodeType.h"
 
-enum{
-    Enabled,
-    Visible,
-    Pos,
-    Size,
-    Checked,
-    Index,
-    Value,
+enum WidgetProp{        
+    WidgetProp_Value,
+    WidgetProp_Index,
 };
 
 enum{
@@ -29,39 +24,43 @@ enum{
     Trigger_editFinish,
 };
 
+class BindInfo
+{
+public:
+    QString widget;
+    QList<int> dataType;
+};
+
 class BindObject : public QObject
 {
     Q_OBJECT
 
 public:
     BindObject(QString widget,int widget_prop,QList<int> data_type,int dir);
-    virtual ~BindObject();
-
-    QString widget() const;
-    int widgetProp() const;
-    QList<int> dataType() const;
-    int dir() const;
+    virtual ~BindObject();    
     
     virtual void bind(QWidget *widget,QObject *object,QString path);
-    virtual void uiToData(QWidget *w,QObject *content,QString path) = 0;
-    virtual void dataToUi(QObject *content,QString path,QWidget *w) = 0;
-    QList<QString> extParams(){ return QList<QString>();};
-    void setExtParam(QList<QString> params){};
+    void uiToData();
+    void dataToUi();    
 
-protected slots:
-    void onWidgetDestroyed(QObject *obj){};
-    void onObjectDestroyed(QObject *obj){};
-    
-    void onWidgetChanged(){};
-    void onDataChanged(){};
+protected slots:    
+    void onWidgetChanged();
+    void onDataChanged();
 
 protected:
     void connectPropChanged(QObject *object,QString prop);
+    int variableType(const QString &path);
+    QVariant getVariable(const QString &path);
+    void setVariable(const QString &path, const QVariant &value);
 
-    QString m_widget;
-    int m_widgetProp;
-    QList<int> m_dataType;
-    int m_dir;
+    virtual void uiToDataImpl() = 0;
+    virtual void dataToUiImpl() = 0;
+
+    QWidget *m_widget;
+    QObject *m_context;
+    QString m_path;
+    int m_dataType;
+    bool m_changed;
 };
 
 //LineEditBind
@@ -75,8 +74,8 @@ public:
 
 protected slots:
     virtual void bind(QWidget *widget,QObject *object,QString prop) override;
-    virtual void uiToData(QWidget *w,QObject *content,QString prop) override;
-    virtual void dataToUi(QObject *content,QString prop,QWidget *w) override;
+    virtual void uiToDataImpl() override;
+    virtual void dataToUiImpl() override;
 };
 
 //SliderBind
@@ -90,8 +89,8 @@ public:
 
 protected slots:
     virtual void bind(QWidget *widget,QObject *object,QString prop) override;
-    virtual void uiToData(QWidget *w,QObject *content,QString prop) override;
-    virtual void dataToUi(QObject *content,QString prop,QWidget *w) override;
+    virtual void uiToDataImpl() override;
+    virtual void dataToUiImpl() override;
 };
 
 //ComboBoxBind
@@ -105,8 +104,32 @@ public:
 
 protected slots:
     virtual void bind(QWidget *widget,QObject *object,QString prop) override;
-    virtual void uiToData(QWidget *w,QObject *content,QString prop) override;
-    virtual void dataToUi(QObject *content,QString prop,QWidget *w) override;
+    virtual void uiToDataImpl() override;
+    virtual void dataToUiImpl() override;
+};
+
+//BindFactory
+class BindFactory : public QObject
+{    
+public:
+    BindFactory();
+    virtual ~BindFactory();
+
+    const QMap<QString, BindInfo> &widgetMap() const;
+    virtual BindObject *createBind(QString class_name) = 0;
+
+
+protected:
+    QMap<QString, BindInfo> m_widgetMap;
+};
+
+//QtBindFactory
+class QtBindFactory : public BindFactory
+{
+public:
+    QtBindFactory();
+
+    virtual BindObject *createBind(QString class_name);
 };
 
 //BindManager
@@ -120,12 +143,13 @@ public:
     BindManager();
     ~BindManager();
 
-    void regist(BindObject *bind);
+    void init();
+    void regist(BindFactory *factory);
 
     BindObject *bind(QWidget *w,int prop_type,QObject *context,QString prop,int dir);
 
 protected:
-    QList<BindObject*> m_binds;
+    QList<BindFactory*> m_binds;
 };
 
 #endif // !JZNODE_QT_BIND_H_

@@ -77,7 +77,7 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
 }
 
 //JZFunctionDebugInfo
-JZParamDefine *JZFunctionDebugInfo::localParam(QString name)
+const JZParamDefine *JZFunctionDebugInfo::localParam(QString name) const
 {
     for(int i = 0; i < localVariables.size(); i++)
     {
@@ -87,10 +87,9 @@ JZParamDefine *JZFunctionDebugInfo::localParam(QString name)
     return nullptr;
 }
 
-JZParam *JZFunctionDebugInfo::nodeParam(int id)
+const JZParam *JZFunctionDebugInfo::nodeParam(int id) const
 {
     auto gemo = JZNodeCompiler::paramGemo(id);
-    qDebug() << id << gemo.nodeId << gemo.pinId;
     auto it = nodeInfo.find(gemo.nodeId);
     if(it == nodeInfo.end())
         return nullptr;
@@ -98,18 +97,15 @@ JZParam *JZFunctionDebugInfo::nodeParam(int id)
     auto &info = it.value();
     for(int i = 0; i < info.paramIn.size(); i++)
     {
-        qDebug() << "in" << info.paramIn[i].id;
         if(info.paramIn[i].id == gemo.pinId)
             return &info.paramIn[i].define;
     }
     for(int i = 0; i < info.paramOut.size(); i++)
     {
-        qDebug() << "paramOut" << info.paramOut[i].id;
         if(info.paramOut[i].id == gemo.pinId)
             return &info.paramOut[i].define;
     }
 
-    qDebug() << "not find" << gemo.nodeId << gemo.pinId;
     return nullptr;
 }   
 
@@ -449,6 +445,21 @@ const JZFunctionDefine *JZNodeProgram::function(QString name)
         return func;
 
     return JZNodeFunctionManager::instance()->function(name);
+}
+
+const JZFunctionDebugInfo *JZNodeProgram::debugInfo(QString name)
+{
+    auto it = m_scripts.begin();
+    while(it != m_scripts.end())
+    {
+        JZNodeScript *s = it->data();
+        auto debug = s->functionDebug(name);
+        if (debug)
+            return debug;
+
+        it++;
+    }
+    return nullptr;
 }
 
 void JZNodeProgram::registType()

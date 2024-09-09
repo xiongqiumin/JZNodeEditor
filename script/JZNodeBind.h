@@ -429,7 +429,7 @@ public:
         auto func_ptr = [recv,slot](Args... args){
            QVariantList params;           
            createSlotParams<int,Args...>(params,args...);
-           recv->onSig(slot,params);
+           recv->onSigTrigger(slot,params);
         };
 
         Class *cobj = (Class*)obj->cobj();
@@ -488,7 +488,7 @@ public:
         auto func = [recv,slot](Args... args){
            QVariantList params;           
            createSlotParams<int,Args...>(params,args...);
-           recv->onSig(slot,params);
+           recv->onSigTrigger(slot,params);
         };
 
         Class *cobj = (Class*)obj->cobj();

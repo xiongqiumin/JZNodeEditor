@@ -1,105 +1,87 @@
 ﻿#ifndef JZ_MODBUS_SIMULATOR_H_
 #define JZ_MODBUS_SIMULATOR_H_
 
+#include <QMdiArea>
 #include <QMainWindow>
-#include "ui_JZModbusSimulator.h"
+#include <QTreeWidget>
+#include <QTableWidget>
+#include <QPlainTextEdit>
 #include "UiCommon.h"
 #include "3rd/jzmodbus/JZModbusMaster.h"
 #include "3rd/jzmodbus/JZModbusSlaver.h"
 
-enum {
-    Modbus_rtuClient,
-    Modbus_tcpClient,
-    Modbus_rtuServer,
-    Modbus_tcpServer,
-};
-
-class JZModbusSimulator : public QDialog
+class SimulatorWidget;
+class JZModbusSimulator : public QWidget
 {
     Q_OBJECT
 
 public:
     JZModbusSimulator(QWidget *parent = nullptr);
-    virtual ~JZModbusSimulator();
-
-    void run();
-    void setConfigMode(bool isRtu);
-    void setModbusType(int type);
-
-    void setConfig(const JZModbusConfig &cfg);
-    JZModbusConfig config();    
+    virtual ~JZModbusSimulator();    
     
+    void closeAll();
+
 signals:
 
+
 protected slots :
-    void onBoxTypeChanged();
-    void on_btnStart_clicked();
-    void on_btnSetting_clicked();
-    void on_btnClose_clicked();
+    void onActionNew();
+    void onActionClear();
+    void onActionShowAll();
+    void onContextMenu(QPoint pt);
 
-    void on_btnAdd_clicked();
-    void on_btnEdit_clicked();
-    void on_btnRemove_clicked();       
+    void onSimulatorStart();
+    void onSimulatorStop();
+    void onSimulatorSetting();
 
+    void onProtoStrategyClicked();
     void onProtoReadClicked();
     void onProtoWriteClicked();
-    void onProtoStrategyClicked();
-
     void onItemChanged(QTableWidgetItem *item);
     void onParamChanged(int addr);
 
+    void onActionSaveConfig();
+    void onActionLoadConfig();
+
 protected:
-    void init();
+    struct Simulator
+    {
+        Simulator();
+        bool isOpen();
+        void close();
 
-    JZModbusParamMap *mapping();
-    void updateStatus();
-    void updateTable();
-    int indexOfRow(int addr);
-    int currentModbusType();
+        JZModbusMaster *master;
+        JZModbusSlaver *slaver;
+        
+        QTreeWidgetItem *item;
+        QTableWidget *table;
+        QMdiSubWindow *window;        
+        SimulatorWidget *widget;
+        JZModbusConfig config;
+    };
     
-    JZModbusMaster *m_master;
-    JZModbusSlaver *m_slaver;    
-    bool m_run;    
+    virtual bool eventFilter(QObject *o, QEvent *e) override;
+    void addSimulator(JZModbusConfig config);
+    void removeSimulator(int index);
+    void startSimulator(int index);
+    void stopSimulator(int index);
+    void settingSimulator(int index);
+    void initSimulator(int index);    
     
-    QMap<int, JZModbusStrategy> m_strategyMap;
-
-    QList<int> m_baudRateList;
+    void updateStatus(int index);
+    void updateTable(int index);
+    int indexOfRow(QTableWidget *table,int addr);
+    int indexOfTable(QTableWidget *table);
+            
     QList<QSerialPort::DataBits> m_dataBitsList;
     QList<QSerialPort::StopBits> m_stopBitsList;
-    QList<QSerialPort::Parity> m_parityList;    
+    QList<QSerialPort::Parity> m_parityList;          
 
-    int m_rtuSlave;
-    int m_tcpSlave;
-
-    QString m_portName;
-    int m_baud,m_dataBit,m_parityBit,m_stopBit;
-
-    QString m_ip;
-    int m_port;
-
-    Ui::JZModbusSimulatorClass ui;
+    QList<Simulator> m_simulator;
+    QMdiArea *m_mdiArea;
+    QPlainTextEdit *m_log;
+    QTreeWidget *m_tree;
+    int m_simIdx;
 };
-
-
-class JZModbusSimulatorManager : public QObject
-{
-    Q_OBJECT
-
-public:
-    static JZModbusSimulatorManager *instance();
-
-    void addSimulator(JZModbusSimulator *simulator);
-    void closeAll();
-
-protected slots:
-    void onSimulatorClose();
-
-protected:
-    QList<JZModbusSimulator*> m_modbusList;
-};
-
-
-
-
 
 #endif

@@ -9,6 +9,7 @@
 #include "JZNodeDebugPacket.h"
 #include "JZProcess.h"
 
+class MainWindow;
 class JZNodeWatch : public QWidget
 {
     Q_OBJECT
@@ -19,6 +20,7 @@ public:
 
     void setReadOnly(bool flag);
     void setRunningMode(ProcessStatus status);
+    void setMainWindow(MainWindow *w);
     
     void setParamInfo(JZNodeGetDebugParamResp *info);
     void updateParamInfo(JZNodeGetDebugParamResp *info);
@@ -40,6 +42,7 @@ protected:
     void updateStatus();
     void updateWatchItem();
     int indexOfItem(QTreeWidgetItem *root, const QString &name,int start);
+    QString coorName(const JZNodeIRParam &param);
 
     void setItem(QTreeWidgetItem *root, int index,const JZNodeIRParam &coor, const JZNodeDebugParamValue &info);
     QTreeWidgetItem *updateItem(QTreeWidgetItem *root,int index,const QString &name,const JZNodeDebugParamValue &info);
@@ -52,7 +55,7 @@ protected:
     int m_editColumn;
 
     QTreeWidget *m_view;    
-
+    MainWindow *m_mainWindow;
 };
 
 

@@ -68,15 +68,20 @@ bool JZProject::isNull() const
 
 void JZProject::clear()
 {
+    m_root.removeChlids();
+    m_root.setName(".");
+
+    m_tmp.removeChlids();
+    m_tmp.setName("/tmp");
+    
     m_blockRegist = false;
     m_windowSystem = false;
     m_isSaveCache = false;
-    m_filepath.clear();
-    m_root.removeChlids();
-    m_root.setName(".");
-    m_temps.clear();
+    m_filepath.clear();        
     m_containers.clear();
     m_modules.clear();
+    m_saveCache.clear();
+    m_breakPoints.clear();
 
     registType();
 }
@@ -269,15 +274,15 @@ bool JZProject::save()
 }
 
 void JZProject::addTmp(JZProjectItem *item)
-{
-    item->setProject(this);
-    m_temps.push_back(item);
+{    
+    if (item->name().isEmpty())
+        item->setName("tmp" + QString::number(m_tmp.childCount()));
+    addItem("/tmp", item);    
 }
 
 void JZProject::removeTmp(JZProjectItem *item)
-{
-    item->setProject(nullptr);
-    m_temps.removeAll(item);
+{    
+    removeItem("/tmp/" + item->name());
 }
 
 void JZProject::saveTransaction()
@@ -519,11 +524,23 @@ JZProjectItem *JZProject::getItem(QString path)
 {    
     if(path.isEmpty() || path == "." || path == "./")
         return &m_root;
-    if(!path.startsWith("./"))
-        path = "./" + path;
+    if (path == "/tmp")
+        return &m_tmp;
 
-    QStringList path_list = path.split("/",Qt::KeepEmptyParts);
-    JZProjectItem *folder = &m_root;
+    JZProjectItem *folder = nullptr;
+    if (path.startsWith("/tmp"))
+    {
+        path = path.mid(1);
+        folder = &m_tmp;
+    }
+    else 
+    {
+        if (!path.startsWith("./"))
+            path = "./" + path;
+        folder = &m_root;
+    }
+
+    QStringList path_list = path.split("/",Qt::KeepEmptyParts);    
     for(int i = 1; i < path_list.size(); i++)
     {        
         folder = folder->getItem(path_list[i]);

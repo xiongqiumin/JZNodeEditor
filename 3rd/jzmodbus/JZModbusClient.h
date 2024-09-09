@@ -31,7 +31,9 @@ public:
     bool open();
     void close();
     bool isOpen();
+    
     bool setSlave(int salve);
+    void setPlcMode(bool flag);
 
     QString error();
     bool isBusy();

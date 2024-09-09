@@ -14,15 +14,28 @@ MemberInfo jzSplitMember(QString fullName)
     return info;
 }
 
-QString makeLink(QString tips, QString filename, int nodeId)
+QString makeLink(QString tips, QString path, QString args)
 {
-    QString href = filename + "?id=" + QString::number(nodeId);
-    QString link;
-    if (!filename.isEmpty())
-        link = tips + "<link href=" + href + ">(" + filename + ",id=" + QString::number(nodeId) + ")</link>";
-    else
-        link = tips;
+    QString href = path + "?" + args;
+    QString link = "<link href=" + href + ">" + tips + "</link>";
     return link;
+}
+
+JZUrl fromQUrl(QUrl url)
+{
+    JZUrl ret;
+    ret.path = url.path();
+
+    if (url.hasQuery())
+    {
+        QStringList query_list = url.query().split("&");
+        for (int i = 0; i < query_list.size(); i++)
+        {
+            auto pairs = query_list[i].split("=");
+            ret.args[pairs[0]] = pairs[1];
+        }        
+    }
+    return ret;
 }
 
 void projectUpdateLayout(JZProject *project)

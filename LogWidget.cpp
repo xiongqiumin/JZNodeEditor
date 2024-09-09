@@ -183,11 +183,6 @@ JZNodeBreakPoint *LogWidget::breakpoint()
 }
 
 void LogWidget::onAchorClicked(QUrl url)
-{
-    QString link = url.toString();    
-
-    int idx = link.indexOf("?id=");    
-    QString file = link.left(idx);
-    int node_id = link.mid(idx+4).toInt();
-    sigNavigate(file, node_id);
+{    
+    sigNavigate(url);
 }

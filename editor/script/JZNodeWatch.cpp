@@ -9,6 +9,7 @@
 #include <QStyledItemDelegate>
 #include "UiCommon.h"
 #include "JZNodeEngine.h"
+#include "mainwindow.h"
 
 class GridDelegate : public QStyledItemDelegate
 {
@@ -33,6 +34,7 @@ JZNodeWatch::JZNodeWatch(QWidget *parent)
     m_readOnly = false;
     m_editColumn = 0;
     m_editItem = nullptr;
+    m_mainWindow = nullptr;
 
     m_view = new QTreeWidget();
     m_view->setColumnCount(3);
@@ -102,6 +104,11 @@ void JZNodeWatch::setRunningMode(ProcessStatus status)
     updateStatus();
 }
 
+void JZNodeWatch::setMainWindow(MainWindow *w)
+{
+    m_mainWindow = w;
+}
+
 void JZNodeWatch::onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column)
 {
     if (m_status != Process_pause)
@@ -168,6 +175,26 @@ void JZNodeWatch::keyPressEvent(QKeyEvent *e)
     }
 }
 
+QString JZNodeWatch::coorName(const JZNodeIRParam &param)
+{
+    if (param.isThis())
+        return "this";
+    if (param.isRef())
+        return param.ref();
+    else
+    {
+        auto p = m_mainWindow->program();
+        auto stack = m_mainWindow->stackIndex();
+        auto function = m_mainWindow->runtime()->stacks[stack].function;
+        auto debug = p->debugInfo(function);
+        auto def = debug->nodeParam(param.id());
+        if (def)
+            return def->name;
+
+        return QString::number(param.id());
+    }
+}
+
 int JZNodeWatch::indexOfItem(QTreeWidgetItem *root, const QString &name,int start)
 {
     for (int i = start; i < root->childCount(); i++)
@@ -220,14 +247,12 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
             //if (info.type == Type_list || info.type == Type_map)
             //    cur_value = QString("{size = %1}").arg(info.params.size());
         }        
-
-        QStringList sub_params;
+        
         auto it = info.params.begin();
         int sub_index = 0;
         while (it != info.params.end())
         {        
-            updateItem(item, sub_index, it.key(), it.value());
-            sub_params << it.key();
+            updateItem(item, sub_index, it.key(), it.value());            
             sub_index++;
             it++;
         }
@@ -245,7 +270,7 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
 
 void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const JZNodeIRParam &coor, const JZNodeDebugParamValue &info)
 {
-    auto item = updateItem(root, index, "coor.name", info);
+    auto item = updateItem(root, index, coorName(coor), info);
     if(coor.isStack())
         item->setData(0, Qt::UserRole, coor.id());
 }
@@ -271,9 +296,7 @@ void JZNodeWatch::setParamInfo(JZNodeGetDebugParamResp *info)
 
 void JZNodeWatch::updateParamInfo(JZNodeGetDebugParamResp *info)
 {    
-    auto root = m_view->invisibleRootItem();
-    QStringList sub_params;
-
+    auto root = m_view->invisibleRootItem();    
     //m_view 中可能存在多个同名的参数，所以此处要通过tree来遍历
     auto count = m_view->topLevelItemCount();
     for (int i = 0; i < count; i++)
@@ -281,15 +304,12 @@ void JZNodeWatch::updateParamInfo(JZNodeGetDebugParamResp *info)
         auto item = m_view->topLevelItem(i);        
         for (int j = 0; j < info->coors.size(); j++)
         {
-            auto &c = info->coors[j];
-            /*
-            if (c.name == item->text(0))
-            {
-                sub_params << c.name;
+            auto &c = info->coors[j];           
+            if (coorName(c) == item->text(0))
+            {                
                 setItem(root, i, c, info->values[j]);
                 break;
-            }
-            */
+            }           
         }
     }    
 }

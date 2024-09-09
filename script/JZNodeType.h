@@ -22,6 +22,7 @@ enum
     Type_nullptr,    
     Type_any,
     Type_function,
+    Type_auto,      //auto
     Type_arg,       //泛型,任意参数
     Type_args,      //变长参数
 

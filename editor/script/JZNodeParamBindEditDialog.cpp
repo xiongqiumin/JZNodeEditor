@@ -8,7 +8,7 @@
 #include "JZNodeTypeHelper.h"
 #include "JZClassItem.h"
 #include "JZProject.h"
-#include "JZNodeQtBind.h"
+#include "JZNodeVariableBind.h"
 
 //JZNodeParamBindEditDialog
 JZNodeParamBindEditDialog::JZNodeParamBindEditDialog(QWidget *parent)
@@ -22,35 +22,15 @@ JZNodeParamBindEditDialog::JZNodeParamBindEditDialog(QWidget *parent)
     ui->boxDir->addItem("Duplex");
 }
 
-void JZNodeParamBindEditDialog::init(JZScriptClassItem *item, QString variable)
+void JZNodeParamBindEditDialog::init(QString widget)
 {
-    ui->boxWidget->clear();
-
-    m_bind.variable = variable;    
-    m_bind.dir = JZNodeParamBind::UiToData;
-
-    auto var = item->memberVariable(variable, false);
-
-    ui->boxWidget->addItem("不绑定");
-    auto list = item->memberVariableList(true);
-    for (int i = 0; i < list.size(); i++)
-    { 
-        auto def = item->memberVariable(list[i],true);
-        if (!JZNodeType::isInherits(def->type, "QWidget"))
-            continue;
-
-        /*
-        auto info = JZNodeQtBind::BindSupport(def->type);               
-        if (info.dataType.contains(var->type))
-            ui->boxWidget->addItem(list[i]);
-        */
-    }
+    
 }
 
 void JZNodeParamBindEditDialog::setParamBind(JZNodeParamBind bind)
 {
-    m_bind = bind;
-    ui->boxWidget->setCurrentText(bind.widget);
+    m_bind = bind;    
+    ui->boxWidget->setCurrentText(bind.variable);
 }
 
 JZNodeParamBind JZNodeParamBindEditDialog::paramBind()
@@ -65,10 +45,7 @@ JZNodeParamBindEditDialog::~JZNodeParamBindEditDialog()
 
 void JZNodeParamBindEditDialog::on_btnOk_clicked()
 {
-    if (ui->boxWidget->currentIndex() == 0)
-        m_bind.widget.clear();
-    else
-        m_bind.widget = ui->boxWidget->currentText();
+    m_bind.variable = ui->boxWidget->currentText();
 
     int index = ui->boxDir->currentIndex();
     if (index == 0)

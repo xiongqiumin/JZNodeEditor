@@ -47,6 +47,6 @@ protected:
 
     QMap<JZProjectItem*, QByteArray> m_itemCache;
 };
-
+QSharedPointer<JZScriptFile> createTempFile(JZProject *project = nullptr);
 
 #endif

@@ -13,10 +13,11 @@ public:
     JZModbusSlaver(QObject *parent = nullptr);
     ~JZModbusSlaver();
 
-    void setSlave(int slave);
+    void setSlave(int slave);    
 
     void initRtu(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
     void initTcp(int port);
+    bool isStart() const;
     bool startServer();
     void stopServer();
 

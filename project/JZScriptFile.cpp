@@ -294,3 +294,18 @@ JZScriptClassItem *JZScriptFile::getClass(QString name)
     }
     return nullptr;
 }
+
+QSharedPointer<JZScriptFile> createTempFile(JZProject *project)
+{
+    if (!project)
+        project = JZProject::active();
+
+    auto ptr = QSharedPointer<JZScriptFile>(new JZScriptFile(), [](JZScriptFile *file){
+        if (file->project())
+            file->project()->removeItem(file->itemPath());
+        else
+            delete file;
+
+    });
+    return ptr;
+}

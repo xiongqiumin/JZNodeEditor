@@ -47,6 +47,7 @@ public:
     bool hasItem(QString name);
     int indexOfItem(JZProjectItem *item);
     QList<JZProjectItem *> childs();
+    int childCount();
 
     void sort();
     QList<JZProjectItem *> itemList(int type);

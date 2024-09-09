@@ -147,14 +147,13 @@ protected:
     void registType();
             
     JZProjectItemRoot m_root;
+    JZProjectItemRoot m_tmp;
     bool m_windowSystem;        
 
     QMap<JZProjectItem*, QList<BreakPoint>> m_breakPoints;
     QString m_filepath;    
     bool m_blockRegist;
-    QString m_error;
-
-    QList<JZProjectItem*> m_temps;
+    QString m_error;    
 
     bool m_isSaveCache;
     QList<JZProjectItem*> m_saveCache;  //为了避免每次save写文件

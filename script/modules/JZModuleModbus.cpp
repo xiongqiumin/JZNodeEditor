@@ -7,7 +7,8 @@
 #include "JZNodeFactory.h"
 #include "3rd/jzmodbus/JZModbusMaster.h"
 #include "3rd/jzmodbus/JZModbusSlaver.h"
-#include "tools/JZModbusSimulator.h"
+#include "editor/tools/JZModbusConfigDialog.h"
+#include "editor/tools/JZModbusSimulator.h"
 #include "JZNodeParamWidget.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
@@ -38,7 +39,6 @@ void JZNodeModbusConfig::initFunction()
     pin(in)->setDataType({class_type});
     
     addParamIn("", Pin_widget | Pin_noValue);
-    addParamIn("", Pin_widget | Pin_noValue);
     setName(m_functionName);
 }
 
@@ -52,7 +52,7 @@ JZNodePinWidget *JZNodeModbusConfig::createWidget(int id)
         btn->connect(btn, &QPushButton::clicked, [btn,this] {
             QByteArray old = this->toBuffer();
 
-            JZModbusSimulator dlg;
+            JZModbusConfigDialog dlg;
             dlg.setConfigMode(true);
             dlg.setConfig(this->m_config);
             if (dlg.exec() != QDialog::Accepted)
@@ -63,32 +63,8 @@ JZNodePinWidget *JZNodeModbusConfig::createWidget(int id)
         });
         return w;
     }
-    else
-    {
-        JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
-        auto btn = w->button();
-        btn->setText("Æô¶¯Ä£ÄâÆ÷");
-        btn->connect(btn, &QPushButton::clicked, [btn, this] {
-            JZModbusSimulator *dlg = new JZModbusSimulator();
-            dlg->setConfig(this->m_config);
-            if (this->className() == "JZModbusMaster")
-            {
-                if (this->m_config.isRtu)
-                    dlg->setModbusType(Modbus_rtuServer);
-                else
-                    dlg->setModbusType(Modbus_tcpServer);
-            }
-            else
-            {
-                if (this->m_config.isRtu)
-                    dlg->setModbusType(Modbus_rtuClient);
-                else
-                    dlg->setModbusType(Modbus_tcpClient);
-            }
-            dlg->run();
-        });
-        return w;
-    }    
+
+    return nullptr;
 }
 
 bool JZNodeModbusConfig::compiler(JZNodeCompiler *c, QString &error)

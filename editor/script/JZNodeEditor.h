@@ -26,6 +26,7 @@ public:
     virtual void removeMenuBar(QMenuBar *menubar) override;
 
     virtual bool isModified() override;
+    virtual void navigate(QUrl url) override;
 
     virtual void undo() override;
     virtual void redo() override;
@@ -52,8 +53,8 @@ public:
     void setNodeValue(int nodeId, int prop_id, const QString &value);
     void setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value);
     void resetPropValue();
-    void updateNode();
-
+    void updateNode();    
+        
 signals:
     void sigFunctionOpen(QString name);
     void sigAutoCompiler();

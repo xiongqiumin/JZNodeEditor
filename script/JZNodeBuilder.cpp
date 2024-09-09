@@ -145,6 +145,17 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         m_stopBuild = false;
     });
 
+    auto makeParamLink = [](QString tips, QString path, bool ui, int row)->QString
+    {
+        QString args;
+        if (ui)
+            args = "type=ui";
+        else
+            args = "type=param";
+        args += "&row=" + QString::number(row);
+        return makeLink(tips, path, args);
+    };
+
     clear();    
     m_program = program;        
     m_program->clear();    
@@ -179,7 +190,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         if (!m_compiler.checkParamDefine(def, error))
         {
             auto global_item = m_project->globalDefine();
-            m_error += makeLink(error, global_item->path(), i);
+            m_error += makeParamLink(error, global_item->path(),false, i);
         }
     }
     
@@ -200,7 +211,18 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         {
             auto var_def = param->variable(var_list[i]);            
             if(!m_compiler.checkParamDefine(var_def,error))
-                m_error += makeLink(error,param->itemPath(),i);
+                m_error += makeParamLink(error,param->itemPath(),false, i);
+        }
+
+        auto bind_list = param->bindVariableList();
+        for (int i = 0; i < bind_list.size(); i++)
+        {
+            auto bind = param->bindVariable(bind_list[i]);
+            if (!var_list.contains(bind->variable))
+            {
+                error = JZNodeCompiler::errorString(Error_classNoMember, { obj_def.className,bind->variable});
+                m_error += makeParamLink(error, param->itemPath(),true, i);
+            }
         }
     }
     if(!m_error.isEmpty())

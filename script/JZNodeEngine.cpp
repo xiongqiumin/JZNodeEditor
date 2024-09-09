@@ -8,7 +8,6 @@
 #include <QTimer>
 #include "JZNodeVM.h"
 #include "JZNodeBind.h"
-#include "JZNodeQtBind.h"
 #include "JZNodeObjectParser.h"
 #include "JZContainer.h"
 

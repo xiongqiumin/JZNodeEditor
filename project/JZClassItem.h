@@ -44,10 +44,11 @@ public:
     void setUiFile(QString file);
     QList<JZParamDefine> uiWidgets();
 
-protected:               
-    QString m_super;
-    QString m_uiFile;
+protected:           
     int m_classId;
+    QString m_super;
+    QString m_uiFile;        
+
     JZParamDefine m_this;
 };
 

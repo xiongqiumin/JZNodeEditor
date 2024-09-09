@@ -13,6 +13,7 @@
 #include "JZNodeMemberSelectDialog.h"
 #include "LogManager.h"
 #include "JZNodePanel.h"
+#include "JZNodeUtils.h"
 
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
@@ -368,4 +369,10 @@ void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
     {
         LOGI(Log_Runtime, "run filed:" + info.runtimeError.error);
     }
+}
+
+void JZNodeEditor::navigate(QUrl url)
+{
+    JZUrl jz_url = fromQUrl(url);
+    selectNode(jz_url.args["id"].toInt());
 }

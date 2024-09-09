@@ -1,6 +1,7 @@
 ﻿#include "qplugin.h"
 #include "JZWidgetCollectionInterface.h"
 #include "QImageLabel.h"
+#include "3rd/qcustomplot/JZPlotConfg.h"
 
 template<class T>
 QWidget *createWidget(QWidget *parent)
@@ -68,6 +69,7 @@ JZWidgetCollectionInterface::JZWidgetCollectionInterface(QObject* parent)
     :QObject(parent)
 {       
     m_widgets.push_back(new JZWidgetInterface("QImageLabel", "Display Widgets", createWidget<QImageLabel>));
+    m_widgets.push_back(new JZWidgetInterface("JZPlotWidget", "Display Widgets", createWidget<JZPlotWidget>));
 }
 
 JZWidgetCollectionInterface::~JZWidgetCollectionInterface()

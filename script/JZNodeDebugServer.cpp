@@ -225,11 +225,11 @@ QVariant JZNodeDebugServer::getVariable(const JZNodeGetDebugParam &info)
     JZNodeGetDebugParamResp result;
     result.stack = info.stack;
     result.coors = info.coors;
-
+    
     for (int i = 0; i < info.coors.size(); i++)
     {
         auto v= m_engine->getParam(info.stack, info.coors[i]);
-        result.values[i] = toDebugParam(v);
+        result.values << toDebugParam(v);
     }
     
     return netDataPack(result);

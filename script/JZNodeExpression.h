@@ -15,6 +15,8 @@ public:
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
 
+    QStringList irList();
+
 protected:
     struct VarInfo
     {

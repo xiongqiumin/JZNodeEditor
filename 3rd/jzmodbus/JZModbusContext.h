@@ -146,7 +146,9 @@ public:
     JZModbusContext();
     ~JZModbusContext();
 
-    bool JZModbusContext::setSlave(int s);
+    bool setSlave(int s);
+    void setPlcMode(bool flag);
+
     int buildRequestBasis(int function, int addr, int nb, uint8_t *req);
     int sendMsgPre(uint8_t *req, int req_length);    
     int receiveMessage(msg_type_t msg_type, const QByteArray &res);    
@@ -166,6 +168,7 @@ public:
     
     int t_id;
     int slave;
+    bool m_plcMode;
     const modbus_backend_t *backend;
 };
 

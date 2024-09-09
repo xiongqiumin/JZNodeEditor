@@ -40,6 +40,11 @@ void JZModbusServer::setSlave(int slave)
     m_ctx->setSlave(slave);
 }
 
+void JZModbusServer::setPlcMode(bool slave)
+{
+    return m_ctx->setPlcMode(slave);
+}
+
 void JZModbusServer::clear()
 {
     stop();
@@ -81,6 +86,16 @@ void JZModbusServer::initTcp(int port)
     connect(m_tcpServer, SIGNAL(newConnection()), this, SLOT(onNewConnect()));
 
     m_port = port;
+}
+
+bool JZModbusServer::isStart() const
+{
+    if (m_com && m_com->isOpen())
+        return true;
+    if (m_tcpServer && m_tcpServer->isListening())
+        return true;
+    
+    return false;
 }
 
 bool JZModbusServer::start()

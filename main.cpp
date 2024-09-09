@@ -12,6 +12,11 @@
 #include "JZNodeCppGenerater.h"
 #include "3rd/jzupdate/JZUpdateClient.h"
 #include "editor/tools/JZModbusSimulator.h"
+#include "JZRegExpHelp.h"
+#include <stack>
+#include <set>
+using namespace std;
+
 
 void run_testcase(int argc, char *argv[])
 {
@@ -36,6 +41,12 @@ void runProgram(QString program_path)
     qApp->exec();
 }
 
+void testExpr()
+{
+    
+}
+
+
 QtMessageHandler g_defaultMessageHandle = nullptr;
 void outputLogMessage(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
@@ -49,8 +60,7 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
-    
-    
+      
     //runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\x64\Debug\project\projectUi7788\build\projectUi7788.program)");
     if(0)
     {

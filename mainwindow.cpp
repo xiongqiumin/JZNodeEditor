@@ -23,7 +23,6 @@
 #include "3rd/jzupdate/JZUpdateDialog.h"
 #include "JZAboutDialog.h"
 #include "JZProjectSettingDialog.h"
-#include "editor/tools/JZModbusSimulator.h"
 
 //Setting
 Setting::Setting()
@@ -96,6 +95,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
     m_editor = nullptr;
+    m_simulator = nullptr;
     m_useTestProcess = false;
     m_processMode = Process_none;
     m_compilerTimer = new QTimer(this);
@@ -353,6 +353,8 @@ void MainWindow::initUi()
     m_watchManual = m_log->watchManual();    
     m_watchAuto->setReadOnly(true);    
     m_debugWidgets << m_watchAuto << m_watchManual;
+    for (auto w : m_debugWidgets)
+        w->setMainWindow(this);
     
     connect(m_watchManual, &JZNodeWatch::sigParamNameChanged, this, &MainWindow::onWatchNameChanged);
     connect(m_watchManual, &JZNodeWatch::sigParamValueChanged, this, &MainWindow::onWatchValueChanged);
@@ -436,9 +438,15 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }    
 
-    JZModbusSimulatorManager::instance()->closeAll();
     m_runThread.stopRun();
     m_buildThread.stopBuild();
+
+    if (m_simulator)
+    {
+        m_simulator->closeAll();
+        delete m_simulator;
+        m_simulator = nullptr;
+    }
 
     JZDesigner::instance()->closeEditor();
     QMainWindow::closeEvent(event);
@@ -448,6 +456,21 @@ const CompilerResult *MainWindow::compilerResult(const QString &path)
 {
     auto s = (JZScriptItem*)m_project.getItem(path);
     return m_buildThread.builder()->compilerInfo(s);
+}
+
+JZNodeProgram *MainWindow::program()
+{
+    return &m_program;
+}
+
+JZNodeRuntimeInfo *MainWindow::runtime()
+{
+    return &m_runtime;
+}
+
+int MainWindow::stackIndex()
+{
+    return m_stack->stackIndex();
 }
 
 void MainWindow::updateActionStatus()
@@ -778,8 +801,10 @@ void MainWindow::onActionStepOut()
 
 void MainWindow::onActionModbus()
 {
-    JZModbusSimulator *sim = new JZModbusSimulator();
-    sim->run();
+    if (!m_simulator)
+        m_simulator = new JZModbusSimulator(this);
+
+    m_simulator->showNormal();
 }
 
 void MainWindow::onActionHelp()
@@ -796,7 +821,14 @@ void MainWindow::onActionCheckUpdate()
         return;
     }
 
-    if (!client.checkUpdate())
+    bool update = false;
+    if (!client.checkUpdate(update))
+    {
+        QMessageBox::information(this, "", "获取更新信息失败");
+        return;
+    }
+
+    if (update)
     {
         QMessageBox::information(this, "", "当前已经是最新版本");
         return;
@@ -859,6 +891,7 @@ bool MainWindow::closeProject()
     m_breakPoint->clear();
     m_project.close();
     updateActionStatus();
+    setWindowTitle("JZNodeEditor");
     return true;
 }
 
@@ -875,6 +908,7 @@ bool MainWindow::openProject(QString filepath)
     m_setting.addRecentProject(m_project.filePath());
     m_breakPoint->updateBreakPoint();     
     updateActionStatus();
+    setWindowTitle(m_project.name());
     return true;
 }
 
@@ -1156,10 +1190,22 @@ void MainWindow::closeItem(QString filepath)
     closeEditor(editor);
 }
 
-void MainWindow::removeItem(QString filepath)
+void MainWindow::removeItem(QString itempath)
 {
-    closeItem(filepath);
-    m_project.removeItem(filepath);
+    auto item = m_project.getItem(itempath);
+    auto file_item = m_project.getItemFile(item);
+
+    closeItem(itempath);
+    if (file_item == item)
+    {
+        m_project.removeItem(itempath);
+        QFile::remove(itempath);
+    }
+    else
+    {
+        m_project.removeItem(itempath);
+        m_project.saveItem(file_item);
+    }
 }
 
 void MainWindow::onProjectTreeAction(int type, QString filepah)
@@ -1188,19 +1234,11 @@ void MainWindow::onEditorActivite(int index)
     switchEditor(editor);
 }
 
-void MainWindow::onNavigate(QString file, int nodeId)
+void MainWindow::onNavigate(QUrl url)
 {
-    if(openEditor(file))
+    if(openEditor(url.path()))
     {
-        if(m_editor->type() == Editor_script)
-        {
-            JZNodeEditor *editor = qobject_cast<JZNodeEditor*>(m_editor);
-            editor->selectNode(nodeId);
-        }
-        else if(m_editor->type() == Editor_param)
-        {
-            
-        }
+        m_editor->navigate(url);
     }
 }
 
@@ -1515,7 +1553,7 @@ void MainWindow::startProgram()
         m_testProcess.start();
     }    
 
-    QThread::msleep(500);
+    QThread::msleep(100);
     if(!m_debuger.connectToServer("127.0.0.1",19888))
     {
         QMessageBox::information(this,"","can't connect to process");
@@ -1599,7 +1637,7 @@ void MainWindow::onRuntimeError(JZNodeRuntimeError error)
     for (int i = 0; i < stack_size; i++)
     {
         auto s = error.info.stacks[stack_size - i - 1];
-        QString line = makeLink(s.file, s.function, s.nodeId);
+        QString line = makeLink(s.file, s.function, "id=" + QString::number(s.nodeId));
         m_log->addLog(Log_Runtime, line);
         
         line = s.function;
@@ -1816,7 +1854,7 @@ void MainWindow::setWatchStatus(ProcessStatus status)
 
 void MainWindow::onBreakPointClicked(QString file, int id)
 {
-    onNavigate(file, id);
+    onNavigate(file + "?id=" + QString::number(id));
 }
 
 void MainWindow::onBreakPointChanged(BreakPointChange reason, QString file, int id)

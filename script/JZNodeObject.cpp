@@ -10,6 +10,7 @@
 #include "JZNodeQtWrapper.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
+#include "JZNodeVariableBind.h"
 
 int JZClassId(const QString &name)
 {
@@ -438,6 +439,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param)
     s << param.isUiWidget;
     s << param.widgetXml;
     s << param.widgetParams;
+    s << param.widgetBind;
     return s;
 }
 
@@ -458,6 +460,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
     s >> param.isUiWidget;
     s >> param.widgetXml;
     s >> param.widgetParams;
+    s >> param.widgetBind;
     return s;
 }
 
@@ -624,37 +627,54 @@ QVariant JZNodeObject::param(const QString &name) const
 {    
     auto it = m_params.find(name);
     if (it != m_params.end())
-        return *it->data();
-    else
     {
-        auto c = cparam(name);
-        Q_ASSERT(c);
+        if(*it)
+            return *it->data();
+        else
+        {
+            auto c = cparam(name);
+            Q_ASSERT(c);
 
-        QVariantList in, out;
-        in << QVariant::fromValue(JZNodeObjectPtr((JZNodeObject*)this,false));
-        c->read->call(in, out);
-        return out[0];
+            QVariantList in, out;
+            in << QVariant::fromValue(JZNodeObjectPtr((JZNodeObject*)this, false));
+            c->read->call(in, out);
+            return out[0];
+        }
     }
+    Q_ASSERT(0);
+    return QVariant();
 }
 
-void JZNodeObject::setParam(const QString &name,const QVariant &value)
-{    
+void JZNodeObject::setParam(const QString &name, const QVariant &value)
+{
     auto it = m_params.find(name);
     if (it != m_params.end())
     {
         auto ref = it->data();
-        Q_ASSERT(JZNodeType::isSameType(value, *ref));
-        *ref = value;
+        if(ref)
+        {
+            Q_ASSERT(JZNodeType::isSameType(value, *ref));
+
+            if (*ref != value)
+            {
+                *ref = value;
+                emit sigValueChanged(name);
+            }
+        }
+        else
+        {
+            auto c = cparam(name);
+            Q_ASSERT(c);
+
+            QVariantList in, out;
+            in << QVariant::fromValue(JZNodeObjectPtr((JZNodeObject*)this, false));
+            in << value;
+            c->write->call(in, out);
+        }
     }
     else
     {
-        auto c = cparam(name);
-        Q_ASSERT(c);
-
-        QVariantList in, out;
-        in << QVariant::fromValue(JZNodeObjectPtr((JZNodeObject*)this, false));
-        in << value;
-        c->write->call(in, out);       
+        Q_ASSERT(0);
     }
 }
 
@@ -708,7 +728,7 @@ void JZNodeObject::singleConnect(QString sig,JZNodeObject *recv,QString slot)
     if(singleConnectCount(recv) == 1)
     {
         connect(recv,&QObject::destroyed,this,&JZNodeObject::onRecvDestory);
-        connect(this,&JZNodeObject::sig,recv,&JZNodeObject::onSig);
+        connect(this,&JZNodeObject::sigTrigger,recv,&JZNodeObject::onSigTrigger);
     }
 }
 
@@ -717,7 +737,7 @@ void JZNodeObject::singleDisconnect(QString sig,JZNodeObject *recv,QString slot)
     if(singleConnectCount(recv) == 0)
     {
         disconnect(recv,&QObject::destroyed,this,&JZNodeObject::onRecvDestory);
-        disconnect(this,&JZNodeObject::sig,recv,&JZNodeObject::onSig);
+        disconnect(this,&JZNodeObject::sigTrigger,recv,&JZNodeObject::onSigTrigger);
     }
 }
 
@@ -726,7 +746,7 @@ void JZNodeObject::singleEmit(QString sig_name,const QVariantList &params)
     for(int i = 0; i < m_connectList.size(); i++)
     {
         if(m_connectList[i].single == sig_name)
-            emit sig(m_connectList[i].slot,params);
+            emit sigTrigger(m_connectList[i].slot,params);
     }
 }
 
@@ -748,7 +768,7 @@ void JZNodeObject::updateUiWidget(QWidget *widget)
             JZNodeObject *jzobj = new JZNodeObject(inst->meta(param_def.dataType()));
             jzobj->setCObject(w, false);
             JZNodeObjectPtr ptr(jzobj, true);
-            m_params[param_def.name] = QVariantPtr(new QVariant(QVariant::fromValue(ptr)));
+            m_params[param_def.name] = QVariantPtr(new QVariant(QVariant::fromValue(ptr)));                       
         }
     }
 }
@@ -805,7 +825,22 @@ void JZNodeObject::autoConnect()
     }
 }
 
-void JZNodeObject::onSig(QString name,const QVariantList &params)
+void JZNodeObject::autoBind()
+{
+    auto it = m_define->widgetBind.begin();
+    while (it != m_define->widgetBind.end())
+    {
+        auto def = m_params.find(it->widget);
+        if (def != m_params.end())
+        {
+            QWidget *w = JZObjectCast<QWidget>(*def->data());
+            BindManager::instance()->bind(w, WidgetProp_Value, this, it->variable, it->dir);
+            it++;
+        }
+    }               
+}
+
+void JZNodeObject::onSigTrigger(QString name,const QVariantList &params)
 {
     auto func = function(name);
     QString full_name = func->fullName();
@@ -1360,6 +1395,10 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
             *ptr = v;
             obj->m_params[param->name] = ptr;
         }
+        else
+        {
+            obj->m_params[param->name] = QVariantPtr();
+        }
 
         it++;
     }
@@ -1390,6 +1429,7 @@ JZNodeObject* JZNodeObjectManager::create(int type)
     create(def,obj);
     obj->m_isNull = false;
     obj->autoConnect();
+    obj->autoBind();
     return obj;
 }
 

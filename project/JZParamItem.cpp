@@ -15,11 +15,12 @@ JZParamItem::~JZParamItem()
 }
 
 QByteArray JZParamItem::toBuffer()
-{
+{    
     QByteArray buffer;
     QDataStream s(&buffer, QIODevice::WriteOnly);
     s << m_name;    
     s << m_variables;
+    s << m_binds;
     return buffer;
 }
 
@@ -28,6 +29,7 @@ bool JZParamItem::fromBuffer(const QByteArray &buffer)
     QDataStream s(buffer);
     s >> m_name;
     s >> m_variables;
+    s >> m_binds;
     return true;
 }
 
@@ -56,8 +58,7 @@ void JZParamItem::addVariable(JZParamDefine define)
 
 void JZParamItem::removeVariable(QString name)
 {
-    m_variables.remove(name);
-    m_binds.remove(name);
+    m_variables.remove(name);    
     itemChangedNotify();
 }
 
@@ -67,13 +68,7 @@ void JZParamItem::setVariable(QString name, JZParamDefine define)
     if (name != define.name)
     {
         Q_ASSERT(!m_variables.contains(define.name));
-        m_variables.remove(name);
-        if (m_binds.contains(name))
-        {
-            m_binds[define.name] = m_binds[name];
-            m_binds[define.name].variable = define.name;
-            m_binds.remove(name);
-        }
+        m_variables.remove(name);        
     }
     m_variables[define.name] = define;
     itemChangedNotify();
@@ -93,9 +88,10 @@ QStringList JZParamItem::variableList()
     return m_variables.keys();
 }
 
+
 void JZParamItem::addBind(JZNodeParamBind info)
-{        
-    m_binds[info.variable] = info;
+{
+    m_binds[info.widget] = info;
 }
 
 void JZParamItem::removeBind(QString name)
@@ -103,9 +99,9 @@ void JZParamItem::removeBind(QString name)
     m_binds.remove(name);
 }
 
-QMap<QString, JZNodeParamBind> JZParamItem::bindVariables()
+QStringList JZParamItem::bindVariableList()
 {
-    return m_binds;
+    return m_binds.keys();
 }
 
 JZNodeParamBind *JZParamItem::bindVariable(QString name)

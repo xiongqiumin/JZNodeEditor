@@ -15,6 +15,7 @@
 #include "JZBaseDialog.h"
 #include "JZNodeParamBindEditDialog.h"
 #include "JZNodeParamWidget.h"
+#include "JZNodeUtils.h"
 
 static int bindDir(QString text)
 {
@@ -75,68 +76,6 @@ public:
     QTableWidget *m_table;
 };
 
-class BindItemDelegate : public QStyledItemDelegate
-{
-public:
-    BindItemDelegate(QObject *parent)
-        :QStyledItemDelegate(parent)
-    {
-
-    }
-
-    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
-    {
-        JZNodeParamBindEditDialog *dlg = new JZNodeParamBindEditDialog(parent);
-        QString name = index.model()->data(index.siblingAtColumn(0)).toString();
-        dlg->init(m_editor->classItem(), name);
-        return dlg;
-    }
-
-    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const
-    {
-        auto dlg = qobject_cast<JZNodeParamBindEditDialog*>(editor);
-        QString name = index.model()->data(index.siblingAtColumn(0)).toString();
-        QString text = index.model()->data(index).toString();        
-        if (text.size() > 0)
-        {
-            QStringList values = text.split("|");
-
-            JZNodeParamBind bind;
-            bind.variable = name;
-            bind.widget = values[0];
-            bind.dir = bindDir(values[1]);
-            dlg->setParamBind(bind);
-        }
-    }
-
-    virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
-    {
-        auto dlg = qobject_cast<JZNodeParamBindEditDialog*>(editor);       
-        if (dlg->result() != QDialog::Accepted)
-            return;
-
-        auto bind = dlg->paramBind();
-        if (bind.widget.isEmpty())
-        {
-            model->setData(index, QString());
-        }
-        else
-        {
-            QString text = bind.widget + "|" + bindText(bind.dir);
-            model->setData(index, text);
-        }
-    }
-
-    virtual void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
-    {
-        auto pt = editor->parentWidget()->mapToGlobal(option.rect.topLeft());
-        pt.ry() -= 30;
-        editor->move(pt);
-    }
-
-    JZNodeParamEditor *m_editor;
-};
-
 //JZNodeParamEditorCommand
 JZNodeParamEditorCommand::JZNodeParamEditorCommand(JZNodeParamEditor *editor, int type)
 {
@@ -164,7 +103,7 @@ void JZNodeParamEditorCommand::redo()
     }
     else if (command == Bind)
     {
-        m_editor->bindParam(newBind.variable, newBind);
+        m_editor->bindParam(newBind.widget, newBind);
     }
 }
 
@@ -188,7 +127,7 @@ void JZNodeParamEditorCommand::undo()
     }
     else if (command == Bind)
     {
-        m_editor->bindParam(oldBind.variable, oldBind);
+        m_editor->bindParam(oldBind.widget, oldBind);
     }
 }
 
@@ -207,7 +146,7 @@ JZNodeParamEditor::JZNodeParamEditor()
     :ui(new Ui::JZNodeParamEditor())
 {
     ui->setupUi(this);
-    m_isClass = false;
+    m_class = nullptr;
 
     ui->boxParamType->addItem("成员");
     ui->boxParamType->addItem("控件成员");
@@ -216,7 +155,7 @@ JZNodeParamEditor::JZNodeParamEditor()
     m_table->setColumnCount(3);
     m_table->setHorizontalHeaderLabels({"名称","类型","初始值"});
     m_table->setSelectionBehavior(QTableWidget::SelectItems);
-    m_table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);    
+    m_table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
 
     m_tableUi = ui->tableWidgetUi;
     m_tableUi->setColumnCount(3);
@@ -229,11 +168,7 @@ JZNodeParamEditor::JZNodeParamEditor()
 
     ValueItemDelegate *value_delegate = new ValueItemDelegate(this);
     value_delegate->setTable(m_table);
-    m_table->setItemDelegateForColumn(2, value_delegate);    
-
-    BindItemDelegate *bind_delegate = new BindItemDelegate(this);    
-    bind_delegate->m_editor = this;
-    m_tableUi->setItemDelegateForColumn(2, bind_delegate);
+    m_table->setItemDelegateForColumn(2, value_delegate);        
     
     connect(m_table, &QTableWidget::itemChanged, this, &JZNodeParamEditor::onItemChanged);
     connect(m_tableUi, &QTableWidget::itemChanged, this, &JZNodeParamEditor::onUiItemChanged);
@@ -274,29 +209,40 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
     m_table->setItem(row, 0, itemName);    
     
     QTableWidgetItem *itemType = new QTableWidgetItem(def->type);    
-    m_table->setItem(row, 1, itemType);
-
-    QTableWidgetItem *itemValue = new QTableWidgetItem();            
-    m_table->setItem(row, 2, itemValue);
-    itemValue->setText(def->value);
+    m_table->setItem(row, 1, itemType);    
 }
 
 void JZNodeParamEditor::updateUiItem(int row,const JZParamDefine *def)
 {
-    QTableWidgetItem *itemName = new QTableWidgetItem(def->name);                        
+    QTableWidgetItem *itemName = new QTableWidgetItem(def->name);
+    itemName->setData(Qt::UserRole, def->name);
     m_tableUi->setItem(row, 0, itemName);
 
     QTableWidgetItem *itemType = new QTableWidgetItem(def->type);            
     m_tableUi->setItem(row, 1, itemType);
 
-    QTableWidgetItem *itemBind = new QTableWidgetItem();
-    m_table->setItem(row, 2, itemBind);        
-
+    //bind
     auto bind = m_file->bindVariable(def->name);
+
+    QWidget *widget = new QWidget();
+    QHBoxLayout *l = new QHBoxLayout();
+    widget->setLayout(l);
+    l->setContentsMargins(3, 3, 3, 3);
+
+    QLineEdit *line = new QLineEdit();
+    line->setReadOnly(true);
     if (bind)
-    {
-        itemBind->setText(bind->widget + "|" + bindText(bind->dir));
-    }
+        line->setText(bind->variable);
+    l->addWidget(line);
+
+    QPushButton *btn = new QPushButton("设置");
+    connect(btn, &QPushButton::clicked, this, &JZNodeParamEditor::onParamBind);
+    btn->setProperty("rowItem", QVariant::fromValue<void*>(itemName));
+    itemName->setData(Qt::UserRole + 1, QVariant::fromValue<void*>(line));
+    l->addWidget(btn);
+    l->setSpacing(1);
+
+    m_tableUi->setCellWidget(row, 2, widget);
 }
 
 void JZNodeParamEditor::open(JZProjectItem *item)
@@ -306,22 +252,16 @@ void JZNodeParamEditor::open(JZProjectItem *item)
     m_table->blockSignals(true);
     m_table->clearContents();
     
-    JZScriptClassItem *class_file = m_project->getItemClass(item);
-    if (class_file)
+    m_class = m_project->getItemClass(item);
+    if (m_class)
     {
-        m_isClass = true;
-
-        auto widgets = class_file->uiWidgets();
+        auto widgets = m_class->uiWidgets();
         m_tableUi->setRowCount(widgets.size());        
         for (int i = 0; i < widgets.size(); i++)
         {            
             auto &def = widgets[i];
             updateUiItem(i,&def);
         }        
-    }
-    else
-    {
-        m_isClass = false;
     }
     
     QStringList list = m_file->variableList();
@@ -445,10 +385,6 @@ void JZNodeParamEditor::addChangeCommand(QString name, JZParamDefine define)
 void JZNodeParamEditor::addBindCommand(QString name, JZNodeParamBind define)
 {
     auto oldBind = m_file->bindVariable(name);
-    if (!oldBind && define.widget.isEmpty())
-        return;
-    if (oldBind && oldBind->widget == define.widget && oldBind->dir == define.dir)
-        return;
 
     JZNodeParamEditorCommand *cmd = new JZNodeParamEditorCommand(this, JZNodeParamEditorCommand::Bind);
     if(oldBind)
@@ -465,11 +401,11 @@ int JZNodeParamEditor::rowDataType(int row)
     return box->currentData().toInt();
 }
 
-int JZNodeParamEditor::rowIndex(QComboBox *box)
+int JZNodeParamEditor::rowIndexUi(QString name)
 {
-    for (int i = 0; i < m_table->rowCount(); i++)
+    for (int i = 0; i < m_tableUi->rowCount(); i++)
     {
-        if (m_table->cellWidget(i,1) == box)
+        if (m_tableUi->item(i, 0)->data(Qt::UserRole).toString() == name)
             return i;
     }
     return -1;
@@ -529,16 +465,20 @@ void JZNodeParamEditor::changeParam(QString name, JZParamDefine define)
 
 void JZNodeParamEditor::bindParam(QString name, JZNodeParamBind define)
 {
-    if (define.widget.isEmpty())
+    if (define.variable.isEmpty())
         m_file->removeBind(name);
     else
         m_file->addBind(define);
 
     auto def = m_file->variable(name);
-    int row = rowIndex(name);
-    m_table->blockSignals(true);
-    updateItem(row, def);
-    m_table->blockSignals(false);
+    int row = rowIndexUi(name);
+    m_tableUi->blockSignals(true);
+    
+    auto item = m_tableUi->item(row, 0);
+    auto line = (QLineEdit*)item->data(Qt::UserRole + 1).value<void*>();
+    line->setText(define.variable);
+
+    m_tableUi->blockSignals(false);
 }
 
 void JZNodeParamEditor::on_btnAdd_clicked()
@@ -575,4 +515,41 @@ void JZNodeParamEditor::on_btnRemove_clicked()
 void JZNodeParamEditor::on_boxParamType_currentIndexChanged(int index)
 {
     ui->stackedWidget->setCurrentIndex(index);
+}
+
+void JZNodeParamEditor::onParamBind()
+{
+    auto btn = qobject_cast<QPushButton*>(sender());
+
+    auto item = (QTableWidgetItem*)btn->property("rowItem").value<void*>();    
+    auto name = item->data(Qt::UserRole).toString();
+    m_file->variable(name);
+
+    auto def = m_class->uiWidgets()[item->row()];
+    auto bind = m_file->bindVariable(def.name);
+
+    JZNodeParamBindEditDialog dlg(this);
+    dlg.init(def.type);
+    if(bind)
+        dlg.setParamBind(*bind);
+    else
+    {
+        JZNodeParamBind b;
+        b.widget = def.name;
+        dlg.setParamBind(b);
+    }
+
+    if (dlg.exec() != JZNodeParamBindEditDialog::Accepted)
+        return;
+
+    addBindCommand(def.name, dlg.paramBind());
+}
+
+void JZNodeParamEditor::navigate(QUrl url)
+{
+    auto jz_url = fromQUrl(url);
+    if (jz_url.args["type"] == "ui")    
+        ui->boxParamType->setCurrentIndex(1);
+    else
+        ui->boxParamType->setCurrentIndex(0);
 }

@@ -19,6 +19,11 @@ bool JZRegExpHelp::isFloat(const QString &str)
     return exp.match(str).hasMatch();
 }
 
+bool JZRegExpHelp::isNumber(const QString &str)
+{
+    return isInt(str) || isFloat(str) || isHex(str);
+}
+
 bool JZRegExpHelp::isBool(const QString &str)
 {    
     return (str == "true" || str == "false");

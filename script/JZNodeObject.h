@@ -76,6 +76,7 @@ public:
     bool isUiWidget;
     QString widgetXml;
     QList<JZParamDefine> widgetParams;
+    QMap<QString,JZNodeParamBind> widgetBind;
 
     bool isCObject;    
     CMeta cMeta;
@@ -144,12 +145,14 @@ public:
 
     void updateUiWidget(QWidget *widget);
     void autoConnect();
+    void autoBind();
 
 signals:
-    void sig(QString slot_function,const QVariantList &params);
+    void sigTrigger(QString slot_function,const QVariantList &params);
+    void sigValueChanged(const QString &name);
 
 public slots:
-    void onSig(QString slot_function,const QVariantList &params);
+    void onSigTrigger(QString slot_function,const QVariantList &params);
     void onDestory(QObject *obj);
     void onRecvDestory(QObject *obj);
 

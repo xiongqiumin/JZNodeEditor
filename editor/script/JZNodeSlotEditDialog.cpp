@@ -61,12 +61,13 @@ void JZNodeSlotEditDialog::onListParamChanged(QListWidgetItem *current)
         QListWidgetItem *item = new QListWidgetItem(sigs[i]);
         m_listSingle->addItem(item);
     }
+    m_listSingle->setCurrentRow(0);
 }
 
 bool JZNodeSlotEditDialog::onOk()
 {
     if(!m_listParam->currentItem() || !m_listSingle->currentItem())
-        return true;
+        return false;
 
     m_param = m_listParam->currentItem()->text();
     m_signal = m_listSingle->currentItem()->text();

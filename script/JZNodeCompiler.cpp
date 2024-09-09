@@ -1232,7 +1232,7 @@ bool JZNodeCompiler::checkBuildResult()
         if(!nodeInfo.error.isEmpty())
         {
             QString name = node->name();
-            QString error = makeLink(nodeInfo.error,m_scriptFile->itemPath(),nodeInfo.node_id) + "\n";
+            QString error = makeLink(nodeInfo.error,m_scriptFile->itemPath(),"id=" + QString::number(nodeInfo.node_id)) + "\n";
             m_error += error;
 
             m_compilerInfo.nodeError[node->id()] = error;

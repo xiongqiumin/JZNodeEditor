@@ -154,7 +154,7 @@ public:
     void setBuilder(JZNodeBuilder *builder);
 
     bool genGraphs(JZScriptItem *file, QVector<GraphPtr> &result);
-    bool build(JZScriptItem *file,JZNodeScript *result);
+    bool build(JZScriptItem *file,JZNodeScript *result);    
     CompilerResult compilerResult();
     
     bool checkParamDefine(const JZParamDefine *def, QString &error);

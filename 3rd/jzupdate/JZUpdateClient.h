@@ -15,7 +15,7 @@ public:
 
     bool init(QString ip, int port);
     
-    bool checkUpdate();
+    bool checkUpdate(bool &isUpadte);
     bool downloadUpdate();
     bool isDownloadFinish();
     bool dealUpdate();    

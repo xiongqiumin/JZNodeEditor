@@ -6,6 +6,13 @@
 #include <QVariant>
 
 enum {
+    Modbus_rtuClient,
+    Modbus_tcpClient,
+    Modbus_rtuServer,
+    Modbus_tcpServer,
+};
+
+enum {
     Param_Coil,
     Param_DiscreteInput,
     Param_HoldingRegister,
@@ -96,11 +103,15 @@ class JZModbusConfig
 public:
     JZModbusConfig();
 
-    QMap<int,JZModbusStrategy> strategyMap;
-    QList<JZModbusParam> paramList;
+    bool isRtu() const;
+    bool isMaster() const;
 
-    bool isRtu;
-    int slave;    
+    int modbusType;
+    int slave;
+    bool plcMode;
+
+    QMap<int,JZModbusStrategy> strategyMap;
+    QList<JZModbusParam> paramList;    
 
     QString portName;
     int baud, dataBit, parityBit, stopBit;

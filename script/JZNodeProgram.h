@@ -51,8 +51,8 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 class JZFunctionDebugInfo
 {
 public:
-    JZParamDefine *localParam(QString name);
-    JZParam *nodeParam(int id);
+    const JZParamDefine *localParam(QString name) const;
+    const JZParam *nodeParam(int id) const;
 
     QMap<int, NodeInfo> nodeInfo;
     QList<JZParamDefine> localVariables;
@@ -152,6 +152,7 @@ public:
     JZNodeScript *script(QString path);   
 
     const JZFunctionDefine *function(QString name);
+    const JZFunctionDebugInfo *debugInfo(QString name);
 
     QString irToString(JZNodeIR *ir);
     QString dump();   

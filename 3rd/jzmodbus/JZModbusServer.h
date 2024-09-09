@@ -22,9 +22,11 @@ public:
     JZModbusMapping *mapping();
 
     void setSlave(int slave);
+    void setPlcMode(bool slave);
 
     void initRtu(QString com, int baud, QSerialPort::DataBits, QSerialPort::StopBits, QSerialPort::Parity);
     void initTcp(int port);
+    bool isStart() const;
     bool start();
     void stop();
 

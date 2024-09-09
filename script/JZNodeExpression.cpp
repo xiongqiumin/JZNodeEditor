@@ -1,5 +1,6 @@
 ﻿#include <QRegularExpression>
 #include <QPushButton>
+#include <QScopeGuard>
 #include "JZNodeExpression.h"
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
@@ -31,17 +32,26 @@ QString JZNodeExpression::expr()
     return m_expression;
 }
 
+QStringList JZNodeExpression::irList()
+{
+    return m_exprList;
+}
+
 bool JZNodeExpression::updateExpr(QString &error)
 {
+    auto project = JZProject::active();
+    Q_ASSERT(project);
+
+    JZScriptFile *file = new JZScriptFile();    
+    project->addTmp(file);
+    auto cleanup = qScopeGuard([project,file] {
+        project->removeTmp(file);        
+    });
+
     setName(m_expression);
     clearPin();
 
-    QString code = "void func(){\n" + m_expression + "\n}";
-
-    JZProject project;
-    project.initEmpty();
-
-    auto file = project.mainFile();
+    QString code = "void __expr_func__(){\n" + m_expression + "\n}";    
     ASConvert convert;
     if(!convert.convert(code,file))
     {
@@ -49,8 +59,7 @@ bool JZNodeExpression::updateExpr(QString &error)
         return false;
     }
 
-    auto func = file->getFunction("func");
-    
+    auto func = file->getFunction("__expr_func__");    
     JZNodeCompiler c;
     QVector<GraphPtr> graph_list;
     if(!c.genGraphs(func, graph_list))

@@ -21,6 +21,7 @@
 #include "JZNodeAutoRunThread.h"
 #include "JZNodeBuildThread.h"
 #include "JZNodeEditor.h"
+#include "editor/tools/JZModbusSimulator.h"
 
 class Setting
 {
@@ -40,6 +41,9 @@ public:
     ~MainWindow();
 
     const CompilerResult *compilerResult(const QString &path);
+    JZNodeProgram *program();
+    JZNodeRuntimeInfo *runtime();
+    int stackIndex();
 
 protected slots:    
     void onActionNewProject();
@@ -93,7 +97,7 @@ protected slots:
 
     void onEditorClose(int index);
     void onEditorActivite(int index);
-    void onNavigate(QString file, int nodeId);
+    void onNavigate(QUrl url);
     void onProjectChanged(JZProjectItem *item);
     
     void onFunctionOpen(QString filepath);    
@@ -236,6 +240,7 @@ private:
     QAction *m_actionRun, *m_actionResume;
     QList<QAction*> m_debugActions;
     QToolBar *m_toolDebug;    
+    JZModbusSimulator *m_simulator;
 
     QTimer *m_compilerTimer;
     BuildInfo m_buildInfo;

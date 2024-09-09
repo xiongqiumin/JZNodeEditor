@@ -128,6 +128,11 @@ void JZModbusMaster::setSlave(int slave)
     m_client->setSlave(slave);
 }
 
+void JZModbusMaster::setPlcMode(bool mode)
+{
+    m_client->setPlcMode(mode);
+}
+
 bool JZModbusMaster::isOpen()
 {
     return m_client->isOpen();
@@ -309,7 +314,7 @@ void modbusMasterSetConfig(JZModbusMaster *master, const JZModbusConfig *c)
     for (int i = 0; i < c->paramList.size(); i++)
         map->add(c->paramList[i]);
 
-    if (c->isRtu)
+    if (c->isRtu())
     {
         master->initRtu(c->portName, c->baud, (QSerialPort::DataBits)c->dataBit, (QSerialPort::StopBits)c->stopBit, (QSerialPort::Parity)c->parityBit);
         master->setSlave(c->slave);

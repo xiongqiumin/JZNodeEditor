@@ -110,6 +110,12 @@
     <Filter Include="Source Files\3rd\jzmodbus">
       <UniqueIdentifier>{0bba7a06-a935-4614-8703-7960d40b8c93}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\3rd\qcustomplot">
+      <UniqueIdentifier>{e8fdb8ab-ee09-4581-a28c-c297ee51e4d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rd\qcustomplot">
+      <UniqueIdentifier>{8732c3d3-5dfe-4871-9be0-f3c3646bf9d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -310,9 +316,6 @@
     <ClCompile Include="LogManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="script\JZNodeQtBind.cpp">
-      <Filter>Source Files\script</Filter>
-    </ClCompile>
     <ClCompile Include="script\JZNodeObjectParser.cpp">
       <Filter>Source Files\script</Filter>
     </ClCompile>
@@ -478,9 +481,6 @@
     <ClCompile Include="3rd\jzprofiler\JZTx.cpp">
       <Filter>Source Files\3rd\jzprofiler</Filter>
     </ClCompile>
-    <ClCompile Include="editor\tools\JZModbusSimulator.cpp">
-      <Filter>Source Files\editor\tools</Filter>
-    </ClCompile>
     <ClCompile Include="3rd\jzmodbus\JZModbusClient.cpp">
       <Filter>Source Files\3rd\jzmodbus</Filter>
     </ClCompile>
@@ -522,6 +522,33 @@
     </ClCompile>
     <ClCompile Include="editor\script\JZNodeEditorManager.cpp">
       <Filter>Source Files\editor\script</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\qcustomplot\qcustomplot.cpp">
+      <Filter>Source Files\3rd\qcustomplot</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\qcustomplot\JZPlotConfg.cpp">
+      <Filter>Source Files\3rd\qcustomplot</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\tools\JZModbusConfigDialog.cpp">
+      <Filter>Source Files\editor\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\tools\JZModbusSimulator.cpp">
+      <Filter>Source Files\editor\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="editor\tools\JZModbusTemplateDialog.cpp">
+      <Filter>Source Files\editor\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\JZSearchTreeWidget.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZExpressionSolver.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeVariableBind.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\JZNodeLangServer.cpp">
+      <Filter>Source Files\script</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -615,9 +642,6 @@
     <QtMoc Include="project\JZProject.h">
       <Filter>Header Files\project</Filter>
     </QtMoc>
-    <QtMoc Include="script\JZNodeQtBind.h">
-      <Filter>Header Files\script</Filter>
-    </QtMoc>
     <QtMoc Include="editor\script\JZNodeViewPanel.h">
       <Filter>Header Files\editor\script</Filter>
     </QtMoc>
@@ -699,9 +723,6 @@
     <QtMoc Include="3rd\jzupdate\JZUpdateDialog.h">
       <Filter>Header Files\3rd\jzupdate</Filter>
     </QtMoc>
-    <QtMoc Include="editor\tools\JZModbusSimulator.h">
-      <Filter>Header Files\editor\tools</Filter>
-    </QtMoc>
     <QtMoc Include="3rd\jzmodbus\JZModbusClient.h">
       <Filter>Header Files\3rd\jzmodbus</Filter>
     </QtMoc>
@@ -722,6 +743,27 @@
     </QtMoc>
     <QtMoc Include="editor\ui\JZWidgetCollectionInterface.h">
       <Filter>Header Files\editor\ui</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qcustomplot\qcustomplot.h">
+      <Filter>Header Files\3rd\qcustomplot</Filter>
+    </QtMoc>
+    <QtMoc Include="3rd\qcustomplot\JZPlotConfg.h">
+      <Filter>Header Files\3rd\qcustomplot</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\tools\JZModbusConfigDialog.h">
+      <Filter>Header Files\editor\tools</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\tools\JZModbusSimulator.h">
+      <Filter>Header Files\editor\tools</Filter>
+    </QtMoc>
+    <QtMoc Include="editor\tools\JZModbusTemplateDialog.h">
+      <Filter>Header Files\editor\tools</Filter>
+    </QtMoc>
+    <QtMoc Include="widgets\JZSearchTreeWidget.h">
+      <Filter>Header Files\widgets</Filter>
+    </QtMoc>
+    <QtMoc Include="script\JZNodeVariableBind.h">
+      <Filter>Header Files\script</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -926,6 +968,12 @@
     <ClInclude Include="editor\script\JZNodeEditorManager.h">
       <Filter>Header Files\editor\script</Filter>
     </ClInclude>
+    <ClInclude Include="script\JZExpressionSolver.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="script\JZNodeLangServer.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="editor\JZNewProjectDialog.ui">
@@ -955,7 +1003,7 @@
     <QtUic Include="editor\script\JZNodeParamBindEditDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtUic Include="editor\tools\JZModbusSimulator.ui">
+    <QtUic Include="editor\tools\JZModbusConfigDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>
