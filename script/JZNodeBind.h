@@ -390,7 +390,7 @@ QSharedPointer<CFunction> createFuncion(Return (Class::*f)(Args...) const,Extra.
     return createFuncionImpl<decltype(func),Extra...>(func,extra...);
 }
 
-#if __cplusplus >= 201103L
+#if __cplusplus >= 201703L
 template <typename Return, typename Class, typename... Args, typename... Extra>
 QSharedPointer<CFunction> createFuncion(Return(Class::*f)(Args...) noexcept, Extra... extra)
 {
