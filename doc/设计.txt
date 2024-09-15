@@ -1,2 +1,0 @@
-1. 为什么要区分QVariant 和 JZVarinatAny 
-QVariant 只是一个容器，不代表真正的类型，JZVarinatAny 是一个真正的类型
