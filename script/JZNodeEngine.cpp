@@ -1857,8 +1857,8 @@ bool JZNodeEngine::run()
 
             JZNodeIRExpr *ir_expr =  dynamic_cast<JZNodeIRExpr*>(op);
             QVariant c;
-            auto &a = getParam(ir_expr->src1);
-            auto &b = getParam(ir_expr->src2);
+            auto a = getParam(ir_expr->src1);
+            auto b = getParam(ir_expr->src2);
             c = dealExpr(a,b,ir_expr->type);
             setParam(ir_expr->dst,c);
             break; 
@@ -1870,7 +1870,7 @@ bool JZNodeEngine::run()
 
             JZNodeIRExpr *ir_expr = dynamic_cast<JZNodeIRExpr*>(op);
             QVariant c;
-            auto &a = getParam(ir_expr->src1);
+            auto a = getParam(ir_expr->src1);
             c = dealSingleExpr(a, ir_expr->type);
             setParam(ir_expr->dst, c);
             break;

@@ -1,4 +1,4 @@
-QT       += core gui network uitools serialport testlib designer
+QT       += core gui network uitools serialport testlib designer printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

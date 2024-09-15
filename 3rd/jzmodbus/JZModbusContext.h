@@ -154,7 +154,7 @@ public:
     int receiveMessage(msg_type_t msg_type, const QByteArray &res);    
     int checkConfirmation(const uint8_t *req, const uint8_t *rsp, int rsp_length);
     int reply(uint8_t *rsp, const uint8_t *req, int req_length, JZModbusMapping *mb_mapping, MappingChanged &chg_info);
-    int JZModbusContext::response_exception(sft_t *sft,
+    int response_exception(sft_t *sft,
         int exception_code, uint8_t *rsp,
         unsigned int to_flush,
         const char* temp, ...);

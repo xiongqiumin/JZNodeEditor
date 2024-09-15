@@ -24,6 +24,8 @@ protected slots:
 protected:
     struct ClientInfo
     {        
+        ClientInfo();
+        
         int offset;
         QSharedPointer<QFile> file;
     };    

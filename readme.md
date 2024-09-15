@@ -34,5 +34,8 @@ http://120.77.183.99/data/JZNodeEditor.zip
 下载版本后, sample\russian 是一个demo， 实现了俄罗斯方块.
 
 ## 编译要求
-qt5.15 
+qt5.15<br/>
+vs2015 + qt5.15.2 + qt插件<br/>
+ming81 + qt5.15.2
+
 

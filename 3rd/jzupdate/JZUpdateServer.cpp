@@ -1,6 +1,11 @@
 #include "JZUpdateServer.h"
 #include "JZUpdateUtils.h"
 
+JZUpdateServer::ClientInfo::ClientInfo()
+{
+    offset = 0;
+}
+
 JZUpdateServer::JZUpdateServer()
 {
     connect(&m_server, &JZNetServer::sigNewConnect, this, &JZUpdateServer::onConnect);

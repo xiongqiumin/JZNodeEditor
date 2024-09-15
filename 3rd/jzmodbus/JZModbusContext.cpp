@@ -539,10 +539,10 @@ int JZModbusContext::reply(uint8_t *rsp,const uint8_t *req, int req_length, JZMo
         }
         else {
             uint16_t data = mb_mapping->tab_registers[mapping_address];
-            uint16_t and = (req[offset + 3] << 8) + req[offset + 4];
-            uint16_t or = (req[offset + 5] << 8) + req[offset + 6];
+            uint16_t and_i = (req[offset + 3] << 8) + req[offset + 4];
+            uint16_t or_i = (req[offset + 5] << 8) + req[offset + 6];
 
-            data = (data & and) | (or &(~and));
+            data = (data & and_i) | (or_i &(~and_i));
             mb_mapping->tab_registers[mapping_address] = data;
             memcpy(rsp, req, req_length);
             rsp_length = req_length;
