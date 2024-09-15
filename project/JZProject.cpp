@@ -285,6 +285,12 @@ void JZProject::removeTmp(JZProjectItem *item)
     removeItem("/tmp/" + item->name());
 }
 
+bool JZProject::isTmp(JZProjectItem *item)
+{
+    QString path = item->itemPath();
+    return path.startsWith("/tmp/");
+}
+
 void JZProject::saveTransaction()
 {
     m_isSaveCache = true;
@@ -893,5 +899,6 @@ void JZProject::onItemChanged(JZProjectItem *item)
         }
     }
 
-    emit sigItemChanged(item);
+    if(!isTmp(item))
+        emit sigItemChanged(item);
 }

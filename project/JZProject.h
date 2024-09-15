@@ -61,6 +61,7 @@ public:
 
     void addTmp(JZProjectItem *item);
     void removeTmp(JZProjectItem *item);
+    bool isTmp(JZProjectItem *item);
 
     void saveTransaction();
     void saveCommit();
