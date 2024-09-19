@@ -575,3 +575,10 @@ void registContainer(QString type,int type_id)
         registSet(type_str,type_id);
     }   
 }
+
+void unregistContainer(QString type)
+{
+    auto type_id = JZNodeObjectManager::instance()->getId(type);
+    if(type_id != Type_none)
+        JZNodeObjectManager::instance()->unregist(type_id);
+}

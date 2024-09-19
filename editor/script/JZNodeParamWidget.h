@@ -59,8 +59,11 @@ public:
     virtual QString value() const;
     virtual void setValue(const QString &value);
 
+    virtual void updateWidget();
+
 signals:
     void sigValueChanged(const QString &value);
+    void sigSizeChanged(QSize size);
 };
 
 //JZNodePinButtonWidget
@@ -108,6 +111,18 @@ protected:
     QString m_widgetType;
 };
 
+class JZNodeDisplayWidget : public JZNodePinWidget
+{
+    Q_OBJECT
 
+public:
+    JZNodeDisplayWidget();
+
+    void setRuntimeValue(const JZNodeDebugParamValue &value);
+    virtual void updateWidget() override;
+
+protected:
+    QLineEdit *m_line;
+};
 
 #endif // !JZNODE_PARAM_WIDGET_H_

@@ -57,6 +57,7 @@ public:
 TemplateInfo parseTemplate(QString type);
 bool checkContainer(QString type,QString &error);
 void registContainer(QString type,int type_id = -1);
+void unregistContainer(QString type);
 
 
 #endif

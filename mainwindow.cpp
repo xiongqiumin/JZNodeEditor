@@ -95,8 +95,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
     m_editor = nullptr;
-    m_simulator = nullptr;
-    m_useTestProcess = false;
+    m_simulator = nullptr;    
     m_processMode = Process_none;
     m_compilerTimer = new QTimer(this);
     connect(m_compilerTimer, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
@@ -112,6 +111,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
     connect(&m_project,&JZProject::sigItemChanged, this, &MainWindow::onProjectChanged);
+    connect(&m_project,&JZProject::sigDefineChanged, this, &MainWindow::onProjectChanged);
     connect(&m_project,&JZProject::sigBreakPointChanged, this, &MainWindow::onBreakPointChanged);
 
     connect(&m_runThread,&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
@@ -124,8 +124,7 @@ MainWindow::MainWindow(QWidget *parent)
     loadSetting();    
     initUi();     
     updateActionStatus();    
-    
-    JZProject::setActive(&m_project);
+        
     //initLocalProcessTest();
 }
 
@@ -712,16 +711,6 @@ void MainWindow::onActionExport()
     m_log->addLog(Log_Compiler, "export to: " + output);
 }
 
-void MainWindow::initLocalProcessTest()
-{   
-    m_useTestProcess = true;    
-    connect(&m_testProcess, &QThread::finished, this, &MainWindow::onTestProcessFinish);
-
-    m_testProcess.init(&m_project);
-    m_projectTree->setProject(&m_project);    
-    updateActionStatus();
-}
-
 void MainWindow::onActionRun()
 {    
     if(m_buildInfo.buildTimestamp >= m_buildInfo.saveTimestamp)
@@ -759,15 +748,10 @@ void MainWindow::onActionStop()
 {        
     if (m_processMode == Process_none)
         return;
-
-    if (!m_useTestProcess)
-    {
-        m_process.setProperty("userKill", 1);
-        m_process.kill();
-        m_process.waitForFinished();
-    }
-    else
-        m_testProcess.stop();
+    
+    m_process.setProperty("userKill", 1);
+    m_process.kill();
+    m_process.waitForFinished();    
     updateActionStatus();
 }
 
@@ -892,6 +876,7 @@ bool MainWindow::closeProject()
     m_project.close();
     updateActionStatus();
     setWindowTitle("JZNodeEditor");
+    JZProject::setActive(nullptr);
     return true;
 }
 
@@ -903,6 +888,7 @@ bool MainWindow::openProject(QString filepath)
         return false;
     }
 
+    JZProject::setActive(&m_project);
     m_buildInfo.clear();
     m_projectTree->setProject(&m_project);
     m_setting.addRecentProject(m_project.filePath());
@@ -1242,7 +1228,7 @@ void MainWindow::onNavigate(QUrl url)
     }
 }
 
-void MainWindow::onProjectChanged(JZProjectItem *item)
+void MainWindow::onProjectChanged()
 {   
     m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
 
@@ -1254,7 +1240,7 @@ void MainWindow::onProjectChanged(JZProjectItem *item)
         if (it.value()->type() == Editor_script)
         {
             auto node_edit = (JZNodeEditor*)it.value();
-            node_edit->updateNode();
+            node_edit->updateDefine();
         }
 
         it++;
@@ -1530,28 +1516,20 @@ void MainWindow::startProgram()
     
     m_runThread.stopRun();
 
-    m_log->clearLog(Log_Runtime);
-    if (!m_useTestProcess)
-    {
-        QString app = qApp->applicationFilePath();
-        QString build_exe = m_project.path() + "/build/" + m_project.name() + ".program";
-        QStringList params;
-        params << "--run" << build_exe << "--debug";
+    m_log->clearLog(Log_Runtime);   
+    QString app = qApp->applicationFilePath();
+    QString build_exe = m_project.path() + "/build/" + m_project.name() + ".program";
+    QStringList params;
+    params << "--run" << build_exe << "--debug";
 
-        m_log->addLog(Log_Runtime, "start program");
-        m_process.setWorkingDirectory(m_project.path());
-        m_process.start(app, params);
-        if (!m_process.waitForStarted())
-        {
-            QMessageBox::information(this, "", "start failed");
-            return;
-        }
-    }
-    else
+    m_log->addLog(Log_Runtime, "start program");
+    m_process.setWorkingDirectory(m_project.path());
+    m_process.start(app, params);
+    if (!m_process.waitForStarted())
     {
-        m_log->addLog(Log_Runtime, "start program");
-        m_testProcess.start();
-    }    
+        QMessageBox::information(this, "", "start failed");
+        return;
+    }
 
     QThread::msleep(100);
     if(!m_debuger.connectToServer("127.0.0.1",19888))
@@ -1655,13 +1633,6 @@ void MainWindow::onNetError()
 {
     m_log->addLog(Log_Runtime, "调试连接中断");
     onActionStop();
-}
-
-void MainWindow::onTestProcessFinish()
-{
-    m_log->addLog(Log_Runtime, "local server test finish.");        
-    setRunningMode(Process_none);
-    updateActionStatus();
 }
 
 void MainWindow::onRuntimeFinish(int code,QProcess::ExitStatus status)

@@ -25,3 +25,8 @@ int JZNodeEditorManager::customFunctionNode(QString function)
 {
     return m_functionMap.value(function, Node_none);
 }
+
+void JZNodeEditorManager::unregistCustomFunctionNode(QString function)
+{
+    m_functionMap.remove(function);
+}

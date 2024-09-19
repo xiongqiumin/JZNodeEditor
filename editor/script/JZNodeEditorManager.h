@@ -10,6 +10,7 @@ public:
     static JZNodeEditorManager *instance();
 
     void registCustomFunctionNode(QString function,int node_type);
+    void unregistCustomFunctionNode(QString function);
     int customFunctionNode(QString function);
 
 protected:

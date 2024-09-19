@@ -1,5 +1,5 @@
-﻿#ifndef JZNODE_PARAM_BIND_EDIT_DIALOG_H_
-#define JZNODE_PARAM_BIND_EDIT_DIALOG_H_
+﻿#ifndef JZNODE_EXPR_EDIT_DIALOG_H_
+#define JZNODE_EXPR_EDIT_DIALOG_H_
 
 #include <QDialog>
 #include <QPlainTextEdit>

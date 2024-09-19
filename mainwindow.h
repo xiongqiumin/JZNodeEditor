@@ -17,7 +17,6 @@
 #include "JZNodeStack.h"
 #include "JZNodeBreakPoint.h"
 #include "LogManager.h"
-#include "tests/test_server.h"
 #include "JZNodeAutoRunThread.h"
 #include "JZNodeBuildThread.h"
 #include "JZNodeEditor.h"
@@ -98,7 +97,7 @@ protected slots:
     void onEditorClose(int index);
     void onEditorActivite(int index);
     void onNavigate(QUrl url);
-    void onProjectChanged(JZProjectItem *item);
+    void onProjectChanged();
     
     void onFunctionOpen(QString filepath);    
     void onAutoCompiler();
@@ -117,8 +116,7 @@ protected slots:
     void onRuntimeError(JZNodeRuntimeError error);    
     void onRuntimeStatus(int staus);    
     void onRuntimeFinish(int code,QProcess::ExitStatus status);        
-    
-    void onTestProcessFinish();
+        
     void onNetError();
     void onTabContextMenu(QPoint pos);
 
@@ -207,8 +205,7 @@ private:
     void saveToFile(QString file,QString text);
     void saveAll();
     bool closeAllEditor(JZEditor *except = nullptr);
-    void resetEditor(JZEditor *editor);
-    void initLocalProcessTest();
+    void resetEditor(JZEditor *editor);    
     QIcon menuIcon(const QString &name);
     void showTopLevel();
     
@@ -231,10 +228,7 @@ private:
 
     JZNodeDebugClient m_debuger;
     QProcess m_process;           
-    ProcessStatus m_processMode;
-
-    bool m_useTestProcess;
-    TestServer m_testProcess;
+    ProcessStatus m_processMode;    
 
     QList<JZNodeWatch*> m_debugWidgets;
     QAction *m_actionRun, *m_actionResume;

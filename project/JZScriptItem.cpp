@@ -342,6 +342,9 @@ bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &er
         error = "输入需为常量";
         return false;
     }
+    if (!node_to->canLink(from.nodeId, from.pinId, error))
+        return false;
+
     return true;
 }
 

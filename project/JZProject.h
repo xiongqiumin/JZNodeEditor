@@ -132,9 +132,11 @@ public:
     void onItemChanged(JZProjectItem *item);     
 
 signals:
+    void sigDefineChanged();
     void sigItemChanged(JZProjectItem *item);
     void sigBreakPointChanged(BreakPointChange reason,QString file, int id);
     void sigScriptNodeChanged(JZScriptItem *file, int nodeId,const QByteArray &buffer);
+    void sigScriptNodeWidgetChanged(JZScriptItem *file, int nodeId, int propId);
 
 protected:
     Q_DISABLE_COPY(JZProject)
@@ -146,6 +148,7 @@ protected:
     int indexOfBreakPoint(QString file,int id);
 
     void registType();
+    void unregistType();
             
     JZProjectItemRoot m_root;
     JZProjectItemRoot m_tmp;

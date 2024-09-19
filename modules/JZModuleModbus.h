@@ -3,6 +3,7 @@
 
 #include "JZNodeFunction.h"
 #include "3rd/jzmodbus/JZModbusParam.h"
+#include "JZModule.h"
 
 enum {
     Node_modbusConfig = 1000,    
@@ -27,7 +28,15 @@ protected:
     JZModbusConfig m_config;
 };
 
-void InitModbus();
+class JZModuleModbus: public JZModule
+{
+public:
+    JZModuleModbus();
+    virtual ~JZModuleModbus();
+    
+    virtual void regist() override;
+    virtual void unregist() override;
+};
 
 
 

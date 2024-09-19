@@ -4,10 +4,23 @@
 #include <QDialog>
 #include <QTextEdit>
 #include <QStackedWidget>
+#include <QTreeWidget>
+#include <QCheckBox>
 #include "UiCommon.h"
 #include "JZProject.h"
 #include "JZBaseDialog.h"
-#include <QTreeWidget>
+
+class ModuleEdit : public QWidget
+{
+public:
+    ModuleEdit();
+
+    QStringList getModule();
+    void setModule(QStringList module);
+
+protected:
+    QList<QCheckBox*> m_checkList;
+};
 
 class JZProjectSettingDialog : public JZBaseDialog
 {
@@ -28,7 +41,7 @@ protected:
 	QWidget *addPage(QWidget *w,QString help);
 
 	QStackedWidget *m_stackWidget;
-	QTextEdit *m_moduleEdit;
+	ModuleEdit *m_moduleEdit;
 	QTextEdit *m_containerEdit;
     JZProject *m_project;
     QTreeWidget *m_tree;

@@ -6,6 +6,7 @@
 #include "JZNode.h"
 #include "JZScriptItem.h"
 #include "JZNodePropertyEditor.h"
+#include "JZModule.h"
 
 enum {
     TreeItem_type = Qt::UserRole,
@@ -32,7 +33,7 @@ public:
     ~JZNodePanel();    
 
     void setFile(JZScriptItem *file);        
-    void updateNode();
+    void updateDefine();
 
     QTreeWidgetItem *itemOp();
     QTreeWidgetItem *itemProcess();
@@ -43,20 +44,12 @@ protected slots:
     void onAddScriptParam();    
     void onContextMenu(const QPoint &pos);
 
-protected:
-    struct Module
-    {
-        QString name;
-        QStringList typeList;
-        QStringList functionList;
-    };
-    
+protected:        
     void init();
     void initData();
-    void initBasicFlow();
-    void initModule();
-    void initLocalDefine();
-    
+    void initBasicFlow();    
+    void initLocalDefine();    
+
     void initThis(QTreeWidgetItem *root);
     void initConstParam(QTreeWidgetItem *root);    
     void initProjectParam(QTreeWidgetItem *root);
@@ -66,18 +59,26 @@ protected:
     void initExpression(QTreeWidgetItem *root);
     void initConvert(QTreeWidgetItem *root);
 
-    void updateClass();
-    void updateLocalVariable();
+    void addModule(QTreeWidgetItem *item_root,QString name);
+    void updateClass(QTreeWidgetItem *item_root,const QString &class_name,bool show_protected);
 
+    void updateThis();    
+    void updateLocalVariable();
+    void updateModule();
+    void updateLocalDefine();
+    
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
     QTreeWidgetItem *createParam(QString name);
     QTreeWidgetItem *createMemberParam(QString name);
     QTreeWidgetItem *createClass(QString name);
     QTreeWidgetItem *createFunction(QString name);
+    void setNode(QTreeWidgetItem *item,JZNode *node);
 
+    void removeItem(QTreeWidgetItem *root, QString name);
     bool filterItem(QTreeWidgetItem *root,QString name);    
     bool isClassItem(QTreeWidgetItem *item);
+    const JZModule *module(QString name);
 
     JZNodeTreeWidget *m_tree;    
     JZScriptItem *m_file;
@@ -89,7 +90,10 @@ protected:
     QTreeWidgetItem *m_memberFunction;
     QTreeWidgetItem *m_memberParam;
     QTreeWidgetItem *m_itemLocalParam;
-    QList<Module> m_modules;
+    QTreeWidgetItem *m_itemLocalDefine;
+    QTreeWidgetItem *m_module;
+
+    QList<JZModuleStatic> m_modules;
 };
 
 #endif

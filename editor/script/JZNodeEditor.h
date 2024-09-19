@@ -53,7 +53,7 @@ public:
     void setNodeValue(int nodeId, int prop_id, const QString &value);
     void setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value);
     void resetPropValue();
-    void updateNode();    
+    void updateDefine();    
         
 signals:
     void sigFunctionOpen(QString name);

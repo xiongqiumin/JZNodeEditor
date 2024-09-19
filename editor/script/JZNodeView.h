@@ -175,7 +175,8 @@ signals:
 
 protected slots:
     void onContextMenu(const QPoint &pos);
-    void onItemPropChanged();        
+    void onItemPropChanged();     
+    void onItemSizeChanged();
     void onNodeTimer();
     void onMouseMoveTimer();
     void onCleanChanged(bool modify);
@@ -184,6 +185,7 @@ protected slots:
     void onMapSceneScaled(bool flag);
 
     void onScriptNodeChanged(JZScriptItem *file, int nodeId, const QByteArray &buffer);
+    void onScriptNodeWidgetChanged(JZScriptItem *file, int nodeId, int propId);
     void onPropChanged(int nodeId, int pinId, const QString &value);
     void onDependChanged();
 

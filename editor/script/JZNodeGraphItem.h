@@ -18,6 +18,8 @@ public:
 
     virtual QRectF boundingRect() const override;
     virtual void updateNode() override;
+    void updatePinWidget(int id);
+    void updateSize();
 
     JZNode *node();
     int pinAt(QPointF pos);        //连接框
@@ -78,9 +80,10 @@ protected:
     void drawProp(QPainter *painter,int pinId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
     void calcGemo(int pin, int x, int y,PropGemo *gemo);
-    void updatePropGemo();
+    void updatePin();
     void updateErrorGemo();        
     
+    void createPinWidget(int prop_id);
     void setWidgetValue(int prop_id, const QString &value);
     QString getWidgetValue(int prop_id);
 

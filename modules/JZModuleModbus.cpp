@@ -1,4 +1,4 @@
-#include <QSerialPort>
+﻿#include <QSerialPort>
 #include <QPushButton>
 #include "JZModuleModbus.h"
 #include "JZNodeObject.h"
@@ -48,7 +48,7 @@ JZNodePinWidget *JZNodeModbusConfig::createWidget(int id)
     {
         JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
         auto btn = w->button();
-        btn->setText("�༭");
+        btn->setText("�༭");
         btn->connect(btn, &QPushButton::clicked, [btn,this] {
             QByteArray old = this->toBuffer();
 
@@ -117,7 +117,20 @@ void initModbusSlaver(JZModbusSlaver *slaver,const QByteArray &buffer)
     modbusSlaverSetConfig(slaver, &config);
 }
 
-void InitModbus()
+//JZModuleModbus
+JZModuleModbus::JZModuleModbus()
+{    
+    m_name = "modbus";
+    m_functionList << "initModbusMaster" << "initModbusSlaver" << "initPlotConfig";
+    m_classList << "QSerialPort::BaudRate" << "QSerialPort::StopBits" << "QSerialPort::Parity" << "QSerialPort::DataBits" <<
+        "JZModbusParam" << "JZModbusSlaver" << "JZModbusMaster" << "JZPlotWidget";
+}
+
+JZModuleModbus::~JZModuleModbus()
+{
+}
+
+void JZModuleModbus::regist()
 {
     jzbind::registEnum<QSerialPort::BaudRate>("QSerialPort::BaudRate");
     jzbind::registEnum<QSerialPort::StopBits>("QSerialPort::StopBits");
@@ -128,7 +141,6 @@ void InitModbus()
     cls_modbus_param.defProperty("name", JZBIND_PROPERTY_IMPL(JZModbusParam,name));    
     cls_modbus_param.defProperty("value", JZBIND_PROPERTY_IMPL(JZModbusParam,value));
     cls_modbus_param.regist();
-
 
     jzbind::ClassBind<JZModbusMaster> cls_modbus_master("JZModbusMaster","QObject");
     cls_modbus_master.def("setSlave", true, &JZModbusMaster::setSlave);
@@ -167,4 +179,9 @@ void InitModbus()
 
     JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusMaster", Node_modbusConfig);
     JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusSlaver", Node_modbusConfig);
+}
+
+void JZModuleModbus::unregist()
+{
+
 }

@@ -1,21 +1,19 @@
 #ifndef IMAGE_MODULE_H_
 #define IMAGE_MODULE_H_
 
-#include "modules/JZModule.h"
+#include "JZModule.h"
 
-class ImageModule : public JZModule
+class ModuleImageSample : public JZModule
 {
-public:
-    static void init();
-
-    ImageModule();
-    ~ImageModule();
+public:    
+    ModuleImageSample();
+    ~ModuleImageSample();
 
     virtual void regist() override;
     virtual void unregist() override;
 
 protected:
-    QStringList m_functions;
+    
 };
 
 

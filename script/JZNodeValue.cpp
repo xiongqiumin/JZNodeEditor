@@ -443,30 +443,6 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-class JZNodeDisplayWidget : public JZNodePinWidget
-{
-public:
-    JZNodeDisplayWidget()
-    {
-        QHBoxLayout *l = new QHBoxLayout();
-        l->setContentsMargins(0, 0, 0, 0);
-        setLayout(l);    
-        
-        m_line = new QLineEdit();
-        l->addWidget(m_line);
-        m_line->setReadOnly(true);
-        m_line->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    }
-
-    void setRuntimeValue(const JZNodeDebugParamValue &value)
-    {
-        m_line->setText(value.value);
-    }
-
-protected:
-    QLineEdit *m_line;
-};
-
 //JZNodeDisplay
 JZNodeDisplay::JZNodeDisplay()
 {
@@ -542,6 +518,21 @@ bool JZNodeDisplay::pinActionTriggered(int id, int index)
     int pin_index = paramInList().indexOf(id);
     removeInput(pin_index);
     return true;
+}
+
+bool JZNodeDisplay::canLink(int node_id, int pin_id, QString &error)
+{
+    return true;
+}
+
+void JZNodeDisplay::onPinLinked(int id)
+{
+    widgetChangedNotify(id);
+}
+
+void JZNodeDisplay::onPinUnlinked(int id)
+{
+    widgetChangedNotify(id);
 }
 
 //JZNodePrint

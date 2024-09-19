@@ -129,6 +129,7 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param);
 QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param);
 void JZNodeRegistType(const JZNodeTypeMeta &type_info);
+void JZNodeUnregistType();
 
 //JZNodeProgram
 class JZNodeBuilder;

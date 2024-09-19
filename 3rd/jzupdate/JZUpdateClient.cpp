@@ -237,8 +237,11 @@ bool JZUpdateClient::dealUpdate()
             if (dst.endsWith(".exe") || dst.endsWith(".dll"))
             {
                 QString dst_bak = dst + ".bak";
-                if (!QFile::remove(dst_bak) || !QFile::rename(dst, dst_bak))
-                    return false;                
+                if (QFile::exists(dst_bak) && !QFile::remove(dst_bak))
+                    return false;
+
+                if(!QFile::rename(dst, dst_bak))
+                    return false;
             }
             else
             {
@@ -274,7 +277,6 @@ void JZUpdateClient::clearCache()
         return;    
 
     QThread::msleep(2000);
-
     QFile file_log(renameFile());
     if (file_log.open(QIODevice::ReadOnly | QIODevice::Text))
     {
@@ -287,11 +289,7 @@ void JZUpdateClient::clearCache()
         }        
     }
     file_log.close();
-
-    qDebug() << "remove bak log";
-    bool ret = QFile::remove(renameFile());    
-    Q_ASSERT(ret);
-    Q_ASSERT(!QFile::exists(renameFile()));
+    QFile::remove(renameFile());        
 }
 
 bool JZUpdateClient::isDownload()

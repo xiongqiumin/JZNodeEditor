@@ -1,19 +1,60 @@
-#include <QFileDialog>
+ï»¿#include <QFileDialog>
 #include <QMessageBox>
 #include <QToolBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QGridLayout>
 #include <QLabel>
 #include "JZProjectSettingDialog.h"
 #include "JZContainer.h"
+#include "JZModule.h"
 
+ModuleEdit::ModuleEdit()
+{
+    auto list = JZModuleManager::instance()->moduleList();
+    QGridLayout *grid = new QGridLayout();
+    for (int i = 0; i < list.size(); i++)
+    {
+        QCheckBox *box = new QCheckBox(list[i]);
+        grid->addWidget(box,i/3,i%3);
+        m_checkList.push_back(box);
+    }
+    if(list.size() > 0)
+        grid->setRowStretch((list.size()-1)/3 + 1, 1);
+    setLayout(grid);
+}
+
+QStringList ModuleEdit::getModule()
+{
+    QStringList ret;
+    for (int i = 0; i < m_checkList.size(); i++)
+    {
+        if (m_checkList[i]->isChecked())
+            ret << m_checkList[i]->text();
+    }
+    return ret;
+}
+
+void ModuleEdit::setModule(QStringList module)
+{    
+    for (int i = 0; i < m_checkList.size(); i++)
+    {
+        for (int j = 0; j < module.size(); j++)
+        {
+            if (m_checkList[i]->text() == module[j])
+                m_checkList[i]->setChecked(true);
+        }
+    }
+}
+
+//JZProjectSettingDialog
 JZProjectSettingDialog::JZProjectSettingDialog(QWidget *parent)
     :JZBaseDialog(parent)
 {
     m_project = nullptr;
 
-    m_moduleEdit = new QTextEdit();
+    m_moduleEdit = new ModuleEdit();
 	m_containerEdit = new QTextEdit();
 
     m_tree = new QTreeWidget();
@@ -21,7 +62,7 @@ JZProjectSettingDialog::JZProjectSettingDialog(QWidget *parent)
     m_tree->setHeaderHidden(true);
 
     QTreeWidgetItem *item_root = new QTreeWidgetItem();
-    item_root->setText(0,"ÅäÖÃÊôÐÔ");
+    item_root->setText(0,"è®¾ç½®");
     m_tree->addTopLevelItem(item_root);
     m_tree->setFixedWidth(200);
     connect(m_tree, &QTreeWidget::itemClicked, this, &JZProjectSettingDialog::onTreeItemClicked);
@@ -38,8 +79,8 @@ JZProjectSettingDialog::JZProjectSettingDialog(QWidget *parent)
     item_root->addChild(item_m);    
 
     m_stackWidget = new QStackedWidget();
-    m_stackWidget->addWidget(addPage(m_containerEdit,"Ìí¼ÓÈÝÆ÷"));
-    m_stackWidget->addWidget(addPage(m_moduleEdit,"Ìí¼ÓÄ£¿é"));
+    m_stackWidget->addWidget(addPage(m_containerEdit,"å®¹å™¨"));
+    m_stackWidget->addWidget(addPage(m_moduleEdit,"æ¨¡å—"));
 
     QHBoxLayout *l = new QHBoxLayout();
     l->setContentsMargins(0,0,0,0);
@@ -61,34 +102,45 @@ void JZProjectSettingDialog::setProject(JZProject *project)
 
     auto module_list = m_project->moduleList();
     auto container_list =  m_project->containerList();
-    m_moduleEdit->setPlainText(module_list.join("\n"));
+    m_moduleEdit->setModule(module_list);
     m_containerEdit->setPlainText(container_list.join("\n"));
 }
 
 bool JZProjectSettingDialog::onOk()
 {
-    auto module_list = m_project->moduleList();
-    auto container_list =  m_project->containerList();
-    for(int i = 0; i < container_list.size(); i++)
-        m_project->unregistContainer(container_list[i]);
+    auto new_module_list = m_moduleEdit->getModule();
+    auto new_container_list = m_containerEdit->toPlainText().split("\n");
+    auto old_module_list = m_project->moduleList();
+    auto old_container_list =  m_project->containerList();
 
-    for(int i = 0; i < module_list.size(); i++)
-        m_project->unimportModule(module_list[i]);
-
-    module_list = m_moduleEdit->toPlainText().split("\n");
-    container_list = m_containerEdit->toPlainText().split("\n");
-    for(int i = 0; i < container_list.size(); i++)
+    //unregist
+    for (int i = 0; i < old_container_list.size(); i++)
     {
-        QString line = container_list[i].trimmed();
-        if(!line.isEmpty())
-            m_project->registContainer(line);
+        QString name = old_container_list[i];
+        if (!new_container_list.contains(name))
+            m_project->unregistContainer(name);
     }
 
-    for(int i = 0; i < container_list.size(); i++)
+    for (int i = 0; i < old_module_list.size(); i++)
     {
-        QString line = container_list[i].trimmed();
-        if(!line.isEmpty())
-            m_project->importModule(container_list[i]);
+        QString name = old_module_list[i];
+        if(!new_module_list.contains(name))
+            m_project->unimportModule(name);
+    }
+
+    //regist
+    for(int i = 0; i < new_container_list.size(); i++)
+    {
+        QString name = new_container_list[i].trimmed();
+        if(!name.isEmpty() && !old_container_list.contains(name))
+            m_project->registContainer(name);
+    }
+
+    for(int i = 0; i < new_module_list.size(); i++)
+    {
+        QString name = new_module_list[i];
+        if (!old_module_list.contains(name))
+            m_project->importModule(name);
     }
     m_project->save();
     return true;

@@ -1,5 +1,5 @@
-﻿#include "qplugin.h"
-#include "JZWidgetCollectionInterface.h"
+﻿#include "JZWidgetCollectionInterface.h"
+#include "qplugin.h"
 #include "QImageLabel.h"
 #include "3rd/qcustomplot/JZPlotConfg.h"
 
@@ -67,7 +67,7 @@ public:
 Q_IMPORT_PLUGIN(JZWidgetCollectionInterface)
 JZWidgetCollectionInterface::JZWidgetCollectionInterface(QObject* parent)
     :QObject(parent)
-{       
+{    
     m_widgets.push_back(new JZWidgetInterface("QImageLabel", "Display Widgets", createWidget<QImageLabel>));
     m_widgets.push_back(new JZWidgetInterface("JZPlotWidget", "Display Widgets", createWidget<JZPlotWidget>));
 }
@@ -81,3 +81,5 @@ QList<QDesignerCustomWidgetInterface*> JZWidgetCollectionInterface::customWidget
 {
     return m_widgets;
 }
+
+#include "moc_JZWidgetCollectionInterface.cpp"

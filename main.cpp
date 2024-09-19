@@ -13,13 +13,12 @@
 #include "3rd/jzupdate/JZUpdateClient.h"
 #include "editor/tools/JZModbusSimulator.h"
 #include "JZRegExpHelp.h"
-#include <stack>
-#include <set>
-using namespace std;
 
+using namespace std;
 
 void run_testcase(int argc, char *argv[])
 {
+    /*
     extern void test_script(int argc, char *argv[]);
     extern void test_anglescript(int argc, char *argv[]);
     extern void test_benchmark(int argc, char *argv[]);
@@ -27,10 +26,11 @@ void run_testcase(int argc, char *argv[])
     test_script(argc, argv);
     test_anglescript(argc, argv);
     test_benchmark(argc, argv);
+    */
 }
 
 void runProgram(QString program_path)
-{        
+{
     QString error;
     JZNodeVM vm;
     if (!vm.init(program_path, false, error))
@@ -40,12 +40,6 @@ void runProgram(QString program_path)
     }
     qApp->exec();
 }
-
-void testExpr()
-{
-    
-}
-
 
 QtMessageHandler g_defaultMessageHandle = nullptr;
 void outputLogMessage(QtMsgType type, const QMessageLogContext& context, const QString& msg)
@@ -60,26 +54,23 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
-      
-    //runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\x64\Debug\project\projectUi7788\build\projectUi7788.program)");
-    if(0)
-    {
-        run_testcase(argc,argv);
-        return 0;
-    }    
-    if(0 && argc == 1)
-    {
-        SampleRussian sample;        
-        //SampleImageBatch sample;
-        //SampleSmartHome sample;
-        sample.saveProject();
-        //sample.loadProject();
-        sample.run();
+    
+    runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\build\Debug\project\project\build\project.program)");
 
-        //JZNodeCppGenerater cpp;
-        //cpp.generate(sample.project(),"cpp");
-        return 1;
-    }    
+    JZUpdateClient client(qApp->applicationDirPath());
+    if (client.isDownloadFinish())
+    {
+        if (!client.dealUpdate())
+        {
+            QMessageBox::information(nullptr, "", "自动更新失败，请尝试重新下载");
+            return false;
+        }
+
+        QString exe_path = qApp->applicationFilePath();
+        QProcess::startDetached(exe_path);
+        return 0;
+    }
+    client.clearCache();
 
     QCommandLineParser parser;
 
@@ -92,18 +83,6 @@ int main(int argc, char *argv[])
     parser.addOption(debugOption);
 
     parser.process(a);
-
-    JZUpdateClient client(qApp->applicationDirPath());
-    if (client.isDownloadFinish())
-    {        
-        if (!client.dealUpdate())
-            return false;
-
-        QString exe_path = qApp->applicationFilePath();
-        QProcess::startDetached(exe_path);
-        return 0;
-    }
-    client.clearCache();     
 
     if(parser.isSet(runOption))
     {   
@@ -123,5 +102,5 @@ int main(int argc, char *argv[])
         MainWindow w;
         w.showMaximized();
         return a.exec();                  
-    }            
+    }
 }

@@ -6,7 +6,7 @@ JZNetDataManager::JZNetDataManager()
 {    
     mRecvSize = 1024 * 1024;
     mRecvBuffer = new char[mRecvSize];
-	packHead = 0xAA;		
+	packHead = (char)0xAA;		
 	packTail = 0x55;	
     m_packSeq = 0;
 }

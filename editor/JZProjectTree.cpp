@@ -583,7 +583,10 @@ void JZProjectTree::onContextMenu(QPoint pos)
         {
             JZProjectSettingDialog dlg(this);
             dlg.setProject(m_project);
-            dlg.exec();
+            if (dlg.exec() != QDialog::Accepted)
+                return;
+
+            m_project->save();
         }
         else
             QMessageBox::information(this, "", item->name());

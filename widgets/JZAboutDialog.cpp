@@ -2,6 +2,8 @@
 #include <QTextEdit>
 #include "JZAboutDialog.h"
 
+#define VERSION "2024-09-15"
+
 JZAboutDialog::JZAboutDialog(QWidget *parent)
     :JZBaseDialog(parent)
 {
@@ -16,7 +18,7 @@ JZAboutDialog::JZAboutDialog(QWidget *parent)
 
     QString tips = R"(我们是开发基于qt的低代码平台，类似蓝图的节点编译器，支持qt设计器布局，控件参数绑定，流程代码，自定义插件，调试功能，并可以导出c++程序。
 本产品可以结合视觉算法，采集，控制等功能，快速开发出属于贵司自己的低代码平台，大幅降低开发，部署和调试的时间。
-详细咨询可添加QQ群
+详细咨询可添加QQ群: 598601341
 
 主要特点
 1.基于qt开发，单机应用，简单高效.
@@ -29,7 +31,7 @@ JZAboutDialog::JZAboutDialog(QWidget *parent)
 预期使用场景
 用户基于我们的低代码平台进行二次开发，通过增加库，或更多的场景编辑。
 1.工业自动化，机器视觉
-1.智能家居，类似node - red
+1.智能家居，类似node-red
 2.上位机应用，类似labview
 3.工业网关
 4.图像处理，类似blender
@@ -37,7 +39,7 @@ JZAboutDialog::JZAboutDialog(QWidget *parent)
 6.ai应用
 因为产品本身是低代码平台，理论应用场景是很广阔的。)";
 
-    QString text = QString("欢迎试用\n版本号:") + __DATE__ " " __TIME__;
+    QString text = QString("欢迎试用\n版本号:") + VERSION;
     text += "\n文件->打开->项目 可以打开 sample 下面的一个 demo 工程.";
     text += "\nQQ群:598601341";
     text += "\n\n" + tips;

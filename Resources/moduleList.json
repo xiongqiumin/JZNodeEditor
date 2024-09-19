@@ -1,0 +1,17 @@
+[
+{
+    "name":"计算",
+    "function":["rand","pow","sqrt","ceil","floor","round","fmod","sin","cos","exp","log","log10","tan","sinh","cosh","tanh","asin","acos","atan","atan2"]
+},
+{
+    "name":"core",
+    "class":["QObject","QTimer","QPoint","QPointF","QRect","QRectF","QColor","QFile","QStringList",
+        "QList<int>","QList<double>","QMap<int,int>","QMap<int,QString>","QMap<QString,QString>","QMap<QString,int>"]    
+},
+{
+    "name":"gui",
+    "class":["QWidget","QLabel","QLineEdit","QTextEdit","QPushButton","QRadioButton","QToolButton","QCheckBox","QComboBox",
+       "QPainter","QPen","QBrush","QKeyEvent","QMouseEvent","QShowEvent","QPaintEvent","QResizeEvent","Qt::Key",
+       "QTableWidget","QTableWidgetItem"]    
+}
+]

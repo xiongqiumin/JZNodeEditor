@@ -13,7 +13,7 @@
 #include "JZProjectTemplate.h"
 #include "JZContainer.h"
 #include "JZNodeProgram.h"
-#include "modules/JZModule.h"
+#include "JZModule.h"
 
 BreakPoint::BreakPoint()
 {
@@ -41,6 +41,8 @@ JZProject *JZProject::m_active = nullptr;
 void JZProject::setActive(JZProject *project)
 {
     Q_ASSERT(!m_active || project == nullptr);
+    if (m_active)
+        m_active->unregistType();
     
     m_active = project;
     if(m_active)
@@ -98,11 +100,14 @@ void JZProject::registContainer(QString type)
 
     m_containers.push_back(type);
     ::registContainer(type);
+    emit sigDefineChanged();    
 }
 
 void JZProject::unregistContainer(QString type)
 {
     m_containers.removeAll(type);
+    ::unregistContainer(type);
+    emit sigDefineChanged();
 }
 
 void JZProject::importModule(QString module)
@@ -112,19 +117,20 @@ void JZProject::importModule(QString module)
 
     m_modules.push_back(module);
     JZModuleManager::instance()->loadModule(module);
+    emit sigDefineChanged();
 }
 
 void JZProject::unimportModule(QString module)
 {
     m_modules.removeAll(module);
     JZModuleManager::instance()->unloadModule(module);
+    emit sigDefineChanged();
 }
 
 QStringList JZProject::moduleList() const
 {
     return m_modules;
 }
-
 
 void JZProject::initEmpty()
 {
@@ -194,6 +200,12 @@ void JZProject::registType()
     JZNodeRegistType(meta);    
 }
 
+void JZProject::unregistType()
+{
+    JZNodeFunctionManager::instance()->clearUserReigst();
+    JZNodeObjectManager::instance()->clearUserReigst();
+}
+
 bool JZProject::open(QString filepath)
 {
     clear();
@@ -207,6 +219,7 @@ bool JZProject::open(QString filepath)
     QStringList file_list;
     auto &pro_s = file.stream();
     pro_s >> m_containers;
+    pro_s >> m_modules;;
     pro_s >> file_list;
     file.close();
 
@@ -267,6 +280,7 @@ bool JZProject::save()
 
     auto &pro_s = file.stream();
     pro_s << m_containers;
+    pro_s << m_modules;
     pro_s << file_list;
 
     file.close();

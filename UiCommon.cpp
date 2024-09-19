@@ -30,55 +30,42 @@ void UiHelper::clearTreeItem(QTreeWidgetItem *root)
         delete root->takeChild(0);
 }
 
-void UiHelper::treeUpdate(QTreeWidgetItem *root, const QStringList &names, std::function<QTreeWidgetItem*(int)> func)
-{    
-    auto indexOfItem = [](QTreeWidgetItem *node,const QString &name)->int{
-        for (int i = 0; i < node->childCount(); i++)
-        {
-            auto sub = node->child(i);
-            if (sub->text(0) == name)
-                return i;
-        }
-        return -1;
-    };
-
-    for (int i = root->childCount() - 1; i >= 0; i--)
+int UiHelper::treeIndexOf(QTreeWidgetItem *node,const QString &name)
+{
+    for (int i = 0; i < node->childCount(); i++)
     {
-        if (!names.contains(root->child(0)->text(0)))
-            delete root->takeChild(i);
+        auto sub = node->child(i);
+        if (sub->text(0) == name)
+            return i;
+    }
+    return -1;
+}
+
+QList<TreeDiffResult> UiHelper::treeDiff(QTreeWidgetItem *root, const QStringList &names)
+{    
+    QList<TreeDiffResult> list;
+    for (int i = 0; i < root->childCount(); i++)
+    {
+        if (!names.contains(root->child(i)->text(0)))
+        {
+            TreeDiffResult ret;
+            ret.name = root->child(i)->text(0);
+            ret.type = TreeDiffResult::Remove;
+            list << ret;
+        }
     }
     
     for (int i = 0; i < names.count(); i++)
     {
         QTreeWidgetItem *item = nullptr;
-        int cur_index = indexOfItem(root, names[i]);
-        if (cur_index >= 0)
-        {
-            item = root->child(cur_index);
-            if (cur_index != i)
-            {
-                root->takeChild(cur_index);
-                root->insertChild(i, item);
-            }            
-        }
-        else
+        int cur_index = treeIndexOf(root, names[i]);
+        if (cur_index == -1)
         {            
-            item = func(i);            
-            root->addChild(item);
+            TreeDiffResult ret;
+            ret.name = names[i];
+            ret.type = TreeDiffResult::Add;
+            list << ret;
         }
-    }    
-}
-
-void UiHelper::updateEnumBox(QComboBox *box, int dataType, int value)
-{
-    box->blockSignals(true);
-    auto meta = JZNodeObjectManager::instance()->enumMeta(dataType);
-    for (int i = 0; i < meta->count(); i++)
-        box->addItem(meta->key(i), meta->value(i));
-    if (value != 0xfafa)
-    {
-        int index = box->findData(value);
-        box->setCurrentIndex(index);
     }
-    box->blockSignals(false);
+    return list;
 }

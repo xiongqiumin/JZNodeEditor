@@ -1,7 +1,7 @@
-#ifndef JZNODEBUILD_H_
+#ifndef JZNODE_BUILD_THREAD_H_
 #define JZNODE_BUILD_THREAD_H_
 
-#include <QWidget>
+#include <QThread>
 #include "JZNodeBuilder.h"
 
 //JZNodeAutoRunWidget

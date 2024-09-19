@@ -311,9 +311,9 @@ void JZNodeEditor::setRuntimeNode(int nodeId)
     m_view->setRuntimeNode(nodeId);
 }
 
-void JZNodeEditor::updateNode()
+void JZNodeEditor::updateDefine()
 {
-    m_nodePanel->updateNode();
+    m_nodePanel->updateDefine();
 }
 
 JZScriptItem *JZNodeEditor::script()

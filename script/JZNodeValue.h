@@ -97,7 +97,9 @@ public:
     virtual bool pinActionTriggered(int id, int index) override;
 
 protected:
-
+    virtual bool canLink(int node_id,int pin_id,QString &error) override;
+    virtual void onPinLinked(int id) override;
+    virtual void onPinUnlinked(int id) override;
 };
 
 //JZNodePrint

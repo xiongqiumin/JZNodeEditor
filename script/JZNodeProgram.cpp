@@ -4,7 +4,7 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
 #include "JZContainer.h"
-#include "modules/JZModule.h"
+#include "JZModule.h"
 
 //NodeRange
 NodeRange::NodeRange()
@@ -299,6 +299,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param)
     s << param.functionList;
     s << param.objectList;
     s << param.cobjectList;
+    s << param.moduleList;
     return s;
 }
 
@@ -307,13 +308,13 @@ QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param)
     s >> param.functionList;
     s >> param.objectList;
     s >> param.cobjectList;
+    s >> param.moduleList;
     return s;
 }
 
 void JZNodeRegistType(const JZNodeTypeMeta &type_info)
 {
-    JZNodeFunctionManager::instance()->clearUserReigst();
-    JZNodeObjectManager::instance()->clearUserReigst();
+    JZNodeUnregistType();
     
     auto &module_list = type_info.moduleList;
     auto &define_list = type_info.objectList;
@@ -342,6 +343,13 @@ void JZNodeRegistType(const JZNodeTypeMeta &type_info)
     }
     for (int i = 0; i < function_list.size(); i++)        
         JZNodeFunctionManager::instance()->registFunction(function_list[i]);
+}
+
+void JZNodeUnregistType()
+{
+    JZNodeFunctionManager::instance()->clearUserReigst();
+    JZNodeObjectManager::instance()->clearUserReigst();
+    JZModuleManager::instance()->unloadAllModule();
 }
 
 //JZNodeProgram

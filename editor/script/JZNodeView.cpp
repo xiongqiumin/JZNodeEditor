@@ -488,6 +488,7 @@ void JZNodeView::setFile(JZScriptItem *file)
 {
     m_file = file;    
     connect(m_file->project(), &JZProject::sigScriptNodeChanged, this, &JZNodeView::onScriptNodeChanged);
+    connect(m_file->project(), &JZProject::sigScriptNodeWidgetChanged, this, &JZNodeView::onScriptNodeWidgetChanged);
 
     initGraph();
     autoCompiler();    
@@ -2250,6 +2251,13 @@ void JZNodeView::onItemPropChanged()
     onPropChanged(node_id,prop_id,value);    
 }
 
+void JZNodeView::onItemSizeChanged()
+{
+    QObject *obj = sender();
+    int node_id = obj->property("node_id").toInt();
+    getNodeItem(node_id)->updateNode();
+}
+
 void JZNodeView::onScriptNodeChanged(JZScriptItem *file, int node_id, const QByteArray &old)
 {
     if (m_file != file)
@@ -2259,7 +2267,7 @@ void JZNodeView::onScriptNodeChanged(JZScriptItem *file, int node_id, const QByt
     auto pre_list = old_node->pinList();
     delete old_node;
 
-    auto node = getNode(node_id);            
+    auto node = getNode(node_id);
     m_commandStack.beginMacro("node changed");
     auto new_list = node->pinList();
     auto remove_set = pre_list.toSet() - new_list.toSet();
@@ -2271,6 +2279,15 @@ void JZNodeView::onScriptNodeChanged(JZScriptItem *file, int node_id, const QByt
     }    
     addPropChangedCommand(node->id(), old);
     m_commandStack.endMacro();
+}
+
+void JZNodeView::onScriptNodeWidgetChanged(JZScriptItem *file, int node_id, int prop_id)
+{
+    if (m_file != file)
+        return;
+
+    auto item = getNodeItem(node_id);    
+    item->updatePinWidget(prop_id);
 }
 
 void JZNodeView::onPropChanged(int id,int pinId,const QString &value)

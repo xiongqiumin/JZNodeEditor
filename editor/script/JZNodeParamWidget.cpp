@@ -127,6 +127,9 @@ void JZNodePinWidget::setValue(const QString &)
 {
 }
 
+void JZNodePinWidget::updateWidget()
+{
+}
 //JZNodePinButtonWidget
 JZNodePinButtonWidget::JZNodePinButtonWidget()
 {
@@ -401,4 +404,27 @@ void JZNodeParamValueWidget::setValue(const QString &value)
     {
         Q_ASSERT(0);
     }
+}
+
+//JZNodeDisplayWidget
+JZNodeDisplayWidget::JZNodeDisplayWidget()
+{
+    QHBoxLayout *l = new QHBoxLayout();
+    l->setContentsMargins(0, 0, 0, 0);
+    setLayout(l);
+
+    m_line = new QLineEdit();
+    l->addWidget(m_line);
+    m_line->setReadOnly(true);
+    m_line->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+}
+
+void JZNodeDisplayWidget::updateWidget()
+{
+    emit sigSizeChanged(size());
+}
+
+void JZNodeDisplayWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
+{
+    m_line->setText(value.value);
 }

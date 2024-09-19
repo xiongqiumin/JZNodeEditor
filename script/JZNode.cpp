@@ -671,6 +671,12 @@ void JZNode::drag(const QVariant &v)
     Q_UNUSED(v);
 }
 
+bool JZNode::canLink(int node_id, int pin_id, QString &error)
+{
+    Q_UNUSED(error);
+    return true;
+}
+
 JZNodePinWidget *JZNode::createWidget(int id)
 {
     return nullptr;
@@ -719,6 +725,12 @@ void JZNode::propertyChangedNotify(const QByteArray &old)
 {
     if (m_file && m_file->project())
         m_file->project()->sigScriptNodeChanged(m_file,m_id, old);
+}
+
+void JZNode::widgetChangedNotify(int pin_id)
+{
+    if (m_file && m_file->project())
+        m_file->project()->sigScriptNodeWidgetChanged(m_file,m_id,pin_id);
 }
 
 void JZNode::saveToStream(QDataStream &s) const

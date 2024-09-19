@@ -224,6 +224,8 @@ public:
     virtual bool update(QString &error);
     virtual void drag(const QVariant &value);
 
+    virtual bool canLink(int node_id, int pin_id, QString &error);
+
     virtual JZNodePinWidget *createWidget(int id);
     virtual QStringList actionList();
     virtual bool actionTriggered(int actIndex);
@@ -242,6 +244,7 @@ protected:
     virtual void onPinChanged(int id);
 
     void propertyChangedNotify(const QByteArray &old);
+    void widgetChangedNotify(int pin_id);
 
     void setPinTypeArg(int id);
     void setPinTypeInt(int id);
