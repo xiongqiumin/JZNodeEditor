@@ -1708,6 +1708,40 @@ bool JZNodeTryCatch::compiler(JZNodeCompiler *compiler, QString &error)
     return true;
 }
 
+//JZNodeMainLoop
+JZNodeMainLoop::JZNodeMainLoop()
+{    
+    m_type = Node_mainLoop;
+    m_name = "MainLoop";
+
+    addFlowIn();
+    int in = addParamIn("window",Pin_dispName);
+    setPinType(in, { Type_widget });
+}
+
+JZNodeMainLoop::~JZNodeMainLoop()
+{    
+}
+
+bool JZNodeMainLoop::compiler(JZNodeCompiler *c, QString &error)
+{
+    if(!c->addFlowInput(m_id,error))
+        return false;
+
+    int id = c->paramId(m_id,paramIn(0));
+    c->addAlloc(JZNodeIRAlloc::Heap,"__mainwindow__", Type_widget);
+
+    JZNodeIRSet *ir_set = new JZNodeIRSet();    
+    ir_set->dst = irRef("__mainwindow__");
+    ir_set->src = irId(id);
+    c->addStatement(JZNodeIRPtr(ir_set));
+
+    JZNodeIR *ir_return = new JZNodeIR(OP_return);
+    c->addStatement(JZNodeIRPtr(ir_return));
+
+    return true;    
+}
+
 //NodeMagic
 QByteArray NodeMagic()
 {

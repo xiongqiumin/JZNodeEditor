@@ -42,7 +42,7 @@ signals:
 protected:    
     virtual void keyPressEvent(QKeyEvent *e) override;
     
-    bool isModuleItem(QTreeWidgetItem *item);
+    bool canItemRename(QTreeWidgetItem *item);
     void addItem(JZProjectItem *item);
     void addItem(QTreeWidgetItem *parent, JZProjectItem *item);
     void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);        
@@ -53,9 +53,7 @@ protected:
     
     void cancelEdit();
     QString filepath(QTreeWidgetItem *item);
-    void renameItem(QTreeWidgetItem *item);    
-
-    void onModuleMenu(QTreeWidgetItem *item,QPoint pos);
+    void renameItem(QTreeWidgetItem *item);        
 
     JZProject *m_project;   
     QTreeWidget *m_tree; 

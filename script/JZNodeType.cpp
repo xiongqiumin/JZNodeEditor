@@ -800,17 +800,7 @@ QVariant JZNodeType::initValue(int type, const QString &text)
     if (text.isEmpty())
         return JZNodeType::defaultValue(type);
 
-    if (type == Type_any)
-    {
-        QVariant v = initValue(JZNodeType::stringType(text),text);
-        if(v.isNull())
-            return v;
-
-        JZNodeVariantAny any;
-        any.value = v;
-        return QVariant::fromValue(any);
-    }
-    else if (type == Type_string)
+    if (type == Type_string)
     {
         return text;
     }
@@ -820,36 +810,6 @@ QVariant JZNodeType::initValue(int type, const QString &text)
             return false;
         else if (text == "true")
             return true;
-    }
-    else if(type == Type_function)
-    {   
-        JZFunctionPointer func;
-        func.functionName = text;
-        return QVariant::fromValue(func);
-    }
-    else if(type == Type_nullptr)
-    {
-        if(text == "null")
-            return QVariant::fromValue(JZObjectNull());
-    }
-    else if(type >= Type_enum && type < Type_class)
-    {
-        auto enum_meta = JZNodeObjectManager::instance()->enumMeta(type);
-        if(!enum_meta->hasKey(text))
-            return QVariant();
-
-        return enum_meta->keyToValue(text);
-    }
-    else if(type >= Type_class)
-    {
-        JZNodeObject *obj = nullptr;
-        if(text.isEmpty() || text == "null")
-            obj = JZNodeObjectManager::instance()->createNull(type);
-        else
-            obj = JZNodeObjectManager::instance()->create(type);
-        
-        if(obj)
-            return QVariant::fromValue(JZNodeObjectPtr(obj,true));
     }
     else if (type == Type_int || type == Type_int64 || type == Type_double)
     {        
@@ -882,8 +842,27 @@ QVariant JZNodeType::initValue(int type, const QString &text)
             }
         }
     }
+    else if(type == Type_function)
+    {   
+        JZFunctionPointer func;
+        func.functionName = text;
+        return QVariant::fromValue(func);
+    }
+    else if(type == Type_nullptr)
+    {
+        if(text == "null")
+            return QVariant::fromValue(JZObjectNull());
+    }
+    else if(type >= Type_enum && type < Type_class)
+    {
+        auto enum_meta = JZNodeObjectManager::instance()->enumMeta(type);
+        if(!enum_meta->hasKey(text))
+            return QVariant();
 
-    Q_ASSERT(0);
+        return enum_meta->keyToValue(text);
+    }    
+
+    Q_ASSERT_X(0,"Type ",qUtf8Printable(typeToName(type)));
     return true;
 }
 

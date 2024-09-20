@@ -24,6 +24,7 @@ protected:
 };
 
 class JZScriptItem;
+class JZNodeView;
 class JZNodePanel : public QWidget
 {
     Q_OBJECT
@@ -33,10 +34,15 @@ public:
     ~JZNodePanel();    
 
     void setFile(JZScriptItem *file);        
+    void setView(JZNodeView *view);
     void updateDefine();
 
     QTreeWidgetItem *itemOp();
     QTreeWidgetItem *itemProcess();
+
+    void addLocalVariable(JZParamDefine def);
+    void removeLocalVariable(QString name);
+    void changeLocalVariable(QString name, JZParamDefine def);
 
 protected slots:
     void onSearch();
@@ -51,8 +57,7 @@ protected:
     void initLocalDefine();    
 
     void initThis(QTreeWidgetItem *root);
-    void initConstParam(QTreeWidgetItem *root);    
-    void initProjectParam(QTreeWidgetItem *root);
+    void initConstParam(QTreeWidgetItem *root);        
     void initScriptParam(QTreeWidgetItem *root);    
         
     void initProcess(QTreeWidgetItem *root);
@@ -63,9 +68,12 @@ protected:
     void updateClass(QTreeWidgetItem *item_root,const QString &class_name,bool show_protected);
 
     void updateThis();    
+    void updateInputVariable();
     void updateLocalVariable();
+    void updateGlobalVariable();
     void updateModule();
     void updateLocalDefine();
+    void updateVariable(QTreeWidgetItem *item, QStringList paramList);
     
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
@@ -79,8 +87,10 @@ protected:
     bool filterItem(QTreeWidgetItem *root,QString name);    
     bool isClassItem(QTreeWidgetItem *item);
     const JZModule *module(QString name);
+    QTreeWidgetItem *localVariableItem(QString name);
 
     JZNodeTreeWidget *m_tree;    
+    JZNodeView *m_view;
     JZScriptItem *m_file;
     JZScriptClassItem *m_classFile;
     QLineEdit *m_lineSearch;    
@@ -88,8 +98,11 @@ protected:
     QTreeWidgetItem *m_itemOp;
     QTreeWidgetItem *m_itemProcess;
     QTreeWidgetItem *m_memberFunction;
-    QTreeWidgetItem *m_memberParam;
+    QTreeWidgetItem *m_itemMemberParam;
+    QTreeWidgetItem *m_itemInputParam;
     QTreeWidgetItem *m_itemLocalParam;
+    QTreeWidgetItem *m_itemGlobalParam;
+
     QTreeWidgetItem *m_itemLocalDefine;
     QTreeWidgetItem *m_module;
 

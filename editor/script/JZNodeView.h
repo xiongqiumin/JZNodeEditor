@@ -69,6 +69,22 @@ protected:
     JZNodeView *m_view;
 };
 
+class JZNodeVariableCommand : public QUndoCommand
+{
+public:
+    JZNodeVariableCommand(JZNodeView *view, int type);
+
+    virtual void redo() override;
+    virtual void undo() override;
+
+    int command;
+    JZParamDefine newParam;
+    JZParamDefine oldParam;
+
+protected:
+    JZNodeView *m_view;
+};
+
 class JZNodeView : public QGraphicsView
 {
     Q_OBJECT
@@ -85,8 +101,9 @@ public:
 
     void setFile(JZScriptItem *file);
     JZScriptItem *file();
+    void resetFile();
 
-    bool isModified();
+    bool isModified();    
 
     /* node */
     JZNode *getNode(int id);
@@ -129,6 +146,15 @@ public:
     QByteArray getGroupData(int id);
     void setGroupData(int id, QByteArray buffer);
     void updateGroup(int id);
+
+    /* local variable */
+    void addLocalVariableCommand(JZParamDefine def);
+    void removeLocalVariableCommand(QString name);
+    void changeLocalVariableCommand(QString name, JZParamDefine def);
+
+    void addLocalVariable(JZParamDefine def);
+    void removeLocalVariable(QString name);
+    void changeLocalVariable(QString name,JZParamDefine def);
 
     void showTip(QPointF pt,QString tip);    
     void clearTip();
@@ -257,6 +283,7 @@ protected:
     JZNodeViewMap *m_map;
     JZNodeScene *m_scene;
     JZScriptItem *m_file;    
+    JZScriptItem *m_srcFile;
     JZNodeLineItem *m_selLine;   
     QPoint m_tipPoint;
 

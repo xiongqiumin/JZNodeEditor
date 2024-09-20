@@ -522,6 +522,12 @@ bool JZNodeDisplay::pinActionTriggered(int id, int index)
 
 bool JZNodeDisplay::canLink(int node_id, int pin_id, QString &error)
 {
+    if(m_file->getConnectPin(node_id,pin_id).size() > 1)
+    {
+        error = "只能连接一个变量";
+        return false;
+    }
+
     return true;
 }
 

@@ -1014,6 +1014,7 @@ JZNodeObjectManager::JZNodeObjectManager()
 {        
     m_objectId = Type_internalObject;
     m_enumId = Type_internalEnum;    
+    m_testMode = false;
 }
 
 JZNodeObjectManager::~JZNodeObjectManager()
@@ -1039,6 +1040,11 @@ void JZNodeObjectManager::init()
 void JZNodeObjectManager::setUserRegist(bool flag)
 {
     m_objectId = Type_userObject;
+}
+
+void JZNodeObjectManager::setUnitTest(bool flag)
+{
+    m_testMode = flag;
 }
 
 void JZNodeObjectManager::initFunctions()
@@ -1358,6 +1364,9 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
     Q_ASSERT(def);
     if (def->isCObject)
     {
+        if (m_testMode && isInherits(def->id,Type_widget))
+            return;
+
         auto cobj = def->cMeta.create();
         obj->setCObject(cobj,true);
         return;
@@ -1365,12 +1374,15 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
 
     if (def->isUiWidget)
     {
-        JZNodeUiLoader loader;
-        QWidget *widget = loader.create(def->widgetXml);
-        Q_ASSERT(widget); 
+        if (!m_testMode)
+        {
+            JZNodeUiLoader loader;
+            QWidget *widget = loader.create(def->widgetXml);
+            Q_ASSERT(widget);
 
-        obj->setCObject(widget, true);
-        obj->updateUiWidget(widget);
+            obj->setCObject(widget, true);
+            obj->updateUiWidget(widget);
+        }
     }
     else
     {
@@ -1408,16 +1420,16 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
 JZNodeObject* JZNodeObjectManager::createNull(int type)
 {
     JZNodeObjectDefine *def = meta(type);
-    Q_ASSERT(def);
+    Q_ASSERT(def && !def->isValueType());
 
-    JZNodeObject *obj = new JZNodeObject(def);
+    JZNodeObject *obj = new JZNodeObject(def);      
     return obj;
 }
 
 JZNodeObject* JZNodeObjectManager::createNull(const QString &name)
 {
     int id = getClassId(name);
-    return create(id);
+    return createNull(id);
 }
 
 JZNodeObject* JZNodeObjectManager::create(int type)
@@ -1499,8 +1511,9 @@ bool JZNodeObjectManager::equal(JZNodeObject* o1,JZNodeObject *o2)
             auto it = o1->m_params.begin();
             while(it != o1->m_params.end())
             {
-                if (*it->data() != *o2->m_params[it.key()].data())
-                        return false;                
+                if (it->data() && (*it->data() != *o2->m_params[it.key()].data()))
+                    return false;
+                
                 it++;
             }
             return true;

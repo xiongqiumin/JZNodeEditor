@@ -16,7 +16,6 @@
 
 enum{
     Item_none,
-    Item_module,
 };
 
 JZProjectTree::JZProjectTree()
@@ -102,10 +101,13 @@ void JZProjectTree::keyPressEvent(QKeyEvent *e)
     QWidget::keyPressEvent(e);
 }
 
-bool JZProjectTree::isModuleItem(QTreeWidgetItem *item)
+bool JZProjectTree::canItemRename(QTreeWidgetItem *view_item)
 {
-    QVariant v = item->data(0,Qt::UserRole);
-    return v.type() == QVariant::Int && (v.toInt() == Item_module);
+    JZProjectItem *item = getFile(view_item);
+    if (item == m_project->mainFunction() || item->itemType() == ProjectItem_param)
+        return false;
+
+    return true;
 }
 
 void JZProjectTree::addItem(JZProjectItem *item)
@@ -275,6 +277,7 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
             if(pre_select)
                 m_tree->setCurrentItem(item);
         }
+        m_project->saveItem(project_item);
     }
     else
     {
@@ -292,10 +295,7 @@ void JZProjectTree::onItemClicked(QTreeWidgetItem *view_item)
 
 
 void JZProjectTree::onItemDoubleClicked(QTreeWidgetItem *view_item)
-{
-    if(isModuleItem(view_item))
-        return;
-        
+{     
     JZProjectItem *item = getFile(view_item);
     if(canOpenItem(item))
         sigActionTrigged(Action_open,item->itemPath());
@@ -306,7 +306,7 @@ void JZProjectTree::onItemDoubleClicked(QTreeWidgetItem *view_item)
 void JZProjectTree::onItemRename()
 {
     auto view_item = m_tree->currentItem();
-    if(isModuleItem(view_item))
+    if(!canItemRename(view_item))
         return;
     
     if(!view_item || !view_item->parent())
@@ -324,13 +324,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
 {
     QTreeWidgetItem *view_item = m_tree->itemAt(pos);
     if (!view_item)
-        return;
-
-    if(isModuleItem(view_item))
-    {   
-        onModuleMenu(view_item,pos);
-        return;
-    }
+        return;    
 
     JZProjectItem *item = getFile(view_item);
     QMenu menu(this);
@@ -557,8 +551,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
                 return;
             
             JZFunctionDefine def = dialog.functionInfo(); 
-            auto file_item = dynamic_cast<JZScriptFile*>(m_project->getItemFile(func_item));
-            file_item->updateScriptFunction(func_item, def);
+            func_item->setFunction(def);
             if (oldName != def.name)
             {
                 m_project->renameItem(func_item, def.name);
@@ -590,30 +583,5 @@ void JZProjectTree::onContextMenu(QPoint pos)
         }
         else
             QMessageBox::information(this, "", item->name());
-    }
-}
-
-void JZProjectTree::onModuleMenu(QTreeWidgetItem *item,QPoint pos)
-{
-    bool is_root = (item->parent()->parent() == nullptr);
-    QAction *actAdd = nullptr;
-    QAction *actRemove = nullptr;
-
-    QMenu menu(this);
-
-    if(is_root)
-        actAdd = menu.addAction("引入模块");
-    else
-        actRemove = menu.addAction("删除模块");
-
-    QAction *act = menu.exec(m_tree->mapToGlobal(pos));
-    if(!act)
-        return;
-
-    if(act == actAdd)
-    {        
-    }
-    else if(act == actRemove)
-    {        
     }
 }

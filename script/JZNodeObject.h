@@ -213,7 +213,7 @@ bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
 JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
 JZNodeObject* qobjectToJZObject(QObject *obj);
-JZNodeObject* objectFromString(int data_name,const QString &text);
+JZNodeObject* objectFromString(int type,const QString &text);
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
@@ -235,6 +235,7 @@ public:
     int getIdByCTypeid(const QString &ctypeid);
 
     void setUserRegist(bool flag);
+    void setUnitTest(bool flag);
 
     JZNodeObjectDefine *meta(const QString &className);
     JZNodeObjectDefine *meta(int type_id);
@@ -295,7 +296,8 @@ protected:
     
     QMap<int, QSharedPointer<JZNodeObjectDefine>> m_metas;
     QMap<QString,int> m_qobjectId;
-    int m_objectId;    
+    int m_objectId;
+    bool m_testMode;
 };
 
 template<class T>

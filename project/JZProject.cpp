@@ -73,11 +73,9 @@ void JZProject::clear()
     m_root.removeChlids();
     m_root.setName(".");
 
-    m_tmp.removeChlids();
-    m_tmp.setName("/tmp");
+    m_tmp.clear();
     
-    m_blockRegist = false;
-    m_windowSystem = false;
+    m_blockRegist = false;    
     m_isSaveCache = false;
     m_filepath.clear();        
     m_containers.clear();
@@ -289,20 +287,39 @@ bool JZProject::save()
 
 void JZProject::addTmp(JZProjectItem *item)
 {    
-    if (item->name().isEmpty())
-        item->setName("tmp" + QString::number(m_tmp.childCount()));
-    addItem("/tmp", item);    
+    item->setProject(this);
+    m_tmp.push_back(JZProjectItemPtr(item));    
 }
 
 void JZProject::removeTmp(JZProjectItem *item)
 {    
-    removeItem("/tmp/" + item->name());
+    for (int i = 0; i < m_tmp.size(); i++)
+    {
+        if (m_tmp[i].data() == item)
+        {
+            m_tmp.removeAt(i);
+            break;
+        }
+    }
 }
 
 bool JZProject::isTmp(JZProjectItem *item)
 {
-    QString path = item->itemPath();
-    return path.startsWith("/tmp/");
+    for (int i = 0; i < m_tmp.size(); i++)
+    {
+        if (m_tmp[i].data() == item)
+            return true;
+    }
+    return false;
+}
+
+bool JZProject::isFile(JZProjectItem *item)
+{
+    if(item->itemType() == ProjectItem_ui
+            || item->itemType() == ProjectItem_scriptFile)
+        return true;
+    
+    return false;
 }
 
 void JZProject::saveTransaction()
@@ -469,12 +486,24 @@ void JZProject::removeItem(QString filepath)
         }
     }
 
+    auto file_item = getItemFile(item);
     auto parent = item->parent();
     int index = parent->indexOfItem(item);
     parent->removeItem(index);
 
     for(int i = 0; i < replace_list.size(); i++)
         JZNodeObjectManager::instance()->replace(replace_list[i]->objectDefine());
+
+    if(file_item == item)
+    {
+        QString item_path = path() + "/" + filepath;
+        QFile::remove(item_path);
+        save();
+    }
+    else
+    {
+        saveItem(file_item);        
+    }
 }
 
 bool JZProject::saveItem(JZProjectItem *item)
@@ -486,19 +515,18 @@ bool JZProject::saveItem(JZProjectItem *item)
 
 bool JZProject::saveItems(QList<JZProjectItem*> items)
 {
+    if(m_isSaveCache)
+    {
+        m_saveCache.append(items);
+        return true;
+    }
+
     QMap<JZProjectItem*,QList<JZProjectItem*>> file_item;
     for (int i = 0; i < items.size(); i++)
-    {
+    {        
         auto file = getItemFile(items[i]);        
-        if (file)
-        {
-            if (m_isSaveCache && (file->itemType() == ProjectItem_scriptFile))
-            {
-                m_saveCache << items[i];
-                continue;
-            }
-            file_item[file].push_back(items[i]);
-        }
+        if (file)        
+            file_item[file].push_back(items[i]);        
     }
 
     auto it = file_item.begin();
@@ -518,19 +546,31 @@ bool JZProject::saveItems(QList<JZProjectItem*> items)
         else if (file->itemType() == ProjectItem_scriptFile)
         {
             JZScriptFile *script_file = dynamic_cast<JZScriptFile*>(file);                        
-            if (!script_file->save(file_path, it.value()))
+            if (!script_file->save(file_path))
                 return false;
         }
 
         it++;
     }
 
+    for (int i = 0; i < items.size(); i++)    
+        onItemChanged(items[i]);
+        
     return true;
 }
 
 bool JZProject::saveAllItem()
 {
     auto items = itemList("./", ProjectItem_any);
+    for (int i = 0; i < items.size(); i++)
+    {
+        int type = items[i]->itemType();
+        if (type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
+        {
+            JZScriptItem *script_item = (JZScriptItem *)items[i];
+            script_item->saveEditorCache();
+        }
+    }
     return saveItems(items);
 }
 
@@ -538,27 +578,26 @@ void JZProject::renameItem(JZProjectItem *item, QString newname)
 {    
     item->setName(newname);
     item->parent()->sort();
+    saveItem(item);
+
+    if(isFile(item))
+    {
+        QString item_path = path() + "/" + item->itemPath();
+        QFile f(item_path);
+        f.rename(newname);
+        save();
+    }
 }
 
 JZProjectItem *JZProject::getItem(QString path)
 {    
     if(path.isEmpty() || path == "." || path == "./")
-        return &m_root;
-    if (path == "/tmp")
-        return &m_tmp;
+        return &m_root;    
 
     JZProjectItem *folder = nullptr;
-    if (path.startsWith("/tmp"))
-    {
-        path = path.mid(1);
-        folder = &m_tmp;
-    }
-    else 
-    {
-        if (!path.startsWith("./"))
+    if (!path.startsWith("./"))
             path = "./" + path;
-        folder = &m_root;
-    }
+    folder = &m_root;    
 
     QStringList path_list = path.split("/",Qt::KeepEmptyParts);    
     for(int i = 1; i < path_list.size(); i++)
@@ -608,13 +647,6 @@ void JZProject::removeFile(QString path)
     removeItem(path);
 }
 
-void JZProject::renameFile(QString oldPath, QString newPath)
-{
-    auto item = getItem(oldPath);
-    QString name = QFileInfo(newPath).fileName();
-    item->setName(name);
-}
-
 JZScriptClassItem *JZProject::getClass(QString class_name)
 {
     auto list = itemList("./", ProjectItem_class);
@@ -655,8 +687,7 @@ JZProjectItem *JZProject::getItemFile(JZProjectItem *item)
 {
     while (item)
     {
-        if (item->itemType() == ProjectItem_ui
-            || item->itemType() == ProjectItem_scriptFile)
+        if (isFile(item))
             return item;
 
         item = item->parent();
@@ -858,6 +889,9 @@ void JZProject::onItemChanged(JZProjectItem *item)
     if (m_blockRegist)
         return;
 
+    if (isTmp(item))
+        return;
+
     auto registClass = [](JZScriptClassItem *class_file)
     {
         //起到声明作用
@@ -913,6 +947,5 @@ void JZProject::onItemChanged(JZProjectItem *item)
         }
     }
 
-    if(!isTmp(item))
-        emit sigItemChanged(item);
+    emit sigItemChanged(item);
 }

@@ -60,8 +60,7 @@ protected:
 
     void addItem(QSharedPointer<JZProjectItem> child);
     void removeItem(int index);    
-    void removeChlids();
-    void itemChangedNotify();
+    void removeChlids();    
 
     JZProjectItem *m_parent;
     QList<QSharedPointer<JZProjectItem>> m_childs;

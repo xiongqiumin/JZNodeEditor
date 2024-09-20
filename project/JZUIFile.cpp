@@ -45,8 +45,7 @@ bool JZUiFile::save(QString filepath)
     QTextStream s(&file);
     s.setCodec("utf-8");
     s << m_xml;
-
-    itemChangedNotify();
+    
     return true;
 }
 
@@ -60,8 +59,7 @@ bool JZUiFile::load(QString filepath)
     QTextStream s(&file);
     s.setCodec("utf-8");
     setXml(s.readAll());
-
-    itemChangedNotify();
+    
     return true;
 }
 
@@ -73,8 +71,7 @@ QString JZUiFile::xml()
 void JZUiFile::setXml(QString xml)
 {
     m_xml = xml;
-    updateDefine();
-    itemChangedNotify();
+    updateDefine();    
 }
 
 const JZParamDefine *JZUiFile::widgetVariable(QString name)

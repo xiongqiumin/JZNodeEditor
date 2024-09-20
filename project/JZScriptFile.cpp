@@ -13,19 +13,10 @@ JZScriptFile::~JZScriptFile()
 }
 
 bool JZScriptFile::save(QString filepath)
-{
-    QList<JZProjectItem*> list = itemList(ProjectItem_any);
-    return save(filepath, list);
-}
-
-bool JZScriptFile::save(QString filepath, QList<JZProjectItem*> change_items)
-{   
+{  
     QFile sub_file(filepath);
     if (!sub_file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return false;
-    
-    for (int i = 0; i < change_items.size(); i++)            
-        m_itemCache.remove(change_items[i]);    
     
     QList<QByteArray> class_buffer;           
     auto all_class = itemList(ProjectItem_class);
@@ -58,50 +49,12 @@ bool JZScriptFile::load(QString filepath)
 
         JZScriptClassItem *class_item = new JZScriptClassItem();
         class_item->fromBuffer(head);
-        m_itemCache[class_item] = head;
         m_project->addItem(itemPath(), class_item);                
 
         loadScript(cls_s, class_item);        
     }
     loadScript(s, this);
     return true;
-}
-
-void JZScriptFile::reset(JZProjectItem *item)
-{
-    if (!m_itemCache.contains(item))
-        return;
-
-    QByteArray buffer = m_itemCache[item];
-    setItemData(item, buffer);
-}
-
-void JZScriptFile::updateClass(JZScriptClassItem *item, JZNodeObjectDefine define)
-{
-    m_itemCache.remove(item);
-    m_project->saveItem(this);
-}
-
-void JZScriptFile::updateScriptName(JZScriptItem *item, QString name)
-{
-    QByteArray buffer = getItemData(item);
-    JZScriptItem tmp(item->itemType());
-    tmp.fromBuffer(buffer);
-    tmp.setName(name);
-    item->setName(name);
-    m_itemCache[item] = tmp.toBuffer();
-    m_project->saveItem(this);
-}
-
-void JZScriptFile::updateScriptFunction(JZScriptItem *item, JZFunctionDefine define)
-{
-    QByteArray buffer = getItemData(item);
-    JZScriptItem tmp(item->itemType());
-    tmp.fromBuffer(buffer);
-    tmp.setFunction(define);
-    item->setFunction(define);
-    m_itemCache[item] = tmp.toBuffer();
-    m_project->saveItem(this);
 }
 
 QByteArray JZScriptFile::getClassData(JZScriptClassItem *item)
@@ -115,29 +68,26 @@ QByteArray JZScriptFile::getClassData(JZScriptClassItem *item)
 }
 
 QByteArray JZScriptFile::getItemData(JZProjectItem *item)
-{
-    if (!m_itemCache.contains(item))
+{  
+    QByteArray buffer;        
+    if (item->itemType() == ProjectItem_class)
     {
-        QByteArray buffer;        
-        if (item->itemType() == ProjectItem_class)
-        {
-            auto class_item = dynamic_cast<JZScriptClassItem*>(item);
-            buffer = class_item->toBuffer();
-        }
-        else if (item->itemType() == ProjectItem_param)
-        {
-            auto param_item = dynamic_cast<JZParamItem*>(item);
-            buffer = param_item->toBuffer();
-        }
-        else if (item->itemType() == ProjectItem_scriptFunction
-            || item->itemType() == ProjectItem_scriptParamBinding)
-        {
-            auto script = dynamic_cast<JZScriptItem*>(item);
-            buffer = script->toBuffer();
-        }
-        m_itemCache[item] = buffer;
+        auto class_item = dynamic_cast<JZScriptClassItem*>(item);
+        buffer = class_item->toBuffer();
     }
-    return m_itemCache[item];
+    else if (item->itemType() == ProjectItem_param)
+    {
+        auto param_item = dynamic_cast<JZParamItem*>(item);
+        buffer = param_item->toBuffer();
+    }
+    else if (item->itemType() == ProjectItem_scriptFunction
+        || item->itemType() == ProjectItem_scriptParamBinding)
+    {
+        auto script = dynamic_cast<JZScriptItem*>(item);
+        buffer = script->toBuffer();
+    }
+    
+    return buffer;
 }
 
 void JZScriptFile::setItemData(JZProjectItem *item, const QByteArray &data)
@@ -191,7 +141,6 @@ void JZScriptFile::loadScript(QDataStream &s, JZProjectItem *parent)
         JZParamItem *item = new JZParamItem();
         item->fromBuffer(param_list[i]);
         m_project->addItem(parent->itemPath(),item);
-        m_itemCache[item] = param_list[i];
     }
 
     for (int i = 0; i < function_list.size(); i++)
@@ -199,7 +148,6 @@ void JZScriptFile::loadScript(QDataStream &s, JZProjectItem *parent)
         JZScriptItem *item = new JZScriptItem(ProjectItem_scriptFunction);
         item->fromBuffer(function_list[i]);
         m_project->addItem(parent->itemPath(), item);
-        m_itemCache[item] = function_list[i];
     }
 }
 

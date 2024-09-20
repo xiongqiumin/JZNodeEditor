@@ -98,17 +98,15 @@ public:
         int nodeId;
         int pc;
         QString function;
-        QList<JZParamDefine> params;
+        QStringList params;
     };
     
     void clear();    
-    JZParamDefine *getGlobal(QString name);
-    JZParamDefine *getMember(QString name);
     FunctionHook *getHook(int node_id);
 
     JZFunctionDefine function;
-    QList<JZParamDefine> member;
-    QList<JZParamDefine> global;
+    QMap<QString,QString> member;
+    QMap<QString,QString> global;
     QList<FunctionHook> hook;
 };
 

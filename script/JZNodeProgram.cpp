@@ -218,29 +218,6 @@ void ScriptDepend::clear()
     hook.clear();
 }
 
-JZParamDefine *ScriptDepend::getGlobal(QString name)
-{        
-    for (int i = 0; i < global.size(); i++)
-    {
-        if (global[i].name == name)
-            return &global[i];
-    }
-    return nullptr;
-}
-
-JZParamDefine *ScriptDepend::getMember(QString name)
-{
-    if (name.startsWith("this."))
-        name = name.mid(5);
-
-    for (int i = 0; i < member.size(); i++)
-    {
-        if (member[i].name == name)
-            return &member[i];
-    }
-    return nullptr;
-}
-
 ScriptDepend::FunctionHook *ScriptDepend::getHook(int node_id)
 {
     for(int i = 0; i < hook.size(); i++)

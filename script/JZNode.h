@@ -67,6 +67,7 @@ enum
     Node_timeEvent,   
     Node_display,
     Node_signalConnect,
+    Node_mainLoop,
     Node_custom,
 };
 
@@ -486,4 +487,16 @@ public:
 protected:
 };
 
+//JZNodeMainLoop
+class JZNodeMainLoop : public JZNode
+{
+public:
+    JZNodeMainLoop();
+    virtual ~JZNodeMainLoop();
+    
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:
+
+};
 #endif

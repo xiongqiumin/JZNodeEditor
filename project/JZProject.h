@@ -62,6 +62,7 @@ public:
     void addTmp(JZProjectItem *item);
     void removeTmp(JZProjectItem *item);
     bool isTmp(JZProjectItem *item);
+    bool isFile(JZProjectItem *item);
 
     void saveTransaction();
     void saveCommit();
@@ -100,8 +101,7 @@ public:
     JZProjectItem *root();
 
     JZProjectItem *addFile(QString path);
-    void removeFile(QString path);    
-    void renameFile(QString oldPath,QString newPath);    
+    void removeFile(QString path);        
 
     JZScriptClassItem *getClass(QString class_name);
     QStringList classList();
@@ -150,19 +150,18 @@ protected:
     void registType();
     void unregistType();
             
+    QString m_filepath;
     JZProjectItemRoot m_root;
-    JZProjectItemRoot m_tmp;
-    bool m_windowSystem;        
-
-    QMap<JZProjectItem*, QList<BreakPoint>> m_breakPoints;
-    QString m_filepath;    
-    bool m_blockRegist;
-    QString m_error;    
-
-    bool m_isSaveCache;
-    QList<JZProjectItem*> m_saveCache;  //为了避免每次save写文件
+    QList<JZProjectItemPtr> m_tmp;    
     QStringList m_containers;
     QStringList m_modules;
+
+    QMap<JZProjectItem*, QList<BreakPoint>> m_breakPoints;
+    
+    QString m_error;
+    bool m_blockRegist;
+    bool m_isSaveCache;
+    QList<JZProjectItem*> m_saveCache;  //为了避免每次save写文件
 
     static JZProject *m_active;
 };

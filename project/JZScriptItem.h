@@ -22,6 +22,9 @@ public:
     QByteArray toBuffer();
     bool fromBuffer(const QByteArray &object);
 
+    void saveEditorCache();
+    void loadEditorCache();
+
     const JZFunctionDefine &function();
     void setFunction(JZFunctionDefine def);
 
@@ -75,6 +78,7 @@ protected:
 
     QMap<int, QPointF> m_nodesPos;
     QMap<QString, JZParamDefine> m_variables;
+    QByteArray m_editorCache;
 };
 
 #endif

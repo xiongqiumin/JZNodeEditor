@@ -49,6 +49,9 @@ enum ViewCommand {
     CreateGroup,
     RemoveGroup,
     SetGroup,
+    AddLocalVariable,
+    RemoveLocalVariable,
+    ChangeLocalVariable,
 };
 
 JZNodeConnect parseLine(const QByteArray &buffer)
@@ -288,6 +291,45 @@ void JZNodeMoveCommand::undo()
     }
 }
 
+//JZNodeVariableCommand
+JZNodeVariableCommand::JZNodeVariableCommand(JZNodeView *view, int type)
+{
+    m_view = view;
+    command = type;
+}
+
+void JZNodeVariableCommand::redo()
+{
+    if (command == AddLocalVariable)
+    {
+        m_view->addLocalVariable(newParam);
+    }
+    else if(command == RemoveLocalVariable)
+    {        
+        m_view->removeLocalVariable(oldParam.name);
+    }
+    else if (command == ChangeLocalVariable)
+    {
+        m_view->changeLocalVariable(oldParam.name,newParam);
+    }
+}
+
+void JZNodeVariableCommand::undo()
+{
+    if (command == AddLocalVariable)
+    {
+        m_view->removeLocalVariable(newParam.name);
+    }
+    else if (command == RemoveLocalVariable)
+    {
+        m_view->addLocalVariable(oldParam);
+    }
+    else if (command == ChangeLocalVariable)
+    {
+        m_view->changeLocalVariable(newParam.name,oldParam);
+    }
+}
+
 //CopyData
 struct CopyData
 {
@@ -339,13 +381,13 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_selLine = nullptr;        
     m_propEditor = nullptr;
     m_loadFlag = false;    
-    m_file = nullptr;    
+    m_file = nullptr;        
     m_recordMove = true;    
     m_runningMode = Process_none;
     m_runNode = -1;        
     m_groupIsMoving = false;
     m_autoRunning = false;
-    m_isUpdateFlowPanel = false;
+    m_isUpdateFlowPanel = false;    
     
     connect(&m_commandStack,&QUndoStack::cleanChanged, this, &JZNodeView::onCleanChanged);
     connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
@@ -486,12 +528,17 @@ void JZNodeView::udpateFlowPanel()
 
 void JZNodeView::setFile(JZScriptItem *file)
 {
-    m_file = file;    
+    m_file = file;
     connect(m_file->project(), &JZProject::sigScriptNodeChanged, this, &JZNodeView::onScriptNodeChanged);
     connect(m_file->project(), &JZProject::sigScriptNodeWidgetChanged, this, &JZNodeView::onScriptNodeWidgetChanged);
 
     initGraph();
     autoCompiler();    
+}
+
+void JZNodeView::resetFile()
+{
+    m_file->loadEditorCache();
 }
 
 bool JZNodeView::isModified()
@@ -863,6 +910,45 @@ void JZNodeView::updateGroup(int id)
     getGroupItem(id)->updateNode();
 }
 
+void JZNodeView::addLocalVariableCommand(JZParamDefine def)
+{
+    JZNodeVariableCommand *cmd = new JZNodeVariableCommand(this, ViewCommand::AddLocalVariable);
+    cmd->newParam = def;
+    m_commandStack.push(cmd);
+}
+
+void JZNodeView::removeLocalVariableCommand(QString name)
+{
+    JZNodeVariableCommand *cmd = new JZNodeVariableCommand(this, ViewCommand::RemoveLocalVariable);
+    auto def = *m_file->localVariable(name);
+    cmd->oldParam = def;
+    m_commandStack.push(cmd);
+}
+
+void JZNodeView::changeLocalVariableCommand(QString name, JZParamDefine def)
+{
+    JZNodeVariableCommand *cmd = new JZNodeVariableCommand(this, ViewCommand::ChangeLocalVariable);
+    auto old_def = *m_file->localVariable(name);
+    cmd->newParam = def;
+    cmd->oldParam = old_def;
+    m_commandStack.push(cmd);
+}
+
+void JZNodeView::addLocalVariable(JZParamDefine def)
+{
+    m_panel->addLocalVariable(def);
+}
+
+void JZNodeView::removeLocalVariable(QString name)
+{
+    m_panel->removeLocalVariable(name);
+}
+
+void JZNodeView::changeLocalVariable(QString name, JZParamDefine def)
+{
+    m_panel->changeLocalVariable(name,def);
+}
+
 void JZNodeView::showTip(QPointF pt,QString text)
 {            
     auto tip = this->mapFromScene(pt);
@@ -1031,7 +1117,8 @@ void JZNodeView::clear()
 void JZNodeView::save()
 {
     auto project = m_file->project();
-    saveNodePos();
+    saveNodePos();    
+    m_file->saveEditorCache();
     project->saveItem(m_file);
     m_commandStack.setClean();
 }

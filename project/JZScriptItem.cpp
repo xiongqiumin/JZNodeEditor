@@ -66,8 +66,7 @@ const JZFunctionDefine &JZScriptItem::function()
 void JZScriptItem::setFunction(JZFunctionDefine def)
 {
     m_name = def.name;
-    m_function = def;
-    itemChangedNotify();
+    m_function = def;    
 }
 
 int JZScriptItem::addNode(JZNode *node)
@@ -532,14 +531,12 @@ QStringList JZScriptItem::localVariableList(bool hasFunc)
     return list;
 }
 
-QByteArray JZScriptItem::toBuffer()
+void JZScriptItem::saveEditorCache()
 {
-    QByteArray buffer;
-    QDataStream s(&buffer,QIODevice::WriteOnly);
-    
-    s << m_name;
-    s << m_nodeId;
-    
+    m_editorCache.clear();
+    QDataStream s(&m_editorCache,QIODevice::WriteOnly);
+
+    s << m_nodeId;    
     QList<QByteArray> node_list;
     auto it = m_nodes.begin();
     while (it != m_nodes.end())
@@ -548,22 +545,17 @@ QByteArray JZScriptItem::toBuffer()
         it++;
     }
     s << node_list;    
-    s << m_connects;    
-    s << m_function;
+    s << m_connects;        
     s << m_variables;
     s << m_nodesPos;
     s << m_groups;
-
-    return buffer;
 }
 
-bool JZScriptItem::fromBuffer(const QByteArray &buffer)
+void JZScriptItem::loadEditorCache()
 {
-    QDataStream s(buffer);    
+    QDataStream s(&m_editorCache,QIODevice::ReadOnly); 
 
-    s >> m_name;
-    s >> m_nodeId;
-    
+    s >> m_nodeId;    
     QList<QByteArray> node_list;
     s >> node_list;
     for (int i = 0; i < node_list.size(); i++)
@@ -577,10 +569,28 @@ bool JZScriptItem::fromBuffer(const QByteArray &buffer)
         node->fromBuffer(node_buffer);
         m_nodes.insert(node->id(), node);
     }    
-    s >> m_connects;
-    s >> m_function;
+    s >> m_connects;    
     s >> m_variables;
     s >> m_nodesPos;
     s >> m_groups;
+}
+
+QByteArray JZScriptItem::toBuffer()
+{
+    QByteArray buffer;
+    QDataStream s(&buffer,QIODevice::WriteOnly);    
+    s << m_name;
+    s << m_function;
+    s << m_editorCache;
+    return buffer;
+}
+
+bool JZScriptItem::fromBuffer(const QByteArray &buffer)
+{
+    QDataStream s(buffer);    
+    s >> m_name;
+    s >> m_function;
+    s >> m_editorCache;        
+    loadEditorCache();
     return true;
 }

@@ -54,8 +54,8 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
-    
-    runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\build\Debug\project\project\build\project.program)");
+        
+    //runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\build\Debug\project\project56\build\project56.program)");
 
     JZUpdateClient client(qApp->applicationDirPath());
     if (client.isDownloadFinish())

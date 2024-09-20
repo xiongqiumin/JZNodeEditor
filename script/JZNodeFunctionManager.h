@@ -16,7 +16,7 @@ public:
     void init();        
     void loadLibrary(QString filename);
     void setUserRegist(bool flag);
-    void clearUserReigst(); 
+    void clearUserReigst();     
 
     QList<const JZFunctionDefine*> functionList();
     const JZFunctionDefine *function(QString name);    
@@ -36,7 +36,7 @@ protected:
     
     QMap<QString, JZFunctionDefine> m_funcDefine;
     QMap<QString, JZFunction> m_funcImpl;
-    bool m_userRegist;
+    bool m_userRegist;    
     QStringList m_userFuncs;
 };
 void updateParam(JZFunctionDefine &dei,CFunction *func);

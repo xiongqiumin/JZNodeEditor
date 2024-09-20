@@ -419,7 +419,6 @@ void JZNodeEngine::regist()
     auto clone_func = BuiltInFunctionPtr(new JZClone());
     JZNodeFunctionManager::instance()->registBuiltInFunction(clone, clone_func);
 
-
     JZNodeFunctionManager::instance()->registCFunction("connect", true, jzbind::createFuncion(QObjectConnect));
     JZNodeFunctionManager::instance()->registCFunction("disconnect", true, jzbind::createFuncion(QObjectDisconnect));
     JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
@@ -610,13 +609,7 @@ void JZNodeEngine::pushStack(const JZFunction *func)
     m_stack.push();    
     m_stack.currentEnv()->function = func;
 
-    checkFunctionIn(func);
-    if (func->isMemberFunction())
-    {
-        auto &v_this = getReg(Reg_CallIn);
-        if(v_this.type() != QVariant::String && JZNodeType::isNullObject(v_this))
-            throw std::runtime_error("object is nullptr");
-    } 
+    checkFunctionIn(func);     
     
     if(!func->isCFunction())
     {          
@@ -948,21 +941,8 @@ Stack *JZNodeEngine::stack()
 
 bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
 {
-    auto toVariant = [this](const JZParamDefine &param,QVariant &v)->bool
-    {
-        if(param.dataType() >= Type_class)
-        {
-            auto obj = objectFromString(param.dataType(), param.value);
-            if(!obj)
-                return false;
-            v = QVariant::fromValue(JZNodeObjectPtr(obj,true));
-        }
-        else
-        {
-            v = JZNodeType::initValue(param.dataType(),param.value);
-        }
-        return true;
-    };
+    m_depend = depend;
+    JZNodeObjectManager::instance()->setUnitTest(true);
 
     //init hook function
     m_dependHook.clear();
@@ -972,13 +952,13 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
         if(!hook.enable)
             continue;
 
+        auto func = JZNodeFunctionManager::instance()->function(hook.function);
+
         QVariantList value_list;
         auto &hook_list = hook.params;
         for(int i = 0; i < hook_list.size(); i++)
         {
-            QVariant v; 
-            if(!toVariant(hook_list[i],v))
-                return false;
+            QVariant v = createVariable(func->paramOut[i].dataType(), hook_list[i]);
             
             value_list << v;
         }
@@ -987,13 +967,13 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
     }
 
     //global
-    for (int i = 0; i < depend->global.size(); i++)
+    auto it = depend->global.begin();
+    while(it != depend->global.end())
     {
-        QVariant v; 
-        if(!toVariant(depend->global[i],v))
-            return false;
-        
-        setVariable(depend->global[i].name,v);
+        auto ptr = m_global[it.key()];
+        int data_type = JZNodeType::variantType(*ptr);
+        *ptr = createVariable(data_type,it.value());       
+        it++;
     }
 
     //init input
@@ -1007,27 +987,25 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
             JZNodeObjectPtr ptr(obj,true);
             in << QVariant::fromValue(ptr);
 
-            for(int mem_idx = 0; mem_idx < depend->member.size(); i++)
+            auto mem_it = depend->member.begin();
+            while (mem_it != depend->member.end())
             {   
-                QVariant v; 
-                if(!toVariant(depend->member[mem_idx],v))
-                    return false;
-                
-                obj->setParam(depend->member[mem_idx].name,v);
+                auto param_def = obj->meta()->param(it.key());
+                auto v = createVariable(param_def->dataType(), mem_it.value());
+                obj->setParam(it.key(),v);
+                mem_it++;
             }
         }
         else
         {
-            QVariant v; 
-            if(!toVariant(p,v))
-                return false;
+            QVariant v = createVariable(p.dataType(), p.value);
             in << v;
         }
     }
 
-    //call
-    m_depend = depend; 
+    //call    
     bool ret = call(depend->function.fullName(),in,out);
+    JZNodeObjectManager::instance()->setUnitTest(false);
     m_depend = nullptr;
     return ret;
 }
@@ -1046,13 +1024,23 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     auto inst = JZNodeObjectManager::instance();
 
     QVariant v;
-    if(type <= Type_class)
+    if(type < Type_class)
         v = JZNodeType::initValue(type, value);
     else
-    {
+    {        
         JZNodeObject *sub = nullptr; 
-        if(value.isEmpty() || value == "null")
+        if (value.isEmpty())
+        {
+            auto def = inst->meta(type);
+            if(def->isValueType())
+                sub = inst->create(type);
+            else
+                sub = inst->createNull(type);
+        }
+        else if (value == "null")
+        {
             sub = inst->createNull(type);
+        }
         else if(value.startsWith("{") && value.endsWith("}"))
         {
             QString init_text = value.mid(1,value.size() - 2);
@@ -1405,7 +1393,12 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
             break;
             
         const QVariant &v = getReg(Reg_CallIn + i);
-        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(v),inList[i].dataType()));        
+        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(v),inList[i].dataType()));
+        if (inList[i].dataType() >= Type_class && JZNodeType::isNullObject(v))
+        {
+            QString error = "param" + QString::number(i + 1) + " is nullptr object";
+            throw std::runtime_error(qUtf8Printable(error));
+        }
     }
 }
 

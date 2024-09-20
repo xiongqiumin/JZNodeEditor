@@ -55,7 +55,7 @@ QString JZProjectItem::name() const
 
 void JZProjectItem::setName(QString name)
 {
-    m_name = name;
+    m_name = name;    
 }
 
 QString JZProjectItem::path() 
@@ -169,12 +169,6 @@ QList<JZProjectItem *> JZProjectItem::itemList(QList<int> type_list)
         result << chlid[i]->itemList(type_list);
         
     return result;
-}
-
-void JZProjectItem::itemChangedNotify()
-{
-    if (m_project)
-        m_project->onItemChanged(this);
 }
 
 //JZProjectItemRoot

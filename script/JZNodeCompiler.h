@@ -221,6 +221,7 @@ public:
     int addBreak();    
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
     
+    void addAlloc(int allocType, QString name, int dataType);
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
@@ -272,8 +273,7 @@ protected:
     bool buildParamBinding();
     void replaceSubNode(int id,int parentId,int flow_index);
     int isAllFlowReturn(int id,bool root);
-    void addFunction(const JZFunctionDefine &define,int start_addr);
-    void addAlloc(int allocType, QString name, int dataType);
+    void addFunction(const JZFunctionDefine &define,int start_addr);    
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);         
 

@@ -22,6 +22,11 @@ void JZEditor::setProject(JZProject *project)
     m_project = project;
 }
 
+JZProject *JZEditor::project()
+{
+    return m_project;
+}
+
 void JZEditor::setItem(JZProjectItem *item)
 {
     if (item == nullptr && m_item)

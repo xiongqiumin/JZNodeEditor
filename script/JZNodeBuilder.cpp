@@ -7,12 +7,6 @@
 #include "JZNodeUtils.h"
 #include "JZContainer.h"
 
-enum {
-    build_global,
-    build_emptyGlobal,
-    build_unitTest,
-};
-
 //JZNodeCustomBuild
 JZNodeCustomBuild::JZNodeCustomBuild()
 {
@@ -80,9 +74,7 @@ bool JZNodeBuilder::initGlobal()
             auto def = m_project->globalVariable(global_params[i]);
             c->addAlloc(JZNodeIRAlloc::Heap, def->name, def->dataType());
             if(!def->value.isEmpty())
-            {
-                m_compiler.addInitVariable(irRef(def->name),def->dataType(),def->value);
-            }
+                m_compiler.addInitVariable(irRef(def->name),def->dataType(),def->value);            
         }
         return ret_error.isEmpty();
     };

@@ -909,10 +909,23 @@ void JZNodeCompiler::updateDispayNode()
 void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
 {
     ScriptDepend depend;
-    depend.function = jzfunc->define;
-    for (int i = jzfunc->addr; i < jzfunc->addrEnd; i++)
+
+    if (jzfunc->isMemberFunction())
     {
-        auto *stmt = m_script->statmentList[i].data();
+        auto meta = JZNodeObjectManager::instance()->meta(jzfunc->className());
+        QStringList member_list = meta->paramList(true);
+        for (int i = 0; i < member_list.size(); i++)
+            depend.member[member_list[i]] = meta->param(member_list[i])->value;
+    }
+
+    auto global_list = m_project->globalVariableList();
+    for (int i = 0; i < global_list.size(); i++)
+        depend.global[global_list[i]] = m_project->globalVariable(global_list[i])->value;
+
+    depend.function = jzfunc->define;
+    for (int pc = jzfunc->addr; pc < jzfunc->addrEnd; pc++)
+    {
+        auto *stmt = m_script->statmentList[pc].data();
         switch (stmt->type)
         {
             case OP_call:
@@ -921,9 +934,9 @@ void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
                 auto func = JZNodeFunctionManager::instance()->function(ir_call->function);
                 int node_id = -1;
                 int pre_count = func->paramIn.size() + 1;
-                if(i >= pre_count && m_script->statmentList[i - pre_count]->type == OP_nodeId)
+                if(pc >= pre_count && m_script->statmentList[pc - pre_count]->type == OP_nodeId)
                 {
-                    auto ir_node = dynamic_cast<JZNodeIRNodeId*>(m_script->statmentList[i - pre_count].data());
+                    auto ir_node = dynamic_cast<JZNodeIRNodeId*>(m_script->statmentList[pc - pre_count].data());
                     if(m_scriptFile->getNode(ir_node->id)->type() == Node_function)
                         node_id = ir_node->id;
                 }
@@ -932,10 +945,11 @@ void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
                 {
                     ScriptDepend::FunctionHook hook;
                     hook.nodeId = node_id;
-                    hook.pc = i;
+                    hook.pc = pc;
                     hook.function = func->fullName();
 
-                    hook.params = func->paramOut; 
+                    for(int i = 0; i < func->paramOut.size(); i++)
+                        hook.params.push_back(func->paramOut[i].value);
                     depend.hook.push_back(hook);
                 }
                 break;
@@ -1447,8 +1461,7 @@ bool JZNodeCompiler::bulidControlFlow()
         if (m_statmentList->at(pc)->type != OP_ComilerStackInit)
             continue;
 
-        QList<JZNodeIRPtr> ir_list;
-        
+        QList<JZNodeIRPtr> ir_list;        
         for (int node_idx = 0; node_idx < m_buildGraph->topolist.size(); node_idx++)
         {
             auto node = m_buildGraph->topolist[node_idx]->node;        

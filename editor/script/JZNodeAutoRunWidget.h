@@ -48,10 +48,12 @@ protected:
         JZNodeProperty *pin;
         PinType type;
         int nodeId;
+        QString name;
         int index;
     };
 
-    void addPin(JZNodeProperty *pin, PinType type, int index, int nodeId = -1);
+    void addPin(JZNodeProperty *pin, PinType type, QString name);
+    void addPin(JZNodeProperty *pin, PinType type, int index, int nodeId);
     void clear();
     PropCoor *propCoor(PinType type, int index);
     void copyDependValue(ScriptDepend &old, ScriptDepend &dst);

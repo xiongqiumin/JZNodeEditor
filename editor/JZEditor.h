@@ -33,6 +33,7 @@ public:
 
     int type();
     void setProject(JZProject *project);
+    JZProject *project();
 
     void setItem(JZProjectItem *item);
     JZProjectItem *item();

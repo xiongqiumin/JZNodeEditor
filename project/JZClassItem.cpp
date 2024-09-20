@@ -41,8 +41,7 @@ bool JZScriptClassItem::fromBuffer(const QByteArray &buffer)
 void JZScriptClassItem::setClass(QString className, QString super)
 {
     m_name = className;    
-    m_super = super;
-    itemChangedNotify();
+    m_super = super;    
 }
 
 QString JZScriptClassItem::className() const
@@ -52,8 +51,7 @@ QString JZScriptClassItem::className() const
 
 void JZScriptClassItem::setUiFile(QString uiFile)
 {
-    m_uiFile = uiFile;
-    itemChangedNotify();
+    m_uiFile = uiFile;    
 }
 
 QString JZScriptClassItem::uiFile() const
@@ -140,10 +138,9 @@ const JZParamDefine *JZScriptClassItem::memberThis()
 
 JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
 {
-    Q_ASSERT(!func.isCFunction && !func.name.isEmpty());
+    Q_ASSERT(!func.isCFunction && !func.name.isEmpty() && func.className == m_name);
 
-    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);
-    func.className = m_name;
+    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    
     file->setFunction(func);
     m_project->addItem(itemPath(), file);        
     return file;

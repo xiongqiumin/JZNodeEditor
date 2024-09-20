@@ -537,6 +537,7 @@ void initPainter()
 
     //image
     jzbind::ClassBind<QImage> cls_image(Type_image,"QImage");
+    cls_image.setValueType(true);
     cls_image.def("create", false, [](QString filename)->QImage{ return QImage(filename); });
     cls_image.def("load", true, [](QImage *image,QString filename)->bool { return image->load(filename); });
     cls_image.def("save", true, [](QImage *image, QString filename)->bool { return image->save(filename); });

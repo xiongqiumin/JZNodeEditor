@@ -162,13 +162,13 @@ void JZNodeEditor::init()
     splitter->setStretchFactor(2,0);
     splitter->setSizes({220,300,220});
     l->addWidget(splitter);
-    
-    //m_nodeProp->setMaximumWidth(200);
+        
     m_view->setPropertyEditor(m_nodeProp);    
     m_view->setRunEditor(m_runProp);
     m_view->setPanel(m_nodePanel);
     m_view->setFlowPanel(m_nodeViewPanel);
 
+    m_nodePanel->setView(m_view);
     m_nodeViewPanel->setView(m_view);
 }    
 
@@ -320,6 +320,11 @@ JZScriptItem *JZNodeEditor::script()
 {
     JZScriptItem* file = dynamic_cast<JZScriptItem*>(m_item);
     return file;
+}
+
+void JZNodeEditor::resetFile()
+{
+    m_view->resetFile();
 }
 
 ScriptDepend JZNodeEditor::scriptTestDepend()

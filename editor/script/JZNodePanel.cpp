@@ -12,6 +12,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include "UiCommon.h"
 #include "JZNodePanel.h"
 #include "JZNodeExpression.h"
 #include "JZRegExpHelp.h"
@@ -25,8 +26,8 @@
 #include "JZNodeFunction.h"
 #include "JZNodeEvent.h"
 #include "JZNodeLocalParamEditDialog.h"
-#include "UiCommon.h"
 #include "JZNodeEditorManager.h"
+#include "JZNodeView.h"
 
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
@@ -47,10 +48,13 @@ JZNodePanel::JZNodePanel(QWidget *widget)
     : QWidget(widget)
 {    
     m_file = nullptr;
+    m_view = nullptr;
     m_classFile = nullptr;    
     m_memberFunction = nullptr;
-    m_memberParam = nullptr;
+    m_itemMemberParam = nullptr;
+    m_itemInputParam = nullptr;
     m_itemLocalParam = nullptr;
+    m_itemGlobalParam = nullptr;
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0,0,0,0);
@@ -121,10 +125,17 @@ void JZNodePanel::setFile(JZScriptItem *file)
     init();
 }
 
+void JZNodePanel::setView(JZNodeView *view)
+{
+    m_view = view;
+}
+
 void JZNodePanel::updateDefine()
 {    
     updateThis();
+    updateInputVariable();
     updateLocalVariable();
+    updateGlobalVariable();
     updateModule();    
 }
 
@@ -144,20 +155,41 @@ void JZNodePanel::updateThis()
     //params    
     QStringList params;
     params << "this" << def.paramList(false);
-    for(int i = 0; i < params.size(); i++)
+    for(int i = 1; i < params.size(); i++)
+        params[i] = "this." + params[i];
+    
+    updateVariable(m_itemMemberParam, params);
+}
+
+void JZNodePanel::updateVariable(QTreeWidgetItem *root, QStringList paramList)
+{
+    auto list = UiHelper::treeDiff(root, paramList);
+    for (int i = 0; i < list.size(); i++)
     {
-        QTreeWidgetItem *item = nullptr;
-        if (i == 0)
-        {   
-            item = createParam("this");
-        }
-        else
+        auto ret = list[i];
+        if (ret.type == TreeDiffResult::Remove)
         {
-            item = createParam("this." + params[i]);
-            item->setText(0,params[i]);
+            removeItem(root, list[i].name);
         }
-        m_memberParam->addChild(item);
+        else if (ret.type == TreeDiffResult::Add)
+        {
+            QTreeWidgetItem *item = createParam(list[i].name);
+            root->addChild(item);
+        }
     }
+}
+
+void JZNodePanel::updateInputVariable()
+{
+    auto in_list = m_file->function().paramIn;
+    QStringList params;
+    for (int i = 0; i < in_list.size(); i++)
+        params << in_list[i].name;
+    if (m_file->function().isMemberFunction())
+        params.pop_front();
+
+    m_itemInputParam->setHidden(params.size() == 0);
+    updateVariable(m_itemInputParam, params);
 }
 
 void JZNodePanel::updateLocalVariable()
@@ -165,21 +197,15 @@ void JZNodePanel::updateLocalVariable()
     if (m_file->itemType() != ProjectItem_scriptFunction)
         return;
 
-    QStringList params = m_file->localVariableList(true);
-    auto list = UiHelper::treeDiff(m_itemLocalParam,params);
-    for(int i = 0; i < list.size(); i++)
-    {   
-        auto ret = list[i];
-        if(ret.type = TreeDiffResult::Remove)
-        {
-            removeItem(m_itemLocalParam,list[i].name);
-        }
-        else if(ret.type = TreeDiffResult::Add)
-        {
-            QTreeWidgetItem *item = createParam(list[i].name);
-            m_itemLocalParam->addChild(item);
-        }                        
-    }    
+    QStringList params = m_file->localVariableList(false);
+    updateVariable(m_itemLocalParam, params);        
+}
+
+void JZNodePanel::updateGlobalVariable()
+{
+    QStringList params = m_file->project()->globalVariableList();
+    m_itemGlobalParam->setHidden(params.size() == 0);
+    updateVariable(m_itemGlobalParam, params);
 }
 
 void JZNodePanel::updateModule()
@@ -362,11 +388,13 @@ void JZNodePanel::initData()
     itemDataFolder->addChild(itemConst);
     initConstParam(itemConst);    
     
+    m_itemInputParam = createFolder("输入参数");
+    itemDataFolder->addChild(m_itemInputParam);
+    
     initScriptParam(itemDataFolder);
 
-    QTreeWidgetItem *itemParam = createFolder("全局变量");
-    itemDataFolder->addChild(itemParam);
-    initProjectParam(itemParam);
+    m_itemGlobalParam = createFolder("全局变量");
+    itemDataFolder->addChild(m_itemGlobalParam);
 
     QTreeWidgetItem *itemOp = createFolder("操作");
     itemDataFolder->addChild(itemOp);    
@@ -561,26 +589,14 @@ void JZNodePanel::initThis(QTreeWidgetItem *root)
         root->addChild(createClass(def.superName));
     }
 
-    m_memberParam = createFolder("成员变量");
-    root->addChild(m_memberParam);
+    m_itemMemberParam = createFolder("成员变量");
+    root->addChild(m_itemMemberParam);
 
     m_memberFunction = createFolder("成员函数");
     root->addChild(m_memberFunction);    
     
     QTreeWidgetItem *itemClassEvent = createFolder("事件");
     root->addChild(itemClassEvent);
-}
-
-void JZNodePanel::initProjectParam(QTreeWidgetItem *root)
-{
-    auto project = m_file->project();
-    auto list = project->globalVariableList();
-    for(int i = 0; i < list.size(); i++)
-    {
-        auto info = project->globalVariable(list[i]);
-        QTreeWidgetItem *item = createParam(list[i]);
-        root->addChild(item);
-    }
 }
 
 void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
@@ -596,7 +612,7 @@ void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
     l->addStretch();
     l->addWidget(btn);
     w->setLayout(l);    
-    
+
     m_itemLocalParam = createFolder("");
     root->addChild(m_itemLocalParam);
     m_tree->setItemWidget(m_itemLocalParam,0,w);    
@@ -709,6 +725,15 @@ const JZModule *JZNodePanel::module(QString name)
     return JZModuleManager::instance()->module(name);
 }
 
+QTreeWidgetItem *JZNodePanel::localVariableItem(QString name)
+{
+    int index = UiHelper::treeIndexOf(m_itemLocalParam, name);
+    if (index == -1)
+        return nullptr;
+
+    return m_itemLocalParam->child(index);
+}
+
 void JZNodePanel::removeItem(QTreeWidgetItem *root, QString name)
 {
     int index = UiHelper::treeIndexOf(root, name);
@@ -786,14 +811,12 @@ void JZNodePanel::onContextMenu(const QPoint &pos)
         if (dialog.exec() != QDialog::Accepted)
             return;
 
-        auto new_def = dialog.param();        
-        m_file->setLocalVariable(old_def->name, new_def);
-        item->setText(0,new_def.name);
+        auto new_def = dialog.param();
+        m_view->changeLocalVariableCommand(old_def->name, new_def);               
     }
     else if (act == actDel)
     {
-        m_file->removeLocalVariable(item->text(0));
-        m_itemLocalParam->removeChild(item);
+        m_view->removeLocalVariableCommand(item->text(0));        
     }
 }
 
@@ -809,8 +832,33 @@ void JZNodePanel::onAddScriptParam()
         return;
     
     define = dialog.param();
+    m_view->addLocalVariableCommand(define);       
+}
+
+void JZNodePanel::addLocalVariable(JZParamDefine define)
+{
     m_file->addLocalVariable(define);
     QTreeWidgetItem *item = createParam(define.name);
     m_itemLocalParam->addChild(item);
-    m_itemLocalParam->setExpanded(true);       
+    m_itemLocalParam->setExpanded(true);
+}
+
+void JZNodePanel::removeLocalVariable(QString name)
+{
+    auto item = localVariableItem(name);
+    if (item)
+    {
+        m_file->removeLocalVariable(name);
+        m_itemLocalParam->removeChild(item);
+    }
+}
+
+void JZNodePanel::changeLocalVariable(QString name, JZParamDefine new_def)
+{
+    auto item = localVariableItem(name);
+    if (item)
+    {
+        m_file->setLocalVariable(name, new_def);
+        item->setText(0, new_def.name);
+    }
 }

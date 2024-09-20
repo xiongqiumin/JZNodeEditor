@@ -665,7 +665,7 @@ bool JZNodeCppGenerater::toCppFunction(JZFunction *func,CppFunction *cfunc)
         auto stmt = script->statmentList[i].data();
         lines << irToCpp(stmt);
     }
-    qSort(m_jumpAddr);
+    std::sort(m_jumpAddr.begin(), m_jumpAddr.end());
     for(int i = m_jumpAddr.size() - 1; i >= 0; i--)
     {
         int addr = m_jumpAddr[i];

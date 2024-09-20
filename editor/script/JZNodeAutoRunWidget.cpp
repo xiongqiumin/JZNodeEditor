@@ -44,6 +44,15 @@ void JZNodeAutoRunWidget::clear()
     m_propList.clear();
 }
 
+void JZNodeAutoRunWidget::addPin(JZNodeProperty *pin, PinType type, QString name)
+{
+    PropCoor coor;
+    coor.pin = pin;
+    coor.type = type;
+    coor.name = name;    
+    m_propList.push_back(coor);
+}
+
 void JZNodeAutoRunWidget::addPin(JZNodeProperty *pin, PinType type, int index, int nodeId)
 {
     PropCoor coor;
@@ -73,36 +82,32 @@ bool JZNodeAutoRunWidget::typeEqual(const QList<JZParamDefine> &p1, const QList<
 }
 
 void JZNodeAutoRunWidget::copyDependValue(ScriptDepend &old, ScriptDepend &dst)
-{
+{    
+    auto copyExist = [](QMap<QString,QString> &old, QMap<QString, QString> &dst) {
+        auto it = dst.begin();
+        while (it != dst.end())
+        {
+            if (old.contains(it.key()))
+            {
+                it.value() = old[it.key()];
+            }
+            it++;
+        } 
+    };
+
     if (typeEqual(old.function.paramIn, dst.function.paramIn))
         dst.function.paramIn = old.function.paramIn;
-
-    for (int i = 0; i < old.global.size(); i++)
-    {
-        QString name = old.global[i].name;
-        auto param = dst.getGlobal(name);
-        if (param && param->type == old.global[i].type)
-            param->value = old.global[i].value;
-    }
-
-    for (int i = 0; i < old.member.size(); i++)
-    {
-        QString name = old.member[i].name;
-        auto param = dst.getMember(name);
-        if (param && param->type == old.member[i].type)
-            param->value = old.member[i].value;
-    }
+       
+    copyExist(old.member, dst.member);
+    copyExist(old.global, dst.global);
 
     for (int i = 0; i < old.hook.size(); i++)    
     {
         auto ptr = dst.getHook(old.hook[i].nodeId);
         if (ptr)
         {
-            if (typeEqual(ptr->params, old.hook[i].params))
-            {
-                ptr->enable = old.hook[i].enable;
-                ptr->params = old.hook[i].params;
-            }
+            ptr->enable = old.hook[i].enable;
+            ptr->params = old.hook[i].params;            
         }
     }
 }
@@ -132,7 +137,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             sub_item->setValue(m_depend.function.paramIn[i].value);
 
             func_input->addSubProperty(sub_item);
-            addPin(sub_item, Pin_funcIn, i);
+            addPin(sub_item, Pin_funcIn, i, -1);
         }
     }
 
@@ -141,14 +146,23 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         auto item_member = new JZNodeProperty("成员变量", NodeProprety_GroupId);
         item_input->addSubProperty(item_member);
 
-        for (int i = 0; i < m_depend.member.size(); i++)
+        auto meta = JZNodeObjectManager::instance()->meta(m_depend.function.className);
+
+        auto it = m_depend.member.begin();
+        while(it != m_depend.member.end())
         {
-            auto sub_item = new JZNodeProperty(m_depend.member[i].name, NodeProprety_Value);
-            sub_item->setDataType(m_depend.member[i].dataType());
-            sub_item->setValue(m_depend.member[i].value);
+            QString name = it.key();
+            int data_type = meta->param(name)->dataType();
+            QString value = it.value();
+
+            auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
+            sub_item->setDataType(data_type);
+            sub_item->setValue(value);
 
             item_member->addSubProperty(sub_item);
-            addPin(sub_item, Pin_member, i);
+            addPin(sub_item, Pin_member, name);
+
+            it++;
         }
     }
 
@@ -157,14 +171,21 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         auto item_global = new JZNodeProperty("全局变量", NodeProprety_GroupId);
         item_input->addSubProperty(item_global);
 
-        for (int i = 0; i < m_depend.global.size(); i++)
+        auto it = m_depend.global.begin();
+        while (it != m_depend.global.end())
         {
-            auto sub_item = new JZNodeProperty(m_depend.global[i].name, NodeProprety_Value);
-            sub_item->setDataType(m_depend.global[i].dataType());
-            sub_item->setValue(m_depend.global[i].value);
+            QString name = it.key();
+            int data_type = m_editor->project()->globalVariable(name)->dataType();
+            QString value = it.value();
+
+            auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
+            sub_item->setDataType(data_type);
+            sub_item->setValue(value);
 
             item_global->addSubProperty(sub_item);
-            addPin(sub_item, Pin_global, i);
+            addPin(sub_item, Pin_member, name);
+
+            it++;
         }
     }
 
@@ -187,13 +208,14 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             enable_item->setValue(hook.enable? "true" : "false");
             item_function->addSubProperty(enable_item);
             addPin(enable_item, Pin_hook, 0, hook.nodeId);
-
+            
+            auto func = JZNodeFunctionManager::instance()->function(hook.function);
             auto &node_out = hook.params;
             for (int i = 0; i < node_out.size(); i++)
-            {
-                auto sub_item = new JZNodeProperty(node_out[i].name, NodeProprety_Value);
-                sub_item->setDataType(node_out[i].dataType());
-                sub_item->setValue(node_out[i].value);
+            {                
+                auto sub_item = new JZNodeProperty(func->paramOut[i].name, NodeProprety_Value);
+                sub_item->setDataType(func->paramOut[i].dataType());
+                sub_item->setValue(node_out[i]);
 
                 item_function->addSubProperty(sub_item);
                 addPin(sub_item, Pin_hook, i+1, hook.nodeId);
@@ -214,7 +236,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             sub_item->setEnabled(false);
 
             item_output->addSubProperty(sub_item);       
-            addPin(sub_item, Pin_funcOut, i);            
+            addPin(sub_item, Pin_funcOut, i, -1);            
         }
     }
 }
@@ -262,16 +284,16 @@ void JZNodeAutoRunWidget::onValueChanged(JZNodeProperty *pin, const QString &val
     if (coor->type == Pin_funcIn)
         m_depend.function.paramIn[coor->index].value = value;
     else if(coor->type == Pin_member)
-        m_depend.member[coor->index].value = value;
+        m_depend.member[coor->name] = value;
     else if(coor->type == Pin_global)
-        m_depend.global[coor->index].value = value;    
+        m_depend.global[coor->name] = value;
     else if (coor->type == Pin_hook)
     {
         auto ptr = m_depend.getHook(coor->nodeId);
         if (coor->index == 0)
             ptr->enable = (value == "true");   
         else
-            ptr->params[coor->index - 1].value = value;
+            ptr->params[coor->index - 1] = value;
     }
 
     emit sigDependChanged();

@@ -41,8 +41,7 @@ void JZParamItem::addVariable(QString name, QString type, const QString &v)
     info.name = name;
     info.type = type;
     info.value = v;
-    m_variables[name] = info;
-    itemChangedNotify();
+    m_variables[name] = info;    
 }
 
 void JZParamItem::addVariable(QString name,int type, const QString &v)
@@ -58,8 +57,7 @@ void JZParamItem::addVariable(JZParamDefine define)
 
 void JZParamItem::removeVariable(QString name)
 {
-    m_variables.remove(name);    
-    itemChangedNotify();
+    m_variables.remove(name);        
 }
 
 void JZParamItem::setVariable(QString name, JZParamDefine define)
@@ -70,8 +68,7 @@ void JZParamItem::setVariable(QString name, JZParamDefine define)
         Q_ASSERT(!m_variables.contains(define.name));
         m_variables.remove(name);        
     }
-    m_variables[define.name] = define;
-    itemChangedNotify();
+    m_variables[define.name] = define;    
 }
 
 const JZParamDefine *JZParamItem::variable(QString name) const

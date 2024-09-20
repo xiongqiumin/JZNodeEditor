@@ -16,13 +16,7 @@ public:
     virtual ~JZScriptFile();
 
     bool save(QString filepath);
-    bool save(QString filepath,QList<JZProjectItem*> items);
     bool load(QString filepath);
-    void reset(JZProjectItem *item);
-
-    void updateClass(JZScriptClassItem *item, JZNodeObjectDefine define);
-    void updateScriptName(JZScriptItem *item, QString name);
-    void updateScriptFunction(JZScriptItem *item, JZFunctionDefine define);
 
     JZParamItem *addParamDefine(QString name);
     void removeParamDefine(QString name);
@@ -44,8 +38,6 @@ protected:
 
     void loadScript(QDataStream &s, JZProjectItem *item);
     void saveScript(QDataStream &s, JZProjectItem *item);
-
-    QMap<JZProjectItem*, QByteArray> m_itemCache;
 };
 QSharedPointer<JZScriptFile> createTempFile(JZProject *project = nullptr);
 

@@ -11,7 +11,7 @@ JZNodeFunctionManager *JZNodeFunctionManager::instance()
 
 JZNodeFunctionManager::JZNodeFunctionManager()
 {
-    m_userRegist = false;
+    m_userRegist = false;    
 }
 
 JZNodeFunctionManager::~JZNodeFunctionManager()

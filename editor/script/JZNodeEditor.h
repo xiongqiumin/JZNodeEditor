@@ -42,10 +42,11 @@ public:
 
     void setRunningMode(ProcessStatus staus);
     int runtimeNode();
-    void setRuntimeNode(int nodeId);
+    void setRuntimeNode(int nodeId);    
 
     JZScriptItem *script();
     ScriptDepend scriptTestDepend();
+    void resetFile();
 
     void setCompilerResult(const CompilerResult *info);
     void setAutoRunResult(const UnitTestResult &result);

@@ -110,7 +110,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeWatch, this, &MainWindow::onRuntimeWatch);
 
     connect(&m_process,(void (QProcess::*)(int,QProcess::ExitStatus))&QProcess::finished,this,&MainWindow::onRuntimeFinish);
-    connect(&m_project,&JZProject::sigItemChanged, this, &MainWindow::onProjectChanged);
+    connect(&m_project,&JZProject::sigItemChanged, this, &MainWindow::onProjectItemChanged);
     connect(&m_project,&JZProject::sigDefineChanged, this, &MainWindow::onProjectChanged);
     connect(&m_project,&JZProject::sigBreakPointChanged, this, &MainWindow::onBreakPointChanged);
 
@@ -126,6 +126,7 @@ MainWindow::MainWindow(QWidget *parent)
     updateActionStatus();    
         
     //initLocalProcessTest();
+    JZProject::setActive(&m_project);
 }
 
 MainWindow::~MainWindow()
@@ -849,10 +850,7 @@ void MainWindow::onModifyChanged(bool flag)
     if (index == -1)
         return;
 
-    QString title = editor->item()->itemPath();
-    if (flag)
-        title += "*";
-    m_editorStack->setTabText(index, title);
+    updateTabText(index);    
     updateActionStatus();
 }
 
@@ -875,8 +873,7 @@ bool MainWindow::closeProject()
     m_breakPoint->clear();
     m_project.close();
     updateActionStatus();
-    setWindowTitle("JZNodeEditor");
-    JZProject::setActive(nullptr);
+    setWindowTitle("JZNodeEditor");    
     return true;
 }
 
@@ -887,8 +884,7 @@ bool MainWindow::openProject(QString filepath)
         QMessageBox::information(this, "", "打开工程失败: " + m_project.error());
         return false;
     }
-
-    JZProject::setActive(&m_project);
+    
     m_buildInfo.clear();
     m_projectTree->setProject(&m_project);
     m_setting.addRecentProject(m_project.filePath());
@@ -1037,11 +1033,33 @@ void MainWindow::onAutoRunResult(UnitTestResultPtr result)
 
 JZEditor *MainWindow::editor(QString filepath)
 {
-    auto it = m_editors.find(filepath);
-    if (it == m_editors.end())
-        return nullptr;
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
+    {
+        if (it.key()->itemPath() == filepath)
+            return it.value();
 
-    return it.value();
+        it++;
+    }
+    return nullptr;    
+}
+
+QList<JZNodeEditor*> MainWindow::nodeEditorList()
+{
+    QList<JZNodeEditor*> list;
+    //editor
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
+    {
+        auto editor = it.value();
+        if (it.value()->type() == Editor_script)
+        {
+            auto node_edit = (JZNodeEditor*)it.value();
+            list << node_edit;
+        }
+        it++;
+    }
+    return list;
 }
 
 JZNodeEditor *MainWindow::nodeEditor(QString filepath)
@@ -1083,19 +1101,20 @@ bool MainWindow::openEditor(QString filepath)
         return false;
 
     QString file = item->itemPath();
-    if (!m_editors.contains(file)) {
-        JZEditor *editor = createEditor(item->itemType());
-        if (!editor)
+    auto new_edit = editor(file);
+    if (!new_edit) {
+        new_edit = createEditor(item->itemType());
+        if (!new_edit)
             return false;
         
-        connect(editor, &JZEditor::redoAvailable, this, &MainWindow::onRedoAvailable);
-        connect(editor, &JZEditor::undoAvailable, this, &MainWindow::onUndoAvailable);
-        connect(editor, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);        
-        editor->setItem(item);
-        editor->open(item);
-        if (editor->type() == Editor_script)
+        connect(new_edit, &JZEditor::redoAvailable, this, &MainWindow::onRedoAvailable);
+        connect(new_edit, &JZEditor::undoAvailable, this, &MainWindow::onUndoAvailable);
+        connect(new_edit, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);
+        new_edit->setItem(item);
+        new_edit->open(item);
+        if (new_edit->type() == Editor_script)
         {
-            auto node_edit = (JZNodeEditor*)editor;
+            auto node_edit = (JZNodeEditor*)new_edit;
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
             connect(node_edit, &JZNodeEditor::sigAutoCompiler, this, &MainWindow::onAutoCompiler);
             connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
@@ -1107,26 +1126,26 @@ bool MainWindow::openEditor(QString filepath)
                 node_edit->setCompilerResult(cmp_ret);
         }
 
-        m_editors[file] = editor;
-        m_editorStack->addTab(editor, filepath);
+        m_editors[item] = new_edit;
+        m_editorStack->addTab(new_edit, filepath);
     }
-    switchEditor(m_editors[file]);
+    switchEditor(new_edit);
     
     return true;
 }
 
 void MainWindow::resetEditor(JZEditor *editor)
 {
-    JZProjectItem *file = m_project.getItemFile(editor->item());
-    if (file->itemType() == ProjectItem_scriptFile)
+    if (editor->type() == Editor_script)
     {
-        auto script_file = dynamic_cast<JZScriptFile*>(file);
-        script_file->reset(editor->item());
-    }
+        auto node_edit = (JZNodeEditor*)editor;
+        node_edit->resetFile();
+    }        
 }
 
 void MainWindow::closeEditor(JZEditor *editor)
 {
+    auto item = editor->item();
     if (editor->isModified())
     {
         int ret = QMessageBox::question(this, "", "是否保存", QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
@@ -1145,10 +1164,8 @@ void MainWindow::closeEditor(JZEditor *editor)
     }    
     editor->close();
     editor->setItem(nullptr);
-
-    QString path = m_editors.key(editor);
-    if(!path.isEmpty())
-        m_editors.remove(path);
+    
+    m_editors.remove(item);
     if(m_editor == editor)
     {
         if(m_editors.size() > 0)
@@ -1169,11 +1186,11 @@ void MainWindow::openItem(QString filepath)
 
 void MainWindow::closeItem(QString filepath)
 {
-    if(!m_editors.contains(filepath))
+    auto edit = editor(filepath);
+    if(!edit)
         return;
 
-    auto editor = m_editors[filepath];
-    closeEditor(editor);
+    closeEditor(edit);
 }
 
 void MainWindow::removeItem(QString itempath)
@@ -1182,16 +1199,7 @@ void MainWindow::removeItem(QString itempath)
     auto file_item = m_project.getItemFile(item);
 
     closeItem(itempath);
-    if (file_item == item)
-    {
-        m_project.removeItem(itempath);
-        QFile::remove(itempath);
-    }
-    else
-    {
-        m_project.removeItem(itempath);
-        m_project.saveItem(file_item);
-    }
+    m_project.removeItem(itempath);    
 }
 
 void MainWindow::onProjectTreeAction(int type, QString filepah)
@@ -1233,18 +1241,21 @@ void MainWindow::onProjectChanged()
     m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
 
     //editor
-    auto it = m_editors.begin();
-    while (it != m_editors.end())
-    {
-        auto editor = it.value();
-        if (it.value()->type() == Editor_script)
-        {
-            auto node_edit = (JZNodeEditor*)it.value();
-            node_edit->updateDefine();
-        }
+    auto list = nodeEditorList();
+    for(auto node_edit : list)
+        node_edit->updateDefine();        
+}
 
-        it++;
+void MainWindow::onProjectItemChanged(JZProjectItem *item)
+{
+    //editor
+    if (m_editors.contains(item))
+    {
+        int index = m_editorStack->indexOf(m_editors[item]);
+        if (m_editorStack->tabText(index) != item->itemPath())
+            updateTabText(index);
     }
+    onProjectChanged();
 }
 
 void MainWindow::onStackChanged(int stack_index)
@@ -1669,7 +1680,7 @@ void MainWindow::saveAll()
 bool MainWindow::closeAllEditor(JZEditor *except)
 {
     QList<JZEditor*> close_list;
-    QStringList close_file_list;
+    QList<JZProjectItem*> close_file_list;
 
     m_project.saveTransaction();
     bool saveToAll = false, noToAll = false;
@@ -1840,4 +1851,13 @@ void MainWindow::onBreakPointChanged(BreakPointChange reason, QString file, int 
         else if(reason == BreakPoint_remove)
             m_debuger.removeBreakPoint(file, id);
     }
+}
+
+void MainWindow::updateTabText(int index)
+{
+    auto editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
+    QString title = editor->item()->itemPath();
+    if (editor->isModified())
+        title += "*";
+    m_editorStack->setTabText(index, title);
 }

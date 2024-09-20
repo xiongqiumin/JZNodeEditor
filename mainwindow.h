@@ -97,6 +97,7 @@ protected slots:
     void onEditorClose(int index);
     void onEditorActivite(int index);
     void onNavigate(QUrl url);
+    void onProjectItemChanged(JZProjectItem *item);
     void onProjectChanged();
     
     void onFunctionOpen(QString filepath);    
@@ -182,6 +183,7 @@ private:
     bool openEditor(QString filepath);    
     void closeEditor(JZEditor *editor);
     JZEditor *editor(QString filepath);
+    QList<JZNodeEditor*> nodeEditorList();
     JZNodeEditor *nodeEditor(QString filepath);
     void updateActionStatus();    
 
@@ -208,6 +210,7 @@ private:
     void resetEditor(JZEditor *editor);    
     QIcon menuIcon(const QString &name);
     void showTopLevel();
+    void updateTabText(int index);
     
     JZProject m_project;    
 
@@ -223,7 +226,7 @@ private:
 
     JZEditor *m_editor;  
     QTabWidget *m_editorStack;
-    QMap<QString,JZEditor *> m_editors;
+    QMap<JZProjectItem*,JZEditor *> m_editors;
     Setting m_setting;
 
     JZNodeDebugClient m_debuger;
