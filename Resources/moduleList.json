@@ -5,8 +5,8 @@
 },
 {
     "name":"core",
-    "class":["QObject","QTimer","QPoint","QPointF","QRect","QRectF","QColor","QFile","QStringList",
-        "QList<int>","QList<double>","QMap<int,int>","QMap<int,QString>","QMap<QString,QString>","QMap<QString,int>"]    
+    "class":["QObject","QTimer","QPoint","QPointF","QRect","QRectF","QColor","QFile","stringList",
+        "QList<int>","QList<double>","QMap<int,int>","QMap<int,string>","QMap<string,string>","QMap<string,int>"]    
 },
 {
     "name":"gui",

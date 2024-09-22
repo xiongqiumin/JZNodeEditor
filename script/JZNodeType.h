@@ -29,6 +29,7 @@ enum
     Type_internalUse,
     Type_paramName,
     Type_hookEnable,
+    Type_imageEdit,
     Type_ignore,
     Type_internalUseEnd,
 

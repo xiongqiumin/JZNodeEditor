@@ -53,7 +53,7 @@ QWidget *TypeItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
     box->setEditText(type_text);
 
     QStringList type_list;
-    type_list << "bool" << "int" << "double" << "QString";
+    type_list << "bool" << "int" << "double" << "string";
     type_list << JZNodeObjectManager::instance()->getClassList();
     type_list << JZNodeObjectManager::instance()->getEnumList();
     box->addItems(type_list);
@@ -165,7 +165,7 @@ JZNodeTypeHelper * JZNodeTypeHelper::instance()
 JZNodeTypeHelper::JZNodeTypeHelper()
 {
     QStringList type_list;
-    type_list << "bool" << "int" << "double" << "QString";
+    type_list << "bool" << "int" << "double" << "string";
     type_list << JZNodeObjectManager::instance()->getClassList();
     type_list << JZNodeObjectManager::instance()->getEnumList();    
 

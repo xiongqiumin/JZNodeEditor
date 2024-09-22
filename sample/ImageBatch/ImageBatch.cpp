@@ -226,9 +226,9 @@ void SampleImageBatch::addProcessGetImage()
     define_dir.isFlowFunction = true;
     define_dir.paramIn.push_back(JZParamDefine("this", "MainWindow"));
     define_dir.paramIn.push_back(JZParamDefine("inputDir", Type_string));
-    define_dir.paramIn.push_back(JZParamDefine("outList","QStringList"));
+    define_dir.paramIn.push_back(JZParamDefine("outList","stringList"));
     auto script = class_file->addMemberFunction(define_dir);    
-    script->addLocalVariable(JZParamDefine("list", "QStringList"));
+    script->addLocalVariable(JZParamDefine("list", "stringList"));
     script->addLocalVariable(JZParamDefine("in", Type_string));
 
     auto node_start = script->getNode(0);
@@ -336,7 +336,7 @@ void SampleImageBatch::addProcessDir()
     define_dir.paramIn.push_back(JZParamDefine("outputDir", Type_string));
     define_dir.isFlowFunction = true;
     auto script = class_file->addMemberFunction(define_dir);
-    script->addLocalVariable(JZParamDefine("list", "QStringList"));
+    script->addLocalVariable(JZParamDefine("list", "stringList"));
     script->addLocalVariable(JZParamDefine("in", Type_string));
     script->addLocalVariable(JZParamDefine("out", Type_string));    
     script->addLocalVariable(JZParamDefine("out_dir", Type_string));

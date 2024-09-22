@@ -1,10 +1,11 @@
 #include <QApplication>
 #include <QPainter>
 #include <QStyle>
-#include <QItemDelegate>
+#include <QStyledItemDelegate>
 #include <QHeaderView>
 #include <QDebug>
 #include <QFocusEvent>
+#include <QFileInfo>
 #include "JZNodePropertyBrowser.h"
 #include "JZNodeParamWidget.h"
 #include "JZNodeType.h"
@@ -116,11 +117,51 @@ void JZNodeProperty::setValue(const QString &value)
     }
 }
 
-class PinValueItemDelegate : public QItemDelegate
+//https://stackoverflow.com/questions/12145522/why-pressing-of-tab-key-emits-only-qeventshortcutoverride-event
+class ItemFocusEventFilter : public QObject
+{
+public:
+    ItemFocusEventFilter(QObject *parent)
+        :QObject(parent)
+    {
+    }
+
+    virtual bool eventFilter(QObject *object, QEvent *event) override
+    {
+        switch (event->type())
+        {
+        case QEvent::FocusIn:
+        case QEvent::FocusOut:
+        case QEvent::FocusAboutToChange:
+        {
+            QFocusEvent *fe = static_cast<QFocusEvent *>(event);
+            if (fe->reason() == Qt::ActiveWindowFocusReason)
+                return false;
+
+            auto main = object->parent();
+            while (main)
+            {
+                if (main->property("isEditor").toBool())
+                    break;
+                main = main->parent();
+            }
+
+            // Forward focus events to editor because the QStyledItemDelegate relies on them                  
+            QCoreApplication::sendEvent(main, event);
+            break;
+        }
+        default:
+            break;
+        }
+        return QObject::eventFilter(object, event);
+    }
+};
+
+class PinValueItemDelegate : public QStyledItemDelegate
 {
 public:
     PinValueItemDelegate(QObject *parent)
-        :QItemDelegate(parent)
+        :QStyledItemDelegate(parent)
     {
     }
 
@@ -132,13 +173,15 @@ public:
         auto prop = browser->property(index);
         if (prop->type() != NodeProprety_Value || prop->dataType() == Type_none)
             return nullptr;
-        
-        QString text = index.data().toString();
+                
         auto edit = new JZNodeParamValueWidget(parent);
         edit->initWidget(prop->dataType());
-        edit->setValue(text);
+        edit->setValue(prop->value());
         edit->setAutoFillBackground(true);
-        edit->widget()->installEventFilter(const_cast<PinValueItemDelegate*>(this));
+        edit->setProperty("isEditor",true);
+
+        ItemFocusEventFilter *filter = new ItemFocusEventFilter(edit);
+        edit->widget()->installEventFilter(filter);             
         return edit;
     }
 
@@ -150,14 +193,17 @@ public:
         edit->deleteLater();
 
         auto prop = browser->property(index);
-        prop->setValue(edit->value());
-        emit browser->valueChanged(prop, edit->value());
+        if (prop->value() != edit->value())
+        {
+            prop->setValue(edit->value());
+            emit browser->valueChanged(prop, edit->value());
+        }
     }
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
         const QModelIndex &index) const
     {
-        QItemDelegate::paint(painter, option, index);
+        QStyledItemDelegate::paint(painter, option, index);
 
         QColor color = static_cast<QRgb>(QApplication::style()->styleHint(QStyle::SH_Table_GridLineColor, &option));
         painter->save();
@@ -175,17 +221,7 @@ public:
         editor->setGeometry(option.rect.adjusted(0, 0, 0, -1));
     }
 
-    bool eventFilter(QObject *object, QEvent *event)
-    {
-        if (event->type() == QEvent::FocusOut) {
-            QFocusEvent *fe = static_cast<QFocusEvent *>(event);
-            if (fe->reason() == Qt::ActiveWindowFocusReason)
-                return false;
-        }
-        return QItemDelegate::eventFilter(object, event);
-    }
-
-    JZNodePropertyBrowser *browser;
+    JZNodePropertyBrowser *browser;    
 };
 
 //JZNodePropertyBrowser
@@ -293,6 +329,19 @@ void JZNodePropertyBrowser::updateItem(QTreeWidgetItem *item)
         icon = drawCheckBox(flag);
         if (item->text(1).isEmpty())
             item->setText(1, "false");
+    }
+    else if (type == Type_imageEdit)
+    {
+        QString path = m_propMap[item]->value();
+        if (!path.isEmpty())
+        {
+            QPixmap map(path);
+            map = map.scaled(QSize(16, 16), Qt::KeepAspectRatio);
+
+            QString file = QFileInfo(path).fileName();
+            item->setText(1, file);
+            icon = QIcon(map);
+        }
     }
     item->setIcon(1, icon);
 }

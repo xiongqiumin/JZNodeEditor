@@ -300,7 +300,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
 
     if (type == "{")
     {
-        auto map = readMap("QString","any");
+        auto map = readMap("string","any");
         if(map)
             return inst->createRefrence(map->type(),map,true);
         return nullptr;
@@ -369,7 +369,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
     {
         JZNodeObject *obj = JZNodeObjectManager::instance()->create(meta->id);
         QScopedPointer<JZNodeObject> ptr(obj);
-        QScopedPointer<JZMap> map(readMap("QString","any"));        
+        QScopedPointer<JZMap> map(readMap("string","any"));        
         if (!map)
             return nullptr;
 

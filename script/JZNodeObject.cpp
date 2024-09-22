@@ -1257,7 +1257,8 @@ QStringList JZNodeObjectManager::getClassList()
     auto it = m_metas.begin();
     while (it != m_metas.end())
     {
-        list << (it.value()->className);
+        if(it.key() >= Type_enum)
+            list << (it.value()->className);
         it++;
     }
     return list;

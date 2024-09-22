@@ -78,20 +78,20 @@ void initEnum()
 
 void initBase()
 {
-    JZNodeObjectManager::instance()->delcareCClass("QStringList",typeid(QStringList).name() ,Type_stringList);
+    JZNodeObjectManager::instance()->delcareCClass("stringList",typeid(QStringList).name() ,Type_stringList);
 
     registContainer("QList<int>",Type_intList);
     registContainer("QList<double>",Type_doubleList);
     registContainer("QList<any>",Type_varList);
 
     registContainer("QMap<int,int>",Type_intIntMap);
-    registContainer("QMap<int,QString>",Type_intStringMap);
-    registContainer("QMap<QString,int>",Type_stringIntMap);
-    registContainer("QMap<QString,QString>",Type_stringStringMap);
-    registContainer("QMap<QString,any>",Type_varMap);
+    registContainer("QMap<int,string>",Type_intStringMap);
+    registContainer("QMap<string,int>",Type_stringIntMap);
+    registContainer("QMap<string,string>",Type_stringStringMap);
+    registContainer("QMap<string,any>",Type_varMap);
 
     //string 全部只读
-    jzbind::ClassBind<QString> cls_string(Type_string,"QString");
+    jzbind::ClassBind<QString> cls_string(Type_string,"string");
     cls_string.def("format", false, [](const QString &format)->QString {
         QString fmt = format;
         return fmt;
@@ -239,7 +239,7 @@ void initCore()
     cls_app.regist();
 
     //stringlist , 这里需要全部使用 lambda 因为 QList<QString> 未定义
-    jzbind::ClassBind<QStringList> cls_string_list(Type_stringList,"QStringList");
+    jzbind::ClassBind<QStringList> cls_string_list(Type_stringList,"stringList");
     cls_string_list.def("create", false, []()->QStringList {        
         return QStringList();
     });

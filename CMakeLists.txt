@@ -135,6 +135,8 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeParamEditor.ui
     editor/script/JZNodeParamWidget.cpp
     editor/script/JZNodeParamWidget.h
+    editor/script/JZNodeEditorWidget.cpp
+    editor/script/JZNodeEditorWidget.h
     editor/script/JZNodePropertyBrowser.cpp
     editor/script/JZNodePropertyBrowser.h
     editor/script/JZNodePropertyEditor.cpp

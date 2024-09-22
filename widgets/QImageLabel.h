@@ -11,10 +11,15 @@ public:
     QImageLabel(QWidget *parent = nullptr);
     ~QImageLabel();
 
+    QImage image();
+    void setImage(QImage image);
+
     virtual QSize sizeHint() const override;
 
 protected:
     virtual void paintEvent(QPaintEvent *event) override;    
+
+    QImage m_image;
 };
 
 

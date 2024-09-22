@@ -81,6 +81,14 @@ bool JZNodeAutoRunWidget::typeEqual(const QList<JZParamDefine> &p1, const QList<
     return true;
 }
 
+int JZNodeAutoRunWidget::editType(int data_type)
+{
+    if (JZNodeParamWidgetManager::instance()->hasEditDelegate(data_type))
+        return JZNodeParamWidgetManager::instance()->editDelegate(data_type);
+    else
+        return data_type;
+}
+
 void JZNodeAutoRunWidget::copyDependValue(ScriptDepend &old, ScriptDepend &dst)
 {    
     auto copyExist = [](QMap<QString,QString> &old, QMap<QString, QString> &dst) {
@@ -133,7 +141,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         {
             auto &p = m_depend.function.paramIn[i];
             auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
-            sub_item->setDataType(p.dataType());
+            sub_item->setDataType(editType(p.dataType()));
             sub_item->setValue(m_depend.function.paramIn[i].value);
 
             func_input->addSubProperty(sub_item);
@@ -156,7 +164,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             QString value = it.value();
 
             auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
-            sub_item->setDataType(data_type);
+            sub_item->setDataType(editType(data_type));
             sub_item->setValue(value);
 
             item_member->addSubProperty(sub_item);
@@ -179,7 +187,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             QString value = it.value();
 
             auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
-            sub_item->setDataType(data_type);
+            sub_item->setDataType(editType(data_type));
             sub_item->setValue(value);
 
             item_global->addSubProperty(sub_item);
@@ -214,7 +222,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             for (int i = 0; i < node_out.size(); i++)
             {                
                 auto sub_item = new JZNodeProperty(func->paramOut[i].name, NodeProprety_Value);
-                sub_item->setDataType(func->paramOut[i].dataType());
+                sub_item->setDataType(editType(func->paramOut[i].dataType()));
                 sub_item->setValue(node_out[i]);
 
                 item_function->addSubProperty(sub_item);

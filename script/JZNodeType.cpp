@@ -62,7 +62,7 @@ void JZNodeType::init()
     typeMap["int"]    = Type_int;
     typeMap["int64"]  = Type_int64;
     typeMap["double"] = Type_double;
-    typeMap["QString"] = Type_string;
+    typeMap["string"] = Type_string;
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;
     

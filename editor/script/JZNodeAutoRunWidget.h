@@ -59,6 +59,7 @@ protected:
     void copyDependValue(ScriptDepend &old, ScriptDepend &dst);
     bool typeEqual(const JZParamDefine &p1, const JZParamDefine &p2);
     bool typeEqual(const QList<JZParamDefine> &p1, const QList<JZParamDefine> &p2);
+    int editType(int data_type);
 
     ScriptDepend m_depend;
     JZNodePropertyBrowser *m_tree;        

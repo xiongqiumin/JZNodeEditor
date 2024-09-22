@@ -250,6 +250,13 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
 
     if (gemo->widget)
     {        
+        int w = gemo->widget->width();
+        int h = gemo->widget->height();
+        w = qMax(w, 60);
+        h = qMax(h, 24);
+        gemo->valueRect = QRect(0, 0, w, h);
+        gemo->proxy->resize(w, h);
+
         gemo->valueRect.moveTo(QPoint(x, y));
         if (pin->isEditValue())
         {
@@ -384,19 +391,14 @@ void JZNodeGraphItem::createPinWidget(int pin_id)
     widget->connect(widget, SIGNAL(sigSizeChanged(QSize)), editor(), SLOT(onItemSizeChanged()));
     widget->setProperty("node_id", m_id);
     widget->setProperty("prop_id", pin_id);
+    widget->init(m_node, pin_id);
 
     auto gemo = &m_pinRects[pin_id];
     gemo->widget = widget;
     gemo->proxy = proxy;
-    auto w = widget->sizeHint().width();
-    auto h = widget->sizeHint().height();
-    w = qMax(w, 60);
-    h = qMax(h, 24);
-    gemo->valueRect = QRect(0, 0, w, h);
 
     proxy->setWidget(widget);
-    proxy->setParentItem(this);
-    proxy->resize(w, h);
+    proxy->setParentItem(this);    
 }
 
 void JZNodeGraphItem::updateRuntimeStatus()

@@ -83,7 +83,7 @@ JZNodeParamTypeWidget::JZNodeParamTypeWidget(QWidget *parent)
     setEditable(true);
     
     QStringList type_list;
-    type_list << "bool" << "int" << "double" << "QString";
+    type_list << "bool" << "int" << "double" << "string";
     type_list << JZNodeObjectManager::instance()->getClassList();
     type_list << JZNodeObjectManager::instance()->getEnumList();
     addItems(type_list);    
@@ -108,14 +108,52 @@ void JZNodeParamTypeWidget::setType(QString type)
     setCurrentText(type);
 }
 
+//JZNodeParamEditWidget
+JZNodeParamEditWidget::JZNodeParamEditWidget()
+{
+    setFocusPolicy(Qt::StrongFocus);
+}
+
+JZNodeParamEditWidget::~JZNodeParamEditWidget()
+{
+}
+
+void JZNodeParamEditWidget::init()
+{
+
+}
+
+//JZNodeParamDiaplayWidget
+JZNodeParamDiaplayWidget::JZNodeParamDiaplayWidget()
+{
+}
+
+JZNodeParamDiaplayWidget::~JZNodeParamDiaplayWidget()
+{
+}
+
 //JZNodePinWidget
 JZNodePinWidget::JZNodePinWidget(QWidget *parent)
     :QWidget(parent)
 {
+    m_node = nullptr;
+    m_pin = -1;
 }
 
 JZNodePinWidget::~JZNodePinWidget()
 {
+}
+
+void JZNodePinWidget::init()
+{
+
+}
+
+void JZNodePinWidget::init(JZNode *node, int pin_id)
+{
+    m_node = node;
+    m_pin = pin_id;
+    init();
 }
 
 QString JZNodePinWidget::value() const
@@ -130,6 +168,7 @@ void JZNodePinWidget::setValue(const QString &)
 void JZNodePinWidget::updateWidget()
 {
 }
+
 //JZNodePinButtonWidget
 JZNodePinButtonWidget::JZNodePinButtonWidget()
 {
@@ -184,7 +223,7 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
     if (data_type == Type_bool)
         type = "QComboBox";
     else if(data_type == Type_hookEnable)
-        type = "QCheckBox";
+        type = "QCheckBox";    
     else if (JZNodeType::isEnum(data_type))
     {
         auto meta = JZNodeObjectManager::instance()->enumMeta(data_type);
@@ -192,6 +231,10 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
             type = "JZNodeFlagEditWidget";
         else
             type = "QComboBox";         
+    }
+    else if (JZNodeParamWidgetManager::instance()->hasEditWidget(data_type))
+    {
+        type = "JZNodeParamEditWidget";
     }
     else
     {
@@ -243,14 +286,20 @@ void JZNodeParamValueWidget::createWidget()
         edit->connect(edit, &JZNodeFlagEditWidget::sigValueChanged, this, &JZNodeParamValueWidget::onValueChanged);
         m_widget = edit;
     }
+    else if (widget == "JZNodeParamEditWidget")
+    {
+        auto edit = JZNodeParamWidgetManager::instance()->createEditWidget(m_dataType);
+        edit->connect(edit, &JZNodeParamEditWidget::sigValueChanged, this, &JZNodeParamValueWidget::onValueChanged);
+        m_widget = edit;
+    }
     else
     {
         Q_ASSERT(0);
     }
-    m_widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-
-    setFocusProxy(m_widget);
+    m_widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);    
     layout()->addWidget(m_widget);        
+    setFocusProxy(m_widget);
+    qDebug() << "m_widget" << m_widget->focusPolicy();
 
     //init value
     m_widget->blockSignals(true);    
@@ -296,12 +345,17 @@ void JZNodeParamValueWidget::createWidget()
         QString type_text = JZNodeType::typeToName(m_dataType);
         edit->setFlagType(type_text);
     }    
+    else if (widget == "JZNodeParamEditWidget")
+    {
+        JZNodeParamEditWidget *edit = qobject_cast<JZNodeParamEditWidget*>(m_widget);
+        edit->init();
+    }
+
     m_widget->blockSignals(false);    
 }
 
 void JZNodeParamValueWidget::onValueChanged()
-{
-    clearFocus();
+{    
     emit sigValueChanged(value());    
 }
 
@@ -355,6 +409,11 @@ QString JZNodeParamValueWidget::value() const
         auto *edit = qobject_cast<JZNodeFlagEditWidget*>(m_widget);
         text = edit->value();
     }
+    else if (m_widget->inherits("JZNodeParamEditWidget"))
+    {
+        JZNodeParamEditWidget *edit = qobject_cast<JZNodeParamEditWidget*>(m_widget);
+        text = edit->value();
+    }
     else
     {
         Q_ASSERT(0);
@@ -400,6 +459,11 @@ void JZNodeParamValueWidget::setValue(const QString &value)
         auto *edit = qobject_cast<JZNodeFlagEditWidget*>(m_widget);
         edit->setValue(value);
     }
+    else if (m_widget->inherits("JZNodeParamEditWidget"))
+    {
+        JZNodeParamEditWidget *edit = qobject_cast<JZNodeParamEditWidget*>(m_widget);
+        edit->setValue(value);
+    }
     else
     {
         Q_ASSERT(0);
@@ -409,22 +473,152 @@ void JZNodeParamValueWidget::setValue(const QString &value)
 //JZNodeDisplayWidget
 JZNodeDisplayWidget::JZNodeDisplayWidget()
 {
+    m_widget = nullptr;
+
     QHBoxLayout *l = new QHBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);
-    setLayout(l);
+    setLayout(l);        
+}
 
-    m_line = new QLineEdit();
-    l->addWidget(m_line);
-    m_line->setReadOnly(true);
-    m_line->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+void JZNodeDisplayWidget::init()
+{
+    createWidget();
+}
+
+void JZNodeDisplayWidget::createWidget()
+{
+    QString cur_type, need_type;
+    if (m_widget)
+        cur_type = m_widget->metaObject()->className();
+
+    need_type = "QLineEdit";    
+    if (m_node)
+    {
+        auto file = m_node->file();
+        auto list = file->getConnectPin(m_node->id(), m_pin);
+        if (list.size() == 1)
+        {
+            auto line = file->getConnect(list[0]);
+            auto type_list = file->getPin(line->from)->dataTypeId();
+            if (type_list.size() == 1 && type_list[0] == Type_image)
+                need_type = "QImageLabel";
+        }
+    }
+    if (cur_type == need_type)
+        return;    
+
+    if (m_widget)
+        delete m_widget;
+
+    if (need_type == "QLineEdit")
+    {
+        auto line = new QLineEdit();        
+        line->setReadOnly(true);        
+        m_widget = line;
+        resize(120, 24);
+    }
+    else if (need_type == "QImageLabel")
+    {
+        auto image = new QImageLabel();        
+        m_widget = image;
+        resize(100, 100);
+    }
+    m_widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    layout()->addWidget(m_widget);
 }
 
 void JZNodeDisplayWidget::updateWidget()
 {
+    createWidget();
     emit sigSizeChanged(size());
 }
 
 void JZNodeDisplayWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
 {
-    m_line->setText(value.value);
+    if (m_widget->inherits("QLineEdit"))
+    {
+        auto line = qobject_cast<QLineEdit*>(m_widget);
+        line->setText(value.value);
+    }
+    else if (m_widget->inherits("QImageLabel"))
+    {
+        auto image_label = qobject_cast<QImageLabel*>(m_widget);
+        if (value.ptrValue && JZNodeType::variantType(*value.ptrValue) == Type_image)
+        {
+            QImage *image = JZObjectCast<QImage>(*value.ptrValue);
+            image_label->setImage(*image);
+        }
+    }    
+}
+
+//JZNodeParamWidgetManager
+JZNodeParamWidgetManager *JZNodeParamWidgetManager::instance()
+{
+    static JZNodeParamWidgetManager inst;
+    return &inst;
+}
+
+
+JZNodeParamWidgetManager::JZNodeParamWidgetManager()
+{
+}
+
+JZNodeParamWidgetManager::~JZNodeParamWidgetManager()
+{
+}
+
+void JZNodeParamWidgetManager::registEditWidget(int edit_type, CreateParamEditFunc func)
+{
+    m_editFactory[edit_type] = func;
+}
+
+void JZNodeParamWidgetManager::registEditDelegate(int data_type, int edit_type, CreateParamFunc func)
+{
+    EditDelegate d;
+    d.editType = edit_type;
+    d.func = func;
+    m_editDelegate[data_type] = d;
+}
+
+void JZNodeParamWidgetManager::registDisplayWidget(int data_type, CreateParamDiaplayFunc func)
+{
+    m_displayFactory[data_type] = func;
+}
+
+bool JZNodeParamWidgetManager::hasEditDelegate(int data_type)
+{
+    return m_editDelegate.contains(data_type);                                                                        
+}
+
+bool JZNodeParamWidgetManager::hasEditWidget(int data_type)
+{
+    return m_editFactory.contains(data_type);
+}
+
+bool JZNodeParamWidgetManager::hasDisplayWidget(int data_type)
+{
+    return m_displayFactory.contains(data_type);
+}
+
+int JZNodeParamWidgetManager::editDelegate(int data_type)
+{
+    if (!m_editDelegate.contains(data_type))
+        return Type_none;
+
+    return m_editDelegate[data_type].editType;
+}
+
+JZNodeParamEditWidget *JZNodeParamWidgetManager::createEditWidget(int data_type)
+{
+    return m_editFactory[data_type]();
+}
+
+QVariant JZNodeParamWidgetManager::createEditParam(int data_type,const QString &value)
+{
+    return m_editDelegate[data_type].func(value);
+}
+
+JZNodeParamDiaplayWidget *JZNodeParamWidgetManager::createDisplayWidget(int data_type)
+{
+    return m_displayFactory[data_type]();
 }

@@ -2330,10 +2330,11 @@ bool JZNodeView::event(QEvent *event)
 
 void JZNodeView::onItemPropChanged()
 {
-    QObject *obj = sender();
+    JZNodePinWidget *obj = qobject_cast<JZNodePinWidget*>(sender());
+    obj->clearFocus();
+
     int node_id = obj->property("node_id").toInt();
     int prop_id = obj->property("prop_id").toInt();    
-    
     QString value = getNodeItem(node_id)->pinValue(prop_id);
     onPropChanged(node_id,prop_id,value);    
 }

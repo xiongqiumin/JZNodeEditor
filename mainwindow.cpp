@@ -1679,8 +1679,7 @@ void MainWindow::saveAll()
 
 bool MainWindow::closeAllEditor(JZEditor *except)
 {
-    QList<JZEditor*> close_list;
-    QList<JZProjectItem*> close_file_list;
+    QList<JZEditor*> close_list;    
 
     m_project.saveTransaction();
     bool saveToAll = false, noToAll = false;
@@ -1700,19 +1699,23 @@ bool MainWindow::closeAllEditor(JZEditor *except)
             {
                 int ret = QMessageBox::question(this, "", "是否保存", QMessageBox::Yes | QMessageBox::No
                     | QMessageBox::YesToAll | QMessageBox::NoToAll | QMessageBox::Cancel);
-                if (ret == QMessageBox::Yes)
+                if (ret == QMessageBox::Yes || ret == QMessageBox::YesToAll)
+                {
                     editor->save();
-                else if (ret == QMessageBox::Yes)
+                    if (ret == QMessageBox::YesToAll)
+                        saveToAll = true;
+                }
+                else if (ret == QMessageBox::No || ret == QMessageBox::NoToAll)
+                {
                     resetEditor(editor);
+                    if(ret == QMessageBox::NoToAll)
+                        noToAll = true;
+                }
                 else if (ret == QMessageBox::Cancel)
                 {
                     m_project.saveCommit();
                     return false;
-                }
-                else if (ret == QMessageBox::YesToAll)
-                    saveToAll = true;
-                else if (ret == QMessageBox::NoToAll)
-                    noToAll = true;
+                }                
             }
             else if (saveToAll)
             {
@@ -1724,19 +1727,19 @@ bool MainWindow::closeAllEditor(JZEditor *except)
             }
         }
         editor->close();
-        close_list << editor;
-        close_file_list << it.key();
-
-        int index = m_editorStack->indexOf(editor);
-        m_editorStack->removeTab(index);
+        close_list << editor;        
+        
         it++;
     }
     m_project.saveCommit();
 
     for (auto editor : close_list)
+    {
+        int index = m_editorStack->indexOf(editor);
+        m_editorStack->removeTab(index);
+        m_editors.remove(editor->item());
         delete editor;
-    for (auto editor_path : close_file_list)
-        m_editors.remove(editor_path);
+    }            
     
     m_editor = nullptr;
     switchEditor(except);    
