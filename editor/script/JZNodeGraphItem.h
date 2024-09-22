@@ -5,7 +5,7 @@
 #include <QWidget>
 #include "JZNodeBaseItem.h"
 #include "JZNode.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 
 class JZNodeLineItem;
 

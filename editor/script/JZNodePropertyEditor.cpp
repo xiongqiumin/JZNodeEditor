@@ -54,6 +54,16 @@ JZNode *JZNodePropertyEditor::node()
     return m_node;
 }
 
+void JZNodePropertyEditor::setPinName(int prop_id,const QString &name)
+{
+    if(!m_propMap.contains(prop_id))
+        return;
+
+    m_tree->blockSignals(true);
+    m_propMap[prop_id]->setName(name);
+    m_tree->blockSignals(false);
+}
+
 void JZNodePropertyEditor::setPinValue(int prop_id,const QString &value)
 {
     if(!m_propMap.contains(prop_id))

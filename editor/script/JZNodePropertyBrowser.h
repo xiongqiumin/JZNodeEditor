@@ -24,8 +24,11 @@ public:
 
     void addSubProperty(JZNodeProperty *prop);    
 
+    void setName(const QString &value);
+    const QString &name() const;
+    
     void setDataType(int data_type);
-    int dataType();
+    int dataType();    
 
     void setValue(const QString &value);
     const QString &value() const;

@@ -30,8 +30,7 @@ void JZNodeDebugPacket::loadFromStream(QDataStream &s)
 //JZNodeDebugParamValue
 JZNodeDebugParamValue::JZNodeDebugParamValue()
 {
-    type = Type_none;
-    ptrValue = nullptr;
+    type = Type_none;    
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param)

@@ -53,8 +53,7 @@ public:
 
     int type;
     QString value;
-    QByteArray binValue;
-    QVariant *ptrValue;     //本地传输使用
+    QByteArray binValue;    
     QMap<QString, JZNodeDebugParamValue> params;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param);

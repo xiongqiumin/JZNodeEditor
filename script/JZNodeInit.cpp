@@ -11,7 +11,7 @@
 
 #include "modules/JZModuleModbus.h"
 #include "sample/ImageModule/ImageModule.h"
-#include "JZNodeEditorWidget.h"
+#include "JZNodeParamDelegate.h"
 
 void JZNodeInit()
 {
@@ -32,9 +32,9 @@ void JZNodeInit()
 
     JZNetPackManager::instance()->init();
     JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);
-   
-    InitEditorWidget();
+       
     InitCustomPlot();
+    InitParamDelegate();
 
     JZNodeFunctionManager::instance()->setUserRegist(true);
     JZNodeObjectManager::instance()->setUserRegist(true);

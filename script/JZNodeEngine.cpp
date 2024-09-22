@@ -10,7 +10,7 @@
 #include "JZNodeBind.h"
 #include "JZNodeObjectParser.h"
 #include "JZContainer.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodeParamDelegate.h"
 
 bool JZForCheck(int first,int last,int step,int op,QString &error)
 {
@@ -999,9 +999,11 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
         }
         else
         {
+            auto d = JZNodeParamDelegateManager::instance()->delegate(p.dataType());
+
             QVariant v;
-            if(JZNodeParamWidgetManager::instance()->hasEditDelegate(p.dataType()))
-                v = JZNodeParamWidgetManager::instance()->createEditParam(p.dataType(), p.value);
+            if(d && d->createParam)
+                v = d->createParam(p.value);
             else
                 v = createVariable(p.dataType(), p.value);
 

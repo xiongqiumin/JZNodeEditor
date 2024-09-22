@@ -3,7 +3,7 @@
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
 #include "JZRegExpHelp.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 
 JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {

@@ -14,7 +14,7 @@
 #include "JZNodeTypeHelper.h"
 #include "JZBaseDialog.h"
 #include "JZNodeParamBindEditDialog.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 #include "JZNodeUtils.h"
 
 static int bindDir(QString text)
@@ -54,7 +54,7 @@ public:
         if (dataType == Type_none)
             return nullptr;
 
-        auto edit = new JZNodeParamValueWidget(parent);
+        auto edit = new JZNodePinValueWidget(parent);
         edit->initWidget(dataType);
         edit->setValue(option.text);
         return edit;
@@ -64,7 +64,7 @@ public:
         QAbstractItemModel *model,
         const QModelIndex &index) const override
     {
-        auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
+        auto edit = qobject_cast<JZNodePinValueWidget*>(editor);
         model->setData(index, edit->value());
     }
 

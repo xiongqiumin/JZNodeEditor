@@ -7,7 +7,7 @@
 #include "JZNodeFactory.h"
 #include "JZClassItem.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 #include "JZNodeFunction.h"
 #include "JZNodeUtils.h"
 
@@ -211,7 +211,7 @@ bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
 
 JZNodePinWidget* JZNodeConvert::createWidget(int id)
 {
-    auto w = new JZNodeParamValueWidget();
+    auto w = new JZNodePinValueWidget();
     w->initWidget(Type_string);
     return w;
 }
@@ -488,7 +488,7 @@ JZNodePinWidget* JZNodeDisplay::createWidget(int id)
     auto in_list = paramInList();
     if(in_list.contains(id))
     {
-        return new JZNodeDisplayWidget();
+        return new JZNodePinDisplayWidget();
     }
     else
     {

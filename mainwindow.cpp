@@ -23,6 +23,7 @@
 #include "3rd/jzupdate/JZUpdateDialog.h"
 #include "JZAboutDialog.h"
 #include "JZProjectSettingDialog.h"
+#include "JZNodeParamDelegate.h"
 
 //Setting
 Setting::Setting()
@@ -1309,6 +1310,7 @@ void MainWindow::onWatchNameChanged(JZNodeIRParam coor)
 
 void MainWindow::onWatchNotify()
 {
+    auto inst = JZNodeParamDelegateManager::instance();
     if(m_runThread.engine()->stack()->size() != 1)
         return;
 
@@ -1325,7 +1327,12 @@ void MainWindow::onWatchNotify()
         JZNodeDebugParamValue value;
         value.type = JZNodeType::variantType(it.value());
         value.value = JZNodeType::debugString(it.value());
-        value.ptrValue = &it.value();
+
+        auto data_type = JZNodeType::variantType(it.value());
+        auto d = inst->delegate(data_type);
+        if (d && d->pack)
+            value.binValue = d->pack(it.value());
+
         e->setRuntimeValue(gemo.nodeId,gemo.pinId,value);
         it++;
     }

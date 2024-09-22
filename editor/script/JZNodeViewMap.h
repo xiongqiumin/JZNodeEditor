@@ -1,10 +1,12 @@
-#ifndef JZNODE_VIEW_MAP_H_
+﻿#ifndef JZNODE_VIEW_MAP_H_
 #define JZNODE_VIEW_MAP_H_
 
 #include <QWidget>
 #include "JZScriptItem.h"
 
 class JZNodeView;
+
+//缩略图控件
 class JZNodeViewMap : public QWidget
 {
     Q_OBJECT

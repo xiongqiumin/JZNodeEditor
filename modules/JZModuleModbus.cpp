@@ -9,7 +9,7 @@
 #include "3rd/jzmodbus/JZModbusSlaver.h"
 #include "editor/tools/JZModbusConfigDialog.h"
 #include "editor/tools/JZModbusSimulator.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
 #include "JZNodeEditorManager.h"

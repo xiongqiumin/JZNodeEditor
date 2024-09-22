@@ -378,7 +378,7 @@ void JZNodeGraphItem::createPinWidget(int pin_id)
     }
     else if (pin->isDispValue())
     {
-        JZNodeParamValueWidget *param_widget = new JZNodeParamValueWidget();
+        JZNodePinValueWidget *param_widget = new JZNodePinValueWidget();
         int up_type = JZNodeType::upType(pin->dataTypeId());
         param_widget->initWidget(up_type);
 
@@ -560,9 +560,9 @@ void JZNodeGraphItem::setPinRuntimeValue(int pin_id,const JZNodeDebugParamValue 
     if (!widget)
         return;
 
-    if (widget->inherits("JZNodeDisplayWidget"))
+    if (widget->inherits("JZNodePinDisplayWidget"))
     {
-        auto *disp = qobject_cast<JZNodeDisplayWidget*>(widget);
+        auto *disp = qobject_cast<JZNodePinDisplayWidget*>(widget);
         disp->setRuntimeValue(value);
     }
     else

@@ -1,8 +1,22 @@
 #include <QHBoxLayout>
 #include <QFileDialog>
 #include <QIcon>
-#include "JZNodeEditorWidget.h"
+#include "JZNodeParamEditWidget.h"
 
+//JZNodeParamEditWidget
+JZNodeParamEditWidget::JZNodeParamEditWidget()
+{
+}
+
+JZNodeParamEditWidget::~JZNodeParamEditWidget()
+{
+}
+
+void JZNodeParamEditWidget::init()
+{
+}
+
+//JZNodeImageEditWidget
 JZNodeImageEditWidget::JZNodeImageEditWidget()
 {
     m_pixmapLabel = new QLabel(this);
@@ -61,16 +75,4 @@ void JZNodeImageEditWidget::onFileActionActivated()
         setValue(newPath);
         emit sigValueChanged();
     }
-}
-
-QVariant createImage(const QString &value)
-{
-    QImage *image = new QImage(value);
-    return JZObjectCreateRefrence(image,true);
-}
-
-void InitEditorWidget()
-{
-    JZNodeParamWidgetManager::instance()->registEditWidget(Type_imageEdit, CreateParamEditWidget<JZNodeImageEditWidget>);
-    JZNodeParamWidgetManager::instance()->registEditDelegate(Type_image, Type_imageEdit, createImage);
 }

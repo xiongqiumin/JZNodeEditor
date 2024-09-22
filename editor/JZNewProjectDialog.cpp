@@ -1,4 +1,4 @@
-#include "JZNewProjectDialog.h"
+ï»¿#include "JZNewProjectDialog.h"
 #include "ui_JZNewProjectDialog.h"
 #include <QFileDialog>
 #include <QMessageBox>
@@ -12,8 +12,8 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
 	ui->lineProjectName->setText("project");
 	ui->lineProjectDir->setText(QDir::cleanPath(QApplication::applicationDirPath() + "/project"));
 
-    ui->listWidget->addItem("Ui½çÃæ³ÌĞò");
-    ui->listWidget->addItem("ÃüÁîĞĞ³ÌĞò");
+    ui->listWidget->addItem("Uiç•Œé¢ç¨‹åº");
+    ui->listWidget->addItem("å‘½ä»¤è¡Œç¨‹åº");
 
     ui->listWidget->setCurrentRow(0);
 }
@@ -53,12 +53,12 @@ void JZNewProjectDialog::on_btnOk_clicked()
 	QString dir = this->dir();
 	if (name.isEmpty() || dir.isEmpty())
     {
-        QMessageBox::information(this,tr("ÌáÊ¾"),tr("ÏîÄ¿ÃûºÍÏîÄ¿Â·¾¶²»ÄÜÎª¿Õ"));
+        QMessageBox::information(this,tr("æç¤º"),tr("é¡¹ç›®åå’Œé¡¹ç›®è·¯å¾„ä¸èƒ½ä¸ºç©º"));
 		return;
 	}
     if (QFile::exists(dir + "/" + name))
     {
-        QMessageBox::information(this, tr("ÌáÊ¾"), tr("ÎÄ¼ş¼ĞÒÑ´æÔÚ"));
+        QMessageBox::information(this, tr("æç¤º"), tr("æ–‡ä»¶å¤¹å·²å­˜åœ¨"));
         return;
     }
 	QDialog::accept();

@@ -16,7 +16,8 @@ include_directories(./
     ./editor
     ./editor/script
     ./editor/ui
-    ./3rd/jznet)
+    ./3rd/jznet
+    ./3rd/jzprofiler)
 
 set(JZNodeEditor_SOURCES    
     JZNodeEditor.qrc
@@ -133,10 +134,14 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeParamEditor.cpp
     editor/script/JZNodeParamEditor.h
     editor/script/JZNodeParamEditor.ui
-    editor/script/JZNodeParamWidget.cpp
-    editor/script/JZNodeParamWidget.h
-    editor/script/JZNodeEditorWidget.cpp
-    editor/script/JZNodeEditorWidget.h
+    editor/script/JZNodePinWidget.cpp
+    editor/script/JZNodePinWidget.h
+    editor/script/JZNodeParamEditWidget.cpp
+    editor/script/JZNodeParamEditWidget.h
+    editor/script/JZNodeParamDisplayWidget.cpp
+    editor/script/JZNodeParamDisplayWidget.h
+    editor/script/JZNodeParamDelegate.cpp
+    editor/script/JZNodeParamDelegate.h
     editor/script/JZNodePropertyBrowser.cpp
     editor/script/JZNodePropertyBrowser.h
     editor/script/JZNodePropertyEditor.cpp

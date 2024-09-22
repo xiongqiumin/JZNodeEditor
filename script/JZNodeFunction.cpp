@@ -1,7 +1,6 @@
 ﻿#include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodeParamWidget.h"
 
 //JZNodeFunction
 JZNodeFunction::JZNodeFunction()

@@ -3,7 +3,7 @@
 #include <QDateTime>
 #include <QTimer>
 #include "JZPlotConfg.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeEditorManager.h"
 #include "JZNodeBind.h"
@@ -88,7 +88,7 @@ JZNodePinWidget *JZNodePlotConfig::createWidget(int id)
     {
         JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
         auto btn = w->button();
-        btn->setText("�༭");
+        btn->setText("�༭");
         btn->connect(btn, &QPushButton::clicked, [btn, this] {
             QByteArray old = this->toBuffer();
 

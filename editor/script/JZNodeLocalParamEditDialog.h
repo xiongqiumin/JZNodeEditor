@@ -4,7 +4,7 @@
 #include <QTableWidget>
 #include <QLineEdit>
 #include "JZNodeValue.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 
 namespace Ui { class JZNodeLocalParamEditDialog; }
 
@@ -28,6 +28,6 @@ protected slots:
 private:
     QLineEdit *m_lineName;
     JZNodeParamTypeWidget *m_typeWidget;
-    JZNodeParamValueWidget *m_valueWidget;
+    JZNodePinValueWidget *m_valueWidget;
     JZParamDefine m_define;
 };

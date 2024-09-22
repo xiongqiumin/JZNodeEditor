@@ -3,7 +3,7 @@
 #include "JZNode.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 
 // JZNodeGemo
 int JZNodeGemo::paramId(int nodeId,int pinId)
@@ -1109,9 +1109,9 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 
 JZNodePinWidget* JZNodeFor::createWidget(int id)
 {
-    JZNodeParamValueWidget *w = new JZNodeParamValueWidget();
+    JZNodePinValueWidget *w = new JZNodePinValueWidget();
     w->initWidget(Type_int, "QComboBox");
-    QComboBox *comboBox = qobject_cast<QComboBox*>(w->widget());
+    QComboBox *comboBox = qobject_cast<QComboBox*>(w->focusWidget());
     comboBox->addItems(m_condTip);      ;
     comboBox->setCurrentIndex(paramInValue(3).toInt());    
 

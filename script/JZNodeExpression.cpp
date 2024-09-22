@@ -5,7 +5,6 @@
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
 #include "JZRegExpHelp.h"
-#include "JZNodeParamWidget.h"
 #include "angelscript/as_tojzscript.h"
 #include "JZNodeValue.h"
 #include "JZProject.h"

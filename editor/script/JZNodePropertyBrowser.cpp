@@ -7,7 +7,7 @@
 #include <QFocusEvent>
 #include <QFileInfo>
 #include "JZNodePropertyBrowser.h"
-#include "JZNodeParamWidget.h"
+#include "JZNodePinWidget.h"
 #include "JZNodeType.h"
 #include "JZNodeObject.h"
 
@@ -91,6 +91,21 @@ const QString &JZNodeProperty::value() const
     return m_value;
 }
 
+void JZNodeProperty::setName(const QString &value)
+{
+    m_name = value;     
+    if(m_item)
+    {
+        auto tree = qobject_cast<JZNodePropertyBrowser*>(m_item->treeWidget());
+        m_item->setText(0,value);        
+    }   
+}
+
+const QString &JZNodeProperty::name() const
+{
+    return m_name;
+}
+
 void JZNodeProperty::setDataType(int data_type)
 {
     m_dataType = data_type;
@@ -111,8 +126,7 @@ void JZNodeProperty::setValue(const QString &value)
     m_value = value;
     if(m_item)
     {
-        auto tree = qobject_cast<JZNodePropertyBrowser*>(m_item->treeWidget());
-        m_item->setText(1,value);
+        auto tree = qobject_cast<JZNodePropertyBrowser*>(m_item->treeWidget());        
         tree->updateItem(m_item);
     }
 }
@@ -174,14 +188,14 @@ public:
         if (prop->type() != NodeProprety_Value || prop->dataType() == Type_none)
             return nullptr;
                 
-        auto edit = new JZNodeParamValueWidget(parent);
+        auto edit = new JZNodePinValueWidget(parent);
         edit->initWidget(prop->dataType());
         edit->setValue(prop->value());
         edit->setAutoFillBackground(true);
         edit->setProperty("isEditor",true);
 
         ItemFocusEventFilter *filter = new ItemFocusEventFilter(edit);
-        edit->widget()->installEventFilter(filter);             
+        edit->focusWidget()->installEventFilter(filter);             
         return edit;
     }
 
@@ -189,7 +203,7 @@ public:
         QAbstractItemModel *model,
         const QModelIndex &index) const override
     {
-        auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
+        auto edit = qobject_cast<JZNodePinValueWidget*>(editor);
         edit->deleteLater();
 
         auto prop = browser->property(index);
@@ -274,8 +288,7 @@ void JZNodePropertyBrowser::setItemEnabled(QTreeWidgetItem *item, bool flag)
 void JZNodePropertyBrowser::createPropItem(QTreeWidgetItem *parent, JZNodeProperty *prop)
 {
     QTreeWidgetItem *item = new QTreeWidgetItem();
-    item->setText(0, prop->m_name);
-    item->setText(1, prop->m_value);
+    item->setText(0, prop->m_name);    
     if (prop->m_enabled)
         item->setFlags(item->flags() | Qt::ItemIsEditable);
     else
@@ -323,16 +336,17 @@ void JZNodePropertyBrowser::updateItem(QTreeWidgetItem *item)
     int type = m_propMap[item]->dataType();
 
     QIcon icon;
+    QString value = m_propMap[item]->value();
     if (type == Type_bool)
     {
-        bool flag = m_propMap[item]->value() == "true";
+        bool flag = (value == "true");
         icon = drawCheckBox(flag);
         if (item->text(1).isEmpty())
             item->setText(1, "false");
     }
     else if (type == Type_imageEdit)
     {
-        QString path = m_propMap[item]->value();
+        QString path = value;
         if (!path.isEmpty())
         {
             QPixmap map(path);
@@ -342,6 +356,10 @@ void JZNodePropertyBrowser::updateItem(QTreeWidgetItem *item)
             item->setText(1, file);
             icon = QIcon(map);
         }
+    }
+    else
+    {
+        item->setText(1,value);
     }
     item->setIcon(1, icon);
 }

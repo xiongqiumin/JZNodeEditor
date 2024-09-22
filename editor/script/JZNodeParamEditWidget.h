@@ -1,10 +1,25 @@
-#ifndef JZNODE_EDITOR_WIDGET_H_
-#define JZNODE_EDITOR_WIDGET_H_
+#ifndef JZNODE_PARAM_EDIT_WIDGET_H_
+#define JZNODE_PARAM_EDIT_WIDGET_H_
 
 #include <QLabel>
 #include <QToolButton>
-#include "JZNodeParamWidget.h"
 
+//JZNodeParamEditWidget
+class JZNodeParamEditWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodeParamEditWidget();
+    virtual ~JZNodeParamEditWidget();
+
+    virtual void init();
+    virtual QString value() = 0;
+    virtual void setValue(const QString &text) = 0;
+
+signals:
+    void sigValueChanged();
+};
 
 //JZNodeImageEditWidget
 class JZNodeImageEditWidget : public JZNodeParamEditWidget
@@ -30,9 +45,6 @@ protected:
     QToolButton *m_button;
     QString m_path;
 };
-
-
-void InitEditorWidget();
 
 
 #endif
