@@ -58,7 +58,7 @@ void ScriptTest::testClone()
     p_pt1->setX(150);
     QVERIFY(pt1 != pt2);
 
-    registContainer("QList<QPoint>");
+    m_project.registContainer("QList<QPoint>");
 
     auto obj_list = JZNodeObjectManager::instance()->create("QList<QPoint>");
     QVariant list = QVariant::fromValue(JZNodeObjectPtr(obj_list,true));
@@ -1237,13 +1237,13 @@ void ScriptTest::testCClass()
     QString c = "money";
     
     QVariantList out;
-    engine->call("QString.left",{a,6},out);
+    engine->call("string.left",{a,6},out);
     QCOMPARE(out[0],a.left(6));
 
-    engine->call("QString.size",{out[0]},out);
+    engine->call("string.size",{out[0]},out);
     QCOMPARE(out[0],a.left(6).size());
 
-    engine->call("QString.replace",{a,b,c},out);
+    engine->call("string.replace",{a,b,c},out);
     QCOMPARE(out[0],a.replace(b,c));
 }
 

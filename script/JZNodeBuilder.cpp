@@ -145,7 +145,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         else
             args = "type=param";
         args += "&row=" + QString::number(row);
-        return makeLink(tips, path, args);
+        return JZNodeUtils::makeLink(tips, path, args);
     };
 
     clear();    

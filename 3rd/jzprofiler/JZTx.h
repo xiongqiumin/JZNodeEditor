@@ -2,8 +2,9 @@
 #define JZTX_H_
 
 #include <QString>
+#include "JZNodeCoreDefine.h"
 
-class ScopedRecord
+class JZCORE_EXPORT ScopedRecord
 {
 public:
     ScopedRecord(QString name);

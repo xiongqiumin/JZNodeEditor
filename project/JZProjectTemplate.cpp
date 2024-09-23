@@ -85,7 +85,7 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         main_flow->addConnect(get_param->paramOutGemo(0), main_loop->paramInGemo(0));
         
     }
-    projectUpdateLayout(project);
+    JZNodeUtils::projectUpdateLayout(project);
     project->save();
     project->saveAllItem();
     return true;

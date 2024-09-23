@@ -31,7 +31,7 @@ enum{
 };
 
 
-class JZNodeDebugPacket : public JZNetPack 
+class JZCORE_EXPORT JZNodeDebugPacket : public JZNetPack 
 {
 public:
     JZNodeDebugPacket();
@@ -46,7 +46,7 @@ public:
 };
 
 //JZNodeDebugParamValue
-class JZNodeDebugParamValue
+class JZCORE_EXPORT JZNodeDebugParamValue
 {
 public:
     JZNodeDebugParamValue();
@@ -60,7 +60,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param);
 
 //JZNodeGetDebugParam
-class JZNodeGetDebugParam
+class JZCORE_EXPORT JZNodeGetDebugParam
 {
 public:
     JZNodeGetDebugParam();
@@ -72,7 +72,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParam &param);
 
 //JZNodeGetDebugParamResp
-class JZNodeGetDebugParamResp
+class JZCORE_EXPORT JZNodeGetDebugParamResp
 {
 public:
     JZNodeGetDebugParamResp();
@@ -85,7 +85,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param);
 QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParamResp &param);
 
 //JZNodeSetDebugParam
-class JZNodeSetDebugParam
+class JZCORE_EXPORT JZNodeSetDebugParam
 {
 public:
     JZNodeSetDebugParam();
@@ -98,7 +98,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParam &param);
 
 //JZNodeSetDebugParamResp
-class JZNodeSetDebugParamResp
+class JZCORE_EXPORT JZNodeSetDebugParamResp
 {
 public:
     JZNodeSetDebugParamResp();
@@ -111,7 +111,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamResp &param);
 QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamResp &param);
 
 //JZNodeScriptInfo
-class JZNodeScriptInfo
+class JZCORE_EXPORT JZNodeScriptInfo
 {
 public:
     JZNodeScriptInfo();
@@ -128,7 +128,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeScriptInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeScriptInfo &param);
 
 //JZNodeProgramInfo
-class JZNodeProgramInfo
+class JZCORE_EXPORT JZNodeProgramInfo
 {
 public:    
     QString appPath;
@@ -137,7 +137,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeProgramInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeProgramInfo &param);
 
 //JZNodeDebugInfo
-class JZNodeDebugInfo
+class JZCORE_EXPORT JZNodeDebugInfo
 {
 public:    
     JZNodeDebugInfo();
@@ -148,7 +148,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param);
 
 //JZNodeRuntimeWatch
-class JZNodeRuntimeWatch
+class JZCORE_EXPORT JZNodeRuntimeWatch
 {
 public:
     JZNodeRuntimeWatch();

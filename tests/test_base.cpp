@@ -85,8 +85,8 @@ void BaseTest::dumpImage(JZScriptItem *func,QString file)
     if(!file.endsWith(".png"))
         file += ".png";
 
-    jzScriptItemUpdateLayout(func);
-    jzScriptItemDump(func,qApp->applicationDirPath() + "/dump/" + file);
+    JZNodeUtils::scriptItemUpdateLayout(func);
+    JZNodeUtils::scriptItemDump(func,qApp->applicationDirPath() + "/dump/" + file);
 }
 
 bool BaseTest::build()

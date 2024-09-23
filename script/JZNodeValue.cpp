@@ -1068,7 +1068,7 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
         else if (node->type() == Node_function)
         {
             JZNodeFunction *node_func = dynamic_cast<JZNodeFunction*>(node);
-            auto func_info = jzSplitMember(node_func->function());
+            auto func_info = JZNodeUtils::splitMember(node_func->function());
 
             if (func_info.className.startsWith("QList<") && func_info.name == "get")
                 return swap_list;
@@ -1091,7 +1091,7 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
             else
             {
                 JZNodeFunction *node_func = dynamic_cast<JZNodeFunction*>(node);
-                auto func_info = jzSplitMember(node_func->function());
+                auto func_info = JZNodeUtils::splitMember(node_func->function());
 
                 QList<JZNodeIRParam> in;
                 QList<JZNodeIRParam> out;

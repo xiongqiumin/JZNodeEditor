@@ -547,7 +547,7 @@ void JZNodeParamEditor::onParamBind()
 
 void JZNodeParamEditor::navigate(QUrl url)
 {
-    auto jz_url = fromQUrl(url);
+    auto jz_url = JZNodeUtils::fromQUrl(url);
     if (jz_url.args["type"] == "ui")    
         ui->boxParamType->setCurrentIndex(1);
     else

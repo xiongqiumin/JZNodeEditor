@@ -4,7 +4,7 @@
 #include "JZNodeObject.h"
 #include "JZContainer.h"
 
-class JZNodeObjectParser
+class JZCORE_EXPORT JZNodeObjectParser
 {
 public:
     JZNodeObjectParser();

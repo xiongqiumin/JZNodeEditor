@@ -3,8 +3,12 @@
 
 #include "JZModule.h"
 
-class ModuleImageSample : public JZModule
+class ModuleImageSample : public QObject, public JZModule
 {
+    Q_OBJECT
+    Q_INTERFACES(JZModule)
+    Q_PLUGIN_METADATA(IID JZModulePluginInterface_iid)
+
 public:    
     ModuleImageSample();
     ~ModuleImageSample();

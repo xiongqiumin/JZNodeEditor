@@ -4,7 +4,7 @@
 #include "JZNode.h"
 
 //JZNodeLiteral
-class JZNodeLiteral : public JZNode
+class JZCORE_EXPORT JZNodeLiteral : public JZNode
 {
 public:
     JZNodeLiteral();
@@ -23,7 +23,7 @@ protected:
 };
 
 //JZNodeEnum
-class JZNodeEnum : public JZNode
+class JZCORE_EXPORT JZNodeEnum : public JZNode
 {
 public:
     JZNodeEnum();
@@ -37,7 +37,7 @@ public:
 };
 
 //JZNodeFlag
-class JZNodeFlag : public JZNode
+class JZCORE_EXPORT JZNodeFlag : public JZNode
 {
 public:
     JZNodeFlag();
@@ -51,7 +51,7 @@ public:
 };
 
 //JZNodeConvert
-class JZNodeConvert : public JZNode
+class JZCORE_EXPORT JZNodeConvert : public JZNode
 {
 public:
     JZNodeConvert();
@@ -67,7 +67,7 @@ protected:
 };
 
 //JZNodeFunctionPointer
-class JZNodeFunctionPointer : public JZNode
+class JZCORE_EXPORT JZNodeFunctionPointer : public JZNode
 {
 public:
     JZNodeFunctionPointer();
@@ -82,7 +82,7 @@ protected:
 };
 
 //JZNodeDisplay
-class JZNodeDisplay : public JZNode
+class JZCORE_EXPORT JZNodeDisplay : public JZNode
 {
 public:
     JZNodeDisplay();
@@ -103,7 +103,7 @@ protected:
 };
 
 //JZNodePrint
-class JZNodePrint : public JZNode
+class JZCORE_EXPORT JZNodePrint : public JZNode
 {
 public:
     JZNodePrint();
@@ -115,7 +115,7 @@ protected:
 };
 
 //JZNodeCreate
-class JZNodeCreate : public JZNode
+class JZCORE_EXPORT JZNodeCreate : public JZNode
 {
 public:
     JZNodeCreate();
@@ -130,7 +130,7 @@ public:
 };
 
 //JZNodeCreateFromString
-class JZNodeCreateFromString : public JZNode
+class JZCORE_EXPORT JZNodeCreateFromString : public JZNode
 {
 public:
     JZNodeCreateFromString();
@@ -147,7 +147,7 @@ public:
 };
 
 //JZNodeParamThis
-class JZNodeThis : public JZNode
+class JZCORE_EXPORT JZNodeThis : public JZNode
 {
 public:
     JZNodeThis();
@@ -158,7 +158,7 @@ public:
 };
 
 //JZNodeParam
-class JZNodeParam : public JZNode
+class JZCORE_EXPORT JZNodeParam : public JZNode
 {
 public:
     JZNodeParam();
@@ -177,7 +177,7 @@ protected:
 };
 
 //JZNodeSetParam
-class JZNodeSetParam : public JZNode
+class JZCORE_EXPORT JZNodeSetParam : public JZNode
 {
 public:
     JZNodeSetParam();
@@ -199,7 +199,7 @@ protected:
 };
 
 //JZNodeSetParamDataFlow
-class JZNodeSetParamDataFlow : public JZNode
+class JZCORE_EXPORT JZNodeSetParamDataFlow : public JZNode
 {
 public:
     JZNodeSetParamDataFlow();
@@ -221,7 +221,7 @@ protected:
 };
 
 //JZNodeAbstractMember
-class JZNodeAbstractMember : public JZNode
+class JZCORE_EXPORT JZNodeAbstractMember : public JZNode
 {
 public:
     JZNodeAbstractMember();
@@ -241,7 +241,7 @@ protected:
 };
 
 //JZNodeMemberParam
-class JZNodeMemberParam : public JZNodeAbstractMember
+class JZCORE_EXPORT JZNodeMemberParam : public JZNodeAbstractMember
 {
 public:
     JZNodeMemberParam();
@@ -252,7 +252,7 @@ public:
 };
 
 //JZNodeSetMemberParam
-class JZNodeSetMemberParam : public JZNodeAbstractMember
+class JZCORE_EXPORT JZNodeSetMemberParam : public JZNodeAbstractMember
 {
 public:
     JZNodeSetMemberParam();
@@ -263,7 +263,7 @@ public:
 };
 
 //JZNodeSetMemberParamData
-class JZNodeSetMemberParamData : public JZNodeAbstractMember
+class JZCORE_EXPORT JZNodeSetMemberParamData : public JZNodeAbstractMember
 {
 public:
     JZNodeSetMemberParamData();
@@ -273,7 +273,7 @@ public:
 };
 
 //JZNodeClone
-class JZNodeClone : public JZNode
+class JZCORE_EXPORT JZNodeClone : public JZNode
 {
 public:
     JZNodeClone();
@@ -283,7 +283,7 @@ public:
 };
 
 //JZNodeSwap
-class JZNodeSwap : public JZNode
+class JZCORE_EXPORT JZNodeSwap : public JZNode
 {
 public:
     JZNodeSwap();

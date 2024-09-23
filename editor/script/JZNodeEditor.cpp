@@ -378,6 +378,6 @@ void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
 
 void JZNodeEditor::navigate(QUrl url)
 {
-    JZUrl jz_url = fromQUrl(url);
+    JZUrl jz_url = JZNodeUtils::fromQUrl(url);
     selectNode(jz_url.args["id"].toInt());
 }

@@ -12,7 +12,7 @@
 #include "JZNodeUtils.h"
 
 SampleSmartHome::SampleSmartHome()
-{
+{    
     newProject("SmartHome");        
 
     JZUiFile *ui_file = dynamic_cast<JZUiFile*>(m_project.getItem("./mainwindow.ui"));
@@ -43,6 +43,7 @@ void SampleSmartHome::addEvent()
     {
         JZFunctionDefine define;
         define.name = "on_" + btn_list[i] + "_clicked";
+        define.className = "MainWindow";
         define.isFlowFunction = true;
         define.paramIn.push_back(JZParamDefine("this", "MainWindow"));
         
@@ -52,7 +53,7 @@ void SampleSmartHome::addEvent()
         stack->setVariable("stackedWidget");
 
         JZNodeFunction *func1 = new JZNodeFunction();
-        func1->setFunction("StackedWidget.setCurrentIndex");
+        func1->setFunction("QStackedWidget.setCurrentIndex");
         func1->setParamInValue(1, QString::number(stack_index[i]));
 
         script->addNode(stack);

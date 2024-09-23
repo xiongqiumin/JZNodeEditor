@@ -7,7 +7,7 @@
 #include "JZNodeObject.h"
 
 //JZUiFile
-class JZUiFile : public JZProjectItem
+class JZCORE_EXPORT JZUiFile : public JZProjectItem
 {
 public:
     JZUiFile();

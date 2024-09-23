@@ -58,7 +58,9 @@ bool JZNodeExpression::updateExpr(QString &error)
         return false;
     }
 
-    auto func = file->getFunction("__expr_func__");    
+    auto func = file->getFunction("__expr_func__");
+    Q_ASSERT(func);
+
     JZNodeCompiler c;
     QVector<GraphPtr> graph_list;
     if(!c.genGraphs(func, graph_list))

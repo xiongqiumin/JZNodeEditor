@@ -3,7 +3,7 @@
 
 #include "JZNode.h"
 
-class JZNodeOperator: public JZNode
+class JZCORE_EXPORT JZNodeOperator: public JZNode
 {
 public:
     JZNodeOperator(int node_type,int op_type);
@@ -28,63 +28,63 @@ protected:
 };
 
 //JZNodeAdd
-class JZNodeAdd: public JZNodeOperator
+class JZCORE_EXPORT JZNodeAdd: public JZNodeOperator
 {
 public:
     JZNodeAdd();
 };
 
 //JZNodeSub
-class JZNodeSub: public JZNodeOperator
+class JZCORE_EXPORT JZNodeSub: public JZNodeOperator
 {
 public:
     JZNodeSub();
 };
     
 //JZNodeMul
-class JZNodeMul: public JZNodeOperator
+class JZCORE_EXPORT JZNodeMul: public JZNodeOperator
 {
 public:
     JZNodeMul();
 };
 
 //JZNodeDiv
-class JZNodeDiv: public JZNodeOperator
+class JZCORE_EXPORT JZNodeDiv: public JZNodeOperator
 {
 public:
     JZNodeDiv();
 };
 
 //JZNodeMod
-class JZNodeMod: public JZNodeOperator
+class JZCORE_EXPORT JZNodeMod: public JZNodeOperator
 {
 public:
     JZNodeMod();
 };
 
 //JZNodeBitAnd
-class JZNodeBitAnd: public JZNodeOperator
+class JZCORE_EXPORT JZNodeBitAnd: public JZNodeOperator
 {
 public:
     JZNodeBitAnd();
 };
 
 //JZNodeBitAnd
-class JZNodeBitOr: public JZNodeOperator
+class JZCORE_EXPORT JZNodeBitOr: public JZNodeOperator
 {
 public:
     JZNodeBitOr();
 };
     
 //JZNodeBitXor
-class JZNodeBitXor: public JZNodeOperator
+class JZCORE_EXPORT JZNodeBitXor: public JZNodeOperator
 {
 public:
     JZNodeBitXor();
 };
 
 //JZNodeBitResver
-class JZNodeBitResver : public JZNode
+class JZCORE_EXPORT JZNodeBitResver : public JZNode
 {
 public:
     JZNodeBitResver();
@@ -93,49 +93,49 @@ public:
 };
 
 //JZNodeEQ
-class JZNodeEQ : public JZNodeOperator
+class JZCORE_EXPORT JZNodeEQ : public JZNodeOperator
 {
 public:
     JZNodeEQ();
 };
 
 //JZNodeNE
-class JZNodeNE : public JZNodeOperator
+class JZCORE_EXPORT JZNodeNE : public JZNodeOperator
 {
 public:
     JZNodeNE();
 };
 
 //JZNodeLE
-class JZNodeLE : public JZNodeOperator
+class JZCORE_EXPORT JZNodeLE : public JZNodeOperator
 {
 public:
     JZNodeLE();
 };
 
 //JZNodeGE
-class JZNodeGE : public JZNodeOperator
+class JZCORE_EXPORT JZNodeGE : public JZNodeOperator
 {
 public:
     JZNodeGE();
 };
 
 //JZNodeLT
-class JZNodeLT : public JZNodeOperator
+class JZCORE_EXPORT JZNodeLT : public JZNodeOperator
 {
 public:
     JZNodeLT();
 };
 
 //JZNodeGT
-class JZNodeGT : public JZNodeOperator
+class JZCORE_EXPORT JZNodeGT : public JZNodeOperator
 {
 public:
     JZNodeGT();
 };
 
 //JZNodeAnd
-class JZNodeAnd : public JZNodeOperator
+class JZCORE_EXPORT JZNodeAnd : public JZNodeOperator
 {
 public:
     JZNodeAnd();
@@ -144,7 +144,7 @@ public:
 };
 
 //JZNodeOr
-class JZNodeOr : public JZNodeOperator
+class JZCORE_EXPORT JZNodeOr : public JZNodeOperator
 {
 public:
     JZNodeOr();
@@ -153,7 +153,7 @@ public:
 };
 
 //JZNodeNot
-class JZNodeNot : public JZNode
+class JZCORE_EXPORT JZNodeNot : public JZNode
 {
 public:
     JZNodeNot();

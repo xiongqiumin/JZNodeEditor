@@ -30,7 +30,7 @@ void TestServer::init(JZProject *project)
     addTimeoutFunction();
     addInitFunction();
 
-    projectUpdateLayout(m_project);
+    JZNodeUtils::projectUpdateLayout(m_project);
     m_project->saveAllItem();
     m_project->save();
 }

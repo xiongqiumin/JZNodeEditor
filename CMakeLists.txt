@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(QT NAMES Qt5 REQUIRED COMPONENTS widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test designer printsupport DesignerComponents)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test designer printsupport DesignerComponents xml)
 
 include_directories(./
     ./widgets
@@ -285,12 +285,7 @@ set(JZNodeCore_SOURCES
     widgets/JZSearchTreeWidget.cpp
     widgets/JZSearchTreeWidget.h
     widgets/QImageLabel.cpp
-    widgets/QImageLabel.h
-
-    sample/SampleProject.cpp
-    sample/SampleProject.h        
-    sample/Russian/Russian.cpp
-    sample/Russian/Russian.h    
+    widgets/QImageLabel.h  
 )
 
 

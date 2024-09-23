@@ -2,8 +2,9 @@
 #define JZREG_EXP_HELP_H_
 
 #include <QString>
+#include "JZNodeCoreDefine.h"
 
-class JZRegExpHelp
+class JZCORE_EXPORT JZRegExpHelp
 {
 public:
     static bool isBool(const QString &str);

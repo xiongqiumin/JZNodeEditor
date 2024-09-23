@@ -10,11 +10,10 @@
 
 SampleProject::SampleProject()
 {
-    QDir dir;
-    if(dir.exists("sample"))
-        m_root = ".";
-    else if(dir.exists("../sample"))
-        m_root = "..";
+    QFileInfo info(__FILE__);
+    m_root = info.path();
+
+    JZProject::setActive(&m_project);
 }
 
 SampleProject::~SampleProject()
@@ -24,7 +23,7 @@ SampleProject::~SampleProject()
 
 QString SampleProject::loadUi(QString filename)
 {    
-    QString filepath = m_root + "/sample/" + m_name + "/" + filename;
+    QString filepath = m_root + "/" + m_name + "/" + filename;
     QFile file(filepath);
     if (!file.open(QFile::ReadOnly | QFile::Text))
     {
@@ -41,7 +40,7 @@ void SampleProject::newProject(QString name)
 
     QString dir = qApp->applicationDirPath() + "/sample/" + m_name;
     if (!QDir().exists(dir))
-        QDir().mkdir(dir);
+        QDir().mkpath(dir);
         
     m_project.newProject(dir, m_name, "ui");
 }
@@ -64,7 +63,7 @@ void SampleProject::addClassFile(QString class_name, QString super, QString ui_f
 
 void SampleProject::addResources(QString name)
 {
-    m_resources = m_root + "/sample/" + m_name + "/" + name;
+    m_resources = m_root + "/" + m_name + "/" + name;
 }
 
 bool SampleProject::copyDir(QString srcPath, QString dstPath)
@@ -109,13 +108,16 @@ void SampleProject::loadProject()
     m_project.open(path);
 }
 
-
 void SampleProject::saveProject()
 {
     Q_ASSERT(!m_name.isEmpty());
-    projectUpdateLayout(&m_project);
+    JZNodeUtils::projectUpdateLayout(&m_project);
     m_project.saveAllItem();
-    m_project.save();
+    if (!m_project.save())
+    {
+        qDebug() << "save to" << m_project.path() + "failed";
+        return;
+    }
     
     if (!m_resources.isEmpty())
     {

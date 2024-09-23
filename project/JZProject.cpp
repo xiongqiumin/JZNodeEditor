@@ -61,6 +61,8 @@ JZProject::JZProject()
 
 JZProject::~JZProject()
 {
+    if (this == m_active)
+        setActive(nullptr);
 }
 
 bool JZProject::isNull() const
@@ -73,7 +75,8 @@ void JZProject::clear()
     m_root.removeChlids();
     m_root.setName(".");
 
-    m_tmp.clear();
+    m_tmp.removeChlids();
+    m_tmp.setName("/tmp");
     
     m_blockRegist = false;    
     m_isSaveCache = false;
@@ -287,30 +290,31 @@ bool JZProject::save()
 
 void JZProject::addTmp(JZProjectItem *item)
 {    
-    item->setProject(this);
-    m_tmp.push_back(JZProjectItemPtr(item));    
+    if (item->name().isEmpty())
+    {
+        int idx = m_tmp.childCount();
+        while (true)
+        {
+            QString name = "tmp" + QString::number(idx);
+            if (!m_tmp.getItem(name))
+            {
+                item->setName(name);
+                break;
+            }
+            idx++;
+        }
+    }
+    addItem("/tmp", item);
 }
 
 void JZProject::removeTmp(JZProjectItem *item)
 {    
-    for (int i = 0; i < m_tmp.size(); i++)
-    {
-        if (m_tmp[i].data() == item)
-        {
-            m_tmp.removeAt(i);
-            break;
-        }
-    }
+    removeItem(item->itemPath());
 }
 
 bool JZProject::isTmp(JZProjectItem *item)
 {
-    for (int i = 0; i < m_tmp.size(); i++)
-    {
-        if (m_tmp[i].data() == item)
-            return true;
-    }
-    return false;
+    return item->itemPath().startsWith("/tmp");
 }
 
 bool JZProject::isFile(JZProjectItem *item)
@@ -593,11 +597,21 @@ JZProjectItem *JZProject::getItem(QString path)
 {    
     if(path.isEmpty() || path == "." || path == "./")
         return &m_root;    
+    if (path == "/tmp")
+        return &m_tmp;
 
     JZProjectItem *folder = nullptr;
-    if (!path.startsWith("./"))
+    if (path.startsWith("/tmp/"))
+    {
+        folder = &m_tmp;
+        path = path.mid(1);
+    }
+    else
+    {
+        if (!path.startsWith("./"))
             path = "./" + path;
-    folder = &m_root;    
+        folder = &m_root;
+    }
 
     QStringList path_list = path.split("/",Qt::KeepEmptyParts);    
     for(int i = 1; i < path_list.size(); i++)

@@ -5,7 +5,7 @@
 #include "JZProject.h"
 
 class asCScriptNode;
-class ASConvert
+class JZCORE_EXPORT ASConvert
 {
 public:
     ASConvert();

@@ -6,9 +6,6 @@
 #include <QMessageBox>
 #include <QCommandLineParser>
 #include "JZNodeBind.h"
-#include "sample/Russian/Russian.h"
-#include "sample/ImageBatch/ImageBatch.h"
-#include "sample/SmartHome/SmartHome.h"
 #include "JZNodeCppGenerater.h"
 #include "3rd/jzupdate/JZUpdateClient.h"
 #include "JZRegExpHelp.h"

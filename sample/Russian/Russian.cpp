@@ -12,8 +12,7 @@
 #include "JZContainer.h"
 
 SampleRussian::SampleRussian()
-{
-    JZProject::setActive(&m_project);
+{    
     newProject("russian");        
 
     JZUiFile *ui_file = dynamic_cast<JZUiFile*>(m_project.getItem("./mainwindow.ui"));
@@ -74,6 +73,7 @@ void SampleRussian::addInitGame()
 
     JZFunctionDefine define;
     define.name = "initGame";
+    define.className = "MainWindow";
     define.isFlowFunction = true;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_meta->id));
     auto script = class_file->addMemberFunction(define);
@@ -275,6 +275,7 @@ void SampleRussian::addMapGet()
 
     JZFunctionDefine define;
     define.name = "getMap";
+    define.className = "MainWindow";
     define.isFlowFunction = false;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramIn.push_back(JZParamDefine("row", Type_int));
@@ -325,6 +326,7 @@ void SampleRussian::addMapSet()
 
     JZFunctionDefine define;
     define.name = "setMap";
+    define.className = "MainWindow";
     define.isFlowFunction = true;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramIn.push_back(JZParamDefine("row", Type_int));
@@ -704,6 +706,7 @@ void SampleRussian::addCreateRect()
 
     JZFunctionDefine define;
     define.name = "createRect";
+    define.className = "MainWindow";
     define.isFlowFunction = true;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramOut.push_back(JZParamDefine("ok", Type_bool));
@@ -825,6 +828,7 @@ void SampleRussian::addRectDown()
 
     JZFunctionDefine define;
     define.name = "rectDown";
+    define.className = "MainWindow";
     define.isFlowFunction = true;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramOut.push_back(JZParamDefine("ok", Type_bool));
@@ -977,6 +981,7 @@ void SampleRussian::addMoveFunction()
 
         JZFunctionDefine define;
         define.name = functions[i];
+        define.className = "MainWindow";
         define.isFlowFunction = !isCan;
         define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
         if(isCan)
@@ -1340,22 +1345,18 @@ void SampleRussian::addKeyEvent()
 void SampleRussian::addRotate()
 {
     auto mainwindow_id = JZNodeObjectManager::instance()->getClassId("MainWindow");
-    auto class_file = m_project.getClass("MainWindow");
+    auto class_file = m_project.getClass("MainWindow");    
+    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
 
-    JZFunctionDefine def_can;    
-    def_can.name = "canRotate";
-    def_can.isFlowFunction = false;
-    def_can.paramIn.push_back(JZParamDefine("this", mainwindow_id));
+    JZFunctionDefine def_can = meta->initMemberFunction("canRotate");    
+    def_can.isFlowFunction = false;        
     def_can.paramOut.push_back(JZParamDefine("ok", Type_bool));
     class_file->addMemberFunction(def_can);
     
-    JZFunctionDefine def_rotate;
-    def_rotate.name = "rotate";
-    def_rotate.isFlowFunction = true;
-    def_rotate.paramIn.push_back(JZParamDefine("this", mainwindow_id));
+    JZFunctionDefine def_rotate = meta->initMemberFunction("rotate");
+    def_rotate.isFlowFunction = true;    
     class_file->addMemberFunction(def_rotate);
-
-    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
+      
 
     //can
     {
@@ -1511,6 +1512,7 @@ void SampleRussian::addCreateShape()
 
     JZFunctionDefine define;
     define.name = "createShape";
+    define.className = "MainWindow";
     define.isFlowFunction = false;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramIn.push_back(JZParamDefine("type", Type_int));    
@@ -1594,6 +1596,7 @@ void SampleRussian::addCanPlaceShape()
 
     JZFunctionDefine define;
     define.name = "canPlace";
+    define.className = "MainWindow";
     define.isFlowFunction = false;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
     define.paramIn.push_back(JZParamDefine("index", Type_int));
@@ -1783,6 +1786,7 @@ void SampleRussian::addClearLine()
 
     JZFunctionDefine define;
     define.name = "clearLine";
+    define.className = "MainWindow";
     define.isFlowFunction = true;
     define.paramIn.push_back(JZParamDefine("this", mainwindow_id));    
 

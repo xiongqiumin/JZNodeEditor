@@ -3,7 +3,7 @@
 #include <QDateTime>
 #include <QDebug>
 
-MemberInfo jzSplitMember(QString fullName)
+MemberInfo JZNodeUtils::splitMember(QString fullName)
 {
     MemberInfo info;
     QStringList list = fullName.split(".");
@@ -14,14 +14,14 @@ MemberInfo jzSplitMember(QString fullName)
     return info;
 }
 
-QString makeLink(QString tips, QString path, QString args)
+QString JZNodeUtils::makeLink(QString tips, QString path, QString args)
 {
     QString href = path + "?" + args;
     QString link = "<link href=" + href + ">" + tips + "</link>";
     return link;
 }
 
-JZUrl fromQUrl(QUrl url)
+JZUrl JZNodeUtils::fromQUrl(QUrl url)
 {
     JZUrl ret;
     ret.path = url.path();
@@ -38,7 +38,7 @@ JZUrl fromQUrl(QUrl url)
     return ret;
 }
 
-void projectUpdateLayout(JZProject *project)
+void JZNodeUtils::projectUpdateLayout(JZProject *project)
 {
     auto item_list = project->itemList("./", ProjectItem_any);
     for (int i = 0; i < item_list.size(); i++)
@@ -48,12 +48,12 @@ void projectUpdateLayout(JZProject *project)
             || item_type == ProjectItem_scriptParamBinding)
         {
             JZScriptItem *item = (JZScriptItem *)item_list[i];
-            jzScriptItemUpdateLayout(item);
+            JZNodeUtils::scriptItemUpdateLayout(item);
         }
     }    
 }
 
-void jzScriptItemUpdateLayout(JZScriptItem *item)
+void JZNodeUtils::scriptItemUpdateLayout(JZScriptItem *item)
 {
     JZNodeView *view = new JZNodeView();
     view->setFile(item);
@@ -62,7 +62,7 @@ void jzScriptItemUpdateLayout(JZScriptItem *item)
     delete view;
 }
 
-void jzScriptItemDump(JZScriptItem *item,QString file)
+void JZNodeUtils::scriptItemDump(JZScriptItem *item,QString file)
 {
     JZNodeView *view = new JZNodeView();
     view->setFile(item);
@@ -81,6 +81,6 @@ void jzScriptItemDump(JZScriptItem *item,QString file)
 
 QString JZNodeUtils::className(QString name)
 {
-    MemberInfo ret = jzSplitMember(name);
+    MemberInfo ret = JZNodeUtils::splitMember(name);
     return ret.className;
 }

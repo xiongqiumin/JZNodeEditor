@@ -4,7 +4,7 @@
 #include "JZNode.h"
 
 //JZNodeExpression
-class JZNodeExpression: public JZNode
+class JZCORE_EXPORT JZNodeExpression: public JZNode
 {
 public:
     JZNodeExpression();

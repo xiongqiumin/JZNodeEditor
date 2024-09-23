@@ -20,8 +20,8 @@
     <file>Resources/icons/iconSearch.png</file>
     <file>Resources/icons/iconStop.png</file>
     <file>Resources/icons/iconUndo.png</file>
-	<file>Resources/icons/iconSetting.png</file>
+	  <file>Resources/icons/iconSetting.png</file>
     <file>Resources/moduleList.json</file>
-	<file>Resources/widgetBox.xml</file>
+	  <file>Resources/widgetBox.xml</file>
   </qresource>
 </RCC>

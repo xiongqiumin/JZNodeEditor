@@ -152,7 +152,7 @@ protected:
             
     QString m_filepath;
     JZProjectItemRoot m_root;
-    QList<JZProjectItemPtr> m_tmp;    
+    JZProjectItemRoot m_tmp;
     QStringList m_containers;
     QStringList m_modules;
 

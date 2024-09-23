@@ -102,7 +102,7 @@ enum
 typedef QVariant (*ConvertFunc)(const QVariant& v);
 typedef QSharedPointer<QVariant> QVariantPtr;
 
-class JZEnum
+class JZCORE_EXPORT JZEnum
 {
 public:
     JZEnum();
@@ -114,7 +114,7 @@ QDataStream &operator<<(QDataStream &s, const JZEnum &param);
 QDataStream &operator>>(QDataStream &s, JZEnum &param);
 Q_DECLARE_METATYPE(JZEnum)
 
-class JZFunctionPointer
+class JZCORE_EXPORT JZFunctionPointer
 {
 public:
     bool operator==(const JZFunctionPointer &other);
@@ -125,7 +125,7 @@ Q_DECLARE_METATYPE(JZFunctionPointer)
 QDataStream &operator<<(QDataStream &s, const JZFunctionPointer &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param);
 
-class JZNodeVariantAny
+class JZCORE_EXPORT JZNodeVariantAny
 {
 public:
     int type();
@@ -133,7 +133,7 @@ public:
 };
 Q_DECLARE_METATYPE(JZNodeVariantAny)
 
-class QVariantPointer
+class JZCORE_EXPORT QVariantPointer
 {
 public:
     QVariant *value;

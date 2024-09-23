@@ -4,13 +4,13 @@
 #include <QString>
 #include "JZProject.h"
 
-struct MemberInfo
+struct JZCORE_EXPORT MemberInfo
 {
     QString className;
     QString name;
 };
 
-class JZUrl
+class JZCORE_EXPORT JZUrl
 {
 public:
     QString path;
@@ -18,17 +18,17 @@ public:
 };
 
 
-MemberInfo jzSplitMember(QString name);
-QString makeLink(QString tips, QString path, QString args);
-JZUrl fromQUrl(QUrl url);
-void projectUpdateLayout(JZProject *project);
-void jzScriptItemUpdateLayout(JZScriptItem *item);
-void jzScriptItemDump(JZScriptItem *item,QString file);
-
-class JZNodeUtils
+class JZCORE_EXPORT JZNodeUtils
 {
 public:    
     static QString className(QString name);
+    static MemberInfo splitMember(QString name);
+    static QString makeLink(QString tips, QString path, QString args);
+    static JZUrl fromQUrl(QUrl url);
+
+    static void projectUpdateLayout(JZProject *project);
+    static void scriptItemUpdateLayout(JZScriptItem *item);
+    static void scriptItemDump(JZScriptItem *item,QString file);
 };
 
 #endif // !JZNODE_UTILS_H_
