@@ -125,10 +125,10 @@ template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
 template<class T> void copyClass(void *src,void *dst){ *((T*)dst) = *((T*)src); }
 template<class T> bool equalClass(void *src,void *dst){ return *((T*)src) == *((T*)dst); }
 
-void *createClassAssert();
-void destoryClassAssert(void *);
-void copyClassAssert(void *src,void *dst);
-bool equalClassAssert(void *src,void *dst);
+JZCORE_EXPORT void *createClassAssert();
+JZCORE_EXPORT void destoryClassAssert(void *);
+JZCORE_EXPORT void copyClassAssert(void *src,void *dst);
+JZCORE_EXPORT bool equalClassAssert(void *src,void *dst);
 
 // from QVariant, 运行时，所有enum 擦除类型信息, 使用 int 保存
 template<class T>
@@ -170,20 +170,20 @@ T fromVariant(const QVariant &v, std::false_type)
 }
 
 template<>
-QString fromVariant<QString>(const QVariant &v, std::false_type);
+JZCORE_EXPORT QString fromVariant<QString>(const QVariant &v, std::false_type);
 
 //为了调用QString 成员函数，比如 QString.size();
 template<>
-QString* fromVariant<QString*>(const QVariant &v, std::true_type);
+JZCORE_EXPORT QString* fromVariant<QString*>(const QVariant &v, std::true_type);
 
 template<>
-QVariant fromVariant<QVariant>(const QVariant &v, std::false_type);
+JZCORE_EXPORT QVariant fromVariant<QVariant>(const QVariant &v, std::false_type);
 
 template<>
-JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type);
+JZCORE_EXPORT JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type);
 
 template<>
-JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type);
+JZCORE_EXPORT JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type);
 
 template<class T>
 remove_cvr_t<T> fromVariant(const QVariant &v)
@@ -240,16 +240,16 @@ QVariant toVariant(T value)
 }
 
 template<>
-QVariant toVariant(QVariant value);
+JZCORE_EXPORT QVariant toVariant(QVariant value);
 
 template<>
-QVariant toVariant(JZNodeVariantAny value);
+JZCORE_EXPORT QVariant toVariant(JZNodeVariantAny value);
 
 template<>
-QVariant toVariant(JZFunctionPointer ptr);
+JZCORE_EXPORT QVariant toVariant(JZFunctionPointer ptr);
 
 template<>
-QVariant toVariant(QString value);
+JZCORE_EXPORT QVariant toVariant(QString value);
 
 template <class type>
 void toVariantList(QVariantList &list)
@@ -538,7 +538,7 @@ ret_type getReturn(const QVariantList &list)
 }
 
 template<>
-void getReturn(const QVariantList &);
+JZCORE_EXPORT void getReturn(const QVariantList &);
 
 #define JZBIND_OVERRIDE_IMPL(ret_type, func, ...)              \
     do                                                         \

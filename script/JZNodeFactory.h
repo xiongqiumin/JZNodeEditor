@@ -7,7 +7,7 @@
 typedef bool(*JZNodeFactoryEdit)(JZNode *node);
 
 typedef JZNode *(*JZNodeCreateFunc)();
-class JZNodeFactory
+class JZCORE_EXPORT JZNodeFactory
 {
 public:
     static JZNodeFactory *instance();
@@ -27,9 +27,6 @@ protected:
 };
 
 template<class T>
-JZNode *createJZNode() 
-{ 
-    return new T(); 
-}
+JZNode *createJZNode(){ return new T(); }
 
 #endif

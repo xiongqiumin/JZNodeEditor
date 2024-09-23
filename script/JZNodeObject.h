@@ -8,7 +8,7 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeEnum.h"
 
-class CMeta
+class JZCORE_EXPORT CMeta
 {
 public:
     CMeta();
@@ -23,7 +23,7 @@ public:
 
 /* 对于虚函数，this 参数应当为基类指针
 */
-class JZNodeObjectDefine
+class JZCORE_EXPORT JZNodeObjectDefine
 {
 public:
     JZNodeObjectDefine();
@@ -84,7 +84,7 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param);
 QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param);
 
-class JZNodeCObjectDelcare
+class JZCORE_EXPORT JZNodeCObjectDelcare
 {
 public:
     JZNodeCObjectDelcare();
@@ -95,7 +95,7 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeCObjectDelcare &param);
 QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param);
 
-class JZObjectNull
+class JZCORE_EXPORT JZObjectNull
 {
 public:
     JZObjectNull();
@@ -105,7 +105,7 @@ QDataStream &operator>>(QDataStream &s, JZObjectNull &param);
 Q_DECLARE_METATYPE(JZObjectNull)
 
 class JZNodeObjectManager;
-class JZNodeObject : public QObject
+class JZCORE_EXPORT JZNodeObject : public QObject
 {
     Q_OBJECT
 
@@ -181,7 +181,7 @@ protected:
     QList<ConnectInfo> m_connectList;
 };
 
-class JZNodeObjectPtr
+class JZCORE_EXPORT JZNodeObjectPtr
 {
 public:
     JZNodeObjectPtr();
@@ -209,11 +209,11 @@ protected:
 };
 Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
-bool isJZObject(const QVariant &v);
-JZNodeObject* toJZObject(const QVariant &v);
-JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
-JZNodeObject* qobjectToJZObject(QObject *obj);
-JZNodeObject* objectFromString(int type,const QString &text);
+JZCORE_EXPORT bool isJZObject(const QVariant &v);
+JZCORE_EXPORT JZNodeObject* toJZObject(const QVariant &v);
+JZCORE_EXPORT JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
+JZCORE_EXPORT JZNodeObject* qobjectToJZObject(QObject *obj);
+JZCORE_EXPORT JZNodeObject* objectFromString(int type,const QString &text);
 
 int JZClassId(const QString &name);
 QString JZClassName(int id);
@@ -223,7 +223,7 @@ bool JZObjectIsList(JZNodeObject *obj);
 bool JZObjectIsMap(JZNodeObject *obj);
 bool JZObjectIsSet(JZNodeObject *obj);
 
-class JZNodeObjectManager
+class JZCORE_EXPORT JZNodeObjectManager
 {
 public:
     static JZNodeObjectManager *instance();

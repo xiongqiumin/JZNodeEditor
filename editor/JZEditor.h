@@ -23,7 +23,7 @@ enum {
 };
 
 class JZProject;
-class JZEditor : public QWidget
+class JZCORE_EXPORT JZEditor : public QWidget
 {
     Q_OBJECT
 

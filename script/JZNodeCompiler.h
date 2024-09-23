@@ -15,7 +15,7 @@ enum VariableCoor{
     Variable_global,
 };
 
-class GraphNode
+class JZCORE_EXPORT GraphNode
 {
 public:
     GraphNode();
@@ -32,7 +32,7 @@ public:
 typedef QSharedPointer<GraphNode> GraphNodePtr;
 
 //Graph
-class Graph
+class JZCORE_EXPORT Graph
 {
 public:
     Graph();
@@ -79,7 +79,7 @@ public:
 };
 
 //NodeCompilerInfo
-struct NodeCompilerInfo
+struct JZCORE_EXPORT NodeCompilerInfo
 {
     NodeCompilerInfo();
 
@@ -121,7 +121,7 @@ public:
 };
 
 //CompilerResult
-class CompilerResult
+class JZCORE_EXPORT CompilerResult
 {
 public:
     bool result;
@@ -137,7 +137,7 @@ enum CompilerTip{
 };
 
 class JZNodeBuilder;
-class JZNodeCompiler
+class JZCORE_EXPORT JZNodeCompiler
 {
 public:
     static int paramId(int nodeId,int pinId);

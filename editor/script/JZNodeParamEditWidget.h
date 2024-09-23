@@ -3,9 +3,10 @@
 
 #include <QLabel>
 #include <QToolButton>
+#include "JZNodeCoreDefine.h"
 
 //JZNodeParamEditWidget
-class JZNodeParamEditWidget : public QWidget
+class JZCORE_EXPORT JZNodeParamEditWidget : public QWidget
 {
     Q_OBJECT
 

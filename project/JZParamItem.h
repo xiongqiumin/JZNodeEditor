@@ -6,7 +6,7 @@
 #include <QMap>
 #include <QVariant>
 
-class JZParamItem : public JZProjectItem
+class JZCORE_EXPORT JZParamItem : public JZProjectItem
 {
 public:
     JZParamItem();

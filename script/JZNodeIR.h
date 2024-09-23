@@ -58,7 +58,7 @@ enum{
     Reg_End = Reg_CallOut + 16,
 };
 
-class JZNodeIRParam
+class JZCORE_EXPORT JZNodeIRParam
 {
 public:
     enum{
@@ -89,12 +89,12 @@ public:
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param);
-JZNodeIRParam irRef(const QString &id);
-JZNodeIRParam irId(int id);
-JZNodeIRParam irLiteral(const QVariant &value);
-JZNodeIRParam irThis();
+JZCORE_EXPORT JZNodeIRParam irRef(const QString &id);
+JZCORE_EXPORT JZNodeIRParam irId(int id);
+JZCORE_EXPORT JZNodeIRParam irLiteral(const QVariant &value);
+JZCORE_EXPORT JZNodeIRParam irThis();
 
-class JZNodeIR
+class JZCORE_EXPORT JZNodeIR
 {
 public:
     JZNodeIR();
@@ -111,7 +111,7 @@ public:
 typedef QSharedPointer<JZNodeIR> JZNodeIRPtr;
 JZNodeIR *createNodeIR(int type);
 
-class JZNodeIRNodeId : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRNodeId : public JZNodeIR
 {
 public:    
     JZNodeIRNodeId();
@@ -124,7 +124,7 @@ public:
     int breakPointType;
 };
 
-class JZNodeIRAlloc : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRAlloc : public JZNodeIR
 {
 public:
     enum{
@@ -146,7 +146,7 @@ public:
     int dataType;
 };
 
-class JZNodeIRExpr : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRExpr : public JZNodeIR
 {
 public:    
     JZNodeIRExpr(int type);
@@ -160,7 +160,7 @@ public:
     JZNodeIRParam src2;
 };
 
-class JZNodeIRSet : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRSet : public JZNodeIR
 {
 public:
     JZNodeIRSet();
@@ -173,7 +173,7 @@ public:
     JZNodeIRParam src;
 };
 
-class JZNodeIRClone : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRClone : public JZNodeIR
 {
 public:
     JZNodeIRClone();
@@ -186,7 +186,7 @@ public:
     JZNodeIRParam src;
 };
 
-class JZNodeIRBuffer : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRBuffer : public JZNodeIR
 {
 public:
     JZNodeIRBuffer();
@@ -199,7 +199,7 @@ public:
     QByteArray buffer;
 };
 
-class JZNodeIRWatch : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRWatch : public JZNodeIR
 {
 public:
     JZNodeIRWatch();
@@ -212,7 +212,7 @@ public:
     JZNodeIRParam traget;
 };
 
-class JZNodeIRConvert: public JZNodeIR
+class JZCORE_EXPORT JZNodeIRConvert: public JZNodeIR
 {
 public:
     JZNodeIRConvert();
@@ -226,7 +226,7 @@ public:
     JZNodeIRParam src;
 };
 
-class JZNodeIRJmp : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRJmp : public JZNodeIR
 {
 public:
     JZNodeIRJmp(int type);
@@ -238,7 +238,7 @@ public:
     int jmpPc;
 };
 
-class JZNodeIRCall : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRCall : public JZNodeIR
 {
 public:
     JZNodeIRCall();
@@ -252,7 +252,7 @@ public:
     const JZFunction *cache;
 };
 
-class JZNodeIRAssert : public JZNodeIR
+class JZCORE_EXPORT JZNodeIRAssert : public JZNodeIR
 {
 public:
     JZNodeIRAssert();

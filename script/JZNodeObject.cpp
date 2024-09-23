@@ -947,12 +947,12 @@ QDebug operator<<(QDebug dbg, const JZNodeObjectPtr ptr)
     return dbg;
 }
 
-bool isJZObject(const QVariant &v)
+JZCORE_EXPORT bool isJZObject(const QVariant &v)
 {
     return (v.userType() == qMetaTypeId<JZNodeObjectPtr>());
 }
 
-JZNodeObject* toJZObject(const QVariant &v)
+JZCORE_EXPORT JZNodeObject* toJZObject(const QVariant &v)
 {
     if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
     {
@@ -966,7 +966,7 @@ JZNodeObject* toJZObject(const QVariant &v)
     }
 }
 
-JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
+JZCORE_EXPORT JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
 {
     if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
     {
@@ -979,7 +979,7 @@ JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
     }
 }
 
-JZNodeObject* qobjectToJZObject(QObject *obj)
+JZCORE_EXPORT JZNodeObject* qobjectToJZObject(QObject *obj)
 {
     auto ptr = obj->property("JZObject").value<void*>();
     if(!ptr)
@@ -988,7 +988,7 @@ JZNodeObject* qobjectToJZObject(QObject *obj)
         return (JZNodeObject*)ptr;
 }
 
-JZNodeObject *objectFromString(int data_type,const QString &text)
+JZCORE_EXPORT JZNodeObject *objectFromString(int data_type,const QString &text)
 {
     auto meta = JZNodeObjectManager::instance()->meta(data_type);
     auto func = meta->className + ".__fromString__";

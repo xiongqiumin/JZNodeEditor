@@ -1,6 +1,8 @@
 ﻿#ifndef JZPROJECT_ITEM_FILE_H_
 #define JZPROJECT_ITEM_FILE_H_
+
 #include <QSharedPointer>
+#include "JZNodeCoreDefine.h"
 
 enum {
     ProjectItem_any = -1,
@@ -19,7 +21,7 @@ enum {
 class JZProject;
 class JZScriptClassItem;
 class JZEditor;
-class JZProjectItem
+class JZCORE_EXPORT JZProjectItem
 {    
 public:
     JZProjectItem(int itemType);

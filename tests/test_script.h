@@ -49,9 +49,6 @@ protected:
     bool initWhileCase(QList<int> &nodeId,QList<int> &value);
 };
 
-
-
-
-
+void test_script(int argc, char *argv[]);
 
 #endif

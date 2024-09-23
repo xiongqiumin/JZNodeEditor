@@ -19,35 +19,19 @@ include_directories(./
     ./3rd/jznet
     ./3rd/jzprofiler)
 
-set(JZNodeEditor_SOURCES    
+set(JZNodeCore_SOURCES    
+    JZNodeCore.cpp
+    JZNodeCore.h
+    JZNodeCoreDefine.h
     JZNodeEditor.qrc
     LogManager.cpp
     LogManager.h
     LogWidget.cpp
-    LogWidget.h
-    main.cpp
+    LogWidget.h    
     mainwindow.cpp
     mainwindow.h
     UiCommon.cpp
-    UiCommon.h
-    3rd/jzmodbus/JZModbusClient.cpp
-    3rd/jzmodbus/JZModbusClient.h
-    3rd/jzmodbus/JZModbusContext.cpp
-    3rd/jzmodbus/JZModbusContext.h
-    3rd/jzmodbus/JZModbusDefine.cpp
-    3rd/jzmodbus/JZModbusDefine.h
-    3rd/jzmodbus/JZModbusMaster.cpp
-    3rd/jzmodbus/JZModbusMaster.h
-    3rd/jzmodbus/JZModbusParam.cpp
-    3rd/jzmodbus/JZModbusParam.h
-    3rd/jzmodbus/JZModbusRtu.cpp
-    3rd/jzmodbus/JZModbusRtu.h
-    3rd/jzmodbus/JZModbusServer.cpp
-    3rd/jzmodbus/JZModbusServer.h
-    3rd/jzmodbus/JZModbusSlaver.cpp
-    3rd/jzmodbus/JZModbusSlaver.h
-    3rd/jzmodbus/JZModbusTcp.cpp
-    3rd/jzmodbus/JZModbusTcp.h
+    UiCommon.h    
     3rd/jznet/JZNetClient.cpp
     3rd/jznet/JZNetClient.h
     3rd/jznet/JZNetDataManager.cpp
@@ -166,14 +150,7 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeWatch.cpp
     editor/script/JZNodeWatch.h
     editor/script/JZProcess.cpp
-    editor/script/JZProcess.h
-    editor/tools/JZModbusConfigDialog.cpp
-    editor/tools/JZModbusConfigDialog.h
-    editor/tools/JZModbusConfigDialog.ui
-    editor/tools/JZModbusSimulator.cpp
-    editor/tools/JZModbusSimulator.h
-    editor/tools/JZModbusTemplateDialog.cpp
-    editor/tools/JZModbusTemplateDialog.h
+    editor/script/JZProcess.h    
     editor/ui/formresizer.cpp
     editor/ui/formresizer.h
     editor/ui/JZDesignerEditor.cpp
@@ -192,9 +169,7 @@ set(JZNodeEditor_SOURCES
     editor/ui/JZWidgetCollectionInterface.h
     editor/ui/sizehandlerect.cpp
     editor/ui/sizehandlerect.h
-    editor/ui/widgethostconstants.h
-    modules/JZModuleModbus.cpp
-    modules/JZModuleModbus.h
+    editor/ui/widgethostconstants.h    
     modules/JZModuleNetwok.cpp
     modules/JZModuleNetwok.h
     project/JZClassItem.cpp
@@ -315,28 +290,30 @@ set(JZNodeEditor_SOURCES
     sample/SampleProject.cpp
     sample/SampleProject.h        
     sample/Russian/Russian.cpp
-    sample/Russian/Russian.h
-    sample/ImageModule/ImageModule.cpp
-    sample/ImageModule/ImageModule.h
+    sample/Russian/Russian.h    
 )
 
-#add_library(JZEditorPlugin ${JZEditorPlugin_SOURCES})
-#add_library(JZModule ${JZModule_SOURCES})
-add_executable(JZNodeEditor ${JZNodeEditor_SOURCES})
-target_link_libraries(JZNodeEditor PRIVATE Qt${QT_VERSION_MAJOR}::Network 
-    Qt${QT_VERSION_MAJOR}::Widgets 
-    Qt${QT_VERSION_MAJOR}::UiTools 
-    Qt${QT_VERSION_MAJOR}::SerialPort 
-    Qt${QT_VERSION_MAJOR}::Test 
-    Qt${QT_VERSION_MAJOR}::Designer 
-    Qt${QT_VERSION_MAJOR}::PrintSupport
+
+add_library(JZNodeCore SHARED ${JZNodeCore_SOURCES})
+target_compile_definitions(JZNodeCore PRIVATE -DJZCORE_SDK_EXPORTS)
+target_link_libraries(JZNodeCore PUBLIC 
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network          
+    Qt${QT_VERSION_MAJOR}::SerialPort      
+    Qt${QT_VERSION_MAJOR}::PrintSupport)
+
+target_link_libraries(JZNodeCore PRIVATE
+    Qt${QT_VERSION_MAJOR}::UiTools      
+    Qt${QT_VERSION_MAJOR}::Designer
     Qt${QT_VERSION_MAJOR}::DesignerComponents)
 
+add_executable(JZNodeEditor main.cpp)
+target_link_libraries(JZNodeEditor JZNodeCore)
 set_target_properties(JZNodeEditor PROPERTIES    
     WIN32_EXECUTABLE TRUE
 )
 
-#target_link_libraries(JZNodeEditor JZEditorPlugin JZModule)
-
-#add_subdirectory(sample)
-#add_subdirectory(modules)
+add_subdirectory(modules)
+add_subdirectory(sample)
+add_subdirectory(tests)
+add_dependencies(JZNodeEditor ModuleModbus ModuleOpencv)

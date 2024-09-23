@@ -1,7 +1,9 @@
 ﻿#ifndef JZNODE_INIT_H_
 #define JZNODE_INIT_H_
 
-void JZNodeInit();
+#include "JZNodeCoreDefine.h"
+
+void JZCORE_EXPORT JZNodeInit();
 
 
 #endif

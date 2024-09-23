@@ -20,7 +20,6 @@
 #include "JZNodeAutoRunThread.h"
 #include "JZNodeBuildThread.h"
 #include "JZNodeEditor.h"
-#include "editor/tools/JZModbusSimulator.h"
 
 class Setting
 {
@@ -81,9 +80,7 @@ protected slots:
     void onActionBreakPoint();
     void onActionStepOver();
     void onActionStepIn();
-    void onActionStepOut();    
-
-    void onActionModbus();
+    void onActionStepOut();        
 
     void onActionHelp();
     void onActionCheckUpdate();
@@ -237,7 +234,6 @@ private:
     QAction *m_actionRun, *m_actionResume;
     QList<QAction*> m_debugActions;
     QToolBar *m_toolDebug;    
-    JZModbusSimulator *m_simulator;
 
     QTimer *m_compilerTimer;
     BuildInfo m_buildInfo;

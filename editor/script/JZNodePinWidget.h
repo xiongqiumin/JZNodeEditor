@@ -7,7 +7,7 @@
 #include "JZNodeDebugPacket.h"
 #include "QImageLabel.h"
 
-class JZNodeFlagEditWidget : public QWidget
+class JZCORE_EXPORT JZNodeFlagEditWidget : public QWidget
 {
     Q_OBJECT
 
@@ -32,7 +32,7 @@ protected:
     QString m_flagType;    
 };
 
-class JZNodeParamTypeWidget : public QComboBox
+class JZCORE_EXPORT JZNodeParamTypeWidget : public QComboBox
 {
     Q_OBJECT
 
@@ -50,7 +50,7 @@ protected:
 
 //JZNodePinWidget
 class JZNode;
-class JZNodePinWidget : public QWidget
+class JZCORE_EXPORT JZNodePinWidget : public QWidget
 {
     Q_OBJECT
         
@@ -77,7 +77,7 @@ protected:
 
 //JZNodePinButtonWidget
 class QPushButton;
-class JZNodePinButtonWidget : public JZNodePinWidget
+class JZCORE_EXPORT JZNodePinButtonWidget : public JZNodePinWidget
 {
     Q_OBJECT
 
@@ -92,7 +92,7 @@ protected:
 };
 
 //JZNodePinValueWidget
-class JZNodePinValueWidget : public JZNodePinWidget
+class JZCORE_EXPORT JZNodePinValueWidget : public JZNodePinWidget
 {
     Q_OBJECT
 
@@ -120,7 +120,7 @@ protected:
     QString m_widgetType;
 };
 
-class JZNodePinDisplayWidget : public JZNodePinWidget
+class JZCORE_EXPORT JZNodePinDisplayWidget : public JZNodePinWidget
 {
     Q_OBJECT
 

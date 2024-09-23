@@ -9,7 +9,7 @@
 
 class JZNodeEngine;
 class JZNodeVM;
-class JZNodeDebugServer : public QThread
+class JZCORE_EXPORT JZNodeDebugServer : public QThread
 {
     Q_OBJECT
     

@@ -7,7 +7,7 @@
 #include "QImageLabel.h"
 
 //JZNodeParamDisplayWidget
-class JZNodeParamDisplayWidget : public QWidget
+class JZCORE_EXPORT JZNodeParamDisplayWidget : public QWidget
 {
     Q_OBJECT
 

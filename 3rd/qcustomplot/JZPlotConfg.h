@@ -3,7 +3,6 @@
 
 #include <QLineEdit>
 #include "JZNodeFunction.h"
-#include "3rd/jzmodbus/JZModbusParam.h"
 #include "JZBaseDialog.h"
 #include "qcustomplot.h"
 

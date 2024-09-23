@@ -6,7 +6,7 @@
 #include "JZNodeDebugPacket.h"
 #include "JZNodeEngine.h"
 
-class JZNodeDebugClient : public QObject
+class JZCORE_EXPORT JZNodeDebugClient : public QObject
 {
     Q_OBJECT
 

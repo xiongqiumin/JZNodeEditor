@@ -6,7 +6,7 @@
 #include "JZNodeCompiler.h"
 
 class JZNodeBuilder;
-class JZNodeCustomBuild: public JZNode
+class JZCORE_EXPORT JZNodeCustomBuild: public JZNode
 {
 public:    
     JZNodeCustomBuild();
@@ -16,7 +16,7 @@ public:
 };
 
 //JZNodeBuilder
-class JZNodeBuilder
+class JZCORE_EXPORT JZNodeBuilder
 {
 public:
     JZNodeBuilder();

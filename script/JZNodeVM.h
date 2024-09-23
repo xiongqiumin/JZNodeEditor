@@ -5,7 +5,7 @@
 #include "JZNodeDebugServer.h"
 
 //JZNodeVM
-class JZNodeVM : public QObject
+class JZCORE_EXPORT JZNodeVM : public QObject
 {
     Q_OBJECT
 

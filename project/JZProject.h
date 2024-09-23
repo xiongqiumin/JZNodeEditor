@@ -18,7 +18,7 @@ enum BreakPointChange
 };
 
 //BreakPoint
-class BreakPoint
+class JZCORE_EXPORT BreakPoint
 {
 public: 
     enum Type{
@@ -37,7 +37,7 @@ void operator<<(QDataStream &s, const BreakPoint &param);
 void operator>>(QDataStream &s, BreakPoint &param);
 
 //JZProject
-class JZProject : public QObject
+class JZCORE_EXPORT JZProject : public QObject
 {
     Q_OBJECT
 

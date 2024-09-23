@@ -1,16 +1,26 @@
-﻿#include "JZNewProjectDialog.h"
-#include "ui_JZNewProjectDialog.h"
-#include <QFileDialog>
+﻿#include <QFileDialog>
 #include <QMessageBox>
+#include <QFileInfo>
+#include "JZNewProjectDialog.h"
+#include "ui_JZNewProjectDialog.h"
 
 JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
     :QDialog(parent)
 {
     ui = new Ui::JZNewProjectDialog();
 
+    QString project_name;
+    int idx = 1;
+    while (true)
+    {
+        project_name = "project" + QString::number(idx);
+        if (!QFile::exists(project_name))
+            break;
+    }    
+
     ui->setupUi(this);
 	ui->lineProjectName->setText("project");
-	ui->lineProjectDir->setText(QDir::cleanPath(QApplication::applicationDirPath() + "/project"));
+	ui->lineProjectDir->setText(QDir::cleanPath(QApplication::applicationDirPath() + "/" + project_name));
 
     ui->listWidget->addItem("Ui界面程序");
     ui->listWidget->addItem("命令行程序");

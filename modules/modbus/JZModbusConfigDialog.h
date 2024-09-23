@@ -5,8 +5,8 @@
 #include <QStackedWidget>
 #include "ui_JZModbusConfigDialog.h"
 #include "UiCommon.h"
-#include "3rd/jzmodbus/JZModbusMaster.h"
-#include "3rd/jzmodbus/JZModbusSlaver.h"
+#include "jzmodbus/JZModbusMaster.h"
+#include "jzmodbus/JZModbusSlaver.h"
 #include "JZBaseDialog.h"
 
 

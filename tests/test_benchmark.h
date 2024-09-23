@@ -51,9 +51,6 @@ protected:
     Benchmark m_benchmark;
 };
 
-
-
-
-
+void test_benchmark(int argc, char *argv[]);
 
 #endif

@@ -1,13 +1,10 @@
 ﻿#ifndef JZNODE_TYPE_H_
 #define JZNODE_TYPE_H_
 
-#if defined(_MSC_VER) && _MSC_VER >= 1600
-#pragma execution_character_set("utf-8")
-#endif
-
 #include <QVariant>
 #include <QDataStream>
 #include <QSharedPointer>
+#include "JZNodeCoreDefine.h"
 
 constexpr int INVALID_ID = -1; 
 
@@ -150,7 +147,7 @@ Q_DECLARE_METATYPE(QVariantPointer)
 class JZNodeObject;
 class JZSignalDefine;
 class JZFunctionDefine;
-class JZNodeType
+class JZCORE_EXPORT JZNodeType
 {
 public:
     static void init();

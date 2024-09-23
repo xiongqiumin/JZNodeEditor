@@ -7,7 +7,7 @@
 #include "JZNodeObject.h"
 
 class JZScriptClassItem;
-class JZScriptItem : public JZProjectItem
+class JZCORE_EXPORT JZScriptItem : public JZProjectItem
 {
 public:    
     JZScriptItem(int type);

@@ -863,7 +863,7 @@ void ScriptTest::testUnitTest()
     QCOMPARE(out[0].toInt(),4);
 
     depend.hook[0].enable = true;
-    depend.hook[0].params[0].value = "180";
+    depend.hook[0].params[0] = "180";
     ret = m_engine.callUnitTest(&depend,out);
     QVERIFY(ret);
     QCOMPARE(out[0].toInt(),180);
@@ -915,7 +915,7 @@ void ScriptTest::testUnitTestClass()
     QCOMPARE(out[0].toInt(),4);
 
     depend.hook[0].enable = true;
-    depend.hook[0].params[0].value = "180";
+    depend.hook[0].params[0] = "180";
     ret = m_engine.callUnitTest(&depend,out);
     QVERIFY(ret);
     QCOMPARE(out[0].toInt(),180);

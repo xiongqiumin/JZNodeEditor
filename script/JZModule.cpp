@@ -1,3 +1,7 @@
+#include <QPluginLoader>
+#include <QDir>
+#include <QApplication>
+#include <QSysInfo>
 #include "JZModule.h"
 
 //JZModule
@@ -92,7 +96,40 @@ JZModuleManager::~JZModuleManager()
 
 void JZModuleManager::init()
 {
+    QString osType = QSysInfo::productType();
+    QString librarySuffix;
+    if (osType == "windows") {
+        librarySuffix = ".dll";
+    }
+    else if (osType == "macos") {
+        librarySuffix = ".dylib";
+    }
+    else {
+        librarySuffix = ".so";
+    }
 
+    QString plugin_path = qApp->applicationDirPath() + "/modules";
+    QDir dir(plugin_path);
+    QStringList list = dir.entryList(QDir::Files);
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (!list[i].endsWith(librarySuffix))
+            continue;
+
+        QString module_path = plugin_path + "/" + list[i];
+        QPluginLoader pluginLoader(module_path);
+        QObject* plugin = pluginLoader.instance();
+        if (plugin) {
+            auto name = plugin->metaObject()->className();
+            JZModule* pInterface = qobject_cast<JZModule*>(plugin);
+            if (pInterface)
+                addModule(pInterface);
+        }
+        else
+        {
+            qDebug() << "load plugin" << module_path <<  "failed\n";
+        }
+    }
 }
 
 void JZModuleManager::addModule(JZModule *module)

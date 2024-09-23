@@ -3,8 +3,9 @@
 
 #include <QString>
 #include <QMap>
+#include "JZNodeCoreDefine.h"
 
-class JZNodeEditorManager
+class JZCORE_EXPORT JZNodeEditorManager
 {
 public:
     static JZNodeEditorManager *instance();

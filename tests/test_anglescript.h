@@ -22,4 +22,6 @@ protected:
     bool buildAs(QString code);
 };
 
+void test_anglescript(int argc, char *argv[]);
+
 #endif

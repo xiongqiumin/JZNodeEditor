@@ -9,6 +9,7 @@
 #include <QTreeWidget>
 #include <QComboBox>
 #include <functional>
+#include "JZNodeCoreDefine.h"
 
 class QTreeWidget;
 

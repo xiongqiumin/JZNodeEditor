@@ -8,8 +8,7 @@
 #include "JZParamItem.h"
 #include "JZScriptItem.h"
 
-class JZParamItem;
-class JZScriptFile : public JZProjectItem
+class JZCORE_EXPORT JZScriptFile : public JZProjectItem
 {
 public:
     JZScriptFile();

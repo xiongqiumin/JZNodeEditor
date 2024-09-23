@@ -79,7 +79,7 @@ enum
 };
 
 //JZNodeGemo
-struct JZNodeGemo
+struct JZCORE_EXPORT JZNodeGemo
 {
     static int paramId(int nodeId, int pinId);
     static JZNodeGemo paramGemo(int param_id);
@@ -95,7 +95,7 @@ struct JZNodeGemo
 };
 
 //JZNodeConnect
-class JZNodeConnect
+class JZCORE_EXPORT JZNodeConnect
 {
 public:
     JZNodeConnect();
@@ -108,7 +108,7 @@ void operator<<(QDataStream &s, const JZNodeConnect &param);
 void operator>>(QDataStream &s, JZNodeConnect &param);
 
 //JZNodeGroup
-class JZNodeGroup
+class JZCORE_EXPORT JZNodeGroup
 {
 public:
     JZNodeGroup();
@@ -122,7 +122,7 @@ void operator>>(QDataStream &s, JZNodeGroup &param);
 class JZNodeCompiler;
 class JZScriptItem;
 class JZNodePinWidget;
-class JZNode
+class JZCORE_EXPORT JZNode
 {
 public:
     JZNode();
@@ -270,7 +270,7 @@ protected:
 QByteArray NodeMagic();
 
 //JZNodeNop
-class JZNodeNop : public JZNode
+class JZCORE_EXPORT JZNodeNop : public JZNode
 {
 public:
     JZNodeNop();
@@ -281,7 +281,7 @@ protected:
 };
 
 //JZNodeContinue
-class JZNodeContinue : public JZNode
+class JZCORE_EXPORT JZNodeContinue : public JZNode
 {
 public:
     JZNodeContinue();
@@ -292,7 +292,7 @@ protected:
 };
 
 //JZNodeBreak
-class JZNodeBreak : public JZNode
+class JZCORE_EXPORT JZNodeBreak : public JZNode
 {
 public:
     JZNodeBreak();
@@ -303,7 +303,7 @@ protected:
 };
 
 //JZNodeReturn
-class JZNodeReturn : public JZNode
+class JZCORE_EXPORT JZNodeReturn : public JZNode
 {
 public:
     JZNodeReturn();
@@ -317,7 +317,7 @@ protected:
 };
 
 //JZNodeExit
-class JZNodeExit : public JZNode
+class JZCORE_EXPORT JZNodeExit : public JZNode
 {
 public:
     JZNodeExit();
@@ -329,7 +329,7 @@ protected:
 };
 
 //JZNodeSequence
-class JZNodeSequence : public JZNode
+class JZCORE_EXPORT JZNodeSequence : public JZNode
 {
 public:
     JZNodeSequence();
@@ -347,7 +347,7 @@ protected:
 };
 
 //JZNodeParallel
-class JZNodeParallel : public JZNode
+class JZCORE_EXPORT JZNodeParallel : public JZNode
 {
 public:
     JZNodeParallel();    
@@ -357,7 +357,7 @@ protected:
 
 //JZNodeFor
 class QComboBox;
-class JZNodeFor: public JZNode
+class JZCORE_EXPORT JZNodeFor: public JZNode
 {
 public:
     JZNodeFor();
@@ -380,7 +380,7 @@ protected:
 };
 
 //JZNodeForEach
-class JZNodeForEach: public JZNode
+class JZCORE_EXPORT JZNodeForEach: public JZNode
 {
 public:
     JZNodeForEach();
@@ -392,7 +392,7 @@ protected:
 };
 
 //JZNodeWhile
-class JZNodeWhile: public JZNode
+class JZCORE_EXPORT JZNodeWhile: public JZNode
 {
 public:
     JZNodeWhile();
@@ -404,7 +404,7 @@ protected:
 };
 
 //JZNodeIf
-class JZNodeIf : public JZNode
+class JZCORE_EXPORT JZNodeIf : public JZNode
 {
 public:
     JZNodeIf();
@@ -428,7 +428,7 @@ protected:
 };
 
 //JZNodeSwitch
-class JZNodeSwitch : public JZNode
+class JZCORE_EXPORT JZNodeSwitch : public JZNode
 {
 public:
     JZNodeSwitch();
@@ -453,7 +453,7 @@ protected:
 
 
 //JZNodeBranch
-class JZNodeBranch : public JZNode
+class JZCORE_EXPORT JZNodeBranch : public JZNode
 {
 public:
     JZNodeBranch();
@@ -465,7 +465,7 @@ protected:
 };
 
 //JZNodeAssert
-class JZNodeAssert : public JZNode
+class JZCORE_EXPORT JZNodeAssert : public JZNode
 {
 public:
     JZNodeAssert();
@@ -477,7 +477,7 @@ protected:
 };
 
 //JZNodeTryCatch
-class JZNodeTryCatch : public JZNode
+class JZCORE_EXPORT JZNodeTryCatch : public JZNode
 {
 public:
     JZNodeTryCatch();
@@ -488,7 +488,7 @@ protected:
 };
 
 //JZNodeMainLoop
-class JZNodeMainLoop : public JZNode
+class JZCORE_EXPORT JZNodeMainLoop : public JZNode
 {
 public:
     JZNodeMainLoop();

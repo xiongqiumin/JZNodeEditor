@@ -3,7 +3,9 @@
 
 #include "JZNodeObject.h"
 
-class JZModule
+#define JZModulePluginInterface_iid "JZModulePlugin.Interface"
+
+class JZCORE_EXPORT JZModule
 {
 public:
     JZModule();
@@ -29,6 +31,7 @@ protected:
     QStringList m_depends;
     int m_refCount;
 };
+Q_DECLARE_INTERFACE(JZModule, JZModulePluginInterface_iid);
 
 class JZModuleStatic : public JZModule
 {

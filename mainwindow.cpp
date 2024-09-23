@@ -95,8 +95,7 @@ MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> act_flags)
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
-    m_editor = nullptr;
-    m_simulator = nullptr;    
+    m_editor = nullptr;    
     m_processMode = Process_none;
     m_compilerTimer = new QTimer(this);
     connect(m_compilerTimer, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
@@ -265,8 +264,7 @@ void MainWindow::initMenu()
     m_actionStatus << ActionStatus(actBuild, { as::ProjectVaild, as::ProcessIsEmpty });
 
     QMenu *menu_tool = menubar->addMenu("工具");
-    auto actModbus = menu_tool->addAction("Modbus");
-    connect(actModbus, &QAction::triggered, this, &MainWindow::onActionModbus);
+    menu_tool->addAction("性能分析");
 
     QMenu *menu_debug = menubar->addMenu("调试");    
     auto actRun = menu_debug->addAction(menuIcon("iconRun.png"), "开始调试");
@@ -441,14 +439,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     m_runThread.stopRun();
     m_buildThread.stopBuild();
-
-    if (m_simulator)
-    {
-        m_simulator->closeAll();
-        delete m_simulator;
-        m_simulator = nullptr;
-    }
-
+    
     JZDesigner::instance()->closeEditor();
     QMainWindow::closeEvent(event);
 }
@@ -783,14 +774,6 @@ void MainWindow::onActionStepOut()
 {
     m_debuger.stepOut();
     updateActionStatus();
-}
-
-void MainWindow::onActionModbus()
-{
-    if (!m_simulator)
-        m_simulator = new JZModbusSimulator(this);
-
-    m_simulator->showNormal();
 }
 
 void MainWindow::onActionHelp()

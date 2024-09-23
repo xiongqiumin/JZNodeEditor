@@ -8,10 +8,8 @@
 #include "3rd/jzupdate/JZUpdatePack.h"
 #include "3rd/qcustomplot/JZPlotConfg.h"
 #include "JZNodeVariableBind.h"
-
-#include "modules/JZModuleModbus.h"
-#include "sample/ImageModule/ImageModule.h"
 #include "JZNodeParamDelegate.h"
+#include "JZModule.h"
 
 void JZNodeInit()
 {
@@ -39,11 +37,6 @@ void JZNodeInit()
     JZNodeFunctionManager::instance()->setUserRegist(true);
     JZNodeObjectManager::instance()->setUserRegist(true);
 
-    BindManager::instance()->init();
-
-    //load module
-    auto module_modbus = new JZModuleModbus();
-    auto module_image = new ModuleImageSample();
-    JZModuleManager::instance()->addModule(module_modbus);
-    JZModuleManager::instance()->addModule(module_image);
+    BindManager::instance()->init();    
+    JZModuleManager::instance()->init();
 }

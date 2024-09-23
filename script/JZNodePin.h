@@ -30,7 +30,7 @@ enum {
     Pri_widget = 300,
 };
 
-class JZNodePin
+class JZCORE_EXPORT JZNodePin
 {
 public:
     JZNodePin();

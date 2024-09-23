@@ -7,8 +7,8 @@
 #include <QTableWidget>
 #include <QPlainTextEdit>
 #include "UiCommon.h"
-#include "3rd/jzmodbus/JZModbusMaster.h"
-#include "3rd/jzmodbus/JZModbusSlaver.h"
+#include "jzmodbus/JZModbusMaster.h"
+#include "jzmodbus/JZModbusSlaver.h"
 
 class SimulatorWidget;
 class JZModbusSimulator : public QWidget

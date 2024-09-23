@@ -5,10 +5,10 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeBind.h"
 #include "JZNodeFactory.h"
-#include "3rd/jzmodbus/JZModbusMaster.h"
-#include "3rd/jzmodbus/JZModbusSlaver.h"
-#include "editor/tools/JZModbusConfigDialog.h"
-#include "editor/tools/JZModbusSimulator.h"
+#include "jzmodbus/JZModbusMaster.h"
+#include "jzmodbus/JZModbusSlaver.h"
+#include "JZModbusConfigDialog.h"
+#include "JZModbusSimulator.h"
 #include "JZNodePinWidget.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
@@ -48,7 +48,7 @@ JZNodePinWidget *JZNodeModbusConfig::createWidget(int id)
     {
         JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
         auto btn = w->button();
-        btn->setText("�༭");
+        btn->setText("设置");
         btn->connect(btn, &QPushButton::clicked, [btn,this] {
             QByteArray old = this->toBuffer();
 

@@ -2,8 +2,8 @@
 #define JZ_MODULE_MODBUS_H_
 
 #include "JZNodeFunction.h"
-#include "3rd/jzmodbus/JZModbusParam.h"
 #include "JZModule.h"
+#include "jzmodbus/JZModbusParam.h"
 
 enum {
     Node_modbusConfig = 1000,    
@@ -28,8 +28,12 @@ protected:
     JZModbusConfig m_config;
 };
 
-class JZModuleModbus: public JZModule
+class JZModuleModbus: public QObject, public JZModule
 {
+    Q_OBJECT
+    Q_INTERFACES(JZModule)
+    Q_PLUGIN_METADATA(IID JZModulePluginInterface_iid)
+    
 public:
     JZModuleModbus();
     virtual ~JZModuleModbus();
