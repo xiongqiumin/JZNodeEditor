@@ -1474,6 +1474,17 @@ bool JZNodeView::isBreakPoint(int nodeId)
     return project->hasBreakPoint(m_file->itemPath(), nodeId);
 }
 
+bool JZNodeView::canRemoveItem(QGraphicsItem *item)
+{
+    auto item_id = ((JZNodeBaseItem *)item)->id();
+    if (item->type() == Item_node)
+    {
+        if (!getNode(item_id)->canRemove())
+            return false;
+    }
+    return true;
+}
+
 void JZNodeView::removeItem(QGraphicsItem *item)
 {        
     Q_ASSERT(item->type() > Item_none);
@@ -2443,6 +2454,18 @@ void JZNodeView::copyItems(QList<QGraphicsItem*> items)
 
 void JZNodeView::removeItems(QList<QGraphicsItem*> items)
 {
+    bool can_remove = false;;
+    for (int i = 0; i < items.size(); i++)
+    {
+        if (canRemoveItem(items[i]))
+        {
+            can_remove = true;
+            break;
+        }
+    }
+    if (!can_remove)
+        return;
+
     m_commandStack.beginMacro("remove");
     std::sort(items.begin(),items.end(),[](const QGraphicsItem *i1,const QGraphicsItem *i2)->bool{
             return i1->type() < i2->type();
@@ -2452,7 +2475,7 @@ void JZNodeView::removeItems(QList<QGraphicsItem*> items)
     {        
         removeItem(items[i]);
     }
-    m_commandStack.endMacro();
+    m_commandStack.endMacro();      
 }
 
 void JZNodeView::autoCompiler()

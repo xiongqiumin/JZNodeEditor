@@ -87,7 +87,7 @@ void JZScriptItem::insertNode(JZNode * node)
 }
 
 void JZScriptItem::removeNode(int id)
-{
+{    
     QList<int> lines = getConnectPin(id);
     for (int i = 0; i < lines.size(); i++)
         removeConnect(lines[i]);
@@ -95,6 +95,7 @@ void JZScriptItem::removeNode(int id)
     auto it = m_nodes.find(id);
     if (it != m_nodes.end())
     {
+        Q_ASSERT(it.value()->canRemove());
         delete it.value();
         m_nodes.erase(it);
     }

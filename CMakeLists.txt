@@ -311,4 +311,3 @@ set_target_properties(JZNodeEditor PROPERTIES
 add_subdirectory(modules)
 add_subdirectory(sample)
 add_subdirectory(tests)
-add_dependencies(JZNodeEditor ModuleModbus ModuleOpencv)

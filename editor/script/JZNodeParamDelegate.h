@@ -17,7 +17,7 @@ template <class T>
 JZNodeParamDisplayWidget *CreateParamDisplayWidget() { return new T(); }
 
 //JZNodeParamDelegate
-class JZNodeParamDelegate
+class JZCORE_EXPORT JZNodeParamDelegate
 {
 public:
     JZNodeParamDelegate();
@@ -31,7 +31,7 @@ public:
 };
 
 //JZNodeParamDelegateManager
-class JZNodeParamDelegateManager
+class JZCORE_EXPORT JZNodeParamDelegateManager
 {
 public:
     static JZNodeParamDelegateManager *instance();

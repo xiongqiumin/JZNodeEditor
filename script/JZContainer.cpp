@@ -486,7 +486,7 @@ void registMap(QString key_type, QString value_type,int type_id)
     map_it.className = it_name;
     map_it.isCObject = true;
     map_it.id = it_id;
-    inst->regist(map_it);
+    inst->replace(map_it);
 }
 
 void registSet(QString value_type,int type_id)

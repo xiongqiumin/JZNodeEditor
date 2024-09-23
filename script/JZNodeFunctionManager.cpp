@@ -64,10 +64,6 @@ const JZFunctionDefine *JZNodeFunctionManager::function(QString funcName)
     return nullptr;
 }
 
-void JZNodeFunctionManager::loadLibrary(QString filename)
-{    
-}
-
 void JZNodeFunctionManager::setUserRegist(bool flag)
 {
     m_userRegist = flag;

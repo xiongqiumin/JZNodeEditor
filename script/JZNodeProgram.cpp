@@ -316,7 +316,7 @@ void JZNodeRegistType(const JZNodeTypeMeta &type_info)
     for (int i = 0; i < define_list.size(); i++)
     {
         QString error;
-        JZNodeObjectManager::instance()->regist(define_list[i]);
+        JZNodeObjectManager::instance()->replace(define_list[i]);
     }
     for (int i = 0; i < function_list.size(); i++)        
         JZNodeFunctionManager::instance()->registFunction(function_list[i]);

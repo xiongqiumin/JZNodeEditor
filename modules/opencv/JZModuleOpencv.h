@@ -14,7 +14,7 @@ public:
     virtual ~JZModuleOpencv();
     
     virtual void regist() override;
-    virtual void unregist() override;
+    virtual void unregist() override;    
 };
 
 

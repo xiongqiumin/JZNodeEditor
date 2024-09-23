@@ -248,6 +248,7 @@ protected:
     void copyItems(QList<QGraphicsItem*> item);
     void removeItems(QList<QGraphicsItem*> item);
     void removeItem(QGraphicsItem *item);
+    bool canRemoveItem(QGraphicsItem *item);
     QList<JZNodeGraphItem*> selectNodeItems();
     void initGraph();            
     void setSelectNode(int id);

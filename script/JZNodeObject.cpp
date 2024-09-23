@@ -1090,19 +1090,19 @@ int JZNodeObjectManager::delcareCClass(const QString &name, const QString &c_typ
 
 int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
-    Q_ASSERT(!info.className.isEmpty());    
-    
+    //可以先声明在注册
+    Q_ASSERT(!info.className.isEmpty() && !meta(info.className));
+    Q_ASSERT(info.id == -1 || !meta(info.id));
+
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;
     if(info.id != -1)
     {
-        Q_ASSERT(!meta(info.className) || meta(info.className)->id == info.id);
         def->id = info.id;
         m_objectId = qMax(m_objectId,def->id + 1);
     }
     else
-    {
-        Q_ASSERT(!meta(info.className));
+    {        
         def->id = m_objectId++;
     }
 
@@ -1149,9 +1149,15 @@ int JZNodeObjectManager::registCEnum(const JZNodeEnumDefine &define, const QStri
     return id;
 }
 
-void JZNodeObjectManager::unregist(int name)
-{
-    m_metas.remove(name);
+void JZNodeObjectManager::unregist(int id)
+{   
+    if (!m_metas.contains(id))
+        return;
+
+    m_metas.remove(id);
+    QString ctype_id = m_ctypeidMap.key(id);
+    if(!ctype_id.isEmpty())
+        m_ctypeidMap.remove(ctype_id);
 }
 
 void JZNodeObjectManager::setQObjectType(const QString &name,int id)

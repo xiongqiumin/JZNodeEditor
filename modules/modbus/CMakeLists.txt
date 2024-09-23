@@ -39,3 +39,5 @@ set_target_properties(ModuleModbus PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>/modules"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>/modules"
 )
+
+add_dependencies(JZNodeEditor ModuleModbus)

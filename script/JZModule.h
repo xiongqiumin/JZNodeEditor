@@ -9,7 +9,7 @@ class JZCORE_EXPORT JZModule
 {
 public:
     JZModule();
-    virtual ~JZModule();    
+    virtual ~JZModule();        
 
     QString name() const;
     QStringList classList() const;

@@ -19,7 +19,7 @@ public:
 };
 
 //JZNodeImageDisplayWidget
-class JZNodeImageDisplayWidget : public JZNodeParamDisplayWidget
+class JZCORE_EXPORT JZNodeImageDisplayWidget : public JZNodeParamDisplayWidget
 {
     Q_OBJECT
 

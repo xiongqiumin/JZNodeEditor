@@ -23,7 +23,7 @@ signals:
 };
 
 //JZNodeImageEditWidget
-class JZNodeImageEditWidget : public JZNodeParamEditWidget
+class JZCORE_EXPORT JZNodeImageEditWidget : public JZNodeParamEditWidget
 {
     Q_OBJECT
 

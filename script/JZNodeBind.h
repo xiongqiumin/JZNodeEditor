@@ -141,16 +141,10 @@ T fromVariantEnum(const QVariant &v, std::true_type)
 template<class T>
 T fromVariantEnum(const QVariant &v, std::false_type)
 {
-    if(v.type() == QVariant::UserType)
-    {
-        JZNodeObject *obj = toJZObject(v);
-        T *cobj = (T*)(obj->cobj());
-        return *cobj;
-    }
-    else
-    {
-        return v.value<T>();
-    }
+    Q_ASSERT(v.type() == QVariant::UserType);
+    JZNodeObject *obj = toJZObject(v);
+    T *cobj = (T*)(obj->cobj());
+    return *cobj;
 }
 
 template<class T>
@@ -168,6 +162,18 @@ T fromVariant(const QVariant &v, std::false_type)
 {
     return fromVariantEnum<T>(v, is_enum_or_qenum<T>());
 }
+
+template<>
+JZCORE_EXPORT bool fromVariant<bool>(const QVariant &v, std::false_type);
+
+template<>
+JZCORE_EXPORT int fromVariant<int>(const QVariant &v, std::false_type);
+
+template<>
+JZCORE_EXPORT qint64 fromVariant<qint64>(const QVariant &v, std::false_type);
+
+template<>
+JZCORE_EXPORT double fromVariant<double>(const QVariant &v, std::false_type);
 
 template<>
 JZCORE_EXPORT QString fromVariant<QString>(const QVariant &v, std::false_type);
@@ -640,7 +646,17 @@ public:
         m_define.className = name;
         m_define.superName = super;
         m_define.isCObject = true;
-        m_define.id = JZNodeObjectManager::instance()->delcareCClass(m_define.className, typeid(Class).name(), typeId);
+
+        JZNodeObjectDefine* meta = JZNodeObjectManager::instance()->meta(m_define.className);
+        if (meta)
+        {
+            Q_ASSERT(m_define.functions.size() == 0 && m_define.params.size() == 0);
+            m_define.id = meta->id;            
+        }
+        else
+        {
+            m_define.id = JZNodeObjectManager::instance()->delcareCClass(m_define.className, typeid(Class).name(), typeId);
+        }
 
         initCreate(std::is_abstract<Class>());
         initCopy(std::is_copy_constructible<Class>());
@@ -652,6 +668,11 @@ public:
         :ClassBind(-1, name, super)
     {        
     }    
+
+    int id()
+    {
+        return m_define.id;
+    }
 
     void setValueType(bool flag)
     {
@@ -754,7 +775,7 @@ public:
         m_define.cparams[def.name] = cdef;
     }
 
-    void regist()
+    int regist()
     {
         auto func_inst = JZNodeFunctionManager::instance();
         for (int func_idx = 0; func_idx < m_funcList.size(); func_idx++)
@@ -773,6 +794,8 @@ public:
         //regist
         JZNodeObjectManager::instance()->replace(m_define);
         setQObjectType(std::is_base_of<QObject, Class>());
+
+        return m_define.id;
     }
 
 protected:

@@ -34,6 +34,30 @@ JZCORE_EXPORT QString* fromVariant<QString*>(const QVariant &v, std::true_type)
 }
 
 template<>
+JZCORE_EXPORT bool fromVariant<bool>(const QVariant &v, std::false_type)
+{
+    return v.toBool();
+}
+
+template<>
+JZCORE_EXPORT int fromVariant<int>(const QVariant &v, std::false_type)
+{
+    return v.toInt();
+}
+
+template<>
+JZCORE_EXPORT qint64 fromVariant<qint64>(const QVariant &v, std::false_type)
+{
+    return v.value<qint64>();
+}
+
+template<>
+JZCORE_EXPORT double fromVariant<double>(const QVariant &v, std::false_type)
+{
+    return v.toDouble();
+}
+
+template<>
 JZCORE_EXPORT QString fromVariant<QString>(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.type() == QVariant::String);

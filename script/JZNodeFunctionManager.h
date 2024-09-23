@@ -13,8 +13,7 @@ class JZCORE_EXPORT JZNodeFunctionManager
 public:
     static JZNodeFunctionManager *instance();
 
-    void init();        
-    void loadLibrary(QString filename);
+    void init();            
     void setUserRegist(bool flag);
     void clearUserReigst();     
 
