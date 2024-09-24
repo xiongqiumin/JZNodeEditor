@@ -345,7 +345,8 @@ QTreeWidgetItem *JZNodePanel::createMemberParam(QString name)
 QTreeWidgetItem *JZNodePanel::createFunction(QString name)
 {
     QTreeWidgetItem *item = nullptr;
-    auto func_def = JZNodeFunctionManager::instance()->function(name);
+    auto func_inst = m_file->project()->functionManager();
+    auto func_def = func_inst->function(name);
     int node_type = JZNodeEditorManager::instance()->customFunctionNode(name);
     if(node_type != Node_none)
     { 
@@ -477,7 +478,7 @@ void JZNodePanel::initLocalDefine()
 
 void JZNodePanel::addModule(QTreeWidgetItem *item_root,QString name)
 {    
-    auto func_inst = JZNodeFunctionManager::instance();
+    auto func_inst = m_file->project()->functionManager();
     const JZModule *m = module(name);
     auto item_module = createFolder(m->name());
     item_root->addChild(item_module);
@@ -486,7 +487,7 @@ void JZNodePanel::addModule(QTreeWidgetItem *item_root,QString name)
     for (int func_idx = 0; func_idx < functionList.size(); func_idx++)
     {
         QString func_name = functionList[func_idx];
-        auto *func = JZNodeFunctionManager::instance()->function(func_name);
+        auto *func = func_inst->function(func_name);
         Q_ASSERT_X(func,"Error Function",qUtf8Printable(func_name));
     
         auto function_node = createFunction(func->fullName());
@@ -503,7 +504,8 @@ void JZNodePanel::addModule(QTreeWidgetItem *item_root,QString name)
 
 void JZNodePanel::updateClass(QTreeWidgetItem *item_class,const QString &class_name,bool show_protected)
 {
-    auto enum_meta = JZNodeObjectManager::instance()->enumMeta(class_name);
+    auto obj_inst = m_file->project()->objectManager();
+    auto enum_meta = obj_inst->enumMeta(class_name);
     if(enum_meta)
     {
         JZNodeEnum node_enum;
@@ -514,7 +516,7 @@ void JZNodePanel::updateClass(QTreeWidgetItem *item_class,const QString &class_n
         return;
     }
 
-    auto meta = JZNodeObjectManager::instance()->meta(class_name);
+    auto meta = obj_inst->meta(class_name);
     Q_ASSERT_X(meta,"Error Class",qUtf8Printable(class_name));
 
     item_class->setText(0, class_name);

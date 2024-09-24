@@ -24,18 +24,14 @@ void JZNodeInit()
 
     JZNodeType::init();
     JZNodeFactory::instance()->init();    
-    JZNodeFunctionManager::instance()->init();   
-    JZNodeObjectManager::instance()->init();    
-    JZNodeEngine::regist();    
+    JZNodeEngine::regist();
+    InitJZProject();
 
     JZNetPackManager::instance()->init();
     JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);
        
     InitCustomPlot();
-    InitParamDelegate();
-
-    JZNodeFunctionManager::instance()->setUserRegist(true);
-    JZNodeObjectManager::instance()->setUserRegist(true);
+    InitParamDelegate();    
 
     BindManager::instance()->init();    
     JZModuleManager::instance()->init();

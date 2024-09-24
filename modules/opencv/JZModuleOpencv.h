@@ -12,9 +12,9 @@ class JZModuleOpencv: public QObject, public JZModule
 public:
     JZModuleOpencv();
     virtual ~JZModuleOpencv();
-    
-    virtual void regist() override;
-    virtual void unregist() override;    
+
+    virtual void regist(JZScriptEnvironment *env) override;
+    virtual void unregist(JZScriptEnvironment *env) override;        
 };
 
 

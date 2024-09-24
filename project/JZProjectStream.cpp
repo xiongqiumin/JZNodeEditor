@@ -4,6 +4,21 @@
 #include "JZNode.h"
 #include "JZProjectStream.h"
 
+//QByteArray
+QByteArray ProjectMagic()
+{
+    QByteArray result;
+    QDataStream s(&result, QIODevice::WriteOnly);
+    s << QString("2");
+    //node
+    s << sizeof(JZNodePin);
+    s << sizeof(JZNodeGemo);
+    s << sizeof(JZNodeConnect);
+    s << sizeof(JZNode);
+
+    return result;
+}
+
 //JZProjectFile
 JZProjectFile::JZProjectFile()
 {
@@ -26,7 +41,7 @@ bool JZProjectFile::openLoad(const QString &filename)
     QByteArray magic;
     m_stream.setDevice(&m_file);
     m_stream >> magic;
-    if(magic != NodeMagic())
+    if(magic != ProjectMagic())
     {
         m_error = "version not match";
         m_file.close();
@@ -46,7 +61,7 @@ bool JZProjectFile::openSave(const QString &filename)
     }
 
     m_stream.setDevice(&m_file);
-    m_stream << NodeMagic();
+    m_stream << ProjectMagic();
     return true;
 }
 

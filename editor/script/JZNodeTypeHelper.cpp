@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QCompleter>
 #include <QTableWidget>
+#include "mainwindow.h"
 
 //TypeEditHelp
 TypeEditHelp::TypeEditHelp()
@@ -13,7 +14,8 @@ TypeEditHelp::TypeEditHelp()
 
 void TypeEditHelp::init(QString type_name)
 {
-    int dataType = JZNodeType::nameToType(type_name);
+    auto env = editorEnvironment();
+    int dataType = env->nameToType(type_name);
     types = { Type_bool,Type_int,Type_double,Type_string };
     index = types.indexOf(dataType);
     if (index == -1)
@@ -23,7 +25,7 @@ void TypeEditHelp::init(QString type_name)
     }
     typeNames.clear();
     for (int i = 0; i < types.size(); i++)
-        typeNames << JZNodeType::typeToName(types[i]);
+        typeNames << env->typeToName(types[i]);
     typeNames << "更多类型...";
     types << Type_none;
 }
@@ -46,6 +48,7 @@ TypeItemDelegate::TypeItemDelegate(QObject *parent)
 
 QWidget *TypeItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
+    auto obj_inst = g_mainWindow->project()->objectManager();
     QString type_text = option.text;
 
     QComboBox *box = new QComboBox(parent);
@@ -54,8 +57,8 @@ QWidget *TypeItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 
     QStringList type_list;
     type_list << "bool" << "int" << "double" << "string";
-    type_list << JZNodeObjectManager::instance()->getClassList();
-    type_list << JZNodeObjectManager::instance()->getEnumList();
+    type_list << obj_inst->getClassList();
+    type_list << obj_inst->getEnumList();
     box->addItems(type_list);
     box->setCurrentText(type_text);
 
@@ -78,7 +81,7 @@ JZNodeTypeDialog::JZNodeTypeDialog(QWidget *p)
     item_class->setText(0, "object");
     ui->treeWidget->addTopLevelItem(item_class);
 
-    auto inst = JZNodeObjectManager::instance();
+    auto inst = g_mainWindow->project()->objectManager();
     auto list = inst->getClassList();
     for (int i = 0; i < list.size(); i++)
     {
@@ -114,7 +117,7 @@ JZNodeTypeDialog::~JZNodeTypeDialog()
 
 void JZNodeTypeDialog::setDataType(QString dataType)
 {
-    int t = JZNodeType::nameToType(dataType);
+    int t = editorEnvironment()->nameToType(dataType);
     if (JZNodeType::isBase(t))
         return;
 
@@ -164,10 +167,11 @@ JZNodeTypeHelper * JZNodeTypeHelper::instance()
 
 JZNodeTypeHelper::JZNodeTypeHelper()
 {
+    auto obj_inst = g_mainWindow->project()->objectManager();
     QStringList type_list;
     type_list << "bool" << "int" << "double" << "string";
-    type_list << JZNodeObjectManager::instance()->getClassList();
-    type_list << JZNodeObjectManager::instance()->getEnumList();    
+    type_list << obj_inst->getClassList();
+    type_list << obj_inst->getEnumList();    
 
     m_typeCompleter = new QCompleter(type_list,this);
     m_typeCompleter->setCaseSensitivity(Qt::CaseInsensitive);
@@ -193,9 +197,10 @@ QCompleter *JZNodeTypeHelper::typeCompleter()
 
 QCompleter *JZNodeTypeHelper::enumCompleter(int type)
 {
+    auto obj_inst = g_mainWindow->project()->objectManager();
     if (!m_enumCompleter.contains(type))
     {
-        auto meta = JZNodeObjectManager::instance()->enumMeta(type);
+        auto meta = obj_inst->enumMeta(type);
         if (!meta)
             return nullptr;
 

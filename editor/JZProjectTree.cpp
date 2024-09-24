@@ -133,8 +133,6 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
         icon_path = ":/JZNodeEditor/Resources/icons/iconProject.png";
     else if (item->itemType() == ProjectItem_folder)
         icon_path = ":/JZNodeEditor/Resources/icons/iconFolder.png";
-    else if (item->itemType() == ProjectItem_library)
-        icon_path = ":/JZNodeEditor/Resources/icons/iconLibrary.png";
     else if (item->itemType() == ProjectItem_class)
         icon_path = ":/JZNodeEditor/Resources/icons/iconClass.png";
     else if (item->itemType() == ProjectItem_scriptFunction)
@@ -342,7 +340,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     auto item_class = m_project->getItemClass(item);
     JZNodeObjectDefine *meta = nullptr;
     if(item_class)
-        meta = JZNodeObjectManager::instance()->meta(item_class->className());
+        meta = m_project->objectManager()->meta(item_class->className());
 
     if(item->itemType() == ProjectItem_root)
     {
@@ -482,7 +480,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
             JZNodeFuctionEditDialog dialog(this);
             dialog.setFunctionInfo(function,true);
-            dialog.init();
+            dialog.init(m_project);
             if (dialog.exec() != QDialog::Accepted)
                 return;
 
@@ -546,7 +544,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
             JZNodeFuctionEditDialog dialog(this);
             dialog.setFunctionInfo(func_item->function(), false);
-            dialog.init();
+            dialog.init(m_project);
             if (dialog.exec() != QDialog::Accepted)
                 return;
             

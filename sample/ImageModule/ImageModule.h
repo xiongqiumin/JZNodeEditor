@@ -13,8 +13,8 @@ public:
     ModuleImageSample();
     ~ModuleImageSample();
 
-    virtual void regist() override;
-    virtual void unregist() override;
+    virtual void regist(JZScriptEnvironment *env) override;
+    virtual void unregist(JZScriptEnvironment *env) override;
 
 protected:
     

@@ -1,7 +1,24 @@
 ﻿#include "JZNodeBind.h"
+#include "JZNodeEngine.h"
 
 namespace jzbind
 {
+
+static JZScriptEnvironment *g_bindEnv = nullptr;
+JZCORE_EXPORT void setBindEnvironment(JZScriptEnvironment *env)
+{    
+    g_bindEnv = env;
+}
+
+JZCORE_EXPORT JZScriptEnvironment *bindEnvironment()
+{
+    return g_bindEnv;    
+}
+
+JZCORE_EXPORT JZScriptEnvironment *runtimeEnvironment()
+{
+    return g_engine->environment();    
+}
 
 JZCORE_EXPORT void *createClassAssert()
 {

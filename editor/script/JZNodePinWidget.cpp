@@ -14,9 +14,11 @@
 #include "JZNodeTypeHelper.h"
 #include "JZNodeParamEditWidget.h"
 #include "JZNodeParamDelegate.h"
+#include "JZNode.h"
+#include "JZScriptEnvironment.h"
 
-//JZNodeFlagEditWidget
-JZNodeFlagEditWidget::JZNodeFlagEditWidget(QWidget *parent)
+//JZNodePinPopupWidget
+JZNodePinPopupWidget::JZNodePinPopupWidget(QWidget *parent)
     :QWidget(parent)
 {    
     QHBoxLayout *l = new QHBoxLayout();
@@ -26,52 +28,22 @@ JZNodeFlagEditWidget::JZNodeFlagEditWidget(QWidget *parent)
     m_line = new QLineEdit();
     m_line->setReadOnly(true);    
     QPushButton *btn = new QPushButton();
-    connect(btn, &QPushButton::clicked, this , &JZNodeFlagEditWidget::onSettingClicked);
+    connect(btn, &QPushButton::clicked, this , &JZNodePinPopupWidget::sigSettingClicked);
     l->addWidget(m_line);
     l->addWidget(btn);
     setLayout(l);    
 }
 
-JZNodeFlagEditWidget::~JZNodeFlagEditWidget()
+JZNodePinPopupWidget::~JZNodePinPopupWidget()
 {
 }
 
-void JZNodeFlagEditWidget::onSettingClicked()
-{
-    QString value = m_line->text();
-    QString new_value;
-    
-    JZNodeFlagEditDialog dlg(this);
-    dlg.init(m_flagType);
-    dlg.setFlag(value);
-    if (dlg.exec() != QDialog::Accepted)
-        return;
-
-    new_value = dlg.flag();   
-
-    if (new_value != value)
-    {
-        setValue(new_value);
-        emit sigValueChanged();
-    }
-}
-
-void JZNodeFlagEditWidget::setFlagType(QString flag)
-{
-    m_flagType = flag;
-}
-
-QString JZNodeFlagEditWidget::flagType()
-{
-    return m_flagType;
-}
-
-QString JZNodeFlagEditWidget::value()
+QString JZNodePinPopupWidget::value()
 {
     return m_line->text();
 }
 
-void JZNodeFlagEditWidget::setValue(QString text)
+void JZNodePinPopupWidget::setValue(QString text)
 {
     m_line->setText(text);
     m_line->setToolTip(text);
@@ -83,11 +55,14 @@ JZNodeParamTypeWidget::JZNodeParamTypeWidget(QWidget *parent)
     :QComboBox(parent)
 {
     setEditable(true);
-    
+}
+
+void JZNodeParamTypeWidget::init(JZNodeObjectManager *inst)
+{
     QStringList type_list;
     type_list << "bool" << "int" << "double" << "string";
-    type_list << JZNodeObjectManager::instance()->getClassList();
-    type_list << JZNodeObjectManager::instance()->getEnumList();
+    type_list << inst->getClassList();
+    type_list << inst->getEnumList();
     addItems(type_list);    
 
     QCompleter *comp = new QCompleter(type_list, this);
@@ -204,9 +179,10 @@ QString JZNodePinValueWidget::getWidgetType(int data_type)
         type = "QCheckBox";    
     else if (JZNodeType::isEnum(data_type))
     {
-        auto meta = JZNodeObjectManager::instance()->enumMeta(data_type);
+        auto obj_inst = m_node->environment()->objectManager();
+        auto meta = obj_inst->enumMeta(data_type);
         if (meta->isFlag())
-            type = "JZNodeFlagEditWidget";
+            type = "JZNodePinPopupWidget";
         else
             type = "QComboBox";         
     }
@@ -225,6 +201,7 @@ void JZNodePinValueWidget::createWidget()
 {    
     clearWidget();
 
+    auto obj_inst = m_node->environment()->objectManager();
     QString widget = m_widgetType;
     if (widget == "QCheckBox")
     {
@@ -258,10 +235,30 @@ void JZNodePinValueWidget::createWidget()
         edit->connect(edit, SIGNAL(editingFinished()), this, SLOT(onValueChanged()));
         m_widget = edit;
     }
-    else if (widget == "JZNodeFlagEditWidget")
+    else if (widget == "JZNodePinPopupWidget")
     {        
-        JZNodeFlagEditWidget *edit = new JZNodeFlagEditWidget();        
-        edit->connect(edit, &JZNodeFlagEditWidget::sigValueChanged, this, &JZNodePinValueWidget::onValueChanged);
+        JZNodePinPopupWidget *edit = new JZNodePinPopupWidget();
+        /*
+        edit->connect(edit, &JZNodePinPopupWidget::sigSettingClicked, this, [this] {            
+            QString value;
+            QString new_value;
+
+            auto meta = m_node->environment()->objectManager()->enumMeta(value);
+            JZNodeFlagEditDialog dlg(this);
+            dlg.init(m_flagType);
+            dlg.setFlag(value);
+            if (dlg.exec() != QDialog::Accepted)
+                return;
+
+            new_value = dlg.flag();
+
+            if (new_value != value)
+            {
+                setValue(new_value);
+                emit sigValueChanged();
+            }            
+        });
+        */
         m_widget = edit;
     }
     else if (widget == "JZNodeParamEditWidget")
@@ -298,15 +295,11 @@ void JZNodePinValueWidget::createWidget()
         }
         else
         {
-            auto meta = JZNodeObjectManager::instance()->enumMeta(m_dataType);
+            auto meta = obj_inst->enumMeta(m_dataType);
             Q_ASSERT(!meta->isFlag());
             
-            if (meta->count() < 24)
-            {
-                for (int i = 0; i < meta->count(); i++)
-                    box->addItem(meta->key(i), meta->value(i));
-            }
-
+            for (int i = 0; i < meta->count(); i++)
+                box->addItem(meta->key(i), meta->value(i));            
             box->setCompleter(JZNodeTypeHelper::instance()->enumCompleter(m_dataType));
         }
     }
@@ -316,11 +309,11 @@ void JZNodePinValueWidget::createWidget()
     else if (m_widget->inherits("QPlainTextEdit"))
     {
     }
-    else if (m_widget->inherits("JZNodeFlagEditWidget"))
+    else if (m_widget->inherits("JZNodePinPopupWidget"))
     {
-        JZNodeFlagEditWidget *edit = qobject_cast<JZNodeFlagEditWidget*>(m_widget);        
-        QString type_text = JZNodeType::typeToName(m_dataType);
-        edit->setFlagType(type_text);
+        JZNodePinPopupWidget *edit = qobject_cast<JZNodePinPopupWidget*>(m_widget);        
+        QString type_text = editorEnvironment()->typeToName(m_dataType);
+        //edit->setFlagType(type_text);
     }    
     else if (widget == "JZNodeParamEditWidget")
     {
@@ -381,9 +374,9 @@ QString JZNodePinValueWidget::value() const
         QPlainTextEdit *edit = qobject_cast<QPlainTextEdit*>(m_widget);
         text = edit->toPlainText();
     }
-    else if (m_widget->inherits("JZNodeFlagEditWidget"))
+    else if (m_widget->inherits("JZNodePinPopupWidget"))
     {
-        auto *edit = qobject_cast<JZNodeFlagEditWidget*>(m_widget);
+        auto *edit = qobject_cast<JZNodePinPopupWidget*>(m_widget);
         text = edit->value();
     }
     else if (m_widget->inherits("JZNodeParamEditWidget"))
@@ -431,9 +424,9 @@ void JZNodePinValueWidget::setValue(const QString &value)
         QPlainTextEdit *edit = qobject_cast<QPlainTextEdit*>(m_widget);
         edit->setPlainText(value);
     }
-    else if (m_widget->inherits("JZNodeFlagEditWidget"))
+    else if (m_widget->inherits("JZNodePinPopupWidget"))
     {
-        auto *edit = qobject_cast<JZNodeFlagEditWidget*>(m_widget);
+        auto *edit = qobject_cast<JZNodePinPopupWidget*>(m_widget);
         edit->setValue(value);
     }
     else if (m_widget->inherits("JZNodeParamEditWidget"))

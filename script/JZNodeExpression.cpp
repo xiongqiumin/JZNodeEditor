@@ -189,6 +189,7 @@ void JZNodeExpression::loadFromStream(QDataStream &s)
 
 JZNodeIRParam JZNodeExpression::toIr(const QString &name)
 {
+    auto env = environment();
     JZNodeIRParam parma;
     if (name.startsWith("#Reg"))
     {
@@ -206,8 +207,8 @@ JZNodeIRParam JZNodeExpression::toIr(const QString &name)
     }
     else
     {
-        int type = JZNodeType::stringType(name);
-        QVariant v = JZNodeType::initValue(type,name); 
+        int type = env->stringType(name);
+        QVariant v = env->initValue(type,name); 
         return irLiteral(v);
     }
 }

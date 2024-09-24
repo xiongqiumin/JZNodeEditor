@@ -29,12 +29,7 @@ JZProject *JZEditor::project()
 
 void JZEditor::setItem(JZProjectItem *item)
 {
-    if (item == nullptr && m_item)
-        m_item->setEditor(nullptr);
-
     m_item = item;
-    if(m_item)
-        m_item->setEditor(this);
 }
 
 JZProjectItem *JZEditor::item()

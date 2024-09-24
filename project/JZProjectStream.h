@@ -8,6 +8,9 @@
 #include <QDataStream>
 #include <QFile>
 
+//ProjectMagic
+QByteArray ProjectMagic();
+
 //JZProjectFile
 class JZProjectFile
 {

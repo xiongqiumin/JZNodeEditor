@@ -123,8 +123,7 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
 }
 
 bool JZNodeBuilder::build(JZNodeProgram *program)
-{    
-    Q_ASSERT(JZProject::active() == m_project);
+{        
     {
         QMutexLocker locker(&m_mutex);
         m_build = true;
@@ -152,16 +151,17 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     m_program = program;        
     m_program->clear();    
     
+    auto env = m_project->environment();
     JZNodeTypeMeta type_meta;
     auto container_list = m_project->containerList();
     for(int i = 0; i < container_list.size(); i++)
     {
         QString error;
-        if(!checkContainer(container_list[i],error))
+        if(!checkContainer(env,container_list[i],error))
             m_error += error + "\n";
         else
         {
-            auto meta = JZNodeObjectManager::instance()->meta(container_list[i]);
+            auto meta = m_project->objectManager()->meta(container_list[i]);
             Q_ASSERT_X(meta,"Error container:",qUtf8Printable(container_list[i]));
 
             JZNodeCObjectDelcare cobj;
@@ -250,21 +250,25 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
 
 bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNodeCompiler*, QString&)> buildFunction)
 {
-    JZScriptItem file(ProjectItem_scriptFunction);
-    file.setName(func.name);
-    file.setFunction(func);
-    file.setProject(m_project);
+    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);
+    file->setName(func.name);
+    file->setFunction(func);
+    m_project->addTmp(file);
     
-    auto start = file.getNode(0);
+    auto cleanup = qScopeGuard([file,this] {
+        m_project->removeTmp(file);
+    });
+
+    auto start = file->getNode(0);
     JZNodeCustomBuild *custom = new JZNodeCustomBuild();
     custom->buildFunction = buildFunction;
-    file.addNode(custom);
-    file.addConnect(start->flowOutGemo(), custom->flowInGemo());
+    file->addNode(custom);
+    file->addConnect(start->flowOutGemo(), custom->flowInGemo());
  
-    if(!buildScript(&file))
+    if(!buildScript(file))
         return false;
     
-    m_program->m_typeMeta.functionList << file.function();
+    m_program->m_typeMeta.functionList << file->function();
     return true;
 }
 

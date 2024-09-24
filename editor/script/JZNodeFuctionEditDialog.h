@@ -15,7 +15,7 @@ public:
     JZNodeFuctionEditDialog(QWidget *parent = Q_NULLPTR);
     ~JZNodeFuctionEditDialog();
     
-    void init();    
+    void init(JZProject *project);    
     void setFunctionInfo(JZFunctionDefine info,bool newFunction);
     JZFunctionDefine functionInfo();    
 
@@ -51,5 +51,6 @@ private:
     QString m_className;
     bool m_newFunction;
     JZFunctionDefine m_functionDefine;    
+    JZProject *m_project;
     Ui::JZNodeFuctionEditDialog *ui;
 };

@@ -5,6 +5,7 @@
 #include <QMenuBar>
 #include "JZProjectItem.h"
 #include "JZScriptItem.h"
+#include "JZEditorGlobal.h"
 
 enum{
     Editor_none,

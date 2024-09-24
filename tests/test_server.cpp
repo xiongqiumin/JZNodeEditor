@@ -37,7 +37,7 @@ void TestServer::init(JZProject *project)
 
 void TestServer::addInitFunction()
 {        
-    auto time_meta = JZNodeObjectManager::instance()->meta(Type_timer);
+    auto time_meta = m_project->objectManager()->meta(Type_timer);
 
     JZScriptItem *script = m_project->mainFunction();    
 
@@ -93,7 +93,8 @@ void TestServer::addInitFunction()
 void TestServer::addTimeoutFunction()
 {
     //timeout
-    auto meta = JZNodeObjectManager::instance()->meta("TestClass");
+    auto obj_inst = m_project->objectManager();
+    auto meta = obj_inst->meta("TestClass");
     auto def = meta->initMemberFunction("onTimer");
     JZScriptClassItem *class_file = m_project->getClass("TestClass");
     auto script = class_file->addMemberFunction(def);

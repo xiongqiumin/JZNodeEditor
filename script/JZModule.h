@@ -5,31 +5,26 @@
 
 #define JZModulePluginInterface_iid "JZModulePlugin.Interface"
 
+class JZScriptEnvironment;
 class JZCORE_EXPORT JZModule
 {
 public:
     JZModule();
     virtual ~JZModule();        
 
+    virtual void regist(JZScriptEnvironment *env) = 0;
+    virtual void unregist(JZScriptEnvironment *env) = 0;
+
     QString name() const;
     QStringList classList() const;
     QStringList functionList() const;
     QStringList depends() const;
 
-    void addRef();
-    void release();
-    int refCount();
-    void unload();
-
-protected:
-    virtual void regist() = 0;
-    virtual void unregist() = 0;
-
+protected:    
     QString m_name;
     QStringList m_classList;
     QStringList m_functionList;
-    QStringList m_depends;
-    int m_refCount;
+    QStringList m_depends;    
 };
 Q_DECLARE_INTERFACE(JZModule, JZModulePluginInterface_iid);
 
@@ -39,8 +34,8 @@ public:
     void init(QString name,QStringList classList, QStringList functionList, QStringList depends);
 
 protected:
-    virtual void regist();
-    virtual void unregist();
+    virtual void regist(JZScriptEnvironment *env);
+    virtual void unregist(JZScriptEnvironment *env);
 };
 
 class JZModuleManager
@@ -52,11 +47,7 @@ public:
     void addModule(JZModule *module);
 
     QStringList moduleList();    
-    JZModule *module(QString name);
-
-    bool loadModule(QString name);
-    void unloadModule(QString name);
-    void unloadAllModule();
+    JZModule *module(QString name);    
 
 protected:
     JZModuleManager();

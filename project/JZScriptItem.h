@@ -70,6 +70,9 @@ public:
     QStringList localVariableList(bool hasFunc);
 
 protected:    
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual bool loadFromStream(QDataStream &s) override;
+
     int m_nodeId;
     QMap<int, JZNode*> m_nodes;        
     QList<JZNodeGroup> m_groups;

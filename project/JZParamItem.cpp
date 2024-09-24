@@ -14,19 +14,15 @@ JZParamItem::~JZParamItem()
 
 }
 
-QByteArray JZParamItem::toBuffer()
-{    
-    QByteArray buffer;
-    QDataStream s(&buffer, QIODevice::WriteOnly);
+void JZParamItem::saveToStream(QDataStream &s) const
+{
     s << m_name;    
     s << m_variables;
-    s << m_binds;
-    return buffer;
+    s << m_binds;    
 }
 
-bool JZParamItem::fromBuffer(const QByteArray &buffer)
+bool JZParamItem::loadFromStream(QDataStream &s)
 {
-    QDataStream s(buffer);
     s >> m_name;
     s >> m_variables;
     s >> m_binds;
@@ -46,7 +42,8 @@ void JZParamItem::addVariable(QString name, QString type, const QString &v)
 
 void JZParamItem::addVariable(QString name,int type, const QString &v)
 {
-    QString type_name = JZNodeType::typeToName(type);
+    auto env = project()->environment();
+    QString type_name = env->typeToName(type);
     addVariable(name, type_name, v);
 }
 

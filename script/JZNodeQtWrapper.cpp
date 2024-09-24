@@ -36,6 +36,7 @@
 #include "JZRegExpHelp.h"
 #include "JZContainer.h"
 #include "JZNodeObjectParser.h"
+#include "JZScriptEnvironment.h"
 
 void checkSize(int index, int size)
 {
@@ -46,8 +47,49 @@ void checkSize(int index, int size)
     }
 }
 
+class QtWrapper
+{
+public:
+    void regist(JZScriptEnvironment *env);    
 
-void initEnum()
+    void initEnum();
+    void initBase();
+    void initEvent();
+    void initCore();
+    void initObjects();
+    void initLayout();
+    void initWidgets();
+    void initDialogs();
+    void initPainter();
+    void initFiles();
+    void registConvert();
+
+protected:
+    JZScriptEnvironment *m_env;
+    JZNodeObjectManager *m_objInst;
+    JZNodeFunctionManager *m_funcInst;
+};
+
+void QtWrapper::regist(JZScriptEnvironment *env)
+{
+    m_env = env;
+    m_objInst = env->objectManager();
+    m_funcInst = env->functionManager();
+
+    initEnum();
+    initBase();
+    initEvent();
+    initCore();
+    initObjects();
+    initLayout();
+    initWidgets();
+    initDialogs();
+    initPainter();
+    initFiles();
+    registConvert();
+}
+
+void QtWrapper::initEnum()
 {
     jzbind::registEnum<Qt::KeyboardModifiers>("Qt::KeyboardModifiers");
     jzbind::registEnum<Qt::SplitBehavior>("Qt::SplitBehavior");
@@ -69,26 +111,26 @@ void initEnum()
     filter_value_list << QDir::Files;
     filter_value_list << QDir::NoDotAndDotDot;
     filter_define.init("QDir::Filter", filter_key_list, filter_value_list);
-    int filter_id = JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filter).name());
+    int filter_id = m_objInst->registCEnum(filter_define,typeid(QDir::Filter).name());
     
     filter_define.init("QDir::Filters", filter_key_list, filter_value_list);
     filter_define.setFlag(true, filter_id);
-    JZNodeObjectManager::instance()->registCEnum(filter_define,typeid(QDir::Filters).name());    
+    m_objInst->registCEnum(filter_define,typeid(QDir::Filters).name());    
 }
 
-void initBase()
+void QtWrapper::initBase()
 {
-    JZNodeObjectManager::instance()->delcareCClass("stringList",typeid(QStringList).name() ,Type_stringList);
+    m_objInst->delcareCClass("stringList",typeid(QStringList).name() ,Type_stringList);
 
-    registContainer("QList<int>",Type_intList);
-    registContainer("QList<double>",Type_doubleList);
-    registContainer("QList<any>",Type_varList);
+    registContainer(m_env,"QList<int>",Type_intList);
+    registContainer(m_env,"QList<double>",Type_doubleList);
+    registContainer(m_env,"QList<any>",Type_varList);
 
-    registContainer("QMap<int,int>",Type_intIntMap);
-    registContainer("QMap<int,string>",Type_intStringMap);
-    registContainer("QMap<string,int>",Type_stringIntMap);
-    registContainer("QMap<string,string>",Type_stringStringMap);
-    registContainer("QMap<string,any>",Type_varMap);
+    registContainer(m_env,"QMap<int,int>",Type_intIntMap);
+    registContainer(m_env,"QMap<int,string>",Type_intStringMap);
+    registContainer(m_env,"QMap<string,int>",Type_stringIntMap);
+    registContainer(m_env,"QMap<string,string>",Type_stringStringMap);
+    registContainer(m_env,"QMap<string,any>",Type_varMap);
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
@@ -226,7 +268,7 @@ void initBase()
     cls_color.regist();    
 }
 
-void initCore()
+void QtWrapper::initCore()
 {
     jzbind::ClassBind<QObject> cls_object(Type_object,"QObject");
     cls_object.def("setObjectName",true,&QObject::setObjectName);
@@ -299,7 +341,7 @@ void initCore()
     cls_data_stream.regist();
 }
 
-void initEvent()
+void QtWrapper::initEvent()
 {    
     jzbind::ClassBind<QEvent> cls_event(Type_event,"QEvent");
     cls_event.regist();
@@ -328,7 +370,7 @@ void initEvent()
     cls_mouse_event.regist();
 }
 
-void initObjects()
+void QtWrapper::initObjects()
 {
     jzbind::ClassBind<QTimer> cls_timer(Type_timer,"QTimer", "QObject");
     cls_timer.def("start",true, QOverload<int>::of(&QTimer::start));
@@ -338,9 +380,9 @@ void initObjects()
     cls_timer.regist();
 }
 
-void initLayout()
+void QtWrapper::initLayout()
 {
-    JZNodeObjectManager::instance()->delcareCClass("QWidget", typeid(QWidget).name(), Type_widget);
+    m_objInst->delcareCClass("QWidget", typeid(QWidget).name(), Type_widget);
 
     jzbind::ClassBind<QLayout> cls_layout(Type_layout,"QLayout", "QObject");    
     cls_layout.def("setContentsMargins", true,QOverload<int,int,int,int>::of(&QLayout::setContentsMargins));
@@ -361,7 +403,7 @@ void initLayout()
     cls_gird_layout.regist();
 }
 
-void initWidgets()
+void QtWrapper::initWidgets()
 {
     //widget
     jzbind::ClassBind<QWidget> cls_widget(Type_widget, "QWidget", "QObject");
@@ -473,7 +515,7 @@ void initWidgets()
     cls_tree.regist(); 
 }
 
-void initDialogs()
+void QtWrapper::initDialogs()
 {
     jzbind::ClassBind<QDialog> cls_dlg("QDialog", "QWidget");
     cls_dlg.def("exec",true, &QDialog::exec);
@@ -487,7 +529,7 @@ void initDialogs()
     
     int file_dlg_option = jzbind::registEnum<QFileDialog::Option>("QFileDialog.Option");
     int file_dlg_options = jzbind::registEnum<QFileDialog::Options>("QFileDialog.Options");
-    JZNodeObjectManager::instance()->enumMeta(file_dlg_options)->setFlag(true, file_dlg_option);
+    m_objInst->enumMeta(file_dlg_options)->setFlag(true, file_dlg_option);
 
     jzbind::ClassBind<QFileDialog> cls_file_dlg("QFileDialog", "Dialog");
     auto open_file_def = cls_file_dlg.def("getOpenFileName", true, [](QWidget *parent,QString caption,QString dir,QString filter)->QString 
@@ -516,7 +558,7 @@ void initDialogs()
     cls_progress_dlg.regist();
 }
 
-void initPainter()
+void QtWrapper::initPainter()
 {
     //pen
     jzbind::ClassBind<QPen> cls_pen(Type_pen,"QPen");
@@ -544,9 +586,9 @@ void initPainter()
     cls_image.regist();
 }
 
-void initFiles()
+void QtWrapper::initFiles()
 {   
-    auto obj_inst = JZNodeObjectManager::instance();
+    auto obj_inst = m_objInst;
 
     QStringList file_mode_key_list;
     QVector<int> file_mode_value_list;
@@ -598,54 +640,45 @@ void initFiles()
     cls_dir.regist();
 }
 
-QVariant colorEnum_to_color(const QVariant &v)
+QVariant colorEnum_to_color(JZScriptEnvironment *env,const QVariant &v)
 {
     QColor *color = new QColor((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectCreateRefrence(color,true);
+    auto ptr = env->objectRefrence(color,true);
     return QVariant::fromValue(ptr);
 }
 
-QVariant colorEnum_to_brush(const QVariant &v)
+QVariant colorEnum_to_brush(JZScriptEnvironment *env,const QVariant &v)
 {
     QBrush *brush = new QBrush((Qt::GlobalColor)v.toInt());
-    auto ptr = JZObjectCreateRefrence(brush,true);
+    auto ptr = env->objectRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 
-QVariant color_to_brush(const QVariant &v)
+QVariant color_to_brush(JZScriptEnvironment *env,const QVariant &v)
 {    
     QColor *c = jzbind::fromVariant<QColor*>(v);
     QBrush *brush = new QBrush(*c);
-    auto ptr = JZObjectCreateRefrence(brush,true);
+    auto ptr = env->objectRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 
-void registConvert()
+void QtWrapper::registConvert()
 {
-    auto inst = JZNodeObjectManager::instance();
+    auto inst = m_objInst;
     int from_id = inst->getEnumId("Qt::GlobalColor");
     int to_id = inst->getClassId("QBrush");
 
-    JZNodeType::registConvert(from_id, to_id, colorEnum_to_brush);
+    m_env->registConvert(from_id, to_id, colorEnum_to_brush);
     to_id = inst->getClassId("QColor");
-    JZNodeType::registConvert(from_id, to_id, colorEnum_to_color);
+    m_env->registConvert(from_id, to_id, colorEnum_to_color);
 
     from_id = inst->getClassId("QColor");
     to_id = inst->getClassId("QBrush");
-    JZNodeType::registConvert(from_id, to_id, color_to_brush);
+    m_env->registConvert(from_id, to_id, color_to_brush);
 }
 
-void registQtClass()
+void registQtClass(JZScriptEnvironment *env)
 {    
-    initEnum();
-    initBase();
-    initEvent();
-    initCore();
-    initObjects();
-    initLayout();
-    initWidgets();
-    initDialogs();
-    initPainter();
-    initFiles();
-    registConvert();
+    QtWrapper wrapper;
+    wrapper.regist(env);    
 }

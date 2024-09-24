@@ -4,6 +4,7 @@
 #include "JZNodeBind.h"
 #include "JZNodeParamDelegate.h"
 #include "CvMatAndQImage.h"
+#include "JZScriptEnvironment.h"
 
 using namespace cv;
 
@@ -48,11 +49,11 @@ JZModuleOpencv::~JZModuleOpencv()
 {
 }
 
-void JZModuleOpencv::regist()
+void JZModuleOpencv::regist(JZScriptEnvironment *env)
 {
-    auto func_inst = JZNodeFunctionManager::instance();
-
+    auto func_inst = env->functionManager();
     int cls_id = Opencv_mat;
+    
     jzbind::ClassBind<Mat> cls_mat(cls_id++, "Mat");
     cls_mat.setValueType(true);
     cls_mat.def("create", false, [](int col,int row){ return Mat(row,col,CV_8UC3); });
@@ -90,10 +91,10 @@ void JZModuleOpencv::regist()
     d_inst->registDelegate(cls_mat.id(), d_mat);
 }
 
-void JZModuleOpencv::unregist()
+void JZModuleOpencv::unregist(JZScriptEnvironment *env)
 {
-    auto func_inst = JZNodeFunctionManager::instance();
-    auto obj_inst = JZNodeObjectManager::instance();
+    auto func_inst = env->functionManager();
+    auto obj_inst = env->objectManager();
 
     for(auto cls_name : m_classList)
         obj_inst->unregist(obj_inst->meta(cls_name)->id);

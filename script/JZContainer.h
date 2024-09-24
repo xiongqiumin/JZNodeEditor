@@ -4,6 +4,7 @@
 #include <QMap>
 #include <QVariant>
 #include "JZNodeObject.h"
+#include "JZScriptEnvironment.h"
 
 class TemplateInfo
 {
@@ -55,9 +56,9 @@ public:
 };
 
 TemplateInfo parseTemplate(QString type);
-bool checkContainer(QString type,QString &error);
-void registContainer(QString type,int type_id = -1);
-void unregistContainer(QString type);
+bool checkContainer(JZScriptEnvironment *env,QString type,QString &error);
+void registContainer(JZScriptEnvironment *env,QString type,int type_id = -1);
+void unregistContainer(JZScriptEnvironment *env,QString type);
 
 
 #endif

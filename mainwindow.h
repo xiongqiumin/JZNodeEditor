@@ -41,6 +41,7 @@ public:
     const CompilerResult *compilerResult(const QString &path);
     JZNodeProgram *program();
     JZNodeRuntimeInfo *runtime();
+    JZProject *project();
     int stackIndex();
 
 protected slots:    
@@ -242,5 +243,8 @@ private:
 
     JZNodeProgram m_program;
     JZNodeRuntimeInfo m_runtime;
+    JZScriptEnvironment m_programEnv;
 };
+extern MainWindow *g_mainWindow;
+
 #endif // MAINWINDOW_H

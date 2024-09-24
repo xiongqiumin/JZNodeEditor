@@ -17,9 +17,9 @@ public:
     std::function<void(JZNodeEngine*)> func;
 };
 
-void registFunction(JZFunctionDefine &def, std::function<void(JZNodeEngine*)> ptr)
+void registFunction(JZScriptEnvironment *env,JZFunctionDefine &def, std::function<void(JZNodeEngine*)> ptr)
 {
-    auto func_inst = JZNodeFunctionManager::instance();
+    auto func_inst = env->functionManager();
     def.isCFunction = true;
 
     ContainerFunction *func = new ContainerFunction();
@@ -68,10 +68,11 @@ void listClear(JZNodeEngine *engine)
 }
 void listResize(JZNodeEngine *engine)
 {
+    auto env = engine->environment();
     auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
     int cur_size = obj->list.size();
     int size = engine->getReg(Reg_CallIn + 1).toInt();
-    int data_type = JZNodeType::nameToType(obj->valueType);
+    int data_type = env->nameToType(obj->valueType);
 
     if(cur_size < size)
     {
@@ -141,8 +142,9 @@ void listContains(JZNodeEngine *engine)
 }
 void listMid(JZNodeEngine *engine)
 {
+    auto env = g_engine->environment();
     auto obj = (JZList *)toJZObject(engine->getReg(Reg_CallIn))->cobj();
-    auto ptr = JZNodeObjectManager::instance()->create(obj->type());
+    auto ptr = env->objectManager()->create(obj->type());
     auto ret = (JZList *)ptr->cobj();
     int index = engine->getReg(Reg_CallIn + 1).toInt();
     int size = engine->getReg(Reg_CallIn + 2).toInt();
@@ -162,10 +164,10 @@ void listAppend(JZNodeEngine *engine)
     obj1->list.append(obj2->list);
 }
 
-void registList(QString type,int type_id)
+void registList(JZScriptEnvironment *env,QString type,int type_id)
 {
-    auto inst = JZNodeObjectManager::instance();
-    Q_ASSERT(JZNodeType::isVaildType(type));
+    auto inst = env->objectManager();
+    Q_ASSERT(env->isVaildType(type));
 
     QString list_name = "QList<" + type + ">";
     if(inst->meta(list_name) && inst->meta(list_name)->functions.size() > 0)
@@ -203,7 +205,7 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("value", Type_string));
     func_def.paramOut.push_back(JZParamDefine("object", list_name));
     list.addFunction(func_def);
-    registFunction(func_def, from_string);
+    registFunction(env,func_def, from_string);
 
     // set
     func_def = list.initMemberFunction("set");
@@ -211,7 +213,7 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
-    registFunction(func_def, listSet);
+    registFunction(env,func_def, listSet);
 
     // get
     func_def = list.initMemberFunction("get");
@@ -219,74 +221,74 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     func_def.paramOut.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
-    registFunction(func_def, listGet);
+    registFunction(env,func_def, listGet);
 
     // size
     func_def = list.initMemberFunction("size");
     func_def.isFlowFunction = false;
     func_def.paramOut.push_back(JZParamDefine("size", Type_int));
     list.addFunction(func_def);
-    registFunction(func_def, listSize);
+    registFunction(env,func_def, listSize);
 
     // clear
     func_def = list.initMemberFunction("clear");
     func_def.isFlowFunction = true;
     list.addFunction(func_def);
-    registFunction(func_def, listClear);
+    registFunction(env,func_def, listClear);
 
     // resize
     func_def = list.initMemberFunction("resize");
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     list.addFunction(func_def);
-    registFunction(func_def, listResize);
+    registFunction(env,func_def, listResize);
 
     // push_back
     func_def = list.initMemberFunction("push_back");
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
-    registFunction(func_def, listPushBack);
+    registFunction(env,func_def, listPushBack);
 
     // pop_back
     func_def = list.initMemberFunction("pop_back");
     func_def.isFlowFunction = true;
     list.addFunction(func_def);
-    registFunction(func_def, listPopBack);
+    registFunction(env,func_def, listPopBack);
 
     // push_front
     func_def = list.initMemberFunction("push_front");
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
-    registFunction(func_def, listPushFront);
+    registFunction(env,func_def, listPushFront);
 
     // pop_front
     func_def = list.initMemberFunction("pop_front");
     func_def.isFlowFunction = true;
     list.addFunction(func_def);
-    registFunction(func_def, listPopFront);
+    registFunction(env,func_def, listPopFront);
 
     // removeAt
     func_def = list.initMemberFunction("removeAt");
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     list.addFunction(func_def);
-    registFunction(func_def, listRemoveAt);
+    registFunction(env,func_def, listRemoveAt);
 
     // removeOne
     func_def = list.initMemberFunction("removeOne");
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
-    registFunction(func_def, listRemoveOne);
+    registFunction(env,func_def, listRemoveOne);
 
     // removeAll
     func_def = list.initMemberFunction("removeAll");
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
-    registFunction(func_def, listRemoveAll);
+    registFunction(env,func_def, listRemoveAll);
 
     // contains
     func_def = list.initMemberFunction("contains");
@@ -294,7 +296,7 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("value", type));
     func_def.paramOut.push_back(JZParamDefine("has", Type_bool));
     list.addFunction(func_def);
-    registFunction(func_def, listContains);
+    registFunction(env,func_def, listContains);
 
     // indexOf
     func_def = list.initMemberFunction("indexOf");
@@ -303,7 +305,7 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("start", Type_int, "0"));
     func_def.paramOut.push_back(JZParamDefine("index", Type_int));
     list.addFunction(func_def);
-    registFunction(func_def, listIndexOf);
+    registFunction(env,func_def, listIndexOf);
 
     // lastIndexOf
     func_def = list.initMemberFunction("lastIndexOf");
@@ -312,7 +314,7 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("start", Type_int, "-1"));
     func_def.paramOut.push_back(JZParamDefine("index", Type_int));
     list.addFunction(func_def);
-    registFunction(func_def, listLastIndexOf);
+    registFunction(env,func_def, listLastIndexOf);
 
     // mid
     func_def = list.initMemberFunction("mid");
@@ -321,7 +323,7 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("length", Type_int));
     func_def.paramOut.push_back(JZParamDefine("list", list_name));
     list.addFunction(func_def);
-    registFunction(func_def, listMid);
+    registFunction(env,func_def, listMid);
 
     // insert
     func_def = list.initMemberFunction("insert");
@@ -329,14 +331,14 @@ void registList(QString type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("index", Type_int));
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
-    registFunction(func_def, listInsert);
+    registFunction(env,func_def, listInsert);
 
     // append
     func_def = list.initMemberFunction("append");
     func_def.isFlowFunction = true;
     func_def.paramIn.push_back(JZParamDefine("list", list_name));
     list.addFunction(func_def);
-    registFunction(func_def, listAppend);
+    registFunction(env,func_def, listAppend);
 
     inst->regist(list);
 }
@@ -404,10 +406,10 @@ void mapContains(JZNodeEngine *engine)
     engine->setReg(Reg_CallOut,obj->map.contains(key));
 }
 
-void registMap(QString key_type, QString value_type,int type_id)
+void registMap(JZScriptEnvironment *env,QString key_type, QString value_type,int type_id)
 {
-    auto inst = JZNodeObjectManager::instance();
-    Q_ASSERT(JZNodeType::isVaildType(key_type) && JZNodeType::isVaildType(value_type));
+    auto inst = env->objectManager();
+    Q_ASSERT(env->isVaildType(key_type) && env->isVaildType(value_type));
 
     QString map_name = "QMap<" + key_type + "," + value_type + ">";
     QString it_name = "QMapIterator<" + key_type + "," + value_type + ">";
@@ -449,7 +451,7 @@ void registMap(QString key_type, QString value_type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("value", Type_string));
     func_def.paramOut.push_back(JZParamDefine("object", map_name));
     map.addFunction(func_def);
-    registFunction(func_def, from_string);
+    registFunction(env,func_def, from_string);
 
     // set
     func_def = map.initMemberFunction("set");
@@ -457,7 +459,7 @@ void registMap(QString key_type, QString value_type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("index", key_type));
     func_def.paramIn.push_back(JZParamDefine("value", value_type));
     map.addFunction(func_def);
-    registFunction(func_def, mapSet);
+    registFunction(env,func_def, mapSet);
 
     // get
     func_def = map.initMemberFunction("get");
@@ -465,20 +467,20 @@ void registMap(QString key_type, QString value_type,int type_id)
     func_def.paramIn.push_back(JZParamDefine("index", key_type));
     func_def.paramOut.push_back(JZParamDefine("value", value_type));
     map.addFunction(func_def);
-    registFunction(func_def, mapGet);
+    registFunction(env,func_def, mapGet);
 
     // size
     func_def = map.initMemberFunction("size");
     func_def.isFlowFunction = false;
     func_def.paramOut.push_back(JZParamDefine("size", Type_int));
     map.addFunction(func_def);
-    registFunction(func_def, mapSize);
+    registFunction(env,func_def, mapSize);
 
     // clear
     func_def = map.initMemberFunction("clear");
     func_def.isFlowFunction = true;
     map.addFunction(func_def);
-    registFunction(func_def, mapClear);
+    registFunction(env,func_def, mapClear);
 
     inst->regist(map);
 
@@ -489,9 +491,9 @@ void registMap(QString key_type, QString value_type,int type_id)
     inst->replace(map_it);
 }
 
-void registSet(QString value_type,int type_id)
+void registSet(JZScriptEnvironment *env,QString value_type,int type_id)
 {
-    auto inst = JZNodeObjectManager::instance();
+    auto inst = env->objectManager();
     QString map_name = "Set<" + value_type + ">";
     QString it_name = "SetIterator<" + value_type + ">";
     if(inst->meta(map_name) && inst->meta(map_name)->functions.size() > 0)
@@ -517,7 +519,7 @@ TemplateInfo parseTemplate(QString type)
     return info;
 }   
 
-bool checkContainer(QString type,QString &error)
+bool checkContainer(JZScriptEnvironment *env,QString type,QString &error)
 {
     QString list_pre = "QList<";
     QString map_pre = "QMap<";
@@ -536,7 +538,7 @@ bool checkContainer(QString type,QString &error)
     {
         for(int i = 0; i < info.args.size(); i++)
         {
-            if(!JZNodeType::isVaildType(info.args[i]))
+            if(!env->isVaildType(info.args[i]))
             {
                 error = "no such type " + info.args[i];
                 return false;
@@ -549,7 +551,7 @@ bool checkContainer(QString type,QString &error)
     return false;
 }
 
-void registContainer(QString type,int type_id)
+void registContainer(JZScriptEnvironment *env,QString type,int type_id)
 {
     QString list_pre = "QList<";
     QString map_pre = "QMap<";
@@ -559,7 +561,7 @@ void registContainer(QString type,int type_id)
     if(type.startsWith(list_pre))
     {
         QString value_type = type.mid(list_pre.size(),end_idx - list_pre.size());
-        registList(value_type,type_id);
+        registList(env,value_type,type_id);
     }
     else if(type.startsWith(map_pre))
     {
@@ -567,18 +569,18 @@ void registContainer(QString type,int type_id)
         QStringList type_list = type_str.split(",");
         QString key_type = type_list[0];
         QString value_type = type_list[1];
-        registMap(key_type,value_type,type_id);
+        registMap(env,key_type,value_type,type_id);
     }
     else if(type.startsWith(set_pre))
     {
         QString type_str = type.mid(set_pre.size(),end_idx - set_pre.size());
-        registSet(type_str,type_id);
+        registSet(env,type_str,type_id);
     }   
 }
 
-void unregistContainer(QString type)
+void unregistContainer(JZScriptEnvironment *env,QString type)
 {
-    auto type_id = JZNodeObjectManager::instance()->getId(type);
+    auto type_id = env->objectManager()->getId(type);
     if(type_id != Type_none)
-        JZNodeObjectManager::instance()->unregist(type_id);
+        env->objectManager()->unregist(type_id);
 }

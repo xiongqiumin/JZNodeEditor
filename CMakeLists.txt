@@ -150,7 +150,7 @@ set(JZNodeCore_SOURCES
     editor/script/JZNodeWatch.cpp
     editor/script/JZNodeWatch.h
     editor/script/JZProcess.cpp
-    editor/script/JZProcess.h    
+    editor/script/JZProcess.h        
     editor/ui/formresizer.cpp
     editor/ui/formresizer.h
     editor/ui/JZDesignerEditor.cpp
@@ -230,6 +230,8 @@ set(JZNodeCore_SOURCES
     script/JZNodeFunctionDefine.h
     script/JZNodeFunctionManager.cpp
     script/JZNodeFunctionManager.h
+    script/JZScriptEnvironment.cpp
+    script/JZScriptEnvironment.h
     script/JZNodeInit.cpp
     script/JZNodeInit.h
     script/JZNodeIR.cpp

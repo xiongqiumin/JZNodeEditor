@@ -7,6 +7,7 @@
 #include "JZNodeUtils.h"
 #include "JZNodeFunction.h"
 #include "JZNodeOperator.h"
+#include "JZScriptEnvironment.h"
 
 ASConvert::ASConvert()
 {
@@ -280,6 +281,7 @@ JZNode *ASConvert::toExprTerm(asCScriptNode *root)
 {
 	Q_ASSERT(root->nodeType == snExprTerm);
 	
+	auto env = m_file->project()->environment();
 	JZNode *ret = nullptr;
 	auto node_value = root->firstChild;
 	auto node = node_value->firstChild;
@@ -287,7 +289,7 @@ JZNode *ASConvert::toExprTerm(asCScriptNode *root)
 	{
 		QString value = nodeText(node);
 		auto literal = createNode<JZNodeLiteral>();
-		literal->setDataType(JZNodeType::stringType(value));
+		literal->setDataType(env->stringType(value));
 		literal->setLiteral(value);
 		ret = literal;
 	}
@@ -375,9 +377,7 @@ JZNode *ASConvert::toExpression(asCScriptNode *node)
 
 		int type;
 		JZNode *node;
-	};
-	
-
+	};	
 	Q_ASSERT(node->nodeType == snExpression);
 
 	auto list = childList(node);

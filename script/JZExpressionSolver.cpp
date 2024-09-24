@@ -197,13 +197,9 @@ QString expressionSolver(const QString &expr_text, QString &error)
     return removeBrackets(resv_expr);
 }
 
-
 bool JZExpressRunner::init(QString expr, QString &error, QMap<QString, int> typeMap)
-{
-    auto project = JZProject::active();
-
-    auto file_ptr = createTempFile();
-    JZScriptFile *file = file_ptr.data();
+{    
+    JZScriptFile *file = new JZScriptFile();
 
     JZNodeExpression *node_expr = new JZNodeExpression();
     if (!node_expr->setExpr(expr, error))

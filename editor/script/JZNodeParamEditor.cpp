@@ -16,6 +16,7 @@
 #include "JZNodeParamBindEditDialog.h"
 #include "JZNodePinWidget.h"
 #include "JZNodeUtils.h"
+#include "JZEditorGlobal.h"
 
 static int bindDir(QString text)
 {
@@ -50,7 +51,7 @@ public:
     {        
         auto item = m_table->item(index.row(), index.column());
         QString type_text = m_table->item(index.row(), 1)->text();        
-        int dataType = JZNodeType::nameToType(type_text);
+        int dataType = editorEnvironment()->nameToType(type_text);
         if (dataType == Type_none)
             return nullptr;
 

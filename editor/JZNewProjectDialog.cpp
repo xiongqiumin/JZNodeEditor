@@ -8,19 +8,22 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
     :QDialog(parent)
 {
     ui = new Ui::JZNewProjectDialog();
-
+    
+    QString project_dir = QDir::cleanPath(QApplication::applicationDirPath() + "/project");
     QString project_name;
     int idx = 1;
     while (true)
     {
-        project_name = "project" + QString::number(idx);
-        if (!QFile::exists(project_name))
+        project_name = "Project" + QString::number(idx);
+        if (!QFile::exists(project_dir + "/" + project_name))
             break;
+
+        idx++;
     }    
 
     ui->setupUi(this);
-	ui->lineProjectName->setText("project");
-	ui->lineProjectDir->setText(QDir::cleanPath(QApplication::applicationDirPath() + "/" + project_name));
+	ui->lineProjectName->setText(project_name);
+	ui->lineProjectDir->setText(project_dir);
 
     ui->listWidget->addItem("Ui界面程序");
     ui->listWidget->addItem("命令行程序");

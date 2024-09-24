@@ -8,8 +8,8 @@
 
 namespace Ui { class JZNodeMemberSelectDialog; }
 
-
 //JZNodeGroupEditDialog
+class JZProject;
 class JZNodeMemberSelectDialog : public QDialog
 {
     Q_OBJECT
@@ -18,7 +18,7 @@ public:
     JZNodeMemberSelectDialog(QWidget *p = nullptr);
     ~JZNodeMemberSelectDialog();
 
-    void init(JZNode *node);
+    void init(JZProject *project,QString className);
 
     QString className();
     QStringList paramList();
@@ -36,7 +36,7 @@ protected:
     QTreeWidgetItem *createTreeItem(QString name, int type);    
 
     QString m_className;
-    JZNodeAbstractMember *m_node;
+    JZProject *m_project;
 
     Ui::JZNodeMemberSelectDialog *ui;
 };

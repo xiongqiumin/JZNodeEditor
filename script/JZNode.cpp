@@ -580,6 +580,14 @@ void JZNode::setFile(JZScriptItem *file)
     m_notifyList.clear();
 }
 
+JZScriptEnvironment *JZNode::environment()
+{
+    if(m_file && m_file->project())
+        return m_file->project()->environment();
+    
+    return nullptr;
+}
+
 const QString& JZNode::name() const
 {
     return m_name;
@@ -1186,10 +1194,11 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
         return false;
 
     int class_type = c->pinType(m_id,paramIn(0));
-    auto meta = JZNodeObjectManager::instance()->meta(class_type);    
+    auto obj_inst = environment()->objectManager();
+    auto meta = obj_inst->meta(class_type);    
 
     auto *it_define = meta->function("iterator");
-    auto it_meta = JZNodeObjectManager::instance()->meta(it_define->paramOut[0].dataType());
+    auto it_meta = obj_inst->meta(it_define->paramOut[0].dataType());
 
     int id_list = c->paramId(m_id,paramIn(0));
     JZNodeIRParam list = irId(id_list);    
@@ -1585,7 +1594,8 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
         error = "请添加case";
         return false;
     }
-
+    
+    auto env = environment();
     int in_id = c->paramId(m_id, paramIn(0));
     int out_id = c->paramId(m_id, paramOut(0));    
     c->setPinType(m_id,paramOut(0),c->pinType(m_id,paramIn(0)));
@@ -1602,7 +1612,7 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
     for (case_idx = 0; case_idx < case_count; case_idx++)
     {
         QString out_value_str = pin(sub_flow_list[case_idx])->value();
-        QVariant value = JZNodeType::initValue(in_type, out_value_str);
+        QVariant value = env->initValue(in_type, out_value_str);
 
         int jmp_cmp = c->addCompare(irId(in_id), irLiteral(value), OP_eq);
         JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
@@ -1740,19 +1750,4 @@ bool JZNodeMainLoop::compiler(JZNodeCompiler *c, QString &error)
     c->addStatement(JZNodeIRPtr(ir_return));
 
     return true;    
-}
-
-//NodeMagic
-QByteArray NodeMagic()
-{
-    QByteArray result;
-    QDataStream s(&result, QIODevice::WriteOnly);
-    s << QString("12345678");
-    //node
-    s << sizeof(JZNodePin);
-    s << sizeof(JZNodeGemo);
-    s << sizeof(JZNodeConnect);
-    s << sizeof(JZNode);
-
-    return result;
 }

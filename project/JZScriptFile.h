@@ -31,13 +31,8 @@ public:
     JZScriptClassItem *getClass(QString className);
 
 protected:
-    QByteArray getClassData(JZScriptClassItem *item);
-    QByteArray getItemData(JZProjectItem *item);
-    void setItemData(JZProjectItem *item, const QByteArray &data);
-
-    void loadScript(QDataStream &s, JZProjectItem *item);
-    void saveScript(QDataStream &s, JZProjectItem *item);
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual bool loadFromStream(QDataStream &s) override;
 };
-QSharedPointer<JZScriptFile> createTempFile(JZProject *project = nullptr);
 
 #endif

@@ -5,6 +5,7 @@
 #include <QStyledItemDelegate>
 #include "UiCommon.h"
 #include "JZNodeType.h"
+#include "JZEditorGlobal.h"
 
 namespace Ui { class JZNodeTypeDialog; }
 

@@ -37,14 +37,14 @@ ModuleImageSample::~ModuleImageSample()
 {
 }
 
-void ModuleImageSample::regist() 
-{
-    auto inst = JZNodeFunctionManager::instance();
+void ModuleImageSample::regist(JZScriptEnvironment *env)
+{    
+    auto inst = env->functionManager();
     inst->registCFunction("ImageThreshold",false,jzbind::createFuncion(ImageThreshold));
 }
 
-void ModuleImageSample::unregist()    
-{
-    auto inst = JZNodeFunctionManager::instance();
+void ModuleImageSample::unregist(JZScriptEnvironment *env)
+{   
+    auto inst = env->functionManager();
     inst->unregistFunction("ImageThreshold");
 }

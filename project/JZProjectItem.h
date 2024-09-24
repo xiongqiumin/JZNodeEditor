@@ -1,6 +1,7 @@
 ﻿#ifndef JZPROJECT_ITEM_FILE_H_
 #define JZPROJECT_ITEM_FILE_H_
 
+#include <QMap>
 #include <QSharedPointer>
 #include "JZNodeCoreDefine.h"
 
@@ -14,8 +15,7 @@ enum {
     ProjectItem_class,
     ProjectItem_scriptFile,
     ProjectItem_scriptParamBinding,
-    ProjectItem_scriptFunction,    
-    ProjectItem_library,
+    ProjectItem_scriptFunction,        
 };
 
 class JZProject;
@@ -26,12 +26,10 @@ class JZCORE_EXPORT JZProjectItem
 public:
     JZProjectItem(int itemType);
     virtual ~JZProjectItem();
-
-    void setProject(JZProject *project);
-    JZProject *project();
-
-    void setEditor(JZEditor *editor);
-    JZEditor *editor();  
+    
+    JZProject *project();    
+    QByteArray toBuffer();
+    void fromBuffer(const QByteArray &buffer);
 
     QString name() const;
     void setName(QString name);    
@@ -64,13 +62,14 @@ protected:
     void removeItem(int index);    
     void removeChlids();    
 
+    virtual void saveToStream(QDataStream &s) const;
+    virtual bool loadFromStream(QDataStream &s);
+
     JZProjectItem *m_parent;
     QList<QSharedPointer<JZProjectItem>> m_childs;
     
     int m_itemType;    
-    QString m_name;    
-    JZProject *m_project;
-    JZEditor *m_editor;
+    QString m_name;            
     int m_pri;
 };
 typedef QSharedPointer<JZProjectItem> JZProjectItemPtr;
@@ -81,6 +80,12 @@ class JZProjectItemRoot : public JZProjectItem
 public:
     JZProjectItemRoot();
     virtual ~JZProjectItemRoot();
+
+    JZProject *rootProject();
+    void setRootProject(JZProject *project);
+
+protected:
+    JZProject *m_project;
 };
 
 //JZProjectItemFolder
@@ -92,5 +97,22 @@ public:
 };
 
 int JZProjectItemIsScript(JZProjectItem *item);
+
+
+typedef JZProjectItem *(*JZProjectItemCreateFunc)();
+template<class T>
+JZProjectItem *createJZProjectItem(){ return new T(); }
+
+class JZCORE_EXPORT JZProjectItemManager
+{
+public:
+    static JZProjectItemManager *instance();
+
+    void registItem(int item_type,JZProjectItemCreateFunc);
+    JZProjectItem *create(int item_type);
+
+protected:
+    QMap<int,JZProjectItemCreateFunc> m_funcs;    
+};
 
 #endif

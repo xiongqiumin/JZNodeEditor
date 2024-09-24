@@ -6,6 +6,7 @@
 #include "JZUiFile.h"
 #include "JZNodeObject.h"
 #include "JZNodeUiLoader.h"
+#include "JZProject.h"
 
 JZUiFile::JZUiFile()
     :JZProjectItem(ProjectItem_ui)
@@ -63,6 +64,17 @@ bool JZUiFile::load(QString filepath)
     return true;
 }
 
+void JZUiFile::saveToStream(QDataStream &s) const
+{
+    s << m_xml;
+}
+
+bool JZUiFile::loadFromStream(QDataStream &s)
+{
+    s >> m_xml;
+    return true;
+}
+
 QString JZUiFile::xml()
 {
     return m_xml;
@@ -101,7 +113,7 @@ void JZUiFile::walkChild(const QDomElement &root)
             QString class_name = sub_ele.attribute("class");
             QString obj_name = sub_ele.attribute("name");
 
-            auto meta = JZNodeObjectManager::instance()->meta(class_name);
+            auto meta = project()->objectManager()->meta(class_name);
             if (meta)
             {
                 JZParamDefine def;

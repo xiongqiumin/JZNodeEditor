@@ -10,6 +10,7 @@
 #include <math.h>
 #include "JZNodeGraphItem.h"
 #include "JZNodeView.h"
+#include "JZScriptEnvironment.h"
 
 enum {
     Widget_none,
@@ -370,6 +371,7 @@ void JZNodeGraphItem::updatePinWidget(int pin_id)
 void JZNodeGraphItem::createPinWidget(int pin_id)
 {
     auto pin = m_node->pin(pin_id);
+    auto env = m_node->environment();
 
     JZNodePinWidget *widget = nullptr;
     if (pin->isWidget())
@@ -379,7 +381,7 @@ void JZNodeGraphItem::createPinWidget(int pin_id)
     else if (pin->isDispValue())
     {
         JZNodePinValueWidget *param_widget = new JZNodePinValueWidget();
-        int up_type = JZNodeType::upType(pin->dataTypeId());
+        int up_type = env->upType(pin->dataTypeId());
         param_widget->initWidget(up_type);
 
         widget = param_widget;

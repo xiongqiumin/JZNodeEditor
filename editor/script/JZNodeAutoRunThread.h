@@ -26,7 +26,7 @@ protected:
     
     JZNodeEngine m_engine;
     JZNodeProgram *m_program;
-    ScriptDepend m_depend;
+    ScriptDepend m_depend;    
     bool m_cancel;
 };
 

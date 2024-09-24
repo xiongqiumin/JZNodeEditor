@@ -31,8 +31,8 @@ SampleSmartHome::~SampleSmartHome()
 
 void SampleSmartHome::addEvent()
 {   
-    auto btn_meta = JZNodeObjectManager::instance()->meta("PushButton");
-    auto meta = JZNodeObjectManager::instance()->meta("MainWindow");
+    auto btn_meta = m_objInst->meta("PushButton");
+    auto meta = m_objInst->meta("MainWindow");
 
     QStringList btn_list = { "living_room_btn","coffee_btn","close1","close2"};
     QList<int> stack_index = {1,2,0,0};

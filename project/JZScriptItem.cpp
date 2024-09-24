@@ -223,6 +223,7 @@ int JZScriptItem::parentNode(int id)
 
 bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &error)
 {
+    auto env = project()->environment();
     JZNodePin *pin_from = getPin(from);
     JZNodePin *pin_to = getPin(to);
 
@@ -248,7 +249,7 @@ bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &erro
         {
             for (int j = 0; j < in_type.size(); j++)
             {
-                if (JZNodeType::canConvert(from_type[i], in_type[j]))
+                if (env->canConvert(from_type[i], in_type[j]))
                 {
                     ok = true;
                     break;
@@ -261,9 +262,9 @@ bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &erro
         {
             QStringList inTypes,formTypes;
             for(int i = 0; i < in_type.size(); i++)
-                inTypes << JZNodeType::typeToName(in_type[i]);
+                inTypes << env->typeToName(in_type[i]);
             for(int i = 0; i < from_type.size(); i++)
-                formTypes << JZNodeType::typeToName(from_type[i]);
+                formTypes << env->typeToName(from_type[i]);
             
             error = "数据类型不匹配,需要" + inTypes.join(",") + ", 输入为" + formTypes.join(",");
             return false;
@@ -576,22 +577,18 @@ void JZScriptItem::loadEditorCache()
     s >> m_groups;
 }
 
-QByteArray JZScriptItem::toBuffer()
-{
-    QByteArray buffer;
-    QDataStream s(&buffer,QIODevice::WriteOnly);    
+void JZScriptItem::saveToStream(QDataStream &s) const
+{    
     s << m_name;
     s << m_function;
-    s << m_editorCache;
-    return buffer;
+    s << m_editorCache;    
 }
 
-bool JZScriptItem::fromBuffer(const QByteArray &buffer)
-{
-    QDataStream s(buffer);    
+bool JZScriptItem::loadFromStream(QDataStream &s)
+{    
     s >> m_name;
     s >> m_function;
     s >> m_editorCache;        
-    loadEditorCache();
+    loadEditorCache(); 
     return true;
 }

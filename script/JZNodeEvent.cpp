@@ -97,8 +97,9 @@ bool JZNodeSignalConnect::compiler(JZNodeCompiler *c, QString &error)
     QString sig = c->pinLiteral(m_id,paramIn(1));
     QString slot = c->pinLiteral(m_id,paramIn(3));
 
-    auto sig_func = JZNodeObjectManager::instance()->signal(sig);
-    auto slot_func = JZNodeFunctionManager::instance()->function(slot);
+    auto env = environment();
+    auto sig_func = env->objectManager()->signal(sig);
+    auto slot_func = env->functionManager()->function(slot);
     if(!sig_func)
     {
         error = "no signal " + sig;

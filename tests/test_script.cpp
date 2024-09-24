@@ -22,7 +22,8 @@ ScriptTest::ScriptTest()
 
 void ScriptTest::testMatchType()
 {
-    int ret = JZNodeType::matchType({ Type_bool,Type_double,Type_int }, QList<int>{Type_bool});
+    auto env = m_project.environment();
+    int ret = env->matchType({ Type_bool,Type_double,Type_int }, QList<int>{Type_bool});
     QVERIFY(ret == Type_bool);
 
     QVariant vb = true;
@@ -44,30 +45,31 @@ void ScriptTest::testMatchType()
 
 void ScriptTest::testClone()
 {
-    auto obj1 = JZObjectCreate<QObject>();
-    auto obj2 = JZObjectCreate<QObject>();
+    auto env = m_project.environment();
+    auto obj1 = env->objectCreate<QObject>();
+    auto obj2 = env->objectCreate<QObject>();
     QVariant obj3 = obj1;
     QVERIFY(obj1 != obj2);
     QVERIFY(obj1 == obj3);
 
-    auto pt1 = JZObjectCreate<QPoint>();
-    auto pt2 = JZObjectCreate<QPoint>();
+    auto pt1 = env->objectCreate<QPoint>();
+    auto pt2 = env->objectCreate<QPoint>();
     QVERIFY(pt1 == pt2);
 
-    auto p_pt1 = JZObjectCast<QPoint>(pt1);
+    auto p_pt1 = env->objectCast<QPoint>(pt1);
     p_pt1->setX(150);
     QVERIFY(pt1 != pt2);
 
     m_project.registContainer("QList<QPoint>");
 
-    auto obj_list = JZNodeObjectManager::instance()->create("QList<QPoint>");
+    auto obj_list = m_project.objectManager()->create("QList<QPoint>");
     QVariant list = QVariant::fromValue(JZNodeObjectPtr(obj_list,true));
 
     QVariantList in,out;
     for(int i = 0; i < 5; i++)
     {
-        QVariant pt = JZObjectCreate<QPoint>();
-        QPoint *p_pt = JZObjectCast<QPoint>(pt);
+        QVariant pt = env->objectCreate<QPoint>();
+        QPoint *p_pt = env->objectCast<QPoint>(pt);
         p_pt->setX(i);
         p_pt->setY(0);
 
@@ -75,8 +77,8 @@ void ScriptTest::testClone()
         in << list << pt;
         m_engine.call("QList<QPoint>.push_back",in,out);
 
-        QVariant pt_other = JZObjectCreate<QPoint>();
-        QPoint *p_pt_other = JZObjectCast<QPoint>(pt_other);
+        QVariant pt_other = env->objectCreate<QPoint>();
+        QPoint *p_pt_other = env->objectCast<QPoint>(pt_other);
         p_pt_other->setX(i);
         p_pt_other->setY(0);
 
@@ -556,7 +558,7 @@ void ScriptTest::testForEach()
     JZNodeEngine *engine = &m_engine;
 
     m_project.addGlobalVariable("sum",Type_int,0);
-    m_project.addGlobalVariable("a",JZNodeObjectManager::instance()->getClassId("List"));
+    m_project.addGlobalVariable("a",m_project.objectManager()->getClassId("List"));
 
     JZNode *node_start = script->getNode(0);
     JZNodeForEach *node_for = new JZNodeForEach();        
@@ -572,7 +574,7 @@ void ScriptTest::testForEach()
     node_set->setVariable("sum");
 
     JZNodeFunction *node_create = new JZNodeFunction();
-    node_create->setFunction(JZNodeFunctionManager::instance()->function("List.__fromString__"));
+    node_create->setFunction(m_project.functionManager()->function("List.__fromString__"));
     node_create->setParamInValue(0, "1,2,3,4,5,6,7,8,9,10");
 
     int start_id = node_start->id();
@@ -896,7 +898,7 @@ void ScriptTest::testUnitTestClass()
     if(!build())
         return;    
 
-    auto obj = JZNodeObjectManager::instance()->create("unitTestClass");
+    auto obj = m_project.objectManager()->create("unitTestClass");
     JZNodeObjectPtr ptr(obj,true);
 
     QVariantList in,out;    
@@ -925,7 +927,8 @@ void ScriptTest::testModule()
 {
     m_project.importModule("ImageModuleSample");
 
-    QVariant obj = JZObjectCreate<QImage>();
+    auto env = m_project.environment();
+    QVariant obj = env->objectCreate<QImage>();
     QVariantList in,out;    
     in << obj;
     bool ret = m_engine.call("ImageThreshold",in,out);
@@ -1186,7 +1189,7 @@ void ScriptTest::testClass()
     if(!build())
         return;
 
-    auto inst = JZNodeObjectManager::instance();
+    auto inst = m_project.objectManager();
     auto obj_base = JZNodeObjectPtr(inst->create("ClassBase"),true);
     auto obj_a = JZNodeObjectPtr(inst->create("ClassA"), true);
     auto obj_b = JZNodeObjectPtr(inst->create("ClassB"), true);
@@ -1274,7 +1277,7 @@ void ScriptTest::testArgs()
     sum_func.paramOut.push_back(JZParamDefine("sum", Type_int));
     
     auto sum_ptr = BuiltInFunctionPtr(new JZSumTest());
-    JZNodeFunctionManager::instance()->registBuiltInFunction(sum_func, sum_ptr);
+    m_project.functionManager()->registBuiltInFunction(sum_func, sum_ptr);
 
     QVariantList in,out;
     in << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10;

@@ -7,13 +7,15 @@
 #include "JZNodeVM.h"
 #include "JZNodeUtils.h"
 #include "JZUiFile.h"
+#include "JZNodeProgramDumper.h"
 
 SampleProject::SampleProject()
 {
     QFileInfo info(__FILE__);
     m_root = info.path();
 
-    JZProject::setActive(&m_project);
+    m_objInst = m_project.objectManager();
+    m_funcInst = m_project.functionManager();
 }
 
 SampleProject::~SampleProject()
@@ -148,8 +150,10 @@ bool SampleProject::run()
     QFile file(jsm_path);
     if (file.open(QFile::WriteOnly | QFile::Truncate))
     {
+        JZNodeProgramDumper dumper;
+
         QTextStream s(&file);
-        s << program.dump();
+        s << dumper.dump(&program);
         file.close();
     }
     //save bin

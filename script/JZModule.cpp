@@ -7,8 +7,7 @@
 
 //JZModule
 JZModule::JZModule()
-{
-    m_refCount = 0;
+{ 
 }
 
 JZModule::~JZModule()
@@ -35,32 +34,6 @@ QStringList JZModule::depends() const
     return m_depends;
 }
 
-void JZModule::addRef()
-{
-    m_refCount++;
-    if (m_refCount == 1)
-        regist();
-}
-
-void JZModule::release()
-{
-    m_refCount--;
-    if (m_refCount == 0)
-        unregist();
-}
-
-int JZModule::refCount()
-{
-    return m_refCount;
-}
-
-void JZModule::unload()
-{
-    if (m_refCount > 0)
-        unregist();
-    m_refCount = 0;
-}
-
 //JZModuleStatic
 void JZModuleStatic::init(QString name, QStringList classList, QStringList functionList, QStringList depends)
 {
@@ -70,11 +43,11 @@ void JZModuleStatic::init(QString name, QStringList classList, QStringList funct
     m_depends = depends;
 }
 
-void JZModuleStatic::regist()
+void JZModuleStatic::regist(JZScriptEnvironment *env)
 {
 }
 
-void JZModuleStatic::unregist()
+void JZModuleStatic::unregist(JZScriptEnvironment *env)
 {
 }
 
@@ -143,14 +116,6 @@ void JZModuleManager::addModule(JZModule *module)
     m_moduleList.push_back(module);
 }
 
-void JZModuleManager::unloadAllModule()
-{
-    for (int i = 0; i < m_moduleList.size(); i++)
-    {
-        m_moduleList[i]->unload();
-    }
-}
-
 QStringList JZModuleManager::moduleList()
 {
     QStringList list;
@@ -159,7 +124,6 @@ QStringList JZModuleManager::moduleList()
     
     return list;
 }
-
 
 JZModule *JZModuleManager::module(QString name)
 {
@@ -171,30 +135,3 @@ JZModule *JZModuleManager::module(QString name)
 
     return nullptr;
 }
-
-bool JZModuleManager::loadModule(QString name)
-{
-    JZModule *m = module(name);    
-    if (!m)
-        return false;
-    
-    m->addRef();    
-    auto depends = m->depends();
-    for(int i = 0; i < depends.size(); i++)
-    {
-        if(!loadModule(depends[i]))
-            return false;
-    }        
-    return true;
-}
-
-void JZModuleManager::unloadModule(QString name)
-{
-    JZModule *m = module(name);
-    Q_ASSERT(m);      
-
-    auto depends = m->depends();
-    for(int i = 0; i < depends.size(); i++)
-        unloadModule(depends[i]);
-}
-

@@ -119,6 +119,7 @@ public:
 void operator<<(QDataStream &s, const JZNodeGroup &param);
 void operator>>(QDataStream &s, JZNodeGroup &param);
 
+class JZScriptEnvironment;
 class JZNodeCompiler;
 class JZScriptItem;
 class JZNodePinWidget;
@@ -133,6 +134,8 @@ public:
 
     JZScriptItem *file() const;
     void setFile(JZScriptItem *file);
+
+    JZScriptEnvironment *environment();
 
     const QString &name() const;
     void setName(const QString &name);
@@ -267,7 +270,6 @@ protected:
     JZScriptItem *m_file;
     QList<int> m_notifyList;
 };
-QByteArray NodeMagic();
 
 //JZNodeNop
 class JZCORE_EXPORT JZNodeNop : public JZNode

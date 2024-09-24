@@ -313,7 +313,7 @@ protected:
     int m_stackId;       //当前栈位置，用于分配内存    
     QMap<int,int> m_stackType;
     CompilerResult m_compilerInfo;
-
+    
     JZProject *m_project;
     JZNodeBuilder *m_builder;
     QString m_error;

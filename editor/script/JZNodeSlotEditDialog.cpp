@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeSlotEditDialog.h"
+#include "mainwindow.h"
 
 //JZNodeSlotEditDialog
 JZNodeSlotEditDialog::JZNodeSlotEditDialog(QWidget *parent)
@@ -37,7 +38,7 @@ void JZNodeSlotEditDialog::setClass(JZScriptClassItem *cls)
     for(int i = 0; i < paramList.size(); i++)
     {
         auto param = m_class.param(paramList[i]);
-        if(!JZNodeType::isInherits(param->dataType(),Type_object))
+        if(!editorEnvironment()->isInherits(param->dataType(),Type_object))
             continue;
 
         QListWidgetItem *item = new QListWidgetItem(paramList[i]);
@@ -54,7 +55,7 @@ void JZNodeSlotEditDialog::onListParamChanged(QListWidgetItem *current)
         return;
 
     auto def = m_class.param(current->text());
-    auto meta = JZNodeObjectManager::instance()->meta(def->type);
+    auto meta = editorEnvironment()->objectManager()->meta(def->type);
     auto sigs = meta->signalList();
     for(int i = 0; i < sigs.size(); i++)
     {

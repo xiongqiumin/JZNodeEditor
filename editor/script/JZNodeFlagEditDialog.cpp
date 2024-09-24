@@ -18,10 +18,9 @@ JZNodeFlagEditDialog::~JZNodeFlagEditDialog()
 {
 }
 
-void JZNodeFlagEditDialog::init(QString flagName)
+void JZNodeFlagEditDialog::init(JZNodeEnumDefine *meta)
 {    
-    m_flag = flagName;
-    auto meta = JZNodeObjectManager::instance()->enumMeta(flagName);
+    m_enumMeta = meta;    
     int n = meta->count();
     
     QVBoxLayout *l = new QVBoxLayout();
@@ -53,7 +52,7 @@ QString JZNodeFlagEditDialog::flag()
 
 bool JZNodeFlagEditDialog::onOk()
 {
-    auto meta = JZNodeObjectManager::instance()->enumMeta(m_flag);
+    auto meta = m_enumMeta;
     QStringList keyList;
     for (int i = 0; i < m_boxList.size(); i++)
     {

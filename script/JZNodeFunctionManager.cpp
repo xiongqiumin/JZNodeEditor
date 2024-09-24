@@ -1,21 +1,22 @@
 ﻿#include "JZNodeFunctionManager.h"
 #include "math.h"
 #include "JZNodeBind.h"
+#include "JZScriptEnvironment.h"
 
 //JZNodeFunctionManager
-JZNodeFunctionManager *JZNodeFunctionManager::instance()
+JZNodeFunctionManager::JZNodeFunctionManager(JZScriptEnvironment *env)
 {
-    static JZNodeFunctionManager inst;
-    return &inst;
-}
-
-JZNodeFunctionManager::JZNodeFunctionManager()
-{
-    m_userRegist = false;    
+    m_userRegist = false;  
+    m_env = env;  
 }
 
 JZNodeFunctionManager::~JZNodeFunctionManager()
 {
+}
+
+JZScriptEnvironment *JZNodeFunctionManager::env()
+{
+    return m_env;
 }
 
 void JZNodeFunctionManager::init()
@@ -50,7 +51,7 @@ const JZFunctionDefine *JZNodeFunctionManager::function(QString funcName)
     {
         QString base_name = funcName.mid(0, index);
         QString function_name = funcName.mid(index + 1);
-        auto meta = JZNodeObjectManager::instance()->meta(base_name);
+        auto meta = m_env->objectManager()->meta(base_name);
         if (meta)
             return meta->function(function_name);
     }

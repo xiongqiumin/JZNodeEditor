@@ -92,6 +92,7 @@ BenchmarkTest::BenchmarkTest()
 void BenchmarkTest::testBase()
 {   
     return;
+    auto env = m_project.environment();
     QList<QVariant> varList;
     QMap<int,QVariant> varMap;
     QMap<QString,QVariant> varStrMap;
@@ -146,28 +147,13 @@ void BenchmarkTest::testBase()
 
     JZBENCHMARK(type_to_name)
     {
-        QString t = JZNodeType::typeToName(Type_timer);
+        QString t = env->typeToName(Type_timer);
     }
 
     JZBENCHMARK(name_to_type)
     {
-        int t = JZNodeType::nameToType("timer");
-    }
-
-    auto obj = JZNodeObjectManager::instance()->create(Type_intList);
-    JZNodeObjectPtr ptr(obj,true);
-    QVariant ptr_v = QVariant::fromValue(ptr);
-
-    JZBENCHMARK(obj_to_variant)
-    {
-        QVariantList tmp;
-        tmp << QVariant::fromValue(ptr);
-    }
-
-    JZBENCHMARK(variant_to_obj)
-    {
-        toJZObject(ptr_v);
-    }
+        int t = env->nameToType("timer");
+    }    
 
     m_benchmark.report();
 }
@@ -180,7 +166,7 @@ void BenchmarkTest::testCall()
 
     m_benchmark.clear();
 
-    auto pow_func = JZNodeFunctionManager::instance()->functionImpl("pow");
+    auto pow_func = m_project.functionManager()->functionImpl("pow");
     JZBENCHMARK(jz_pow)
     {
         QVariantList in,out;
@@ -209,12 +195,12 @@ void BenchmarkTest::testCall()
     }
 
     //list_get
-    auto obj = JZNodeObjectManager::instance()->create(Type_intList);
+    auto obj = m_project.objectManager()->create(Type_intList);
     auto list = (JZList*)(obj->cobj());
     list->list << 1 << 2 << 3 << 4 << 5;
     JZNodeObjectPtr ptr(obj,true);
 
-    auto list_func = JZNodeFunctionManager::instance()->functionImpl("QList<int>.get");
+    auto list_func = m_project.functionManager()->functionImpl("QList<int>.get");
     JZBENCHMARK(jz_list_get)
     {
         QVariantList in,out;
@@ -237,7 +223,7 @@ void BenchmarkTest::testSort()
     def.name = "testSort";
     def.paramIn.push_front(JZParamDefine("list",Type_intList));
 
-    auto obj = JZNodeObjectManager::instance()->create(Type_intList);
+    auto obj = m_project.objectManager()->create(Type_intList);
     auto list = (JZList*)(obj->cobj());
     JZNodeObjectPtr ptr(obj,true);
     QVariantList base_list;

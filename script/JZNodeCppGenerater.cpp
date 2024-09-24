@@ -8,14 +8,16 @@
 #include "JZUiFile.h"
 #include "JZContainer.h"
 
+#if 0
 bool isValueType(int dataType)
 {
     Q_ASSERT(dataType != Type_none);
     if(dataType <= Type_class)
         return true;
 
-    auto meta = JZNodeObjectManager::instance()->meta(dataType);
-    return meta->isValueType();
+    return false;
+    //auto meta = JZNodeObjectManager::instance()->meta(dataType);
+    //return meta->isValueType();
 }
 
 //CppFunction
@@ -39,7 +41,7 @@ CppFunction *CppClass::getFunction(QString func_name)
             return functions[i];
     }
 
-    auto func_def = JZNodeFunctionManager::instance()->function(func_name);
+    auto func_def = m_funcInst->function(func_name);
 
     CppFunction *func = new CppFunction();
     func->define = *func_def;
@@ -80,7 +82,7 @@ CppFunction *CppFile::getFunction(QString name)
             return functionList[i];
     }
 
-    auto func_def = JZNodeFunctionManager::instance()->function(name);
+    auto func_def = m_funcInst->function(name);
     
     CppFunction *func = new CppFunction();
     func->define = *func_def;
@@ -267,7 +269,7 @@ QString JZNodeCppGenerater::tab()
 
 QString JZNodeCppGenerater::dealCall()
 {
-    auto func_def = JZNodeFunctionManager::instance()->function(m_irCall->function);
+    auto func_def = m_funcInst->function(m_irCall->function);
     QString func_name = func_def->name;
 
     QString line;
@@ -561,7 +563,7 @@ QString JZNodeCppGenerater::irToCpp(JZNodeIR *op)
         JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
         m_irCall = ir_call;
 
-        auto func_def = JZNodeFunctionManager::instance()->function(ir_call->function);
+        auto func_def = m_funcInst->function(ir_call->function);
         if(func_def->paramOut.size() == 0)
             line = dealCall();
         break;
@@ -1034,3 +1036,4 @@ bool JZNodeCppGenerater::dumpProgram(QString output)
     saveFile(out_pro,output + "/" + m_project->name() + ".pro");
     return true;
 }
+#endif

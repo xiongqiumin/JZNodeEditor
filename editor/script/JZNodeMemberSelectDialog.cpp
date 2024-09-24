@@ -40,17 +40,10 @@ QStringList JZNodeMemberSelectDialog::paramList()
     return result;
 }
 
-void JZNodeMemberSelectDialog::init(JZNode *node)
+void JZNodeMemberSelectDialog::init(JZProject *project, QString class_name)
 {
-    m_node = (JZNodeAbstractMember*)node;
-    QString class_name = m_node->className();
-    if (class_name.isEmpty())
-    {
-        auto project = node->file()->project();
-        auto class_file = project->getItemClass(node->file());
-        if (class_file)
-            class_name = class_file->className();
-    }
+    m_project = project;
+    m_className = class_name;
     ui->lineName->setText(class_name);
     updateTree();    
 }
@@ -61,10 +54,11 @@ void JZNodeMemberSelectDialog::updateTree()
     if (m_className == className)
         return;
 
+    auto obj_inst = m_project->objectManager();
     m_className = className;
     ui->treeWidget->clear();
     ui->listWidget->clear();
-    auto def = JZNodeObjectManager::instance()->meta(className);
+    auto def = obj_inst->meta(className);
     if (def)
     {
         QTreeWidgetItem *item = createTreeItem(className, def->id);
@@ -78,9 +72,10 @@ QTreeWidgetItem *JZNodeMemberSelectDialog::createTreeItem(QString name, int type
     QTreeWidgetItem *item = new QTreeWidgetItem();
     item->setText(0, name);
 
+    auto obj_inst = m_project->objectManager();
     if (JZNodeType::isObject(type))
     {
-        auto def = JZNodeObjectManager::instance()->meta(type);
+        auto def = obj_inst->meta(type);
         auto super = def->super();
         if (super && super->paramList(true).size() > 0)
         {
@@ -107,8 +102,9 @@ void JZNodeMemberSelectDialog::on_lineName_returnPressed()
 
 void JZNodeMemberSelectDialog::on_btnSelect_clicked()
 {
+    auto obj_inst = m_project->objectManager();
     QString className = ui->lineName->text();
-    auto def = JZNodeObjectManager::instance()->meta(className);
+    auto def = obj_inst->meta(className);
 
     JZNodeTypeDialog dialog(this);
     if (def)
@@ -116,7 +112,7 @@ void JZNodeMemberSelectDialog::on_btnSelect_clicked()
     if (dialog.exec() != QDialog::Accepted)
         return;
 
-    def = JZNodeObjectManager::instance()->meta(dialog.dataType());
+    def = obj_inst->meta(dialog.dataType());
     ui->lineName->setText(def->className);
     updateTree();
 }

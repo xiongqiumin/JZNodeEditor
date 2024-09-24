@@ -3,15 +3,15 @@
 
 JZNodeBuildThread::JZNodeBuildThread()
 {
+    m_builder.setProject(&m_project);
 }
 
 JZNodeBuildThread::~JZNodeBuildThread()
 {
 }
 
-void JZNodeBuildThread::init(JZProject *project,JZNodeProgram *program)
-{
-    m_builder.setProject(project);
+void JZNodeBuildThread::init(JZNodeProgram *program)
+{    
     m_program = program;
 }
 
@@ -20,14 +20,22 @@ JZNodeBuilder *JZNodeBuildThread::builder()
     return &m_builder;
 }
 
-void JZNodeBuildThread::startBuild()
+void JZNodeBuildThread::sync(JZProject *project)
 {
+    m_project.clear();
+    project->copyTo(&m_project);
+}
+
+void JZNodeBuildThread::startBuild(JZProject *project)
+{
+    sync(project);
     start();
 }
 
 void JZNodeBuildThread::stopBuild()
 {
     m_builder.stopBuild();
+    wait();
 }
 
 void JZNodeBuildThread::run()

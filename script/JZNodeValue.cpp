@@ -29,9 +29,11 @@ int JZNodeLiteral::dataType() const
 
 void JZNodeLiteral::setDataType(int type)
 {
+    auto env = environment();
+
     int out = paramOut(0);
     pin(out)->setDataTypeId({type});
-    setName(JZNodeType::typeToName(type));
+    setName(env->typeToName(type));
     if(JZNodeType::isBaseOrEnum(type))
         pin(out)->setFlag(Pin_out | Pin_param | Pin_dispValue | Pin_editValue);
     else
@@ -62,10 +64,11 @@ void JZNodeLiteral::setLiteral(const QString &value)
 
 bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
 {   
+    auto env = environment();
     int id = c->paramId(m_id,paramOut(0));    
 
     auto pin = this->pin(paramOut(0));
-    QVariant value = JZNodeType::initValue(pin->dataTypeId()[0],pin->value());
+    QVariant value = env->initValue(pin->dataTypeId()[0],pin->value());
     
     c->addSetVariable(irId(id),irLiteral(value));
     c->addNodeDebug(m_id);
@@ -87,7 +90,7 @@ JZNodeEnum::~JZNodeEnum()
 bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 {
     QString key = pin(paramOut(0))->value();
-    auto def = JZNodeObjectManager::instance()->enumMeta(m_name);
+    auto def = obj_inst->enumMeta(m_name);
     int v = def->keyToValue(key);
     
     int id = c->paramId(m_id, paramOut(0));
@@ -101,7 +104,7 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 
 void JZNodeEnum::setEnum(QString type)
 {
-    auto meta = JZNodeObjectManager::instance()->enumMeta(type);    
+    auto meta = obj_inst->enumMeta(type);    
 
     setName(meta->name());
     setPinType(paramOut(0), { meta->id() });
@@ -115,7 +118,7 @@ void JZNodeEnum::setKey(QString key)
 
 void JZNodeEnum::setValue(int value)
 {    
-    auto meta = JZNodeObjectManager::instance()->enumMeta(m_name);
+    auto meta = obj_inst->enumMeta(m_name);
     setPinValue(paramOut(0), meta->valueToKey(value));
 }
 
@@ -133,7 +136,7 @@ JZNodeFlag::~JZNodeFlag()
 bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
 {
     QString key = pin(paramOut(0))->value();
-    auto def = JZNodeObjectManager::instance()->enumMeta(m_name);    
+    auto def = obj_inst->enumMeta(m_name);    
     int v = def->keyToValue(key);
     
     int id = c->paramId(m_id, paramOut(0));
@@ -147,7 +150,7 @@ bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
 
 void JZNodeFlag::setFlag(QString type)
 {
-    auto meta = JZNodeObjectManager::instance()->enumMeta(type);
+    auto meta = obj_inst->enumMeta(type);
 
     setName(meta->name());
     setPinType(paramOut(0), { meta->id() });
@@ -161,7 +164,7 @@ void JZNodeFlag::setKey(QString value)
 
 void JZNodeFlag::setValue(int value)
 {
-    auto def = JZNodeObjectManager::instance()->enumMeta(m_name);
+    auto def = obj_inst->enumMeta(m_name);
     auto key = def->valueToKey(value);
     setPinValue(paramOut(0), key);
 }
@@ -183,7 +186,8 @@ JZNodeConvert::~JZNodeConvert()
 
 void JZNodeConvert::setOutputType(int type)
 {
-    QString name = JZNodeType::typeToName(type);
+    auto env = environment();
+    QString name = env->typeToName(type);
     setPinValue(paramOut(0), name);
     
     QString error;
@@ -191,15 +195,16 @@ void JZNodeConvert::setOutputType(int type)
 }
 
 bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
-{
+{    
     if(!c->addDataInput(m_id,error))
         return false;
 
+    auto env = environment();
     int in_type = c->pinType(m_id,paramIn(0));
     int out_type = pinTypeId(paramOut(0))[0];
-    if(!JZNodeType::canConvertExplicitly(in_type,out_type))
+    if(!env->canConvertExplicitly(in_type,out_type))
     {   
-        error = "无法将类型" + JZNodeType::typeToName(in_type) + "转换到" + JZNodeType::typeToName(out_type);
+        error = "无法将类型" + env->typeToName(in_type) + "转换到" + env->typeToName(out_type);
         return false;
     }
 
@@ -218,10 +223,11 @@ JZNodePinWidget* JZNodeConvert::createWidget(int id)
 
 bool JZNodeConvert::update(QString &error)
 {
+    auto env = environment();
     int id = paramOut(0);
     QString name = pinValue(id);
     setName("convert to " + name + "");
-    int type = JZNodeType::nameToType(name);
+    int type = env->nameToType(name);
         
     if (type != Type_none)
     {
@@ -272,7 +278,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
         return false;
     }
 
-    auto meta = JZNodeObjectManager::instance()->meta(className());    
+    auto meta = obj_inst->meta(className());    
     if (!meta)
     {
         error = "没有此类型:" + className();
@@ -293,7 +299,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
 
 bool JZNodeCreate::update(QString &error)
 {    
-    int type = JZNodeObjectManager::instance()->getClassId(className());
+    int type = obj_inst->getClassId(className());
     if (type != Type_none)
     {
         setPinType(paramOut(0), { type });
@@ -334,7 +340,7 @@ bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
         return false;
     }
 
-    auto meta = JZNodeObjectManager::instance()->meta(class_name);
+    auto meta = obj_inst->meta(class_name);
     if (!meta)
     {
         error = "没有此类型:" + class_name;
@@ -364,7 +370,7 @@ bool JZNodeCreateFromString::update(QString &error)
 {
     int id = paramIn(0);
     
-    int type = JZNodeObjectManager::instance()->getClassId(className());
+    int type = obj_inst->getClassId(className());
     if (type != Type_none)
     {
         setPinType(paramOut(0), { type });
@@ -428,7 +434,7 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
     int id = c->paramId(m_id, paramOut(0));
     QString function_name = paramOutValue(0);
 
-    auto func = JZNodeFunctionManager::instance()->function(function_name);
+    auto func = environment()->functionManager()->function(function_name);
     if(!func)
     {
         error = "no such function " + function_name;
@@ -605,7 +611,7 @@ bool JZNodeThis::update(QString &error)
     }
 
     QString className = class_file->className();
-    int data_type = JZNodeObjectManager::instance()->getClassId(className);
+    int data_type = obj_inst->getClassId(className);
     Q_ASSERT(data_type != Type_none);
     setPinType(paramOut(0),{data_type});
     return false;
@@ -867,7 +873,7 @@ QString JZNodeAbstractMember::member()
 bool JZNodeAbstractMember::update(QString &error)
 {
     auto class_name = className();
-    auto meta = JZNodeObjectManager::instance()->meta(class_name);
+    auto meta = obj_inst->meta(class_name);
     if (!meta)
     {
         error = JZNodeCompiler::errorString(Error_noClass, { class_name });

@@ -10,6 +10,7 @@
 #include "JZScriptItem.h"
 #include "JZClassItem.h"
 #include "JZScriptFile.h"
+#include "JZScriptEnvironment.h"
 
 enum BreakPointChange
 {
@@ -42,14 +43,16 @@ class JZCORE_EXPORT JZProject : public QObject
     Q_OBJECT
 
 public:
-    static void setActive(JZProject *project);
-    static JZProject* active();
-
     JZProject();
     ~JZProject();
 
     bool isNull() const;
     void clear();
+    void copyTo(JZProject *other);
+
+    JZScriptEnvironment *environment();
+    JZNodeFunctionManager *functionManager();
+    JZNodeObjectManager *objectManager();
     
     void initEmpty();
     bool initConsole();
@@ -146,6 +149,7 @@ protected:
     QString domain(JZProjectItem *item);        
     QString dir(const QString &filepath);    
     int indexOfBreakPoint(QString file,int id);
+    void loadFinish();
 
     void registType();
     void unregistType();
@@ -162,8 +166,9 @@ protected:
     bool m_blockRegist;
     bool m_isSaveCache;
     QList<JZProjectItem*> m_saveCache;  //为了避免每次save写文件
-
-    static JZProject *m_active;
+    JZScriptEnvironment m_env;
 };
+
+void InitJZProject();
 
 #endif

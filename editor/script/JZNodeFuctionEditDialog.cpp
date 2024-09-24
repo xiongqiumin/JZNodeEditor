@@ -2,10 +2,11 @@
 #include <QFontMetrics>
 #include <QDebug>
 #include <QComboBox>
+#include "ui_JZNodeFuctionEditDialog.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFuctionEditDialog.h"
-#include "ui_JZNodeFuctionEditDialog.h"
 #include "JZNodeTypeHelper.h"
+#include "JZProject.h"
 
 enum {
     Item_name = Qt::UserRole,    
@@ -18,6 +19,7 @@ JZNodeFuctionEditDialog::JZNodeFuctionEditDialog(QWidget *parent)
     : QDialog(parent)
 {
     m_newFunction = false;
+    m_project = nullptr;
 
     ui = new Ui::JZNodeFuctionEditDialog();
     ui->setupUi(this);                   
@@ -40,8 +42,9 @@ JZNodeFuctionEditDialog::~JZNodeFuctionEditDialog()
     delete ui;
 }
 
-void JZNodeFuctionEditDialog::init()
+void JZNodeFuctionEditDialog::init(JZProject *project)
 {    
+    m_project = project;
     dataToUi();
 }
 
@@ -123,7 +126,7 @@ void JZNodeFuctionEditDialog::on_btnOk_clicked()
 
     if (m_newFunction)
     {
-        auto func = JZNodeFunctionManager::instance()->function(m_functionDefine.fullName());
+        auto func = m_project->functionManager()->function(m_functionDefine.fullName());
         if (func)
         {
             QMessageBox::information(this, "", "同名函数已存在");

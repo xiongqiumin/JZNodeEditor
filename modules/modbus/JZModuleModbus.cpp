@@ -130,7 +130,7 @@ JZModuleModbus::~JZModuleModbus()
 {
 }
 
-void JZModuleModbus::regist()
+void JZModuleModbus::regist(JZScriptEnvironment *env)
 {
     jzbind::registEnum<QSerialPort::BaudRate>("QSerialPort::BaudRate");
     jzbind::registEnum<QSerialPort::StopBits>("QSerialPort::StopBits");
@@ -181,7 +181,7 @@ void JZModuleModbus::regist()
     JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusSlaver", Node_modbusConfig);
 }
 
-void JZModuleModbus::unregist()
+void JZModuleModbus::unregist(JZScriptEnvironment *env)
 {
 
 }

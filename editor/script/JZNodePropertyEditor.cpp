@@ -1,11 +1,11 @@
-﻿#include "JZNodePropertyEditor.h"
-#include <QGridLayout>
+﻿#include <QGridLayout>
 #include <QLineEdit>
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QTimer>
 #include "JZNodeTypeHelper.h"
+#include "JZNodePropertyEditor.h"
 
 JZNodePropertyEditor::JZNodePropertyEditor(QWidget *widget)
     :QWidget(widget)
@@ -84,11 +84,11 @@ void JZNodePropertyEditor::setPropEditable(int prop_id,bool editable)
 
 JZNodeProperty *JZNodePropertyEditor::createPropValue(JZNodePin *pin)
 {
-    int type = JZNodeType::upType(pin->dataTypeId());
+    int type = editorEnvironment()->upType(pin->dataTypeId());
     if (type == Type_none && pin->dataType().size() > 0)
         type = Type_any;
 
-    int up_type = JZNodeType::upType(pin->dataTypeId());
+    int up_type = editorEnvironment()->upType(pin->dataTypeId());
     auto pin_prop = new JZNodeProperty(pin->name(), NodeProprety_Value);
     pin_prop->setDataType(up_type);
     pin_prop->setValue(pin->value());

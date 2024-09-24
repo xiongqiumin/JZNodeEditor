@@ -230,7 +230,7 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
         root->insertChild(index,item);        
     }
     
-    item->setText(2, JZNodeType::typeToName(info.type));
+    item->setText(2, editorEnvironment()->typeToName(info.type));
     if (JZNodeType::isBase(info.type))
         item->setFlags(item->flags() | Qt::ItemIsEditable);
 

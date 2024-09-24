@@ -91,7 +91,7 @@ public:
     virtual void call(JZNodeEngine *engine) override
     {
         QString type = engine->getReg(Reg_CallIn).toString();    
-        JZNodeObject *obj = JZNodeObjectManager::instance()->create(type);
+        JZNodeObject *obj = obj_inst->create(type);
         engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectPtr(obj,true)));
     }
 };
@@ -392,6 +392,7 @@ JZNodeEngine *g_engine = nullptr;
 
 void JZNodeEngine::regist()
 {
+    auto func_inst = m_env.functionManager();
     JZNodeEngineIdlePauseEvent::Event = QEvent::registerEventType();
 
     JZFunctionDefine print;
@@ -400,7 +401,7 @@ void JZNodeEngine::regist()
     print.isFlowFunction = true;    
     print.paramIn.push_back(JZParamDefine("args", Type_args));
     auto print_func = BuiltInFunctionPtr(new JZPrint());
-    JZNodeFunctionManager::instance()->registBuiltInFunction(print, print_func);
+    func_inst->registBuiltInFunction(print, print_func);
 
     JZFunctionDefine create;
     create.name = "createObject";
@@ -409,7 +410,7 @@ void JZNodeEngine::regist()
     create.paramIn.push_back(JZParamDefine("type", Type_string));
     create.paramOut.push_back(JZParamDefine("arg", Type_arg));
     auto create_func = BuiltInFunctionPtr(new JZCreate());
-    JZNodeFunctionManager::instance()->registBuiltInFunction(create, create_func);
+    func_inst->registBuiltInFunction(create, create_func);
  
     JZFunctionDefine clone;
     clone.name = "clone";
@@ -418,11 +419,11 @@ void JZNodeEngine::regist()
     clone.paramIn.push_back(JZParamDefine("in", Type_arg));
     clone.paramOut.push_back(JZParamDefine("out", Type_arg));
     auto clone_func = BuiltInFunctionPtr(new JZClone());
-    JZNodeFunctionManager::instance()->registBuiltInFunction(clone, clone_func);
+    func_inst->registBuiltInFunction(clone, clone_func);
 
-    JZNodeFunctionManager::instance()->registCFunction("connect", true, jzbind::createFuncion(QObjectConnect));
-    JZNodeFunctionManager::instance()->registCFunction("disconnect", true, jzbind::createFuncion(QObjectDisconnect));
-    JZNodeFunctionManager::instance()->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
+    func_inst->registCFunction("connect", true, jzbind::createFuncion(QObjectConnect));
+    func_inst->registCFunction("disconnect", true, jzbind::createFuncion(QObjectDisconnect));
+    func_inst->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));    
 }
 
 JZNodeEngine::JZNodeEngine()
@@ -458,6 +459,11 @@ JZNodeProgram *JZNodeEngine::program()
     return m_program;
 }
 
+JZScriptEnvironment *JZNodeEngine::environment()
+{
+    return &m_env;
+}
+
 void JZNodeEngine::clear()
 {    
     m_watchTimer->stop();
@@ -486,7 +492,14 @@ void JZNodeEngine::init()
     Q_ASSERT(!g_engine);
 
     // regist type
-    m_program->registType();
+    m_env->registType(m_program->typeMeta());
+    auto script_list = m_program->scriptList();
+    for(int i = 0; i < script_list.size(); i++)
+    {
+        auto &func_list = script_list[i]->functionList;
+        for (int func_idx = 0; func_idx < func_list.size(); func_idx++)
+            m_env.functionManager()->registFunctionImpl(func_list[func_idx]);    
+    }
 
     g_engine = this;
     QVariantList in, out;
@@ -943,7 +956,7 @@ Stack *JZNodeEngine::stack()
 bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
 {
     m_depend = depend;
-    JZNodeObjectManager::instance()->setUnitTest(true);
+    obj_inst->setUnitTest(true);
 
     //init hook function
     m_dependHook.clear();
@@ -953,7 +966,7 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
         if(!hook.enable)
             continue;
 
-        auto func = JZNodeFunctionManager::instance()->function(hook.function);
+        auto func = m_env.functionManager()->function(hook.function);
 
         QVariantList value_list;
         auto &hook_list = hook.params;
@@ -984,7 +997,7 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
         auto &p = depend->function.paramIn[i];
         if(depend->function.isMemberFunction() && i == 0)
         {
-            auto obj = JZNodeObjectManager::instance()->create(depend->function.className);
+            auto obj = obj_inst->create(depend->function.className);
             JZNodeObjectPtr ptr(obj,true);
             in << QVariant::fromValue(ptr);
 
@@ -1013,7 +1026,7 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
 
     //call    
     bool ret = call(depend->function.fullName(),in,out);
-    JZNodeObjectManager::instance()->setUnitTest(false);
+    obj_inst->setUnitTest(false);
     m_depend = nullptr;
     return ret;
 }
@@ -1029,11 +1042,11 @@ void JZNodeEngine::splitMember(const QString &fullName, QStringList &objName,QSt
 
 QVariant JZNodeEngine::createVariable(int type,const QString &value)
 {
-    auto inst = JZNodeObjectManager::instance();
+    auto inst = obj_inst;
 
     QVariant v;
     if(type < Type_class)
-        v = JZNodeType::initValue(type, value);
+        v = m_env->initValue(type, value);
     else
     {        
         JZNodeObject *sub = nullptr; 
@@ -1083,7 +1096,7 @@ JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &
 
 void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
 {
-    Q_ASSERT(JZNodeType::isSameType(value,*ref));
+    Q_ASSERT(m_env->isSameType(value,*ref));
     *ref = value;
 }
 
@@ -1113,7 +1126,7 @@ void JZNodeEngine::printMemory()
     while(g_it != m_global.end())
     {
         auto *var = g_it->data();
-        text += "  "  + JZNodeType::variantTypeName(*var) + " " + g_it.key() + "\n"; 
+        text += "  "  + m_env.variantTypeName(*var) + " " + g_it.key() + "\n"; 
         g_it++;
     }
 
@@ -1121,7 +1134,7 @@ void JZNodeEngine::printMemory()
     for(int i = 1; i < m_regs.size(); i++)
     {
         if(!m_regs[i].isNull())
-            text += "  "  + JZNodeType::variantTypeName(m_regs[i]) + " Reg" + QString::number(i) + "\n"; 
+            text += "  "  + m_env.variantTypeName(m_regs[i]) + " Reg" + QString::number(i) + "\n"; 
     }
     m_mutex.unlock();
 
@@ -1401,7 +1414,7 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
             break;
             
         const QVariant &v = getReg(Reg_CallIn + i);
-        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(v),inList[i].dataType()));
+        Q_ASSERT(m_env->isSameType(JZNodeType::variantType(v),inList[i].dataType()));
         if (inList[i].dataType() >= Type_class && JZNodeType::isNullObject(v))
         {
             QString error = "param" + QString::number(i + 1) + " is nullptr object";
@@ -1415,7 +1428,7 @@ void JZNodeEngine::checkFunctionOut(const JZFunction *func)
     auto &outList = func->define.paramOut;
     for (int i = 0; i < outList.size(); i++)
     {        
-        Q_ASSERT(JZNodeType::isSameType(JZNodeType::variantType(getReg(Reg_CallOut + i)),outList[i].dataType()));
+        Q_ASSERT(m_env->isSameType(JZNodeType::variantType(getReg(Reg_CallOut + i)),outList[i].dataType()));
     }
 }
 
@@ -1447,7 +1460,7 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
 
 const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
 {
-    auto func_ptr = JZNodeFunctionManager::instance()->functionImpl(name);
+    auto func_ptr = m_env.functionManager()->functionImpl(name);
     if(!func_ptr)
         return nullptr;
     if(!func_ptr->isVirtualFunction())
@@ -1467,7 +1480,7 @@ const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
     QString func_name = name.mid(idx + 1);
     auto func = obj->function(func_name);
     Q_ASSERT_X(func,"Error",qUtf8Printable("no function " + func_name));
-    return JZNodeFunctionManager::instance()->functionImpl(func->fullName());
+    return m_env.functionManager()->functionImpl(func->fullName());
 }
 
 const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
@@ -1482,7 +1495,7 @@ const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
 void JZNodeEngine::unSupportSingleOp(int a, int op)
 {
     QString error = QString("不支持的操作,操作符%1,数据类型%2").arg(JZNodeType::opName(op),
-        JZNodeType::typeToName(a));
+        m_env->typeToName(a));
 
     Q_ASSERT_X(0,"unSupportOp:",qUtf8Printable(error));
 }
@@ -1490,7 +1503,7 @@ void JZNodeEngine::unSupportSingleOp(int a, int op)
 void JZNodeEngine::unSupportOp(int a, int b, int op)
 {    
     QString error = QString("操作符%1,数据类型%2,%3").arg(JZNodeType::opName(op), 
-        JZNodeType::typeToName(a), JZNodeType::typeToName(b));
+        m_env->typeToName(a), m_env->typeToName(b));
 
     Q_ASSERT_X(0,"unSupportOp:",qUtf8Printable(error));
 }
@@ -1682,7 +1695,7 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
         {
             auto obj1 = toJZObject(a);
             auto obj2 = toJZObject(b);
-            bool ret = JZNodeObjectManager::instance()->equal(obj1,obj2);
+            bool ret = obj_inst->equal(obj1,obj2);
             if (op == OP_eq)
                 return ret;
             else
@@ -1789,7 +1802,7 @@ bool JZNodeEngine::isWidgetFunction(const JZFunction *function)
     if(!function->isCFunction() || !function->isMemberFunction())
         return false;
 
-    return JZNodeType::isInherits(function->className(),"QWidget");
+    return m_env->isInherits(function->className(),"QWidget");
 }
 
 void JZNodeEngine::updateHook()
@@ -1921,7 +1934,7 @@ bool JZNodeEngine::run()
         case OP_clone:
         {
             JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
-            auto obj = JZNodeObjectManager::instance()->clone(toJZObject(getParam(ir_set->src)));
+            auto obj = obj_inst->clone(toJZObject(getParam(ir_set->src)));
             auto ptr = JZNodeObjectPtr(obj,true);
             setParam(ir_set->dst,QVariant::fromValue(ptr));
             break;
@@ -1946,7 +1959,7 @@ bool JZNodeEngine::run()
         case OP_convert:
         {
             JZNodeIRConvert *ir_convert = (JZNodeIRConvert*)op;
-            QVariant ret = JZNodeType::convertTo(ir_convert->dstType,getParam(ir_convert->src));
+            QVariant ret = m_env->convertTo(ir_convert->dstType,getParam(ir_convert->src));
             setParam(ir_convert->dst,ret);
             break;   
         }

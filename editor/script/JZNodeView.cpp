@@ -539,6 +539,7 @@ void JZNodeView::setFile(JZScriptItem *file)
 void JZNodeView::resetFile()
 {
     m_file->loadEditorCache();
+    m_file->loadFinish();
 }
 
 bool JZNodeView::isModified()
@@ -1548,16 +1549,18 @@ void JZNodeView::removeItem(QGraphicsItem *item)
 
 QStringList JZNodeView::matchParmas(JZNodeObjectDefine *meta, int match_type, QString pre)
 {
+    auto env = m_file->project()->environment();
+
     QStringList list;
     auto params = meta->paramList(true);
     for (int i = 0; i < params.size(); i++)
     {
         auto p = meta->param(params[i]);
-        if (JZNodeType::canConvert(p->dataType(),match_type))
+        if (env->canConvert(p->dataType(),match_type))
             list << pre + p->name;
         if (JZNodeType::isObject(p->dataType()))
         {
-            auto sub_meta = JZNodeObjectManager::instance()->meta(p->dataType());
+            auto sub_meta = env->objectManager()->meta(p->dataType());
             list << matchParmas(sub_meta, match_type, pre + p->name + ".");
         }
     }
@@ -1581,6 +1584,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     if (m_runningMode != Process_none)
         return;
 
+    auto func_inst = m_file->project()->functionManager();
     QMenu menu(this);    
 
     auto item = itemAt(pos);
@@ -1654,7 +1658,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
                 if (node->type() == Node_function)
                 {
                     auto func = (JZNodeFunction*)node;
-                    auto func_def = JZNodeFunctionManager::instance()->function(func->function());
+                    auto func_def = func_inst->function(func->function());
                     if (func_def && !func_def->isCFunction)
                     {
                         QString fullName = func->function();
@@ -1765,7 +1769,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         auto text = QInputDialog::getText(this, "", "函数名:", QLineEdit::Normal, function, &ok);
         if (!ok || text == function)
             return;
-        if (!JZNodeFunctionManager::instance()->function(text))
+        if (!func_inst->function(text))
         {
             QMessageBox::information(this, "", "函数不存在");
             return;
@@ -1937,10 +1941,11 @@ void JZNodeView::dragMoveEvent(QDragMoveEvent *event)
 }
 
 void JZNodeView::dropEvent(QDropEvent *event)
-{
+{    
     if (m_runningMode != Process_none)
         return;
 
+    auto obj_inst = m_file->project()->objectManager();
     auto factory = JZNodeFactory::instance();
     if(event->mimeData()->hasFormat("node_data"))
     {
@@ -1981,7 +1986,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
             Q_ASSERT(def);
             if(def->dataType() >= Type_class || def->dataType() == Type_string)
             {
-                auto meta = JZNodeObjectManager::instance()->meta(def->type);
+                auto meta = obj_inst->meta(def->type);
                 if(meta)
                 {
                     QMenu *menuCall = nullptr;

@@ -15,7 +15,7 @@
 
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
-#include "JZNodeFunctionManager.h"
+#include "JZScriptEnvironment.h"
 #include "JZEvent.h"
 
 extern void JZScriptInvoke(const QString &function,const QVariantList &in, QVariantList &out);
@@ -119,6 +119,9 @@ constexpr bool is_enum_or_qenum_cond()
 template<class T>
 using is_enum_or_qenum = bool_constant<is_enum_or_qenum_cond<T>()>;
 
+JZCORE_EXPORT void setBindEnvironment(JZScriptEnvironment *env);
+JZCORE_EXPORT JZScriptEnvironment *bindEnvironment();
+JZCORE_EXPORT JZScriptEnvironment *runtimeEnvironment();
 
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
@@ -213,8 +216,9 @@ QVariant toVariantEnum(T value, std::false_type)
 template<class T>
 QVariant toVariantClass(T value, std::true_type)
 {
-    QVariant v = JZObjectCreate<T>();
-    T *ptr = JZObjectCast<T>(v);
+    auto env = runtimeEnvironment();
+    QVariant v = env->objectCreate<T>();
+    T *ptr = env->objectCast<T>(v);
     *ptr = value;
     return v;
 }
@@ -229,7 +233,8 @@ template<class T>
 QVariant toVariantPointer(T value, std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    QVariant v = JZObjectCreateRefrence<T>(value, false);
+    auto env = runtimeEnvironment();
+    QVariant v = env->objectRefrence<T>(value, false);
     return v;
 }
 
@@ -513,7 +518,7 @@ public:
 template<typename Func>
 void registFunction(QString name, bool is_flow, Func f)
 {
-    JZNodeFunctionManager::instance()->registCFunction(name, is_flow, createFuncion(f));    
+    bindEnvironment()->functionManager()->registCFunction(name, is_flow, createFuncion(f));    
 }
 
 template<typename T>
@@ -534,7 +539,7 @@ int registEnum(QString name,int id = -1)
     define.init(name,keys,values);
     if(id != -1)
         define.setId(id);
-    return JZNodeObjectManager::instance()->registCEnum(define,typeid(T).name());
+    return bindEnvironment()->objectManager()->registCEnum(define,typeid(T).name());
 }
 
 template<class ret_type>
@@ -647,7 +652,8 @@ public:
         m_define.superName = super;
         m_define.isCObject = true;
 
-        JZNodeObjectDefine* meta = JZNodeObjectManager::instance()->meta(m_define.className);
+        auto obj_inst = bindEnvironment()->objectManager();
+        JZNodeObjectDefine* meta = obj_inst->meta(m_define.className);
         if (meta)
         {
             Q_ASSERT(m_define.functions.size() == 0 && m_define.params.size() == 0);
@@ -655,7 +661,7 @@ public:
         }
         else
         {
-            m_define.id = JZNodeObjectManager::instance()->delcareCClass(m_define.className, typeid(Class).name(), typeId);
+            m_define.id = obj_inst->delcareCClass(m_define.className, typeid(Class).name(), typeId);
         }
 
         initCreate(std::is_abstract<Class>());
@@ -704,6 +710,7 @@ public:
     template<typename... Args>
     void defSingle(QString name, void (Class::*f)(Args...))
     {
+        auto env = bindEnvironment();
         registFunction(name,true,createFuncion(f));
 
         JZSignalDefine single;
@@ -718,11 +725,11 @@ public:
         getFunctionParam<int, Args...>(args);
         for (int i = 0; i < args.size(); i++)
         {
-            int dataType = JZNodeType::typeidToType(args[i]);
+            int dataType = env->typeidToType(args[i]);
 
             JZParamDefine def;
             def.name = "output" + QString::number(i);
-            def.type = JZNodeType::typeToName(dataType);
+            def.type = env->typeToName(dataType);
             single.paramOut.push_back(def);
         }
         m_define.singles.push_back(single);
@@ -731,6 +738,7 @@ public:
     template<typename... Args>
     void defPrivateSingle(QString name, void (Class::*f)(Args...))
     {
+        auto env = bindEnvironment();
         m_privateSingleList << name;
 
         JZSignalDefine single;
@@ -745,11 +753,11 @@ public:
         getFunctionParam<int, Args...>(args);
         for (int i = 1; i < args.size(); i++)
         {
-            int dataType = JZNodeType::typeidToType(args[i]);
+            int dataType = env->typeidToType(args[i]);
 
             JZParamDefine def;
             def.name = "output" + QString::number(i);            
-            def.type = JZNodeType::typeToName(dataType);
+            def.type = env->typeToName(dataType);
             single.paramOut.push_back(def);
         }
         m_define.singles.push_back(single);
@@ -758,11 +766,12 @@ public:
     template<typename FuncRead, typename FuncWrite>
     void defProperty(QString name, FuncRead read, FuncWrite write)
     {        
+        auto obj_inst = bindEnvironment()->objectManager();
         auto func_read = createFuncion(read);
         auto func_write = createFuncion(write);
      
-        auto inst = JZNodeObjectManager::instance();
-        int ret_type = inst->getIdByCTypeid(func_read->result);
+        JZNodeObjectManager *obj_inst;
+        int ret_type = obj_inst->getIdByCTypeid(func_read->result);
 
         JZParamDefine def;
         def.name = name;
@@ -776,8 +785,9 @@ public:
     }
 
     int regist()
-    {
-        auto func_inst = JZNodeFunctionManager::instance();
+    {        
+        auto obj_inst = bindEnvironment()->objectManager();
+        auto func_inst = bindEnvironment()->functionManager();        
         for (int func_idx = 0; func_idx < m_funcList.size(); func_idx++)
         {
             auto f = m_funcList[func_idx].data();
@@ -792,7 +802,7 @@ public:
         }
 
         //regist
-        JZNodeObjectManager::instance()->replace(m_define);
+        obj_inst->replace(m_define);
         setQObjectType(std::is_base_of<QObject, Class>());
 
         return m_define.id;
@@ -880,13 +890,14 @@ protected:
 
     JZFunctionDefine *registFunction(QString name,bool isflow,QSharedPointer<CFunction> cfunc)
     {
+        auto env = bindEnvironment();
         JZFunctionDefine *f = new JZFunctionDefine();
         f->name = name;
         f->className = m_define.className;
         f->isCFunction = true;
         f->isFlowFunction = isflow;
         f->updateParam(cfunc.data());
-        if (cfunc->args.size() > 0 && JZNodeType::typeidToType(cfunc->args[0]) == m_define.id)
+        if (cfunc->args.size() > 0 && env->typeidToType(cfunc->args[0]) == m_define.id)
             f->paramIn[0].name = "this";        
 
         m_funcList.push_back(QSharedPointer<JZFunctionDefine>(f));
@@ -896,8 +907,9 @@ protected:
 
     void setQObjectType(std::true_type)
     {
+        auto obj_inst = bindEnvironment()->objectManager();
         QString className = Class::staticMetaObject.className();
-        JZNodeObjectManager::instance()->setQObjectType(className,m_define.id);
+        obj_inst->setQObjectType(className,m_define.id);
     }
 
     void setQObjectType(std::false_type)

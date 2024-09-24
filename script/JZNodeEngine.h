@@ -11,8 +11,8 @@
 #include <QAtomicInt>
 #include "JZProject.h"
 #include "JZNodeProgram.h"
-#include "JZNodeFunctionManager.h"
 #include "JZNodeObject.h"
+#include "JZScriptEnvironment.h"
 
 enum{
     Status_none,
@@ -147,9 +147,7 @@ class JZCORE_EXPORT JZNodeEngine : public QObject
 {
     Q_OBJECT
 
-public:
-    static void regist();
-    
+public:        
     JZNodeEngine();
     virtual ~JZNodeEngine();
 
@@ -181,6 +179,7 @@ public:
     void stepOut();        
        
     Stack *stack();    
+    JZScriptEnvironment *environment();
     
     QVariant createVariable(int type,const QString &value = QString());
 
@@ -243,6 +242,7 @@ protected:
     };
 
     virtual void customEvent(QEvent *event) override;
+    void regist();
     void clear();
     bool checkIdlePause(const JZFunction *func);  //return is stop
     bool checkPause(int node_id);
@@ -299,6 +299,7 @@ protected:
     BreakStep m_breakStep; 
     int m_breakNodeId;
 
+    JZScriptEnvironment m_env;
     Stack m_stack;
     int m_regInCount;
     QMap<QString,QVariantPtr> m_global;

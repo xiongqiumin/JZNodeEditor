@@ -99,7 +99,6 @@ enum
     Type_userObject = 10000,    // 用户注册起始
 };
 
-typedef QVariant (*ConvertFunc)(const QVariant& v);
 typedef QSharedPointer<QVariant> QVariantPtr;
 
 class JZCORE_EXPORT JZEnum
@@ -155,53 +154,28 @@ public:
     static QString opName(int op);
     static int opType(const QString &name);
     static int opPri(const QString &op);
-    static bool isDoubleOp(const QString &op);
-
-    static QString typeToName(int id);
-    static int nameToType(const QString &name);
-    static int typeidToType(const QString &name);
-    static int variantType(const QVariant &v);
-    static QString variantTypeName(const QVariant &v);
-    static int stringType(const QString &text);
-
-    static bool canConvert(int from,int to);    //隐式转换
-    static bool canConvertExplicitly(int from,int to);    //被 convertTo 支持的
-    static QVariant convertTo(int type,const QVariant &v); 
-    static void registConvert(int from, int to, ConvertFunc func);
-    static QVariant clone(const QVariant &v);
+    static bool isDoubleOp(const QString &op);    
         
+    static int variantType(const QVariant &v);
+
     static bool isBase(int type);    
     static bool isEnum(int type);
     static bool isBaseOrEnum(int type);
     static bool isBool(int type);
     static bool isNumber(int type);
     static bool isObject(int type);
-    static bool isVaildType(QString type);
- 
-    static bool isNullObject(const QVariant &v);   
-    static bool isNullptr(const QVariant &v);
-    static bool isWidget(const QVariant &v);
-    static bool isSameType(const QVariant &src_v,const QVariant &dst_v);
-    static bool isSameType(int src_type,int dst_type);
+    static bool isNullObject(const QVariant &v);
+    static bool isNullptr(const QVariant &v);    
     static bool isLiteralType(int type);
 
     static bool isPointer(const QVariant &v);
     static QVariant *getPointer(const QVariant &v);
-
-    static int isInherits(const QString &type1,const QString &type2);
-    static int isInherits(int type1,int type2);
+    
     static int calcExprType(int type1,int type2,int op);
         
     static QString debugString(const QVariant &v);
     static QString debugString(const JZNodeObject *obj);
-    
-    static int upType(int type1, int type2);  //提升类型
-    static int upType(QList<int> types);
-    static int matchType(QList<int> src_types,QList<int> dst_types);
-    static bool canInitValue(int type,const QString &v);
-    static QVariant defaultValue(int type);
-    static QVariant initValue(int type, const QString &v);
-
+        
     static bool sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot);
     static bool functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2);
 };

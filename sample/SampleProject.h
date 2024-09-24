@@ -26,6 +26,8 @@ protected:
     QString m_name;
     QString m_resources;
     JZProject m_project;    
+    JZNodeObjectManager *m_objInst;
+    JZNodeFunctionManager *m_funcInst;
 };
 
 

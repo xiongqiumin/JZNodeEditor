@@ -6,9 +6,7 @@
 
 JZProjectItem::JZProjectItem(int itemType)
 {
-    m_parent = nullptr;
-    m_project = nullptr;
-    m_editor = nullptr;
+    m_parent = nullptr;    
     m_itemType = itemType;    
     m_pri = 0;
 }
@@ -17,24 +15,73 @@ JZProjectItem::~JZProjectItem()
 {
 }
 
-void JZProjectItem::setProject(JZProject *project)
+QByteArray JZProjectItem::toBuffer()
 {
-    m_project = project;
+    QByteArray ret;
+    QDataStream s(&ret, QIODevice::WriteOnly);
+    s << m_itemType;
+    s << m_name;
+    s << m_pri;
+    saveToStream(s);
+    
+    QList<QByteArray> sub_list;
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        QByteArray sub = m_childs[i]->toBuffer();
+        sub_list << sub;
+    }
+    s << sub_list;
+    return ret;
+}
+
+void JZProjectItem::fromBuffer(const QByteArray &buffer)
+{    
+    int itemType;
+    QDataStream s(buffer);
+    s >> itemType;
+    Q_ASSERT(itemType == m_itemType);
+    s >> m_name;
+    s >> m_pri;
+    loadFromStream(s);
+
+    QList<QByteArray> sub_list;
+    s >> sub_list;
+    for (int i = 0; i < sub_list.size(); i++)
+    {
+        QDataStream sub_s(sub_list[i]);
+        int type = ProjectItem_none;
+        sub_s >> type;
+
+        auto sub_item = JZProjectItemManager::instance()->create(type);
+        JZProjectItemPtr child = JZProjectItemPtr(sub_item);
+        child->fromBuffer(sub_list[i]);
+        addItem(child);
+    }
+}
+
+void JZProjectItem::saveToStream(QDataStream &s) const
+{
+}
+
+bool JZProjectItem::loadFromStream(QDataStream &s)
+{
+    return true;
 }
 
 JZProject *JZProjectItem::project() 
 {
-    return m_project;
-}
-
-void JZProjectItem::setEditor(JZEditor *editor)
-{
-    m_editor = editor;
-}
-
-JZEditor *JZProjectItem::editor() 
-{
-    return m_editor;
+    if (m_itemType == ProjectItem_root)
+    {
+        JZProjectItemRoot *root = (JZProjectItemRoot *)this;
+        return root->rootProject();
+    }
+    else
+    {
+        if (parent())
+            return parent()->project();
+        else
+            return nullptr;
+    }
 }
 
 void JZProjectItem::sort()
@@ -91,10 +138,10 @@ JZProjectItem *JZProjectItem::parent()
 
 JZScriptClassItem *JZProjectItem::getClassFile() 
 {
-    if (!m_project)
+    if (!project())
         return nullptr;
 
-    return m_project->getItemClass(this);
+    return project()->getItemClass(this);
 }
 
 void JZProjectItem::addItem(JZProjectItemPtr child)
@@ -175,12 +222,22 @@ QList<JZProjectItem *> JZProjectItem::itemList(QList<int> type_list)
 JZProjectItemRoot::JZProjectItemRoot()
     :JZProjectItem(ProjectItem_root)
 {
+    m_project = nullptr;
 }
 
 JZProjectItemRoot::~JZProjectItemRoot()
 {
 }
 
+JZProject *JZProjectItemRoot::rootProject()
+{
+    return m_project;
+}
+
+void JZProjectItemRoot::setRootProject(JZProject *project)
+{
+    m_project = project;
+}
 
 //JZProjectItemFolder
 JZProjectItemFolder::JZProjectItemFolder()
@@ -201,4 +258,22 @@ int JZProjectItemIsScript(JZProjectItem *item)
         return true;
 
     return false;
+}
+
+//JZProjectItemManager
+JZProjectItemManager *JZProjectItemManager::instance()
+{    
+    static JZProjectItemManager inst;
+    return &inst;
+}
+
+void JZProjectItemManager::registItem(int item_type,JZProjectItemCreateFunc func)
+{
+    m_funcs[item_type] = func;
+}
+
+JZProjectItem *JZProjectItemManager::create(int item_type)
+{
+    Q_ASSERT(m_funcs.contains(item_type));
+    return m_funcs[item_type]();
 }

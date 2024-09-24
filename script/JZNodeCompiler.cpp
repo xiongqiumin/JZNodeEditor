@@ -910,9 +910,11 @@ void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
 {
     ScriptDepend depend;
 
+    auto obj_inst = m_project->objectManager();
+    auto func_inst = m_project->functionManager();
     if (jzfunc->isMemberFunction())
     {
-        auto meta = JZNodeObjectManager::instance()->meta(jzfunc->className());
+        auto meta = obj_inst->meta(jzfunc->className());
         QStringList member_list = meta->paramList(true);
         for (int i = 0; i < member_list.size(); i++)
             depend.member[member_list[i]] = meta->param(member_list[i])->value;
@@ -931,7 +933,7 @@ void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
             case OP_call:
             {
                 JZNodeIRCall *ir_call = dynamic_cast<JZNodeIRCall*>(stmt);
-                auto func = JZNodeFunctionManager::instance()->function(ir_call->function);
+                auto func = func_inst->function(ir_call->function);
                 int node_id = -1;
                 int pre_count = func->paramIn.size() + 1;
                 if(pc >= pre_count && m_script->statmentList[pc - pre_count]->type == OP_nodeId)
@@ -1325,11 +1327,12 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
 
 bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &error)
 {   
-    auto typeListName = [](QList<int> types)->QString{
+    auto env = m_project->environment();
+    auto typeListName = [env](QList<int> types)->QString{
         QStringList list;
         for(int i = 0; i < types.size(); i++)
         {
-            list << JZNodeType::typeToName(types[i]);
+            list << env->typeToName(types[i]);
         }
         return list.join(",");
     };
@@ -1369,7 +1372,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
 
                 from_type.push_back(pinType(from_gemo));
             }
-            pin_type = JZNodeType::matchType(from_type, pin->dataTypeId());
+            pin_type = env->matchType(from_type, pin->dataTypeId());
             if (pin_type == Type_none)
             {
                 error = pin_name + "无法确定输入类型,输出" + typeListName(from_type) + ",需要" + pin->dataType().join(",");
@@ -1384,12 +1387,12 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
                 {
                     pin_type = pin->dataTypeId()[0];
                     if(pin_type == Type_arg)
-                        pin_type = JZNodeType::stringType(pin->value());
+                        pin_type = env->stringType(pin->value());
                 }   
                 else if(pin->dataType().size() > 1)
                 {
-                    int pin_value_type = JZNodeType::stringType(pin->value());
-                    pin_type = JZNodeType::matchType( {pin_value_type} , pin->dataTypeId());
+                    int pin_value_type = env->stringType(pin->value());
+                    pin_type = env->matchType( {pin_value_type} , pin->dataTypeId());
                 }
 
                 if (pin_type == Type_none)
@@ -1407,7 +1410,6 @@ bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &err
         in_type[prop_in_id] = pin_type;
     }
 
-calc_end:
     auto it_type = in_type.begin();
     while (it_type != in_type.end())
     {
@@ -1670,7 +1672,7 @@ const JZFunctionDefine *JZNodeCompiler::function(QString name)
     if(func)
         return func;
         
-    return JZNodeFunctionManager::instance()->function(name);
+    return m_project->functionManager()->function(name);
 }
 
 JZNodeIR *JZNodeCompiler::lastStatment()
@@ -1789,9 +1791,9 @@ int JZNodeCompiler::addBreak()
     return jmp->pc;
 }
 
-void JZNodeCompiler::addCall(const QString &function, const QList<JZNodeIRParam> &paramIn,const QList<JZNodeIRParam> &paramOut)
+void JZNodeCompiler::addCall(const QString &function_name, const QList<JZNodeIRParam> &paramIn,const QList<JZNodeIRParam> &paramOut)
 {    
-    auto func = JZNodeFunctionManager::instance()->function(function);
+    auto func = function(function_name);
     addCall(func, paramIn, paramOut); 
 }
 
@@ -1814,9 +1816,9 @@ void JZNodeCompiler::addCall(const JZFunctionDefine *func, const QList<JZNodeIRP
     addStatement(JZNodeIRPtr(new JZNodeIR(OP_clearReg)));    
 }
 
-void JZNodeCompiler::addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut)
+void JZNodeCompiler::addCallConvert(const QString &function_name, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut)
 {
-    auto func = JZNodeFunctionManager::instance()->function(function);
+    auto func = function(function_name);
     addCallConvert(func, paramIn, paramOut); 
 }
 
@@ -1922,6 +1924,7 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
 const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QString &name)
 {
     auto project = file->project();    
+    auto obj_inst = project->objectManager();
     JZScriptClassItem *class_item = file->getClassFile();
 
     int gap = name.indexOf(".");
@@ -1947,7 +1950,7 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QS
         JZScriptClassItem *class_file = project->getItemClass(file);
         if (class_file)
         {
-            auto class_meta = JZNodeObjectManager::instance()->meta(class_file->className());
+            auto class_meta = obj_inst->meta(class_file->className());
             def = class_meta->param(base_name);
         }
     }
@@ -1960,7 +1963,7 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QS
         return def;
     else
     {
-        auto obj_def = JZNodeObjectManager::instance()->meta(def->type);
+        auto obj_def = obj_inst->meta(def->type);
         if (!obj_def)
             return nullptr;
 
@@ -1976,13 +1979,14 @@ void JZNodeCompiler::setRegCallFunction(const JZFunctionDefine *func)
 
 bool JZNodeCompiler::checkParamDefine(const JZParamDefine *def, QString &error)
 {
+    auto env = m_project->environment();
     if (def->dataType() == Type_none)
     {
         error = "no such type " + def->type;
         return false;
     }
 
-    if (!JZNodeType::canInitValue(def->dataType(), def->value))
+    if (!env->canInitValue(def->dataType(), def->value))
     {
         error = "无法初始化" + def->type + ", value = " + def->value;
         return false;
@@ -2016,13 +2020,14 @@ bool JZNodeCompiler::checkVariableExist(const QString &name,QString &error)
 
 bool JZNodeCompiler::checkVariableType(const QString &name, int data_type, QString &error)
 {
+    auto env = m_project->environment();
     if (!checkVariableExist(name, error))
         return false;
 
     auto def = getVariableInfo(name);
-    if (!JZNodeType::canConvert(def->dataType(),data_type))
+    if (!env->canConvert(def->dataType(),data_type))
     {
-        error = name + "不是" + JZNodeType::typeToName(data_type);
+        error = name + "不是" + env->typeToName(data_type);
         return false;
     }
 
@@ -2033,7 +2038,8 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
 {    
     if (!checkPinInType(nodeId, prop_id, error))
         return false;
- 
+    
+    auto func_inst = m_project->functionManager();
     GraphNode* in_node = m_buildGraph->graphNode(nodeId);
     auto in_list = in_node->node->paramInList();
     for (int prop_idx = 0; prop_idx < in_list.size(); prop_idx++)
@@ -2073,7 +2079,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, int prop_id, QString &error)
             if (prop_idx == 0 && in_node->node->type() == Node_function)
             {
                 JZNodeFunction *func_node = (JZNodeFunction*)in_node->node;
-                func = JZNodeFunctionManager::instance()->function(func_node->function());
+                func = func_inst->function(func_node->function());
                 is_member_function = func->isMemberFunction();
             }
             
@@ -2276,10 +2282,11 @@ int JZNodeCompiler::addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam 
 
 void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op)
 {   
+    auto env = m_project->environment();
     int t1 = irParamType(p1);
     int t2 = irParamType(p2);
     int tDst = irParamType(dst);
-    int upType = JZNodeType::upType(t1,t2);
+    int upType = env->upType(t1,t2);
     int dstType = JZNodeType::calcExprType(upType,upType,op);
 
     JZNodeIRParam tmp_dst = dst;
@@ -2321,6 +2328,7 @@ void JZNodeCompiler::addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRPa
 
 int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
 {
+    auto env = m_project->environment();
     int type = Type_none;
     if (param.isReg())
     {
@@ -2359,18 +2367,19 @@ int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
         type = ref->dataType();
     }
     else if(param.isThis())
-        type = JZNodeType::nameToType(m_className);
+        type = env->nameToType(m_className);
     
+    auto obj_inst = env->objectManager();
     if (!param.member.isEmpty())
     {
-        auto meta = JZNodeObjectManager::instance()->meta(type);
+        auto meta = obj_inst->meta(type);
         Q_ASSERT(meta);
 
         QStringList list = param.member.split(".");
         for (int i = 0; i < list.size() - 1; i++)
         {
             type = meta->param(list[i])->dataType();
-            meta = JZNodeObjectManager::instance()->meta(type);
+            meta = obj_inst->meta(type);
             Q_ASSERT(meta);
         }
 
@@ -2383,12 +2392,13 @@ int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
 
 bool JZNodeCompiler::irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet)
 {
+    auto env = m_project->environment();
     int t1 = irParamType(p1);
     int t2 = irParamType(p2);
     if(isSet)
-        return JZNodeType::isSameType(t1,t2);
+        return env->isSameType(t1,t2);
     else  //compare
-        return JZNodeType::isSameType(t1,t2) || JZNodeType::isSameType(t2,t1);
+        return env->isSameType(t1,t2) || env->isSameType(t2,t1);
 }
 
 void JZNodeCompiler::addWatchDisplay(const JZNodeIRParam &dst)
@@ -2411,19 +2421,21 @@ void JZNodeCompiler::addWatchDisplay(const JZNodeIRParam &dst)
 
 void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value)
 {
+    auto env = m_project->environment();
+    auto obj_inst = env->objectManager();
     if(dataType < Type_class)
-        addSetVariable(dst,irLiteral(JZNodeType::initValue(dataType,value)));
+        addSetVariable(dst,irLiteral(env->initValue(dataType,value)));
     else
     {   
         if(value == "null")
-            addSetVariable(dst,irLiteral(JZNodeType::defaultValue(Type_nullptr)));
+            addSetVariable(dst,irLiteral(env->defaultValue(Type_nullptr)));
         else if(value.startsWith("{") && value.endsWith("}"))
         {
             QString init_text = value.mid(1,value.size() - 2);
             QList<JZNodeIRParam> in,out;
             if(init_text.isEmpty())
             {
-                in << irLiteral(JZNodeType::typeToName(dataType));
+                in << irLiteral(env->typeToName(dataType));
                 out << dst;
                 addCall("CreateObject",in,out);
             }
@@ -2432,7 +2444,7 @@ void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, con
                 in << irLiteral(init_text);
                 out << dst;
 
-                auto meta = JZNodeObjectManager::instance()->meta(dataType);
+                auto meta = obj_inst->meta(dataType);
                 auto func = meta->function("__fromString__");
                 addCall(func,in,out);
             }
@@ -2442,12 +2454,13 @@ void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, con
 
 void JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src)
 {
+    auto obj_inst = m_project->objectManager();
     Q_ASSERT(irParamTypeMatch(src,dst,true));
     bool clone = false;
     int dst_type = irParamType(dst);
     if(dst_type >= Type_class)
     {
-        auto meta = JZNodeObjectManager::instance()->meta(dst_type);
+        auto meta = obj_inst->meta(dst_type);
         if(meta->isValueType())
         {
             if(dst.isReg() && (dst.id() != Reg_CallIn || !m_regCallFunction->isMemberFunction()))
@@ -2502,8 +2515,8 @@ void JZNodeCompiler::addSetBuffer(const JZNodeIRParam &id, const QByteArray &buf
 
 void JZNodeCompiler::addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst)
 {
-    Q_ASSERT(JZNodeType::canConvertExplicitly(irParamType(src),dst_type));
-    Q_ASSERT(JZNodeType::isSameType(dst_type,irParamType(dst)));
+    Q_ASSERT(m_project->environment()->canConvertExplicitly(irParamType(src),dst_type));
+    Q_ASSERT(m_project->environment()->isSameType(dst_type,irParamType(dst)));
 
     JZNodeIRConvert *op = new JZNodeIRConvert();    
     op->dst = dst;

@@ -44,16 +44,14 @@ void BaseTest::initTestCase()
 void BaseTest::init()
 {
     m_project.clear();
-    m_project.initProject("console");
-    JZProject::setActive(&m_project);
+    m_project.initProject("console");    
     m_file = m_project.mainFile();
     m_engine.setDebug(false);
 }
 
 void BaseTest::cleanup()
 {
-    stop();
-    JZProject::setActive(nullptr);
+    stop();    
 }
 
 void BaseTest::onRuntimeError(JZNodeRuntimeError error)

@@ -8,6 +8,7 @@
 #include "JZNodeIR.h"
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
+#include "JZScriptEnvironment.h"
 
 //NodeRange
 struct NodeRange
@@ -110,25 +111,6 @@ public:
     QList<FunctionHook> hook;
 };
 
-//JZNodeTypeMeta
-class JZNodeTypeMeta
-{
-public:
-    void clear();
-
-    const JZFunctionDefine *function(QString name) const;
-    const JZNodeObjectDefine *object(QString name) const;
-
-    QList<JZFunctionDefine> functionList;
-    QList<JZNodeObjectDefine> objectList;       
-    QList<JZNodeCObjectDelcare> cobjectList;
-    QStringList moduleList;
-};
-QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param);
-QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param);
-void JZNodeRegistType(const JZNodeTypeMeta &type_info);
-void JZNodeUnregistType();
-
 //JZNodeProgram
 class JZNodeBuilder;
 class JZCORE_EXPORT JZNodeProgram 
@@ -149,19 +131,15 @@ public:
     
     QList<JZNodeScript*> scriptList();
     JZNodeScript *script(QString path);   
-
-    const JZFunctionDefine *function(QString name);
+    
     const JZFunctionDebugInfo *debugInfo(QString name);
-
-    QString irToString(JZNodeIR *ir);
-    QString dump();   
+        
     QString error();
     
 protected:
     Q_DISABLE_COPY(JZNodeProgram);
 
-    friend JZNodeBuilder;    
-    QString toString(JZNodeIRParam param);
+    friend JZNodeBuilder;        
     
     QString m_filePath;
     QString m_error;

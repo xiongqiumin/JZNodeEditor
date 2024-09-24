@@ -13,10 +13,10 @@ public:
     JZNodeBuildThread();
     ~JZNodeBuildThread();
 
-    void init(JZProject *project,JZNodeProgram *program);
+    void init(JZNodeProgram *program);
     JZNodeBuilder *builder();
 
-    void startBuild();
+    void startBuild(JZProject *project);
     void stopBuild();
 
 signals:
@@ -24,9 +24,11 @@ signals:
 
 protected:
     virtual void run() override;
+    void sync(JZProject *project);
     
     JZNodeProgram *m_program;
     JZNodeBuilder m_builder;
+    JZProject m_project;
 };
 
 #endif

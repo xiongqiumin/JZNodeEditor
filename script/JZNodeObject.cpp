@@ -11,21 +11,13 @@
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
 #include "JZNodeVariableBind.h"
-
-int JZClassId(const QString &name)
-{
-    return JZNodeObjectManager::instance()->getClassId(name);
-}
-
-QString JZClassName(int id)
-{
-    return JZNodeObjectManager::instance()->getClassName(id);
-}
+#include "JZScriptEnvironment.h"
 
 void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer slot)
 {
-    auto s = JZNodeObjectManager::instance()->signal(single.functionName);
-    auto func = JZNodeFunctionManager::instance()->function(slot.functionName);
+    auto env = g_engine->environment();
+    auto s = env->objectManager()->signal(single.functionName);
+    auto func = env->functionManager()->function(slot.functionName);
     Q_ASSERT(s && func && JZNodeType::sigSlotTypeMatch(s,func));
     if (s->csignal)
         s->csignal->connect(sender,recv,func->name);
@@ -35,8 +27,9 @@ void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObjec
 
 void JZObjectDisconnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer slot)
 {
-    auto s = JZNodeObjectManager::instance()->signal(single.functionName);
-    auto func = JZNodeFunctionManager::instance()->function(slot.functionName);
+    auto env = g_engine->environment();
+    auto s = env->objectManager()->signal(single.functionName);
+    auto func = env->functionManager()->function(slot.functionName);
     Q_ASSERT(s && func);
     if (s->csignal)
         s->csignal->disconnect(sender,recv,func->name);
@@ -77,6 +70,7 @@ JZNodeObjectDefine::JZNodeObjectDefine()
     isCObject = false;
     isUiWidget = false;    
     valueType = false;
+    manager = nullptr;
 }
 
 QString JZNodeObjectDefine::fullname() const
@@ -122,30 +116,17 @@ QStringList JZNodeObjectDefine::paramList(bool hasParent) const
 }
 
 const JZParamDefine *JZNodeObjectDefine::param(const QString &name) const
-{
-    QStringList list = name.split(".");
-
+{    
     auto def = this;
-    for(int i = 0; i < list.size(); i++)
+    while (def)
     {
-        while(def)
-        {
-            auto it = def->params.find(list[i]);
-            if(it != def->params.end())
-            {
-                if(i == list.size() - 1)
-                    return &it.value();
-                else
-                {
-                    def = JZNodeObjectManager::instance()->meta(it->dataType());
-                    break;
-                }
-            }
-            def = def->super();
-        }
-        if(!def)
-            break;
-    }
+        auto it = def->params.find(list[i]);
+        if(it != def->params.end())
+            return &it.value();
+        
+        def = def->super();
+    }            
+     
     return nullptr;
 }
 
@@ -182,7 +163,7 @@ JZFunctionDefine JZNodeObjectDefine::initSlotFunction(QString name,QString singl
     const JZParamDefine *param_def = param(name);
     Q_ASSERT(param_def);
 
-    auto param_meta = JZNodeObjectManager::instance()->meta(param_def->dataType());
+    auto param_meta = manager->meta(param_def->dataType());
     Q_ASSERT(param_meta && param_meta->signal(single));
     
     auto s = param_meta->signal(single);
@@ -370,7 +351,7 @@ const JZNodeObjectDefine *JZNodeObjectDefine::super() const
     if(superName.isEmpty())
         return nullptr;
 
-    return JZNodeObjectManager::instance()->meta(superName);
+    return manager->meta(superName);
 }
 
 const JZNodeObjectDefine *JZNodeObjectDefine::cBase() const
@@ -388,12 +369,12 @@ const JZNodeObjectDefine *JZNodeObjectDefine::cBase() const
 
 bool JZNodeObjectDefine::isInherits(int type) const
 {
-    return JZNodeObjectManager::instance()->isInherits(id,type);
+    return manager->isInherits(id,type);
 }
 
 bool JZNodeObjectDefine::isInherits(const QString &name) const
 {
-    return isInherits(JZNodeObjectManager::instance()->getClassId(name));
+    return isInherits(manager->getClassId(name));
 }
 
 bool JZNodeObjectDefine::isCopyable() const
@@ -406,7 +387,7 @@ bool JZNodeObjectDefine::isCopyable() const
         {
             if(JZNodeType::isObject(v.dataType()))
             {                
-                bool ret = JZNodeObjectManager::instance()->meta(v.dataType())->isCopyable();
+                bool ret = manager->meta(v.dataType())->isCopyable();
                 if(!ret)
                     return false;
             }
@@ -512,6 +493,11 @@ JZNodeObject::~JZNodeObject()
     clearCObj();
 }
 
+JZScriptEnvironment *JZNodeObject::env()
+{
+    return m_define->manager->env();
+}
+
 const JZCParamDefine *JZNodeObject::cparam(const QString &name) const
 {
     const JZNodeObjectDefine *def = m_define;
@@ -570,12 +556,12 @@ bool JZNodeObject::isNull() const
 
 bool JZNodeObject::isInherits(int type) const
 {
-    return JZNodeObjectManager::instance()->isInherits(m_define->id,type);
+    return m_define->isInherits(type);
 }
 
 bool JZNodeObject::isInherits(const QString &name) const
 {
-    return isInherits(JZNodeObjectManager::instance()->getClassId(name));
+    return m_define->isInherits(name);
 }
 
 bool JZNodeObject::isCopyable() const
@@ -653,8 +639,7 @@ void JZNodeObject::setParam(const QString &name, const QVariant &value)
         auto ref = it->data();
         if(ref)
         {
-            Q_ASSERT(JZNodeType::isSameType(value, *ref));
-
+            Q_ASSERT(env()->isSameType(value, *ref));
             if (*ref != value)
             {
                 *ref = value;
@@ -755,7 +740,7 @@ void JZNodeObject::updateUiWidget(QWidget *widget)
     Q_ASSERT(isInherits("QWidget"));
 
     QObject *obj = (QObject*)m_cobj;
-    auto inst = JZNodeObjectManager::instance();
+    auto inst = env()->objectManager();
 
     auto def = m_define;
     for (int i = 0; i < m_define->widgetParams.size(); i++)
@@ -833,7 +818,7 @@ void JZNodeObject::autoBind()
         auto def = m_params.find(it->widget);
         if (def != m_params.end())
         {
-            QWidget *w = JZObjectCast<QWidget>(*def->data());
+            QWidget *w = env()->objectCast<QWidget>(*def->data());
             BindManager::instance()->bind(w, WidgetProp_Value, this, it->variable, it->dir);
             it++;
         }
@@ -928,11 +913,11 @@ void JZNodeObjectPtr::releaseOwner()
     data->isOwner = false;
 }
 
-bool JZNodeObjectPtr::operator ==(const JZNodeObjectPtr &other) const
+bool JZNodeObjectPtr::operator==(const JZNodeObjectPtr &other) const
 {
     JZNodeObject *o1 = object();
-    JZNodeObject *o2 = other.object();
-    return JZNodeObjectManager::instance()->equal(o1,o2);
+    JZNodeObject *o2 = other.object();    
+    return o1->meta()->manager->equal(o1,o2);
 }
 
 bool JZNodeObjectPtr::operator !=(const JZNodeObjectPtr &other) const
@@ -988,38 +973,23 @@ JZCORE_EXPORT JZNodeObject* qobjectToJZObject(QObject *obj)
         return (JZNodeObject*)ptr;
 }
 
-JZCORE_EXPORT JZNodeObject *objectFromString(int data_type,const QString &text)
-{
-    auto meta = JZNodeObjectManager::instance()->meta(data_type);
-    auto func = meta->className + ".__fromString__";
-    QVariantList in,out;
-    in << text;
-    if(!g_engine->call(func,in,out))
-        return nullptr;
-
-    JZNodeObjectPtr ptr = out[0].value<JZNodeObjectPtr>();
-    ptr.releaseOwner();
-    return ptr.object();
-}   
-
-
 //JZNodeObjectManager
-JZNodeObjectManager *JZNodeObjectManager::instance()
-{
-    static JZNodeObjectManager inst;
-    return &inst;
-}
-
-JZNodeObjectManager::JZNodeObjectManager()
+JZNodeObjectManager::JZNodeObjectManager(JZScriptEnvironment *env)
 {        
     m_objectId = Type_internalObject;
     m_enumId = Type_internalEnum;    
     m_testMode = false;
+    m_env = env;
 }
 
 JZNodeObjectManager::~JZNodeObjectManager()
 {    
     m_metas.clear();    
+}
+
+JZScriptEnvironment *JZNodeObjectManager::env()
+{
+    return m_env;
 }
 
 void JZNodeObjectManager::init()
@@ -1033,7 +1003,7 @@ void JZNodeObjectManager::init()
     jzbind::ClassBind<JZFunctionPointer> cls_function(Type_function,"function");
     cls_function.regist();
 
-    registQtClass();    
+    registQtClass(m_env);    
     initFunctions();           
 }
 
@@ -1499,7 +1469,7 @@ JZNodeObject* JZNodeObjectManager::clone(JZNodeObject *src)
 
 bool JZNodeObjectManager::equal(JZNodeObject* o1,JZNodeObject *o2)
 {
-    Q_ASSERT(JZNodeType::isSameType(o1->baseType(),o2->baseType()));
+    Q_ASSERT(m_env->isSameType(o1->baseType(),o2->baseType()));
 
     if(o1->isValueType())
     {

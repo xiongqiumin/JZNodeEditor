@@ -13,13 +13,10 @@ public:
     JZScriptClassItem();
     virtual ~JZScriptClassItem();    
 
-    QByteArray toBuffer();
-    bool fromBuffer(const QByteArray &object);
-
     void setClass(QString className, QString super);
     QString className() const;
 
-    int classType() const;
+    int classType();
     void setClassType(int classId);
 
     QString superClass() const;
@@ -44,7 +41,10 @@ public:
     void setUiFile(QString file);
     QList<JZParamDefine> uiWidgets();
 
-protected:           
+protected:
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual bool loadFromStream(QDataStream &s) override;
+
     int m_classId;
     QString m_super;
     QString m_uiFile;        

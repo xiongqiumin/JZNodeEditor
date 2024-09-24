@@ -124,6 +124,9 @@ void JZNodeAutoRunWidget::copyDependValue(ScriptDepend &old, ScriptDepend &dst)
 
 void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 {
+    auto obj_inst = m_editor->project()->objectManager();
+    auto func_inst = m_editor->project()->functionManager();
+
     auto old = m_depend;
     m_depend = depend;
     copyDependValue(old,m_depend);
@@ -156,7 +159,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         auto item_member = new JZNodeProperty("成员变量", NodeProprety_GroupId);
         item_input->addSubProperty(item_member);
 
-        auto meta = JZNodeObjectManager::instance()->meta(m_depend.function.className);
+        auto meta = obj_inst->meta(m_depend.function.className);
 
         auto it = m_depend.member.begin();
         while(it != m_depend.member.end())
@@ -219,7 +222,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             item_function->addSubProperty(enable_item);
             addPin(enable_item, Pin_hook, 0, hook.nodeId);
             
-            auto func = JZNodeFunctionManager::instance()->function(hook.function);
+            auto func = func_inst->function(hook.function);
             auto &node_out = hook.params;
             for (int i = 0; i < node_out.size(); i++)
             {                

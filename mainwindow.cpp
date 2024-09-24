@@ -24,6 +24,7 @@
 #include "JZAboutDialog.h"
 #include "JZProjectSettingDialog.h"
 #include "JZNodeParamDelegate.h"
+#include "JZNodeProgramDumper.h"
 
 //Setting
 Setting::Setting()
@@ -92,9 +93,11 @@ MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> act_flags)
 }
 
 //MainWindow
+MainWindow *g_mainWindow = nullptr;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {    
+    g_mainWindow = this;
     m_editor = nullptr;    
     m_processMode = Process_none;
     m_compilerTimer = new QTimer(this);
@@ -116,7 +119,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(&m_runThread,&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
     connect(&m_buildThread,&JZNodeBuildThread::sigResult,this, &MainWindow::onBuildFinish);
-    m_buildThread.init(&m_project,&m_program);
+    m_buildThread.init(&m_program);
 
     auto engine = m_runThread.engine();
     connect(engine,&JZNodeEngine::sigWatchNotify,this,&MainWindow::onWatchNotify,Qt::BlockingQueuedConnection);
@@ -125,8 +128,7 @@ MainWindow::MainWindow(QWidget *parent)
     initUi();     
     updateActionStatus();    
         
-    //initLocalProcessTest();
-    JZProject::setActive(&m_project);
+    //initLocalProcessTest();    
 }
 
 MainWindow::~MainWindow()
@@ -1062,9 +1064,7 @@ void MainWindow::switchEditor(JZEditor *editor)
 
     m_editor = editor;
     if(editor != nullptr)
-    {        
-        QMenu *menu;        
-
+    {                
         m_editorStack->setCurrentWidget(m_editor);
         m_editor->addMenuBar(this->menuBar());
         m_editor->active();
@@ -1308,10 +1308,10 @@ void MainWindow::onWatchNotify()
     {
         JZNodeGemo gemo = JZNodeCompiler::paramGemo(it.key());
         JZNodeDebugParamValue value;
-        value.type = JZNodeType::variantType(it.value());
+        value.type = m_programEnv.variantType(it.value());
         value.value = JZNodeType::debugString(it.value());
 
-        auto data_type = JZNodeType::variantType(it.value());
+        auto data_type = m_programEnv.variantType(it.value());
         auto d = inst->delegate(data_type);
         if (d && d->pack)
             value.binValue = d->pack(it.value());
@@ -1347,7 +1347,7 @@ void MainWindow::updateAutoWatch(int stack_index)
     JZNodeGetDebugParam param_info;
     param_info.stack = stack_index;
     
-    auto func = m_program.function(stack.function);
+    auto func = m_programEnv.functionManager()->function(stack.function);
     if(func->isCFunction)
     {
         m_watchAuto->clear();
@@ -1467,7 +1467,7 @@ void MainWindow::build()
     
     m_runThread.stopRun();
     m_buildThread.stopBuild();
-    m_buildThread.startBuild();
+    m_buildThread.startBuild(&m_project);
     m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
 }
 
@@ -1499,7 +1499,9 @@ void MainWindow::saveProgram()
         m_log->addLog(Log_Compiler, "generate program failed");
         return;
     }
-    saveToFile(build_path + "/" + m_project.name() + ".jsm", m_program.dump());
+
+    JZNodeProgramDumper dumper;
+    saveToFile(build_path + "/" + m_project.name() + ".jsm", dumper.dump(&m_program));
 }
 
 void MainWindow::startUnitTest(QString runItemPath)

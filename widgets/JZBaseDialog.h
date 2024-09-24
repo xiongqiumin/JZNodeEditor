@@ -10,7 +10,7 @@ class JZCORE_EXPORT JZBaseDialog : public QDialog
 
 public:
     JZBaseDialog(QWidget *parent = Q_NULLPTR);
-    ~JZBaseDialog();       
+    ~JZBaseDialog();           
 
 protected slots:
     void onBtnOkClicked();

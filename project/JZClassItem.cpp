@@ -16,20 +16,16 @@ JZScriptClassItem::~JZScriptClassItem()
 
 }
 
-QByteArray JZScriptClassItem::toBuffer()
+void JZScriptClassItem::saveToStream(QDataStream &s) const   
 {
-    QByteArray buffer;
-    QDataStream s(&buffer, QIODevice::WriteOnly);
     s << m_name;    
     s << m_super;
     s << m_uiFile;
     s << m_classId;    
-    return buffer;
 }
 
-bool JZScriptClassItem::fromBuffer(const QByteArray &buffer)
+bool JZScriptClassItem::loadFromStream(QDataStream &s)
 {
-    QDataStream s(buffer);
     s >> m_name;
     s >> m_super;
     s >> m_uiFile;
@@ -59,9 +55,9 @@ QString JZScriptClassItem::uiFile() const
     return m_uiFile;
 }
 
-int JZScriptClassItem::classType() const
+int JZScriptClassItem::classType()
 {
-    return JZNodeObjectManager::instance()->getClassId(m_name);
+    return project()->objectManager()->getClassId(m_name);
 }
 
 void JZScriptClassItem::setClassType(int classId)
@@ -76,7 +72,8 @@ QString JZScriptClassItem::superClass() const
 
 bool JZScriptClassItem::addMemberVariable(QString name,int dataType,const QString &v)
 {    
-    return addMemberVariable(name, JZNodeType::typeToName(dataType), v);    
+    auto env = project()->environment();
+    return addMemberVariable(name, env->typeToName(dataType), v);
 }
 
 bool JZScriptClassItem::addMemberVariable(QString name, QString dataType, const QString &v)
@@ -101,7 +98,7 @@ QStringList JZScriptClassItem::memberVariableList(bool hasUi)
     QStringList list = paramFile()->variableList();
     if (hasUi && !m_uiFile.isEmpty())
     {
-        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
         if (ui_item)
         {
             auto widgets = ui_item->widgets();
@@ -121,7 +118,7 @@ const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
 
     if (hasUi && !m_uiFile.isEmpty())
     {
-        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
         if (ui_item)        
             return ui_item->widgetVariable(name);
     }
@@ -142,7 +139,7 @@ JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
 
     JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    
     file->setFunction(func);
-    m_project->addItem(itemPath(), file);        
+    project()->addItem(itemPath(), file);
     return file;
 }
 
@@ -170,7 +167,7 @@ JZScriptItem *JZScriptClassItem::memberFunction(QString func)
 void JZScriptClassItem::removeMemberFunction(QString func)
 {
     JZScriptItem *item = memberFunction(func);
-    m_project->removeItem(item->itemPath());    
+    project()->removeItem(item->itemPath());
 }
 
 QList<JZParamDefine> JZScriptClassItem::uiWidgets()
@@ -178,7 +175,7 @@ QList<JZParamDefine> JZScriptClassItem::uiWidgets()
     QList<JZParamDefine> list;
     if (!m_uiFile.isEmpty())
     {
-        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
         if(ui_item)
             list = ui_item->widgets();
     }
@@ -224,7 +221,7 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
         
     if(!m_uiFile.isEmpty())
     {        
-        auto ui_item = dynamic_cast<JZUiFile*>(m_project->getItem(m_uiFile));
+        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
         define.isUiWidget = true;
         define.widgetXml = ui_item->xml();
         define.widgetParams = ui_item->widgets();

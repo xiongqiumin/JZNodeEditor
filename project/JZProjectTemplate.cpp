@@ -28,7 +28,7 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
 
     if (temp == "ui")
     {  
-        auto func_inst = JZNodeFunctionManager::instance();
+        auto func_inst = project->environment()->functionManager();
         auto window_file = new JZScriptFile();
         window_file->setName("MainWindow.jz");
 

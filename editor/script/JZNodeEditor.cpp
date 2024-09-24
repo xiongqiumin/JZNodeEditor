@@ -20,7 +20,7 @@ bool JZListInitFunction(JZNode *node)
 {
     QString value = node->paramInValue(0);
     value.replace(",", "\n");
-    QDialog dialog(node->file()->editor());
+    QDialog dialog;
 
     QVBoxLayout *l = new QVBoxLayout();
     l->addWidget(new QLabel("init"));
@@ -47,17 +47,6 @@ bool JZListInitFunction(JZNode *node)
             result.push_back(line);
     }
     node->setParamInValue(0, result.join(","));
-    return true;
-}
-
-//JZMemberEdit
-bool JZMemberEdit(JZNode *node)
-{
-    JZNodeMemberSelectDialog dialog(node->file()->editor());
-    dialog.init(node);
-    if (dialog.exec() != QDialog::Accepted)
-        return false;
-
     return true;
 }
 

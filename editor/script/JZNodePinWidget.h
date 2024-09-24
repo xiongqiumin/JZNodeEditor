@@ -6,30 +6,24 @@
 #include "JZProcess.h"
 #include "JZNodeDebugPacket.h"
 #include "QImageLabel.h"
+#include "JZEditorGlobal.h"
 
-class JZCORE_EXPORT JZNodeFlagEditWidget : public QWidget
+class JZCORE_EXPORT JZNodePinPopupWidget: public QWidget
 {
     Q_OBJECT
 
 public:    
-    JZNodeFlagEditWidget(QWidget *parent = nullptr);
-    ~JZNodeFlagEditWidget();
-
-    void setFlagType(QString flag);
-    QString flagType();
+    JZNodePinPopupWidget(QWidget *parent = nullptr);
+    ~JZNodePinPopupWidget();
 
     QString value();
     void setValue(QString text);    
 
 signals:
-    void sigValueChanged();
-
-protected slots:
-    void onSettingClicked();
+    void sigSettingClicked();
 
 protected:
-    QLineEdit *m_line;
-    QString m_flagType;    
+    QLineEdit *m_line;    
 };
 
 class JZCORE_EXPORT JZNodeParamTypeWidget : public QComboBox
@@ -39,6 +33,7 @@ class JZCORE_EXPORT JZNodeParamTypeWidget : public QComboBox
 public:
     JZNodeParamTypeWidget(QWidget *parent = nullptr);
 
+    void init(JZNodeObjectManager *inst);
     QString type();
     void setType(QString type);
 

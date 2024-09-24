@@ -21,7 +21,7 @@ bool JZNodeFunction::isMemberCall()
     if (!class_item)
         return false;
 
-    auto meta = JZNodeFunctionManager::instance()->function(m_functionName);
+    auto meta = func_inst->function(m_functionName);
     if (meta && meta->isMemberFunction() && JZNodeType::isInherits(class_item->className(),meta->className))
         return true;
 
@@ -31,7 +31,7 @@ bool JZNodeFunction::isMemberCall()
 void JZNodeFunction::updateName()
 {
     setName(m_functionName);
-    auto meta = JZNodeFunctionManager::instance()->function(m_functionName);
+    auto meta = func_inst->function(m_functionName);
     if(meta && meta->isMemberFunction())
     {
         QString v = variable();
@@ -73,7 +73,7 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
 
 void JZNodeFunction::setFunction(const QString &name)
 {
-    auto def = JZNodeFunctionManager::instance()->function(name);
+    auto def = func_inst->function(name);
     setFunction(def);
 }
 

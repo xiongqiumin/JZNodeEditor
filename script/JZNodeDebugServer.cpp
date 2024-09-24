@@ -244,7 +244,7 @@ QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParam &info)
 
 JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
 {
-    auto func_inst = JZNodeFunctionManager::instance();
+    auto func_inst = m_engine->environment()->functionManager();
 
     JZNodeDebugParamValue ret;
     if (isJZObject(value))

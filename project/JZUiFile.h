@@ -23,8 +23,11 @@ public:
     QList<JZParamDefine> widgets();
     
 protected:
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual bool loadFromStream(QDataStream &s) override;
+
     void updateDefine();
-    void walkChild(const QDomElement &root);
+    void walkChild(const QDomElement &root);    
 
     QString m_xml;
     QList<JZParamDefine> m_widgets;

@@ -69,7 +69,7 @@ JZParamDefine JZNodeLocalParamEditDialog::param()
 
 void JZNodeLocalParamEditDialog::onTypeChanged()
 {
-    int data_type = JZNodeType::nameToType(m_typeWidget->type());
+    int data_type = editorEnvironment()->nameToType(m_typeWidget->type());
     m_valueWidget->initWidget(data_type);
 }
 

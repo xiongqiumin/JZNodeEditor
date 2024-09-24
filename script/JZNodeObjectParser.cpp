@@ -294,7 +294,7 @@ JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
 
 JZNodeObject *JZNodeObjectParser::readObject()
 {    
-    auto inst = JZNodeObjectManager::instance();
+    auto inst = g_engine->environment()->objectManager();
     Token tk = nextToken();
     QString type = tk.word;
 
@@ -313,7 +313,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
         return nullptr;
     }
     
-    auto meta = JZNodeObjectManager::instance()->meta(type);
+    auto meta = inst->meta(type);
     if (!meta)
     {
         makeError("no object " + type);
@@ -367,7 +367,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
     }
     else
     {
-        JZNodeObject *obj = JZNodeObjectManager::instance()->create(meta->id);
+        JZNodeObject *obj = inst->create(meta->id);
         QScopedPointer<JZNodeObject> ptr(obj);
         QScopedPointer<JZMap> map(readMap("string","any"));        
         if (!map)

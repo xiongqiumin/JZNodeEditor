@@ -11,8 +11,9 @@ typedef bool(*JZNodeFunctionEdit)(JZNode *node);
 class JZCORE_EXPORT JZNodeFunctionManager
 {
 public:
-    static JZNodeFunctionManager *instance();
-
+    JZNodeFunctionManager(JZScriptEnvironment *env);
+    ~JZNodeFunctionManager();           
+    
     void init();            
     void setUserRegist(bool flag);
     void clearUserReigst();     
@@ -29,14 +30,12 @@ public:
     void registFunctionImpl(JZFunction &impl);    
     const JZFunction *functionImpl(QString name);
 
-protected:
-    JZNodeFunctionManager();
-    ~JZNodeFunctionManager();           
-    
+protected:        
     QMap<QString, JZFunctionDefine> m_funcDefine;
     QMap<QString, JZFunction> m_funcImpl;
     bool m_userRegist;    
     QStringList m_userFuncs;
+    JZScriptEnvironment *m_env;
 };
 void updateParam(JZFunctionDefine &dei,CFunction *func);
 
