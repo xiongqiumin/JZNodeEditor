@@ -54,7 +54,7 @@ void JZNodeMemberSelectDialog::updateTree()
     if (m_className == className)
         return;
 
-    auto obj_inst = m_project->objectManager();
+    auto obj_inst = editorObjectManager();
     m_className = className;
     ui->treeWidget->clear();
     ui->listWidget->clear();
@@ -72,7 +72,7 @@ QTreeWidgetItem *JZNodeMemberSelectDialog::createTreeItem(QString name, int type
     QTreeWidgetItem *item = new QTreeWidgetItem();
     item->setText(0, name);
 
-    auto obj_inst = m_project->objectManager();
+    auto obj_inst = editorObjectManager();
     if (JZNodeType::isObject(type))
     {
         auto def = obj_inst->meta(type);
@@ -102,7 +102,7 @@ void JZNodeMemberSelectDialog::on_lineName_returnPressed()
 
 void JZNodeMemberSelectDialog::on_btnSelect_clicked()
 {
-    auto obj_inst = m_project->objectManager();
+    auto obj_inst = editorObjectManager();
     QString className = ui->lineName->text();
     auto def = obj_inst->meta(className);
 

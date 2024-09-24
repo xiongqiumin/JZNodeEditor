@@ -230,14 +230,14 @@ bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &erro
     //检测数据类型
     if(pin_from->isParam())
     {
-        QList<int> from_type = pin_from->dataTypeId();
+        QList<int> from_type = env->nameToTypeList(pin_from->dataType());
         if (from_type.size() == 0)
         {
             error = pin_from->name() + "输出数据未设置类型";
             return false;
         }
 
-        QList<int> in_type = pin_to->dataTypeId();
+        QList<int> in_type = env->nameToTypeList(pin_to->dataType());
         if (in_type.size() == 0) 
         {
             error = "输入数据未设置类型";
@@ -260,13 +260,9 @@ bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &erro
         }        
         if(!ok)
         {
-            QStringList inTypes,formTypes;
-            for(int i = 0; i < in_type.size(); i++)
-                inTypes << env->typeToName(in_type[i]);
-            for(int i = 0; i < from_type.size(); i++)
-                formTypes << env->typeToName(from_type[i]);
-            
-            error = "数据类型不匹配,需要" + inTypes.join(",") + ", 输入为" + formTypes.join(",");
+            QStringList toTypes = pin_from->dataType();
+            QStringList formTypes = pin_from->dataType();            
+            error = "数据类型不匹配,需要" + toTypes.join(",") + ", 输入为" + formTypes.join(",");
             return false;
         }
     }
@@ -485,7 +481,8 @@ void JZScriptItem::addLocalVariable(const JZParamDefine &def)
 
 void JZScriptItem::addLocalVariable(const QString &name,int dataType,const QString &value)
 {
-    addLocalVariable(JZParamDefine(name,dataType,value));
+    QString type = project()->environment()->typeToName(dataType);
+    addLocalVariable(JZParamDefine(name, type,value));
 }
 
 void JZScriptItem::removeLocalVariable(QString name)

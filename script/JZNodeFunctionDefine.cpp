@@ -8,23 +8,11 @@ JZParamDefine::JZParamDefine()
 {    
 }
 
-JZParamDefine::JZParamDefine(QString param_name, int dataType, const QString &v)
-{
-    this->name = param_name;
-    this->type = JZNodeType::typeToName(dataType);
-    this->value = v;
-}
-
 JZParamDefine::JZParamDefine(QString param_name, QString dataType, const QString &v)
 {
     this->name = param_name;
     this->type = dataType;
     this->value = v;
-}
-
-int JZParamDefine::dataType() const
-{
-    return JZNodeType::nameToType(type);
 }
 
 QDataStream &operator<<(QDataStream &s, const JZParamDefine &param)
@@ -150,29 +138,7 @@ bool JZFunctionDefine::isMemberFunction() const
 
 bool JZFunctionDefine::isVariadicFunction() const
 {
-    return (paramIn.size() > 0 && paramIn.back().dataType() == Type_args);
-}
-
-void JZFunctionDefine::updateParam(CFunction *func)
-{
-    paramIn.clear();
-    paramOut.clear();
-    for (int i = 0; i < func->args.size(); i++)
-    {
-        QString param_name = "input" + QString::number(i);
-        int dataType = JZNodeType::typeidToType(func->args[i]);
-        Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->args[i]));
-
-        paramIn.push_back(JZParamDefine(param_name, dataType));
-    }
-    if (func->result != typeid(void).name())
-    {
-        QString param_name = "output";
-        int dataType = JZNodeType::typeidToType(func->result);
-        Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->result));
-
-        paramOut.push_back(JZParamDefine(param_name, dataType));
-    }
+    return (paramIn.size() > 0 && paramIn.back().type == JZNodeType::typeName(Type_args));
 }
 
 void JZFunctionDefine::setDefaultValue(int index, QString text)
@@ -262,14 +228,6 @@ QDataStream &operator>>(QDataStream &s, JZSignalDefine &param)
 }
 
 //JZParam
-JZParam JZParam::formDefine(const JZParamDefine &def)
-{
-    JZParam param;
-    param.name = def.name;
-    param.dataType = def.dataType();
-    return param;
-}
-
 JZParam::JZParam()
 {
     dataType = Type_none;
@@ -279,14 +237,6 @@ JZParam::JZParam(const QString &param_name, int type)
 {
     this->name = param_name;
     this->dataType = type;
-}
-
-JZParamDefine JZParam::define() const
-{
-    JZParamDefine def;
-    def.name = name;
-    def.type = JZNodeType::typeToName(dataType);    
-    return def;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZParam &param)

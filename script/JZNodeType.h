@@ -151,6 +151,7 @@ class JZCORE_EXPORT JZNodeType
 public:
     static void init();
 
+    static QString typeName(int type);
     static QString opName(int op);
     static int opType(const QString &name);
     static int opPri(const QString &op);

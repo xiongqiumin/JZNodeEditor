@@ -529,7 +529,7 @@ void QtWrapper::initDialogs()
     
     int file_dlg_option = jzbind::registEnum<QFileDialog::Option>("QFileDialog.Option");
     int file_dlg_options = jzbind::registEnum<QFileDialog::Options>("QFileDialog.Options");
-    m_objInst->enumMeta(file_dlg_options)->setFlag(true, file_dlg_option);
+    m_objInst->setFlag(file_dlg_options, file_dlg_option);
 
     jzbind::ClassBind<QFileDialog> cls_file_dlg("QFileDialog", "Dialog");
     auto open_file_def = cls_file_dlg.def("getOpenFileName", true, [](QWidget *parent,QString caption,QString dir,QString filter)->QString 
@@ -602,7 +602,7 @@ void QtWrapper::initFiles()
     JZNodeEnumDefine file_flag_define; 
     file_flag_define.init("QFile.OpenMode",{},{});
     int file_mode_flag = obj_inst->registCEnum(file_mode_define,typeid(QFile::OpenMode).name());
-    obj_inst->enumMeta(file_mode_enum)->setFlag(true, file_mode_flag);
+    obj_inst->setFlag(file_mode_flag, file_mode_enum);
 
     jzbind::ClassBind<QFile> cls_file("QFile");
     cls_file.def("exists", false, QOverload<const QString&>::of(&QFile::exists));
@@ -640,25 +640,25 @@ void QtWrapper::initFiles()
     cls_dir.regist();
 }
 
-QVariant colorEnum_to_color(JZScriptEnvironment *env,const QVariant &v)
+QVariant colorEnum_to_color(const JZScriptEnvironment *env,const QVariant &v)
 {
     QColor *color = new QColor((Qt::GlobalColor)v.toInt());
-    auto ptr = env->objectRefrence(color,true);
+    auto ptr = env->objectManager()->objectRefrence(color,true);
     return QVariant::fromValue(ptr);
 }
 
-QVariant colorEnum_to_brush(JZScriptEnvironment *env,const QVariant &v)
+QVariant colorEnum_to_brush(const JZScriptEnvironment *env,const QVariant &v)
 {
     QBrush *brush = new QBrush((Qt::GlobalColor)v.toInt());
-    auto ptr = env->objectRefrence(brush,true);
+    auto ptr = env->objectManager()->objectRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 
-QVariant color_to_brush(JZScriptEnvironment *env,const QVariant &v)
+QVariant color_to_brush(const JZScriptEnvironment *env,const QVariant &v)
 {    
     QColor *c = jzbind::fromVariant<QColor*>(v);
     QBrush *brush = new QBrush(*c);
-    auto ptr = env->objectRefrence(brush,true);
+    auto ptr = env->objectManager()->objectRefrence(brush,true);
     return QVariant::fromValue(ptr);
 }
 

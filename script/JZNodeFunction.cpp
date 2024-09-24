@@ -21,8 +21,9 @@ bool JZNodeFunction::isMemberCall()
     if (!class_item)
         return false;
 
-    auto meta = func_inst->function(m_functionName);
-    if (meta && meta->isMemberFunction() && JZNodeType::isInherits(class_item->className(),meta->className))
+    auto env = environment();
+    auto meta = env->functionManager()->function(m_functionName);
+    if (meta && meta->isMemberFunction() && env->isInherits(class_item->className(),meta->className))
         return true;
 
     return false;
@@ -30,6 +31,7 @@ bool JZNodeFunction::isMemberCall()
 
 void JZNodeFunction::updateName()
 {
+    auto func_inst = environment()->functionManager();
     setName(m_functionName);
     auto meta = func_inst->function(m_functionName);
     if(meta && meta->isMemberFunction())
@@ -73,6 +75,8 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
 
 void JZNodeFunction::setFunction(const QString &name)
 {
+    Q_ASSERT(environment());
+    auto func_inst = environment()->functionManager();
     auto def = func_inst->function(name);
     setFunction(def);
 }
@@ -80,6 +84,8 @@ void JZNodeFunction::setFunction(const QString &name)
 void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 {
     Q_ASSERT(define);            
+
+    auto env = environment();
     m_functionName = define->fullName();
     
     clearPin();
@@ -95,7 +101,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         pin.setName(define->paramIn[i].name);    
         pin.setFlag(Pin_param | Pin_in | Pin_dispName);
         pin.setDataType({define->paramIn[i].type });
-        if (JZNodeType::isBaseOrEnum(define->paramIn[i].dataType()))        
+        if (JZNodeType::isBaseOrEnum(env->nameToType(define->paramIn[i].type)))
             pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);
         pin.setValue(define->paramIn[i].value);
         addPin(pin);
@@ -159,6 +165,7 @@ bool JZNodeFunction::update(QString &error)
 
 bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
 {
+    auto env = environment();
     auto def = c->function(m_functionName);
     if (!def)
     {
@@ -190,7 +197,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
 
     if (def->isMemberFunction() && c->isPinLiteral(m_id, paramIn(0)))
     {
-        int this_type = def->paramIn[0].dataType();
+        int this_type = env->nameToType(def->paramIn[0].type);
         c->setPinType(m_id, paramIn(0), this_type);
         QString name = c->pinLiteral(m_id, paramIn(0));
         if (name.isEmpty())

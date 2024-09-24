@@ -12,7 +12,7 @@ enum
 {
     Opencv_mat = 15000,
 };
-
+/*
 QVariant createMat(const QString &value)
 {
     Mat *mat = new Mat();
@@ -38,7 +38,7 @@ QVariant matUnpack(const QByteArray &buffer)
     image->loadFromData(buffer);
     return JZObjectCreateRefrence(image, true);
 }
-
+*/
 //JZModuleOpencv
 JZModuleOpencv::JZModuleOpencv()
 {        
@@ -85,9 +85,9 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     JZNodeParamDelegate d_mat;
     d_mat.editType = Type_imageEdit;
     d_mat.createDisplay = CreateParamDisplayWidget<JZNodeImageDisplayWidget>;
-    d_mat.createParam = createMat;    
-    d_mat.pack = matPack;
-    d_mat.unpack = matUnpack;
+    //d_mat.createParam = createMat;    
+    //d_mat.pack = matPack;
+    //d_mat.unpack = matUnpack;
     d_inst->registDelegate(cls_mat.id(), d_mat);
 }
 

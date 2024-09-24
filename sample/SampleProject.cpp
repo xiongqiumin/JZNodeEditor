@@ -14,8 +14,8 @@ SampleProject::SampleProject()
     QFileInfo info(__FILE__);
     m_root = info.path();
 
-    m_objInst = m_project.objectManager();
-    m_funcInst = m_project.functionManager();
+    m_objInst = m_project.environment()->objectManager();
+    m_funcInst = m_project.environment()->functionManager();
 }
 
 SampleProject::~SampleProject()

@@ -3,7 +3,8 @@
 
 #include "JZScriptEnvironment.h"
 
-
 JZScriptEnvironment *editorEnvironment();
+JZNodeObjectManager *editorObjectManager();
+JZNodeFunctionManager *editorFunctionManager();
 
 #endif

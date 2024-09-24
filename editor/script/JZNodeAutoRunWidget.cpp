@@ -124,8 +124,9 @@ void JZNodeAutoRunWidget::copyDependValue(ScriptDepend &old, ScriptDepend &dst)
 
 void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 {
-    auto obj_inst = m_editor->project()->objectManager();
-    auto func_inst = m_editor->project()->functionManager();
+    auto env = m_editor->project()->environment();
+    auto obj_inst = env->objectManager();
+    auto func_inst = env->functionManager();
 
     auto old = m_depend;
     m_depend = depend;
@@ -146,7 +147,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         {
             auto &p = m_depend.function.paramIn[i];
             auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
-            sub_item->setDataType(editType(p.dataType()));
+            sub_item->setDataType(editType(env->nameToType(p.type)));
             sub_item->setValue(m_depend.function.paramIn[i].value);
 
             func_input->addSubProperty(sub_item);
@@ -165,7 +166,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         while(it != m_depend.member.end())
         {
             QString name = it.key();
-            int data_type = meta->param(name)->dataType();
+            int data_type = env->nameToType(meta->param(name)->type);
             QString value = it.value();
 
             auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
@@ -188,7 +189,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         while (it != m_depend.global.end())
         {
             QString name = it.key();
-            int data_type = m_editor->project()->globalVariable(name)->dataType();
+            int data_type = env->nameToType(m_editor->project()->globalVariable(name)->type);
             QString value = it.value();
 
             auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
@@ -227,7 +228,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             for (int i = 0; i < node_out.size(); i++)
             {                
                 auto sub_item = new JZNodeProperty(func->paramOut[i].name, NodeProprety_Value);
-                sub_item->setDataType(editType(func->paramOut[i].dataType()));
+                sub_item->setDataType(editType(env->nameToType(func->paramOut[i].type)));
                 sub_item->setValue(node_out[i]);
 
                 item_function->addSubProperty(sub_item);

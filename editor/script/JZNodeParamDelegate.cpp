@@ -66,14 +66,14 @@ CreateParamDisplayFunc JZNodeParamDelegateManager::displayFunction(int data_type
 QVariant createImage(const QString &value)
 {    
     QImage *image = new QImage(value);
-    return editorEnvironment()->objectRefrence(image, true);
+    return editorObjectManager()->objectRefrence(image, true);
 }
 
 QByteArray imagePack(const QVariant &value)
 {
     JZTX_FUNCTION
     
-    auto image = editorEnvironment()->objectCast<QImage>(value);
+    auto image = editorObjectManager()->objectCast<QImage>(value);
 
     QByteArray ba;
     QBuffer buffer(&ba);
@@ -88,7 +88,7 @@ QVariant imageUnpack(const QByteArray &buffer)
 
     QImage *image = new QImage();    
     image->loadFromData(buffer);
-    return editorEnvironment()->objectRefrence(image,true);
+    return editorObjectManager()->objectRefrence(image,true);
 }
 
 

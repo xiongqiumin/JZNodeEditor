@@ -38,8 +38,7 @@ QStringList JZNodeExpression::irList()
 
 bool JZNodeExpression::updateExpr(QString &error)
 {
-    auto project = JZProject::active();
-    Q_ASSERT(project);
+    auto project = m_file->project();
 
     JZScriptFile *file = new JZScriptFile();    
     project->addTmp(file);
@@ -215,6 +214,7 @@ JZNodeIRParam JZNodeExpression::toIr(const QString &name)
 
 int JZNodeExpression::getIrType(const QString &name)
 {
+    auto env = environment();
     JZNodeIRParam parma;
     if (name.startsWith("#Reg"))
     {
@@ -238,19 +238,20 @@ int JZNodeExpression::getIrType(const QString &name)
     }
     else
     {
-        return JZNodeType::stringType(name);
+        return env->stringType(name);
     }
 }
 
 void JZNodeExpression::setIrType(const QString &name,int type)
 {
+    auto env = environment();
     JZNodeIRParam parma;
     if (name.startsWith("#Reg"))
     {
         int reg_index = name.mid(4).toInt();
         if(m_varMap.contains(reg_index))
         {
-            m_varMap[reg_index].type = JZNodeType::upType(m_varMap[reg_index].type,type);
+            m_varMap[reg_index].type = env->upType(m_varMap[reg_index].type,type);
         }
         else
         {
@@ -265,7 +266,7 @@ void JZNodeExpression::setIrType(const QString &name,int type)
         if(ptr->isOutput())
         {
             if(m_outType.contains(name))
-                m_outType[name] = JZNodeType::upType(m_outType[name],type);
+                m_outType[name] = env->upType(m_outType[name],type);
             else
                 m_outType[name] = type;
         }
@@ -281,6 +282,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     if(!updateExpr(error))
         return false;
 
+    auto env = environment();
     m_compiler = c;
     if(!c->addDataInput(m_id,error))
         return false;
@@ -315,7 +317,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
                 error = QString("Function %0 return error").arg(function);
                 return false;
             }
-            setIrType(strs[0],define->paramOut[0].dataType());
+            setIrType(strs[0], env->nameToType(define->paramOut[0].type));
         }
         else
         {
@@ -344,7 +346,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     while (out_it != m_outType.end())
     {
         int out_id = indexOfPinByName(out_it.key());
-        c->setPinType(m_id,out_id,out_it.value());
+        c->setPinType(m_id,out_id, out_it.value());
         out_it++;
     }
 

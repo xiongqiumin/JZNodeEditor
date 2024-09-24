@@ -27,8 +27,10 @@ public:
     JZProjectItem(int itemType);
     virtual ~JZProjectItem();
     
-    JZProject *project();    
-    QByteArray toBuffer();
+    JZProject *project();
+    const JZProject *project() const;
+
+    QByteArray toBuffer() const;
     void fromBuffer(const QByteArray &buffer);
 
     QString name() const;

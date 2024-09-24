@@ -72,9 +72,10 @@ bool JZNodeBuilder::initGlobal()
         for(int i = 0; i < global_params.size(); i++)
         {
             auto def = m_project->globalVariable(global_params[i]);
-            c->addAlloc(JZNodeIRAlloc::Heap, def->name, def->dataType());
+            int data_type = m_project->environment()->nameToType(def->type);
+            c->addAlloc(JZNodeIRAlloc::Heap, def->name, data_type);
             if(!def->value.isEmpty())
-                m_compiler.addInitVariable(irRef(def->name),def->dataType(),def->value);            
+                m_compiler.addInitVariable(irRef(def->name), data_type,def->value);
         }
         return ret_error.isEmpty();
     };
@@ -161,7 +162,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             m_error += error + "\n";
         else
         {
-            auto meta = m_project->objectManager()->meta(container_list[i]);
+            auto meta = m_project->environment()->objectManager()->meta(container_list[i]);
             Q_ASSERT_X(meta,"Error container:",qUtf8Printable(container_list[i]));
 
             JZNodeCObjectDelcare cobj;

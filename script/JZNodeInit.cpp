@@ -23,8 +23,7 @@ void JZNodeInit()
     JZUpdatePackRegist();    
 
     JZNodeType::init();
-    JZNodeFactory::instance()->init();    
-    JZNodeEngine::regist();
+    JZNodeFactory::instance()->init();
     InitJZProject();
 
     JZNetPackManager::instance()->init();

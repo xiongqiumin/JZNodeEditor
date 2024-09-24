@@ -1,5 +1,6 @@
 ﻿#include "JZNodeProgramDumper.h"
-    
+#include "JZNodeCompiler.h"    
+
 JZNodeProgramDumper::JZNodeProgramDumper()
 {    
     m_program = nullptr;
@@ -13,8 +14,8 @@ QString JZNodeProgramDumper::dump(JZNodeProgram *program)
     auto sc_list = m_program->scriptList();
     for(int sc_idx = 0; sc_idx < sc_list.size(); sc_idx++)
     {
-        JZNodeScript *script = sc_list[i];
-        content += "// Script " + script->file() + "\n";
+        JZNodeScript *script = sc_list[sc_idx];
+        content += "// Script " + script->file + "\n";
         auto &opList = script->statmentList;
         for(int func_idx = 0; func_idx < script->functionList.size(); func_idx++)
         {

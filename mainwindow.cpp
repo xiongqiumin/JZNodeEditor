@@ -457,6 +457,11 @@ JZNodeProgram *MainWindow::program()
     return &m_program;
 }
 
+JZProject *MainWindow::project()
+{
+    return &m_project;
+}
+
 JZNodeRuntimeInfo *MainWindow::runtime()
 {
     return &m_runtime;
@@ -698,10 +703,10 @@ void MainWindow::onActionBuild()
 
 void MainWindow::onActionExport()
 {
-    JZNodeCppGenerater gen;
+    //JZNodeCppGenerater gen;
 
     QString output = m_project.path() + "/build/cpp";
-    gen.generate(&m_project,output);
+    //gen.generate(&m_project,output);
 
     m_log->addLog(Log_Compiler, "export to: " + output);
 }

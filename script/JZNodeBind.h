@@ -216,9 +216,9 @@ QVariant toVariantEnum(T value, std::false_type)
 template<class T>
 QVariant toVariantClass(T value, std::true_type)
 {
-    auto env = runtimeEnvironment();
-    QVariant v = env->objectCreate<T>();
-    T *ptr = env->objectCast<T>(v);
+    auto obj_inst = runtimeEnvironment()->objectManager();
+    QVariant v = obj_inst->objectCreate<T>();
+    T *ptr = obj_inst->objectCast<T>(v);
     *ptr = value;
     return v;
 }
@@ -234,7 +234,7 @@ QVariant toVariantPointer(T value, std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
     auto env = runtimeEnvironment();
-    QVariant v = env->objectRefrence<T>(value, false);
+    QVariant v = env->objectManager()->objectRefrence<T>(value, false);
     return v;
 }
 
@@ -653,7 +653,7 @@ public:
         m_define.isCObject = true;
 
         auto obj_inst = bindEnvironment()->objectManager();
-        JZNodeObjectDefine* meta = obj_inst->meta(m_define.className);
+        const JZNodeObjectDefine* meta = obj_inst->meta(m_define.className);
         if (meta)
         {
             Q_ASSERT(m_define.functions.size() == 0 && m_define.params.size() == 0);
@@ -770,12 +770,10 @@ public:
         auto func_read = createFuncion(read);
         auto func_write = createFuncion(write);
      
-        JZNodeObjectManager *obj_inst;
         int ret_type = obj_inst->getIdByCTypeid(func_read->result);
-
         JZParamDefine def;
         def.name = name;
-        def.type = inst->getClassName(ret_type);
+        def.type = obj_inst->getClassName(ret_type);
         m_define.params[def.name] = def;
 
         JZCParamDefine cdef;
@@ -896,7 +894,7 @@ protected:
         f->className = m_define.className;
         f->isCFunction = true;
         f->isFlowFunction = isflow;
-        f->updateParam(cfunc.data());
+        env->functionManager()->setParam(f,cfunc.data());
         if (cfunc->args.size() > 0 && env->typeidToType(cfunc->args[0]) == m_define.id)
             f->paramIn[0].name = "this";        
 

@@ -9,10 +9,7 @@ class JZCORE_EXPORT JZParamDefine
 {
 public:
     JZParamDefine();
-    JZParamDefine(QString name, int dataType, const QString &v = QString());
-    JZParamDefine(QString name, QString dataType, const QString &v = QString());    
-
-    int dataType() const;
+    JZParamDefine(QString name, QString dataType, const QString &v = QString());
 
     QString name;
     QString type;
@@ -93,9 +90,7 @@ public:
     QString delcare() const;
     
     void setDefaultValue(int index, QString text);
-    void setDefaultValue(int from, QStringList values);
-
-    void updateParam(CFunction *func);
+    void setDefaultValue(int from, QStringList values);    
         
     QString name;    
     QString className;
@@ -145,12 +140,8 @@ QDataStream &operator>>(QDataStream &s, JZSignalDefine &param);
 class JZCORE_EXPORT JZParam
 {
 public:
-    static JZParam formDefine(const JZParamDefine &def);
-
     JZParam();
     JZParam(const QString &name, int type);
-
-    JZParamDefine define() const;
 
     QString name;
     int dataType;    

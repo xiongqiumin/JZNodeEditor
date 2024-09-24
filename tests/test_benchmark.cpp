@@ -166,7 +166,8 @@ void BenchmarkTest::testCall()
 
     m_benchmark.clear();
 
-    auto pow_func = m_project.functionManager()->functionImpl("pow");
+    auto env = m_project.environment();
+    auto pow_func = env->functionManager()->functionImpl("pow");
     JZBENCHMARK(jz_pow)
     {
         QVariantList in,out;
@@ -195,12 +196,12 @@ void BenchmarkTest::testCall()
     }
 
     //list_get
-    auto obj = m_project.objectManager()->create(Type_intList);
+    auto obj = env->objectManager()->create(Type_intList);
     auto list = (JZList*)(obj->cobj());
     list->list << 1 << 2 << 3 << 4 << 5;
     JZNodeObjectPtr ptr(obj,true);
 
-    auto list_func = m_project.functionManager()->functionImpl("QList<int>.get");
+    auto list_func = env->functionManager()->functionImpl("QList<int>.get");
     JZBENCHMARK(jz_list_get)
     {
         QVariantList in,out;
@@ -219,11 +220,12 @@ void BenchmarkTest::testCall()
 
 void BenchmarkTest::testSort()
 {
+    auto env = m_project.environment();
     JZFunctionDefine def;
     def.name = "testSort";
-    def.paramIn.push_front(JZParamDefine("list",Type_intList));
+    def.paramIn.push_front(env->paramDefine("list",Type_intList));
 
-    auto obj = m_project.objectManager()->create(Type_intList);
+    auto obj = m_objInst->create(Type_intList);
     auto list = (JZList*)(obj->cobj());
     JZNodeObjectPtr ptr(obj,true);
     QVariantList base_list;
@@ -396,13 +398,15 @@ void BenchmarkTest::testSort()
 void BenchmarkTest::testSum()
 {
     return;
+
+    auto env = m_project.environment();
     JZFunctionDefine define;
     define.name = "testSum";     
-    define.paramIn.push_back(JZParamDefine("count", Type_int));   
-    define.paramOut.push_back(JZParamDefine("result", Type_int64));
+    define.paramIn.push_back(env->paramDefine("count", Type_int));
+    define.paramOut.push_back(env->paramDefine("result", Type_int64));
 
     JZScriptItem *script = m_file->addFunction(define);
-    script->addLocalVariable(JZParamDefine("sum", Type_int64));
+    script->addLocalVariable(env->paramDefine("sum", Type_int64));
 
     JZNode *node_start = script->getNode(0);
 

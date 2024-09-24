@@ -580,7 +580,7 @@ void JZNode::setFile(JZScriptItem *file)
     m_notifyList.clear();
 }
 
-JZScriptEnvironment *JZNode::environment()
+const JZScriptEnvironment *JZNode::environment() const
 {
     if(m_file && m_file->project())
         return m_file->project()->environment();
@@ -623,11 +623,6 @@ void JZNode::setId(int id)
     m_id = id;
 }
 
-QList<int> JZNode::pinTypeId(int id) const
-{
-    return pin(id)->dataTypeId();
-}
-
 const QStringList &JZNode::pinType(int id) const
 {
     return pin(id)->dataType();
@@ -635,32 +630,32 @@ const QStringList &JZNode::pinType(int id) const
 
 void JZNode::setPinTypeArg(int id)
 {
-    pin(id)->setDataTypeId({Type_arg});
+    pin(id)->setDataType({ JZNodeType::typeName(Type_arg)});
 }
 
 void JZNode::setPinTypeInt(int id)
 {
-    pin(id)->setDataTypeId({Type_int});
+    pin(id)->setDataType({JZNodeType::typeName(Type_int)});
 }
 
 void JZNode::setPinTypeNumber(int id)
 {
-    pin(id)->setDataTypeId({Type_bool,Type_int,Type_int64,Type_double});
+    pin(id)->setDataType({ JZNodeType::typeName(Type_bool),JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),JZNodeType::typeName(Type_double)});
 }
 
 void JZNode::setPinTypeBool(int id)
 {
-    pin(id)->setDataTypeId({Type_bool});
+    pin(id)->setDataType({ JZNodeType::typeName(Type_bool)});
 }
 
 void JZNode::setPinTypeString(int id)
 {
-    pin(id)->setDataTypeId({Type_string});
+    pin(id)->setDataType( { JZNodeType::typeName(Type_string)});
 }
 
-void JZNode::setPinType(int id,const QList<int> &type)
+void JZNode::setPinType(int id,const QStringList &type)
 {
-    pin(id)->setDataTypeId(type);
+    pin(id)->setDataType(type);
 }
 
 void JZNode::clearPinType(int id)
@@ -842,6 +837,7 @@ JZNodeReturn::JZNodeReturn()
 
 bool JZNodeReturn::update(QString &error)
 {
+    auto env = environment();
     auto inList = paramInList();
     QList<JZParamDefine> ret_list;
     if(m_file->itemType() == ProjectItem_scriptFunction)
@@ -857,13 +853,14 @@ bool JZNodeReturn::update(QString &error)
     for (int i = 0; i < ret_list.size(); i++)
     {
         int in = inList[i];
-        setPinType(in, { ret_list[i].dataType() });
+        setPinType(in, { ret_list[i].type });
     }
     return true;
 }
 
 void JZNodeReturn::setFunction(const JZFunctionDefine *def)
 {
+    auto env = environment();
     auto inList = paramInList();
     for (int i = 0; i < inList.size(); i++)
         removePin(inList[i]);
@@ -871,7 +868,7 @@ void JZNodeReturn::setFunction(const JZFunctionDefine *def)
     for (int i = 0; i < def->paramOut.size(); i++)
     {
         int in = addParamIn(def->paramOut[i].name, Pin_dispName | Pin_dispValue | Pin_editValue);
-        setPinType(in, { def->paramOut[i].dataType() });
+        setPinType(in, { def->paramOut[i].type });
     }
 }
 
@@ -1192,13 +1189,13 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 {
     if(!c->addFlowInput(m_id,error))
         return false;
-
+    
     int class_type = c->pinType(m_id,paramIn(0));
     auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->meta(class_type);    
 
     auto *it_define = meta->function("iterator");
-    auto it_meta = obj_inst->meta(it_define->paramOut[0].dataType());
+    auto it_meta = obj_inst->meta(it_define->paramOut[0].type);
 
     int id_list = c->paramId(m_id,paramIn(0));
     JZNodeIRParam list = irId(id_list);    
@@ -1463,10 +1460,12 @@ JZNodeSwitch::JZNodeSwitch()
 {
     m_type = Node_switch;
     m_name = "switch";
+    m_caseType << JZNodeType::typeName(Type_int) << JZNodeType::typeName(Type_string);
+
     addFlowIn();
     addFlowOut("complete",Pin_dispName);
     int in = addParamIn("cond", Pin_dispName);    
-    setPinType(in, { Type_int,Type_string });
+    setPinType(in, m_caseType);
 
     addParamOut("cond", Pin_dispName);
     addCase();
@@ -1478,7 +1477,7 @@ JZNodeSwitch::JZNodeSwitch()
 void JZNodeSwitch::addCase()
 {
     int sub_id = addSubFlowOut("case", Pin_dispName | Pin_dispValue | Pin_editValue);
-    setPinType(sub_id, { Type_int,Type_string });
+    setPinType(sub_id, m_caseType);
 }
 
 void JZNodeSwitch::addDefault()
@@ -1720,13 +1719,13 @@ bool JZNodeTryCatch::compiler(JZNodeCompiler *compiler, QString &error)
 
 //JZNodeMainLoop
 JZNodeMainLoop::JZNodeMainLoop()
-{    
+{        
     m_type = Node_mainLoop;
     m_name = "MainLoop";
 
     addFlowIn();
     int in = addParamIn("window",Pin_dispName);
-    setPinType(in, { Type_widget });
+    setPinType(in, { JZNodeType::typeName(Type_widget) });
 }
 
 JZNodeMainLoop::~JZNodeMainLoop()

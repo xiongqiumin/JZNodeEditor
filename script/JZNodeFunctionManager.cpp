@@ -44,7 +44,7 @@ void JZNodeFunctionManager::init()
     registCFunction("atan2",false,jzbind::createFuncion((double (*)(double,double))(atan2)));
 }
 
-const JZFunctionDefine *JZNodeFunctionManager::function(QString funcName)
+const JZFunctionDefine *JZNodeFunctionManager::function(QString funcName) const
 {    
     int index = funcName.indexOf(".");
     if (index >= 0)
@@ -70,7 +70,7 @@ void JZNodeFunctionManager::setUserRegist(bool flag)
     m_userRegist = flag;
 }
 
-QList<const JZFunctionDefine*> JZNodeFunctionManager::functionList()
+QList<const JZFunctionDefine*> JZNodeFunctionManager::functionList() const
 {
     QList<const JZFunctionDefine*>  list;
     auto it = m_funcDefine.begin();
@@ -93,6 +93,30 @@ void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSha
     m_funcImpl[define.fullName()] = impl;
 }
 
+void JZNodeFunctionManager::setParam(JZFunctionDefine *def,CFunction *func)
+{
+    auto env = this->env();
+
+    def->paramIn.clear();
+    def->paramOut.clear();
+    for (int i = 0; i < func->args.size(); i++)
+    {
+        QString param_name = "input" + QString::number(i);
+        int dataType = env->typeidToType(func->args[i]);
+        Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->args[i]));
+
+        def->paramIn.push_back(env->paramDefine(param_name, dataType));
+    }
+    if (func->result != typeid(void).name())
+    {
+        QString param_name = "output";
+        int dataType = env->typeidToType(func->result);
+        Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->result));
+
+        def->paramOut.push_back(env->paramDefine(param_name, dataType));
+    }
+}
+
 void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> cfunc)
 {
     JZFunctionDefine define;
@@ -107,7 +131,7 @@ void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QShare
         define.className = name_list[0];
         define.name = name_list[1];
     }
-    define.updateParam(cfunc.data());
+    setParam(&define,cfunc.data());
     define.isFlowFunction = isFlow;
     define.isCFunction = true;
     registCFunction(define, cfunc);       
@@ -170,7 +194,7 @@ void JZNodeFunctionManager::registFunctionImpl(JZFunction &impl)
         m_userFuncs << full_name;
 }
 
-const JZFunction *JZNodeFunctionManager::functionImpl(QString funcName)
+const JZFunction *JZNodeFunctionManager::functionImpl(QString funcName) const
 {
     auto it = m_funcImpl.find(funcName);
     if (it == m_funcImpl.end())

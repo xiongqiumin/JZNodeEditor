@@ -45,31 +45,31 @@ void ScriptTest::testMatchType()
 
 void ScriptTest::testClone()
 {
-    auto env = m_project.environment();
-    auto obj1 = env->objectCreate<QObject>();
-    auto obj2 = env->objectCreate<QObject>();
+    auto obj_inst = m_objInst;
+    auto obj1 = obj_inst->objectCreate<QObject>();
+    auto obj2 = obj_inst->objectCreate<QObject>();
     QVariant obj3 = obj1;
     QVERIFY(obj1 != obj2);
     QVERIFY(obj1 == obj3);
 
-    auto pt1 = env->objectCreate<QPoint>();
-    auto pt2 = env->objectCreate<QPoint>();
+    auto pt1 = obj_inst->objectCreate<QPoint>();
+    auto pt2 = obj_inst->objectCreate<QPoint>();
     QVERIFY(pt1 == pt2);
 
-    auto p_pt1 = env->objectCast<QPoint>(pt1);
+    auto p_pt1 = obj_inst->objectCast<QPoint>(pt1);
     p_pt1->setX(150);
     QVERIFY(pt1 != pt2);
 
     m_project.registContainer("QList<QPoint>");
 
-    auto obj_list = m_project.objectManager()->create("QList<QPoint>");
+    auto obj_list = m_objInst->create("QList<QPoint>");
     QVariant list = QVariant::fromValue(JZNodeObjectPtr(obj_list,true));
 
     QVariantList in,out;
     for(int i = 0; i < 5; i++)
     {
-        QVariant pt = env->objectCreate<QPoint>();
-        QPoint *p_pt = env->objectCast<QPoint>(pt);
+        QVariant pt = obj_inst->objectCreate<QPoint>();
+        QPoint *p_pt = obj_inst->objectCast<QPoint>(pt);
         p_pt->setX(i);
         p_pt->setY(0);
 
@@ -77,8 +77,8 @@ void ScriptTest::testClone()
         in << list << pt;
         m_engine.call("QList<QPoint>.push_back",in,out);
 
-        QVariant pt_other = env->objectCreate<QPoint>();
-        QPoint *p_pt_other = env->objectCast<QPoint>(pt_other);
+        QVariant pt_other = obj_inst->objectCreate<QPoint>();
+        QPoint *p_pt_other = obj_inst->objectCast<QPoint>(pt_other);
         p_pt_other->setX(i);
         p_pt_other->setY(0);
 
@@ -226,12 +226,13 @@ void ScriptTest::testParamBinding()
 void ScriptTest::testBranch()
 {    
     JZNodeEngine *engine = &m_engine;
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "testFunc";
-    define.paramIn.push_back(JZParamDefine("a", Type_int));
-    define.paramIn.push_back(JZParamDefine("b", Type_int));
-    define.paramOut.push_back(JZParamDefine("c", Type_int));    
+    define.paramIn.push_back(env->paramDefine("a", Type_int));
+    define.paramIn.push_back(env->paramDefine("b", Type_int));
+    define.paramOut.push_back(env->paramDefine("c", Type_int));
 
     auto script = m_file->addFunction(define);
     auto node_start = script->getNode(0);
@@ -283,10 +284,12 @@ void ScriptTest::testBranch()
 
 void ScriptTest::testIf()
 {
+    auto env = m_project.environment();
+
     JZFunctionDefine define;
     define.name = "testFunc";
-    define.paramIn.push_back(JZParamDefine("a", Type_int));    
-    define.paramOut.push_back(JZParamDefine("ret", Type_int));
+    define.paramIn.push_back(env->paramDefine("a", Type_int));
+    define.paramOut.push_back(env->paramDefine("ret", Type_int));
 
     auto script = m_file->addFunction(define);
     auto node_start = script->getNode(0);
@@ -348,10 +351,12 @@ void ScriptTest::testIf()
 
 void ScriptTest::testSwitch()
 {
+    auto env = m_project.environment();
+
     JZFunctionDefine define;
     define.name = "testFunc";
-    define.paramIn.push_back(JZParamDefine("a", Type_int));
-    define.paramOut.push_back(JZParamDefine("ret", Type_int));
+    define.paramIn.push_back(env->paramDefine("a", Type_int));
+    define.paramOut.push_back(env->paramDefine("ret", Type_int));
 
     auto script = m_file->addFunction(define);
     auto node_start = script->getNode(0);
@@ -467,14 +472,15 @@ void ScriptTest::testSequeue()
 
 void ScriptTest::testFor()
 {        
+    auto env = m_project.environment();
     for (int i = 0; i < 4; i++)
     {
         JZFunctionDefine define;
         define.name = "ForTest" + QString::number(i);        
-        define.paramOut.push_back(JZParamDefine("result", Type_int));
+        define.paramOut.push_back(env->paramDefine("result", Type_int));
 
         JZScriptItem *script = m_file->addFunction(define);
-        script->addLocalVariable(JZParamDefine("sum", Type_int));
+        script->addLocalVariable(env->paramDefine("sum", Type_int));
 
         JZNode *node_start = script->getNode(0);
 
@@ -558,7 +564,7 @@ void ScriptTest::testForEach()
     JZNodeEngine *engine = &m_engine;
 
     m_project.addGlobalVariable("sum",Type_int,0);
-    m_project.addGlobalVariable("a",m_project.objectManager()->getClassId("List"));
+    m_project.addGlobalVariable("a",m_objInst->getClassId("List"));
 
     JZNode *node_start = script->getNode(0);
     JZNodeForEach *node_for = new JZNodeForEach();        
@@ -574,7 +580,7 @@ void ScriptTest::testForEach()
     node_set->setVariable("sum");
 
     JZNodeFunction *node_create = new JZNodeFunction();
-    node_create->setFunction(m_project.functionManager()->function("List.__fromString__"));
+    node_create->setFunction(m_funcInst->function("List.__fromString__"));
     node_create->setParamInValue(0, "1,2,3,4,5,6,7,8,9,10");
 
     int start_id = node_start->id();
@@ -825,10 +831,12 @@ void ScriptTest::testDebugServer()
 
 void ScriptTest::testUnitTest()
 {
+    auto env = m_project.environment();
+
     JZFunctionDefine def;
     def.name = "unitTest";
     def.isFlowFunction = false;
-    def.paramOut.push_back(JZParamDefine("result", Type_int));
+    def.paramOut.push_back(env->paramDefine("result", Type_int));
     
     JZScriptItem *script = m_file->addFunction(def);
     auto start = script->getNode(0);
@@ -873,11 +881,12 @@ void ScriptTest::testUnitTest()
 
 void ScriptTest::testUnitTestClass()
 {   
+    auto env = m_project.environment();
     auto class_file = m_file->addClass("unitTestClass");
     
     JZFunctionDefine def = class_file->objectDefine().initMemberFunction("unitTest");
     def.isFlowFunction = false;
-    def.paramOut.push_back(JZParamDefine("result", Type_int));
+    def.paramOut.push_back(env->paramDefine("result", Type_int));
     
     JZScriptItem *script = class_file->addMemberFunction(def);
     auto start = script->getNode(0);
@@ -898,7 +907,7 @@ void ScriptTest::testUnitTestClass()
     if(!build())
         return;    
 
-    auto obj = m_project.objectManager()->create("unitTestClass");
+    auto obj = m_objInst->create("unitTestClass");
     JZNodeObjectPtr ptr(obj,true);
 
     QVariantList in,out;    
@@ -927,8 +936,8 @@ void ScriptTest::testModule()
 {
     m_project.importModule("ImageModuleSample");
 
-    auto env = m_project.environment();
-    QVariant obj = env->objectCreate<QImage>();
+    auto obj_inst = m_objInst;
+    QVariant obj = obj_inst->objectCreate<QImage>();
     QVariantList in,out;    
     in << obj;
     bool ret = m_engine.call("ImageThreshold",in,out);
@@ -1077,11 +1086,12 @@ void ScriptTest::testFunction()
         }
     */    
 
+    auto env = m_project.environment();
     JZFunctionDefine fab;
     fab.name = "fab";
     fab.isFlowFunction = false;
-    fab.paramIn.push_back(JZParamDefine("n", Type_int));
-    fab.paramOut.push_back(JZParamDefine("result", Type_int));
+    fab.paramIn.push_back(env->paramDefine("n", Type_int));
+    fab.paramOut.push_back(env->paramDefine("result", Type_int));
     JZScriptItem *script = m_file->addFunction(fab);
 
     JZNode *node_start = script->getNode(0);
@@ -1155,6 +1165,7 @@ void ScriptTest::testFunction()
 
 void ScriptTest::testClass()
 {       
+    auto env = m_project.environment();
     auto classBase = m_file->addClass("ClassBase");
     auto classA = m_file->addClass("ClassA","ClassBase");
     auto classB = m_file->addClass("ClassB","ClassBase");
@@ -1174,7 +1185,7 @@ void ScriptTest::testClass()
     define.isVirtualFunction = true;
     define.name = "getValue";
     define.paramIn.push_back(JZParamDefine("this", "ClassBase"));
-    define.paramOut.push_back(JZParamDefine("ret",Type_int));
+    define.paramOut.push_back(env->paramDefine("ret",Type_int));
     auto func_base = classBase->addMemberFunction(define);
     addReturn(func_base, 0);
 
@@ -1189,7 +1200,7 @@ void ScriptTest::testClass()
     if(!build())
         return;
 
-    auto inst = m_project.objectManager();
+    auto inst = m_objInst;
     auto obj_base = JZNodeObjectPtr(inst->create("ClassBase"),true);
     auto obj_a = JZNodeObjectPtr(inst->create("ClassA"), true);
     auto obj_b = JZNodeObjectPtr(inst->create("ClassB"), true);
@@ -1270,14 +1281,15 @@ void ScriptTest::testArgs()
     if(!build())
         return;
 
+    auto env = m_project.environment();
     JZFunctionDefine sum_func;
     sum_func.name = "JZSumTest";
     sum_func.isCFunction = true;
-    sum_func.paramIn.push_back(JZParamDefine("args", Type_args));
-    sum_func.paramOut.push_back(JZParamDefine("sum", Type_int));
+    sum_func.paramIn.push_back(env->paramDefine("args", Type_args));
+    sum_func.paramOut.push_back(env->paramDefine("sum", Type_int));
     
     auto sum_ptr = BuiltInFunctionPtr(new JZSumTest());
-    m_project.functionManager()->registBuiltInFunction(sum_func, sum_ptr);
+    m_funcInst->registBuiltInFunction(sum_func, sum_ptr);
 
     QVariantList in,out;
     in << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10;

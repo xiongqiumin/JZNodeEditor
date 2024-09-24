@@ -113,7 +113,7 @@ void JZUiFile::walkChild(const QDomElement &root)
             QString class_name = sub_ele.attribute("class");
             QString obj_name = sub_ele.attribute("name");
 
-            auto meta = project()->objectManager()->meta(class_name);
+            auto meta = project()->environment()->objectManager()->meta(class_name);
             if (meta)
             {
                 JZParamDefine def;

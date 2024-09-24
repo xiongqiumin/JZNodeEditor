@@ -15,7 +15,7 @@ JZProjectItem::~JZProjectItem()
 {
 }
 
-QByteArray JZProjectItem::toBuffer()
+QByteArray JZProjectItem::toBuffer() const
 {
     QByteArray ret;
     QDataStream s(&ret, QIODevice::WriteOnly);
@@ -66,6 +66,12 @@ void JZProjectItem::saveToStream(QDataStream &s) const
 bool JZProjectItem::loadFromStream(QDataStream &s)
 {
     return true;
+}
+
+const JZProject *JZProjectItem::project() const
+{
+    auto item = const_cast<JZProjectItem*>(this);
+    return item->project();
 }
 
 JZProject *JZProjectItem::project() 

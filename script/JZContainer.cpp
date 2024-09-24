@@ -202,7 +202,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     // __fromString__
     func_def = list.initStaticFunction("__fromString__");
     func_def.isFlowFunction = false;
-    func_def.paramIn.push_back(JZParamDefine("value", Type_string));
+    func_def.paramIn.push_back(env->paramDefine("value", Type_string));
     func_def.paramOut.push_back(JZParamDefine("object", list_name));
     list.addFunction(func_def);
     registFunction(env,func_def, from_string);
@@ -210,7 +210,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     // set
     func_def = list.initMemberFunction("set");
     func_def.isFlowFunction = true;
-    func_def.paramIn.push_back(JZParamDefine("index", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("index", Type_int));
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
     registFunction(env,func_def, listSet);
@@ -218,7 +218,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     // get
     func_def = list.initMemberFunction("get");
     func_def.isFlowFunction = false;
-    func_def.paramIn.push_back(JZParamDefine("index", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("index", Type_int));
     func_def.paramOut.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
     registFunction(env,func_def, listGet);
@@ -226,7 +226,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     // size
     func_def = list.initMemberFunction("size");
     func_def.isFlowFunction = false;
-    func_def.paramOut.push_back(JZParamDefine("size", Type_int));
+    func_def.paramOut.push_back(env->paramDefine("size", Type_int));
     list.addFunction(func_def);
     registFunction(env,func_def, listSize);
 
@@ -239,7 +239,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     // resize
     func_def = list.initMemberFunction("resize");
     func_def.isFlowFunction = true;
-    func_def.paramIn.push_back(JZParamDefine("index", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("index", Type_int));
     list.addFunction(func_def);
     registFunction(env,func_def, listResize);
 
@@ -272,7 +272,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     // removeAt
     func_def = list.initMemberFunction("removeAt");
     func_def.isFlowFunction = true;
-    func_def.paramIn.push_back(JZParamDefine("index", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("index", Type_int));
     list.addFunction(func_def);
     registFunction(env,func_def, listRemoveAt);
 
@@ -294,7 +294,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     func_def = list.initMemberFunction("contains");
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", type));
-    func_def.paramOut.push_back(JZParamDefine("has", Type_bool));
+    func_def.paramOut.push_back(env->paramDefine("has", Type_bool));
     list.addFunction(func_def);
     registFunction(env,func_def, listContains);
 
@@ -302,8 +302,8 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     func_def = list.initMemberFunction("indexOf");
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", type));
-    func_def.paramIn.push_back(JZParamDefine("start", Type_int, "0"));
-    func_def.paramOut.push_back(JZParamDefine("index", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("start", Type_int, "0"));
+    func_def.paramOut.push_back(env->paramDefine("index", Type_int));
     list.addFunction(func_def);
     registFunction(env,func_def, listIndexOf);
 
@@ -311,16 +311,16 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     func_def = list.initMemberFunction("lastIndexOf");
     func_def.isFlowFunction = false;
     func_def.paramIn.push_back(JZParamDefine("value", type));
-    func_def.paramIn.push_back(JZParamDefine("start", Type_int, "-1"));
-    func_def.paramOut.push_back(JZParamDefine("index", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("start", Type_int, "-1"));
+    func_def.paramOut.push_back(env->paramDefine("index", Type_int));
     list.addFunction(func_def);
     registFunction(env,func_def, listLastIndexOf);
 
     // mid
     func_def = list.initMemberFunction("mid");
     func_def.isFlowFunction = false;
-    func_def.paramIn.push_back(JZParamDefine("start", Type_int));
-    func_def.paramIn.push_back(JZParamDefine("length", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("start", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("length", Type_int));
     func_def.paramOut.push_back(JZParamDefine("list", list_name));
     list.addFunction(func_def);
     registFunction(env,func_def, listMid);
@@ -328,7 +328,7 @@ void registList(JZScriptEnvironment *env,QString type,int type_id)
     // insert
     func_def = list.initMemberFunction("insert");
     func_def.isFlowFunction = true;
-    func_def.paramIn.push_back(JZParamDefine("index", Type_int));
+    func_def.paramIn.push_back(env->paramDefine("index", Type_int));
     func_def.paramIn.push_back(JZParamDefine("value", type));
     list.addFunction(func_def);
     registFunction(env,func_def, listInsert);
@@ -448,7 +448,7 @@ void registMap(JZScriptEnvironment *env,QString key_type, QString value_type,int
     // __fromString__
     func_def = map.initStaticFunction("__fromString__");
     func_def.isFlowFunction = false;
-    func_def.paramIn.push_back(JZParamDefine("value", Type_string));
+    func_def.paramIn.push_back(env->paramDefine("value", Type_string));
     func_def.paramOut.push_back(JZParamDefine("object", map_name));
     map.addFunction(func_def);
     registFunction(env,func_def, from_string);
@@ -472,7 +472,7 @@ void registMap(JZScriptEnvironment *env,QString key_type, QString value_type,int
     // size
     func_def = map.initMemberFunction("size");
     func_def.isFlowFunction = false;
-    func_def.paramOut.push_back(JZParamDefine("size", Type_int));
+    func_def.paramOut.push_back(env->paramDefine("size", Type_int));
     map.addFunction(func_def);
     registFunction(env,func_def, mapSize);
 

@@ -57,7 +57,7 @@ QString JZScriptClassItem::uiFile() const
 
 int JZScriptClassItem::classType()
 {
-    return project()->objectManager()->getClassId(m_name);
+    return project()->environment()->objectManager()->getClassId(m_name);
 }
 
 void JZScriptClassItem::setClassType(int classId)

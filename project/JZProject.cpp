@@ -71,7 +71,7 @@ void JZProject::clear()
     registType();
 }
 
-void JZProject::copyTo(JZProject *other)
+void JZProject::copyTo(JZProject *other) const
 {
     other->clear();
     other->m_containers = m_containers;
@@ -130,14 +130,9 @@ JZScriptEnvironment *JZProject::environment()
     return &m_env;
 }
 
-JZNodeFunctionManager *JZProject::functionManager()
+const JZScriptEnvironment *JZProject::environment() const
 {
-    return m_env.functionManager();
-}
-
-JZNodeObjectManager *JZProject::objectManager()
-{
-    return m_env.objectManager();
+    return &m_env;
 }
 
 void JZProject::initEmpty()

@@ -275,7 +275,7 @@ protected:
 
     QString getExpr(const QString &text = QString());
     int popMenu(QStringList list);
-    QStringList matchParmas(JZNodeObjectDefine *define,int type,QString pre);    
+    QStringList matchParmas(const JZNodeObjectDefine *define,int type,QString pre);    
 
     JZNodePanel *m_panel;
     JZNodeViewPanel *m_flowPanel;

@@ -228,6 +228,11 @@ QString JZNodeType::debugString(const QVariant &v)
     }    
 }
 
+QString JZNodeType::typeName(int type)
+{
+    return typeMap.key(type,"none");
+}
+
 QString JZNodeType::opName(int op)
 {   
     Q_ASSERT(opNameMap.contains(op));

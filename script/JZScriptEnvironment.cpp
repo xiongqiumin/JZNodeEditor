@@ -1,6 +1,7 @@
 ﻿#include "JZScriptEnvironment.h"
 #include "JZRegExpHelp.h"
 #include "JZNodeBind.h"
+#include "JZContainer.h"
 
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
@@ -33,7 +34,7 @@ void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
     QList<int> cobj_id;
 
     for(int i = 0; i < module_list.size(); i++)
-        JZModuleManager::instance()->loadModule(module_list[i]);
+        loadModule(module_list[i]);
 
     //delcare
     for (int i = 0; i < define_list.size(); i++)
@@ -51,7 +52,7 @@ void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
         m_objectManager.replace(define_list[i]);
     }
     for (int i = 0; i < function_list.size(); i++)        
-        m_funcManager->registFunction(function_list[i]);
+        m_funcManager.registFunction(function_list[i]);
 }
 
 void JZScriptEnvironment::unregistType()
@@ -67,8 +68,18 @@ JZNodeObjectManager *JZScriptEnvironment::objectManager()
     return &m_objectManager;
 }
 
+const JZNodeObjectManager *JZScriptEnvironment::objectManager() const
+{
+    return &m_objectManager;
+}
+
 JZNodeFunctionManager *JZScriptEnvironment::functionManager()
 {        
+    return &m_funcManager;
+}
+
+const JZNodeFunctionManager *JZScriptEnvironment::functionManager() const
+{
     return &m_funcManager;
 }
 
@@ -76,13 +87,14 @@ JZScriptEnvironment::ModuleInfo *JZScriptEnvironment::module(QString name)
 {
     for(int i = 0; i < m_moduleList.size(); i++)
     {
-        if(m_moduleList[i].module->name() == name)
-            return m_moduleList[i].module;
+        if(m_moduleList[i]->module->name() == name)
+            return m_moduleList[i];
     }
 
     ModuleInfo *info = new ModuleInfo();
-    info.module = JZModuleManager::instance()->module(name);
-    info.ref = 0;
+    info->module = JZModuleManager::instance()->module(name);
+    info->ref = 0;
+    m_moduleList.push_back(info);
     return info;
 }
 
@@ -100,7 +112,7 @@ bool JZScriptEnvironment::loadModule(QString name)
         jzbind::setBindEnvironment(nullptr);
     }
 
-    auto depends = m->depends();
+    auto depends = m->module->depends();
     for(int i = 0; i < depends.size(); i++)
     {
         if(!loadModule(depends[i]))
@@ -118,36 +130,45 @@ void JZScriptEnvironment::unloadModule(QString name)
     if(m->ref == 0)
         m->module->unregist(this);
 
-    auto depends = m->depends();
+    auto depends = m->module->depends();
     for(int i = 0; i < depends.size(); i++)
         unloadModule(depends[i]);
 }
 
-int64_t JZScriptEnvironment::makeConvertId(int from, int to)
+int64_t JZScriptEnvironment::makeConvertId(int from, int to) const
 {
     int64_t id = (int64_t)from << 32 | (int64_t)to;
     return id;
 }
 
-QString JZScriptEnvironment::typeToName(int id)
+QString JZScriptEnvironment::typeToName(int id) const
 {            
     if(isEnum(id))
         return m_objectManager.getEnumName(id);
     else if (id >= Type_class)
         return m_objectManager.getClassName(id);
     else
-        return typeMap.key(id, "unknown type " + QString::number(id));
+        return m_typeMap.key(id, "unknown type " + QString::number(id));
 }
 
-int JZScriptEnvironment::nameToType(const QString &name)
+int JZScriptEnvironment::nameToType(const QString &name) const
 {
-    if(typeMap.contains(name))
-        return typeMap[name];
+    if(m_typeMap.contains(name))
+        return m_typeMap[name];
 
     return m_objectManager.getId(name);
 }
 
-int JZScriptEnvironment::typeidToType(const QString &name)
+QList<int> JZScriptEnvironment::nameToTypeList(const QStringList &names) const
+{
+    QList<int> ret;
+    for (int i = 0; i < names.size(); i++)
+        ret << nameToType(names[i]);
+    
+    return ret;
+}
+
+int JZScriptEnvironment::typeidToType(const QString &name) const
 {
     if(name == typeid(bool).name())
         return Type_bool;
@@ -163,22 +184,22 @@ int JZScriptEnvironment::typeidToType(const QString &name)
         return m_objectManager.getIdByCTypeid(name);
 }
 
-int JZScriptEnvironment::variantType(const QVariant &v)
+int JZScriptEnvironment::variantType(const QVariant &v) const
 {
     return JZNodeType::variantType(v);
 }
 
-QString JZScriptEnvironment::variantTypeName(const QVariant &v)
+QString JZScriptEnvironment::variantTypeName(const QVariant &v) const
 {
     return typeToName(variantType(v));
 }
 
-bool JZScriptEnvironment::isBool(int type)
+bool JZScriptEnvironment::isBool(int type) const
 {
     return (type == Type_bool);
 }
 
-bool JZScriptEnvironment::isNumber(int type)
+bool JZScriptEnvironment::isNumber(int type) const
 {
     if(type == Type_int || type == Type_int64 || type == Type_double || type == Type_bool)
         return true;
@@ -186,66 +207,66 @@ bool JZScriptEnvironment::isNumber(int type)
     return false;
 }
 
-bool JZScriptEnvironment::isEnum(int type)
+bool JZScriptEnvironment::isEnum(int type) const
 {
     return (m_objectManager.enumMeta(type) != nullptr);
 }
 
-bool JZScriptEnvironment::isBaseOrEnum(int type)
+bool JZScriptEnvironment::isBaseOrEnum(int type) const
 {
     return isBase(type) || isEnum(type);
 }
 
-bool JZScriptEnvironment::isNullObject(const QVariant &v)
+bool JZScriptEnvironment::isNullObject(const QVariant &v) const
 {
     return toJZObject(v)->isNull();
 }
 
-bool JZScriptEnvironment::isNullptr(const QVariant &v)
+bool JZScriptEnvironment::isNullptr(const QVariant &v) const
 {
     return (v.userType() == qMetaTypeId<JZObjectNull>());
 }
 
-bool JZScriptEnvironment::isWidget(const QVariant &v)
+bool JZScriptEnvironment::isWidget(const QVariant &v) const
 {
     auto type = variantType(v);
     return isInherits(type, Type_widget);
 }
 
-bool JZScriptEnvironment::isBase(int type)
+bool JZScriptEnvironment::isBase(int type) const
 {
     return (type >= Type_none) && (type <= Type_string);
 }
 
-bool JZScriptEnvironment::isObject(int type)
+bool JZScriptEnvironment::isObject(int type) const
 {
     return (type == Type_nullptr || type >= Type_class);
 }
 
-int JZScriptEnvironment::isInherits(const QString &type1,const QString &type2)
+int JZScriptEnvironment::isInherits(const QString &type1,const QString &type2) const
 {
     int t1 = JZScriptEnvironment::nameToType(type1);
     int t2 = JZScriptEnvironment::nameToType(type2);
     return m_objectManager.isInherits(t1, t2);
 }
 
-bool JZScriptEnvironment::isVaildType(QString type)
+bool JZScriptEnvironment::isVaildType(QString type) const
 {
-    if(typeMap.contains(type))
+    if(m_typeMap.contains(type))
         return true;
 
     return m_objectManager.meta(type)
         || m_objectManager.enumMeta(type);
 }
 
-bool JZScriptEnvironment::isSameType(const QVariant &v1,const QVariant &v2)
+bool JZScriptEnvironment::isSameType(const QVariant &v1,const QVariant &v2) const
 {
     int type1 = JZScriptEnvironment::variantType(v1);
     int type2 = JZScriptEnvironment::variantType(v2);
     return isSameType(type1,type2);
 }
 
-bool JZScriptEnvironment::isSameType(int type1,int type2)
+bool JZScriptEnvironment::isSameType(int type1,int type2) const
 {
     if(type1 == type2)
         return true;
@@ -260,7 +281,7 @@ bool JZScriptEnvironment::isSameType(int type1,int type2)
     return false;
 }
 
-bool JZScriptEnvironment::isLiteralType(int type)
+bool JZScriptEnvironment::isLiteralType(int type) const
 {
     if(isBaseOrEnum(type) || type == Type_nullptr || type == Type_function)
         return true;
@@ -268,12 +289,22 @@ bool JZScriptEnvironment::isLiteralType(int type)
     return false;
 }
 
-int JZScriptEnvironment::isInherits(int type1,int type2)
+int JZScriptEnvironment::isInherits(int type1,int type2) const
 {
     return m_objectManager.isInherits(type1,type2);
 }
 
-bool JZScriptEnvironment::canConvert(int type1,int type2)
+JZParamDefine JZScriptEnvironment::paramDefine(QString name, int data_type, QString value) const
+{
+    JZParamDefine p;
+    p.name = name;
+    p.type = typeToName(data_type);
+    p.value = value;
+    Q_ASSERT(p.type != Type_none);
+    return p;
+}
+
+bool JZScriptEnvironment::canConvert(int type1,int type2) const
 {   
     if(type1 == Type_arg || type2 == Type_arg)
         return true;
@@ -306,7 +337,7 @@ bool JZScriptEnvironment::canConvert(int type1,int type2)
     return false;
 }
 
-bool JZScriptEnvironment::canConvertExplicitly(int from,int to)
+bool JZScriptEnvironment::canConvertExplicitly(int from,int to) const
 {
     if(canConvert(from,to))
         return true;
@@ -321,7 +352,7 @@ bool JZScriptEnvironment::canConvertExplicitly(int from,int to)
     return false;
 }
 
-QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v)
+QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
 {
     int src_type = variantType(v);
     if (src_type == dst_type)
@@ -423,7 +454,12 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v)
     return QVariant();
 }
 
-int JZScriptEnvironment::upType(int type1, int type2)
+QVariant JZScriptEnvironment::clone(const QVariant &v) const
+{
+    return QVariant();
+}
+
+int JZScriptEnvironment::upType(int type1, int type2) const
 {
     if (type1 > type2)
         std::swap(type1, type2);
@@ -450,7 +486,7 @@ int JZScriptEnvironment::upType(int type1, int type2)
     return Type_none;
 }
 
-int JZScriptEnvironment::upType(QList<int> types)
+int JZScriptEnvironment::upType(QList<int> types) const
 {
     if (types.size() == 0)
         return Type_none;
@@ -462,7 +498,7 @@ int JZScriptEnvironment::upType(QList<int> types)
     return type;
 }
 
-int JZScriptEnvironment::matchType(QList<int> src_types,QList<int> dst_types)
+int JZScriptEnvironment::matchType(QList<int> src_types,QList<int> dst_types) const
 {   
     if(dst_types.size() == 1 && dst_types[0] == Type_arg)
         return upType(src_types);
@@ -525,7 +561,7 @@ int JZScriptEnvironment::matchType(QList<int> src_types,QList<int> dst_types)
     return upType(dst_near_type);
 }
 
-int JZScriptEnvironment::stringType(const QString &text)
+int JZScriptEnvironment::stringType(const QString &text) const
 {
     if (text == "false" || text == "true")
         return Type_bool;
@@ -543,7 +579,7 @@ int JZScriptEnvironment::stringType(const QString &text)
     return Type_string;
 }
 
-QVariant JZScriptEnvironment::defaultValue(int type)
+QVariant JZScriptEnvironment::defaultValue(int type) const
 {
     if(type == Type_any)
     {
@@ -574,7 +610,7 @@ QVariant JZScriptEnvironment::defaultValue(int type)
     return QVariant();
 }
 
-bool JZScriptEnvironment::canInitValue(int type,const QString &text)
+bool JZScriptEnvironment::canInitValue(int type,const QString &text) const
 {
     if(text.isEmpty())
         return true;
@@ -628,7 +664,7 @@ bool JZScriptEnvironment::canInitValue(int type,const QString &text)
     return false;
 }
 
-QVariant JZScriptEnvironment::initValue(int type, const QString &text)
+QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
 {
     if (text.isEmpty())
         return JZScriptEnvironment::defaultValue(type);

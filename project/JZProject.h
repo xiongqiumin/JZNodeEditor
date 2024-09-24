@@ -48,11 +48,10 @@ public:
 
     bool isNull() const;
     void clear();
-    void copyTo(JZProject *other);
+    void copyTo(JZProject *other) const;
 
     JZScriptEnvironment *environment();
-    JZNodeFunctionManager *functionManager();
-    JZNodeObjectManager *objectManager();
+    const JZScriptEnvironment *environment() const;    
     
     void initEmpty();
     bool initConsole();

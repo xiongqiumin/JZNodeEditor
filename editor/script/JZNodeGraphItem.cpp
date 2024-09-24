@@ -381,7 +381,7 @@ void JZNodeGraphItem::createPinWidget(int pin_id)
     else if (pin->isDispValue())
     {
         JZNodePinValueWidget *param_widget = new JZNodePinValueWidget();
-        int up_type = env->upType(pin->dataTypeId());
+        int up_type = env->upType(env->nameToTypeList(pin->dataType()));
         param_widget->initWidget(up_type);
 
         widget = param_widget;

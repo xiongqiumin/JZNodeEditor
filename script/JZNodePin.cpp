@@ -117,28 +117,6 @@ const QStringList &JZNodePin::dataType() const
     return m_dataType;
 }
 
-void JZNodePin::setDataTypeId(const QList<int> &type)
-{    
-    m_dataType.clear();
-    for (int i = 0; i < type.size(); i++)
-    {
-        QString name = JZNodeType::typeToName(type[i]);
-        Q_ASSERT(name != "none");
-        m_dataType << name;
-    }
-}
-
-QList<int> JZNodePin::dataTypeId() const
-{
-    QList<int> ret;
-    for (int i = 0; i < m_dataType.size(); i++)
-    {
-        int type = JZNodeType::nameToType(m_dataType[i]);
-        ret << type;
-    }
-    return ret;
-}
-
 const QString &JZNodePin::value() const
 {
     return m_value;

@@ -237,7 +237,7 @@ protected:
     bool update(QString &error);
     int m_classType;
     int m_memberId;
-    int m_memberType;
+    QString m_memberType;
 };
 
 //JZNodeMemberParam

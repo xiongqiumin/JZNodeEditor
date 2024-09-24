@@ -60,6 +60,8 @@ set(JZNodeCore_SOURCES
     3rd/qcustomplot/qcustomplot.h
     editor/JZEditor.cpp
     editor/JZEditor.h
+    editor/JZEditorGlobal.cpp
+    editor/JZEditorGlobal.h
     editor/JZNewFileDialog.cpp
     editor/JZNewFileDialog.h
     editor/JZNewFileDialog.ui
@@ -250,6 +252,8 @@ set(JZNodeCore_SOURCES
     script/JZNodePin.h
     script/JZNodeProgram.cpp
     script/JZNodeProgram.h
+    script/JZNodeProgramDumper.cpp
+    script/JZNodeProgramDumper.h
     script/JZNodeQtWrapper.cpp
     script/JZNodeQtWrapper.h
     script/JZNodeType.cpp

@@ -14,12 +14,15 @@ public:
     JZNodeFunctionManager(JZScriptEnvironment *env);
     ~JZNodeFunctionManager();           
     
+    JZScriptEnvironment *env();
+
     void init();            
     void setUserRegist(bool flag);
     void clearUserReigst();     
 
-    QList<const JZFunctionDefine*> functionList();
-    const JZFunctionDefine *function(QString name);    
+    QList<const JZFunctionDefine*> functionList() const;
+    const JZFunctionDefine *function(QString name) const;
+
     void registFunction(const JZFunctionDefine &define);
     void replaceFunction(const JZFunctionDefine &define);        
     void registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func);
@@ -28,8 +31,10 @@ public:
     void unregistFunction(QString name);       
 
     void registFunctionImpl(JZFunction &impl);    
-    const JZFunction *functionImpl(QString name);
+    const JZFunction *functionImpl(QString name) const;
 
+    void setParam(JZFunctionDefine *def,CFunction *func);
+    
 protected:        
     QMap<QString, JZFunctionDefine> m_funcDefine;
     QMap<QString, JZFunction> m_funcImpl;
@@ -37,6 +42,5 @@ protected:
     QStringList m_userFuncs;
     JZScriptEnvironment *m_env;
 };
-void updateParam(JZFunctionDefine &dei,CFunction *func);
 
 #endif

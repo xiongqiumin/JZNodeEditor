@@ -135,7 +135,7 @@ public:
     JZScriptItem *file() const;
     void setFile(JZScriptItem *file);
 
-    JZScriptEnvironment *environment();
+    const JZScriptEnvironment *environment() const;
 
     const QString &name() const;
     void setName(const QString &name);
@@ -221,8 +221,7 @@ public:
     bool canRemove();
     bool canDragVariable();    
 
-    const QStringList &pinType(int id) const;
-    QList<int> pinTypeId(int id) const;
+    const QStringList &pinType(int id) const;    
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     
     virtual bool update(QString &error);
@@ -255,7 +254,7 @@ protected:
     void setPinTypeNumber(int id);
     void setPinTypeBool(int id);
     void setPinTypeString(int id);
-    void setPinType(int id,const QList<int> &type);
+    void setPinType(int id,const QStringList &type);
     void clearPinType(int id);
 
     void setPinEditType(int id, int edit_type);
@@ -451,6 +450,7 @@ protected:
 
     int m_btnCase;
     int m_btnDefault;
+    QStringList m_caseType;
 };
 
 

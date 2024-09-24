@@ -91,18 +91,19 @@ bool JZNodeOperator::checkPinInput(JZNodeCompiler *c,QString &error)
             has_input_type << c->pinType(m_id,input_list[i]);
     }
     
+    auto env = environment();
     int in_type = Type_none;
     if(has_input_type.size() > 0)
-        in_type = JZNodeType::upType(has_input_type);
+        in_type = env->upType(has_input_type);
     else
-        in_type = JZNodeType::upType(all_input_type);
+        in_type = env->upType(all_input_type);
     
     if(in_type == Type_none)
     {
         QStringList strs;
         for(int i = 0; i < input_list.size(); i++)
         {
-            strs << JZNodeType::typeToName(all_input_type[i]);
+            strs << env->typeToName(all_input_type[i]);
         }
         error = "无法对" + strs.join(",") + "进行运算";
         return false;
@@ -145,6 +146,7 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
 
 void JZNodeOperator::calcPinOutType(JZNodeCompiler *c)
 {        
+    auto env = environment();
     int out_type = Type_none;    
     switch (m_op)
     {
@@ -165,7 +167,7 @@ void JZNodeOperator::calcPinOutType(JZNodeCompiler *c)
             if (m_op == OP_add && in_types[0] == Type_string)
                 out_type = Type_string;
             else
-                out_type = JZNodeType::upType(in_types);
+                out_type = env->upType(in_types);
             break;
         }
         case OP_eq:
@@ -188,9 +190,11 @@ void JZNodeOperator::calcPinOutType(JZNodeCompiler *c)
 //JZNodeAdd
 JZNodeAdd::JZNodeAdd()
     :JZNodeOperator(Node_add,OP_add)
-{
-    m_name = "+";      
-    QList<int> type = {Type_bool,Type_int,Type_int64,Type_double,Type_string};  
+{    
+    QStringList type = { JZNodeType::typeName(Type_int), JZNodeType::typeName(Type_int64), 
+        JZNodeType::typeName(Type_double), JZNodeType::typeName(Type_string)};  
+    
+    m_name = "+";
     setPinType(paramIn(0),type);
     setPinType(paramIn(1),type);
     setPinType(paramOut(0),type);
@@ -297,9 +301,12 @@ bool JZNodeBitResver::compiler(JZNodeCompiler *c, QString &error)
 JZNodeLE::JZNodeLE()
     :JZNodeOperator(Node_le, OP_le)
 {
+    QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
+        JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
+
     m_name = "<=";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(0), cmp_type);
+    setPinType(paramIn(1), cmp_type);
     setPinTypeBool(paramOut(0));
 }
 
@@ -307,9 +314,12 @@ JZNodeLE::JZNodeLE()
 JZNodeGE::JZNodeGE()
     :JZNodeOperator(Node_ge, OP_ge)
 {
+    QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
+        JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
+
     m_name = ">=";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(0), cmp_type);
+    setPinType(paramIn(1), cmp_type);
     setPinTypeBool(paramOut(0));
 }
 
@@ -317,9 +327,12 @@ JZNodeGE::JZNodeGE()
 JZNodeLT::JZNodeLT()
     :JZNodeOperator(Node_lt, OP_lt)
 {
+    QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
+        JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
+
     m_name = "<";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(0), cmp_type);
+    setPinType(paramIn(1), cmp_type);
     setPinTypeBool(paramOut(0));
 }
 
@@ -327,9 +340,12 @@ JZNodeLT::JZNodeLT()
 JZNodeGT::JZNodeGT()
     :JZNodeOperator(Node_gt, OP_gt)
 {
+    QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
+        JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
+
     m_name = ">";
-    setPinType(paramIn(0), { Type_int,Type_double,Type_string });
-    setPinType(paramIn(1), { Type_int,Type_double,Type_string });
+    setPinType(paramIn(0), cmp_type);
+    setPinType(paramIn(1), cmp_type);
     setPinTypeBool(paramOut(0));
 }
 

@@ -23,16 +23,16 @@ JZNodeLiteral::~JZNodeLiteral()
 }
 
 int JZNodeLiteral::dataType() const
-{
-    return pin(paramOut(0))->dataTypeId()[0];
+{    
+    auto env = environment();
+    return env->nameToType(pin(paramOut(0))->dataType()[0]);
 }
 
 void JZNodeLiteral::setDataType(int type)
-{
+{    
+    int out = paramOut(0);    
     auto env = environment();
-
-    int out = paramOut(0);
-    pin(out)->setDataTypeId({type});
+    pin(out)->setDataType({ env->typeToName(type) });
     setName(env->typeToName(type));
     if(JZNodeType::isBaseOrEnum(type))
         pin(out)->setFlag(Pin_out | Pin_param | Pin_dispValue | Pin_editValue);
@@ -68,7 +68,8 @@ bool JZNodeLiteral::compiler(JZNodeCompiler *c,QString &error)
     int id = c->paramId(m_id,paramOut(0));    
 
     auto pin = this->pin(paramOut(0));
-    QVariant value = env->initValue(pin->dataTypeId()[0],pin->value());
+    int data_type = env->nameToType(pin->dataType()[0]);
+    QVariant value = env->initValue(data_type,pin->value());
     
     c->addSetVariable(irId(id),irLiteral(value));
     c->addNodeDebug(m_id);
@@ -90,6 +91,7 @@ JZNodeEnum::~JZNodeEnum()
 bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 {
     QString key = pin(paramOut(0))->value();
+    auto obj_inst = environment()->objectManager();
     auto def = obj_inst->enumMeta(m_name);
     int v = def->keyToValue(key);
     
@@ -104,10 +106,11 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 
 void JZNodeEnum::setEnum(QString type)
 {
+    auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->enumMeta(type);    
 
     setName(meta->name());
-    setPinType(paramOut(0), { meta->id() });
+    setPinType(paramOut(0), { meta->name() });
     setKey(meta->defaultKey());
 }
 
@@ -118,6 +121,7 @@ void JZNodeEnum::setKey(QString key)
 
 void JZNodeEnum::setValue(int value)
 {    
+    auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->enumMeta(m_name);
     setPinValue(paramOut(0), meta->valueToKey(value));
 }
@@ -136,6 +140,7 @@ JZNodeFlag::~JZNodeFlag()
 bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
 {
     QString key = pin(paramOut(0))->value();
+    auto obj_inst = environment()->objectManager();
     auto def = obj_inst->enumMeta(m_name);    
     int v = def->keyToValue(key);
     
@@ -150,10 +155,11 @@ bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
 
 void JZNodeFlag::setFlag(QString type)
 {
+    auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->enumMeta(type);
 
     setName(meta->name());
-    setPinType(paramOut(0), { meta->id() });
+    setPinType(paramOut(0), { meta->name() });
     setKey(meta->defaultKey());
 }
 
@@ -164,6 +170,7 @@ void JZNodeFlag::setKey(QString value)
 
 void JZNodeFlag::setValue(int value)
 {
+    auto obj_inst = environment()->objectManager();
     auto def = obj_inst->enumMeta(m_name);
     auto key = def->valueToKey(value);
     setPinValue(paramOut(0), key);
@@ -201,10 +208,11 @@ bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
 
     auto env = environment();
     int in_type = c->pinType(m_id,paramIn(0));
-    int out_type = pinTypeId(paramOut(0))[0];
-    if(!env->canConvertExplicitly(in_type,out_type))
+    QString out_type_str = pinType(paramOut(0))[0];
+    int out_type = env->nameToType(out_type_str);
+    if(!env->canConvertExplicitly(in_type, out_type))
     {   
-        error = "无法将类型" + env->typeToName(in_type) + "转换到" + env->typeToName(out_type);
+        error = "无法将类型" + env->typeToName(in_type) + "转换到" + out_type_str;
         return false;
     }
 
@@ -231,7 +239,7 @@ bool JZNodeConvert::update(QString &error)
         
     if (type != Type_none)
     {
-        setPinType(paramOut(0), { type });
+        setPinType(paramOut(0), { name });
         return true;
     }
     else
@@ -278,6 +286,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
         return false;
     }
 
+    auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->meta(className());    
     if (!meta)
     {
@@ -299,10 +308,11 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
 
 bool JZNodeCreate::update(QString &error)
 {    
+    auto obj_inst = environment()->objectManager();
     int type = obj_inst->getClassId(className());
     if (type != Type_none)
     {
-        setPinType(paramOut(0), { type });
+        setPinType(paramOut(0), { className() });
         return true;
     }
     else
@@ -340,6 +350,7 @@ bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
         return false;
     }
 
+    auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->meta(class_name);
     if (!meta)
     {
@@ -370,10 +381,11 @@ bool JZNodeCreateFromString::update(QString &error)
 {
     int id = paramIn(0);
     
+    auto obj_inst = environment()->objectManager();
     int type = obj_inst->getClassId(className());
     if (type != Type_none)
     {
-        setPinType(paramOut(0), { type });
+        setPinType(paramOut(0), { className() });
         return true;
     }
     else
@@ -411,7 +423,7 @@ JZNodeFunctionPointer::JZNodeFunctionPointer()
     m_name = "FunctionPointer";
 
     int out = addParamOut("",Pin_dispValue | Pin_editValue | Pin_literal);
-    setPinType(out, {Type_function});
+    setPinType(out, { JZNodeType::typeName(Type_function) });
 }
 
 JZNodeFunctionPointer::~JZNodeFunctionPointer()
@@ -610,10 +622,11 @@ bool JZNodeThis::update(QString &error)
         return false;
     }
 
+    auto obj_inst = environment()->objectManager();
     QString className = class_file->className();
     int data_type = obj_inst->getClassId(className);
     Q_ASSERT(data_type != Type_none);
-    setPinType(paramOut(0),{data_type});
+    setPinType(paramOut(0),{ className });
     return false;
 }
 
@@ -639,11 +652,12 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
     if (!c->checkVariableExist(name, error))
         return false;
 
+    auto env = environment();
     auto def = c->getVariableInfo(name);    
     c->addNodeDebug(m_id);
     int out_id = c->paramId(m_id,paramOut(0));
     JZNodeIRParam ref = c->paramRef(name);    
-    c->setPinType(m_id, paramOut(0), def->dataType());
+    c->setPinType(m_id, paramOut(0), env->nameToType(def->type));
     c->addSetVariable(irId(out_id), ref);
     return true;
 }
@@ -666,11 +680,12 @@ void JZNodeParam::drag(const QVariant &value)
 bool JZNodeParam::update(QString &error)
 {    
     QString name = variable();
+    auto env = environment();
     auto def = JZNodeCompiler::getVariableInfo(m_file, name);
-    int dataType = def? def->dataType() : Type_none;        
+    int dataType = def ? env->nameToType(def->type) : Type_none;
     if (dataType != Type_none)
     {
-        setPinType(paramOut(0), { dataType });
+        setPinType(paramOut(0), { def->type });
         return true;
     }
     {
@@ -729,12 +744,13 @@ void JZNodeSetParam::drag(const QVariant &value)
 bool JZNodeSetParam::update(QString &error)
 {
     int id = paramIn(0);    
+    auto env = environment();
     auto def = JZNodeCompiler::getVariableInfo(m_file, variable());        
-    int dataType = def? def->dataType() : Type_none;
+    int dataType = def ? env->nameToType(def->type) : Type_none;
     if (dataType != Type_none)
     {
-        setPinType(paramIn(1), { dataType });
-        setPinType(paramOut(0), { dataType });
+        setPinType(paramIn(1), { def->type });
+        setPinType(paramOut(0), { def->type });
         return true;
     }
     else
@@ -810,12 +826,12 @@ void JZNodeSetParamDataFlow::drag(const QVariant &value)
 bool JZNodeSetParamDataFlow::update(QString &error)
 {
     int id = paramIn(0);
-   
+    auto env = environment();
     auto def = JZNodeCompiler::getVariableInfo(m_file,variable());
-    int dataType = def? def->dataType() : Type_none;        
+    int dataType = def? env->nameToType(def->type) : Type_none;        
     if (dataType != Type_none)
     {
-        setPinType(paramIn(1), { dataType });
+        setPinType(paramIn(1), { def->type });
         return true;
     }
     else
@@ -873,6 +889,8 @@ QString JZNodeAbstractMember::member()
 bool JZNodeAbstractMember::update(QString &error)
 {
     auto class_name = className();
+    auto env = environment();
+    auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->meta(class_name);
     if (!meta)
     {
@@ -881,13 +899,13 @@ bool JZNodeAbstractMember::update(QString &error)
     }
 
     auto def = meta->param(member());
-    if(!def || def->dataType() == Type_none)
+    if(!def || env->nameToType(def->type) == Type_none)
     {
         error = JZNodeCompiler::errorString(Error_classNoMember, { class_name,member() });
         return false;
     }
-    m_memberType = def->dataType();
-    setPinType(paramIn(0), { meta->id });
+    m_memberType = def->type;
+    setPinType(paramIn(0), { meta->className });
     return true;
 }
 
@@ -951,9 +969,10 @@ bool JZNodeSetMemberParam::update(QString &error)
     if (!JZNodeAbstractMember::update(error))
         return false;
 
+    auto env = environment();
     auto pin_value = pin(paramIn(2));
-    pin_value->setDataTypeId({ m_memberType });
-    if (JZNodeType::isBaseOrEnum(m_memberType))
+    pin_value->setDataType({ m_memberType });    
+    if (JZNodeType::isBaseOrEnum(env->nameToType(m_memberType)))
         pin_value->setFlag(pin_value->flag() | Pin_editValue);
     else
         pin_value->setFlag(pin_value->flag() & ~Pin_editValue);

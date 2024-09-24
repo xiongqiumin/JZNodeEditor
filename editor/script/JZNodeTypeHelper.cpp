@@ -48,7 +48,7 @@ TypeItemDelegate::TypeItemDelegate(QObject *parent)
 
 QWidget *TypeItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    auto obj_inst = g_mainWindow->project()->objectManager();
+    auto obj_inst = editorObjectManager();
     QString type_text = option.text;
 
     QComboBox *box = new QComboBox(parent);
@@ -81,7 +81,7 @@ JZNodeTypeDialog::JZNodeTypeDialog(QWidget *p)
     item_class->setText(0, "object");
     ui->treeWidget->addTopLevelItem(item_class);
 
-    auto inst = g_mainWindow->project()->objectManager();
+    auto inst = editorObjectManager();
     auto list = inst->getClassList();
     for (int i = 0; i < list.size(); i++)
     {
@@ -167,7 +167,7 @@ JZNodeTypeHelper * JZNodeTypeHelper::instance()
 
 JZNodeTypeHelper::JZNodeTypeHelper()
 {
-    auto obj_inst = g_mainWindow->project()->objectManager();
+    auto obj_inst = editorObjectManager();
     QStringList type_list;
     type_list << "bool" << "int" << "double" << "string";
     type_list << obj_inst->getClassList();
@@ -197,7 +197,7 @@ QCompleter *JZNodeTypeHelper::typeCompleter()
 
 QCompleter *JZNodeTypeHelper::enumCompleter(int type)
 {
-    auto obj_inst = g_mainWindow->project()->objectManager();
+    auto obj_inst = editorObjectManager();
     if (!m_enumCompleter.contains(type))
     {
         auto meta = obj_inst->enumMeta(type);

@@ -315,6 +315,7 @@ protected:
     CompilerResult m_compilerInfo;
     
     JZProject *m_project;
+    const JZScriptEnvironment *m_env = nullptr;
     JZNodeBuilder *m_builder;
     QString m_error;
     QString m_ignoreError;  // 由于buildData 错误引起, 后续节点不在记录错误

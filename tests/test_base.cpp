@@ -7,6 +7,7 @@
 #include "test_base.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeUtils.h"
+#include "JZNodeProgramDumper.h"
 
 BaseTest::BaseTest()
 {
@@ -14,6 +15,9 @@ BaseTest::BaseTest()
     m_file = nullptr;
     m_builder.setProject(&m_project);
     connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &BaseTest::onRuntimeError);
+
+    m_objInst = m_project.environment()->objectManager();
+    m_funcInst = m_project.environment()->functionManager();
 }
 
 void BaseTest::makeDump()
@@ -56,7 +60,8 @@ void BaseTest::cleanup()
 
 void BaseTest::onRuntimeError(JZNodeRuntimeError error)
 {        
-    qDebug().noquote() << m_program.dump();
+    JZNodeProgramDumper dumper;
+    qDebug().noquote() << dumper.dump(&m_program);
     qDebug().noquote() << "Stack:\n" << error.errorReport();    
     Q_ASSERT(0);
 }
@@ -68,7 +73,8 @@ void BaseTest::msleep(int ms)
 
 void BaseTest::dumpAsm(QString path)
 {
-    QString text = m_program.dump();
+    JZNodeProgramDumper dumper;
+    QString text = dumper.dump(&m_program);
     QFile file(qApp->applicationDirPath() + "/dump/" + path);
     if(file.open(QFile::WriteOnly | QFile::Truncate))
     {

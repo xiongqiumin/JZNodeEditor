@@ -458,6 +458,7 @@ void JZNodePinDisplayWidget::init()
 
 void JZNodePinDisplayWidget::createWidget()
 {    
+    auto env = editorEnvironment();
     int need_type = Type_none;
     if (m_node)
     {
@@ -466,7 +467,7 @@ void JZNodePinDisplayWidget::createWidget()
         if (list.size() == 1)
         {
             auto line = file->getConnect(list[0]);
-            auto type_list = file->getPin(line->from)->dataTypeId();
+            auto type_list = env->nameToTypeList(file->getPin(line->from)->dataType());
             if (type_list.size() == 1 && type_list[0] == Type_image)
                 need_type = Type_image;
         }

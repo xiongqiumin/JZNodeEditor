@@ -65,7 +65,8 @@ int BindObject::variableType(const QString &path)
     if (m_context->inherits("JZNodeObject"))
     {
         auto jz_obj = qobject_cast<JZNodeObject*>(m_context);
-        return jz_obj->meta()->param(path)->dataType();
+        auto env = jz_obj->meta()->manager->env();
+        return env->nameToType(jz_obj->meta()->param(path)->type);
     }
     else
     {

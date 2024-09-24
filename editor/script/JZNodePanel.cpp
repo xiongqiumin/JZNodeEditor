@@ -345,7 +345,7 @@ QTreeWidgetItem *JZNodePanel::createMemberParam(QString name)
 QTreeWidgetItem *JZNodePanel::createFunction(QString name)
 {
     QTreeWidgetItem *item = nullptr;
-    auto func_inst = m_file->project()->functionManager();
+    auto func_inst = editorFunctionManager();
     auto func_def = func_inst->function(name);
     int node_type = JZNodeEditorManager::instance()->customFunctionNode(name);
     if(node_type != Node_none)
@@ -478,7 +478,7 @@ void JZNodePanel::initLocalDefine()
 
 void JZNodePanel::addModule(QTreeWidgetItem *item_root,QString name)
 {    
-    auto func_inst = m_file->project()->functionManager();
+    auto func_inst = editorFunctionManager();
     const JZModule *m = module(name);
     auto item_module = createFolder(m->name());
     item_root->addChild(item_module);
@@ -504,7 +504,7 @@ void JZNodePanel::addModule(QTreeWidgetItem *item_root,QString name)
 
 void JZNodePanel::updateClass(QTreeWidgetItem *item_class,const QString &class_name,bool show_protected)
 {
-    auto obj_inst = m_file->project()->objectManager();
+    auto obj_inst = editorObjectManager();
     auto enum_meta = obj_inst->enumMeta(class_name);
     if(enum_meta)
     {

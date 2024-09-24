@@ -33,7 +33,7 @@ void JZNodeImageDisplayWidget::setRuntimeValue(const JZNodeDebugParamValue &valu
 {
     auto d = JZNodeParamDelegateManager::instance()->delegate(Type_image);
     QVariant v = d->unpack(value.binValue);
-    auto env = g_mainWindow->project()->environment();
-    auto image = env->objectCast<QImage>(v);
+
+    auto image = editorObjectManager()->objectCast<QImage>(v);
     m_label->setImage(*image);
 }

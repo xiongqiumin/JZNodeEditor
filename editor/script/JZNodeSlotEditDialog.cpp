@@ -31,6 +31,7 @@ JZNodeSlotEditDialog::~JZNodeSlotEditDialog()
 
 void JZNodeSlotEditDialog::setClass(JZScriptClassItem *cls)
 {
+    auto env = editorEnvironment();
     m_class = cls->objectDefine();
     m_listParam->clear();
 
@@ -38,7 +39,7 @@ void JZNodeSlotEditDialog::setClass(JZScriptClassItem *cls)
     for(int i = 0; i < paramList.size(); i++)
     {
         auto param = m_class.param(paramList[i]);
-        if(!editorEnvironment()->isInherits(param->dataType(),Type_object))
+        if(!env->isInherits(env->nameToType(param->type),Type_object))
             continue;
 
         QListWidgetItem *item = new QListWidgetItem(paramList[i]);

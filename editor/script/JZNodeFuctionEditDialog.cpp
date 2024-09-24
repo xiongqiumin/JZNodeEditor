@@ -126,7 +126,7 @@ void JZNodeFuctionEditDialog::on_btnOk_clicked()
 
     if (m_newFunction)
     {
-        auto func = m_project->functionManager()->function(m_functionDefine.fullName());
+        auto func = m_project->environment()->functionManager()->function(m_functionDefine.fullName());
         if (func)
         {
             QMessageBox::information(this, "", "同名函数已存在");

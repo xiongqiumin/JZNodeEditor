@@ -1547,7 +1547,7 @@ void JZNodeView::removeItem(QGraphicsItem *item)
     }
 }
 
-QStringList JZNodeView::matchParmas(JZNodeObjectDefine *meta, int match_type, QString pre)
+QStringList JZNodeView::matchParmas(const JZNodeObjectDefine *meta, int match_type, QString pre)
 {
     auto env = m_file->project()->environment();
 
@@ -1556,11 +1556,12 @@ QStringList JZNodeView::matchParmas(JZNodeObjectDefine *meta, int match_type, QS
     for (int i = 0; i < params.size(); i++)
     {
         auto p = meta->param(params[i]);
-        if (env->canConvert(p->dataType(),match_type))
+        int data_type = env->nameToType(p->type);
+        if (env->canConvert(data_type,match_type))
             list << pre + p->name;
-        if (JZNodeType::isObject(p->dataType()))
+        if (JZNodeType::isObject(data_type))
         {
-            auto sub_meta = env->objectManager()->meta(p->dataType());
+            auto sub_meta = env->objectManager()->meta(data_type);
             list << matchParmas(sub_meta, match_type, pre + p->name + ".");
         }
     }
@@ -1584,7 +1585,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     if (m_runningMode != Process_none)
         return;
 
-    auto func_inst = m_file->project()->functionManager();
+    auto func_inst = editorFunctionManager();
     QMenu menu(this);    
 
     auto item = itemAt(pos);
@@ -1945,7 +1946,8 @@ void JZNodeView::dropEvent(QDropEvent *event)
     if (m_runningMode != Process_none)
         return;
 
-    auto obj_inst = m_file->project()->objectManager();
+    auto env = editorEnvironment();
+    auto obj_inst = env->objectManager();
     auto factory = JZNodeFactory::instance();
     if(event->mimeData()->hasFormat("node_data"))
     {
@@ -1984,9 +1986,10 @@ void JZNodeView::dropEvent(QDropEvent *event)
 
             auto def = JZNodeCompiler::getVariableInfo(m_file,param_name);
             Q_ASSERT(def);
-            if(def->dataType() >= Type_class || def->dataType() == Type_string)
+            int data_type = env->nameToType(def->type);
+            if(data_type >= Type_class || data_type == Type_string)
             {
-                auto meta = obj_inst->meta(def->type);
+                auto meta = obj_inst->meta(data_type);
                 if(meta)
                 {
                     QMenu *menuCall = nullptr;

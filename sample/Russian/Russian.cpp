@@ -70,14 +70,15 @@ void SampleRussian::addInitGame()
 
     auto class_file = m_project.getClass("MainWindow");
     auto mainwindow_meta = m_objInst->meta("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "initGame";
     define.className = "MainWindow";
     define.isFlowFunction = true;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_meta->id));
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_meta->id));
     auto script = class_file->addMemberFunction(define);
-    script->addLocalVariable(JZParamDefine("col_list", Type_intList));
+    script->addLocalVariable(env->paramDefine("col_list", Type_intList));
 
     JZNode *func_start = script->getNode(0);
 
@@ -272,15 +273,16 @@ void SampleRussian::addMapGet()
 {
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
     auto class_file = m_project.getClass("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "getMap";
     define.className = "MainWindow";
     define.isFlowFunction = false;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
-    define.paramIn.push_back(JZParamDefine("row", Type_int));
-    define.paramIn.push_back(JZParamDefine("col", Type_int));
-    define.paramOut.push_back(JZParamDefine("", Type_int));
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_id));
+    define.paramIn.push_back(env->paramDefine("row", Type_int));
+    define.paramIn.push_back(env->paramDefine("col", Type_int));
+    define.paramOut.push_back(env->paramDefine("", Type_int));
 
     auto script = class_file->addMemberFunction(define);
     JZNode *func_start = script->getNode(0);    
@@ -323,15 +325,16 @@ void SampleRussian::addMapSet()
 {
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
     auto class_file = m_project.getClass("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "setMap";
     define.className = "MainWindow";
     define.isFlowFunction = true;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
-    define.paramIn.push_back(JZParamDefine("row", Type_int));
-    define.paramIn.push_back(JZParamDefine("col", Type_int));
-    define.paramIn.push_back(JZParamDefine("value", Type_int));
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_id));
+    define.paramIn.push_back(env->paramDefine("row", Type_int));
+    define.paramIn.push_back(env->paramDefine("col", Type_int));
+    define.paramIn.push_back(env->paramDefine("value", Type_int));
 
     auto script = class_file->addMemberFunction(define);
     JZNode *func_start = script->getNode(0);
@@ -372,8 +375,7 @@ void SampleRussian::addMapSet()
 
 void SampleRussian::addPaintEvent()
 {
-    auto class_file = m_project.getClass("MainWindow");
-
+    auto class_file = m_project.getClass("MainWindow");    
     auto meta = m_objInst->meta("MainWindow");
     auto rect_meta = m_objInst->meta("QRect");
     auto painter = m_objInst->meta("QPainter");
@@ -703,13 +705,14 @@ void SampleRussian::addButtonClicked()
 void SampleRussian::addCreateRect()
 {
     auto mainwindow_id = m_objInst->getClassId("MainWindow");    
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "createRect";
     define.className = "MainWindow";
     define.isFlowFunction = true;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
-    define.paramOut.push_back(JZParamDefine("ok", Type_bool));
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_id));
+    define.paramOut.push_back(env->paramDefine("ok", Type_bool));
 
     auto class_file = m_project.getClass("MainWindow");
     auto script = class_file->addMemberFunction(define);
@@ -825,17 +828,18 @@ void SampleRussian::addCreateRect()
 void SampleRussian::addRectDown()
 {
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "rectDown";
     define.className = "MainWindow";
     define.isFlowFunction = true;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
-    define.paramOut.push_back(JZParamDefine("ok", Type_bool));
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_id));
+    define.paramOut.push_back(env->paramDefine("ok", Type_bool));
 
     auto class_file = m_project.getClass("MainWindow");    
     auto script = class_file->addMemberFunction(define);
-    script->addLocalVariable(JZParamDefine("value", "int"));
+    script->addLocalVariable(env->paramDefine("value", Type_int));
 
     auto meta = m_objInst->meta("MainWindow");
 
@@ -974,6 +978,7 @@ void SampleRussian::addMoveFunction()
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
     auto class_file = m_project.getClass("MainWindow");
     QStringList functions = { "canMoveDown","canMoveLeft", "canMoveRight" , "moveDown", "moveLeft", "moveRight" };
+    auto env = m_project.environment();
 
     for (int i = 0; i < functions.size(); i++)
     {
@@ -983,9 +988,9 @@ void SampleRussian::addMoveFunction()
         define.name = functions[i];
         define.className = "MainWindow";
         define.isFlowFunction = !isCan;
-        define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
+        define.paramIn.push_back(env->paramDefine("this", mainwindow_id));
         if(isCan)
-            define.paramOut.push_back(JZParamDefine("ok", Type_bool));
+            define.paramOut.push_back(env->paramDefine("ok", Type_bool));
         
         class_file->addMemberFunction(define);
     }   
@@ -1347,10 +1352,11 @@ void SampleRussian::addRotate()
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
     auto class_file = m_project.getClass("MainWindow");    
     auto meta = m_objInst->meta("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine def_can = meta->initMemberFunction("canRotate");    
     def_can.isFlowFunction = false;        
-    def_can.paramOut.push_back(JZParamDefine("ok", Type_bool));
+    def_can.paramOut.push_back(env->paramDefine("ok", Type_bool));
     class_file->addMemberFunction(def_can);
     
     JZFunctionDefine def_rotate = meta->initMemberFunction("rotate");
@@ -1509,13 +1515,14 @@ QVector<QVector<QVector<QPoint>>> SampleRussian::shapeGroup()
 void SampleRussian::addCreateShape()
 {
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "createShape";
     define.className = "MainWindow";
     define.isFlowFunction = false;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
-    define.paramIn.push_back(JZParamDefine("type", Type_int));    
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_id));
+    define.paramIn.push_back(env->paramDefine("type", Type_int));    
     define.paramOut.push_back(JZParamDefine("shape", "QList<QList<QPoint>>"));
 
     auto class_file = m_project.getClass("MainWindow");
@@ -1593,16 +1600,17 @@ void SampleRussian::addCreateShape()
 void SampleRussian::addCanPlaceShape()
 {
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "canPlace";
     define.className = "MainWindow";
     define.isFlowFunction = false;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_id));
-    define.paramIn.push_back(JZParamDefine("index", Type_int));
-    define.paramIn.push_back(JZParamDefine("row", Type_int));
-    define.paramIn.push_back(JZParamDefine("col", Type_int));
-    define.paramOut.push_back(JZParamDefine("result", Type_bool));
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_id));
+    define.paramIn.push_back(env->paramDefine("index", Type_int));
+    define.paramIn.push_back(env->paramDefine("row", Type_int));
+    define.paramIn.push_back(env->paramDefine("col", Type_int));
+    define.paramOut.push_back(env->paramDefine("result", Type_bool));
 
     auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
@@ -1610,8 +1618,8 @@ void SampleRussian::addCanPlaceShape()
     auto meta = m_objInst->meta("MainWindow");
 
     auto script = class_file->memberFunction("canPlace");
-    script->addLocalVariable(JZParamDefine("pt_row", "int"));
-    script->addLocalVariable(JZParamDefine("pt_col", "int"));
+    script->addLocalVariable(env->paramDefine("pt_row", Type_int));
+    script->addLocalVariable(env->paramDefine("pt_col", Type_int));
 
     JZNode *node_start = script->getNode(0);
 
@@ -1783,12 +1791,13 @@ void SampleRussian::addCanPlaceShape()
 void SampleRussian::addClearLine()
 {
     auto mainwindow_id = m_objInst->getClassId("MainWindow");
+    auto env = m_project.environment();
 
     JZFunctionDefine define;
     define.name = "clearLine";
     define.className = "MainWindow";
     define.isFlowFunction = true;
-    define.paramIn.push_back(JZParamDefine("this", mainwindow_id));    
+    define.paramIn.push_back(env->paramDefine("this", mainwindow_id));    
 
     auto class_file = m_project.getClass("MainWindow");
     class_file->addMemberFunction(define);
@@ -1796,8 +1805,8 @@ void SampleRussian::addClearLine()
     auto meta = m_objInst->meta("MainWindow");
 
     auto script = class_file->memberFunction("clearLine");
-    script->addLocalVariable(JZParamDefine("line_count", "int"));
-    script->addLocalVariable(JZParamDefine("row", "int", QString::number(m_row - 1)));
+    script->addLocalVariable(env->paramDefine("line_count", Type_int));
+    script->addLocalVariable(env->paramDefine("row", Type_int, QString::number(m_row - 1)));
 
     JZNode *node_start = script->getNode(0);
 

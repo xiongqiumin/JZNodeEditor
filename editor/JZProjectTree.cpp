@@ -13,6 +13,7 @@
 #include "JZUIFile.h"
 #include "JZProjectSettingDialog.h"
 #include "JZNodeSlotEditDialog.h"
+#include "JZEditorGlobal.h"
 
 enum{
     Item_none,
@@ -338,9 +339,9 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
     bool canChanged = true;
     auto item_class = m_project->getItemClass(item);
-    JZNodeObjectDefine *meta = nullptr;
+    const JZNodeObjectDefine *meta = nullptr;
     if(item_class)
-        meta = m_project->objectManager()->meta(item_class->className());
+        meta = editorObjectManager()->meta(item_class->className());
 
     if(item->itemType() == ProjectItem_root)
     {

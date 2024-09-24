@@ -38,25 +38,7 @@ JZFunctionDefine JZNodeFunctionStart::function()
 }
 
 bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
-{
-    auto &func = m_file->function();
-    for(int i = 0; i < func.paramIn.size(); i++)
-    {
-        if(func.paramIn[i].dataType() == Type_none)
-        {
-            error = "输入" + func.paramIn[i].name + "类型错误," + func.paramIn[i].type;
-            return false;
-        }
-    }
-    for(int i = 0; i < func.paramOut.size(); i++)
-    {
-        if(func.paramOut[i].dataType() == Type_none)
-        {
-            error = "输入" + func.paramOut[i].name + "类型错误," + func.paramIn[i].type;
-            return false;
-        }
-    }
-
+{    
     c->addFunctionAlloc(m_file->function());
     c->addNodeDebug(m_id);
     c->addFlowOutput(m_id);
@@ -78,10 +60,10 @@ JZNodeSignalConnect::JZNodeSignalConnect()
     int in3 = addParamIn("receiver", Pin_dispName);
     int in4 = addParamIn("slot", Pin_dispName | Pin_literal);
 
-    setPinType(in1, { Type_object });
-    setPinType(in2, { Type_function });
-    setPinType(in3, { Type_object });
-    setPinType(in4, { Type_function });
+    setPinType(in1, { JZNodeType::typeName(Type_object) });
+    setPinType(in2, { JZNodeType::typeName(Type_function) });
+    setPinType(in3, { JZNodeType::typeName(Type_object) });
+    setPinType(in4, { JZNodeType::typeName(Type_function) });
 }
 
 JZNodeSignalConnect::~JZNodeSignalConnect()

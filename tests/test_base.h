@@ -42,6 +42,8 @@ protected:
     void makeDump();
     
     JZProject m_project;
+    JZNodeObjectManager *m_objInst;
+    JZNodeFunctionManager *m_funcInst;
     JZNodeProgram m_program;
     JZNodeEngine m_engine;
     JZScriptFile *m_file;
