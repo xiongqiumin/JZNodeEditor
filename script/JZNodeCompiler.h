@@ -294,6 +294,7 @@ protected:
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
                     
     NodeCompilerInfo *currentNodeInfo();
+    JZProject *project();
 
     /* build info*/        
     QVector<GraphPtr> m_graphList;

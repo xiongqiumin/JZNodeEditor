@@ -8,6 +8,7 @@
 #include "JZNodeUtils.h"
 #include "JZUiFile.h"
 #include "JZNodeProgramDumper.h"
+#include "JZEditorGlobal.h"
 
 SampleProject::SampleProject()
 {
@@ -44,6 +45,7 @@ void SampleProject::newProject(QString name)
     if (!QDir().exists(dir))
         QDir().mkpath(dir);
         
+    setEditorEnvironment(m_project.environment());
     m_project.newProject(dir, m_name, "ui");
 }
 
@@ -113,6 +115,7 @@ void SampleProject::loadProject()
 void SampleProject::saveProject()
 {
     Q_ASSERT(!m_name.isEmpty());
+    setEditorEnvironment(m_project.environment());
     JZNodeUtils::projectUpdateLayout(&m_project);
     m_project.saveAllItem();
     if (!m_project.save())

@@ -22,6 +22,7 @@ JZNodeExpression::JZNodeExpression()
 
 bool JZNodeExpression::setExpr(QString expr,QString &error)
 {
+    Q_ASSERT(m_file);
     m_expression = expr;
     return updateExpr(error);
 }

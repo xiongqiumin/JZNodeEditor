@@ -54,8 +54,8 @@ void JZProjectItem::fromBuffer(const QByteArray &buffer)
 
         auto sub_item = JZProjectItemManager::instance()->create(type);
         JZProjectItemPtr child = JZProjectItemPtr(sub_item);
-        child->fromBuffer(sub_list[i]);
         addItem(child);
+        child->fromBuffer(sub_list[i]);        
     }
 }
 

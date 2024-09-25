@@ -71,7 +71,9 @@ void JZUiFile::saveToStream(QDataStream &s) const
 
 bool JZUiFile::loadFromStream(QDataStream &s)
 {
-    s >> m_xml;
+    QString xml;
+    s >> xml;
+    setXml(xml);
     return true;
 }
 

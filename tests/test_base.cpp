@@ -8,6 +8,7 @@
 #include "JZNodeBuilder.h"
 #include "JZNodeUtils.h"
 #include "JZNodeProgramDumper.h"
+#include "JZEditorGlobal.h"
 
 BaseTest::BaseTest()
 {
@@ -51,6 +52,7 @@ void BaseTest::init()
     m_project.initProject("console");    
     m_file = m_project.mainFile();
     m_engine.setDebug(false);
+    setEditorEnvironment(m_project.environment());
 }
 
 void BaseTest::cleanup()
@@ -102,8 +104,7 @@ bool BaseTest::build()
     }        
 
     m_engine.setProgram(&m_program);
-    m_engine.init();
-    
+    m_engine.init();    
     return true;
 }
 

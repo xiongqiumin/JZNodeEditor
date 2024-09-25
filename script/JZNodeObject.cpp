@@ -124,7 +124,16 @@ const JZParamDefine *JZNodeObjectDefine::param(const QString &name) const
         auto it = def->params.find(name);
         if(it != def->params.end())
             return &it.value();
-        
+
+        if (isUiWidget)
+        {
+            for (int i = 0; i < widgetParams.size(); i++)
+            {
+                if (widgetParams[i].name == name)
+                    return &widgetParams[i];
+            }
+        }
+
         def = def->super();
     }            
      

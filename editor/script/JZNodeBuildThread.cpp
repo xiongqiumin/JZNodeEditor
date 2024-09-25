@@ -32,6 +32,11 @@ void JZNodeBuildThread::startBuild(JZProject *project)
     start();
 }
 
+bool JZNodeBuildThread::isBuild()
+{
+    return isRunning();
+}
+
 void JZNodeBuildThread::stopBuild()
 {
     m_builder.stopBuild();

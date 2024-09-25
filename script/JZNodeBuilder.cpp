@@ -32,6 +32,7 @@ JZNodeBuilder::JZNodeBuilder()
     m_project = nullptr;
     m_build = false;
     m_stopBuild = false;
+    m_compiler.setBuilder(this);
 }
 
 JZNodeBuilder::~JZNodeBuilder()

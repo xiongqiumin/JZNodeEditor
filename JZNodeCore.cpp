@@ -33,11 +33,13 @@ void outputLogMessage(QtMsgType type, const QMessageLogContext& context, const Q
 
 JZCORE_EXPORT int JZNodeCoreMain(int argc,char *argv[])
 {
-    g_defaultMessageHandle = qInstallMessageHandler(outputLogMessage);    
+    g_defaultMessageHandle = qInstallMessageHandler(outputLogMessage);        
 
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();           
+
+    //runProgram(R"(C:\Users\xiong\Desktop\JZNode Document\JZNodeEditor\sample\russian\build\russian.program)");
         
     JZUpdateClient client(qApp->applicationDirPath());
     if (client.isDownloadFinish())

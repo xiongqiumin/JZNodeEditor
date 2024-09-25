@@ -358,7 +358,6 @@ JZNodeCompiler::JZNodeCompiler()
     m_regCallFunction = nullptr;
     m_builder = nullptr;
     m_env = nullptr;
-    m_project = nullptr;
 
     m_buildGraph = GraphPtr(new Graph());
     m_ignoreError = "#IGNORE_ERROR#";
@@ -369,10 +368,9 @@ JZNodeCompiler::~JZNodeCompiler()
 }
 
 void JZNodeCompiler::init(JZScriptItem *scriptFile)
-{
-    m_scriptFile = scriptFile;
-    m_project = scriptFile->project();        
-    m_env = m_project->environment();
+{    
+    m_scriptFile = scriptFile;     
+    m_env = project()->environment();
     m_script = nullptr;    
     m_originGraph = nullptr;
     m_statmentList = nullptr;
@@ -389,6 +387,16 @@ void JZNodeCompiler::init(JZScriptItem *scriptFile)
 void JZNodeCompiler::setBuilder(JZNodeBuilder *builder)
 {
     m_builder = builder;
+}
+
+JZProject *JZNodeCompiler::project()
+{
+    if (m_builder)
+        return m_builder->project();
+    else if (m_scriptFile)
+        return m_scriptFile->project();
+    else
+        return nullptr;
 }
 
 bool JZNodeCompiler::genGraphs(JZScriptItem *scriptFile, QVector<GraphPtr> &list)
@@ -529,7 +537,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     m_compilerInfo = CompilerResult();
     m_compilerInfo.result = false;
 
-    JZScriptClassItem *class_file = m_project->getItemClass(scriptFile);
+    JZScriptClassItem *class_file = project()->getItemClass(scriptFile);
     if (class_file)
     {
         m_className = class_file->className();
@@ -678,7 +686,7 @@ QString JZNodeCompiler::pinName(JZNodePin *pin)
 
 void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
 {    
-    auto env = m_project->environment();
+    auto env = project()->environment();
     auto list = node->paramOutList();
     for (int i = 0; i < list.size(); i++)
     {
@@ -924,9 +932,9 @@ void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
             depend.member[member_list[i]] = meta->param(member_list[i])->value;
     }
 
-    auto global_list = m_project->globalVariableList();
+    auto global_list = project()->globalVariableList();
     for (int i = 0; i < global_list.size(); i++)
-        depend.global[global_list[i]] = m_project->globalVariable(global_list[i])->value;
+        depend.global[global_list[i]] = project()->globalVariable(global_list[i])->value;
 
     depend.function = jzfunc->define;
     for (int pc = jzfunc->addr; pc < jzfunc->addrEnd; pc++)
@@ -1266,10 +1274,7 @@ bool JZNodeCompiler::checkBuildResult()
 
 bool JZNodeCompiler::checkBuildStop()
 {
-    if(m_builder)
-        return m_builder->isBuildInterrupt();
-
-    return false;
+    return m_builder->isBuildInterrupt();
 }
 
 void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
@@ -1331,7 +1336,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr)
 
 bool JZNodeCompiler::checkPinInType(int node_id, int prop_check_id, QString &error)
 {   
-    auto env = m_project->environment();
+    auto env = project()->environment();
     auto typeListName = [env](QList<int> types)->QString{
         QStringList list;
         for(int i = 0; i < types.size(); i++)
@@ -1673,7 +1678,7 @@ int JZNodeCompiler::nextPc()
 
 const JZFunctionDefine *JZNodeCompiler::function(QString name)
 {
-    const JZFunctionDefine *func = m_project->function(name);
+    const JZFunctionDefine *func = project()->function(name);
     if(func)
         return func;
         
@@ -1831,7 +1836,7 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
 {
     Q_ASSERT(func && func->paramIn.size() == org_paramIn.size() && func->paramOut.size() >= org_paramOut.size());
 
-    auto env = m_project->environment();
+    auto env = project()->environment();
     QList<JZNodeIRParam> param_in;
     for(int i = 0; i < org_paramIn.size(); i++)
     {
@@ -1903,7 +1908,7 @@ JZNodeIRParam JZNodeCompiler::paramRef(QString name)
 
 void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
 {
-    auto env = m_project->environment();
+    auto env = project()->environment();
     int start_pc = nextPc();
     setRegCallFunction(&define);
     for (int i = 0; i < define.paramIn.size(); i++)
@@ -1987,7 +1992,7 @@ void JZNodeCompiler::setRegCallFunction(const JZFunctionDefine *func)
 
 bool JZNodeCompiler::checkParamDefine(const JZParamDefine *def, QString &error)
 {
-    auto env = m_project->environment();
+    auto env = project()->environment();
     int data_type = env->nameToType(def->type);
     if (data_type == Type_none)
     {
@@ -2029,7 +2034,7 @@ bool JZNodeCompiler::checkVariableExist(const QString &name,QString &error)
 
 bool JZNodeCompiler::checkVariableType(const QString &name, int data_type, QString &error)
 {
-    auto env = m_project->environment();
+    auto env = project()->environment();
     if (!checkVariableExist(name, error))
         return false;
 
@@ -2291,7 +2296,7 @@ int JZNodeCompiler::addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam 
 
 void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op)
 {   
-    auto env = m_project->environment();
+    auto env = project()->environment();
     int t1 = irParamType(p1);
     int t2 = irParamType(p2);
     int tDst = irParamType(dst);
@@ -2337,7 +2342,7 @@ void JZNodeCompiler::addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRPa
 
 int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
 {
-    auto env = m_project->environment();
+    auto env = project()->environment();
     int type = Type_none;    
     if (param.isReg())
     {
@@ -2401,7 +2406,7 @@ int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
 
 bool JZNodeCompiler::irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet)
 {
-    auto env = m_project->environment();
+    auto env = project()->environment();
     int t1 = irParamType(p1);
     int t2 = irParamType(p2);
     if(isSet)
@@ -2430,7 +2435,7 @@ void JZNodeCompiler::addWatchDisplay(const JZNodeIRParam &dst)
 
 void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value)
 {
-    auto env = m_project->environment();
+    auto env = project()->environment();
     auto obj_inst = env->objectManager();
     if(dataType < Type_class)
         addSetVariable(dst,irLiteral(env->initValue(dataType,value)));
@@ -2526,8 +2531,8 @@ void JZNodeCompiler::addSetBuffer(const JZNodeIRParam &id, const QByteArray &buf
 
 void JZNodeCompiler::addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst)
 {
-    Q_ASSERT(m_project->environment()->canConvertExplicitly(irParamType(src),dst_type));
-    Q_ASSERT(m_project->environment()->isSameType(dst_type,irParamType(dst)));
+    Q_ASSERT(project()->environment()->canConvertExplicitly(irParamType(src),dst_type));
+    Q_ASSERT(project()->environment()->isSameType(dst_type,irParamType(dst)));
 
     JZNodeIRConvert *op = new JZNodeIRConvert();    
     op->dst = dst;

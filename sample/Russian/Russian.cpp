@@ -615,7 +615,9 @@ void SampleRussian::addPaintEvent()
 
     JZNodeFunction *pt_rect_create = new JZNodeFunction();
     pt_rect_create->setFunction(rect_meta->function("create"));
-
+    
+    script->addNode(pt_expr_row);
+    script->addNode(pt_expr_col);
     ret1 = pt_expr_row->setExpr(exrp1, error);
     ret2 = pt_expr_col->setExpr(exrp2, error);
     Q_ASSERT(ret1 && ret2);
@@ -624,9 +626,7 @@ void SampleRussian::addPaintEvent()
     pt_fill_rect->setFunction(painter->function("fillRect"));
 
     script->addNode(pt_rect_create);
-    script->addNode(pt_fill_rect);
-    script->addNode(pt_expr_row);
-    script->addNode(pt_expr_col);
+    script->addNode(pt_fill_rect);    
     script->addNode(pt_color_get);
 
     script->addConnect(shape_row->paramOutGemo(0), shape_row_add->paramInGemo(0));

@@ -113,8 +113,12 @@ JZScriptEnvironment::ModuleInfo *JZScriptEnvironment::module(QString name)
             return m_moduleList[i];
     }
 
+    auto m = JZModuleManager::instance()->module(name);
+    if (!m)
+        return nullptr;
+
     ModuleInfo *info = new ModuleInfo();
-    info->module = JZModuleManager::instance()->module(name);
+    info->module = m;
     info->ref = 0;
     m_moduleList.push_back(info);
     return info;

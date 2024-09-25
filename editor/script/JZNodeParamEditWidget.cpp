@@ -217,7 +217,7 @@ void JZNodeParamValueWidget::createWidget()
         auto line = box->findChild<QLineEdit*>();
         connect(line, &QLineEdit::editingFinished, this, &JZNodeParamValueWidget::sigValueChanged);
         connect(line, &QLineEdit::returnPressed, this, &JZNodeParamValueWidget::sigValueChanged);
-        box->connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(onValueChanged()));
+        box->connect(box, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &JZNodeParamValueWidget::sigValueChanged);
 
         if (m_dataType == Type_bool)
         {

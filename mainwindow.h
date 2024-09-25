@@ -199,7 +199,7 @@ private:
     void updateAutoWatch(int stack_index);
 
     void build();
-    void saveProgram();
+    bool saveProgram();
     void startProgram();
     void startUnitTest(QString testItemPath);
     void saveToFile(QString file,QString text);

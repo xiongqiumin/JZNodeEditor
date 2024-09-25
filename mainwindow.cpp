@@ -696,6 +696,14 @@ void MainWindow::onActionProjectProp()
 
 void MainWindow::onActionBuild()
 {
+    if (m_processMode != Process_none)
+    {
+        if (QMessageBox::question(this, "", "是否停止调试", QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
+            return;
+
+        onActionStop();
+    }
+
     m_buildInfo.save = true;
     build();
 }
@@ -720,6 +728,7 @@ void MainWindow::onActionRun()
     }
     else
     {
+        Q_ASSERT(!m_buildThread.isRunning());
         startProgram();
     }    
 }
@@ -972,6 +981,9 @@ void MainWindow::onBuildFinish(bool flag)
     QString result = flag ? "successed" : "failed";
     m_log->addLog(Log_Compiler, "build finish:" + result);
 
+    qDebug() << "build finish";
+
+    m_buildThread.wait();
     auto builder = m_buildThread.builder();
     auto it = m_editors.begin();
     while (it != m_editors.end())
@@ -995,7 +1007,9 @@ void MainWindow::onBuildFinish(bool flag)
         }
         if(m_buildInfo.save)
         {
-            saveProgram();
+            if (!saveProgram())
+                return;
+
             m_buildInfo.saveTimestamp = QDateTime::currentMSecsSinceEpoch();
         }
         if(m_buildInfo.start)
@@ -1465,6 +1479,8 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
 
 void MainWindow::build()
 {    
+    Q_ASSERT(m_processMode == Process_none);
+
     QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
 
     m_log->clearLog(Log_Compiler);
@@ -1474,6 +1490,8 @@ void MainWindow::build()
     m_buildThread.stopBuild();
     m_buildThread.startBuild(&m_project);
     m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
+
+    qDebug() << "start build";
 }
 
 void MainWindow::saveToFile(QString filepath,QString text)
@@ -1488,8 +1506,10 @@ void MainWindow::saveToFile(QString filepath,QString text)
     }
 }
 
-void MainWindow::saveProgram()
+bool MainWindow::saveProgram()
 {
+    qDebug() << "save program";
+
     QString build_path = m_project.path() + "/build";
     QString build_exe = build_path + "/" + m_project.name() + ".program";
 
@@ -1502,11 +1522,12 @@ void MainWindow::saveProgram()
     if (!m_program.save(build_exe))
     {
         m_log->addLog(Log_Compiler, "generate program failed");
-        return;
+        return false;
     }
 
     JZNodeProgramDumper dumper;
     saveToFile(build_path + "/" + m_project.name() + ".jsm", dumper.dump(&m_program));
+    return true;
 }
 
 void MainWindow::startUnitTest(QString runItemPath)
@@ -1560,6 +1581,7 @@ void MainWindow::startProgram()
     }
 
     setRunningMode(Process_running);
+    qDebug() << "startProgram finish";
 }
 
 void MainWindow::onTabContextMenu(QPoint pos)

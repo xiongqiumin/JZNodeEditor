@@ -60,7 +60,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<Mat> cls_mat(cls_id++, "Mat");
     cls_mat.setValueType(true);
     cls_mat.def("create", false, [](int col,int row){ return Mat(row,col,CV_8UC3); });
-    cls_mat.def("resize", true, &Mat::clone);
+    cls_mat.def("clone", true, &Mat::clone);
     cls_mat.regist();    
     
     func_inst->registCFunction("imread", false, jzbind::createFuncion([](QString file) {

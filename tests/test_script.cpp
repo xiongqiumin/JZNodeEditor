@@ -45,6 +45,10 @@ void ScriptTest::testMatchType()
 
 void ScriptTest::testClone()
 {
+    m_project.registContainer("QList<QPoint>");
+    if (!build())
+        return;
+
     auto obj_inst = m_objInst;
     auto obj1 = obj_inst->objectCreate<QObject>();
     auto obj2 = obj_inst->objectCreate<QObject>();
@@ -58,9 +62,7 @@ void ScriptTest::testClone()
 
     auto p_pt1 = obj_inst->objectCast<QPoint>(pt1);
     p_pt1->setX(150);
-    QVERIFY(pt1 != pt2);
-
-    m_project.registContainer("QList<QPoint>");
+    QVERIFY(pt1 != pt2);    
 
     auto obj_list = m_objInst->create("QList<QPoint>");
     QVariant list = QVariant::fromValue(JZNodeObjectPtr(obj_list,true));
@@ -113,9 +115,9 @@ void ScriptTest::testContainer()
     m_project.addGlobalVariable("list_int","QList<int>","{1,2,3,4,5,6,7,8}");
     m_project.addGlobalVariable("list_double","QList<double>","{1,2,3,4,5,6,7,8}");
     m_project.addGlobalVariable("map_int_int","QMap<int,int>","{1:19,2:4}");
-    m_project.addGlobalVariable("map_int_string","QMap<int,QString>",R"({1:"hello",2:"57575"})");
-    m_project.addGlobalVariable("map_string_int","QMap<QString,int>",R"({"a":200,"b":400})");
-    m_project.addGlobalVariable("map_string_string","QMap<QString,QString>",R"({"a":"aa","b":"bbb"})");
+    m_project.addGlobalVariable("map_int_string","QMap<int,string>",R"({1:"hello",2:"57575"})");
+    m_project.addGlobalVariable("map_string_int","QMap<string,int>",R"({"a":200,"b":400})");
+    m_project.addGlobalVariable("map_string_string","QMap<string,string>",R"({"a":"aa","b":"bbb"})");
 
     if(!build())
         return;
@@ -934,7 +936,9 @@ void ScriptTest::testUnitTestClass()
 
 void ScriptTest::testModule()
 {
-    m_project.importModule("ImageModuleSample");
+    m_project.importModule("imageSample");
+    if (!build())
+        return;
 
     auto obj_inst = m_objInst;
     QVariant obj = obj_inst->objectCreate<QImage>();
@@ -1027,7 +1031,8 @@ void ScriptTest::testCustomExpr()
     JZNodeParam *node_a = new JZNodeParam();
     JZNodeParam *node_b = new JZNodeParam();
     JZNodeExpression *node_expr = new JZNodeExpression();
-    
+    script->addNode(node_expr);
+
     m_project.addGlobalVariable("a",Type_int,"2");
     m_project.addGlobalVariable("b",Type_int,"3");
     m_project.addGlobalVariable("c",Type_int,"0");
@@ -1044,8 +1049,7 @@ void ScriptTest::testCustomExpr()
     {
         QVERIFY2(false,qUtf8Printable(error));
         return;
-    }
-    script->addNode(node_expr);
+    }    
 
     JZNodeSetParam *node_set = new JZNodeSetParam();
     node_set->setVariable("c");
@@ -1068,9 +1072,9 @@ void ScriptTest::testCustomExpr()
     QVariant c = engine->getVariable("c");
     QVERIFY(c.toInt() == pow(a,b) - pow(b,a));
 
-
-    JZNodeExpression expr2;
-    bool ret = expr2.setExpr("ret = x >=0 && x < 20 && y >=0 && y < 20;",error);
+    JZNodeExpression *expr2 = new JZNodeExpression();
+    script->addNode(expr2);
+    bool ret = expr2->setExpr("ret = x >=0 && x < 20 && y >=0 && y < 20;",error);
     QVERIFY2(ret,qUtf8Printable(error));
 }
 
@@ -1277,11 +1281,11 @@ public:
 };
 
 void ScriptTest::testArgs()
-{
-    if(!build())
+{    
+    if (!build())
         return;
 
-    auto env = m_project.environment();
+    auto env = m_engine.environment();
     JZFunctionDefine sum_func;
     sum_func.name = "JZSumTest";
     sum_func.isCFunction = true;
@@ -1289,7 +1293,7 @@ void ScriptTest::testArgs()
     sum_func.paramOut.push_back(env->paramDefine("sum", Type_int));
     
     auto sum_ptr = BuiltInFunctionPtr(new JZSumTest());
-    m_funcInst->registBuiltInFunction(sum_func, sum_ptr);
+    env->functionManager()->registBuiltInFunction(sum_func, sum_ptr);    
 
     QVariantList in,out;
     in << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10;

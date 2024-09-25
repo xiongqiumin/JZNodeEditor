@@ -17,6 +17,7 @@ public:
     JZNodeBuilder *builder();
 
     void startBuild(JZProject *project);
+    bool isBuild();
     void stopBuild();
 
 signals:
