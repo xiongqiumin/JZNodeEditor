@@ -16,8 +16,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-
-    void setFunction(const QString &name);
+    
     void setFunction(const JZFunctionDefine *define);
     QString function() const;
     JZFunctionDefine functionDefine();

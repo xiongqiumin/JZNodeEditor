@@ -989,7 +989,7 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
 
 JZNodePinWidget *JZNodeSequence::createWidget(int id)
 {
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this,id);
     QPushButton *btn = w->button();
     btn->setText("Add Input");
     btn->connect(btn, &QPushButton::clicked, [this] {
@@ -1114,10 +1114,10 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 
 JZNodePinWidget* JZNodeFor::createWidget(int id)
 {
-    JZNodePinValueWidget *w = new JZNodePinValueWidget();
+    JZNodePinValueWidget *w = new JZNodePinValueWidget(this, id);
     w->initWidget(Type_int, "QComboBox");
     QComboBox *comboBox = qobject_cast<QComboBox*>(w->focusWidget());
-    comboBox->addItems(m_condTip);      ;
+    comboBox->addItems(m_condTip);
     comboBox->setCurrentIndex(paramInValue(3).toInt());    
 
     return w;
@@ -1356,7 +1356,7 @@ JZNodePinWidget* JZNodeIf::createWidget(int id)
 {
     Q_UNUSED(id);
 
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
     QPushButton *btn = w->button();
     btn->setText(pinName(id));
     if (id == btnCondId())
@@ -1524,7 +1524,7 @@ void JZNodeSwitch::setCaseValue(int index, const QString &v)
 
 JZNodePinWidget* JZNodeSwitch::createWidget(int pin_id)
 {    
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, pin_id);
     QPushButton *btn = w->button();
     btn->setText(pinName(pin_id));
     if (pin_id == widgetOut(0))

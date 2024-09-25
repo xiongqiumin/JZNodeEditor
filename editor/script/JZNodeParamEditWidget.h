@@ -13,13 +13,85 @@ class JZCORE_EXPORT JZNodeParamEditWidget : public QWidget
 public:
     JZNodeParamEditWidget();
     virtual ~JZNodeParamEditWidget();
-
-    virtual void init();
-    virtual QString value() = 0;
+    
+    virtual QString value() const = 0;
     virtual void setValue(const QString &text) = 0;
 
 signals:
     void sigValueChanged();
+};
+
+//JZNodeParamPopupWidget
+class JZCORE_EXPORT JZNodeParamPopupWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodeParamPopupWidget(QWidget *parent = nullptr);
+    ~JZNodeParamPopupWidget();
+
+    QString value();
+    void setValue(QString text);
+
+signals:
+    void sigSettingClicked();
+
+protected:
+    QLineEdit *m_line;
+};
+
+class JZCORE_EXPORT JZNodeParamTypeWidget : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    JZNodeParamTypeWidget(QWidget *parent = nullptr);
+
+    void init(JZNodeObjectManager *inst);
+    QString type();
+    void setType(QString type);
+
+signals:
+    void sigTypeChanged();
+
+protected:
+};
+
+//ItemFocusEventFilter
+class JZCORE_EXPORT ItemFocusEventFilter : public QObject
+{
+public:
+    ItemFocusEventFilter(QObject *parent);
+    virtual bool eventFilter(QObject *object, QEvent *event) override;
+};
+
+//JZNodeParamValueWidget
+class JZCORE_EXPORT JZNodeParamValueWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodeParamValueWidget();
+    ~JZNodeParamValueWidget();
+
+    void initWidget(int data_type, QString widget_type = QString());
+    QWidget *focusWidget();
+
+    QString value() const;
+    void setValue(const QString &value);
+
+signals:
+    void sigValueChanged();
+
+protected:
+    QString getWidgetType(int data_type);
+    void createWidget();
+    void clearWidget();
+
+    QWidget *m_widget;
+
+    int m_dataType;
+    QString m_widgetType;
 };
 
 //JZNodeImageEditWidget
@@ -31,7 +103,7 @@ public:
     JZNodeImageEditWidget();
     virtual ~JZNodeImageEditWidget();
     
-    virtual QString value() override;
+    virtual QString value() const override;
     virtual void setValue(const QString &text) override;
 
 signals:

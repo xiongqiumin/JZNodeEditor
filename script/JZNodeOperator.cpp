@@ -47,7 +47,7 @@ JZNodePinWidget* JZNodeOperator::createWidget(int id)
 {
     Q_UNUSED(id);    
 
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
     QPushButton *btn = w->button();
     btn->setText("Add Input");
     btn->connect(btn, &QPushButton::clicked, [this] {

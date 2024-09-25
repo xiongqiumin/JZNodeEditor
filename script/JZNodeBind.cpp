@@ -7,11 +7,13 @@ namespace jzbind
 static JZScriptEnvironment *g_bindEnv = nullptr;
 JZCORE_EXPORT void setBindEnvironment(JZScriptEnvironment *env)
 {    
+    Q_ASSERT(env == nullptr || g_bindEnv == nullptr);
     g_bindEnv = env;
 }
 
 JZCORE_EXPORT JZScriptEnvironment *bindEnvironment()
 {
+    Q_ASSERT(g_bindEnv);
     return g_bindEnv;    
 }
 

@@ -1,6 +1,5 @@
 #include <QHBoxLayout>
 #include "JZNodeParamDisplayWidget.h"
-#include "JZNodeParamDelegate.h"
 #include "mainwindow.h"
 
 //JZNodeParamDisplayWidget
@@ -31,8 +30,9 @@ JZNodeImageDisplayWidget::~JZNodeImageDisplayWidget()
 
 void JZNodeImageDisplayWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
 {
-    auto d = JZNodeParamDelegateManager::instance()->delegate(Type_image);
-    QVariant v = d->unpack(value.binValue);
+    auto env = editorEnvironment();
+    auto d = env->editorManager()->delegate(Type_image);
+    QVariant v = d->unpack(env,value.binValue);
 
     auto image = editorObjectManager()->objectCast<QImage>(v);
     m_label->setImage(*image);

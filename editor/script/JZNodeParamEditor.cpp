@@ -55,9 +55,13 @@ public:
         if (dataType == Type_none)
             return nullptr;
 
-        auto edit = new JZNodePinValueWidget(parent);
+        auto edit = new JZNodeParamValueWidget();
+        edit->setParent(parent);
         edit->initWidget(dataType);
         edit->setValue(option.text);
+
+        ItemFocusEventFilter *filter = new ItemFocusEventFilter(edit);
+        edit->focusWidget()->installEventFilter(filter);
         return edit;
     }
 
@@ -65,7 +69,7 @@ public:
         QAbstractItemModel *model,
         const QModelIndex &index) const override
     {
-        auto edit = qobject_cast<JZNodePinValueWidget*>(editor);
+        auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
         model->setData(index, edit->value());
     }
 

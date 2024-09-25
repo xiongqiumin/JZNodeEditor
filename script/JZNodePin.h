@@ -44,6 +44,7 @@ public:
     const QString &name() const;
 
     void setFlag(int flag);
+    void changeFlag(int flag,bool isSet);
     int flag() const;
 
     bool isInput() const;

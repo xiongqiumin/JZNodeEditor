@@ -2462,9 +2462,10 @@ void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, con
 }
 
 void JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src)
-{
-    auto obj_inst = m_env->objectManager();
+{    
     Q_ASSERT(irParamTypeMatch(src,dst,true));
+
+    auto obj_inst = m_env->objectManager();
     bool clone = false;
     int dst_type = irParamType(dst);
     if(dst_type >= Type_class)
@@ -2472,6 +2473,7 @@ void JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst, const JZNodeIRPara
         auto meta = obj_inst->meta(dst_type);
         if(meta->isValueType())
         {
+            Q_ASSERT(meta->isCopyable());
             if(dst.isReg() && (dst.id() != Reg_CallIn || !m_regCallFunction->isMemberFunction()))
                 clone = true;
             if(dst.isRef())

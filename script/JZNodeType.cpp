@@ -64,6 +64,8 @@ void JZNodeType::init()
     typeMap["string"] = Type_string;
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;
+    typeMap["QObject"] = Type_object;
+    typeMap["QWidget"] = Type_widget;
     
     typeMap["auto"] = Type_arg;
     typeMap["arg"] = Type_arg;
@@ -231,6 +233,11 @@ QString JZNodeType::debugString(const QVariant &v)
 QString JZNodeType::typeName(int type)
 {
     return typeMap.key(type,"none");
+}
+
+int JZNodeType::nameToType(const QString &name)
+{
+    return typeMap.value(name, Type_none);
 }
 
 QString JZNodeType::opName(int op)

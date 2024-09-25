@@ -50,6 +50,7 @@ protected:
     QString m_code;
     QString m_error;
     JZScriptFile *m_file;
+    JZScriptEnvironment *m_env;
 
     JZScriptItem *m_script;
 };

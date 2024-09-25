@@ -102,7 +102,7 @@ void SampleRussian::addInitGame()
     set_score->setParamInValue(1, "0");
 
     JZNodeFunction *line_setText = new JZNodeFunction();
-    line_setText->setFunction("QLineEdit.setText");
+    line_setText->setFunction(m_funcInst->function("QLineEdit.setText"));
 
     JZNodeConvert *node_convert = new JZNodeConvert();
     node_convert->setOutputType(Type_string);
@@ -130,7 +130,7 @@ void SampleRussian::addInitGame()
     script->addConnect(create_color_list->paramOutGemo(0), set_color_list->paramInGemo(1));
 
     JZNodeFunction *color_resize = new JZNodeFunction();
-    color_resize->setFunction("QList<QColor>.resize");
+    color_resize->setFunction(m_funcInst->function("QList<QColor>.resize"));
     script->addNode(color_resize);
 
     script->addConnect(node_color_list->paramOutGemo(0), color_resize->paramInGemo(0));
@@ -153,7 +153,7 @@ void SampleRussian::addInitGame()
         color_create->setPinValue(color_create->paramIn(2), QString::number(b));
 
         JZNodeFunction *list_set = new JZNodeFunction();
-        list_set->setFunction("QList<QColor>.set");
+        list_set->setFunction(m_funcInst->function("QList<QColor>.set"));
         script->addNode(color_create);
         script->addNode(list_set);
 
@@ -174,7 +174,7 @@ void SampleRussian::addInitGame()
     for_col->setRange(0, m_col);
 
     JZNodeFunction *row_push = new JZNodeFunction();
-    row_push->setFunction("QList<QList<int>>.push_back");
+    row_push->setFunction(m_funcInst->function("QList<QList<int>>.push_back"));
 
     JZNodeCreate *create_col = new JZNodeCreate();
     create_col->setClassName("QList<int>");
@@ -185,7 +185,7 @@ void SampleRussian::addInitGame()
     get_col->setVariable("col_list");
 
     JZNodeFunction *col_push = new JZNodeFunction();
-    col_push->setFunction("QList<int>.push_back");
+    col_push->setFunction(m_funcInst->function("QList<int>.push_back"));
     col_push->setPinValue(col_push->paramIn(1), QString::number(-1));
 
     script->addNode(node_map);
@@ -218,7 +218,7 @@ void SampleRussian::addInitGame()
     script->addConnect(for_row->flowOutGemo(), node_isRect->flowInGemo());
 
     JZNodeFunction *node_func = new JZNodeFunction();
-    node_func->setFunction("QWidget.update");
+    node_func->setFunction(m_funcInst->function("QWidget.update"));
     script->addNode(node_func);
 
     script->addConnect(node_isRect->flowOutGemo(), node_func->flowInGemo());
@@ -297,10 +297,10 @@ void SampleRussian::addMapGet()
     node_map->setVariable("this.map");
 
     JZNodeFunction *row_get = new JZNodeFunction();
-    row_get->setFunction("QList<QList<int>>.get");
+    row_get->setFunction(m_funcInst->function("QList<QList<int>>.get"));
 
     JZNodeFunction *col_get = new JZNodeFunction();
-    col_get->setFunction("QList<int>.get");
+    col_get->setFunction(m_funcInst->function("QList<int>.get"));
 
     JZNodeReturn *node_return = new JZNodeReturn();
     node_return->setFunction(&script->function());
@@ -352,10 +352,10 @@ void SampleRussian::addMapSet()
     node_map->setVariable("this.map");
 
     JZNodeFunction *row_get = new JZNodeFunction();
-    row_get->setFunction("QList<QList<int>>.get");
+    row_get->setFunction(m_funcInst->function("QList<QList<int>>.get"));
 
     JZNodeFunction *col_set = new JZNodeFunction();
-    col_set->setFunction("QList<int>.set");
+    col_set->setFunction(m_funcInst->function("QList<int>.set"));
     
     script->addNode(node_row);
     script->addNode(node_col);
@@ -453,7 +453,7 @@ void SampleRussian::addPaintEvent()
     node_color_list->setVariable("this.colors");
 
     JZNodeFunction *color_get = new JZNodeFunction();
-    color_get->setFunction("QList<QColor>.get");
+    color_get->setFunction(m_funcInst->function("QList<QColor>.get"));
 
     script->addNode(node_color_list);
     script->addNode(color_get);    
@@ -462,10 +462,10 @@ void SampleRussian::addPaintEvent()
     node_map->setVariable("this.map");
 
     JZNodeFunction *row_get = new JZNodeFunction();
-    row_get->setFunction("QList<QList<int>>.get");
+    row_get->setFunction(m_funcInst->function("QList<QList<int>>.get"));
 
     JZNodeFunction *col_get = new JZNodeFunction();
-    col_get->setFunction("QList<int>.get");
+    col_get->setFunction(m_funcInst->function("QList<int>.get"));
 
     JZNodeBranch *branch = new JZNodeBranch();
 
@@ -525,19 +525,19 @@ void SampleRussian::addPaintEvent()
     JZNodeFor *node_for = new JZNodeFor();
 
     JZNodeFunction *get_list = new JZNodeFunction();
-    get_list->setFunction("QList<QList<QPoint>>.get");
+    get_list->setFunction(m_funcInst->function("QList<QList<QPoint>>.get"));
 
     JZNodeFunction *get_point = new JZNodeFunction();
-    get_point->setFunction("QList<QPoint>.get");
+    get_point->setFunction(m_funcInst->function("QList<QPoint>.get"));
 
     JZNodeFunction *get_list_size = new JZNodeFunction();
-    get_list_size->setFunction("QList<QPoint>.size");
+    get_list_size->setFunction(m_funcInst->function("QList<QPoint>.size"));
 
     JZNodeFunction *point_row = new JZNodeFunction();
-    point_row->setFunction("QPoint.x");
+    point_row->setFunction(m_funcInst->function("QPoint.x"));
 
     JZNodeFunction *point_col = new JZNodeFunction();
-    point_col->setFunction("QPoint.y");    
+    point_col->setFunction(m_funcInst->function("QPoint.y"));
 
     JZNodeParam *shape_row = new JZNodeParam();
     shape_row->setVariable("this.shape_row");
@@ -611,7 +611,7 @@ void SampleRussian::addPaintEvent()
     JZNodeExpression *pt_expr_col = new JZNodeExpression();
 
     JZNodeFunction *pt_color_get = new JZNodeFunction();
-    pt_color_get->setFunction("QList<QColor>.get");
+    pt_color_get->setFunction(m_funcInst->function("QList<QColor>.get"));
 
     JZNodeFunction *pt_rect_create = new JZNodeFunction();
     pt_rect_create->setFunction(rect_meta->function("create"));
@@ -692,7 +692,7 @@ void SampleRussian::addButtonClicked()
         timer->setVariable("this.timer");
 
         JZNodeFunction *stop = new JZNodeFunction();
-        stop->setFunction("QTimer.stop");
+        stop->setFunction(m_funcInst->function("QTimer.stop"));
 
         script->addNode(timer);
         script->addNode(stop);
@@ -762,7 +762,7 @@ void SampleRussian::addCreateRect()
     shape_index->setParamInValue(1, "0");
     
     JZNodeFunction *node_rand = new JZNodeFunction();
-    node_rand->setFunction("rand");
+    node_rand->setFunction(m_funcInst->function("rand"));
 
     JZNodeMod *color_mod = new JZNodeMod();
     JZNodeMod *shape_col_mod = new JZNodeMod();
@@ -886,19 +886,19 @@ void SampleRussian::addRectDown()
     JZNodeFor *node_for = new JZNodeFor();
 
     JZNodeFunction *get_list = new JZNodeFunction();
-    get_list->setFunction("QList<QList<QPoint>>.get");
+    get_list->setFunction(m_funcInst->function("QList<QList<QPoint>>.get"));
 
     JZNodeFunction *get_point = new JZNodeFunction();
-    get_point->setFunction("QList<QPoint>.get");
+    get_point->setFunction(m_funcInst->function("QList<QPoint>.get"));
 
     JZNodeFunction *get_list_size = new JZNodeFunction();
-    get_list_size->setFunction("QList<QPoint>.size");
+    get_list_size->setFunction(m_funcInst->function("QList<QPoint>.size"));
 
     JZNodeFunction *point_row = new JZNodeFunction();
-    point_row->setFunction("QPoint.x");
+    point_row->setFunction(m_funcInst->function("QPoint.x"));
 
     JZNodeFunction *point_col = new JZNodeFunction();
-    point_col->setFunction("QPoint.y");
+    point_col->setFunction(m_funcInst->function("QPoint.y"));
 
     JZNodeParam *shape_row = new JZNodeParam();
     shape_row->setVariable("this.shape_row");
@@ -1282,9 +1282,11 @@ void SampleRussian::addKeyEvent()
     script->addConnect(node_keyPress->paramOutGemo(0), key_code->paramInGemo(0));        
     
     auto connectKey = [script](JZNodeEQ *eq, int in_key_code){
+        auto env = script->project()->environment();
+        auto enum_meta = env->objectManager()->enumMeta("Qt::Key");
         JZNodeEnum *key = new JZNodeEnum();
-        key->setEnum("Qt::Key");
-        key->setValue(in_key_code);
+        key->setEnum(enum_meta);
+        key->setKey(enum_meta->valueToKey(in_key_code));
         script->addNode(key);
         script->addConnect(key->paramOutGemo(0), eq->paramInGemo(1));
     };
@@ -1632,19 +1634,19 @@ void SampleRussian::addCanPlaceShape()
     JZNodeFor *node_for = new JZNodeFor();
 
     JZNodeFunction *get_list = new JZNodeFunction();
-    get_list->setFunction("QList<QList<QPoint>>.get");
+    get_list->setFunction(m_funcInst->function("QList<QList<QPoint>>.get"));
 
     JZNodeFunction *get_point = new JZNodeFunction();
-    get_point->setFunction("QList<QPoint>.get");
+    get_point->setFunction(m_funcInst->function("QList<QPoint>.get"));
     
     JZNodeFunction *get_list_size = new JZNodeFunction();
-    get_list_size->setFunction("QList<QPoint>.size");
+    get_list_size->setFunction(m_funcInst->function("QList<QPoint>.size"));
 
     JZNodeFunction *point_row = new JZNodeFunction();
-    point_row->setFunction("QPoint.x");
+    point_row->setFunction(m_funcInst->function("QPoint.x"));
 
     JZNodeFunction *point_col = new JZNodeFunction();
-    point_col->setFunction("QPoint.y");
+    point_col->setFunction(m_funcInst->function("QPoint.y"));
 
     JZNodeFunction *get_map = new JZNodeFunction();
     get_map->setFunction(meta->function("getMap"));
@@ -1956,7 +1958,7 @@ void SampleRussian::addClearLine()
     score_set->setVariable("this.score");
 
     JZNodeFunction *line_setText = new JZNodeFunction();
-    line_setText->setFunction("QLineEdit.setText");
+    line_setText->setFunction(m_funcInst->function("QLineEdit.setText"));
 
     JZNodeConvert *node_convert = new JZNodeConvert();
     node_convert->setOutputType(Type_string);

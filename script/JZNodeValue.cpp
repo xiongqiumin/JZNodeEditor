@@ -30,15 +30,12 @@ int JZNodeLiteral::dataType() const
 
 void JZNodeLiteral::setDataType(int type)
 {    
-    int out = paramOut(0);    
-    auto env = environment();
-    pin(out)->setDataType({ env->typeToName(type) });
-    setName(env->typeToName(type));
-    if(JZNodeType::isBaseOrEnum(type))
-        pin(out)->setFlag(Pin_out | Pin_param | Pin_dispValue | Pin_editValue);
-    else
-        pin(out)->setFlag(Pin_out | Pin_param | Pin_dispName);
-    
+    Q_ASSERT(JZNodeType::isBase(type) || type == Type_nullptr);
+
+    int out = paramOut(0);        
+    pin(out)->setDataType({ JZNodeType::typeName(type) });
+    setName(JZNodeType::typeName(type));
+    pin(out)->setFlag(Pin_out | Pin_param | Pin_dispValue | Pin_editValue);        
     if (type == Type_bool)
         setLiteral("false");
     else if (type == Type_int)
@@ -104,11 +101,8 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-void JZNodeEnum::setEnum(QString type)
-{
-    auto obj_inst = environment()->objectManager();
-    auto meta = obj_inst->enumMeta(type);    
-
+void JZNodeEnum::setEnum(const JZNodeEnumDefine *meta)
+{    
     setName(meta->name());
     setPinType(paramOut(0), { meta->name() });
     setKey(meta->defaultKey());
@@ -117,13 +111,6 @@ void JZNodeEnum::setEnum(QString type)
 void JZNodeEnum::setKey(QString key)
 {
     setPinValue(paramOut(0), key);
-}
-
-void JZNodeEnum::setValue(int value)
-{    
-    auto obj_inst = environment()->objectManager();
-    auto meta = obj_inst->enumMeta(m_name);
-    setPinValue(paramOut(0), meta->valueToKey(value));
 }
 
 //JZNodeFlag
@@ -153,11 +140,8 @@ bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-void JZNodeFlag::setFlag(QString type)
+void JZNodeFlag::setFlag(const JZNodeEnumDefine *meta)
 {
-    auto obj_inst = environment()->objectManager();
-    auto meta = obj_inst->enumMeta(type);
-
     setName(meta->name());
     setPinType(paramOut(0), { meta->name() });
     setKey(meta->defaultKey());
@@ -166,14 +150,6 @@ void JZNodeFlag::setFlag(QString type)
 void JZNodeFlag::setKey(QString value)
 {
     setPinValue(paramOut(0), value);
-}
-
-void JZNodeFlag::setValue(int value)
-{
-    auto obj_inst = environment()->objectManager();
-    auto def = obj_inst->enumMeta(m_name);
-    auto key = def->valueToKey(value);
-    setPinValue(paramOut(0), key);
 }
 
 //JZNodeConvert
@@ -224,7 +200,7 @@ bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
 
 JZNodePinWidget* JZNodeConvert::createWidget(int id)
 {
-    auto w = new JZNodePinValueWidget();
+    auto w = new JZNodePinValueWidget(this, id);
     w->initWidget(Type_string);
     return w;
 }
@@ -506,11 +482,11 @@ JZNodePinWidget* JZNodeDisplay::createWidget(int id)
     auto in_list = paramInList();
     if(in_list.contains(id))
     {
-        return new JZNodePinDisplayWidget();
+        return new JZNodePinDisplayWidget(this,id);
     }
     else
     {
-        JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+        JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
         QPushButton *btn = w->button();
         btn->setText("Add Input");
         btn->connect(btn, &QPushButton::clicked, [this] {

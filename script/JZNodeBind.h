@@ -877,13 +877,13 @@ protected:
     void initEqual(std::true_type)
     {
         m_define.cMeta.equal = &equalClass<Class>;
-        m_define.cMeta.isCopyable = true;
+        m_define.cMeta.isCompare = true;
     }
 
     void initEqual(std::false_type)
     {
         m_define.cMeta.equal = &equalClassAssert;
-        m_define.cMeta.isCopyable = false;
+        m_define.cMeta.isCompare = false;
     }  
 
     JZFunctionDefine *registFunction(QString name,bool isflow,QSharedPointer<CFunction> cfunc)

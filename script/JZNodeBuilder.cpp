@@ -153,6 +153,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     m_program->clear();    
     
     auto env = m_project->environment();
+    auto obj_inst = env->objectManager();
     JZNodeTypeMeta type_meta;
     auto container_list = m_project->containerList();
     for(int i = 0; i < container_list.size(); i++)
@@ -191,11 +192,11 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     for(int cls_idx = 0; cls_idx < class_list.size(); cls_idx++)
     {
         JZScriptClassItem *class_item = dynamic_cast<JZScriptClassItem*>(class_list[cls_idx]);
-        auto obj_def = class_item->objectDefine();        
-        type_meta.objectList << obj_def;
+        auto obj_def = obj_inst->meta(class_item->className());
+        type_meta.objectList << *obj_def;
                 
         QString error;
-        if(!obj_def.check(error))        
+        if(!obj_def->check(error))        
             m_error += error;        
 
         JZParamItem *param = class_item->paramFile();
@@ -213,7 +214,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             auto bind = param->bindVariable(bind_list[i]);
             if (!var_list.contains(bind->variable))
             {
-                error = JZNodeCompiler::errorString(Error_classNoMember, { obj_def.className,bind->variable});
+                error = JZNodeCompiler::errorString(Error_classNoMember, { obj_def->className,bind->variable});
                 m_error += makeParamLink(error, param->itemPath(),true, i);
             }
         }

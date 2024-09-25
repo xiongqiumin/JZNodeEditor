@@ -57,6 +57,7 @@ CMeta::CMeta()
 {
     isCopyable = false;
     isAbstract = false;
+    isCompare = false;
 
     create = nullptr;
     copy = nullptr;
@@ -930,13 +931,6 @@ bool JZNodeObjectPtr::operator !=(const JZNodeObjectPtr &other) const
     return !(this->operator==(other));
 }
 
-QDebug operator<<(QDebug dbg, const JZNodeObjectPtr ptr)
-{
-    Q_ASSERT(ptr.object());
-    dbg << JZNodeType::debugString(ptr.object());
-    return dbg;
-}
-
 JZCORE_EXPORT bool isJZObject(const QVariant &v)
 {
     return (v.userType() == qMetaTypeId<JZNodeObjectPtr>());
@@ -1008,9 +1002,7 @@ const JZScriptEnvironment *JZNodeObjectManager::env() const
 }
 
 void JZNodeObjectManager::init()
-{  
-    QMetaType::registerDebugStreamOperator<JZNodeObjectPtr>();           
-
+{          
     jzbind::ClassBind<JZNodeVariantAny> cls_any(Type_any, "any");
     cls_any.def("type", false, &JZNodeVariantAny::type);
     cls_any.regist();
@@ -1081,6 +1073,7 @@ int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;
+    def->manager = this;
     if(info.id != -1)
     {
         def->id = info.id;
@@ -1101,6 +1094,7 @@ void JZNodeObjectManager::replace(const JZNodeObjectDefine &define)
         
     JZNodeObjectDefine *ptr = m_metas[define.id].data();
     *ptr = define;
+    ptr->manager = this;
 }
 
 int JZNodeObjectManager::registCClass(const JZNodeObjectDefine &define,const QString &ctype_id)

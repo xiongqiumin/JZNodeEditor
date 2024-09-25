@@ -1778,7 +1778,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
 
         auto node_func = dynamic_cast<JZNodeFunction*>(node);
         auto old = getNodeData(node_func->id());        
-        node_func->setFunction(text);
+        node_func->setFunction(func_inst->function(text));
         onScriptNodeChanged(m_file,node_func->id(), old);
     }
     else if(ret == actSetExpr)
@@ -1948,6 +1948,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
 
     auto env = editorEnvironment();
     auto obj_inst = env->objectManager();
+    auto func_inst = env->functionManager();
     auto factory = JZNodeFactory::instance();
     if(event->mimeData()->hasFormat("node_data"))
     {
@@ -2028,7 +2029,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
             else
             {
                 JZNodeFunction function;
-                function.setFunction(act->data().toString());
+                function.setFunction(func_inst->function(act->data().toString()));
                 function.setVariable(param_name);
                 addCreateNodeCommand(factory->saveNode(&function), mapToScene(event->pos()));
             }            

@@ -28,7 +28,7 @@ JZNodeLocalParamEditDialog::JZNodeLocalParamEditDialog(QWidget *parent)
     gridLayout->addWidget(m_typeWidget, 1, 1);
     connect(m_typeWidget,SIGNAL(sigTypeChanged()),this, SLOT(onTypeChanged()));
 
-    m_valueWidget = new JZNodePinValueWidget();
+    m_valueWidget = new JZNodeParamValueWidget();
     gridLayout->addWidget(new QLabel("默认值:"), 2, 0);    
     gridLayout->addWidget(m_valueWidget, 2, 1);    
 

@@ -59,6 +59,8 @@ int JZNodeGraphItem::PropGemo::height()
 // JZNodeGraphItem
 JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 {
+    Q_ASSERT(node);
+
     m_type = Item_node;
     m_node = node;
     m_id = node->id();    
@@ -380,7 +382,7 @@ void JZNodeGraphItem::createPinWidget(int pin_id)
     }
     else if (pin->isDispValue())
     {
-        JZNodePinValueWidget *param_widget = new JZNodePinValueWidget();
+        JZNodePinValueWidget *param_widget = new JZNodePinValueWidget(m_node, pin_id);
         int up_type = env->upType(env->nameToTypeList(pin->dataType()));
         param_widget->initWidget(up_type);
 
@@ -392,8 +394,7 @@ void JZNodeGraphItem::createPinWidget(int pin_id)
     widget->connect(widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
     widget->connect(widget, SIGNAL(sigSizeChanged(QSize)), editor(), SLOT(onItemSizeChanged()));
     widget->setProperty("node_id", m_id);
-    widget->setProperty("prop_id", pin_id);
-    widget->init(m_node, pin_id);
+    widget->setProperty("prop_id", pin_id);    
 
     auto gemo = &m_pinRects[pin_id];
     gemo->widget = widget;

@@ -2,8 +2,8 @@
 #include <QBuffer>
 #include "JZModuleOpencv.h"
 #include "JZNodeBind.h"
-#include "JZNodeParamDelegate.h"
 #include "CvMatAndQImage.h"
+#include "JZNodeParamDisplayWidget.h"
 #include "JZScriptEnvironment.h"
 
 using namespace cv;
@@ -12,17 +12,17 @@ enum
 {
     Opencv_mat = 15000,
 };
-/*
-QVariant createMat(const QString &value)
+
+QVariant createMat(JZScriptEnvironment *env,const QString &value)
 {
     Mat *mat = new Mat();
     *mat = imread(qPrintable(value));
-    return JZObjectCreateRefrence(mat, true);
+    return env->objectManager()->objectRefrence(mat, true);
 }
 
-QByteArray matPack(const QVariant &value)
+QByteArray matPack(JZScriptEnvironment *env, const QVariant &value)
 {
-    Mat *mat = JZObjectCast<Mat>(value);
+    Mat *mat = env->objectManager()->objectCast<Mat>(value);
     
     QImage image = QtOcv::mat2Image(*mat);
     QByteArray ba;
@@ -32,17 +32,20 @@ QByteArray matPack(const QVariant &value)
     return ba;
 }
 
-QVariant matUnpack(const QByteArray &buffer)
+QVariant matUnpack(JZScriptEnvironment *env, const QByteArray &buffer)
 {
     QImage *image = new QImage();
     image->loadFromData(buffer);
-    return JZObjectCreateRefrence(image, true);
+    return env->objectManager()->objectRefrence(image, true);
 }
-*/
+
 //JZModuleOpencv
 JZModuleOpencv::JZModuleOpencv()
 {        
     m_name = "opencv";
+
+    m_classList << "Mat";
+    m_functionList << "imread" << "threshold" << "medianBlur";
 }
 
 JZModuleOpencv::~JZModuleOpencv()
@@ -58,8 +61,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     cls_mat.setValueType(true);
     cls_mat.def("create", false, [](int col,int row){ return Mat(row,col,CV_8UC3); });
     cls_mat.def("resize", true, &Mat::clone);
-    cls_mat.regist();
-    m_classList << "Mat";
+    cls_mat.regist();    
     
     func_inst->registCFunction("imread", false, jzbind::createFuncion([](QString file) {
         Mat out;
@@ -77,17 +79,16 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         Mat out;
         medianBlur(in, out, size);
         return out;
-    }));
-    m_functionList << "imread" << "threshold" << "medianBlur";
+    }));    
 
-    auto d_inst = JZNodeParamDelegateManager::instance();
+    auto d_inst = env->editorManager();
 
     JZNodeParamDelegate d_mat;
     d_mat.editType = Type_imageEdit;
     d_mat.createDisplay = CreateParamDisplayWidget<JZNodeImageDisplayWidget>;
-    //d_mat.createParam = createMat;    
-    //d_mat.pack = matPack;
-    //d_mat.unpack = matUnpack;
+    d_mat.createParam = createMat;    
+    d_mat.pack = matPack;
+    d_mat.unpack = matUnpack;
     d_inst->registDelegate(cls_mat.id(), d_mat);
 }
 

@@ -5,43 +5,8 @@
 #include <QComboBox>
 #include "JZProcess.h"
 #include "JZNodeDebugPacket.h"
-#include "QImageLabel.h"
+#include "JZNodeParamEditWidget.h"
 #include "JZEditorGlobal.h"
-
-class JZCORE_EXPORT JZNodePinPopupWidget: public QWidget
-{
-    Q_OBJECT
-
-public:    
-    JZNodePinPopupWidget(QWidget *parent = nullptr);
-    ~JZNodePinPopupWidget();
-
-    QString value();
-    void setValue(QString text);    
-
-signals:
-    void sigSettingClicked();
-
-protected:
-    QLineEdit *m_line;    
-};
-
-class JZCORE_EXPORT JZNodeParamTypeWidget : public QComboBox
-{
-    Q_OBJECT
-
-public:
-    JZNodeParamTypeWidget(QWidget *parent = nullptr);
-
-    void init(JZNodeObjectManager *inst);
-    QString type();
-    void setType(QString type);
-
-signals:
-    void sigTypeChanged();
-
-protected:
-};
 
 //JZNodePinWidget
 class JZNode;
@@ -50,13 +15,11 @@ class JZCORE_EXPORT JZNodePinWidget : public QWidget
     Q_OBJECT
         
 public:
-    JZNodePinWidget(QWidget *parent = nullptr);
+    JZNodePinWidget(JZNode *node, int pin_id);
     ~JZNodePinWidget();
-    
-    void init(JZNode *node, int pin_id);
+        
     virtual QString value() const;
     virtual void setValue(const QString &value);
-
     virtual void updateWidget();
 
 signals:
@@ -64,8 +27,6 @@ signals:
     void sigSizeChanged(QSize size);
 
 protected:
-    virtual void init();
-
     JZNode *m_node;
     int m_pin;
 };
@@ -77,7 +38,7 @@ class JZCORE_EXPORT JZNodePinButtonWidget : public JZNodePinWidget
     Q_OBJECT
 
 public:
-    JZNodePinButtonWidget();
+    JZNodePinButtonWidget(JZNode *node, int pin_id);
     ~JZNodePinButtonWidget();
 
     QPushButton *button();
@@ -92,7 +53,7 @@ class JZCORE_EXPORT JZNodePinValueWidget : public JZNodePinWidget
     Q_OBJECT
 
 public:
-    JZNodePinValueWidget(QWidget *parent = nullptr);
+    JZNodePinValueWidget(JZNode *node, int pin_id);
     ~JZNodePinValueWidget();
 
     void initWidget(int data_type, QString widget_type = QString());
@@ -104,30 +65,22 @@ public:
 protected slots:
     void onValueChanged();
 
-protected:
-    QString getWidgetType(int data_type);
-    void createWidget();        
-    void clearWidget();    
-
-    QWidget *m_widget;
-
-    int m_dataType;
-    QString m_widgetType;
+protected:    
+    JZNodeParamValueWidget *m_widget;
 };
 
+//JZNodePinDisplayWidget
 class JZCORE_EXPORT JZNodePinDisplayWidget : public JZNodePinWidget
 {
     Q_OBJECT
 
 public:
-    JZNodePinDisplayWidget();
+    JZNodePinDisplayWidget(JZNode *node, int pin_id);
 
     void setRuntimeValue(const JZNodeDebugParamValue &value);
     virtual void updateWidget() override;
 
-protected:
-    virtual void init();
-
+protected:   
     void createWidget();
     QWidget *m_widget;
     int m_dataType;

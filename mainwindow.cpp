@@ -23,7 +23,6 @@
 #include "3rd/jzupdate/JZUpdateDialog.h"
 #include "JZAboutDialog.h"
 #include "JZProjectSettingDialog.h"
-#include "JZNodeParamDelegate.h"
 #include "JZNodeProgramDumper.h"
 
 //Setting
@@ -1298,7 +1297,8 @@ void MainWindow::onWatchNameChanged(JZNodeIRParam coor)
 
 void MainWindow::onWatchNotify()
 {
-    auto inst = JZNodeParamDelegateManager::instance();
+    auto env = editorEnvironment();
+    auto inst = env->editorManager();
     if(m_runThread.engine()->stack()->size() != 1)
         return;
 
@@ -1319,7 +1319,7 @@ void MainWindow::onWatchNotify()
         auto data_type = m_programEnv.variantType(it.value());
         auto d = inst->delegate(data_type);
         if (d && d->pack)
-            value.binValue = d->pack(it.value());
+            value.binValue = d->pack(env, it.value());
 
         e->setRuntimeValue(gemo.nodeId,gemo.pinId,value);
         it++;

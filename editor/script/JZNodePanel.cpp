@@ -345,9 +345,10 @@ QTreeWidgetItem *JZNodePanel::createMemberParam(QString name)
 QTreeWidgetItem *JZNodePanel::createFunction(QString name)
 {
     QTreeWidgetItem *item = nullptr;
+    auto env = editorEnvironment();
     auto func_inst = editorFunctionManager();
     auto func_def = func_inst->function(name);
-    int node_type = JZNodeEditorManager::instance()->customFunctionNode(name);
+    int node_type = env->editorManager()->customFunctionNode(name);
     if(node_type != Node_none)
     { 
         auto node = JZNodeFactory::instance()->createNode(node_type);
@@ -359,7 +360,7 @@ QTreeWidgetItem *JZNodePanel::createFunction(QString name)
     else
     {
         JZNodeFunction func_node;
-        func_node.setFunction(name);
+        func_node.setFunction(func_def);
         item = createNode(&func_node);        
     }
 
@@ -509,7 +510,7 @@ void JZNodePanel::updateClass(QTreeWidgetItem *item_class,const QString &class_n
     if(enum_meta)
     {
         JZNodeEnum node_enum;
-        node_enum.setEnum(class_name);
+        node_enum.setEnum(enum_meta);
         setNode(item_class,&node_enum);
 
         item_class->setData(0, TreeItem_isClass, QVariant());
@@ -542,7 +543,7 @@ void JZNodePanel::updateClass(QTreeWidgetItem *item_class,const QString &class_n
         if(!tree_item_list.contains(meta->enums[i]))
         {
             JZNodeEnum node_enum;
-            node_enum.setEnum(meta->enums[i]);
+            node_enum.setEnum(obj_inst->enumMeta(meta->enums[i]));
             QTreeWidgetItem *item_enum = createNode(&node_enum);
             item_class->addChild(item_enum);
         }

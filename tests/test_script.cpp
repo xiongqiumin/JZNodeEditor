@@ -842,7 +842,7 @@ void ScriptTest::testUnitTest()
     auto start = script->getNode(0);
 
     JZNodeFunction *func = new JZNodeFunction();
-    func->setFunction("pow");
+    func->setFunction(m_funcInst->function("pow"));
     func->setParamInValue(0,"2");
     func->setParamInValue(1,"2");
 
@@ -892,7 +892,7 @@ void ScriptTest::testUnitTestClass()
     auto start = script->getNode(0);
 
     JZNodeFunction *func = new JZNodeFunction();
-    func->setFunction("pow");
+    func->setFunction(m_funcInst->function("pow"));
     func->setParamInValue(0,"2");
     func->setParamInValue(1,"2");
 

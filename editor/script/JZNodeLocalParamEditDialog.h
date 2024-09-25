@@ -28,6 +28,6 @@ protected slots:
 private:
     QLineEdit *m_lineName;
     JZNodeParamTypeWidget *m_typeWidget;
-    JZNodePinValueWidget *m_valueWidget;
+    JZNodeParamValueWidget *m_valueWidget;
     JZParamDefine m_define;
 };

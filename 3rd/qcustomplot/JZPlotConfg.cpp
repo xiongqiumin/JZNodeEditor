@@ -86,9 +86,9 @@ JZNodePinWidget *JZNodePlotConfig::createWidget(int id)
 {
     if (id == paramIn(1))
     {
-        JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+        JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
         auto btn = w->button();
-        btn->setText("�༭");
+        btn->setText("设置");
         btn->connect(btn, &QPushButton::clicked, [btn, this] {
             QByteArray old = this->toBuffer();
 
@@ -224,5 +224,5 @@ void InitCustomPlot()
     jzbind::registFunction("initPlotConfig", true, initPlotConfig);
 
     JZNodeFactory::instance()->registNode(Node_plotConfig, createJZNode<JZNodePlotConfig>);
-    JZNodeEditorManager::instance()->registCustomFunctionNode("initPlotConfig", Node_plotConfig);
+    //JZNodeEditorManager::instance()->registCustomFunctionNode("initPlotConfig", Node_plotConfig);
 }

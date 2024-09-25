@@ -148,6 +148,8 @@ class JZCORE_EXPORT JZNodeEngine : public QObject
     Q_OBJECT
 
 public:        
+    static void regist();
+
     JZNodeEngine();
     virtual ~JZNodeEngine();
 
@@ -241,8 +243,7 @@ protected:
         int setTime;
     };
 
-    virtual void customEvent(QEvent *event) override;
-    void regist();
+    virtual void customEvent(QEvent *event) override;    
     void clear();
     bool checkIdlePause(const JZFunction *func);  //return is stop
     bool checkPause(int node_id);

@@ -15,6 +15,7 @@ public:
 
     bool isAbstract;
     bool isCopyable;
+    bool isCompare;
     std::function<void*()> create;
     std::function<void(void*,void*)> copy;  //src->dst
     std::function<bool(void*,void*)> equal;

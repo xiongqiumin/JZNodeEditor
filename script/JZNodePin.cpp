@@ -42,6 +42,14 @@ void JZNodePin::setFlag(int flag)
     m_flag = flag;    
 }
 
+void JZNodePin::changeFlag(int flag, bool isSet)
+{
+    if (isSet)
+        m_flag |= flag;
+    else
+        m_flag &= ~flag;
+}
+
 int JZNodePin::flag() const
 {
     return m_flag;

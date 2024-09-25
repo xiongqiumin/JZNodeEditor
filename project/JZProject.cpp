@@ -78,6 +78,7 @@ void JZProject::copyTo(JZProject *other) const
     other->m_modules = m_modules; 
     other->m_root.fromBuffer(m_root.toBuffer());
     other->m_tmp.fromBuffer(m_tmp.toBuffer());
+    other->registType();
     other->loadFinish();
 }
 

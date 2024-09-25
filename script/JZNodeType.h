@@ -152,6 +152,8 @@ public:
     static void init();
 
     static QString typeName(int type);
+    static int nameToType(const QString &name);
+
     static QString opName(int op);
     static int opType(const QString &name);
     static int opPri(const QString &op);

@@ -46,7 +46,7 @@ JZNodePinWidget *JZNodeModbusConfig::createWidget(int id)
 {
     if (id == paramIn(1))
     {
-        JZNodePinButtonWidget *w = new JZNodePinButtonWidget();
+        JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this,id);
         auto btn = w->button();
         btn->setText("设置");
         btn->connect(btn, &QPushButton::clicked, [btn,this] {
@@ -177,8 +177,8 @@ void JZModuleModbus::regist(JZScriptEnvironment *env)
 
     JZNodeFactory::instance()->registNode(Node_modbusConfig, createJZNode<JZNodeModbusConfig>);
 
-    JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusMaster", Node_modbusConfig);
-    JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusSlaver", Node_modbusConfig);
+    env->editorManager()->registCustomFunctionNode("initModbusMaster", Node_modbusConfig);
+    env->editorManager()->registCustomFunctionNode("initModbusSlaver", Node_modbusConfig);
 }
 
 void JZModuleModbus::unregist(JZScriptEnvironment *env)

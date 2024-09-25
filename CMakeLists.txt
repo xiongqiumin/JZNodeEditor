@@ -19,6 +19,8 @@ include_directories(./
     ./3rd/jznet
     ./3rd/jzprofiler)
 
+add_subdirectory(3rd)
+
 set(JZNodeCore_SOURCES    
     JZNodeCore.cpp
     JZNodeCore.h
@@ -125,9 +127,7 @@ set(JZNodeCore_SOURCES
     editor/script/JZNodeParamEditWidget.cpp
     editor/script/JZNodeParamEditWidget.h
     editor/script/JZNodeParamDisplayWidget.cpp
-    editor/script/JZNodeParamDisplayWidget.h
-    editor/script/JZNodeParamDelegate.cpp
-    editor/script/JZNodeParamDelegate.h
+    editor/script/JZNodeParamDisplayWidget.h    
     editor/script/JZNodePropertyBrowser.cpp
     editor/script/JZNodePropertyBrowser.h
     editor/script/JZNodePropertyEditor.cpp
@@ -270,6 +270,8 @@ set(JZNodeCore_SOURCES
     script/JZNodeVM.h
     script/JZRegExpHelp.cpp
     script/JZRegExpHelp.h
+    script/JZScriptBuildInFunction.cpp
+    script/JZScriptBuildInFunction.h
     script/angelscript/angelscript.h
     script/angelscript/as_config.h
     script/angelscript/as_parser.cpp

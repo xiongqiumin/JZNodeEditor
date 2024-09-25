@@ -14,7 +14,7 @@ public:
     JZNodeFlagEditDialog(QWidget *parent = Q_NULLPTR);
     ~JZNodeFlagEditDialog();
     
-    void init(JZNodeEnumDefine *meta);
+    void init(const JZNodeEnumDefine *meta);
     void setFlag(QString flag);
     QString flag();    
     
@@ -22,6 +22,6 @@ private:
     virtual bool onOk() override;
     
     QString m_flagKey;
-    JZNodeEnumDefine *m_enumMeta;
+    const JZNodeEnumDefine *m_enumMeta;
     QList<QCheckBox*> m_boxList;
 };

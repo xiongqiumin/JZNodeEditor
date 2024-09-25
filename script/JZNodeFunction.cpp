@@ -73,14 +73,6 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
     s >> m_functionName;
 }
 
-void JZNodeFunction::setFunction(const QString &name)
-{
-    Q_ASSERT(environment());
-    auto func_inst = environment()->functionManager();
-    auto def = func_inst->function(name);
-    setFunction(def);
-}
-
 void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 {
     Q_ASSERT(define);            
@@ -100,9 +92,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         JZNodePin pin;
         pin.setName(define->paramIn[i].name);    
         pin.setFlag(Pin_param | Pin_in | Pin_dispName);
-        pin.setDataType({define->paramIn[i].type });
-        if (JZNodeType::isBaseOrEnum(env->nameToType(define->paramIn[i].type)))
-            pin.setFlag(pin.flag() | Pin_dispValue | Pin_editValue);
+        pin.setDataType({define->paramIn[i].type });        
         pin.setValue(define->paramIn[i].value);
         addPin(pin);
     }
@@ -124,7 +114,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         m_flag &= NodeProp_dragVariable; 
     }
 
-    updateName();
+    setName(define->fullName());
 }
 
 QString JZNodeFunction::function() const
@@ -159,26 +149,40 @@ JZFunctionDefine JZNodeFunction::functionDefine()
 
 bool JZNodeFunction::update(QString &error)
 {
-    updateName();
-    return true;
-}
-
-bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
-{
     auto env = environment();
-    auto def = c->function(m_functionName);
-    if (!def)
+    auto func = env->functionManager()->function(m_functionName);
+    if (!func)
     {
         error = "函数不存在";
         return false;
     }
 
     JZFunctionDefine cur_def = functionDefine();
-    if(!JZNodeType::functionTypeMatch(def,&cur_def))
+    if (!JZNodeType::functionTypeMatch(func, &cur_def))
     {
-        error = "函数定义已改变,请更新," + def->delcare() + "," + cur_def.delcare();
+        error = "函数定义已改变,请更新," + func->delcare() + "," + cur_def.delcare();
         return false;
     }
+
+    updateName();       
+    if (func)
+    {
+        for (int i = 0; i < func->paramIn.size(); i++)
+        {
+            auto pin = this->pin(paramIn(i));
+            if (JZNodeType::isBaseOrEnum(env->nameToType(func->paramIn[i].type)))
+                pin->changeFlag(Pin_dispValue | Pin_editValue, true);
+            else
+                pin->changeFlag(Pin_dispValue | Pin_editValue, false);
+        }
+    }
+    return true;
+}
+
+bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
+{
+    auto env = environment();
+    auto def = c->function(m_functionName);       
 
     QList<int> in_list = pinInList(Pin_param);
     QList<int> out_list = pinOutList(Pin_param);

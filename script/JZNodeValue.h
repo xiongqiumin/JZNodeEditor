@@ -2,6 +2,7 @@
 #define JZNODE_VALUE_H_
 
 #include "JZNode.h"
+#include "JZNodeObject.h"
 
 //JZNodeLiteral
 class JZCORE_EXPORT JZNodeLiteral : public JZNode
@@ -13,7 +14,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
     int dataType() const;
-    void setDataType(int type);
+    void setDataType(int type);    
 
     QString literal() const;
     void setLiteral(const QString &value);    
@@ -31,9 +32,8 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 
-    void setEnum(QString text);
-    void setKey(QString text);
-    void setValue(int value);
+    void setEnum(const JZNodeEnumDefine *def);
+    void setKey(QString text);    
 };
 
 //JZNodeFlag
@@ -45,9 +45,8 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 
-    void setFlag(QString flag);
-    void setKey(QString value);
-    void setValue(int value);
+    void setFlag(const JZNodeEnumDefine *def);
+    void setKey(QString value);    
 };
 
 //JZNodeConvert

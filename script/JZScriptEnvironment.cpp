@@ -2,15 +2,23 @@
 #include "JZRegExpHelp.h"
 #include "JZNodeBind.h"
 #include "JZContainer.h"
+#include "3rd/qcustomplot/JZPlotConfg.h"
+#include "JZNodeEngine.h"
+#include "JZScriptBuildInFunction.h"
 
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
     :m_funcManager(this),
-     m_objectManager(this)
+     m_objectManager(this),
+     m_editorManager(this)
 {    
     jzbind::setBindEnvironment(this);
     m_objectManager.init();
     m_funcManager.init();
+    m_editorManager.init();
+
+    InitBuildInFunction();
+    InitCustomPlot();    
 
     m_objectManager.setUserRegist(true);
     m_funcManager.setUserRegist(true);
@@ -57,10 +65,14 @@ void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
 
 void JZScriptEnvironment::unregistType()
 {
-    m_funcManager.clearUserReigst();
-    m_objectManager.clearUserReigst();
+    for (int i = 0; i < m_moduleList.size(); i++)
+        m_moduleList[i]->module->unregist(this);
     qDeleteAll(m_moduleList);
     m_moduleList.clear();
+
+    m_funcManager.clearUserReigst();
+    m_objectManager.clearUserReigst();
+    m_editorManager.clearUserRegist();    
 }
 
 JZNodeObjectManager *JZScriptEnvironment::objectManager()
@@ -81,6 +93,16 @@ JZNodeFunctionManager *JZScriptEnvironment::functionManager()
 const JZNodeFunctionManager *JZScriptEnvironment::functionManager() const
 {
     return &m_funcManager;
+}
+
+JZNodeEditorManager *JZScriptEnvironment::editorManager()
+{
+    return &m_editorManager;
+}
+
+const JZNodeEditorManager *JZScriptEnvironment::editorManager() const
+{
+    return &m_editorManager;
 }
 
 JZScriptEnvironment::ModuleInfo *JZScriptEnvironment::module(QString name)
@@ -143,18 +165,19 @@ int64_t JZScriptEnvironment::makeConvertId(int from, int to) const
 
 QString JZScriptEnvironment::typeToName(int id) const
 {            
-    if(isEnum(id))
+    if(JZNodeType::isEnum(id))
         return m_objectManager.getEnumName(id);
     else if (id >= Type_class)
         return m_objectManager.getClassName(id);
     else
-        return m_typeMap.key(id, "unknown type " + QString::number(id));
+        return JZNodeType::typeName(id);
 }
 
 int JZScriptEnvironment::nameToType(const QString &name) const
 {
-    if(m_typeMap.contains(name))
-        return m_typeMap[name];
+    int type = JZNodeType::nameToType(name);
+    if (type != Type_none)
+        return type;
 
     return m_objectManager.getId(name);
 }
@@ -194,65 +217,9 @@ QString JZScriptEnvironment::variantTypeName(const QVariant &v) const
     return typeToName(variantType(v));
 }
 
-bool JZScriptEnvironment::isBool(int type) const
-{
-    return (type == Type_bool);
-}
-
-bool JZScriptEnvironment::isNumber(int type) const
-{
-    if(type == Type_int || type == Type_int64 || type == Type_double || type == Type_bool)
-        return true;
-    
-    return false;
-}
-
-bool JZScriptEnvironment::isEnum(int type) const
-{
-    return (m_objectManager.enumMeta(type) != nullptr);
-}
-
-bool JZScriptEnvironment::isBaseOrEnum(int type) const
-{
-    return isBase(type) || isEnum(type);
-}
-
-bool JZScriptEnvironment::isNullObject(const QVariant &v) const
-{
-    return toJZObject(v)->isNull();
-}
-
-bool JZScriptEnvironment::isNullptr(const QVariant &v) const
-{
-    return (v.userType() == qMetaTypeId<JZObjectNull>());
-}
-
-bool JZScriptEnvironment::isWidget(const QVariant &v) const
-{
-    auto type = variantType(v);
-    return isInherits(type, Type_widget);
-}
-
-bool JZScriptEnvironment::isBase(int type) const
-{
-    return (type >= Type_none) && (type <= Type_string);
-}
-
-bool JZScriptEnvironment::isObject(int type) const
-{
-    return (type == Type_nullptr || type >= Type_class);
-}
-
-int JZScriptEnvironment::isInherits(const QString &type1,const QString &type2) const
-{
-    int t1 = JZScriptEnvironment::nameToType(type1);
-    int t2 = JZScriptEnvironment::nameToType(type2);
-    return m_objectManager.isInherits(t1, t2);
-}
-
 bool JZScriptEnvironment::isVaildType(QString type) const
 {
-    if(m_typeMap.contains(type))
+    if (JZNodeType::nameToType(type) != Type_none)
         return true;
 
     return m_objectManager.meta(type)
@@ -267,12 +234,12 @@ bool JZScriptEnvironment::isSameType(const QVariant &v1,const QVariant &v2) cons
 }
 
 bool JZScriptEnvironment::isSameType(int type1,int type2) const
-{
+{    
     if(type1 == type2)
         return true;
     else if(type1 == Type_arg || type2 == Type_arg)
         return true;
-    else if((isEnum(type1) && type2 == Type_int) || (type1 == Type_int && isEnum(type2))) 
+    else if((JZNodeType::isEnum(type1) && type2 == Type_int) || (type1 == Type_int && JZNodeType::isEnum(type2)))
         return true;
     else if(type1 >= Type_class && type2 >= Type_class)
         return isInherits(type1,type2);
@@ -281,12 +248,11 @@ bool JZScriptEnvironment::isSameType(int type1,int type2) const
     return false;
 }
 
-bool JZScriptEnvironment::isLiteralType(int type) const
+int JZScriptEnvironment::isInherits(const QString &type1, const QString &type2) const
 {
-    if(isBaseOrEnum(type) || type == Type_nullptr || type == Type_function)
-        return true;
-    
-    return false;
+    int t1 = JZScriptEnvironment::nameToType(type1);
+    int t2 = JZScriptEnvironment::nameToType(type2);
+    return m_objectManager.isInherits(t1, t2);
 }
 
 int JZScriptEnvironment::isInherits(int type1,int type2) const
@@ -310,11 +276,11 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
         return true;
     if(type1 == type2 || type2 == Type_any)
         return true;
-    if(isNumber(type1) && isNumber(type2))
+    if(JZNodeType::isNumber(type1) && JZNodeType::isNumber(type2))
         return true;
-    if ((type1 == Type_int && isEnum(type2)) || (isEnum(type1) && type2 == Type_int))
+    if ((type1 == Type_int && JZNodeType::isEnum(type2)) || (JZNodeType::isEnum(type1) && type2 == Type_int))
         return true;
-    if (isEnum(type1) && isEnum(type2))
+    if (JZNodeType::isEnum(type1) && JZNodeType::isEnum(type2))
     {
         auto meta1 = m_objectManager.enumMeta(type1);
         auto meta2 = m_objectManager.enumMeta(type2);
@@ -344,9 +310,9 @@ bool JZScriptEnvironment::canConvertExplicitly(int from,int to) const
 
     if(from == Type_any)
         return true;
-    if(from == Type_string && isNumber(to))
+    if(from == Type_string && JZNodeType::isNumber(to))
         return true;
-    if(isNumber(from) && to == Type_string)
+    if(JZNodeType::isNumber(from) && to == Type_string)
         return true;
 
     return false;
@@ -378,7 +344,7 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
         if(m_objectManager.isInherits(src_type,dst_type))
             return v;
     }
-    else if(isNumber(src_type) && isNumber(dst_type))
+    else if(JZNodeType::isNumber(src_type) && JZNodeType::isNumber(dst_type))
     {
         if(src_type == Type_bool)
         {
@@ -421,7 +387,7 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
                 return (qint64)d;
         }
     }
-    else if(src_type == Type_string && isNumber(dst_type))
+    else if(src_type == Type_string && JZNodeType::isNumber(dst_type))
     {
         QString str = v.toString();
         if(dst_type == Type_bool)
@@ -433,7 +399,7 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
         else
             return str.toDouble();
     }
-    else if(isNumber(src_type) && dst_type == Type_string)
+    else if(JZNodeType::isNumber(src_type) && dst_type == Type_string)
     {
         if(src_type == Type_bool)
             return v.toBool()? "true" : "false";
@@ -471,7 +437,7 @@ int JZScriptEnvironment::upType(int type1, int type2) const
         && type2 >= Type_bool && type2 <= Type_double)
         return type2;
 
-    if(type1 == Type_int && isEnum(type2)) 
+    if(type1 == Type_int && JZNodeType::isEnum(type2))
         return Type_int;
 
     if(type1 == Type_nullptr && type2 >= Type_class)
@@ -529,7 +495,7 @@ int JZScriptEnvironment::matchType(QList<int> src_types,QList<int> dst_types) co
     for (int i = 0; i < src_types.size(); i++)
     {
         int near_type = Type_none;
-        int near = INT_MAX;
+        int near_dis = INT_MAX;
         for (int j = 0; j < dst_allow_type.size(); j++)
         {
             if (src_types[i] == dst_allow_type[j])
@@ -540,19 +506,19 @@ int JZScriptEnvironment::matchType(QList<int> src_types,QList<int> dst_types) co
             else
             {
                 int cur_near = 0;
-                if (isBaseOrEnum(src_types[i]))
+                if (JZNodeType::isBaseOrEnum(src_types[i]))
                 {
                     cur_near = abs(src_types[i] - dst_allow_type[j]);
                 }
-                else if (isObject(src_types[i]))
+                else if(JZNodeType::isObject(src_types[i]))
                 {
 
                 }
 
-                if (cur_near < near) 
+                if (cur_near < near_dis)
                 {
                     near_type = dst_allow_type[j];
-                    near = cur_near;
+                    near_dis = cur_near;
                 }
             }
         }

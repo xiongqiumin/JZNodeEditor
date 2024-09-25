@@ -53,7 +53,7 @@ void SampleSmartHome::addEvent()
         stack->setVariable("stackedWidget");
 
         JZNodeFunction *func1 = new JZNodeFunction();
-        func1->setFunction("QStackedWidget.setCurrentIndex");
+        func1->setFunction(m_funcInst->function("QStackedWidget.setCurrentIndex"));
         func1->setParamInValue(1, QString::number(stack_index[i]));
 
         script->addNode(stack);

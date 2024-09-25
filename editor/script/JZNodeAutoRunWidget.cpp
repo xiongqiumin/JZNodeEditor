@@ -1,7 +1,6 @@
 ﻿#include <QVBoxLayout>
 #include "JZNodeAutoRunWidget.h"
 #include "JZNodeEditor.h"
-#include "JZNodeParamDelegate.h"
 
 //PropCoor
 JZNodeAutoRunWidget::PropCoor::PropCoor()
@@ -26,7 +25,6 @@ JZNodeAutoRunWidget::JZNodeAutoRunWidget(QWidget *p)
     setLayout(l);
 
     m_editor = nullptr;
-    setDepend(ScriptDepend());
 }
 
 JZNodeAutoRunWidget::~JZNodeAutoRunWidget()
@@ -84,8 +82,10 @@ bool JZNodeAutoRunWidget::typeEqual(const QList<JZParamDefine> &p1, const QList<
 
 int JZNodeAutoRunWidget::editType(int data_type)
 {
-    auto inst = JZNodeParamDelegateManager::instance();
-    if (inst->hasDelegate(data_type))
+    auto env = editorEnvironment();
+    auto inst = env->editorManager();
+    auto d = inst->delegate(data_type);
+    if (d && d->editType != Type_none)
         return inst->delegate(data_type)->editType;
     else
         return data_type;

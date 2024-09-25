@@ -29,6 +29,7 @@ bool ASConvert::convert(QString code,JZScriptFile *file)
 {
     m_code = code;
 	m_file = file;
+    m_env = m_file->project()->environment();
     asCScriptCode script;
     script.SetCode("conert.as", code);
 
@@ -263,9 +264,10 @@ JZNode *ASConvert::toFunctionCall(asCScriptNode *node)
 {
 	Q_ASSERT(node->nodeType == snFunctionCall);    
 
+    auto func_inst = m_env->functionManager();
     auto node_name = node->firstChild;
 	JZNodeFunction *func = createNode<JZNodeFunction>();
-    func->setFunction(nodeText(node_name));    
+    func->setFunction(func_inst->function(nodeText(node_name)));
 
     auto arg_list = childList(node_name->next);
     for (int i = 0; i < arg_list.size(); i++)

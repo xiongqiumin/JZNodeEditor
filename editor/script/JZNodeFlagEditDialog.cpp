@@ -18,7 +18,7 @@ JZNodeFlagEditDialog::~JZNodeFlagEditDialog()
 {
 }
 
-void JZNodeFlagEditDialog::init(JZNodeEnumDefine *meta)
+void JZNodeFlagEditDialog::init(const JZNodeEnumDefine *meta)
 {    
     m_enumMeta = meta;    
     int n = meta->count();

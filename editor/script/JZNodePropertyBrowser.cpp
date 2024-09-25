@@ -131,46 +131,6 @@ void JZNodeProperty::setValue(const QString &value)
     }
 }
 
-//https://stackoverflow.com/questions/12145522/why-pressing-of-tab-key-emits-only-qeventshortcutoverride-event
-class ItemFocusEventFilter : public QObject
-{
-public:
-    ItemFocusEventFilter(QObject *parent)
-        :QObject(parent)
-    {
-    }
-
-    virtual bool eventFilter(QObject *object, QEvent *event) override
-    {
-        switch (event->type())
-        {
-        case QEvent::FocusIn:
-        case QEvent::FocusOut:
-        case QEvent::FocusAboutToChange:
-        {
-            QFocusEvent *fe = static_cast<QFocusEvent *>(event);
-            if (fe->reason() == Qt::ActiveWindowFocusReason)
-                return false;
-
-            auto main = object->parent();
-            while (main)
-            {
-                if (main->property("isEditor").toBool())
-                    break;
-                main = main->parent();
-            }
-
-            // Forward focus events to editor because the QStyledItemDelegate relies on them                  
-            QCoreApplication::sendEvent(main, event);
-            break;
-        }
-        default:
-            break;
-        }
-        return QObject::eventFilter(object, event);
-    }
-};
-
 class PinValueItemDelegate : public QStyledItemDelegate
 {
 public:
@@ -188,14 +148,15 @@ public:
         if (prop->type() != NodeProprety_Value || prop->dataType() == Type_none)
             return nullptr;
                 
-        auto edit = new JZNodePinValueWidget(parent);
+        auto edit = new JZNodeParamValueWidget();
+        edit->setParent(parent);
         edit->initWidget(prop->dataType());
         edit->setValue(prop->value());
         edit->setAutoFillBackground(true);
         edit->setProperty("isEditor",true);
 
         ItemFocusEventFilter *filter = new ItemFocusEventFilter(edit);
-        edit->focusWidget()->installEventFilter(filter);             
+        edit->focusWidget()->installEventFilter(filter);
         return edit;
     }
 
@@ -203,7 +164,7 @@ public:
         QAbstractItemModel *model,
         const QModelIndex &index) const override
     {
-        auto edit = qobject_cast<JZNodePinValueWidget*>(editor);
+        auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
         edit->deleteLater();
 
         auto prop = browser->property(index);
