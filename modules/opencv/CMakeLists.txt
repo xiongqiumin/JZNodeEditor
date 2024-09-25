@@ -1,5 +1,4 @@
-find_package(OpenCV 4 REQUIRED)
-#QUIET)
+find_package(OpenCV 4 QUIET)
 
 if(${OpenCV_FOUND})
 
