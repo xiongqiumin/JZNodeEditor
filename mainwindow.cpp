@@ -63,22 +63,23 @@ void MainWindow::BuildInfo::clear()
     changeTimestamp = QDateTime::currentMSecsSinceEpoch();
     buildTimestamp = 0;
     saveTimestamp = 0;
+    buildVersion = 0;
     save = false;
     start = false;
     success = false;
-    runItemPath.clear();
+    unitTestItemPath.clear();
 }
 
 void MainWindow::BuildInfo::clearTask()
-{
+{    
     save = false;
     start = false;
-    runItemPath.clear();
+    unitTestItemPath.clear();
 }
 
 bool MainWindow::BuildInfo::isUnitTest()
 {
-    if(!runItemPath.isEmpty() && !start)
+    if(!unitTestItemPath.isEmpty() && !start)
         return true;
     
     return false;
@@ -233,13 +234,21 @@ void MainWindow::initMenu()
     auto actPaste = menu_edit->addAction(menuIcon("iconPaste.png"),"粘贴");
     menu_edit->addSeparator();
     auto actSelectAll = menu_edit->addAction("全选");
-    actUndo->setShortcut(QKeySequence("Ctrl+Z"));
-    actRedo->setShortcut(QKeySequence("Ctrl+Y"));
+    actUndo->setShortcut(QKeySequence("Ctrl+Z"));    
+    actRedo->setShortcut(QKeySequence("Ctrl+Y"));    
     actDel->setShortcut(QKeySequence("Ctrl+D"));
     actCut->setShortcut(QKeySequence("Ctrl+X"));
     actCopy->setShortcut(QKeySequence("Ctrl+C"));
     actPaste->setShortcut(QKeySequence("Ctrl+V"));
     actSelectAll->setShortcut(QKeySequence("Ctrl+A"));
+
+    actUndo->setShortcutContext(Qt::WidgetShortcut);
+    actRedo->setShortcutContext(Qt::WidgetShortcut);
+    actDel->setShortcutContext(Qt::WidgetShortcut);
+    actCut->setShortcutContext(Qt::WidgetShortcut);
+    actCopy->setShortcutContext(Qt::WidgetShortcut);
+    actPaste->setShortcutContext(Qt::WidgetShortcut);
+    actSelectAll->setShortcutContext(Qt::WidgetShortcut);
 
     connect(actUndo,&QAction::triggered,this,&MainWindow::onActionUndo);
     connect(actRedo,&QAction::triggered,this,&MainWindow::onActionRedo);
@@ -682,9 +691,7 @@ void MainWindow::onActionPaste()
 void MainWindow::onActionSelectAll()
 {
     if(m_editor)
-    {
-        m_editor->selectAll();        
-    }
+        m_editor->selectAll();
 }
 
 void MainWindow::onActionProjectProp()
@@ -704,6 +711,7 @@ void MainWindow::onActionBuild()
         onActionStop();
     }
 
+    saveAll();
     m_buildInfo.save = true;
     build();
 }
@@ -719,18 +727,11 @@ void MainWindow::onActionExport()
 }
 
 void MainWindow::onActionRun()
-{    
-    if(m_buildInfo.buildTimestamp >= m_buildInfo.saveTimestamp)
-    {
-        m_buildInfo.save = true;
-        m_buildInfo.start = true;
-        build();
-    }
-    else
-    {
-        Q_ASSERT(!m_buildThread.isRunning());
-        startProgram();
-    }    
+{            
+    saveAll();
+    m_buildInfo.save = true;
+    m_buildInfo.start = true;
+    build();       
 }
 
 void MainWindow::onActionDetach()
@@ -934,18 +935,7 @@ void MainWindow::onAutoRun()
     if(m_editor != edit)
         return;
     
-    if(m_processMode == Process_none)
-    {
-        if(m_buildInfo.changeTimestamp >= m_buildInfo.buildTimestamp)
-        {
-            m_buildInfo.runItemPath = edit->script()->itemPath();
-            build();
-        }
-        else
-        {
-            startUnitTest(edit->script()->itemPath());
-        }
-    }
+    startUnitTest(edit->script()->itemPath());    
 }
 
 void MainWindow::showTopLevel()
@@ -972,48 +962,72 @@ void MainWindow::onAutoCompilerTimer()
     if (m_project.isNull())
         return;
 
-    if(m_buildInfo.changeTimestamp >= m_buildInfo.buildTimestamp)
+    if(m_buildInfo.changeTimestamp > m_buildInfo.buildVersion)
         build();
 }
 
-void MainWindow::onBuildFinish(bool flag)
+void MainWindow::onBuildFinish(int flag)
 {
-    QString result = flag ? "successed" : "failed";
-    m_log->addLog(Log_Compiler, "build finish:" + result);
-
-    qDebug() << "build finish";
+    QString result = flag ? "successed" : "failed";        
 
     m_buildThread.wait();
     auto builder = m_buildThread.builder();
-    auto it = m_editors.begin();
-    while (it != m_editors.end())
+    if (flag != Build_Cached)
     {
-        if (it.value()->type() == Editor_script)
+        auto it = m_editors.begin();
+        while (it != m_editors.end())
         {
-            auto node_edit = (JZNodeEditor*)it.value();
-            auto cmp_info = builder->compilerInfo(node_edit->script());
-            if(cmp_info)
-                node_edit->setCompilerResult(cmp_info);
-        }        
-        it++;
+            if (it.value()->type() == Editor_script)
+            {
+                auto node_edit = (JZNodeEditor*)it.value();
+                auto cmp_info = builder->compilerInfo(node_edit->script());
+                if (cmp_info)
+                    node_edit->setCompilerResult(cmp_info);
+            }
+            it++;
+        }
     }
     
-    m_buildInfo.success = flag;
-    if(m_buildInfo.success)
+    if (flag == Build_Failed)
     {
+        m_buildInfo.success = false;
+        m_log->addLog(Log_Compiler, "build failed.");
+    }
+    else
+    {
+        if (flag == Build_Successed)
+        {
+            m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
+            m_log->addLog(Log_Compiler, "build finish.");
+        }
+
+        m_buildInfo.success = true;
+    }
+
+    if(m_buildInfo.success)
+    {        
         if(m_buildInfo.isUnitTest())
         {
-            startUnitTest(m_buildInfo.runItemPath);
+            auto e = nodeEditor(m_buildInfo.unitTestItemPath);
+            if (e)
+            {                
+                m_runThread.startRun(&m_program, e->scriptTestDepend());
+            }
         }
-        if(m_buildInfo.save)
+        else 
         {
-            if (!saveProgram())
-                return;
-
-            m_buildInfo.saveTimestamp = QDateTime::currentMSecsSinceEpoch();
-        }
-        if(m_buildInfo.start)
-            startProgram();
+            if (m_buildInfo.save)
+            {
+                if (m_buildInfo.saveTimestamp < m_buildInfo.buildTimestamp)
+                {
+                    if (!saveProgram())
+                        return;
+                    m_buildInfo.saveTimestamp = QDateTime::currentMSecsSinceEpoch();
+                }
+            }
+            if (m_buildInfo.start)
+                startProgram();
+        }                    
     }
     m_buildInfo.clearTask();
 }
@@ -1481,17 +1495,27 @@ void MainWindow::build()
 {    
     Q_ASSERT(m_processMode == Process_none);
 
-    QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
-
-    m_log->clearLog(Log_Compiler);
-    m_log->addLog(Log_Compiler, "[" + time + "] ===== start build =====");    
+    QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");    
     
-    m_runThread.stopRun();
-    m_buildThread.stopBuild();
-    m_buildThread.startBuild(&m_project);
-    m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
+    if (m_buildThread.isRunning() && m_buildInfo.changeTimestamp == m_buildInfo.buildVersion)
+        return;
 
-    qDebug() << "start build";
+    m_runThread.stopRun();    
+    if (m_buildInfo.changeTimestamp > m_buildInfo.buildTimestamp)
+    {
+        m_buildInfo.buildVersion = m_buildInfo.changeTimestamp;
+
+        m_log->clearLog(Log_Compiler);
+        m_log->addLog(Log_Compiler, "[" + time + "] ===== start build =====");        
+        qDebug() << "start build";        
+        m_buildInfo.success = false;
+        m_buildThread.startBuild(&m_project);        
+    }
+    else
+    {
+        //wait finish        
+        onBuildFinish(Build_Cached);
+    }
 }
 
 void MainWindow::saveToFile(QString filepath,QString text)
@@ -1530,13 +1554,13 @@ bool MainWindow::saveProgram()
     return true;
 }
 
-void MainWindow::startUnitTest(QString runItemPath)
-{
-    qDebug() << "start unit test" << runItemPath;
+void MainWindow::startUnitTest(QString unitTestItemPath)
+{    
+    if (m_processMode != Process_none)
+        return;
 
-    auto e = nodeEditor(runItemPath);
-    if(e)
-        m_runThread.startRun(&m_program,e->scriptTestDepend());
+    m_buildInfo.unitTestItemPath = unitTestItemPath;
+    build();
 }
 
 void MainWindow::startProgram()

@@ -74,6 +74,7 @@ public:
     int matchType(QList<int> src_types,QList<int> dst_types) const;
     bool canInitValue(int type,const QString &v) const;
     QVariant defaultValue(int type) const;
+    QString defaultValueString(int type) const;
     QVariant initValue(int type, const QString &v) const;
 
 protected:

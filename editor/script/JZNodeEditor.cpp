@@ -350,7 +350,7 @@ void JZNodeEditor::setCompilerResult(const CompilerResult *info)
 
 void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
 {
-    if(info.result)
+    if(info.result == UnitTestResult::Finish)
     {
         QStringList out_list;        
         for (int i = 0; i < info.out.size(); i++)        
@@ -361,7 +361,7 @@ void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
     }
     else
     {
-        LOGI(Log_Runtime, "run filed:" + info.runtimeError.error);
+        LOGI(Log_Runtime, "run filed:" + info.runtimeError.errorReport());
     }
 }
 

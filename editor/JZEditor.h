@@ -47,8 +47,9 @@ public:
     virtual void save() = 0;
     virtual void active();
     virtual void navigate(QUrl url);
+    virtual bool isModified();   
 
-    virtual bool isModified();    
+public slots:
     virtual void undo();
     virtual void redo();
     virtual void remove();

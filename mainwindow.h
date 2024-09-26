@@ -120,7 +120,7 @@ protected slots:
     void onTabContextMenu(QPoint pos);
 
     void onAutoCompilerTimer();
-    void onBuildFinish(bool flag);
+    void onBuildFinish(int flag);
     void onAutoRunResult(UnitTestResultPtr result);
 
     void onBreakPointClicked(QString file, int id);
@@ -156,11 +156,13 @@ private:
         void clearTask();
 
         bool success;
-        qint64 changeTimestamp;
-        qint64 buildTimestamp;
+        qint64 changeTimestamp;    //改动时间
+        qint64 buildVersion;       //编译版本
+        qint64 buildTimestamp;     //编译成功时间
+        
+        QString unitTestItemPath;  //单元测试地址
+        bool save;                 //保存编译结果
         qint64 saveTimestamp;
-        QString runItemPath;
-        bool save;
         bool start;
     };
 

@@ -580,6 +580,29 @@ QVariant JZScriptEnvironment::defaultValue(int type) const
     return QVariant();
 }
 
+QString JZScriptEnvironment::defaultValueString(int type) const
+{
+    if (type == Type_any)
+        return QString();
+    else if (type == Type_bool)
+        return "false";
+    else if (type == Type_int || type == Type_int64 || type == Type_double)
+        return "0";
+    else if (type == Type_string)
+        return QString();
+    else if (type == Type_function)
+        return "null";
+    else if (type == Type_nullptr)
+        return "null";
+    else if (type >= Type_enum && type < Type_class)
+    {
+        auto meta = m_objectManager.enumMeta(type);
+        return meta->defaultKey();
+    }
+    else
+        return "{}";
+}
+
 bool JZScriptEnvironment::canInitValue(int type,const QString &text) const
 {
     if(text.isEmpty())

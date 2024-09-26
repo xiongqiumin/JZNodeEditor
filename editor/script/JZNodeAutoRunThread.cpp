@@ -4,7 +4,7 @@
 JZNodeAutoRunThread::JZNodeAutoRunThread()
 {
      m_cancel = false;
-     m_engine.setDebug(true);
+     m_engine.setWatch(true);
      m_engine.moveToThread(this);
 }
 
@@ -29,6 +29,7 @@ void JZNodeAutoRunThread::stopRun()
     m_cancel = true;
     m_engine.stop();
     m_cancel = false;
+    wait();
 }
 
 void JZNodeAutoRunThread::run()

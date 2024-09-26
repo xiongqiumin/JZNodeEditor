@@ -22,7 +22,7 @@ LogManager::~LogManager()
 }
 
 void LogManager::log(int module, int level, const QString &text)
-{
+{    
     log(module, level, "%s", qUtf8Printable(text));
 }
 

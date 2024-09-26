@@ -1,4 +1,5 @@
 ﻿#include <QUrl>
+#include <QShortcut>
 #include "JZEditor.h"
 
 JZEditor::JZEditor()
@@ -6,6 +7,14 @@ JZEditor::JZEditor()
     m_item = nullptr;
     m_project = nullptr;
     m_type = Editor_none;
+
+    new QShortcut(QKeySequence("Ctrl+Z"), this, this, &JZEditor::undo, Qt::WidgetWithChildrenShortcut);
+    new QShortcut(QKeySequence("Ctrl+Y"), this, this, &JZEditor::redo, Qt::WidgetWithChildrenShortcut);
+    new QShortcut(QKeySequence("Ctrl+D"), this, this, &JZEditor::remove, Qt::WidgetWithChildrenShortcut);
+    new QShortcut(QKeySequence("Ctrl+X"), this, this, &JZEditor::cut, Qt::WidgetWithChildrenShortcut);
+    new QShortcut(QKeySequence("Ctrl+C"), this, this, &JZEditor::copy, Qt::WidgetWithChildrenShortcut);
+    new QShortcut(QKeySequence("Ctrl+V"), this, this, &JZEditor::paste, Qt::WidgetWithChildrenShortcut);
+    new QShortcut(QKeySequence("Ctrl+A"), this, this, &JZEditor::selectAll, Qt::WidgetWithChildrenShortcut);
 }
 
 JZEditor::~JZEditor()

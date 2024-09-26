@@ -4,6 +4,12 @@
 #include <QThread>
 #include "JZNodeBuilder.h"
 
+enum {
+    Build_Failed,
+    Build_Successed,
+    Build_Cached,
+};
+
 //JZNodeAutoRunWidget
 class JZNodeBuildThread : public QThread
 {
@@ -21,7 +27,7 @@ public:
     void stopBuild();
 
 signals:
-    void sigResult(bool flag);
+    void sigResult(int flag);
 
 protected:
     virtual void run() override;

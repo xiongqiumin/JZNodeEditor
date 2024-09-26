@@ -93,8 +93,8 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param);
 class JZCORE_EXPORT JZNodeRuntimeError
 {
 public:
-    bool isError();
-    QString errorReport();
+    bool isError() const;
+    QString errorReport() const;
 
     QString error;
     JZNodeRuntimeInfo info;
@@ -106,7 +106,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
 class JZCORE_EXPORT UnitTestResult
 {
 public:
-    enum{
+    enum Result{
         None,
         Finish,
         Error,
@@ -115,7 +115,7 @@ public:
 
     UnitTestResult();
     
-    int result;
+    Result result;
     QString function;
     QVariantList out;
     JZNodeRuntimeError runtimeError;
@@ -167,6 +167,7 @@ public:
     JZNodeRuntimeError runtimeError();
 
     void setDebug(bool flag);    
+    void setWatch(bool flag);
 
     void addBreakPoint(QString filepath,int nodeId);
     void addBreakPoint(const BreakPoint &pt);
@@ -314,6 +315,7 @@ protected:
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
     bool m_debug;
+    bool m_watch;
     JZNodeRuntimeError m_error;
 
     ScriptDepend *m_depend;

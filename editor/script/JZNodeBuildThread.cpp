@@ -48,5 +48,6 @@ void JZNodeBuildThread::run()
     bool ret = m_builder.build(m_program);
     if(!ret)
         LOGE(Log_Compiler, m_builder.error());
-    emit sigResult(ret);
+    
+    emit sigResult(ret? Build_Successed: Build_Failed);
 }

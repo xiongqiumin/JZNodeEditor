@@ -145,12 +145,12 @@ void Stack::push()
 }
 
 //JZNodeRuntimeError
-bool JZNodeRuntimeError::isError()
+bool JZNodeRuntimeError::isError() const
 {
     return !error.isEmpty();
 }
 
-QString JZNodeRuntimeError::errorReport()
+QString JZNodeRuntimeError::errorReport() const
 {
     QString text = "Error: " + error + "\n\n";
     int stack_size = info.stacks.size();
@@ -297,7 +297,8 @@ JZNodeEngine::JZNodeEngine()
     m_script = nullptr;
     m_sender = nullptr;
     m_depend = nullptr;
-    m_pc = -1;        
+    m_pc = -1;
+    m_watch = false;
     m_debug = false;
     m_status = Status_none;
     m_statusCommand = Command_none;
@@ -644,6 +645,8 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
             m_statusCommand = Command_none;
             m_mutex.unlock();
         }
+
+        updateStatus(Status_none);
         return false;
     }
 }
@@ -847,13 +850,14 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
     }
 
     //global
-    auto it = depend->global.begin();
-    while(it != depend->global.end())
+    auto global_it = depend->global.begin();
+    while(global_it != depend->global.end())
     {
-        auto ptr = m_global[it.key()];
+        auto ptr = m_global[global_it.key()];
         int data_type = JZNodeType::variantType(*ptr);
-        *ptr = createVariable(data_type,it.value());       
-        it++;
+        *ptr = createVariable(data_type, global_it.value());
+        
+        global_it++;
     }
 
     //init input
@@ -870,9 +874,9 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
             auto mem_it = depend->member.begin();
             while (mem_it != depend->member.end())
             {   
-                auto param_def = obj->meta()->param(it.key());
+                auto param_def = obj->meta()->param(mem_it.key());
                 auto v = createVariable(m_env.nameToType(param_def->type), mem_it.value());
-                obj->setParam(it.key(),v);
+                obj->setParam(mem_it.key(),v);
                 mem_it++;
             }
         }
@@ -1082,6 +1086,11 @@ void JZNodeEngine::setDebug(bool flag)
     m_debug = flag;
 }
 
+void JZNodeEngine::setWatch(bool flag)
+{
+    m_watch = flag;
+}
+
 void JZNodeEngine::addBreakPoint(QString filepath,int nodeId)
 {
     BreakPoint pt;
@@ -1201,12 +1210,12 @@ void JZNodeEngine::resume()
 void JZNodeEngine::stop()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status == Status_none)
+    if(m_status == Status_none )
         return;
         
     m_statusCommand = Command_stop;
     lock.unlock();
-    if(m_status == Status_idlePause || m_status == Status_pause)
+    if(m_status == Status_idlePause || m_status == Status_pause || m_status == Status_error)
         m_waitCond.wakeOne();
     waitCommand();
 }
@@ -1656,7 +1665,7 @@ void JZNodeEngine::updateStatus(int status)
         || (m_status == Status_running && (status == Status_none || status == Status_pause || status == Status_error))
         || (m_status == Status_pause && (status == Status_none || status == Status_running))
         || (m_status == Status_idlePause && (status == Status_none))
-        || (m_status == Status_pause && (status == Status_none)));        
+        || (m_status == Status_error && (status == Status_none)));
     if (m_status != status)
     {
         m_status = status;

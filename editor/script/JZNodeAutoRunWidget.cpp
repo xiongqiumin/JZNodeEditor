@@ -164,10 +164,21 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 
         auto it = m_depend.member.begin();
         while(it != m_depend.member.end())
-        {
+        {        
             QString name = it.key();
             int data_type = env->nameToType(meta->param(name)->type);
+            if (obj_inst->isInherits(data_type, Type_widget))
+            {
+                it++;
+                continue;
+            }
+
             QString value = it.value();
+            if (value.isEmpty())
+            {
+                value = env->defaultValueString(data_type);
+                it.value() = value;
+            }
 
             auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
             sub_item->setDataType(editType(data_type));
