@@ -1666,6 +1666,8 @@ void JZNodeEngine::updateStatus(int status)
         || (m_status == Status_pause && (status == Status_none || status == Status_running))
         || (m_status == Status_idlePause && (status == Status_none))
         || (m_status == Status_error && (status == Status_none)));
+
+    int pre_status = m_status;
     if (m_status != status)
     {
         m_status = status;

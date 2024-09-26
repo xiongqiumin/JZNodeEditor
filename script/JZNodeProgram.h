@@ -124,16 +124,13 @@ public:
     bool save(QString file);
     void clear();
 
-    const JZNodeTypeMeta &typeMeta() const;   
-    void registType();
-
+    const JZNodeTypeMeta &typeMeta() const;       
     QString applicationFilePath();
     
     QList<JZNodeScript*> scriptList();
     JZNodeScript *script(QString path);   
     
-    const JZFunctionDebugInfo *debugInfo(QString name);
-        
+    const JZFunctionDebugInfo *debugInfo(QString name);        
     QString error();
     
 protected:

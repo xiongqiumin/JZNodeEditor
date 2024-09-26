@@ -755,13 +755,7 @@ void MainWindow::onActionResume()
 
 void MainWindow::onActionStop()
 {        
-    if (m_processMode == Process_none)
-        return;
-    
-    m_process.setProperty("userKill", 1);
-    m_process.kill();
-    m_process.waitForFinished();    
-    updateActionStatus();
+    stopProgram();    
 }
 
 void MainWindow::onActionBreakPoint()
@@ -1343,9 +1337,8 @@ void MainWindow::onWatchNotify()
         JZNodeDebugParamValue value;
         value.type = m_programEnv.variantType(it.value());
         value.value = JZNodeType::debugString(it.value());
-
-        auto data_type = m_programEnv.variantType(it.value());
-        auto d = inst->delegate(data_type);
+        
+        auto d = inst->delegate(value.type);
         if (d && d->pack)
             value.binValue = d->pack(env, it.value());
 
@@ -1376,12 +1369,11 @@ void MainWindow::updateAutoWatch(int stack_index)
         return;
 
     auto &stack = m_runtime.stacks[stack_index];
-
     JZNodeGetDebugParam param_info;
     param_info.stack = stack_index;
     
     auto func = m_programEnv.functionManager()->function(stack.function);
-    if(func->isCFunction)
+    if(!func || func->isCFunction)
     {
         m_watchAuto->clear();
         return;
@@ -1597,15 +1589,29 @@ void MainWindow::startProgram()
     JZNodeProgramInfo program_info; 
     if(!m_debuger.init(info,program_info))
     {
-        m_log->addLog(Log_Runtime, "load debug info failed.");
+        m_log->addLog(Log_Runtime, "connec to process failed.");
+        stopProgram();
+        return;
     }
     if(!m_program.load(program_info.appPath))
     {
+        m_programEnv.registType(m_program.typeMeta());
         m_log->addLog(Log_Runtime, "load debug info failed.");
     }
 
     setRunningMode(Process_running);
     qDebug() << "startProgram finish";
+}
+
+void MainWindow::stopProgram()
+{
+    if (m_processMode == Process_none)
+        return;
+
+    m_process.setProperty("userKill", 1);
+    m_process.kill();
+    m_process.waitForFinished();
+    updateActionStatus();
 }
 
 void MainWindow::onTabContextMenu(QPoint pos)
@@ -1650,10 +1656,12 @@ void MainWindow::onRuntimeStatus(int status)
     ProcessStatus process_status;
     if (status == Status_idlePause || status == Status_pause)
         process_status = Process_pause;
-    else    
+    else  if(status == Status_error)
+        process_status = Process_error;
+    else
         process_status = Process_running;    
 
-    setRunningMode(process_status);    
+    setRunningMode(process_status);
 }
 
 void MainWindow::onRuntimeLog(QString log)
@@ -1664,7 +1672,6 @@ void MainWindow::onRuntimeLog(QString log)
 void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
     QString error_msg = "Runtime Error: " + error.error + "\n\n";
-    
     int stack_size = error.info.stacks.size();
     for (int i = 0; i < stack_size; i++)
     {

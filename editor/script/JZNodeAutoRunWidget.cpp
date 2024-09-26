@@ -81,7 +81,7 @@ bool JZNodeAutoRunWidget::typeEqual(const QList<JZParamDefine> &p1, const QList<
 }
 
 int JZNodeAutoRunWidget::editType(int data_type)
-{
+{    
     auto env = editorEnvironment();
     auto inst = env->editorManager();
     auto d = inst->delegate(data_type);
@@ -147,7 +147,11 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         {
             auto &p = m_depend.function.paramIn[i];
             auto sub_item = new JZNodeProperty(p.name, NodeProprety_Value);
-            sub_item->setDataType(editType(env->nameToType(p.type)));
+            int data_type = env->nameToType(p.type);
+            if (m_depend.function.paramIn[i].value.isEmpty())            
+                m_depend.function.paramIn[i].value = env->defaultValueString(data_type);                            
+            
+            sub_item->setDataType(editType(data_type));
             sub_item->setValue(m_depend.function.paramIn[i].value);
 
             func_input->addSubProperty(sub_item);
@@ -201,7 +205,9 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
         {
             QString name = it.key();
             int data_type = env->nameToType(m_editor->project()->globalVariable(name)->type);
-            QString value = it.value();
+            QString value = it.value();            
+            if (value.isEmpty())
+                it.value() = value;
 
             auto sub_item = new JZNodeProperty(name, NodeProprety_Value);
             sub_item->setDataType(editType(data_type));
@@ -229,7 +235,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             item_function_hook->addSubProperty(item_function);                        
 
             auto enable_item = new JZNodeProperty("hook enable", NodeProprety_Value);
-            enable_item->setDataType(Type_hookEnable);
+            enable_item->setDataType(Type_boolCheck);
             enable_item->setValue(hook.enable? "true" : "false");
             item_function->addSubProperty(enable_item);
             addPin(enable_item, Pin_hook, 0, hook.nodeId);
@@ -237,9 +243,13 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
             auto func = func_inst->function(hook.function);
             auto &node_out = hook.params;
             for (int i = 0; i < node_out.size(); i++)
-            {                
+            {   
+                int data_type = env->nameToType(func->paramOut[i].type);                
+                if (hook.params[i].isEmpty())
+                    hook.params[i] = env->defaultValueString(data_type);
+                
                 auto sub_item = new JZNodeProperty(func->paramOut[i].name, NodeProprety_Value);
-                sub_item->setDataType(editType(env->nameToType(func->paramOut[i].type)));
+                sub_item->setDataType(editType(data_type));
                 sub_item->setValue(node_out[i]);
 
                 item_function->addSubProperty(sub_item);

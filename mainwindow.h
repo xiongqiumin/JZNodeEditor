@@ -203,6 +203,7 @@ private:
     void build();
     bool saveProgram();
     void startProgram();
+    void stopProgram();
     void startUnitTest(QString testItemPath);
     void saveToFile(QString file,QString text);
     void saveAll();

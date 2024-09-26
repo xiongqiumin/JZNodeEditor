@@ -248,7 +248,7 @@ protected:
     void clear();
     bool checkIdlePause(const JZFunction *func);  //return is stop
     bool checkPause(int node_id);
-    bool run();         
+    bool run();             
     void updateStatus(int status);
 
     const JZFunction *function(QString name,const QVariantList *list);

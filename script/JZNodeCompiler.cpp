@@ -955,7 +955,7 @@ void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
                         node_id = ir_node->id;
                 }
 
-                if(node_id != -1)
+                if(node_id != -1 && !depend.getHook(node_id))
                 {
                     ScriptDepend::FunctionHook hook;
                     hook.nodeId = node_id;

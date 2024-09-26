@@ -158,7 +158,7 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
     QString type;
     if (data_type == Type_bool)
         type = "QComboBox";
-    else if (data_type == Type_hookEnable)
+    else if (data_type == Type_boolCheck)
         type = "QCheckBox";
     else if (JZNodeType::isEnum(data_type))
     {

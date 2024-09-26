@@ -298,7 +298,7 @@ void JZNodePropertyBrowser::updateItem(QTreeWidgetItem *item)
 
     QIcon icon;
     QString value = m_propMap[item]->value();
-    if (type == Type_bool)
+    if (type == Type_boolCheck)
     {
         bool flag = (value == "true");
         icon = drawCheckBox(flag);
