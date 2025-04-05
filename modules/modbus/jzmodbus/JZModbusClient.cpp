@@ -1,4 +1,3 @@
-#include <QThread>
 #include <QElapsedTimer>
 #include <QDebug>
 #include <QApplication>

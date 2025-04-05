@@ -10,18 +10,6 @@
 #include "JZProject.h"
 #include "JZBaseDialog.h"
 
-class ModuleEdit : public QWidget
-{
-public:
-    ModuleEdit();
-
-    QStringList getModule();
-    void setModule(QStringList module);
-
-protected:
-    QList<QCheckBox*> m_checkList;
-};
-
 class JZProjectSettingDialog : public JZBaseDialog
 {
 	Q_OBJECT
@@ -41,8 +29,6 @@ protected:
 	QWidget *addPage(QWidget *w,QString help);
 
 	QStackedWidget *m_stackWidget;
-	ModuleEdit *m_moduleEdit;
-	QTextEdit *m_containerEdit;
     JZProject *m_project;
     QTreeWidget *m_tree;
 };

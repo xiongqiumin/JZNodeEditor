@@ -9,7 +9,6 @@
 #include <JZRegExpHelp.h>
 #include "JZNodeFuctionEditDialog.h"
 #include "JZNewFileDialog.h"
-#include "JZNodeClassEditDialog.h"
 #include "JZUIFile.h"
 #include "JZProjectSettingDialog.h"
 #include "JZNodeSlotEditDialog.h"
@@ -133,9 +132,7 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
     if (item->name() == ".")
         icon_path = ":/JZNodeEditor/Resources/icons/iconProject.png";
     else if (item->itemType() == ProjectItem_folder)
-        icon_path = ":/JZNodeEditor/Resources/icons/iconFolder.png";
-    else if (item->itemType() == ProjectItem_class)
-        icon_path = ":/JZNodeEditor/Resources/icons/iconClass.png";
+        icon_path = ":/JZNodeEditor/Resources/icons/iconFolder.png";    
     else if (item->itemType() == ProjectItem_scriptFunction)
         icon_path = ":/JZNodeEditor/Resources/icons/iconFunction.png";
     else
@@ -159,8 +156,7 @@ bool JZProjectTree::canOpenItem(JZProjectItem *item)
 {
     if (item->itemType() == ProjectItem_ui
         || item->itemType() == ProjectItem_param
-        || item->itemType() == ProjectItem_scriptFunction
-        || item->itemType() == ProjectItem_scriptParamBinding)
+        || item->itemType() == ProjectItem_scriptFunction)
         return true;
 
     return false;
@@ -337,12 +333,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actNewFile = nullptr, *actExistFile = nullptr;
     QAction *actSlot = nullptr;
 
-    bool canChanged = true;
-    auto item_class = m_project->getItemClass(item);
-    const JZNodeObjectDefine *meta = nullptr;
-    if(item_class)
-        meta = editorObjectManager()->meta(item_class->className());
-
+    bool canChanged = true;    
     if(item->itemType() == ProjectItem_root)
     {
         actBuild = menu.addAction("编译");
@@ -374,23 +365,8 @@ void JZProjectTree::onContextMenu(QPoint pos)
     {
         actOpen = menu.addAction("打开");
     }
-    else if (item->itemType() == ProjectItem_class)
-    {
-        QMenu *menu_new = menu.addMenu("添加");
-        actCreateFunction = menu_new->addAction("成员函数");
-        
-        auto virtual_list = meta->virtualFunctionList();
-        if(virtual_list.size() > 0)
-        {        
-            QMenu *menu_virtual = menu_new->addMenu("虚函数");
-            for(int i = 0; i < virtual_list.size(); i++)
-                actCreateVirtual << menu_virtual->addAction(virtual_list[i]);
-        }
-        actSlot = menu_new->addAction("槽函数");
-    }
     else if (item->itemType() == ProjectItem_param
-        || item->itemType() == ProjectItem_scriptFunction
-        || item->itemType() == ProjectItem_scriptParamBinding)
+        || item->itemType() == ProjectItem_scriptFunction)
     {
         actOpen = menu.addAction("打开");
     }
@@ -465,19 +441,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         JZFunctionDefine function;
         if (act == actCreateFunction)
         {
-            if (item_class)
-            {
-                function.className = item_class->className();
-                function.name = JZRegExpHelp::uniqueString("newFunction", item_class->memberFunctionList());
-
-                JZParamDefine def;
-                def.name = "this";
-                def.type = function.className;
-                function.paramIn.push_back(def);
-                function.isFlowFunction = true;
-            }
-            else            
-                function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());
+            function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());
 
             JZNodeFuctionEditDialog dialog(this);
             dialog.setFunctionInfo(function,true);
@@ -487,19 +451,6 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
             function = dialog.functionInfo();
         }
-        else if (act == actSlot)
-        {
-            JZNodeSlotEditDialog dlg(this);
-            dlg.setClass(item_class);
-            if (dlg.exec() != QDialog::Accepted)
-                return;
-
-            function = meta->initSlotFunction(dlg.param(), dlg.signal());
-        }
-        else
-        {
-            function = meta->initVirtualFunction(act->text());
-        }
 
         JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptFunction);
         func_item->setFunction(function);
@@ -508,22 +459,6 @@ void JZProjectTree::onContextMenu(QPoint pos)
         
         addItem(view_item, func_item);        
     }
-    else if (act == actCreateClass)
-    {
-        JZNodeClassEditDialog dialog(this);
-        if(dialog.exec() != QDialog::Accepted)
-            return;
-
-        QString def = dialog.className();
-        QString super = dialog.super();
-        QString file = dialog.uiFile();
-        
-        auto file_item = dynamic_cast<JZScriptFile*>(item);
-        auto class_item = file_item->addClass(def, super);
-        addItem(view_item, class_item);
-        class_item->setUiFile(file);
-        m_project->saveItem(class_item);
-    }    
     else if(act == actRemove)
     {
         if (QMessageBox::question(this, "", "是否删除", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
@@ -558,19 +493,6 @@ void JZProjectTree::onContextMenu(QPoint pos)
             }
             m_project->saveItem(func_item);
         }
-        else if (item->itemType() == ProjectItem_class)
-        {
-            JZScriptClassItem *class_item = (JZScriptClassItem*)item;
-            
-            JZNodeClassEditDialog dlg(this);
-            dlg.setClass(class_item);
-            if (dlg.exec() != QDialog::Accepted)
-                return;
-             
-            class_item->setClass(dlg.className(), dlg.super());
-            class_item->setUiFile(dlg.uiFile());
-            m_project->saveItem(class_item);
-        } 
         else if(item->itemType() == ProjectItem_root)
         {
             JZProjectSettingDialog dlg(this);

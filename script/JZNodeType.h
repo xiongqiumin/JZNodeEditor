@@ -4,7 +4,6 @@
 #include <QVariant>
 #include <QDataStream>
 #include <QSharedPointer>
-#include "JZNodeCoreDefine.h"
 
 constexpr int INVALID_ID = -1; 
 
@@ -101,7 +100,7 @@ enum
 
 typedef QSharedPointer<QVariant> QVariantPtr;
 
-class JZCORE_EXPORT JZEnum
+class JZEnum
 {
 public:
     JZEnum();
@@ -113,7 +112,7 @@ QDataStream &operator<<(QDataStream &s, const JZEnum &param);
 QDataStream &operator>>(QDataStream &s, JZEnum &param);
 Q_DECLARE_METATYPE(JZEnum)
 
-class JZCORE_EXPORT JZFunctionPointer
+class JZFunctionPointer
 {
 public:
     bool operator==(const JZFunctionPointer &other);
@@ -124,7 +123,7 @@ Q_DECLARE_METATYPE(JZFunctionPointer)
 QDataStream &operator<<(QDataStream &s, const JZFunctionPointer &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param);
 
-class JZCORE_EXPORT JZNodeVariantAny
+class JZNodeVariantAny
 {
 public:
     int type();
@@ -132,7 +131,7 @@ public:
 };
 Q_DECLARE_METATYPE(JZNodeVariantAny)
 
-class JZCORE_EXPORT QVariantPointer
+class QVariantPointer
 {
 public:
     QVariant *value;
@@ -146,7 +145,7 @@ Q_DECLARE_METATYPE(QVariantPointer)
 class JZNodeObject;
 class JZSignalDefine;
 class JZFunctionDefine;
-class JZCORE_EXPORT JZNodeType
+class JZNodeType
 {
 public:
     static void init();

@@ -9,7 +9,6 @@
 #include "JZNodeVariableBind.h"
 #include "JZModule.h"
 #include "JZNodeInit.h"
-#include "3rd/jzupdate/JZUpdatePack.h"
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectPtr ptr)
 {
@@ -27,9 +26,7 @@ void JZNodeInit()
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
     
     QMetaType::registerDebugStreamOperator<JZNodeObjectPtr>();
-    QMetaType::registerEqualsComparator<JZNodeObjectPtr>();
-
-    JZUpdatePackRegist();    
+    QMetaType::registerEqualsComparator<JZNodeObjectPtr>();    
 
     JZNodeType::init();
     JZNodeFactory::instance()->init();

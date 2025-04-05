@@ -567,7 +567,7 @@ bool JZProject::saveAllItem()
     for (int i = 0; i < items.size(); i++)
     {
         int type = items[i]->itemType();
-        if (type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
+        if (type == ProjectItem_scriptFunction)
         {
             JZScriptItem *script_item = (JZScriptItem *)items[i];
             script_item->saveEditorCache();
@@ -961,7 +961,6 @@ void JZProject::onItemChanged(JZProjectItem *item)
 
 //InitJZProject
 JZProjectItem *createScriptFunction() { return new JZScriptItem(ProjectItem_scriptFunction); }
-JZProjectItem *createScriptParamBinding() { return new JZScriptItem(ProjectItem_scriptParamBinding); }
 
 void InitJZProject()
 {
@@ -971,6 +970,5 @@ void InitJZProject()
     inst->registItem(ProjectItem_param, createJZProjectItem<JZParamItem>);
     inst->registItem(ProjectItem_class, createJZProjectItem<JZScriptClassItem>);
     inst->registItem(ProjectItem_scriptFile, createJZProjectItem<JZScriptFile>);
-    inst->registItem(ProjectItem_scriptFunction, createScriptFunction);
-    inst->registItem(ProjectItem_scriptParamBinding, createScriptParamBinding);
+    inst->registItem(ProjectItem_scriptFunction, createScriptFunction);    
 }

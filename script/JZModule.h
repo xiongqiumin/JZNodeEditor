@@ -3,10 +3,8 @@
 
 #include "JZNodeObject.h"
 
-#define JZModulePluginInterface_iid "JZModulePlugin.Interface"
-
 class JZScriptEnvironment;
-class JZCORE_EXPORT JZModule
+class JZModule
 {
 public:
     JZModule();
@@ -25,17 +23,6 @@ protected:
     QStringList m_classList;
     QStringList m_functionList;
     QStringList m_depends;    
-};
-Q_DECLARE_INTERFACE(JZModule, JZModulePluginInterface_iid);
-
-class JZModuleStatic : public JZModule
-{
-public:
-    void init(QString name,QStringList classList, QStringList functionList, QStringList depends);
-
-protected:
-    virtual void regist(JZScriptEnvironment *env);
-    virtual void unregist(JZScriptEnvironment *env);
 };
 
 class JZModuleManager

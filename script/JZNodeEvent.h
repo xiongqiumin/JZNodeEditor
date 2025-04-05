@@ -5,7 +5,7 @@
 #include "JZEvent.h"
 
 //JZNodeEvent
-class JZCORE_EXPORT JZNodeEvent : public JZNode
+class JZNodeEvent : public JZNode
 {
 public:
     JZNodeEvent();
@@ -16,7 +16,7 @@ public:
 
 
 //JZNodeFunctionStart
-class JZCORE_EXPORT JZNodeFunctionStart : public JZNodeEvent
+class JZNodeFunctionStart : public JZNodeEvent
 {
 public:
     JZNodeFunctionStart();
@@ -30,7 +30,7 @@ protected:
 };
 
 //JZNodeSignalConnect
-class JZCORE_EXPORT JZNodeSignalConnect : public JZNode
+class JZNodeSignalConnect : public JZNode
 {
 public:
     JZNodeSignalConnect();
@@ -40,7 +40,7 @@ public:
 };
 
 //JZNodeSignalDisconnect
-class JZCORE_EXPORT JZNodeSignalDisconnect : public JZNode
+class JZNodeSignalDisconnect : public JZNode
 {
 public:
     JZNodeSignalDisconnect();
@@ -50,7 +50,7 @@ public:
 };
 
 //JZNodeParamChangedEvent
-class JZCORE_EXPORT JZNodeParamChangedEvent : public JZNodeEvent
+class JZNodeParamChangedEvent : public JZNodeEvent
 {
 public:
     JZNodeParamChangedEvent();

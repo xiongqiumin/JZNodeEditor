@@ -4,7 +4,7 @@
 #include <QDialog>
 #include "UiCommon.h"
 
-class JZCORE_EXPORT JZBaseDialog : public QDialog
+class JZBaseDialog : public QDialog
 {
     Q_OBJECT
 

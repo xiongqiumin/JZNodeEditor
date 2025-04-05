@@ -155,25 +155,8 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     
     auto env = m_project->environment();
     auto obj_inst = env->objectManager();
-    JZNodeTypeMeta type_meta;
-    auto container_list = m_project->containerList();
-    for(int i = 0; i < container_list.size(); i++)
-    {
-        QString error;
-        if(!checkContainer(env,container_list[i],error))
-            m_error += error + "\n";
-        else
-        {
-            auto meta = m_project->environment()->objectManager()->meta(container_list[i]);
-            Q_ASSERT_X(meta,"Error container:",qUtf8Printable(container_list[i]));
-
-            JZNodeCObjectDelcare cobj;
-            cobj.className = meta->className;
-            cobj.id = meta->id;
-            type_meta.cobjectList << cobj;
-        }
-    }
     
+    JZNodeTypeMeta type_meta;    
     auto list = m_project->globalVariableList();
     for(int i = 0; i < list.size(); i++)
     {
@@ -222,15 +205,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     }
     if(!m_error.isEmpty())
         return false;
-
-    auto bind_list = m_project->itemList("./", ProjectItem_scriptParamBinding);
-    for(int i = 0; i < bind_list.size(); i++)
-    {
-        JZScriptItem *script = dynamic_cast<JZScriptItem*>(bind_list[i]);
-        if(!buildScript(script))
-            return false;
-    }
-
+        
     auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
     for (int i = 0; i < function_list.size(); i++)
     {
@@ -241,8 +216,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         auto func_def = script->function();
         if(!func_def.isMemberFunction())
             type_meta.functionList << func_def;        
-    }
-    type_meta.moduleList = m_project->moduleList();
+    }    
 
     m_program->m_typeMeta = type_meta;
     if(!link())

@@ -940,12 +940,12 @@ bool JZNodeObjectPtr::operator !=(const JZNodeObjectPtr &other) const
     return !(this->operator==(other));
 }
 
-JZCORE_EXPORT bool isJZObject(const QVariant &v)
+bool isJZObject(const QVariant &v)
 {
     return (v.userType() == qMetaTypeId<JZNodeObjectPtr>());
 }
 
-JZCORE_EXPORT JZNodeObject* toJZObject(const QVariant &v)
+JZNodeObject* toJZObject(const QVariant &v)
 {
     if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
     {
@@ -959,7 +959,7 @@ JZCORE_EXPORT JZNodeObject* toJZObject(const QVariant &v)
     }
 }
 
-JZCORE_EXPORT JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
+JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
 {
     if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
     {
@@ -972,7 +972,7 @@ JZCORE_EXPORT JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
     }
 }
 
-JZCORE_EXPORT JZNodeObject* qobjectToJZObject(QObject *obj)
+JZNodeObject* qobjectToJZObject(QObject *obj)
 {
     auto ptr = obj->property("JZObject").value<void*>();
     if(!ptr)
@@ -981,7 +981,7 @@ JZCORE_EXPORT JZNodeObject* qobjectToJZObject(QObject *obj)
         return (JZNodeObject*)ptr;
 }
 
-JZCORE_EXPORT JZNodeObject* objectFromString(int type,const QString &text)
+JZNodeObject* objectFromString(int type,const QString &text)
 {
     return nullptr;
 }

@@ -28,11 +28,8 @@ protected:
     JZModbusConfig m_config;
 };
 
-class JZModuleModbus: public QObject, public JZModule
-{
-    Q_OBJECT
-    Q_INTERFACES(JZModule)
-    Q_PLUGIN_METADATA(IID JZModulePluginInterface_iid)
+class JZModuleModbus: public JZModule
+{        
     
 public:
     JZModuleModbus();

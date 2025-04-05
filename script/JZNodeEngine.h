@@ -22,7 +22,7 @@ enum{
     Status_error,
 };
 
-class JZCORE_EXPORT RunnerEnv
+class RunnerEnv
 {
 public:
     RunnerEnv();
@@ -50,7 +50,7 @@ public:
     QMap<JZNodeIRParam*,QVariant*> irParamCache; //为了加速JZNodeIRParam访问的缓存
 };
 
-class JZCORE_EXPORT Stack
+class Stack
 {
 public:
     Stack();
@@ -70,7 +70,7 @@ protected:
     QList<RunnerEnv> m_env;
 };
 
-class JZCORE_EXPORT JZNodeRuntimeInfo
+class JZNodeRuntimeInfo
 {
 public:
     struct Stack 
@@ -90,7 +90,7 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeInfo &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param);
 
-class JZCORE_EXPORT JZNodeRuntimeError
+class JZNodeRuntimeError
 {
 public:
     bool isError() const;
@@ -103,7 +103,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeError &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
 
 //UnitTestResult
-class JZCORE_EXPORT UnitTestResult
+class UnitTestResult
 {
 public:
     enum Result{
@@ -123,7 +123,7 @@ public:
 typedef QSharedPointer<UnitTestResult> UnitTestResultPtr;
 
 //BreakStep
-class JZCORE_EXPORT BreakStep
+class BreakStep
 {
 public: 
     enum Type{
@@ -143,7 +143,7 @@ public:
 
 //JZNodeEngine
 class JZNodeDebugServer;
-class JZCORE_EXPORT JZNodeEngine : public QObject
+class JZNodeEngine : public QObject
 {
     Q_OBJECT
 

@@ -4,7 +4,7 @@
 #include "JZNode.h"
 #include "JZNodeFunctionDefine.h"
 
-class JZCORE_EXPORT JZNodeFunction : public JZNode
+class JZNodeFunction : public JZNode
 {
 public:
     JZNodeFunction();
@@ -29,7 +29,7 @@ protected:
     QString m_functionName;
 };
 
-class JZCORE_EXPORT JZNodeFunctionCustom : public JZNode
+class JZNodeFunctionCustom : public JZNode
 {
 public:
     JZNodeFunctionCustom();

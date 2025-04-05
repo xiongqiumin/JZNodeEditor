@@ -2,8 +2,6 @@
 
 set(JZTest_SOURCES    
     main.cpp
-    test_anglescript.cpp
-    test_anglescript.h
     test_base.cpp
     test_base.h
     test_benchmark.cpp

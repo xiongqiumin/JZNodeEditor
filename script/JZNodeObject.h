@@ -8,7 +8,7 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeEnum.h"
 
-class JZCORE_EXPORT CMeta
+class CMeta
 {
 public:
     CMeta();
@@ -25,7 +25,7 @@ public:
 /* 对于虚函数，this 参数应当为基类指针
 */
 class JZNodeObjectManager;
-class JZCORE_EXPORT JZNodeObjectDefine
+class JZNodeObjectDefine
 {
 public:
     JZNodeObjectDefine();
@@ -87,7 +87,7 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param);
 QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param);
 
-class JZCORE_EXPORT JZNodeCObjectDelcare
+class JZNodeCObjectDelcare
 {
 public:
     JZNodeCObjectDelcare();
@@ -98,7 +98,7 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeCObjectDelcare &param);
 QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param);
 
-class JZCORE_EXPORT JZObjectNull
+class JZObjectNull
 {
 public:
     JZObjectNull();
@@ -109,7 +109,7 @@ Q_DECLARE_METATYPE(JZObjectNull)
 
 class JZNodeObjectManager;
 class JZScriptEnvironment;
-class JZCORE_EXPORT JZNodeObject : public QObject
+class JZNodeObject : public QObject
 {
     Q_OBJECT
 
@@ -186,7 +186,7 @@ protected:
     QList<ConnectInfo> m_connectList;
 };
 
-class JZCORE_EXPORT JZNodeObjectPtr
+class JZNodeObjectPtr
 {
 public:
     JZNodeObjectPtr();
@@ -214,11 +214,11 @@ protected:
 };
 Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
-JZCORE_EXPORT bool isJZObject(const QVariant &v);
-JZCORE_EXPORT JZNodeObject* toJZObject(const QVariant &v);
-JZCORE_EXPORT JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
-JZCORE_EXPORT JZNodeObject* qobjectToJZObject(QObject *obj);
-JZCORE_EXPORT JZNodeObject* objectFromString(int type,const QString &text);
+bool isJZObject(const QVariant &v);
+JZNodeObject* toJZObject(const QVariant &v);
+JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
+JZNodeObject* qobjectToJZObject(QObject *obj);
+JZNodeObject* objectFromString(int type,const QString &text);
 
 void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer function);
 void JZObjectDisconnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer function);
@@ -227,7 +227,7 @@ bool JZObjectIsMap(JZNodeObject *obj);
 bool JZObjectIsSet(JZNodeObject *obj);
 
 class JZScriptEnvironment;
-class JZCORE_EXPORT JZNodeObjectManager
+class JZNodeObjectManager
 {
 public:    
     JZNodeObjectManager(JZScriptEnvironment *env);

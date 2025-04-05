@@ -3,7 +3,7 @@
 
 #include <QString>
 #include <QMap>
-#include "JZNodeCoreDefine.h"
+
 
 class JZNodeParamEditWidget;
 class JZNodeParamDisplayWidget;
@@ -23,7 +23,7 @@ template <class T>
 JZNodeParamDisplayWidget *CreateParamDisplayWidget() { return new T(); }
 
 //JZNodeParamDelegate
-class JZCORE_EXPORT JZNodeParamDelegate
+class JZNodeParamDelegate
 {
 public:
     JZNodeParamDelegate();
@@ -36,7 +36,7 @@ public:
     ParamUnpackFunc unpack;
 };
 
-class JZCORE_EXPORT JZNodeEditorManager
+class JZNodeEditorManager
 {
 public:
     JZNodeEditorManager(JZScriptEnvironment *env);

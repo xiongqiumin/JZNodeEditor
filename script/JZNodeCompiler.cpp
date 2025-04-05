@@ -552,11 +552,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
         int buildType = m_scriptFile->itemType();
 
         resetStack();
-        if (buildType == ProjectItem_scriptParamBinding)
-        {
-            buildParamBinding();
-        }
-        else if (buildType == ProjectItem_scriptFunction)
+        if (buildType == ProjectItem_scriptFunction)
         {   
             QList<GraphNode*> event_list;
             event_list.push_back(m_originGraph->topolist[0]);

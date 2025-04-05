@@ -150,8 +150,7 @@ bool JZNodeParamEditorCommand::mergeWith(const QUndoCommand *cmd)
 JZNodeParamEditor::JZNodeParamEditor()
     :ui(new Ui::JZNodeParamEditor())
 {
-    ui->setupUi(this);
-    m_class = nullptr;
+    ui->setupUi(this);    
 
     ui->boxParamType->addItem("成员");
     ui->boxParamType->addItem("控件成员");
@@ -185,11 +184,6 @@ JZNodeParamEditor::JZNodeParamEditor()
 JZNodeParamEditor::~JZNodeParamEditor()
 {
     delete ui;
-}
-
-JZScriptClassItem *JZNodeParamEditor::classItem()
-{
-    return m_project->getItemClass(m_file);
 }
 
 void JZNodeParamEditor::keyPressEvent(QKeyEvent *e)
@@ -240,8 +234,7 @@ void JZNodeParamEditor::updateUiItem(int row,const JZParamDefine *def)
         line->setText(bind->variable);
     l->addWidget(line);
 
-    QPushButton *btn = new QPushButton("设置");
-    connect(btn, &QPushButton::clicked, this, &JZNodeParamEditor::onParamBind);
+    QPushButton *btn = new QPushButton("设置");    
     btn->setProperty("rowItem", QVariant::fromValue<void*>(itemName));
     itemName->setData(Qt::UserRole + 1, QVariant::fromValue<void*>(line));
     l->addWidget(btn);
@@ -255,19 +248,7 @@ void JZNodeParamEditor::open(JZProjectItem *item)
     m_file = dynamic_cast<JZParamItem*>(item);
         
     m_table->blockSignals(true);
-    m_table->clearContents();
-    
-    m_class = m_project->getItemClass(item);
-    if (m_class)
-    {
-        auto widgets = m_class->uiWidgets();
-        m_tableUi->setRowCount(widgets.size());        
-        for (int i = 0; i < widgets.size(); i++)
-        {            
-            auto &def = widgets[i];
-            updateUiItem(i,&def);
-        }        
-    }
+    m_table->clearContents();       
     
     QStringList list = m_file->variableList();
     m_table->setRowCount(list.size());
@@ -487,14 +468,9 @@ void JZNodeParamEditor::bindParam(QString name, JZNodeParamBind define)
 }
 
 void JZNodeParamEditor::on_btnAdd_clicked()
-{        
-    JZScriptClassItem *class_file = getClassFile(m_file);
-
+{            
     QStringList namelist;    
-    if (class_file)
-        namelist = m_file->variableList();
-    else
-        namelist = m_project->globalVariableList();
+    namelist = m_project->globalVariableList();
     
     QString name;    
     for(int i = 0;;i++)
@@ -520,34 +496,6 @@ void JZNodeParamEditor::on_btnRemove_clicked()
 void JZNodeParamEditor::on_boxParamType_currentIndexChanged(int index)
 {
     ui->stackedWidget->setCurrentIndex(index);
-}
-
-void JZNodeParamEditor::onParamBind()
-{
-    auto btn = qobject_cast<QPushButton*>(sender());
-
-    auto item = (QTableWidgetItem*)btn->property("rowItem").value<void*>();    
-    auto name = item->data(Qt::UserRole).toString();
-    m_file->variable(name);
-
-    auto def = m_class->uiWidgets()[item->row()];
-    auto bind = m_file->bindVariable(def.name);
-
-    JZNodeParamBindEditDialog dlg(this);
-    dlg.init(def.type);
-    if(bind)
-        dlg.setParamBind(*bind);
-    else
-    {
-        JZNodeParamBind b;
-        b.widget = def.name;
-        dlg.setParamBind(b);
-    }
-
-    if (dlg.exec() != JZNodeParamBindEditDialog::Accepted)
-        return;
-
-    addBindCommand(def.name, dlg.paramBind());
 }
 
 void JZNodeParamEditor::navigate(QUrl url)

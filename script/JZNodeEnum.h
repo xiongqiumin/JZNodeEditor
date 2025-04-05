@@ -3,9 +3,9 @@
 
 #include <QStringList>
 #include <QVector>
-#include "JZNodeCoreDefine.h"
 
-class JZCORE_EXPORT JZNodeEnumDefine
+
+class JZNodeEnumDefine
 {
 public:
     void init(QString name, QStringList keys, QVector<int> values);

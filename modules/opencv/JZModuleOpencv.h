@@ -3,12 +3,8 @@
 
 #include "JZModule.h"
 
-class JZModuleOpencv: public QObject, public JZModule
+class JZModuleOpencv: public JZModule
 {
-    Q_OBJECT
-    Q_INTERFACES(JZModule)
-    Q_PLUGIN_METADATA(IID JZModulePluginInterface_iid)
-
 public:
     JZModuleOpencv();
     virtual ~JZModuleOpencv();

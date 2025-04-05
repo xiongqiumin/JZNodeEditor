@@ -5,47 +5,47 @@ namespace jzbind
 {
 
 static JZScriptEnvironment *g_bindEnv = nullptr;
-JZCORE_EXPORT void setBindEnvironment(JZScriptEnvironment *env)
+void setBindEnvironment(JZScriptEnvironment *env)
 {    
     Q_ASSERT(env == nullptr || g_bindEnv == nullptr);
     g_bindEnv = env;
 }
 
-JZCORE_EXPORT JZScriptEnvironment *bindEnvironment()
+JZScriptEnvironment *bindEnvironment()
 {
     Q_ASSERT(g_bindEnv);
     return g_bindEnv;    
 }
 
-JZCORE_EXPORT JZScriptEnvironment *runtimeEnvironment()
+JZScriptEnvironment *runtimeEnvironment()
 {
     return g_engine->environment();    
 }
 
-JZCORE_EXPORT void *createClassAssert()
+void *createClassAssert()
 {
     Q_ASSERT(0);
     return nullptr;
 }
 
-JZCORE_EXPORT void destoryClassAssert(void *)
+void destoryClassAssert(void *)
 {
     Q_ASSERT(0);
 }
 
-JZCORE_EXPORT void copyClassAssert(void *,void *)
+void copyClassAssert(void *,void *)
 {
     Q_ASSERT(0);
 }
 
-JZCORE_EXPORT bool equalClassAssert(void *,void *)
+bool equalClassAssert(void *,void *)
 {
     Q_ASSERT(0);
     return false;
 }
 // 函数调用
 template<>
-JZCORE_EXPORT QString* fromVariant<QString*>(const QVariant &v, std::true_type)
+QString* fromVariant<QString*>(const QVariant &v, std::true_type)
 {
     if (v.type() != QVariant::String)
         return nullptr;
@@ -53,38 +53,38 @@ JZCORE_EXPORT QString* fromVariant<QString*>(const QVariant &v, std::true_type)
 }
 
 template<>
-JZCORE_EXPORT bool fromVariant<bool>(const QVariant &v, std::false_type)
+bool fromVariant<bool>(const QVariant &v, std::false_type)
 {
     return v.toBool();
 }
 
 template<>
-JZCORE_EXPORT int fromVariant<int>(const QVariant &v, std::false_type)
+int fromVariant<int>(const QVariant &v, std::false_type)
 {
     return v.toInt();
 }
 
 template<>
-JZCORE_EXPORT qint64 fromVariant<qint64>(const QVariant &v, std::false_type)
+qint64 fromVariant<qint64>(const QVariant &v, std::false_type)
 {
     return v.value<qint64>();
 }
 
 template<>
-JZCORE_EXPORT double fromVariant<double>(const QVariant &v, std::false_type)
+double fromVariant<double>(const QVariant &v, std::false_type)
 {
     return v.toDouble();
 }
 
 template<>
-JZCORE_EXPORT QString fromVariant<QString>(const QVariant &v, std::false_type)
+QString fromVariant<QString>(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.type() == QVariant::String);
     return v.toString();
 }
 
 template<>
-JZCORE_EXPORT QVariant fromVariant<QVariant>(const QVariant &v, std::false_type)
+QVariant fromVariant<QVariant>(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.userType() == qMetaTypeId<JZNodeVariantAny>());
     auto ptr = (JZNodeVariantAny*)v.data();
@@ -92,14 +92,14 @@ JZCORE_EXPORT QVariant fromVariant<QVariant>(const QVariant &v, std::false_type)
 }
 
 template<>
-JZCORE_EXPORT JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type)
+JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.userType() == qMetaTypeId<JZNodeVariantAny>());
     return v.value<JZNodeVariantAny>();
 }
 
 template<>
-JZCORE_EXPORT JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type)
+JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.userType() == qMetaTypeId<JZFunctionPointer>());
     return v.value<JZFunctionPointer>();
@@ -107,7 +107,7 @@ JZCORE_EXPORT JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v
 
 // 函数返回
 template<>
-JZCORE_EXPORT QVariant toVariant(QVariant v)
+QVariant toVariant(QVariant v)
 {
     Q_ASSERT(v.userType() != qMetaTypeId<JZNodeVariantAny>());
     JZNodeVariantAny any;
@@ -116,25 +116,25 @@ JZCORE_EXPORT QVariant toVariant(QVariant v)
 }
 
 template<>
-JZCORE_EXPORT QVariant toVariant(JZNodeVariantAny value)
+QVariant toVariant(JZNodeVariantAny value)
 {
     return QVariant::fromValue(value);
 }
 
 template<>
-JZCORE_EXPORT QVariant toVariant(JZFunctionPointer ptr)
+QVariant toVariant(JZFunctionPointer ptr)
 {
     return QVariant::fromValue(ptr);
 }
 
 template<>
-JZCORE_EXPORT QVariant toVariant(QString value)
+QVariant toVariant(QString value)
 {
     return value;
 }
 
 template<>
-JZCORE_EXPORT void getReturn(const QVariantList &)
+void getReturn(const QVariantList &)
 {
 
 }

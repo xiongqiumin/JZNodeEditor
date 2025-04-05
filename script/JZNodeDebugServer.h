@@ -3,13 +3,13 @@
 
 #include <QThread>
 #include <QTcpServer>
-#include "JZNetServer.h"
+#include "3rd/jznet/JZNetServer.h"
 #include "JZNodeEngine.h"
 #include "JZNodeDebugPacket.h"
 
 class JZNodeEngine;
 class JZNodeVM;
-class JZCORE_EXPORT JZNodeDebugServer : public QThread
+class JZNodeDebugServer : public QThread
 {
     Q_OBJECT
     

@@ -4,10 +4,10 @@
 #include <QLabel>
 #include <QToolButton>
 #include "JZNodePinWidget.h"
-#include "QImageLabel.h"
+#include "JZImageLabel.h"
 
 //JZNodeParamDisplayWidget
-class JZCORE_EXPORT JZNodeParamDisplayWidget : public QWidget
+class JZNodeParamDisplayWidget : public QWidget
 {
     Q_OBJECT
 
@@ -19,7 +19,7 @@ public:
 };
 
 //JZNodeImageDisplayWidget
-class JZCORE_EXPORT JZNodeImageDisplayWidget : public JZNodeParamDisplayWidget
+class JZNodeImageDisplayWidget : public JZNodeParamDisplayWidget
 {
     Q_OBJECT
 
@@ -30,7 +30,7 @@ public:
     virtual void setRuntimeValue(const JZNodeDebugParamValue &value) override;    
 
 protected:
-    QImageLabel *m_label;
+    JZImageLabel *m_label;
 };
 
 

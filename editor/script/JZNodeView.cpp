@@ -36,7 +36,6 @@
 #include "JZNodeExprEditDialog.h"
 #include "JZNodePanel.h"
 #include "JZNodeViewPanel.h"
-#include "3rd/jzprofiler/JZTx.h"
 #include "JZNodeUtils.h"
 
 enum ViewCommand {

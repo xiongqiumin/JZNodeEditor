@@ -3,9 +3,9 @@
 
 #include <QTreeWidget>
 #include <QLineEdit>
-#include "JZNodeCoreDefine.h"
 
-class JZCORE_EXPORT JZSearchTreeWidget: public QWidget
+
+class JZSearchTreeWidget: public QWidget
 {
     Q_OBJECT
 

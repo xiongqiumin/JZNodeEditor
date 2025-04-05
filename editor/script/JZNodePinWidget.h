@@ -10,7 +10,7 @@
 
 //JZNodePinWidget
 class JZNode;
-class JZCORE_EXPORT JZNodePinWidget : public QWidget
+class JZNodePinWidget : public QWidget
 {
     Q_OBJECT
         
@@ -33,7 +33,7 @@ protected:
 
 //JZNodePinButtonWidget
 class QPushButton;
-class JZCORE_EXPORT JZNodePinButtonWidget : public JZNodePinWidget
+class JZNodePinButtonWidget : public JZNodePinWidget
 {
     Q_OBJECT
 
@@ -48,7 +48,7 @@ protected:
 };
 
 //JZNodePinValueWidget
-class JZCORE_EXPORT JZNodePinValueWidget : public JZNodePinWidget
+class JZNodePinValueWidget : public JZNodePinWidget
 {
     Q_OBJECT
 
@@ -70,7 +70,7 @@ protected:
 };
 
 //JZNodePinDisplayWidget
-class JZCORE_EXPORT JZNodePinDisplayWidget : public JZNodePinWidget
+class JZNodePinDisplayWidget : public JZNodePinWidget
 {
     Q_OBJECT
 

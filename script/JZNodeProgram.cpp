@@ -276,7 +276,6 @@ QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param)
     s << param.functionList;
     s << param.objectList;
     s << param.cobjectList;
-    s << param.moduleList;
     return s;
 }
 
@@ -285,7 +284,6 @@ QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param)
     s >> param.functionList;
     s >> param.objectList;
     s >> param.cobjectList;
-    s >> param.moduleList;
     return s;
 }
 

@@ -6,8 +6,9 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(QT NAMES Qt5 REQUIRED COMPONENTS widgets)
+find_package(QT NAMES Qt5 REQUIRED COMPONENTS widgets xml)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test designer printsupport DesignerComponents xml)
+find_package(OpenCV 4 REQUIRED)
 
 include_directories(./
     ./widgets
@@ -16,16 +17,11 @@ include_directories(./
     ./editor
     ./editor/script
     ./editor/ui
-    ./3rd/jznet
-    ./3rd/jzprofiler)
+    ${OpenCV_INCLUDE_DIRS})
 
-add_subdirectory(3rd)
-
-set(JZNodeCore_SOURCES    
-    JZNodeCore.cpp
-    JZNodeCore.h
-    JZNodeCoreDefine.h
+set(JZNodeEditor_SOURCES
     JZNodeEditor.qrc
+    main.cpp        
     LogManager.cpp
     LogManager.h
     LogWidget.cpp
@@ -34,32 +30,6 @@ set(JZNodeCore_SOURCES
     mainwindow.h
     UiCommon.cpp
     UiCommon.h    
-    3rd/jznet/JZNetClient.cpp
-    3rd/jznet/JZNetClient.h
-    3rd/jznet/JZNetDataManager.cpp
-    3rd/jznet/JZNetDataManager.h
-    3rd/jznet/JZNetPack.cpp
-    3rd/jznet/JZNetPack.h
-    3rd/jznet/JZNetServer.cpp
-    3rd/jznet/JZNetServer.h
-    3rd/jzprofiler/JZTx.cpp
-    3rd/jzprofiler/JZTx.h
-    3rd/jzupdate/JZUpdateClient.cpp
-    3rd/jzupdate/JZUpdateClient.h
-    3rd/jzupdate/JZUpdateDialog.cpp
-    3rd/jzupdate/JZUpdateDialog.h
-    3rd/jzupdate/JZUpdatePack.cpp
-    3rd/jzupdate/JZUpdatePack.h
-    3rd/jzupdate/JZUpdateServer.cpp
-    3rd/jzupdate/JZUpdateServer.h
-    3rd/jzupdate/JZUpdateTest.cpp
-    3rd/jzupdate/JZUpdateTest.h
-    3rd/jzupdate/JZUpdateUtils.cpp
-    3rd/jzupdate/JZUpdateUtils.h
-    3rd/qcustomplot/JZPlotConfg.cpp
-    3rd/qcustomplot/JZPlotConfg.h
-    3rd/qcustomplot/qcustomplot.cpp
-    3rd/qcustomplot/qcustomplot.h
     editor/JZEditor.cpp
     editor/JZEditor.h
     editor/JZEditorGlobal.cpp
@@ -84,9 +54,6 @@ set(JZNodeCore_SOURCES
     editor/script/JZNodeBreakPoint.h
     editor/script/JZNodeBuildThread.cpp
     editor/script/JZNodeBuildThread.h
-    editor/script/JZNodeClassEditDialog.cpp
-    editor/script/JZNodeClassEditDialog.h
-    editor/script/JZNodeClassEditDialog.ui
     editor/script/JZNodeEditor.cpp
     editor/script/JZNodeEditor.h
     editor/script/JZNodeEditorManager.cpp
@@ -155,43 +122,28 @@ set(JZNodeCore_SOURCES
     editor/script/JZProcess.h        
     editor/ui/formresizer.cpp
     editor/ui/formresizer.h
-    editor/ui/JZDesignerEditor.cpp
-    editor/ui/JZDesignerEditor.h
-    editor/ui/JZDesignerFormWindow.cpp
-    editor/ui/JZDesignerFormWindow.h
-    editor/ui/JZDesinger.cpp
-    editor/ui/JZDesinger.h
-    editor/ui/JZMenuExtension.cpp
-    editor/ui/JZMenuExtension.h
-    editor/ui/JZNodeIntegration.cpp
-    editor/ui/JZNodeIntegration.h
     editor/ui/JZUiEditor.cpp
     editor/ui/JZUiEditor.h
-    editor/ui/JZWidgetCollectionInterface.cpp
-    editor/ui/JZWidgetCollectionInterface.h
     editor/ui/sizehandlerect.cpp
-    editor/ui/sizehandlerect.h
-    editor/ui/widgethostconstants.h    
-    modules/JZModuleNetwok.cpp
-    modules/JZModuleNetwok.h
-    project/JZClassItem.cpp
-    project/JZClassItem.h
-    project/JZParamItem.cpp
-    project/JZParamItem.h
-    project/JZProject.cpp
-    project/JZProject.h
-    project/JZProjectItem.cpp
-    project/JZProjectItem.h
-    project/JZProjectStream.cpp
-    project/JZProjectStream.h
-    project/JZProjectTemplate.cpp
-    project/JZProjectTemplate.h
-    project/JZScriptFile.cpp
-    project/JZScriptFile.h
-    project/JZScriptItem.cpp
-    project/JZScriptItem.h
-    project/JZUiFile.cpp
-    project/JZUiFile.h
+    editor/ui/sizehandlerect.h    
+    script/JZParamItem.cpp
+    script/JZParamItem.h
+    script/JZProject.cpp
+    script/JZProject.h
+    script/JZProjectItem.cpp
+    script/JZProjectItem.h    
+    script/JZProjectTemplate.cpp
+    script/JZProjectTemplate.h
+    script/JZScriptFile.cpp
+    script/JZScriptFile.h
+    script/JZScriptItem.cpp
+    script/JZScriptItem.h
+    script/JZClassItem.cpp
+    script/JZClassItem.h
+    script/JZProjectFile.cpp
+    script/JZProjectFile.h
+    script/JZUiFile.cpp
+    script/JZUiFile.h
     script/JZContainer.cpp
     script/JZContainer.h
     script/JZEvent.cpp
@@ -271,51 +223,66 @@ set(JZNodeCore_SOURCES
     script/JZRegExpHelp.cpp
     script/JZRegExpHelp.h
     script/JZScriptBuildInFunction.cpp
-    script/JZScriptBuildInFunction.h
-    script/angelscript/angelscript.h
-    script/angelscript/as_config.h
-    script/angelscript/as_parser.cpp
-    script/angelscript/as_parser.h
-    script/angelscript/as_scriptcode.cpp
-    script/angelscript/as_scriptcode.h
-    script/angelscript/as_scriptnode.cpp
-    script/angelscript/as_scriptnode.h
-    script/angelscript/as_texts.h
-    script/angelscript/as_tojzscript.cpp
-    script/angelscript/as_tojzscript.h
-    script/angelscript/as_tokendef.h
-    script/angelscript/as_tokenizer.cpp
-    script/angelscript/as_tokenizer.h
+    script/JZScriptBuildInFunction.h    
     widgets/JZAboutDialog.cpp
     widgets/JZAboutDialog.h
     widgets/JZBaseDialog.cpp
     widgets/JZBaseDialog.h
     widgets/JZSearchTreeWidget.cpp
-    widgets/JZSearchTreeWidget.h
-    widgets/QImageLabel.cpp
-    widgets/QImageLabel.h  
+    widgets/JZSearchTreeWidget.h  
+    widgets/JZImageLabel.cpp 
+    widgets/JZImageLabel.h 
+    #modbus
+    modules/modbus/jzmodbus/JZModbusClient.cpp
+    modules/modbus/jzmodbus/JZModbusClient.h
+    modules/modbus/jzmodbus/JZModbusContext.cpp
+    modules/modbus/jzmodbus/JZModbusContext.h
+    modules/modbus/jzmodbus/JZModbusDefine.cpp
+    modules/modbus/jzmodbus/JZModbusDefine.h
+    modules/modbus/jzmodbus/JZModbusMaster.cpp
+    modules/modbus/jzmodbus/JZModbusMaster.h
+    modules/modbus/jzmodbus/JZModbusParam.cpp
+    modules/modbus/jzmodbus/JZModbusParam.h
+    modules/modbus/jzmodbus/JZModbusRtu.cpp
+    modules/modbus/jzmodbus/JZModbusRtu.h
+    modules/modbus/jzmodbus/JZModbusServer.cpp
+    modules/modbus/jzmodbus/JZModbusServer.h
+    modules/modbus/jzmodbus/JZModbusSlaver.cpp
+    modules/modbus/jzmodbus/JZModbusSlaver.h
+    modules/modbus/jzmodbus/JZModbusTcp.cpp
+    modules/modbus/jzmodbus/JZModbusTcp.h
+    modules/modbus/JZModuleModbus.cpp
+    modules/modbus/JZModuleModbus.h
+    modules/modbus/JZModbusConfigDialog.cpp
+    modules/modbus/JZModbusConfigDialog.h
+    modules/modbus/JZModbusConfigDialog.ui
+    modules/modbus/JZModbusSimulator.cpp
+    modules/modbus/JZModbusSimulator.h
+    modules/modbus/JZModbusTemplateDialog.cpp
+    modules/modbus/JZModbusTemplateDialog.h    
+    #opencv
+    modules/opencv/JZModuleOpencv.h
+    modules/opencv/JZModuleOpencv.cpp
+    modules/opencv/CvMatAndQImage.h
+    modules/opencv/CvMatAndQImage.cpp
+    #3rd
+    3rd/jznet/JZNetClient.cpp
+    3rd/jznet/JZNetClient.h
+    3rd/jznet/JZNetDataManager.cpp
+    3rd/jznet/JZNetDataManager.h
+    3rd/jznet/JZNetPack.cpp
+    3rd/jznet/JZNetPack.h
+    3rd/jznet/JZNetServer.cpp
+    3rd/jznet/JZNetServer.h
 )
 
-
-add_library(JZNodeCore SHARED ${JZNodeCore_SOURCES})
-target_compile_definitions(JZNodeCore PRIVATE -DJZCORE_SDK_EXPORTS)
-target_link_libraries(JZNodeCore PUBLIC 
-    Qt${QT_VERSION_MAJOR}::Widgets
+add_executable(JZNodeEditor ${JZNodeEditor_SOURCES})
+target_link_libraries(JZNodeEditor Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network          
     Qt${QT_VERSION_MAJOR}::SerialPort      
-    Qt${QT_VERSION_MAJOR}::PrintSupport)
-
-target_link_libraries(JZNodeCore PRIVATE
-    Qt${QT_VERSION_MAJOR}::UiTools      
-    Qt${QT_VERSION_MAJOR}::Designer
-    Qt${QT_VERSION_MAJOR}::DesignerComponents)
-
-add_executable(JZNodeEditor main.cpp)
-target_link_libraries(JZNodeEditor JZNodeCore)
-set_target_properties(JZNodeEditor PROPERTIES    
+    Qt${QT_VERSION_MAJOR}::PrintSupport
+    Qt${QT_VERSION_MAJOR}::Xml
+    ${OpenCV_LIBRARIES})    
+set_target_properties(JZNodeEditor PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
-
-add_subdirectory(modules)
-add_subdirectory(sample)
-add_subdirectory(tests)

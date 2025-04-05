@@ -5,7 +5,6 @@
 #include "UiCommon.h"
 #include "JZNode.h"
 #include "JZNodeValue.h"
-#include "JZClassItem.h"
 
 namespace Ui { class JZNodeParamBindEditDialog; }
 

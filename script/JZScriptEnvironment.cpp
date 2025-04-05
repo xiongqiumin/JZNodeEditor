@@ -2,7 +2,6 @@
 #include "JZRegExpHelp.h"
 #include "JZNodeBind.h"
 #include "JZContainer.h"
-#include "3rd/qcustomplot/JZPlotConfg.h"
 #include "JZNodeEngine.h"
 #include "JZScriptBuildInFunction.h"
 
@@ -18,7 +17,6 @@ JZScriptEnvironment::JZScriptEnvironment()
     m_editorManager.init();
 
     InitBuildInFunction();
-    InitCustomPlot();    
 
     m_objectManager.setUserRegist(true);
     m_funcManager.setUserRegist(true);
@@ -35,14 +33,10 @@ void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
 {
     unregistType();
     
-    auto &module_list = type_info.moduleList;
     auto &define_list = type_info.objectList;
     auto &cobj_list = type_info.cobjectList;
     auto &function_list = type_info.functionList;
     QList<int> cobj_id;
-
-    for(int i = 0; i < module_list.size(); i++)
-        loadModule(module_list[i]);
 
     //delcare
     for (int i = 0; i < define_list.size(); i++)

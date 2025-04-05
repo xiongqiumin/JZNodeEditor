@@ -4,13 +4,13 @@
 #include <QString>
 #include "JZProject.h"
 
-struct JZCORE_EXPORT MemberInfo
+struct MemberInfo
 {
     QString className;
     QString name;
 };
 
-class JZCORE_EXPORT JZUrl
+class JZUrl
 {
 public:
     QString path;
@@ -18,7 +18,7 @@ public:
 };
 
 
-class JZCORE_EXPORT JZNodeUtils
+class JZNodeUtils
 {
 public:    
     static QString className(QString name);

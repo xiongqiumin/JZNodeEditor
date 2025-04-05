@@ -25,11 +25,8 @@
 
 #include "formresizer.h"
 #include "sizehandlerect.h"
-#include "widgethostconstants.h"
 
 #include <QDebug>
-
-#include <QDesignerFormWindowInterface>
 
 #include <QResizeEvent>
 #include <QPalette>
@@ -37,8 +34,6 @@
 #include <QFrame>
 
 enum { debugFormResizer = 0 };
-
-using namespace SharedTools::Internal;
 
 FormResizer::FormResizer(QWidget *parent) :
     QWidget(parent),
@@ -129,8 +124,9 @@ void FormResizer::setState(SelectionHandleState st)
         (*it)->setState(st);
 }
 
-void FormResizer::setFormWindow(QDesignerFormWindowInterface *fw)
+void FormResizer::setFormWindow(JZUiEditor *fw)
 {
+/*
     if (debugFormResizer)
         qDebug() << "FormResizer::setFormWindow " << fw;
     QVBoxLayout *layout = qobject_cast<QVBoxLayout *>(m_frame->layout());
@@ -142,7 +138,8 @@ void FormResizer::setFormWindow(QDesignerFormWindowInterface *fw)
     if (m_formWindow)
         layout->addWidget(m_formWindow);
     mainContainerChanged();
-     connect(fw, &QDesignerFormWindowInterface::mainContainerChanged, this, &FormResizer::mainContainerChanged);
+    connect(fw, &QDesignerFormWindowInterface::mainContainerChanged, this, &FormResizer::mainContainerChanged);
+*/
 }
 
 void FormResizer::resizeEvent(QResizeEvent *event)
@@ -162,9 +159,7 @@ QSize FormResizer::decorationSize() const
 }
 
 QWidget *FormResizer::mainContainer()
-{
-    if (m_formWindow)
-        return m_formWindow->mainContainer();
+{    
     return 0;
 }
 

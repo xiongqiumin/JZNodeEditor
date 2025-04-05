@@ -16,11 +16,8 @@
 #include "JZUiEditor.h"
 #include "JZNodeParamEditor.h"
 #include "JZNewProjectDialog.h"
-#include "JZDesignerEditor.h"
 #include "JZNodeUtils.h"
 #include "JZNodeCppGenerater.h"
-#include "3rd/jzupdate/JZUpdateClient.h"
-#include "3rd/jzupdate/JZUpdateDialog.h"
 #include "JZAboutDialog.h"
 #include "JZProjectSettingDialog.h"
 #include "JZNodeProgramDumper.h"
@@ -449,8 +446,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     m_runThread.stopRun();
     m_buildThread.stopBuild();
-    
-    JZDesigner::instance()->closeEditor();
+        
     QMainWindow::closeEvent(event);
 }
 
@@ -558,12 +554,7 @@ void MainWindow::onActionNewProject()
     if (!QDir().exists(project_dir))
         QDir().mkpath(project_dir);
     
-    QString project_tmp;
-    if (dialog.projectType() == 0)
-        project_tmp = "ui";
-    else
-        project_tmp = "console";
-
+    QString project_tmp = dialog.projectType();    
     JZProject project;
     if (!project.newProject(project_dir, name, project_tmp))
         return;
@@ -793,42 +784,7 @@ void MainWindow::onActionHelp()
 
 void MainWindow::onActionCheckUpdate()
 {
-    JZUpdateClient client(qApp->applicationDirPath());
-    if (!client.init("120.77.183.99", 8888))
-    {
-        QMessageBox::information(this, "", "连接服务器失败");
-        return;
-    }
-
-    bool update = false;
-    if (!client.checkUpdate(update))
-    {
-        QMessageBox::information(this, "", "获取更新信息失败");
-        return;
-    }
-
-    if (update)
-    {
-        QMessageBox::information(this, "", "当前已经是最新版本");
-        return;
-    }
-    else
-    {
-        if (QMessageBox::question(this, "", "发现新版本，是否更新", QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
-            return;
-
-        if (!closeProject())
-            return;
-        
-        JZUpdateDialog dlg(this);
-        dlg.setClient(&client);
-        if (dlg.exec() != QDialog::Accepted)        
-            return;        
-        
-        QString exe_path = qApp->applicationFilePath();        
-        QProcess::startDetached(exe_path);
-        close();         
-    }
+    QMessageBox::information(this, "", "还没实现");
 }
 
 void MainWindow::onActionAbout()
@@ -891,7 +847,7 @@ bool MainWindow::openProject(QString filepath)
 JZEditor *MainWindow::createEditor(int type)
 {
     JZEditor *editor = nullptr;
-    if(type == ProjectItem_scriptParamBinding || type == ProjectItem_scriptFunction)
+    if(type == ProjectItem_scriptFunction)
         editor = new JZNodeEditor();
     else if(type == ProjectItem_param)
         editor = new JZNodeParamEditor();

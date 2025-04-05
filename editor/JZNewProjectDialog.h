@@ -14,7 +14,7 @@ public:
 	JZNewProjectDialog(QWidget *parent = 0);
 	~JZNewProjectDialog();
 
-    int projectType();
+    QString projectType();
 	QString name();
 	QString dir();
 

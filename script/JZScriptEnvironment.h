@@ -10,7 +10,7 @@ class JZScriptEnvironment;
 typedef QVariant (*ConvertFunc)(const JZScriptEnvironment *env,const QVariant& v);
 
 //JZNodeTypeMeta
-class JZCORE_EXPORT JZNodeTypeMeta
+class JZNodeTypeMeta
 {
 public:
     void clear();
@@ -20,13 +20,12 @@ public:
 
     QList<JZFunctionDefine> functionList;
     QList<JZNodeObjectDefine> objectList;       
-    QList<JZNodeCObjectDelcare> cobjectList;
-    QStringList moduleList;
+    QList<JZNodeCObjectDelcare> cobjectList;    
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param);
 QDataStream &operator>>(QDataStream &s, JZNodeTypeMeta &param);
 
-class JZCORE_EXPORT JZScriptEnvironment
+class JZScriptEnvironment
 {
 public:
     JZScriptEnvironment();

@@ -105,15 +105,3 @@ void JZEditor::selectAll()
 {
 
 }
-
-JZScriptClassItem *JZEditor::getClassFile(JZProjectItem *item)
-{    
-    while (item)
-    {
-        if (item->itemType() == ProjectItem_class)
-            return (JZScriptClassItem*)item;
-
-        item = item->parent();
-    }
-    return nullptr;
-}

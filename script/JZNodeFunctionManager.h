@@ -8,7 +8,7 @@
 
 typedef bool(*JZNodeFunctionEdit)(JZNode *node);
 
-class JZCORE_EXPORT JZNodeFunctionManager
+class JZNodeFunctionManager
 {
 public:
     JZNodeFunctionManager(JZScriptEnvironment *env);

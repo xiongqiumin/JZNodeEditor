@@ -26,18 +26,10 @@
 #ifndef FORMRESIZER_H
 #define FORMRESIZER_H
 
-#include "widgethostconstants.h"
-
 #include <QWidget>
 #include <QVector>
-
-QT_FORWARD_DECLARE_CLASS(QDesignerFormWindowInterface)
-QT_FORWARD_DECLARE_CLASS(QFrame)
-
-namespace SharedTools {
-namespace Internal {
-
-class SizeHandleRect;
+#include <QFrame>
+#include "sizehandlerect.h"
 
 /* A window to embed a form window interface as follows:
  *
@@ -56,6 +48,7 @@ class SizeHandleRect;
  *
  * Can be embedded into a QScrollArea. */
 
+class JZUiEditor;
 class FormResizer : public QWidget
 {
     Q_OBJECT
@@ -67,7 +60,7 @@ public:
     void setState(SelectionHandleState st);
     void update();
 
-    void setFormWindow(QDesignerFormWindowInterface *fw);
+    void setFormWindow(JZUiEditor *fw);
 
 signals:
     void formWindowSizeChanged(const QRect &oldGeo, const QRect &newGeo);
@@ -85,10 +78,7 @@ private:
     QFrame *m_frame;
     typedef QVector<SizeHandleRect*> Handles;
     Handles m_handles;
-    QDesignerFormWindowInterface * m_formWindow;
+    JZUiEditor * m_formWindow;
 };
-
-}
-} // namespace SharedTools
 
 #endif // FORMRESIZER_H

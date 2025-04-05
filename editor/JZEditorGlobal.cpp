@@ -2,7 +2,7 @@
 #include "mainwindow.h"
 
 static JZScriptEnvironment *g_env = nullptr;
-JZCORE_EXPORT void setEditorEnvironment(JZScriptEnvironment *env)
+void setEditorEnvironment(JZScriptEnvironment *env)
 {
     g_env = env;
 }

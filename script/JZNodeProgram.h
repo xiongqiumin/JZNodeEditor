@@ -32,7 +32,7 @@ QDataStream &operator<<(QDataStream &s, const NodeParamInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeParamInfo &param);
 
 //NodeInfo
-struct JZCORE_EXPORT NodeInfo
+struct NodeInfo
 {        
     NodeInfo();    
     
@@ -49,7 +49,7 @@ QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 
 //JZFunctionDebugInfo
-class JZCORE_EXPORT JZFunctionDebugInfo
+class JZFunctionDebugInfo
 {
 public:
     const JZParamDefine *localParam(QString name) const;
@@ -62,7 +62,7 @@ QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionDebugInfo &param);
 
 //JZNodeScript
-class JZCORE_EXPORT JZNodeScript
+class JZNodeScript
 {    
 public:    
     JZNodeScript();
@@ -113,7 +113,7 @@ public:
 
 //JZNodeProgram
 class JZNodeBuilder;
-class JZCORE_EXPORT JZNodeProgram 
+class JZNodeProgram 
 {
 public:
     JZNodeProgram();

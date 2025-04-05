@@ -3,7 +3,6 @@
 #include "JZScriptItem.h"
 #include "JZNodeView.h"
 #include "JZNodeValue.h"
-#include "3rd/jzprofiler/JZTx.h"
 
 // JZNodeViewPanel
 JZNodeViewPanel::JZNodeViewPanel(QWidget *widget)

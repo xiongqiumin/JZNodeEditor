@@ -3,10 +3,10 @@
 
 #include <QLabel>
 #include <QToolButton>
-#include "JZNodeCoreDefine.h"
+
 
 //JZNodeParamEditWidget
-class JZCORE_EXPORT JZNodeParamEditWidget : public QWidget
+class JZNodeParamEditWidget : public QWidget
 {
     Q_OBJECT
 
@@ -22,7 +22,7 @@ signals:
 };
 
 //JZNodeParamPopupWidget
-class JZCORE_EXPORT JZNodeParamPopupWidget : public QWidget
+class JZNodeParamPopupWidget : public QWidget
 {
     Q_OBJECT
 
@@ -40,7 +40,7 @@ protected:
     QLineEdit *m_line;
 };
 
-class JZCORE_EXPORT JZNodeParamTypeWidget : public QComboBox
+class JZNodeParamTypeWidget : public QComboBox
 {
     Q_OBJECT
 
@@ -58,7 +58,7 @@ protected:
 };
 
 //ItemFocusEventFilter
-class JZCORE_EXPORT ItemFocusEventFilter : public QObject
+class ItemFocusEventFilter : public QObject
 {
 public:
     ItemFocusEventFilter(QObject *parent);
@@ -66,7 +66,7 @@ public:
 };
 
 //JZNodeParamValueWidget
-class JZCORE_EXPORT JZNodeParamValueWidget : public QWidget
+class JZNodeParamValueWidget : public QWidget
 {
     Q_OBJECT
 
@@ -95,7 +95,7 @@ protected:
 };
 
 //JZNodeImageEditWidget
-class JZCORE_EXPORT JZNodeImageEditWidget : public JZNodeParamEditWidget
+class JZNodeImageEditWidget : public JZNodeParamEditWidget
 {
     Q_OBJECT
 

@@ -24,7 +24,7 @@ enum {
 };
 
 class JZProject;
-class JZCORE_EXPORT JZEditor : public QWidget
+class JZEditor : public QWidget
 {
     Q_OBJECT
 
@@ -63,9 +63,7 @@ signals:
     void undoAvailable(bool available);
     void modifyChanged(bool changed);
 
-protected:
-    JZScriptClassItem *getClassFile(JZProjectItem *item);
-
+protected:    
     JZProjectItem *m_item;
     JZProject *m_project;
     int m_type;    

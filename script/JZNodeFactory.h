@@ -7,7 +7,7 @@
 typedef bool(*JZNodeFactoryEdit)(JZNode *node);
 
 typedef JZNode *(*JZNodeCreateFunc)();
-class JZCORE_EXPORT JZNodeFactory
+class JZNodeFactory
 {
 public:
     static JZNodeFactory *instance();

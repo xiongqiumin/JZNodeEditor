@@ -55,8 +55,7 @@ protected:
     void initData();
     void initBasicFlow();    
     void initLocalDefine();    
-
-    void initThis(QTreeWidgetItem *root);
+    
     void initConstParam(QTreeWidgetItem *root);        
     void initScriptParam(QTreeWidgetItem *root);    
         
@@ -66,12 +65,10 @@ protected:
 
     void addModule(QTreeWidgetItem *item_root,QString name);
     void updateClass(QTreeWidgetItem *item_root,const QString &class_name,bool show_protected);
-
-    void updateThis();    
+    
     void updateInputVariable();
     void updateLocalVariable();
-    void updateGlobalVariable();
-    void updateModule();
+    void updateGlobalVariable();    
     void updateLocalDefine();
     void updateVariable(QTreeWidgetItem *item, QStringList paramList);
     
@@ -91,8 +88,7 @@ protected:
 
     JZNodeTreeWidget *m_tree;    
     JZNodeView *m_view;
-    JZScriptItem *m_file;
-    JZScriptClassItem *m_classFile;
+    JZScriptItem *m_file;    
     QLineEdit *m_lineSearch;    
     
     QTreeWidgetItem *m_itemOp;
@@ -105,8 +101,6 @@ protected:
 
     QTreeWidgetItem *m_itemLocalDefine;
     QTreeWidgetItem *m_module;
-
-    QList<JZModuleStatic> m_modules;
 };
 
 #endif

@@ -25,8 +25,9 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
 	ui->lineProjectName->setText(project_name);
 	ui->lineProjectDir->setText(project_dir);
 
-    ui->listWidget->addItem("Ui界面程序");
-    ui->listWidget->addItem("命令行程序");
+    ui->listWidget->addItem("ui");
+    ui->listWidget->addItem("console");
+    ui->listWidget->addItem("ai");
 
     ui->listWidget->setCurrentRow(0);
 }
@@ -36,9 +37,9 @@ JZNewProjectDialog::~JZNewProjectDialog()
 	delete ui;
 }
 
-int JZNewProjectDialog::projectType()
+QString JZNewProjectDialog::projectType()
 {
-    return ui->listWidget->currentRow();
+    return ui->listWidget->currentItem()->text();
 }
 
 QString JZNewProjectDialog::name()

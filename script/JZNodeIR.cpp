@@ -72,7 +72,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param)
     return s;
 }
 
-JZCORE_EXPORT JZNodeIRParam irRef(const QString &id)
+JZNodeIRParam irRef(const QString &id)
 {    
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Reference;
@@ -89,7 +89,7 @@ JZCORE_EXPORT JZNodeIRParam irRef(const QString &id)
     return param;        
 }
 
-JZCORE_EXPORT JZNodeIRParam irId(int id)
+JZNodeIRParam irId(int id)
 {
     Q_ASSERT(id >= 0);    
 
@@ -102,7 +102,7 @@ JZCORE_EXPORT JZNodeIRParam irId(int id)
     return param;
 }
 
-JZCORE_EXPORT JZNodeIRParam irLiteral(const QVariant &value)
+JZNodeIRParam irLiteral(const QVariant &value)
 {
     Q_ASSERT(JZNodeType::isLiteralType(JZNodeType::variantType(value)));
     
@@ -112,7 +112,7 @@ JZCORE_EXPORT JZNodeIRParam irLiteral(const QVariant &value)
     return param;
 }
 
-JZCORE_EXPORT JZNodeIRParam irThis()
+JZNodeIRParam irThis()
 {
     JZNodeIRParam param;
     param.type = JZNodeIRParam::This;

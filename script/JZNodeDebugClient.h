@@ -2,11 +2,11 @@
 #define JZNODE_DEBUG_CLIENT_H_
 
 #include <QObject>
-#include "JZNetClient.h"
+#include "3rd/jznet/JZNetClient.h"
 #include "JZNodeDebugPacket.h"
 #include "JZNodeEngine.h"
 
-class JZCORE_EXPORT JZNodeDebugClient : public QObject
+class JZNodeDebugClient : public QObject
 {
     Q_OBJECT
 

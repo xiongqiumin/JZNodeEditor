@@ -4,7 +4,7 @@
 #include <QThread>
 #include "JZNodeProgram.h"
 
-class JZCORE_EXPORT JZNodeProgramDumper
+class JZNodeProgramDumper
 {
 public:
     JZNodeProgramDumper();

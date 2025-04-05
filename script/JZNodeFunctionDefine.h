@@ -5,7 +5,7 @@
 #include <QSharedPointer>
 
 //JZParamDefine
-class JZCORE_EXPORT JZParamDefine
+class JZParamDefine
 {
 public:
     JZParamDefine();
@@ -39,7 +39,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeParamBind &param);
 
 //CFunction
 class JZNodeObject;
-class JZCORE_EXPORT CFunction
+class CFunction
 {
 public:
     CFunction();
@@ -55,7 +55,7 @@ protected:
 typedef QSharedPointer<CFunction> CFunctionPtr;
 
 class JZNodeEngine;
-class JZCORE_EXPORT BuiltInFunction
+class BuiltInFunction
 {
 public:
     BuiltInFunction();
@@ -68,14 +68,14 @@ protected:
 typedef QSharedPointer<BuiltInFunction> BuiltInFunctionPtr;
 
 //JZCParamDefine
-class JZCORE_EXPORT JZCParamDefine
+class JZCParamDefine
 {
 public:
     CFunctionPtr read;
     CFunctionPtr write;
 };
 
-class JZCORE_EXPORT JZFunctionDefine
+class JZFunctionDefine
 {
 public:
     JZFunctionDefine();
@@ -107,7 +107,7 @@ QDataStream &operator<<(QDataStream &s, const JZFunctionDefine &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param);
 
 //signal
-class JZCORE_EXPORT CSignal
+class CSignal
 {
 public:
     CSignal();
@@ -120,7 +120,7 @@ protected:
     Q_DISABLE_COPY(CSignal);       
 };
 
-class JZCORE_EXPORT JZSignalDefine
+class JZSignalDefine
 {
 public:
     JZSignalDefine();
@@ -137,7 +137,7 @@ QDataStream &operator<<(QDataStream &s, const JZSignalDefine &param);
 QDataStream &operator>>(QDataStream &s, JZSignalDefine &param);
 
 //JZParam
-class JZCORE_EXPORT JZParam
+class JZParam
 {
 public:
     JZParam();
@@ -150,7 +150,7 @@ QDataStream &operator<<(QDataStream &s, const JZParam &param);
 QDataStream &operator>>(QDataStream &s, JZParam &param);
 
 //JZFunction
-class JZCORE_EXPORT JZFunction
+class JZFunction
 {
 public:
     JZFunction();

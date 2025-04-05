@@ -44,8 +44,7 @@ void JZNodeUtils::projectUpdateLayout(JZProject *project)
     for (int i = 0; i < item_list.size(); i++)
     {
         int item_type = item_list[i]->itemType();
-        if (item_type == ProjectItem_scriptFunction
-            || item_type == ProjectItem_scriptParamBinding)
+        if (item_type == ProjectItem_scriptFunction)
         {
             JZScriptItem *item = (JZScriptItem *)item_list[i];
             JZNodeUtils::scriptItemUpdateLayout(item);

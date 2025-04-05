@@ -3,10 +3,8 @@
 
 #include "JZEditor.h"
 #include "JZUiFile.h"
-#include "JZDesinger.h"
-#include "JZDesignerEditor.h"
+#include <QUndoStack>
 
-class QDesignerFormWindowManagerInterface;
 class JZUiEditor : public JZEditor
 {
     Q_OBJECT
@@ -32,9 +30,8 @@ public:
 protected slots:
     void onCleanChanged(bool flag);
 
-protected:        
-    JZDesignerFormWindow *m_form;   
-    QDesignerFormWindowManagerInterface *m_fwm;
+protected:            
+    QUndoStack m_stack;
 };
 
 #endif

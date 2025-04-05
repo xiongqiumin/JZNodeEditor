@@ -6,7 +6,6 @@
 #include "ui_JZNodeParamBindEditDialog.h"
 #include "JZNodeObject.h"
 #include "JZNodeTypeHelper.h"
-#include "JZClassItem.h"
 #include "JZProject.h"
 #include "JZNodeVariableBind.h"
 

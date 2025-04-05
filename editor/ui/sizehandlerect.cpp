@@ -24,9 +24,6 @@
 ****************************************************************************/
 
 #include "sizehandlerect.h"
-#include "widgethostconstants.h"
-
-#include <QDesignerFormWindowInterface>
 
 #include <QMouseEvent>
 #include <QPainter>
@@ -34,8 +31,6 @@
 #include <QDebug>
 
 enum { debugSizeHandle = 0 };
-
-using namespace SharedTools::Internal;
 
 SizeHandleRect::SizeHandleRect(QWidget *parent, Direction d, QWidget *resizable) :
     QWidget(parent),

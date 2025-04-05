@@ -4,14 +4,15 @@
     "function":["rand","pow","sqrt","ceil","floor","round","fmod","sin","cos","exp","log","log10","tan","sinh","cosh","tanh","asin","acos","atan","atan2"]
 },
 {
-    "name":"core",
-    "class":["QObject","QTimer","QPoint","QPointF","QRect","QRectF","QColor","QFile","stringList",
-        "QList<int>","QList<double>","QMap<int,int>","QMap<int,string>","QMap<string,string>","QMap<string,int>"]    
+    "name":"输入",
+    "node":["数据源"],
 },
 {
-    "name":"gui",
-    "class":["QWidget","QLabel","QLineEdit","QTextEdit","QPushButton","QRadioButton","QToolButton","QCheckBox","QComboBox",
-       "QPainter","QPen","QBrush","QKeyEvent","QMouseEvent","QShowEvent","QPaintEvent","QResizeEvent","Qt::Key",
-       "QTableWidget","QTableWidgetItem"]    
+    "name":"算法",
+    "node":["人脸识别"],
+},
+{
+    "name":"通信",
+    "node":["TCP","Modbus","serialPort","GPIO",]    
 }
 ]

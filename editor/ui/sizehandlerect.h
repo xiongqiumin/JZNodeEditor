@@ -26,13 +26,11 @@
 #ifndef SIZEHANDLERECT_H
 #define SIZEHANDLERECT_H
 
-#include "widgethostconstants.h"
-
 #include <QWidget>
 #include <QPoint>
 
-namespace SharedTools {
-namespace Internal {
+enum { SELECTION_HANDLE_SIZE = 6, SELECTION_MARGIN = 10 };
+enum SelectionHandleState { SelectionHandleOff, SelectionHandleInactive, SelectionHandleActive };
 
 class SizeHandleRect : public QWidget
 {
@@ -68,10 +66,6 @@ private:
     QWidget *m_resizable;
     SelectionHandleState m_state;
 };
-
-}
-} // namespace SharedTools
-
 
 #endif // SIZEHANDLERECT_H
 

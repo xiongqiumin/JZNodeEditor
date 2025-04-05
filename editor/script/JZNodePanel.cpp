@@ -48,8 +48,7 @@ JZNodePanel::JZNodePanel(QWidget *widget)
     : QWidget(widget)
 {    
     m_file = nullptr;
-    m_view = nullptr;
-    m_classFile = nullptr;    
+    m_view = nullptr;    
     m_memberFunction = nullptr;
     m_itemMemberParam = nullptr;
     m_itemInputParam = nullptr;
@@ -77,41 +76,7 @@ JZNodePanel::JZNodePanel(QWidget *widget)
 
     layout->addWidget(m_tree);
     setLayout(layout);
-
-    QFile file(":/JZNodeEditor/Resources/moduleList.json");
-    if (file.open(QFile::ReadOnly | QFile::Text))
-    {
-        auto toStringList = [](const QJsonValue &v)->QStringList {
-            QStringList ret;
-            if (v.isArray())
-            {
-                auto list = v.toArray();
-                for (int i = 0; i < list.size(); i++)
-                {
-                    ret << list[i].toString();
-                }
-            }
-            return ret;
-        };
-
-        QByteArray buffer = file.readAll();
-        file.close();
-        
-        QJsonDocument doc = QJsonDocument::fromJson(buffer);
-        auto list = doc.array();
-        for (int i = 0; i < list.size(); i++)
-        {
-            auto obj = list[i].toObject();
-            QString name = obj["name"].toString();
-            QStringList functionList = toStringList(obj["function"]);
-            QStringList classList = toStringList(obj["class"]);
-            QStringList depends = toStringList(obj["depend"]);
-
-            JZModuleStatic m;
-            m.init(name, classList, functionList, depends);
-            m_modules.push_back(m);
-        }
-    }
+    
 }
 
 JZNodePanel::~JZNodePanel()
@@ -120,8 +85,7 @@ JZNodePanel::~JZNodePanel()
 
 void JZNodePanel::setFile(JZScriptItem *file)
 {
-    m_file = file;    
-    m_classFile = m_file->project()->getItemClass(m_file);
+    m_file = file;        
     init();
 }
 
@@ -131,34 +95,10 @@ void JZNodePanel::setView(JZNodeView *view)
 }
 
 void JZNodePanel::updateDefine()
-{    
-    updateThis();
+{        
     updateInputVariable();
     updateLocalVariable();
-    updateGlobalVariable();
-    updateModule();    
-}
-
-void JZNodePanel::updateThis()
-{
-    if (!m_classFile)
-        return;
-
-    auto def = m_classFile->objectDefine();
-    //function    
-    for (int i = 0; i < def.functions.size(); i++)
-    {        
-        auto item = createFunction(def.functions[i].fullName());
-        m_memberFunction->addChild(item);
-    }
-
-    //params    
-    QStringList params;
-    params << "this" << def.paramList(false);
-    for(int i = 1; i < params.size(); i++)
-        params[i] = "this." + params[i];
-    
-    updateVariable(m_itemMemberParam, params);
+    updateGlobalVariable();     
 }
 
 void JZNodePanel::updateVariable(QTreeWidgetItem *root, QStringList paramList)
@@ -208,28 +148,6 @@ void JZNodePanel::updateGlobalVariable()
     updateVariable(m_itemGlobalParam, params);
 }
 
-void JZNodePanel::updateModule()
-{
-    QStringList module_list;
-    for(int md_idx = 0; md_idx < m_modules.size(); md_idx++)
-        module_list << m_modules[md_idx].name();
-    module_list << m_file->project()->moduleList();
-
-    auto list = UiHelper::treeDiff(m_module,module_list);
-    for(int i = 0; i < list.size(); i++)
-    {
-        auto ret = list[i];
-        if(ret.type == TreeDiffResult::Remove)
-        {            
-            removeItem(m_module,list[i].name);
-        }
-        else
-        {
-            addModule(m_module,list[i].name);
-        }
-    }
-}
-
 void JZNodePanel::updateLocalDefine()
 {
     QStringList tree_item_list;
@@ -241,18 +159,7 @@ void JZNodePanel::updateLocalDefine()
         tree_items << m_itemLocalDefine->child(i);
     }
 
-    //update
-    QStringList class_list = m_file->project()->classList();
-    class_list << m_file->project()->containerList();
-    for(int i = 0; i < class_list.size(); i++)
-    {
-        int index = tree_item_list.indexOf(class_list[i]);
-        if(index == -1)        
-            m_itemLocalDefine->addChild(createClass(class_list[i]));        
-        else        
-            updateClass(tree_items[index],class_list[i],false);                     
-    }
-
+    //update    
     QStringList function_list = m_file->project()->functionList();    
     for(int i = 0; i < function_list.size(); i++)
     {        
@@ -376,13 +283,7 @@ QTreeWidgetItem * JZNodePanel::createClass(QString class_name)
 }
 
 void JZNodePanel::initData()
-{
-    if (m_classFile) {
-        QTreeWidgetItem *itemClass = createFolder("类");        
-        m_tree->addTopLevelItem(itemClass);
-        initThis(itemClass);
-    }
-
+{    
     QTreeWidgetItem *itemDataFolder = createFolder("数据");
     m_tree->addTopLevelItem(itemDataFolder);
 
@@ -403,20 +304,13 @@ void JZNodePanel::initData()
     
     JZNodeParam node_param;
     itemOp->addChild(createNode(&node_param));
-    if (m_file->itemType() == ProjectItem_scriptParamBinding)
-    {
-        //JZNodeParam node_param;
-        //itemOp->addChild(createNode("set",Node_setParamData));
-    }
-    else
-    {
-        JZNodeSetParam node_setParam;
-        JZNodeCreate node_create;
-        JZNodeCreateFromString node_createFormString;
-        itemOp->addChild(createNode(&node_setParam));
-        itemOp->addChild(createNode(&node_create));
-        itemOp->addChild(createNode(&node_createFormString));
-    }   
+
+    JZNodeSetParam node_setParam;
+    JZNodeCreate node_create;
+    JZNodeCreateFromString node_createFormString;
+    itemOp->addChild(createNode(&node_setParam));
+    itemOp->addChild(createNode(&node_create));
+    itemOp->addChild(createNode(&node_createFormString));    
 
     JZNodeMemberParam node_memberParam;
     JZNodeSetMemberParam node_setMemberParam;
@@ -584,24 +478,6 @@ void JZNodePanel::updateClass(QTreeWidgetItem *item_class,const QString &class_n
     }
 }
 
-void JZNodePanel::initThis(QTreeWidgetItem *root)
-{       
-    auto def = m_classFile->objectDefine();
-    if(def.superName.isEmpty())
-    {
-        root->addChild(createClass(def.superName));
-    }
-
-    m_itemMemberParam = createFolder("成员变量");
-    root->addChild(m_itemMemberParam);
-
-    m_memberFunction = createFolder("成员函数");
-    root->addChild(m_memberFunction);    
-    
-    QTreeWidgetItem *itemClassEvent = createFolder("事件");
-    root->addChild(itemClassEvent);
-}
-
 void JZNodePanel::initScriptParam(QTreeWidgetItem *root)
 {    
     QPushButton *btn = new QPushButton("+");
@@ -718,13 +594,7 @@ bool JZNodePanel::isClassItem(QTreeWidgetItem *item)
 }
 
 const JZModule *JZNodePanel::module(QString name)
-{
-    for (int i = 0; i < m_modules.size(); i++)
-    {
-        if (name == m_modules[i].name())
-            return &m_modules[i];
-    }
-
+{    
     return JZModuleManager::instance()->module(name);
 }
 

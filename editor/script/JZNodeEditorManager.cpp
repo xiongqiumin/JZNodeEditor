@@ -4,7 +4,6 @@
 #include "JZScriptEnvironment.h"
 #include "JZNodeParamDisplayWidget.h"
 #include "JZNodeParamEditWidget.h"
-#include "JZTx.h"
 
 JZNodeParamDelegate::JZNodeParamDelegate()
 {
@@ -24,9 +23,7 @@ QVariant createImage(JZScriptEnvironment *env, const QString &value)
 }
 
 QByteArray imagePack(JZScriptEnvironment *env,const QVariant &value)
-{
-    JZTX_FUNCTION
-
+{    
     auto image = env->objectManager()->objectCast<QImage>(value);
 
     QByteArray ba;
@@ -37,9 +34,7 @@ QByteArray imagePack(JZScriptEnvironment *env,const QVariant &value)
 }
 
 QVariant imageUnpack(JZScriptEnvironment *env,const QByteArray &buffer)
-{
-    JZTX_FUNCTION
-
+{    
     QImage *image = new QImage();
     image->loadFromData(buffer);
     return env->objectManager()->objectRefrence(image, true);

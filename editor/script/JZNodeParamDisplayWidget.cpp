@@ -17,7 +17,7 @@ JZNodeImageDisplayWidget::JZNodeImageDisplayWidget()
 {    
     QHBoxLayout *l = new QHBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);    
-    m_label = new QImageLabel();
+    m_label = new JZImageLabel();
     l->addWidget(m_label);
     setLayout(l);
 
