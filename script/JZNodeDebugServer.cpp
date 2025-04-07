@@ -58,7 +58,7 @@ void JZNodeDebugServer::log(QString log)
 
     JZNodeDebugPacket result_pack;
     result_pack.cmd = Cmd_log;
-    result_pack.params << log;
+    //result_pack.params << log;
     m_server.sendPack(m_client,&result_pack);
 }
 
@@ -114,12 +114,12 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
 {
     JZNodeDebugPacket *packet = (JZNodeDebugPacket*)(ptr.data());    
     int cmd = packet->cmd;
-    QVariantList &params = packet->params;
-    QVariantList result;
+    QByteArray &params = packet->buffer;
+    QByteArray result;
     
     if(cmd == Cmd_init)
     {
-        m_debugInfo = netDataUnPack<JZNodeDebugInfo>(params[0]);                                               
+        m_debugInfo = netDataUnPack<JZNodeDebugInfo>(params);                                               
         for (int i = 0; i < m_debugInfo.breakPoints.size(); i++)
         {
             auto &pt = m_debugInfo.breakPoints[i];
@@ -128,16 +128,18 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
 
         JZNodeProgramInfo info;
         info.appPath = m_engine->program()->applicationFilePath();
-        result << netDataPack(info.appPath);
+        result = netDataPack(info.appPath);
         m_init = true;
     }
     else if(cmd == Cmd_addBreakPoint)
     {
-        auto pt = netDataUnPack<BreakPoint>(params[0]);
+        auto pt = netDataUnPack<BreakPoint>(params);
         m_engine->addBreakPoint(pt);
     }
-    else if(cmd == Cmd_removeBreakPoint)    
-        m_engine->removeBreakPoint(params[0].toString(),params[1].toInt());
+    else if (cmd == Cmd_removeBreakPoint)
+    {
+        //m_engine->removeBreakPoint(params[0].toString(), params[1].toInt());
+    }
     else if(cmd == Cmd_clearBreakPoint)
         m_engine->clearBreakPoint();
     else if(cmd == Cmd_pause)
@@ -152,23 +154,23 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
         m_engine->stepOver();
     else if(cmd == Cmd_stepOut)                                       
         m_engine->stepOut();
-    else if(cmd == Cmd_runtimeInfo)    
-        result << netDataPack(m_engine->runtimeInfo());    
+    else if (cmd == Cmd_runtimeInfo)   
+        result = netDataPack(m_engine->runtimeInfo());    
     else if (cmd == Cmd_getVariable)
     {
-        JZNodeGetDebugParam info = netDataUnPack<JZNodeGetDebugParam>(params[0]);        
-        result << getVariable(info);
+        JZNodeGetDebugParam info = netDataUnPack<JZNodeGetDebugParam>(params);        
+        //result = getVariable(info);
     }
     else if (cmd == Cmd_setVariable)
     {
-        JZNodeSetDebugParam info = netDataUnPack<JZNodeSetDebugParam>(params[0]);
-        result << setVariable(info);
+        JZNodeSetDebugParam info = netDataUnPack<JZNodeSetDebugParam>(params);
+        //result = setVariable(info);
     }
 
     JZNodeDebugPacket result_pack;
     result_pack.cmd = cmd;
-    result_pack.setSeq(packet->seq());
-    result_pack.params = result;
+    result_pack.setId(packet->id());
+    result_pack.buffer = result;
     m_server.sendPack(netId,&result_pack);
 }
 
@@ -179,7 +181,7 @@ void JZNodeDebugServer::onRuntimeError(JZNodeRuntimeError error)
 
     JZNodeDebugPacket result_pack;
     result_pack.cmd = Cmd_runtimeError;
-    result_pack.params << netDataPack(error);
+    result_pack.buffer = netDataPack(error);
     m_server.sendPack(m_client,&result_pack);
 }
 
@@ -195,7 +197,7 @@ void JZNodeDebugServer::onStatusChanged(int status)
 
     JZNodeDebugPacket status_pack;
     status_pack.cmd = Cmd_runtimeStatus;
-    status_pack.params << status;
+    //status_pack.params << status;
     m_server.sendPack(m_client, &status_pack);
 }
 
@@ -216,7 +218,7 @@ void JZNodeDebugServer::onWatchNotify()
 
     JZNodeDebugPacket status_pack;
     status_pack.cmd = Cmd_nodePropChanged;
-    status_pack.params << netDataPack<JZNodeRuntimeWatch>(info);
+    status_pack.buffer = netDataPack<JZNodeRuntimeWatch>(info);
     m_server.sendPack(m_client, &status_pack);
 }
 

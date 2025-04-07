@@ -19,12 +19,12 @@ int JZNodeDebugPacket::type() const
 
 void JZNodeDebugPacket::saveToStream(QDataStream &s) const
 {
-    s << cmd << params;        
+    s << cmd << buffer;
 }
 
 void JZNodeDebugPacket::loadFromStream(QDataStream &s)
 {
-    s >> cmd >> params;
+    s >> cmd >> buffer;
 }
 
 //JZNodeDebugParamValue

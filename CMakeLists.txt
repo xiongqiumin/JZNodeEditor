@@ -232,25 +232,7 @@ set(JZNodeEditor_SOURCES
     widgets/JZSearchTreeWidget.h  
     widgets/JZImageLabel.cpp 
     widgets/JZImageLabel.h 
-    #modbus
-    modules/modbus/jzmodbus/JZModbusClient.cpp
-    modules/modbus/jzmodbus/JZModbusClient.h
-    modules/modbus/jzmodbus/JZModbusContext.cpp
-    modules/modbus/jzmodbus/JZModbusContext.h
-    modules/modbus/jzmodbus/JZModbusDefine.cpp
-    modules/modbus/jzmodbus/JZModbusDefine.h
-    modules/modbus/jzmodbus/JZModbusMaster.cpp
-    modules/modbus/jzmodbus/JZModbusMaster.h
-    modules/modbus/jzmodbus/JZModbusParam.cpp
-    modules/modbus/jzmodbus/JZModbusParam.h
-    modules/modbus/jzmodbus/JZModbusRtu.cpp
-    modules/modbus/jzmodbus/JZModbusRtu.h
-    modules/modbus/jzmodbus/JZModbusServer.cpp
-    modules/modbus/jzmodbus/JZModbusServer.h
-    modules/modbus/jzmodbus/JZModbusSlaver.cpp
-    modules/modbus/jzmodbus/JZModbusSlaver.h
-    modules/modbus/jzmodbus/JZModbusTcp.cpp
-    modules/modbus/jzmodbus/JZModbusTcp.h
+    #modbus    
     modules/modbus/JZModuleModbus.cpp
     modules/modbus/JZModuleModbus.h
     modules/modbus/JZModbusConfigDialog.cpp
@@ -265,15 +247,44 @@ set(JZNodeEditor_SOURCES
     modules/opencv/JZModuleOpencv.cpp
     modules/opencv/CvMatAndQImage.h
     modules/opencv/CvMatAndQImage.cpp
+    modules/opencv/CvToQt.h
+    modules/opencv/CvToQt.cpp
+    modules/opencv/JZYolo.h
+    modules/opencv/JZYolo.cpp
+    modules/opencv/JZYoloView.h
+    modules/opencv/JZYoloView.cpp
+    #camera
+    modules/camera/JZModuleCamera.h
+    modules/camera/JZModuleCamera.cpp
     #3rd
-    3rd/jznet/JZNetClient.cpp
-    3rd/jznet/JZNetClient.h
-    3rd/jznet/JZNetDataManager.cpp
-    3rd/jznet/JZNetDataManager.h
-    3rd/jznet/JZNetPack.cpp
-    3rd/jznet/JZNetPack.h
-    3rd/jznet/JZNetServer.cpp
-    3rd/jznet/JZNetServer.h
+    3rd/JZCommon/jzNet/JZNetClient.cpp
+    3rd/JZCommon/jzNet/JZNetClient.h
+    3rd/JZCommon/jzNet/JZNetDataManager.cpp
+    3rd/JZCommon/jzNet/JZNetDataManager.h
+    3rd/JZCommon/jzNet/JZNetPack.cpp
+    3rd/JZCommon/jzNet/JZNetPack.h
+    3rd/JZCommon/jzNet/JZNetServer.cpp
+    3rd/JZCommon/jzNet/JZNetServer.h
+    3rd/JZCommon/jzModbus/JZModbusClient.cpp
+    3rd/JZCommon/jzModbus/JZModbusClient.h
+    3rd/JZCommon/jzModbus/JZModbusContext.cpp
+    3rd/JZCommon/jzModbus/JZModbusContext.h
+    3rd/JZCommon/jzModbus/JZModbusDefine.cpp
+    3rd/JZCommon/jzModbus/JZModbusDefine.h
+    3rd/JZCommon/jzModbus/JZModbusMaster.cpp
+    3rd/JZCommon/jzModbus/JZModbusMaster.h
+    3rd/JZCommon/jzModbus/JZModbusParam.cpp
+    3rd/JZCommon/jzModbus/JZModbusParam.h
+    3rd/JZCommon/jzModbus/JZModbusRtu.cpp
+    3rd/JZCommon/jzModbus/JZModbusRtu.h
+    3rd/JZCommon/jzModbus/JZModbusServer.cpp
+    3rd/JZCommon/jzModbus/JZModbusServer.h
+    3rd/JZCommon/jzModbus/JZModbusSlaver.cpp
+    3rd/JZCommon/jzModbus/JZModbusSlaver.h
+    3rd/JZCommon/jzModbus/JZModbusTcp.cpp
+    3rd/JZCommon/jzModbus/JZModbusTcp.h
+    3rd/JZCommon/jzWidgets/JZImageView.cpp
+    3rd/JZCommon/jzWidgets/JZImageView.h
 )
 
 add_executable(JZNodeEditor ${JZNodeEditor_SOURCES})

@@ -3,7 +3,7 @@
 
 #include <QThread>
 #include <QTcpServer>
-#include "3rd/jznet/JZNetServer.h"
+#include "3rd/JZCommon/jzNet/JZNetServer.h"
 #include "JZNodeEngine.h"
 #include "JZNodeDebugPacket.h"
 

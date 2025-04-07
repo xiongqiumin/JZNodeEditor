@@ -1,5 +1,5 @@
-#ifndef JZ_MODULE_MODBUS_H_
-#define JZ_MODULE_MODBUS_H_
+#ifndef JZ_MODULE_CAMERA_H_
+#define JZ_MODULE_CAMERA_H_
 
 #include "JZNodeFunction.h"
 #include "JZModule.h"

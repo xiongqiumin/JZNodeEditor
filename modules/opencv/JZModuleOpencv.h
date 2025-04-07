@@ -1,5 +1,5 @@
-#ifndef JZ_MODULE_MODBUS_H_
-#define JZ_MODULE_MODBUS_H_
+#ifndef JZ_MODULE_OPENCV_H_
+#define JZ_MODULE_OPENCV_H_
 
 #include "JZModule.h"
 

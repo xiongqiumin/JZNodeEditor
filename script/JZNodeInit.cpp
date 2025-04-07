@@ -9,6 +9,9 @@
 #include "JZNodeVariableBind.h"
 #include "JZModule.h"
 #include "JZNodeInit.h"
+#include "modules/opencv/JZModuleOpencv.h"
+#include "modules/camera/JZModuleCamera.h"
+#include "modules/modbus/JZModuleModbus.h"
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectPtr ptr)
 {
@@ -37,5 +40,10 @@ void JZNodeInit()
     JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);          
 
     BindManager::instance()->init();    
-    JZModuleManager::instance()->init();
+
+    auto module_inst = JZModuleManager::instance();
+    module_inst->addModule(new JZModuleModbus());
+    module_inst->addModule(new JZModuleCamera());
+    module_inst->addModule(new JZModuleOpencv());
+    module_inst->initModules();
 }

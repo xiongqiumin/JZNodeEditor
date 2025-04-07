@@ -51,13 +51,21 @@ JZModuleManager::~JZModuleManager()
     qDeleteAll(m_moduleList);
 }
 
-void JZModuleManager::init()
+void JZModuleManager::initModules()
 {    
 }
 
 void JZModuleManager::addModule(JZModule *module)
 {
     m_moduleList.push_back(module);
+}
+
+void JZModuleManager::regist(JZScriptEnvironment *env)
+{
+    for (int i = 0; i < m_moduleList.size(); i++)
+    {
+        m_moduleList[i]->regist(env);
+    }
 }
 
 QStringList JZModuleManager::moduleList()

@@ -124,9 +124,8 @@ void FormResizer::setState(SelectionHandleState st)
         (*it)->setState(st);
 }
 
-void FormResizer::setFormWindow(JZUiEditor *fw)
+void FormResizer::setFormWindow(QWidget *fw)
 {
-/*
     if (debugFormResizer)
         qDebug() << "FormResizer::setFormWindow " << fw;
     QVBoxLayout *layout = qobject_cast<QVBoxLayout *>(m_frame->layout());
@@ -138,8 +137,6 @@ void FormResizer::setFormWindow(JZUiEditor *fw)
     if (m_formWindow)
         layout->addWidget(m_formWindow);
     mainContainerChanged();
-    connect(fw, &QDesignerFormWindowInterface::mainContainerChanged, this, &FormResizer::mainContainerChanged);
-*/
 }
 
 void FormResizer::resizeEvent(QResizeEvent *event)
@@ -160,7 +157,7 @@ QSize FormResizer::decorationSize() const
 
 QWidget *FormResizer::mainContainer()
 {    
-    return 0;
+    return m_formWindow;
 }
 
 void FormResizer::mainContainerChanged()

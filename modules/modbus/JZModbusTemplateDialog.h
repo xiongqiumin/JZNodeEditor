@@ -6,7 +6,7 @@
 #include "UiCommon.h"
 #include "JZBaseDialog.h"
 #include "JZSearchTreeWidget.h"
-#include "jzmodbus/JZModbusParam.h"
+#include "3rd/JZCommon/jzModbus/JZModbusParam.h"
 
 //ModbusStargeDialog
 class JZModbusTemplateDialog : public JZBaseDialog

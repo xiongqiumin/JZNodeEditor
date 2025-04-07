@@ -2,7 +2,7 @@
 #define JZNODE_DEBUG_CLIENT_H_
 
 #include <QObject>
-#include "3rd/jznet/JZNetClient.h"
+#include "3rd/JZCommon/jzNet/JZNetClient.h"
 #include "JZNodeDebugPacket.h"
 #include "JZNodeEngine.h"
 
@@ -50,7 +50,7 @@ protected slots:
 	void onNetPackRecv(JZNetPackPtr ptr);    
 
 protected:    
-    bool sendCommand(int command,QVariantList &params,QVariantList &result);    
+    bool sendCommand(int command, const QByteArray &send, QByteArray &result);
     JZNetClient m_client;    
 };
 

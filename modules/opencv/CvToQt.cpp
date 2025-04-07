@@ -9,11 +9,11 @@ QRectF toQRectF(const cv::Rect2d& cvRectF) {
 }
 
 cv::Rect fromQRect(const QRect& qRect) {
-    return cv::Rect(qRect.x(), qRect.y(), qRect.width(), qRect.height);
+    return cv::Rect(qRect.x(), qRect.y(), qRect.width(), qRect.height());
 }
 
 cv::Rect2d fromQRectF(const QRectF& qRectF) {
-    return cv::Rect2d(qRectF.x(), qRectF.y(), qRectF.width(), qRectF.height);
+    return cv::Rect2d(qRectF.x(), qRectF.y(), qRectF.width(), qRectF.height());
 }
 
 QPoint toQPoint(const cv::Point& cvPoint) {

@@ -2,15 +2,28 @@
 #include <QVBoxLayout>
 #include <QDebug>
 #include <QUndoStack>
+#include <QPushButton>
 #include "JZProject.h"
 
 JZUiEditor::JZUiEditor()
 {    
     m_type = Editor_ui;        
 
+    QWidget *widget = new QWidget();
+    QPushButton *btn = new QPushButton(widget);
+    btn->setGeometry(50, 50,100,50);
+
+    FormResizer *form = new FormResizer();    
+    form->setFormWindow(widget);
+    widget->resize(400, 200);
+
     QVBoxLayout *l = new QVBoxLayout();
-    l->setContentsMargins(0,0,0,0);
-    this->setLayout(l);    
+    l->setContentsMargins(0,0,0,0);        
+    m_area = new QScrollArea();
+    m_area->setWidget(form);
+
+    l->addWidget(m_area);
+    this->setLayout(l);
 }
 
 JZUiEditor::~JZUiEditor()

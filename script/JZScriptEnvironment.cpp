@@ -18,6 +18,8 @@ JZScriptEnvironment::JZScriptEnvironment()
 
     InitBuildInFunction();
 
+    JZModuleManager::instance()->regist(this);
+
     m_objectManager.setUserRegist(true);
     m_funcManager.setUserRegist(true);
 

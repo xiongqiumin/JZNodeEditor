@@ -109,6 +109,11 @@ struct is_operator_equal
     using type = typename std::is_same<bool, decltype(test<T, T>(0))>::type;
 };
 
+template<class T>
+struct is_operator_equal<QList<T>>
+{
+    using type = typename is_operator_equal<T>::type;
+};
 
 template<class T>
 constexpr bool is_enum_or_qenum_cond()

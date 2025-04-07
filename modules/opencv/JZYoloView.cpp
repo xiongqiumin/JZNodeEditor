@@ -20,7 +20,7 @@ JZYoloView::~JZYoloView()
 {
 }
 
-void JZYoloView::setYoloResult(QImage image,const QList<YoloResult> &m_lists)
+void JZYoloView::setYoloResult(QImage image,const QList<JZYoloResult> &m_lists)
 {
     m_scene->clear();
     setImage(image);

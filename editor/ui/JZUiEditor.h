@@ -1,9 +1,11 @@
 ﻿#ifndef JZUI_EDITOR_H_
 #define JZUI_EDITOR_H_
 
+#include <QUndoStack>
+#include <QScrollArea>
 #include "JZEditor.h"
 #include "JZUiFile.h"
-#include <QUndoStack>
+#include "formresizer.h"
 
 class JZUiEditor : public JZEditor
 {
@@ -32,6 +34,7 @@ protected slots:
 
 protected:            
     QUndoStack m_stack;
+    QScrollArea *m_area;
 };
 
 #endif

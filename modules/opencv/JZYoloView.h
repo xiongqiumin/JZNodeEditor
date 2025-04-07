@@ -2,7 +2,7 @@
 #define JZ_YOLO_VIEW_H_
 
 #include "3rd/JZCommon/jzWidgets/JZImageView.h"
-
+#include "JZYolo.h"
 
 class JZYoloView : public JZImageView
 {
@@ -12,7 +12,7 @@ public:
     JZYoloView();
     ~JZYoloView();
 
-    void setYoloResult(QImage image,const QList<YoloResult> &m_lists);
+    void setYoloResult(QImage image,const QList<JZYoloResult> &m_lists);
     QList<QColor> m_colorList;
 };
 

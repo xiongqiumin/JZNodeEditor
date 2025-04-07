@@ -30,8 +30,9 @@ class JZModuleManager
 public:
     static JZModuleManager *instance();
     
-    void init();
-    void addModule(JZModule *module);
+    void initModules();                   //从文件加载module
+    void addModule(JZModule *module);     //静态module
+    void regist(JZScriptEnvironment *env);
 
     QStringList moduleList();    
     JZModule *module(QString name);    

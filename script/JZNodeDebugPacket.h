@@ -1,7 +1,7 @@
 ﻿#ifndef JZNODE_DEBUG_PACKET_H_
 #define JZNODE_DEBUG_PACKET_H_
 
-#include "3rd/jznet/JZNetPack.h"
+#include "3rd/JZCommon/jzNet/JZNetPack.h"
 #include "JZProject.h"
 #include "JZNodeProgram.h"
 #include "JZNodeEngine.h"
@@ -30,6 +30,23 @@ enum{
     Cmd_log,
 };
 
+template<class T>
+QByteArray netDataPack(const T &data)
+{
+    QByteArray buffer;
+    QDataStream s(&buffer, QIODevice::WriteOnly);
+    s << data;
+    return buffer;
+}
+
+template<class T>
+T netDataUnPack(const QByteArray &buffer)
+{    
+    QDataStream s(buffer);
+    T data;
+    s >> data;
+    return data;
+}
 
 class JZNodeDebugPacket : public JZNetPack 
 {
@@ -42,7 +59,7 @@ public:
 	virtual void loadFromStream(QDataStream &s);    
 
     int cmd;
-    QVariantList params;
+    QByteArray buffer;
 };
 
 //JZNodeDebugParamValue

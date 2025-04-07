@@ -48,7 +48,6 @@
  *
  * Can be embedded into a QScrollArea. */
 
-class JZUiEditor;
 class FormResizer : public QWidget
 {
     Q_OBJECT
@@ -60,7 +59,7 @@ public:
     void setState(SelectionHandleState st);
     void update();
 
-    void setFormWindow(JZUiEditor *fw);
+    void setFormWindow(QWidget *fw);
 
 signals:
     void formWindowSizeChanged(const QRect &oldGeo, const QRect &newGeo);
@@ -78,7 +77,7 @@ private:
     QFrame *m_frame;
     typedef QVector<SizeHandleRect*> Handles;
     Handles m_handles;
-    JZUiEditor * m_formWindow;
+    QWidget * m_formWindow;
 };
 
 #endif // FORMRESIZER_H

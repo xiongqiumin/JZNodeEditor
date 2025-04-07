@@ -5,6 +5,8 @@
 #include "CvMatAndQImage.h"
 #include "JZNodeParamDisplayWidget.h"
 #include "JZScriptEnvironment.h"
+#include "JZYolo.h"
+#include "JZYoloView.h"
 
 using namespace cv;
 
@@ -80,6 +82,17 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         medianBlur(in, out, size);
         return out;
     }));    
+
+    jzbind::ClassBind<JZYoloResult> cls_yolo_ret(cls_id++, "JZYoloResult");
+    cls_yolo_ret.regist();
+
+    jzbind::ClassBind<QList<JZYoloResult>> cls_yolo_ret_list(cls_id++, "QList<JZYoloResult>");
+    cls_yolo_ret_list.regist();
+
+    jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "Yolo");
+    cls_yolo.defProperty("modelPath", &JZYolo::modelPath, &JZYolo::setModelPath);    
+    cls_yolo.def("forward", true, &JZYolo::forward);
+    cls_yolo.regist();
 
     auto d_inst = env->editorManager();
 
