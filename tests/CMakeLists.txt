@@ -1,5 +1,3 @@
-
-
 set(JZTest_SOURCES    
     main.cpp
     test_base.cpp
@@ -13,7 +11,7 @@ set(JZTest_SOURCES
 )
 
 add_executable(test ${JZTest_SOURCES})
-target_link_libraries(test JZNodeCore Qt${QT_VERSION_MAJOR}::Test)
+target_link_libraries(test Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Test)
 set_target_properties(test PROPERTIES 
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>"
