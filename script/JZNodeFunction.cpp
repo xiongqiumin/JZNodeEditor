@@ -15,9 +15,8 @@ JZNodeFunction::~JZNodeFunction()
 
 bool JZNodeFunction::isMemberCall()
 {
-    if (!m_file)
-        return false;
-    auto class_item = m_file->getClassFile();
+    Q_ASSERT(m_file);
+    auto class_item = m_file->getClassItem();
     if (!class_item)
         return false;
 

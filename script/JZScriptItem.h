@@ -7,6 +7,7 @@
 #include "JZNodeObject.h"
 
 class JZScriptClassItem;
+class JZNodeFunctionStart;
 class JZScriptItem : public JZProjectItem
 {
 public:    
@@ -19,14 +20,13 @@ public:
     void clear();
     int nextId();
 
-    QByteArray toBuffer();
-    bool fromBuffer(const QByteArray &object);
-
     void saveEditorCache();
     void loadEditorCache();
 
     const JZFunctionDefine &function();
     void setFunction(JZFunctionDefine def);
+
+    JZNodeFunctionStart* startNode();
 
     int addNode(JZNode *node);
     void insertNode(JZNode *node);

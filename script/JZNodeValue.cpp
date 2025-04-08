@@ -7,7 +7,6 @@
 #include "JZNodeFactory.h"
 #include "JZClassItem.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodePinWidget.h"
 #include "JZNodeFunction.h"
 #include "JZNodeUtils.h"
 
@@ -196,13 +195,6 @@ bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
     int out_id = c->paramId(m_id,paramOut(0));
     c->addConvert(irId(in_id),out_type,irId(out_id));
     return true;
-}
-
-JZNodePinWidget* JZNodeConvert::createWidget(int id)
-{
-    auto w = new JZNodePinValueWidget(this, id);
-    w->initWidget(Type_string);
-    return w;
 }
 
 bool JZNodeConvert::update(QString &error)
@@ -475,44 +467,6 @@ void JZNodeDisplay::removeInput(int index)
     removePin(id);
 }
 
-JZNodePinWidget* JZNodeDisplay::createWidget(int id)
-{
-    Q_UNUSED(id);    
-
-    auto in_list = paramInList();
-    if(in_list.contains(id))
-    {
-        return new JZNodePinDisplayWidget(this,id);
-    }
-    else
-    {
-        JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
-        QPushButton *btn = w->button();
-        btn->setText("Add Input");
-        btn->connect(btn, &QPushButton::clicked, [this] {
-            QByteArray old = toBuffer();
-            addInput();
-            propertyChangedNotify(old);        
-        });                
-        return w;
-    }
-}
-
-QStringList JZNodeDisplay::pinActionList(int id)
-{
-    QStringList ret;
-    if (paramInCount() > 2)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeDisplay::pinActionTriggered(int id, int index)
-{
-    int pin_index = paramInList().indexOf(id);
-    removeInput(pin_index);
-    return true;
-}
 
 bool JZNodeDisplay::canLink(int node_id, int pin_id, QString &error)
 {

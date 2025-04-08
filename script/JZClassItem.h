@@ -5,6 +5,7 @@
 #include "JZProjectItem.h"
 #include "JZScriptItem.h"
 #include "JZNodeObject.h"
+#include "JZUiItem.h"
 
 class JZParamItem;
 class JZScriptClassItem : public JZProjectItem
@@ -37,8 +38,9 @@ public:
     JZScriptItem *memberFunction(QString func);    
     QStringList memberFunctionList();
 
-    QString uiFile() const;
-    void setUiFile(QString file);
+    JZUiItem *ui();
+    void addUi(JZUiItem *item);
+    void removeUi();
     QList<JZParamDefine> uiWidgets();
 
 protected:
@@ -46,8 +48,7 @@ protected:
     virtual bool loadFromStream(QDataStream &s) override;
 
     int m_classId;
-    QString m_super;
-    QString m_uiFile;        
+    QString m_super;  
 
     JZParamDefine m_this;
 };

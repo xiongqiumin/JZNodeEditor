@@ -124,6 +124,8 @@ public:
     bool save(QString file);
     void clear();
 
+    void initEnv(JZScriptEnvironment *env);
+
     const JZNodeTypeMeta &typeMeta() const;       
     QString applicationFilePath();
     

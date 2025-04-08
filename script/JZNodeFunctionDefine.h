@@ -112,12 +112,28 @@ class CSignal
 public:
     CSignal();
     virtual ~CSignal();
+    
+    virtual void connect(JZNodeObject* obj, QString slot) = 0;
+    void disconnect(JZNodeObject* sender, QString slot);
 
     virtual void connect(JZNodeObject *sender,JZNodeObject *recv,QString slot) = 0;
-    virtual void disconnect(JZNodeObject *sender,JZNodeObject *recv,QString slot) = 0;
+    void disconnect(JZNodeObject *sender,JZNodeObject *recv,QString slot);
 
 protected:
-    Q_DISABLE_COPY(CSignal);       
+    Q_DISABLE_COPY(CSignal);      
+
+    struct ConnectInfo
+    {
+        JZNodeObject* send;
+        JZNodeObject* recv;
+        QString slot;
+        QMetaObject::Connection conn;
+    };
+
+    void addConnect(JZNodeObject* obj, JZNodeObject* recv, QString slot, QMetaObject::Connection conn);
+    void removeConnect(JZNodeObject* obj, JZNodeObject* recv, QString slot);
+
+    QList<ConnectInfo> m_connects;
 };
 
 class JZSignalDefine
@@ -135,6 +151,9 @@ public:
 };
 QDataStream &operator<<(QDataStream &s, const JZSignalDefine &param);
 QDataStream &operator>>(QDataStream &s, JZSignalDefine &param);
+
+//slot
+JZFunctionDefine JZSlotFunctionDefine(QString sender, const JZSignalDefine *signal);
 
 //JZParam
 class JZParam

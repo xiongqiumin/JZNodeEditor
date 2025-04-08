@@ -3,15 +3,14 @@
 #include <QFileInfo>
 #include <QTextStream>
 #include <QDomDocument>
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZNodeObject.h"
 #include "JZNodeUiLoader.h"
 #include "JZProject.h"
 
-JZUiFile::JZUiFile()
+JZUiItem::JZUiItem()
     :JZProjectItem(ProjectItem_ui)
 {
-    m_pri = 9;
     m_xml =  R"(<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>widget</class>
@@ -32,12 +31,12 @@ JZUiFile::JZUiFile()
 
 }
 
-JZUiFile::~JZUiFile()
+JZUiItem::~JZUiItem()
 {
     
 }
 
-bool JZUiFile::save(QString filepath)
+bool JZUiItem::save(QString filepath)
 {
     QFile file(filepath);
     if (!file.open(QFile::WriteOnly | QFile::Text))
@@ -50,7 +49,7 @@ bool JZUiFile::save(QString filepath)
     return true;
 }
 
-bool JZUiFile::load(QString filepath)
+bool JZUiItem::load(QString filepath)
 {
     QFile file(filepath);
     if (!file.open(QFile::ReadOnly | QFile::Text))
@@ -64,12 +63,12 @@ bool JZUiFile::load(QString filepath)
     return true;
 }
 
-void JZUiFile::saveToStream(QDataStream &s) const
+void JZUiItem::saveToStream(QDataStream &s) const
 {
     s << m_xml;
 }
 
-bool JZUiFile::loadFromStream(QDataStream &s)
+bool JZUiItem::loadFromStream(QDataStream &s)
 {
     QString xml;
     s >> xml;
@@ -77,18 +76,18 @@ bool JZUiFile::loadFromStream(QDataStream &s)
     return true;
 }
 
-QString JZUiFile::xml()
+QString JZUiItem::xml()
 {
     return m_xml;
 }
 
-void JZUiFile::setXml(QString xml)
+void JZUiItem::setXml(QString xml)
 {
     m_xml = xml;
     updateDefine();    
 }
 
-const JZParamDefine *JZUiFile::widgetVariable(QString name)
+const JZParamDefine *JZUiItem::widgetVariable(QString name)
 {
     for (int i = 0; i < m_widgets.size(); i++)
     {
@@ -99,12 +98,12 @@ const JZParamDefine *JZUiFile::widgetVariable(QString name)
     return nullptr;
 }
 
-QList<JZParamDefine> JZUiFile::widgets()
+QList<JZParamDefine> JZUiItem::widgets()
 {    
     return m_widgets;
 }
 
-void JZUiFile::walkChild(const QDomElement &root)
+void JZUiItem::walkChild(const QDomElement &root)
 {
     auto ele_list = root.childNodes();
     for (int ele_idx = 0; ele_idx < ele_list.size(); ele_idx++)
@@ -127,7 +126,7 @@ void JZUiFile::walkChild(const QDomElement &root)
     }
 }
 
-void JZUiFile::updateDefine()
+void JZUiItem::updateDefine()
 {
     QList<JZParamDefine> list;
 

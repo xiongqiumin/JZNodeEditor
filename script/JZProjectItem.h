@@ -13,7 +13,7 @@ enum {
     ProjectItem_param,
     ProjectItem_class,
     ProjectItem_scriptFile,
-    ProjectItem_scriptFunction,        
+    ProjectItem_scriptFunction,
 };
 
 class JZProject;
@@ -41,7 +41,7 @@ public:
     void setItemType(int type);
 
     JZProjectItem *parent();
-    JZScriptClassItem *getClassFile();
+    JZScriptClassItem *getClassItem();
     
     JZProjectItem *getItem(QString name);     
     bool hasItem(QString name);
@@ -49,7 +49,6 @@ public:
     QList<JZProjectItem *> childs();
     int childCount();
 
-    void sort();
     QList<JZProjectItem *> itemList(int type);
     QList<JZProjectItem *> itemList(QList<int> type);
     
@@ -58,9 +57,9 @@ protected:
     
     Q_DISABLE_COPY(JZProjectItem)
 
-    void addItem(QSharedPointer<JZProjectItem> child);
-    void removeItem(int index);    
-    void removeChlids();    
+    void addItem(JZProjectItem *child);
+    void removeItem(JZProjectItem* child);
+    void clearChlids();    
 
     virtual void saveToStream(QDataStream &s) const;
     virtual bool loadFromStream(QDataStream &s);
@@ -69,8 +68,7 @@ protected:
     QList<QSharedPointer<JZProjectItem>> m_childs;
     
     int m_itemType;    
-    QString m_name;            
-    int m_pri;
+    QString m_name;           
 };
 typedef QSharedPointer<JZProjectItem> JZProjectItemPtr;
 

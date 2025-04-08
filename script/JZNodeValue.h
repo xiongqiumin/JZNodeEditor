@@ -61,7 +61,6 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 
 protected:
-    virtual JZNodePinWidget* createWidget(int id) override;
     virtual bool update(QString &error) override;
 };
 
@@ -91,9 +90,6 @@ public:
     void removeInput(int index);
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-    virtual JZNodePinWidget* createWidget(int id) override;
-    virtual QStringList pinActionList(int id) override;
-    virtual bool pinActionTriggered(int id, int index) override;
 
 protected:
     virtual bool canLink(int node_id,int pin_id,QString &error) override;

@@ -1,7 +1,7 @@
 ﻿#include <QScopeGuard>
 #include "JZNodeBuilder.h"
 #include "JZParamItem.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZClassItem.h"
 #include "LogManager.h"
 #include "JZNodeUtils.h"
@@ -75,8 +75,7 @@ bool JZNodeBuilder::initGlobal()
             auto def = m_project->globalVariable(global_params[i]);
             int data_type = m_project->environment()->nameToType(def->type);
             c->addAlloc(JZNodeIRAlloc::Heap, def->name, data_type);
-            if(!def->value.isEmpty())
-                m_compiler.addInitVariable(irRef(def->name), data_type,def->value);
+            m_compiler.addInitVariable(irRef(def->name), data_type,def->value);
         }
         return ret_error.isEmpty();
     };
@@ -108,7 +107,7 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
     }
 
     QString path = scriptFile->itemPath();
-    LOGI(Log_Compiler, "build " + scriptFile->itemPath());
+    LOGMOD_I(Log_Compiler, "build " + scriptFile->itemPath());
 
     m_scripts[path].script = JZNodeScriptPtr(new JZNodeScript());
     JZNodeScript *script = m_scripts[path].script.data();

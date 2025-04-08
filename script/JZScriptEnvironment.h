@@ -4,7 +4,6 @@
 #include "JZNodeObject.h"
 #include "JZModule.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodeEditorManager.h"
 
 class JZScriptEnvironment;
 typedef QVariant (*ConvertFunc)(const JZScriptEnvironment *env,const QVariant& v);
@@ -43,9 +42,12 @@ public:
     JZNodeFunctionManager *functionManager();
     const JZNodeFunctionManager *functionManager() const;
 
-    JZNodeEditorManager *editorManager();
-    const JZNodeEditorManager *editorManager() const;
-    
+    const JZFunctionDefine* function(const QString& name) const;
+    const JZFunction* functionImpl(const QString& name) const;
+
+    const JZNodeObjectDefine *meta(int id) const;
+    const JZNodeObjectDefine *meta(const QString& name) const;
+
     QString typeToName(int id) const;
     int nameToType(const QString &name) const;
     QList<int> nameToTypeList(const QStringList &names) const;
@@ -88,7 +90,6 @@ protected:
 
     JZNodeFunctionManager m_funcManager;
     JZNodeObjectManager m_objectManager;
-    JZNodeEditorManager m_editorManager;    
     QList<ModuleInfo*> m_moduleList;
 
     QMap<int64_t,ConvertFunc> convertMap;    

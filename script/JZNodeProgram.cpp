@@ -412,3 +412,15 @@ const JZNodeTypeMeta &JZNodeProgram::typeMeta() const
 {
     return m_typeMeta;
 }
+
+void JZNodeProgram::initEnv(JZScriptEnvironment *env)
+{
+    env->registType(this->typeMeta());
+    auto script_list = this->scriptList();
+    for (int i = 0; i < script_list.size(); i++)
+    {
+        auto& func_list = script_list[i]->functionList;
+        for (int func_idx = 0; func_idx < func_list.size(); func_idx++)
+            env->functionManager()->registFunctionImpl(func_list[func_idx]);
+    }
+}

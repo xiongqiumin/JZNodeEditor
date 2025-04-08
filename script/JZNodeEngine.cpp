@@ -296,14 +296,12 @@ JZNodeEngine::JZNodeEngine()
     m_program = nullptr;
     m_script = nullptr;
     m_sender = nullptr;
-    m_depend = nullptr;
     m_pc = -1;
     m_watch = false;
     m_debug = false;
     m_status = Status_none;
     m_statusCommand = Command_none;
     m_regs.resize(Reg_End - Reg_Start);
-    m_hookEnable = false;
     m_regInCount = 0;
 
     m_watchTimer = new QTimer(this);
@@ -339,9 +337,6 @@ void JZNodeEngine::clear()
     m_stack.clear();
     m_global.clear();   
     m_sender = nullptr;
-    m_depend = nullptr;
-    m_hookEnable = false;
-    m_dependHook.clear();
     m_statusCommand = Command_none;
     m_status = Status_none;
     m_breakNodeId = -1;    
@@ -358,22 +353,66 @@ void JZNodeEngine::init()
     Q_ASSERT(!g_engine);
 
     // regist type
-    m_env.registType(m_program->typeMeta());
-    auto script_list = m_program->scriptList();
-    for(int i = 0; i < script_list.size(); i++)
-    {
-        auto &func_list = script_list[i]->functionList;
-        for (int func_idx = 0; func_idx < func_list.size(); func_idx++)
-            m_env.functionManager()->registFunctionImpl(func_list[func_idx]);    
-    }
+    m_program->initEnv(&m_env);
 
     g_engine = this;
     QVariantList in, out;
     call("__init__", in,out);
 
+    autoConnect();
+
     if(m_debug)
         m_watchTimer->start(50);
 }   
+
+void JZNodeEngine::autoConnect()
+{
+    auto script_list = m_program->scriptList();
+    for (int i = 0; i < script_list.size(); i++)
+    {
+        auto& func_list = script_list[i]->functionList;
+        for (int func_idx = 0; func_idx < func_list.size(); func_idx++)
+        {
+            QString func = func_list[func_idx].name();
+            if (!func.startsWith("on_"))
+                continue;
+
+            int idx1 = 3;
+            int idx2 = func.lastIndexOf("_");
+            if (idx2 == -1 || idx2 == idx1)
+                continue;
+
+            QString param_name = func.mid(3, idx2 - idx1);
+            if(!m_global.contains(param_name))
+            {
+                qDebug() << "connect slot by name no param: " + param_name;
+                continue;
+            }
+
+            QString sig = func.mid(idx2 + 1);
+            auto jz_obj = toJZObject(*m_global[param_name]);
+            if (!jz_obj)
+            {
+                qDebug() << "connect slot by name object not init";
+                continue;
+            }
+
+            auto sig_func = jz_obj->signal(sig);
+            if (!sig_func)
+            {
+                qDebug() << "connect slot by name no single: " + sig;
+                continue;
+            }
+
+            JZFunctionPointer sig_func_ptr;
+            sig_func_ptr.functionName = sig_func->fullName();
+
+            JZFunctionPointer slot_func_ptr;
+            slot_func_ptr.functionName = func;
+            JZObjectConnect(jz_obj, sig_func_ptr, slot_func_ptr);
+        }
+    }
+}
 
 void JZNodeEngine::deinit()
 {
@@ -493,8 +532,6 @@ void JZNodeEngine::pushStack(const JZFunction *func)
     
     if(!func->isCFunction())
     {          
-        updateHook();
-
         m_pc = func->addr;
         m_script = getScript(func->path);
         Q_ASSERT_X(m_script,"Error",qUtf8Printable(func->path));
@@ -515,7 +552,6 @@ void JZNodeEngine::popStack()
 {       
     checkFunctionOut(m_stack.currentEnv()->function);
     m_stack.pop();
-    updateHook();
 
     if(m_stack.size() > 0)
     {
@@ -626,6 +662,8 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
     }
     catch(const std::exception& e)
     {           
+        qDebug() << "Runtime Exception: " << e.what();
+
         m_mutex.lock();
         m_stack.currentEnv()->pc = m_pc;                                
         m_statusCommand = Command_none;
@@ -819,86 +857,6 @@ void JZNodeEngine::clearReg()
 Stack *JZNodeEngine::stack()
 {
     return &m_stack;
-}
-
-bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
-{
-    auto obj_inst = m_env.objectManager();
-    m_depend = depend;    
-    obj_inst->setUnitTest(true);
-
-    //init hook function
-    m_dependHook.clear();
-    for (int hook_idx = 0; hook_idx < depend->hook.size(); hook_idx++)
-    {
-        auto &hook = depend->hook[hook_idx]; 
-        if(!hook.enable)
-            continue;
-
-        auto func = m_env.functionManager()->function(hook.function);
-
-        QVariantList value_list;
-        auto &hook_list = hook.params;
-        for(int i = 0; i < hook_list.size(); i++)
-        {
-            QVariant v = createVariable(m_env.nameToType(func->paramOut[i].type), hook_list[i]);
-            
-            value_list << v;
-        }
-        
-        m_dependHook[hook.pc] = value_list;
-    }
-
-    //global
-    auto global_it = depend->global.begin();
-    while(global_it != depend->global.end())
-    {
-        auto ptr = m_global[global_it.key()];
-        int data_type = JZNodeType::variantType(*ptr);
-        *ptr = createVariable(data_type, global_it.value());
-        
-        global_it++;
-    }
-
-    //init input
-    QVariantList in;
-    for (int i = 0; i < depend->function.paramIn.size(); i++)
-    {
-        auto &p = depend->function.paramIn[i];
-        if(depend->function.isMemberFunction() && i == 0)
-        {
-            auto obj = obj_inst->create(depend->function.className);
-            JZNodeObjectPtr ptr(obj,true);
-            in << QVariant::fromValue(ptr);
-
-            auto mem_it = depend->member.begin();
-            while (mem_it != depend->member.end())
-            {   
-                auto param_def = obj->meta()->param(mem_it.key());
-                auto v = createVariable(m_env.nameToType(param_def->type), mem_it.value());
-                obj->setParam(mem_it.key(),v);
-                mem_it++;
-            }
-        }
-        else
-        {
-            auto d = m_env.editorManager()->delegate(m_env.nameToType(p.type));
-
-            QVariant v;
-            if(d && d->createParam)
-                v = d->createParam(&m_env,p.value);
-            else
-                v = createVariable(m_env.nameToType(p.type), p.value);
-
-            in << v;
-        }
-    }
-
-    //call    
-    bool ret = call(depend->function.fullName(),in,out);
-    obj_inst->setUnitTest(false);
-    m_depend = nullptr;
-    return ret;
 }
 
 void JZNodeEngine::splitMember(const QString &fullName, QStringList &objName,QString &memberName)
@@ -1683,19 +1641,10 @@ bool JZNodeEngine::isWidgetFunction(const JZFunction *function)
     return m_env.isInherits(function->className(),"QWidget");
 }
 
-void JZNodeEngine::updateHook()
-{
-    if(m_stack.size() > 0)
-        m_hookEnable = (m_depend && m_depend->function.fullName() == m_stack.currentEnv()->function->fullName());
-    else
-        m_hookEnable = false;
-}
-
 bool JZNodeEngine::run()
 {    
     auto obj_inst = m_env.objectManager();
-    updateHook();
-
+    
     int in_stack_size = m_stack.size();
     while (true)
     {                   
@@ -1850,33 +1799,18 @@ bool JZNodeEngine::run()
             const JZFunction *func = function(ir_call);
             Q_ASSERT(func);            
 
-            if(m_hookEnable && m_dependHook.contains(m_pc))
-            {
-                auto &hook_list = m_dependHook[m_pc];
-                for(int i = 0; i < hook_list.size(); i++)
-                    setReg(Reg_CallOut + i, hook_list[i]);
-            }
+            m_regInCount = ir_call->inCount;
+            if(func->isCFunction())
+                callCFunction(func);
             else
             {
-                if(m_depend && isWidgetFunction(func))
-                    throw std::runtime_error("can't use widget function in test,please hook first");
-
-                m_regInCount = ir_call->inCount;
-                if(func->isCFunction())
-                    callCFunction(func);
-                else
-                {
-                    pushStack(func);
-                    continue;
-                }
+                pushStack(func);
+                continue;
             }
             break;
         }
         case OP_return:
-        {            
-            if(m_depend && m_stack.size() == 1)
-                watchNotify();
-                
+        {                
             printNode();
             popStack();                  
             if(m_stack.size() < in_stack_size)

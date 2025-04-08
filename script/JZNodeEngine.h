@@ -206,7 +206,6 @@ public:
 
     bool call(const QString &function,const QVariantList &in,QVariantList &out);    
     bool call(const JZFunction *func,const QVariantList &in,QVariantList &out);
-    bool callUnitTest(ScriptDepend *depend,QVariantList &out);
     void invoke(const QString &function,const QVariantList &in,QVariantList &out);
     void onSlot(const QString &function,const QVariantList &in,QVariantList &out);
     void print(const QString &log);
@@ -290,7 +289,7 @@ protected:
     void unSupportOp(int a,int b,int op);
 
     bool isWidgetFunction(const JZFunction *function);
-    void updateHook();
+    void autoConnect();
     
     int m_pc;    
     JZNodeProgram *m_program;    
@@ -318,9 +317,6 @@ protected:
     bool m_watch;
     JZNodeRuntimeError m_error;
 
-    ScriptDepend *m_depend;
-    QMap<int,QVariantList> m_dependHook;
-    bool m_hookEnable;
     QTimer *m_watchTimer;
     
     Stat m_stat;

@@ -2,7 +2,7 @@
 #define JZ_CAMERA_H_
 
 #include <QObject>
-#include <opencv/opecv2.hpp>
+#include <opencv2/opencv.hpp>
 
 class JZCamera : public QObject
 {
@@ -20,7 +20,7 @@ public:
     virtual void stop() = 0;
 
 signals:
-    void sigTrigger(cv::Mat mat);
+    void sigFrameReady(cv::Mat mat);
     void sigError();
 
 protected:

@@ -440,7 +440,21 @@ template<typename Class, typename... Args>
 class CSingleImpl : public CSignal
 {
 public:    
-    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
+    virtual void connect(JZNodeObject* obj, QString slot) override
+    {
+        auto func = [slot](Args... args) {
+            QVariantList params;
+            createSlotParams<int, Args...>(params, args...);
+            QVariantList out;
+            JZScriptInvoke(slot, params, out);
+        };
+
+        Class* cobj = (Class*)obj->cobj();
+        auto conn = cobj->connect(cobj, single, func);
+        addConnect(obj, nullptr, slot, conn);
+    }
+
+    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot) override
     {
         auto func_ptr = [recv,slot](Args... args){
            QVariantList params;           
@@ -450,56 +464,31 @@ public:
 
         Class *cobj = (Class*)obj->cobj();
         auto conn = cobj->connect(cobj,single,recv,func_ptr);
-
-        ConnectInfo info;
-        info.send = obj;
-        info.recv = recv;
-        info.slot = slot;
-        info.conn = conn;
-        m_connects.push_back(info);
-    }
-
-    virtual void disconnect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
-    {
-        int index = getConnectIndex(obj,recv,slot);
-        if(index == -1)
-            return;
-
-        Class *cobj = (Class*)obj->cobj();
-        cobj->disconnect(m_connects[index].conn);
-        m_connects.removeAt(index);
+        addConnect(obj, nullptr, slot, conn);
     }
 
     void (Class::*single)(Args...); 
-
-protected:
-    struct ConnectInfo
-    {
-        JZNodeObject *send;
-        JZNodeObject *recv;
-        QString slot;
-        QMetaObject::Connection conn;
-    };
-
-    int getConnectIndex(JZNodeObject *obj,JZNodeObject *recv,QString slot)
-    {
-        for(int i = 0; i < m_connects.size(); i++)
-        {
-            auto &info = m_connects[i];
-            if(obj == info.send && recv == info.recv && slot == info.slot)
-                return i;
-        }
-        return -1;
-    }
-
-    QList<ConnectInfo> m_connects;
 };
 
 template<typename Class,typename PrivateSingle,typename... Args>
 class CPrivateSingleImpl : public CSignal
 {
 public:    
-    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
+    virtual void connect(JZNodeObject* obj, QString slot) override
+    {
+        auto func = [slot](Args... args) {
+            QVariantList params;
+            createSlotParams<int, Args...>(params, args...);
+            QVariantList out;
+            JZScriptInvoke(slot, params, out);
+        };
+
+        Class* cobj = (Class*)obj->cobj();
+        auto conn = cobj->connect(cobj, single, func);
+        addConnect(obj, nullptr, slot, conn);
+    }
+
+    virtual void connect(JZNodeObject *obj,JZNodeObject *recv,QString slot) override
     {
         auto func = [recv,slot](Args... args){
            QVariantList params;           
@@ -508,13 +497,8 @@ public:
         };
 
         Class *cobj = (Class*)obj->cobj();
-        cobj->connect(cobj,single,recv,func);  
-    }
-
-    virtual void disconnect(JZNodeObject *obj,JZNodeObject *recv,QString slot)
-    {
-        Class *cobj = (Class*)obj->cobj();
-        cobj->disconnect(cobj, single, recv, nullptr);
+        auto conn = cobj->connect(cobj,single,recv,func);  
+        addConnect(obj, nullptr, slot, conn);
     }
 
     void (Class::*single)(PrivateSingle, Args...);

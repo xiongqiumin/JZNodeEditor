@@ -5,7 +5,7 @@
 #include "JZNodeCppGenerater.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeBuilder.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZContainer.h"
 
 #if 0
@@ -217,7 +217,7 @@ int JZNodeCppGenerater::paramType(const JZNodeIRParam &param)
     if (param.type == JZNodeIRParam::Literal)
         return JZNodeType::variantType(param.value);
     else if(param.type == JZNodeIRParam::This)
-        return m_file->getClassFile()->classType();
+        return m_file->getClassItem()->classType();
     else if(param.type == JZNodeIRParam::Reference)
     {
         auto def = JZNodeCompiler::getVariableInfo(m_file,param.ref());
@@ -727,7 +727,7 @@ void JZNodeCppGenerater::generate(JZProject *project,QString output)
                 QString uiFile = jz_class->uiFile();
                 if(!uiFile.isEmpty())
                 {
-                    auto ui_item = (JZUiFile*)m_project->getItem(uiFile);
+                    auto ui_item = (JZUiItem*)m_project->getItem(uiFile);
                     QString ui_xml = ui_item->xml();
                     int cls_idx = ui_xml.indexOf("<class>");
                     cls_idx += 7;

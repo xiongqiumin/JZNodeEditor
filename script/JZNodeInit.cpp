@@ -33,7 +33,7 @@ void JZNodeInit()
 
     JZNodeType::init();
     JZNodeFactory::instance()->init();
-    InitJZProject();
+    JZProjectInit();
     JZNodeEngine::regist();
 
     JZNetPackManager::instance()->init();
@@ -42,8 +42,8 @@ void JZNodeInit()
     BindManager::instance()->init();    
 
     auto module_inst = JZModuleManager::instance();
-    module_inst->addModule(new JZModuleModbus());
-    module_inst->addModule(new JZModuleCamera());
     module_inst->addModule(new JZModuleOpencv());
+    module_inst->addModule(new JZModuleCamera());
+    //module_inst->addModule(new JZModuleModbus());
     module_inst->initModules();
 }

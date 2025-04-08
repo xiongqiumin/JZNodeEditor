@@ -1,5 +1,4 @@
-﻿#include "JZNodeEditor.h"
-#include <QVBoxLayout>
+﻿#include <QVBoxLayout>
 #include <QSplitter>
 #include <QShortcut>
 #include <QDebug>
@@ -8,12 +7,14 @@
 #include <QTabWidget>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QUrlQuery>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFactory.h"
 #include "JZNodeMemberSelectDialog.h"
 #include "LogManager.h"
 #include "JZNodePanel.h"
 #include "JZNodeUtils.h"
+#include "JZNodeEditor.h"
 
 //JZListInitFunct
 bool JZListInitFunction(JZNode *node)
@@ -367,6 +368,7 @@ void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
 
 void JZNodeEditor::navigate(QUrl url)
 {
-    JZUrl jz_url = JZNodeUtils::fromQUrl(url);
-    selectNode(jz_url.args["id"].toInt());
+    QUrlQuery query(url);
+    int id = query.queryItemValue("id").toInt();
+    selectNode(id);
 }

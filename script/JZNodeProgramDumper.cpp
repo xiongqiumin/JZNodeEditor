@@ -9,6 +9,7 @@ JZNodeProgramDumper::JZNodeProgramDumper()
 QString JZNodeProgramDumper::dump(JZNodeProgram *program)
 {        
     m_program = program;
+    m_program->initEnv(&m_env);
 
     QString content;    
     auto sc_list = m_program->scriptList();

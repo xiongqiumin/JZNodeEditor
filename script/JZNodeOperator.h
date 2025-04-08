@@ -9,7 +9,6 @@ public:
     JZNodeOperator(int node_type,int op_type);
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual JZNodePinWidget* createWidget(int id) override;
 
     void addInput();
     void removeInput(int index);    
@@ -17,9 +16,6 @@ public:
 
 protected:
     void addInputButton();    
-
-    virtual QStringList pinActionList(int id) override;
-    virtual bool pinActionTriggered(int id, int index) override;
 
     bool checkPinInput(JZNodeCompiler *compiler,QString &error);
     void calcPinOutType(JZNodeCompiler *compiler);

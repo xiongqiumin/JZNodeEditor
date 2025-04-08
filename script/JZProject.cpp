@@ -4,7 +4,7 @@
 #include "JZProject.h"
 #include "JZNodeFactory.h"
 #include "JZScriptItem.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZEvent.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
@@ -38,8 +38,10 @@ void operator>>(QDataStream &s, BreakPoint &param)
 }
 
 JZProject::JZProject()    
-{            
-    clear();
+{           
+    m_root.setName(".");
+    m_tmp.setName("/tmp");
+
     m_root.setRootProject(this);
     m_tmp.setRootProject(this);
 }
@@ -55,10 +57,10 @@ bool JZProject::isNull() const
 
 void JZProject::clear()
 {
-    m_root.removeChlids();
+    m_root.clearChlids();
     m_root.setName(".");
 
-    m_tmp.removeChlids();
+    m_tmp.clearChlids();
     m_tmp.setName("/tmp");
     
     m_blockRegist = false;    
@@ -89,40 +91,6 @@ const JZScriptEnvironment *JZProject::environment() const
     return &m_env;
 }
 
-void JZProject::initEmpty()
-{
-    JZScriptFile *main_file = new JZScriptFile();
-    main_file->setName("main.jz");
-    addItem("./", main_file);
-    
-    JZFunctionDefine main_def;
-    main_def.name = "main";
-    main_file->addFunction(main_def);
-    main_file->addParamDefine("global");
-}
-
-bool JZProject::initConsole()
-{
-    return initProject("console");
-}
-
-bool JZProject::initProject(QString temp)
-{
-    return JZProjectTemplate::instance()->initProject(this,temp);
-}
-
-bool JZProject::newProject(QString path,QString name, QString temp)
-{
-    if (!initProject(temp))
-        return false;
-
-    m_filepath = path + "/"  + name + ".jzproj";
-    if(!saveAllItem())
-        return false;
-    
-    return save();
-}
-
 void JZProject::registType()
 {
     JZNodeTypeMeta meta;
@@ -137,7 +105,7 @@ void JZProject::registType()
     QList<JZProjectItem *> function_list = itemList("./",ProjectItem_scriptFunction);
     for (int i = 0; i < function_list.size(); i++)
     {
-        if(!function_list[i]->getClassFile())
+        if(!function_list[i]->getClassItem())
         {
             auto script_item = dynamic_cast<JZScriptItem*>(function_list[i]);
             meta.functionList << script_item->function();
@@ -392,8 +360,7 @@ bool JZProject::addItem(QString dir, JZProjectItem *item)
 
     Q_ASSERT(!item->project());
     Q_ASSERT(!item->name().isEmpty());    
-    parent->addItem(JZProjectItemPtr(item));
-    item->parent()->sort();
+    parent->addItem(item);
 
     onItemChanged(item);
     return true;
@@ -420,12 +387,7 @@ void JZProject::removeItem(QString filepath)
         else if (item->itemType() == ProjectItem_ui)
         {
             auto class_list = itemList("./", ProjectItem_class);
-            for (int i = 0; i < class_list.size(); i++)
-            {
-                auto class_item = dynamic_cast<JZScriptClassItem*>(class_list[i]);                
-                if (class_item->uiFile() == item->itemPath())
-                    replace_list << class_item;
-            }
+            replace_list << item->getClassItem();
         }
     }    
 
@@ -439,8 +401,7 @@ void JZProject::removeItem(QString filepath)
     }
 
     auto parent = item->parent();
-    int index = parent->indexOfItem(item);
-    parent->removeItem(index);
+    parent->removeItem(item);
 
     for(int i = 0; i < replace_list.size(); i++)
         m_env.objectManager()->replace(replace_list[i]->objectDefine());
@@ -482,7 +443,7 @@ bool JZProject::saveItems(QList<JZProjectItem*> items)
 
         if (file->itemType() == ProjectItem_ui)
         {
-            JZUiFile *ui_file = dynamic_cast<JZUiFile*>(file);
+            JZUiItem *ui_file = dynamic_cast<JZUiItem*>(file);
             if (!ui_file->save(file_path))
                 return false;
         }
@@ -520,7 +481,6 @@ bool JZProject::saveAllItem()
 void JZProject::renameItem(JZProjectItem *item, QString newname)
 {    
     item->setName(newname);
-    item->parent()->sort();
     saveItem(item);
 
     if(isFile(item))
@@ -586,7 +546,7 @@ JZProjectItem *JZProject::addFile(QString filepath)
     }
     else if (ext == "ui")
     {
-        JZUiFile *ui_file = new JZUiFile();
+        JZUiItem *ui_file = new JZUiItem();
         ui_file->setName(fileName);
         addItem(sub_dir, ui_file);
         ui_file->load(filepath);        
@@ -885,16 +845,6 @@ void JZProject::onItemChanged(JZProjectItem *item)
             else
                 func_inst->replaceFunction(func_def);
         }
-        else if (item->itemType() == ProjectItem_ui)
-        {
-            auto class_list = itemList("./", ProjectItem_class);
-            for (int i = 0; i < class_list.size(); i++)
-            {
-                auto class_item = dynamic_cast<JZScriptClassItem*>(class_list[i]);                
-                if (class_item->uiFile() == item->itemPath())
-                    registClass(class_item);
-            }
-        }
     }    
 
     emit sigItemChanged(item);
@@ -903,11 +853,11 @@ void JZProject::onItemChanged(JZProjectItem *item)
 //InitJZProject
 JZProjectItem *createScriptFunction() { return new JZScriptItem(ProjectItem_scriptFunction); }
 
-void InitJZProject()
+void JZProjectInit()
 {
     auto inst = JZProjectItemManager::instance();
     inst->registItem(ProjectItem_folder, createJZProjectItem<JZProjectItemFolder>);
-    inst->registItem(ProjectItem_ui, createJZProjectItem<JZUiFile>);
+    inst->registItem(ProjectItem_ui, createJZProjectItem<JZUiItem>);
     inst->registItem(ProjectItem_param, createJZProjectItem<JZParamItem>);
     inst->registItem(ProjectItem_class, createJZProjectItem<JZScriptClassItem>);
     inst->registItem(ProjectItem_scriptFile, createJZProjectItem<JZScriptFile>);

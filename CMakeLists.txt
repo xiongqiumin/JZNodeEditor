@@ -142,8 +142,8 @@ set(JZNodeEditor_SOURCES
     script/JZClassItem.h
     script/JZProjectFile.cpp
     script/JZProjectFile.h
-    script/JZUiFile.cpp
-    script/JZUiFile.h
+    script/JZUiItem.cpp
+    script/JZUiItem.h
     script/JZContainer.cpp
     script/JZContainer.h
     script/JZEvent.cpp

@@ -3,7 +3,6 @@
 #include "JZNode.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodePinWidget.h"
 
 // JZNodeGemo
 int JZNodeGemo::paramId(int nodeId,int pinId)
@@ -323,21 +322,6 @@ int JZNode::pinCount(int flag) const
             count++;
     }
     return count;
-}
-
-int JZNode::pinPri(int id) const
-{
-    auto ptr = pin(id);
-    if (ptr->isSubFlow())
-        return Pri_sub_flow;
-    else if (ptr->isFlow())
-        return Pri_flow;
-    else if (ptr->isParam())
-        return Pri_param;
-    else if(ptr->isWidget())
-        return Pri_widget;
-    else
-        return Pri_none;        
 }
 
 int JZNode::paramIn(int index) const
@@ -680,31 +664,6 @@ bool JZNode::canLink(int node_id, int pin_id, QString &error)
     return true;
 }
 
-JZNodePinWidget *JZNode::createWidget(int id)
-{
-    return nullptr;
-}
-
-QStringList JZNode::actionList()
-{   
-    return QStringList();    
-}
-
-bool JZNode::actionTriggered(int)
-{
-    return false;
-}
-
-QStringList JZNode::pinActionList(int)
-{
-    return QStringList();
-}
-
-bool JZNode::pinActionTriggered(int, int)
-{
-    return false;
-}
-
 bool JZNode::update(QString &error)
 {
     return true;
@@ -943,28 +902,6 @@ void JZNodeSequence::removeSequeue(int id)
     updateSeqName();
 }
 
-QStringList JZNodeSequence::pinActionList(int id)
-{
-    int sub_index = subFlowList().indexOf(id);
-    if (sub_index == -1)
-        return QStringList();
-    if (subFlowCount() < 2)
-        return QStringList();
-    
-    QStringList ret;
-    ret.push_back("删除");
-    return ret;
-}
-
-bool JZNodeSequence::pinActionTriggered(int id, int index)
-{
-    int pin_index = subFlowList().indexOf(id);
-    if (pin_index == -1)
-        return false;
-
-    removeSequeue(id);
-    return true;
-}
 
 bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
 {
@@ -987,18 +924,6 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-JZNodePinWidget *JZNodeSequence::createWidget(int id)
-{
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this,id);
-    QPushButton *btn = w->button();
-    btn->setText("Add Input");
-    btn->connect(btn, &QPushButton::clicked, [this] {
-        QByteArray old = toBuffer();
-        addSequeue();
-        propertyChangedNotify(old);
-    });        
-    return w;
-}
 
 // JZNodeParallel
 JZNodeParallel::JZNodeParallel()
@@ -1110,17 +1035,6 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     c->setBreakContinue({break_pc},{ continue_pc });
 
     return true;
-}
-
-JZNodePinWidget* JZNodeFor::createWidget(int id)
-{
-    JZNodePinValueWidget *w = new JZNodePinValueWidget(this, id);
-    w->initWidget(Type_int, "QComboBox");
-    QComboBox *comboBox = qobject_cast<QComboBox*>(w->focusWidget());
-    comboBox->addItems(m_condTip);
-    comboBox->setCurrentIndex(paramInValue(3).toInt());    
-
-    return w;
 }
 
 void JZNodeFor::loadFromStream(QDataStream &s)
@@ -1318,14 +1232,6 @@ void JZNodeIf::addElsePin()
     updateCondName();
 }
 
-int JZNodeIf::pinPri(int id) const
-{
-    if (pin(id)->name() == "else")
-        return Pri_sub_flow + 1;
-    else
-        return JZNode::pinPri(id);
-}
-
 void JZNodeIf::removeCond(int index)
 {
     int flow_id = paramInList()[index];
@@ -1340,76 +1246,6 @@ void JZNodeIf::removeElse()
     int id = subFlowList().back();
     removePin(id);
     updateCondName();
-}
-
-int JZNodeIf::btnCondId()
-{
-    return widgetIn(0);
-}
-
-int JZNodeIf::btnElseId()
-{
-    return widgetIn(1);
-}
-
-JZNodePinWidget* JZNodeIf::createWidget(int id)
-{
-    Q_UNUSED(id);
-
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
-    QPushButton *btn = w->button();
-    btn->setText(pinName(id));
-    if (id == btnCondId())
-    {
-        btn->connect(btn, &QPushButton::clicked, [this] {
-            QByteArray old = toBuffer();
-            addCondPin();
-            propertyChangedNotify(old);
-        });
-    }
-    else
-    {
-        btn->connect(btn, &QPushButton::clicked, [this] {
-            if (subFlowCount() > paramInCount())
-                return;
-
-            QByteArray old = toBuffer();
-            addElsePin();
-            propertyChangedNotify(old);
-        });
-    }
-    return w;
-}
-
-QStringList JZNodeIf::pinActionList(int id)
-{
-    int param_index = paramInList().indexOf(id);
-    int sub_index = subFlowList().indexOf(id);
-    if (param_index == -1 && sub_index == -1)
-        return QStringList();
-
-    bool isElse = (subFlowCount() > paramInCount()) && (sub_index == subFlowCount() - 1);
-
-    QStringList ret;
-    if (paramInCount() > 1 || isElse)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeIf::pinActionTriggered(int id, int)
-{
-    int pin_index = paramInList().indexOf(id);
-    if(pin_index == -1)
-        pin_index = subFlowList().indexOf(id);
-
-    bool isElse = (subFlowCount() > paramInCount()) && (pin_index == subFlowCount() - 1);
-    if (isElse)
-        removeElse();
-    else
-        removeCond(pin_index);
-
-    return true;
 }
 
 bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error) 
@@ -1485,14 +1321,6 @@ void JZNodeSwitch::addDefault()
     addSubFlowOut("default", Pin_dispName);    
 }
 
-int JZNodeSwitch::pinPri(int id) const
-{
-    if(pin(id)->name() == "default")
-        return Pri_sub_flow + 1;
-    else
-        return JZNode::pinPri(id);
-}
-
 void JZNodeSwitch::removeCase(int index)
 {
     int id = subFlowList()[index];
@@ -1520,65 +1348,6 @@ void JZNodeSwitch::setCaseValue(int index, const QString &v)
 {
     Q_ASSERT(index < caseCount());
     pin(subFlowOut(index))->setValue(v);
-}
-
-JZNodePinWidget* JZNodeSwitch::createWidget(int pin_id)
-{    
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, pin_id);
-    QPushButton *btn = w->button();
-    btn->setText(pinName(pin_id));
-    if (pin_id == widgetOut(0))
-    {
-        btn->connect(btn, &QPushButton::clicked, [this] {
-            QByteArray old = toBuffer();
-            addCase();
-            propertyChangedNotify(old);
-        });
-    }
-    else
-    {
-        btn->connect(btn, &QPushButton::clicked, [this] {
-            if (subFlowCount() > paramInCount())
-                return;
-
-            int id = subFlowList().back();
-            bool isDefault = !(pin(id)->flag() & Pin_editValue);
-            if (isDefault)
-                return;
-
-            addDefault();
-        });
-    }
-
-    return w;
-}
-
-QStringList JZNodeSwitch::pinActionList(int id)
-{    
-    int sub_index = subFlowList().indexOf(id);
-    if (sub_index == -1)
-        return QStringList();
-
-    bool isDefault = !(pin(id)->flag() & Pin_editValue);
-
-    QStringList ret;
-    if (caseCount() > 1 || isDefault)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeSwitch::pinActionTriggered(int id, int index)
-{
-    int pin_index = subFlowList().indexOf(id);
-
-    bool isDefault = !(pin(id)->flag() & Pin_editValue);
-    if (isDefault)
-        removeDefault();
-    else
-        removeCase(pin_index);
-
-    return true;
 }
 
 bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)

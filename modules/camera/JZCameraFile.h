@@ -18,10 +18,6 @@ public:
     virtual void startOnce() override;
     virtual void stop() override;
 
-signals:
-    void sigFrameReady();
-    void sigError();
-
 protected slots:
     void onReadTimer();
 

@@ -173,7 +173,6 @@ public:
     QList<int> pinListByType(int flag) const;
     QList<int> pinList() const;
     int pinCount(int flag) const;
-    virtual int pinPri(int id) const;
               
     int addParamIn(QString name,int extFlag = 0);    
     int paramIn(int index) const;
@@ -228,12 +227,6 @@ public:
     virtual void drag(const QVariant &value);
 
     virtual bool canLink(int node_id, int pin_id, QString &error);
-
-    virtual JZNodePinWidget *createWidget(int id);
-    virtual QStringList actionList();
-    virtual bool actionTriggered(int actIndex);
-    virtual QStringList pinActionList(int id);
-    virtual bool pinActionTriggered(int id,int actIndex);
 
 protected:     
     Q_DISABLE_COPY(JZNode)
@@ -336,14 +329,11 @@ public:
     JZNodeSequence();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual JZNodePinWidget *createWidget(int id) override;
 
     int addSequeue();
     void removeSequeue(int id);    
 
 protected:
-    virtual QStringList pinActionList(int id);
-    virtual bool pinActionTriggered(int id, int index);
     void updateSeqName();
 };
 
@@ -364,7 +354,6 @@ public:
     JZNodeFor();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual JZNodePinWidget* createWidget(int id) override;
 
     void setRange(int start, int end);
     void setRange(int start, int step, int end);
@@ -417,15 +406,7 @@ public:
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
-    virtual JZNodePinWidget* createWidget(int id) override;
-    virtual QStringList pinActionList(int id);
-    virtual bool pinActionTriggered(int id, int index);
-    virtual int pinPri(int id) const override;
-    
     void updateCondName();
-
-    int btnCondId();
-    int btnElseId();    
 };
 
 //JZNodeSwitch
@@ -443,10 +424,6 @@ public:
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
-    virtual JZNodePinWidget* createWidget(int id) override;
-    virtual QStringList pinActionList(int id);
-    virtual bool pinActionTriggered(int id, int index);
-    virtual int pinPri(int id) const override;
 
     int m_btnCase;
     int m_btnDefault;

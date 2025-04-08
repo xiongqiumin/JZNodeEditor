@@ -194,6 +194,34 @@ CSignal::~CSignal()
 
 }
 
+void CSignal::disconnect(JZNodeObject* sender, QString slot)
+{
+    removeConnect(sender, nullptr, slot);
+}
+
+void CSignal::disconnect(JZNodeObject* sender, JZNodeObject* recv, QString slot)
+{
+    removeConnect(sender, recv, slot);
+}
+
+void CSignal::addConnect(JZNodeObject* obj, JZNodeObject* recv, QString slot, QMetaObject::Connection conn)
+{
+}
+
+void CSignal::removeConnect(JZNodeObject* obj, JZNodeObject* recv, QString slot)
+{
+    for (int i = 0; i < m_connects.size(); i++)
+    {
+        auto& info = m_connects[i];
+        if (obj == info.send && recv == info.recv && slot == info.slot)
+        {
+            QObject* qobj = JZObjectCast<QObject*>(obj);
+            qobj->disconnect(info.conn);
+            return;
+        }
+    }
+}
+
 //JZSignalDefine
 JZSignalDefine::JZSignalDefine()
 {
@@ -225,6 +253,18 @@ QDataStream &operator>>(QDataStream &s, JZSignalDefine &param)
     s >> param.className;
     s >> param.paramOut;
     return s;
+}
+
+//JZSlotFunctionDefine
+JZFunctionDefine JZSlotFunctionDefine(QString sender, const JZSignalDefine* signal)
+{
+    JZFunctionDefine func_def;
+    func_def.name = "on_" + sender + "_" + signal->name;
+    for (int i = 0; i < signal->paramOut.size(); i++)
+    {
+        func_def.paramIn.push_back(signal->paramOut[i]);
+    }
+    return func_def;
 }
 
 //JZParam

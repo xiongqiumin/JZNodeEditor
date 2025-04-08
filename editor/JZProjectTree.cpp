@@ -326,12 +326,12 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actRemove = nullptr;
     QAction *actRename = nullptr;
     QAction *actCreateFunction = nullptr;
+    QAction *actCreateFlow = nullptr;
     QAction *actCreateClass = nullptr;
     QList<QAction*> actCreateVirtual;
     QAction *actOpen = nullptr;
     QAction *actBuild = nullptr, *actRebuild = nullptr, *actClearBuild = nullptr;
     QAction *actNewFile = nullptr, *actExistFile = nullptr;
-    QAction *actSlot = nullptr;
 
     bool canChanged = true;    
     if(item->itemType() == ProjectItem_root)
@@ -361,12 +361,13 @@ void JZProjectTree::onContextMenu(QPoint pos)
         actCreateClass = menu_new->addAction("类");
         actCreateFunction = menu_new->addAction("全局函数");
     }
-    else if (item->itemType() == ProjectItem_ui)
+    else if(item->itemType() == ProjectItem_class)
     {
-        actOpen = menu.addAction("打开");
+        actCreateFlow = menu_new->addAction("流程");
+        actCreateFunction = menu_new->addAction("函数");
     }
-    else if (item->itemType() == ProjectItem_param
-        || item->itemType() == ProjectItem_scriptFunction)
+    
+    if (canOpenItem(item))
     {
         actOpen = menu.addAction("打开");
     }
@@ -415,7 +416,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
             }
             else
             {
-                new_item = new JZUiFile();
+                new_item = new JZUiItem();
                 new_item->setName(name + ".ui");                
             }
 
@@ -436,7 +437,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
             addItem(new_item);            
         }
     }
-    else if(act == actCreateFunction || act == actSlot || actCreateVirtual.contains(act))
+    else if(act == actCreateFunction || act == actCreateFlow || actCreateVirtual.contains(act))
     {        
         JZFunctionDefine function;
         if (act == actCreateFunction)

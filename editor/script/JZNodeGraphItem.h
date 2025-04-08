@@ -84,6 +84,7 @@ protected:
     void updateErrorGemo();        
     
     void createPinWidget(int prop_id);
+    JZNodePinWidget *createCustomWidget(int pin_id);
     void setWidgetValue(int prop_id, const QString &value);
     QString getWidgetValue(int prop_id);
 

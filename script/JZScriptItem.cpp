@@ -2,7 +2,7 @@
 #include "JZNodeFactory.h"
 #include "JZNodeEvent.h"
 #include "JZNodeFunction.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZParamItem.h"
 #include "JZProject.h"
 
@@ -11,7 +11,6 @@ JZScriptItem::JZScriptItem(int type)
     :JZProjectItem(type)
 {
     clear();
-    m_pri = 10;
 
     if(type == ProjectItem_scriptFunction)
     {
@@ -67,6 +66,12 @@ void JZScriptItem::setFunction(JZFunctionDefine def)
 {
     m_name = def.name;
     m_function = def;    
+}
+
+JZNodeFunctionStart* JZScriptItem::startNode()
+{
+    Q_ASSERT(m_nodes[0]->type() == Node_functionStart);
+    return (JZNodeFunctionStart*)m_nodes[0];
 }
 
 int JZScriptItem::addNode(JZNode *node)

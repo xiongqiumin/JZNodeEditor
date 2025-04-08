@@ -28,6 +28,7 @@
 #include <QTableWidget>
 #include <QListWidget>
 #include <QComboBox>
+#include <stdexcept>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"

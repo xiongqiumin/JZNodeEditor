@@ -14,9 +14,9 @@ public:
 protected:
     QString irToString(JZNodeIR *ir);
     QString toString(JZNodeIRParam param);
-
-    JZScriptEnvironment m_env;    
+    
     JZNodeProgram *m_program;
+    JZScriptEnvironment m_env;
 };
 
 #endif

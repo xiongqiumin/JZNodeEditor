@@ -6,12 +6,12 @@
 #include "JZNode.h"
 #include "JZNodeObject.h"
 
-//JZUiFile
-class JZUiFile : public JZProjectItem
+//JZUiItem
+class JZUiItem : public JZProjectItem
 {
 public:
-    JZUiFile();
-    virtual ~JZUiFile();
+    JZUiItem();
+    virtual ~JZUiItem();
 
     QString xml();
     void setXml(QString xml);

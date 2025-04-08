@@ -53,10 +53,6 @@ public:
     JZScriptEnvironment *environment();
     const JZScriptEnvironment *environment() const;    
     
-    void initEmpty();
-    bool initConsole();
-    bool initProject(QString temp);
-    bool newProject(QString path,QString name, QString temp);
     bool open(QString filepath);
     void close();
     bool save();    //只保存工程自身，不保存项目文件
@@ -64,12 +60,13 @@ public:
     void addTmp(JZProjectItem *item);
     void removeTmp(JZProjectItem *item);
     bool isTmp(JZProjectItem *item);
+
     bool isFile(JZProjectItem *item);
 
     void saveTransaction();
     void saveCommit();
 
-    void saveCache(); //保存 breakpoint 之类的设置信息
+    void saveCache();  //保存 breakpoint 之类的设置信息
     void loadCache();
 
     QString error();
@@ -158,6 +155,6 @@ protected:
     JZScriptEnvironment m_env;
 };
 
-void InitJZProject();
+void JZProjectInit();
 
 #endif

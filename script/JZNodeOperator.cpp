@@ -3,7 +3,6 @@
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
 #include "JZRegExpHelp.h"
-#include "JZNodePinWidget.h"
 
 JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {
@@ -41,37 +40,6 @@ void JZNodeOperator::removeInput(int index)
 {
     int id = paramInList()[index];
     removePin(id);
-}
-
-JZNodePinWidget* JZNodeOperator::createWidget(int id)
-{
-    Q_UNUSED(id);    
-
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
-    QPushButton *btn = w->button();
-    btn->setText("Add Input");
-    btn->connect(btn, &QPushButton::clicked, [this] {
-        QByteArray old = toBuffer();
-        addInput();
-        propertyChangedNotify(old);        
-    });                
-    return w;
-}
-
-QStringList JZNodeOperator::pinActionList(int id)
-{
-    QStringList ret;
-    if (paramInCount() > 2)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeOperator::pinActionTriggered(int id, int index)
-{
-    int pin_index = paramInList().indexOf(id);
-    removeInput(pin_index);
-    return true;
 }
 
 bool JZNodeOperator::checkPinInput(JZNodeCompiler *c,QString &error)

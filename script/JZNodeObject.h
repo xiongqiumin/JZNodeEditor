@@ -58,7 +58,7 @@ public:
     QStringList slotList() const;
     
     const JZNodeObjectDefine *super() const;
-    const JZNodeObjectDefine *cBase() const; //最近的c定义
+    const JZNodeObjectDefine *cSuper() const; //最近的c类
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
@@ -136,6 +136,9 @@ public:
     const JZSignalDefine *signal(QString function) const;
     QStringList signalList() const;
 
+    void singleConnect(QString sig, QString slot);
+    void singleDisconnect(QString sig, QString slot);
+
     void singleConnect(QString sig,JZNodeObject *recv,QString slot);
     void singleDisconnect(QString sig,JZNodeObject *recv,QString slot);
     void singleEmit(QString sig,const QVariantList &params);
@@ -186,6 +189,7 @@ protected:
     QList<ConnectInfo> m_connectList;
 };
 
+//会根据QObject是否有父类，决定是否释放
 class JZNodeObjectPtr
 {
 public:
@@ -220,6 +224,8 @@ JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
 JZNodeObject* qobjectToJZObject(QObject *obj);
 JZNodeObject* objectFromString(int type,const QString &text);
 
+void JZObjectConnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot);
+void JZObjectDisconnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot);
 void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer function);
 void JZObjectDisconnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer function);
 bool JZObjectIsList(JZNodeObject *obj);
@@ -335,7 +341,14 @@ protected:
     QMap<int, QSharedPointer<JZNodeObjectDefine>> m_metas;
     QMap<QString,int> m_qobjectId;
     int m_objectId;
-    bool m_testMode;
+    bool m_userRegist;
 };
+
+template<class T>
+T JZObjectCast(JZNodeObject *obj)
+{
+    Q_ASSERT(obj->isInherits(obj->manager()->getIdByCTypeid(typeid(std::remove_pointer_t<T>).name())));
+    return (T)obj->cobj();
+}
 
 #endif

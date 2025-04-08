@@ -1,6 +1,6 @@
 ﻿#include "JZProjectItem.h"
 #include "JZScriptItem.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZParamItem.h"
 #include "JZProject.h"
 
@@ -8,7 +8,6 @@ JZProjectItem::JZProjectItem(int itemType)
 {
     m_parent = nullptr;    
     m_itemType = itemType;    
-    m_pri = 0;
 }
 
 JZProjectItem::~JZProjectItem()
@@ -21,7 +20,6 @@ QByteArray JZProjectItem::toBuffer() const
     QDataStream s(&ret, QIODevice::WriteOnly);
     s << m_itemType;
     s << m_name;
-    s << m_pri;
     saveToStream(s);
     
     QList<QByteArray> sub_list;
@@ -41,7 +39,6 @@ void JZProjectItem::fromBuffer(const QByteArray &buffer)
     s >> itemType;
     Q_ASSERT(itemType == m_itemType);
     s >> m_name;
-    s >> m_pri;
     loadFromStream(s);
 
     QList<QByteArray> sub_list;
@@ -53,9 +50,8 @@ void JZProjectItem::fromBuffer(const QByteArray &buffer)
         sub_s >> type;
 
         auto sub_item = JZProjectItemManager::instance()->create(type);
-        JZProjectItemPtr child = JZProjectItemPtr(sub_item);
-        addItem(child);
-        child->fromBuffer(sub_list[i]);        
+        addItem(sub_item);
+        sub_item->fromBuffer(sub_list[i]);
     }
 }
 
@@ -88,17 +84,6 @@ JZProject *JZProjectItem::project()
         else
             return nullptr;
     }
-}
-
-void JZProjectItem::sort()
-{
-    std::sort(m_childs.begin(),m_childs.end(),[]( JZProjectItemPtr &i1_ptr, JZProjectItemPtr &i2_ptr){
-        auto i1 = i1_ptr.data();
-        auto i2 = i2_ptr.data();
-        if(i1->m_pri != i2->m_pri)
-            return i1->m_pri < i2->m_pri;
-        return i1->m_name < i2->m_name;
-    });
 }
 
 QString JZProjectItem::name() const
@@ -142,7 +127,7 @@ JZProjectItem *JZProjectItem::parent()
     return m_parent;
 }
 
-JZScriptClassItem *JZProjectItem::getClassFile() 
+JZScriptClassItem *JZProjectItem::getClassItem() 
 {
     if (!project())
         return nullptr;
@@ -150,16 +135,18 @@ JZScriptClassItem *JZProjectItem::getClassFile()
     return project()->getItemClass(this);
 }
 
-void JZProjectItem::addItem(JZProjectItemPtr child)
+void JZProjectItem::addItem(JZProjectItem *child)
 {
     Q_ASSERT(child->parent() == nullptr);
     child->m_parent = this;
-    m_childs.push_back(child);
+    m_childs.push_back(JZProjectItemPtr(child));
 }
 
-void JZProjectItem::removeItem(int index)
+void JZProjectItem::removeItem(JZProjectItem* child)
 {
-    m_childs.removeAt(index);
+    int index = indexOfItem(child);
+    if(index != -1)
+        m_childs.removeAt(index);
 }
 
 JZProjectItem *JZProjectItem::getItem(QString name) 
@@ -190,7 +177,7 @@ int JZProjectItem::childCount()
     return m_childs.size();
 }
 
-void JZProjectItem::removeChlids()
+void JZProjectItem::clearChlids()
 {
     m_childs.clear();
 }

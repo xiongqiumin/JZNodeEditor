@@ -1,7 +1,7 @@
 ﻿#include "JZClassItem.h"
 #include "JZParamItem.h"
 #include "JZProject.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZNodeEvent.h"
 
 //JZScriptClassItem
@@ -20,7 +20,6 @@ void JZScriptClassItem::saveToStream(QDataStream &s) const
 {
     s << m_name;    
     s << m_super;
-    s << m_uiFile;
     s << m_classId;    
 }
 
@@ -28,7 +27,6 @@ bool JZScriptClassItem::loadFromStream(QDataStream &s)
 {
     s >> m_name;
     s >> m_super;
-    s >> m_uiFile;
     s >> m_classId;    
     return true;
 }
@@ -45,14 +43,27 @@ QString JZScriptClassItem::className() const
     return m_name;
 }
 
-void JZScriptClassItem::setUiFile(QString uiFile)
+
+JZUiItem *JZScriptClassItem::ui()
 {
-    m_uiFile = uiFile;    
+    auto list = itemList(ProjectItem_ui);
+    if (list.size() == 0)
+        return nullptr;
+    
+    return dynamic_cast<JZUiItem*>(list[0]);
 }
 
-QString JZScriptClassItem::uiFile() const
+void JZScriptClassItem::addUi(JZUiItem *item)
 {
-    return m_uiFile;
+    Q_ASSERT(!ui());
+    addItem(item);
+}
+
+void JZScriptClassItem::removeUi()
+{
+    auto ui_item = ui();
+    if(ui_item)
+        removeItem(ui_item);
 }
 
 int JZScriptClassItem::classType()
@@ -96,15 +107,12 @@ void JZScriptClassItem::removeMemberVariable(QString name)
 QStringList JZScriptClassItem::memberVariableList(bool hasUi)
 {
     QStringList list = paramFile()->variableList();
-    if (hasUi && !m_uiFile.isEmpty())
+    auto ui_item = ui();
+    if (hasUi && ui_item)
     {
-        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
-        if (ui_item)
-        {
-            auto widgets = ui_item->widgets();
-            for (int i = 0; i < widgets.size(); i++)
-                list << widgets[i].name;
-        }
+        auto widgets = ui_item->widgets();
+        for (int i = 0; i < widgets.size(); i++)
+            list << widgets[i].name;
     }
 
     return list;
@@ -116,11 +124,10 @@ const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
     if (def)
         return def;
 
-    if (hasUi && !m_uiFile.isEmpty())
+    auto ui_item = ui();
+    if (hasUi && ui_item)
     {
-        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
-        if (ui_item)        
-            return ui_item->widgetVariable(name);
+        return ui_item->widgetVariable(name);
     }
     
     return nullptr;
@@ -173,11 +180,11 @@ void JZScriptClassItem::removeMemberFunction(QString func)
 QList<JZParamDefine> JZScriptClassItem::uiWidgets()
 {
     QList<JZParamDefine> list;
-    if (!m_uiFile.isEmpty())
+
+    auto ui_item = ui();
+    if (ui_item)
     {
-        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
-        if(ui_item)
-            list = ui_item->widgets();
+        list = ui_item->widgets();
     }
     return list;
 }
@@ -218,10 +225,10 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
             define.addFunction(function_item->function());
         }
     }
-        
-    if(!m_uiFile.isEmpty())
+     
+    JZUiItem* ui_item = ui();
+    if(ui_item)
     {        
-        auto ui_item = dynamic_cast<JZUiFile*>(project()->getItem(m_uiFile));
         define.isUiWidget = true;
         define.widgetXml = ui_item->xml();
         define.widgetParams = ui_item->widgets();

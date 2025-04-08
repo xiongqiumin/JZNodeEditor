@@ -6,7 +6,7 @@
 #include "JZNodeValue.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "JZNodeUtils.h"
 
 JZProjectTemplate *JZProjectTemplate::instance()
@@ -17,6 +17,8 @@ JZProjectTemplate *JZProjectTemplate::instance()
 
 bool JZProjectTemplate::initProject(JZProject *project, QString temp)
 {
+    project->clear();
+
     JZScriptFile *main_file = new JZScriptFile();
     main_file->setName("main.jz");
     project->addItem("./", main_file);
@@ -26,20 +28,24 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
     auto *main_flow = main_file->addFunction(main_def);
     auto *global_def = main_file->addParamDefine("global");
 
-    if (temp == "ui")
+    if (temp == "console")
+    {
+
+    }
+    else if (temp == "ui")
     {  
         auto func_inst = project->environment()->functionManager();
         auto window_file = new JZScriptFile();
         window_file->setName("MainWindow.jz");
 
-        auto ui_file = new JZUiFile();
-        ui_file->setName("mainwindow.ui");        
+        auto ui_file = new JZUiItem();
+        ui_file->setName("界面");        
 
         project->addItem("./",window_file);
         project->addItem("./",ui_file);
 
         auto class_item = window_file->addClass("MainWindow","QWidget");        
-        class_item->setUiFile("./mainwindow.ui");
+        class_item->addUi(ui_file);
         
         JZFunctionDefine define;
         define.className = "MainWindow";
@@ -82,11 +88,8 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         main_flow->addConnect(get_param->paramOutGemo(0), func_show->paramInGemo(0));
 
         main_flow->addConnect(func_show->flowOutGemo(0), main_loop->flowInGemo());
-        main_flow->addConnect(get_param->paramOutGemo(0), main_loop->paramInGemo(0));
-        
+        main_flow->addConnect(get_param->paramOutGemo(0), main_loop->paramInGemo(0));   
     }
-    JZNodeUtils::projectUpdateLayout(project);
-    project->save();
-    project->saveAllItem();
+
     return true;
 }

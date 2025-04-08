@@ -3,9 +3,13 @@
 #include <QFileInfo>
 #include "JZCameraFile.h"
 
+using namespace cv;
+
 JZCameraFile::JZCameraFile(QObject *parent)
     :JZCamera(parent)
 {
+    m_timer = new QTimer();
+    m_fileIndex = 0;
     connect(m_timer,&QTimer::timeout,this,&JZCameraFile::onReadTimer);
 }
 
@@ -30,6 +34,7 @@ bool JZCameraFile::open(QString path)
     for(int i = 0; i < list.size(); i++)
         m_fileList.push_back(list[i].filePath());
 
+    m_fileIndex = 0;
     return true;
 }
 
@@ -39,10 +44,13 @@ void JZCameraFile::close()
 
 void JZCameraFile::start()
 {
+    if (m_fileList.size() == 0)
+        return;
+
     m_timer->start(100);
 }
 
-cv::Mat JZCameraFile::startOnce()
+void JZCameraFile::startOnce()
 {
     cv::Mat mat = readFrame();
     emit sigFrameReady(mat);

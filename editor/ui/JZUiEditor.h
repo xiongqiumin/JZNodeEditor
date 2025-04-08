@@ -4,7 +4,7 @@
 #include <QUndoStack>
 #include <QScrollArea>
 #include "JZEditor.h"
-#include "JZUiFile.h"
+#include "JZUiItem.h"
 #include "formresizer.h"
 
 class JZUiEditor : public JZEditor

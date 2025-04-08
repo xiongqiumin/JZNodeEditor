@@ -8,13 +8,11 @@
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
     :m_funcManager(this),
-     m_objectManager(this),
-     m_editorManager(this)
+     m_objectManager(this)
 {    
     jzbind::setBindEnvironment(this);
     m_objectManager.init();
     m_funcManager.init();
-    m_editorManager.init();
 
     InitBuildInFunction();
 
@@ -67,8 +65,7 @@ void JZScriptEnvironment::unregistType()
     m_moduleList.clear();
 
     m_funcManager.clearUserReigst();
-    m_objectManager.clearUserReigst();
-    m_editorManager.clearUserRegist();    
+    m_objectManager.clearUserReigst();    
 }
 
 JZNodeObjectManager *JZScriptEnvironment::objectManager()
@@ -91,14 +88,14 @@ const JZNodeFunctionManager *JZScriptEnvironment::functionManager() const
     return &m_funcManager;
 }
 
-JZNodeEditorManager *JZScriptEnvironment::editorManager()
+const JZFunctionDefine* JZScriptEnvironment::function(const QString& name) const
 {
-    return &m_editorManager;
+    return m_funcManager.function(name);
 }
 
-const JZNodeEditorManager *JZScriptEnvironment::editorManager() const
+const JZFunction* JZScriptEnvironment::functionImpl(const QString& name) const
 {
-    return &m_editorManager;
+    return m_funcManager.functionImpl(name);
 }
 
 JZScriptEnvironment::ModuleInfo *JZScriptEnvironment::module(QString name)
@@ -161,6 +158,16 @@ int64_t JZScriptEnvironment::makeConvertId(int from, int to) const
 {
     int64_t id = (int64_t)from << 32 | (int64_t)to;
     return id;
+}
+
+const JZNodeObjectDefine* JZScriptEnvironment::meta(int id) const
+{
+    return m_objectManager.meta(id);
+}
+
+const JZNodeObjectDefine* JZScriptEnvironment::meta(const QString& name) const
+{
+    return m_objectManager.meta(name);
 }
 
 QString JZScriptEnvironment::typeToName(int id) const

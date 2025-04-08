@@ -3,7 +3,6 @@
 #include "JZModuleOpencv.h"
 #include "JZNodeBind.h"
 #include "CvMatAndQImage.h"
-#include "JZNodeParamDisplayWidget.h"
 #include "JZScriptEnvironment.h"
 #include "JZYolo.h"
 #include "JZYoloView.h"
@@ -12,7 +11,7 @@ using namespace cv;
 
 enum 
 {
-    Opencv_mat = 15000,
+    OpencvModule_id = 15000,
 };
 
 QVariant createMat(JZScriptEnvironment *env,const QString &value)
@@ -57,7 +56,7 @@ JZModuleOpencv::~JZModuleOpencv()
 void JZModuleOpencv::regist(JZScriptEnvironment *env)
 {
     auto func_inst = env->functionManager();
-    int cls_id = Opencv_mat;
+    int cls_id = OpencvModule_id;
     
     jzbind::ClassBind<Mat> cls_mat(cls_id++, "Mat");
     cls_mat.setValueType(true);
@@ -93,16 +92,6 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     cls_yolo.defProperty("modelPath", &JZYolo::modelPath, &JZYolo::setModelPath);    
     cls_yolo.def("forward", true, &JZYolo::forward);
     cls_yolo.regist();
-
-    auto d_inst = env->editorManager();
-
-    JZNodeParamDelegate d_mat;
-    d_mat.editType = Type_imageEdit;
-    d_mat.createDisplay = CreateParamDisplayWidget<JZNodeImageDisplayWidget>;
-    d_mat.createParam = createMat;    
-    d_mat.pack = matPack;
-    d_mat.unpack = matUnpack;
-    d_inst->registDelegate(cls_mat.id(), d_mat);
 }
 
 void JZModuleOpencv::unregist(JZScriptEnvironment *env)

@@ -95,7 +95,7 @@ enum
     Type_treeWidgetItem,
 
     Type_internalObject = 8000, // 内部注册起始
-    Type_userObject = 10000,    // 用户注册起始
+    Type_userObject = 50000,    // 用户注册起始
 };
 
 typedef QSharedPointer<QVariant> QVariantPtr;

@@ -32,7 +32,7 @@ JZUiEditor::~JZUiEditor()
 
 void JZUiEditor::open(JZProjectItem *item)
 {    
-    JZUiFile *file = (JZUiFile*)item;     
+    JZUiItem *file = (JZUiItem*)item;     
         
     QUndoStack *stack = &m_stack;
     connect(stack, &QUndoStack::canRedoChanged, this, &JZUiEditor::redoAvailable);

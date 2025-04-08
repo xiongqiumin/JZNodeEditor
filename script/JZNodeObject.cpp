@@ -13,6 +13,32 @@
 #include "JZNodeVariableBind.h"
 #include "JZScriptEnvironment.h"
 
+void JZObjectConnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot)
+{
+    auto env = g_engine->environment();
+    auto s = env->objectManager()->signal(single.functionName);
+    auto func = env->functionManager()->function(slot.functionName);
+    Q_ASSERT(s && func && JZNodeType::sigSlotTypeMatch(s, func));
+    if (s->csignal)
+        s->csignal->connect(sender, func->name);
+    else
+    {
+        sender->singleConnect(s->name, func->name);
+    }
+}
+
+void JZObjectDisconnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot)
+{
+    auto env = g_engine->environment();
+    auto s = env->objectManager()->signal(single.functionName);
+    auto func = env->functionManager()->function(slot.functionName);
+    Q_ASSERT(s && func);
+    if (s->csignal)
+        s->csignal->disconnect(sender, func->name);
+    else
+        sender->singleDisconnect(s->name, func->name);
+}
+
 void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer slot)
 {
     auto env = g_engine->environment();
@@ -364,7 +390,7 @@ const JZNodeObjectDefine *JZNodeObjectDefine::super() const
     return manager->meta(superName);
 }
 
-const JZNodeObjectDefine *JZNodeObjectDefine::cBase() const
+const JZNodeObjectDefine *JZNodeObjectDefine::cSuper() const
 {
     auto def = this;
     while (def)
@@ -720,6 +746,14 @@ int JZNodeObject::singleConnectCount(JZNodeObject *recv) const
     return count;
 }
 
+void JZNodeObject::singleConnect(QString sig, QString slot)
+{
+}
+
+void JZNodeObject::singleDisconnect(QString sig, QString slot)
+{
+}
+
 void JZNodeObject::singleConnect(QString sig,JZNodeObject *recv,QString slot)
 {
     if(singleConnectCount(recv) == 1)
@@ -991,7 +1025,7 @@ JZNodeObjectManager::JZNodeObjectManager(JZScriptEnvironment *env)
 {        
     m_objectId = Type_internalObject;
     m_enumId = Type_internalEnum;    
-    m_testMode = false;
+    m_userRegist = false;
     m_env = env;
 }
 
@@ -1025,12 +1059,9 @@ void JZNodeObjectManager::init()
 
 void JZNodeObjectManager::setUserRegist(bool flag)
 {
-    m_objectId = Type_userObject;
-}
-
-void JZNodeObjectManager::setUnitTest(bool flag)
-{
-    m_testMode = flag;
+    m_userRegist = flag;
+    if(m_userRegist)
+        m_objectId = Type_userObject;
 }
 
 void JZNodeObjectManager::initFunctions()
@@ -1079,6 +1110,7 @@ int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
     //可以先声明在注册
     Q_ASSERT(!info.className.isEmpty() && !meta(info.className));
     Q_ASSERT(info.id == -1 || !meta(info.id));
+    Q_ASSERT((!m_userRegist && info.id < Type_userObject) || (m_userRegist && info.id >= Type_userObject));
 
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;
@@ -1337,7 +1369,7 @@ void JZNodeObjectManager::copy(JZNodeObject *src,JZNodeObject *dst) const
         return;
     }
 
-    auto cBase = src->meta()->cBase();
+    auto cBase = src->meta()->cSuper();
     if (cBase)
         cBase->cMeta.copy(src->cobj(), dst->cobj());
 
@@ -1364,9 +1396,6 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
     Q_ASSERT(def);    
     if (def->isCObject)
     {
-        if (m_testMode && isInherits(def->id,Type_widget))
-            return;
-
         auto cobj = def->cMeta.create();
         obj->setCObject(cobj,true);
         return;
@@ -1374,15 +1403,12 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
 
     if (def->isUiWidget)
     {
-        if (!m_testMode)
-        {
-            JZNodeUiLoader loader;
-            QWidget *widget = loader.create(def->widgetXml);
-            Q_ASSERT(widget);
+        JZNodeUiLoader loader;
+        QWidget *widget = loader.create(def->widgetXml);
+        Q_ASSERT(widget);
 
-            obj->setCObject(widget, true);
-            obj->updateUiWidget(widget);
-        }
+        obj->setCObject(widget, true);
+        obj->updateUiWidget(widget);
     }
     else
     {
@@ -1505,7 +1531,7 @@ bool JZNodeObjectManager::equal(JZNodeObject* o1,JZNodeObject *o2) const
             return o1->meta()->cMeta.equal(o1->cobj(),o2->cobj());
         else
         {
-            auto cBase = o1->meta()->cBase();
+            auto cBase = o1->meta()->cSuper();
             if (cBase)
             {
                 if (!cBase->cMeta.equal(o1->cobj(), o2->cobj()))

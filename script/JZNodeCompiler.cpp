@@ -328,7 +328,7 @@ VariableCoor JZNodeCompiler::variableCoor(JZScriptItem *file, QString name)
             return Variable_global;
         else
         {
-            auto class_file = file->getClassFile();
+            auto class_file = file->getClassItem();
             if (class_file && class_file->memberVariable(name,true))
                 return Variable_member;
             else
@@ -486,7 +486,7 @@ bool JZNodeCompiler::checkFunction()
     JZNode *start_node = m_originGraph->topolist[0]->node;
 
     QString check_error;
-    auto class_file = m_scriptFile->getClassFile();     
+    auto class_file = m_scriptFile->getClassItem();     
     if(check_error.isEmpty())
     {
         QStringList list = m_scriptFile->localVariableList(true);
@@ -1934,7 +1934,7 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QS
 {
     auto project = file->project();    
     auto obj_inst = project->environment()->objectManager();
-    JZScriptClassItem *class_item = file->getClassFile();
+    JZScriptClassItem *class_item = file->getClassItem();
 
     int gap = name.indexOf(".");
     QString base_name;
@@ -2437,27 +2437,27 @@ void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, con
         addSetVariable(dst,irLiteral(env->initValue(dataType,value)));
     else
     {   
-        if(value == "null")
-            addSetVariable(dst,irLiteral(env->defaultValue(Type_nullptr)));
+        if (value.isEmpty())
+        {
+            QList<JZNodeIRParam> in, out;
+            in << irLiteral(env->typeToName(dataType));
+            out << dst;
+            addCall("createObject", in, out);
+        }
         else if(value.startsWith("{") && value.endsWith("}"))
         {
             QString init_text = value.mid(1,value.size() - 2);
             QList<JZNodeIRParam> in,out;
-            if(init_text.isEmpty())
-            {
-                in << irLiteral(env->typeToName(dataType));
-                out << dst;
-                addCall("CreateObject",in,out);
-            }
-            else
-            {
-                in << irLiteral(init_text);
-                out << dst;
+            in << irLiteral(init_text);
+            out << dst;
 
-                auto meta = obj_inst->meta(dataType);
-                auto func = meta->function("__fromString__");
-                addCall(func,in,out);
-            }
+            auto meta = obj_inst->meta(dataType);
+            auto func = meta->function("__fromString__");
+            addCall(func,in,out);
+        }
+        else
+        {
+            Q_ASSERT(0);
         }
     }
 }

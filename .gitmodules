@@ -1,3 +1,4 @@
 [submodule "3rd/JZCommon"]
 	path = 3rd/JZCommon
 	url = https://gitee.com/xiongqiumin/JZCommon.git
+	branch = master
