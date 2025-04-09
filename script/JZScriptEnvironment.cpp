@@ -172,8 +172,8 @@ const JZNodeObjectDefine* JZScriptEnvironment::meta(const QString& name) const
 
 QString JZScriptEnvironment::typeToName(int id) const
 {   
-    bool isPoint = id & Type_pointFlag;
-    id = id & (~Type_pointFlag);
+    bool isPoint = JZNodeType::isPointer(id);
+    id = JZNodeType::baseType(id);
     QString suffix = isPoint ? "*" : "";
 
     if (JZNodeType::isEnum(id))
@@ -187,7 +187,14 @@ QString JZScriptEnvironment::typeToName(int id) const
 }
 
 int JZScriptEnvironment::nameToType(const QString &name) const
-{
+{   
+    bool isPoint = JZNodeType::isPointer(name);
+    if (isPoint)
+    {
+        int base_type = nameToType(JZNodeType::baseType(name));
+        return JZNodeType::makePointerType(base_type);
+    }
+
     int type = JZNodeType::nameToType(name);
     if (type != Type_none)
         return type;
@@ -204,8 +211,14 @@ QList<int> JZScriptEnvironment::nameToTypeList(const QStringList &names) const
     return ret;
 }
 
-int JZScriptEnvironment::typeidToType(const QString &name) const
+int JZScriptEnvironment::ctypeidToType(const QString &name) const
 {
+    if (JZNodeType::isPointer(name))
+    {
+        int base_type = ctypeidToType(JZNodeType::baseType(name));
+        return JZNodeType::makePointerType(base_type);
+    }
+
     if(name == typeid(bool).name())
         return Type_bool;
     else if(name == typeid(int).name())
@@ -222,13 +235,7 @@ int JZScriptEnvironment::typeidToType(const QString &name) const
 
 int JZScriptEnvironment::variantType(const QVariant &v) const
 {
-    if (JZNodeType::isPointer(v))
-    {
-        QVariantPtr ptr = JZNodeType::getPointer(v);
-        return JZNodeType::variantType(*ptr) | Type_pointFlag;
-    }
-    else
-        return JZNodeType::variantType(v);
+    return JZNodeType::variantType(v);
 }
 
 QString JZScriptEnvironment::variantTypeName(const QVariant &v) const
@@ -252,18 +259,23 @@ bool JZScriptEnvironment::isSameType(const QVariant &v1,const QVariant &v2) cons
     return isSameType(type1,type2);
 }
 
-bool JZScriptEnvironment::isSameType(int type1,int type2) const
+bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
 {    
-    if(type1 == type2)
-        return true;
-    else if(type1 == Type_arg || type2 == Type_arg)
-        return true;
-    else if((JZNodeType::isEnum(type1) && type2 == Type_int) || (type1 == Type_int && JZNodeType::isEnum(type2)))
-        return true;
-    else if(type1 >= Type_class && type2 >= Type_class)
-        return isInherits(type1,type2);
+    if (JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type))
+    {
+        int base_src = JZNodeType::baseType(src_type);
+        int base_dst = JZNodeType::baseType(dst_type);
+        return isInherits(base_src, base_dst);
+    }
 
-    qDebug() << typeToName(type1) << typeToName(type2);
+    if(src_type == dst_type)
+        return true;
+    else if(dst_type == Type_arg)
+        return true;
+    else if((JZNodeType::isEnum(src_type) && dst_type == Type_int) || (src_type == Type_int && JZNodeType::isEnum(dst_type)))
+        return true;
+
+    qDebug() << "set" << typeToName(src_type) << "to" << typeToName(dst_type);
     return false;
 }
 
@@ -276,6 +288,9 @@ int JZScriptEnvironment::isInherits(const QString &type1, const QString &type2) 
 
 int JZScriptEnvironment::isInherits(int type1,int type2) const
 {
+    if (type1 == type2)
+        return true;
+
     return m_objectManager.isInherits(type1,type2);
 }
 
@@ -291,6 +306,12 @@ JZParamDefine JZScriptEnvironment::paramDefine(QString name, int data_type, QStr
 
 bool JZScriptEnvironment::canConvert(int type1,int type2) const
 {   
+    if (!JZNodeType::isPointer(type1) && JZNodeType::isPointer(type2)
+        && isInherits(type1, JZNodeType::baseType(type2)))
+    {
+        return true;
+    }
+
     if(type1 == Type_arg || type2 == Type_arg)
         return true;
     if(type1 == type2 || type2 == Type_any)
@@ -342,6 +363,15 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
     int src_type = variantType(v);
     if (src_type == dst_type)
         return v;
+
+    if (!JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type)
+        && isInherits(src_type, JZNodeType::baseType(dst_type)))
+    {
+        JZNodeObjectPtr* obj_ptr = (JZNodeObjectPtr*)v.data();
+        JZNodeObjectPtrRef pointer = JZNodeObjectPtrRef::fromPtr(*obj_ptr);
+        return QVariant::fromValue(pointer);
+    }
+
     if (dst_type == Type_any)
     {
         JZNodeVariantAny any;

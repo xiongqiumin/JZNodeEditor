@@ -10,6 +10,10 @@ find_package(QT NAMES Qt5 REQUIRED COMPONENTS widgets xml)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test printsupport xml)
 find_package(OpenCV 4 REQUIRED)
 
+if (MSVC)
+    add_compile_options(/execution-charset:utf-8)
+endif()
+
 include_directories(
     ../../
     ../../script
@@ -102,8 +106,6 @@ set(JZNodeTest_SOURCES
     ${NodePath}/script/JZNodeQtWrapper.h
     ${NodePath}/script/JZNodeType.cpp
     ${NodePath}/script/JZNodeType.h
-    ${NodePath}/script/JZNodeUiLoader.cpp
-    ${NodePath}/script/JZNodeUiLoader.h
     ${NodePath}/script/JZNodeUtils.cpp
     ${NodePath}/script/JZNodeUtils.h
     ${NodePath}/script/JZNodeValue.cpp
@@ -126,6 +128,8 @@ set(JZNodeTest_SOURCES
     ${NodePath}/3rd/JZCommon/jzNet/JZNetServer.h
     ${NodePath}/3rd/JZCommon/jzCommon/JZLogManager.h
     ${NodePath}/3rd/JZCommon/jzCommon/JZLogManager.cpp
+	${NodePath}/3rd/JZCommon/jzWidgets/JZImageView.h
+    ${NodePath}/3rd/JZCommon/jzWidgets/JZImageView.cpp
 
     ${NodePath}/LogManager.cpp
     ${NodePath}/LogManager.h
@@ -144,6 +148,8 @@ set(JZNodeTest_SOURCES
     ${NodePath}/modules/opencv/CvToQt.cpp
     ${NodePath}/modules/opencv/JZYolo.h
     ${NodePath}/modules/opencv/JZYolo.cpp
+	${NodePath}/modules/opencv/JZYoloView.h
+	${NodePath}/modules/opencv/JZYoloView.cpp
 )
 
 add_executable(JZNodeTest ${JZNodeTest_SOURCES})

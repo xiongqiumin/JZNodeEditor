@@ -51,7 +51,7 @@ public:
     QString typeToName(int id) const;
     int nameToType(const QString &name) const;
     QList<int> nameToTypeList(const QStringList &names) const;
-    int typeidToType(const QString &name) const;
+    int ctypeidToType(const QString &name) const;
     int variantType(const QVariant &v) const;
     QString variantTypeName(const QVariant &v) const;
     int stringType(const QString &text) const;

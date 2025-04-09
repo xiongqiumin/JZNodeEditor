@@ -159,12 +159,13 @@ public:
     
     bool checkParamDefine(const JZParamDefine *def, QString &error);
     const JZParamDefine *getVariableInfo(const QString &name);
-    bool checkVariableExist(const QString &var, QString &error);    
-    bool checkVariableType(const QString &var,int data_type, QString &error);
+    bool checkVariableExist(const QString &var, QString &error);              //检查是否存在
+    bool checkVariableType(const QString &var,int data_type, QString &error); //检查变量是类型
+    bool checkInitValue(int data_type,const QString &value);   //检查能否用字符串初始化
 
     void resetStack();
     int allocStack(int dataType);
-    void addFunctionAlloc(const JZFunctionDefine &define);
+    void addFunctionAlloc(const JZFunctionDefine &define);  //初始化本地变量
     
     JZNodeIRParam paramRef(QString name);
 
@@ -190,12 +191,12 @@ public:
 
     addFlowInput，addDataInput 后，会自动插入JZNodeIRNodeId, 表示一个节点的开始, 用于断点
     */   
-    bool checkPinInType(int nodeId, int prop_id, QString &error); //计算输入类型
+    bool checkPinInType(int nodeId, const QList<int> &prop_list, QString &error); //计算输入类型
 
     bool addFlowInput(int nodeId,QString &error);
-    bool addFlowInput(int nodeId,int prop_id,QString &error);
+    bool addFlowInput(int nodeId,const QList<int> &prop_id,QString &error);
     bool addDataInput(int nodeId,QString &error);
-    bool addDataInput(int nodeId,int prop_id,QString &error); //获得指定nodeId 的 prop_id 输入
+    bool addDataInput(int nodeId,const QList<int> &prop_id,QString &error); //获得指定nodeId 的 prop_id 输入
     void addFlowOutput(int nodeId);         
 
     int addNop();
@@ -301,8 +302,9 @@ protected:
 
     QString m_className;    
     const JZFunctionDefine *m_regCallFunction;
+    QList<JZNodeIRParam> m_regCallInput;
     JZNodeScript *m_script;
-    JZScriptItem *m_scriptFile;         
+    JZScriptItem *m_scriptItem;         
     Graph *m_originGraph; //原始图
     GraphPtr m_buildGraph;  //当前处理的图
         
@@ -315,7 +317,6 @@ protected:
     QMap<int,int> m_stackType;
     CompilerResult m_compilerInfo;
     
-    JZProject *m_project;
     const JZScriptEnvironment *m_env = nullptr;
     JZNodeBuilder *m_builder;
     QString m_error;

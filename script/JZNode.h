@@ -58,6 +58,7 @@ enum
     Node_parallel,    
     Node_view,        
     Node_print,
+    Node_format,
     Node_switch,
     Node_break,
     Node_continue,
@@ -75,7 +76,6 @@ enum
 {
     NodeProp_none = 0,
     NodeProp_noRemove = 0x1,
-    NodeProp_dragVariable = 0x2,
 };
 
 //JZNodeGemo
@@ -209,28 +209,19 @@ public:
     JZNodeGemo subFlowOutGemo(int index) const;
     QList<int> subFlowList() const;
     int subFlowCount() const;
-
-    int addWidgetIn(QString name);
-    int addWidgetOut(QString name);
-    int widgetIn(int index) const;
-    int widgetOut(int index) const;
     
     const QString &pinValue(int pin) const;
     void setPinValue(int pin, const QString &value);
     const QString &pinName(int id) const;
     void setPinName(int id,const QString &name);
 
-    bool canRemove();
-    bool canDragVariable();    
-
-    const QStringList &pinType(int id) const;    
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
-    
-    virtual bool update(QString &error);      //更新
-    virtual void drag(const QVariant &value);
-
+    bool canRemove(); 
     virtual bool canLink(int node_id, int pin_id, QString &error);
 
+    const QStringList &pinType(int id) const;    
+    virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0; 
+    virtual bool update(QString &error);      //更新
+    
 protected:     
     Q_DISABLE_COPY(JZNode)
 
@@ -252,8 +243,6 @@ protected:
     void setPinTypeString(int id);
     void setPinType(int id,const QStringList &type);
     void clearPinType(int id);
-
-    void setPinEditType(int id, int edit_type);
 
     int m_id;
     int m_type;
@@ -428,9 +417,6 @@ public:
 
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
-
-    int m_btnCase;
-    int m_btnDefault;
     QStringList m_caseType;
 };
 

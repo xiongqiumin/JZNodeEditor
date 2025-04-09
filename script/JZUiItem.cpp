@@ -5,7 +5,6 @@
 #include <QDomDocument>
 #include "JZUiItem.h"
 #include "JZNodeObject.h"
-#include "JZNodeUiLoader.h"
 #include "JZProject.h"
 
 JZUiItem::JZUiItem()

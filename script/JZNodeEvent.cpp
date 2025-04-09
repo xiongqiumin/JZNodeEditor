@@ -55,10 +55,10 @@ JZNodeSignalConnect::JZNodeSignalConnect()
     addFlowIn();
     addFlowOut();
     
-    int in1 = addParamIn("sender", Pin_dispName);
-    int in2 = addParamIn("signal", Pin_dispName | Pin_literal);
-    int in3 = addParamIn("receiver", Pin_dispName);
-    int in4 = addParamIn("slot", Pin_dispName | Pin_literal);
+    int in1 = addParamIn("sender");
+    int in2 = addParamIn("signal", Pin_constValue);
+    int in3 = addParamIn("receiver");
+    int in4 = addParamIn("slot", Pin_constValue);
 
     setPinType(in1, { JZNodeType::typeName(Type_object) });
     setPinType(in2, { JZNodeType::typeName(Type_function) });
@@ -133,7 +133,7 @@ JZNodeParamChangedEvent::JZNodeParamChangedEvent()
     m_name = "ParamChanged";
     m_type = Node_paramChangedEvent;
 
-    addParamIn("", Pin_dispValue | Pin_editValue);
+    addParamIn("");
 }
 
 JZNodeParamChangedEvent::~JZNodeParamChangedEvent()

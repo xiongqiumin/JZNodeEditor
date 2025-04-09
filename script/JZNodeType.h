@@ -9,8 +9,9 @@ constexpr int INVALID_ID = -1;
 
 enum
 {
-    Type_none = -1,
-    Type_bool,
+    Type_none = 0,
+    Type_begin,
+    Type_bool = Type_begin,
     Type_int,
     Type_int64,
     Type_double,
@@ -21,13 +22,6 @@ enum
     Type_auto,      //auto
     Type_arg,       //泛型,任意参数
     Type_args,      //变长参数
-
-    Type_internalUse,
-    Type_paramName,
-    Type_boolCheck,
-    Type_imageEdit,
-    Type_ignore,
-    Type_internalUseEnd,
 
     Type_enum = 1000,
     Type_keyCode,   //Qt::Key
@@ -96,10 +90,12 @@ enum
 
     Type_internalObject = 8000, // 内部注册起始
     Type_userObject = 50000,    // 用户注册起始
-    Type_pointFlag = 1 << 31,
+    Type_pointerFlag = 1 << 31,
 };
 
 typedef QSharedPointer<QVariant> QVariantPtr;
+
+
 
 class JZEnum
 {
@@ -124,6 +120,10 @@ Q_DECLARE_METATYPE(JZFunctionPointer)
 QDataStream &operator<<(QDataStream &s, const JZFunctionPointer &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param);
 
+/*
+    任意类型可以隐式转换为 any
+    any 必须显示转换为指定类型
+*/
 class JZNodeVariantAny
 {
 public:
@@ -132,17 +132,6 @@ public:
 };
 Q_DECLARE_METATYPE(JZNodeVariantAny)
 
-class QVariantPointer
-{
-public:
-    QVariantPtr value;
-};
-Q_DECLARE_METATYPE(QVariantPointer)
-
-/*
-    任意类型可以隐式转换为 any
-    any 必须显示转换为指定类型
-*/
 class JZNodeObject;
 class JZSignalDefine;
 class JZFunctionDefine;
@@ -160,6 +149,7 @@ public:
     static bool isDoubleOp(const QString &op);    
         
     static int variantType(const QVariant &v);
+    static bool variantIsPointer(const QVariant& v);
 
     static bool isBase(int type);    
     static bool isEnum(int type);
@@ -171,8 +161,13 @@ public:
     static bool isNullptr(const QVariant &v);    
     static bool isLiteralType(int type);
 
-    static bool isPointer(const QVariant &v);
-    static QVariantPtr getPointer(const QVariant &v);
+    static int baseType(int type);
+    static int makePointerType(int type);
+    static bool isPointer(int type);
+
+    static QString baseType(const QString& type);
+    static QString makePointerType(const QString& type);
+    static bool isPointer(const QString& type);
     
     static int calcExprType(int type1,int type2,int op);
         

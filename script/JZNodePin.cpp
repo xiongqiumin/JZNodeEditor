@@ -80,39 +80,9 @@ bool JZNodePin::isSubFlow() const
     return (m_flag & Pin_subFlow);
 }
 
-bool JZNodePin::isWidget() const
+bool JZNodePin::isConstValue() const
 {
-    return (m_flag & Pin_widget);
-}
-
-bool JZNodePin::isEditValue() const
-{
-    return (m_flag & Pin_editValue);
-}
-
-bool JZNodePin::isDispName() const
-{
-    return (m_flag & Pin_dispName);
-}
-
-bool JZNodePin::isDispValue() const
-{
-    return (m_flag & Pin_dispValue);
-}
-
-bool JZNodePin::isLiteral() const
-{
-    return (m_flag & Pin_literal);
-}
-
-void JZNodePin::setEditType(int edit_type)
-{
-    m_editType = edit_type;
-}
-
-int JZNodePin::editType() const
-{
-    return m_editType;
+    return (m_flag & Pin_constValue);
 }
 
 void JZNodePin::setDataType(const QStringList &type)
@@ -140,7 +110,6 @@ void operator<<(QDataStream &s, const JZNodePin &param)
     s << param.m_id;
     s << param.m_name;
     s << param.m_flag;
-    s << param.m_editType;
     s << param.m_dataType;
     s << param.m_value;
 }
@@ -150,7 +119,6 @@ void operator>>(QDataStream &s, JZNodePin &param)
     s >> param.m_id;
     s >> param.m_name;
     s >> param.m_flag;
-    s >> param.m_editType;
     s >> param.m_dataType;
     s >> param.m_value;
 }

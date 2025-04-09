@@ -6,7 +6,6 @@
 #include <QListWidgetItem>
 #include <QTableWidgetItem>
 #include "JZNodeObject.h"
-#include "JZNodeUiLoader.h"
 #include "JZNodeQtWrapper.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
@@ -93,7 +92,7 @@ CMeta::CMeta()
 //JZNodeObjectDefine
 JZNodeObjectDefine::JZNodeObjectDefine()
 {
-    id = -1;
+    id = Type_none;
     isCObject = false;
     isUiWidget = false;    
     valueType = false;
@@ -485,7 +484,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
 //JZNodeCObjectDelcare
 JZNodeCObjectDelcare::JZNodeCObjectDelcare()
 {
-    id = -1;
+    id = Type_none;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeCObjectDelcare &param)
@@ -921,7 +920,7 @@ void JZNodeObject::setCOwner(bool owner)
     m_cobjOwner = owner;
 }
 
-//JZNodeObjectRef
+//JZNodeObjectPtr
 JZNodeObjectPtr::JZNodeObjectPtrData::JZNodeObjectPtrData()
 {
     isOwner = false;
@@ -981,7 +980,12 @@ bool isJZObject(const QVariant &v)
 
 JZNodeObject* toJZObject(const QVariant &v)
 {
-    if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
+    if (v.userType() == qMetaTypeId<JZNodeObjectPtrRef>())
+    {
+        auto ptr = (JZNodeObjectPtrRef*)v.data();
+        return ptr->pointer.object();
+    }
+    else if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
     {
         auto ptr = (JZNodeObjectPtr*)v.data();
         return ptr->object();
@@ -995,7 +999,12 @@ JZNodeObject* toJZObject(const QVariant &v)
 
 JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
 {
-    if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
+    if (v.userType() == qMetaTypeId<JZNodeObjectPtrRef>())
+    {
+        auto ptr = (JZNodeObjectPtrRef*)v.data();
+        return ptr->pointer;
+    }
+    else if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
     {
         return v.value<JZNodeObjectPtr>();
     }
@@ -1004,6 +1013,20 @@ JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
         Q_ASSERT(0);
         return JZNodeObjectPtr();
     }
+}
+
+//JZNodeObjectPtrRef
+JZNodeObjectPtrRef JZNodeObjectPtrRef::fromPtr(const JZNodeObjectPtr& ptr)
+{
+    JZNodeObjectPtrRef ref;
+    ref.type = JZNodeType::makePointerType(ptr.object()->type());
+    ref.pointer = ptr;
+    return ref;
+}
+
+JZNodeObjectPtrRef::JZNodeObjectPtrRef()
+{
+    type = Type_none;
 }
 
 JZNodeObject* qobjectToJZObject(QObject *obj)
@@ -1019,6 +1042,7 @@ JZNodeObject* objectFromString(int type,const QString &text)
 {
     return nullptr;
 }
+
 
 //JZNodeObjectManager
 JZNodeObjectManager::JZNodeObjectManager(JZScriptEnvironment *env)
@@ -1108,13 +1132,13 @@ int JZNodeObjectManager::delcareCClass(const QString &name, const QString &c_typ
 int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
     //可以先声明在注册
-    Q_ASSERT(!info.className.isEmpty() && !meta(info.className));
-    Q_ASSERT(info.id == -1 || !meta(info.id));    
+    Q_ASSERT(!info.className.isEmpty());
+    Q_ASSERT(!meta(info.className) || (info.id == Type_none || meta(info.className)->id == info.id));
 
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;
     def->manager = this;
-    if(info.id != -1)
+    if(info.id != Type_none)
     {
         def->id = info.id;
         m_objectId = qMax(m_objectId,def->id + 1);
@@ -1149,8 +1173,8 @@ int JZNodeObjectManager::registCClass(const JZNodeObjectDefine &define,const QSt
 
 int JZNodeObjectManager::registEnum(const JZNodeEnumDefine &define)
 {
-    int id = -1;
-    if (define.id() == -1)
+    int id = Type_none;
+    if (define.id() == Type_none)
         id = m_enumId++;
     else
         id = define.id();
@@ -1343,7 +1367,7 @@ int JZNodeObjectManager::getEnumId(const QString &enumName) const
             return it.key();
         it++;
     }
-    return -1;
+    return Type_none;
 }
 
 QStringList JZNodeObjectManager::getEnumList() const
@@ -1403,8 +1427,7 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
 
     if (def->isUiWidget)
     {
-        JZNodeUiLoader loader;
-        QWidget *widget = loader.create(def->widgetXml);
+        QWidget* widget = g_engine->createWidget(def->widgetXml);
         Q_ASSERT(widget);
 
         obj->setCObject(widget, true);

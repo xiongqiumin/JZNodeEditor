@@ -14,20 +14,8 @@ enum
     Pin_param = 0x4,       //参数
     Pin_flow = 0x8,        //流程 
     Pin_subFlow  = 0x10,   //子程序
-    Pin_widget = 0x20,
-    Pin_dispName = 0x40,    
-    Pin_dispValue = 0x80,
-    Pin_editValue = Pin_dispValue | 0x100,
-    Pin_noValue = 0x200,   //不在运行时起作用
-    Pin_literal = 0x400,    
-};
-
-enum {    
-    Pri_none = -1,
-    Pri_sub_flow = 0,
-    Pri_flow = 100,
-    Pri_param = 200,
-    Pri_widget = 300,
+    Pin_constValue = 0x20,   //需要常数  
+    Pin_noCompiler = 0x40,   //节点自己处理，不作为input/output
 };
 
 class JZNodePin
@@ -44,7 +32,7 @@ public:
     const QString &name() const;
 
     void setFlag(int flag);
-    void changeFlag(int flag,bool isSet);
+    void changeFlag(int flag,bool isSet); //检测flag是否设置
     int flag() const;
 
     bool isInput() const;
@@ -53,15 +41,7 @@ public:
     bool isParam() const;
     bool isFlow() const;
     bool isSubFlow() const;
-    bool isWidget() const;
-
-    bool isEditValue() const;
-    bool isDispName() const;
-    bool isDispValue() const;
-    bool isLiteral() const;
-
-    void setEditType(int edit_type);
-    int editType() const;
+    bool isConstValue() const;
 
     void setDataType(const QStringList &type);
     const QStringList &dataType() const;
@@ -75,7 +55,6 @@ protected:
 
     int m_id;
     int m_flag;    
-    int m_editType;
     QString m_name;      
     QStringList m_dataType;
     QString m_value;

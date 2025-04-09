@@ -22,13 +22,13 @@ QString JZNodeProgramDumper::dump(JZNodeProgram *program)
         {
             auto &func = script->functionList[func_idx];
             
-            QString line = "function " + func.fullName() + ":\n";
+            content += functionDeclare(&func) + "\n{\n";
             for(int i = func.addr; i < func.addrEnd; i++)
             {
                 //deal op            
                 content += irToString(opList[i].data()) + "\n";
             }
-            content += "\n";
+            content += "}\n\n";
         }
     }    
     return content;
@@ -58,76 +58,74 @@ QString JZNodeProgramDumper::toString(JZNodeIRParam param)
 
 QString JZNodeProgramDumper::irToString(JZNodeIR *op)
 {    
-    QString line = QString::asprintf("%04d ", op->pc);
+    QString line;
     switch (op->type)
     {
     case OP_nodeId:
     {
         JZNodeIRNodeId *ir_node = (JZNodeIRNodeId*)op;
-        line += "Node" + QString::number(ir_node->id);
+        line += "//node" + QString::number(ir_node->id);
         break;
     }
     case OP_nop:
     {
-        line += "NOP";
+        line += "//nop";
         break;
     }
     case OP_alloc:
     {
         JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
-        QString alloc = (ir_alloc->allocType == JZNodeIRAlloc::Heap) ? "Global" : "Local";
-        alloc += " " + m_env.typeToName(ir_alloc->dataType);
+        QString alloc = m_env.typeToName(ir_alloc->dataType);
         if (ir_alloc->allocType == JZNodeIRAlloc::Heap || ir_alloc->allocType == JZNodeIRAlloc::Stack)
-            line += alloc + " " + ir_alloc->name;
+            line += alloc + " " + ir_alloc->name + ";";
         else
-            line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id);
+            line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id) + ";";
         break;
     }
     case OP_clearReg:
-        line += "CLEAR REG";
+        line += "//clear reg";
         break;
     case OP_set:
     {
         JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
-        line += "SET " + toString(ir_set->dst) + " = " + toString(ir_set->src);
+        line += toString(ir_set->dst) + " = " + toString(ir_set->src) + ";";
         break;
     }
     case OP_clone:
     {
         JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
-        line += "CLONE " + toString(ir_set->dst) + " = " + toString(ir_set->src);
+        line += toString(ir_set->dst) + " = " + toString(ir_set->src) + "; //clone";
         break;
     }
     case OP_buffer:
     {
         JZNodeIRBuffer *ir_set = (JZNodeIRBuffer*)op;
-        line += "BUFFER " + toString(ir_set->id) + ", size = " + QString::number(ir_set->buffer.size());
+        line += toString(ir_set->id) + QString::asprintf("= QByteArray(%d);",ir_set->buffer.size());
         break;
     }
     case OP_watch:
     {
         JZNodeIRWatch *ir_watch = (JZNodeIRWatch*)op;
-        line += "WATCH " + toString(ir_watch->traget) + " = " + toString(ir_watch->source);
+        line += "//watch " + toString(ir_watch->traget) + " = " + toString(ir_watch->source);
         break;
     }
     case OP_convert:
     {
         JZNodeIRConvert *ir_cvt = (JZNodeIRConvert*)op;
-        line += "CONVERT " + m_env.typeToName(ir_cvt->dstType) + " " + 
-            toString(ir_cvt->dst) + " = " + toString(ir_cvt->src);
+        line += toString(ir_cvt->dst) + " = (" + m_env.typeToName(ir_cvt->dstType) + ")" + toString(ir_cvt->src) + ";";
         break;
     }
     case OP_call:
     {
         JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
-        line += "CALL " + ir_call->function;
+        line += dealCall(ir_call->function);
         break;
     }
     case OP_return:
-        line += "RETURN";
+        line += "return;";
         break;
     case OP_exit:
-        line += "EXIT";
+        line += "exit(0);";
         break;
     case OP_add:
     case OP_sub:
@@ -158,7 +156,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
         QString c = toString(ir_expr->dst);
         QString a = toString(ir_expr->src1);
-        line += c + " = " + JZNodeType::opName(op->type) + " " + a;
+        line += c + " = " + JZNodeType::opName(op->type) + a;
         break;
     }
     case OP_jmp:
@@ -177,7 +175,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     case OP_assert:
     {
         JZNodeIRAssert *ir_assert = (JZNodeIRAssert *)op;
-        line += "ASSERT " + toString(ir_assert->tips);
+        line += "assert(" + toString(ir_assert->tips) + ")";
         break;
     }
     default:
@@ -188,7 +186,49 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     if (!op->memo.isEmpty())
     {
         line = line.leftJustified(12);
-        line += " //" + op->memo;
+        if (line.startsWith("//"))
+            line += op->memo;
+        else
+            line += " //" + op->memo;
     }
+    line = QString::asprintf("%04d", op->pc) + "    " + line;
     return line;
 }    
+
+QString JZNodeProgramDumper::functionDeclare(JZFunction* func)
+{
+    auto& define = func->define;
+
+    QString returnType = "void";
+    if (define.paramOut.size() > 0)
+        returnType = define.paramOut[0].type;
+
+    QString line = returnType + " " + define.name + "(";
+    QStringList param_str;
+    int start = define.isMemberFunction() ? 1 : 0;
+    for (int i = start; i < define.paramIn.size(); i++)
+    {
+        auto p = define.paramIn[i];
+        param_str.push_back(p.type + " " + p.name);
+    }
+    return line + param_str.join(",") + ")";
+}
+
+QString JZNodeProgramDumper::dealCall(QString function)
+{
+    auto func_def = m_env.function(function);
+    QString line;
+    int reg_idx = 0;
+    if (func_def->isMemberFunction())
+    {
+        line = JZNodeCompiler::paramName(Reg_CallIn + reg_idx++) + ".";
+    }
+    QStringList param_in_list;
+    for(int i = reg_idx; i < func_def->paramIn.size(); i++)
+        param_in_list << JZNodeCompiler::paramName(Reg_CallIn + i);
+    line = line + func_def->name + "(" + param_in_list.join(",") + ")";
+    if (func_def->paramOut.size() != 0)
+        line = JZNodeCompiler::paramName(Reg_CallOut) + " = " + line + ";";
+
+    return line;
+}

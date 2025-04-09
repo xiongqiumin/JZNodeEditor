@@ -109,6 +109,18 @@ protected:
 
 };
 
+//JZNodeFormat
+class JZNodeFormat : public JZNode
+{
+public:
+    JZNodeFormat();
+    ~JZNodeFormat();
+
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+protected:
+
+};
+
 //JZNodeCreate
 class JZNodeCreate : public JZNode
 {
@@ -165,8 +177,6 @@ public:
     void setVariable(const QString &name);
     QString variable() const;
 
-    virtual void drag(const QVariant &value);
-
 protected:
 
 };
@@ -187,8 +197,6 @@ public:
     void setValue(const QString &name);
     QString value() const;
 
-    virtual void drag(const QVariant &value) override;
-
 protected:        
 
 };
@@ -208,8 +216,6 @@ public:
     
     void setValue(const QString &name);
     QString value() const;
-
-    virtual void drag(const QVariant &value) override;
 
 protected:    
 

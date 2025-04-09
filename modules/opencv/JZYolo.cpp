@@ -202,15 +202,7 @@ QList<JZYoloResult> JZYolo::forward(Mat frame)
         ret.rect = toQRect(box);
         ret.confidence = confidence;
         yolo_result.push_back(ret);
-
-        int index = idx;
-        cv::rectangle(frame, boxes[index], cv::Scalar(1,0,0), 2, 8);
-        cv::rectangle(frame, cv::Point(boxes[index].tl().x, boxes[index].tl().y - 20),
-        cv::Point(boxes[index].br().x, boxes[index].tl().y), cv::Scalar(255, 255, 255), -1);
-        cv::putText(frame, qPrintable(label), cv::Point(boxes[index].tl().x, boxes[index].tl().y - 10), cv::FONT_HERSHEY_SIMPLEX, .5, cv::Scalar(0, 0, 0));
     }
-
-    cv::imshow("OpenCV4.8 + YOLOv8", frame);
 
     return yolo_result;
 }

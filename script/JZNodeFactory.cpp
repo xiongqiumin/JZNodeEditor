@@ -55,6 +55,7 @@ void JZNodeFactory::init()
 {   
     registNode(Node_display, createJZNode<JZNodeDisplay>);
     registNode(Node_print,createJZNode<JZNodePrint>);  
+    registNode(Node_format,createJZNode<JZNodeFormat>);  
     registNode(Node_nop, createJZNode<JZNodeNop>);
     registNode(Node_assert, createJZNode<JZNodeAssert>);
 

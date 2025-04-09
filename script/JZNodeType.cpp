@@ -70,7 +70,6 @@ void JZNodeType::init()
     typeMap["auto"] = Type_arg;
     typeMap["arg"] = Type_arg;
     typeMap["args"] = Type_args;
-    typeMap["paramName"] = Type_paramName;
 
     opNameMap[OP_add] = "+";
     opNameMap[OP_sub] = "-";
@@ -142,17 +141,39 @@ bool JZNodeType::isLiteralType(int type)
     return false;
 }
 
-bool JZNodeType::isPointer(const QVariant &v)
+int JZNodeType::baseType(int type)
 {
-    return v.userType() == qMetaTypeId<QVariantPointer>();
+    return type & (~Type_pointerFlag);
 }
 
-QVariantPtr JZNodeType::getPointer(const QVariant &v)
+int JZNodeType::makePointerType(int type)
 {
-    Q_ASSERT(isPointer(v));
+    Q_ASSERT(!isPointer(type));
+    return type | Type_pointerFlag;
+}
 
-    QVariantPointer *ptr = (QVariantPointer *)v.data();
-    return ptr->value;
+bool JZNodeType::isPointer(int type)
+{
+    return type & Type_pointerFlag;
+}
+
+QString JZNodeType::baseType(const QString& type)
+{
+    if (type.endsWith("*"))
+        return type.left(type.size() - 1);
+    else
+        return type;
+}
+
+QString JZNodeType::makePointerType(const QString& type)
+{
+    Q_ASSERT(!isPointer(type));
+    return type + "*";
+}
+
+bool JZNodeType::isPointer(const QString& type)
+{
+    return type.endsWith("*");
 }
 
 int JZNodeType::calcExprType(int type1,int type2,int op)
@@ -318,19 +339,26 @@ int JZNodeType::variantType(const QVariant &v)
     else if(v_type == QVariant::UserType)
     {
         int v_usertype = v.userType(); 
-        if(v_usertype == qMetaTypeId<JZEnum>())
+        if (v_usertype == qMetaTypeId<JZEnum>())
             return ((JZEnum*)v.data())->type;
-        else if(v_usertype == qMetaTypeId<JZObjectNull>())
+        else if (v_usertype == qMetaTypeId<JZObjectNull>())
             return Type_nullptr;
-        else if(v_usertype == qMetaTypeId<JZFunctionPointer>())
+        else if (v_usertype == qMetaTypeId<JZFunctionPointer>())
             return Type_function;
         else if (v_usertype == qMetaTypeId<JZNodeObjectPtr>())
             return ((JZNodeObjectPtr*)v.data())->object()->type();
         else if (v_usertype == qMetaTypeId<JZNodeVariantAny>())
             return Type_any;
+        else if (v_usertype == qMetaTypeId<JZNodeObjectPtrRef>())
+            return ((JZNodeObjectPtrRef*)v.data())->type;
     }
     
     return Type_none;
+}
+
+bool JZNodeType::variantIsPointer(const QVariant& v)
+{
+    return v.userType() == qMetaTypeId<JZNodeObjectPtrRef>();
 }
 
 bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot)

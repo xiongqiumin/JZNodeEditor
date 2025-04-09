@@ -150,6 +150,7 @@ template<class T>
 T fromVariantEnum(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.type() == QVariant::UserType);
+    Q_ASSERT(!JZNodeType::variantIsPointer(v));
     JZNodeObject *obj = toJZObject(v);
     T *cobj = (T*)(obj->cobj());
     return *cobj;
@@ -158,6 +159,7 @@ T fromVariantEnum(const QVariant &v, std::false_type)
 template<class T>
 T fromVariant(const QVariant &v, std::true_type)
 {
+    Q_ASSERT(JZNodeType::variantIsPointer(v));
     JZNodeObject *obj = toJZObject(v);
     if (obj)
         return (T)obj->cobj();
@@ -290,7 +292,10 @@ void getFunctionParam(QStringList &)
 template <class type,typename T,typename... Args>
 void getFunctionParam(QStringList &list)
 {    
-    list.push_back(typeid(typename std::remove_pointer<T>::type).name());
+    QString ctype = typeid(typename std::remove_pointer<T>::type).name();
+    if (std::is_pointer<T>())
+        ctype += "*";
+    list.push_back(ctype);
     getFunctionParam<type,Args...>(list);
 }
 
@@ -511,7 +516,7 @@ void registFunction(QString name, bool is_flow, Func f)
 }
 
 template<typename T>
-int registEnum(QString name,int id = -1)
+int registEnum(QString name,int id = Type_none)
 {    
     QStringList keys;
     QVector<int> values;
@@ -526,7 +531,7 @@ int registEnum(QString name,int id = -1)
 
     JZNodeEnumDefine define;
     define.init(name,keys,values);
-    if(id != -1)
+    if(id != Type_none)
         define.setId(id);
     return bindEnvironment()->objectManager()->registCEnum(define,typeid(T).name());
 }
@@ -646,6 +651,7 @@ public:
         if (meta)
         {
             Q_ASSERT(m_define.functions.size() == 0 && m_define.params.size() == 0);
+            Q_ASSERT(typeId == -1 || typeId == meta->id);
             m_define.id = meta->id;            
         }
         else
@@ -660,7 +666,7 @@ public:
     }
 
     ClassBind(QString name, QString super = QString())
-        :ClassBind(-1, name, super)
+        :ClassBind(Type_none, name, super)
     {        
     }    
 
@@ -714,7 +720,7 @@ public:
         getFunctionParam<int, Args...>(args);
         for (int i = 0; i < args.size(); i++)
         {
-            int dataType = env->typeidToType(args[i]);
+            int dataType = env->ctypeidToType(args[i]);
 
             JZParamDefine def;
             def.name = "output" + QString::number(i);
@@ -742,7 +748,7 @@ public:
         getFunctionParam<int, Args...>(args);
         for (int i = 1; i < args.size(); i++)
         {
-            int dataType = env->typeidToType(args[i]);
+            int dataType = env->ctypeidToType(args[i]);
 
             JZParamDefine def;
             def.name = "output" + QString::number(i);            
@@ -884,7 +890,7 @@ protected:
         f->isCFunction = true;
         f->isFlowFunction = isflow;
         env->functionManager()->setParam(f,cfunc.data());
-        if (cfunc->args.size() > 0 && env->typeidToType(cfunc->args[0]) == m_define.id)
+        if (cfunc->args.size() > 0 && JZNodeType::baseType(env->ctypeidToType(cfunc->args[0])) == m_define.id)
             f->paramIn[0].name = "this";        
 
         m_funcList.push_back(QSharedPointer<JZFunctionDefine>(f));

@@ -8,7 +8,7 @@
 JZScriptClassItem::JZScriptClassItem()
     :JZProjectItem(ProjectItem_class)
 {
-    m_classId = -1;
+    m_classId = Type_none;
 }
 
 JZScriptClassItem::~JZScriptClassItem()

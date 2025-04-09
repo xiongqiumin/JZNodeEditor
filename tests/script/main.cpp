@@ -56,7 +56,7 @@ int main(int argc,char *argv[])
     builder.setProject(&project);
     if (!builder.build(&program))
     {
-        qDebug() << "build failed:" << builder.error();
+        qDebug().noquote() << "build failed:\n" << builder.error();
         return false;
     }
     JZNodeProgramDumper dumper;

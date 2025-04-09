@@ -14,6 +14,8 @@ public:
 protected:
     QString irToString(JZNodeIR *ir);
     QString toString(JZNodeIRParam param);
+    QString functionDeclare(JZFunction* func);
+    QString dealCall(QString function);
     
     JZNodeProgram *m_program;
     JZScriptEnvironment m_env;

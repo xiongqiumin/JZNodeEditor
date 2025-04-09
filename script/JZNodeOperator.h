@@ -15,7 +15,6 @@ public:
     int op() const;
 
 protected:
-    void addInputButton();    
 
     bool checkPinInput(JZNodeCompiler *compiler,QString &error);
     void calcPinOutType(JZNodeCompiler *compiler);

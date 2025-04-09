@@ -57,7 +57,7 @@ public:
 
 TemplateInfo parseTemplate(QString type);
 bool checkContainer(JZScriptEnvironment *env,QString type,QString &error);
-void registContainer(JZScriptEnvironment *env,QString type,int type_id = -1);
+void registContainer(JZScriptEnvironment *env,QString type,int type_id = Type_none);
 void unregistContainer(JZScriptEnvironment *env,QString type);
 
 

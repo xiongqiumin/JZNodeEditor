@@ -8,8 +8,8 @@ JZNodeOperator::JZNodeOperator(int node_type,int op_type)
 {
     m_type = node_type;
     m_op = op_type;
-    int in1 = addParamIn("",Pin_editValue | Pin_dispValue);
-    int in2 = addParamIn("",Pin_editValue | Pin_dispValue);
+    int in1 = addParamIn("");
+    int in2 = addParamIn("");
     setPinTypeNumber(in1);
     setPinTypeNumber(in2);
     pin(in1)->setValue("0");
@@ -22,18 +22,11 @@ int JZNodeOperator::op() const
     return m_op;
 }
 
-void JZNodeOperator::addInputButton()
-{
-    addWidgetIn("Add input");
-}
-
 void JZNodeOperator::addInput()
 {
     auto pin0 = pin(paramIn(0));
     int in = addParamIn("", pin0->flag());    
     pin(in)->setDataType(pin0->dataType());
-    if(pin0->isEditValue())
-        pin(in)->setValue(0);
 }
 
 void JZNodeOperator::removeInput(int index)
@@ -45,11 +38,9 @@ void JZNodeOperator::removeInput(int index)
 bool JZNodeOperator::checkPinInput(JZNodeCompiler *c,QString &error)
 {
     auto input_list = paramInList();
-    for(int i = 0; i < input_list.size(); i++)
-    {   
-        if(!c->checkPinInType(m_id,input_list[i],error))
-            return false;
-    }
+    if(!c->checkPinInType(m_id,input_list,error))
+        return false;
+  
 
     QList<int> has_input_type,all_input_type;
     for(int i = 0; i < input_list.size(); i++)
@@ -166,7 +157,6 @@ JZNodeAdd::JZNodeAdd()
     setPinType(paramIn(0),type);
     setPinType(paramIn(1),type);
     setPinType(paramOut(0),type);
-    addInputButton();
 }
 
 //JZNodeSub
@@ -177,7 +167,6 @@ JZNodeSub::JZNodeSub()
     setPinTypeNumber(paramIn(0));
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
-    addInputButton();
 }
     
 //JZNodeMul
@@ -188,7 +177,6 @@ JZNodeMul::JZNodeMul()
     setPinTypeNumber(paramIn(0));
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
-    addInputButton();
 }
 
 //JZNodeDiv
@@ -200,7 +188,6 @@ JZNodeDiv::JZNodeDiv()
     setPinTypeNumber(paramIn(1));
     setPinTypeNumber(paramOut(0));
     setParamInValue(1, "1");
-    addInputButton();
 }
 
 //JZNodeMod
@@ -248,7 +235,7 @@ JZNodeBitResver::JZNodeBitResver()
 {
     m_name = "~";
     m_type = Node_bitresver;
-    int in = addParamIn("", Pin_editValue | Pin_dispValue);
+    int in = addParamIn("");
     int out = addParamOut("");
     setPinTypeInt(in);
     setPinTypeInt(out);
@@ -347,7 +334,6 @@ JZNodeAnd::JZNodeAnd()
     setPinTypeBool(paramOut(0));
     pin(paramIn(0))->setFlag(Pin_in | Pin_param);
     pin(paramIn(1))->setFlag(Pin_in | Pin_param);
-    addInputButton();
 }
 
 bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
@@ -359,7 +345,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
     c->addSetVariable(irId(out), irLiteral(false));
     for (int i = 0; i < input_list.size(); i++)
     {
-        if (!c->addFlowInput(m_id, input_list[i], error))
+        if (!c->addFlowInput(m_id, { input_list[i]}, error))
             return false;
         c->addNodeDebug(m_id);
 
@@ -388,7 +374,6 @@ JZNodeOr::JZNodeOr()
     setPinTypeBool(paramOut(0));
     pin(paramIn(0))->setFlag(Pin_in | Pin_param);
     pin(paramIn(1))->setFlag(Pin_in | Pin_param);
-    addInputButton();
 }
 
 bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
@@ -400,7 +385,7 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
     c->addSetVariable(irId(out), irLiteral(true));
     for (int i = 0; i < input_list.size(); i++)
     {
-        if (!c->addFlowInput(m_id, input_list[i], error))
+        if (!c->addFlowInput(m_id, { input_list[i] }, error))
             return false;
         c->addNodeDebug(m_id);
 
@@ -424,8 +409,8 @@ JZNodeNot::JZNodeNot()
 {
     m_name = "not";
     m_type = Node_not;
-    int in = addParamIn("input",Pin_dispName);
-    int out = addParamOut("invert", Pin_dispName);
+    int in = addParamIn("input");
+    int out = addParamOut("invert");
     setPinTypeBool(in);
     setPinTypeBool(out);
 }

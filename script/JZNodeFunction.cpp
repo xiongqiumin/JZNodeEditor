@@ -93,7 +93,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
     {
         JZNodePin pin;
         pin.setName(define->paramIn[i].name);    
-        pin.setFlag(Pin_param | Pin_in | Pin_dispName);
+        pin.setFlag(Pin_param | Pin_in);
         pin.setDataType({define->paramIn[i].type });        
         pin.setValue(define->paramIn[i].value);
         addPin(pin);
@@ -103,7 +103,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
     {
         JZNodePin pin;
         pin.setName(define->paramOut[i].name);
-        pin.setFlag(Pin_param | Pin_out | Pin_dispName);
+        pin.setFlag(Pin_param | Pin_out);
         pin.setDataType({define->paramOut[i].type});
         addPin(pin);
     }
@@ -111,9 +111,7 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
     if(define->isMemberFunction())
     {
         auto pin = this->pin(paramIn(0));
-        pin->setFlag(pin->flag() | Pin_editValue);
-        pin->setEditType(Type_paramName);
-        m_flag &= NodeProp_dragVariable; 
+        pin->setFlag(pin->flag());
     }
 
     setName(define->fullName());
@@ -166,18 +164,7 @@ bool JZNodeFunction::update(QString &error)
         return false;
     }
 
-    updateName();       
-    if (func)
-    {
-        for (int i = 0; i < func->paramIn.size(); i++)
-        {
-            auto pin = this->pin(paramIn(i));
-            if (JZNodeType::isBaseOrEnum(env->nameToType(func->paramIn[i].type)))
-                pin->changeFlag(Pin_dispValue | Pin_editValue, true);
-            else
-                pin->changeFlag(Pin_dispValue | Pin_editValue, false);
-        }
-    }
+    updateName();
     return true;
 }
 
@@ -191,13 +178,13 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     Q_ASSERT(def->paramIn.size() == in_list.size() && def->paramOut.size() == out_list.size());
     
     if (def->isMemberFunction() && c->isPinLiteral(m_id, paramIn(0)))
-        c->setPinType(m_id, paramIn(0), Type_ignore);
+        in_list.removeAt(0);
 
     bool input_ret = false;
     if(isFlowNode())
-        input_ret = c->addFlowInput(m_id,error);
+        input_ret = c->addFlowInput(m_id, in_list,error);
     else
-        input_ret = c->addDataInput(m_id,error);
+        input_ret = c->addDataInput(m_id, in_list,error);
     if(!input_ret)        
         return false;
 
@@ -219,7 +206,9 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
             return false;
 
         int this_id = JZNodeGemo::paramId(m_id, paramIn(0));
-        c->addSetVariable(irId(this_id), irRef(name));
+        c->addSetVariableConvert(irId(this_id), irRef(name));
+
+        in_list.insert(0, paramIn(0));
     }
         
     QList<JZNodeIRParam> in,out;

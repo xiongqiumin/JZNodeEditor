@@ -337,7 +337,7 @@ bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &er
             return false;
         }
     }
-    if(!pin_from->isLiteral() && pin_to->isLiteral())
+    if(!pin_from->isConstValue() && pin_to->isConstValue())
     {
         error = "输入需为常量";
         return false;

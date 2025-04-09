@@ -873,7 +873,13 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     auto inst = m_env.objectManager();
 
     QVariant v;
-    if(type < Type_class)
+    if (JZNodeType::isPointer(type))
+    {
+        JZNodeObjectPtrRef ref;
+        ref.type = type;
+        v = QVariant::fromValue(ref);
+    }
+    else if(type < Type_class)
         v = m_env.initValue(type, value);
     else
     {        
@@ -900,6 +906,11 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     return v;
 }
 
+QWidget* JZNodeEngine::createWidget(const QString& xml)
+{
+    return nullptr;
+}
+
 JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &obj_list)
 {        
     JZNodeObject *obj = toJZObject(*ref);
@@ -920,7 +931,8 @@ JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &
 
 void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
 {
-    Q_ASSERT(m_env.isSameType(value,*ref));
+    Q_ASSERT_X(m_env.isSameType(value,*ref),"",qUtf8Printable("set " + m_env.variantTypeName(value) 
+        + " to " + m_env.variantTypeName(*ref)));
     *ref = value;
 }
 

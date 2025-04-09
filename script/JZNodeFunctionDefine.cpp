@@ -215,7 +215,7 @@ void CSignal::removeConnect(JZNodeObject* obj, JZNodeObject* recv, QString slot)
         auto& info = m_connects[i];
         if (obj == info.send && recv == info.recv && slot == info.slot)
         {
-            QObject* qobj = JZObjectCast<QObject*>(obj);
+            QObject* qobj = obj->manager()->objectCast<QObject>(obj);
             qobj->disconnect(info.conn);
             return;
         }

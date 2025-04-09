@@ -172,7 +172,7 @@ bool JZNode::isParamNode() const
 int JZNode::addPin(const JZNodePin &pin)
 {
     Q_ASSERT(pin.isInput() || pin.isOutput());
-    Q_ASSERT(pin.isFlow() || pin.isParam() || pin.isSubFlow() || pin.isWidget());
+    Q_ASSERT(pin.isFlow() || pin.isParam() || pin.isSubFlow());
 
     int max_id = 0;
     for (int i = 0; i < m_pinList.size(); i++)
@@ -473,40 +473,6 @@ int JZNode::subFlowCount() const
     return pinOutList(Pin_subFlow).size();
 }
 
-int JZNode::addWidgetIn(QString name)
-{
-    JZNodePin btn;
-    btn.setName(name);
-    btn.setFlag(Pin_widget | Pin_in);
-    return addPin(btn);    
-}
-
-int JZNode::addWidgetOut(QString name)
-{
-    JZNodePin btn;
-    btn.setName(name);
-    btn.setFlag(Pin_widget | Pin_out);
-    return addPin(btn);
-}
-
-int JZNode::widgetIn(int index) const
-{
-    auto list = pinInList(Pin_widget);
-    if (index < list.size())
-        return list[index];
-    else
-        return -1;
-}
-
-int JZNode::widgetOut(int index) const
-{
-    auto list = pinOutList(Pin_widget);
-    if (index < list.size())
-        return list[index];
-    else
-        return -1;
-}
-
 const QString &JZNode::pinValue(int id) const
 {
     auto ptr = pin(id);
@@ -602,11 +568,6 @@ bool JZNode::canRemove()
     return !(m_flag & NodeProp_noRemove);
 }
 
-bool JZNode::canDragVariable()
-{
-    return (m_flag & NodeProp_dragVariable);
-}
-
 int JZNode::id() const
 {
     return m_id;
@@ -656,16 +617,6 @@ void JZNode::clearPinType(int id)
 {
     QStringList type;
     pin(id)->setDataType(type);
-}
-
-void JZNode::setPinEditType(int id, int edit_type)
-{
-    pin(id)->setEditType(edit_type);
-}
-
-void JZNode::drag(const QVariant &v)
-{
-    Q_UNUSED(v);
 }
 
 bool JZNode::canLink(int node_id, int pin_id, QString &error)
@@ -838,7 +789,7 @@ void JZNodeReturn::setFunction(const JZFunctionDefine *def)
 
     for (int i = 0; i < def->paramOut.size(); i++)
     {
-        int in = addParamIn(def->paramOut[i].name, Pin_dispName | Pin_dispValue | Pin_editValue);
+        int in = addParamIn(def->paramOut[i].name);
         setPinType(in, { def->paramOut[i].type });
     }
 }
@@ -885,12 +836,10 @@ JZNodeSequence::JZNodeSequence()
     m_name = "sequence";
     m_type = Node_sequence;
     addFlowIn();
-    addFlowOut("complete",Pin_dispName);
+    addFlowOut("complete");
 
     addSequeue();
     addSequeue();
-
-    addWidgetOut("Add pin");    
 }
 
 void JZNodeSequence::updateSeqName()
@@ -905,7 +854,7 @@ void JZNodeSequence::updateSeqName()
 
 int JZNodeSequence::addSequeue()
 {
-    return addSubFlowOut("Seqeue " + QString::number(subFlowCount() + 1),Pin_dispName);
+    return addSubFlowOut("Seqeue " + QString::number(subFlowCount() + 1));
 }
 
 void JZNodeSequence::removeSequeue(int id)
@@ -949,14 +898,14 @@ JZNodeFor::JZNodeFor()
     m_type = Node_for;
 
     addFlowIn();
-    addSubFlowOut("loop body",Pin_dispName);
-    addFlowOut("complete",Pin_dispName);
+    addSubFlowOut("loop body");
+    addFlowOut("complete");
 
-    int id_start = addParamIn("Index",Pin_editValue | Pin_dispName | Pin_dispValue);
-    int id_step = addParamIn("Step", Pin_editValue | Pin_dispName | Pin_dispValue);
-    int id_end = addParamIn("End index",Pin_editValue | Pin_dispName | Pin_dispValue);
-    int id_op = addParamIn("Cond", Pin_dispName | Pin_widget | Pin_noValue);
-    int id_index = addParamOut("Index", Pin_dispName);
+    int id_start = addParamIn("Index");
+    int id_step = addParamIn("Step");
+    int id_end = addParamIn("End index");
+    int id_op = addParamIn("Cond");
+    int id_index = addParamOut("Index");
     setPinTypeInt(id_start);
     setPinTypeInt(id_step);
     setPinTypeInt(id_index);
@@ -1099,11 +1048,11 @@ JZNodeForEach::JZNodeForEach()
 
     addFlowIn();
     int in = addParamIn("");
-    addSubFlowOut("loop body", Pin_dispName);
-    addFlowOut("complete", Pin_dispName);
+    addSubFlowOut("loop body");
+    addFlowOut("complete");
 
-    int out1 = addParamOut("key",Pin_dispName);
-    int out2 = addParamOut("value",Pin_dispName);
+    int out1 = addParamOut("key");
+    int out2 = addParamOut("value");
 }
 
 JZNodeForEach::~JZNodeForEach()
@@ -1172,10 +1121,10 @@ JZNodeWhile::JZNodeWhile()
     m_name = "while";
     m_type = Node_while;
     addFlowIn();
-    addSubFlowOut("loop body", Pin_dispName);
-    addFlowOut("complete", Pin_dispName);
+    addSubFlowOut("loop body");
+    addFlowOut("complete");
     
-    int cond = addParamIn("cond", Pin_dispName);
+    int cond = addParamIn("cond");
     setPinTypeBool(cond);
 }
 
@@ -1209,11 +1158,8 @@ JZNodeIf::JZNodeIf()
     m_type = Node_if;
     m_name = "if";
     addFlowIn();
-    addFlowOut("complete", Pin_dispName);
+    addFlowOut("complete");
     addCondPin();    
-
-    addWidgetIn("Add cond");
-    addWidgetIn("Add else");
 }
 
 void JZNodeIf::updateCondName()
@@ -1231,16 +1177,16 @@ void JZNodeIf::updateCondName()
 
 void JZNodeIf::addCondPin()
 {
-    int in = addParamIn("cond",Pin_dispName);
+    int in = addParamIn("cond");
     setPinTypeBool(in);
 
-    addSubFlowOut("cond", Pin_dispName);    
+    addSubFlowOut("cond");    
     updateCondName();    
 }
 
 void JZNodeIf::addElsePin()
 {
-    addSubFlowOut("else", Pin_dispName); 
+    addSubFlowOut("else"); 
     updateCondName();
 }
 
@@ -1270,7 +1216,7 @@ bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error)
     for (int i = 0; i < inList.size(); i++)
     {
         int nextPc = c->nextPc();
-        if (!c->addFlowInput(m_id, inList[i], error))
+        if (!c->addFlowInput(m_id, { inList[i] }, error))
             return false;
         if (last_jmp)
             last_jmp->jmpPc = nextPc;
@@ -1311,26 +1257,23 @@ JZNodeSwitch::JZNodeSwitch()
     m_caseType << JZNodeType::typeName(Type_int) << JZNodeType::typeName(Type_string);
 
     addFlowIn();
-    addFlowOut("complete",Pin_dispName);
-    int in = addParamIn("cond", Pin_dispName);    
+    addFlowOut("complete");
+    int in = addParamIn("cond");    
     setPinType(in, m_caseType);
 
-    addParamOut("cond", Pin_dispName);
+    addParamOut("cond");
     addCase();
-
-    m_btnCase = addWidgetOut("Add case");
-    m_btnDefault = addWidgetOut("Add default");
 }
 
 void JZNodeSwitch::addCase()
 {
-    int sub_id = addSubFlowOut("case", Pin_dispName | Pin_dispValue | Pin_editValue);
+    int sub_id = addSubFlowOut("case");
     setPinType(sub_id, m_caseType);
 }
 
 void JZNodeSwitch::addDefault()
 {
-    addSubFlowOut("default", Pin_dispName);    
+    addSubFlowOut("default");    
 }
 
 void JZNodeSwitch::removeCase(int index)
@@ -1349,7 +1292,7 @@ int JZNodeSwitch::caseCount()
 {
     auto list = subFlowList();
     int id = list.back();
-    bool isDefault = !(pin(id)->flag() & Pin_editValue);
+    bool isDefault = pin(id)->name() == "default";
     if (isDefault)
         return list.size() - 1;
     else
@@ -1429,10 +1372,10 @@ JZNodeBranch::JZNodeBranch()
     m_name = "branch";
     m_type = Node_branch;
     addFlowIn();
-    addFlowOut("true",Pin_dispName);
-    addFlowOut("false",Pin_dispName);
+    addFlowOut("true");
+    addFlowOut("false");
     
-    int cond = addParamIn("cond",Pin_dispName);
+    int cond = addParamIn("cond");
     setPinTypeBool(cond);
 }
 
@@ -1463,10 +1406,10 @@ JZNodeAssert::JZNodeAssert()
     addFlowIn();
     addFlowOut();    
 
-    int cond = addParamIn("cond", Pin_dispName);
+    int cond = addParamIn("cond");
     setPinTypeBool(cond);
 
-    int tips = addParamIn("tips", Pin_dispName | Pin_dispValue | Pin_editValue);
+    int tips = addParamIn("tips");
     setPinTypeString(tips);
 }
 
@@ -1487,7 +1430,7 @@ bool JZNodeAssert::compiler(JZNodeCompiler *c, QString &error)
 JZNodeTryCatch::JZNodeTryCatch()
 {
     addFlowIn();
-    addFlowOut("complete",Pin_dispName);
+    addFlowOut("complete");
     addSubFlowOut("try");
     addSubFlowOut("catch");
     addSubFlowOut("finally");
@@ -1505,7 +1448,7 @@ JZNodeMainLoop::JZNodeMainLoop()
     m_name = "MainLoop";
 
     addFlowIn();
-    int in = addParamIn("window",Pin_dispName);
+    int in = addParamIn("window");
     setPinType(in, { JZNodeType::typeName(Type_widget) });
 }
 

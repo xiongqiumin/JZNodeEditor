@@ -246,7 +246,7 @@ void QtWrapper::initBase()
     });
     cls_rectf.regist();
 
-    jzbind::ClassBind<QColor> cls_color("QColor");
+    jzbind::ClassBind<QColor> cls_color(Type_color, "QColor");
     cls_color.setValueType(true);
     cls_color.def("create", false, [](int r, int g, int b)->QColor {
         return QColor(r, g, b);

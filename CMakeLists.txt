@@ -10,6 +10,10 @@ find_package(QT NAMES Qt5 REQUIRED COMPONENTS widgets xml)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test designer printsupport DesignerComponents xml)
 find_package(OpenCV 4 REQUIRED)
 
+if (MSVC)
+    add_compile_options(/execution-charset:utf-8)
+endif()
+
 include_directories(./
     ./widgets
     ./project

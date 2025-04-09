@@ -102,7 +102,7 @@ void JZNodeFunctionManager::setParam(JZFunctionDefine *def,CFunction *func)
     for (int i = 0; i < func->args.size(); i++)
     {
         QString param_name = "input" + QString::number(i);
-        int dataType = env->typeidToType(func->args[i]);
+        int dataType = env->ctypeidToType(func->args[i]);
         Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->args[i]));
 
         def->paramIn.push_back(env->paramDefine(param_name, dataType));
@@ -110,7 +110,7 @@ void JZNodeFunctionManager::setParam(JZFunctionDefine *def,CFunction *func)
     if (func->result != typeid(void).name())
     {
         QString param_name = "output";
-        int dataType = env->typeidToType(func->result);
+        int dataType = env->ctypeidToType(func->result);
         Q_ASSERT_X(dataType != Type_none,"Unkown typeid",qUtf8Printable(func->result));
 
         def->paramOut.push_back(env->paramDefine(param_name, dataType));

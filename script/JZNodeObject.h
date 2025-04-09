@@ -98,6 +98,7 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeCObjectDelcare &param);
 QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param);
 
+//这是一个值 nullptr, 不是类型
 class JZObjectNull
 {
 public:
@@ -218,6 +219,21 @@ protected:
 };
 Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
+/*
+    指针，可以指向任意类型
+*/
+class JZNodeObjectPtrRef
+{
+public:
+    static JZNodeObjectPtrRef fromPtr(const JZNodeObjectPtr &ptr);
+
+    JZNodeObjectPtrRef();
+
+    int type;   //指针类型
+    JZNodeObjectPtr pointer;
+};
+Q_DECLARE_METATYPE(JZNodeObjectPtrRef)
+
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
 JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
@@ -250,8 +266,6 @@ public:
     void setUserRegist(bool flag);
     void clearUserReigst();
 
-    void setUnitTest(bool flag);
-
     const JZNodeObjectDefine *meta(const QString &className) const;
     const JZNodeObjectDefine *meta(int type_id) const;
     QString getClassName(int type_id) const;
@@ -271,8 +285,8 @@ public:
     int getQObjectType(const QString &name) const;
     void setQObjectType(const QString &name,int id);
 
-    int delcare(const QString &name, int id = -1);
-    int delcareCClass(const QString &name, const QString &ctype_id, int id = -1);
+    int delcare(const QString &name, int id = Type_none);
+    int delcareCClass(const QString &name, const QString &ctype_id, int id = Type_none);
 
     int regist(const JZNodeObjectDefine &define);    
     int registCClass(const JZNodeObjectDefine &define,const QString &type_id);
@@ -309,21 +323,29 @@ public:
     }
 
     template<class T>
-    QVariant objectRefrence(T ptr, bool owner) const
+    QVariant objectRefrence(T ptr, bool cowner) const
     {
         static_assert(std::is_pointer<T>(), "only support class pointer");
         QString c_typeid = typeid(std::remove_pointer_t<T>).name();
-        auto obj = createRefrenceByCTypeid(c_typeid, ptr, owner);
-        return QVariant::fromValue(JZNodeObjectPtr(obj, true));
+        auto obj = createRefrenceByCTypeid(c_typeid, ptr, cowner);
+        JZNodeObjectPtrRef node_ptr = JZNodeObjectPtrRef::fromPtr(JZNodeObjectPtr(obj, true)); //这里代表true是不是管理obj， 上面的cowner代表是不是管理c  
+        return QVariant::fromValue(node_ptr);
+    }
+
+    template<class T>
+    T* objectCast(JZNodeObject* obj) const
+    {
+        static_assert(!std::is_pointer<T>(), "do not use pointer");
+        int c_type = getIdByCTypeid(typeid(T).name());
+        Q_ASSERT(obj->isInherits(c_type));
+        return (T*)obj->cobj();
     }
 
     template<class T>
     T *objectCast(const QVariant &v) const
     {
-        int c_type = getIdByCTypeid(typeid(T).name());
         auto obj = toJZObject(v);
-        Q_ASSERT(obj->isInherits(c_type));
-        return (T*)obj->cobj();
+        return objectCast<T>(obj);
     }
 
 protected:
@@ -343,12 +365,5 @@ protected:
     int m_objectId;
     bool m_userRegist;
 };
-
-template<class T>
-T JZObjectCast(JZNodeObject *obj)
-{
-    Q_ASSERT(obj->isInherits(obj->manager()->getIdByCTypeid(typeid(std::remove_pointer_t<T>).name())));
-    return (T)obj->cobj();
-}
 
 #endif
