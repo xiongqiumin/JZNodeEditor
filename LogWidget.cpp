@@ -128,7 +128,7 @@ LogWidget::LogWidget()
         connect(edit, &LogBrowser::anchorClicked, this, &LogWidget::onAchorClicked);
     }
 
-    m_breakPoint = new JZNodeBreakPoint();
+    m_breakPoint = new JZNodeBreakPointWidget();
     m_tabWidget->addTab(m_breakPoint, "断点");
 
     m_stack = new JZNodeStack();
@@ -178,7 +178,7 @@ JZNodeWatch *LogWidget::watchManual()
     return m_watchManual;
 }
 
-JZNodeBreakPoint *LogWidget::breakpoint()
+JZNodeBreakPointWidget *LogWidget::breakpoint()
 {
     return m_breakPoint;
 }

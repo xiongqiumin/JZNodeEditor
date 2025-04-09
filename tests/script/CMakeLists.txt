@@ -12,6 +12,7 @@ find_package(OpenCV 4 REQUIRED)
 
 if (MSVC)
     add_compile_options(/execution-charset:utf-8)
+    add_compile_options(/bigobj)
 endif()
 
 include_directories(

@@ -12,44 +12,37 @@
 #include "JZNodeView.h"
 #include "JZScriptEnvironment.h"
 
-enum {
-    Widget_none,
-    Widget_lineEdit,    
-    Widget_comboBox,
-};
-
 constexpr int name_max_width = 120;
 
-//JZNodeGraphItem::PropGemo
-JZNodeGraphItem::PropGemo::PropGemo()
+//JZNodeGraphItem::Block
+JZNodeGraphItem::Block::Block()
 {
-    widgetType = Widget_none;
     proxy = nullptr;
-    widget = nullptr;    
+    widget = nullptr;
+    pri = 0;    
 }
 
-JZNodeGraphItem::PropGemo::~PropGemo()
+JZNodeGraphItem::Block::~Block()
 {
     Q_ASSERT(!proxy && !widget);
 }
 
-void JZNodeGraphItem::PropGemo::clear()
+void JZNodeGraphItem::Block::clear()
 {
     if (proxy)
     {
         delete proxy;
     }
-    widgetType = 0;
     proxy = nullptr;
     widget = nullptr;
 }
 
-int JZNodeGraphItem::PropGemo::width()
+int JZNodeGraphItem::Block::width()
 {    
     return iconRect.width() + nameRect.width() + valueRect.width();
 }
 
-int JZNodeGraphItem::PropGemo::height()
+int JZNodeGraphItem::Block::height()
 {
     int h = qMax(iconRect.height(), nameRect.height());
     h = qMax(h, valueRect.height());
@@ -76,13 +69,14 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 
 JZNodeGraphItem::~JZNodeGraphItem()
 {
-    auto it = m_pinRects.begin();
-    while (it != m_pinRects.end())
+    clear();
+    auto it = m_blocks.begin();
+    while (it != m_blocks.end())
     {
         it->clear();
         it++;
     }
-    m_pinRects.clear();
+    m_blocks.clear();
 }
 
 void JZNodeGraphItem::clear()
@@ -92,9 +86,11 @@ void JZNodeGraphItem::clear()
     {
         if(it->widget)
             it->widget->disconnect(it->widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
-
+        
+        it->clear();
         it++;
     }
+    m_blocks.clear();
 }
 
 void JZNodeGraphItem::setRunningMode(ProcessStatus mode)
@@ -105,13 +101,13 @@ void JZNodeGraphItem::setRunningMode(ProcessStatus mode)
 void JZNodeGraphItem::updatePin()
 {
     //remove
-    auto it = m_pinRects.begin();
-    while (it != m_pinRects.end())
+    auto it = m_blocks.begin();
+    while (it != m_blocks.end())
     {
-        if (!m_node->hasPin(it.key()))
+        if (it->isPin() && !m_node->hasPin(it.key()) )
         {
             it->clear();
-            it = m_pinRects.erase(it);
+            it = m_blocks.erase(it);
         }
         else
             it++;
@@ -123,7 +119,7 @@ void JZNodeGraphItem::updatePin()
     {
         int pin = list[i];
         if (!m_pinRects.contains(pin))
-            m_pinRects[pin] = PropGemo();
+            m_pinRects[pin] = Block();
     }
 
     //create widget
@@ -237,7 +233,7 @@ QSize JZNodeGraphItem::size() const
     return m_size;
 }
 
-void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, PropGemo *gemo)
+void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, Block *gemo)
 {
     auto pin = m_node->pin(pin_id);
     gemo->iconRect = QRect(x, y, 24, 24);
@@ -370,20 +366,9 @@ void JZNodeGraphItem::createPinWidget(int pin_id)
     auto pin = m_node->pin(pin_id);
     auto env = m_node->environment();
 
-    JZNodePinWidget *widget = nullptr;
-    if (pin->isWidget())
-    {
-        widget = createCustomWidget(pin_id);
-    }
-    else if (pin->isDispValue())
-    {
-        JZNodePinValueWidget *param_widget = new JZNodePinValueWidget(m_node, pin_id);
-        int up_type = env->upType(env->nameToTypeList(pin->dataType()));
-        param_widget->initWidget(up_type);
-
-        widget = param_widget;
-    }
-    Q_ASSERT(widget);
+    JZNodePinValueWidget *widget = new JZNodePinValueWidget(m_node, pin_id);
+    int up_type = env->upType(env->nameToTypeList(pin->dataType()));
+    param_widget->initWidget(up_type);
 
     QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
     widget->connect(widget, SIGNAL(sigValueChanged(QString)), editor(), SLOT(onItemPropChanged()));
@@ -705,7 +690,7 @@ void JZNodeGraphItem::onTimerEvent(int event)
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
 {    
     JZNodePin *pin = m_node->pin(prop_id);
-    PropGemo &info = m_pinRects[prop_id];
+    Block &info = m_pinRects[prop_id];
 
     /*
     case PinType::Flow:     return ImColor(255, 255, 255);

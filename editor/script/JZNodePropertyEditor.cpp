@@ -146,9 +146,9 @@ void JZNodePropertyEditor::updateNode()
     prop_id->setEnabled(false);
     m_tree->addProperty(prop_base);            
 
-    auto in_list = m_node->pinInList(Pin_param | Pin_editValue);
+    auto in_list = m_node->pinInList(Pin_param);
     addPropList("输入",in_list);
-    auto out_list = m_node->pinOutList(Pin_param | Pin_editValue);    
+    auto out_list = m_node->pinOutList(Pin_param);    
     addPropList("输出",out_list);
 
     m_editing = false;

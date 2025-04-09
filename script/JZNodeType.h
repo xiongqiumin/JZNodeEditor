@@ -127,6 +127,10 @@ QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param);
 class JZNodeVariantAny
 {
 public:
+    JZNodeVariantAny();
+
+    bool operator==(const JZNodeVariantAny &other) const;
+
     int type();
     QVariant value;
 };

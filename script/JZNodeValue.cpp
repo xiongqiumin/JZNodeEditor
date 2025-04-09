@@ -429,62 +429,6 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-//JZNodeDisplay
-JZNodeDisplay::JZNodeDisplay()
-{
-    m_type = Node_display;
-    m_name = "display";
-
-    int in = addParamIn("value");
-    setPinTypeArg(in);
-}
-
-JZNodeDisplay::~JZNodeDisplay()
-{
-
-}
-
-bool JZNodeDisplay::compiler(JZNodeCompiler *c, QString &error)
-{
-    c->addNodeDebug(m_id);
-    return true;
-}
-
-void JZNodeDisplay::addInput()
-{
-    auto pin0 = pin(paramIn(0));
-    int in = addParamIn("", pin0->flag());    
-    pin(in)->setDataType(pin0->dataType());
-}
-
-void JZNodeDisplay::removeInput(int index)
-{
-    int id = paramInList()[index];
-    removePin(id);
-}
-
-
-bool JZNodeDisplay::canLink(int node_id, int pin_id, QString &error)
-{
-    if(m_file->getConnectPin(node_id,pin_id).size() > 1)
-    {
-        error = "只能连接一个变量";
-        return false;
-    }
-
-    return true;
-}
-
-void JZNodeDisplay::onPinLinked(int id)
-{
-    widgetChangedNotify(id);
-}
-
-void JZNodeDisplay::onPinUnlinked(int id)
-{
-    widgetChangedNotify(id);
-}
-
 //JZNodePrint
 JZNodePrint::JZNodePrint()
 {

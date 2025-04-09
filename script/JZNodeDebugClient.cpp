@@ -162,9 +162,9 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
     {   
         emit sigRuntimeError(netDataUnPack<JZNodeRuntimeError>(packet->buffer));
     }
-    else if (packet->cmd == Cmd_nodePropChanged)
+    else if (packet->cmd == Cmd_watchChanged)
     {
-        emit sigRuntimeWatch(netDataUnPack<JZNodeRuntimeWatch>(packet->buffer));
+        emit sigRuntimeWatch(netDataUnPack<JZNodeRuntimeWatchResult>(packet->buffer));
     }
 }
 

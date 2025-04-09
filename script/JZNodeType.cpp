@@ -47,6 +47,15 @@ QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param)
 }
 
 //JZNodeVariantAny
+JZNodeVariantAny::JZNodeVariantAny()
+{
+}
+
+bool JZNodeVariantAny::operator==(const JZNodeVariantAny& other) const
+{
+    return value == other.value;
+}
+
 int JZNodeVariantAny::type()
 {
     return JZNodeType::variantType(value);

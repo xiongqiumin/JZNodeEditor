@@ -18,6 +18,21 @@ public:
     virtual void setRuntimeValue(const JZNodeDebugParamValue &value) = 0;
 };
 
+//JZNodeImageNomarlDisplayWidget
+class JZNodeImageNomarlDisplayWidget : public JZNodeParamDisplayWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodeImageNomarlDisplayWidget();
+    virtual ~JZNodeImageNomarlDisplayWidget();
+
+    virtual void setRuntimeValue(const JZNodeDebugParamValue &value) override;    
+
+protected:
+    QLineEdit *m_lineEdit;
+};
+
 //JZNodeImageDisplayWidget
 class JZNodeImageDisplayWidget : public JZNodeParamDisplayWidget
 {

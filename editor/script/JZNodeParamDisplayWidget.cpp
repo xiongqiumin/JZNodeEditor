@@ -12,6 +12,19 @@ JZNodeParamDisplayWidget::~JZNodeParamDisplayWidget()
 
 }
 
+//JZNodeImageNomarlDisplayWidget
+JZNodeImageNomarlDisplayWidget::JZNodeImageNomarlDisplayWidget()
+{
+}
+    
+JZNodeImageNomarlDisplayWidget::~JZNodeImageNomarlDisplayWidget()
+{
+}
+
+void JZNodeImageNomarlDisplayWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
+{
+}
+
 //JZNodeImageDisplayWidget
 JZNodeImageDisplayWidget::JZNodeImageDisplayWidget()
 {    

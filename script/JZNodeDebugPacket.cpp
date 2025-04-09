@@ -37,7 +37,6 @@ QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param)
 {
     s << param.type;
     s << param.value;
-    s << param.binValue;
     s << param.params;
     return s;
 }
@@ -46,7 +45,6 @@ QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param)
 {
     s >> param.type;
     s >> param.value;
-    s >> param.binValue;
     s >> param.params;
     return s;
 }
@@ -74,21 +72,18 @@ QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParam &param)
 //JZNodeGetDebugParam
 JZNodeGetDebugParamResp::JZNodeGetDebugParamResp()
 {
-    stack = -1;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param)
 {
-    s << param.stack;
-    s << param.coors;
+    s << param.req;
     s << param.values;
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParamResp &param)
 {
-    s >> param.stack;
-    s >> param.coors;
+    s >> param.req;
     s >> param.values;
     return s;
 }
@@ -118,21 +113,14 @@ QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParam &param)
 //JZNodeSetDebugParamResp
 JZNodeSetDebugParamResp::JZNodeSetDebugParamResp()
 {
-    stack = -1;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamResp &param)
 {
-    s << param.stack;
-    s << param.coor;
-    s << param.value;
     return s;
 }
 QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamResp &param)
 {
-    s >> param.stack;
-    s >> param.coor;
-    s >> param.value;
     return s;
 }
 
@@ -189,30 +177,45 @@ JZNodeDebugInfo::JZNodeDebugInfo()
 {
 }
 
-QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param)
+QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo&param)
 {
     s << param.breakPoints;
     return s;
 }
 
-QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param)
+QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo&param)
 {
     s >> param.breakPoints;
     return s;
 }
 
-//JZNodeValueChanged
+//JZNodeRuntimeWatch
 JZNodeRuntimeWatch::JZNodeRuntimeWatch()
-{        
+{
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param)
+{
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZNodeRuntimeWatch &param)
+{
+    return s;
+}
+
+//JZNodeRuntimeWatchResult
+JZNodeRuntimeWatchResult::JZNodeRuntimeWatchResult()
+{        
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatchResult &param)
 {
     s << param.runtimInfo << param.values;
     return s;
 }
 
-QDataStream &operator >> (QDataStream &s, JZNodeRuntimeWatch &param)
+QDataStream &operator >> (QDataStream &s, JZNodeRuntimeWatchResult &param)
 {
     s >> param.runtimInfo >> param.values;
     return s;

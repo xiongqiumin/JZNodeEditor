@@ -8,8 +8,10 @@
 
 const int NetPack_debugPacket = NetPack_user;
 
-enum{
+enum
+{
     Cmd_none,
+    Cmd_response,
     Cmd_init,
     Cmd_addBreakPoint,
     Cmd_removeBreakPoint,       
@@ -26,7 +28,10 @@ enum{
     Cmd_runtimeError,
     Cmd_getVariable,
     Cmd_setVariable,
-    Cmd_nodePropChanged,
+    Cmd_addWatch,
+    Cmd_removeWatch,
+    Cmd_clearWatch,
+    Cmd_watchChanged,
     Cmd_log,
 };
 
@@ -62,16 +67,27 @@ public:
     QByteArray buffer;
 };
 
+//DebugNodeGemo
+class DebugNodeGemo
+{
+public:
+    QString filePath;
+    int nodeId;
+    int pinId;
+    int statck;
+};
+QDataStream &operator<<(QDataStream &s, const DebugNodeGemo &param);
+QDataStream &operator>>(QDataStream &s, DebugNodeGemo &param);
+
 //JZNodeDebugParamValue
 class JZNodeDebugParamValue
 {
 public:
     JZNodeDebugParamValue();
 
-    int type;
-    QString value;
-    QByteArray binValue;    
-    QMap<QString, JZNodeDebugParamValue> params;
+    int type;           //数据类型
+    QString value;      //值
+    QMap<QString, JZNodeDebugParamValue> params;  //子项的值
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param);
@@ -82,6 +98,7 @@ class JZNodeGetDebugParam
 public:
     JZNodeGetDebugParam();
 
+    QString filePath;
     int stack;
     QList<JZNodeIRParam> coors;
 };
@@ -94,12 +111,37 @@ class JZNodeGetDebugParamResp
 public:
     JZNodeGetDebugParamResp();
 
-    int stack;
-    QList<JZNodeIRParam> coors;
+    JZNodeGetDebugParam req;
     QList<JZNodeDebugParamValue> values;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param);
 QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParamResp &param);
+
+//JZNodeGetDebugParamBin
+class JZNodeGetDebugParamBin
+{
+public:
+    JZNodeGetDebugParamBin();
+
+    QString filePath;
+    int stack;
+    QList<JZNodeIRParam> coors;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamBin &param);
+QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParamBin &param);
+
+//JZNodeGetDebugParamBinResp
+class JZNodeGetDebugParamBinResp
+{
+public:
+    JZNodeGetDebugParamBinResp();
+
+    QString filePath;
+    int stack;
+    QList<JZNodeIRParam> coors;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParam &param);
+QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParam &param);
 
 //JZNodeSetDebugParam
 class JZNodeSetDebugParam
@@ -107,6 +149,7 @@ class JZNodeSetDebugParam
 public:
     JZNodeSetDebugParam();
 
+    QString filePath;
     int stack;
     JZNodeIRParam coor;
     QString value;
@@ -120,12 +163,37 @@ class JZNodeSetDebugParamResp
 public:
     JZNodeSetDebugParamResp();
 
-    int stack;
-    JZNodeIRParam coor;
-    JZNodeDebugParamValue value;
+    JZNodeSetDebugParam req;
+    bool ret;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamResp &param);
 QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamResp &param);
+
+//JZNodeSetDebugParamBin
+class JZNodeSetDebugParamBin
+{
+public:
+    JZNodeSetDebugParamBin();
+
+    QString filePath;
+    int stack;
+    JZNodeIRParam coor;
+    QByteArray value;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamBin &param);
+QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamBin &param);
+
+//JZNodeSetDebugParamBinResp
+class JZNodeSetDebugParamBinResp
+{
+public:
+    JZNodeSetDebugParamBinResp();
+
+    JZNodeSetDebugParamBin req;
+    bool ret;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamBinResp &param);
+QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamBinResp &param);
 
 //JZNodeScriptInfo
 class JZNodeScriptInfo
@@ -161,8 +229,8 @@ public:
 
     QList<BreakPoint> breakPoints;
 };
-QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo &param);
-QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo &param);
+QDataStream &operator<<(QDataStream &s, const JZNodeDebugInfo& param);
+QDataStream &operator>>(QDataStream &s, JZNodeDebugInfo& param);
 
 //JZNodeRuntimeWatch
 class JZNodeRuntimeWatch
@@ -170,10 +238,21 @@ class JZNodeRuntimeWatch
 public:
     JZNodeRuntimeWatch();
 
-    JZNodeRuntimeInfo runtimInfo;
-    QMap<int, JZNodeDebugParamValue> values;
+    QList<DebugNodeGemo> m_watchs;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeWatch &param);
+
+//JZNodeRuntimeWatchResult
+class JZNodeRuntimeWatchResult
+{
+public:
+    JZNodeRuntimeWatchResult();
+
+    JZNodeRuntimeInfo runtimInfo;
+    QMap<int, JZNodeDebugParamValue> values;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatchResult &param);
+QDataStream &operator>>(QDataStream &s, JZNodeRuntimeWatchResult &param);
 
 #endif

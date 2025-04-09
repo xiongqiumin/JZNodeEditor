@@ -56,8 +56,8 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeAutoRunWidget.h
     editor/script/JZNodeBaseItem.cpp
     editor/script/JZNodeBaseItem.h
-    editor/script/JZNodeBreakPoint.cpp
-    editor/script/JZNodeBreakPoint.h
+    editor/script/JZNodeBreakPointWidget.cpp
+    editor/script/JZNodeBreakPointWidget.h
     editor/script/JZNodeBuildThread.cpp
     editor/script/JZNodeBuildThread.h
     editor/script/JZNodeEditor.cpp

@@ -289,7 +289,6 @@ protected:
     void updateFlowOut();    
     void linkNodes(QList<GraphNode *> flow_list);
     void updateDebugInfo();
-    void updateDispayNode();
     void updateDepend(const JZFunction *define);
     void addNodeFlowPc(int node_id, int cond, int pc);
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);

@@ -367,10 +367,8 @@ void JZNodePanel::initData()
     itemOp->addChild(createNode(&node_clone));
 
     JZNodeConvert node_convert;
-    JZNodeDisplay node_display;
     JZNodePrint node_print;
     itemOp->addChild(createNode(&node_convert));
-    itemOp->addChild(createNode(&node_display));
     itemOp->addChild(createNode(&node_print));
 }
 

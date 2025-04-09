@@ -376,7 +376,7 @@ void MainWindow::initUi()
     
     m_breakPoint = m_log->breakpoint();    
     m_breakPoint->setProject(&m_project);
-    connect(m_breakPoint, &JZNodeBreakPoint::sigBreakPointClicked, this, &MainWindow::onBreakPointClicked);    
+    connect(m_breakPoint, &JZNodeBreakPointWidget::sigBreakPointClicked, this, &MainWindow::onBreakPointClicked);    
 
     m_projectTree = new JZProjectTree();    
     connect(m_projectTree,&JZProjectTree::sigActionTrigged,this,&MainWindow::onProjectTreeAction);
@@ -1324,7 +1324,7 @@ void MainWindow::onWatchNotify()
     }
 }
 
-void MainWindow::onRuntimeWatch(const JZNodeRuntimeWatch &info)
+void MainWindow::onRuntimeWatch(const JZNodeRuntimeWatchResult &info)
 {
     QString file = info.runtimInfo.stacks.back().file;
     auto edit = nodeEditor(file);

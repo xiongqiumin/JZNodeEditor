@@ -66,7 +66,6 @@ enum
     Node_exit,
     Node_paramChangedEvent,
     Node_timeEvent,   
-    Node_display,
     Node_signalConnect,
     Node_mainLoop,
     Node_custom,
@@ -357,8 +356,6 @@ public:
 
 protected:    
     virtual void loadFromStream(QDataStream &s) override;
-
-    QStringList m_condTip;
     QList<int> m_condOp;        
 };
 

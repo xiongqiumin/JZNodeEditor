@@ -890,30 +890,6 @@ void JZNodeCompiler::updateDebugInfo()
 {
 }
 
-void JZNodeCompiler::updateDispayNode()
-{
-    for (int node_idx = 0; node_idx < m_originGraph->topolist.size(); node_idx++)
-    {
-        auto graph_node = m_originGraph->topolist[node_idx];
-        if (graph_node->node->type() != Node_display)
-            continue;
-
-        auto it = graph_node->paramIn.begin();
-        while (it != graph_node->paramIn.end())
-        {
-            auto &in_list = it.value();
-            if (in_list.size() > 0)
-            {
-                NodeWatch watch;
-                watch.traget = paramId(graph_node->node->id(), it.key());
-                watch.source = paramId(in_list[0]);
-                m_compilerInfo.watchList.push_back(watch);
-            }            
-            it++;
-        }
-    }
-}
-
 void JZNodeCompiler::updateDepend(const JZFunction *jzfunc)
 {
     ScriptDepend depend;
@@ -1358,7 +1334,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, const QList<int> &prop_list, QS
             continue;
         
         QString pin_name = "输入节点" + graph->node->pinName(prop_in_id);        
-        auto pin_type_list = env->nameToTypeList(pin->dataType());
+        auto pin_type_list = env->nameListToTypeList(pin->dataType());
         int pin_type = Type_none;
         if (graph->paramIn.contains(prop_in_id))  //有输入
         {
@@ -1428,8 +1404,6 @@ bool JZNodeCompiler::checkPinInType(int node_id, const QList<int> &prop_list, QS
 
 bool JZNodeCompiler::bulidControlFlow()
 {        
-    updateDispayNode();
-
     //build node
     QList<GraphNode *> graph_list = m_buildGraph->topolist;
     QList<GraphNode *> flow_list;

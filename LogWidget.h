@@ -8,7 +8,7 @@
 #include "UiCommon.h"
 #include "JZNodeStack.h"
 #include "JZNodeWatch.h"
-#include "JZNodeBreakPoint.h"
+#include "JZNodeBreakPointWidget.h"
 
 class LogBrowser : public QTextBrowser
 {
@@ -49,7 +49,7 @@ public:
     JZNodeStack *stack();
     JZNodeWatch *watchAuto();
     JZNodeWatch *watchManual();
-    JZNodeBreakPoint *breakpoint();
+    JZNodeBreakPointWidget *breakpoint();
 
 signals:
     void sigNavigate(QUrl url);
@@ -63,7 +63,7 @@ protected:
     JZNodeStack *m_stack;    
     JZNodeWatch *m_watchAuto;
     JZNodeWatch *m_watchManual;
-    JZNodeBreakPoint *m_breakPoint;    
+    JZNodeBreakPointWidget *m_breakPoint;    
 };
 
 #endif

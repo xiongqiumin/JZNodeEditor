@@ -53,7 +53,6 @@ QByteArray JZNodeFactory::saveNode(JZNode *node)
 
 void JZNodeFactory::init()
 {   
-    registNode(Node_display, createJZNode<JZNodeDisplay>);
     registNode(Node_print,createJZNode<JZNodePrint>);  
     registNode(Node_format,createJZNode<JZNodeFormat>);  
     registNode(Node_nop, createJZNode<JZNodeNop>);

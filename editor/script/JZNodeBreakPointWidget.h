@@ -8,13 +8,13 @@
 #include <QTreeWidget>
 #include "JZProject.h"
 
-class JZNodeBreakPoint : public QWidget
+class JZNodeBreakPointWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    JZNodeBreakPoint(QWidget *parent = nullptr);
-    ~JZNodeBreakPoint();
+    JZNodeBreakPointWidget(QWidget *parent = nullptr);
+    ~JZNodeBreakPointWidget();
     
     void setProject(JZProject *project);
     void updateBreakPoint();

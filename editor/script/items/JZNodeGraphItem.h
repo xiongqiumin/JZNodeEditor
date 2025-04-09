@@ -52,23 +52,30 @@ protected:
     };
 
     enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };        
-    struct PropGemo
+    struct Block
     {
-        PropGemo();
-        ~PropGemo();
+        enum{
+            Pin,
+            Widget,
+        },
+
+        Block();
+        ~Block();
         
-        void clear();
         int width();        
         int height();
+        void clear();
         
         QRect iconRect;
         QRect nameRect;
-        QRect valueRect;
+        QRect valueRect; //valueRect 就是 widget 显示范围
 
-        int widgetType;
+        int pri;
+        bool isPin;
         QGraphicsProxyWidget *proxy;
-        JZNodePinWidget *widget;
+        QWidget *widget;
     };    
+    typedef QSharedPointer<Block> BlockPtr;
 
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
@@ -84,15 +91,14 @@ protected:
     void updateErrorGemo();        
     
     void createPinWidget(int prop_id);
-    JZNodePinWidget *createCustomWidget(int pin_id);
     void setWidgetValue(int prop_id, const QString &value);
     QString getWidgetValue(int prop_id);
 
     QSize m_size;    
     JZNode *m_node;    
-    QMap<int,PropGemo> m_pinRects;
     QRectF m_errorRect;    
     QString m_error;
+    QMap<int,Block> m_blocks;
     
     int m_downPin;
     int m_longPress;        

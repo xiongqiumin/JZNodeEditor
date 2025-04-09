@@ -206,7 +206,7 @@ void JZNodeDebugServer::onWatchNotify()
     if (m_client == -1)
         return;
         
-    JZNodeRuntimeWatch info;
+    JZNodeRuntimeWatchResult info;
     info.runtimInfo = m_engine->runtimeInfo();
     auto &watchMap = m_engine->stack()->currentEnv()->watchMap;
     auto it = watchMap.begin();
@@ -217,16 +217,15 @@ void JZNodeDebugServer::onWatchNotify()
     }
 
     JZNodeDebugPacket status_pack;
-    status_pack.cmd = Cmd_nodePropChanged;
-    status_pack.buffer = netDataPack<JZNodeRuntimeWatch>(info);
+    status_pack.cmd = Cmd_watchChanged;
+    status_pack.buffer = netDataPack<JZNodeRuntimeWatchResult>(info);
     m_server.sendPack(m_client, &status_pack);
 }
 
 QVariant JZNodeDebugServer::getVariable(const JZNodeGetDebugParam &info)
 {        
     JZNodeGetDebugParamResp result;
-    result.stack = info.stack;
-    result.coors = info.coors;
+    result.req = info;
     
     for (int i = 0; i < info.coors.size(); i++)
     {
@@ -260,15 +259,16 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
         else if(JZObjectIsList(obj))
         {
             ret.type = obj->type();            
-            
+/*
             JZList *list = (JZList*)obj->cobj();
             for (int i = 0; i < list->list.size(); i++)
                 ret.params[QString::number(i)] = toDebugParam(list->list[i]);
+*/
         }
         else if(JZObjectIsMap(obj))
         {
             ret.type = obj->type();
-            
+/*
             JZMap *map = (JZMap*)obj->cobj();          
                         
             auto it = map->map.begin();
@@ -278,6 +278,7 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
                 ret.params[key] = toDebugParam(it.value());
                 it++;
             }
+*/
         }
         else 
         {

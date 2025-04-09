@@ -31,8 +31,8 @@ protected:
     void pushToken();
 
     QVariant readVariable();    
-    JZList *readList(QString valueType,QString start);
-    JZMap *readMap(QString keyType,QString valueType);    
+    QStringList readList(QString valueType,QString start);
+    QMap<QString,QString> readMap(QString keyType,QString valueType);    
     JZNodeObject *readObject();
     
     bool readBkt(QString &context);
@@ -58,8 +58,8 @@ public:
     QString format(JZNodeObject *obj);
 
 protected:
-    QString listToString(const JZList *list);
-    QString mapToString(const JZMap *map);
+    QString listToString(const QStringList &list);
+    QString mapToString(const QMap<QString, QString> &map);
     QString objectToString(JZNodeObject *obj);
     QString variantToString(const QVariant &v);
 };

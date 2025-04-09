@@ -15,7 +15,7 @@
 #include "JZNodeProgram.h"
 #include "LogWidget.h"
 #include "JZNodeStack.h"
-#include "JZNodeBreakPoint.h"
+#include "JZNodeBreakPointWidget.h"
 #include "LogManager.h"
 #include "JZNodeAutoRunThread.h"
 #include "JZNodeBuildThread.h"
@@ -105,7 +105,7 @@ protected slots:
     void onStackChanged(int stack);
     void onWatchValueChanged(JZNodeIRParam coor, QString value);
     void onWatchNameChanged(JZNodeIRParam coor);
-    void onRuntimeWatch(const JZNodeRuntimeWatch &info);
+    void onRuntimeWatch(const JZNodeRuntimeWatchResult &info);
     void onWatchNotify();
     void onEditorValueChanged(int id,QString value);
 
@@ -217,7 +217,7 @@ private:
     LogWidget *m_log;
     JZNodeStack *m_stack;
     JZNodeWatch *m_watchAuto,*m_watchManual;
-    JZNodeBreakPoint *m_breakPoint;
+    JZNodeBreakPointWidget *m_breakPoint;
     JZProjectTree *m_projectTree;
     QList<QMenu*> m_menuList;
         

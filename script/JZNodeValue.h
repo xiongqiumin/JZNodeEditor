@@ -79,24 +79,6 @@ public:
 protected:
 };
 
-//JZNodeDisplay
-class JZNodeDisplay : public JZNode
-{
-public:
-    JZNodeDisplay();
-    ~JZNodeDisplay();
-
-    void addInput();
-    void removeInput(int index);
-
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-
-protected:
-    virtual bool canLink(int node_id,int pin_id,QString &error) override;
-    virtual void onPinLinked(int id) override;
-    virtual void onPinUnlinked(int id) override;
-};
-
 //JZNodePrint
 class JZNodePrint : public JZNode
 {

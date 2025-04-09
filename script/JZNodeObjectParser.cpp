@@ -214,8 +214,10 @@ void JZNodeObjectParser::pushToken()
     m_currentIndex--;
 }
 
-JZList *JZNodeObjectParser::readList(QString valueType,QString gap)
-{    
+QStringList JZNodeObjectParser::readList(QString valueType,QString gap)
+{   
+    QStringList list;
+/*
     Token c = readToken();
     Q_ASSERT(c.word == gap);
     gap = (gap == "[")? "]":"}";
@@ -245,10 +247,14 @@ JZList *JZNodeObjectParser::readList(QString valueType,QString gap)
     }
 
     return ptr.take();    
+*/
+    return list;
 }
 
-JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
+QMap<QString, QString> JZNodeObjectParser::readMap(QString keyType,QString valueType)
 {
+    QMap<QString, QString> ret;
+/*
     Token c = readToken();
     Q_ASSERT(c.word == "{");
 
@@ -292,11 +298,14 @@ JZMap *JZNodeObjectParser::readMap(QString keyType,QString valueType)
         }
     }
 
-    return ptr.take();    
+    return ptr.take();  
+*/
+    return ret;
 }
 
 JZNodeObject *JZNodeObjectParser::readObject()
 {    
+/*
     auto env = g_engine->environment();
     auto inst = g_engine->environment()->objectManager();
     Token tk = nextToken();
@@ -398,6 +407,8 @@ JZNodeObject *JZNodeObjectParser::readObject()
         ptr.releaseOwner();
         return ptr.object();   
     }
+*/
+    return nullptr;
 }
 
 QVariant JZNodeObjectParser::readVariable()
@@ -561,9 +572,10 @@ QString JZNodeObjectFormat::variantToString(const QVariant &v)
         return env->convertTo(Type_string, v).toString();
 }
 
-QString JZNodeObjectFormat::listToString(const JZList *list)
+QString JZNodeObjectFormat::listToString(const QStringList& list)
 {
     QString context;
+/*
     if(list->type() != "QMap<string,any>")
         context = list->type() + "{";
     else
@@ -578,13 +590,14 @@ QString JZNodeObjectFormat::listToString(const JZList *list)
         context += "}";
     else
         context += "]";
-
+*/
     return context;         
 }
 
-QString JZNodeObjectFormat::mapToString(const JZMap *map)
+QString JZNodeObjectFormat::mapToString(const QMap<QString,QString> &map)
 {
     QString context;
+/*
     if(map->type() != "QMap<string,any>")
         context += map->type();
 
@@ -602,11 +615,14 @@ QString JZNodeObjectFormat::mapToString(const JZMap *map)
     }
     context += "}";
     return context;
+*/
+    return context;
 }
 
 QString JZNodeObjectFormat::objectToString(JZNodeObject *obj)
 {    
     QString text;
+/*
     if(JZObjectIsList(obj))
     {
         JZList *list = (JZList *)obj->cobj();
@@ -642,6 +658,7 @@ QString JZNodeObjectFormat::objectToString(JZNodeObject *obj)
         }
         text += "}";
     }
+*/
     return text;
 }
 

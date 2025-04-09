@@ -44,9 +44,7 @@ void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
         QString error;
         m_objectManager.delcare(define_list[i].className, define_list[i].id);
     }    
-    for(int i = 0; i < cobj_list.size(); i++)    
-        registContainer(this,cobj_list[i].className);
-
+   
     //regist
     for (int i = 0; i < define_list.size(); i++)
     {
@@ -202,7 +200,7 @@ int JZScriptEnvironment::nameToType(const QString &name) const
     return m_objectManager.getId(name);
 }
 
-QList<int> JZScriptEnvironment::nameToTypeList(const QStringList &names) const
+QList<int> JZScriptEnvironment::nameListToTypeList(const QStringList &names) const
 {
     QList<int> ret;
     for (int i = 0; i < names.size(); i++)
@@ -231,6 +229,11 @@ int JZScriptEnvironment::ctypeidToType(const QString &name) const
         return Type_string;
     else    
         return m_objectManager.getIdByCTypeid(name);
+}
+
+QString JZScriptEnvironment::ctypeidToName(const QString& name) const
+{
+    return typeToName(ctypeidToType(name));
 }
 
 int JZScriptEnvironment::variantType(const QVariant &v) const

@@ -69,21 +69,4 @@ protected:
     JZNodeParamValueWidget *m_widget;
 };
 
-//JZNodePinDisplayWidget
-class JZNodePinDisplayWidget : public JZNodePinWidget
-{
-    Q_OBJECT
-
-public:
-    JZNodePinDisplayWidget(JZNode *node, int pin_id);
-
-    void setRuntimeValue(const JZNodeDebugParamValue &value);
-    virtual void updateWidget() override;
-
-protected:   
-    void createWidget();
-    QWidget *m_widget;
-    int m_dataType;
-};
-
 #endif // !JZNODE_PARAM_WIDGET_H_

@@ -11,7 +11,7 @@
 #include "JZNodeEngine.h"
 #include "mainwindow.h"
 #include "JZBaseDialog.h"
-#include "JZNodeBreakPoint.h"
+#include "JZNodeBreakPointWidget.h"
 
 //JZBaseDialog
 class BreakPointDialog : public JZBaseDialog
@@ -60,8 +60,8 @@ protected:
     QList<QRadioButton*> m_radioList;
 };
 
-//JZNodeBreakPoint
-JZNodeBreakPoint::JZNodeBreakPoint(QWidget *parent)
+//JZNodeBreakPointWidget
+JZNodeBreakPointWidget::JZNodeBreakPointWidget(QWidget *parent)
     :QWidget(parent)
 {
     m_project = nullptr;
@@ -73,25 +73,25 @@ JZNodeBreakPoint::JZNodeBreakPoint(QWidget *parent)
     m_table->setEditTriggers(QTableWidget::NoEditTriggers);
     m_table->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(m_table, &QTableWidget::itemDoubleClicked, this, &JZNodeBreakPoint::onItemDoubleClicked);
-    connect(m_table, &QTableWidget::customContextMenuRequested, this, &JZNodeBreakPoint::onContexMenu);
+    connect(m_table, &QTableWidget::itemDoubleClicked, this, &JZNodeBreakPointWidget::onItemDoubleClicked);
+    connect(m_table, &QTableWidget::customContextMenuRequested, this, &JZNodeBreakPointWidget::onContexMenu);
 
     QVBoxLayout *sub_layout = new QVBoxLayout();
     sub_layout->addWidget(m_table);
     this->setLayout(sub_layout);
 }
 
-JZNodeBreakPoint::~JZNodeBreakPoint()
+JZNodeBreakPointWidget::~JZNodeBreakPointWidget()
 {
 
 }
 
-void JZNodeBreakPoint::setProject(JZProject *project)
+void JZNodeBreakPointWidget::setProject(JZProject *project)
 {
     m_project = project;
 }
 
-void JZNodeBreakPoint::updateBreakPoint()
+void JZNodeBreakPointWidget::updateBreakPoint()
 {
     clear();
 
@@ -110,14 +110,14 @@ void JZNodeBreakPoint::updateBreakPoint()
     }
 }
 
-void JZNodeBreakPoint::clear()
+void JZNodeBreakPointWidget::clear()
 {
     m_table->clearContents();
     m_table->setRowCount(0);
 }
 
 
-void JZNodeBreakPoint::onItemDoubleClicked()
+void JZNodeBreakPointWidget::onItemDoubleClicked()
 {
     int row = m_table->currentRow();
     if (row == -1)
@@ -128,7 +128,7 @@ void JZNodeBreakPoint::onItemDoubleClicked()
     emit sigBreakPointClicked(file,id);
 }
 
-void JZNodeBreakPoint::onContexMenu(QPoint pt)
+void JZNodeBreakPointWidget::onContexMenu(QPoint pt)
 {
     int row = m_table->currentRow();
     if (row == -1)

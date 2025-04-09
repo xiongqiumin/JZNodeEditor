@@ -39,15 +39,6 @@
 #include "JZNodeObjectParser.h"
 #include "JZScriptEnvironment.h"
 
-void checkSize(int index, int size)
-{
-    if (index < 0 || index >= size)
-    {
-        QString error = QString::asprintf("index %d out of range %d", index, size);
-        throw std::runtime_error(qPrintable(error));
-    }
-}
-
 class QtWrapper
 {
 public:
@@ -123,15 +114,15 @@ void QtWrapper::initBase()
 {
     m_objInst->delcareCClass("stringList",typeid(QStringList).name() ,Type_stringList);
 
-    registContainer(m_env,"QList<int>",Type_intList);
-    registContainer(m_env,"QList<double>",Type_doubleList);
-    registContainer(m_env,"QList<any>",Type_varList);
+    registList<int>(m_env,Type_intList);
+    registList<double>(m_env,Type_doubleList);
+    registList<JZNodeVariantAny>(m_env,Type_varList);
 
-    registContainer(m_env,"QMap<int,int>",Type_intIntMap);
-    registContainer(m_env,"QMap<int,string>",Type_intStringMap);
-    registContainer(m_env,"QMap<string,int>",Type_stringIntMap);
-    registContainer(m_env,"QMap<string,string>",Type_stringStringMap);
-    registContainer(m_env,"QMap<string,any>",Type_varMap);
+    registMap<int,int>(m_env,Type_intIntMap);
+    registMap<int,QString>(m_env,Type_intStringMap);
+    registMap<QString,int>(m_env,Type_stringIntMap);
+    registMap<QString,QString>(m_env,Type_stringStringMap);
+    registMap<QString,JZNodeVariantAny>(m_env,Type_varMap);
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
@@ -181,6 +172,7 @@ void QtWrapper::initBase()
     cls_pt.def("setX", true, &QPoint::setX);
     cls_pt.def("setY", true, &QPoint::setY);
     cls_pt.regist();            
+    registList<QPoint>(m_env);
 
     jzbind::ClassBind<QPointF> cls_ptf(Type_pointF,"QPointF");
     cls_ptf.setValueType(true);
@@ -205,6 +197,7 @@ void QtWrapper::initBase()
     cls_ptf.def("setX", true, &QPointF::setX);
     cls_ptf.def("setY", true, &QPointF::setY);
     cls_ptf.regist();
+    registList<QPointF>(m_env);
 
     jzbind::ClassBind<QRect> cls_rect(Type_rect,"QRect");
     cls_rect.setValueType(true);
@@ -223,6 +216,12 @@ void QtWrapper::initBase()
         auto w = list[2].toInt();
         auto h = list[3].toInt();
         return QRect(x,y,w,h);
+    });
+    registList<QRect>(m_env);
+
+    cls_rect.def("__toString__", false, [](QRect *rc)->QString {
+        return QString::number(rc->x()) + "," + QString::number(rc->y())
+            + "," + QString::number(rc->width()) + "," + QString::number(rc->height());
     });
     cls_rect.regist();
 
@@ -244,7 +243,12 @@ void QtWrapper::initBase()
         auto h = list[3].toDouble();
         return QRectF(x,y,w,h);    
     });
+    cls_rectf.def("__toString__", false, [](QRectF *rc)->QString {
+        return QString::number(rc->x()) + "," + QString::number(rc->y())
+            + "," + QString::number(rc->width()) + "," + QString::number(rc->height());
+    });
     cls_rectf.regist();
+    registList<QRectF>(m_env);
 
     jzbind::ClassBind<QColor> cls_color(Type_color, "QColor");
     cls_color.setValueType(true);
@@ -262,6 +266,10 @@ void QtWrapper::initBase()
         auto g = list[1].toInt();
         auto b = list[2].toInt();
         return QColor(r, g, b);
+    });
+    cls_rectf.def("__toString__", false, [](QColor *c)->QString {
+        return QString::number(c->red()) + "," + QString::number(c->green())
+            + "," + QString::number(c->blue());
     });
     cls_color.def("red", false, &QColor::red);
     cls_color.def("green", false, &QColor::green);
@@ -289,6 +297,9 @@ void QtWrapper::initCore()
     cls_string_list.def("__fromString__", false, [](const QString &text)->QStringList {
         QStringList list = text.split(",");
         return list;
+    });
+    cls_string_list.def("__toString__", false, [](QStringList *list)->QString{
+        return list->join(",");
     });
     cls_string_list.def("join", false, [](const QStringList *list, const QString &sep)->QString {
         return (*list).join(sep);
@@ -626,12 +637,14 @@ void QtWrapper::initFiles()
     cls_fileInfo.def("path", false, &QFileInfo::path);
     cls_fileInfo.def("suffix", false, &QFileInfo::suffix);
     cls_fileInfo.regist();
+
+    registList<QFileInfo>(m_env);
     
     jzbind::ClassBind<QDir> cls_dir("QDir");
     cls_dir.def("create", false, [](QString path)->QDir { return QDir(path);  });
-    auto entry_def = cls_dir.def("entryList", false, [](QDir *dir,QString nameFilter,int filter)->QStringList{
+    auto entry_def = cls_dir.def("entryList", false, [](QDir *dir,QString nameFilter,int filter)->QList<QFileInfo>{
         auto list = dir->nameFiltersFromString(nameFilter);
-        return dir->entryList(list, (QDir::Filters)filter);
+        return dir->entryInfoList(list, (QDir::Filters)filter);
     });
     entry_def->paramIn[2].type = "Dir::Filters";
     cls_dir.def("mkpath", true, &QDir::mkpath);

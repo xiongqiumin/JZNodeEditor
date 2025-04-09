@@ -917,15 +917,6 @@ JZNodeFor::JZNodeFor()
     setPinValue(id_end, "1");
     setPinValue(id_op, "0");
 
-    QStringList list;
-    list << "Index < End";
-    list << "Index <= End";
-    list << "Index > End";
-    list << "Index >= End";
-    list << "Index == End";
-    list << "Index != End";
-    m_condTip = list;
-
     m_condOp.push_back(OP_lt);
     m_condOp.push_back(OP_le);
     m_condOp.push_back(OP_gt);
