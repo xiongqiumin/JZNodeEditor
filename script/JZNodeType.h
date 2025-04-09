@@ -15,7 +15,7 @@ enum
     Type_int64,
     Type_double,
     Type_string,
-    Type_nullptr,    
+    Type_nullptr,
     Type_any,
     Type_function,
     Type_auto,      //auto
@@ -29,14 +29,14 @@ enum
     Type_ignore,
     Type_internalUseEnd,
 
-    Type_enum = 1000,    
+    Type_enum = 1000,
     Type_keyCode,   //Qt::Key
 
     Type_internalEnum = 1100,
 
     Type_class = 5000,
     Type_stringList,
-    Type_varList,    
+    Type_varList,
     Type_intList,
     Type_doubleList,
     Type_varMap,
@@ -74,7 +74,7 @@ enum
 
     Type_object,  //qobject
     Type_timer,
-    
+
     Type_widget,
     Type_frame,
     Type_label,
@@ -96,6 +96,7 @@ enum
 
     Type_internalObject = 8000, // 内部注册起始
     Type_userObject = 50000,    // 用户注册起始
+    Type_pointFlag = 1 << 31,
 };
 
 typedef QSharedPointer<QVariant> QVariantPtr;
@@ -134,7 +135,7 @@ Q_DECLARE_METATYPE(JZNodeVariantAny)
 class QVariantPointer
 {
 public:
-    QVariant *value;
+    QVariantPtr value;
 };
 Q_DECLARE_METATYPE(QVariantPointer)
 
@@ -171,7 +172,7 @@ public:
     static bool isLiteralType(int type);
 
     static bool isPointer(const QVariant &v);
-    static QVariant *getPointer(const QVariant &v);
+    static QVariantPtr getPointer(const QVariant &v);
     
     static int calcExprType(int type1,int type2,int op);
         

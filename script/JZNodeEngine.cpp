@@ -884,12 +884,8 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
             if(def->isValueType())
                 sub = inst->create(type);
             else
-                sub = inst->createNull(type);
-        }
-        else if (value == "null")
-        {
-            sub = inst->createNull(type);
-        }
+                sub = inst->create(type);
+        }        
         else if(value.startsWith("{") && value.endsWith("}"))
         {
             QString init_text = value.mid(1,value.size() - 2);

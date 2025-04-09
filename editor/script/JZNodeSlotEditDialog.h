@@ -5,7 +5,7 @@
 #include <QListWidget>
 #include "JZNodeFunction.h"
 #include "JZBaseDialog.h"
-#include "JZNodeObject.h"
+#include "JZClassItem.h"
 
 class JZNodeSlotEditDialog : public JZBaseDialog
 {
@@ -14,7 +14,8 @@ class JZNodeSlotEditDialog : public JZBaseDialog
 public:
     JZNodeSlotEditDialog(QWidget *parent = Q_NULLPTR);
     ~JZNodeSlotEditDialog();
-      
+
+    void setClass(const JZNodeObjectDefine *cls);
     QString param();
     QString signal();
 
@@ -26,7 +27,7 @@ protected:
 
     QListWidget *m_listParam;
     QListWidget *m_listSingle;
-    JZNodeObjectDefine m_class;
+    const JZNodeObjectDefine *m_class;
     QString m_param;
     QString m_signal;
     

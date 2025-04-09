@@ -30,6 +30,9 @@ bool JZNodeFunction::isMemberCall()
 
 void JZNodeFunction::updateName()
 {
+    if (!m_file)
+        return;
+
     auto func_inst = environment()->functionManager();
     setName(m_functionName);
     auto meta = func_inst->function(m_functionName);

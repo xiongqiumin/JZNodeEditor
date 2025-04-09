@@ -40,10 +40,10 @@ public:
 class JZNodeEditorManager
 {
 public:
-    JZNodeEditorManager(JZScriptEnvironment *env);
-    ~JZNodeEditorManager();
+    static JZNodeEditorManager *instance();
 
-    JZScriptEnvironment *env();
+    JZNodeEditorManager();
+    ~JZNodeEditorManager();    
 
     void init();
     void setUserRegist(bool flag);
@@ -63,8 +63,6 @@ protected:
     bool m_userRegist;
     QStringList m_userFunctionList;
     QList<int> m_userDelegateList;
-
-    JZScriptEnvironment *m_env;
 };
 
 #endif // !JZNODE_EDITOR_MANAGER_H_

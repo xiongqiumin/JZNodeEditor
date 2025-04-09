@@ -146,6 +146,9 @@ public:
     void setId(int id);
     int type() const;
 
+    QPointF pos() const;
+    void setPos(QPointF pos);
+
     void setFlag(int flag);
     int flag() const;
 
@@ -223,7 +226,7 @@ public:
     const QStringList &pinType(int id) const;    
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0;
     
-    virtual bool update(QString &error);
+    virtual bool update(QString &error);      //更新
     virtual void drag(const QVariant &value);
 
     virtual bool canLink(int node_id, int pin_id, QString &error);
@@ -257,6 +260,7 @@ protected:
     int m_flag;
     int m_group;
     QString m_name;
+    QPointF m_pos;
     QString m_memo;
     QList<JZNodePin> m_pinList;
     JZScriptItem *m_file;

@@ -536,8 +536,7 @@ void JZNodeView::setFile(JZScriptItem *file)
 }
 
 void JZNodeView::resetFile()
-{
-    m_file->loadEditorCache();
+{    
     m_file->loadFinish();
 }
 
@@ -1117,8 +1116,7 @@ void JZNodeView::clear()
 void JZNodeView::save()
 {
     auto project = m_file->project();
-    saveNodePos();    
-    m_file->saveEditorCache();
+    saveNodePos();        
     project->saveItem(m_file);
     m_commandStack.setClean();
 }
@@ -1641,8 +1639,10 @@ void JZNodeView::onContextMenu(const QPoint &pos)
             pin_id = node_item->pinAtInName(item_pos);
 
             QStringList actions_list;
+
+            /*
             if(pin_id >= 0)
-                actions_list = node_item->node()->pinActionList(pin_id);
+                actions_list = node_item->node()->pinActionList(pin_id);            
 
             if (actions_list.size() > 0)
             {
@@ -1676,6 +1676,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
                 actCpy = menu.addAction("复制节点");
                 actDel = menu.addAction("删除节点");
             }
+            */
         }
         else if (item->type() == Item_line)
             actDel = menu.addAction("删除连线");
@@ -1746,16 +1747,14 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         int index = pin_actions.indexOf(ret);
         auto node = dynamic_cast<JZNodeGraphItem*>(item)->node();        
         auto old = getNodeData(node->id());
-        if (node->pinActionTriggered(pin_id, index))
-            onScriptNodeChanged(m_file, node->id(), old);        
+        onScriptNodeChanged(m_file, node->id(), old);        
     }
     else if(node_actions.contains(ret))
     {
         int index = node_actions.indexOf(ret);
         auto node = dynamic_cast<JZNodeGraphItem*>(item)->node(); 
         auto old = getNodeData(node->id());
-        if (node->actionTriggered(index))
-            onScriptNodeChanged(m_file, node->id(), old);  
+        onScriptNodeChanged(m_file, node->id(), old);  
     }
     else if(ret == actFuncGoto)
     {

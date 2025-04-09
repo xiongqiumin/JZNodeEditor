@@ -53,6 +53,11 @@ JZUiItem *JZScriptClassItem::ui()
     return dynamic_cast<JZUiItem*>(list[0]);
 }
 
+bool JZScriptClassItem::hasUi()
+{
+    return ui();
+}
+
 void JZScriptClassItem::addUi(JZUiItem *item)
 {
     Q_ASSERT(!ui());

@@ -44,6 +44,8 @@ set(JZNodeEditor_SOURCES
     editor/JZProjectSettingDialog.h
     editor/JZProjectTree.cpp
     editor/JZProjectTree.h
+    editor/JZEditorUtils.cpp
+    editor/JZEditorUtils.h
     editor/script/JZNodeAutoRunThread.cpp
     editor/script/JZNodeAutoRunThread.h
     editor/script/JZNodeAutoRunWidget.cpp
@@ -119,13 +121,29 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeWatch.cpp
     editor/script/JZNodeWatch.h
     editor/script/JZProcess.cpp
-    editor/script/JZProcess.h        
+    editor/script/JZProcess.h   
+    editor/script/JZNodeClassEditDialog.ui
+    editor/script/JZNodeClassEditDialog.cpp
+    editor/script/JZNodeClassEditDialog.h       
     editor/ui/formresizer.cpp
     editor/ui/formresizer.h
+    editor/ui/JZDesignerEditor.cpp
+    editor/ui/JZDesignerEditor.h
+    editor/ui/JZDesignerFormWindow.cpp
+    editor/ui/JZDesignerFormWindow.h
+    editor/ui/JZDesinger.cpp
+    editor/ui/JZDesinger.h
+    editor/ui/JZMenuExtension.cpp
+    editor/ui/JZMenuExtension.h
+    editor/ui/JZNodeIntegration.cpp
+    editor/ui/JZNodeIntegration.h
     editor/ui/JZUiEditor.cpp
     editor/ui/JZUiEditor.h
+    editor/ui/JZWidgetCollectionInterface.cpp
+    editor/ui/JZWidgetCollectionInterface.h
     editor/ui/sizehandlerect.cpp
-    editor/ui/sizehandlerect.h    
+    editor/ui/sizehandlerect.h
+    editor/ui/widgethostconstants.h
     script/JZParamItem.cpp
     script/JZParamItem.h
     script/JZProject.cpp
@@ -256,6 +274,10 @@ set(JZNodeEditor_SOURCES
     #camera
     modules/camera/JZModuleCamera.h
     modules/camera/JZModuleCamera.cpp
+    modules/camera/JZCamera.h
+    modules/camera/JZCamera.cpp
+    modules/camera/JZCameraFile.h
+    modules/camera/JZCameraFile.cpp
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp
     3rd/JZCommon/jzNet/JZNetClient.h
@@ -284,7 +306,9 @@ set(JZNodeEditor_SOURCES
     3rd/JZCommon/jzModbus/JZModbusTcp.cpp
     3rd/JZCommon/jzModbus/JZModbusTcp.h
     3rd/JZCommon/jzWidgets/JZImageView.cpp
-    3rd/JZCommon/jzWidgets/JZImageView.h
+    3rd/JZCommon/jzWidgets/JZImageView.h    
+    3rd/JZCommon/jzCommon/JZLogManager.cpp
+    3rd/JZCommon/jzCommon/JZLogManager.h
 )
 
 add_executable(JZNodeEditor ${JZNodeEditor_SOURCES})
@@ -293,6 +317,9 @@ target_link_libraries(JZNodeEditor Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::SerialPort      
     Qt${QT_VERSION_MAJOR}::PrintSupport
     Qt${QT_VERSION_MAJOR}::Xml
+    Qt${QT_VERSION_MAJOR}::Designer
+    Qt${QT_VERSION_MAJOR}::DesignerComponents
+    Qt${QT_VERSION_MAJOR}::UiTools
     ${OpenCV_LIBRARIES})    
 set_target_properties(JZNodeEditor PROPERTIES
     WIN32_EXECUTABLE TRUE

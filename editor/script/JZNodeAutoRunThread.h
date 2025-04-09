@@ -25,7 +25,7 @@ protected:
     virtual void run() override;
     
     JZNodeEngine m_engine;
-    JZNodeProgram *m_program;
+    JZNodeProgram m_program;
     ScriptDepend m_depend;    
     bool m_cancel;
 };

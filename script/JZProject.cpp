@@ -186,6 +186,12 @@ bool JZProject::save()
     return true;
 }
 
+bool JZProject::saveAs(QString filepath)   //只保存工程自身，不保存项目文
+{
+    m_filepath = filepath;
+    return save();
+}
+
 void JZProject::loadFinish()
 {
     auto script_list = itemList("./", ProjectItem_any);
@@ -230,8 +236,7 @@ bool JZProject::isTmp(JZProjectItem *item)
 
 bool JZProject::isFile(JZProjectItem *item)
 {
-    if(item->itemType() == ProjectItem_ui
-            || item->itemType() == ProjectItem_scriptFile)
+    if(item->itemType() == ProjectItem_scriptFile)
         return true;
     
     return false;
@@ -426,8 +431,9 @@ bool JZProject::saveItems(QList<JZProjectItem*> items)
     }
 
     QMap<JZProjectItem*,QList<JZProjectItem*>> file_item;
-    for (int i = 0; i < items.size(); i++)
+    for (int i = 0; i < items.size(); i++)   
     {        
+        Q_ASSERT(items[i]->project() == this);
         auto file = getItemFile(items[i]);        
         if (file)        
             file_item[file].push_back(items[i]);        
@@ -465,16 +471,7 @@ bool JZProject::saveItems(QList<JZProjectItem*> items)
 
 bool JZProject::saveAllItem()
 {
-    auto items = itemList("./", ProjectItem_any);
-    for (int i = 0; i < items.size(); i++)
-    {
-        int type = items[i]->itemType();
-        if (type == ProjectItem_scriptFunction)
-        {
-            JZScriptItem *script_item = (JZScriptItem *)items[i];
-            script_item->saveEditorCache();
-        }
-    }
+    auto items = itemList("./", ProjectItem_any);    
     return saveItems(items);
 }
 

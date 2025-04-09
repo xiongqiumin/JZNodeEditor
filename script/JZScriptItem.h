@@ -18,10 +18,7 @@ public:
 
     void loadFinish();
     void clear();
-    int nextId();
-
-    void saveEditorCache();
-    void loadEditorCache();
+    int nextId();    
 
     const JZFunctionDefine &function();
     void setFunction(JZFunctionDefine def);
@@ -78,10 +75,8 @@ protected:
     QList<JZNodeGroup> m_groups;
     QList<JZNodeConnect> m_connects;    
     JZFunctionDefine m_function;    
-
-    QMap<int, QPointF> m_nodesPos;
-    QMap<QString, JZParamDefine> m_variables;
-    QByteArray m_editorCache;
+        
+    QMap<QString, JZParamDefine> m_variables;    
 };
 
 #endif

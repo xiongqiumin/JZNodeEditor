@@ -119,6 +119,16 @@ int JZNode::type() const
     return m_type;
 }
 
+QPointF JZNode::pos() const
+{
+    return m_pos;        
+}
+
+void JZNode::setPos(QPointF pos)
+{
+    m_pos = pos;
+}
+
 void JZNode::setFlag(int flag)
 {
     m_flag = flag;
@@ -700,6 +710,7 @@ void JZNode::saveToStream(QDataStream &s) const
     s << m_type;
     s << m_id;
     s << m_name;
+    s << m_pos;
     s << m_flag;
     s << m_group;
     s << m_memo;
@@ -715,6 +726,7 @@ void JZNode::loadFromStream(QDataStream &s)
 
     s >> m_id;
     s >> m_name;
+    s >> m_pos;
     s >> m_flag;
     s >> m_group;
     s >> m_memo;

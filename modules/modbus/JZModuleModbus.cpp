@@ -177,8 +177,8 @@ void JZModuleModbus::regist(JZScriptEnvironment *env)
 
     JZNodeFactory::instance()->registNode(Node_modbusConfig, createJZNode<JZNodeModbusConfig>);
 
-    env->editorManager()->registCustomFunctionNode("initModbusMaster", Node_modbusConfig);
-    env->editorManager()->registCustomFunctionNode("initModbusSlaver", Node_modbusConfig);
+    JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusMaster", Node_modbusConfig);
+    JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusSlaver", Node_modbusConfig);
 }
 
 void JZModuleModbus::unregist(JZScriptEnvironment *env)

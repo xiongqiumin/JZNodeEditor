@@ -29,6 +29,25 @@ JZNodeSlotEditDialog::~JZNodeSlotEditDialog()
 {
 }
 
+void JZNodeSlotEditDialog::setClass(const JZNodeObjectDefine *cls)
+{
+    auto env = editorEnvironment();
+    m_class = cls;
+    m_listParam->clear();
+
+    auto paramList = m_class->paramList(true);
+    for(int i = 0; i < paramList.size(); i++)
+    {
+        auto param = m_class->param(paramList[i]);
+        if(!env->isInherits(env->nameToType(param->type),Type_object))
+            continue;
+
+        QListWidgetItem *item = new QListWidgetItem(paramList[i]);
+        m_listParam->addItem(item);
+    }
+    m_listParam->setCurrentRow(0);
+}
+
 void JZNodeSlotEditDialog::onListParamChanged(QListWidgetItem *current)
 {
     m_listSingle->clear();
@@ -36,7 +55,7 @@ void JZNodeSlotEditDialog::onListParamChanged(QListWidgetItem *current)
     if(row == -1)
         return;
 
-    auto def = m_class.param(current->text());
+    auto def = m_class->param(current->text());
     auto meta = editorEnvironment()->objectManager()->meta(def->type);
     auto sigs = meta->signalList();
     for(int i = 0; i < sigs.size(); i++)

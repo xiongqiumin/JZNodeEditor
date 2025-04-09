@@ -25,7 +25,7 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
 {
     int cls_id = CameraModule_id;
 
-    jzbind::ClassBind<JZCamera> cls_camera(cls_id++, "JZCamera");
+    jzbind::ClassBind<JZCamera> cls_camera(cls_id++, "JZCamera", "QObject");
     cls_camera.def("open", true, &JZCamera::open);
     cls_camera.def("close", true, &JZCamera::close);
     cls_camera.def("start",true,&JZCamera::start);

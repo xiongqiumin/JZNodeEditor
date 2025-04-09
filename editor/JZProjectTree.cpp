@@ -9,7 +9,8 @@
 #include <JZRegExpHelp.h>
 #include "JZNodeFuctionEditDialog.h"
 #include "JZNewFileDialog.h"
-#include "JZUIFile.h"
+#include "JZNodeClassEditDialog.h"
+#include "JZUiItem.h"
 #include "JZProjectSettingDialog.h"
 #include "JZNodeSlotEditDialog.h"
 #include "JZEditorGlobal.h"
@@ -133,6 +134,8 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
         icon_path = ":/JZNodeEditor/Resources/icons/iconProject.png";
     else if (item->itemType() == ProjectItem_folder)
         icon_path = ":/JZNodeEditor/Resources/icons/iconFolder.png";    
+    else if (item->itemType() == ProjectItem_class)
+        icon_path = ":/JZNodeEditor/Resources/icons/iconClass.png";
     else if (item->itemType() == ProjectItem_scriptFunction)
         icon_path = ":/JZNodeEditor/Resources/icons/iconFunction.png";
     else
@@ -326,14 +329,19 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actRemove = nullptr;
     QAction *actRename = nullptr;
     QAction *actCreateFunction = nullptr;
-    QAction *actCreateFlow = nullptr;
     QAction *actCreateClass = nullptr;
     QList<QAction*> actCreateVirtual;
     QAction *actOpen = nullptr;
     QAction *actBuild = nullptr, *actRebuild = nullptr, *actClearBuild = nullptr;
     QAction *actNewFile = nullptr, *actExistFile = nullptr;
+    QAction *actSlot = nullptr;
 
     bool canChanged = true;    
+    auto item_class = m_project->getItemClass(item);
+    const JZNodeObjectDefine *meta = nullptr;
+    if(item_class)
+        meta = editorObjectManager()->meta(item_class->className());
+
     if(item->itemType() == ProjectItem_root)
     {
         actBuild = menu.addAction("编译");
@@ -361,12 +369,20 @@ void JZProjectTree::onContextMenu(QPoint pos)
         actCreateClass = menu_new->addAction("类");
         actCreateFunction = menu_new->addAction("全局函数");
     }
-    else if(item->itemType() == ProjectItem_class)
+    else if (item->itemType() == ProjectItem_class)
     {
-        actCreateFlow = menu_new->addAction("流程");
-        actCreateFunction = menu_new->addAction("函数");
+        QMenu *menu_new = menu.addMenu("添加");
+        actCreateFunction = menu_new->addAction("成员函数");
+        
+        auto virtual_list = meta->virtualFunctionList();
+        if(virtual_list.size() > 0)
+        {        
+            QMenu *menu_virtual = menu_new->addMenu("虚函数");
+            for(int i = 0; i < virtual_list.size(); i++)
+                actCreateVirtual << menu_virtual->addAction(virtual_list[i]);
+        }
+        actSlot = menu_new->addAction("槽函数");
     }
-    
     if (canOpenItem(item))
     {
         actOpen = menu.addAction("打开");
@@ -437,12 +453,24 @@ void JZProjectTree::onContextMenu(QPoint pos)
             addItem(new_item);            
         }
     }
-    else if(act == actCreateFunction || act == actCreateFlow || actCreateVirtual.contains(act))
+    else if(act == actCreateFunction || act == actSlot || actCreateVirtual.contains(act))
     {        
         JZFunctionDefine function;
         if (act == actCreateFunction)
         {
-            function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());
+            if (item_class)
+            {
+                function.className = item_class->className();
+                function.name = JZRegExpHelp::uniqueString("newFunction", item_class->memberFunctionList());
+
+                JZParamDefine def;
+                def.name = "this";
+                def.type = function.className;
+                function.paramIn.push_back(def);
+                function.isFlowFunction = true;
+            }
+            else            
+                function.name = JZRegExpHelp::uniqueString("newFunction", m_project->functionList());
 
             JZNodeFuctionEditDialog dialog(this);
             dialog.setFunctionInfo(function,true);
@@ -452,6 +480,19 @@ void JZProjectTree::onContextMenu(QPoint pos)
 
             function = dialog.functionInfo();
         }
+        else if (act == actSlot)
+        {
+            JZNodeSlotEditDialog dlg(this);
+            dlg.setClass(meta);
+            if (dlg.exec() != QDialog::Accepted)
+                return;
+
+            function = meta->initSlotFunction(dlg.param(), dlg.signal());
+        }
+        else
+        {
+            function = meta->initVirtualFunction(act->text());
+        }
 
         JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptFunction);
         func_item->setFunction(function);
@@ -460,6 +501,23 @@ void JZProjectTree::onContextMenu(QPoint pos)
         
         addItem(view_item, func_item);        
     }
+    else if (act == actCreateClass)
+    {
+        JZNodeClassEditDialog dialog(this);
+        if(dialog.exec() != QDialog::Accepted)
+            return;
+
+        QString def = dialog.className();
+        QString super = dialog.super();        
+        
+        auto file_item = dynamic_cast<JZScriptFile*>(item);
+        auto class_item = file_item->addClass(def, super);
+        addItem(view_item, class_item);
+        if (dialog.isUi())
+            class_item->addUi(new JZUiItem());
+
+        m_project->saveItem(class_item);
+    }    
     else if(act == actRemove)
     {
         if (QMessageBox::question(this, "", "是否删除", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
@@ -494,6 +552,22 @@ void JZProjectTree::onContextMenu(QPoint pos)
             }
             m_project->saveItem(func_item);
         }
+        else if (item->itemType() == ProjectItem_class)
+        {
+            JZScriptClassItem *class_item = (JZScriptClassItem*)item;
+            
+            JZNodeClassEditDialog dlg(this);
+            dlg.setClass(class_item);
+            if (dlg.exec() != QDialog::Accepted)
+                return;
+             
+            class_item->setClass(dlg.className(), dlg.super());
+            if (dlg.isUi() && class_item->hasUi())
+                class_item->addUi(new JZUiItem());
+            else
+                class_item->removeUi();
+            m_project->saveItem(class_item);
+        } 
         else if(item->itemType() == ProjectItem_root)
         {
             JZProjectSettingDialog dlg(this);

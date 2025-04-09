@@ -11,7 +11,7 @@ JZModuleOpencvEditor::~JZModuleOpencvEditor()
 
 void JZModuleOpencvEditor::regist(JZScriptEnvironment *env)
 {
-    auto d_inst = env->editorManager();
+    auto d_inst = JZNodeEditorManager::instance();
 
     JZNodeParamDelegate d_mat;
     d_mat.editType = Type_imageEdit;

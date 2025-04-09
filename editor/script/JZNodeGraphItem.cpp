@@ -290,12 +290,7 @@ void JZNodeGraphItem::updateNode()
 void JZNodeGraphItem::updateSize()
 {
     auto cmp = [this](int i, int j)->bool {
-        int flag1 = m_node->pinPri(i);
-        int flag2 = m_node->pinPri(j);
-        if (flag1 != flag2)
-            return flag1 < flag2;
-        else
-            return i < j;
+        return i < j;
     };
 
     QString title = m_node->name();
@@ -1027,7 +1022,7 @@ void JZNodeGraphItem::drawIcon(QPainter *painter,QRectF rect, IconType type, boo
     }
     painter->restore();
 }
-
+/*
 int JZNode::pinPri(int id) const
 {
     auto ptr = pin(id);
@@ -1290,3 +1285,4 @@ JZNodePinWidget* JZNodeDisplay::createWidget(int id)
         return w;
     }
 }
+*/

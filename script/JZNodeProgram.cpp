@@ -318,6 +318,37 @@ QString JZNodeProgram::applicationFilePath()
     return m_filePath;
 }
 
+void JZNodeProgram::saveToStream(QDataStream &s)
+{
+    int script_size = m_scripts.size();
+    s << script_size;
+    auto it = m_scripts.begin();
+    while (it != m_scripts.end())
+    {
+        s << it.key();
+        it.value()->saveToStream(s);
+        it++;
+    }
+    s << m_variables;
+    s << m_typeMeta;
+}
+
+void JZNodeProgram::loadFromStream(QDataStream &s)
+{
+    int script_size = 0;
+    s >> script_size;
+    for (int i = 0; i < script_size; i++)
+    {
+        QString path;
+        s >> path;
+        JZNodeScript *script = new JZNodeScript();
+        script->loadFromStream(s);
+        m_scripts[path] = JZNodeScriptPtr(script);
+    }
+    s >> m_variables;
+    s >> m_typeMeta;
+}
+
 bool JZNodeProgram::load(QString filepath)
 {   
     QFile file(filepath);
@@ -328,8 +359,7 @@ bool JZNodeProgram::load(QString filepath)
     }
 
     QByteArray magic;
-    QDataStream s(&file);
-    int script_size;
+    QDataStream s(&file);    
     s >> magic;
     if(magic != NodeIRMagic())
     {
@@ -337,17 +367,7 @@ bool JZNodeProgram::load(QString filepath)
         return false;
     }
         
-    s >> script_size;
-    for(int i = 0; i < script_size; i++)
-    {
-        QString path;
-        s >> path;
-        JZNodeScript *script = new JZNodeScript();
-        script->loadFromStream(s);
-        m_scripts[path] = JZNodeScriptPtr(script);       
-    }
-    s >> m_variables;    
-    s >> m_typeMeta;
+    loadFromStream(s);
 
     m_filePath = filepath;
     return true;
@@ -361,19 +381,20 @@ bool JZNodeProgram::save(QString filepath)
 
     QDataStream s(&file);    
     s << NodeIRMagic();
-    s << m_scripts.size();
-    auto it = m_scripts.begin();
-    while (it != m_scripts.end())
-    {
-        s << it.key();
-        it.value()->saveToStream(s);
-        it++;
-    }        
-    s << m_variables;        
-    s << m_typeMeta;
+    saveToStream(s);
 
     m_filePath = filepath;
     return true;
+}
+
+void JZNodeProgram::copyTo(JZNodeProgram *other)
+{
+    QByteArray buffer;
+    QDataStream out(&buffer,QIODevice::WriteOnly);
+    this->saveToStream(out);
+
+    QDataStream in(&buffer, QIODevice::ReadOnly);
+    other->loadFromStream(in);
 }
 
 JZNodeScript *JZNodeProgram::script(QString path)

@@ -20,7 +20,7 @@ JZNodeEngine *JZNodeAutoRunThread::engine()
 void JZNodeAutoRunThread::startRun(JZNodeProgram *program,const ScriptDepend &depend)
 {
     m_depend = depend;
-    m_program = program;
+    program->copyTo(&m_program);
     start();
 }
 
@@ -36,9 +36,9 @@ void JZNodeAutoRunThread::run()
 {
     auto ret = UnitTestResultPtr(new UnitTestResult());
    
-    m_engine.setProgram(m_program);
+    m_engine.setProgram(&m_program);
     m_engine.init();
-
+/*
     QVariantList out;
     ret->function = m_depend.function.fullName();
     if (m_engine.callUnitTest(&m_depend,out))
@@ -56,6 +56,7 @@ void JZNodeAutoRunThread::run()
             ret->runtimeError = m_engine.runtimeError();
         }
     }
+*/
     m_engine.deinit();
     m_cancel = false;
     emit sigResult(ret);

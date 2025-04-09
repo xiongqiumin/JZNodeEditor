@@ -32,7 +32,7 @@ protected:
     JZNode *findLCA(JZNode *node, QList<int> node_list);    
 
     QLineEdit *m_lineSearch;
-    QMap<JZNode*, JZNode*> m_lcaMap;
+    QMap<JZNode*, JZNode*> m_lcaMap;  //最小关键路径
     QTreeWidget *m_tree;
     JZScriptItem *m_file;
     JZNodeView *m_view;

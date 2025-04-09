@@ -140,7 +140,7 @@ void JZNodePinDisplayWidget::createWidget()
         delete m_widget;
 
     m_dataType = need_type;
-    auto d = editorEnvironment()->editorManager()->delegate(m_dataType);;
+    auto d = editorManager()->delegate(m_dataType);;
     if (d && d->createDisplay)
     {        
         m_widget = d->createDisplay();

@@ -147,7 +147,7 @@ bool JZNodeType::isPointer(const QVariant &v)
     return v.userType() == qMetaTypeId<QVariantPointer>();
 }
 
-QVariant *JZNodeType::getPointer(const QVariant &v)
+QVariantPtr JZNodeType::getPointer(const QVariant &v)
 {
     Q_ASSERT(isPointer(v));
 

@@ -55,7 +55,8 @@ public:
     
     bool open(QString filepath);
     void close();
-    bool save();    //只保存工程自身，不保存项目文件
+    bool save();      //只保存工程自身，不保存项目文件
+    bool saveAs(QString filepath);
 
     void addTmp(JZProjectItem *item);
     void removeTmp(JZProjectItem *item);

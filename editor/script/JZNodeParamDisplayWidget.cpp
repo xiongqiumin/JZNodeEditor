@@ -31,7 +31,7 @@ JZNodeImageDisplayWidget::~JZNodeImageDisplayWidget()
 void JZNodeImageDisplayWidget::setRuntimeValue(const JZNodeDebugParamValue &value)
 {
     auto env = editorEnvironment();
-    auto d = env->editorManager()->delegate(Type_image);
+    auto d = JZNodeEditorManager::instance()->delegate(Type_image);
     QVariant v = d->unpack(env,value.binValue);
 
     auto image = editorObjectManager()->objectCast<QImage>(v);

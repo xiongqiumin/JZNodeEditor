@@ -357,12 +357,12 @@ void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
         for (int i = 0; i < info.out.size(); i++)        
             out_list << JZNodeType::debugString(info.out[i]);        
 
-        LOGI(Log_Runtime, "运行完毕.");
+        LOGMOD_I(Log_Runtime, "运行完毕.");
         m_runProp->setResult(info.out);
     }
     else
     {
-        LOGI(Log_Runtime, "run filed:" + info.runtimeError.errorReport());
+        LOGMOD_I(Log_Runtime, "run filed:" + info.runtimeError.errorReport());
     }
 }
 

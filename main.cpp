@@ -9,7 +9,6 @@
 #include "mainwindow.h"
 #include "JZNodeInit.h"
 #include "JZNodeVM.h"
-#include "modules/opencv/JZYolo.h"
 
 using namespace std;
 
@@ -25,23 +24,13 @@ int runProgram(QString program_path,bool debug)
     return qApp->exec();
 }
 
-void runYolo()
-{
-    JZYolo yolo;
-    yolo.setModelPath("C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx");
-    bool ret = yolo.loadNet();
-    QList<JZYoloResult> yolo_ret = yolo.forward(imread("C:/Users/xiong/Desktop/JZNodeEditorTest/data/111111111.jpg"));
-
-    qDebug() << yolo_ret.size();
-}
-
 int main(int argc,char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     JZNodeInit();               
 
-    runYolo();
+    return runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\build\Debug\project\Project17\build\Project17.program)", false);    
 
     QCommandLineParser parser;
 

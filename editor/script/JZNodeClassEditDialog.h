@@ -2,6 +2,7 @@
 #define JZNODE_NEW_CLASS_EDIT_DIALOG_H_
 
 #include <QDialog>
+#include "JZClassItem.h"
 
 namespace Ui { class JZNodeClassEditDialog; }
 
@@ -11,11 +12,13 @@ class JZNodeClassEditDialog : public QDialog
     
 public:
     JZNodeClassEditDialog(QWidget *p = nullptr);
-    ~JZNodeClassEditDialog();    
+    ~JZNodeClassEditDialog();
+
+    void setClass(JZScriptClassItem *class_item);
 
     QString className();
     QString super();
-    QString uiFile();
+    bool isUi();
 
 protected slots:
     void on_btnOk_clicked();

@@ -47,7 +47,8 @@ private:
     bool isMemberFunction();
     void dataToUi();
     void uiToData();
-    
+
+    QString m_className;
     bool m_newFunction;
     JZFunctionDefine m_functionDefine;    
     JZProject *m_project;

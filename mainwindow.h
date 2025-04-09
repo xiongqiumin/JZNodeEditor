@@ -102,8 +102,6 @@ protected slots:
     void onAutoCompiler();
     void onAutoRun();
 
-    void onLog(LogObjectPtr log);
-
     void onStackChanged(int stack);
     void onWatchValueChanged(JZNodeIRParam coor, QString value);
     void onWatchNameChanged(JZNodeIRParam coor);
@@ -166,6 +164,7 @@ private:
         bool start;
     };
 
+    virtual void customEvent(QEvent *event) override;
     virtual void resizeEvent(QResizeEvent *event) override;
     virtual void closeEvent(QCloseEvent *event) override;
 

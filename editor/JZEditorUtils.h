@@ -1,9 +1,9 @@
-#ifndef JZ_EDITOR_UTILS_H_
-#define JZ_EDITOR_UTILS_H_
+#ifndef JZ_NODE_EDITOR_UTILS_H_
+#define JZ_NODE_EDITOR_UTILS_H_
 
 #include "JZProject.h"
 
-class JZNodeUtils
+class JZEditorUtils
 {
 public: 
     static void projectUpdateLayout(JZProject *project);
@@ -12,4 +12,4 @@ public:
 };
 
 
-#elif
+#endif

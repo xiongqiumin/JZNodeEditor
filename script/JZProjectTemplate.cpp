@@ -39,10 +39,9 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         window_file->setName("MainWindow.jz");
 
         auto ui_file = new JZUiItem();
-        ui_file->setName("界面");        
+        ui_file->setName("ui");        
 
-        project->addItem("./",window_file);
-        project->addItem("./",ui_file);
+        project->addItem("./",window_file);        
 
         auto class_item = window_file->addClass("MainWindow","QWidget");        
         class_item->addUi(ui_file);

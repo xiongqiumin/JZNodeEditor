@@ -47,7 +47,7 @@ void JZCameraFile::start()
     if (m_fileList.size() == 0)
         return;
 
-    m_timer->start(100);
+    m_timer->start(1000);
 }
 
 void JZCameraFile::startOnce()

@@ -58,7 +58,7 @@ protected slots:
     void onAchorClicked(QUrl url);
 
 protected:    
-    QList<LogBrowser*> m_logs;
+    QMap<int,LogBrowser*> m_logs;
     QTabWidget *m_tabWidget;
     JZNodeStack *m_stack;    
     JZNodeWatch *m_watchAuto;

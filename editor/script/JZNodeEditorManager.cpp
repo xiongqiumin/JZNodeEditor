@@ -41,19 +41,19 @@ QVariant imageUnpack(JZScriptEnvironment *env,const QByteArray &buffer)
 }
 
 //JZNodeEditorManager
-JZNodeEditorManager::JZNodeEditorManager(JZScriptEnvironment *env)
+JZNodeEditorManager *JZNodeEditorManager::instance()
 {
-    m_userRegist = false;
-    m_env = env;
+    static JZNodeEditorManager inst;
+    return &inst;
+}
+
+JZNodeEditorManager::JZNodeEditorManager()
+{
+    m_userRegist = false;    
 }
 
 JZNodeEditorManager::~JZNodeEditorManager()
 {
-}
-
-JZScriptEnvironment *JZNodeEditorManager::env()
-{
-    return m_env;
 }
 
 void JZNodeEditorManager::init()

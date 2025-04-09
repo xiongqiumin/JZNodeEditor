@@ -7,6 +7,7 @@
 #include <QMenu>
 #include <QTextDocument>
 #include <QScrollBar>
+#include "LogManager.h"
 
 //LogBrowser
 LogBrowser::LogBrowser()
@@ -116,7 +117,7 @@ LogWidget::LogWidget()
     for (int i = 0; i < domains.size(); i++)
     {
         LogBrowser *edit = new LogBrowser();
-        m_logs << edit;
+        m_logs[Log_Compiler + i] = edit;
 
         QWidget *w = new QWidget();
         QVBoxLayout *sub_layout = new QVBoxLayout();        

@@ -120,10 +120,12 @@ public:
     ~JZNodeProgram();
 
     bool isNull();
+
     bool load(QString file);
     bool save(QString file);
     void clear();
-
+    void copyTo(JZNodeProgram *other);
+    
     void initEnv(JZScriptEnvironment *env);
 
     const JZNodeTypeMeta &typeMeta() const;       
@@ -139,6 +141,9 @@ protected:
     Q_DISABLE_COPY(JZNodeProgram);
 
     friend JZNodeBuilder;        
+
+    void saveToStream(QDataStream &s);
+    void loadFromStream(QDataStream &s);
     
     QString m_filePath;
     QString m_error;

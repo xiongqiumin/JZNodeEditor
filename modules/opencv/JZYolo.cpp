@@ -126,20 +126,10 @@ bool JZYolo::isVaild()
     return !m_net.empty();
 }
 
-bool JZYolo::loadNet()
+bool JZYolo::loadNet(QString path)
 {
-    m_net = cv::dnn::readNet(m_modelPath.toLocal8Bit().data());
+    m_net = cv::dnn::readNet(path.toLocal8Bit().data());
     return true;
-}
-
-QString JZYolo::modelPath()
-{
-    return m_modelPath;
-}
-
-void JZYolo::setModelPath(QString path)
-{
-    m_modelPath = path;
 }
 
 QList<JZYoloResult> JZYolo::forward(Mat frame)

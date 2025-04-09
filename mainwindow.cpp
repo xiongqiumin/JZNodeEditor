@@ -21,6 +21,9 @@
 #include "JZAboutDialog.h"
 #include "JZProjectSettingDialog.h"
 #include "JZNodeProgramDumper.h"
+#include "JZProjectTemplate.h"
+#include "JZNodeEditorManager.h"
+#include "JZEditorUtils.h"
 
 //Setting
 Setting::Setting()
@@ -99,9 +102,13 @@ MainWindow::MainWindow(QWidget *parent)
     m_processMode = Process_none;
     m_compilerTimer = new QTimer(this);
     connect(m_compilerTimer, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
-    m_compilerTimer->start(100);
+    m_compilerTimer->start(100);    
 
-    connect(LogManager::instance(), &LogManager::sigLog, this, &MainWindow::onLog);
+    JZLogModuleConfig config;
+    JZLogManager::instance()->addModule(Log_Compiler, config);
+    JZLogManager::instance()->addModule(Log_Runtime, config);
+    JZLogManager::instance()->addObserver(Log_Compiler,this);
+    JZLogManager::instance()->addObserver(Log_Runtime, this);
 
     connect(&m_debuger,&JZNodeDebugClient::sigLog,this,&MainWindow::onRuntimeLog);    
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError);
@@ -421,6 +428,16 @@ void MainWindow::initUi()
     setCentralWidget(widget);
 }
 
+void MainWindow::customEvent(QEvent *event)
+{
+    if(event->type() == JZLogEvent::EventType)    
+    {
+        auto log_event = dynamic_cast<JZLogEvent*>(event);
+        auto log = log_event->log;
+        m_log->addLog(log->module, log->message);
+    }
+}
+
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
@@ -554,12 +571,16 @@ void MainWindow::onActionNewProject()
     if (!QDir().exists(project_dir))
         QDir().mkpath(project_dir);
     
-    QString project_tmp = dialog.projectType();    
-    JZProject project;
-    if (!project.newProject(project_dir, name, project_tmp))
+    QString project_path = project_dir + "/" + name + ".jzproj";
+    QString project_tmp = dialog.projectType();        
+    JZProjectTemplate::instance()->initProject(&m_project, project_tmp);
+    JZEditorUtils::projectUpdateLayout(&m_project);
+    if (!m_project.saveAs(project_path) || !m_project.saveAllItem())
+    {
+        QMessageBox::information(this, "", "新建工程失败");
         return;
-    
-    openProject(project.filePath());
+    }
+    openProject(project_path);    
 }
 
 void MainWindow::onActionOpenProject()
@@ -1276,7 +1297,7 @@ void MainWindow::onWatchNameChanged(JZNodeIRParam coor)
 void MainWindow::onWatchNotify()
 {
     auto env = editorEnvironment();
-    auto inst = env->editorManager();
+    auto inst = JZNodeEditorManager::instance();
     if(m_runThread.engine()->stack()->size() != 1)
         return;
 
@@ -1600,11 +1621,6 @@ void MainWindow::onTabContextMenu(QPoint pos)
         auto editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
         closeAllEditor(editor);
     }
-}
-
-void MainWindow::onLog(LogObjectPtr log)
-{
-    m_log->addLog(log->module, log->message);
 }
 
 void MainWindow::onRuntimeStatus(int status)

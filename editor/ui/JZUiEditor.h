@@ -1,12 +1,12 @@
 ﻿#ifndef JZUI_EDITOR_H_
 #define JZUI_EDITOR_H_
 
-#include <QUndoStack>
-#include <QScrollArea>
 #include "JZEditor.h"
 #include "JZUiItem.h"
-#include "formresizer.h"
+#include "JZDesinger.h"
+#include "JZDesignerEditor.h"
 
+class QDesignerFormWindowManagerInterface;
 class JZUiEditor : public JZEditor
 {
     Q_OBJECT
@@ -32,9 +32,9 @@ public:
 protected slots:
     void onCleanChanged(bool flag);
 
-protected:            
-    QUndoStack m_stack;
-    QScrollArea *m_area;
+protected:        
+    JZDesignerFormWindow *m_form;   
+    QDesignerFormWindowManagerInterface *m_fwm;
 };
 
 #endif

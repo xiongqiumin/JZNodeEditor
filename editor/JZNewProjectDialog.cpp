@@ -27,7 +27,6 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
 
     ui->listWidget->addItem("ui");
     ui->listWidget->addItem("console");
-    ui->listWidget->addItem("ai");
 
     ui->listWidget->setCurrentRow(0);
 }

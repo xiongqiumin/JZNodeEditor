@@ -171,13 +171,19 @@ const JZNodeObjectDefine* JZScriptEnvironment::meta(const QString& name) const
 }
 
 QString JZScriptEnvironment::typeToName(int id) const
-{            
-    if(JZNodeType::isEnum(id))
-        return m_objectManager.getEnumName(id);
+{   
+    bool isPoint = id & Type_pointFlag;
+    id = id & (~Type_pointFlag);
+    QString suffix = isPoint ? "*" : "";
+
+    if (JZNodeType::isEnum(id))
+    {
+        return m_objectManager.getEnumName(id) + suffix;
+    }
     else if (id >= Type_class)
-        return m_objectManager.getClassName(id);
+        return m_objectManager.getClassName(id) + suffix;
     else
-        return JZNodeType::typeName(id);
+        return JZNodeType::typeName(id) + suffix;
 }
 
 int JZScriptEnvironment::nameToType(const QString &name) const
@@ -216,11 +222,17 @@ int JZScriptEnvironment::typeidToType(const QString &name) const
 
 int JZScriptEnvironment::variantType(const QVariant &v) const
 {
-    return JZNodeType::variantType(v);
+    if (JZNodeType::isPointer(v))
+    {
+        QVariantPtr ptr = JZNodeType::getPointer(v);
+        return JZNodeType::variantType(*ptr) | Type_pointFlag;
+    }
+    else
+        return JZNodeType::variantType(v);
 }
 
 QString JZScriptEnvironment::variantTypeName(const QVariant &v) const
-{
+{    
     return typeToName(variantType(v));
 }
 

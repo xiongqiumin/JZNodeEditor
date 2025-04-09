@@ -12,6 +12,7 @@
 #include "JZNodeParamEditWidget.h"
 #include "JZNodeTypeHelper.h"
 #include "JZNodeFlagEditDialog.h"
+#include "JZNodeEditorManager.h"
 
 //JZNodeParamEditWidget
 JZNodeParamEditWidget::JZNodeParamEditWidget()
@@ -153,7 +154,7 @@ void JZNodeParamValueWidget::clearWidget()
 
 QString JZNodeParamValueWidget::getWidgetType(int data_type)
 {
-    auto d = editorEnvironment()->editorManager()->delegate(m_dataType);
+    auto d = editorManager()->delegate(m_dataType);
 
     QString type;
     if (data_type == Type_bool)
@@ -197,7 +198,7 @@ void JZNodeParamValueWidget::createWidget()
     clearWidget();
 
     blockSignals(true);
-
+    
     auto obj_inst = editorObjectManager();
     QString widget = m_widgetType;
     if (widget == "QCheckBox")
@@ -280,7 +281,7 @@ void JZNodeParamValueWidget::createWidget()
     }
     else if (widget == "JZNodeParamEditWidget")
     {
-        auto edit = editorEnvironment()->editorManager()->delegate(m_dataType)->createEdit();
+        auto edit = editorManager()->delegate(m_dataType)->createEdit();
         edit->connect(edit, &JZNodeParamEditWidget::sigValueChanged, this, &JZNodeParamValueWidget::sigValueChanged);
         m_widget = edit;
     }

@@ -88,7 +88,6 @@ void JZScriptItem::insertNode(JZNode * node)
     Q_ASSERT(node->id() != -1 && getNode(node->id()) == nullptr);
     node->setFile(this);
     m_nodes.insert(node->id(), node);
-    m_nodesPos.insert(node->id(), QPointF());
 }
 
 void JZScriptItem::removeNode(int id)
@@ -104,7 +103,6 @@ void JZScriptItem::removeNode(int id)
         delete it.value();
         m_nodes.erase(it);
     }
-    m_nodesPos.remove(id);
 }
 
 int JZScriptItem::addGroup(const JZNodeGroup &group)
@@ -184,12 +182,12 @@ JZNode *JZScriptItem::getNode(int id)
 
 void JZScriptItem::setNodePos(int id,QPointF pos)
 {
-    m_nodesPos[id] = pos;        
+    m_nodes[id]->setPos(pos);        
 }
 
 QPointF JZScriptItem::getNodePos(int id)
 {    
-    return m_nodesPos.value(id,QPointF());
+    return m_nodes[id]->pos();
 }
 
 QList<int> JZScriptItem::nodeList()
@@ -535,31 +533,30 @@ QStringList JZScriptItem::localVariableList(bool hasFunc)
     return list;
 }
 
-void JZScriptItem::saveEditorCache()
-{
-    m_editorCache.clear();
-    QDataStream s(&m_editorCache,QIODevice::WriteOnly);
+void JZScriptItem::saveToStream(QDataStream &s) const
+{    
+    s << m_name;
+    s << m_function;    
 
-    s << m_nodeId;    
+    s << m_nodeId;
     QList<QByteArray> node_list;
     auto it = m_nodes.begin();
     while (it != m_nodes.end())
-    {        
+    {
         node_list << it.value()->toBuffer();
         it++;
     }
-    s << node_list;    
-    s << m_connects;        
-    s << m_variables;
-    s << m_nodesPos;
+    s << node_list;
+    s << m_connects;
+    s << m_variables;    
     s << m_groups;
 }
 
-void JZScriptItem::loadEditorCache()
-{
-    QDataStream s(&m_editorCache,QIODevice::ReadOnly); 
-
-    s >> m_nodeId;    
+bool JZScriptItem::loadFromStream(QDataStream &s)
+{    
+    s >> m_name;
+    s >> m_function;    
+    s >> m_nodeId;
     QList<QByteArray> node_list;
     s >> node_list;
     for (int i = 0; i < node_list.size(); i++)
@@ -568,29 +565,13 @@ void JZScriptItem::loadEditorCache()
         QDataStream node_s(node_buffer);
         int node_type;
         node_s >> node_type;
-                
+
         JZNode *node = JZNodeFactory::instance()->createNode(node_type);
         node->fromBuffer(node_buffer);
         m_nodes.insert(node->id(), node);
-    }    
-    s >> m_connects;    
-    s >> m_variables;
-    s >> m_nodesPos;
+    }
+    s >> m_connects;
+    s >> m_variables;    
     s >> m_groups;
-}
-
-void JZScriptItem::saveToStream(QDataStream &s) const
-{    
-    s << m_name;
-    s << m_function;
-    s << m_editorCache;    
-}
-
-bool JZScriptItem::loadFromStream(QDataStream &s)
-{    
-    s >> m_name;
-    s >> m_function;
-    s >> m_editorCache;        
-    loadEditorCache(); 
     return true;
 }

@@ -88,10 +88,14 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<QList<JZYoloResult>> cls_yolo_ret_list(cls_id++, "QList<JZYoloResult>");
     cls_yolo_ret_list.regist();
 
-    jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "Yolo");
-    cls_yolo.defProperty("modelPath", &JZYolo::modelPath, &JZYolo::setModelPath);    
+    jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "JZYolo");
+    cls_yolo.def("loadNet", true, &JZYolo::loadNet);
     cls_yolo.def("forward", true, &JZYolo::forward);
     cls_yolo.regist();
+
+    jzbind::ClassBind<JZYoloView> cls_yolo_view(cls_id++, "JZYoloView", "QWidget");
+    cls_yolo_view.def("setYoloResult", true, &JZYoloView::setYoloResult);
+    cls_yolo_view.regist();
 }
 
 void JZModuleOpencv::unregist(JZScriptEnvironment *env)

@@ -97,7 +97,7 @@ JZNodeObjectDefine::JZNodeObjectDefine()
     isCObject = false;
     isUiWidget = false;    
     valueType = false;
-    manager = nullptr;
+    this->manager = manager;
 }
 
 QString JZNodeObjectDefine::fullname() const
@@ -1109,8 +1109,7 @@ int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
     //可以先声明在注册
     Q_ASSERT(!info.className.isEmpty() && !meta(info.className));
-    Q_ASSERT(info.id == -1 || !meta(info.id));
-    Q_ASSERT((!m_userRegist && info.id < Type_userObject) || (m_userRegist && info.id >= Type_userObject));
+    Q_ASSERT(info.id == -1 || !meta(info.id));    
 
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;
@@ -1124,6 +1123,7 @@ int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
     {        
         def->id = m_objectId++;
     }
+    Q_ASSERT((!m_userRegist && def->id < Type_userObject) || (m_userRegist && def->id >= Type_userObject));
 
     m_metas.insert(def->id ,QSharedPointer<JZNodeObjectDefine>(def));
     return def->id;

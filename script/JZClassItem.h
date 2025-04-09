@@ -22,7 +22,7 @@ public:
 
     QString superClass() const;
 
-    JZNodeObjectDefine objectDefine();
+    JZNodeObjectDefine objectDefine(); //只应该在重新注册类时使用
     
     JZParamItem *paramFile();
     bool addMemberVariable(QString name,int dataType,const QString &v = QString());
@@ -39,6 +39,7 @@ public:
     QStringList memberFunctionList();
 
     JZUiItem *ui();
+    bool hasUi();
     void addUi(JZUiItem *item);
     void removeUi();
     QList<JZParamDefine> uiWidgets();

@@ -55,12 +55,15 @@ public:
     virtual void redo() override;
     virtual void undo() override;
 
-    virtual void navigate(QUrl url) override;    
+    virtual void navigate(QUrl url) override;
+    JZScriptClassItem *classItem();
 
 protected slots:
     void on_btnAdd_clicked();
     void on_btnRemove_clicked();    
     void on_boxParamType_currentIndexChanged(int index);    
+
+    void onParamBind();
 
     void onCleanChanged(bool modify);
     void onItemChanged(QTableWidgetItem *item);
@@ -70,6 +73,7 @@ protected:
     friend JZNodeParamEditorCommand;
     virtual void keyPressEvent(QKeyEvent *e) override;
 
+    QString cellText(int row, int col);
     void updateItem(int row,const JZParamDefine *define);
     void updateUiItem(int row,const JZParamDefine *define);
     void addNewCommand(QString name, QString type);
@@ -91,6 +95,7 @@ protected:
     QTableWidget *m_table;
     QTableWidget *m_tableUi;    
     Ui::JZNodeParamEditor *ui;    
+    JZScriptClassItem *m_class;
 
     QUndoStack m_commandStack;
 };

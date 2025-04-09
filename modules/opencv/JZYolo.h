@@ -23,15 +23,10 @@ public:
     ~JZYolo();
 
     bool isVaild();
-    bool loadNet();
-
-    QString modelPath();
-    void setModelPath(QString path);
-    
+    bool loadNet(QString path);    
     QList<JZYoloResult> forward(Mat mat);
     
-    cv::dnn::Net m_net;
-    QString m_modelPath;    
+    cv::dnn::Net m_net;     
     QMap<int,QString> m_classList;
 };
 

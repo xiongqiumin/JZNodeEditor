@@ -83,7 +83,7 @@ bool JZNodeAutoRunWidget::typeEqual(const QList<JZParamDefine> &p1, const QList<
 int JZNodeAutoRunWidget::editType(int data_type)
 {    
     auto env = editorEnvironment();
-    auto inst = env->editorManager();
+    auto inst = JZNodeEditorManager::instance();
     auto d = inst->delegate(data_type);
     if (d && d->editType != Type_none)
         return inst->delegate(data_type)->editType;
