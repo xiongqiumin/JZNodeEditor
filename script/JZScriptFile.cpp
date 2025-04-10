@@ -110,6 +110,17 @@ JZScriptItem *JZScriptFile::getFunction(QString name)
         return nullptr;
 }
 
+QStringList JZScriptFile::classList() const
+{
+    QStringList class_list;
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        if (m_childs[i]->itemType() == ProjectItem_class)
+            class_list << m_childs[i]->name();
+    }
+    return class_list;
+}
+
 JZScriptClassItem *JZScriptFile::addClass(QString name, QString super)
 {
     QString flow = name + ".jz";

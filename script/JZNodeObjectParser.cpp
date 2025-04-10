@@ -214,26 +214,34 @@ void JZNodeObjectParser::pushToken()
     m_currentIndex--;
 }
 
-QStringList JZNodeObjectParser::readList(QString valueType,QString gap)
+JZNodeObject *JZNodeObjectParser::readList(QString valueType,QString gap)
 {   
-    QStringList list;
-/*
+    QString list_type = "QList<" + valueType + ">";
+
     Token c = readToken();
     Q_ASSERT(c.word == gap);
     gap = (gap == "[")? "]":"}";
 
     auto env = g_engine->environment();
-    int data_type = env->nameToType(valueType);
-    QScopedPointer<JZList> ptr(new JZList());
-    ptr->valueType = valueType;
+    int data_type = env->nameToType(valueType);        
+    JZNodeObject *obj = env->objectManager()->create(list_type);
+    if (!obj)
+        return nullptr;
+
+    JZNodeObjectHolder ptr(obj,true);
+    JZNodeObjectPointer obj_ptr = JZNodeObjectPointer::fromObject(obj, false);
+
+    QVariantList in,out;
+    in << QVariant::fromValue(obj_ptr) << QVariant();
     while (1)
     {
         QVariant v = readVariable();
         if(!checkVariable(v,data_type))
             return nullptr;
 
-        v = env->convertTo(data_type,v);
-        ptr->list.push_back(v);
+        v = env->convertTo(v, data_type);
+        in[1] = v;        
+        JZScriptInvoke(list_type + ".push_back",in,out);
 
         c = readToken();
         if (c.word == gap)
@@ -245,16 +253,15 @@ QStringList JZNodeObjectParser::readList(QString valueType,QString gap)
             return nullptr;
         }
     }
-
-    return ptr.take();    
-*/
-    return list;
+    
+    ptr.releaseOwner();
+    return obj;
 }
 
-QMap<QString, QString> JZNodeObjectParser::readMap(QString keyType,QString valueType)
+JZNodeObject *JZNodeObjectParser::readMap(QString keyType,QString valueType)
 {
-    QMap<QString, QString> ret;
-/*
+    QString map_type = mapType(keyType, valueType);
+
     Token c = readToken();
     Q_ASSERT(c.word == "{");
 
@@ -262,16 +269,25 @@ QMap<QString, QString> JZNodeObjectParser::readMap(QString keyType,QString value
     int key_type = env->nameToType(keyType);
     int value_type = env->nameToType(valueType);
 
-    QScopedPointer<JZMap> ptr(new JZMap());
-    ptr->keyType = keyType;
-    ptr->valueType = valueType;
+    JZNodeObject *obj = env->objectManager()->create(map_type);
+    if (!obj)
+        return nullptr;
+
+    JZNodeObjectHolder ptr(obj,true);
+    JZNodeObjectPointer obj_ptr = JZNodeObjectPointer::fromObject(obj, false);
+
+    QVariantList in, out;
+    in << QVariant::fromValue(obj_ptr) << QVariant() << QVariant();
     while (1)
     {
         QVariant key = readVariable();
         if(!checkVariable(key,key_type))
             return nullptr;
 
-        key = env->convertTo(key_type,key);
+        key = env->convertTo(key, key_type);
+        if (!checkVariable(key, key_type))
+            return nullptr;
+
         c = readToken();
         if (c.word != ":")
         {
@@ -282,11 +298,10 @@ QMap<QString, QString> JZNodeObjectParser::readMap(QString keyType,QString value
         QVariant value = readVariable();
         if(!checkVariable(value,value_type))
             return nullptr;
-        value = env->convertTo(key_type,value);
 
-        JZMap::Key map_key;
-        map_key.v = key;
-        ptr->map.insert(map_key, value);
+        in[1] = key;
+        in[2] = value;
+        JZScriptInvoke(map_type + ".insert", in, out);
 
         c = readToken();
         if (c.word == "}")
@@ -298,14 +313,12 @@ QMap<QString, QString> JZNodeObjectParser::readMap(QString keyType,QString value
         }
     }
 
-    return ptr.take();  
-*/
-    return ret;
+    ptr.releaseOwner();
+    return obj;
 }
 
 JZNodeObject *JZNodeObjectParser::readObject()
 {    
-/*
     auto env = g_engine->environment();
     auto inst = g_engine->environment()->objectManager();
     Token tk = nextToken();
@@ -380,34 +393,42 @@ JZNodeObject *JZNodeObjectParser::readObject()
     }
     else
     {
-        JZNodeObjectPtr ptr = JZNodeObjectPtr(inst->create(meta->id),true);       
-        auto obj = ptr.object();
-        QScopedPointer<JZMap> map(readMap("string","any"));        
+        auto map = readMap("string", "any");
         if (!map)
             return nullptr;
+                
+        JZNodeObjectPointer map_ptr = JZNodeObjectPointer::fromObject(map, true);
+        
+        auto obj = inst->create(meta->id);
+        JZNodeObjectHolder ptr(obj, true);
 
-        auto it = map->map.begin();
-        while (it != map->map.end())
-        {
-            QString param_name = it.key().v.toString();
-            auto param_def = obj->meta()->param(param_name);
-            if (!param_def)
+        mapForeach(map, [this, obj, env](QVariant key, QVariant value)->bool
             {
-                makeError("no param " + param_name);
-                return nullptr;
-            }
+                QString param_name = key.toString();
+                auto param_def = obj->meta()->param(param_name);
+                if (!param_def)
+                {
+                    makeError("no param " + param_name);
+                    return false;
+                }
 
-            int param_type = env->nameToType(param_def->type);
-            if (!checkVariable(it.value(),param_type))
-                return nullptr;
-            
-            obj->setParam(param_name, env->convertTo(param_type, it.value()));
-            it++;
+                int param_type = env->nameToType(param_def->type);
+                if (!checkVariable(value, param_type))
+                    return false;
+
+                obj->setParam(param_name, env->convertTo(value, param_type));
+                return true;
+            });
+
+        if (m_error.isEmpty())
+        {
+            ptr.releaseOwner();
+            return obj;
         }
-        ptr.releaseOwner();
-        return ptr.object();   
+        else
+            return nullptr;
     }
-*/
+
     return nullptr;
 }
 
@@ -439,7 +460,7 @@ QVariant JZNodeObjectParser::readVariable()
         obj = readObject();
         if (!obj)
             return QVariant();
-        return QVariant::fromValue(JZNodeObjectPtr(obj,true));
+        return QVariant::fromValue(JZNodeObjectHolder(obj,true));
     }    
    
 }
@@ -569,7 +590,7 @@ QString JZNodeObjectFormat::variantToString(const QVariant &v)
     if (JZNodeType::isObject(type))
         return objectToString(toJZObject(v));
     else    
-        return env->convertTo(Type_string, v).toString();
+        return env->convertTo(v, Type_string).toString();
 }
 
 QString JZNodeObjectFormat::listToString(const QStringList& list)
@@ -640,7 +661,7 @@ QString JZNodeObjectFormat::objectToString(JZNodeObject *obj)
         if (func_def)
         {        
             QVariantList in, out;
-            in << QVariant::fromValue(JZNodeObjectPtr(obj,false));
+            in << QVariant::fromValue(JZNodeObjectHolder(obj,false));
             JZScriptInvoke(func_def->fullName(), in, out);
             text += out[0].toString();
         }

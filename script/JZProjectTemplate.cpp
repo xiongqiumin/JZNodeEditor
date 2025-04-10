@@ -15,6 +15,13 @@ JZProjectTemplate *JZProjectTemplate::instance()
     return &inst;
 }        
 
+QStringList JZProjectTemplate::templateList()
+{
+    QStringList list;
+    list << "console" << "ui";
+    return list;
+}
+
 bool JZProjectTemplate::initProject(JZProject *project, QString temp)
 {
     project->clear();
@@ -88,6 +95,10 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
 
         main_flow->addConnect(func_show->flowOutGemo(0), main_loop->flowInGemo());
         main_flow->addConnect(get_param->paramOutGemo(0), main_loop->paramInGemo(0));   
+    }
+    else
+    {
+        Q_ASSERT(0);
     }
 
     return true;

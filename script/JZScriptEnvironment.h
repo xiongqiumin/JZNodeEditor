@@ -69,14 +69,13 @@ public:
     void registConvert(int from, int to, ConvertFunc func);
     bool canConvert(int from,int to) const;    //隐式转换
     bool canConvertExplicitly(int from,int to) const;    //被 convertTo 支持的
-    QVariant convertTo(int type,const QVariant &v) const;
+    QVariant convertTo(const QVariant &v, int type) const;
     QVariant clone(const QVariant &v) const;        
 
     bool isVaildType(QString type) const;
     int upType(int type1, int type2) const;  //提升类型
     int upType(QList<int> types) const;
     int matchType(QList<int> src_types,QList<int> dst_types) const;
-    bool canInitValue(int type,const QString &v) const;
     QVariant defaultValue(int type) const;
     QString defaultValueString(int type) const;
     QVariant initValue(int type, const QString &v) const;

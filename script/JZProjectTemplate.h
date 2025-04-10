@@ -10,6 +10,7 @@ public:
     static JZProjectTemplate *instance();
 
     bool initProject(JZProject *project, QString temp);
+    QStringList templateList();
 };
 
 

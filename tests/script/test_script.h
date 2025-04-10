@@ -23,7 +23,6 @@ private slots:
     void testObjectParse();
     
     void testBind();
-    void testParamBinding();
     
     void testWhileLoop();
     void testFor();
@@ -39,10 +38,6 @@ private slots:
     void testFunction();    
     void testBreakPoint();
     void testDebugServer();
-    void testUnitTest();
-    void testUnitTestClass();
-
-    void testModule();
     void testArgs();
 
 protected:

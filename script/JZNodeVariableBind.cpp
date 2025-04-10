@@ -93,7 +93,7 @@ QVariant BindObject::getVariable(const QString &path)
 void BindObject::setVariable(const QString &path, const QVariant &value)
 {
     auto env = g_engine->environment();
-    QVariant v = env->convertTo(m_dataType, value);
+    QVariant v = env->convertTo(value, m_dataType);
     if (m_context->inherits("JZNodeObject"))
     {
         auto jz_obj = qobject_cast<JZNodeObject*>(m_context);

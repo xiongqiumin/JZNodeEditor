@@ -77,7 +77,7 @@ public:
     {
         QString type = engine->getReg(Reg_CallIn).toString();    
         JZNodeObject *obj = engine->environment()->objectManager()->create(type);
-        engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectPtr(obj,true)));
+        engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectHolder(obj,true)));
     }
 };
 

@@ -23,6 +23,16 @@ include_directories(
 set(NodePath ../..)
 set(JZNodeTest_SOURCES
     main.cpp
+	test_base.cpp
+	test_base.h
+	test_benchmark.cpp
+	test_benchmark.h
+	test_server.cpp
+	test_server.h
+	test_script.cpp
+	test_script.h
+	test_opencv.cpp
+	test_opencv.h
     ${NodePath}/script/JZParamItem.cpp
     ${NodePath}/script/JZParamItem.h
     ${NodePath}/script/JZProject.cpp
@@ -57,8 +67,6 @@ set(JZNodeTest_SOURCES
     ${NodePath}/script/JZNodeBuilder.h
     ${NodePath}/script/JZNodeCompiler.cpp
     ${NodePath}/script/JZNodeCompiler.h
-    ${NodePath}/script/JZNodeCppGenerater.cpp
-    ${NodePath}/script/JZNodeCppGenerater.h
     ${NodePath}/script/JZNodeDebugClient.cpp
     ${NodePath}/script/JZNodeDebugClient.h
     ${NodePath}/script/JZNodeDebugPacket.cpp
@@ -159,4 +167,5 @@ target_link_libraries(JZNodeTest Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::SerialPort      
     Qt${QT_VERSION_MAJOR}::PrintSupport
     Qt${QT_VERSION_MAJOR}::Xml
+	Qt${QT_VERSION_MAJOR}::Test
     ${OpenCV_LIBRARIES})

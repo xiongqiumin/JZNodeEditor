@@ -131,8 +131,10 @@ public:
 };
 
 enum CompilerTip{
-    Error_noClass,
+    Error_noType,
     Error_noVariable,
+    Error_noImplement,
+    Errro_initVariableFailed,
     Error_classNoMember,
 };
 

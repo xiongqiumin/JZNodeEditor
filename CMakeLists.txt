@@ -185,9 +185,7 @@ set(JZNodeEditor_SOURCES
     script/JZNodeBuilder.cpp
     script/JZNodeBuilder.h
     script/JZNodeCompiler.cpp
-    script/JZNodeCompiler.h
-    script/JZNodeCppGenerater.cpp
-    script/JZNodeCppGenerater.h
+    script/JZNodeCompiler.h    
     script/JZNodeDebugClient.cpp
     script/JZNodeDebugClient.h
     script/JZNodeDebugPacket.cpp

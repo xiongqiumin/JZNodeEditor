@@ -131,6 +131,8 @@ public:
     const JZNodeTypeMeta &typeMeta() const;       
     QString applicationFilePath();
     
+    JZFunction* function(QString name);
+
     QList<JZNodeScript*> scriptList();
     JZNodeScript *script(QString path);   
     
@@ -144,7 +146,7 @@ protected:
 
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
-    
+     
     QString m_filePath;
     QString m_error;
 

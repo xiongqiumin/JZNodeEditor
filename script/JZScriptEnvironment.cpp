@@ -314,16 +314,16 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
     {
         return true;
     }
-
+    
     if(type1 == Type_arg || type2 == Type_arg)
         return true;
-    if(type1 == type2 || type2 == Type_any)
+    else if(type1 == type2 || type2 == Type_any)
         return true;
-    if(JZNodeType::isNumber(type1) && JZNodeType::isNumber(type2))
+    else if(JZNodeType::isNumber(type1) && JZNodeType::isNumber(type2))
         return true;
-    if ((type1 == Type_int && JZNodeType::isEnum(type2)) || (JZNodeType::isEnum(type1) && type2 == Type_int))
+    else if ((type1 == Type_int && JZNodeType::isEnum(type2)) || (JZNodeType::isEnum(type1) && type2 == Type_int))
         return true;
-    if (JZNodeType::isEnum(type1) && JZNodeType::isEnum(type2))
+    else if (JZNodeType::isEnum(type1) && JZNodeType::isEnum(type2))
     {
         auto meta1 = m_objectManager.enumMeta(type1);
         auto meta2 = m_objectManager.enumMeta(type2);
@@ -333,8 +333,14 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
         
         return false;
     }
-    if (type1 == Type_nullptr && type2 >= Type_class)
+    else if (type1 == Type_nullptr && type2 >= Type_class)
         return true;    
+    else if (type1 >= Type_class && type2 >= Type_class)
+    {
+        if (m_objectManager.isInherits(type1, type2))
+            return true;
+    }
+
     int64_t id = makeConvertId(type1, type2);
     if (convertMap.contains(id))
         return true;
@@ -357,7 +363,7 @@ bool JZScriptEnvironment::canConvertExplicitly(int from,int to) const
     return false;
 }
 
-QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
+QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
 {
     int src_type = variantType(v);
     if (src_type == dst_type)
@@ -366,8 +372,8 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
     if (!JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type)
         && isInherits(src_type, JZNodeType::baseType(dst_type)))
     {
-        JZNodeObjectPtr* obj_ptr = (JZNodeObjectPtr*)v.data();
-        JZNodeObjectPtrRef pointer = JZNodeObjectPtrRef::fromPtr(*obj_ptr);
+        JZNodeObjectHolder* obj_ptr = (JZNodeObjectHolder*)v.data();
+        JZNodeObjectPointer pointer = JZNodeObjectPointer::fromObject(*obj_ptr);
         return QVariant::fromValue(pointer);
     }
 
@@ -380,12 +386,12 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
     else if(src_type == Type_any)
     {
         auto *ptr = (const JZNodeVariantAny*)v.data();
-        return convertTo(dst_type,ptr->value);
+        return convertTo(ptr->value,dst_type);
     }
     else if (src_type == Type_nullptr && dst_type >= Type_class)
     {        
         auto null_obj = m_objectManager.createNull(dst_type);
-        return QVariant::fromValue(JZNodeObjectPtr(null_obj,true));
+        return QVariant::fromValue(JZNodeObjectHolder(null_obj,true));
     }
     else if(src_type >= Type_class && dst_type >= Type_class)
     {
@@ -645,60 +651,6 @@ QString JZScriptEnvironment::defaultValueString(int type) const
     }
     else
         return "{}";
-}
-
-bool JZScriptEnvironment::canInitValue(int type,const QString &text) const
-{
-    if(text.isEmpty())
-        return true;
-    
-    if (type == Type_any)
-    {
-        return canInitValue(JZScriptEnvironment::stringType(text),text);
-    }
-    else if (type == Type_string)
-    {
-        return true;
-    }
-    else if (type == Type_bool)
-    {
-        return (text == "false" || text == "true");
-    }
-    else if(type == Type_function)
-    {   
-        return true;
-    }
-    else if(type == Type_nullptr)
-    {
-        return text == "null";
-    }
-    else if(type >= Type_enum && type < Type_class)
-    {
-        auto meta = m_objectManager.enumMeta(type);
-        return meta->hasKey(text);
-    }
-    else if(type >= Type_class)
-    {
-        if(text.isEmpty() || text == "null")
-            return true;
-        if(text.startsWith("{") || text.endsWith("}"))
-            return true;
-
-        return false;
-    }
-    else if (type == Type_int || type == Type_int64 || type == Type_double)
-    {        
-        bool isInt = JZRegExpHelp::isInt(text);
-        bool isHex = JZRegExpHelp::isHex(text);
-        bool isFloat = JZRegExpHelp::isFloat(text);
-        
-        if (isInt || isHex || isFloat)
-            return true;
-        
-        return false;
-    }
-
-    return false;
 }
 
 QVariant JZScriptEnvironment::initValue(int type, const QString &text) const

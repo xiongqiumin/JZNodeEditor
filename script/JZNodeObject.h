@@ -192,18 +192,18 @@ protected:
 };
 
 //会根据QObject是否有父类，决定是否释放
-class JZNodeObjectPtr
+class JZNodeObjectHolder
 {
 public:
-    JZNodeObjectPtr();
-    JZNodeObjectPtr(JZNodeObject *obj,bool isOwner);
-    ~JZNodeObjectPtr();
+    JZNodeObjectHolder();
+    JZNodeObjectHolder(JZNodeObject *obj,bool isOwner);
+    ~JZNodeObjectHolder();
 
     JZNodeObject *object() const;
     void releaseOwner();
 
-    bool operator ==(const JZNodeObjectPtr &other) const;
-    bool operator !=(const JZNodeObjectPtr &other) const;
+    bool operator ==(const JZNodeObjectHolder &other) const;
+    bool operator !=(const JZNodeObjectHolder &other) const;
 
 protected:
     class JZNodeObjectPtrData
@@ -218,26 +218,27 @@ protected:
 
     QSharedPointer<JZNodeObjectPtrData> data;
 };
-Q_DECLARE_METATYPE(JZNodeObjectPtr)
+Q_DECLARE_METATYPE(JZNodeObjectHolder)
 
 /*
-    指针，可以指向任意类型
+    指针，指向JZNodeObject
 */
-class JZNodeObjectPtrRef
+class JZNodeObjectPointer
 {
 public:
-    static JZNodeObjectPtrRef fromPtr(const JZNodeObjectPtr &ptr);
+    static JZNodeObjectPointer fromObject(const JZNodeObjectHolder &ptr);
+    static JZNodeObjectPointer fromObject(JZNodeObject *ptr,bool owner);
 
-    JZNodeObjectPtrRef();
+    JZNodeObjectPointer();
 
     int type;   //指针类型
-    JZNodeObjectPtr pointer;
+    JZNodeObjectHolder pointer;
 };
-Q_DECLARE_METATYPE(JZNodeObjectPtrRef)
+Q_DECLARE_METATYPE(JZNodeObjectPointer)
 
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
-JZNodeObjectPtr toJZObjectPtr(const QVariant &v);
+JZNodeObjectHolder toJZObjectPtr(const QVariant &v);
 JZNodeObject* qobjectToJZObject(QObject *obj);
 JZNodeObject* objectFromString(int type,const QString &text);
 
@@ -320,7 +321,7 @@ public:
     QVariant objectCreate() const
     {
         auto obj = createByCTypeid(typeid(T).name());
-        return QVariant::fromValue(JZNodeObjectPtr(obj, true));
+        return QVariant::fromValue(JZNodeObjectHolder(obj, true));
     }
 
     template<class T>
@@ -329,7 +330,7 @@ public:
         static_assert(std::is_pointer<T>(), "only support class pointer");
         QString c_typeid = typeid(std::remove_pointer_t<T>).name();
         auto obj = createRefrenceByCTypeid(c_typeid, ptr, cowner);
-        JZNodeObjectPtrRef node_ptr = JZNodeObjectPtrRef::fromPtr(JZNodeObjectPtr(obj, true)); //这里代表true是不是管理obj， 上面的cowner代表是不是管理c  
+        JZNodeObjectPointer node_ptr = JZNodeObjectPointer::fromObject(JZNodeObjectHolder(obj, true)); //这里代表true是不是管理obj， 上面的cowner代表是不是管理c  
         return QVariant::fromValue(node_ptr);
     }
 

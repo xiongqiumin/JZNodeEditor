@@ -1075,7 +1075,7 @@ bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
         if(depend->function.isMemberFunction() && i == 0)
         {
             auto obj = obj_inst->create(depend->function.className);
-            JZNodeObjectPtr ptr(obj,true);
+            JZNodeObjectHolder ptr(obj,true);
             in << QVariant::fromValue(ptr);
 
             auto mem_it = depend->member.begin();

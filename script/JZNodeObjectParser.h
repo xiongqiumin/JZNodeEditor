@@ -31,8 +31,8 @@ protected:
     void pushToken();
 
     QVariant readVariable();    
-    QStringList readList(QString valueType,QString start);
-    QMap<QString,QString> readMap(QString keyType,QString valueType);    
+    JZNodeObject *readList(QString valueType,QString start);
+    JZNodeObject *readMap(QString keyType,QString valueType);
     JZNodeObject *readObject();
     
     bool readBkt(QString &context);

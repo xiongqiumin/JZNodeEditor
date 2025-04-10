@@ -171,7 +171,7 @@ void JZNodeEditor::open(JZProjectItem *item)
 
 void JZNodeEditor::close()
 {
-
+    
 }
 
 void JZNodeEditor::save()

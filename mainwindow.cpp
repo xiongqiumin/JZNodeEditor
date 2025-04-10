@@ -16,14 +16,13 @@
 #include "JZUiEditor.h"
 #include "JZNodeParamEditor.h"
 #include "JZNewProjectDialog.h"
-#include "JZNodeUtils.h"
-#include "JZNodeCppGenerater.h"
 #include "JZAboutDialog.h"
 #include "JZProjectSettingDialog.h"
 #include "JZNodeProgramDumper.h"
 #include "JZProjectTemplate.h"
 #include "JZNodeEditorManager.h"
 #include "JZEditorUtils.h"
+#include "JZNodeUtils.h"
 
 //Setting
 Setting::Setting()
@@ -103,10 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_compilerTimer = new QTimer(this);
     connect(m_compilerTimer, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
     m_compilerTimer->start(100);    
-
-    JZLogModuleConfig config;
-    JZLogManager::instance()->addModule(Log_Compiler, config);
-    JZLogManager::instance()->addModule(Log_Runtime, config);
+    
     JZLogManager::instance()->addObserver(Log_Compiler,this);
     JZLogManager::instance()->addObserver(Log_Runtime, this);
 
@@ -840,6 +836,7 @@ bool MainWindow::closeProject()
     if (!closeAllEditor())
         return false;
     
+    m_log->clearLogs();    
     m_projectTree->clear();
     m_breakPoint->clear();
     m_project.close();
@@ -1515,7 +1512,8 @@ bool MainWindow::saveProgram()
     }
 
     JZNodeProgramDumper dumper;
-    saveToFile(build_path + "/" + m_project.name() + ".cpp", dumper.dump(&m_program));
+    dumper.init(&m_project, &m_program);
+    dumper.dump(build_path + "/" + m_project.name() + ".cpp");
     return true;
 }
 

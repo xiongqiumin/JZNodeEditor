@@ -197,9 +197,9 @@ void BenchmarkTest::testCall()
 
     //list_get
     auto obj = env->objectManager()->create(Type_intList);
-    auto list = (JZList*)(obj->cobj());
-    list->list << 1 << 2 << 3 << 4 << 5;
-    JZNodeObjectPtr ptr(obj,true);
+    auto list = (QList<int>*)(obj->cobj());
+    *list << 1 << 2 << 3 << 4 << 5;
+    JZNodeObjectHolder ptr(obj,true);
 
     auto list_func = env->functionManager()->functionImpl("QList<int>.get");
     JZBENCHMARK(jz_list_get)
@@ -212,7 +212,7 @@ void BenchmarkTest::testCall()
 
     JZBENCHMARK(c_list_get)
     {
-        QVariant out = list->list[1];
+        QVariant out = (*list)[1];
     }
 
     m_benchmark.report();
@@ -226,8 +226,8 @@ void BenchmarkTest::testSort()
     def.paramIn.push_front(env->paramDefine("list",Type_intList));
 
     auto obj = m_objInst->create(Type_intList);
-    auto list = (JZList*)(obj->cobj());
-    JZNodeObjectPtr ptr(obj,true);
+    auto list = (QList<int>*)(obj->cobj());
+    JZNodeObjectHolder ptr(obj,true);
     QVariantList base_list;
 
     int list_len = 200;
@@ -327,8 +327,6 @@ void BenchmarkTest::testSort()
 
     JZBENCHMARK(jz_sort)
     {
-        list->list = base_list;
-
         m_engine.statClear();
 
         QVariantList in,out;
@@ -444,7 +442,6 @@ void BenchmarkTest::testSum()
 
     if(!build())
         return;
-    dumpAsm("testSum.asm");
 
     m_benchmark.clear();
 

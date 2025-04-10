@@ -9,6 +9,12 @@
 static QMap<QString,int> typeMap;
 static QMap<int, QString> opNameMap;
 
+//QVariantPtr
+QVariantPtr::QVariantPtr()
+{
+    type = Type_none;
+}
+
 //JZEnum
 JZEnum::JZEnum()
 {
@@ -357,12 +363,12 @@ int JZNodeType::variantType(const QVariant &v)
             return Type_nullptr;
         else if (v_usertype == qMetaTypeId<JZFunctionPointer>())
             return Type_function;
-        else if (v_usertype == qMetaTypeId<JZNodeObjectPtr>())
-            return ((JZNodeObjectPtr*)v.data())->object()->type();
+        else if (v_usertype == qMetaTypeId<JZNodeObjectHolder>())
+            return ((JZNodeObjectHolder*)v.data())->object()->type();
         else if (v_usertype == qMetaTypeId<JZNodeVariantAny>())
             return Type_any;
-        else if (v_usertype == qMetaTypeId<JZNodeObjectPtrRef>())
-            return ((JZNodeObjectPtrRef*)v.data())->type;
+        else if (v_usertype == qMetaTypeId<JZNodeObjectPointer>())
+            return ((JZNodeObjectPointer*)v.data())->type;
     }
     
     return Type_none;
@@ -370,7 +376,7 @@ int JZNodeType::variantType(const QVariant &v)
 
 bool JZNodeType::variantIsPointer(const QVariant& v)
 {
-    return v.userType() == qMetaTypeId<JZNodeObjectPtrRef>();
+    return v.userType() == qMetaTypeId<JZNodeObjectPointer>();
 }
 
 bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot)

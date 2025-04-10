@@ -11,6 +11,7 @@
 #include "JZNodeObjectParser.h"
 #include "JZContainer.h"
 #include "runtime/JZNodeUiLoader.h"
+#include "LogManager.h"
 
 QString JZObjectToString(JZNodeObject *obj)
 {
@@ -22,6 +23,12 @@ void JZScriptLog(const QString &log)
 {
     g_engine->print(log);
     qDebug() << log;
+}
+
+QVariant JZScriptConvert(const QVariant &in, int type)
+{
+    auto env = g_engine->environment();
+    return env->convertTo(in, type);
 }
 
 void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out)
@@ -50,12 +57,18 @@ RunnerEnv::~RunnerEnv()
 
 void RunnerEnv::initVariable(QString name, const QVariant &value)
 {
-    locals[name] = QVariantPtr(new QVariant(value));
+    QVariantPtr ptr;
+    ptr.type = JZNodeType::variantType(value);
+    ptr.ptr = QSharedPointer<QVariant>(new QVariant(value));
+    locals[name] = ptr;
 }
 
 void RunnerEnv::initVariable(int id, const QVariant &value)
 {
-    stacks[id] = QVariantPtr(new QVariant(value));
+    QVariantPtr ptr;
+    ptr.type = JZNodeType::variantType(value);
+    ptr.ptr = QSharedPointer<QVariant>(new QVariant(value));
+    stacks[id] = ptr;
 }
 
 QVariant *RunnerEnv::getRef(int id)
@@ -64,7 +77,7 @@ QVariant *RunnerEnv::getRef(int id)
     if (it == stacks.end())
         return nullptr;
 
-    return it->data();
+    return it->ptr.data();
 }
 
 QVariant *RunnerEnv::getRef(QString name)
@@ -73,7 +86,7 @@ QVariant *RunnerEnv::getRef(QString name)
     if (it == locals.end())
         return nullptr;
 
-    return it->data();
+    return it->ptr.data();
 }
 
 void RunnerEnv::clearIrCache()
@@ -374,6 +387,9 @@ void JZNodeEngine::autoConnect()
         auto& func_list = script_list[i]->functionList;
         for (int func_idx = 0; func_idx < func_list.size(); func_idx++)
         {
+            if (func_list[func_idx].isMemberFunction())
+                continue;
+
             QString func = func_list[func_idx].name();
             if (!func.startsWith("on_"))
                 continue;
@@ -386,22 +402,22 @@ void JZNodeEngine::autoConnect()
             QString param_name = func.mid(3, idx2 - idx1);
             if(!m_global.contains(param_name))
             {
-                qDebug() << "connect slot by name no param: " + param_name;
+                LOGMOD_D(Log_Runtime,"connect slot by name no param: " + param_name);
                 continue;
             }
 
             QString sig = func.mid(idx2 + 1);
-            auto jz_obj = toJZObject(*m_global[param_name]);
+            auto jz_obj = toJZObject(*m_global[param_name].ptr);
             if (!jz_obj)
             {
-                qDebug() << "connect slot by name object not init";
+                LOGMOD_D(Log_Runtime, "connect slot by name object not init");
                 continue;
             }
 
             auto sig_func = jz_obj->signal(sig);
             if (!sig_func)
             {
-                qDebug() << "connect slot by name no single: " + sig;
+                LOGMOD_D(Log_Runtime, "connect slot by name no single: " + sig);
                 continue;
             }
 
@@ -735,7 +751,7 @@ QVariant *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
     {
         auto it = m_global.find(param.ref());
         if (it != m_global.end())
-            ref = it->data();
+            ref = it->ptr.data();
     }
     else
     {
@@ -751,7 +767,7 @@ QVariant *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
             {
                 auto it = m_global.find(param.ref());
                 if (it != m_global.end())
-                    ref = it->data();
+                    ref = it->ptr.data();
             }
         }
     }
@@ -829,7 +845,10 @@ void JZNodeEngine::setVariable(const QString &name, const QVariant &value)
 
 void JZNodeEngine::initGlobal(QString name, const QVariant &v)
 {
-	m_global[name] = QVariantPtr(new QVariant(v));
+    QVariantPtr ptr;
+    ptr.type = JZNodeType::variantType(v);
+    ptr.ptr = QSharedPointer<QVariant>(new QVariant(v));
+	m_global[name] = ptr;
 }
 
 void JZNodeEngine::initLocal(QString name, const QVariant &v)
@@ -876,7 +895,7 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     QVariant v;
     if (JZNodeType::isPointer(type))
     {
-        JZNodeObjectPtrRef ref;
+        JZNodeObjectPointer ref;
         ref.type = type;
         v = QVariant::fromValue(ref);
     }
@@ -907,7 +926,7 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
                 sub = objectFromString(type, init_text);
         }
         Q_ASSERT(sub);
-        v = QVariant::fromValue(JZNodeObjectPtr(sub,true));
+        v = QVariant::fromValue(JZNodeObjectHolder(sub,true));
     }
     return v;
 }
@@ -968,7 +987,7 @@ void JZNodeEngine::printMemory()
     auto g_it = m_global.begin();
     while(g_it != m_global.end())
     {
-        auto *var = g_it->data();
+        auto *var = g_it->ptr.data();
         text += "  "  + m_env.variantTypeName(*var) + " " + g_it.key() + "\n"; 
         g_it++;
     }
@@ -1779,7 +1798,7 @@ bool JZNodeEngine::run()
         {
             JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
             auto obj = obj_inst->clone(toJZObject(getParam(ir_set->src)));
-            auto ptr = JZNodeObjectPtr(obj,true);
+            auto ptr = JZNodeObjectHolder(obj,true);
             setParam(ir_set->dst,QVariant::fromValue(ptr));
             break;
         }
@@ -1803,7 +1822,7 @@ bool JZNodeEngine::run()
         case OP_convert:
         {
             JZNodeIRConvert *ir_convert = (JZNodeIRConvert*)op;
-            QVariant ret = m_env.convertTo(ir_convert->dstType,getParam(ir_convert->src));
+            QVariant ret = m_env.convertTo(getParam(ir_convert->src),ir_convert->dstType);
             setParam(ir_convert->dst,ret);
             break;   
         }

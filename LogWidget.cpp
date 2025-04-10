@@ -152,6 +152,16 @@ void LogWidget::clearLog(int type)
     m_logs[type]->clear();
 }
 
+void LogWidget::clearLogs()
+{
+    auto it = m_logs.begin();
+    while (it != m_logs.end())
+    {
+        it.value()->clear();
+        it++;
+    }
+}
+
 void LogWidget::addLog(int type, const QString &log)
 {
     m_logs[type]->addLog(log);

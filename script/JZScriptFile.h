@@ -25,6 +25,7 @@ public:
     void removeFunction(QString name);
     JZScriptItem *getFunction(QString name);
 
+    QStringList classList() const;
     JZScriptClassItem *addClass(QString name, QString super = QString());
     void removeClass(QString name);
     JZScriptClassItem *getClass(QString className);

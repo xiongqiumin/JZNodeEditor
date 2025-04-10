@@ -20,6 +20,7 @@ JZUiEditor::JZUiEditor()
 
 JZUiEditor::~JZUiEditor()
 {        
+    close();
 }   
 
 void JZUiEditor::open(JZProjectItem *item)
@@ -60,6 +61,9 @@ void JZUiEditor::save()
 
 void JZUiEditor::active()
 {    
+    if (!m_form)
+        return;
+
     auto designer = JZDesigner::instance()->editor();
     if (designer->parent() != this)
     {        

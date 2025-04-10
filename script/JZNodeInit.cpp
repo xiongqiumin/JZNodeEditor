@@ -13,7 +13,7 @@
 #include "modules/camera/JZModuleCamera.h"
 #include "modules/modbus/JZModuleModbus.h"
 
-QDebug operator<<(QDebug dbg, const JZNodeObjectPtr ptr)
+QDebug operator<<(QDebug dbg, const JZNodeObjectHolder ptr)
 {
     Q_ASSERT(ptr.object());
     dbg << JZNodeType::debugString(ptr.object());
@@ -28,8 +28,8 @@ void JZNodeInit()
     qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
     
-    QMetaType::registerDebugStreamOperator<JZNodeObjectPtr>();
-    QMetaType::registerEqualsComparator<JZNodeObjectPtr>();    
+    QMetaType::registerDebugStreamOperator<JZNodeObjectHolder>();
+    QMetaType::registerEqualsComparator<JZNodeObjectHolder>();    
 
     JZNodeType::init();
     JZNodeFactory::instance()->init();

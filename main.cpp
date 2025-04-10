@@ -4,11 +4,10 @@
 #include <QCommandLineParser>
 #include <QFileInfo>
 #include "JZNodeBind.h"
-#include "JZNodeCppGenerater.h"
 #include "JZRegExpHelp.h"
-#include "mainwindow.h"
 #include "JZNodeInit.h"
 #include "JZNodeVM.h"
+#include "mainwindow.h"
 
 using namespace std;
 

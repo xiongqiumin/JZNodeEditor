@@ -8,6 +8,7 @@
 #include "JZClassItem.h"
 #include "JZNodeUtils.h"
 #include "JZNodeBuilder.h"
+#include "JZRegExpHelp.h"
 
 // GraphNode
 GraphNode::GraphNode()
@@ -339,12 +340,16 @@ VariableCoor JZNodeCompiler::variableCoor(JZScriptItem *file, QString name)
 
 QString JZNodeCompiler::errorString(CompilerTip tip, QStringList args)
 {
-    if (tip == Error_noClass)
-        return "no such class " + args[0];
+    if (tip == Error_noType)
+        return "no such type " + args[0];
     else if(tip == Error_noVariable)
         return "no such variable " + args[0];
+    else if (tip == Error_noVariable)
+        return args[0] + "no implement " + args[1];
     else if(tip == Error_classNoMember)
         return args[0] + " no member " + args[1];
+    else if(tip == Errro_initVariableFailed)
+        return "can't init " + args[0] + " by " + args[1];
 
     return "error";
 }
@@ -1906,7 +1911,6 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
         if(!param->value.isEmpty())
             addInitVariable(irRef(param->name), data_type, param->value);
     }
-
     addStatement(JZNodeIRPtr(new JZNodeIRStackInit()));
 }
 
@@ -1972,13 +1976,13 @@ bool JZNodeCompiler::checkParamDefine(const JZParamDefine *def, QString &error)
     int data_type = env->nameToType(def->type);
     if (data_type == Type_none)
     {
-        error = "no such type " + def->type;
+        error = errorString(Error_noType, { def->type});
         return false;
     }
 
-    if (!env->canInitValue(data_type, def->value))
+    if(!checkInitValue(data_type,def->value))
     {
-        error = "无法初始化" + def->type + ", value = " + def->value;
+        error = errorString(Errro_initVariableFailed, { def->name, def->value });
         return false;
     }
 
@@ -2024,11 +2028,63 @@ bool JZNodeCompiler::checkVariableType(const QString &name, int data_type, QStri
     return true;    
 }
 
-bool JZNodeCompiler::checkInitValue(int data_type,const QString &value)
+bool JZNodeCompiler::checkInitValue(int type,const QString & text)
 {
-    auto env = project()->environment();
-    int str_type = env->stringType(value);
-    return env->matchType({ str_type }, { data_type });
+    if (text.isEmpty())
+        return true;
+
+    if (type == Type_any)
+    {
+        return checkInitValue(m_env->stringType(text), text);
+    }
+    else if (type == Type_string)
+    {
+        return true;
+    }
+    else if (type == Type_bool)
+    {
+        return (text == "false" || text == "true");
+    }
+    else if (type == Type_function)
+    {
+        return true;
+    }
+    else if (type == Type_nullptr)
+    {
+        return text == "null";
+    }
+    else if (type >= Type_enum && type < Type_class)
+    {
+        auto meta = m_env->objectManager()->enumMeta(type);
+        return meta->hasKey(text);
+    }
+    else if (type >= Type_class)
+    {
+        if (text.isEmpty() || text == "null")
+            return true;
+        if (text.startsWith("{") || text.endsWith("}"))
+        {
+            auto func = m_env->meta("__fromString__");
+            if (func)
+                return true;
+            else
+                return false;
+        }
+        return false;
+    }
+    else if (type == Type_int || type == Type_int64 || type == Type_double)
+    {
+        bool isInt = JZRegExpHelp::isInt(text);
+        bool isHex = JZRegExpHelp::isHex(text);
+        bool isFloat = JZRegExpHelp::isFloat(text);
+
+        if (isInt || isHex || isFloat)
+            return true;
+
+        return false;
+    }
+
+    return false;
 }
 
 bool JZNodeCompiler::addDataInput(int nodeId, const QList<int>& prop_list, QString &error)
@@ -2462,7 +2518,7 @@ void JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst, const JZNodeIRPara
     auto obj_inst = m_env->objectManager();
     bool clone = false;
     int dst_type = irParamType(dst);
-    if(dst_type >= Type_class)
+    if(!JZNodeType::isPointer(dst_type) && dst_type >= Type_class)
     {
         auto meta = obj_inst->meta(dst_type);
         if(meta->isValueType())

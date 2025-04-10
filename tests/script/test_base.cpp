@@ -3,12 +3,11 @@
 #include <QTextStream>
 #include <QApplication>
 #include <QDir>
-#include <QTest>
 #include "test_base.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeUtils.h"
 #include "JZNodeProgramDumper.h"
-#include "JZEditorGlobal.h"
+#include "JZProjectTemplate.h"
 
 BaseTest::BaseTest()
 {
@@ -25,8 +24,10 @@ void BaseTest::makeDump()
 {
     QString path = qApp->applicationDirPath() + "/dump";
     QDir dir;
-    if(!dir.exists(path))
+    if (!dir.exists(path))
         dir.mkdir(path);
+
+    m_dumpPath = path;
 }
 
 void BaseTest::callTest(QString function)
@@ -49,10 +50,9 @@ void BaseTest::initTestCase()
 void BaseTest::init()
 {
     m_project.clear();
-    m_project.initProject("console");    
+    JZProjectTemplate::instance()->initProject(&m_project, "console");
     m_file = m_project.mainFile();
     m_engine.setDebug(false);
-    setEditorEnvironment(m_project.environment());
 }
 
 void BaseTest::cleanup()
@@ -60,10 +60,16 @@ void BaseTest::cleanup()
     stop();    
 }
 
+void BaseTest::dump(QString name)
+{
+    JZNodeProgramDumper dumper;
+    dumper.init(&m_project, &m_program);
+    dumper.dump(m_dumpPath + "/" + name);
+}
+
 void BaseTest::onRuntimeError(JZNodeRuntimeError error)
 {        
-    JZNodeProgramDumper dumper;
-    qDebug().noquote() << dumper.dump(&m_program);
+    dump("lastError");
     qDebug().noquote() << "Stack:\n" << error.errorReport();    
     Q_ASSERT(0);
 }
@@ -71,28 +77,6 @@ void BaseTest::onRuntimeError(JZNodeRuntimeError error)
 void BaseTest::msleep(int ms)
 {
     QThread::msleep(ms);
-}
-
-void BaseTest::dumpAsm(QString path)
-{
-    JZNodeProgramDumper dumper;
-    QString text = dumper.dump(&m_program);
-    QFile file(qApp->applicationDirPath() + "/dump/" + path);
-    if(file.open(QFile::WriteOnly | QFile::Truncate))
-    {
-        QTextStream s(&file);
-        s << text;
-        file.close();
-    }
-}
-
-void BaseTest::dumpImage(JZScriptItem *func,QString file)
-{   
-    if(!file.endsWith(".png"))
-        file += ".png";
-
-    JZNodeUtils::scriptItemUpdateLayout(func);
-    JZNodeUtils::scriptItemDump(func,qApp->applicationDirPath() + "/dump/" + file);
 }
 
 bool BaseTest::build()
