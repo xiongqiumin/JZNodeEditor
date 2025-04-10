@@ -397,6 +397,21 @@ void JZNodeProgram::copyTo(JZNodeProgram *other)
     other->loadFromStream(in);
 }
 
+JZFunction* JZNodeProgram::function(QString name)
+{
+    auto it = m_scripts.begin();
+    while (it != m_scripts.end())
+    {
+        JZNodeScript* s = it->data();
+        JZFunction *func = s->function(name);
+        if (func)
+            return func;
+
+        it++;
+    }
+    return nullptr;
+}
+
 JZNodeScript *JZNodeProgram::script(QString path)
 {
     return m_scripts.value(path, JZNodeScriptPtr()).data();

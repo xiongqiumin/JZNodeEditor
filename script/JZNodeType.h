@@ -90,12 +90,17 @@ enum
 
     Type_internalObject = 8000, // 内部注册起始
     Type_userObject = 50000,    // 用户注册起始
-    Type_pointerFlag = 1 << 31,
+    Type_pointerFlag = 1 << 30,
 };
 
-typedef QSharedPointer<QVariant> QVariantPtr;
+class QVariantPtr
+{
+public:
+    QVariantPtr();
 
-
+    int type;
+    QSharedPointer<QVariant> ptr;
+};
 
 class JZEnum
 {

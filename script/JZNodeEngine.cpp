@@ -49,12 +49,18 @@ RunnerEnv::~RunnerEnv()
 
 void RunnerEnv::initVariable(QString name, const QVariant &value)
 {
-    locals[name] = QVariantPtr(new QVariant(value));
+    QVariantPtr ptr;
+    ptr.type = JZNodeType::variantType(value);
+    ptr.ptr = QSharedPointer<QVariant>(value);
+    locals[name] = ptr;
 }
 
 void RunnerEnv::initVariable(int id, const QVariant &value)
 {
-    stacks[id] = QVariantPtr(new QVariant(value));
+    QVariantPtr ptr;
+    ptr.type = JZNodeType::variantType(value);
+    ptr.ptr = QSharedPointer<QVariant>(value);
+    stacks[id] = ptr;
 }
 
 QVariant *RunnerEnv::getRef(int id)
@@ -828,7 +834,10 @@ void JZNodeEngine::setVariable(const QString &name, const QVariant &value)
 
 void JZNodeEngine::initGlobal(QString name, const QVariant &v)
 {
-	m_global[name] = QVariantPtr(new QVariant(v));
+    QVariantPtr ptr;
+    ptr.type = JZNodeType::variantType(v);
+    ptr.ptr = QSharedPointer<QVariant>(v);
+	m_global[name] = ptr;
 }
 
 void JZNodeEngine::initLocal(QString name, const QVariant &v)
@@ -875,7 +884,7 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     QVariant v;
     if (JZNodeType::isPointer(type))
     {
-        JZNodeObjectPtrRef ref;
+        JZNodeObjectPointer ref;
         ref.type = type;
         v = QVariant::fromValue(ref);
     }

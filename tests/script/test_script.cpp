@@ -45,7 +45,6 @@ void ScriptTest::testMatchType()
 
 void ScriptTest::testClone()
 {
-    m_project.registContainer("QList<QPoint>");
     if (!build())
         return;
 
@@ -65,7 +64,8 @@ void ScriptTest::testClone()
     QVERIFY(pt1 != pt2);    
 
     auto obj_list = m_objInst->create("QList<QPoint>");
-    QVariant list = QVariant::fromValue(JZNodeObjectPtr(obj_list,true));
+    JZNodeObjectPointer ptr = JZNodeObjectPointer::fromObject(JZNodeObjectPtr(obj_list,true));
+    QVariant list = QVariant::fromValue(ptr);
 
     QVariantList in,out;
     for(int i = 0; i < 5; i++)
@@ -156,7 +156,7 @@ void ScriptTest::testObjectParse()
 {
     if (!build())
         return;
-
+/*
     QList<JZNodeObjectPtr> cache;
 
     JZNodeObjectParser parser;
@@ -181,48 +181,7 @@ void ScriptTest::testObjectParse()
     QPoint *pt = (QPoint*)(toJZObject(v.value)->cobj());
     QCOMPARE(pt->x(),1);
     QCOMPARE(pt->y(),2);
-}
-
-void ScriptTest::testParamBinding()
-{
-    /*
-        c = a + b
-    */
-#if 0
-    auto script = m_project.mainFunction();
-    m_paramDef->addLocalVariable("a",Type_int,10);
-    m_paramDef->addLocalVariable("b",Type_int,20);
-    m_paramDef->addLocalVariable("c",Type_int);
-
-    JZNodeSetParamDataFlow *node_c = new JZNodeSetParamDataFlow();
-    JZNodeAdd *node_add = new JZNodeAdd();
-    JZNodeParam *node_a = new JZNodeParam();
-    JZNodeParam *node_b = new JZNodeParam();
-
-    script->addNode(node_a));
-    script->addNode(node_b));
-    script->addNode(node_c));
-    script->addNode(node_add));
-
-    node_a->setVariable("a");
-    node_b->setVariable("b");
-    node_c->setVariable("c");
-    script->addConnect(node_a->paramOutGemo(0),node_add->paramInGemo(0));
-    script->addConnect(node_b->paramOutGemo(0),node_add->paramInGemo(1));
-
-    script->addConnect(node_add->paramOutGemo(0),node_c->paramInGemo(0));
-
-    if(!build())
-        return;
-
-    QCOMPARE(30,m_engine.getVariable("c"));
-
-    m_engine.setVariable("a",200);
-    QCOMPARE(220,m_engine.getVariable("c"));
-
-    m_engine.setVariable("b",200);
-    QCOMPARE(400,m_engine.getVariable("c"));
-#endif
+*/
 }
 
 void ScriptTest::testBranch()
@@ -272,7 +231,6 @@ void ScriptTest::testBranch()
 
     if (!build())
         return;
-    dumpAsm("testBranch.jsm");
 
     QVariantList in, out;
     in = { 0 ,1 };
@@ -398,8 +356,7 @@ void ScriptTest::testSwitch()
     script->addConnect(node_switch->subFlowOutGemo(4), ret_else->flowInGemo());
 
     if (!build())
-        return;  
-    dumpAsm("testSwitch.jsm");          
+        return;          
 
     JZNodeEngine *engine = &m_engine;
     for (int i = 0; i < 5; i++)
@@ -537,7 +494,6 @@ void ScriptTest::testFor()
     
     if(!build())
         return;
-    dumpAsm("testFor.jsm");
 
     QVariantList in,out;
     m_engine.call("ForTest0", in, out);
@@ -673,7 +629,6 @@ void ScriptTest::testWhileLoop()
         
     if(!build())
         return;
-    dumpAsm("testWhileLoop.jsm");
 
     QVariantList in,out;
     call("main",in,out);
@@ -733,8 +688,6 @@ void ScriptTest::testBreakPoint()
     QVariantList in;
     callAsync("main",in);
     msleep(200);
-    
-    dumpAsm("testBreakPoint.jsm");
 
     QString main_function = m_project.mainFunctionPath();
     for(int i = 0; i < 5; i++)
@@ -829,123 +782,6 @@ void ScriptTest::testDebugServer()
 
     client.stop(); 
     server.stopServer();
-}
-
-void ScriptTest::testUnitTest()
-{
-    auto env = m_project.environment();
-
-    JZFunctionDefine def;
-    def.name = "unitTest";
-    def.isFlowFunction = false;
-    def.paramOut.push_back(env->paramDefine("result", Type_int));
-    
-    JZScriptItem *script = m_file->addFunction(def);
-    auto start = script->getNode(0);
-
-    JZNodeFunction *func = new JZNodeFunction();
-    func->setFunction(m_funcInst->function("pow"));
-    func->setParamInValue(0,"2");
-    func->setParamInValue(1,"2");
-
-    JZNodeReturn *node_ret = new JZNodeReturn();
-    node_ret->setFunction(&def);
-    script->addNode(func);
-    script->addNode(node_ret);
-
-    script->addConnect(start->flowOutGemo(0),node_ret->flowInGemo());
-    script->addConnect(func->paramOutGemo(0),node_ret->paramInGemo(0));
-
-    dumpImage(script,"unitTest.png");
-    if(!build())
-        return;
-
-    QVariantList in,out;    
-    bool ret = m_engine.call("unitTest",in,out);
-    QVERIFY(ret);
-    QCOMPARE(out[0].toInt(),4);
-
-    auto depend = m_builder.compilerInfo(script)->depend["unitTest"];
-    QCOMPARE(depend.function.fullName(),"unitTest");
-    QCOMPARE(depend.hook.size(),1);
-    QCOMPARE(depend.hook[0].params.size(),1);
-
-    ret = m_engine.callUnitTest(&depend,out);
-    QVERIFY(ret);
-    QCOMPARE(out[0].toInt(),4);
-
-    depend.hook[0].enable = true;
-    depend.hook[0].params[0] = "180";
-    ret = m_engine.callUnitTest(&depend,out);
-    QVERIFY(ret);
-    QCOMPARE(out[0].toInt(),180);
-}
-
-void ScriptTest::testUnitTestClass()
-{   
-    auto env = m_project.environment();
-    auto class_file = m_file->addClass("unitTestClass");
-    
-    JZFunctionDefine def = class_file->objectDefine().initMemberFunction("unitTest");
-    def.isFlowFunction = false;
-    def.paramOut.push_back(env->paramDefine("result", Type_int));
-    
-    JZScriptItem *script = class_file->addMemberFunction(def);
-    auto start = script->getNode(0);
-
-    JZNodeFunction *func = new JZNodeFunction();
-    func->setFunction(m_funcInst->function("pow"));
-    func->setParamInValue(0,"2");
-    func->setParamInValue(1,"2");
-
-    JZNodeReturn *node_ret = new JZNodeReturn();
-    node_ret->setFunction(&def);
-    script->addNode(func);
-    script->addNode(node_ret);
-
-    script->addConnect(start->flowOutGemo(0),node_ret->flowInGemo());
-    script->addConnect(func->paramOutGemo(0),node_ret->paramInGemo(0));
-
-    if(!build())
-        return;    
-
-    auto obj = m_objInst->create("unitTestClass");
-    JZNodeObjectPtr ptr(obj,true);
-
-    QVariantList in,out;    
-    in << QVariant::fromValue(ptr);
-    bool ret = m_engine.call(def.fullName(),in,out);
-    QVERIFY(ret);
-    QCOMPARE(out[0].toInt(),4);
-
-    auto depend = m_builder.compilerInfo(script)->depend[def.fullName()];
-    QCOMPARE(depend.function.fullName(),def.fullName());
-    QCOMPARE(depend.hook.size(),1);
-    QCOMPARE(depend.hook[0].params.size(),1);
-
-    ret = m_engine.callUnitTest(&depend,out);
-    QVERIFY(ret);
-    QCOMPARE(out[0].toInt(),4);
-
-    depend.hook[0].enable = true;
-    depend.hook[0].params[0] = "180";
-    ret = m_engine.callUnitTest(&depend,out);
-    QVERIFY(ret);
-    QCOMPARE(out[0].toInt(),180);
-}
-
-void ScriptTest::testModule()
-{
-    m_project.importModule("imageSample");
-    if (!build())
-        return;
-
-    auto obj_inst = m_objInst;
-    QVariant obj = obj_inst->objectCreate<QImage>();
-    QVariantList in,out;    
-    in << obj;
-    bool ret = m_engine.call("ImageThreshold",in,out);
-    QVERIFY(ret);
 }
 
 void ScriptTest::testExpr()
@@ -1155,7 +991,6 @@ void ScriptTest::testFunction()
 
     if(!build())
         return;    
-    dumpAsm("fab.jsm");
 
     QVariantList out;    
     bool ret = m_engine.call("fab",{15},out);

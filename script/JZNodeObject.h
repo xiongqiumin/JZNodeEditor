@@ -220,19 +220,19 @@ protected:
 Q_DECLARE_METATYPE(JZNodeObjectPtr)
 
 /*
-    指针，可以指向任意类型
+    指针，指向JZNodeObject
 */
-class JZNodeObjectPtrRef
+class JZNodeObjectPointer
 {
 public:
-    static JZNodeObjectPtrRef fromPtr(const JZNodeObjectPtr &ptr);
+    static JZNodeObjectPointer fromObject(const JZNodeObjectPtr &ptr);
 
-    JZNodeObjectPtrRef();
+    JZNodeObjectPointer();
 
     int type;   //指针类型
     JZNodeObjectPtr pointer;
 };
-Q_DECLARE_METATYPE(JZNodeObjectPtrRef)
+Q_DECLARE_METATYPE(JZNodeObjectPointer)
 
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
@@ -328,7 +328,7 @@ public:
         static_assert(std::is_pointer<T>(), "only support class pointer");
         QString c_typeid = typeid(std::remove_pointer_t<T>).name();
         auto obj = createRefrenceByCTypeid(c_typeid, ptr, cowner);
-        JZNodeObjectPtrRef node_ptr = JZNodeObjectPtrRef::fromPtr(JZNodeObjectPtr(obj, true)); //这里代表true是不是管理obj， 上面的cowner代表是不是管理c  
+        JZNodeObjectPointer node_ptr = JZNodeObjectPointer::fromObject(JZNodeObjectPtr(obj, true)); //这里代表true是不是管理obj， 上面的cowner代表是不是管理c  
         return QVariant::fromValue(node_ptr);
     }
 

@@ -212,7 +212,7 @@ bool JZNodeConvert::update(QString &error)
     }
     else
     {
-        error = JZNodeCompiler::errorString(Error_noClass,{ name });
+        error = JZNodeCompiler::errorString(Error_noType,{ name });
         clearPinType(paramOut(0));
         return false;
     }
@@ -358,7 +358,7 @@ bool JZNodeCreateFromString::update(QString &error)
     }
     else
     {
-        error = JZNodeCompiler::errorString(Error_noClass, { className() });
+        error = JZNodeCompiler::errorString(Error_noType, { className() });
         clearPinType(paramOut(0));
         return false;
     }
@@ -761,7 +761,7 @@ bool JZNodeAbstractMember::update(QString &error)
     auto meta = obj_inst->meta(class_name);
     if (!meta)
     {
-        error = JZNodeCompiler::errorString(Error_noClass, { class_name });
+        error = JZNodeCompiler::errorString(Error_noType, { class_name });
         return false;
     }
 

@@ -1,4 +1,6 @@
-﻿#include "JZNodeProgramDumper.h"
+﻿#include <QDir>
+#include <QFile>
+#include "JZNodeProgramDumper.h"
 #include "JZNodeCompiler.h"    
 
 JZNodeProgramDumper::JZNodeProgramDumper()
@@ -6,32 +8,195 @@ JZNodeProgramDumper::JZNodeProgramDumper()
     m_program = nullptr;
 }
 
-QString JZNodeProgramDumper::dump(JZNodeProgram *program)
-{        
+void JZNodeProgramDumper::init(JZProject* project, JZNodeProgram* program)
+{
+    m_project = project;
     m_program = program;
     m_program->initEnv(&m_env);
+}
 
-    QString content;    
-    auto sc_list = m_program->scriptList();
-    for(int sc_idx = 0; sc_idx < sc_list.size(); sc_idx++)
+
+QString JZNodeProgramDumper::tab(int count)
+{
+    QString space;
+    space.resize(count * 4, ' ');
+    return space;
+}
+
+void JZNodeProgramDumper::dump(QString dirPath)
+{
+    QDir dir;
+    if (!dir.exists(dirPath) && !dir.mkdir(dirPath))
+        return;
+    
+    m_dirPath = dirPath;
+    m_program->initEnv(&m_env);
+
+    auto file_list = m_project->itemList("./", ProjectItem_scriptFile);
+    for (int i = 0; i < file_list.size(); i++)
     {
-        JZNodeScript *script = sc_list[sc_idx];
-        content += "// Script " + script->file + "\n";
-        auto &opList = script->statmentList;
-        for(int func_idx = 0; func_idx < script->functionList.size(); func_idx++)
+        JZScriptFile *script_file = (JZScriptFile*)file_list[i];
+        dumpFile(script_file);
+    }
+}
+
+void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
+{
+    QFileInfo file_info(script_file->name());
+    QString file_name = file_info.baseName();
+
+    QString header;
+    QString source;
+    header += "#ifndef " + file_name.toUpper() + "_H_\n";
+    header += "#define " + file_name.toUpper() + "_H_\n\n";
+
+    source += "#include \"JZRuntime.h\"\n";
+    source += "#include \"" + file_name + ".h\"\n\n";
+
+    if (file_name == "main")
+    {
+        QStringList global_list = m_project->globalVariableList();
+        for (int global_idx = 0; global_idx < global_list.size(); global_idx++)
         {
-            auto &func = script->functionList[func_idx];
-            
-            content += functionDeclare(&func) + "\n{\n";
-            for(int i = func.addr; i < func.addrEnd; i++)
-            {
-                //deal op            
-                content += irToString(opList[i].data()) + "\n";
-            }
-            content += "}\n\n";
+            auto global = m_project->globalVariable(global_list[global_idx]);
+
+            source += global->type + " " + global->name + ";\n";
+            header += "extern " + global->type + " " + global->name + ";\n";
         }
-    }    
-    return content;
+        source += "\n";
+        header += "\n";
+    }
+
+    QStringList class_list = script_file->classList();
+    for (int cls_idx = 0; cls_idx < class_list.size(); cls_idx++)
+    {
+        JZScriptClassItem* class_item = script_file->getClass(class_list[cls_idx]);
+        QString class_define, class_impl;
+        dumpClass(class_item, class_define, class_impl);
+
+        header += class_define;
+        source += class_impl;
+    }
+
+    QStringList function_list = script_file->functionList();
+    for (int fun_idx = 0; fun_idx < function_list.size(); fun_idx++)
+    {
+        JZScriptItem* func_item = script_file->getFunction(function_list[fun_idx]);
+        QString func_define, func_impl;
+        dumpFunction(func_item, func_define, func_impl);
+
+        header += func_define + ";";
+        source += func_impl;
+    }
+
+    header += "\n#endif\n";
+
+    QString save_path = m_dirPath + "/" + file_info.baseName();
+    QFile h_file(save_path + ".h");
+    if (h_file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        h_file.write(header.toUtf8());
+        h_file.close();
+    }
+
+   QFile cpp_file(save_path + ".cpp");
+    if (cpp_file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        cpp_file.write(source.toUtf8());
+        cpp_file.close();
+    }
+}
+
+
+void JZNodeProgramDumper::dumpClass(JZScriptClassItem* class_item, QString& def, QString& impl)
+{
+    auto cls = m_env.meta(class_item->className());
+
+    QString name = cls->className;
+    QString super = cls->superName;
+    JZUiItem* ui = class_item->ui();
+
+    QString header;
+    QString source;
+
+    header += "class " + name;
+    if (!super.isEmpty())
+        header += " : public " + super;
+    header += "\n{\n";
+
+    header += "public:\n";
+    header += tab(1) + name + "();\n";
+    header += tab(1) + "virtual ~" + name + "();\n\n";
+
+    auto function_list = class_item->memberFunctionList();
+    for (int i = 0; i < function_list.size(); i++)
+    {
+        auto func = class_item->memberFunction(function_list[i]);
+        QString func_def, func_impl;
+        dumpFunction(func, func_def, func_impl);
+
+        header += tab(1) + func_def + ";";
+        source += func_impl;
+    }
+    
+    auto member_list = class_item->memberVariableList(true);
+    for (int i = 0; i < member_list.size(); i++)
+    {
+        auto member = class_item->memberVariable(member_list[i], true);
+        header += tab(1) + member->type + " " + member->name + ";\n";
+    }
+
+    header += "};";
+
+    def = header;
+    impl = source;
+}
+
+void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QString& impl)
+{
+    QString source;
+    QString header;
+
+    QString fuction_name = func_item->function().fullName();
+
+    auto sc_list = m_program->scriptList();
+    for (int sc_idx = 0; sc_idx < sc_list.size(); sc_idx++)
+    {
+        JZNodeScript* script = sc_list[sc_idx];
+
+        auto& opList = script->statmentList;
+        for (int func_idx = 0; func_idx < script->functionList.size(); func_idx++)
+        {
+            auto& func = script->functionList[func_idx];
+            if (func.fullName() == fuction_name)
+            {
+                source += functionDeclare(&func) + "\n{\n";
+                m_jumpList.clear();
+
+                QStringList lines;
+                for (int i = func.addr; i < func.addrEnd; i++)
+                {
+                    lines += irToString(opList[i].data());
+                }
+
+                //处理跳转
+                std::sort(m_jumpList.begin(), m_jumpList.end());
+                for (int i = m_jumpList.size() - 1; i >= 0; i--)
+                {
+                    int addr = m_jumpList[i];
+                    lines.insert(addr - func.addr, "Line" + QString::number(addr) + ":");
+                }
+
+                source += lines.join("\n");
+                source += "\n}\n\n";
+
+                header += functionDeclare(&func);
+            }
+        }
+    }
+
+    def = header;
+    impl = source;
 }
 
 QString JZNodeProgramDumper::toString(JZNodeIRParam param)
@@ -40,7 +205,7 @@ QString JZNodeProgramDumper::toString(JZNodeIRParam param)
     {
         auto var_type = JZNodeType::variantType(param.value);
         if (var_type == Type_string)
-            return "\"" + param.value.toString() + "\"";
+            return "R(\"" + param.value.toString() + "\")";
         else if (var_type == Type_class)
         {
             return m_env.typeToName(var_type) + "()";
@@ -53,12 +218,17 @@ QString JZNodeProgramDumper::toString(JZNodeIRParam param)
     else if(param.type == JZNodeIRParam::This)
         return "this";
     else
-        return JZNodeCompiler::paramName(param.id());
+    {
+        QString name = JZNodeCompiler::paramName(param.id());
+        name.replace(".", "_");
+        return name;
+    }
 }
 
 QString JZNodeProgramDumper::irToString(JZNodeIR *op)
 {    
     QString line;
+
     switch (op->type)
     {
     case OP_nodeId:
@@ -165,11 +335,14 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     {
         JZNodeIRJmp *ir_jmp = (JZNodeIRJmp *)op;
         if (op->type == OP_jmp)
-            line += "JMP " + QString::number(ir_jmp->jmpPc);
+            line += "JMP(" + QString::number(ir_jmp->jmpPc) + ");";
         else if (op->type == OP_je)
-            line += "JE " + QString::number(ir_jmp->jmpPc);
+            line += "JE(" + QString::number(ir_jmp->jmpPc) + ");";
         else
-            line += "JNE " + QString::number(ir_jmp->jmpPc);
+            line += "JNE(" + QString::number(ir_jmp->jmpPc) + ");";
+        
+        if (!m_jumpList.contains(ir_jmp->jmpPc))
+            m_jumpList.push_back(ir_jmp->jmpPc);
         break;
     }
     case OP_assert:
@@ -191,7 +364,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         else
             line += " //" + op->memo;
     }
-    line = QString::asprintf("%04d", op->pc) + "    " + line;
+    line = QString::asprintf("/*%04d*/", op->pc) + "    " + line;
     return line;
 }    
 

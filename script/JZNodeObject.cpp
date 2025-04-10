@@ -980,9 +980,9 @@ bool isJZObject(const QVariant &v)
 
 JZNodeObject* toJZObject(const QVariant &v)
 {
-    if (v.userType() == qMetaTypeId<JZNodeObjectPtrRef>())
+    if (v.userType() == qMetaTypeId<JZNodeObjectPointer>())
     {
-        auto ptr = (JZNodeObjectPtrRef*)v.data();
+        auto ptr = (JZNodeObjectPointer*)v.data();
         return ptr->pointer.object();
     }
     else if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
@@ -999,9 +999,9 @@ JZNodeObject* toJZObject(const QVariant &v)
 
 JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
 {
-    if (v.userType() == qMetaTypeId<JZNodeObjectPtrRef>())
+    if (v.userType() == qMetaTypeId<JZNodeObjectPointer>())
     {
-        auto ptr = (JZNodeObjectPtrRef*)v.data();
+        auto ptr = (JZNodeObjectPointer*)v.data();
         return ptr->pointer;
     }
     else if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
@@ -1015,16 +1015,16 @@ JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
     }
 }
 
-//JZNodeObjectPtrRef
-JZNodeObjectPtrRef JZNodeObjectPtrRef::fromPtr(const JZNodeObjectPtr& ptr)
+//JZNodeObjectPointer
+JZNodeObjectPointer JZNodeObjectPointer::fromObject(const JZNodeObjectPtr& ptr)
 {
-    JZNodeObjectPtrRef ref;
+    JZNodeObjectPointer ref;
     ref.type = JZNodeType::makePointerType(ptr.object()->type());
     ref.pointer = ptr;
     return ref;
 }
 
-JZNodeObjectPtrRef::JZNodeObjectPtrRef()
+JZNodeObjectPointer::JZNodeObjectPointer()
 {
     type = Type_none;
 }
@@ -1451,14 +1451,19 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
 
         if (!obj->cparam(param->name))
         {
-            auto ptr = QVariantPtr(new QVariant());
+            QVariantPtr ptr;
+            ptr->type = m_env->nameToType(param->type);
+
             QVariant v = g_engine->createVariable(m_env->nameToType(param->type), param->value);
-            *ptr = v;
+            ptr->ptr = QSharedPointer<QVariant>(v);
             obj->m_params[param->name] = ptr;
         }
         else
         {
-            obj->m_params[param->name] = QVariantPtr();
+            //这是 c 成员变量，新建一个空的作为占位
+            QVariantPtr ptr;
+            ptr->type = m_env->nameToType(param->type);
+            obj->m_params[param->name] = ptr;
         }
 
         it++;

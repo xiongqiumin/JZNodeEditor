@@ -19,7 +19,14 @@ void registList(JZScriptEnvironment *env,int type = Type_none)
 
     QString name = "QList<" + env->ctypeidToName(typeid(T).name()) + ">";
     jzbind::ClassBind<QList<T>> cls_list(type, name);
-    cls_list.def("set", false, [](QList<T>* l,int index,const T & t) {
+    cls_list.setValueType(true);
+    cls_list.def("__fromString__", false, [](const QString& text)->QList<T> {
+        return QList<T>();
+    });
+    cls_list.def("__toString__", false, [](QList<T>* l)->QString {
+        return QString();
+    });
+    cls_list.def("set", true, [](QList<T>* l,int index,const T & t) {
         checkSize(index, l->size()); 
         (*l)[index] = t; 
     });
@@ -28,38 +35,38 @@ void registList(JZScriptEnvironment *env,int type = Type_none)
         return (*l)[index];
     });
     cls_list.def("size", false, [](QList<T>* l) ->int { return l->size(); });
-    cls_list.def("clear", false, [](QList<T>* l) { l->clear(); });
+    cls_list.def("clear", true, [](QList<T>* l) { l->clear(); });
 
-    cls_list.def("insert", false, [](QList<T>*l,int index, const T & t) {
+    cls_list.def("insert", true, [](QList<T>*l,int index, const T & t) {
         checkSize(index, l->size() + 1); 
         l->insert(index, t);
     });
-    cls_list.def("push_back", false, [](QList<T>* l, const T& t) {
+    cls_list.def("push_back", true, [](QList<T>* l, const T& t) {
         l->push_back(t);
     });
-    cls_list.def("pop_back", false, [](QList<T>* l){
+    cls_list.def("pop_back", true, [](QList<T>* l){
         checkEmpty(l->size());
         l->pop_back();
     });
-    cls_list.def("push_front", false, [](QList<T>* l, const T& t) {
+    cls_list.def("push_front", true, [](QList<T>* l, const T& t) {
         l->push_back(t);
     });
-    cls_list.def("pop_front", false, [](QList<T>* l){
+    cls_list.def("pop_front", true, [](QList<T>* l){
         checkEmpty(l->size());
         l->pop_front();
     });
-    cls_list.def("indexOf", false, [](QList<T>* l, const T& t) { return l->indexOf(t); });
-    cls_list.def("lastIndexOf", false, [](QList<T>* l, const T& t) { return l->lastIndexOf(t); });
-    cls_list.def("removeAt", false, [](QList<T>* l,int index) { 
+    cls_list.def("indexOf", false, [](QList<T>* l, const T& t, int from) { return l->indexOf(t, from); });
+    cls_list.def("lastIndexOf", true, [](QList<T>* l, const T& t, int from) { return l->lastIndexOf(t, from); });
+    cls_list.def("removeAt", true, [](QList<T>* l,int index) {
         checkSize(index, l->size()); 
         return l->removeAt(index); 
     });
-    cls_list.def("removeOne", false, [](QList<T>* l, const T& t) { l->removeOne(t); });
-    cls_list.def("removeAll", false, [](QList<T>* l, const T& t) { l->removeAll(t); });
+    cls_list.def("removeOne", true, [](QList<T>* l, const T& t) { l->removeOne(t); });
+    cls_list.def("removeAll", true, [](QList<T>* l, const T& t) { l->removeAll(t); });
 
     cls_list.def("contains", false, [](QList<T>* l, const T& t)->bool { return l->contains(t);  });
     cls_list.def("mid", false, [](QList<T>* l, int pos, int len) { return l->mid(pos, len);  });
-    cls_list.def("append", false, [](QList<T>* l, QList<T>* other) { l->append(*other);  });
+    cls_list.def("append", true, [](QList<T>* l, QList<T>* other) { l->append(*other);  });
 
     cls_list.regist();
 }
@@ -74,6 +81,7 @@ void registMap(JZScriptEnvironment* env, int type = Type_none)
 
     QString name = "QMap<" + key_name + "," + value_name + ">";
     jzbind::ClassBind<QMap<Key,Value>> cls_map(type, name);
+    cls_map.setValueType(true);
     cls_map.def("set", false, [](QMap<Key, Value>* map, Key key, const Value& t) {
         checkContains(map->contains(key));
         (*map)[key] = t;

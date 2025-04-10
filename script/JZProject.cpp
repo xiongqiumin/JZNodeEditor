@@ -809,7 +809,7 @@ void JZProject::onItemChanged(JZProjectItem *item)
         base.className = class_file->name();
         base.superName = class_file->superClass();
         base.id = class_file->classType();                
-        if (base.id == -1)
+        if (base.id == Type_none)
         {
             int id = m_env.objectManager()->regist(base);
             class_file->setClassType(id);

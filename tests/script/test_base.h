@@ -6,6 +6,9 @@
 #include "JZProject.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBuilder.h"
+#include "JZNodeValue.h"
+#include "JZNodeOperator.h"
+#include "JZNodeFunction.h"
 
 class BaseTest : public QObject
 {
@@ -36,8 +39,7 @@ protected:
     void callAsync(QString name,const QVariantList &in);
     void stop();
     void asyncThread(QString name,QVariantList in);  
-    void dumpImage(JZScriptItem *item,QString file);
-    void dumpAsm(QString file);
+    void dump(QString dir);
     void msleep(int ms);
     void makeDump();
     
@@ -49,6 +51,7 @@ protected:
     JZScriptFile *m_file;
     JZNodeBuilder m_builder;
     Promise m_callResult;
+    QString m_dumpPath;
     std::thread m_thread;
 };
 

@@ -371,7 +371,7 @@ QVariant JZScriptEnvironment::convertTo(int dst_type,const QVariant &v) const
         && isInherits(src_type, JZNodeType::baseType(dst_type)))
     {
         JZNodeObjectPtr* obj_ptr = (JZNodeObjectPtr*)v.data();
-        JZNodeObjectPtrRef pointer = JZNodeObjectPtrRef::fromPtr(*obj_ptr);
+        JZNodeObjectPointer pointer = JZNodeObjectPointer::fromObject(*obj_ptr);
         return QVariant::fromValue(pointer);
     }
 
@@ -649,60 +649,6 @@ QString JZScriptEnvironment::defaultValueString(int type) const
     }
     else
         return "{}";
-}
-
-bool JZScriptEnvironment::canInitValue(int type,const QString &text) const
-{
-    if(text.isEmpty())
-        return true;
-    
-    if (type == Type_any)
-    {
-        return canInitValue(JZScriptEnvironment::stringType(text),text);
-    }
-    else if (type == Type_string)
-    {
-        return true;
-    }
-    else if (type == Type_bool)
-    {
-        return (text == "false" || text == "true");
-    }
-    else if(type == Type_function)
-    {   
-        return true;
-    }
-    else if(type == Type_nullptr)
-    {
-        return text == "null";
-    }
-    else if(type >= Type_enum && type < Type_class)
-    {
-        auto meta = m_objectManager.enumMeta(type);
-        return meta->hasKey(text);
-    }
-    else if(type >= Type_class)
-    {
-        if(text.isEmpty() || text == "null")
-            return true;
-        if(text.startsWith("{") || text.endsWith("}"))
-            return true;
-
-        return false;
-    }
-    else if (type == Type_int || type == Type_int64 || type == Type_double)
-    {        
-        bool isInt = JZRegExpHelp::isInt(text);
-        bool isHex = JZRegExpHelp::isHex(text);
-        bool isFloat = JZRegExpHelp::isFloat(text);
-        
-        if (isInt || isHex || isFloat)
-            return true;
-        
-        return false;
-    }
-
-    return false;
 }
 
 QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
