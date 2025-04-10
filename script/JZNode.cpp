@@ -1440,7 +1440,7 @@ JZNodeMainLoop::JZNodeMainLoop()
 
     addFlowIn();
     int in = addParamIn("window");
-    setPinType(in, { JZNodeType::typeName(Type_widget) });
+    setPinType(in, { "QWidget*" });
 }
 
 JZNodeMainLoop::~JZNodeMainLoop()
@@ -1453,7 +1453,7 @@ bool JZNodeMainLoop::compiler(JZNodeCompiler *c, QString &error)
         return false;
 
     int id = c->paramId(m_id,paramIn(0));
-    c->addAlloc(JZNodeIRAlloc::Heap,"__mainwindow__", Type_widget);
+    c->addAlloc(JZNodeIRAlloc::Heap,"__mainwindow__", JZNodeType::pointerType(Type_widget));
 
     JZNodeIRSet *ir_set = new JZNodeIRSet();    
     ir_set->dst = irRef("__mainwindow__");

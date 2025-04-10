@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include "JZNode.h"
-#include "JZNodePropertyBrowser.h"
+#include "3rd/JZCommon/jzWidgets/JZPropertyBrowser.h"
 
 enum {
     PropEditor_varName,
@@ -31,17 +31,17 @@ signals:
     void sigNodePropChanged(int nodeId,int pinId,const QString &value);
 
 protected slots:
-    void onValueChanged(JZNodeProperty *pin, const QString &value);
+    void onValueChanged(JZProperty *pin, const QVariant &value);
 
 protected:
     void clear();
     void addPropList(QString name,const QList<int> &list);    
-    JZNodeProperty *createPropValue(JZNodePin *pin);
+    JZProperty *createPropValue(JZNodePin *pin);
 
     JZNode *m_node;    
 
-    JZNodePropertyBrowser *m_tree;
-    QMap<int, JZNodeProperty*> m_propMap;
+    JZPropertyBrowser *m_tree;
+    QMap<int, JZProperty*> m_propMap;
     bool m_editing;
 };
 

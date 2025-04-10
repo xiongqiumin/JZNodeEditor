@@ -122,6 +122,7 @@ void JZUiItem::walkChild(const QDomElement &root)
                 m_widgets.push_back(def);
             }
         }
+        walkChild(sub_ele);
     }
 }
 
@@ -140,8 +141,7 @@ void JZUiItem::updateDefine()
     for (int ele_idx = 0; ele_idx < ele_list.size(); ele_idx++)
     {
         auto sub_ele = ele_list.at(ele_idx).toElement();
-        if (sub_ele.nodeName() == "widget")        
-            walkChild(sub_ele);
+        walkChild(sub_ele);
     }
     
     std::sort(m_widgets.begin(), m_widgets.end(), [](const JZParamDefine &def1,const JZParamDefine &def2)->bool {

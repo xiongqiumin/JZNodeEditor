@@ -10,6 +10,7 @@
 #include "JZNodeBind.h"
 #include "JZNodeObjectParser.h"
 #include "JZContainer.h"
+#include "runtime/JZNodeUiLoader.h"
 
 QString JZObjectToString(JZNodeObject *obj)
 {
@@ -890,7 +891,12 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
             if(def->isValueType())
                 sub = inst->create(type);
             else
-                sub = inst->create(type);
+            {
+                if(!def->isAbstract())
+                    sub = inst->create(type);
+                else
+                    sub = inst->createNull(type);                
+            }
         }        
         else if(value.startsWith("{") && value.endsWith("}"))
         {
@@ -908,7 +914,8 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
 
 QWidget* JZNodeEngine::createWidget(const QString& xml)
 {
-    return nullptr;
+    JZNodeUiLoader ui;
+    return ui.create(xml);
 }
 
 JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &obj_list)
@@ -1256,8 +1263,9 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
             break;
             
         const QVariant &v = getReg(Reg_CallIn + i);
-        Q_ASSERT(m_env.isSameType(JZNodeType::variantType(v), data_type));
-        if (data_type >= Type_class && JZNodeType::isNullObject(v))
+        Q_ASSERT_X(m_env.isSameType(JZNodeType::variantType(v), data_type), "", qUtf8Printable("set " 
+            + m_env.variantTypeName(v) + " to " + m_env.typeToName(data_type)));        
+        if (JZNodeType::baseType(data_type) >= Type_class && JZNodeType::isNullObject(v))
         {
             QString error = "param" + QString::number(i + 1) + " is nullptr object";
             throw std::runtime_error(qUtf8Printable(error));

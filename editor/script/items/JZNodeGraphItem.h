@@ -54,10 +54,10 @@ protected:
     enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };        
     struct Block
     {
-        enum{
+        enum {
             Pin,
             Widget,
-        },
+        };
 
         Block();
         ~Block();
@@ -71,6 +71,7 @@ protected:
         QRect valueRect; //valueRect 就是 widget 显示范围
 
         int pri;
+        bool isDispName;
         bool isPin;
         QGraphicsProxyWidget *proxy;
         QWidget *widget;
@@ -86,7 +87,7 @@ protected:
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
     void drawProp(QPainter *painter,int pinId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
-    void calcGemo(int pin, int x, int y,PropGemo *gemo);
+    void calcGemo(int pin, int x, int y, Block *gemo);
     void updatePin();
     void updateErrorGemo();        
     

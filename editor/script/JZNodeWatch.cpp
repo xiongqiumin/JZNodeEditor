@@ -283,6 +283,7 @@ JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
 
 void JZNodeWatch::setParamInfo(JZNodeGetDebugParamResp *info)
 {       
+/*
     m_view->blockSignals(true);
     auto root = m_view->invisibleRootItem();        
     for (int i = 0; i < info->coors.size(); i++)                      
@@ -292,10 +293,12 @@ void JZNodeWatch::setParamInfo(JZNodeGetDebugParamResp *info)
     
     updateWatchItem();
     m_view->blockSignals(false);
+*/
 }
 
 void JZNodeWatch::updateParamInfo(JZNodeGetDebugParamResp *info)
 {    
+/*
     auto root = m_view->invisibleRootItem();    
     //m_view 中可能存在多个同名的参数，所以此处要通过tree来遍历
     auto count = m_view->topLevelItemCount();
@@ -311,7 +314,8 @@ void JZNodeWatch::updateParamInfo(JZNodeGetDebugParamResp *info)
                 break;
             }           
         }
-    }    
+    }
+*/
 }
 
 QStringList JZNodeWatch::watchList()

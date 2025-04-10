@@ -1266,10 +1266,7 @@ void MainWindow::onWatchValueChanged(JZNodeIRParam coor, QString value)
     if(!m_debuger.setVariable(param_info,result))
         return;
 
-    JZNodeGetDebugParamResp get_resp;
-    get_resp.stack = result.stack;
-    get_resp.coors << result.coor;
-    get_resp.values << result.value;
+    JZNodeGetDebugParamResp get_resp;    
     
     for(auto w : m_debugWidgets)
         w->updateParamInfo(&get_resp);
@@ -1277,7 +1274,7 @@ void MainWindow::onWatchValueChanged(JZNodeIRParam coor, QString value)
     {
         auto stack_info = m_runtime.stacks[param_info.stack];
         auto gemo = JZNodeCompiler::paramGemo(coor.id());
-        setRuntimeValue(stack_info.file,gemo.nodeId,gemo.pinId,result.value);
+        //setRuntimeValue(stack_info.file,gemo.nodeId,gemo.pinId,result.value);
     }
 }
 
@@ -1315,10 +1312,7 @@ void MainWindow::onWatchNotify()
         value.type = m_programEnv.variantType(it.value());
         value.value = JZNodeType::debugString(it.value());
         
-        auto d = inst->delegate(value.type);
-        if (d && d->pack)
-            value.binValue = d->pack(env, it.value());
-
+        auto d = inst->delegate(value.type);        
         e->setRuntimeValue(gemo.nodeId,gemo.pinId,value);
         it++;
     }
@@ -1391,6 +1385,7 @@ void MainWindow::updateAutoWatch(int stack_index)
     auto edit = nodeEditor(stack.file);
     if (edit)
     {
+/*
         for (int i = node_prop_index; i < param_info_resp.coors.size(); i++)
         {
             auto &coor = param_info_resp.coors[i];
@@ -1400,6 +1395,7 @@ void MainWindow::updateAutoWatch(int stack_index)
                 edit->setRuntimeValue(gemo.nodeId,gemo.pinId,param_info_resp.values[i]);
             }
         }
+*/
     }
 }
 
@@ -1519,7 +1515,7 @@ bool MainWindow::saveProgram()
     }
 
     JZNodeProgramDumper dumper;
-    saveToFile(build_path + "/" + m_project.name() + ".jsm", dumper.dump(&m_program));
+    saveToFile(build_path + "/" + m_project.name() + ".cpp", dumper.dump(&m_program));
     return true;
 }
 

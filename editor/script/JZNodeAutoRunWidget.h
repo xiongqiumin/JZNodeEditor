@@ -5,7 +5,7 @@
 #include "UiCommon.h"
 #include "JZNode.h"
 #include "JZNodeCompiler.h"
-#include "JZNodePropertyBrowser.h"
+#include "3rd/JZCommon/jzWidgets/JZPropertyBrowser.h"
 
 //JZNodeAutoRunWidget
 class JZNodeEditor;
@@ -28,7 +28,7 @@ signals:
     void sigDependChanged();
 
 protected slots:
-    void onValueChanged(JZNodeProperty *pin, const QString &value);
+    void onValueChanged(JZProperty *pin, const QVariant &value);
 
 protected:       
     enum PinType{
@@ -45,15 +45,15 @@ protected:
     public:
         PropCoor();
 
-        JZNodeProperty *pin;
+        JZProperty *pin;
         PinType type;
         int nodeId;
         QString name;
         int index;
     };
 
-    void addPin(JZNodeProperty *pin, PinType type, QString name);
-    void addPin(JZNodeProperty *pin, PinType type, int index, int nodeId);
+    void addPin(JZProperty *pin, PinType type, QString name);
+    void addPin(JZProperty *pin, PinType type, int index, int nodeId);
     void clear();
     PropCoor *propCoor(PinType type, int index);
     void copyDependValue(ScriptDepend &old, ScriptDepend &dst);
@@ -62,7 +62,7 @@ protected:
     int editType(int data_type);
 
     ScriptDepend m_depend;
-    JZNodePropertyBrowser *m_tree;        
+    JZPropertyBrowser *m_tree;        
     QList<PropCoor> m_propList;
     JZNodeEditor *m_editor;
 };

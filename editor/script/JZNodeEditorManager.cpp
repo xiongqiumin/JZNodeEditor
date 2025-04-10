@@ -58,17 +58,6 @@ JZNodeEditorManager::~JZNodeEditorManager()
 
 void JZNodeEditorManager::init()
 {    
-    JZNodeParamDelegate d_image;
-    d_image.editType = Type_imageEdit;
-    d_image.createDisplay = CreateParamDisplayWidget<JZNodeImageDisplayWidget>;
-    d_image.createParam = createImage;
-    d_image.pack = imagePack;
-    d_image.unpack = imageUnpack;
-    registDelegate(Type_image, d_image);
-
-    JZNodeParamDelegate d_imageEdit;
-    d_imageEdit.createEdit = CreateParamEditWidget<JZNodeImageEditWidget>;
-    registDelegate(Type_imageEdit, d_imageEdit);
 }
 
 void JZNodeEditorManager::setUserRegist(bool flag)

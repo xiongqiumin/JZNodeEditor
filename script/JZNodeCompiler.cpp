@@ -1333,7 +1333,8 @@ bool JZNodeCompiler::checkPinInType(int node_id, const QList<int> &prop_list, QS
         if (pin->flag() & Pin_noCompiler)
             continue;
         
-        QString pin_name = "输入节点" + graph->node->pinName(prop_in_id);        
+        int prop_idx = graph->node->paramInList().indexOf(prop_in_id);
+        QString pin_name = "输入节点" + QString::number(prop_idx) + ", " + graph->node->pinName(prop_in_id);        
         auto pin_type_list = env->nameListToTypeList(pin->dataType());
         int pin_type = Type_none;
         if (graph->paramIn.contains(prop_in_id))  //有输入
@@ -2127,7 +2128,8 @@ bool JZNodeCompiler::addFlowInput(int nodeId, const QList<int>& prop_list, QStri
                     it++;
                     continue;
                 }
-                if (in_node->node->id() == nodeId && prop_list.contains(it.key()))
+                //初始节点额外根据prop_list筛选
+                if (in_node->node->id() == nodeId && !prop_list.contains(it.key())) 
                 {
                     it++;
                     continue;

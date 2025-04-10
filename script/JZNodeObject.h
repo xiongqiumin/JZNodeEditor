@@ -61,6 +61,7 @@ public:
     const JZNodeObjectDefine *cSuper() const; //最近的c类
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
+    bool isAbstract() const;
     bool isCopyable() const;
     bool isValueType() const;
 

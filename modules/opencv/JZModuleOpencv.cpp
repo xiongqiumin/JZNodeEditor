@@ -64,6 +64,14 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     cls_mat.def("clone", true, &Mat::clone);
     cls_mat.regist();    
     
+    func_inst->registCFunction("image2Mat", false, jzbind::createFuncion([](QImage image)->Mat {
+        return QtOcv::image2Mat(image);
+    }));
+    func_inst->registCFunction("mat2Image", false, jzbind::createFuncion([](Mat mat) {
+        return QtOcv::mat2Image(mat);
+    }));
+
+
     func_inst->registCFunction("imread", false, jzbind::createFuncion([](QString file) {
         Mat out;
         out = imread(file.toLocal8Bit().data());
@@ -80,7 +88,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         Mat out;
         medianBlur(in, out, size);
         return out;
-    }));    
+    }));        
 
     jzbind::ClassBind<JZYoloResult> cls_yolo_ret(cls_id++, "JZYoloResult");
     cls_yolo_ret.regist();

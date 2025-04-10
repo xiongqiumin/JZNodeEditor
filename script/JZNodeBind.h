@@ -555,7 +555,8 @@ void getReturn(const QVariantList &);
         auto func_def = jzobj->function(#func);                \
         QVariantList input,output;                             \
         JZNodeObjectPtr ptr(jzobj,false);                      \
-        input.push_back(QVariant::fromValue(ptr));             \
+        JZNodeObjectPtrRef ref = JZNodeObjectPtrRef::fromPtr(ptr); \
+        input.push_back(QVariant::fromValue(ref));             \
         toVariantList<int>(input,__VA_ARGS__);                 \
         JZScriptInvoke(func_def->fullName(),input,output);     \
         return getReturn<ret_type>(output);                    \

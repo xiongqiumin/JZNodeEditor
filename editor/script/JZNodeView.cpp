@@ -628,10 +628,7 @@ void JZNodeView::setNodePos(int node_id, QPointF pos)
 }
 
 bool JZNodeView::isPropEditable(int id,int prop_id)
-{
-    if(!getNode(id)->pin(prop_id)->isEditValue())
-        return false;
-
+{    
     QList<int> lines = m_file->getConnectInput(id,prop_id);
     return lines.size() == 0;
 }
@@ -2031,13 +2028,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
                 function.setVariable(param_name);
                 addCreateNodeCommand(factory->saveNode(&function), mapToScene(event->pos()));
             }            
-        }
-        else if(node_item->node()->canDragVariable())
-        {
-            QByteArray old = getNodeData(node_item->node()->id());
-            node_item->node()->drag(param_name);
-            addPropChangedCommand(node_item->id(),old);
-        }
+        }        
         event->accept();
     }
     else if (event->mimeData()->hasFormat("node_memberParam"))

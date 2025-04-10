@@ -157,28 +157,7 @@ QString JZNodeParamValueWidget::getWidgetType(int data_type)
     auto d = editorManager()->delegate(m_dataType);
 
     QString type;
-    if (data_type == Type_bool)
-        type = "QComboBox";
-    else if (data_type == Type_boolCheck)
-        type = "QCheckBox";
-    else if (JZNodeType::isEnum(data_type))
-    {
-        auto obj_inst = editorEnvironment()->objectManager();
-        auto meta = obj_inst->enumMeta(data_type);
-        if (meta->isFlag())
-            type = "JZNodeParamPopupWidget";
-        else
-            type = "QComboBox";
-    }
-    else if (d && d->createEdit)
-    {
-        type = "JZNodeParamEditWidget";
-    }
-    else
-    {
-        type = "QLineEdit";
-    }
-
+    type = "QLineEdit";
     return type;
 }
 

@@ -72,6 +72,9 @@ void JZUiEditor::active()
 
 bool JZUiEditor::isModified()
 {
+    if (!m_form)
+        return false;
+
     return m_form->editor()->isDirty();
 }
 

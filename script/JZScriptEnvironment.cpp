@@ -190,7 +190,7 @@ int JZScriptEnvironment::nameToType(const QString &name) const
     if (isPoint)
     {
         int base_type = nameToType(JZNodeType::baseType(name));
-        return JZNodeType::makePointerType(base_type);
+        return JZNodeType::pointerType(base_type);
     }
 
     int type = JZNodeType::nameToType(name);
@@ -214,7 +214,7 @@ int JZScriptEnvironment::ctypeidToType(const QString &name) const
     if (JZNodeType::isPointer(name))
     {
         int base_type = ctypeidToType(JZNodeType::baseType(name));
-        return JZNodeType::makePointerType(base_type);
+        return JZNodeType::pointerType(base_type);
     }
 
     if(name == typeid(bool).name())
@@ -334,11 +334,7 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
         return false;
     }
     if (type1 == Type_nullptr && type2 >= Type_class)
-        return true;
-    if(type1 >= Type_class && type2 >= Type_class)
-    {        
-        return m_objectManager.isInherits(type1,type2);
-    }
+        return true;    
     int64_t id = makeConvertId(type1, type2);
     if (convertMap.contains(id))
         return true;

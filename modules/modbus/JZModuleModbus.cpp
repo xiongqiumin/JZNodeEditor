@@ -35,10 +35,10 @@ void JZNodeModbusConfig::initFunction()
     addFlowOut();
         
     QString class_type = className();
-    int in = addParamIn("modbus", Pin_dispName);
+    int in = addParamIn("modbus");
     pin(in)->setDataType({class_type});
     
-    addParamIn("", Pin_widget | Pin_noValue);
+    addParamIn("");
     setName(m_functionName);
 }
 

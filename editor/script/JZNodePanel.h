@@ -62,7 +62,7 @@ protected:
         
     void initProcess(QTreeWidgetItem *root);
     void initExpression(QTreeWidgetItem *root);
-    void initConvert(QTreeWidgetItem *root);
+    void initConvert(QTreeWidgetItem *root);    
     void initAll(QTreeWidgetItem *root);
 
     void addModule(QTreeWidgetItem *item_root,QString name);

@@ -219,9 +219,10 @@ void JZNodePanel::init()
 
     initData();
     initBasicFlow();
+    initLocalDefine();
 
     m_module = createFolder("所有");
-    m_tree->addTopLevelItem(m_module);
+    m_tree->addTopLevelItem(m_module);    
     initAll(m_module);
 
     updateDefine();           
@@ -591,19 +592,22 @@ void JZNodePanel::initConvert(QTreeWidgetItem *root)
 void JZNodePanel::initAll(QTreeWidgetItem *root)
 {
     auto global_func = createFolder("全局函数");
+    auto global_class = createFolder("类");
     root->addChild(global_func);    
+    root->addChild(global_class);
 
     auto func_inst = editorFunctionManager();
     auto list = func_inst->functionList();
     for (int i = 0; i < list.size(); i++)
     {
-        global_func->addChild(createFunction(list[i]->fullName()));
+        if(list[i]->className.isEmpty())
+            global_func->addChild(createFunction(list[i]->fullName()));
     }
 
     auto obj_list = editorObjectManager()->getClassList();
     for(int i = 0; i < obj_list.size(); i++)
     {
-        root->addChild(createClass(obj_list[i]));
+        global_class->addChild(createClass(obj_list[i]));
     }    
 }
 

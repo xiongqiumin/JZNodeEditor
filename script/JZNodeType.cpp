@@ -124,7 +124,10 @@ bool JZNodeType::isBaseOrEnum(int type)
 
 bool JZNodeType::isNullObject(const QVariant &v)
 {
-    return toJZObject(v)->isNull();
+    auto obj = toJZObject(v);
+    if (!obj)
+        return nullptr;
+    return obj->isNull();
 }
 
 bool JZNodeType::isNullptr(const QVariant &v)
@@ -155,7 +158,7 @@ int JZNodeType::baseType(int type)
     return type & (~Type_pointerFlag);
 }
 
-int JZNodeType::makePointerType(int type)
+int JZNodeType::pointerType(int type)
 {
     Q_ASSERT(!isPointer(type));
     return type | Type_pointerFlag;
@@ -174,7 +177,7 @@ QString JZNodeType::baseType(const QString& type)
         return type;
 }
 
-QString JZNodeType::makePointerType(const QString& type)
+QString JZNodeType::pointerType(const QString& type)
 {
     Q_ASSERT(!isPointer(type));
     return type + "*";

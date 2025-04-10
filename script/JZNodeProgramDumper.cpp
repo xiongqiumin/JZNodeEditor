@@ -40,7 +40,7 @@ QString JZNodeProgramDumper::toString(JZNodeIRParam param)
     {
         auto var_type = JZNodeType::variantType(param.value);
         if (var_type == Type_string)
-            return "\"" + param.value.toString() + "\"";
+            return "R\"(" + param.value.toString() + ")\"";
         else if (var_type == Type_class)
         {
             return m_env.typeToName(var_type) + "()";
@@ -191,7 +191,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         else
             line += " //" + op->memo;
     }
-    line = QString::asprintf("%04d", op->pc) + "    " + line;
+    line = QString::asprintf("/*%04d*/", op->pc) + "    " + line;
     return line;
 }    
 

@@ -263,7 +263,7 @@ bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &erro
         }        
         if(!ok)
         {
-            QStringList toTypes = pin_from->dataType();
+            QStringList toTypes = pin_to->dataType();
             QStringList formTypes = pin_from->dataType();            
             error = "数据类型不匹配,需要" + toTypes.join(",") + ", 输入为" + formTypes.join(",");
             return false;

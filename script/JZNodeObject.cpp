@@ -242,6 +242,21 @@ bool JZNodeObjectDefine::check(QString &error) const
         error = "super class " + superName + " not define";
         return false;
     }
+   
+    QStringList param_list = paramList(false);
+    for (int i = 0; i < functions.size(); i++)
+    {
+        auto param_def = param(param_list[0]);   
+        QString param_type = JZNodeType::baseType(param_def->type);
+
+        auto param_meta = manager->meta(param_type);
+        if (!param_meta)
+        {
+            error = "param " + param_type + " not define";
+            return false;
+        }
+    }
+
     const JZFunctionDefine *func = nullptr;
     for (int i = 0; i < functions.size(); i++)
     {
@@ -256,9 +271,9 @@ bool JZNodeObjectDefine::check(QString &error) const
         }
     }
     
-    if(!superName.isEmpty())
-    {
-        auto def = this->super();
+    auto def = this->super();
+    while(def)
+    {        
         QStringList super_functions = def->functionList();
         for (int funx_idx = 0; funx_idx < functions.size(); funx_idx++)
         {
@@ -281,7 +296,8 @@ bool JZNodeObjectDefine::check(QString &error) const
                     }
                 }
             }
-        } 
+        }
+        def = def->super();
     }
 
     return true;
@@ -410,6 +426,14 @@ bool JZNodeObjectDefine::isInherits(int type) const
 bool JZNodeObjectDefine::isInherits(const QString &name) const
 {
     return isInherits(manager->getClassId(name));
+}
+
+bool JZNodeObjectDefine::isAbstract() const
+{
+    if (isCObject)
+        return cMeta.isAbstract;
+    else
+        return false;
 }
 
 bool JZNodeObjectDefine::isCopyable() const
@@ -982,7 +1006,7 @@ JZNodeObject* toJZObject(const QVariant &v)
 {
     if (v.userType() == qMetaTypeId<JZNodeObjectPtrRef>())
     {
-        auto ptr = (JZNodeObjectPtrRef*)v.data();
+        auto ptr = (JZNodeObjectPtrRef*)v.data();        
         return ptr->pointer.object();
     }
     else if (v.userType() == qMetaTypeId<JZNodeObjectPtr>())
@@ -1019,7 +1043,7 @@ JZNodeObjectPtr toJZObjectPtr(const QVariant &v)
 JZNodeObjectPtrRef JZNodeObjectPtrRef::fromPtr(const JZNodeObjectPtr& ptr)
 {
     JZNodeObjectPtrRef ref;
-    ref.type = JZNodeType::makePointerType(ptr.object()->type());
+    ref.type = JZNodeType::pointerType(ptr.object()->type());
     ref.pointer = ptr;
     return ref;
 }
@@ -1132,6 +1156,7 @@ int JZNodeObjectManager::delcareCClass(const QString &name, const QString &c_typ
 int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
     //可以先声明在注册
+    Q_ASSERT(info.id != -1);
     Q_ASSERT(!info.className.isEmpty());
     Q_ASSERT(!meta(info.className) || (info.id == Type_none || meta(info.className)->id == info.id));
 

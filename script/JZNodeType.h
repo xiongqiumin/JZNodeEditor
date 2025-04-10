@@ -11,22 +11,22 @@ enum
 {
     Type_none = 0,
     Type_begin,
-    Type_bool = Type_begin,
-    Type_int,
-    Type_int64,
-    Type_double,
-    Type_string,
-    Type_nullptr,
+    Type_bool = QVariant::Bool,
+    Type_int = QVariant::Int,
+    Type_int64 = QVariant::LongLong,
+    Type_double = QVariant::Double,
+    Type_string = QVariant::String,
+    Type_nullptr = QVariant::UserType,
     Type_any,
     Type_function,
     Type_auto,      //auto
     Type_arg,       //泛型,任意参数
     Type_args,      //变长参数
 
-    Type_enum = 1000,
+    Type_enum = 2000,
     Type_keyCode,   //Qt::Key
 
-    Type_internalEnum = 1100,
+    Type_internalEnum = 2100,
 
     Type_class = 5000,
     Type_stringList,
@@ -166,11 +166,11 @@ public:
     static bool isLiteralType(int type);
 
     static int baseType(int type);
-    static int makePointerType(int type);
+    static int pointerType(int type);
     static bool isPointer(int type);
 
     static QString baseType(const QString& type);
-    static QString makePointerType(const QString& type);
+    static QString pointerType(const QString& type);
     static bool isPointer(const QString& type);
     
     static int calcExprType(int type1,int type2,int op);

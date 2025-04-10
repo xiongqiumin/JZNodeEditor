@@ -12,11 +12,13 @@
 
 using namespace std;
 
-int runProgram(QString program_path,bool debug)
+int runProgram(QString name,bool debug)
 {
+    QString path = qApp->applicationDirPath() + "/project/" + name + "/build/" + name + ".program";
+
     QString error;
     JZNodeVM vm;
-    if (!vm.init(program_path, debug, error))
+    if (!vm.init(path, debug, error))
     {
         QMessageBox::information(nullptr, "", "init program failed.\n" + error);
         return 1;
@@ -30,7 +32,7 @@ int main(int argc,char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();               
 
-    return runProgram(R"(C:\Users\xiong\Desktop\JZNodeEditor\build\Debug\project\Project17\build\Project17.program)", false);    
+    //return runProgram("Project26", false);    
 
     QCommandLineParser parser;
 

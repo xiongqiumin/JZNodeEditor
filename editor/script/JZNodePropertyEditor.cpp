@@ -11,7 +11,7 @@ JZNodePropertyEditor::JZNodePropertyEditor(QWidget *widget)
     :QWidget(widget)
 {
     m_node = nullptr;    
-    m_tree = new JZNodePropertyBrowser();
+    m_tree = new JZPropertyBrowser();
     m_editing = false;
 
     QVBoxLayout *l = new QVBoxLayout();
@@ -19,7 +19,7 @@ JZNodePropertyEditor::JZNodePropertyEditor(QWidget *widget)
     l->addWidget(m_tree);
     setLayout(l);
     
-    connect(m_tree,&JZNodePropertyBrowser::valueChanged,this,&JZNodePropertyEditor::onValueChanged);
+    connect(m_tree,&JZPropertyBrowser::valueChanged,this,&JZNodePropertyEditor::onValueChanged);
 }
 
 JZNodePropertyEditor::~JZNodePropertyEditor()
@@ -36,7 +36,7 @@ void JZNodePropertyEditor::clear()
     m_node = nullptr;    
 }
 
-void JZNodePropertyEditor::onValueChanged(JZNodeProperty *p, const QString &value)
+void JZNodePropertyEditor::onValueChanged(JZProperty *p, const QVariant &value)
 {    
     if (m_editing)
         return;
@@ -45,7 +45,7 @@ void JZNodePropertyEditor::onValueChanged(JZNodeProperty *p, const QString &valu
     {
         int prop_id = m_propMap.key(p, -1);
         if (prop_id != -1)        
-            emit sigNodePropChanged(m_node->id(), prop_id, value);
+            emit sigNodePropChanged(m_node->id(), prop_id, value.toString());
     }
 }
 
@@ -82,15 +82,12 @@ void JZNodePropertyEditor::setPropEditable(int prop_id,bool editable)
     m_propMap[prop_id]->setEnabled(editable);
 }
 
-JZNodeProperty *JZNodePropertyEditor::createPropValue(JZNodePin *pin)
+JZProperty *JZNodePropertyEditor::createPropValue(JZNodePin *pin)
 {
-    auto env = editorEnvironment();
-    int up_type = env->upType(env->nameToTypeList(pin->dataType()));
-    auto pin_prop = new JZNodeProperty(pin->name(), NodeProprety_Value);
-    pin_prop->setDataType(up_type);
-    pin_prop->setValue(pin->value());
-    if(up_type == Type_none || !(pin->flag() & Pin_editValue))
-        pin_prop->setEnabled(false);
+    auto env = editorEnvironment();    
+    auto pin_prop = new JZProperty(pin->name());
+    pin_prop->setDataType(Type_string);
+    pin_prop->setValue(pin->value());    
     m_propMap[pin->id()] = pin_prop;
     return pin_prop;
 }
@@ -100,15 +97,12 @@ void JZNodePropertyEditor::addPropList(QString name,const QList<int> &list)
     if(list.size() == 0)
         return;
 
-    JZNodeProperty *prop_group = nullptr;
+    JZProperty *prop_group = nullptr;
     for(int i = 0; i < list.size(); i++)
     {
         auto pin = m_node->pin(list[i]);
-        if (pin->isWidget())
-            continue;
-
         if(prop_group == nullptr)
-            prop_group = new JZNodeProperty(name, NodeProprety_GroupId);
+            prop_group = new JZPropertyGroup(name);
         
         auto pin_prop = createPropValue(pin);
         prop_group->addSubProperty(pin_prop);        
@@ -134,15 +128,14 @@ void JZNodePropertyEditor::updateNode()
 
     m_editing = true;
 
-    auto prop_base = new JZNodeProperty("基本信息", NodeProprety_GroupId);
-    auto prop_name = new JZNodeProperty("名称", NodeProprety_Value);
-    auto prop_id = new JZNodeProperty("Id", NodeProprety_NodeId);
+    auto prop_base = new JZPropertyGroup("基本信息");
+    auto prop_name = new JZPropertyNoEdit("名称", QVariant::String);
+    auto prop_id = new JZPropertyNoEdit("Id", QVariant::Int);
     prop_base->addSubProperty(prop_name);
-    prop_base->addSubProperty(prop_id);
-    prop_name->setDataType({ Type_string });
+    prop_base->addSubProperty(prop_id);    
     prop_name->setValue(m_node->name());
     prop_name->setEnabled(false);
-    prop_id->setValue(QString::number(m_node->id()));    
+    prop_id->setValue(m_node->id());    
     prop_id->setEnabled(false);
     m_tree->addProperty(prop_base);            
 

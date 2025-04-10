@@ -12,6 +12,7 @@ find_package(OpenCV 4 REQUIRED)
 
 if (MSVC)
     add_compile_options(/execution-charset:utf-8)
+    add_compile_options(/bigobj)
 endif()
 
 include_directories(./
@@ -19,8 +20,9 @@ include_directories(./
     ./project
     ./script
     ./editor
-    ./editor/script
     ./editor/ui
+    ./editor/script
+    ./editor/script/items   
     ${OpenCV_INCLUDE_DIRS})
 
 set(JZNodeEditor_SOURCES
@@ -53,9 +55,7 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeAutoRunThread.cpp
     editor/script/JZNodeAutoRunThread.h
     editor/script/JZNodeAutoRunWidget.cpp
-    editor/script/JZNodeAutoRunWidget.h
-    editor/script/JZNodeBaseItem.cpp
-    editor/script/JZNodeBaseItem.h
+    editor/script/JZNodeAutoRunWidget.h    
     editor/script/JZNodeBreakPointWidget.cpp
     editor/script/JZNodeBreakPointWidget.h
     editor/script/JZNodeBuildThread.cpp
@@ -70,18 +70,12 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeFlagEditDialog.h
     editor/script/JZNodeFuctionEditDialog.cpp
     editor/script/JZNodeFuctionEditDialog.h
-    editor/script/JZNodeFuctionEditDialog.ui
-    editor/script/JZNodeGraphItem.cpp
-    editor/script/JZNodeGraphItem.h
+    editor/script/JZNodeFuctionEditDialog.ui    
     editor/script/JZNodeGroupEditDialog.cpp
     editor/script/JZNodeGroupEditDialog.h
-    editor/script/JZNodeGroupEditDialog.ui
-    editor/script/JZNodeGroupItem.cpp
-    editor/script/JZNodeGroupItem.h
+    editor/script/JZNodeGroupEditDialog.ui    
     editor/script/JZNodeLayout.cpp
     editor/script/JZNodeLayout.h
-    editor/script/JZNodeLineItem.cpp
-    editor/script/JZNodeLineItem.h
     editor/script/JZNodeLocalParamEditDialog.cpp
     editor/script/JZNodeLocalParamEditDialog.h
     editor/script/JZNodeMemberSelectDialog.cpp
@@ -100,9 +94,7 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeParamEditWidget.cpp
     editor/script/JZNodeParamEditWidget.h
     editor/script/JZNodeParamDisplayWidget.cpp
-    editor/script/JZNodeParamDisplayWidget.h    
-    editor/script/JZNodePropertyBrowser.cpp
-    editor/script/JZNodePropertyBrowser.h
+    editor/script/JZNodeParamDisplayWidget.h        
     editor/script/JZNodePropertyEditor.cpp
     editor/script/JZNodePropertyEditor.h
     editor/script/JZNodeScene.cpp
@@ -129,6 +121,18 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeClassEditDialog.ui
     editor/script/JZNodeClassEditDialog.cpp
     editor/script/JZNodeClassEditDialog.h       
+    editor/script/items/JZNodeBaseItem.cpp
+    editor/script/items/JZNodeBaseItem.h
+    editor/script/items/JZNodeGroupItem.cpp
+    editor/script/items/JZNodeGroupItem.h
+    editor/script/items/JZNodeLineItem.cpp
+    editor/script/items/JZNodeLineItem.h
+    editor/script/items/JZNodeGraphItem.cpp
+    editor/script/items/JZNodeGraphItem.h
+    editor/script/items/JZNodeFlowItem.cpp
+    editor/script/items/JZNodeFlowItem.h
+    editor/script/items/JZNodeOperatorItem.cpp
+    editor/script/items/JZNodeOperatorItem.h    
     editor/ui/formresizer.cpp
     editor/ui/formresizer.h
     editor/ui/JZDesignerEditor.cpp
@@ -231,9 +235,7 @@ set(JZNodeEditor_SOURCES
     script/JZNodeQtWrapper.cpp
     script/JZNodeQtWrapper.h
     script/JZNodeType.cpp
-    script/JZNodeType.h
-    script/JZNodeUiLoader.cpp
-    script/JZNodeUiLoader.h
+    script/JZNodeType.h    
     script/JZNodeUtils.cpp
     script/JZNodeUtils.h
     script/JZNodeValue.cpp
@@ -254,6 +256,9 @@ set(JZNodeEditor_SOURCES
     widgets/JZSearchTreeWidget.h  
     widgets/JZImageLabel.cpp 
     widgets/JZImageLabel.h 
+    #runtime
+    runtime/JZNodeUiLoader.cpp
+    runtime/JZNodeUiLoader.h
     #modbus    
     modules/modbus/JZModuleModbus.cpp
     modules/modbus/JZModuleModbus.h
@@ -311,6 +316,10 @@ set(JZNodeEditor_SOURCES
     3rd/JZCommon/jzModbus/JZModbusTcp.h
     3rd/JZCommon/jzWidgets/JZImageView.cpp
     3rd/JZCommon/jzWidgets/JZImageView.h    
+    3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp
+    3rd/JZCommon/jzWidgets/JZPropertyBrowser.h
+    3rd/JZCommon/jzWidgets/JZPropertyWidget.cpp
+    3rd/JZCommon/jzWidgets/JZPropertyWidget.h
     3rd/JZCommon/jzCommon/JZLogManager.cpp
     3rd/JZCommon/jzCommon/JZLogManager.h
 )
