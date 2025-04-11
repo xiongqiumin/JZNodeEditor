@@ -45,6 +45,8 @@ set(JZNodeTest_SOURCES
     ${NodePath}/script/JZScriptFile.h
     ${NodePath}/script/JZScriptItem.cpp
     ${NodePath}/script/JZScriptItem.h
+	${NodePath}/script/JZScriptItemHelp.cpp
+	${NodePath}/script/JZScriptItemHelp.h
     ${NodePath}/script/JZClassItem.cpp
     ${NodePath}/script/JZClassItem.h
     ${NodePath}/script/JZProjectFile.cpp
@@ -127,6 +129,10 @@ set(JZNodeTest_SOURCES
     ${NodePath}/script/JZRegExpHelp.h
     ${NodePath}/script/JZScriptBuildInFunction.cpp
     ${NodePath}/script/JZScriptBuildInFunction.h
+	
+    ${NodePath}/runtime/JZNodeUiLoader.cpp
+    ${NodePath}/runtime/JZNodeUiLoader.h
+	
     ${NodePath}/3rd/JZCommon/jzNet/JZNetClient.cpp
     ${NodePath}/3rd/JZCommon/jzNet/JZNetClient.h
     ${NodePath}/3rd/JZCommon/jzNet/JZNetDataManager.cpp
@@ -168,4 +174,5 @@ target_link_libraries(JZNodeTest Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::PrintSupport
     Qt${QT_VERSION_MAJOR}::Xml
 	Qt${QT_VERSION_MAJOR}::Test
+	Qt${QT_VERSION_MAJOR}::UiTools
     ${OpenCV_LIBRARIES})

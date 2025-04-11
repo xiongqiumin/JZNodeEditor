@@ -48,10 +48,12 @@ public:
     const JZNodeObjectDefine *meta(int id) const;
     const JZNodeObjectDefine *meta(const QString& name) const;
 
+    bool hasType(int type) const;
     QString typeToName(int id) const;
     int nameToType(const QString &name) const;
     QList<int> nameListToTypeList(const QStringList &names) const;
     
+    bool hasCTypeid(const QString& name) const;
     int ctypeidToType(const QString &name) const;
     QString ctypeidToName(const QString& name) const;
     
@@ -64,6 +66,8 @@ public:
 
     int isInherits(const QString &type1, const QString &type2) const;
     int isInherits(int type1, int type2) const;
+
+    bool isFunctionTypeMatch(const JZFunctionDefine* func1, const JZFunctionDefine* func2) const;
 
     JZParamDefine paramDefine(QString name, int data_type, QString value = QString()) const;
     void registConvert(int from, int to, ConvertFunc func);
@@ -79,6 +83,12 @@ public:
     QVariant defaultValue(int type) const;
     QString defaultValueString(int type) const;
     QVariant initValue(int type, const QString &v) const;
+
+    bool isListType(int type) const;
+    bool listValueType(int type, int& value_type) const;
+    bool isMapType(int type) const;
+    bool mapIteratorType(int type, int &iterator_type) const;
+    bool mapKeyValueType(int type,int &key_type, int& value_type) const;
 
 protected:
     struct ModuleInfo

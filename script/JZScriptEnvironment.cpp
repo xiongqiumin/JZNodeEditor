@@ -168,6 +168,11 @@ const JZNodeObjectDefine* JZScriptEnvironment::meta(const QString& name) const
     return m_objectManager.meta(name);
 }
 
+bool JZScriptEnvironment::hasType(int type) const
+{
+    return m_objectManager.hasType(type);
+}
+
 QString JZScriptEnvironment::typeToName(int id) const
 {   
     bool isPoint = JZNodeType::isPointer(id);
@@ -207,6 +212,11 @@ QList<int> JZScriptEnvironment::nameListToTypeList(const QStringList &names) con
         ret << nameToType(names[i]);
     
     return ret;
+}
+
+bool JZScriptEnvironment::hasCTypeid(const QString& name) const
+{
+    return ctypeidToType(name) != Type_none;
 }
 
 int JZScriptEnvironment::ctypeidToType(const QString &name) const
@@ -297,6 +307,37 @@ int JZScriptEnvironment::isInherits(int type1,int type2) const
     return m_objectManager.isInherits(type1,type2);
 }
 
+bool JZScriptEnvironment::isFunctionTypeMatch(const JZFunctionDefine* func1, const JZFunctionDefine* func2) const
+{
+    if (func1->paramIn.size() != func2->paramIn.size()
+        || func1->paramOut.size() != func2->paramOut.size())
+        return false;
+    if (func1->isVirtualFunction != func2->isVirtualFunction)
+        return false;
+    if (func1->isFlowFunction != func2->isFlowFunction)
+        return false;
+
+    for (int i = 0; i < func1->paramIn.size(); i++)
+    {
+        if (i == 0 && func1->isVirtualFunction)
+        {
+            if (!isInherits(func1->className, func2->className))
+                return false;
+        }
+        else
+        {
+            if (func1->paramIn[i].type != func2->paramIn[i].type)
+                return false;
+        }
+    }
+    for (int i = 0; i < func1->paramOut.size(); i++)
+    {
+        if (func1->paramOut[i].type != func2->paramOut[i].type)
+            return false;
+    }
+    return true;
+}
+
 JZParamDefine JZScriptEnvironment::paramDefine(QString name, int data_type, QString value) const
 {
     JZParamDefine p;
@@ -316,6 +357,8 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
     }
     
     if(type1 == Type_arg || type2 == Type_arg)
+        return true;
+    else if (JZNodeType::baseType(type1) >= Type_class && type2 == Type_argPointer)
         return true;
     else if(type1 == type2 || type2 == Type_any)
         return true;
@@ -373,7 +416,7 @@ QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
         && isInherits(src_type, JZNodeType::baseType(dst_type)))
     {
         JZNodeObjectHolder* obj_ptr = (JZNodeObjectHolder*)v.data();
-        JZNodeObjectPointer pointer = JZNodeObjectPointer::fromObject(*obj_ptr);
+        JZNodeObjectPointer pointer = obj_ptr->toPointer();
         return QVariant::fromValue(pointer);
     }
 
@@ -722,6 +765,66 @@ QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
 
     Q_ASSERT_X(0,"Type ",qUtf8Printable(typeToName(type)));
     return true;
+}
+
+bool JZScriptEnvironment::isListType(int type) const
+{
+    if (!hasType(type))
+        return false;
+
+    QString type_name = typeToName(type);
+    return type_name.startsWith("QList<");
+}
+
+bool JZScriptEnvironment::listValueType(int type, int& value_type) const
+{
+    if (!isListType(type))
+        return false;
+
+    QString type_name = typeToName(type);
+
+    QString list_value;
+    if (!JZNodeType::listValueType(type_name, list_value))
+        return false;
+
+    value_type = nameToType(list_value);
+    return value_type != Type_none;
+}
+
+bool JZScriptEnvironment::isMapType(int type) const
+{
+    if (!hasType(type))
+        return false;
+
+    QString type_name = typeToName(type);
+    return type_name.startsWith("QMap<");
+}
+
+bool JZScriptEnvironment::mapIteratorType(int type, int& iterator_type) const
+{
+    if (!isMapType(type))
+        return false;
+
+    QString type_name = typeToName(type);
+    type_name = JZNodeType::mapIteratorType(type_name);
+    int it_type = nameToType(type_name);
+    return (it_type != Type_none);
+}
+
+bool JZScriptEnvironment::mapKeyValueType(int type, int& key_type, int& value_type) const
+{
+    if (!isMapType(type))
+        return false;
+
+    QString type_name = typeToName(type);
+
+    QString map_key, map_value;
+    if (!JZNodeType::mapValueType(type_name, map_key,map_value))
+        return false;
+
+    key_type = nameToType(map_key);
+    value_type = nameToType(map_value);
+    return (key_type != Type_none && value_type != Type_none);
 }
 
 void JZScriptEnvironment::registConvert(int from, int to, ConvertFunc func)

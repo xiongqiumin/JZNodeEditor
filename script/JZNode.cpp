@@ -4,19 +4,18 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
 
-// JZNodeGemo
-int JZNodeGemo::paramId(int nodeId,int pinId)
+//JZNodeGemo
+int JZNodeGemo::paramId(int nodeId, int pinId)
 {
-    Q_ASSERT(nodeId >= 0 && pinId >= 0);
+    Q_ASSERT(pinId >= 0 && pinId < 100 && nodeId >= 0);
     return nodeId * 100 + pinId;
 }
 
-JZNodeGemo JZNodeGemo::paramGemo(int id)
+JZNodeGemo JZNodeGemo::paramGemo(int param_id)
 {
-    if (id < Stack_User)
-        return JZNodeGemo(id / 100, id % 100);
-    else
-        return JZNodeGemo();
+    int node_id = param_id / 100;
+    int pin_id = param_id % 100;
+    return JZNodeGemo(node_id, pin_id);
 }
 
 JZNodeGemo::JZNodeGemo()
@@ -25,10 +24,17 @@ JZNodeGemo::JZNodeGemo()
     pinId = -1;
 }
 
-JZNodeGemo::JZNodeGemo(int id, int pin)
+JZNodeGemo::JZNodeGemo(int node_id, int pin_id)
 {
-    nodeId = id;
-    pinId = pin;
+    Q_ASSERT(pin_id >= 0 && pin_id < 100 && node_id >= 0);
+
+    nodeId = node_id;
+    pinId = pin_id;
+}
+
+int JZNodeGemo::paramId() const
+{
+    return paramId(nodeId, pinId);
 }
 
 bool JZNodeGemo::isNull() const
@@ -632,10 +638,14 @@ bool JZNode::update(QString &error)
 
 void JZNode::onPinLinked(int id)
 {    
+    QString error;
+    update(error);
 }
 
 void JZNode::onPinUnlinked(int id)
 {    
+    QString error;
+    update(error);
 }
 
 void JZNode::onPinChanged(int id)
@@ -698,7 +708,7 @@ bool JZNodeNop::compiler(JZNodeCompiler *c, QString &error)
 {
     c->addNodeDebug(m_id);
     c->addNop();
-    c->addJumpNode(flowOut());
+    c->addFlowJump(flowOut());
     return true;
 }
 
@@ -874,12 +884,12 @@ bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
     auto list = subFlowList();
     for(int i = 0; i < list.size(); i++)
     {
-        int pc = c->addJumpSubNode(list[i]);
+        int pc = c->addSubFlowJump(list[i]);
         continueList << pc;
         breakList << -1;
     }
     continueList.pop_front();
-    continueList << c->addJumpNode(flowOut());
+    continueList << c->addFlowJump(flowOut());
 
     c->setBreakContinue({breakList},{continueList});
     return true;
@@ -974,7 +984,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_cond_break));    
     c->lastStatment()->memo = "body";    
     c->addFlowOutput(m_id);
-    c->addJumpSubNode(subFlowOut(0));    
+    c->addSubFlowJump(subFlowOut(0));    
 
     int continue_pc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_add);
     c->addSetVariable(irId(id_out_index), irId(id_index));
@@ -982,7 +992,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_to_start));
     jmp_to_start->jmpPc = start;
         
-    int break_pc = c->addJumpNode(flowOut());        
+    int break_pc = c->addFlowJump(flowOut());        
     jmp_cond_break->jmpPc = break_pc;
     c->setBreakContinue({break_pc},{ continue_pc });
 
@@ -1039,6 +1049,7 @@ JZNodeForEach::JZNodeForEach()
 
     addFlowIn();
     int in = addParamIn("");
+    setPinType(paramIn(0), { "arg*" });
     addSubFlowOut("loop body");
     addFlowOut("complete");
 
@@ -1051,56 +1062,155 @@ JZNodeForEach::~JZNodeForEach()
 
 }
 
+bool JZNodeForEach::getInputType(int &class_type,int &from_id, QString& error)
+{
+    QList<int> list = m_file->getConnectInput(m_id, paramIn(0));
+    if (list.size() != 1)
+    {
+        error = "no input";
+        return false;
+    }
+
+    auto line = m_file->getConnect(list[0]);
+    QStringList pin_types = m_file->getPin(line->from)->dataType();
+    if (pin_types.size() != 1)
+    {
+        error = "not support input";
+        return false;
+    }
+
+    auto env = environment();
+    class_type = env->nameToType(pin_types[0]);
+    class_type = JZNodeType::baseType(class_type);
+    from_id = line->from.paramId();
+    return true;
+}
+
+bool JZNodeForEach::update(QString& error)
+{
+    int in_type, from_id;
+    if (!getInputType(in_type, from_id, error))
+        return false;
+
+    auto env = environment();
+    if (env->isListType(in_type))
+    {
+        int value_type = 0;
+        if (!env->listValueType(in_type, value_type))
+            return false;
+
+        setPinType(paramOut(0), { env->typeToName(Type_int) });
+        setPinType(paramOut(1), { env->typeToName(value_type) });
+        return true;
+    }
+    else if (env->isMapType(in_type))
+    {
+        int key_type = 0;
+        int value_type = 0;
+        if (env->mapKeyValueType(in_type, key_type, value_type))
+            return false;
+
+        setPinType(paramOut(0), { env->typeToName(key_type) });
+        setPinType(paramOut(1), { env->typeToName(value_type) });
+        return true;
+    }
+    else
+    {
+        error = "only support list and map";
+        return false;
+    }
+}
+
 bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
 {
-    if(!c->addFlowInput(m_id,error))
+    int class_type, from_id;
+    if(!getInputType(class_type, from_id, error))
+        return false;
+
+    if (!c->addFlowInput(m_id, error))
         return false;
     
-    int class_type = c->pinType(m_id,paramIn(0));
+    int class_id = c->paramId(m_id, paramIn(0));
     auto obj_inst = environment()->objectManager();
     auto meta = obj_inst->meta(class_type);    
 
-    auto *it_define = meta->function("iterator");
-    auto it_meta = obj_inst->meta(it_define->paramOut[0].type);
+    JZNodeIRParam class_ptr = irId(class_id);
+    JZNodeIRParam itKey = irId(c->paramId(m_id, paramOut(0)));
+    JZNodeIRParam itValue = irId(c->paramId(m_id, paramOut(1)));
+    JZNodeIRJmp* jmp_break;
 
-    int id_list = c->paramId(m_id,paramIn(0));
-    JZNodeIRParam list = irId(id_list);    
-    JZNodeIRParam it = irId(c->allocStack(it_meta->id));
-    JZNodeIRParam itIsEnd = irId(c->allocStack(Type_bool));
-            
-    auto itNextFunc = it_meta->function("next");
-    auto itEndFunc = it_meta->function("atEnd");    
-    auto itKeyFunc = it_meta->function("key");
-    auto itValueFunc = it_meta->function("value");
+    int continuePc = 0;
+    if (environment()->isListType(class_type))
+    {
+        JZNodeIRParam itEnd = irId(c->allocStack(Type_int));
 
-    JZNodeIRParam itKey = irId(c->paramId(m_id,paramOut(0)));
-    JZNodeIRParam itValue = irId(c->paramId(m_id,paramOut(1)));    
+        auto* func_size = meta->function("size");
+        auto* func_get = meta->function("get");
 
-    //it = list.first
-    c->addCall(it_define,{list},{it});
+        c->addSetVariable(itKey, irLiteral(0));
+        c->addCall(func_size, { class_ptr }, { itEnd });
 
-    //while(it != it.end()
-    int startPc = c->nextPc();
-    c->addCall(itEndFunc,{it},{itIsEnd});
-    c->addCompare(itIsEnd,irLiteral(true),OP_eq);
-    JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
-    c->addStatement(JZNodeIRPtr(jmp_true));
+        //it < size
+        int startPc = c->nextPc();
+        c->addCompare(itKey, itEnd, OP_lt);
+        jmp_break = new JZNodeIRJmp(OP_jne);
+        c->addStatement(JZNodeIRPtr(jmp_break));
+        
+        c->addCallConvert(func_get, { class_ptr, itKey }, { itValue });
+        c->addFlowOutput(m_id);
+        c->addSubFlowJump(subFlowOut(0));
 
-    c->addCall(itKeyFunc,{it},{itKey});
-    c->addCall(itValueFunc,{it},{itValue});
+        continuePc = c->nextPc();
+        JZNodeIRJmp* jmp = new JZNodeIRJmp(OP_jmp);
+        jmp->jmpPc = startPc;
+        c->addExpr(itKey, OP_add, itKey, irLiteral(1));
+        c->addStatement(JZNodeIRPtr(jmp));
+    }
+    else if (environment()->isMapType(class_type))
+    {
+        auto* it_begin = meta->function("begin");
+        auto* it_end = meta->function("end");
 
-    c->addFlowOutput(m_id);
-    c->addJumpSubNode(subFlowOut(0));
+        int it_type;
+        environment()->mapIteratorType(class_type, it_type);
 
-    // it++
-    int continuePc = c->nextPc();
-    c->addCall(itNextFunc,{it},{});
-    JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
-    jmp->jmpPc = startPc;
-    c->addStatement(JZNodeIRPtr(jmp));
+        JZNodeIRParam it = irId(c->allocStack(it_type));
+        JZNodeIRParam itEnd = irId(c->allocStack(it_type));
 
-    int breakPc = c->addJumpNode(flowOut());
-    jmp_true->jmpPc = breakPc;
+        c->addCall(it_begin, { class_ptr }, { it });
+        c->addCall(it_end, { class_ptr }, { itEnd });
+
+        auto* it_define = meta->function("iterator");
+        auto it_meta = obj_inst->meta(it_define->paramOut[0].type);
+        auto itNextFunc = it_meta->function("next");
+        auto itKeyFunc = it_meta->function("key");
+        auto itValueFunc = it_meta->function("value");
+
+        //while(it != it.end()
+        int startPc = c->nextPc();
+        c->addCompare(it, itEnd, OP_eq);
+        jmp_break = new JZNodeIRJmp(OP_jne);
+        c->addStatement(JZNodeIRPtr(jmp_break));
+
+        c->addCallConvert(itKeyFunc, { it }, { itKey });
+        c->addCallConvert(itValueFunc, { it }, { itValue });
+        c->addFlowOutput(m_id);
+        c->addSubFlowJump(subFlowOut(0));
+
+        continuePc = c->nextPc();
+        c->addCallConvert(itNextFunc, { it }, { });
+
+        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
+        jmp->jmpPc = startPc;
+        c->addStatement(JZNodeIRPtr(jmp));
+    }
+    else
+    {
+        Q_ASSERT(0);
+    }
+
+    int breakPc = c->addFlowJump(flowOut());
+    jmp_break->jmpPc = breakPc;
     c->setBreakContinue({breakPc},{continuePc});
 
     return true;
@@ -1135,8 +1245,8 @@ bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_true));
     c->addStatement(JZNodeIRPtr(jmp_false));    
 
-    int breakPc = c->addJumpNode(flowOut());
-    jmp_true->jmpPc = c->addJumpSubNode(subFlowOut(0));
+    int breakPc = c->addFlowJump(flowOut());
+    jmp_true->jmpPc = c->addSubFlowJump(subFlowOut(0));
     jmp_false->jmpPc = breakPc;
     
     c->setBreakContinue({breakPc},{continuePc});
@@ -1219,14 +1329,14 @@ bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error)
         c->addStatement(JZNodeIRPtr(jmp));
         last_jmp = jmp;
 
-        c->addJumpSubNode(subFlowOut(i));        
+        c->addSubFlowJump(subFlowOut(i));        
     }    
     if (isElse)
     {
-        int else_pc = c->addJumpSubNode(subFlowOut(inList.size()));
+        int else_pc = c->addSubFlowJump(subFlowOut(inList.size()));
         last_jmp->jmpPc = else_pc;
     }    
-    int ret = c->addJumpNode(flowOut(0));    
+    int ret = c->addFlowJump(flowOut(0));    
     if(!isElse)
         last_jmp->jmpPc = ret;
 
@@ -1333,7 +1443,7 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
         JZNodeIRJmp *jmp_false = new JZNodeIRJmp(OP_jmp);
         c->addStatement(JZNodeIRPtr(jmp_true));
         c->addStatement(JZNodeIRPtr(jmp_false));
-        int jmp = c->addJumpSubNode(sub_flow_list[case_idx]);
+        int jmp = c->addSubFlowJump(sub_flow_list[case_idx]);
         jmp_true->jmpPc = jmp;
         if (pre_jmp)
             pre_jmp->jmpPc = jmp_cmp;
@@ -1341,11 +1451,11 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
     }
     for (; case_idx < sub_flow_list.size(); case_idx++)
     {
-        int jmp = c->addJumpSubNode(sub_flow_list[case_idx]);
+        int jmp = c->addSubFlowJump(sub_flow_list[case_idx]);
         if (pre_jmp)
             pre_jmp->jmpPc = jmp;
     }        
-    int out_pc = c->addJumpNode(flowOut());
+    int out_pc = c->addFlowJump(flowOut());
     QList<int> breakPc, continuePc;
     for (int i = 0; i < sub_flow_list.size(); i++)
     {
@@ -1384,8 +1494,8 @@ bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_true));
     c->addStatement(JZNodeIRPtr(jmp_false));
     
-    jmp_true->jmpPc = c->addJumpNode(flowOut(0));
-    jmp_false->jmpPc = c->addJumpNode(flowOut(1));
+    jmp_true->jmpPc = c->addFlowJump(flowOut(0));
+    jmp_false->jmpPc = c->addFlowJump(flowOut(1));
     return true;
 }
 

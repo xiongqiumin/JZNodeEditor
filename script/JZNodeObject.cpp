@@ -178,7 +178,7 @@ JZFunctionDefine JZNodeObjectDefine::initMemberFunction(QString function) const
     JZFunctionDefine def;
     def.name = function;
     def.className = className;
-    def.paramIn.push_back(JZParamDefine("this",className));
+    def.paramIn.push_back(JZParamDefine("this", JZNodeType::pointerType(className)));
     return def;    
 }
 
@@ -236,6 +236,7 @@ int JZNodeObjectDefine::indexOfFunction(const QString &function) const
 
 bool JZNodeObjectDefine::check(QString &error) const
 {
+    auto env = manager->env();
     int count = 0;
     if (!superName.isEmpty() && !super())
     {
@@ -244,7 +245,7 @@ bool JZNodeObjectDefine::check(QString &error) const
     }
    
     QStringList param_list = paramList(false);
-    for (int i = 0; i < functions.size(); i++)
+    for (int i = 0; i < param_list.size(); i++)
     {
         auto param_def = param(param_list[0]);   
         QString param_type = JZNodeType::baseType(param_def->type);
@@ -289,7 +290,7 @@ bool JZNodeObjectDefine::check(QString &error) const
                         return false;
                     }
 
-                    if (!JZNodeType::functionTypeMatch(func, super_func))
+                    if (!env->isFunctionTypeMatch(func, super_func))
                     {
                         error = "函数签名不匹配" + func->delcare() + "," + super_func->delcare();
                         return false;
@@ -947,14 +948,14 @@ void JZNodeObject::setCOwner(bool owner)
     m_cobjOwner = owner;
 }
 
-//JZNodeObjectHolder
-JZNodeObjectHolder::JZNodeObjectPtrData::JZNodeObjectPtrData()
+//JZNodeObjectData
+JZNodeObjectData::JZNodeObjectData()
 {
     isOwner = false;
     object = nullptr;
 }
 
-JZNodeObjectHolder::JZNodeObjectPtrData::~JZNodeObjectPtrData()
+JZNodeObjectData::~JZNodeObjectData()
 {
     if (isOwner && object)
     {
@@ -963,15 +964,22 @@ JZNodeObjectHolder::JZNodeObjectPtrData::~JZNodeObjectPtrData()
     }
 }
 
+//JZNodeObjectPointer
+JZNodeObjectPointer::JZNodeObjectPointer()
+{
+    type = Type_none;
+}
+
+//JZNodeObjectHolder
 JZNodeObjectHolder::JZNodeObjectHolder()
 {
 }
 
 JZNodeObjectHolder::JZNodeObjectHolder(JZNodeObject *obj,bool isOwner)
 {
-    data = QSharedPointer<JZNodeObjectPtrData>(new JZNodeObjectPtrData());
-    data->isOwner = isOwner;
-    data->object = obj;
+    m_data = QSharedPointer<JZNodeObjectData>(new JZNodeObjectData());
+    m_data->isOwner = isOwner;
+    m_data->object = obj;
 }
 
 JZNodeObjectHolder::~JZNodeObjectHolder()
@@ -980,12 +988,20 @@ JZNodeObjectHolder::~JZNodeObjectHolder()
 
 JZNodeObject *JZNodeObjectHolder::object() const
 {
-    return data->object;
+    return m_data->object;
 }
 
 void JZNodeObjectHolder::releaseOwner()
 {
-    data->isOwner = false;
+    m_data->isOwner = false;
+}
+
+JZNodeObjectPointer JZNodeObjectHolder::toPointer() const
+{
+    JZNodeObjectPointer ptr;
+    ptr.type = JZNodeType::pointerType(object()->type());
+    ptr.pointer = m_data.toWeakRef();
+    return ptr;
 }
 
 bool JZNodeObjectHolder::operator==(const JZNodeObjectHolder &other) const
@@ -1010,7 +1026,10 @@ JZNodeObject* toJZObject(const QVariant &v)
     if (v.userType() == qMetaTypeId<JZNodeObjectPointer>())
     {
         auto ptr = (JZNodeObjectPointer*)v.data();
-        return ptr->pointer.object();
+        if (!ptr->pointer)
+            return nullptr;
+
+        return ptr->pointer.data()->object;
     }
     else if (v.userType() == qMetaTypeId<JZNodeObjectHolder>())
     {
@@ -1024,14 +1043,9 @@ JZNodeObject* toJZObject(const QVariant &v)
     }
 }
 
-JZNodeObjectHolder toJZObjectPtr(const QVariant &v)
+JZNodeObjectHolder toJZObjectHolder(const QVariant &v)
 {
-    if (v.userType() == qMetaTypeId<JZNodeObjectPointer>())
-    {
-        auto ptr = (JZNodeObjectPointer*)v.data();
-        return ptr->pointer;
-    }
-    else if (v.userType() == qMetaTypeId<JZNodeObjectHolder>())
+    if (v.userType() == qMetaTypeId<JZNodeObjectHolder>())
     {
         return v.value<JZNodeObjectHolder>();
     }
@@ -1042,28 +1056,6 @@ JZNodeObjectHolder toJZObjectPtr(const QVariant &v)
     }
 }
 
-//JZNodeObjectPointer
-JZNodeObjectPointer JZNodeObjectPointer::fromObject(const JZNodeObjectHolder& ptr)
-{
-    JZNodeObjectPointer ref;
-    ref.type = JZNodeType::pointerType(ptr.object()->type());
-    ref.pointer = ptr;
-    return ref;
-}
-
-JZNodeObjectPointer JZNodeObjectPointer::fromObject(JZNodeObject *obj, bool owner)
-{
-    JZNodeObjectPointer ref;
-    ref.type = obj->type();
-    ref.pointer = JZNodeObjectHolder(obj, owner);
-    return ref;
-}
-
-JZNodeObjectPointer::JZNodeObjectPointer()
-{
-    type = Type_none;
-}
-
 JZNodeObject* qobjectToJZObject(QObject *obj)
 {
     auto ptr = obj->property("JZObject").value<void*>();
@@ -1072,12 +1064,6 @@ JZNodeObject* qobjectToJZObject(QObject *obj)
     else
         return (JZNodeObject*)ptr;
 }
-
-JZNodeObject* objectFromString(int type,const QString &text)
-{
-    return nullptr;
-}
-
 
 //JZNodeObjectManager
 JZNodeObjectManager::JZNodeObjectManager(JZScriptEnvironment *env)
@@ -1167,7 +1153,6 @@ int JZNodeObjectManager::delcareCClass(const QString &name, const QString &c_typ
 int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
     //可以先声明在注册
-    Q_ASSERT(info.id != -1);
     Q_ASSERT(!info.className.isEmpty());
     Q_ASSERT(!meta(info.className) || (info.id == Type_none || meta(info.className)->id == info.id));
 
@@ -1271,8 +1256,14 @@ JZEnum JZNodeObjectManager::createEnum(int enumType) const
     return e;
 }
 
+bool JZNodeObjectManager::hasType(int type_id) const
+{
+    return meta(type_id);
+}
+
 const JZNodeObjectDefine *JZNodeObjectManager::meta(int id) const
 {
+    Q_ASSERT(id != Type_none && !JZNodeType::isPointer(id));
     return m_metas.value(id,nullptr).data();
 }
 
@@ -1281,7 +1272,11 @@ const JZNodeObjectDefine *JZNodeObjectManager::meta(const QString &className) co
     if(className.isEmpty())
         return nullptr;
 
-    return meta(getClassId(className));
+    int type = getClassId(className);
+    if (type == Type_none)
+        return nullptr;
+
+    return meta(type);
 }
 
 const JZSignalDefine *JZNodeObjectManager::signal(const QString &name) const
@@ -1304,6 +1299,8 @@ int JZNodeObjectManager::getQObjectType(const QString &name) const
 
 int JZNodeObjectManager::getClassId(const QString &class_name) const
 {
+    Q_ASSERT(!JZNodeType::isPointer(class_name));
+
     auto it = m_metas.begin();
     while(it != m_metas.end())
     {
@@ -1576,6 +1573,16 @@ void JZNodeObjectManager::destory(JZNodeObject *object) const
     delete object;
 }
 
+JZNodeObjectHolder JZNodeObjectManager::createHolder(int type_id) const
+{
+    return JZNodeObjectHolder(create(type_id), true);
+}
+
+JZNodeObjectHolder JZNodeObjectManager::createHolder(const QString& type_name) const
+{
+    return JZNodeObjectHolder(create(type_name), true);
+}
+
 JZNodeObject* JZNodeObjectManager::clone(JZNodeObject *src) const
 {
     Q_ASSERT(src->isCopyable());
@@ -1618,4 +1625,9 @@ bool JZNodeObjectManager::equal(JZNodeObject* o1,JZNodeObject *o2) const
     {
         return o1 == o2;
     }
+}
+
+JZNodeObjectManager* runtimeObjectManager()
+{
+    return g_engine->environment()->objectManager();
 }

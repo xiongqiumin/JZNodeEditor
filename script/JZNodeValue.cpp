@@ -458,7 +458,7 @@ bool JZNodePrint::compiler(JZNodeCompiler *c,QString &error)
     QList<JZNodeIRParam> in, out;
     in << in_id;
     c->addCall("print", in, out);    
-    c->addJumpNode(flowOut());
+    c->addFlowJump(flowOut());
 
     return true;
 }
@@ -650,7 +650,7 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
     c->addSetVariable(ref,irId(id));
     c->addSetVariable(irId(m_out),irId(id));    
     c->addFlowOutput(m_id);
-    c->addJumpNode(flowOut());
+    c->addFlowJump(flowOut());
     return true;
 }
 
@@ -853,7 +853,7 @@ bool JZNodeSetMemberParam::compiler(JZNodeCompiler *c, QString &error)
     auto in = irId(in_id);
     in.member = member();
     c->addSetVariable(irId(in_id), irId(var_id));
-    c->addJumpNode(flowOut());
+    c->addFlowJump(flowOut());
     return true;
 }
 
@@ -885,7 +885,7 @@ bool JZNodeSetMemberParamData::compiler(JZNodeCompiler *c, QString &error)
     in << irId(var_id);
     c->addCall("setMemberParam", in, out);
 
-    c->addJumpNode(flowOut());
+    c->addFlowJump(flowOut());
     return true;
 }
 
@@ -1017,7 +1017,7 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
     setType(in1_type, in1_node, in2_id);
     setType(in2_type, in2_node, in1_id);
 
-    c->addJumpNode(flowOut());
+    c->addFlowJump(flowOut());
 
     return true;
 }

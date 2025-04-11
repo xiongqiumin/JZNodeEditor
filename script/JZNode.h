@@ -86,6 +86,7 @@ struct JZNodeGemo
     JZNodeGemo();
     JZNodeGemo(int id, int pin_id);
 
+    int paramId() const;
     bool isNull() const;
     bool operator==(const JZNodeGemo &other) const;
 
@@ -369,6 +370,8 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
+    virtual bool update(QString& error) override;
+    bool getInputType(int &class_type, int& from_id, QString& error);
 };
 
 //JZNodeWhile

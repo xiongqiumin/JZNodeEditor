@@ -156,8 +156,6 @@ JZNodeIR *createNodeIR(int type)
         return new JZNodeIRSet();
     case OP_clone:
         return new JZNodeIRClone();
-    case OP_watch:
-        return new JZNodeIRWatch();
     case OP_convert:
         return new JZNodeIRConvert();
     case OP_buffer:
@@ -351,29 +349,6 @@ void JZNodeIRBuffer::loadFromStream(QDataStream &s)
     s >> id >> buffer;
 }
 
-//JZNodeIRWatch
-JZNodeIRWatch::JZNodeIRWatch()
-{
-    type = OP_watch;
-}
-
-JZNodeIRWatch::~JZNodeIRWatch()
-{
-
-}
-
-void JZNodeIRWatch::saveToStream(QDataStream &s) const
-{
-    JZNodeIR::saveToStream(s);
-    s << source << traget;
-}
-
-void JZNodeIRWatch::loadFromStream(QDataStream &s)
-{
-    JZNodeIR::loadFromStream(s);
-    s >> source >> traget;
-}
-
 //JZNodeIRConvert
 JZNodeIRConvert::JZNodeIRConvert()
 {
@@ -426,6 +401,7 @@ JZNodeIRCall::JZNodeIRCall()
 {
     type = OP_call;
     inCount = 0;
+    isVirtual = false;
     cache = nullptr;
 }
 
@@ -437,13 +413,13 @@ JZNodeIRCall::~JZNodeIRCall()
 void JZNodeIRCall::saveToStream(QDataStream &s) const
 {
     JZNodeIR::saveToStream(s);
-    s << function << inCount;
+    s << function << inCount << isVirtual;
 }
 
 void JZNodeIRCall::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
-    s >> function >> inCount;
+    s >> function >> inCount >> isVirtual;
 }
 
 //JZNodeIRAssert

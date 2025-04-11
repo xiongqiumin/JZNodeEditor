@@ -213,13 +213,12 @@ public:
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
     void addSetBuffer(const JZNodeIRParam &dst, const QByteArray &buffer);
-    void addWatchDisplay(const JZNodeIRParam &dst);
 
     void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
     int addStatement(JZNodeIRPtr ir);    
     
-    int addJumpNode(int pin);      //设置下一个flow,应当在执行完操作后增加
-    int addJumpSubNode(int pin);   //设置下一个sub flow    
+    int addFlowJump(int pin);      //设置下一个flow,应当在执行完操作后增加
+    int addSubFlowJump(int pin);   //设置下一个sub flow    
     int addContinue();
     int addBreak();    
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
@@ -227,9 +226,12 @@ public:
     void addAlloc(int allocType, QString name, int dataType);
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+    void addCallVirtual(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);  
     void addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);    
+    void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAssert(const JZNodeIRParam &tips);       
+
+    void addExpr(JZNodeIRParam dst, int op, JZNodeIRParam in1, JZNodeIRParam in2);
 
     JZNodeIR *lastStatment();
     void removeStatement(int pc);
@@ -294,7 +296,8 @@ protected:
     void updateDepend(const JZFunction *define);
     void addNodeFlowPc(int node_id, int cond, int pc);
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
-                    
+    void dealAddCall(bool isVirtual,const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+
     NodeCompilerInfo *currentNodeInfo();
     JZProject *project();
 

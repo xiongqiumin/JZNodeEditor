@@ -6,6 +6,7 @@
 JZNodeFunction::JZNodeFunction()
 {
     m_type = Node_function;
+    m_directCall = true;
 }
 
 JZNodeFunction::~JZNodeFunction()
@@ -50,6 +51,16 @@ void JZNodeFunction::updateName()
         QString name = v + "." + meta->name;
         setName(name);       
     }
+}
+
+void JZNodeFunction::setDirectCall(bool flag)
+{
+    m_directCall = flag;
+}
+
+bool JZNodeFunction::isDirectCall()
+{
+    return m_directCall;
 }
 
 void JZNodeFunction::setVariable(const QString &name)
@@ -158,7 +169,7 @@ bool JZNodeFunction::update(QString &error)
     }
 
     JZFunctionDefine cur_def = functionDefine();
-    if (!JZNodeType::functionTypeMatch(func, &cur_def))
+    if (!env->isFunctionTypeMatch(func, &cur_def))
     {
         error = "函数定义已改变,请更新," + func->delcare() + "," + cur_def.delcare();
         return false;
@@ -205,7 +216,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         if (!c->checkVariableType(name, this_type, error))
             return false;
 
-        int this_id = JZNodeGemo::paramId(m_id, paramIn(0));
+        int this_id = c->paramId(m_id, paramIn(0));
         c->addSetVariableConvert(irId(this_id), irRef(name));
 
         in_list.insert(0, paramIn(0));
@@ -216,12 +227,16 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
         in << irId(c->paramId(m_id,in_list[i]));
     for(int i = 0; i < out_list.size(); i++)
         out << irId(c->paramId(m_id,out_list[i]));
-    c->addCall(m_functionName,in,out);
+    
+    if(m_directCall || !def->isVirtualFunction)
+        c->addCall(m_functionName,in,out);
+    else
+        c->addCallVirtual(m_functionName,in,out);
 
     if (isFlowNode())
     {
         c->addFlowOutput(m_id);
-        c->addJumpNode(flowOut());
+        c->addFlowJump(flowOut());
     }
     return true;
 }

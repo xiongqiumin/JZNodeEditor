@@ -6,27 +6,32 @@
 #include <QList>
 #include <QVector>
 #include <functional>
+#include "JZNodeObjectParser.h"
 #include "JZNodeObject.h"
 #include "JZScriptEnvironment.h"
+#include "JZNodeObjectParser.h"
 
-QString listType(QString value);
-QString listIteratorType(QString list_type);
-QString mapType(QString key, QString value);
-QString mapIteratorType(QString map_type);
 void checkEmpty(int size);
 void checkSize(int index, int size);
 void checkContains(bool flag);
+
+extern JZNodeObject* JZObjectFromString(int type, const QString& text);
 
 template<class T>
 void registList(JZScriptEnvironment *env,int type = Type_none)
 {
     Q_ASSERT(env == jzbind::bindEnvironment());
 
-    QString name = "QList<" + env->ctypeidToName(typeid(T).name()) + ">";
-    jzbind::ClassBind<QList<T>> cls_list(type, name);
+    QString list_type = "QList<" + env->ctypeidToName(typeid(T).name()) + ">";
+
+    jzbind::ClassBind<QList<T>> cls_list(type, list_type);
+    int list_type_id = cls_list.id();
+
     cls_list.setValueType(true);
-    cls_list.def("__fromString__", false, [](const QString& text)->QList<T> {
-        return QList<T>();
+    cls_list.def("__fromString__", false, [list_type_id](const QString& text)->QList<T> {
+        JZNodeObject* obj = JZObjectFromString(list_type_id, text);
+        QList<T> *ret = JZObjectCast<QList<T>>(obj);
+        return *ret;
     });
     cls_list.def("__toString__", false, [](QList<T>* l)->QString {
         return QString();
@@ -83,12 +88,24 @@ void registMap(JZScriptEnvironment* env, int type = Type_none)
 
     QString key_name = env->ctypeidToName(typeid(Key).name());
     QString value_name = env->ctypeidToName(typeid(Value).name());    
-    
-    QString map_type = mapType(key_name, value_name);
-    jzbind::ClassBind<QMap<Key,Value>::iterator> cls_map_it(Type_none, mapIteratorType(map_type));
-    
+    QString map_type = JZNodeType::mapType(key_name, value_name);
+
+    jzbind::ClassBind<QMap<Key,Value>::iterator> cls_map_it(Type_none, JZNodeType::mapIteratorType(map_type));
+
     jzbind::ClassBind<QMap<Key,Value>> cls_map(type, map_type);
+    int map_type_id = cls_map.id();
+
     cls_map.setValueType(true);
+    cls_map.def("__fromString__", false, [map_type_id](const QString& text)->QMap<Key, Value> {
+        JZNodeObject* obj = JZObjectFromString(map_type_id, text);
+        QMap<Key, Value> *ret = JZObjectCast<QMap<Key, Value>>(obj);
+        return *ret;
+    });
+    cls_map.def("__toString__", false, [](QMap<Key, Value>* l)->QString {
+        JZNodeObjectFormat format;
+        JZNodeObjectHolder holder = runtimeObjectManager()->objectRefrenceHolder(l, false);
+        return format.format(holder.object());
+    });
     cls_map.def("set", false, [](QMap<Key, Value>* map, Key key, const Value& t) {
         checkContains(map->contains(key));
         (*map)[key] = t;

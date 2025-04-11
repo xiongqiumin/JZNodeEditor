@@ -191,7 +191,34 @@ protected:
     QList<ConnectInfo> m_connectList;
 };
 
-//会根据QObject是否有父类，决定是否释放
+//JZNodeObjectData
+class JZNodeObjectData
+{
+public:
+    JZNodeObjectData();
+    ~JZNodeObjectData();
+
+    bool isOwner;
+    JZNodeObject *object;
+};
+
+/*
+    指针，指向JZNodeObject
+*/
+class JZNodeObjectPointer
+{
+public:
+    JZNodeObjectPointer();
+
+    int type;   //指针类型
+    QWeakPointer<JZNodeObjectData> pointer;
+};
+Q_DECLARE_METATYPE(JZNodeObjectPointer)
+
+/*
+isOwner 代表是否所有object, QWidget 回调时存在不需要管理的情况
+会根据QObject是否有父类，决定是否释放
+*/
 class JZNodeObjectHolder
 {
 public:
@@ -201,46 +228,20 @@ public:
 
     JZNodeObject *object() const;
     void releaseOwner();
+    JZNodeObjectPointer toPointer() const;
 
     bool operator ==(const JZNodeObjectHolder &other) const;
     bool operator !=(const JZNodeObjectHolder &other) const;
 
 protected:
-    class JZNodeObjectPtrData
-    {
-    public:
-        JZNodeObjectPtrData();
-        ~JZNodeObjectPtrData();
-
-        bool isOwner;
-        JZNodeObject *object;
-    };
-
-    QSharedPointer<JZNodeObjectPtrData> data;
+    QSharedPointer<JZNodeObjectData> m_data;
 };
 Q_DECLARE_METATYPE(JZNodeObjectHolder)
 
-/*
-    指针，指向JZNodeObject
-*/
-class JZNodeObjectPointer
-{
-public:
-    static JZNodeObjectPointer fromObject(const JZNodeObjectHolder &ptr);
-    static JZNodeObjectPointer fromObject(JZNodeObject *ptr,bool owner);
-
-    JZNodeObjectPointer();
-
-    int type;   //指针类型
-    JZNodeObjectHolder pointer;
-};
-Q_DECLARE_METATYPE(JZNodeObjectPointer)
-
 bool isJZObject(const QVariant &v);
 JZNodeObject* toJZObject(const QVariant &v);
-JZNodeObjectHolder toJZObjectPtr(const QVariant &v);
+JZNodeObjectHolder toJZObjectHolder(const QVariant &v);
 JZNodeObject* qobjectToJZObject(QObject *obj);
-JZNodeObject* objectFromString(int type,const QString &text);
 
 void JZObjectConnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot);
 void JZObjectDisconnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot);
@@ -268,6 +269,7 @@ public:
     void setUserRegist(bool flag);
     void clearUserReigst();
 
+    bool hasType(int type_id) const;
     const JZNodeObjectDefine *meta(const QString &className) const;
     const JZNodeObjectDefine *meta(int type_id) const;
     QString getClassName(int type_id) const;
@@ -284,26 +286,29 @@ public:
 
     const JZSignalDefine *signal(const QString &name) const;
     
-    int getQObjectType(const QString &name) const;
-    void setQObjectType(const QString &name,int id);
+    int getQObjectType(const QString & type_name) const;
+    void setQObjectType(const QString & type_name,int id);
 
-    int delcare(const QString &name, int id = Type_none);
-    int delcareCClass(const QString &name, const QString &ctype_id, int id = Type_none);
+    int delcare(const QString & type_name, int id = Type_none);
+    int delcareCClass(const QString & type_name, const QString &ctype_id, int id = Type_none);
 
     int regist(const JZNodeObjectDefine &define);    
     int registCClass(const JZNodeObjectDefine &define,const QString &type_id);
     void replace(const JZNodeObjectDefine &define);    
     
     JZNodeObject* create(int type_id) const;
-    JZNodeObject* create(const QString &name) const;
+    JZNodeObject* create(const QString & type_name) const;
     JZNodeObject* createByCTypeid(const QString &ctype_id) const;
     JZNodeObject* createRefrence(int type_id, void *cobj, bool owner) const;
     JZNodeObject* createRefrence(const QString &type_name,void *cobj,bool owner) const;
     JZNodeObject* createRefrenceByCTypeid(const QString &ctype_id,void *cobj,bool owner) const;
     
     JZNodeObject* createNull(int type) const;
-    JZNodeObject* createNull(const QString &name) const;
+    JZNodeObject* createNull(const QString & type_name) const;
     void destory(JZNodeObject *obj) const;
+
+    JZNodeObjectHolder createHolder(int type_id) const;
+    JZNodeObjectHolder createHolder(const QString& type_name) const;
 
     JZNodeObject* clone(JZNodeObject *src) const;
     bool equal(JZNodeObject* o1,JZNodeObject *o2) const;
@@ -318,20 +323,47 @@ public:
 
     //template
     template<class T>
-    QVariant objectCreate() const
+    JZNodeObject* objectCreate() const
     {
         auto obj = createByCTypeid(typeid(T).name());
-        return QVariant::fromValue(JZNodeObjectHolder(obj, true));
+        return obj;
     }
 
     template<class T>
-    QVariant objectRefrence(T ptr, bool cowner) const
+    JZNodeObject *objectRefrence(T ptr, bool cowner) const
     {
         static_assert(std::is_pointer<T>(), "only support class pointer");
         QString c_typeid = typeid(std::remove_pointer_t<T>).name();
         auto obj = createRefrenceByCTypeid(c_typeid, ptr, cowner);
-        JZNodeObjectPointer node_ptr = JZNodeObjectPointer::fromObject(JZNodeObjectHolder(obj, true)); //这里代表true是不是管理obj， 上面的cowner代表是不是管理c  
-        return QVariant::fromValue(node_ptr);
+        return obj;
+    }
+
+    template<class T>
+    JZNodeObjectHolder objectCreateHolder() const
+    {
+        auto obj = objectCreate<T>();
+        return JZNodeObjectHolder(obj,true);
+    }
+
+    template<class T>
+    JZNodeObjectHolder objectRefrenceHolder(T ptr, bool cowner) const
+    {
+        auto obj = objectRefrence<T>(ptr, cowner);
+        return JZNodeObjectHolder(obj,true);  //这里代表true是不是管理obj， 上面的cowner代表是不是管理c  
+    }
+
+    template<class T>
+    QVariant objectCreateVariant() const
+    {
+        auto holder = objectCreateHolder<T>();
+        return QVariant::fromValue(holder);
+    }
+
+    template<class T>
+    QVariant objectRefrenceVariant(T ptr, bool cowner) const
+    {
+        auto holder = objectRefrenceHolder<T>(ptr, cowner);
+        return QVariant::fromValue(holder);
     }
 
     template<class T>
@@ -341,6 +373,13 @@ public:
         int c_type = getIdByCTypeid(typeid(T).name());
         Q_ASSERT(obj->isInherits(c_type));
         return (T*)obj->cobj();
+    }
+
+    template<class T>
+    T* objectCast(const JZNodeObjectHolder &holder) const
+    {
+        auto obj = holder.object();
+        return objectCast<T>(obj);
     }
 
     template<class T>
@@ -367,5 +406,12 @@ protected:
     int m_objectId;
     bool m_userRegist;
 };
+JZNodeObjectManager* runtimeObjectManager();
+
+template<class T>
+T* JZObjectCast(JZNodeObject *obj)
+{
+    return obj->manager()->objectCast<T>(obj);
+}
 
 #endif

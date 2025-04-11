@@ -3,26 +3,6 @@
 #include "JZContainer.h"
 #include "JZNodeEngine.h"
 
-QString listType(QString value)
-{
-    return "QList<" + value + ">";
-}
-
-QString listIteratorType(QString list_type)
-{
-    return list_type + "::iterator";
-}
-
-QString mapType(QString key, QString value)
-{
-    return "QMap<"  + key + "," + value + ">";
-}
-
-QString mapIteratorType(QString map_type)
-{
-    return map_type + "::iterator";
-}
-
 void checkEmpty(int size)
 {
     if (size == 0)
@@ -43,7 +23,7 @@ void checkSize(int index, int size)
 
 void checkContains(bool flag)
 {
-    if (flag)
+    if (!flag)
     {
         QString error = QString::asprintf("not contains");
         throw std::runtime_error(qPrintable(error));
@@ -55,7 +35,8 @@ void listForeach(JZNodeObject *obj, std::function<bool(int,QVariant)> vistor)
     auto env = g_engine->environment();
 
     QString list_type = obj->className();
-    JZNodeObjectPointer list_ptr = JZNodeObjectPointer::fromObject(obj, true);
+    JZNodeObjectHolder holder(obj, false);
+    JZNodeObjectPointer list_ptr = holder.toPointer();
     
     QVariantList in, out;
     in << QVariant::fromValue(list_ptr);
@@ -80,10 +61,11 @@ void mapForeach(JZNodeObject *obj, std::function<bool(QVariant, QVariant)> visto
     auto env = g_engine->environment();
 
     QString map_type = obj->className();
-    QString it_type = mapIteratorType(map_type);
+    QString it_type = JZNodeType::mapIteratorType(map_type);
     int it_ptr_type = env->nameToType(JZNodeType::pointerType(it_type));
 
-    JZNodeObjectPointer map_ptr = JZNodeObjectPointer::fromObject(obj, true);
+    JZNodeObjectHolder holder(obj, false);
+    JZNodeObjectPointer map_ptr = holder.toPointer();
 
     QVariant it, it_end;
     QVariantList in, out;

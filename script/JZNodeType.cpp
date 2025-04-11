@@ -82,9 +82,9 @@ void JZNodeType::init()
     typeMap["QObject"] = Type_object;
     typeMap["QWidget"] = Type_widget;
     
-    typeMap["auto"] = Type_arg;
     typeMap["arg"] = Type_arg;
-    typeMap["args"] = Type_args;
+    typeMap["argPointer"] = Type_argPointer;
+    typeMap["args"] = Type_args;     
 
     opNameMap[OP_add] = "+";
     opNameMap[OP_sub] = "-";
@@ -166,7 +166,7 @@ int JZNodeType::baseType(int type)
 
 int JZNodeType::pointerType(int type)
 {
-    Q_ASSERT(!isPointer(type));
+    Q_ASSERT(type != Type_none && !isPointer(type));
     return type | Type_pointerFlag;
 }
 
@@ -379,6 +379,50 @@ bool JZNodeType::variantIsPointer(const QVariant& v)
     return v.userType() == qMetaTypeId<JZNodeObjectPointer>();
 }
 
+QString JZNodeType::listType(QString value)
+{
+    return "QList<" + value + ">";
+}
+
+QString JZNodeType::listIteratorType(QString list_type)
+{
+    return list_type + "::iterator";
+}
+
+bool JZNodeType::listValueType(QString list_type, QString& value_type)
+{
+    if (!list_type.startsWith("QList<") || !list_type.endsWith(">"))
+        return false;
+
+    value_type = list_type.mid(6, list_type.size() - 7);
+    return true;
+}
+
+QString JZNodeType::mapType(QString key, QString value)
+{
+    return "QMap<" + key + "," + value + ">";
+}
+
+QString JZNodeType::mapIteratorType(QString map_type)
+{
+    return map_type + "::iterator";
+}
+
+bool JZNodeType::mapValueType(QString map_type, QString& value_type, QString& key_type)
+{
+    if (!map_type.startsWith("QMap<") || !map_type.endsWith(">"))
+        return false;
+
+    map_type = map_type.mid(6, map_type.size() - 7);
+    QStringList str = map_type.split(",");
+    if (str.size() != 2)
+        return false;
+
+    value_type = str[0];
+    key_type = str[1];
+    return true;
+}
+
 bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot)
 {
     int slot_param = slot->paramIn.size() - 1; 
@@ -389,29 +433,6 @@ bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefi
     {
         int slot_idx = i + 1;
         if(sig->paramOut[i].type != slot->paramIn[slot_idx].type)
-            return false;
-    }
-    return true;
-}
-
-bool JZNodeType::functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2)
-{
-    if(func1->paramIn.size() != func2->paramIn.size() 
-        || func1->paramOut.size() != func2->paramOut.size())
-        return false;
-    if(func1->isVirtualFunction != func2->isVirtualFunction)
-        return false;
-    if(func1->isFlowFunction != func2->isFlowFunction)
-        return false;
-
-    for(int i = 0; i < func1->paramIn.size(); i++)
-    {
-        if(func1->paramIn[i].type != func2->paramIn[i].type)
-            return false;
-    }
-    for(int i = 0; i < func1->paramOut.size(); i++)
-    {
-        if(func1->paramOut[i].type != func2->paramOut[i].type)
             return false;
     }
     return true;

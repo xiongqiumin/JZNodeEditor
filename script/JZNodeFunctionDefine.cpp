@@ -93,7 +93,7 @@ bool JZFunctionDefine::isNull() const
 
 void JZFunctionDefine::setFullName(const QString &full_name)
 {
-    int idx = full_name.lastIndexOf(".");
+    int idx = full_name.lastIndexOf("::");
     if(idx >= 0)
     {
         className = full_name.left(idx);
@@ -110,7 +110,7 @@ QString JZFunctionDefine::fullName() const
 {
     QString result = name;
     if (!className.isEmpty())
-        result = className + "." + result;
+        result = className + "::" + result;
     return result;
 }
 

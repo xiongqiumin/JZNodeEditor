@@ -229,7 +229,7 @@ JZNodeObject *JZNodeObjectParser::readList(QString valueType,QString gap)
         return nullptr;
 
     JZNodeObjectHolder ptr(obj,true);
-    JZNodeObjectPointer obj_ptr = JZNodeObjectPointer::fromObject(obj, false);
+    JZNodeObjectPointer obj_ptr = ptr.toPointer();
 
     QVariantList in,out;
     in << QVariant::fromValue(obj_ptr) << QVariant();
@@ -241,7 +241,7 @@ JZNodeObject *JZNodeObjectParser::readList(QString valueType,QString gap)
 
         v = env->convertTo(v, data_type);
         in[1] = v;        
-        JZScriptInvoke(list_type + ".push_back",in,out);
+        JZScriptInvoke(list_type + "::push_back",in,out);
 
         c = readToken();
         if (c.word == gap)
@@ -260,7 +260,7 @@ JZNodeObject *JZNodeObjectParser::readList(QString valueType,QString gap)
 
 JZNodeObject *JZNodeObjectParser::readMap(QString keyType,QString valueType)
 {
-    QString map_type = mapType(keyType, valueType);
+    QString map_type = JZNodeType::mapType(keyType, valueType);
 
     Token c = readToken();
     Q_ASSERT(c.word == "{");
@@ -274,7 +274,7 @@ JZNodeObject *JZNodeObjectParser::readMap(QString keyType,QString valueType)
         return nullptr;
 
     JZNodeObjectHolder ptr(obj,true);
-    JZNodeObjectPointer obj_ptr = JZNodeObjectPointer::fromObject(obj, false);
+    JZNodeObjectPointer obj_ptr = ptr.toPointer();
 
     QVariantList in, out;
     in << QVariant::fromValue(obj_ptr) << QVariant() << QVariant();
@@ -301,7 +301,7 @@ JZNodeObject *JZNodeObjectParser::readMap(QString keyType,QString valueType)
 
         in[1] = key;
         in[2] = value;
-        JZScriptInvoke(map_type + ".insert", in, out);
+        JZScriptInvoke(map_type + "::insert", in, out);
 
         c = readToken();
         if (c.word == "}")
@@ -360,9 +360,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
         int end_idx = type.lastIndexOf(">");
         QString value_type = type.mid(list_pre.size(),end_idx - list_pre.size());
         auto list = readList(value_type,"{");
-        if(list)
-            return inst->createRefrence(list->type(),list,true);
-        return nullptr;
+        return list;
     }
     else if(type.startsWith(map_pre))
     {
@@ -371,9 +369,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
         QString key_type = type_list[0];
         QString value_type = type_list[1];
         auto map = readMap(key_type,value_type);
-        if(map)
-            return inst->createRefrence(map->type(),map,true); 
-        return nullptr;
+        return map;
     }
 
     auto func_def = meta->function("__fromString__");
@@ -387,7 +383,7 @@ JZNodeObject *JZNodeObjectParser::readObject()
         in << create_string;
         JZScriptInvoke(func_def->fullName(), in, out);
 
-        auto ptr = toJZObjectPtr(out[0]);
+        auto ptr = toJZObjectHolder(out[0]);
         ptr.releaseOwner();
         return ptr.object();
     }
@@ -397,7 +393,8 @@ JZNodeObject *JZNodeObjectParser::readObject()
         if (!map)
             return nullptr;
                 
-        JZNodeObjectPointer map_ptr = JZNodeObjectPointer::fromObject(map, true);
+        JZNodeObjectHolder map_holder(map,true);
+        JZNodeObjectPointer map_ptr = map_holder.toPointer();
         
         auto obj = inst->create(meta->id);
         JZNodeObjectHolder ptr(obj, true);
@@ -518,7 +515,7 @@ JZNodeObject *JZNodeObjectParser::parse(const QString &text)
 
 JZNodeObject *JZNodeObjectParser::parseToType(QString type,const QString &text)
 {
-    QString type_text = type + "{" + text +"}";
+    QString type_text = type + text;
     return parse(type_text);
 }
 

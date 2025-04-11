@@ -49,44 +49,44 @@ void ScriptTest::testClone()
         return;
 
     auto obj_inst = m_objInst;
-    auto obj1 = obj_inst->objectCreate<QObject>();
-    auto obj2 = obj_inst->objectCreate<QObject>();
-    QVariant obj3 = obj1;
+    auto obj1 = obj_inst->objectCreateHolder<QObject>();
+    auto obj2 = obj_inst->objectCreateHolder<QObject>();
+    JZNodeObjectHolder obj3 = obj1;
     QVERIFY(obj1 != obj2);
     QVERIFY(obj1 == obj3);
 
-    auto pt1 = obj_inst->objectCreate<QPoint>();
-    auto pt2 = obj_inst->objectCreate<QPoint>();
+    auto pt1 = obj_inst->objectCreateHolder<QPoint>();
+    auto pt2 = obj_inst->objectCreateHolder<QPoint>();
     QVERIFY(pt1 == pt2);
 
     auto p_pt1 = obj_inst->objectCast<QPoint>(pt1);
     p_pt1->setX(150);
     QVERIFY(pt1 != pt2);    
 
-    auto obj_list = m_objInst->create("QList<QPoint>");
-    JZNodeObjectPointer ptr = JZNodeObjectPointer::fromObject(JZNodeObjectHolder(obj_list,true));
+    auto obj_list = m_objInst->objectCreateHolder<QList<QPoint>>();
+    JZNodeObjectPointer ptr = obj_list.toPointer();
     QVariant list = QVariant::fromValue(ptr);
 
     QVariantList in,out;
     for(int i = 0; i < 5; i++)
     {
-        QVariant pt = obj_inst->objectCreate<QPoint>();
+        QVariant pt = obj_inst->objectCreateVariant<QPoint>();
         QPoint *p_pt = obj_inst->objectCast<QPoint>(pt);
         p_pt->setX(i);
         p_pt->setY(0);
 
         in.clear();
         in << list << pt;
-        m_engine.call("QList<QPoint>.push_back",in,out);
+        m_engine.call("QList<QPoint>::push_back",in,out);
 
-        QVariant pt_other = obj_inst->objectCreate<QPoint>();
+        QVariant pt_other = obj_inst->objectCreateVariant<QPoint>();
         QPoint *p_pt_other = obj_inst->objectCast<QPoint>(pt_other);
         p_pt_other->setX(i);
         p_pt_other->setY(0);
 
         in.clear();
         in << list << pt_other << 0;
-        m_engine.call("QList<QPoint>.indexOf",in,out);
+        m_engine.call("QList<QPoint>::indexOf",in,out);
         QCOMPARE(out[0].toInt(),i);
     }
 }
@@ -122,33 +122,37 @@ void ScriptTest::testContainer()
     if(!build())
         return;
 
+    auto env = m_engine.environment();
+
     QVariantList in,out;
-    auto list_int = m_engine.getVariable("list_int");
+    auto list_holder = m_engine.getVariable("list_int");
+    auto list_int = env->convertTo(list_holder, env->nameToType("QList<int>*"));
+
     in << list_int << 0;
-    m_engine.call("QList<int>.get",in,out);
+    m_engine.call("QList<int>::get",in,out);
     QCOMPARE(out[0].toInt(),1);
 
     in.clear();
     in << list_int << 0 << 5;
-    m_engine.call("QList<int>.set",in,out);
+    m_engine.call("QList<int>::set",in,out);
 
     in.clear();
     in << list_int << 0;
-    m_engine.call("QList<int>.get",in,out);
+    m_engine.call("QList<int>::get",in,out);
     QCOMPARE(out[0].toInt(),5);
 
     in.clear();
     in << list_int << 500;
-    m_engine.call("QList<int>.push_back",in,out);  
+    m_engine.call("QList<int>::push_back",in,out);  
 
     in.clear();
     in << list_int;
-    m_engine.call("QList<int>.size",in,out);
+    m_engine.call("QList<int>::size",in,out);
     QCOMPARE(out[0].toInt(),9);
 
-    m_engine.call("QList<int>.clear",in,out);
+    m_engine.call("QList<int>::clear",in,out);
     
-    m_engine.call("QList<int>.size",in,out);
+    m_engine.call("QList<int>::size",in,out);
     QCOMPARE(out[0].toInt(),0);
 }
 
@@ -494,6 +498,7 @@ void ScriptTest::testFor()
     
     if(!build())
         return;
+    dump("testFor");
 
     QVariantList in,out;
     m_engine.call("ForTest0", in, out);
@@ -511,7 +516,6 @@ void ScriptTest::testFor()
 
 void ScriptTest::testForEach()
 {
-    return;
     /*
         for(int i = 0; i < list.size(); i++)
         {
@@ -522,7 +526,6 @@ void ScriptTest::testForEach()
     JZNodeEngine *engine = &m_engine;
 
     m_project.addGlobalVariable("sum",Type_int,0);
-    m_project.addGlobalVariable("a",m_objInst->getClassId("List"));
 
     JZNode *node_start = script->getNode(0);
     JZNodeForEach *node_for = new JZNodeForEach();        
@@ -531,15 +534,12 @@ void ScriptTest::testForEach()
     JZNodeParam *node_sum = new JZNodeParam();
     JZNodeSetParam *node_set = new JZNodeSetParam();
 
-    JZNodeSetParam *node_list = new JZNodeSetParam();
-    node_list->setVariable("a");
-
     node_sum->setVariable("sum");
     node_set->setVariable("sum");
 
     JZNodeFunction *node_create = new JZNodeFunction();
-    node_create->setFunction(m_funcInst->function("List.__fromString__"));
-    node_create->setParamInValue(0, "1,2,3,4,5,6,7,8,9,10");
+    node_create->setFunction(m_funcInst->function("QList<int>::__fromString__"));
+    node_create->setParamInValue(0, "{1,2,3,4,5,6,7,8,9,10}");
 
     int start_id = node_start->id();
     script->addNode(node_for);    
@@ -547,14 +547,10 @@ void ScriptTest::testForEach()
     script->addNode(node_add);
     script->addNode(node_set);
     script->addNode(node_create);
-    script->addNode(node_list);
 
     //start    
-    script->addConnect(JZNodeGemo(start_id,node_start->flowOut()), node_list->flowInGemo());   
-    script->addConnect(node_create->paramOutGemo(0), node_list->paramInGemo(1));
-
-    script->addConnect(node_list->flowOutGemo(),node_for->flowInGemo());
-    script->addConnect(node_list->paramOutGemo(0),node_for->paramInGemo(0));
+    script->addConnect(JZNodeGemo(start_id,node_start->flowOut()), node_for->flowInGemo());
+    script->addConnect(node_create->paramOutGemo(0),node_for->paramInGemo(0));
 
     // sum = sum + i
     script->addConnect(node_sum->paramOutGemo(0),node_add->paramInGemo(0));
@@ -565,6 +561,8 @@ void ScriptTest::testForEach()
     
     if (!build())
         return;
+
+    dump("testForEach");
         
     QVariantList in,out;
     call("main",in,out);
@@ -1007,7 +1005,7 @@ void ScriptTest::testClass()
     auto env = m_project.environment();
     auto classBase = m_file->addClass("ClassBase");
     auto classA = m_file->addClass("ClassA","ClassBase");
-    auto classB = m_file->addClass("ClassB","ClassBase");
+    auto classB = m_file->addClass("ClassB","ClassA");
 
     auto addReturn = [](JZScriptItem *script,int num) {
         auto node_start = script->getNode(0);
@@ -1023,15 +1021,17 @@ void ScriptTest::testClass()
     define.className = classBase->className();
     define.isVirtualFunction = true;
     define.name = "getValue";
-    define.paramIn.push_back(JZParamDefine("this", "ClassBase"));
+    define.paramIn.push_back(JZParamDefine("this", "ClassBase*"));
     define.paramOut.push_back(env->paramDefine("ret",Type_int));
     auto func_base = classBase->addMemberFunction(define);
     addReturn(func_base, 0);
 
+    define.paramIn[0] = JZParamDefine("this", "ClassA*");
     define.className = classA->className();
     auto func_a = classA->addMemberFunction(define);
     addReturn(func_a, 1);
 
+    define.paramIn[0] = JZParamDefine("this", "ClassB*");
     define.className = classB->className();
     auto func_b = classB->addMemberFunction(define);
     addReturn(func_b, 2);
@@ -1040,24 +1040,36 @@ void ScriptTest::testClass()
         return;
 
     auto inst = m_objInst;
-    auto obj_base = JZNodeObjectHolder(inst->create("ClassBase"),true);
-    auto obj_a = JZNodeObjectHolder(inst->create("ClassA"), true);
-    auto obj_b = JZNodeObjectHolder(inst->create("ClassB"), true);
+    auto obj_base = inst->createHolder("ClassBase");
+    auto obj_a = inst->createHolder("ClassA");
+    auto obj_b = inst->createHolder("ClassB");
 
     QVariantList in, out;
     in.clear();
-    in << QVariant::fromValue(obj_base);
-    m_engine.call("ClassBase.getValue", in, out);
+    in << QVariant::fromValue(obj_base.toPointer());
+    m_engine.call("ClassBase::getValue", in, out);
     QCOMPARE(out[0].toInt(),0);
 
     in.clear();
-    in << QVariant::fromValue(obj_a);
-    m_engine.call("ClassBase.getValue", in, out);
+    in << QVariant::fromValue(obj_a.toPointer());
+    m_engine.call("ClassBase::getValue", in, out);
+    QCOMPARE(out[0].toInt(), 0);
+
+    m_engine.call("ClassA::getValue", in, out);
     QCOMPARE(out[0].toInt(), 1);
 
     in.clear();
-    in << QVariant::fromValue(obj_b);
-    m_engine.call("ClassBase.getValue", in, out);
+    in << QVariant::fromValue(obj_b.toPointer());
+    m_engine.call("ClassBase::getValue", in, out);
+    QCOMPARE(out[0].toInt(), 0);
+
+    m_engine.call("ClassA::getValue", in, out);
+    QCOMPARE(out[0].toInt(), 1);
+
+    m_engine.call("ClassB::getValue", in, out);
+    QCOMPARE(out[0].toInt(), 2);
+
+    m_engine.callVirtual("ClassBase::getValue", in, out);
     QCOMPARE(out[0].toInt(), 2);
 }
 
@@ -1090,13 +1102,13 @@ void ScriptTest::testCClass()
     QString c = "money";
     
     QVariantList out;
-    engine->call("string.left",{a,6},out);
+    engine->call("string::left",{a,6},out);
     QCOMPARE(out[0],a.left(6));
 
-    engine->call("string.size",{out[0]},out);
+    engine->call("string::size",{out[0]},out);
     QCOMPARE(out[0],a.left(6).size());
 
-    engine->call("string.replace",{a,b,c},out);
+    engine->call("string::replace",{a,b,c},out);
     QCOMPARE(out[0],a.replace(b,c));
 }
 

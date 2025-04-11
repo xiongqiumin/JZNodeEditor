@@ -32,10 +32,7 @@ public:
     void initVariable(int id, const QVariant &value);
 
     QVariant *getRef(int id);
-    QVariant *getRef(QString name);    
-
-    void clearIrCache();
-    void applyIrCache();
+    QVariant *getRef(const QString &name);    
 
     const JZFunction *function;
     QVariant object;      //this    
@@ -46,8 +43,7 @@ public:
     QMap<int, QVariant> watchMap;
     
     QMap<QString,QVariantPtr> locals;
-    QMap<int,QVariantPtr> stacks;    
-    QMap<JZNodeIRParam*,QVariant*> irParamCache; //为了加速JZNodeIRParam访问的缓存
+    QMap<int,QVariantPtr> stacks;
 };
 
 class Stack
@@ -205,9 +201,14 @@ public:
     void printNode();
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
 
-    bool call(const QString &function,const QVariantList &in,QVariantList &out);    
-    bool call(const JZFunction *func,const QVariantList &in,QVariantList &out);
+    //外部用
+    bool call(const QString &function,const QVariantList &in,QVariantList &out);
+    bool call(const JZFunction* func, const QVariantList& in, QVariantList& out);
+    bool callVirtual(const QString& function, const QVariantList& in, QVariantList& out);
+    
+    //内部用
     void invoke(const QString &function,const QVariantList &in,QVariantList &out);
+    void invokeVirtual(const QString& function, const QVariantList& in, QVariantList& out);
     void onSlot(const QString &function,const QVariantList &in,QVariantList &out);
     void print(const QString &log);
     void printMemory();
@@ -251,8 +252,9 @@ protected:
     bool run();             
     void updateStatus(int status);
 
-    const JZFunction *function(QString name,const QVariantList *list);
+    const JZFunction *function(QString name);
     const JZFunction *function(JZNodeIRCall *ir_call);
+    const JZFunction *virtualFunction(JZNodeObject *obj,QString name);
 
     void checkFunctionIn(const JZFunction *func);
     void checkFunctionOut(const JZFunction *func);
@@ -326,6 +328,8 @@ extern JZNodeEngine *g_engine;
 
 void JZScriptLog(const QString &name);
 QVariant JZScriptConvert(const QVariant &in, int type);
+QString JZObjectToString(JZNodeObject* obj);
+JZNodeObject* JZObjectFromString(int type, const QString& text);
 void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out);
 void JZScriptOnSlot(const QString &function, const QVariantList &in, QVariantList &out);
 

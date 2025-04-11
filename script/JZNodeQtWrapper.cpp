@@ -126,17 +126,14 @@ void QtWrapper::initBase()
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
-    cls_string.def("format", false, [](const QString &format)->QString {
-        QString fmt = format;
-        return fmt;
-    });
+    cls_string.setValueType(true);
     cls_string.def("append", false, [](const QString &a, const QString &b)->QString {
         return a + b;
     });
-    cls_string.def("left", false, &QString::left);
-    cls_string.def("right", false, &QString::right);
-    cls_string.def("size", false, &QString::size);
-    cls_string.def("mid", false, &QString::mid);
+    cls_string.def("left", false, [](const QString& in,int n)->QString { return in.left(n); });
+    cls_string.def("right", false, [](const QString& in,int n)->QString { return in.right(n); });
+    cls_string.def("size", false, [](const QString& in)->int { return in.size(); });
+    cls_string.def("mid", false, [](const QString& in,int pos,int n)->QString { return in.mid(pos, n); });
     cls_string.def("replace", false, [](const QString &in, const QString &before, const QString &after)->QString {
         QString ret = in;
         return ret.replace(before, after);
@@ -144,7 +141,7 @@ void QtWrapper::initBase()
     cls_string.def("split", false, [](const QString &in, const QString &before, Qt::SplitBehavior behavior)->QStringList {
         return in.split(before, behavior);
     });
-    cls_string.def("isEmpty", false, &QString::isEmpty);
+    cls_string.def("isEmpty", false, [](const QString& in)->bool { return in.isEmpty(); });
     cls_string.regist();
 
     //Point

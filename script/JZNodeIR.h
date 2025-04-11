@@ -18,7 +18,6 @@ enum
     OP_set,
     OP_buffer,
     OP_clone,
-    OP_watch,
     OP_convert,
     OP_jmp,
     OP_je,
@@ -199,19 +198,6 @@ public:
     QByteArray buffer;
 };
 
-class JZNodeIRWatch : public JZNodeIR
-{
-public:
-    JZNodeIRWatch();
-    virtual ~JZNodeIRWatch();
-
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
-
-    JZNodeIRParam source;
-    JZNodeIRParam traget;
-};
-
 class JZNodeIRConvert: public JZNodeIR
 {
 public:
@@ -249,6 +235,7 @@ public:
 
     QString function;
     int inCount;
+    bool isVirtual;
     const JZFunction *cache;
 };
 

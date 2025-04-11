@@ -22,7 +22,7 @@ bool JZNodeCustomBuild::compiler(JZNodeCompiler *c, QString &error)
         return false;
 
     c->addFlowOutput(m_id);
-    c->addJumpNode(flowOut());
+    c->addFlowJump(flowOut());
     return true;
 }
 

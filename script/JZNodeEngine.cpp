@@ -12,12 +12,7 @@
 #include "JZContainer.h"
 #include "runtime/JZNodeUiLoader.h"
 #include "LogManager.h"
-
-QString JZObjectToString(JZNodeObject *obj)
-{
-    JZNodeObjectFormat format;
-    return format.format(obj);
-}
+#include "JZNodeCompiler.h"
 
 void JZScriptLog(const QString &log)
 {
@@ -31,9 +26,32 @@ QVariant JZScriptConvert(const QVariant &in, int type)
     return env->convertTo(in, type);
 }
 
+QString JZObjectToString(JZNodeObject* obj)
+{
+    JZNodeObjectFormat format;
+    return format.format(obj);
+}
+
+JZNodeObject* JZObjectFromString(int type, const QString& text)
+{
+    auto env = g_engine->environment();
+
+    JZNodeObjectParser parser;
+    auto obj = parser.parseToType(env->typeToName(type), text);
+    if (!obj)
+        throw std::runtime_error("create from string failed");
+
+    return obj;
+}
+
 void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out)
 {
     g_engine->invoke(function, in, out);
+}
+
+void JZScriptInvokeVirtual(const QString& function, const QVariantList& in, QVariantList& out)
+{
+    g_engine->invokeVirtual(function, in, out);
 }
 
 void JZScriptOnSlot(const QString &function, const QVariantList &in, QVariantList &out)
@@ -52,7 +70,6 @@ RunnerEnv::RunnerEnv()
 
 RunnerEnv::~RunnerEnv()
 {       
-    clearIrCache();
 }
 
 void RunnerEnv::initVariable(QString name, const QVariant &value)
@@ -80,33 +97,13 @@ QVariant *RunnerEnv::getRef(int id)
     return it->ptr.data();
 }
 
-QVariant *RunnerEnv::getRef(QString name)
+QVariant *RunnerEnv::getRef(const QString& name)
 {
     auto it = locals.find(name);
     if (it == locals.end())
         return nullptr;
 
     return it->ptr.data();
-}
-
-void RunnerEnv::clearIrCache()
-{
-    auto it = irParamCache.begin();
-    while(it != irParamCache.end())
-    {
-        it.key()->cache = nullptr;
-        it++;
-    }
-}
-
-void RunnerEnv::applyIrCache()
-{
-    auto it = irParamCache.begin();
-    while(it != irParamCache.end())
-    {
-        it.key()->cache = it.value();
-        it++;
-    }
 }
 
 Stack::Stack()
@@ -144,17 +141,12 @@ RunnerEnv *Stack::env(int index)
 }
 
 void Stack::pop()
-{       
-    m_env.back().clearIrCache();
+{   
     m_env.pop_back();    
-    if(m_env.size() > 0)
-        m_env.back().applyIrCache();
 }
 
 void Stack::push()
-{        
-    if(m_env.size() > 0)
-        m_env.back().clearIrCache();   
+{       
     m_env.push_back(RunnerEnv());
 }
 
@@ -629,8 +621,15 @@ bool JZNodeEngine::checkIdlePause(const JZFunction *func)
 
 bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList &out)
 {    
-    const JZFunction *func = function(name,&in);
+    const JZFunction *func = function(name);
     return call(func,in,out);
+}
+
+bool JZNodeEngine::callVirtual(const QString& function, const QVariantList& in, QVariantList& out)
+{
+    JZNodeObject* obj = toJZObject(in[0]);
+    const JZFunction* func = virtualFunction(obj,function);
+    return call(func, in, out);
 }
 
 bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantList &out)
@@ -714,7 +713,7 @@ void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantLis
         return;
     }
 
-    const JZFunction *func = function(name,&in);
+    const JZFunction *func = function(name);
     Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
     for (int i = 0; i < in.size(); i++)
         setReg(Reg_CallIn + i,in[i]);
@@ -735,6 +734,14 @@ void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantLis
     for (int i = 0; i < func->define.paramOut.size(); i++)
         out.push_back(getReg(Reg_CallOut + i));
     clearReg();
+}
+
+void JZNodeEngine::invokeVirtual(const QString& function, const QVariantList& in, QVariantList& out)
+{
+    JZNodeObject* obj = toJZObject(in[0]);
+    const JZFunction* func = virtualFunction(obj, function);
+    Q_ASSERT(func);
+    return invoke(func->fullName(), in, out);
 }
 
 void JZNodeEngine::onSlot(const QString &function,const QVariantList &in,QVariantList &out)
@@ -923,7 +930,7 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
             if(init_text.isEmpty())
                 sub = inst->create(type); 
             else
-                sub = objectFromString(type, init_text);
+                sub = JZObjectFromString(type, init_text);
         }
         Q_ASSERT(sub);
         v = QVariant::fromValue(JZNodeObjectHolder(sub,true));
@@ -1049,7 +1056,7 @@ void JZNodeEngine::printNode()
     for(int i = 0; i < node_info.paramIn.size(); i++)
     {
         QString name = node_info.paramIn[i].define.name;
-        int param_id = JZNodeGemo::paramId(node_info.id, node_info.paramIn[i].id);
+        int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramIn[i].id);
         auto ref = env->getRef(param_id);
         line += name + " " + JZNodeType::debugString(*ref);
     }
@@ -1059,7 +1066,7 @@ void JZNodeEngine::printNode()
     for(int i = 0; i < node_info.paramOut.size(); i++)
     {
         QString name = node_info.paramOut[i].define.name;
-        int param_id = JZNodeGemo::paramId(node_info.id, node_info.paramOut[i].id);
+        int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramOut[i].id);
         auto ref = env->getRef(param_id);
         line += name + " " + JZNodeType::debugString(*ref);
     }
@@ -1327,38 +1334,37 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
     popStack();
 }
 
-const JZFunction *JZNodeEngine::function(QString name,const QVariantList *list)
+const JZFunction* JZNodeEngine::virtualFunction(JZNodeObject* obj, QString name)
+{
+    int idx = name.indexOf("::");
+    QString func_name = name.mid(idx + 2);
+    auto func = obj->function(func_name);
+    Q_ASSERT_X(func, "Error", qUtf8Printable("no function " + func_name));
+    return m_env.functionManager()->functionImpl(func->fullName());;
+}
+
+const JZFunction *JZNodeEngine::function(QString name)
 {
     auto func_ptr = m_env.functionManager()->functionImpl(name);
-    if(!func_ptr)
-        return nullptr;
-    if(!func_ptr->isVirtualFunction())
-        return func_ptr;
-        
-    QVariant v;
-    if(list)  
-        v = list->at(0);
-    else
-        v = getReg(Reg_CallIn);
-
-    if (!isJZObject(v))
-        return func_ptr;
-    
-    JZNodeObject *obj = toJZObject(v);
-    int idx = name.indexOf(".");
-    QString func_name = name.mid(idx + 1);
-    auto func = obj->function(func_name);
-    Q_ASSERT_X(func,"Error",qUtf8Printable("no function " + func_name));
-    return m_env.functionManager()->functionImpl(func->fullName());
+    return func_ptr;
 }
 
 const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
 {
-    auto func = function(ir_call->function,nullptr);
-    if(!func->isVirtualFunction())
-        ir_call->cache = func;
+    if(ir_call->isVirtual)
+    {
+        auto obj = toJZObject(getReg(Reg_CallIn));
+        return virtualFunction(obj,ir_call->function);
+    }
+    else
+    {
+        if (ir_call->cache)
+            return ir_call->cache;
 
-    return func;
+        auto func = function(ir_call->function);
+        ir_call->cache = func;
+        return func;
+    }
 }
 
 void JZNodeEngine::unSupportSingleOp(int a, int op)
@@ -1805,18 +1811,10 @@ bool JZNodeEngine::run()
         case OP_buffer:
         {
             JZNodeIRBuffer *ir_buffer = (JZNodeIRBuffer*)op;
-            auto v = obj_inst->objectCreate<QByteArray>();
+            auto v = obj_inst->objectCreateVariant<QByteArray>();
             QByteArray *buffer = obj_inst->objectCast<QByteArray>(v);
             *buffer = ir_buffer->buffer;
             setParam(ir_buffer->id, v);
-            break;
-        }
-        case OP_watch:
-        {
-            JZNodeIRWatch *ir_watch = (JZNodeIRWatch*)op;
-            int id = ir_watch->traget.id();
-
-            m_stack.currentEnv()->watchMap[id] = getParam(ir_watch->source);            
             break;
         }
         case OP_convert:

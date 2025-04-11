@@ -226,14 +226,18 @@ void BenchmarkTest::testSort()
     def.paramIn.push_front(env->paramDefine("list",Type_intList));
 
     auto obj = m_objInst->create(Type_intList);
-    auto list = (QList<int>*)(obj->cobj());
-    JZNodeObjectHolder ptr(obj,true);
-    QVariantList base_list;
+    QList<int> *list = JZObjectCast<QList<int>>(obj);
 
+    JZNodeObjectHolder ptr(obj,true);
+    QList<int> base_list;
     int list_len = 200;
     qsrand(150);
-    for(int i = 0; i < list_len; i++)
-        base_list << i;
+    for (int i = 0; i < list_len; i++)
+    {
+        int value = qrand();
+        base_list << value;
+        list->append(value);
+    }
 
     auto script = m_file->addFunction(def);
     script->addLocalVariable("tmp",Type_int);
@@ -244,13 +248,13 @@ void BenchmarkTest::testSort()
     JZNodeFor *for_j = new JZNodeFor();
 
     JZNodeFunction *list_size = new JZNodeFunction();
-    list_size->setFunction(m_funcInst->function("QList<int>.size"));
+    list_size->setFunction(m_funcInst->function("QList<int>::size"));
 
     JZNodeFunction *list_getI = new JZNodeFunction();
-    list_getI->setFunction(m_funcInst->function("QList<int>.get"));
+    list_getI->setFunction(m_funcInst->function("QList<int>::get"));
 
     JZNodeFunction *list_getJ = new JZNodeFunction();
-    list_getJ->setFunction(m_funcInst->function("QList<int>.get"));
+    list_getJ->setFunction(m_funcInst->function("QList<int>::get"));
 
     JZNodeAdd *add = new JZNodeAdd();
 
@@ -267,8 +271,8 @@ void BenchmarkTest::testSort()
     JZNodeFunction *set_i = new JZNodeFunction();
     JZNodeFunction *set_j = new JZNodeFunction();
     set_tmp->setVariable("tmp");
-    set_i->setFunction(m_funcInst->function("QList<int>.set"));
-    set_j->setFunction(m_funcInst->function("QList<int>.set"));
+    set_i->setFunction(m_funcInst->function("QList<int>::set"));
+    set_j->setFunction(m_funcInst->function("QList<int>::set"));
 
     script->addNode(for_i);
     script->addNode(for_j);
@@ -322,20 +326,22 @@ void BenchmarkTest::testSort()
 
     if(!build())
         return;
+
+    dump("testSort");
     
     m_benchmark.clear();
 
+    m_engine.statClear();
     JZBENCHMARK(jz_sort)
     {
         m_engine.statClear();
 
         QVariantList in,out;
         in << QVariant::fromValue(ptr);
-        m_engine.call("testSort",in,out);
-
-        
-        m_engine.statReport();
+        bool ret = m_engine.call("testSort",in,out);
+        QVERIFY2(ret, qUtf8Printable(m_engine.runtimeError().errorReport()));
     }
+    m_engine.statReport();
 
     auto clist_get = [](const QVariantList &vlist, int idx)->QVariant
     {
@@ -347,35 +353,11 @@ void BenchmarkTest::testSort()
         vlist[idx] = value;
     };
 
-    JZBENCHMARK(c_list_sort)
-    {
-        QVariantList v_list = base_list;
-        for(int i = 0; i < v_list.size(); i++)
-        {
-            for(int j = i+1; j < v_list.size(); j++)
-            {
-                QVariant v_i = clist_get(v_list,i);
-                QVariant v_j = clist_get(v_list,j);
 
-                if(v_i.toInt() < v_j.toInt())
-                {
-                    QVariant tmp = clist_get(v_list,j);
-                    v_i = clist_get(v_list,i);
-                    clist_set(v_list,j,v_i);
-                    clist_set(v_list,i,tmp);
-                }
-            }
-        }
-    }
-
-    QVector<int> c_list,c_base_list;
-    qsrand(150);
-    for(int i = 0; i < list_len; i++)
-        c_base_list << qrand();
-
+    QList<int> c_list;
     JZBENCHMARK(c_sort)
     {
-        c_list = c_base_list;
+        c_list = base_list;
         for(int i = 0; i < c_list.size(); i++)
         {
             for(int j = i+1; j < c_list.size(); j++)
@@ -389,7 +371,6 @@ void BenchmarkTest::testSort()
             }
         }
     }
-
     m_benchmark.report();
 }
 

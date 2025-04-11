@@ -224,7 +224,7 @@ template<class T>
 QVariant toVariantClass(T value, std::true_type)
 {
     auto obj_inst = runtimeEnvironment()->objectManager();
-    QVariant v = obj_inst->objectCreate<T>();
+    QVariant v = obj_inst->objectCreateVariant<T>();
     T *ptr = obj_inst->objectCast<T>(v);
     *ptr = value;
     return v;
@@ -241,7 +241,7 @@ QVariant toVariantPointer(T value, std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
     auto env = runtimeEnvironment();
-    QVariant v = env->objectManager()->objectRefrence<T>(value, false);
+    QVariant v = env->objectManager()->objectRefrenceVariant<T>(value, false); //这里总是false, 是否引用由之后设置
     return v;
 }
 
@@ -554,9 +554,8 @@ void getReturn(const QVariantList &);
                                                                \
         auto func_def = jzobj->function(#func);                \
         QVariantList input,output;                             \
-        JZNodeObjectHolder ptr(jzobj,false);                      \
-        JZNodeObjectPointer ref = JZNodeObjectPointer::fromObject(ptr); \
-        input.push_back(QVariant::fromValue(ref));             \
+        JZNodeObjectHolder holder(jzobj,false);                    \
+        input.push_back(QVariant::fromValue(holder.toPointer()));  \
         toVariantList<int>(input,__VA_ARGS__);                 \
         JZScriptInvoke(func_def->fullName(),input,output);     \
         return getReturn<ret_type>(output);                    \

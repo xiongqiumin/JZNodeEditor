@@ -273,6 +273,9 @@ bool JZScriptItem::checkConnectType(JZNodeGemo from, JZNodeGemo to,QString &erro
     return true;
 }
 
+/*
+数据连数据，流程连流程
+*/
 bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &error)
 {
     JZNode *node_from = getNode(from.nodeId);

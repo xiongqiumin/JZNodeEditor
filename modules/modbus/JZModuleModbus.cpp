@@ -76,14 +76,14 @@ bool JZNodeModbusConfig::compiler(JZNodeCompiler *c, QString &error)
     QDataStream s(&buffer, QIODevice::WriteOnly);
     s << m_config;
 
-    int obj_id = JZNodeGemo::paramId(m_id, paramIn(0));
+    int obj_id = c->paramId(m_id, paramIn(0));
     int id = c->allocStack(Type_byteArray);
     c->addSetBuffer(irId(id), buffer);
 
     QList<JZNodeIRParam> in, out;
     in << irId(obj_id) << irId(id);
-    c->addCall(m_functionName,in,out);
-    c->addJumpNode(flowOut());
+    c->addCallVirtual(m_functionName,in,out);
+    c->addFlowJump(flowOut());
 
     return true;
 }

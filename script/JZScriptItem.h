@@ -57,8 +57,8 @@ public:
     QList<int> getConnectPin(int node_id, int pinId = -1);    // pinId = -1 得到节点所有连线
     QList<int> getConnectOut(int node_id, int pinId = -1);
     QList<int> getConnectInput(int node_id, int pinId = -1);
-    QList<JZNodeConnect> connectList();    
-    
+    QList<JZNodeConnect> connectList();   
+
     void addLocalVariable(const JZParamDefine &def);
     void addLocalVariable(const QString &name,int dataType,const QString &value = QString());            
     void removeLocalVariable(QString name);    

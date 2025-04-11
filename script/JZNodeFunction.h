@@ -21,11 +21,15 @@ public:
     void setVariable(const QString& name);  //在当前作用域的变量名，用于成员函数调用
     QString variable() const;
 
+    void setDirectCall(bool flag);
+    bool isDirectCall();
+
 protected:
     virtual bool update(QString &error) override;    
     void updateName();
     bool isMemberCall();
 
+    bool m_directCall;
     QString m_functionName;
 };
 

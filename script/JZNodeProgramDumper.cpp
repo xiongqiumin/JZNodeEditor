@@ -85,8 +85,8 @@ void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
         QString func_define, func_impl;
         dumpFunction(func_item, func_define, func_impl);
 
-        header += func_define + ";";
-        source += func_impl;
+        header += func_define + ";\n";
+        source += func_impl + "\n\n";
     }
 
     header += "\n#endif\n";
@@ -135,8 +135,8 @@ void JZNodeProgramDumper::dumpClass(JZScriptClassItem* class_item, QString& def,
         QString func_def, func_impl;
         dumpFunction(func, func_def, func_impl);
 
-        header += tab(1) + func_def + ";";
-        source += func_impl;
+        header += tab(1) + func_def + ";\n";
+        source += func_impl + "\n\n";
     }
     
     auto member_list = class_item->memberVariableList(true);
@@ -188,7 +188,7 @@ void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QS
                 }
 
                 source += lines.join("\n");
-                source += "\n}\n\n";
+                source += "\n}";
 
                 header += functionDeclare(&func);
             }
@@ -275,12 +275,6 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     {
         JZNodeIRBuffer *ir_set = (JZNodeIRBuffer*)op;
         line += toString(ir_set->id) + QString::asprintf("= QByteArray(%d);",ir_set->buffer.size());
-        break;
-    }
-    case OP_watch:
-    {
-        JZNodeIRWatch *ir_watch = (JZNodeIRWatch*)op;
-        line += "//watch " + toString(ir_watch->traget) + " = " + toString(ir_watch->source);
         break;
     }
     case OP_convert:

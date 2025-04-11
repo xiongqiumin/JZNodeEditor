@@ -9,19 +9,22 @@ constexpr int INVALID_ID = -1;
 
 enum
 {
-    Type_none = 0,
-    Type_begin,
-    Type_bool = QVariant::Bool,
-    Type_int = QVariant::Int,
-    Type_int64 = QVariant::LongLong,
-    Type_double = QVariant::Double,
-    Type_string = QVariant::String,
-    Type_nullptr = QVariant::UserType,
+    Type_pointerFlag = 1 << 30,
+
+    Type_none = -1,
+    Type_begin = 0,
+    Type_bool,
+    Type_int,
+    Type_int64,
+    Type_double,
+    Type_string,
+    Type_nullptr,
     Type_any,
     Type_function,
-    Type_auto,      //auto
-    Type_arg,       //泛型,任意参数
-    Type_args,      //变长参数
+    Type_auto,        //auto
+    Type_arg,         //泛型,任意参数
+    Type_argPointer = (Type_arg | Type_pointerFlag),  //泛型,任意指针
+    Type_args = Type_arg + 1,        //变长参数
 
     Type_enum = 2000,
     Type_keyCode,   //Qt::Key
@@ -90,7 +93,6 @@ enum
 
     Type_internalObject = 8000, // 内部注册起始
     Type_userObject = 50000,    // 用户注册起始
-    Type_pointerFlag = 1 << 30,
 };
 
 class QVariantPtr
@@ -178,13 +180,19 @@ public:
     static QString pointerType(const QString& type);
     static bool isPointer(const QString& type);
     
+    static QString listType(QString value);
+    static QString listIteratorType(QString list_type);
+    static bool listValueType(QString list_type,QString &value_type);
+    static QString mapType(QString key, QString value);
+    static QString mapIteratorType(QString map_type);
+    static bool mapValueType(QString map_type, QString& value_type,QString& key_type);
+
     static int calcExprType(int type1,int type2,int op);
         
     static QString debugString(const QVariant &v);
     static QString debugString(const JZNodeObject *obj);
         
     static bool sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot);
-    static bool functionTypeMatch(const JZFunctionDefine *func1,const JZFunctionDefine *func2);
 };
 
 #endif
