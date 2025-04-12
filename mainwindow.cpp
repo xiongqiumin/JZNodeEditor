@@ -23,6 +23,7 @@
 #include "JZNodeEditorManager.h"
 #include "JZEditorUtils.h"
 #include "JZNodeUtils.h"
+#include "LogManager.h"
 
 //Setting
 Setting::Setting()

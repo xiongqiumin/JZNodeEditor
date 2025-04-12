@@ -281,14 +281,15 @@ bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
         return isInherits(base_src, base_dst);
     }
 
-    if(src_type == dst_type)
+    if (src_type == dst_type)
         return true;
-    else if(dst_type == Type_arg)
+    else if (dst_type == Type_arg)
         return true;
-    else if((JZNodeType::isEnum(src_type) && dst_type == Type_int) || (src_type == Type_int && JZNodeType::isEnum(dst_type)))
+    else if ((JZNodeType::isEnum(src_type) && dst_type == Type_int) || (src_type == Type_int && JZNodeType::isEnum(dst_type)))
         return true;
-
-    qDebug() << "set" << typeToName(src_type) << "to" << typeToName(dst_type);
+    else if (src_type >= Type_class && dst_type >= Type_class)
+        return isInherits(src_type, dst_type);
+    
     return false;
 }
 

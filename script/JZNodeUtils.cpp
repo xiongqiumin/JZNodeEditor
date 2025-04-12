@@ -1,6 +1,7 @@
-#include "JZNodeUtils.h"
 #include <QDateTime>
 #include <QDebug>
+#include "JZNodeUtils.h"
+#include "JZRegExpHelp.h"
 
 MemberInfo JZNodeUtils::splitMember(QString fullName)
 {
@@ -18,10 +19,4 @@ QString JZNodeUtils::makeLink(QString tips, QString path, QString args)
     QString href = path + "?" + args;
     QString link = "<link href=" + href + ">" + tips + "</link>";
     return link;
-}
-
-QString JZNodeUtils::className(QString name)
-{
-    MemberInfo ret = JZNodeUtils::splitMember(name);
-    return ret.className;
 }

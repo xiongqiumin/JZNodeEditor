@@ -86,7 +86,7 @@ JZProperty *JZNodePropertyEditor::createPropValue(JZNodePin *pin)
 {
     auto env = editorEnvironment();    
     auto pin_prop = new JZProperty(pin->name());
-    pin_prop->setDataType(Type_string);
+    pin_prop->setDataType(QVariant::String);
     pin_prop->setValue(pin->value());    
     m_propMap[pin->id()] = pin_prop;
     return pin_prop;

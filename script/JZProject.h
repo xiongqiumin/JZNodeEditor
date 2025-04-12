@@ -11,6 +11,7 @@
 #include "JZClassItem.h"
 #include "JZScriptFile.h"
 #include "JZScriptEnvironment.h"
+#include "JZRegExpHelp.h"
 
 enum BreakPointChange
 {

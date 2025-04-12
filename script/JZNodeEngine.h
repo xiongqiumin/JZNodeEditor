@@ -31,11 +31,11 @@ public:
     void initVariable(QString name, const QVariant &value);
     void initVariable(int id, const QVariant &value);
 
-    QVariant *getRef(int id);
-    QVariant *getRef(const QString &name);    
+    QVariantPtr *getRef(int id);
+    QVariantPtr *getRef(const QString &name);
 
     const JZFunction *function;
-    QVariant object;      //this    
+    QVariantPtr  object;  //this    
     JZNodeScript *script;    
     int pc;
     int inCount;          //传入参数数量
@@ -263,7 +263,7 @@ protected:
     QVariant dealExprInt64(const QVariant &va, const QVariant &vb, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
     QVariant dealSingleExpr(const QVariant &a, int op);
-    void dealSet(QVariant *ref, const QVariant &value);
+    void dealSet(QVariantPtr *ref, const QVariant &value);
 
     void initGlobal(QString name, const QVariant &v);
     void initLocal(QString name, const QVariant &v);
@@ -276,7 +276,7 @@ protected:
     void waitCommand();
     bool breakPointTrigger(int node_id);    
     
-    QVariant *getParamRef(int stack_level,const JZNodeIRParam &param);
+    QVariantPtr *getParamRef(int stack_level,const JZNodeIRParam &param);
     JZNodeObject *getVariableObject(QVariant *ref, const QStringList &name);        
         
     int nodeIdByPc(int pc);        

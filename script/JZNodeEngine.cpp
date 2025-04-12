@@ -76,7 +76,7 @@ void RunnerEnv::initVariable(QString name, const QVariant &value)
 {
     QVariantPtr ptr;
     ptr.type = JZNodeType::variantType(value);
-    ptr.ptr = QSharedPointer<QVariant>(new QVariant(value));
+    *ptr.ptr = value;
     locals[name] = ptr;
 }
 
@@ -84,26 +84,26 @@ void RunnerEnv::initVariable(int id, const QVariant &value)
 {
     QVariantPtr ptr;
     ptr.type = JZNodeType::variantType(value);
-    ptr.ptr = QSharedPointer<QVariant>(new QVariant(value));
+    *ptr.ptr = value;
     stacks[id] = ptr;
 }
 
-QVariant *RunnerEnv::getRef(int id)
+QVariantPtr *RunnerEnv::getRef(int id)
 {
     auto it = stacks.find(id);
     if (it == stacks.end())
         return nullptr;
 
-    return it->ptr.data();
+    return &it.value();
 }
 
-QVariant *RunnerEnv::getRef(const QString& name)
+QVariantPtr *RunnerEnv::getRef(const QString& name)
 {
     auto it = locals.find(name);
     if (it == locals.end())
         return nullptr;
 
-    return it->ptr.data();
+    return &it.value();
 }
 
 Stack::Stack()
@@ -548,7 +548,11 @@ void JZNodeEngine::pushStack(const JZFunction *func)
         m_stack.currentEnv()->pc = m_pc;
         m_stack.currentEnv()->script = m_script;
         if (func->isMemberFunction())
-            m_stack.currentEnv()->object = m_regs[Reg_CallIn - Reg_Start];        
+        {
+            auto &obj = m_stack.currentEnv()->object;
+            obj.type = JZNodeType::variantType(m_regs[Reg_CallIn - Reg_Start]);
+            *obj.ptr = m_regs[Reg_CallIn - Reg_Start];
+        }
     }
     else
     {
@@ -751,14 +755,14 @@ void JZNodeEngine::onSlot(const QString &function,const QVariantList &in,QVarian
     m_sender = nullptr;
 }
 
-QVariant *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
+QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
 {
-    QVariant *ref = nullptr;
+    QVariantPtr *ref = nullptr;
     if (m_stack.size() == 0)
     {
         auto it = m_global.find(param.ref());
         if (it != m_global.end())
-            ref = it->ptr.data();
+            ref = &it.value();
     }
     else
     {
@@ -774,7 +778,7 @@ QVariant *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
             {
                 auto it = m_global.find(param.ref());
                 if (it != m_global.end())
-                    ref = it->ptr.data();
+                    ref = &it.value();
             }
         }
     }
@@ -794,14 +798,14 @@ QVariant JZNodeEngine::getParam(int stack_level, const JZNodeIRParam &param)
     {                
         auto ref = getParamRef(stack_level,param);
         if (param.member.isEmpty())
-            return *ref;
+            return *ref->ptr;
         else
         {
             QStringList obj_list;
             QString param_name;
             splitMember(param.member, obj_list, param_name);
 
-            JZNodeObject *obj = getVariableObject(ref, obj_list);
+            JZNodeObject *obj = getVariableObject(ref->ptr.data(), obj_list);
             return obj->param(param_name);
         }
     }
@@ -824,7 +828,7 @@ void JZNodeEngine::setParam(int stack_level, const JZNodeIRParam &param, const Q
             QString param_name;
             splitMember(param.member, obj_list, param_name);
 
-            JZNodeObject *obj = getVariableObject(ref, obj_list);
+            JZNodeObject *obj = getVariableObject(ref->ptr.data(), obj_list);
             return obj->setParam(param_name,value);
         }
     }
@@ -854,7 +858,7 @@ void JZNodeEngine::initGlobal(QString name, const QVariant &v)
 {
     QVariantPtr ptr;
     ptr.type = JZNodeType::variantType(v);
-    ptr.ptr = QSharedPointer<QVariant>(new QVariant(v));
+    *ptr.ptr = v;
 	m_global[name] = ptr;
 }
 
@@ -962,11 +966,11 @@ JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &
     return obj;
 }
 
-void JZNodeEngine::dealSet(QVariant *ref, const QVariant &value)
+void JZNodeEngine::dealSet(QVariantPtr *ref, const QVariant &value)
 {
-    Q_ASSERT_X(m_env.isSameType(value,*ref),"",qUtf8Printable("set " + m_env.variantTypeName(value) 
-        + " to " + m_env.variantTypeName(*ref)));
-    *ref = value;
+    Q_ASSERT_X(m_env.isSameType(JZNodeType::variantType(value),ref->type),"",qUtf8Printable("set " + m_env.variantTypeName(value) 
+        + " to " + m_env.typeToName(ref->type)));
+    *ref->ptr = value;
 }
 
 QVariant JZNodeEngine::getSender()
@@ -1058,7 +1062,7 @@ void JZNodeEngine::printNode()
         QString name = node_info.paramIn[i].define.name;
         int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramIn[i].id);
         auto ref = env->getRef(param_id);
-        line += name + " " + JZNodeType::debugString(*ref);
+        line += name + " " + JZNodeType::debugString(*ref->ptr);
     }
 
     if(node_info.paramIn.size() > 0 && node_info.paramOut.size() > 0)
@@ -1068,7 +1072,7 @@ void JZNodeEngine::printNode()
         QString name = node_info.paramOut[i].define.name;
         int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramOut[i].id);
         auto ref = env->getRef(param_id);
-        line += name + " " + JZNodeType::debugString(*ref);
+        line += name + " " + JZNodeType::debugString(*ref->ptr);
     }
     line += ")";
     print(line);
@@ -1336,10 +1340,11 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
 
 const JZFunction* JZNodeEngine::virtualFunction(JZNodeObject* obj, QString name)
 {
-    int idx = name.indexOf("::");
-    QString func_name = name.mid(idx + 2);
-    auto func = obj->function(func_name);
-    Q_ASSERT_X(func, "Error", qUtf8Printable("no function " + func_name));
+    QString className,memberName;
+    JZRegExpHelp::splitDefine(name,memberName,memberName);
+
+    auto func = obj->function(memberName);
+    Q_ASSERT_X(func, "Error", qUtf8Printable("no function " + memberName));
     return m_env.functionManager()->functionImpl(func->fullName());;
 }
 

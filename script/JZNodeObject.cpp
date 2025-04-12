@@ -104,6 +104,7 @@ QString JZNodeObjectDefine::fullname() const
     QString name;
     if(!nameSpace.isEmpty())
         name = nameSpace + "::";
+        
     name += className;
     return name;
 }
@@ -550,7 +551,7 @@ JZNodeObject::JZNodeObject(const JZNodeObjectDefine *def)
 }
 
 JZNodeObject::~JZNodeObject()
-{    
+{        
     clearCObj();
 }
 
@@ -576,8 +577,8 @@ const JZCParamDefine *JZNodeObject::cparam(const QString &name) const
 
 void JZNodeObject::clearCObj()
 {
-    if(m_cobjOwner && m_define->isCObject)
-    {
+    if(m_cobjOwner)
+    {        
         if (isInherits(Type_object))
         {
             auto qobj = (QObject*)m_cobj;
@@ -605,7 +606,11 @@ void JZNodeObject::clearCObj()
                 return;
         }
 
-        m_define->cMeta.destory(m_cobj);
+        auto def = m_define;
+        while (!def->isCObject)
+            def = def->super();
+
+        def->cMeta.destory(m_cobj);
     }
     m_cobj = nullptr;
 }
@@ -825,7 +830,7 @@ void JZNodeObject::updateUiWidget(QWidget *widget)
             JZNodeObjectHolder ptr(jzobj, true);
             QVariantPtr qptr;
             qptr.type = jzobj->type();
-            qptr.ptr = QSharedPointer<QVariant>(new QVariant(QVariant::fromValue(ptr)));
+            *qptr.ptr = QVariant::fromValue(ptr);
             m_params[param_def.name] = qptr;
         }
     }
@@ -905,7 +910,7 @@ void JZNodeObject::onSigTrigger(QString name,const QVariantList &params)
 
     QVariantList in,out;
     JZNodeObjectHolder ptr(this,false);
-    in << QVariant::fromValue(ptr);
+    in << QVariant::fromValue(ptr.toPointer());
     for(int i = 0; i < func->paramIn.size() - 1; i++)
         in << params[i];
     JZScriptInvoke(full_name,in,out);
@@ -970,6 +975,20 @@ JZNodeObjectPointer::JZNodeObjectPointer()
     type = Type_none;
 }
 
+//JZNodeObjectSharedPointer
+JZNodeObjectSharedPointer::JZNodeObjectSharedPointer()
+{
+    type = Type_none;
+}
+
+void JZNodeObjectSharedPointer::init(JZNodeObject *obj)
+{
+    type = JZNodeType::pointerType(obj->type());
+    pointer = QSharedPointer<JZNodeObjectData>(new JZNodeObjectData());
+    pointer->isOwner = true;
+    pointer->object = obj;
+}
+
 //JZNodeObjectHolder
 JZNodeObjectHolder::JZNodeObjectHolder()
 {
@@ -1026,6 +1045,14 @@ JZNodeObject* toJZObject(const QVariant &v)
     if (v.userType() == qMetaTypeId<JZNodeObjectPointer>())
     {
         auto ptr = (JZNodeObjectPointer*)v.data();
+        if (!ptr->pointer)
+            return nullptr;
+
+        return ptr->pointer.data()->object;
+    }
+    else if (v.userType() == qMetaTypeId<JZNodeObjectSharedPointer>())
+    {
+        auto ptr = (JZNodeObjectSharedPointer*)v.data();
         if (!ptr->pointer)
             return nullptr;
 
@@ -1486,9 +1513,7 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
         {
             QVariantPtr ptr;
             ptr.type = m_env->nameToType(param->type);
-
-            QVariant v = g_engine->createVariable(m_env->nameToType(param->type), param->value);
-            ptr.ptr = QSharedPointer<QVariant>(new QVariant(v));
+            *ptr.ptr = g_engine->createVariable(m_env->nameToType(param->type), param->value);            
             obj->m_params[param->name] = ptr;
         }
         else

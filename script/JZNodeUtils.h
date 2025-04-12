@@ -10,10 +10,16 @@ struct MemberInfo
     QString name;
 };
 
+struct FunctionInfo
+{
+    QString className;
+    QString name;
+};
+
+
 class JZNodeUtils
 {
 public:    
-    static QString className(QString name);
     static MemberInfo splitMember(QString name);
     static QString makeLink(QString tips, QString path, QString args);
 };

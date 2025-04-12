@@ -8,5 +8,6 @@ enum {
     Log_Runtime,
 };
 
+void LogManagerInit();
 
 #endif // !LOG_MANAGER_H_

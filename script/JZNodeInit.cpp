@@ -12,6 +12,7 @@
 #include "modules/opencv/JZModuleOpencv.h"
 #include "modules/camera/JZModuleCamera.h"
 #include "modules/modbus/JZModuleModbus.h"
+#include "LogManager.h"
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectHolder ptr)
 {
@@ -22,6 +23,8 @@ QDebug operator<<(QDebug dbg, const JZNodeObjectHolder ptr)
 
 void JZNodeInit()
 {
+    LogManagerInit();
+
     qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
     qRegisterMetaType<UnitTestResultPtr>("UnitTestResultPtr");
     qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");

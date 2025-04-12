@@ -7,6 +7,7 @@
 #include "JZNodeOperator.h"
 #include "JZScriptItem.h"
 #include "JZProject.h"
+#include "JZRegExpHelp.h"
 
 enum VariableCoor{
     Variable_none,

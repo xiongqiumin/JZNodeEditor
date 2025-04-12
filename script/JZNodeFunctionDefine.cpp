@@ -2,6 +2,7 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZEvent.h"
 #include "JZNodeObject.h"
+#include "JZRegExpHelp.h"
 
 //JZParamDefine
 JZParamDefine::JZParamDefine()
@@ -93,16 +94,18 @@ bool JZFunctionDefine::isNull() const
 
 void JZFunctionDefine::setFullName(const QString &full_name)
 {
-    int idx = full_name.lastIndexOf("::");
-    if(idx >= 0)
+    QString class_name,member_name;
+    JZRegExpHelp::splitDefine(full_name,class_name,member_name);
+    
+    if(!className.isEmpty())
     {
-        className = full_name.left(idx);
-        name = full_name.mid(idx + 1);
+        className = class_name;
+        name = member_name;
     }
     else
     {
         className.clear();
-        name = full_name;
+        name = member_name;
     }
 }
 
@@ -111,6 +114,7 @@ QString JZFunctionDefine::fullName() const
     QString result = name;
     if (!className.isEmpty())
         result = className + "::" + result;
+        
     return result;
 }
 

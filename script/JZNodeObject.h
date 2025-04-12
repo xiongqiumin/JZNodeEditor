@@ -203,7 +203,7 @@ public:
 };
 
 /*
-    指针，指向JZNodeObject
+    指针，指向JZNodeObject,这两个指针只在调用c时起作用
 */
 class JZNodeObjectPointer
 {
@@ -215,7 +215,20 @@ public:
 };
 Q_DECLARE_METATYPE(JZNodeObjectPointer)
 
+
+class JZNodeObjectSharedPointer
+{
+public:
+    JZNodeObjectSharedPointer();
+    void init(JZNodeObject *obj);
+
+    int type;   //指针类型
+    QSharedPointer<JZNodeObjectData> pointer;
+};
+Q_DECLARE_METATYPE(JZNodeObjectSharedPointer)
+
 /*
+代表值类型
 isOwner 代表是否所有object, QWidget 回调时存在不需要管理的情况
 会根据QObject是否有父类，决定是否释放
 */

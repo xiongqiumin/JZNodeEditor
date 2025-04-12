@@ -7,6 +7,9 @@
 class JZRegExpHelp
 {
 public:
+    static void splitDefine(QString fullName,QString &className,QString &memberName);
+    static QString makeDefine(QString className,QString memberName);
+
     static bool isBool(const QString &str);
     static bool isInt(const QString &str);
     static bool isHex(const QString &str);

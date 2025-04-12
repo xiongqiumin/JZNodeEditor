@@ -13,6 +13,7 @@ static QMap<int, QString> opNameMap;
 QVariantPtr::QVariantPtr()
 {
     type = Type_none;
+    ptr = QSharedPointer<QVariant>(new QVariant());
 }
 
 //JZEnum

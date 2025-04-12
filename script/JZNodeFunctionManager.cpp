@@ -2,6 +2,7 @@
 #include "math.h"
 #include "JZNodeBind.h"
 #include "JZScriptEnvironment.h"
+#include "JZRegExpHelp.h"
 
 //JZNodeFunctionManager
 JZNodeFunctionManager::JZNodeFunctionManager(JZScriptEnvironment *env)
@@ -46,14 +47,14 @@ void JZNodeFunctionManager::init()
 
 const JZFunctionDefine *JZNodeFunctionManager::function(QString funcName) const
 {    
-    int index = funcName.indexOf(".");
-    if (index >= 0)
+    QString className,memberName;
+    JZRegExpHelp::splitDefine(funcName,className,memberName);
+
+    if (!className.isEmpty())
     {
-        QString base_name = funcName.mid(0, index);
-        QString function_name = funcName.mid(index + 1);
-        auto meta = m_env->objectManager()->meta(base_name);
+        auto meta = m_env->objectManager()->meta(className);
         if (meta)
-            return meta->function(function_name);
+            return meta->function(memberName);
     }
     else
     {

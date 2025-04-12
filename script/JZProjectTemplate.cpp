@@ -81,7 +81,7 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         set_param->setVariable("mainwindow");
         create->setClassName("MainWindow");
         func_init->setFunction(&define);
-        func_show->setFunction(func_inst->function("QWidget.show"));        
+        func_show->setFunction(func_inst->function("QWidget::show"));        
 
         JZNode *start = main_flow->getNode(0);
         main_flow->addConnect(start->flowOutGemo(), set_param->flowInGemo());

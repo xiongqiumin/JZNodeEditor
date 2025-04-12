@@ -5,6 +5,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZContainer.h"
 #include "JZModule.h"
+#include "JZRegExpHelp.h"
 
 //NodeRange
 NodeRange::NodeRange()
@@ -239,16 +240,16 @@ void JZNodeTypeMeta::clear()
 
 const JZFunctionDefine *JZNodeTypeMeta::function(QString name) const
 {
-    if (name.contains("."))
-    {
-        int index = name.indexOf(".");
-        QString class_name = name.left(index);
-        QString func_name = name.mid(index + 1);
-        auto obj = object(class_name);
+    QString className,memberName;
+    JZRegExpHelp::splitDefine(name,memberName,memberName);
+
+    if (!className.isEmpty())
+    {        
+        auto obj = object(className);
         if (!obj)
             return nullptr;
 
-        return obj->function(func_name);
+        return obj->function(memberName);
     }
     else
     {
