@@ -8,8 +8,10 @@ public:
     JZModuleOpencvEditor();
     ~JZModuleOpencvEditor();
 
+    /*
     void regist(JZScriptEnvironment *env)
     void unregist();
+    */
 };
 
 #endif

@@ -630,8 +630,7 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
 {
     QTreeWidgetItem *item_process = createFolder("过程");    ;
     m_itemProcess = item_process;
-
-    JZNodeBranch node_branch;
+    
     JZNodeIf node_if;
     JZNodeSwitch node_switch;
     JZNodeSequence node_sequence;
@@ -644,21 +643,21 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     JZNodeReturn node_return;
     node_return.setFunction(&m_file->function());
     JZNodeExit node_exit;   
-
-    item_process->addChild(createNode(&node_branch));
-    item_process->addChild(createNode(&node_if));
-    item_process->addChild(createNode(&node_switch));
-    item_process->addChild(createNode(&node_sequence));
+    JZNodeTryCatch node_try;
+    JZNodeThrow node_throw;
     
+    item_process->addChild(createNode(&node_nop));
+    item_process->addChild(createNode(&node_sequence));
+    item_process->addChild(createNode(&node_if));
+    item_process->addChild(createNode(&node_switch));        
     item_process->addChild(createNode(&node_while));
     item_process->addChild(createNode(&node_for));
     item_process->addChild(createNode(&node_foreach));
     item_process->addChild(createNode(&node_continue));
-    item_process->addChild(createNode(&node_break));    
-
-    item_process->addChild(createNode(&node_nop));
-
+    item_process->addChild(createNode(&node_break));        
     item_process->addChild(createNode(&node_return));
+    item_process->addChild(createNode(&node_try));
+    item_process->addChild(createNode(&node_throw));
     item_process->addChild(createNode(&node_exit));
 
     JZNodeSignalConnect node_connect;

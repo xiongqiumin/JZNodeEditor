@@ -27,8 +27,7 @@ private slots:
     void testWhileLoop();
     void testFor();
     void testForEach();
-
-    void testBranch();
+    
     void testIf();
     void testSwitch();
     void testSequeue();

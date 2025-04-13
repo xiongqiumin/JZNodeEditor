@@ -17,9 +17,8 @@
 #include "JZNodeStack.h"
 #include "JZNodeBreakPointWidget.h"
 #include "LogManager.h"
-#include "JZNodeAutoRunThread.h"
-#include "JZNodeBuildThread.h"
 #include "JZNodeEditor.h"
+#include "mainTask.h"
 
 class Setting
 {
@@ -37,12 +36,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-
-    const CompilerResult *compilerResult(const QString &path);
-    JZNodeProgram *program();
-    JZNodeRuntimeInfo *runtime();
-    JZProject *project();
-    int stackIndex();
+        
+    JZProject *project();    
 
 protected slots:    
     void onActionNewProject();
@@ -70,7 +65,8 @@ protected slots:
     void onActionProjectProp();
 
     void onActionBuild();
-    void onActionExport();
+    void onActionExportExe();
+    void onActionExportCpp();
 
     void onActionRun();
     void onActionDetach();
@@ -82,6 +78,8 @@ protected slots:
     void onActionStepOver();
     void onActionStepIn();
     void onActionStepOut();        
+
+    void onActionModbus();
 
     void onActionHelp();
     void onActionCheckUpdate();
@@ -112,13 +110,14 @@ protected slots:
     void onRuntimeLog(QString log);    
     void onRuntimeError(JZNodeRuntimeError error);    
     void onRuntimeStatus(int staus);    
-    void onRuntimeFinish(int code,QProcess::ExitStatus status);        
-        
+    void onRuntimeFinish(int code,QProcess::ExitStatus status);                    
+
     void onNetError();
     void onTabContextMenu(QPoint pos);
-
-    void onAutoCompilerTimer();
-    void onBuildFinish(int flag);
+        
+    void onBuildStart();    
+    void onBuildFinish(JZNodeBuildResultPtr result);
+    void onTaskRunning();
     void onAutoRunResult(UnitTestResultPtr result);
 
     void onBreakPointClicked(QString file, int id);
@@ -143,26 +142,7 @@ private:
 
         QVector<int> flags; //同时满足才enable
         QAction *action;
-    };
-
-    struct BuildInfo
-    {
-        BuildInfo();
-
-        bool isUnitTest();
-        void clear();
-        void clearTask();
-
-        bool success;
-        qint64 changeTimestamp;    //改动时间
-        qint64 buildVersion;       //编译版本
-        qint64 buildTimestamp;     //编译成功时间
-        
-        QString unitTestItemPath;  //单元测试地址
-        bool save;                 //保存编译结果
-        qint64 saveTimestamp;
-        bool start;
-    };
+    };    
 
     virtual void customEvent(QEvent *event) override;
     virtual void resizeEvent(QResizeEvent *event) override;
@@ -198,9 +178,7 @@ private:
     void clearWatchs();
     void setWatchStatus(ProcessStatus status);
     void updateAutoWatch(int stack_index);
-
-    void build();
-    bool saveProgram();
+        
     void startProgram();
     void stopProgram();
     void startUnitTest(QString testItemPath);
@@ -212,6 +190,8 @@ private:
     void showTopLevel();
     void updateTabText(int index);
     
+    const CompilerResult *compilerResult(const QString &path);
+
     JZProject m_project;    
 
     LogWidget *m_log;
@@ -236,16 +216,13 @@ private:
     QList<JZNodeWatch*> m_debugWidgets;
     QAction *m_actionRun, *m_actionResume;
     QList<QAction*> m_debugActions;
-    QToolBar *m_toolDebug;    
-
-    QTimer *m_compilerTimer;
-    BuildInfo m_buildInfo;
-    JZNodeAutoRunThread m_runThread;
-    JZNodeBuildThread m_buildThread;
+    QToolBar *m_toolDebug;        
 
     JZNodeProgram m_program;
     JZNodeRuntimeInfo m_runtime;
     JZScriptEnvironment m_programEnv;
+    MainTaskManager m_task;
+    JZNodeBuildResultPtr m_buildResult;
 };
 extern MainWindow *g_mainWindow;
 

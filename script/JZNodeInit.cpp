@@ -7,6 +7,7 @@
 #include "JZNodeEngine.h"
 #include "LogManager.h"
 #include "JZNodeVariableBind.h"
+#include "JZNodeBuildThread.h"
 #include "JZModule.h"
 #include "JZNodeInit.h"
 #include "modules/opencv/JZModuleOpencv.h"
@@ -23,10 +24,9 @@ QDebug operator<<(QDebug dbg, const JZNodeObjectHolder ptr)
 
 void JZNodeInit()
 {
-    LogManagerInit();
-
     qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
     qRegisterMetaType<UnitTestResultPtr>("UnitTestResultPtr");
+    qRegisterMetaType<JZNodeBuildResultPtr>("JZNodeBuildResultPtr");
     qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");
     qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");

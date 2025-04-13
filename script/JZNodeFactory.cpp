@@ -80,7 +80,8 @@ void JZNodeFactory::init()
     registNode(Node_for,createJZNode<JZNodeFor>);
     registNode(Node_foreach,createJZNode<JZNodeForEach>);
     registNode(Node_sequence,createJZNode<JZNodeSequence>);
-    registNode(Node_branch,createJZNode<JZNodeBranch>);
+    registNode(Node_tryCatch,createJZNode<JZNodeTryCatch>);
+    registNode(Node_throw, createJZNode<JZNodeThrow>);
     registNode(Node_break,createJZNode<JZNodeBreak>);
     registNode(Node_continue,createJZNode<JZNodeContinue>);
     registNode(Node_return,createJZNode<JZNodeReturn>);

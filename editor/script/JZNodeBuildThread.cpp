@@ -10,20 +10,15 @@ JZNodeBuildThread::~JZNodeBuildThread()
 {
 }
 
-void JZNodeBuildThread::init(JZNodeProgram *program)
-{    
-    m_program = program;
-}
-
-JZNodeBuilder *JZNodeBuildThread::builder()
-{
-    return &m_builder;
-}
-
 void JZNodeBuildThread::sync(JZProject *project)
 {
     m_project.clear();
     project->copyTo(&m_project);
+}
+
+void JZNodeBuildThread::setMute(bool mute)
+{
+    m_builder.setMute(mute);
 }
 
 void JZNodeBuildThread::startBuild(JZProject *project)
@@ -45,9 +40,15 @@ void JZNodeBuildThread::stopBuild()
 
 void JZNodeBuildThread::run()
 {
-    bool ret = m_builder.build(m_program);
+    bool ret = m_builder.build(&m_program);
     if(!ret)
         LOGMOD_E(Log_Compiler, m_builder.error());
     
-    emit sigResult(ret? Build_Successed: Build_Failed);
+    JZNodeBuildResultPtr ptr = JZNodeBuildResultPtr(new JZNodeBuildResult());
+    ptr->status = ret ? Build_Successed : Build_Failed;        
+    ptr->compilerResult = m_builder.compilerResult();
+    if (ret)
+        m_program.copyTo(&ptr->program);
+
+    emit sigResult(ptr);
 }

@@ -15,6 +15,8 @@ if (MSVC)
     add_compile_options(/bigobj)
 endif()
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
+
 include_directories(./
     ./widgets
     ./project
@@ -25,11 +27,173 @@ include_directories(./
     ./editor/script/items   
     ${OpenCV_INCLUDE_DIRS})
 
+set(JZNodeCore_SOURCES
+    ${CMAKE_SOURCE_DIR}/LogManager.cpp
+    ${CMAKE_SOURCE_DIR}/LogManager.h
+
+    ${CMAKE_SOURCE_DIR}/script/JZParamItem.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZParamItem.h
+    ${CMAKE_SOURCE_DIR}/script/JZProject.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZProject.h
+    ${CMAKE_SOURCE_DIR}/script/JZProjectItem.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZProjectItem.h    
+    ${CMAKE_SOURCE_DIR}/script/JZProjectTemplate.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZProjectTemplate.h
+    ${CMAKE_SOURCE_DIR}/script/JZScriptFile.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZScriptFile.h
+    ${CMAKE_SOURCE_DIR}/script/JZScriptItem.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZScriptItem.h
+    ${CMAKE_SOURCE_DIR}/script/JZClassItem.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZClassItem.h
+    ${CMAKE_SOURCE_DIR}/script/JZProjectFile.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZProjectFile.h
+    ${CMAKE_SOURCE_DIR}/script/JZUiItem.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZUiItem.h
+    ${CMAKE_SOURCE_DIR}/script/JZContainer.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZContainer.h
+    ${CMAKE_SOURCE_DIR}/script/JZEvent.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZEvent.h
+    ${CMAKE_SOURCE_DIR}/script/JZExpressionSolver.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZExpressionSolver.h
+    ${CMAKE_SOURCE_DIR}/script/JZModule.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZModule.h
+    ${CMAKE_SOURCE_DIR}/script/JZNode.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNode.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeBind.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeBind.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeBuilder.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeCompiler.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeCompiler.h    
+    ${CMAKE_SOURCE_DIR}/script/JZNodeDebugClient.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeDebugClient.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeDebugPacket.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeDebugPacket.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeDebugServer.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeDebugServer.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeEngine.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeEngine.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeEnum.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeEnum.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeEvent.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeEvent.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeExpression.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeExpression.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFactory.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFactory.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFunction.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFunction.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFunctionDefine.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFunctionDefine.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFunctionManager.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFunctionManager.h
+    ${CMAKE_SOURCE_DIR}/script/JZScriptEnvironment.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZScriptEnvironment.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeInit.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeInit.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeIR.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeIR.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeLangServer.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeLangServer.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeMeta.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeMeta.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeObject.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeObject.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeObjectParser.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeObjectParser.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeOperator.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeOperator.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodePin.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodePin.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeProgram.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeProgram.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeProgramDumper.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeProgramDumper.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeQtWrapper.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeQtWrapper.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeType.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeType.h    
+    ${CMAKE_SOURCE_DIR}/script/JZNodeUtils.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeUtils.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeValue.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeValue.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeVariableBind.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeVariableBind.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeVM.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeVM.h
+    ${CMAKE_SOURCE_DIR}/script/JZRegExpHelp.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZRegExpHelp.h
+    ${CMAKE_SOURCE_DIR}/script/JZScriptBuildInFunction.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZScriptBuildInFunction.h   
+    ${CMAKE_SOURCE_DIR}/script/JZScriptItemHelp.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZScriptItemHelp.h
+    ${CMAKE_SOURCE_DIR}/script/JZScriptParser.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZScriptParser.h
+
+    #runtime
+    ${CMAKE_SOURCE_DIR}/runtime/JZNodeUiLoader.cpp
+    ${CMAKE_SOURCE_DIR}/runtime/JZNodeUiLoader.h
+    #modbus    
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModuleModbus.cpp
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModuleModbus.h
+     
+    #opencv
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZModuleOpencv.h
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZModuleOpencv.cpp    
+    ${CMAKE_SOURCE_DIR}/modules/opencv/CvMatAndQImage.h
+    ${CMAKE_SOURCE_DIR}/modules/opencv/CvMatAndQImage.cpp
+    ${CMAKE_SOURCE_DIR}/modules/opencv/CvToQt.h
+    ${CMAKE_SOURCE_DIR}/modules/opencv/CvToQt.cpp
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZYolo.h
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZYolo.cpp
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZYoloView.h
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZYoloView.cpp
+    #camera
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZModuleCamera.h
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZModuleCamera.cpp
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZCamera.h
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZCamera.cpp
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZCameraFile.h
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZCameraFile.cpp
+    
+    #3rd
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetClient.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetClient.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetDataManager.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetDataManager.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetPack.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetPack.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetServer.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzNet/JZNetServer.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusClient.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusClient.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusContext.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusContext.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusDefine.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusDefine.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusMaster.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusMaster.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusParam.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusParam.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusRtu.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusRtu.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusServer.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusServer.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusSlaver.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusSlaver.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusTcp.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzModbus/JZModbusTcp.h
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzWidgets/JZImageView.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzWidgets/JZImageView.h    
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzCommon/JZLogManager.cpp
+    ${CMAKE_SOURCE_DIR}/3rd/JZCommon/jzCommon/JZLogManager.h
+)
+
 set(JZNodeEditor_SOURCES
     JZNodeEditor.qrc
-    main.cpp        
-    LogManager.cpp
-    LogManager.h
+    main.cpp      
+    mainTask.cpp    
+    mainTask.h    
     LogWidget.cpp
     LogWidget.h    
     mainwindow.cpp
@@ -152,100 +316,7 @@ set(JZNodeEditor_SOURCES
     editor/ui/sizehandlerect.cpp
     editor/ui/sizehandlerect.h
     editor/ui/widgethostconstants.h
-    script/JZParamItem.cpp
-    script/JZParamItem.h
-    script/JZProject.cpp
-    script/JZProject.h
-    script/JZProjectItem.cpp
-    script/JZProjectItem.h    
-    script/JZProjectTemplate.cpp
-    script/JZProjectTemplate.h
-    script/JZScriptFile.cpp
-    script/JZScriptFile.h
-    script/JZScriptItem.cpp
-    script/JZScriptItem.h
-    script/JZClassItem.cpp
-    script/JZClassItem.h
-    script/JZProjectFile.cpp
-    script/JZProjectFile.h
-    script/JZUiItem.cpp
-    script/JZUiItem.h
-    script/JZContainer.cpp
-    script/JZContainer.h
-    script/JZEvent.cpp
-    script/JZEvent.h
-    script/JZExpressionSolver.cpp
-    script/JZExpressionSolver.h
-    script/JZModule.cpp
-    script/JZModule.h
-    script/JZNode.cpp
-    script/JZNode.h
-    script/JZNodeBind.cpp
-    script/JZNodeBind.h
-    script/JZNodeBuilder.cpp
-    script/JZNodeBuilder.h
-    script/JZNodeCompiler.cpp
-    script/JZNodeCompiler.h    
-    script/JZNodeDebugClient.cpp
-    script/JZNodeDebugClient.h
-    script/JZNodeDebugPacket.cpp
-    script/JZNodeDebugPacket.h
-    script/JZNodeDebugServer.cpp
-    script/JZNodeDebugServer.h
-    script/JZNodeEngine.cpp
-    script/JZNodeEngine.h
-    script/JZNodeEnum.cpp
-    script/JZNodeEnum.h
-    script/JZNodeEvent.cpp
-    script/JZNodeEvent.h
-    script/JZNodeExpression.cpp
-    script/JZNodeExpression.h
-    script/JZNodeFactory.cpp
-    script/JZNodeFactory.h
-    script/JZNodeFunction.cpp
-    script/JZNodeFunction.h
-    script/JZNodeFunctionDefine.cpp
-    script/JZNodeFunctionDefine.h
-    script/JZNodeFunctionManager.cpp
-    script/JZNodeFunctionManager.h
-    script/JZScriptEnvironment.cpp
-    script/JZScriptEnvironment.h
-    script/JZNodeInit.cpp
-    script/JZNodeInit.h
-    script/JZNodeIR.cpp
-    script/JZNodeIR.h
-    script/JZNodeLangServer.cpp
-    script/JZNodeLangServer.h
-    script/JZNodeMeta.cpp
-    script/JZNodeMeta.h
-    script/JZNodeObject.cpp
-    script/JZNodeObject.h
-    script/JZNodeObjectParser.cpp
-    script/JZNodeObjectParser.h
-    script/JZNodeOperator.cpp
-    script/JZNodeOperator.h
-    script/JZNodePin.cpp
-    script/JZNodePin.h
-    script/JZNodeProgram.cpp
-    script/JZNodeProgram.h
-    script/JZNodeProgramDumper.cpp
-    script/JZNodeProgramDumper.h
-    script/JZNodeQtWrapper.cpp
-    script/JZNodeQtWrapper.h
-    script/JZNodeType.cpp
-    script/JZNodeType.h    
-    script/JZNodeUtils.cpp
-    script/JZNodeUtils.h
-    script/JZNodeValue.cpp
-    script/JZNodeValue.h
-    script/JZNodeVariableBind.cpp
-    script/JZNodeVariableBind.h
-    script/JZNodeVM.cpp
-    script/JZNodeVM.h
-    script/JZRegExpHelp.cpp
-    script/JZRegExpHelp.h
-    script/JZScriptBuildInFunction.cpp
-    script/JZScriptBuildInFunction.h    
+     
     widgets/JZAboutDialog.cpp
     widgets/JZAboutDialog.h
     widgets/JZBaseDialog.cpp
@@ -253,76 +324,33 @@ set(JZNodeEditor_SOURCES
     widgets/JZSearchTreeWidget.cpp
     widgets/JZSearchTreeWidget.h  
     widgets/JZImageLabel.cpp 
-    widgets/JZImageLabel.h 
-    #runtime
-    runtime/JZNodeUiLoader.cpp
-    runtime/JZNodeUiLoader.h
-    #modbus    
-    modules/modbus/JZModuleModbus.cpp
-    modules/modbus/JZModuleModbus.h
-    modules/modbus/JZModbusConfigDialog.cpp
-    modules/modbus/JZModbusConfigDialog.h
-    modules/modbus/JZModbusConfigDialog.ui
-    modules/modbus/JZModbusSimulator.cpp
-    modules/modbus/JZModbusSimulator.h
-    modules/modbus/JZModbusTemplateDialog.cpp
-    modules/modbus/JZModbusTemplateDialog.h    
-    #opencv
-    modules/opencv/JZModuleOpencv.h
-    modules/opencv/JZModuleOpencv.cpp
-    modules/opencv/CvMatAndQImage.h
-    modules/opencv/CvMatAndQImage.cpp
-    modules/opencv/CvToQt.h
-    modules/opencv/CvToQt.cpp
-    modules/opencv/JZYolo.h
-    modules/opencv/JZYolo.cpp
-    modules/opencv/JZYoloView.h
-    modules/opencv/JZYoloView.cpp
-    #camera
-    modules/camera/JZModuleCamera.h
-    modules/camera/JZModuleCamera.cpp
-    modules/camera/JZCamera.h
-    modules/camera/JZCamera.cpp
-    modules/camera/JZCameraFile.h
-    modules/camera/JZCameraFile.cpp
-    #3rd
-    3rd/JZCommon/jzNet/JZNetClient.cpp
-    3rd/JZCommon/jzNet/JZNetClient.h
-    3rd/JZCommon/jzNet/JZNetDataManager.cpp
-    3rd/JZCommon/jzNet/JZNetDataManager.h
-    3rd/JZCommon/jzNet/JZNetPack.cpp
-    3rd/JZCommon/jzNet/JZNetPack.h
-    3rd/JZCommon/jzNet/JZNetServer.cpp
-    3rd/JZCommon/jzNet/JZNetServer.h
-    3rd/JZCommon/jzModbus/JZModbusClient.cpp
-    3rd/JZCommon/jzModbus/JZModbusClient.h
-    3rd/JZCommon/jzModbus/JZModbusContext.cpp
-    3rd/JZCommon/jzModbus/JZModbusContext.h
-    3rd/JZCommon/jzModbus/JZModbusDefine.cpp
-    3rd/JZCommon/jzModbus/JZModbusDefine.h
-    3rd/JZCommon/jzModbus/JZModbusMaster.cpp
-    3rd/JZCommon/jzModbus/JZModbusMaster.h
-    3rd/JZCommon/jzModbus/JZModbusParam.cpp
-    3rd/JZCommon/jzModbus/JZModbusParam.h
-    3rd/JZCommon/jzModbus/JZModbusRtu.cpp
-    3rd/JZCommon/jzModbus/JZModbusRtu.h
-    3rd/JZCommon/jzModbus/JZModbusServer.cpp
-    3rd/JZCommon/jzModbus/JZModbusServer.h
-    3rd/JZCommon/jzModbus/JZModbusSlaver.cpp
-    3rd/JZCommon/jzModbus/JZModbusSlaver.h
-    3rd/JZCommon/jzModbus/JZModbusTcp.cpp
-    3rd/JZCommon/jzModbus/JZModbusTcp.h
-    3rd/JZCommon/jzWidgets/JZImageView.cpp
-    3rd/JZCommon/jzWidgets/JZImageView.h    
+    widgets/JZImageLabel.h     
+
+    #modbus        
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModuleModbusEditor.cpp
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModuleModbusEditor.h
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModbusConfigDialog.cpp
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModbusConfigDialog.h
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModbusConfigDialog.ui
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModbusSimulator.cpp
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModbusSimulator.h
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModbusTemplateDialog.cpp
+    ${CMAKE_SOURCE_DIR}/modules/modbus/JZModbusTemplateDialog.h    
+    #opencv    
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZModuleOpencvEditor.h
+    ${CMAKE_SOURCE_DIR}/modules/opencv/JZModuleOpencvEditor.cpp            
+    #camera    
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZModuleCameraEditor.h
+    ${CMAKE_SOURCE_DIR}/modules/camera/JZModuleCameraEditor.cpp       
+    
+    #3rd    
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.h
     3rd/JZCommon/jzWidgets/JZPropertyWidget.cpp
-    3rd/JZCommon/jzWidgets/JZPropertyWidget.h
-    3rd/JZCommon/jzCommon/JZLogManager.cpp
-    3rd/JZCommon/jzCommon/JZLogManager.h
+    3rd/JZCommon/jzWidgets/JZPropertyWidget.h    
 )
 
-add_executable(JZNodeEditor ${JZNodeEditor_SOURCES})
+add_executable(JZNodeEditor ${JZNodeEditor_SOURCES} ${JZNodeCore_SOURCES})
 target_link_libraries(JZNodeEditor Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network          
     Qt${QT_VERSION_MAJOR}::SerialPort      
@@ -335,3 +363,5 @@ target_link_libraries(JZNodeEditor Qt${QT_VERSION_MAJOR}::Widgets
 set_target_properties(JZNodeEditor PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
+
+add_subdirectory(tests)

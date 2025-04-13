@@ -22,6 +22,8 @@ public:
     JZNodeBuilder();
     ~JZNodeBuilder();
     
+    void setMute(bool mute);
+
     void setProject(JZProject *project);
     JZProject *project();
 
@@ -30,6 +32,8 @@ public:
     bool isBuildInterrupt();
 
     QString error() const;
+
+    QMap<QString, CompilerResult> compilerResult();
     const CompilerResult *compilerInfo(JZScriptItem *file) const;
 
 protected:    
@@ -42,6 +46,7 @@ protected:
     };
 
     void clear();      
+    void log(const QString &text);
     bool buildScript(JZScriptItem *file);
     bool buildCustom(JZFunctionDefine define,std::function<bool(JZNodeCompiler*, QString&)> func);
     bool link();        
@@ -53,6 +58,7 @@ protected:
     QMap<QString, ScriptInfo> m_scripts;
     JZNodeCompiler m_compiler;
 
+    bool m_logEnable;
     QString m_error;
     QMutex m_mutex;
     bool m_build;

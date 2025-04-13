@@ -188,64 +188,6 @@ void ScriptTest::testObjectParse()
 */
 }
 
-void ScriptTest::testBranch()
-{    
-    JZNodeEngine *engine = &m_engine;
-    auto env = m_project.environment();
-
-    JZFunctionDefine define;
-    define.name = "testFunc";
-    define.paramIn.push_back(env->paramDefine("a", Type_int));
-    define.paramIn.push_back(env->paramDefine("b", Type_int));
-    define.paramOut.push_back(env->paramDefine("c", Type_int));
-
-    auto script = m_file->addFunction(define);
-    auto node_start = script->getNode(0);
-
-    JZNodeBranch *branch = new JZNodeBranch();
-    JZNodeEQ *eq = new JZNodeEQ();
-    JZNodeParam *a = new JZNodeParam();
-    a->setVariable("a");
-
-    JZNodeParam *b = new JZNodeParam();
-    b->setVariable("b");
-
-    JZNodeReturn *r1 = new JZNodeReturn();
-    JZNodeReturn *r2 = new JZNodeReturn();
-    r1->setFunction(&define);
-    r2->setFunction(&define);
-    
-    script->addNode(branch);
-    script->addNode(eq);
-    script->addNode(a);
-    script->addNode(b);
-    script->addNode(r1);
-    script->addNode(r2);
-
-    r1->setParamInValue(0, "1");
-    r2->setParamInValue(0, "0");
-
-    script->addConnect(a->paramOutGemo(0), eq->paramInGemo(0));
-    script->addConnect(b->paramOutGemo(0), eq->paramInGemo(1));
-    script->addConnect(eq->paramOutGemo(0), branch->paramInGemo(0));
-
-    script->addConnect(node_start->flowOutGemo(0), branch->flowInGemo());
-    script->addConnect(branch->flowOutGemo(0), r1->flowInGemo());
-    script->addConnect(branch->flowOutGemo(1), r2->flowInGemo());
-
-    if (!build())
-        return;
-
-    QVariantList in, out;
-    in = { 0 ,1 };
-    engine->call("testFunc", in, out);
-    QCOMPARE(out[0].toInt(), 0);
-
-    in = { 100 ,100 };
-    engine->call("testFunc", in, out);
-    QCOMPARE(out[0].toInt(), 1);
-}
-
 void ScriptTest::testIf()
 {
     auto env = m_project.environment();
@@ -933,7 +875,9 @@ void ScriptTest::testFunction()
     JZScriptItem *script = m_file->addFunction(fab);
 
     JZNode *node_start = script->getNode(0);
-    JZNodeBranch *node_branch = new JZNodeBranch();    
+    JZNodeIf *node_branch = new JZNodeIf();
+    node_branch->addElsePin();
+
     JZNodeGE *node_ge = new JZNodeGE();
     node_ge->setPinValue(node_ge->paramIn(1), "2");
     JZNodeAdd *node_add = new JZNodeAdd();    
@@ -970,8 +914,8 @@ void ScriptTest::testFunction()
     /* if(n >= 2) */
     script->addConnect(n->paramOutGemo(0),node_ge->paramInGemo(0));
     script->addConnect(node_ge->paramOutGemo(0),node_branch->paramInGemo(0));
-    script->addConnect(node_branch->flowOutGemo(0),ret1->flowInGemo());
-    script->addConnect(node_branch->flowOutGemo(1),ret2->flowInGemo());
+    script->addConnect(node_branch->subFlowOutGemo(0),ret1->flowInGemo());
+    script->addConnect(node_branch->subFlowOutGemo(1),ret2->flowInGemo());
 
     /* return fab(n-1) + fab(n-2) */
     sub1->setPinValue(sub1->paramIn(1),"1");

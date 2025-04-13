@@ -31,7 +31,7 @@ int main(int argc,char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();               
 
-    return runProgram("Project34", false);
+    //return runProgram("Project34", false);
 
     QCommandLineParser parser;
 

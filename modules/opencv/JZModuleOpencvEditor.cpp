@@ -9,6 +9,7 @@ JZModuleOpencvEditor::~JZModuleOpencvEditor()
 {
 }
 
+/*
 void JZModuleOpencvEditor::regist(JZScriptEnvironment *env)
 {
     auto d_inst = JZNodeEditorManager::instance();
@@ -21,3 +22,4 @@ void JZModuleOpencvEditor::regist(JZScriptEnvironment *env)
     d_mat.unpack = matUnpack;
     d_inst->registDelegate(cls_mat.id(), d_mat);
 }
+*/

@@ -26,6 +26,9 @@ void JZNodeAutoRunThread::startRun(JZNodeProgram *program,const ScriptDepend &de
 
 void JZNodeAutoRunThread::stopRun()
 {
+    if (!isRunning())
+        return;
+
     m_cancel = true;
     m_engine.stop();
     m_cancel = false;

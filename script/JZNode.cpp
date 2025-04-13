@@ -220,6 +220,8 @@ int JZNode::addFlowIn(int extFlag)
 
 int JZNode::addFlowOut(QString name,int extFlag)
 {
+    Q_ASSERT(flowOutList().size() == 0);
+
     JZNodePin pin;
     pin.setName(name);
     pin.setFlag(Pin_out | Pin_flow | extFlag);
@@ -1400,6 +1402,11 @@ int JZNodeSwitch::caseCount()
         return list.size();
 }
 
+void JZNodeSwitch::clearCaseAndDefault()
+{
+
+}
+
 void JZNodeSwitch::setCaseValue(int index, const QString &v)
 {
     Q_ASSERT(index < caseCount());
@@ -1467,36 +1474,44 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-//JZNodeBranch
-JZNodeBranch::JZNodeBranch()
+//JZNodeTryCatch
+JZNodeTryCatch::JZNodeTryCatch()
 {
-    m_name = "branch";
-    m_type = Node_branch;
+    m_name = "tryCatch";
+    m_type = Node_tryCatch;
     addFlowIn();
-    addFlowOut("true");
-    addFlowOut("false");
-    
-    int cond = addParamIn("cond");
-    setPinTypeBool(cond);
+    addFlowOut("complete");
+    addSubFlowOut("try");
+    addSubFlowOut("catch");    
 }
 
-bool JZNodeBranch::compiler(JZNodeCompiler *c,QString &error)
+bool JZNodeTryCatch::compiler(JZNodeCompiler *c,QString &error)
 {
     int cond = paramIn(0);
     if(!c->addFlowInput(m_id,error))
         return false;
 
-    int id = c->paramId(m_id,cond);
-    c->addCompare(irId(id),irLiteral(true),OP_eq);
-
-    JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
-    JZNodeIRJmp *jmp_false = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_true));
-    c->addStatement(JZNodeIRPtr(jmp_false));
     
-    jmp_true->jmpPc = c->addFlowJump(flowOut(0));
-    jmp_false->jmpPc = c->addFlowJump(flowOut(1));
     return true;
+}
+
+//JZNodeThrow
+JZNodeThrow::JZNodeThrow()
+{
+    m_name = "throw";
+    m_type = Node_tryCatch;
+    addFlowIn();
+
+    int cond = addParamIn("error");
+    setPinTypeString(cond);
+}
+
+bool JZNodeThrow::compiler(JZNodeCompiler *c,QString &error)
+{
+    if(!c->addFlowInput(m_id,error))
+        return false;
+
+    return false;
 }
 
 //JZNodeAssert
@@ -1524,21 +1539,6 @@ bool JZNodeAssert::compiler(JZNodeCompiler *c, QString &error)
     int id_tips = c->paramId(m_id, paramIn(1));
     c->addCompare(irId(id), irLiteral(true), OP_eq);
     c->addAssert(irId(id_tips));
-    return true;
-}
-
-//JZNodeTryCatch
-JZNodeTryCatch::JZNodeTryCatch()
-{
-    addFlowIn();
-    addFlowOut("complete");
-    addSubFlowOut("try");
-    addSubFlowOut("catch");
-    addSubFlowOut("finally");
-}
-
-bool JZNodeTryCatch::compiler(JZNodeCompiler *compiler, QString &error)
-{
     return true;
 }
 

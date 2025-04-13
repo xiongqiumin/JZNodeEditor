@@ -22,9 +22,7 @@ public:
     virtual void loadFromStream(QDataStream &s) override;
 
 protected:    
-    virtual JZNodePinWidget *createWidget(int id);
     QString className();
-
     JZModbusConfig m_config;
 };
 

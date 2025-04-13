@@ -24,6 +24,7 @@
 #include "JZEditorUtils.h"
 #include "JZNodeUtils.h"
 #include "LogManager.h"
+#include "modules/modbus/JZModbusSimulator.h"
 
 //Setting
 Setting::Setting()
@@ -51,40 +52,6 @@ QDataStream &operator >> (QDataStream &s, Setting &param)
     return s;
 }
 
-
-//AutoBuildInfo
-MainWindow::BuildInfo::BuildInfo()
-{
-    clear();
-}
-
-void MainWindow::BuildInfo::clear()
-{
-    changeTimestamp = QDateTime::currentMSecsSinceEpoch();
-    buildTimestamp = 0;
-    saveTimestamp = 0;
-    buildVersion = 0;
-    save = false;
-    start = false;
-    success = false;
-    unitTestItemPath.clear();
-}
-
-void MainWindow::BuildInfo::clearTask()
-{    
-    save = false;
-    start = false;
-    unitTestItemPath.clear();
-}
-
-bool MainWindow::BuildInfo::isUnitTest()
-{
-    if(!unitTestItemPath.isEmpty() && !start)
-        return true;
-    
-    return false;
-}
-
 //ActionStatus
 MainWindow::ActionStatus::ActionStatus(QAction *act, QVector<int> act_flags)
 {
@@ -99,11 +66,9 @@ MainWindow::MainWindow(QWidget *parent)
 {    
     g_mainWindow = this;
     m_editor = nullptr;    
-    m_processMode = Process_none;
-    m_compilerTimer = new QTimer(this);
-    connect(m_compilerTimer, &QTimer::timeout, this, &MainWindow::onAutoCompilerTimer);
-    m_compilerTimer->start(100);    
+    m_processMode = Process_none;    
     
+    LogManagerInit();
     JZLogManager::instance()->addObserver(Log_Compiler,this);
     JZLogManager::instance()->addObserver(Log_Runtime, this);
 
@@ -118,11 +83,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_project,&JZProject::sigDefineChanged, this, &MainWindow::onProjectChanged);
     connect(&m_project,&JZProject::sigBreakPointChanged, this, &MainWindow::onBreakPointChanged);
 
-    connect(&m_runThread,&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
-    connect(&m_buildThread,&JZNodeBuildThread::sigResult,this, &MainWindow::onBuildFinish);
-    m_buildThread.init(&m_program);
+    m_task.setProject(&m_project);    
+    connect(m_task.runThread(),&JZNodeAutoRunThread::sigResult,this, &MainWindow::onAutoRunResult);
+    connect(&m_task, &MainTaskManager::sigTaskRunning, this, &MainWindow::onTaskRunning);
+    connect(&m_task, &MainTaskManager::sigBuildStart, this, &MainWindow::onBuildStart);
+    connect(&m_task, &MainTaskManager::sigBuildFinish, this, &MainWindow::onBuildFinish);
 
-    auto engine = m_runThread.engine();
+    auto engine = m_task.runThread()->engine();
     connect(engine,&JZNodeEngine::sigWatchNotify,this,&MainWindow::onWatchNotify,Qt::BlockingQueuedConnection);
 
     loadSetting();    
@@ -269,12 +236,16 @@ void MainWindow::initMenu()
 
     QMenu *menu_build = menubar->addMenu("构建");
     auto actBuild = menu_build->addAction("编译");
-    auto actExport = menu_build->addAction("导出");
+    auto menu_export = menu_build->addMenu("导出");
+    auto actExportExe = menu_export->addAction("导出Exe");
+    auto actExportCpp = menu_export->addAction("导出Cpp");
     connect(actBuild,&QAction::triggered,this,&MainWindow::onActionBuild);
-    connect(actExport,&QAction::triggered,this,&MainWindow::onActionExport);
+    connect(actExportExe, &QAction::triggered, this, &MainWindow::onActionExportExe);
+    connect(actExportCpp,&QAction::triggered,this,&MainWindow::onActionExportCpp);
     m_actionStatus << ActionStatus(actBuild, { as::ProjectVaild, as::ProcessIsEmpty });
 
     QMenu *menu_tool = menubar->addMenu("工具");
+    auto actModbus = menu_tool->addAction("Modbus");
     menu_tool->addAction("性能分析");
 
     QMenu *menu_debug = menubar->addMenu("调试");    
@@ -330,6 +301,8 @@ void MainWindow::initMenu()
     connect(actHelp, &QAction::triggered, this, &MainWindow::onActionHelp);
     connect(actCheckUpdate, &QAction::triggered, this, &MainWindow::onActionCheckUpdate);
     connect(actAbout, &QAction::triggered, this, &MainWindow::onActionAbout);
+
+    connect(actModbus, &QAction::triggered, this, &MainWindow::onActionModbus);
 
     m_menuList << menu_file << menu_edit << menu_view << menu_build << menu_debug << menu_help;
     
@@ -458,36 +431,26 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }    
 
-    m_runThread.stopRun();
-    m_buildThread.stopBuild();
-        
+    m_task.clearTask();
+
     QMainWindow::closeEvent(event);
 }
 
 const CompilerResult *MainWindow::compilerResult(const QString &path)
 {
-    auto s = (JZScriptItem*)m_project.getItem(path);
-    return m_buildThread.builder()->compilerInfo(s);
-}
+    if (!m_buildResult)
+        return nullptr;
 
-JZNodeProgram *MainWindow::program()
-{
-    return &m_program;
+    auto it = m_buildResult->compilerResult.find(path);
+    if (it == m_buildResult->compilerResult.end())
+        return nullptr;
+
+    return &it.value();
 }
 
 JZProject *MainWindow::project()
 {
     return &m_project;
-}
-
-JZNodeRuntimeInfo *MainWindow::runtime()
-{
-    return &m_runtime;
-}
-
-int MainWindow::stackIndex()
-{
-    return m_stack->stackIndex();
 }
 
 void MainWindow::updateActionStatus()
@@ -721,26 +684,29 @@ void MainWindow::onActionBuild()
     }
 
     saveAll();
-    m_buildInfo.save = true;
-    build();
-}
-
-void MainWindow::onActionExport()
-{
-    //JZNodeCppGenerater gen;
-
-    QString output = m_project.path() + "/build/cpp";
-    //gen.generate(&m_project,output);
-
-    m_log->addLog(Log_Compiler, "export to: " + output);
+    m_task.addBuildTask();
 }
 
 void MainWindow::onActionRun()
-{            
+{
     saveAll();
-    m_buildInfo.save = true;
-    m_buildInfo.start = true;
-    build();       
+    m_task.addRunningTask();
+}
+
+void MainWindow::onActionExportExe()
+{
+    if (m_project.isNull())
+        return;
+
+    m_task.addExportExeTask();
+}
+
+void MainWindow::onActionExportCpp()
+{
+    if (m_project.isNull())
+        return;
+
+    m_task.addExportCppTask();    
 }
 
 void MainWindow::onActionDetach()
@@ -793,6 +759,12 @@ void MainWindow::onActionStepOut()
 {
     m_debuger.stepOut();
     updateActionStatus();
+}
+
+void MainWindow::onActionModbus()
+{
+    JZModbusSimulator *simulator = new JZModbusSimulator();
+    simulator->show();
 }
 
 void MainWindow::onActionHelp()
@@ -853,8 +825,7 @@ bool MainWindow::openProject(QString filepath)
         QMessageBox::information(this, "", "打开工程失败: " + m_project.error());
         return false;
     }
-    
-    m_buildInfo.clear();
+        
     m_projectTree->setProject(&m_project);
     m_setting.addRecentProject(m_project.filePath());
     m_breakPoint->updateBreakPoint();     
@@ -895,7 +866,7 @@ void MainWindow::onFunctionOpen(QString functionName)
 
 void MainWindow::onAutoCompiler()
 {
-    m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
+    m_task.addAutoCompilerTask();
 }
 
 void MainWindow::onAutoRun()
@@ -922,83 +893,27 @@ void MainWindow::showTopLevel()
     activateWindow();
 }
 
-void MainWindow::onAutoCompilerTimer()
-{   
-    qint64 cur = QDateTime::currentMSecsSinceEpoch();    
-    if (cur - m_buildInfo.changeTimestamp <= 1000)
-        return;
-
-    if (m_project.isNull())
-        return;
-
-    if(m_buildInfo.changeTimestamp > m_buildInfo.buildVersion)
-        build();
+void MainWindow::onBuildStart()
+{
+    m_log->clearLog(Log_Compiler);    
 }
 
-void MainWindow::onBuildFinish(int flag)
+void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
 {
-    QString result = flag ? "successed" : "failed";        
-
-    m_buildThread.wait();
-    auto builder = m_buildThread.builder();
-    if (flag != Build_Cached)
+    m_buildResult = result;
+        
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
     {
-        auto it = m_editors.begin();
-        while (it != m_editors.end())
+        if (it.value()->type() == Editor_script)
         {
-            if (it.value()->type() == Editor_script)
-            {
-                auto node_edit = (JZNodeEditor*)it.value();
-                auto cmp_info = builder->compilerInfo(node_edit->script());
-                if (cmp_info)
-                    node_edit->setCompilerResult(cmp_info);
-            }
-            it++;
+            auto node_edit = (JZNodeEditor*)it.value();
+            auto cmp_info = compilerResult(it.key()->itemPath());
+            if (cmp_info)
+                node_edit->setCompilerResult(cmp_info);
         }
+        it++;
     }
-    
-    if (flag == Build_Failed)
-    {
-        m_buildInfo.success = false;
-        m_log->addLog(Log_Compiler, "build failed.");
-    }
-    else
-    {
-        if (flag == Build_Successed)
-        {
-            m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
-            m_log->addLog(Log_Compiler, "build finish.");
-        }
-
-        m_buildInfo.success = true;
-    }
-
-    if(m_buildInfo.success)
-    {        
-        if(m_buildInfo.isUnitTest())
-        {
-            auto e = nodeEditor(m_buildInfo.unitTestItemPath);
-            if (e)
-            {                
-                m_runThread.startRun(&m_program, e->scriptTestDepend());
-            }
-        }
-        else 
-        {
-            if (m_buildInfo.save)
-            {
-                if (m_buildInfo.saveTimestamp < m_buildInfo.buildTimestamp)
-                {
-                    if (!saveProgram())
-                        return;
-                    m_buildInfo.saveTimestamp = QDateTime::currentMSecsSinceEpoch();
-                }
-            }
-            if (m_buildInfo.start)
-                startProgram();
-        }                    
-    }
-    m_buildInfo.clearTask();
 }
 
 void MainWindow::onAutoRunResult(UnitTestResultPtr result)
@@ -1017,6 +932,11 @@ void MainWindow::onAutoRunResult(UnitTestResultPtr result)
     JZNodeEditor *node_e = qobject_cast<JZNodeEditor*>(e);
     node_e->setAutoRunResult(*result);
 }   
+
+void MainWindow::onTaskRunning()
+{
+    startProgram();
+}
 
 JZEditor *MainWindow::editor(QString filepath)
 {
@@ -1223,7 +1143,7 @@ void MainWindow::onNavigate(QUrl url)
 
 void MainWindow::onProjectChanged()
 {   
-    m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
+    m_task.addAutoCompilerTask();
 
     //editor
     auto list = nodeEditorList();
@@ -1291,6 +1211,7 @@ void MainWindow::onWatchNameChanged(JZNodeIRParam coor)
 
 void MainWindow::onWatchNotify()
 {
+/*
     auto env = editorEnvironment();
     auto inst = JZNodeEditorManager::instance();
     if(m_runThread.engine()->stack()->size() != 1)
@@ -1314,6 +1235,7 @@ void MainWindow::onWatchNotify()
         e->setRuntimeValue(gemo.nodeId,gemo.pinId,value);
         it++;
     }
+*/
 }
 
 void MainWindow::onRuntimeWatch(const JZNodeRuntimeWatchResult &info)
@@ -1454,33 +1376,6 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
     m_watchManual->setParamInfo(&param_info_watch_resp); 
 }
 
-void MainWindow::build()
-{    
-    Q_ASSERT(m_processMode == Process_none);
-
-    QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");    
-    
-    if (m_buildThread.isRunning() && m_buildInfo.changeTimestamp == m_buildInfo.buildVersion)
-        return;
-
-    m_runThread.stopRun();    
-    if (m_buildInfo.changeTimestamp > m_buildInfo.buildTimestamp)
-    {
-        m_buildInfo.buildVersion = m_buildInfo.changeTimestamp;
-
-        m_log->clearLog(Log_Compiler);
-        m_log->addLog(Log_Compiler, "[" + time + "] ===== start build =====");        
-        qDebug() << "start build";        
-        m_buildInfo.success = false;
-        m_buildThread.startBuild(&m_project);        
-    }
-    else
-    {
-        //wait finish        
-        onBuildFinish(Build_Cached);
-    }
-}
-
 void MainWindow::saveToFile(QString filepath,QString text)
 {
     QFile file(filepath);
@@ -1493,47 +1388,18 @@ void MainWindow::saveToFile(QString filepath,QString text)
     }
 }
 
-bool MainWindow::saveProgram()
-{
-    qDebug() << "save program";
-
-    QString build_path = m_project.path() + "/build";
-    QString build_exe = build_path + "/" + m_project.name() + ".program";
-
-    QElapsedTimer timer;
-    timer.start();
-
-    QDir dir;
-    if (!dir.exists(build_path))
-        dir.mkdir(build_path);
-    if (!m_program.save(build_exe))
-    {
-        m_log->addLog(Log_Compiler, "generate program failed");
-        return false;
-    }
-
-    JZNodeProgramDumper dumper;
-    dumper.init(&m_project, &m_program);
-    dumper.dump(build_path + "/" + m_project.name() + ".cpp");
-    return true;
-}
-
 void MainWindow::startUnitTest(QString unitTestItemPath)
 {    
-    if (m_processMode != Process_none)
-        return;
+    Q_ASSERT(m_processMode == Process_none);        
 
-    m_buildInfo.unitTestItemPath = unitTestItemPath;
-    build();
+    m_task.addUnitTestTask(unitTestItemPath);    
 }
 
 void MainWindow::startProgram()
 {    
-    qDebug() << "startProgram";
-    
-    m_runThread.stopRun();
-
     m_log->clearLog(Log_Runtime);   
+    LOGMOD_I(Log_Runtime, "start program");
+
     QString app = qApp->applicationFilePath();
     QString build_exe = m_project.path() + "/build/" + m_project.name() + ".program";
     QStringList params;

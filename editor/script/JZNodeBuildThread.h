@@ -5,10 +5,18 @@
 #include "JZNodeBuilder.h"
 
 enum {
-    Build_Failed,
     Build_Successed,
-    Build_Cached,
+    Build_Failed,        
 };
+
+class JZNodeBuildResult
+{
+public:
+    int status;
+    JZNodeProgram program;
+    QMap<QString, CompilerResult>  compilerResult;
+};
+typedef QSharedPointer<JZNodeBuildResult> JZNodeBuildResultPtr;
 
 //JZNodeAutoRunWidget
 class JZNodeBuildThread : public QThread
@@ -18,24 +26,22 @@ class JZNodeBuildThread : public QThread
 public:
     JZNodeBuildThread();
     ~JZNodeBuildThread();
-
-    void init(JZNodeProgram *program);
-    JZNodeBuilder *builder();
-
+    
+    void setMute(bool mute);
     void startBuild(JZProject *project);
     bool isBuild();
     void stopBuild();
 
 signals:
-    void sigResult(int flag);
+    void sigResult(JZNodeBuildResultPtr ptr);
 
 protected:
     virtual void run() override;
     void sync(JZProject *project);
     
-    JZNodeProgram *m_program;
-    JZNodeBuilder m_builder;
     JZProject m_project;
+    JZNodeProgram m_program;
+    JZNodeBuilder m_builder;        
 };
 
 #endif

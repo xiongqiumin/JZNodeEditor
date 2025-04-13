@@ -29,6 +29,7 @@ bool JZNodeCustomBuild::compiler(JZNodeCompiler *c, QString &error)
 //JZNodeBuilder
 JZNodeBuilder::JZNodeBuilder()
 {
+    m_logEnable = true;
     m_project = nullptr;
     m_build = false;
     m_stopBuild = false;
@@ -38,6 +39,11 @@ JZNodeBuilder::JZNodeBuilder()
 JZNodeBuilder::~JZNodeBuilder()
 {
 
+}
+
+void JZNodeBuilder::setMute(bool mute)
+{
+    m_logEnable = !mute;
 }
 
 void JZNodeBuilder::setProject(JZProject *project)
@@ -65,6 +71,14 @@ void JZNodeBuilder::clear()
     m_scripts.clear();
 }
 
+void JZNodeBuilder::log(const QString &text)
+{
+    if (!m_logEnable)
+        return;
+
+    LOGMOD_I(Log_Compiler, text);
+}
+
 bool JZNodeBuilder::initGlobal()
 {            
     // init variable
@@ -89,6 +103,19 @@ bool JZNodeBuilder::initGlobal()
     return true;
 }
 
+QMap<QString, CompilerResult> JZNodeBuilder::compilerResult()
+{
+    QMap<QString, CompilerResult> ret;
+
+    auto it = m_scripts.begin();
+    while (it != m_scripts.end())
+    {
+        ret[it.key()] = it->compilerInfo;
+        it++;
+    }
+    return ret;
+}
+
 const CompilerResult *JZNodeBuilder::compilerInfo(JZScriptItem *file) const
 {
     auto it = m_scripts.find(file->itemPath());
@@ -107,7 +134,8 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
     }
 
     QString path = scriptFile->itemPath();
-    LOGMOD_I(Log_Compiler, "build " + scriptFile->itemPath());
+    if(m_logEnable && !scriptFile->itemPath().startsWith("/tmp"))
+        LOGMOD_I(Log_Compiler, "build " + scriptFile->itemPath());
 
     m_scripts[path].script = JZNodeScriptPtr(new JZNodeScript());
     JZNodeScript *script = m_scripts[path].script.data();
@@ -115,11 +143,11 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
     bool ret = m_compiler.build(scriptFile, script);
     m_scripts[path].compilerInfo = m_compiler.compilerResult();
     if(!ret)
-    {
-        m_error += m_compiler.error();
+    {        
+        m_error += m_compiler.error();        
         return false;
     }
-
+    
     return true;
 }
 
@@ -135,6 +163,11 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         QMutexLocker locker(&m_mutex);
         m_build = false;
         m_stopBuild = false;
+
+        if(!m_error.isEmpty())
+            log("build failed");
+        else
+            log("build finish");
     });
 
     auto makeParamLink = [](QString tips, QString path, bool ui, int row)->QString
@@ -151,6 +184,8 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     clear();    
     m_program = program;        
     m_program->clear();    
+
+    log("start build");
     
     auto env = m_project->environment();
     auto obj_inst = env->objectManager();

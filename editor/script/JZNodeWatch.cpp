@@ -183,6 +183,7 @@ QString JZNodeWatch::coorName(const JZNodeIRParam &param)
         return param.ref();
     else
     {
+/*
         auto p = m_mainWindow->program();
         auto stack = m_mainWindow->stackIndex();
         auto function = m_mainWindow->runtime()->stacks[stack].function;
@@ -192,6 +193,8 @@ QString JZNodeWatch::coorName(const JZNodeIRParam &param)
             return def->name;
 
         return QString::number(param.id());
+*/
+        return QString();
     }
 }
 

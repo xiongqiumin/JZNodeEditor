@@ -7,13 +7,12 @@
 #include "JZNodeFactory.h"
 #include "3rd/JZCommon/jzModbus/JZModbusMaster.h"
 #include "3rd/JZCommon/jzModbus/JZModbusSlaver.h"
-#include "JZModbusConfigDialog.h"
 #include "JZModbusSimulator.h"
-#include "JZNodePinWidget.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
 #include "JZNodeEditorManager.h"
 
+//JZNodeModbusConfig
 JZNodeModbusConfig::JZNodeModbusConfig()
 {
     m_type = Node_modbusConfig;
@@ -33,44 +32,19 @@ void JZNodeModbusConfig::initFunction()
 {
     addFlowIn();
     addFlowOut();
-        
+
     QString class_type = className();
     int in = addParamIn("modbus");
-    pin(in)->setDataType({class_type});
-    
+    pin(in)->setDataType({ class_type });
+
     addParamIn("");
     setName(m_functionName);
-}
-
-JZNodePinWidget *JZNodeModbusConfig::createWidget(int id)
-{
-    if (id == paramIn(1))
-    {
-        JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this,id);
-        auto btn = w->button();
-        btn->setText("设置");
-        btn->connect(btn, &QPushButton::clicked, [btn,this] {
-            QByteArray old = this->toBuffer();
-
-            JZModbusConfigDialog dlg;
-            dlg.setConfigMode(true);
-            dlg.setConfig(this->m_config);
-            if (dlg.exec() != QDialog::Accepted)
-                return;
-
-            m_config = dlg.config();
-            propertyChangedNotify(old);
-        });
-        return w;
-    }
-
-    return nullptr;
 }
 
 bool JZNodeModbusConfig::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
-        return false;    
+        return false;
 
     QByteArray buffer;
     QDataStream s(&buffer, QIODevice::WriteOnly);
@@ -82,7 +56,7 @@ bool JZNodeModbusConfig::compiler(JZNodeCompiler *c, QString &error)
 
     QList<JZNodeIRParam> in, out;
     in << irId(obj_id) << irId(id);
-    c->addCallVirtual(m_functionName,in,out);
+    c->addCallVirtual(m_functionName, in, out);
     c->addFlowJump(flowOut());
 
     return true;
@@ -109,7 +83,7 @@ void initModbusMaster(JZModbusMaster *master, const QByteArray &buffer)
     modbusMasterSetConfig(master, &config);
 }
 
-void initModbusSlaver(JZModbusSlaver *slaver,const QByteArray &buffer)
+void initModbusSlaver(JZModbusSlaver *slaver, const QByteArray &buffer)
 {
     JZModbusConfig config;
     QDataStream s(buffer);
@@ -172,13 +146,10 @@ void JZModuleModbus::regist(JZScriptEnvironment *env)
     cls_modbus_slaver.defSingle("sigParamChanged", &JZModbusSlaver::sigParamChanged);
     cls_modbus_slaver.regist();
 
-    jzbind::registFunction("initModbusMaster", true, initModbusMaster);
-    jzbind::registFunction("initModbusSlaver", true, initModbusSlaver);
+    //jzbind::registFunction("initModbusMaster", true, initModbusMaster);
+    //jzbind::registFunction("initModbusSlaver", true, initModbusSlaver);
 
-    JZNodeFactory::instance()->registNode(Node_modbusConfig, createJZNode<JZNodeModbusConfig>);
-
-    JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusMaster", Node_modbusConfig);
-    JZNodeEditorManager::instance()->registCustomFunctionNode("initModbusSlaver", Node_modbusConfig);
+    JZNodeFactory::instance()->registNode(Node_modbusConfig, createJZNode<JZNodeModbusConfig>);    
 }
 
 void JZModuleModbus::unregist(JZScriptEnvironment *env)

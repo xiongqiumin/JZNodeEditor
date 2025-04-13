@@ -51,8 +51,7 @@ enum
     Node_expr,
     Node_for,
     Node_foreach,
-    Node_while,
-    Node_branch,
+    Node_while,    
     Node_sequence,
     Node_if,                
     Node_parallel,    
@@ -63,6 +62,8 @@ enum
     Node_break,
     Node_continue,
     Node_return,
+    Node_tryCatch,
+    Node_throw,
     Node_exit,
     Node_paramChangedEvent,
     Node_timeEvent,   
@@ -412,6 +413,7 @@ public:
     void removeCase(int index);
     void removeDefault();
     int caseCount();
+    void clearCaseAndDefault();
 
     void setCaseValue(int index, const QString &v);
 
@@ -421,17 +423,31 @@ protected:
 };
 
 
-//JZNodeBranch
-class JZNodeBranch : public JZNode
+//JZNodeTryCatch
+class JZNodeTryCatch : public JZNode
 {
 public:
-    JZNodeBranch();
+    JZNodeTryCatch();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
 
 };
+
+
+//JZNodeThrow
+class JZNodeThrow : public JZNode
+{
+public:
+    JZNodeThrow();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+protected:
+
+};
+
 
 //JZNodeAssert
 class JZNodeAssert : public JZNode
@@ -443,17 +459,6 @@ public:
 
 protected:
 
-};
-
-//JZNodeTryCatch
-class JZNodeTryCatch : public JZNode
-{
-public:
-    JZNodeTryCatch();
-
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-
-protected:
 };
 
 //JZNodeMainLoop
