@@ -20,7 +20,7 @@ void JZScriptLog(const QString &log)
     qDebug() << log;
 }
 
-QVariant JZScriptConvert(const QVariant &in, int type)
+QVariant JZConvertVariant(const QVariant &in, int type)
 {
     auto env = g_engine->environment();
     return env->convertTo(in, type);

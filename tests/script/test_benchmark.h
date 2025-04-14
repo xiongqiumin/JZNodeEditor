@@ -24,7 +24,7 @@ protected:
     public:
         Benchmark();
 
-        inline int step() const{ return m_step; }
+        inline qint64 step() const{ return m_step; }
 
         void reset(QString name);
         bool run();
@@ -42,7 +42,7 @@ protected:
         QList<RunInfo> m_runInfo;
         qint64 m_stepStart;
         QElapsedTimer m_timer;
-        int m_step;
+        qint64 m_step;
         int m_count;
         bool m_first;
         QString m_name;

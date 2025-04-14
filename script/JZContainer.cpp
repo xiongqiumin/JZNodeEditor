@@ -79,7 +79,7 @@ void mapForeach(JZNodeObject *obj, std::function<bool(QVariant, QVariant)> visto
     
     while (it != it_end)
     {
-        QVariant it_ptr = JZScriptConvert(it,it_ptr_type);
+        QVariant it_ptr = JZConvertVariant(it,it_ptr_type);
         QVariantList it_call_in;
         it_call_in << it_ptr;
 

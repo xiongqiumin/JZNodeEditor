@@ -327,7 +327,7 @@ protected:
 extern JZNodeEngine *g_engine;
 
 void JZScriptLog(const QString &name);
-QVariant JZScriptConvert(const QVariant &in, int type);
+QVariant JZConvertVariant(const QVariant &in, int type);
 QString JZObjectToString(JZNodeObject* obj);
 JZNodeObject* JZObjectFromString(int type, const QString& text);
 void JZScriptInvoke(const QString &function, const QVariantList &in, QVariantList &out);

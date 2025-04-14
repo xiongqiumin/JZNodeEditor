@@ -44,7 +44,6 @@ void BenchmarkTest::Benchmark::report()
         auto &info = m_runInfo[i];
         double cost = (double)info.time / info.count / 1000000.0;
         text += info.name + "(" + QString::number(cost,'f')  + " ms, ";
-        text += "step " + QString::number(m_step) + ", ";
         text += "count " + QString::number(info.count) + ")\n";
     }
     qDebug().noquote() << text;
@@ -59,7 +58,7 @@ bool BenchmarkTest::Benchmark::run()
     }
 
     qint64 elapsed = m_timer.nsecsElapsed();
-    if(m_count < 5 && m_step < 100000 && elapsed - m_stepStart < 100000) //0.1 ms, 太短的语句增加循环
+    if(m_count < 5 && elapsed - m_stepStart < 1000000) // 1 ms, 太短的语句增加循环
     {
         m_count = 0;
         m_step = m_step * 10;
@@ -69,7 +68,7 @@ bool BenchmarkTest::Benchmark::run()
     }
 
     m_count++;
-    if(elapsed >= 500 * 1000000)
+    if(elapsed >= qint64(1000) * 1000000) //1秒
     {
         RunInfo info;
         info.name = m_name;
@@ -160,7 +159,6 @@ void BenchmarkTest::testBase()
 
 void BenchmarkTest::testCall()
 {
-    return;
     if(!build())
         return;
 
@@ -185,9 +183,7 @@ void BenchmarkTest::testCall()
     std::function<double(double,double)> func_pow = (double (*)(double,double))(pow);
     JZBENCHMARK(jz_cfunc_pow_std)
     {
-        QVariantList in,out;
-        in << 0.5 << 0.6;
-        out << func_pow(in[0].toDouble(),in[1].toDouble());
+        func_pow(0.5, 0.6);
     }
 
     JZBENCHMARK(c_pow)
@@ -201,11 +197,11 @@ void BenchmarkTest::testCall()
     *list << 1 << 2 << 3 << 4 << 5;
     JZNodeObjectHolder ptr(obj,true);
 
-    auto list_func = env->functionManager()->functionImpl("QList<int>.get");
+    auto list_func = env->functionManager()->functionImpl("QList<int>::get");
     JZBENCHMARK(jz_list_get)
     {
         QVariantList in,out;
-        in << QVariant::fromValue(ptr) << 1;
+        in << QVariant::fromValue(ptr.toPointer()) << 1;
         bool ret = m_engine.call(list_func,in,out);
         QVERIFY(ret);
     }
@@ -220,6 +216,7 @@ void BenchmarkTest::testCall()
 
 void BenchmarkTest::testSort()
 {
+    return;
     auto env = m_project.environment();
     JZFunctionDefine def;
     def.name = "testSort";

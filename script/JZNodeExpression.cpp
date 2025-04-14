@@ -9,6 +9,8 @@
 #include "JZProject.h"
 #include "JZNodeOperator.h"
 #include "JZNodeFunction.h"
+#include "angelscript/as_parser.h"
+#include "JZScriptConvert.h"
 
 //JZNodeExpression
 JZNodeExpression::JZNodeExpression()
@@ -38,7 +40,18 @@ QStringList JZNodeExpression::irList()
 
 bool JZNodeExpression::updateExpr(QString &error)
 {    
-    return false;
+    asCScriptCode script;
+    script.SetCode(path(), m_expression);
+
+    asCParser parser;
+    int ret = parser.ParseFunctionStatement(&script);
+    if (ret != 0)
+    {
+        error = parser.Error();
+        return false;
+    }
+
+    return true;
 }
 
 void JZNodeExpression::saveToStream(QDataStream &s) const

@@ -11,12 +11,6 @@ JZScriptItem::JZScriptItem(int type)
     :JZProjectItem(type)
 {
     clear();
-
-    if(type == ProjectItem_scriptFunction)
-    {
-        JZNodeFunctionStart *node_start = new JZNodeFunctionStart();
-        addNode(node_start);
-    }
 }
 
 JZScriptItem::~JZScriptItem()
@@ -48,6 +42,9 @@ void JZScriptItem::clear()
     m_nodes.clear();
     m_connects.clear();
     m_nodeId = 0;
+
+    JZNodeFunctionStart* node_start = new JZNodeFunctionStart();
+    addNode(node_start);
 }
 
 int JZScriptItem::nextId()

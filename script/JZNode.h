@@ -135,6 +135,7 @@ public:
 
     JZScriptItem *file() const;
     void setFile(JZScriptItem *file);
+    QString path();
 
     const JZScriptEnvironment *environment() const;
 

@@ -548,6 +548,11 @@ void JZNode::setFile(JZScriptItem *file)
     m_notifyList.clear();
 }
 
+QString JZNode::path()
+{
+    return m_file->itemPath() + "/" + QString::number(m_id);
+}
+
 const JZScriptEnvironment *JZNode::environment() const
 {
     if(m_file && m_file->project())

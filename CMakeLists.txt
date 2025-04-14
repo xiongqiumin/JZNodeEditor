@@ -19,7 +19,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
 
 include_directories(./
     ./widgets
-    ./project
     ./script
     ./editor
     ./editor/ui
