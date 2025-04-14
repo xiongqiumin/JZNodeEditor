@@ -38,6 +38,19 @@ public:
 void operator<<(QDataStream &s, const BreakPoint &param);
 void operator>>(QDataStream &s, BreakPoint &param);
 
+//JZTempItemGuard
+class JZTempItemGuard
+{
+public:
+    JZTempItemGuard(JZProject *project, JZProjectItem *item,bool isTake = false);
+    ~JZTempItemGuard();
+
+protected:
+    JZProject *m_project;
+    JZProjectItem *m_item;
+    bool m_isTake;
+};
+
 //JZProject
 class JZProject : public QObject
 {
@@ -61,6 +74,7 @@ public:
 
     void addTmp(JZProjectItem *item);
     void removeTmp(JZProjectItem *item);
+    void takeTmp(JZProjectItem *item);
     bool isTmp(JZProjectItem *item);
 
     bool isFile(JZProjectItem *item);

@@ -12,6 +12,7 @@ JZProjectItem::JZProjectItem(int itemType)
 
 JZProjectItem::~JZProjectItem()
 {
+    qDeleteAll(m_childs);
 }
 
 QByteArray JZProjectItem::toBuffer() const
@@ -139,7 +140,7 @@ void JZProjectItem::addItem(JZProjectItem *child)
 {
     Q_ASSERT(child->parent() == nullptr);
     child->m_parent = this;
-    m_childs.push_back(JZProjectItemPtr(child));
+    m_childs.push_back(child);
 }
 
 void JZProjectItem::removeItem(JZProjectItem* child)
@@ -147,6 +148,19 @@ void JZProjectItem::removeItem(JZProjectItem* child)
     int index = indexOfItem(child);
     if(index != -1)
         m_childs.removeAt(index);
+
+    delete child;
+}
+
+void JZProjectItem::takeItem(JZProjectItem* child)
+{
+    Q_ASSERT(child->m_parent == this);
+
+    int index = indexOfItem(child);
+    if (index != -1)
+        m_childs.removeAt(index);
+
+    child->m_parent = nullptr;
 }
 
 JZProjectItem *JZProjectItem::getItem(QString name) 
@@ -154,7 +168,7 @@ JZProjectItem *JZProjectItem::getItem(QString name)
     for(int i = 0; i < m_childs.size(); i++)
     {
         if(m_childs[i]->name() == name)
-            return m_childs[i].data();
+            return m_childs[i];
     }
     return nullptr;
 }
@@ -165,11 +179,8 @@ bool JZProjectItem::hasItem(QString name)
 }
 
 QList<JZProjectItem *> JZProjectItem::childs() 
-{
-    QList<JZProjectItem *> result;
-    for(int i = 0; i < m_childs.size(); i++)
-        result.push_back(m_childs[i].data());
-    return result;
+{    
+    return m_childs;
 }
 
 int JZProjectItem::childCount()
@@ -186,7 +197,7 @@ int JZProjectItem::indexOfItem(JZProjectItem *item)
 {
     for(int i = 0; i < m_childs.size(); i++)
     {
-        if(m_childs[i].data() == item)
+        if(m_childs[i] == item)
             return i;
     }
     return -1;

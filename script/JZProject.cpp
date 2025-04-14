@@ -37,6 +37,24 @@ void operator>>(QDataStream &s, BreakPoint &param)
     s >> param.type;
 }
 
+//JZTempItemGuard
+JZTempItemGuard::JZTempItemGuard(JZProject *project, JZProjectItem *item,bool isTake)
+{
+    m_project = project;
+    m_item = item;
+    m_isTake = isTake;
+    project->addTmp(item);
+}
+
+JZTempItemGuard::~JZTempItemGuard()
+{
+    if (m_isTake)
+        m_project->takeTmp(m_item);
+    else
+        m_project->removeTmp(m_item);        
+}
+
+//JZProject
 JZProject::JZProject()    
 {           
     m_root.setName(".");
@@ -227,6 +245,11 @@ void JZProject::addTmp(JZProjectItem *item)
 void JZProject::removeTmp(JZProjectItem *item)
 {    
     removeItem(item->itemPath());
+}
+
+void JZProject::takeTmp(JZProjectItem *item)
+{
+    m_tmp.takeItem(item);;
 }
 
 bool JZProject::isTmp(JZProjectItem *item)

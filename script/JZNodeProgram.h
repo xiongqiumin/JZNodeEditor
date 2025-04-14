@@ -71,7 +71,7 @@ public:
     JZFunction *function(QString name);
     JZFunctionDebugInfo *functionDebug(QString name);
     
-    JZNodeScript *clone();
+    void copyTo(JZNodeScript *other);
     void saveToStream(QDataStream &s);
     void loadFromStream(QDataStream &s);
 

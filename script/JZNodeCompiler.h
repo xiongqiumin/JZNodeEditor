@@ -16,6 +16,13 @@ enum VariableCoor{
     Variable_global,
 };
 
+class JZScriptInOutInfo
+{
+public:
+    QStringList inList;
+    QStringList outList;
+};
+
 class GraphNode
 {
 public:
@@ -155,16 +162,17 @@ public:
     ~JZNodeCompiler();
 
     void setBuilder(JZNodeBuilder *builder);
-
+    
     bool genGraphs(JZScriptItem *file, QVector<GraphPtr> &result);
-    bool build(JZScriptItem *file,JZNodeScript *result);    
+    bool genNodeInputOuput(JZScriptItem *file, JZScriptInOutInfo &result);
+    bool build(JZScriptItem *file,JZNodeScript *result);
     CompilerResult compilerResult();
     
     bool checkParamDefine(const JZParamDefine *def, QString &error);
     const JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(const QString &var, QString &error);              //检查是否存在
     bool checkVariableType(const QString &var,int data_type, QString &error); //检查变量是类型
-    bool checkInitValue(int data_type,const QString &value);   //检查能否用字符串初始化
+    bool checkInitValue(int data_type,const QString &value);   //检查能否用字符串初始化    
 
     void resetStack();
     int allocStack(int dataType);
@@ -181,7 +189,7 @@ public:
     bool isPinLiteral(int nodeId, int pinId);
     QString pinLiteral(int nodeId, int pinId);
     
-    int irParamType(const JZNodeIRParam &param);
+    int irParamType(const JZNodeIRParam &param);    
 
     void setRegCallFunction(const JZFunctionDefine *func);    
 
@@ -216,7 +224,9 @@ public:
     void addSetBuffer(const JZNodeIRParam &dst, const QByteArray &buffer);
 
     void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
-    int addStatement(JZNodeIRPtr ir);    
+    int addStatement(JZNodeIRPtr ir);  
+    void addStatementList(QList<JZNodeIRPtr> ir_list);
+    void adjustStatementPc(int pc_cond, int adjust);
     
     int addFlowJump(int pin);      //设置下一个flow,应当在执行完操作后增加
     int addSubFlowJump(int pin);   //设置下一个sub flow    
@@ -237,7 +247,7 @@ public:
     JZNodeIR *lastStatment();
     void removeStatement(int pc);
     void replaceStatement(int pc,JZNodeIRPtr ir);
-    void replaceStatement(int pc,QList<JZNodeIRPtr> ir_list);    
+    void replaceStatementList(int pc,QList<JZNodeIRPtr> ir_list);    
     
     JZScriptItem *currentFile();
     Graph *currentGraph();
@@ -295,9 +305,10 @@ protected:
     void linkNodes(QList<GraphNode *> flow_list);
     void updateDebugInfo();
     void updateDepend(const JZFunction *define);
-    void addNodeFlowPc(int node_id, int cond, int pc);
+    void addNodeFlowPc(int node_id, int pc_cond, int pc);
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
     void dealAddCall(bool isVirtual,const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
+    bool hasStatementDepend(int pc);
 
     NodeCompilerInfo *currentNodeInfo();
     JZProject *project();

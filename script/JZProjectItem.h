@@ -59,13 +59,14 @@ protected:
 
     void addItem(JZProjectItem *child);
     void removeItem(JZProjectItem* child);
+    void takeItem(JZProjectItem* child);
     void clearChlids();    
 
     virtual void saveToStream(QDataStream &s) const;
     virtual bool loadFromStream(QDataStream &s);
 
     JZProjectItem *m_parent;
-    QList<QSharedPointer<JZProjectItem>> m_childs;
+    QList<JZProjectItem*> m_childs;
     
     int m_itemType;    
     QString m_name;           

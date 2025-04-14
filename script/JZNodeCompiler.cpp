@@ -413,6 +413,45 @@ bool JZNodeCompiler::genGraphs(JZScriptItem *scriptFile, QVector<GraphPtr> &list
     return true;
 }
 
+bool JZNodeCompiler::genNodeInputOuput(JZScriptItem *file,JZScriptInOutInfo &result)
+{
+    QVector<GraphPtr> graph_list;
+    if (!genGraphs(file, graph_list))
+        return false;
+
+    GraphPtr graph = graph_list[0];
+
+    QStringList params;
+    QStringList inList, outList;
+    for (int node_idx = 1; node_idx < graph->topolist.size(); node_idx++)
+    {
+        auto graph_node = graph->topolist[node_idx];
+        auto node = graph->topolist[node_idx]->node;
+        if (node->type() == Node_param)
+        {
+            JZNodeParam *param = dynamic_cast<JZNodeParam*>(node);
+            if (!params.contains(param->variable()))
+            {
+                params << param->variable();
+                inList << param->variable();
+            }
+        }
+        else if (node->type() == Node_setParam)
+        {
+            JZNodeSetParam *param = dynamic_cast<JZNodeSetParam*>(node);
+            if (!params.contains(param->variable()))
+            {
+                params << param->variable();
+                outList << param->variable();
+            }
+        }
+    }
+
+    result.inList = inList;
+    result.outList = outList;    
+    return true;
+}
+
 CompilerResult JZNodeCompiler::compilerResult()
 {    
     return m_compilerInfo;
@@ -697,6 +736,7 @@ void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
     }
 }
 
+//更新节点输出，推送设置变量
 void JZNodeCompiler::updateFlowOut()
 {
     auto it = m_nodeInfo.begin();
@@ -723,7 +763,7 @@ void JZNodeCompiler::updateFlowOut()
             for (int j = 0; j < new_list.size(); j++)
                 new_list[j]->pc = -1;
             *m_statmentList = m_statmentList->mid(0, next_pc);
-            replaceStatement(i, new_list);
+            replaceStatementList(i, new_list);
 
             addNodeFlowPc(it.key(), i, new_list.size() - 1);
         }
@@ -762,6 +802,7 @@ void JZNodeCompiler::addNodeFlowPc(int node_id, int cond,int pc)
     add_pc2(node_info.breakList, cond, pc);
 }
 
+//连接节点
 void JZNodeCompiler::linkNodes(QList<GraphNode *> flow_list)
 {
     for (int node_idx = 0; node_idx < m_buildGraph->topolist.size(); node_idx++)
@@ -774,22 +815,7 @@ void JZNodeCompiler::linkNodes(QList<GraphNode *> flow_list)
         node_info.start = m_script->statmentList.size();
         addNodeFlowPc(node->id(), 0, node_info.start);
 
-        int cur_node_id = -1, cur_node_start = -1;
-        int flow_debug_start = -1;        
-        auto &node_stmt_list = node_info.statmentList;
-        for (int i = 0; i < node_stmt_list.size(); i++)
-        {
-            auto stmt = node_stmt_list[i];            
-            if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
-            {
-                JZNodeIRJmp *jmp = (JZNodeIRJmp*)stmt.data();                            
-                int new_jmp = jmp->jmpPc + node_info.start;
-                jmp->jmpPc = new_jmp;   
-            }
-            
-            stmt->pc = m_script->statmentList.size();
-            m_script->statmentList.push_back(stmt);            
-        }
+        addStatementList(node_info.statmentList);        
         
         auto &dataRanges = m_nodeInfo[node->id()].dataRanges;
         auto it = dataRanges.begin();
@@ -861,7 +887,7 @@ void JZNodeCompiler::linkNodes(QList<GraphNode *> flow_list)
 
                 JZNodeGemo next_gemo = out_list[0];
                 JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
-                jmp->jmpPc = m_nodeInfo[next_gemo.nodeId].start;
+                jmp->jmpPc = m_nodeInfo[next_gemo.nodeId].start;   //子流程结束
                 replaceStatement(pc,JZNodeIRPtr(jmp));
             }
             else
@@ -1424,7 +1450,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, const QList<int> &prop_list, QS
 
 bool JZNodeCompiler::bulidControlFlow()
 {        
-    //build node
+    //按顺序编译每个节点
     QList<GraphNode *> graph_list = m_buildGraph->topolist;
     QList<GraphNode *> flow_list;
     for (int graph_idx = 0; graph_idx < graph_list.size(); graph_idx++)
@@ -1439,7 +1465,7 @@ bool JZNodeCompiler::bulidControlFlow()
     }        
     if (isBuildError())
         return false;
-
+    
     updateFlowOut();
     linkNodes(flow_list);
     updateDebugInfo();   
@@ -1497,7 +1523,7 @@ bool JZNodeCompiler::bulidControlFlow()
             ir_list << createAlloc(it.key(),it.value());
             it++;
         }
-        replaceStatement(pc, ir_list);        
+        replaceStatementList(pc, ir_list);
     }
 
     return true;
@@ -1647,6 +1673,40 @@ int JZNodeCompiler::addStatement(JZNodeIRPtr ir)
     return ir->pc;
 }
 
+void JZNodeCompiler::addStatementList(QList<JZNodeIRPtr> ir_list)
+{    
+    int start = ir_list.size();
+    for (int i = 0; i < ir_list.size(); i++)
+    {
+        auto stmt = ir_list[i];        
+        stmt->pc = m_script->statmentList.size();
+        if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
+        {
+            JZNodeIRJmp *jmp = (JZNodeIRJmp*)stmt.data();
+            int new_jmp = jmp->jmpPc + start;
+            jmp->jmpPc = new_jmp;
+        }
+        m_script->statmentList.push_back(stmt);
+    }    
+}
+
+void JZNodeCompiler::adjustStatementPc(int pc_cond, int adjust)
+{
+    for (int i = 0; i < m_script->statmentList.size(); i++)
+    {
+        auto stmt = m_script->statmentList[i];
+        if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
+        {            
+            JZNodeIRJmp *jmp = (JZNodeIRJmp*)stmt.data();
+            if (jmp->jmpPc >= pc_cond)
+            {
+                int new_jmp = jmp->jmpPc + adjust;
+                jmp->jmpPc = new_jmp;
+            }
+        }
+    }
+}
+
 JZScriptItem *JZNodeCompiler::currentFile()
 {
     return m_scriptItem;
@@ -1686,21 +1746,9 @@ JZNodeIR *JZNodeCompiler::lastStatment()
 
 void JZNodeCompiler::removeStatement(int pc)
 {
+    Q_ASSERT(!hasStatementDepend(pc));
     m_statmentList->removeAt(pc);
-    for (int i = 0; i < m_statmentList->size(); i++)
-    {
-        auto stmt = m_statmentList->at(i).data();
-        stmt->pc = i;
-        if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
-        {
-            JZNodeIRJmp *jmp = (JZNodeIRJmp *)stmt;
-            if (jmp->jmpPc > pc)
-            {
-                int old_pc = jmp->jmpPc;
-                jmp->jmpPc = old_pc - 1;
-            }
-        }
-    }
+    adjustStatementPc(pc, -1);
 }
 
 void JZNodeCompiler::replaceStatement(int pc,JZNodeIRPtr ir)
@@ -1710,7 +1758,7 @@ void JZNodeCompiler::replaceStatement(int pc,JZNodeIRPtr ir)
     m_statmentList->replace(pc, ir);
 }
 
-void JZNodeCompiler::replaceStatement(int pc, QList<JZNodeIRPtr> ir_list)
+void JZNodeCompiler::replaceStatementList(int pc, QList<JZNodeIRPtr> ir_list)
 {
     if(ir_list.size() == 0)
     {
@@ -1723,20 +1771,7 @@ void JZNodeCompiler::replaceStatement(int pc, QList<JZNodeIRPtr> ir_list)
         m_statmentList->insert(pc + i, ir_list[i]);
 
     int pc_add = ir_list.size() - 1;
-    for (int i = 0; i < m_statmentList->size(); i++)
-    {
-        auto stmt = m_statmentList->at(i).data();
-        stmt->pc = i;
-        if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
-        {
-            JZNodeIRJmp *jmp = (JZNodeIRJmp *)stmt;
-            if (jmp->jmpPc > pc)
-            {
-                int old_pc = jmp->jmpPc;
-                jmp->jmpPc = old_pc + pc_add;
-            }
-        }
-    }
+    adjustStatementPc(pc, pc_add);
 }
 
 int JZNodeCompiler::addFlowJump(int pin)
@@ -1885,6 +1920,21 @@ void JZNodeCompiler::dealAddCall(bool isVirtual,const JZFunctionDefine *func, co
     setRegCallFunction(nullptr);
     m_regCallInput.clear();
     addStatement(JZNodeIRPtr(new JZNodeIR(OP_clearReg)));    
+}
+
+bool JZNodeCompiler::hasStatementDepend(int pc)
+{
+    for (int i = 0; i < m_script->statmentList.size(); i++)
+    {
+        auto stmt = m_script->statmentList[i];
+        if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
+        {
+            JZNodeIRJmp *jmp = (JZNodeIRJmp*)stmt.data();
+            if (jmp->jmpPc == pc)
+                return true;
+        }
+    }
+    return false;
 }
 
 void JZNodeCompiler::resetStack()

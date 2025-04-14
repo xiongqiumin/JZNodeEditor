@@ -124,10 +124,17 @@ set(JZNodeCore_SOURCES
     ${CMAKE_SOURCE_DIR}/script/JZRegExpHelp.h
     ${CMAKE_SOURCE_DIR}/script/JZScriptBuildInFunction.cpp
     ${CMAKE_SOURCE_DIR}/script/JZScriptBuildInFunction.h   
-    ${CMAKE_SOURCE_DIR}/script/JZScriptItemHelp.cpp
-    ${CMAKE_SOURCE_DIR}/script/JZScriptItemHelp.h
-    ${CMAKE_SOURCE_DIR}/script/JZScriptParser.cpp
-    ${CMAKE_SOURCE_DIR}/script/JZScriptParser.h
+    ${CMAKE_SOURCE_DIR}/script/JZScriptConvert.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZScriptConvert.h  
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_parser.cpp
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_parser.h
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_scriptcode.cpp
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_scriptcode.h
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_scriptnode.cpp
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_scriptnode.h
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_tokendef.h
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_tokenizer.cpp
+    ${CMAKE_SOURCE_DIR}/script/angelscript/as_tokenizer.h    
 
     #runtime
     ${CMAKE_SOURCE_DIR}/runtime/JZNodeUiLoader.cpp

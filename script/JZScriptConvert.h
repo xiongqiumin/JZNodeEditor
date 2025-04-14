@@ -13,7 +13,7 @@ public:
     void init(JZScriptItem* item);
 	bool convertFunction(QString code);
 	bool convertStatments(QString code);
-	bool convertLambda(QString code,JZFunctionDefine &define);
+    bool convertExpression(QString code);	
 
 	QString error();
 

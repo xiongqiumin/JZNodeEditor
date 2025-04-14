@@ -171,7 +171,7 @@ JZScriptItem *JZScriptClassItem::memberFunction(QString func)
     for (int i = 0; i < m_childs.size(); i++)
     {
         if (m_childs[i]->name() == func && m_childs[i]->itemType() == ProjectItem_scriptFunction)
-            return (JZScriptItem *)m_childs[i].data();
+            return (JZScriptItem *)m_childs[i];
     }
     return nullptr;
 }
@@ -198,7 +198,7 @@ JZParamItem *JZScriptClassItem::paramFile()
 {
     for(int i = 0; i < m_childs.size(); i++)
     {
-        auto item = m_childs[i].data();
+        auto item = m_childs[i];
         if(item->itemType() == ProjectItem_param)
             return dynamic_cast<JZParamItem*>(item);
     }

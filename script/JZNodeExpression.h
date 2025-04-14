@@ -2,12 +2,14 @@
 #define JZNODE_EXPRESSION_H_
 
 #include "JZNode.h"
+#include "JZScriptConvert.h"
 
 //JZNodeExpression
 class JZNodeExpression: public JZNode
 {
 public:
     JZNodeExpression();
+    ~JZNodeExpression();
 
     bool setExpr(QString expr,QString &error);
     QString expr();
@@ -26,18 +28,10 @@ protected:
 
     bool updateExpr(QString &error);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    JZNodeIRParam toIr(const QString &name);
-
-    int getIrType(const QString &name);
-    void setIrType(const QString &name,int type);
 
     QString m_expression;
-    QStringList m_exprList;
-
-    QMap<int,VarInfo> m_varMap;
-    QMap<QString,int> m_outType;
-    int m_stackIdx;
-    JZNodeCompiler *m_compiler;
+    JZScriptItem *m_exprItem;    
+    JZScriptConvert m_convert;
 };
 
 #endif

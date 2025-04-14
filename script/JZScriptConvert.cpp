@@ -86,12 +86,34 @@ bool JZScriptConvert::convertStatments(QString code)
 	return true;
 }
 
-bool JZScriptConvert::convertLambda(QString code, JZFunctionDefine& define)
-{
-	if (convertStatments(code))
-		return false;
+bool JZScriptConvert::convertExpression(QString code)
+{    
+    if (!code.trimmed().endsWith(";"))
+        code += ";";
 
-	return true;
+    asCScriptCode script;
+    script.SetCode(m_script->itemPath(), code);
+
+    asCParser parser;
+    int ret = parser.ParseFunctionStatement(&script);
+    if (ret != 0)
+    {
+        m_error = parser.Error();
+        return false;
+    }
+
+    auto node = parser.GetScriptNode();
+    auto list = childList(node);
+    if(!(node->nodeType == snAssignment && list.size() == 3 && list[1]->nodeType == snExprOperator))
+    {
+        m_error = "use as a = b + c;";
+        return false;
+    }
+
+    auto node_start = m_script->getNode(0);
+    auto jz_node = toAssignment(node);
+    m_script->addConnect(node_start->flowOutGemo(), jz_node->flowInGemo());
+    return true;
 }
 
 bool JZScriptConvert::updateFunction(asCScriptNode* node)

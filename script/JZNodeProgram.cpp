@@ -159,16 +159,14 @@ JZFunctionDebugInfo *JZNodeScript::functionDebug(QString name)
     return nullptr;
 }
 
-JZNodeScript *JZNodeScript::clone()
+void JZNodeScript::copyTo(JZNodeScript *other);
 {
     QByteArray buffer;
     QDataStream out(&buffer, QIODevice::WriteOnly);
     this->saveToStream(out);
 
-    QDataStream in(&buffer, QIODevice::ReadOnly);
-    JZNodeScript *script = new JZNodeScript();
-    script->loadFromStream(in);
-    return script;
+    QDataStream in(&buffer, QIODevice::ReadOnly);    
+    other->loadFromStream(in);    
 }
 
 void JZNodeScript::saveToStream(QDataStream &s)
