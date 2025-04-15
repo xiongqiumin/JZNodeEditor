@@ -1,8 +1,8 @@
 ﻿#ifndef JZNODE_FUNCTION_DEFINE_H_
 #define JZNODE_FUNCTION_DEFINE_H_
 
-#include "JZNodeType.h"
 #include <QSharedPointer>
+#include "JZNodeType.h"
 
 //JZParamDefine
 class JZParamDefine

@@ -251,7 +251,7 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
     if (isJZObject(value))
     {
         auto obj = toJZObject(value);
-        if (obj->isNull())
+        if (!obj)
         {
             ret.type = JZNodeType::variantType(value);
             ret.value = "null";

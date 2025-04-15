@@ -61,7 +61,6 @@ public:
     QString variantTypeName(const QVariant &v) const;
     int stringType(const QString &text) const;
 
-    bool isSameType(const QVariant &src_v, const QVariant &dst_v) const;
     bool isSameType(int src_type, int dst_type) const;
 
     int isInherits(const QString &type1, const QString &type2) const;

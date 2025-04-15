@@ -1,6 +1,7 @@
 ﻿#include <QRegularExpression>
 #include <QPushButton>
 #include <QScopeGuard>
+#include <QDebug>
 #include "JZNodeExpression.h"
 #include "JZNodeIR.h"
 #include "JZNodeCompiler.h"
@@ -25,11 +26,10 @@ JZNodeExpression::~JZNodeExpression()
     delete m_exprItem;
 }
 
-bool JZNodeExpression::setExpr(QString expr,QString &error)
+void JZNodeExpression::setExpr(QString expr)
 {
-    Q_ASSERT(m_file);
     m_expression = expr;
-    return updateExpr(error);
+    update();
 }
 
 QString JZNodeExpression::expr()
@@ -37,10 +37,12 @@ QString JZNodeExpression::expr()
     return m_expression;
 }
 
-bool JZNodeExpression::updateExpr(QString &error)
+bool JZNodeExpression::updateNode(QString &error)
 {    
     auto project = m_file->project();
+
     JZTempItemGuard guard(project, m_exprItem, true);        
+    m_exprItem->clearNodes();
     m_convert.init(m_exprItem);
     if (!m_convert.convertExpression(m_expression))
     {
@@ -56,6 +58,7 @@ bool JZNodeExpression::updateExpr(QString &error)
         return false;
     }
     
+    clearPin();
     for (int i = 0; i < result.inList.size(); i++)
     {
         int id = addParamIn(result.inList[i]);        
@@ -82,45 +85,68 @@ void JZNodeExpression::loadFromStream(QDataStream &s)
 }
 
 bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
-{                
-    if(!updateExpr(error))
-        return false;
-        
+{       
     if(!c->addDataInput(m_id,error))
         return false;
-    
-    QVector<GraphPtr> graph_list;
-    JZNodeCompiler tmp_c;
-    if (!tmp_c.genGraphs(m_exprItem, graph_list))
-        return false;
 
+    auto env = environment();
     
-    GraphPtr graph = graph_list[0];    
-    for (int expr_idx = 0; expr_idx < graph->topolist.size(); expr_idx++)
+    auto project = m_file->project();
+    JZTempItemGuard guard(project, m_exprItem, true);
+    m_exprItem->clearLocalVariable();
+
+    QMap<QString, int> localMap;
+    auto in_list = paramInList(); 
+    for (int i = 0; i < in_list.size(); i++)
     {
-        JZNode* node = graph->topolist[expr_idx]->node;
-        int node_type = node->type();
-        if (node_type == Node_functionStart)
-        {
-
-        }
-        else if (node_type >= Node_add && node_type <= Node_or) //func
-        {
-            
-        }
-        else if (node_type == Node_bitresver || node_type == Node_not)        
-        {
-            
-        }
-        else if (node_type == Node_function)
-        {
-
-        }
-        else
-        {
-            Q_ASSERT(0);
-        }
-
+        int pin_id = in_list[i];
+        m_exprItem->addLocalVariable(pinName(pin_id),c->pinType(m_id,pin_id));
+        localMap[pinName(pin_id)] = c->paramId(m_id, pin_id);
     }
+
+    auto out_list = paramOutList();
+    Q_ASSERT(out_list.size() == 1);
+
+    int out_id = out_list[0];
+    m_exprItem->addLocalVariable(pinName(out_id), Type_auto);
+    localMap[pinName(out_id)] = c->paramId(m_id, out_id);
+    QString out_name = pinName(out_id);
+    
+    JZNodeScript script;
+
+    JZNodeCompiler tmp_c;
+    if (!tmp_c.build(m_exprItem, &script))
+    {
+        error = tmp_c.error();
+        return false;
+    }
+    QList<JZNodeIRPtr> ir_list = script.statmentList;
+    for (int i = 0; i < ir_list.size(); i++)
+    {
+        if (ir_list[i].data()->type == OP_nodeId)
+        {
+            ir_list = ir_list.mid(i);
+            break;
+        }
+    }
+    ir_list.pop_back();
+
+    c->setPinType(m_id,paramOut(0), tmp_c.refType(out_name));
+    int pre_stack_id = c->stackId();
+
+    JZMacroIRReplace replace(&tmp_c);
+    replace.setLocalMap(localMap);
+    replace.setStackId(c->stackId());
+    replace.replace(ir_list);
+
+    for (int i = pre_stack_id; i < replace.stackId(); i++)
+    {
+        c->allocStack(replace.stackType(i));
+    }
+    Q_ASSERT(c->stackId() == replace.stackId());
+
+    ir_list.front()->memo = "macro begin";
+    ir_list.back()->memo = "macro end";
+    c->addStatementList(ir_list);
     return true;
 }

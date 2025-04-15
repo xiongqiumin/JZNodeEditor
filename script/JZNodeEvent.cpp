@@ -42,7 +42,6 @@ bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
     c->addFunctionAlloc(m_file->function());
     c->addNodeDebug(m_id);
     c->addFlowOutput(m_id);
-    c->addFlowJump(flowOut());
     return true;
 }
 
@@ -108,7 +107,6 @@ bool JZNodeSignalConnect::compiler(JZNodeCompiler *c, QString &error)
     QList<JZNodeIRParam> in,out;
     in << irId(send_id) << irLiteral(QVariant::fromValue(sig_ptr)) << irId(recv_id) << irLiteral(QVariant::fromValue(slot_ptr));
     c->addCall("connect",in,out);
-    c->addFlowJump(flowOut());
     
     return true;
 }

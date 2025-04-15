@@ -5,7 +5,6 @@
 JZNodeIRParam::JZNodeIRParam()
 {
     type = None;
-    cache = nullptr;
 }
 
 bool JZNodeIRParam::isNull() const
@@ -16,6 +15,11 @@ bool JZNodeIRParam::isNull() const
 bool JZNodeIRParam::isLiteral() const
 {
     return type == Literal;
+}
+
+bool JZNodeIRParam::isNodeId() const
+{
+    return (type == StackId && id() < Stack_User);
 }
 
 bool JZNodeIRParam::isStack() const
@@ -60,7 +64,6 @@ QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param)
 {
     s << param.type;
     s << param.value;
-    s << param.member;
     return s;
 }
 
@@ -68,7 +71,6 @@ QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param)
 {
     s >> param.type;
     s >> param.value;
-    s >> param.member;
     return s;
 }
 
@@ -76,14 +78,7 @@ JZNodeIRParam irRef(const QString &id)
 {    
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Reference;
-    int dot_idx = id.indexOf(".");
-    if(dot_idx == -1)
-        param.value = id;
-    else
-    {
-        param.value = id.left(dot_idx);
-        param.member = id.mid(dot_idx+1);
-    }
+    param.value = id;
     if (param.value == "this")
         param.type = JZNodeIRParam::This;
     return param;        
@@ -238,7 +233,6 @@ JZNodeIRAlloc::JZNodeIRAlloc()
     type = OP_alloc;
     dataType = Type_none;
     allocType = None;
-    id = -1;
 }
 
 JZNodeIRAlloc::~JZNodeIRAlloc()
@@ -249,13 +243,13 @@ JZNodeIRAlloc::~JZNodeIRAlloc()
 void JZNodeIRAlloc::saveToStream(QDataStream &s) const
 {
     JZNodeIR::saveToStream(s);
-    s << allocType << name << id << dataType;
+    s << allocType << dst << dataType;
 }
 
 void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
-    s >> allocType >> name >> id >> dataType;
+    s >> allocType >> dst >> dataType;
 }
 
 //JZNodeIRExpr

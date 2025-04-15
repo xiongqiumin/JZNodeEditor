@@ -126,76 +126,8 @@ QString removeBrackets(QString input)
 }
 
 QString expressionSolver(const QString &expr_text, QString &error)
-{    
-    JZNodeExpression expr;
-    if (!expr.setExpr(expr_text, error))
-        return QString();
-
-    QMap<QString, QString> opMap;
-    QMap<QString, QString> valueMap;
-    opMap["+"] = "-";
-    opMap["-"] = "+";
-    opMap["*"] = "/";
-    opMap["/"] = "*";
-
-    auto isLiteral = [&valueMap](QString text) {
-        return valueMap.contains(text) || JZRegExpHelp::isNumber(text);
-    };
-
-    auto literalVar = [&valueMap](QString text) {
-        if (valueMap.contains(text))
-            return valueMap[text];
-        return text;
-    };
-
-    auto ir_list = expr.irList();
-    for (int i = 0; i < ir_list.size(); i++)
-    {
-        auto params = ir_list[i].split(" ");
-        if (params.size() == 5)
-        {
-            bool v1 = isLiteral(params[2]);
-            bool v2 = isLiteral(params[4]);
-            if (v1 && v2)
-            {
-                valueMap[params[0]] = "(" + literalVar(params[2]) + " " + params[3] + " " + literalVar(params[4]) + ")";
-            }
-        }
-    }
-
-    QString resv_expr;
-    for (int i = ir_list.size() - 1; i >= 0; i--)
-    {
-        auto params = ir_list[i].split(" ");
-        if (params.size() == 3)
-        {
-            resv_expr = "y";
-        }
-        else if (params.size() == 5)
-        {
-            bool v1 = isLiteral(params[2]);
-            bool v2 = isLiteral(params[4]);
-            if (!v1 && !v2)
-            {
-                error = "error two variable";
-                return QString();
-            }
-
-            QString op = params[3];
-            if (v1 && v2)
-                continue;
-            else if (v1)
-            {
-                resv_expr = "(" + literalVar(params[2]) + " " + opMap[op] + " " + resv_expr + ")";
-            }
-            else
-            {
-                resv_expr = "(" + resv_expr + " " + opMap[op] + " " + literalVar(params[4]) + ")";
-            }
-        }
-    }
-
-    return removeBrackets(resv_expr);
+{     
+    return QString();
 }
 
 bool JZExpressRunner::init(QString expr, QString &error, QMap<QString, int> typeMap)
@@ -203,11 +135,7 @@ bool JZExpressRunner::init(QString expr, QString &error, QMap<QString, int> type
     JZScriptFile *file = new JZScriptFile();
 
     JZNodeExpression *node_expr = new JZNodeExpression();
-    if (!node_expr->setExpr(expr, error))
-    {
-        delete node_expr;
-        return false;
-    }
+   
 
     JZFunctionDefine define;
     define.name = "JZExpressRunner";

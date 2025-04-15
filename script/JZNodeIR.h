@@ -73,6 +73,7 @@ public:
     bool isNull() const;
     bool isLiteral() const;
     bool isRef() const;
+    bool isNodeId() const;
     bool isStack() const;
     bool isReg() const;
     bool isThis() const;
@@ -82,9 +83,7 @@ public:
     const QVariant &literal() const;
 
     int type;
-    QString member;
     QVariant value;
-    QVariant *cache;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param);
@@ -140,8 +139,7 @@ public:
     virtual void loadFromStream(QDataStream &s);
 
     int allocType;
-    QString name;
-    int id;
+    JZNodeIRParam dst;
     int dataType;
 };
 

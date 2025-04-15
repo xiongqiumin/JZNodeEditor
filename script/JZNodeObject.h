@@ -99,16 +99,6 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeCObjectDelcare &param);
 QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param);
 
-//这是一个值 nullptr, 不是类型
-class JZObjectNull
-{
-public:
-    JZObjectNull();
-};
-QDataStream &operator<<(QDataStream &s, const JZObjectNull &param);
-QDataStream &operator>>(QDataStream &s, JZObjectNull &param);
-Q_DECLARE_METATYPE(JZObjectNull)
-
 class JZNodeObjectManager;
 class JZScriptEnvironment;
 class JZNodeObject : public QObject
@@ -116,7 +106,6 @@ class JZNodeObject : public QObject
     Q_OBJECT
 
 public:        
-    bool isNull() const;
     bool isInherits(int type) const;
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
@@ -131,6 +120,7 @@ public:
     QVariant param(const QString &name) const;
     void setParam(const QString &name,const QVariant &value);    
     QStringList paramList() const;
+    QVariantPtr* paramRef(const QString& name);
 
     const JZFunctionDefine *function(const QString &function) const;
     QStringList functionList() const;
@@ -182,12 +172,11 @@ protected:
     int singleConnectCount(JZNodeObject *recv)  const;
     void clearCObj();
 
-    bool m_isNull;
     const JZNodeObjectDefine *m_define;
-    QMap<QString, QVariantPtr> m_params;
+    JZNodeObject *m_parent;
     void *m_cobj;
     bool m_cobjOwner;
-
+    QMap<QString, QVariantPtr> m_params;
     QList<ConnectInfo> m_connectList;
 };
 
@@ -316,8 +305,6 @@ public:
     JZNodeObject* createRefrence(const QString &type_name,void *cobj,bool owner) const;
     JZNodeObject* createRefrenceByCTypeid(const QString &ctype_id,void *cobj,bool owner) const;
     
-    JZNodeObject* createNull(int type) const;
-    JZNodeObject* createNull(const QString & type_name) const;
     void destory(JZNodeObject *obj) const;
 
     JZNodeObjectHolder createHolder(int type_id) const;

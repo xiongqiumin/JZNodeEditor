@@ -16,10 +16,8 @@ enum
     Node_createFromString,
     Node_this,
     Node_setParam,
-    Node_setParamData,
     Node_memberParam,
     Node_setMemberParam,
-    Node_setMemberParamData,
     Node_literal,
     Node_enum,
     Node_flag,
@@ -222,7 +220,8 @@ public:
 
     const QStringList &pinType(int id) const;    
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) = 0; 
-    virtual bool update(QString &error);      //更新
+    void update();
+    virtual bool updateNode(QString &error);      //更新
     
 protected:     
     Q_DISABLE_COPY(JZNode)
@@ -230,14 +229,11 @@ protected:
     friend JZScriptItem;
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
+
+    virtual void onPinLinked(int pin_id);
+    virtual void onPinUnlinked(int pin_id);
+    virtual void onPinChanged(int pin_id);
     
-    virtual void onPinLinked(int id);
-    virtual void onPinUnlinked(int id);
-    virtual void onPinChanged(int id);
-
-    void propertyChangedNotify(const QByteArray &old);
-    void widgetChangedNotify(int pin_id);
-
     void setPinTypeArg(int id);
     void setPinTypeInt(int id);
     void setPinTypeNumber(int id);
@@ -255,7 +251,6 @@ protected:
     QString m_memo;
     QList<JZNodePin> m_pinList;
     JZScriptItem *m_file;
-    QList<int> m_notifyList;
 };
 
 //JZNodeNop
@@ -297,7 +292,7 @@ class JZNodeReturn : public JZNode
 public:
     JZNodeReturn();
     
-    virtual bool update(QString &error) override;
+    virtual bool updateNode(QString &error) override;
     void setFunction(const JZFunctionDefine *def);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
 
@@ -372,7 +367,10 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
 protected:
-    virtual bool update(QString& error) override;
+    virtual bool updateNode(QString& error) override;
+    virtual void onPinLinked(int pin_id);
+    virtual void onPinUnlinked(int pin_id);
+
     bool getInputType(int &class_type, int& from_id, QString& error);
 };
 

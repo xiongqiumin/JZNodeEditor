@@ -61,7 +61,7 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 
 protected:
-    virtual bool update(QString &error) override;
+    virtual bool updateNode(QString &error) override;
 };
 
 //JZNodeFunctionPointer
@@ -111,7 +111,7 @@ public:
     ~JZNodeCreate();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
-    virtual bool update(QString &error) override;
+    virtual bool updateNode(QString &error) override;
 
     void setClassName(const QString &name);
     QString className() const;
@@ -126,7 +126,7 @@ public:
     ~JZNodeCreateFromString();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-    virtual bool update(QString &error) override;
+    virtual bool updateNode(QString &error) override;
 
     void setClassName(const QString &name);
     QString className() const;
@@ -143,7 +143,7 @@ public:
     ~JZNodeThis();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual bool update(QString &error) override;
+    virtual bool updateNode(QString &error) override;
 };
 
 //JZNodeParam
@@ -154,7 +154,7 @@ public:
     ~JZNodeParam();        
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual bool update(QString &error) override;
+    virtual bool updateNode(QString &error) override;
 
     void setVariable(const QString &name);
     QString variable() const;
@@ -171,7 +171,7 @@ public:
     ~JZNodeSetParam();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual bool update(QString &error) override;
+    virtual bool updateNode(QString &error) override;
     
     void setVariable(const QString &name);
     QString variable() const;
@@ -180,26 +180,6 @@ public:
     QString value() const;
 
 protected:        
-
-};
-
-//JZNodeSetParamDataFlow
-class JZNodeSetParamDataFlow : public JZNode
-{
-public:
-    JZNodeSetParamDataFlow();
-    ~JZNodeSetParamDataFlow();
-
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-    virtual bool update(QString &error) override;
-    
-    void setVariable(const QString &name);
-    QString variable() const;
-    
-    void setValue(const QString &name);
-    QString value() const;
-
-protected:    
 
 };
 
@@ -243,16 +223,6 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
     bool update(QString &error);
-};
-
-//JZNodeSetMemberParamData
-class JZNodeSetMemberParamData : public JZNodeAbstractMember
-{
-public:
-    JZNodeSetMemberParamData();
-    ~JZNodeSetMemberParamData();
-
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 };
 
 //JZNodeClone

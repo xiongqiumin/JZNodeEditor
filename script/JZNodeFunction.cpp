@@ -158,7 +158,7 @@ JZFunctionDefine JZNodeFunction::functionDefine()
     return def;
 }
 
-bool JZNodeFunction::update(QString &error)
+bool JZNodeFunction::updateNode(QString &error)
 {
     auto env = environment();
     auto func = env->functionManager()->function(m_functionName);
@@ -236,7 +236,6 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     if (isFlowNode())
     {
         c->addFlowOutput(m_id);
-        c->addFlowJump(flowOut());
     }
     return true;
 }

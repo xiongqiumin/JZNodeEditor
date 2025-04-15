@@ -66,10 +66,8 @@ void JZNodeFactory::init()
     registNode(Node_this,createJZNode<JZNodeThis>);
     registNode(Node_param,createJZNode<JZNodeParam>);
     registNode(Node_setParam,createJZNode<JZNodeSetParam>);
-    registNode(Node_setParamData,createJZNode<JZNodeSetParamDataFlow>);
     registNode(Node_memberParam, createJZNode<JZNodeMemberParam>);
     registNode(Node_setMemberParam, createJZNode<JZNodeSetMemberParam>);
-    registNode(Node_setMemberParamData, createJZNode<JZNodeSetMemberParamData>);
     registNode(Node_clone, createJZNode<JZNodeClone>);
     registNode(Node_swap, createJZNode<JZNodeSwap>);    
     registNode(Node_convert, createJZNode<JZNodeConvert>);    

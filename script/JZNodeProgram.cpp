@@ -159,7 +159,7 @@ JZFunctionDebugInfo *JZNodeScript::functionDebug(QString name)
     return nullptr;
 }
 
-void JZNodeScript::copyTo(JZNodeScript *other);
+void JZNodeScript::copyTo(JZNodeScript *other)
 {
     QByteArray buffer;
     QDataStream out(&buffer, QIODevice::WriteOnly);

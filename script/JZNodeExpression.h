@@ -11,24 +11,17 @@ public:
     JZNodeExpression();
     ~JZNodeExpression();
 
-    bool setExpr(QString expr,QString &error);
+    void setExpr(QString expr);
     QString expr();
 
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
 
-    QStringList irList();
+    virtual bool updateNode(QString &error) override;
 
 protected:
-    struct VarInfo
-    {
-        int type;
-        int stackId;
-    };
-
-    bool updateExpr(QString &error);
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
+    
     QString m_expression;
     JZScriptItem *m_exprItem;    
     JZScriptConvert m_convert;

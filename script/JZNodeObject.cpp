@@ -527,27 +527,12 @@ QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param)
     return s;
 }
 
-//JZObjectNull
-JZObjectNull::JZObjectNull()
-{
-}
-
-QDataStream &operator<<(QDataStream &s, const JZObjectNull &param)
-{
-    return s;
-}
-QDataStream &operator>>(QDataStream &s, JZObjectNull &param)
-{
-    return s;
-}
-
 //JZNodeObject
 JZNodeObject::JZNodeObject(const JZNodeObjectDefine *def)
 {    
     m_define = def;
     m_cobj = nullptr;
     m_cobjOwner = false;
-    m_isNull = true;
 }
 
 JZNodeObject::~JZNodeObject()
@@ -615,11 +600,6 @@ void JZNodeObject::clearCObj()
     m_cobj = nullptr;
 }
 
-bool JZNodeObject::isNull() const
-{
-    return m_isNull;
-}
-
 bool JZNodeObject::isInherits(int type) const
 {
     return m_define->isInherits(type);
@@ -680,11 +660,11 @@ QVariant JZNodeObject::param(const QString &name) const
     auto it = m_params.find(name);
     if (it != m_params.end())
     {
-        if(it->ptr)
+        if (!it->cparam)
             return *it->ptr.data();
         else
         {
-            auto c = cparam(name);
+            auto c = it->cparam;
             Q_ASSERT(c);
 
             QVariantList in, out;
@@ -703,19 +683,15 @@ void JZNodeObject::setParam(const QString &name, const QVariant &value)
     auto it = m_params.find(name);
     if (it != m_params.end())
     {
-        auto ref = it->ptr.data();
-        if(ref)
+        Q_ASSERT(env->isSameType(JZNodeType::variantType(value), it->type));
+        
+        if(!it->cparam)
         {
-            Q_ASSERT(env->isSameType(value, *ref));
-            if (*ref != value)
-            {
-                *ref = value;
-                emit sigValueChanged(name);
-            }
+            *it->ptr = value;
         }
         else
         {
-            auto c = cparam(name);
+            auto c = it->cparam;
             Q_ASSERT(c);
 
             QVariantList in, out;
@@ -723,11 +699,21 @@ void JZNodeObject::setParam(const QString &name, const QVariant &value)
             in << value;
             c->write->call(in, out);
         }
+        emit sigValueChanged(name);
     }
     else
     {
         Q_ASSERT(0);
     }
+}
+
+QVariantPtr* JZNodeObject::paramRef(const QString& name)
+{
+    auto it = m_params.find(name);
+    if (it == m_params.end())
+        return nullptr;
+
+    return &it.value();
 }
 
 const JZFunctionDefine *JZNodeObject::function(const QString &name) const
@@ -922,7 +908,6 @@ void JZNodeObject::setCObject(void *obj,bool owner)
     clearCObj();
 
     m_cobj = obj;
-    m_isNull = false;
     if(m_define->isInherits(Type_object))
     {
         QObject *qobj = (QObject*)m_cobj;
@@ -1037,7 +1022,9 @@ bool JZNodeObjectHolder::operator !=(const JZNodeObjectHolder &other) const
 
 bool isJZObject(const QVariant &v)
 {
-    return (v.userType() == qMetaTypeId<JZNodeObjectHolder>());
+    return (v.userType() == qMetaTypeId<JZNodeObjectHolder>()
+            || v.userType() == qMetaTypeId<JZNodeObjectPointer>()
+            || v.userType() == qMetaTypeId<JZNodeObjectSharedPointer>());
 }
 
 JZNodeObject* toJZObject(const QVariant &v)
@@ -1509,39 +1496,20 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
             continue;
         }
 
+        QVariantPtr ptr;
+        ptr.type = m_env->nameToType(param->type);
         if (!obj->cparam(param->name))
         {
-            QVariantPtr ptr;
-            ptr.type = m_env->nameToType(param->type);
             *ptr.ptr = g_engine->createVariable(m_env->nameToType(param->type), param->value);            
-            obj->m_params[param->name] = ptr;
         }
         else
         {
-            //这是 c 成员变量，新建一个空的作为占位
-            QVariantPtr ptr;
-            ptr.type = m_env->nameToType(param->type);
-            obj->m_params[param->name] = ptr;
+            ptr.cparam = obj->cparam(param->name);
         }
+        obj->m_params[param->name] = ptr;
 
         it++;
     }
-}
-
-
-JZNodeObject* JZNodeObjectManager::createNull(int type) const
-{
-    const JZNodeObjectDefine *def = meta(type);
-    Q_ASSERT(def && !def->isValueType());
-
-    JZNodeObject *obj = new JZNodeObject(def);      
-    return obj;
-}
-
-JZNodeObject* JZNodeObjectManager::createNull(const QString &name) const
-{
-    int id = getClassId(name);
-    return createNull(id);
 }
 
 JZNodeObject* JZNodeObjectManager::create(int type) const
@@ -1551,7 +1519,6 @@ JZNodeObject* JZNodeObjectManager::create(int type) const
 
     JZNodeObject *obj = new JZNodeObject(def);    
     create(def,obj);
-    obj->m_isNull = false;
     obj->autoConnect();
     obj->autoBind();
     return obj;

@@ -757,12 +757,35 @@ void JZNodeEngine::onSlot(const QString &function,const QVariantList &in,QVarian
 
 QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
 {
+    QStringList obj_list;
+    if (param.isRef())
+    {
+        obj_list = param.ref().split(".");
+    }
+
+    auto memberRef = [&obj_list](QVariantPtr* ref)->QVariantPtr* {
+        for (int i = 1; i < obj_list.size(); i++)
+        {
+            auto obj = toJZObject(*ref->ptr);
+            if (!obj)
+                throw std::runtime_error("is null object");
+
+            ref = obj->paramRef(obj_list[i]);
+        }
+        return ref;
+    };
+
     QVariantPtr *ref = nullptr;
     if (m_stack.size() == 0)
     {
-        auto it = m_global.find(param.ref());
+        auto it = m_global.find(obj_list[0]);
         if (it != m_global.end())
             ref = &it.value();
+        
+        if (obj_list.size() == 1)
+            return ref;
+        else
+            return memberRef(ref);
     }
     else
     {
@@ -773,13 +796,17 @@ QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &para
             ref = &env->object;
         else
         {
-            ref = env->getRef(param.ref());
+            ref = env->getRef(obj_list[0]);
             if (!ref)
             {
-                auto it = m_global.find(param.ref());
+                auto it = m_global.find(obj_list[0]);
                 if (it != m_global.end())
                     ref = &it.value();
             }
+            if (obj_list.size() == 1)
+                return ref;
+            else
+                return memberRef(ref);
         }
     }
     Q_ASSERT(ref);
@@ -797,17 +824,7 @@ QVariant JZNodeEngine::getParam(int stack_level, const JZNodeIRParam &param)
     else    
     {                
         auto ref = getParamRef(stack_level,param);
-        if (param.member.isEmpty())
-            return *ref->ptr;
-        else
-        {
-            QStringList obj_list;
-            QString param_name;
-            splitMember(param.member, obj_list, param_name);
-
-            JZNodeObject *obj = getVariableObject(ref->ptr.data(), obj_list);
-            return obj->param(param_name);
-        }
+        return *ref->ptr;
     }
 }
 
@@ -820,17 +837,7 @@ void JZNodeEngine::setParam(int stack_level, const JZNodeIRParam &param, const Q
     else
     {
         auto ref = getParamRef(stack_level, param);
-        if (param.member.isEmpty())
-            dealSet(ref, value);
-        else
-        {
-            QStringList obj_list;
-            QString param_name;
-            splitMember(param.member, obj_list, param_name);
-
-            JZNodeObject *obj = getVariableObject(ref->ptr.data(), obj_list);
-            return obj->setParam(param_name,value);
-        }
+        dealSet(ref, value);
     }
 }
 
@@ -890,15 +897,6 @@ Stack *JZNodeEngine::stack()
     return &m_stack;
 }
 
-void JZNodeEngine::splitMember(const QString &fullName, QStringList &objName,QString &memberName)
-{
-    QStringList list = fullName.split(".");
-    if (list.size() > 1)
-        objName = list.mid(0, list.size() - 1);
-    
-    memberName = list.back();
-}
-
 QVariant JZNodeEngine::createVariable(int type,const QString &value)
 {
     auto inst = m_env.objectManager();
@@ -923,9 +921,7 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
             else
             {
                 if(!def->isAbstract())
-                    sub = inst->create(type);
-                else
-                    sub = inst->createNull(type);                
+                    sub = inst->create(type);             
             }
         }        
         else if(value.startsWith("{") && value.endsWith("}"))
@@ -936,7 +932,6 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
             else
                 sub = JZObjectFromString(type, init_text);
         }
-        Q_ASSERT(sub);
         v = QVariant::fromValue(JZNodeObjectHolder(sub,true));
     }
     return v;
@@ -951,15 +946,14 @@ QWidget* JZNodeEngine::createWidget(const QString& xml)
 JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &obj_list)
 {        
     JZNodeObject *obj = toJZObject(*ref);
-    Q_ASSERT(obj);
-    if(obj->isNull())
+    if(!obj)
         throw std::runtime_error("object is nullptr");
 
     for (int i = 0; i < obj_list.size(); i++)
     {
         obj = toJZObject(obj->param(obj_list[i]));
         Q_ASSERT(obj);
-        if (obj->isNull())
+        if (!obj)
             throw std::runtime_error("object is nullptr");
     }
 
@@ -1787,11 +1781,11 @@ bool JZNodeEngine::run()
             JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
             auto value = createVariable(ir_alloc->dataType);
             if(ir_alloc->allocType == JZNodeIRAlloc::Heap)
-                initGlobal(ir_alloc->name,value);
+                initGlobal(ir_alloc->dst.ref(), value);
             else if (ir_alloc->allocType == JZNodeIRAlloc::Stack)
-                initLocal(ir_alloc->name, value);
+                initLocal(ir_alloc->dst.ref(), value);
             else
-                initLocal(ir_alloc->id, value);            
+                initLocal(ir_alloc->dst.id(), value);
             break;
         }
         case OP_clearReg:

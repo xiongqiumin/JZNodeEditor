@@ -12,6 +12,7 @@ public:
     ScriptTest();
 
 private slots:
+    void testWhileLoop();
     void testMatchType();
     void testClone();
     void testContainer();
@@ -24,7 +25,6 @@ private slots:
     
     void testBind();
     
-    void testWhileLoop();
     void testFor();
     void testForEach();
     

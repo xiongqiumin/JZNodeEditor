@@ -54,8 +54,12 @@ public:
     JZNode *node(int id);
     JZNodePin *pin(JZNodeGemo gemo);
     JZNodePin *pin(int nodeId, int pinId);
+    QList<JZNodeGemo> pinInput(int nodeId, int pinId);
+    QList<JZNodeGemo> pinOutput(int nodeId, int pinId);
+
+    //检测是否可达
     void walkFlowNode(GraphNode *node);
-    void walkParamNode(GraphNode *node);    
+    void walkParamNode(GraphNode *node);   
 
     QList<GraphNode*> topolist;
     QMap<int, GraphNodePtr> m_nodes;
@@ -93,6 +97,8 @@ struct NodeCompilerInfo
 
     struct Jump
     {
+        Jump();
+
         int pin;
         int pc;
     };
@@ -109,8 +115,6 @@ struct NodeCompilerInfo
 
     //调转信息    
     int parentId;           //用于subFlow 指明父节点
-    QList<Jump> jmpList;
-    QList<Jump> jmpSubList;
     QList<int> continuePc;  //父节点continuet跳出的地址
     QList<int> breakPc;
     QList<int> continueList; //子节点continue语句地址
@@ -120,22 +124,12 @@ struct NodeCompilerInfo
     QString error;
 };
 
-//NodeWatch
-class NodeWatch
-{
-public:
-    int traget;
-    int source;
-};
-
 //CompilerResult
 class CompilerResult
 {
 public:
     bool result;
     QMap<int, QString> nodeError;    
-    QMap<QString,ScriptDepend> depend;
-    QList<NodeWatch> watchList;
 };
 
 enum CompilerTip{
@@ -146,6 +140,30 @@ enum CompilerTip{
     Error_classNoMember,
 };
 
+class JZNodeCompiler;
+class JZMacroIRReplace
+{
+public:
+    JZMacroIRReplace(JZNodeCompiler *c);
+    void replace(QList<JZNodeIRPtr> &ir_list);
+
+    void setLocalMap(QMap<QString, int> localMap);
+
+    int stackId();
+    void setStackId(int stackId);
+    int stackType(int stackId);
+
+protected:
+    void replaceIr(JZNodeIRParam& ir);
+    
+    int m_stackId;
+    QMap<QString, int> m_localMap;
+    QMap<int, JZNodeIRParam> m_idMap;  //node stack id 都要换
+    QMap<int, int> m_newStackType;
+    JZNodeCompiler* m_compiler;
+};
+
+
 class JZNodeBuilder;
 class JZNodeCompiler
 {
@@ -153,6 +171,7 @@ public:
     static int paramId(int nodeId,int pinId);
     static int paramId(const JZNodeGemo &gemo);    
     static QString paramName(int id);
+    static QString paramName(const JZNodeGemo& gemo);
     static JZNodeGemo paramGemo(int id);    
     static VariableCoor variableCoor(JZScriptItem *file, QString name);
     static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
@@ -176,6 +195,9 @@ public:
 
     void resetStack();
     int allocStack(int dataType);
+    void setStackId(int id);
+    int stackId();   //指向下一个stack
+    int stackType(int id);
     void addFunctionAlloc(const JZFunctionDefine &define);  //初始化本地变量
     
     JZNodeIRParam paramRef(QString name);
@@ -186,12 +208,15 @@ public:
     int pinType(JZNodeGemo gemo);
     bool hasPinType(int nodeId, int pinId);
 
+    void setRefType(QString ref, int type);
+    int refType(QString ref);
+
     bool isPinLiteral(int nodeId, int pinId);
     QString pinLiteral(int nodeId, int pinId);
     
     int irParamType(const JZNodeIRParam &param);    
 
-    void setRegCallFunction(const JZFunctionDefine *func);    
+    void setRegCallFunction(const JZFunctionDefine *func);
 
     /*
     节点数据传递规则:
@@ -225,11 +250,9 @@ public:
 
     void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
     int addStatement(JZNodeIRPtr ir);  
-    void addStatementList(QList<JZNodeIRPtr> ir_list);
+    void addStatementList(const QList<JZNodeIRPtr> &ir_list);
     void adjustStatementPc(int pc_cond, int adjust);
     
-    int addFlowJump(int pin);      //设置下一个flow,应当在执行完操作后增加
-    int addSubFlowJump(int pin);   //设置下一个sub flow    
     int addContinue();
     int addBreak();    
     void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
@@ -243,6 +266,9 @@ public:
     void addAssert(const JZNodeIRParam &tips);       
 
     void addExpr(JZNodeIRParam dst, int op, JZNodeIRParam in1, JZNodeIRParam in2);
+
+    JZNode* nextFlowNode(JZNode* node, int pin);
+    bool buildSubControlFlow(JZNode* node, QList<JZNodeIRPtr>& list);
 
     JZNodeIR *lastStatment();
     void removeStatement(int pc);
@@ -285,11 +311,10 @@ protected:
     /*
     先编译各个flow节点，最后连接，分开编译是因为out的时候无法确定对应输入节点的类型
     */
-    bool bulidControlFlow();    
-    bool buildParamBinding();
+    bool buildControlFlow(JZNode* node);
     void replaceSubNode(int id,int parentId,int flow_index);
     int isAllFlowReturn(int id,bool root);
-    void addFunction(const JZFunctionDefine &define,int start_addr);    
+    void addFunction(const JZFunctionDefine &define,int start_addr,int end_addr);    
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);         
 
@@ -304,7 +329,6 @@ protected:
     void updateFlowOut();    
     void linkNodes(QList<GraphNode *> flow_list);
     void updateDebugInfo();
-    void updateDepend(const JZFunction *define);
     void addNodeFlowPc(int node_id, int pc_cond, int pc);
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
     void dealAddCall(bool isVirtual,const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
@@ -330,7 +354,8 @@ protected:
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
     QMap<int,NodeCompilerInfo> m_nodeInfo;
     int m_stackId;       //当前栈位置，用于分配内存    
-    QMap<int,int> m_stackType;
+    QMap<int,int> m_stackType;     //stack 参数类型
+    QMap<QString, int> m_refType;
     CompilerResult m_compilerInfo;
     
     const JZScriptEnvironment *m_env = nullptr;

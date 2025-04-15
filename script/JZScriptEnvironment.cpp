@@ -265,13 +265,6 @@ bool JZScriptEnvironment::isVaildType(QString type) const
         || m_objectManager.enumMeta(type);
 }
 
-bool JZScriptEnvironment::isSameType(const QVariant &v1,const QVariant &v2) const
-{
-    int type1 = JZScriptEnvironment::variantType(v1);
-    int type2 = JZScriptEnvironment::variantType(v2);
-    return isSameType(type1,type2);
-}
-
 bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
 {    
     if (JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type))
@@ -351,19 +344,28 @@ JZParamDefine JZScriptEnvironment::paramDefine(QString name, int data_type, QStr
 
 bool JZScriptEnvironment::canConvert(int type1,int type2) const
 {   
+    if(type1 == type2)
+        return true;
+
     if (!JZNodeType::isPointer(type1) && JZNodeType::isPointer(type2)
         && isInherits(type1, JZNodeType::baseType(type2)))
     {
         return true;
     }
     
-    if(type1 == Type_arg || type2 == Type_arg)
+    if(type2 == Type_any)
+        return true;
+    else if(type1 == Type_auto || type2 == Type_auto)
+        return true;
+    else if(type1 == Type_arg || type2 == Type_arg)
         return true;
     else if (JZNodeType::baseType(type1) >= Type_class && type2 == Type_argPointer)
         return true;
-    else if(type1 == type2 || type2 == Type_any)
-        return true;
     else if(JZNodeType::isNumber(type1) && JZNodeType::isNumber(type2))
+        return true;
+    else if (type1 == Type_bool && JZNodeType::isNumber(type2))
+        return true;
+    else if (JZNodeType::isNumber(type1) && type2 == Type_bool)
         return true;
     else if ((type1 == Type_int && JZNodeType::isEnum(type2)) || (JZNodeType::isEnum(type1) && type2 == Type_int))
         return true;
@@ -434,8 +436,7 @@ QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
     }
     else if (src_type == Type_nullptr && dst_type >= Type_class)
     {        
-        auto null_obj = m_objectManager.createNull(dst_type);
-        return QVariant::fromValue(JZNodeObjectHolder(null_obj,true));
+        return QVariant::fromValue(JZNodeObjectNull());
     }
     else if(src_type >= Type_class && dst_type >= Type_class)
     {
@@ -444,17 +445,7 @@ QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
     }
     else if(JZNodeType::isNumber(src_type) && JZNodeType::isNumber(dst_type))
     {
-        if(src_type == Type_bool)
-        {
-            bool b = v.toBool();
-            if(dst_type == Type_int)
-                return (int)b;
-            else if(dst_type == Type_int64)
-                return (qint64)b;
-            else 
-                return (double)b;
-        }
-        else if(src_type == Type_int)
+        if(src_type == Type_int)
         {
             int i = v.toInt();
             if(dst_type == Type_bool)
@@ -484,6 +475,53 @@ QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
             else 
                 return (qint64)d;
         }
+    }
+    else if (src_type == Type_bool && JZNodeType::isNumber(dst_type))
+    {
+        bool ret = v.toBool();
+        if (dst_type == Type_int8)
+            return QVariant::fromValue((int8_t)ret);
+        else if (dst_type == Type_int16)
+            return QVariant::fromValue((int16_t)ret);
+        else if (dst_type == Type_int)
+            return QVariant::fromValue((int)ret);
+        else if (dst_type == Type_int64)
+            return QVariant::fromValue((int64_t)ret);
+        else if (dst_type == Type_uint8)
+            return QVariant::fromValue((uint8_t)ret);
+        else if (dst_type == Type_int16)
+            return QVariant::fromValue((uint16_t)ret);
+        else if (dst_type == Type_uint)
+            return QVariant::fromValue((uint)ret);
+        else if (dst_type == Type_uint64)
+            return QVariant::fromValue((uint64_t)ret);
+        else if (dst_type == Type_float)
+            return QVariant::fromValue((float)ret);
+        else if (dst_type == Type_double)
+            return QVariant::fromValue((double)ret);
+    }
+    else if (JZNodeType::isNumber(src_type) && dst_type == Type_bool)
+    {
+        if (src_type == Type_int8)
+            return (bool)v.value<int8_t>();
+        else if (dst_type == Type_int16)
+            return (bool)v.value<int16_t>();
+        else if (dst_type == Type_int)
+            return (bool)v.value<int>();
+        else if (dst_type == Type_int64)
+            return (bool)v.value<int64_t>();
+        else if (dst_type == Type_uint8)
+            return (bool)v.value<uint8_t>();
+        else if (dst_type == Type_uint16)
+            return (bool)v.value<uint16_t>();
+        else if (dst_type == Type_uint)
+            return (bool)v.value<uint>();
+        else if (dst_type == Type_uint64)
+            return (bool)v.value<uint64_t>();
+        else if (dst_type == Type_float)
+            return (bool)v.value<float>();
+        else if (dst_type == Type_double)
+            return (bool)v.value<double>();
     }
     else if(src_type == Type_string && JZNodeType::isNumber(dst_type))
     {
@@ -663,7 +701,7 @@ QVariant JZScriptEnvironment::defaultValue(int type) const
     else if(type == Type_function)
         return QVariant::fromValue(JZFunctionPointer());
     else if(type == Type_nullptr)
-        return QVariant::fromValue(JZObjectNull());
+        return QVariant::fromValue(JZNodeObjectNull());
     else if(type >= Type_enum && type < Type_class)
     {
         auto meta = m_objectManager.enumMeta(type);
@@ -753,7 +791,7 @@ QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
     else if(type == Type_nullptr)
     {
         if(text == "null")
-            return QVariant::fromValue(JZObjectNull());
+            return QVariant::fromValue(JZNodeObjectNull());
     }
     else if(type >= Type_enum && type < Type_class)
     {

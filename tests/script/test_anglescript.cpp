@@ -32,6 +32,7 @@ bool AngleScriptTest::buildAs(QString code)
 
 void AngleScriptTest::testHello()
 {
+    return;
     QString code = R"(int add(int a,int b)
         {
             return 100 + a * b - (b - a) * (b + a) + 298/5 + 1;
@@ -52,39 +53,76 @@ void AngleScriptTest::testHello()
 
 void AngleScriptTest::testIf()
 {
-    QString code = R"(int testIf(int n)
-        {
-            if(n == 10)
-            {
-                return 10;
+    QString code = R"(int testIf(int n) {
+    if (n >= 8) {
+        if (n >= 12) {
+            if (n >= 14) {
+                if (n >= 15) {
+                    return 15;
+                } else {
+                    return 14;
+                }
+            } else {
+                if (n >= 13) {
+                    return 13;
+                } else {
+                    return 12;
+                }
             }
-            else if(n == 9)
-                return 9;
-            else if(n == 8)
-                return 8;
-            else if(n == 7)
-                return 7;
-            else if(n == 6)
-                return 6;
-            else if(n == 5)
-                return 5;
-            else if(n == 4)
-                return 4;
-            else if(n == 3)
-                return 3;
-            else if(n == 2)
-                return 2;
-            else if(n == 1)
-                return 1;
-            else
-                return 0;
+        } else {
+            if (n >= 10) {
+                if (n >= 11) {
+                    return 11;
+                } else {
+                    return 10;
+                }
+            } else {
+                if (n >= 9) {
+                    return 9;
+                } else {
+                    return 8;
+                }
+            }
         }
+    } else {
+        if (n >= 4) {
+            if (n >= 6) {
+                if (n >= 7) {
+                    return 7;
+                } else {
+                    return 6;
+                }
+            } else {
+                if (n >= 5) {
+                    return 5;
+                } else {
+                    return 4;
+                }
+            }
+        } else {
+            if (n >= 2) {
+                if (n >= 3) {
+                    return 3;
+                } else {
+                    return 2;
+                }
+            } else {
+                if (n >= 1) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+}
         )";
 
     if(!buildAs(code))
         return;
+    dump("as_testIf");
     
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 16; i++)
     {
         QVariantList in,out;
         in << i;

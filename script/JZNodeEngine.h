@@ -287,7 +287,6 @@ protected:
 
     JZNodeScript *getScript(QString path); 
         
-    void splitMember(const QString &fullName,QStringList &objName,QString &memberName);
     void unSupportSingleOp(int a,int op);
     void unSupportOp(int a,int b,int op);
 

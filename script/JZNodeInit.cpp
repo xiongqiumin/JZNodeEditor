@@ -27,7 +27,7 @@ void JZNodeInit()
     qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
     qRegisterMetaType<UnitTestResultPtr>("UnitTestResultPtr");
     qRegisterMetaType<JZNodeBuildResultPtr>("JZNodeBuildResultPtr");
-    qRegisterMetaTypeStreamOperators<JZObjectNull>("JZObjectNull");
+    qRegisterMetaTypeStreamOperators<JZNodeObjectNull>("JZNodeObjectNull");
     qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
     

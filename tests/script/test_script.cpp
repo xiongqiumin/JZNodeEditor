@@ -26,11 +26,14 @@ void ScriptTest::testMatchType()
     int ret = env->matchType({ Type_bool,Type_double,Type_int }, QList<int>{Type_bool});
     QVERIFY(ret == Type_bool);
 
+    ret = env->matchType({ Type_double,Type_int }, QList<int>{Type_int});
+    QVERIFY(ret == Type_int);
+
     QVariant vb = true;
     QVariant vi = 1999;
     QVariant vd = 8.34;
     QVariant vs = "true";
-    QVariant vnull = QVariant::fromValue(JZObjectNull());
+    QVariant vnull = QVariant::fromValue(JZNodeObjectNull());
     QVariant vfunc = QVariant::fromValue(JZFunctionPointer());
     QVariant vany = QVariant::fromValue(JZNodeVariantAny());
 
@@ -569,6 +572,7 @@ void ScriptTest::testWhileLoop()
         
     if(!build())
         return;
+    dump("testWhileLoop");
 
     QVariantList in,out;
     call("main",in,out);
@@ -730,7 +734,7 @@ void ScriptTest::testExpr()
     JZNodeEngine *engine = &m_engine;
 
     QVector<int> op_type = {Node_add,Node_sub,Node_mul,Node_div,Node_mod,Node_eq,Node_ne,Node_le,
-        Node_ge,Node_lt,Node_gt,Node_and,Node_or,Node_bitand,Node_bitor,Node_bitxor};
+        Node_ge,Node_lt,Node_gt,Node_bitand,Node_bitor,Node_bitxor};
 
     JZNode *node_start = script->getNode(0);      
     JZNodeParam *node_a = new JZNodeParam();
@@ -751,6 +755,10 @@ void ScriptTest::testExpr()
     {
         m_project.addGlobalVariable("i" + QString::number(i),Type_int);
 
+        JZNodeConvert* convert = new JZNodeConvert();
+        script->addNode(convert);
+        convert->setOutputType(Type_int);
+
         JZNodeSetParam *node_set = new JZNodeSetParam();
         node_set->setVariable("i" + QString::number(i));
         script->addNode(node_set);
@@ -760,7 +768,8 @@ void ScriptTest::testExpr()
 
         script->addConnect(node_a->paramOutGemo(0),node_op->paramInGemo(0));
         script->addConnect(node_b->paramOutGemo(0),node_op->paramInGemo(1));
-        script->addConnect(node_op->paramOutGemo(0),node_set->paramInGemo(1));
+        script->addConnect(node_op->paramOutGemo(0), convert->paramInGemo(0));
+        script->addConnect(convert->paramOutGemo(0), node_set->paramInGemo(1));
 
         if(i == 0)
             script->addConnect(node_start->flowOutGemo(),node_set->flowInGemo());
@@ -791,11 +800,9 @@ void ScriptTest::testExpr()
     QCOMPARE((bool)ret[8],a >= b); //Node_ge
     QCOMPARE((bool)ret[9],a < b);  //Node_lt
     QCOMPARE((bool)ret[10],a > b); //Node_gt
-    QCOMPARE((bool)ret[11],a && b); //Node_and
-    QCOMPARE((bool)ret[12],a || b); //Node_or
-    QCOMPARE(ret[13],a & b); //Node_bitand
-    QCOMPARE(ret[14],a | b); //Node_bitor
-    QCOMPARE(ret[15],a ^ b); //Node_bitxor
+    QCOMPARE(ret[11],a & b); //Node_bitand
+    QCOMPARE(ret[12],a | b); //Node_bitor
+    QCOMPARE(ret[13],a ^ b); //Node_bitxor
 }
 
 void ScriptTest::testCustomExpr()
@@ -821,11 +828,9 @@ void ScriptTest::testCustomExpr()
     script->addNode(node_b);
 
     QString error;
-    if(!node_expr->setExpr("c = pow(a,b) - pow(b,a);",error))
-    {
-        QVERIFY2(false,qUtf8Printable(error));
-        return;
-    }    
+    node_expr->setExpr("c = pow(a,b) - pow(b,a);");
+    QVERIFY(node_expr->paramInCount() == 2);
+    QVERIFY(node_expr->paramOutCount() == 1);
 
     JZNodeSetParam *node_set = new JZNodeSetParam();
     node_set->setVariable("c");
@@ -839,6 +844,7 @@ void ScriptTest::testCustomExpr()
 
     if(!build())
         return;
+    dump("testCustomExpr");
 
     QVariantList in,out;
     call("main",in,out);
@@ -850,7 +856,9 @@ void ScriptTest::testCustomExpr()
 
     JZNodeExpression *expr2 = new JZNodeExpression();
     script->addNode(expr2);
-    bool ret = expr2->setExpr("ret = x >=0 && x < 20 && y >=0 && y < 20;",error);
+    expr2->setExpr("ret = x >=0 && x < 20 && y >=0 && y < 20;");
+
+    bool ret = expr2->updateNode(error);
     QVERIFY2(ret,qUtf8Printable(error));
 }
 

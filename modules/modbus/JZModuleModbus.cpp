@@ -57,7 +57,6 @@ bool JZNodeModbusConfig::compiler(JZNodeCompiler *c, QString &error)
     QList<JZNodeIRParam> in, out;
     in << irId(obj_id) << irId(id);
     c->addCallVirtual(m_functionName, in, out);
-    c->addFlowJump(flowOut());
 
     return true;
 }

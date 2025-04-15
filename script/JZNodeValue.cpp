@@ -172,8 +172,7 @@ void JZNodeConvert::setOutputType(int type)
     QString name = env->typeToName(type);
     setPinValue(paramOut(0), name);
     
-    QString error;
-    update(error);
+    update();
 }
 
 bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
@@ -197,7 +196,7 @@ bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-bool JZNodeConvert::update(QString &error)
+bool JZNodeConvert::updateNode(QString &error)
 {
     auto env = environment();
     int id = paramOut(0);
@@ -274,7 +273,7 @@ bool JZNodeCreate::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-bool JZNodeCreate::update(QString &error)
+bool JZNodeCreate::updateNode(QString &error)
 {    
     auto obj_inst = environment()->objectManager();
     int type = obj_inst->getClassId(className());
@@ -345,7 +344,7 @@ bool JZNodeCreateFromString::compiler(JZNodeCompiler *c, QString &error)
 
 }
 
-bool JZNodeCreateFromString::update(QString &error)
+bool JZNodeCreateFromString::updateNode(QString &error)
 {
     int id = paramIn(0);
     
@@ -458,7 +457,6 @@ bool JZNodePrint::compiler(JZNodeCompiler *c,QString &error)
     QList<JZNodeIRParam> in, out;
     in << in_id;
     c->addCall("print", in, out);    
-    c->addFlowJump(flowOut());
 
     return true;
 }
@@ -500,7 +498,7 @@ bool JZNodeThis::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-bool JZNodeThis::update(QString &error) 
+bool JZNodeThis::updateNode(QString &error)
 {
     auto class_file = m_file->project()->getItemClass(m_file);
     if(!class_file){
@@ -556,7 +554,7 @@ QString JZNodeParam::variable() const
     return pinValue(paramOut(0));
 }
 
-bool JZNodeParam::update(QString &error)
+bool JZNodeParam::updateNode(QString &error)
 {    
     QString name = variable();
     auto env = environment();
@@ -614,7 +612,7 @@ QString JZNodeSetParam::value() const
     return pinValue(paramIn(1));
 }
 
-bool JZNodeSetParam::update(QString &error)
+bool JZNodeSetParam::updateNode(QString &error)
 {
     int id = paramIn(0);    
     auto env = environment();
@@ -647,78 +645,16 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
     int m_out = c->paramId(m_id,paramOut(0));
     
     JZNodeIRParam ref = c->paramRef(name);
+    if (c->refType(name) == Type_auto)
+    {
+        auto in_type = c->pinType(m_id, paramIn(1));
+        c->setRefType(name, in_type);
+        c->setPinType(m_id, paramOut(0), in_type);
+    }
+
     c->addSetVariable(ref,irId(id));
     c->addSetVariable(irId(m_out),irId(id));    
     c->addFlowOutput(m_id);
-    c->addFlowJump(flowOut());
-    return true;
-}
-
-//JZNodeSetParamDataFlow
-JZNodeSetParamDataFlow::JZNodeSetParamDataFlow()
-{
-    m_name = "set";
-    m_type = Node_setParamData;
-
-    int in = addParamIn("name", Pin_constValue | Pin_noCompiler);
-    setPinTypeString(in);
-
-    addParamIn("value");
-}
-
-JZNodeSetParamDataFlow::~JZNodeSetParamDataFlow()
-{
-}
-
-void JZNodeSetParamDataFlow::setVariable(const QString &name)
-{
-    setPinValue(paramIn(0),name);
-}
-
-QString JZNodeSetParamDataFlow::variable() const
-{
-    return pinValue(paramIn(0));
-}
-
-void JZNodeSetParamDataFlow::setValue(const QString &name)
-{
-    setPinValue(paramIn(1), name);
-}
-
-QString JZNodeSetParamDataFlow::value() const
-{
-    return pinValue(paramIn(1));
-}
-
-bool JZNodeSetParamDataFlow::update(QString &error)
-{
-    int id = paramIn(0);
-    auto env = environment();
-    auto def = JZNodeCompiler::getVariableInfo(m_file,variable());
-    int dataType = def? env->nameToType(def->type) : Type_none;        
-    if (dataType != Type_none)
-    {
-        setPinType(paramIn(1), { def->type });
-        return true;
-    }
-    else
-    {
-        clearPinType(paramIn(1));
-        error = JZNodeCompiler::errorString(Error_noVariable, { variable() });
-        return false;
-    }    
-}
-
-bool JZNodeSetParamDataFlow::compiler(JZNodeCompiler *c,QString &error)
-{
-    QString name = variable();
-    if (!c->checkVariableExist(name, error))
-        return false;
-    if(!c->addDataInput(m_id,error))
-        return false;
-    
-    int id = c->paramId(m_id,paramIn(1));
-    c->addSetVariable(c->paramRef(name),irId(id));
     return true;
 }
 
@@ -808,7 +744,6 @@ bool JZNodeMemberParam::compiler(JZNodeCompiler *c, QString &error)
     int out_id = c->paramId(m_id, paramOut(0));
 
     auto in = irId(in_id);
-    in.member = member();    
     c->addSetVariable(irId(out_id), in);    
     return true;
 }
@@ -850,42 +785,7 @@ bool JZNodeSetMemberParam::compiler(JZNodeCompiler *c, QString &error)
     int in_id = c->paramId(m_id, paramIn(0));
     int var_id = c->paramId(m_id, paramOut(2));
 
-    auto in = irId(in_id);
-    in.member = member();
     c->addSetVariable(irId(in_id), irId(var_id));
-    c->addFlowJump(flowOut());
-    return true;
-}
-
-//JZNodeSetMemberData
-JZNodeSetMemberParamData::JZNodeSetMemberParamData()
-{
-    m_name = "setMember";
-    m_type = Node_setMemberParamData;
-
-    addParamIn("");    
-}
-
-JZNodeSetMemberParamData::~JZNodeSetMemberParamData()
-{
-
-}
-
-bool JZNodeSetMemberParamData::compiler(JZNodeCompiler *c, QString &error)
-{
-    if (!c->addDataInput(m_id, error))
-        return false;
-
-    int obj_id = c->paramId(m_id, paramIn(0));
-    int var_id = c->paramId(m_id, paramIn(1));
-
-    QList<JZNodeIRParam> in, out;
-    in << irId(obj_id);
-    in << irLiteral(pin(paramIn(1))->name());
-    in << irId(var_id);
-    c->addCall("setMemberParam", in, out);
-
-    c->addFlowJump(flowOut());
     return true;
 }
 
@@ -1017,7 +917,6 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
     setType(in1_type, in1_node, in2_id);
     setType(in2_type, in2_node, in1_id);
 
-    c->addFlowJump(flowOut());
 
     return true;
 }

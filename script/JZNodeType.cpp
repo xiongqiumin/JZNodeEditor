@@ -14,6 +14,7 @@ QVariantPtr::QVariantPtr()
 {
     type = Type_none;
     ptr = QSharedPointer<QVariant>(new QVariant());
+    cparam = nullptr;
 }
 
 //JZEnum
@@ -68,14 +69,35 @@ int JZNodeVariantAny::type()
     return JZNodeType::variantType(value);
 }
 
+//JZObjectNull
+JZNodeObjectNull::JZNodeObjectNull()
+{
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeObjectNull&param)
+{
+    return s;
+}
+QDataStream &operator>>(QDataStream &s, JZNodeObjectNull&param)
+{
+    return s;
+}
+
 //JZNodeType
 void JZNodeType::init()
 {
     typeMap["none"]   = Type_none;
     typeMap["any"]    = Type_any;
     typeMap["bool"]   = Type_bool;
+    typeMap["int8"]   = Type_int8;
+    typeMap["int16"]  = Type_int16;
     typeMap["int"]    = Type_int;
     typeMap["int64"]  = Type_int64;
+    typeMap["uint8"] = Type_uint8;
+    typeMap["uint16"] = Type_uint16;
+    typeMap["uint"] = Type_uint;
+    typeMap["uint64"] = Type_uint64;
+    typeMap["float"] = Type_float;
     typeMap["double"] = Type_double;
     typeMap["string"] = Type_string;
     typeMap["null"] = Type_nullptr;
@@ -85,7 +107,8 @@ void JZNodeType::init()
     
     typeMap["arg"] = Type_arg;
     typeMap["argPointer"] = Type_argPointer;
-    typeMap["args"] = Type_args;     
+    typeMap["args"] = Type_args; 
+    typeMap["auto"] = Type_auto;
 
     opNameMap[OP_add] = "+";
     opNameMap[OP_sub] = "-";
@@ -113,7 +136,9 @@ bool JZNodeType::isBool(int type)
 
 bool JZNodeType::isNumber(int type)
 {
-    if(type == Type_int || type == Type_int64 || type == Type_double || type == Type_bool)
+    if(type == Type_int8 || type == Type_int16 || type == Type_int || type == Type_int64 
+        || type == Type_uint8 || type == Type_uint16 || type == Type_uint || type == Type_uint64
+        || type == Type_float  || type == Type_double)
         return true;
     
     return false;
@@ -132,19 +157,17 @@ bool JZNodeType::isBaseOrEnum(int type)
 bool JZNodeType::isNullObject(const QVariant &v)
 {
     auto obj = toJZObject(v);
-    if (!obj)
-        return nullptr;
-    return obj->isNull();
+    return (obj == nullptr);
 }
 
 bool JZNodeType::isNullptr(const QVariant &v)
 {
-    return (v.userType() == qMetaTypeId<JZObjectNull>());
+    return (v.userType() == qMetaTypeId<JZNodeObjectNull>());
 }
 
 bool JZNodeType::isBase(int type)
 {
-    return (type >= Type_none) && (type <= Type_string);
+    return (type >= Type_none) && (type <= Type_nullptr);
 }
 
 bool JZNodeType::isObject(int type)
@@ -347,10 +370,24 @@ int JZNodeType::variantType(const QVariant &v)
     int v_type = v.type(); 
     if(v_type == QVariant::Bool)
         return Type_bool;
+    else if (v_type == qMetaTypeId<int8_t>())
+        return Type_int8;
+    else if (v_type == qMetaTypeId<int16_t>())
+        return Type_int16;
     else if(v_type == QVariant::Int)
         return Type_int;
-    else if(v_type == QVariant::LongLong)
+    else if (v_type == QVariant::LongLong)
         return Type_int64;
+    else if (v_type == qMetaTypeId<uint8_t>())
+        return Type_uint8;
+    else if (v_type == qMetaTypeId<uint16_t>())
+        return Type_uint16;
+    else if (v_type == QVariant::Int)
+        return Type_uint;
+    else if (v_type == QVariant::LongLong)
+        return Type_uint64;
+    else if (v_type == qMetaTypeId<float>())
+        return Type_float;
     else if(v_type == QVariant::Double)
         return Type_double;
     else if(v_type == QVariant::String)
@@ -360,7 +397,7 @@ int JZNodeType::variantType(const QVariant &v)
         int v_usertype = v.userType(); 
         if (v_usertype == qMetaTypeId<JZEnum>())
             return ((JZEnum*)v.data())->type;
-        else if (v_usertype == qMetaTypeId<JZObjectNull>())
+        else if (v_usertype == qMetaTypeId<JZNodeObjectNull>())
             return Type_nullptr;
         else if (v_usertype == qMetaTypeId<JZFunctionPointer>())
             return Type_function;
@@ -437,4 +474,299 @@ bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefi
             return false;
     }
     return true;
+}
+
+QVariant JZNodeType::convertNumber(const QVariant& srcValue, int dstType)
+{
+    int srcType = variantType(srcValue);
+    if (srcType == Type_int8) {
+        if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_int16) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_int) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_int64) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_uint8) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_uint16) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_uint) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_uint64) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_float) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_double) {
+            return QVariant::fromValue(srcValue.value<double>());
+        }
+    }
+    else if (srcType == Type_double) {
+        if (dstType == Type_int8) {
+            return QVariant::fromValue(srcValue.value<int8_t>());
+        }
+        else if (dstType == Type_int16) {
+            return QVariant::fromValue(srcValue.value<int16_t>());
+        }
+        else if (dstType == Type_int) {
+            return QVariant::fromValue(srcValue.value<int>());
+        }
+        else if (dstType == Type_int64) {
+            return QVariant::fromValue(srcValue.value<int64_t>());
+        }
+        else if (dstType == Type_uint8) {
+            return QVariant::fromValue(srcValue.value<uint8_t>());
+        }
+        else if (dstType == Type_uint16) {
+            return QVariant::fromValue(srcValue.value<uint16_t>());
+        }
+        else if (dstType == Type_uint) {
+            return QVariant::fromValue(srcValue.value<unsigned int>());
+        }
+        else if (dstType == Type_uint64) {
+            return QVariant::fromValue(srcValue.value<uint64_t>());
+        }
+        else if (dstType == Type_float) {
+            return QVariant::fromValue(srcValue.value<float>());
+        }
+    }
 }

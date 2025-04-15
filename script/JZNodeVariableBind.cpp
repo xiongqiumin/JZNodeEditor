@@ -21,7 +21,12 @@ BindObject::~BindObject()
 
 }
 
-void BindObject::bind(QWidget *widget,QObject *object,QString path)
+const JZScriptEnvironment* BindObject::environment()
+{
+    return m_context->manager()->env();
+}
+
+void BindObject::bind(QWidget *widget, JZNodeObject *object,QString path)
 {
     m_widget = widget;
     m_context = object;
@@ -34,75 +39,26 @@ void BindObject::bind(QWidget *widget,QObject *object,QString path)
 
 void BindObject::connectPropChanged(QObject *object, QString prop)
 {
-    if (object->inherits("JZNodeObject"))
-    {
-        auto jz_obj = qobject_cast<JZNodeObject*>(object);
-        connect(jz_obj, &JZNodeObject::sigValueChanged, this, [this,prop](const QString &name) {
-            if(name == prop)
-                this->onDataChanged();
-        });
-    }
-    else
-    {        
-        int prop_index = object->metaObject()->indexOfProperty(qUtf8Printable(prop));
-        if (prop_index >= 0)
-        {
-            QMetaProperty meta = object->metaObject()->property(prop_index);
-            auto method = "2" + meta.notifySignal().methodSignature();
-            connect(object, method, this, SLOT(onDataChanged()));
-
-            qDebug() << "connect" << method;
-        }
-        else
-        {
-            qDebug() << "no prop" << prop;
-        }
-    }    
+    connect(m_context, &JZNodeObject::sigValueChanged, this, [this,prop](const QString &name) {
+        if(name == prop)
+            this->onDataChanged();
+    });
 }
 
 int BindObject::variableType(const QString &path)
 {
-    if (m_context->inherits("JZNodeObject"))
-    {
-        auto jz_obj = qobject_cast<JZNodeObject*>(m_context);
-        auto env = jz_obj->meta()->manager->env();
-        return env->nameToType(jz_obj->meta()->param(path)->type);
-    }
-    else
-    {
-        int idx = m_context->metaObject()->indexOfProperty(qUtf8Printable(path));
-        auto prop_meta = m_context->metaObject()->property(idx);
-        Q_ASSERT(0);
-        return Type_none;
-    }
+    auto env = m_context->meta()->manager->env();
+    return env->nameToType(m_context->meta()->param(path)->type);
 }
 
 QVariant BindObject::getVariable(const QString &path)
 {
-    if (m_context->inherits("JZNodeObject"))
-    {
-        auto jz_obj = qobject_cast<JZNodeObject*>(m_context);
-        return jz_obj->param(path);
-    }
-    else
-    {
-        return m_context->property(qUtf8Printable(path));
-    }
+    return m_context->param(path);
 }
 
 void BindObject::setVariable(const QString &path, const QVariant &value)
 {
-    auto env = g_engine->environment();
-    QVariant v = env->convertTo(value, m_dataType);
-    if (m_context->inherits("JZNodeObject"))
-    {
-        auto jz_obj = qobject_cast<JZNodeObject*>(m_context);
-        jz_obj->setParam(path,v);
-    }
-    else
-    {
-        m_context->setProperty(qUtf8Printable(path),v);
-    }
+    m_context->setParam(path,value);
 }
 
 void BindObject::uiToData()
@@ -148,7 +104,7 @@ LineEditBind::~LineEditBind()
 
 }
 
-void LineEditBind::bind(QWidget *widget,QObject *object,QString path)
+void LineEditBind::bind(QWidget *widget, JZNodeObject *object,QString path)
 {
     BindObject::bind(widget,object,path);
 
@@ -159,12 +115,13 @@ void LineEditBind::bind(QWidget *widget,QObject *object,QString path)
 void LineEditBind::uiToDataImpl()
 {
     auto edit = qobject_cast<QLineEdit*>(m_widget);
-    QString value = edit->text();
-    if (JZNodeType::isNumber(m_dataType) && !JZRegExpHelp::isNumber(value))
+    QString text = edit->text();
+    if (JZNodeType::isNumber(m_dataType) && !JZRegExpHelp::isNumber(text))
     {
         edit->setText("0");
-        value = "0";
+        text = "0";
     }
+    QVariant value = environment()->convertTo(value, m_dataType);
     setVariable(m_path, value);
 }
 
@@ -187,7 +144,7 @@ SliderBind::~SliderBind()
 
 }
 
-void SliderBind::bind(QWidget *widget,QObject *object,QString path)
+void SliderBind::bind(QWidget *widget, JZNodeObject *object,QString path)
 {
     BindObject::bind(widget,object,path);
 
@@ -221,7 +178,7 @@ ComboBoxBind::~ComboBoxBind()
 
 }
 
-void ComboBoxBind::bind(QWidget *widget,QObject *object,QString path)
+void ComboBoxBind::bind(QWidget *widget, JZNodeObject *object,QString path)
 {
     BindObject::bind(widget,object,path);
 
@@ -300,7 +257,7 @@ void BindManager::regist(BindFactory *factory)
     m_binds << factory;
 }
 
-BindObject *BindManager::bind(QWidget *w,int widget_prop,QObject *context,QString prop,int dir)
+BindObject *BindManager::bind(QWidget *w,int widget_prop, JZNodeObject *context,QString prop,int dir)
 {    
     BindObject *bindObj = nullptr;
     for(int i = 0; i < m_binds.size(); i++)

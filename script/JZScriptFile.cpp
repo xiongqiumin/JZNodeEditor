@@ -69,7 +69,7 @@ JZParamItem *JZScriptFile::paramDefine(QString name)
     for (int i = 0; i < m_childs.size(); i++)
     {
         if (m_childs[i]->name() == name && m_childs[i]->itemType() == ProjectItem_param)
-            return (JZParamItem *)m_childs[i].data();
+            return (JZParamItem *)m_childs[i];
     }
     return nullptr;
 }

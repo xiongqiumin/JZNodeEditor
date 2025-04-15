@@ -495,10 +495,7 @@ void JZNode::setPinValue(int id,const QString &value)
     Q_ASSERT(ptr);
     
     ptr->setValue(value);
-    if(m_file)
-        onPinChanged(id);
-    else
-        m_notifyList << id;
+    onPinChanged(id);
 }
 
 const QString &JZNode::pinName(int id) const
@@ -515,10 +512,7 @@ void JZNode::setPinName(int id,const QString &name)
     Q_ASSERT(ptr);
 
     ptr->setName(name);
-    if(m_file)
-        onPinChanged(id);
-    else
-        m_notifyList << id;
+    onPinChanged(id);
 }
 
 QList<int> JZNode::pinList() const
@@ -538,14 +532,7 @@ JZScriptItem *JZNode::file() const
 void JZNode::setFile(JZScriptItem *file)
 {
     m_file = file;
-
-    QString error;
-    update(error);
-
-    //delay notify
-    for(int i = 0; i < m_notifyList.size(); i++)
-        onPinChanged(m_notifyList[i]);
-    m_notifyList.clear();
+    update();
 }
 
 QString JZNode::path()
@@ -638,39 +625,31 @@ bool JZNode::canLink(int node_id, int pin_id, QString &error)
     return true;
 }
 
-bool JZNode::update(QString &error)
+void JZNode::onPinLinked(int pin_id)
+{
+}
+
+void JZNode::onPinUnlinked(int pin_id)
+{
+}
+
+void JZNode::onPinChanged(int pin_id)
+{
+    update();
+}
+
+void JZNode::update()
+{
+    if (m_file)
+    {
+        QString error;
+        updateNode(error);
+    }
+}
+
+bool JZNode::updateNode(QString &error)
 {
     return true;
-}
-
-void JZNode::onPinLinked(int id)
-{    
-    QString error;
-    update(error);
-}
-
-void JZNode::onPinUnlinked(int id)
-{    
-    QString error;
-    update(error);
-}
-
-void JZNode::onPinChanged(int id)
-{
-    QString error;
-    update(error);
-}
-
-void JZNode::propertyChangedNotify(const QByteArray &old)
-{
-    if (m_file && m_file->project())
-        m_file->project()->sigScriptNodeChanged(m_file,m_id, old);
-}
-
-void JZNode::widgetChangedNotify(int pin_id)
-{
-    if (m_file && m_file->project())
-        m_file->project()->sigScriptNodeWidgetChanged(m_file,m_id,pin_id);
 }
 
 void JZNode::saveToStream(QDataStream &s) const
@@ -683,7 +662,6 @@ void JZNode::saveToStream(QDataStream &s) const
     s << m_group;
     s << m_memo;
     s << m_pinList;
-    s << m_notifyList;
 }
 
 void JZNode::loadFromStream(QDataStream &s)
@@ -698,8 +676,7 @@ void JZNode::loadFromStream(QDataStream &s)
     s >> m_flag;
     s >> m_group;
     s >> m_memo;
-    s >> m_pinList;
-    s >> m_notifyList;    
+    s >> m_pinList;  
 }
 
 //JZNodeNop
@@ -715,7 +692,6 @@ bool JZNodeNop::compiler(JZNodeCompiler *c, QString &error)
 {
     c->addNodeDebug(m_id);
     c->addNop();
-    c->addFlowJump(flowOut());
     return true;
 }
 
@@ -774,7 +750,7 @@ JZNodeReturn::JZNodeReturn()
     addFlowIn();
 }
 
-bool JZNodeReturn::update(QString &error)
+bool JZNodeReturn::updateNode(QString &error)
 {
     auto env = environment();
     auto inList = paramInList();
@@ -883,22 +859,19 @@ void JZNodeSequence::removeSequeue(int id)
 
 bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
 {
-    QList<int> breakList;
-    QList<int> continueList;
-
     c->addNodeDebug(m_id);
     //设置continue, 最后一个是跳出
     auto list = subFlowList();
     for(int i = 0; i < list.size(); i++)
     {
-        int pc = c->addSubFlowJump(list[i]);
-        continueList << pc;
-        breakList << -1;
+        JZNode* sub_node = c->nextFlowNode(this, subFlowOut(i));
+        if (sub_node)
+        {
+            QList<JZNodeIRPtr> ir_list;
+            c->buildSubControlFlow(sub_node, ir_list);
+            c->addStatementList(ir_list);
+        }
     }
-    continueList.pop_front();
-    continueList << c->addFlowJump(flowOut());
-
-    c->setBreakContinue({breakList},{continueList});
     return true;
 }
 
@@ -991,15 +964,24 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     c->addStatement(JZNodeIRPtr(jmp_cond_break));    
     c->lastStatment()->memo = "body";    
     c->addFlowOutput(m_id);
-    c->addSubFlowJump(subFlowOut(0));    
 
+    //body
+    JZNode* sub_node = c->nextFlowNode(this, subFlowOut(0));
+    if (sub_node)
+    {
+        QList<JZNodeIRPtr> ir_list;
+        c->buildSubControlFlow(sub_node, ir_list);
+        c->addStatementList(ir_list);
+    }
+
+    //continue
     int continue_pc = c->addExpr(irId(id_index), irId(id_index), irId(id_step), OP_add);
     c->addSetVariable(irId(id_out_index), irId(id_index));
     JZNodeIRJmp *jmp_to_start = new JZNodeIRJmp(OP_jmp);    
     c->addStatement(JZNodeIRPtr(jmp_to_start));
     jmp_to_start->jmpPc = start;
         
-    int break_pc = c->addFlowJump(flowOut());        
+    int break_pc = c->addNop();        
     jmp_cond_break->jmpPc = break_pc;
     c->setBreakContinue({break_pc},{ continue_pc });
 
@@ -1093,7 +1075,17 @@ bool JZNodeForEach::getInputType(int &class_type,int &from_id, QString& error)
     return true;
 }
 
-bool JZNodeForEach::update(QString& error)
+void JZNodeForEach::onPinLinked(int pin_id)
+{
+    update();
+}
+
+void JZNodeForEach::onPinUnlinked(int pin_id)
+{
+    update();
+}
+
+bool JZNodeForEach::updateNode(QString& error)
 {
     int in_type, from_id;
     if (!getInputType(in_type, from_id, error))
@@ -1165,8 +1157,17 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
         
         c->addCallConvert(func_get, { class_ptr, itKey }, { itValue });
         c->addFlowOutput(m_id);
-        c->addSubFlowJump(subFlowOut(0));
 
+        //body
+        JZNode* sub_node = c->nextFlowNode(this, subFlowOut(0));
+        if (sub_node)
+        {
+            QList<JZNodeIRPtr> ir_list;
+            c->buildSubControlFlow(sub_node, ir_list);
+            c->addStatementList(ir_list);
+        }
+
+        //continue
         continuePc = c->nextPc();
         JZNodeIRJmp* jmp = new JZNodeIRJmp(OP_jmp);
         jmp->jmpPc = startPc;
@@ -1202,8 +1203,17 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
         c->addCallConvert(itKeyFunc, { it }, { itKey });
         c->addCallConvert(itValueFunc, { it }, { itValue });
         c->addFlowOutput(m_id);
-        c->addSubFlowJump(subFlowOut(0));
 
+        //body
+        JZNode* sub_node = c->nextFlowNode(this, subFlowOut(0));
+        if (sub_node)
+        {
+            QList<JZNodeIRPtr> ir_list;
+            c->buildSubControlFlow(sub_node, ir_list);
+            c->addStatementList(ir_list);
+        }
+
+        //continue
         continuePc = c->nextPc();
         c->addCallConvert(itNextFunc, { it }, { });
 
@@ -1216,7 +1226,7 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
         Q_ASSERT(0);
     }
 
-    int breakPc = c->addFlowJump(flowOut());
+    int breakPc = c->addNop();
     jmp_break->jmpPc = breakPc;
     c->setBreakContinue({breakPc},{continuePc});
 
@@ -1247,13 +1257,23 @@ bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
     int id = c->paramId(m_id,cond);
     c->addCompare(irId(id),irLiteral(true),OP_eq);
 
-    JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
-    JZNodeIRJmp *jmp_false = new JZNodeIRJmp(OP_jmp);
-    c->addStatement(JZNodeIRPtr(jmp_true));
+    JZNodeIRJmp * jmp_false = new JZNodeIRJmp(OP_jne);
     c->addStatement(JZNodeIRPtr(jmp_false));    
 
-    int breakPc = c->addFlowJump(flowOut());
-    jmp_true->jmpPc = c->addSubFlowJump(subFlowOut(0));
+    //body
+    JZNode* sub_node = c->nextFlowNode(this, subFlowOut(0));
+    if (sub_node)
+    {
+        QList<JZNodeIRPtr> ir_list;
+        c->buildSubControlFlow(sub_node, ir_list);
+        c->addStatementList(ir_list);
+    }
+
+    JZNodeIRJmp* jmp = new JZNodeIRJmp(OP_jmp);
+    jmp->jmpPc = continuePc;
+    c->addStatement(JZNodeIRPtr(jmp));
+
+    int breakPc = c->addNop();
     jmp_false->jmpPc = breakPc;
     
     c->setBreakContinue({breakPc},{continuePc});
@@ -1321,39 +1341,62 @@ bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error)
     
     JZNodeIRJmp *last_jmp = nullptr;
     QList<int> inList = paramInList();
+    QList<JZNodeIRJmp*> jump_end_list;
     for (int i = 0; i < inList.size(); i++)
     {
         int nextPc = c->nextPc();
         if (!c->addFlowInput(m_id, { inList[i] }, error))
             return false;
+
         if (last_jmp)
             last_jmp->jmpPc = nextPc;
 
         int cond = c->paramId(m_id, inList[i]);
-        c->addCompare(irId(cond), irLiteral(false), OP_eq);
+        c->addCompare(irId(cond), irLiteral(true), OP_eq);
 
-        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_je);
+        JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jne);
         c->addStatement(JZNodeIRPtr(jmp));
         last_jmp = jmp;
 
-        c->addSubFlowJump(subFlowOut(i));        
+        JZNode* sub_node = c->nextFlowNode(this, subFlowOut(i));
+        if (sub_node)
+        {
+            QList<JZNodeIRPtr> ir_list;
+            c->buildSubControlFlow(sub_node, ir_list);
+            c->addStatementList(ir_list);
+        }
+
+        JZNodeIRJmp* jmp_end = new JZNodeIRJmp(OP_jmp);
+        jump_end_list << jmp_end;
     }    
     if (isElse)
     {
-        int else_pc = c->addSubFlowJump(subFlowOut(inList.size()));
-        last_jmp->jmpPc = else_pc;
-    }    
-    int ret = c->addFlowJump(flowOut(0));    
-    if(!isElse)
-        last_jmp->jmpPc = ret;
+        if (last_jmp)
+            last_jmp->jmpPc = c->nextPc();
 
-    int sub_flow_count = subFlowCount();
-    for (int i = 0; i < sub_flow_count; i++)
+        JZNode* sub_node = c->nextFlowNode(this, subFlowOut(inList.size()));
+        if (sub_node)
+        {
+            QList<JZNodeIRPtr> ir_list;
+            c->buildSubControlFlow(sub_node, ir_list);
+            c->addStatementList(ir_list);
+        }
+        else
+        {
+            c->addNop();
+        }
+        JZNodeIRJmp* jmp_end = new JZNodeIRJmp(OP_jmp);
+        jump_end_list << jmp_end;
+    }    
+    else
     {
-        continuePc << ret;
-        breakPc << -1;
+        jump_end_list << last_jmp;
     }
-    c->setBreakContinue(breakPc, continuePc);
+
+    int pc = c->addNop();
+    for (int i = 0; i < jump_end_list.size(); i++)
+        jump_end_list[i]->jmpPc = pc;
+
     return true;
 }
 
@@ -1438,12 +1481,16 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
     c->addSetVariable(irId(out_id), irId(in_id));
     c->addFlowOutput(m_id);
 
+    bool isDefault = false;
     int case_count = sub_flow_list.size();
     if (pin(sub_flow_list.back())->name() == "default")
+    {
         case_count--;
-
+        isDefault = true;
+    }
     int in_type = c->pinType(m_id, paramIn(0));
 
+    QList<JZNodeIRJmp*> jump_end_list;
     JZNodeIRJmp *pre_jmp = nullptr;
     for (case_idx = 0; case_idx < case_count; case_idx++)
     {
@@ -1451,30 +1498,54 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
         QVariant value = env->initValue(in_type, out_value_str);
 
         int jmp_cmp = c->addCompare(irId(in_id), irLiteral(value), OP_eq);
-        JZNodeIRJmp *jmp_true = new JZNodeIRJmp(OP_je);
-        JZNodeIRJmp *jmp_false = new JZNodeIRJmp(OP_jmp);
-        c->addStatement(JZNodeIRPtr(jmp_true));
+        JZNodeIRJmp *jmp_false = new JZNodeIRJmp(OP_jne);
         c->addStatement(JZNodeIRPtr(jmp_false));
-        int jmp = c->addSubFlowJump(sub_flow_list[case_idx]);
-        jmp_true->jmpPc = jmp;
+
+        JZNode* sub_node = c->nextFlowNode(this, subFlowOut(case_idx));
+        if (sub_node)
+        {
+            QList<JZNodeIRPtr> ir_list;
+            c->buildSubControlFlow(sub_node, ir_list);
+            c->addStatementList(ir_list);
+        }
+
+        JZNodeIRJmp* jmp_end = new JZNodeIRJmp(OP_jmp);
+        jump_end_list << jmp_end;
+
         if (pre_jmp)
             pre_jmp->jmpPc = jmp_cmp;
         pre_jmp = jmp_false;
     }
-    for (; case_idx < sub_flow_list.size(); case_idx++)
+    if (isDefault)
     {
-        int jmp = c->addSubFlowJump(sub_flow_list[case_idx]);
         if (pre_jmp)
-            pre_jmp->jmpPc = jmp;
-    }        
-    int out_pc = c->addFlowJump(flowOut());
-    QList<int> breakPc, continuePc;
-    for (int i = 0; i < sub_flow_list.size(); i++)
-    {
-        breakPc.push_back(out_pc);
-        continuePc.push_back(out_pc);
+            pre_jmp->jmpPc = c->nextPc();
+
+        JZNode* sub_node = c->nextFlowNode(this, subFlowOut(case_count));
+        if (sub_node)
+        {
+            QList<JZNodeIRPtr> ir_list;
+            c->buildSubControlFlow(sub_node, ir_list);
+            c->addStatementList(ir_list);
+        }
+        else
+        {
+            c->addNop();
+        }
+
+        JZNodeIRJmp* jmp_end = new JZNodeIRJmp(OP_jmp);
+        jump_end_list << jmp_end;
     }
-    c->setBreakContinue(breakPc, continuePc);
+    else
+    {
+        jump_end_list << pre_jmp;
+    }
+
+
+    int out_pc = c->addNop();
+    int pc = c->addNop();
+    for (int i = 0; i < jump_end_list.size(); i++)
+        jump_end_list[i]->jmpPc = pc;
 
     return true;
 }

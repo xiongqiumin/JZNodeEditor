@@ -25,7 +25,7 @@ public:
     bool isDirectCall();
 
 protected:
-    virtual bool update(QString &error) override;    
+    virtual bool updateNode(QString &error) override;
     void updateName();
     bool isMemberCall();
 

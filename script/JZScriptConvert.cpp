@@ -74,8 +74,7 @@ bool JZScriptConvert::convertStatments(QString code)
         m_error = parser.Error();
         return false;
     }
-
-	m_script->clear();
+	m_script->clearNodes();
 
 	auto root = parser.GetScriptNode();
 	auto node_start = m_script->getNode(0);
@@ -87,12 +86,13 @@ bool JZScriptConvert::convertStatments(QString code)
 }
 
 bool JZScriptConvert::convertExpression(QString code)
-{    
+{   
     if (!code.trimmed().endsWith(";"))
         code += ";";
 
     asCScriptCode script;
     script.SetCode(m_script->itemPath(), code);
+	m_code = code;
 
     asCParser parser;
     int ret = parser.ParseFunctionStatement(&script);
@@ -103,15 +103,19 @@ bool JZScriptConvert::convertExpression(QString code)
     }
 
     auto node = parser.GetScriptNode();
-    auto list = childList(node);
-    if(!(node->nodeType == snAssignment && list.size() == 3 && list[1]->nodeType == snExprOperator))
-    {
-        m_error = "use as a = b + c;";
-        return false;
-    }
 
-    auto node_start = m_script->getNode(0);
+	auto node_list = childList(node);
+	if (node_list.size() != 1 || node_list[0]->nodeType != snExpressionStatement || !node_list[0]->firstChild
+		|| node_list[0]->firstChild->nodeType != snAssignment)
+	{
+		m_error = "use as a = b + c;";
+		return false;
+	}
+	m_script->clearNodes();
+	node = node_list[0]->firstChild;
+
     auto jz_node = toAssignment(node);
+	auto node_start = m_script->getNode(0);
     m_script->addConnect(node_start->flowOutGemo(), jz_node->flowInGemo());
     return true;
 }
@@ -135,7 +139,7 @@ bool JZScriptConvert::updateFunction(asCScriptNode* node)
     child = nextNode(child, 1);
     
     m_script->setFunction(func);
-    m_script->clear();
+    m_script->clearNodes();
 
 	auto node_start = m_script->getNode(0);
 	auto jz_node_list = toStatementBlock(child);

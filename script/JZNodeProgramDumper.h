@@ -21,7 +21,7 @@ protected:
     QString dealCall(QString function);
 
     QString functionDeclare(JZFunction* func);
-
+    QString paramDefine(const JZParamDefine* define);
     void dumpClass(JZScriptClassItem* class_item, QString& def, QString& impl);
     void dumpFunction(JZScriptItem* func_item,QString &def,QString &impl);
     QString tab(int count);

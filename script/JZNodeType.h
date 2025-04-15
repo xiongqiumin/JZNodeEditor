@@ -10,12 +10,18 @@ constexpr int INVALID_ID = -1;
 enum
 {
     Type_pointerFlag = 1 << 30,
-
+    
     Type_none = -1,
-    Type_begin = 0,
     Type_bool,
+    Type_int8,
+    Type_int16,
     Type_int,
     Type_int64,
+    Type_uint8,
+    Type_uint16,
+    Type_uint,
+    Type_uint64,
+    Type_float,
     Type_double,
     Type_string,
     Type_nullptr,
@@ -95,6 +101,7 @@ enum
     Type_userObject = 50000,    // 用户注册起始
 };
 
+class JZCParamDefine;
 class QVariantPtr
 {
 public:
@@ -102,6 +109,7 @@ public:
 
     int type;
     QSharedPointer<QVariant> ptr;
+    const JZCParamDefine* cparam;
 };
 
 class JZEnum
@@ -142,6 +150,16 @@ public:
     QVariant value;
 };
 Q_DECLARE_METATYPE(JZNodeVariantAny)
+
+//这是一个值 nullptr, 不是类型
+class JZNodeObjectNull
+{
+public:
+    JZNodeObjectNull();
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeObjectNull&param);
+QDataStream &operator>>(QDataStream &s, JZNodeObjectNull&param);
+Q_DECLARE_METATYPE(JZNodeObjectNull)
 
 class JZNodeObject;
 class JZSignalDefine;
@@ -193,6 +211,7 @@ public:
     static QString debugString(const JZNodeObject *obj);
         
     static bool sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot);
+    QVariant convertNumber(const QVariant& srcValue, int dstType);
 };
 
 #endif

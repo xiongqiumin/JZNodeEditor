@@ -17,7 +17,7 @@ public:
     bool isFunction() const;
 
     void loadFinish();
-    void clear();
+    void clearNodes();
     int nextId();    
 
     const JZFunctionDefine &function();
@@ -62,6 +62,7 @@ public:
     void addLocalVariable(const JZParamDefine &def);
     void addLocalVariable(const QString &name,int dataType,const QString &value = QString());            
     void removeLocalVariable(QString name);    
+    void clearLocalVariable();
     void setLocalVariable(QString name, const JZParamDefine &def);
     const JZParamDefine *localVariable(QString name);
     QStringList localVariableList(bool hasFunc);

@@ -10,12 +10,12 @@
 JZScriptItem::JZScriptItem(int type)
     :JZProjectItem(type)
 {
-    clear();
+    clearNodes();
 }
 
 JZScriptItem::~JZScriptItem()
 {
-    clear();
+    clearNodes();
 }
 
 bool JZScriptItem::isFunction() const
@@ -36,7 +36,7 @@ void JZScriptItem::loadFinish()
         m_function.name = m_name;
 }
 
-void JZScriptItem::clear()
+void JZScriptItem::clearNodes()
 {    
     qDeleteAll(m_nodes);
     m_nodes.clear();
@@ -331,6 +331,11 @@ bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &er
             error = "不能同时连接流程输入和数据输入";
             return false;
         }
+        else if (cur_flow)
+        {
+            error = "已有流程输入,只能连接一个输入";
+            return false;
+        }
         else if (!cur_flow)
         {
             error = "已有数据输入,只能连接一个输入";
@@ -491,6 +496,11 @@ void JZScriptItem::addLocalVariable(const QString &name,int dataType,const QStri
 void JZScriptItem::removeLocalVariable(QString name)
 {
     m_variables.remove(name);
+}
+
+void JZScriptItem::clearLocalVariable()
+{
+    m_variables.clear();
 }
 
 void JZScriptItem::setLocalVariable(QString name, const JZParamDefine &def)

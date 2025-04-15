@@ -15,6 +15,16 @@ void JZNodeProgramDumper::init(JZProject* project, JZNodeProgram* program)
     m_program->initEnv(&m_env);
 }
 
+QString JZNodeProgramDumper::paramDefine(const JZParamDefine* define)
+{
+    QString line = define->type + " " + define->name + " = ";
+    if (define->value.isEmpty())
+        line += m_env.defaultValueString(m_env.nameToType(define->type));
+    else
+        line += define->value;
+    return line;
+}
+
 
 QString JZNodeProgramDumper::tab(int count)
 {
@@ -60,7 +70,7 @@ void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
         {
             auto global = m_project->globalVariable(global_list[global_idx]);
 
-            source += global->type + " " + global->name + ";\n";
+            source += paramDefine(global)  + ";\n";
             header += "extern " + global->type + " " + global->name + ";\n";
         }
         source += "\n";
@@ -173,6 +183,8 @@ void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QS
                 source += functionDeclare(&func) + "\n{\n";
                 m_jumpList.clear();
 
+                source += tab(1) + "bool Reg_Cmp = false;\n";
+
                 QStringList lines;
                 for (int i = func.addr; i < func.addrEnd; i++)
                 {
@@ -214,7 +226,7 @@ QString JZNodeProgramDumper::toString(JZNodeIRParam param)
         }
         else
         {
-            return JZNodeType::debugString(param.value) + ":" + m_env.typeToName(var_type);
+            return JZNodeType::debugString(param.value);
         }
     }
     else if(param.type == JZNodeIRParam::Reference)
@@ -251,9 +263,19 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
         QString alloc = m_env.typeToName(ir_alloc->dataType);
         if (ir_alloc->allocType == JZNodeIRAlloc::Heap || ir_alloc->allocType == JZNodeIRAlloc::Stack)
-            line += alloc + " " + ir_alloc->name + ";";
+            line += alloc + " " + toString(ir_alloc->dst);
         else
-            line += alloc + " " + JZNodeCompiler::paramName(ir_alloc->id) + ";";
+            line += alloc + " " + toString(ir_alloc->dst);
+
+        if (JZNodeType::isBase(ir_alloc->type))
+        {
+            line += " = " + m_env.defaultValueString(ir_alloc->dataType);
+        }
+        else if (JZNodeType::isPointer(ir_alloc->type))
+        {
+            line += " = nullptr";
+        }
+        line += ";";
         break;
     }
     case OP_clearReg:
@@ -316,7 +338,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         QString c = toString(ir_expr->dst);
         QString a = toString(ir_expr->src1);
         QString b = toString(ir_expr->src2);
-        line += c + " = " + a + " " + JZNodeType::opName(op->type) + " " + b;
+        line += c + " = " + a + " " + JZNodeType::opName(op->type) + " " + b + ";";
         break;
     }
     case OP_not:
@@ -324,7 +346,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
         QString c = toString(ir_expr->dst);
         QString a = toString(ir_expr->src1);
-        line += c + " = " + JZNodeType::opName(op->type) + a;
+        line += c + " = " + JZNodeType::opName(op->type) + a + ";";
         break;
     }
     case OP_jmp:
