@@ -167,6 +167,7 @@ protected:
 	QString ExpectedOneOf(int *tokens, int count);
 	QString ExpectedOneOf(const char **tokens, int count);
 	QString InsteadFound(sToken &t);
+    bool IsTemplateType(QString text);
 
 	bool errorWhileParsing;
 	bool isSyntaxError;

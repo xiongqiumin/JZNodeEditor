@@ -31,13 +31,6 @@ QString JZNodeExprEditDialog::expr()
 
 bool JZNodeExprEditDialog::onOk()
 {
-    JZNodeExpression expr_node;
-    QString error;
-    if(!expr_node.setExpr(expr(),error))
-    {
-        QMessageBox::information(this,"",error);
-        return false;
-    }
-
+    JZNodeExpression expr_node;    
     return true;
 }

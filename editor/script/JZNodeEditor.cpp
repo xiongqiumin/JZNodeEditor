@@ -344,8 +344,7 @@ void JZNodeEditor::setCompilerResult(const CompilerResult *info)
     auto s = script();
     if (s->itemType() == ProjectItem_scriptFunction)
     {
-        QString function = script()->function().fullName();
-        m_runProp->setDepend(info->depend[function]);
+        QString function = script()->function().fullName();        
     }
 }
 

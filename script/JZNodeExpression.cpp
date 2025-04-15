@@ -42,7 +42,7 @@ bool JZNodeExpression::updateNode(QString &error)
     auto project = m_file->project();
 
     JZTempItemGuard guard(project, m_exprItem, true);        
-    m_exprItem->clearNodes();
+    m_exprItem->clear();
     m_convert.init(m_exprItem);
     if (!m_convert.convertExpression(m_expression))
     {
@@ -100,7 +100,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     for (int i = 0; i < in_list.size(); i++)
     {
         int pin_id = in_list[i];
-        m_exprItem->addLocalVariable(pinName(pin_id),c->pinType(m_id,pin_id));
+        m_exprItem->addLocalVariable(pinName(pin_id),env->typeToName(c->pinType(m_id,pin_id)));
         localMap[pinName(pin_id)] = c->paramId(m_id, pin_id);
     }
 
@@ -108,7 +108,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     Q_ASSERT(out_list.size() == 1);
 
     int out_id = out_list[0];
-    m_exprItem->addLocalVariable(pinName(out_id), Type_auto);
+    m_exprItem->addLocalVariable(pinName(out_id), "auto");
     localMap[pinName(out_id)] = c->paramId(m_id, out_id);
     QString out_name = pinName(out_id);
     

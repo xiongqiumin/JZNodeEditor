@@ -237,7 +237,7 @@ void BenchmarkTest::testSort()
     }
 
     auto script = m_file->addFunction(def);
-    script->addLocalVariable("tmp",Type_int);
+    script->addLocalVariable("tmp", "int");
 
     auto start = script->getNode(0);
 

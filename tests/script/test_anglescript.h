@@ -16,6 +16,9 @@ public:
 private slots:
     void testHello();
     void testIf();
+    void testFor();
+    void testWhile();
+    void testSwitch();
     
 protected:
     bool buildAs(QString code);

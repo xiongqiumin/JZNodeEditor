@@ -61,7 +61,7 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         class_item->addMemberFunction(define);
         project->onItemChanged(class_item);
 
-        main_flow->addLocalVariable("mainwindow", class_item->classType());
+        main_flow->addLocalVariable("mainwindow", class_item->className());
 
         JZNodeParam *get_param = new JZNodeParam();
         JZNodeSetParam *set_param = new JZNodeSetParam();

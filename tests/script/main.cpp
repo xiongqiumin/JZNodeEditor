@@ -12,7 +12,7 @@ int main(int argc,char *argv[])
     JZNodeInit();
 
     test_script(argc, argv);
-    //test_benchmark(argc, argv);
+    test_benchmark(argc, argv);
     test_anglescript(argc, argv);
 
     return 0;

@@ -1,6 +1,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QDialogButtonBox>
 #include "JZBaseDialog.h"
 
 //JZBaseDialog
@@ -11,21 +12,14 @@ JZBaseDialog::JZBaseDialog(QWidget *parent)
 
     m_mainWidget = new QWidget();
     
-    QHBoxLayout *btnLayout = new QHBoxLayout();
-    btnLayout->setContentsMargins(0, 0, 0, 0);
-    QPushButton *btnOk = new QPushButton("Ok");
-    QPushButton *btnCancel = new QPushButton("Cancel");
-    connect(btnOk, &QPushButton::clicked, this, &JZBaseDialog::onBtnOkClicked);
-    connect(btnCancel, &QPushButton::clicked, this, &JZBaseDialog::onBtnCancelClicked);
-    m_buttons << btnOk << btnCancel;
-
-    btnLayout->addStretch();
-    btnLayout->addWidget(btnOk);
-    btnLayout->addWidget(btnCancel);
+    QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    
+    connect(box, &QDialogButtonBox::accepted, this, &JZBaseDialog::onBtnOkClicked);
+    connect(box, &QDialogButtonBox::rejected, this, &JZBaseDialog::onBtnCancelClicked);
 
     this->setLayout(verticalLayout);
     verticalLayout->addWidget(m_mainWidget);
-    verticalLayout->addLayout(btnLayout);
+    verticalLayout->addWidget(box);
 }
 
 JZBaseDialog::~JZBaseDialog()

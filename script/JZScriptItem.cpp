@@ -10,12 +10,12 @@
 JZScriptItem::JZScriptItem(int type)
     :JZProjectItem(type)
 {
-    clearNodes();
+    clear();
 }
 
 JZScriptItem::~JZScriptItem()
 {
-    clearNodes();
+    clear();
 }
 
 bool JZScriptItem::isFunction() const
@@ -36,12 +36,16 @@ void JZScriptItem::loadFinish()
         m_function.name = m_name;
 }
 
-void JZScriptItem::clearNodes()
+void JZScriptItem::clear()
 {    
     qDeleteAll(m_nodes);
     m_nodes.clear();
     m_connects.clear();
     m_nodeId = 0;
+
+    m_variables.clear();
+    m_function = JZFunctionDefine();
+    m_function.name = m_name;
 
     JZNodeFunctionStart* node_start = new JZNodeFunctionStart();
     addNode(node_start);
@@ -487,10 +491,9 @@ void JZScriptItem::addLocalVariable(const JZParamDefine &def)
     m_variables[def.name] = def;
 }
 
-void JZScriptItem::addLocalVariable(const QString &name,int dataType,const QString &value)
-{
-    QString type = project()->environment()->typeToName(dataType);
-    addLocalVariable(JZParamDefine(name, type,value));
+void JZScriptItem::addLocalVariable(const QString &name,QString dataType,const QString &value)
+{    
+    addLocalVariable(JZParamDefine(name, dataType,value));
 }
 
 void JZScriptItem::removeLocalVariable(QString name)

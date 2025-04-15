@@ -357,8 +357,7 @@ void asCParser::ParseOptionalScope(asCScriptNode *node)
 	if( t1.type == ttIdentifier && t2.type == ttLessThan )
 	{
 		tempString = script->code.mid(t1.pos,t1.length);
-        /* todo
-		if (engine->IsTemplateType(tempString.AddressOf()))
+		if (IsTemplateType(tempString))
 		{
 			RewindTo(&t1);
 			asCScriptNode *restore = scope->lastChild;
@@ -384,17 +383,16 @@ void asCParser::ParseOptionalScope(asCScriptNode *node)
 					{
 						asCScriptNode *last = scope->lastChild;
 						last->DisconnectParent();
-						last->Destroy(engine);
+						last->Destroy();
 					}
 					if( scope->lastChild )
 						node->AddChildLast(scope);
 					else
-						scope->Destroy(engine);
+						scope->Destroy();
 					return;
 				}
 			}
 		}
-        */
 	}
 
 	// The identifier is not part of the scope
@@ -402,6 +400,8 @@ void asCParser::ParseOptionalScope(asCScriptNode *node)
 
 	if (scope->lastChild)
 		node->AddChildLast(scope);
+	else
+		scope->Destroy();
 }
 
 asCScriptNode *asCParser::ParseFunctionDefinition()
@@ -504,13 +504,11 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, boo
 	RewindTo(&t);
 	asCScriptNode *type = node->lastChild;
 	tempString = script->code.mid(type->tokenPos, type->tokenLength);
-    /* todo
-	if( engine->IsTemplateType(tempString.AddressOf()) && t.type == ttLessThan )
+	if(IsTemplateType(tempString) && t.type == ttLessThan )
 	{
 		ParseTemplTypeList(node);
 		if (isSyntaxError) return node;
 	}
-    */
 
 	// Parse [] and @
 	GetToken(&t);
@@ -608,6 +606,7 @@ bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
 		{
 			asCScriptNode *n = node->lastChild;
 			n->DisconnectParent();
+			n->Destroy();
 		}
 
 		return false;
@@ -1051,7 +1050,6 @@ bool asCParser::IsDataType(const sToken &token)
 {
 	if( token.type == ttIdentifier )
 	{
-
 		if( checkValidTypes )
 		{
 			// Check if this is an existing type, regardless of namespace
@@ -1352,11 +1350,9 @@ bool asCParser::FindTokenAfterType(sToken &nextToken)
 // at the first token after the type in case of success
 bool asCParser::CheckTemplateType(const sToken &t)
 {
-    return false;
-/*
 	// Is this a template type?
-	tempString.Assign(&script->code[t.pos], t.length);
-	if( engine->IsTemplateType(tempString.AddressOf()) )
+	tempString = script->code.mid(t.pos, t.length);
+	if(IsTemplateType(tempString))
 	{
 		// If the next token is a < then parse the sub-type too
 		sToken t1;
@@ -1371,8 +1367,6 @@ bool asCParser::CheckTemplateType(const sToken &t)
 		{
 			// There might optionally be a 'const'
 			GetToken(&t1);
-			if( t1.type == ttConst )
-				GetToken(&t1);
 
 			// The type may be initiated with the scope operator
 			if( t1.type == ttScope )
@@ -1398,7 +1392,7 @@ bool asCParser::CheckTemplateType(const sToken &t)
 			GetToken(&t1);
 
 			// Is it a handle or array?
-			while( t1.type == ttHandle || t1.type == ttOpenBracket )
+			while( t1.type == ttOpenBracket )
 			{
 				if( t1.type == ttOpenBracket )
 				{
@@ -1417,7 +1411,7 @@ bool asCParser::CheckTemplateType(const sToken &t)
 
 		// Accept >> and >>> tokens too. But then force the tokenizer to move
 		// only 1 character ahead (thus splitting the token in two).
-		if( script->code[t1.pos] != '>' )
+		if( script->code[(int)t1.pos] != '>' )
 			return false;
 		else if( t1.length != 1 )
 		{
@@ -1427,7 +1421,6 @@ bool asCParser::CheckTemplateType(const sToken &t)
 	}
 
 	return true;
-*/
 }
 
 // BNF:12: CAST          ::= 'cast' '<' TYPE '>' '(' ASSIGN ')'
@@ -1531,8 +1524,8 @@ asCScriptNode *asCParser::ParseExprValue()
 			{
 				// Is this a template type?
 				tempString = script->code.mid(t2.pos, t2.length);
-				//if( engine->IsTemplateType(tempString.AddressOf()) )
-                //	isTemplateType = true;
+				if( IsTemplateType(tempString) )
+					isTemplateType = true;
 			}
 
 			GetToken(&t2);
@@ -1888,7 +1881,7 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 			// It also avoids conflict with expressions to that creates anonymous objects initialized with lists, i.e. type = {...}
 			// The alternate syntax: arg = expr, is supported to provide backwards compatibility with 2.29.0
 			// TODO: 3.0.0: Remove the alternate syntax
-			if( tl.type == ttIdentifier && (t2.type == ttColon))// || (engine->ep.alterSyntaxNamedArgs && t2.type == ttAssignment)) )
+			if( tl.type == ttIdentifier && (t2.type == ttColon || (t2.type == ttAssignment)) )
 			{
 				asCScriptNode *named = CreateNode(snNamedArgument);
 				if( named == 0 ) return 0;
@@ -2362,6 +2355,9 @@ int asCParser::ParseFunction(asCScriptCode* in_script)
 	this->script = in_script;
 
 	scriptNode = ParseFunction();
+    if (!m_error.isEmpty())
+        return -1;
+
 	return scriptNode ? 0: -1;
 }
 
@@ -2565,6 +2561,7 @@ bool asCParser::IsVarDecl()
 	// A class property decl can be preceded by 'private' or 'protected'
 	sToken t1;
 	GetToken(&t1);
+    RewindTo(&t1);
 
 	// A variable decl starts with the type
 	if (!FindTokenAfterType(t1))
@@ -3863,3 +3860,7 @@ asCScriptNode *asCParser::ParseContinue()
 }
 
 
+bool asCParser::IsTemplateType(QString text)
+{
+    return false;
+}

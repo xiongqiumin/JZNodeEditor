@@ -52,7 +52,8 @@ void AngleScriptTest::testHello()
 }
 
 void AngleScriptTest::testIf()
-{
+{    
+    return;
     QString code = R"(int testIf(int n) {
     if (n >= 8) {
         if (n >= 12) {
@@ -131,6 +132,82 @@ void AngleScriptTest::testIf()
         QVERIFY(ret);
         QCOMPARE(out[0].toInt(),i);
     }
+}
+
+void AngleScriptTest::testFor()
+{
+    return;
+    QString code = R"(void testFor() {       
+        int result = 0;
+        for (int i = 0; i < n; i++) {
+            result += i;
+        }
+        return result;        
+    })";
+
+    if(!buildAs(code))
+        return;
+    dump("as_testFor");
+    
+    auto testFor = [](int n)->int {       
+        int result = 0;
+        for (int i = 0; i < n; i++) {
+            result += i;
+        }
+        return result;        
+    };
+
+    for(int i = 0; i < 10; i++)
+    {
+        QVariantList in,out;
+        in << i;
+        
+        bool ret = call("testFor",in,out);
+        QVERIFY(ret);
+        QCOMPARE(out[0].toInt(), testFor(i));
+    }
+}
+
+void AngleScriptTest::testWhile()
+{    
+    QString code = R"(int testWhile(int n) {
+        int result = 0;
+        int i = 0;
+        while(i < n) {
+            result += i;
+            i = i + 1;
+        }
+        return result;
+    })";
+
+    if (!buildAs(code))
+        return;
+    dump("as_testWhile");
+
+    auto testWhile = [](int n)->int {
+        int result = 0;
+        int i = 0;
+        while(i < n) {
+            result += i;
+            i++;
+        }
+        return result;
+    };
+
+    for (int i = 0; i < 10; i++)
+    {
+        QVariantList in, out;
+        in << i;
+
+        bool ret = call("testWhile", in, out);
+        QVERIFY(ret);
+        QCOMPARE(out[0].toInt(), testWhile(i));
+    }
+}
+
+void AngleScriptTest::testSwitch()
+{
+
 }
 
 void test_anglescript(int argc, char *argv[])

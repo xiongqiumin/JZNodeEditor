@@ -40,7 +40,7 @@ protected:
 	void printNode(asCScriptNode* node);
 	QString nodeText(asCScriptNode* node);
 	asCScriptNode* nextNode(asCScriptNode* node, int count);
-	QList<asCScriptNode*> childList(asCScriptNode* node);
+	QList<asCScriptNode*> nodeChilds(asCScriptNode* node);
 
 	QList<JZParamDefine> toParamList(asCScriptNode* node);
 	JZNode* toStatement(asCScriptNode* node);
@@ -58,6 +58,7 @@ protected:
 	JZNode* toExprTerm(asCScriptNode* node);
 	JZNode* toAssignment(asCScriptNode* node);
 	JZNode* toFunctionCall(asCScriptNode* node);
+    JZNode* toDeclaration(asCScriptNode* node);
 
 	JZNode* createOpNode(QString op);
 

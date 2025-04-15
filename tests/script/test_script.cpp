@@ -588,7 +588,7 @@ bool ScriptTest::initWhileCase(QList<int> &id_list,QList<int> &value_list)
     JZNodeWhile *node_while = new JZNodeWhile();
     JZNodeLiteral *node_true = new JZNodeLiteral();
 
-    script->addLocalVariable("i",Type_int);
+    script->addLocalVariable("i","int");
     
     script->addNode(node_while);
     script->addNode(node_true);

@@ -1785,7 +1785,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
 
         auto old = getNodeData(node_expr->id());
         QString error;
-        node_expr->setExpr(expr,error);
+        node_expr->setExpr(expr);
         onScriptNodeChanged(m_file,node_expr->id(),old);
     }   
     else if (ret == actEditGroup)
@@ -1957,11 +1957,9 @@ void JZNodeView::dropEvent(QDropEvent *event)
             QString expr = getExpr();
             if(expr.isEmpty())
                 return;
-
-            QString error;
+            
             JZNodeExpression node_expr;
-            node_expr.setExpr(expr,error);
-
+            node_expr.setExpr(expr);
             node_data = factory->saveNode(&node_expr);
         }        
         
