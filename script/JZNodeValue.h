@@ -91,6 +91,7 @@ protected:
 
 };
 
+\
 //JZNodeFormat
 class JZNodeFormat : public JZNode
 {
@@ -99,6 +100,18 @@ public:
     ~JZNodeFormat();
 
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+protected:
+
+};
+
+//JZNodeDisplay
+class JZNodeDisplay : public JZNode
+{
+public:
+    JZNodeDisplay();
+    ~JZNodeDisplay();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 protected:
 
 };

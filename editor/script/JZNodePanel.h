@@ -35,14 +35,9 @@ public:
 
     void setFile(JZScriptItem *file);        
     void setView(JZNodeView *view);
-    void updateDefine();
+    void updateDefine();    
 
-    QTreeWidgetItem *itemOp();
-    QTreeWidgetItem *itemProcess();
-
-    void addLocalVariable(JZParamDefine def);
-    void removeLocalVariable(QString name);
-    void changeLocalVariable(QString name, JZParamDefine def);
+    QTreeWidgetItem *localVariableItem(QString name);    
 
 protected slots:
     void onSearch();
@@ -50,35 +45,34 @@ protected slots:
     void onAddScriptParam();    
     void onContextMenu(const QPoint &pos);
 
-protected:        
-    void init();
-    void initData();
-    void initBasicFlow();    
-    void initLocalDefine();    
+protected:      
+    enum {
+        Create_Function,
+        Create_Param,
+        Create_Class,
+    };
+
+    void init();       
+    void initBasic();    
+    void initLocalDefine();        
 
     void initThis(QTreeWidgetItem *root);
     void initConstParam(QTreeWidgetItem *root);        
-    void initScriptParam(QTreeWidgetItem *root);    
         
     void initProcess(QTreeWidgetItem *root);
     void initExpression(QTreeWidgetItem *root);
-    void initConvert(QTreeWidgetItem *root);    
     void initAll(QTreeWidgetItem *root);
 
-    void addModule(QTreeWidgetItem *item_root,QString name);
-    void updateClass(QTreeWidgetItem *item_root,const QString &class_name,bool show_protected);
+    void addModule(QTreeWidgetItem *item_root,QString name);    
 
-    void updateThis();    
-    void updateInputVariable();
-    void updateLocalVariable();
-    void updateGlobalVariable();    
+    void updateFunction();
+    void updateThis();        
     void updateLocalDefine();
-    void updateVariable(QTreeWidgetItem *item, QStringList paramList);    
-    
+    void updateGlobalVariable();        
+        
     QTreeWidgetItem *createFolder(QString name);
     QTreeWidgetItem *createNode(JZNode *node);
     QTreeWidgetItem *createParam(QString name);
-    QTreeWidgetItem *createMemberParam(QString name);
     QTreeWidgetItem *createClass(QString name);
     QTreeWidgetItem *createFunction(QString name);
     void setNode(QTreeWidgetItem *item,JZNode *node);
@@ -86,8 +80,11 @@ protected:
     void removeItem(QTreeWidgetItem *root, QString name);
     bool filterItem(QTreeWidgetItem *root,QString name);    
     bool isClassItem(QTreeWidgetItem *item);
-    const JZModule *module(QString name);
-    QTreeWidgetItem *localVariableItem(QString name);
+    const JZModule *module(QString name);    
+
+    QStringList childItemText(QTreeWidgetItem *root);
+    void sortChildItem(QTreeWidgetItem *root);
+    void syncChildList(QTreeWidgetItem *root,QStringList list,int type);
 
     JZNodeTreeWidget *m_tree;    
     JZNodeView *m_view;
@@ -95,16 +92,11 @@ protected:
     JZScriptClassItem *m_classFile;
     QLineEdit *m_lineSearch;    
     
-    QTreeWidgetItem *m_itemOp;
-    QTreeWidgetItem *m_itemProcess;
-    QTreeWidgetItem *m_memberFunction;
-    QTreeWidgetItem *m_itemMemberParam;
-    QTreeWidgetItem *m_itemInputParam;
+    QTreeWidgetItem *m_itemFunction;       
     QTreeWidgetItem *m_itemLocalParam;
-    QTreeWidgetItem *m_itemGlobalParam;
-
-    QTreeWidgetItem *m_itemLocalDefine;
-    QTreeWidgetItem *m_module;
+    QTreeWidgetItem *m_itemClassDefine;
+    QTreeWidgetItem *m_itemLocalDefine;    
+    QTreeWidgetItem *m_itemGlobalVariable;
 };
 
 #endif

@@ -258,6 +258,7 @@ QString JZScriptEnvironment::variantTypeName(const QVariant &v) const
 
 bool JZScriptEnvironment::isVaildType(QString type) const
 {
+    QString bast_type = JZNodeType::baseType(type);
     if (JZNodeType::nameToType(type) != Type_none)
         return true;
 

@@ -477,6 +477,24 @@ bool JZNodeFormat::compiler(JZNodeCompiler* compiler, QString& error)
     return false;
 }
 
+//JZNodeDisplay
+JZNodeDisplay::JZNodeDisplay()
+{
+    m_type = Node_display;
+    m_name = "diaplay";
+
+    int in = addParamIn("var1");
+}
+
+JZNodeDisplay::~JZNodeDisplay()
+{
+}
+
+bool JZNodeDisplay::compiler(JZNodeCompiler *compiler, QString &error)
+{
+    return true;
+}
+
 //JZNodeThis
 JZNodeThis::JZNodeThis()
 {

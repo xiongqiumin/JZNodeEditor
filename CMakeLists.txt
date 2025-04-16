@@ -58,6 +58,8 @@ set(JZNodeCore_SOURCES
     ${CMAKE_SOURCE_DIR}/script/JZModule.h
     ${CMAKE_SOURCE_DIR}/script/JZNode.cpp
     ${CMAKE_SOURCE_DIR}/script/JZNode.h
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFlow.cpp
+    ${CMAKE_SOURCE_DIR}/script/JZNodeFlow.h
     ${CMAKE_SOURCE_DIR}/script/JZNodeBind.cpp
     ${CMAKE_SOURCE_DIR}/script/JZNodeBind.h
     ${CMAKE_SOURCE_DIR}/script/JZNodeBuilder.cpp
@@ -278,10 +280,12 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeTypeHelper.h
     editor/script/JZNodeView.cpp
     editor/script/JZNodeView.h
+    editor/script/JZNodeViewCommand.cpp
+    editor/script/JZNodeViewCommand.h
     editor/script/JZNodeViewMap.cpp
     editor/script/JZNodeViewMap.h
-    editor/script/JZNodeViewPanel.cpp
-    editor/script/JZNodeViewPanel.h
+    editor/script/JZNodeFlowPanel.cpp
+    editor/script/JZNodeFlowPanel.h
     editor/script/JZNodeVirtualFuctionEditDialog.cpp
     editor/script/JZNodeVirtualFuctionEditDialog.h
     editor/script/JZNodeWatch.cpp

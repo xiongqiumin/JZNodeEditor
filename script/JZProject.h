@@ -142,8 +142,7 @@ signals:
     void sigDefineChanged();
     void sigItemChanged(JZProjectItem *item);
     void sigBreakPointChanged(BreakPointChange reason,QString file, int id);
-    void sigScriptNodeChanged(JZScriptItem *file, int nodeId,const QByteArray &buffer);
-    void sigScriptNodeWidgetChanged(JZScriptItem *file, int nodeId, int propId);
+    void sigScriptNodeChanged(JZScriptItem *file, int nodeId,const QByteArray &buffer);    
 
 protected:
     Q_DISABLE_COPY(JZProject)

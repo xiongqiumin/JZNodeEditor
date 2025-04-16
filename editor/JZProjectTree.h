@@ -45,10 +45,11 @@ protected:
     bool canItemRename(QTreeWidgetItem *item);
     void addItem(JZProjectItem *item);
     void addItem(QTreeWidgetItem *parent, JZProjectItem *item);
-    void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);        
+    void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);    
+    void sortItem(QTreeWidgetItem *item);
 
     QTreeWidgetItem *getItem(QString path);
-    JZProjectItem *getFile(QTreeWidgetItem *view_item);
+    JZProjectItem *getProjectItem(QTreeWidgetItem *view_item);
     bool canOpenItem(JZProjectItem *item);
     
     void cancelEdit();

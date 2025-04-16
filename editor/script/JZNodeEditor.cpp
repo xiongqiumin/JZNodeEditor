@@ -97,7 +97,7 @@ void JZNodeEditor::init()
 {                
     //left
     m_nodePanel = new JZNodePanel();
-    m_nodeViewPanel = new JZNodeViewPanel();
+    m_nodeViewPanel = new JZNodeFlowPanel();
 
     QTabWidget *tabView = new QTabWidget();
     tabView->addTab(m_nodePanel, "编辑");
@@ -322,14 +322,9 @@ ScriptDepend JZNodeEditor::scriptTestDepend()
     return m_runProp->depend();
 }
 
-void JZNodeEditor::resetPropValue()
+void JZNodeEditor::clearRuntimeValue()
 {
-    m_view->resetPropValue();
-}
-
-void JZNodeEditor::setNodeValue(int nodeId, int prop_id, const QString &value)
-{
-    m_view->setNodePropValue(nodeId, prop_id, value);
+    m_view->clearRuntimeValue();
 }
 
 void JZNodeEditor::setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value)

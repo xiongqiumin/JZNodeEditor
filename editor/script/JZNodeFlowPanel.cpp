@@ -1,11 +1,11 @@
 ﻿#include <QVBoxLayout>
-#include "JZNodeViewPanel.h"
+#include "JZNodeFlowPanel.h"
 #include "JZScriptItem.h"
 #include "JZNodeView.h"
 #include "JZNodeValue.h"
 
-// JZNodeViewPanel
-JZNodeViewPanel::JZNodeViewPanel(QWidget *widget)
+// JZNodeFlowPanel
+JZNodeFlowPanel::JZNodeFlowPanel(QWidget *widget)
     : QWidget(widget)
 {        
     QVBoxLayout *layout = new QVBoxLayout();
@@ -15,27 +15,27 @@ JZNodeViewPanel::JZNodeViewPanel(QWidget *widget)
 
     m_lineSearch = new QLineEdit();
     layout->addWidget(m_lineSearch);
-    connect(m_lineSearch,&QLineEdit::returnPressed,this,&JZNodeViewPanel::onSearch);
+    connect(m_lineSearch,&QLineEdit::returnPressed,this,&JZNodeFlowPanel::onSearch);
 
     m_tree = new QTreeWidget();
     m_tree->setColumnCount(1);
     m_tree->setHeaderHidden(true);
 
-    connect(m_tree, &QTreeWidget::itemClicked, this, &JZNodeViewPanel::onTreeItemClicked);
+    connect(m_tree, &QTreeWidget::itemClicked, this, &JZNodeFlowPanel::onTreeItemClicked);
     setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_tree, &QTreeWidget::customContextMenuRequested, this, &JZNodeViewPanel::onContextMenu);
+    connect(m_tree, &QTreeWidget::customContextMenuRequested, this, &JZNodeFlowPanel::onContextMenu);
 
     layout->addWidget(m_tree);
     setLayout(layout);    
 }
 
-JZNodeViewPanel::~JZNodeViewPanel()
+JZNodeFlowPanel::~JZNodeFlowPanel()
 {
 }
 
-QString JZNodeViewPanel::inputText(JZNode *to_node, int pin_id)
+QString JZNodeFlowPanel::inputText(JZNode *to_node, int pin_id)
 {
     QList<int> in_list = m_file->getConnectInput(to_node->id(), pin_id);
     if (in_list.size() == 0)
@@ -79,7 +79,7 @@ QString JZNodeViewPanel::inputText(JZNode *to_node, int pin_id)
     return node->name();
 }
 
-QString JZNodeViewPanel::nodeText(JZNode *node)
+QString JZNodeFlowPanel::nodeText(JZNode *node)
 {
     if (node->type() == Node_setParam)
     {
@@ -107,12 +107,12 @@ QString JZNodeViewPanel::nodeText(JZNode *node)
     return node->name();
 }
 
-void JZNodeViewPanel::setView(JZNodeView *view)
+void JZNodeFlowPanel::setView(JZNodeView *view)
 {
     m_view = view;
 }
 
-void JZNodeViewPanel::updateFlow(JZScriptItem *file)
+void JZNodeFlowPanel::updateFlow(JZScriptItem *file)
 {        
     m_file = file;
     m_tree->clear();
@@ -123,7 +123,7 @@ void JZNodeViewPanel::updateFlow(JZScriptItem *file)
     m_tree->expandAll();
 }
 
-JZNode *JZNodeViewPanel::nextNode(JZNode *node, int pin_id)
+JZNode *JZNodeFlowPanel::nextNode(JZNode *node, int pin_id)
 {
     auto lines = m_file->getConnectPin(node->id(), pin_id);
     if (lines.size() == 0)
@@ -133,7 +133,7 @@ JZNode *JZNodeViewPanel::nextNode(JZNode *node, int pin_id)
     return m_file->getNode(line->to.nodeId);
 }
 
-void JZNodeViewPanel::addFlow(QTreeWidgetItem *parent, QTreeWidgetItem *lca_parent, JZNode *node, QList<int> flow_list)
+void JZNodeFlowPanel::addFlow(QTreeWidgetItem *parent, QTreeWidgetItem *lca_parent, JZNode *node, QList<int> flow_list)
 {
     JZNode *lca_node = nullptr;
     if(flow_list.size() > 1)
@@ -161,7 +161,7 @@ void JZNodeViewPanel::addFlow(QTreeWidgetItem *parent, QTreeWidgetItem *lca_pare
         createNode(lca_parent, lca_node, nullptr);
 }
 
-JZNode *JZNodeViewPanel::findLCA(JZNode *node, QList<int> flow_list)
+JZNode *JZNodeFlowPanel::findLCA(JZNode *node, QList<int> flow_list)
 {
     if (m_lcaMap.contains(node))
         return m_lcaMap[node];
@@ -199,7 +199,7 @@ lca_end:
     return ret;
 }
 
-void JZNodeViewPanel::createNode(QTreeWidgetItem *parent, JZNode *node, JZNode *lca_node)
+void JZNodeFlowPanel::createNode(QTreeWidgetItem *parent, JZNode *node, JZNode *lca_node)
 {        
     while (node)
     {
@@ -233,12 +233,12 @@ void JZNodeViewPanel::createNode(QTreeWidgetItem *parent, JZNode *node, JZNode *
     }
 }
 
-void JZNodeViewPanel::onSearch()
+void JZNodeFlowPanel::onSearch()
 {
 
 }
 
-void JZNodeViewPanel::onTreeItemClicked(QTreeWidgetItem *current, int col)
+void JZNodeFlowPanel::onTreeItemClicked(QTreeWidgetItem *current, int col)
 {
     QVariant v = current->data(0, Qt::UserRole);
     if (v.isNull())
@@ -248,7 +248,7 @@ void JZNodeViewPanel::onTreeItemClicked(QTreeWidgetItem *current, int col)
     m_view->selectNode(node_id);
 }
 
-void JZNodeViewPanel::onContextMenu(const QPoint &pos)
+void JZNodeFlowPanel::onContextMenu(const QPoint &pos)
 {
 
 }

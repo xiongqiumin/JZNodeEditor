@@ -8,6 +8,7 @@
 #include "JZNodeFunction.h"
 #include "JZUiItem.h"
 #include "JZNodeUtils.h"
+#include "JZNodeFlow.h"
 
 JZProjectTemplate *JZProjectTemplate::instance()
 {

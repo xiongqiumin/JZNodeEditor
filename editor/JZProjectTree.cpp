@@ -15,8 +15,8 @@
 #include "JZNodeSlotEditDialog.h"
 #include "JZEditorGlobal.h"
 
-enum{
-    Item_none,
+enum {
+    Role_itemPath = Qt::UserRole,    
 };
 
 JZProjectTree::JZProjectTree()
@@ -72,17 +72,18 @@ void JZProjectTree::init()
     root->setText(0,m_project->name());
     m_tree->addTopLevelItem(root);
     setItem(root,m_project->root());
+    sortItem(root);
 
     m_tree->expandAll();
 }
 
 void JZProjectTree::addItem(QTreeWidgetItem *parent, JZProjectItem *item)
 {
-    Q_ASSERT(getFile(parent) == item->parent());
+    Q_ASSERT(getProjectItem(parent) == item->parent());
 
     QTreeWidgetItem *view_item = new QTreeWidgetItem();
     view_item->setText(0,item->name());
-    view_item->setData(0, Qt::UserRole, item->name());
+    view_item->setData(0, Role_itemPath, item->name());
     parent->addChild(view_item);
     setItem(view_item, item);
 }
@@ -104,7 +105,7 @@ void JZProjectTree::keyPressEvent(QKeyEvent *e)
 
 bool JZProjectTree::canItemRename(QTreeWidgetItem *view_item)
 {
-    JZProjectItem *item = getFile(view_item);
+    JZProjectItem *item = getProjectItem(view_item);
     if (item == m_project->mainFunction() || item->itemType() == ProjectItem_param)
         return false;
 
@@ -125,6 +126,21 @@ void JZProjectTree::addItem(JZProjectItem *item)
         item = parent_item;
         parent_item = parent_item->parent();
     }
+}
+
+void JZProjectTree::sortItem(QTreeWidgetItem *item)
+{
+    for (int i = 0; i < item->childCount(); i++)
+        sortItem(item->child(i));
+
+    UiHelper::treeSortChilds(item, [this](QTreeWidgetItem *a, QTreeWidgetItem *b)->bool {
+        int a_pri = getProjectItem(a)->itemType();
+        int b_pri = getProjectItem(b)->itemType();
+        if (a_pri != b_pri)
+            return a_pri < b_pri;
+        else
+            return a->text(0) < b->text(0);
+    });
 }
 
 void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
@@ -149,7 +165,7 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
         JZProjectItem *sub_item = list[i];
         QTreeWidgetItem *sub_view = new QTreeWidgetItem();
         sub_view->setText(0,sub_item->name());        
-        sub_view->setData(0, Qt::UserRole, sub_item->name());
+        sub_view->setData(0, Role_itemPath, sub_item->name());
         view_item->addChild(sub_view);
         setItem(sub_view,sub_item);
     }
@@ -189,7 +205,7 @@ QTreeWidgetItem *JZProjectTree::getItem(QString path)
     return item;
 }
 
-JZProjectItem *JZProjectTree::getFile(QTreeWidgetItem *view_item)
+JZProjectItem *JZProjectTree::getProjectItem(QTreeWidgetItem *view_item)
 {
     QString path = filepath(view_item);
     auto item = m_project->getItem(path);
@@ -202,7 +218,7 @@ void JZProjectTree::cancelEdit()
     m_tree->blockSignals(true);
     if(m_editItem)
     {
-        QString old_name = getFile(m_editItem)->name();
+        QString old_name = getProjectItem(m_editItem)->name();
 
         m_editItem->setFlags(m_editItem->flags() & ~Qt::ItemIsEditable);
         m_editItem->setText(0, old_name);        
@@ -219,7 +235,7 @@ QString JZProjectTree::filepath(QTreeWidgetItem *item)
     {
         if (!path.isEmpty())
             path = "/" + path;;
-        path = item->data(0,Qt::UserRole).toString() + path;
+        path = item->data(0, Role_itemPath).toString() + path;
         item = item->parent();
     }
     return "./" + path;
@@ -240,13 +256,13 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     if(m_editItem != item)
         return;    
 
-    QString old_name = getFile(m_editItem)->name();    
+    QString old_name = getProjectItem(m_editItem)->name();    
     QString name = m_editItem->text(0);
     if (old_name == name)
         return;
 
     auto item_parent = m_editItem->parent();
-    auto p = getFile(item_parent);
+    auto p = getProjectItem(item_parent);
     QString name_error;
     if(name.isEmpty())
         name_error = "名称不能为空";
@@ -259,11 +275,11 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     m_editItem->setFlags(m_editItem->flags() & ~Qt::ItemIsEditable);
     if(name_error.isEmpty())
     {
-        auto project_item = getFile(m_editItem);
+        auto project_item = getProjectItem(m_editItem);
         project_item->setName(name);
         
         m_project->renameItem(project_item,name);
-        item->setData(0,Qt::UserRole, project_item->name());
+        item->setData(0, Role_itemPath, project_item->name());
 
         int old_idx = item_parent->indexOfChild(item);
         int new_idx = project_item->parent()->indexOfItem(project_item);
@@ -294,7 +310,7 @@ void JZProjectTree::onItemClicked(QTreeWidgetItem *view_item)
 
 void JZProjectTree::onItemDoubleClicked(QTreeWidgetItem *view_item)
 {     
-    JZProjectItem *item = getFile(view_item);
+    JZProjectItem *item = getProjectItem(view_item);
     if(canOpenItem(item))
         sigActionTrigged(Action_open,item->itemPath());
     else    
@@ -324,7 +340,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     if (!view_item)
         return;    
 
-    JZProjectItem *item = getFile(view_item);
+    JZProjectItem *item = getProjectItem(view_item);
     QMenu menu(this);
     QAction *actRemove = nullptr;
     QAction *actRename = nullptr;

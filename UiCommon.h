@@ -9,24 +9,12 @@
 
 class QTreeWidget;
 
-class TreeDiffResult
-{
-public:
-    enum{
-        Add,
-        Remove,        
-    };
-
-    QString name;
-    int type;
-};
-
 class UiHelper
 {
 public:
-    static bool treeFilter(QTreeWidgetItem *tree, QString name);
-    static QList<TreeDiffResult> treeDiff(QTreeWidgetItem *root,const QStringList &list);
+    static bool treeFilter(QTreeWidgetItem *tree, QString name);    
     static int treeIndexOf(QTreeWidgetItem *root,const QString &name);
+    static void treeSortChilds(QTreeWidgetItem *node,std::function<bool(QTreeWidgetItem*,QTreeWidgetItem*)> cmp);
     static void clearTreeItem(QTreeWidgetItem *root);    
 };
 

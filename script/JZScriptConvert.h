@@ -2,6 +2,7 @@
 #define JZ_ScriptItem_Help_H_
 
 #include "JZScriptItem.h"
+#include "JZNodeFlow.h"
 
 class asCScriptNode;
 class JZScriptConvert

@@ -41,31 +41,31 @@ int UiHelper::treeIndexOf(QTreeWidgetItem *node,const QString &name)
     return -1;
 }
 
-QList<TreeDiffResult> UiHelper::treeDiff(QTreeWidgetItem *root, const QStringList &names)
-{    
-    QList<TreeDiffResult> list;
-    for (int i = 0; i < root->childCount(); i++)
+void UiHelper::treeSortChilds(QTreeWidgetItem *root,std::function<bool(QTreeWidgetItem*,QTreeWidgetItem*)> cmp)
+{
+    int count = root->childCount();
+    QList<QTreeWidgetItem*> sort_list;
+    for (int i = count - 1; i >= 0; i--)
     {
-        if (!names.contains(root->child(i)->text(0)))
+        sort_list << root->child(i);
+    }
+    std::sort(sort_list.begin(), sort_list.end(), cmp);
+
+    bool need_sort = false;
+    for (int i = 0; i < count; i++)
+    {
+        if (sort_list[i] != root->child(i))
         {
-            TreeDiffResult ret;
-            ret.name = root->child(i)->text(0);
-            ret.type = TreeDiffResult::Remove;
-            list << ret;
+            need_sort = true;
+            break;
         }
     }
-    
-    for (int i = 0; i < names.count(); i++)
-    {
-        QTreeWidgetItem *item = nullptr;
-        int cur_index = treeIndexOf(root, names[i]);
-        if (cur_index == -1)
-        {            
-            TreeDiffResult ret;
-            ret.name = names[i];
-            ret.type = TreeDiffResult::Add;
-            list << ret;
-        }
-    }
-    return list;
+    if (!need_sort)
+        return;
+
+    for (int i = 0; i < count; i++)
+        root->takeChild(i);
+
+    for (int i = 0; i < sort_list.size(); i++)
+        root->addChild(sort_list[i]);   
 }

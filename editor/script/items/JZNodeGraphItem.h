@@ -5,11 +5,8 @@
 #include <QWidget>
 #include "JZNodeBaseItem.h"
 #include "JZNode.h"
-#include "JZNodePinWidget.h"
 
 class JZNodeLineItem;
-
-class JZNodeGraphItem;
 class JZNodeGraphItem : public JZNodeBaseItem
 {
 public:
@@ -17,8 +14,7 @@ public:
     ~JZNodeGraphItem();
 
     virtual QRectF boundingRect() const override;
-    virtual void updateNode() override;
-    void updatePinWidget(int id);
+    virtual void updateNode() override;    
     void updateSize();
 
     JZNode *node();
@@ -29,12 +25,9 @@ public:
     QSize size() const;
     
     QString getTip(QPointF pt);
-
-    void setPinValue(int pin_id,const QString &value);
-    QString pinValue(int pin_id);
-    void setPinRuntimeValue(int pin_id,const JZNodeDebugParamValue &value);
-    void updateRuntimeStatus();
-    void resetPropValue();
+        
+    void setPinRuntimeValue(int pin_id,const QString &value);    
+    void clearRuntimeValue();
 
     void setError(const QString &error);
     void clearError();
@@ -42,8 +35,6 @@ public:
     
     void onTimerEvent(int event);
     void clear();
-
-    void setRunningMode(ProcessStatus mode);
 
 protected:
     enum
@@ -53,28 +44,25 @@ protected:
 
     enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };        
     struct Block
-    {
-        enum {
-            Pin,
-            Widget,
-        };
-
+    {                
         Block();
         ~Block();
         
         int width();        
         int height();
         void clear();
-        
+        bool isPin();
+                
+        int id;
+        int pri;
+        bool isInput;
+        JZNodePin *pin;
+        IconType iconType;
+        QString name;
+
         QRect iconRect;
         QRect nameRect;
-        QRect valueRect; //valueRect 就是 widget 显示范围
-
-        int pri;
-        bool isDispName;
-        bool isPin;
-        QGraphicsProxyWidget *proxy;
-        QWidget *widget;
+        QRect valueRect; //valueRect 就是 widget 显示范围        
     };    
     typedef QSharedPointer<Block> BlockPtr;
 
@@ -85,21 +73,20 @@ protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
     virtual void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+
+    virtual Block fromPin(JZNodePin *pin);
     void drawProp(QPainter *painter,int pinId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
     void calcGemo(int pin, int x, int y, Block *gemo);
     void updatePin();
-    void updateErrorGemo();        
-    
-    void createPinWidget(int prop_id);
-    void setWidgetValue(int prop_id, const QString &value);
-    QString getWidgetValue(int prop_id);
+    void updateErrorGemo();            
 
     QSize m_size;    
     JZNode *m_node;    
     QRectF m_errorRect;    
     QString m_error;
     QMap<int,Block> m_blocks;
+    QMap<int, QString> m_runtimeValue;
     
     int m_downPin;
     int m_longPress;        

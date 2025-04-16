@@ -1,5 +1,6 @@
 ﻿#include <QPainter>
 #include <QGraphicsSceneMouseEvent>
+#include "JZNodeGraphItem.h"
 #include "JZNodeGroupItem.h"
 #include "JZNodeView.h"
 

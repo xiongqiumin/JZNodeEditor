@@ -3,7 +3,7 @@
 
 #include "JZEditor.h"
 #include "JZNodeView.h"
-#include "JZNodeViewPanel.h"
+#include "JZNodeFlowPanel.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeAutoRunWidget.h"
 #include "JZNodePropertyEditor.h"
@@ -51,9 +51,8 @@ public:
     void setCompilerResult(const CompilerResult *info);
     void setAutoRunResult(const UnitTestResult &result);
 
-    void setNodeValue(int nodeId, int prop_id, const QString &value);
     void setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value);
-    void resetPropValue();
+    void clearRuntimeValue();
     void updateDefine();    
         
 signals:
@@ -75,7 +74,7 @@ protected:
 
     JZNodeView *m_view;    
     JZNodePanel *m_nodePanel;
-    JZNodeViewPanel *m_nodeViewPanel;
+    JZNodeFlowPanel *m_nodeViewPanel;
     JZNodePropertyEditor *m_nodeProp;
     JZNodeAutoRunWidget* m_runProp;
     QTabWidget *m_tabLeft;

@@ -9,7 +9,6 @@
 #include <QUndoStack>
 #include <QGraphicsRectItem>
 #include "JZNodeScene.h"
-#include "JZNodeGraphItem.h"
 #include "JZNodeLineItem.h"
 #include "JZNodeGroupItem.h"
 #include "JZNodePropertyEditor.h"
@@ -17,73 +16,15 @@
 #include "JZScriptItem.h"
 #include "JZNodeProgram.h"
 #include "JZNodeViewMap.h"
+#include "JZNodeDebugPacket.h"
 #include "JZProcess.h"
+#include "JZNodeViewCommand.h"
 
 class JZNodeView;
 class JZNodePanel;
-class JZNodeViewPanel;
+class JZNodeFlowPanel;
 class JZProject;
-class JZNodeViewCommand : public QUndoCommand
-{
-public:    
-    JZNodeViewCommand(JZNodeView *view,int type);
-
-    virtual void redo() override;
-    virtual void undo() override;       
-    virtual int id() const override;
-    virtual bool mergeWith(const QUndoCommand *command);
-
-    int command;
-    int itemId;
-    int pinId;
-    QVariant oldValue;
-    QVariant newValue;   
-    QPointF oldPos;
-    QPointF newPos; 
-
-protected:
-    JZNodeView *m_view;
-};
-
-class JZNodeMoveCommand : public QUndoCommand
-{
-public:
-    struct NodePosInfo
-    {
-        int itemId;
-        QPointF oldPos;
-        QPointF newPos;
-    };
-
-    JZNodeMoveCommand(JZNodeView *view, int type);
-
-    virtual void redo() override;
-    virtual void undo() override;
-    virtual int id() const override;
-    virtual bool mergeWith(const QUndoCommand *command);    
-   
-    int command;
-    QList<NodePosInfo> nodeList;
-
-protected:
-    JZNodeView *m_view;
-};
-
-class JZNodeVariableCommand : public QUndoCommand
-{
-public:
-    JZNodeVariableCommand(JZNodeView *view, int type);
-
-    virtual void redo() override;
-    virtual void undo() override;
-
-    int command;
-    JZParamDefine newParam;
-    JZParamDefine oldParam;
-
-protected:
-    JZNodeView *m_view;
-};
+class JZNodeGraphItem;
 
 class JZNodeView : public QGraphicsView
 {
@@ -97,7 +38,7 @@ public:
     void setRunEditor(JZNodeAutoRunWidget *runEditor);
     
     void setPanel(JZNodePanel *panel);
-    void setFlowPanel(JZNodeViewPanel *panel);
+    void setFlowPanel(JZNodeFlowPanel *panel);
 
     void setFile(JZScriptItem *file);
     JZScriptItem *file();
@@ -115,15 +56,14 @@ public:
     QByteArray getNodeData(int id);
     void setNodeData(int id,const QByteArray &buffer);
     void setNodePos(int id, QPointF pos);
+    void setNodePinValue(int id, int pin, QString value);
     
     void updateNode(int id);
     bool isPropEditable(int id,int pinId);
 
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
-
-    void setNodePropValue(int nodeId, int prop_id,QString value);
-    QString getNodePropValue(int nodeId, int prop_id);
+    
     void setNodeTimer(int ms,int nodeId,int event);
 
     /* connect */
@@ -183,7 +123,7 @@ public:
 
     int runtimeNode();
     void setRuntimeNode(int nodeId);
-    void resetPropValue();
+    void clearRuntimeValue();
     void setRuntimeValue(int node_id,int pin_id,const JZNodeDebugParamValue &value);
 
     bool isBreakPoint(int nodeId);
@@ -210,9 +150,8 @@ protected slots:
     void onMapSceneChanged(QRectF rc);
     void onMapSceneScaled(bool flag);
 
-    void onScriptNodeChanged(JZScriptItem *file, int nodeId, const QByteArray &buffer);
-    void onScriptNodeWidgetChanged(JZScriptItem *file, int nodeId, int propId);
-    void onPropChanged(int nodeId, int pinId, const QString &value);
+    void onNodeChanged(JZScriptItem *file, int nodeId, const QByteArray &buffer);
+    void onNodePinValueChanged(int nodeId, int pinId, const QString &value);
     void onDependChanged();
 
 protected:
@@ -260,8 +199,8 @@ protected:
     void udpateFlowPanel();
 
     void addCreateNodeCommand(const QByteArray &buffer,QPointF pt);
-    void addPropChangedCommand(int id,const QByteArray &oldValue);
-    void addPinValueChangedCommand(int id,int pin_id, const QByteArray &oldValue);
+    void addNodeChangedCommand(int id,const QByteArray &oldValue);
+    void addPinValueChangedCommand(int id,int pin_id, const QString &oldValue);
     void addMoveNodeCommand(int id, QPointF pt);
     
     void addRemoveLineCommand(int line_id);
@@ -269,6 +208,7 @@ protected:
     int addCreateGroupCommand(const JZNodeGroup &group);
     void addRemoveGroupCommand(int id);
     void addSetGroupCommand(int id, const JZNodeGroup &group);
+    int propEditorNodeId();
      
     void autoCompiler();
     void autoRunning();
@@ -278,7 +218,7 @@ protected:
     QStringList matchParmas(const JZNodeObjectDefine *define,int type,QString pre);    
 
     JZNodePanel *m_panel;
-    JZNodeViewPanel *m_flowPanel;
+    JZNodeFlowPanel *m_flowPanel;
     bool m_isUpdateFlowPanel;
 
     JZNodeViewMap *m_map;

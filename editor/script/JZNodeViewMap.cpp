@@ -2,6 +2,7 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include "JZNodeViewMap.h"
+#include "JZNodeGraphItem.h"
 #include "JZNodeView.h"
 
 //DrawInfo

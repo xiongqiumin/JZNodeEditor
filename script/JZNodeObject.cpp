@@ -248,13 +248,10 @@ bool JZNodeObjectDefine::check(QString &error) const
     QStringList param_list = paramList(false);
     for (int i = 0; i < param_list.size(); i++)
     {
-        auto param_def = param(param_list[0]);   
-        QString param_type = JZNodeType::baseType(param_def->type);
-
-        auto param_meta = manager->meta(param_type);
-        if (!param_meta)
+        auto param_def = param(param_list[0]);                
+        if (!manager->env()->isVaildType(param_def->type))
         {
-            error = "param " + param_type + " not define";
+            error = "param " + param_def->type + " not define";
             return false;
         }
     }

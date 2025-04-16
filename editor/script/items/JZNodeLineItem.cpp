@@ -1,6 +1,7 @@
 ﻿#include <math.h>
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
+#include "JZNodeGraphItem.h"
 #include "JZNodeLineItem.h"
 #include "JZNodeView.h"
 

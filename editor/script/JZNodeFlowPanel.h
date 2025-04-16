@@ -7,13 +7,13 @@
 #include "JZNodePropertyEditor.h"
 
 class JZNodeView;
-class JZNodeViewPanel : public QWidget
+class JZNodeFlowPanel : public QWidget
 {
     Q_OBJECT
 
 public:
-    JZNodeViewPanel(QWidget *widget = nullptr);
-    ~JZNodeViewPanel();
+    JZNodeFlowPanel(QWidget *widget = nullptr);
+    ~JZNodeFlowPanel();
 
     void setView(JZNodeView *view);
     void updateFlow(JZScriptItem *file);
