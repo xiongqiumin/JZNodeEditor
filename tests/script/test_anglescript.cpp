@@ -11,25 +11,6 @@ AngleScriptTest::AngleScriptTest()
     
 }
 
-bool AngleScriptTest::buildAs(QString code)
-{
-    auto script_file = m_project.mainFile();
-
-    JZFunctionDefine as_func;
-    as_func.name = "as_func";
-    auto script_item = script_file->addFunction(as_func);
-
-    JZScriptConvert convert;
-    convert.init(script_item);
-    if(!convert.convertFunction(code))
-    {
-        QTest::qVerify(false, "convert", convert.error().toLocal8Bit().data(), __FILE__, __LINE__);
-        return false;
-    }
-
-    return build();
-}
-
 void AngleScriptTest::testHello()
 {
     return;
@@ -136,7 +117,6 @@ void AngleScriptTest::testIf()
 
 void AngleScriptTest::testFor()
 {
-    return;
     QString code = R"(void testFor() {       
         int result = 0;
         for (int i = 0; i < n; i++) {

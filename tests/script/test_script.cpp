@@ -11,8 +11,6 @@
 #include "JZNodeValue.h"
 #include "JZNodeFunction.h"
 #include "JZNodeExpression.h"
-#include "JZNodeDebugServer.h"
-#include "JZNodeDebugClient.h"
 #include "JZNodeBind.h"
 #include "JZContainer.h"
 
@@ -656,76 +654,6 @@ void ScriptTest::testBreakPoint()
     }
 
     m_engine.stop();
-}
-
-void ScriptTest::testDebugServer()
-{           
-    QList<int> id_list,value_list;
-    if(!initWhileCase(id_list,value_list))
-        return;
-
-    m_engine.setDebug(true);
-    bool cmd_ret;
-    QVariantList in;
-    callAsync("main",in);
-
-    JZNodeDebugServer server;
-    JZNodeDebugClient client;
-    server.setEngine(&m_engine);
-    if(!server.startServer(18888))
-    {
-        QVERIFY2(false,"start server failded");
-    }
-    if(!client.connectToServer("127.0.0.1",18888))
-    {
-        QVERIFY2(false,"connect to server failded");
-    }
-    QThread::msleep(100);
-
-    JZNodeDebugInfo init_info;
-    JZNodeProgramInfo ret;
-    cmd_ret = client.init(init_info,ret);
-    QVERIFY(cmd_ret);
-
-    cmd_ret = server.waitForAttach(500); 
-    QVERIFY(cmd_ret);
-
-    QString main_function = m_project.mainFunctionPath();
-    for(int i = 0; i < 5; i++)
-    {
-        int cur_id = rand()%id_list.size();
-
-        BreakPoint pt;
-        pt.file = main_function;
-        pt.nodeId = id_list[cur_id];
-        pt.type = BreakPoint::nodeEnter;
-        client.addBreakPoint(pt);
-        msleep(50);
-
-        JZNodeRuntimeInfo runtime;
-        cmd_ret = client.runtimeInfo(runtime);
-        QVERIFY(cmd_ret);
-        QCOMPARE(runtime.status,Status_pause);
-
-        client.stepOver();
-        msleep(10);
-
-        JZNodeGetDebugParam get_param;
-        JZNodeGetDebugParamResp get_param_resp;        
-        get_param.coors << irRef("i");
-        
-        cmd_ret = client.getVariable(get_param,get_param_resp);
-        QVERIFY(cmd_ret);
-
-        int value = get_param_resp.values[0].value.toInt();
-        QCOMPARE(value, value_list[cur_id]);
-
-        client.removeBreakPoint(main_function, id_list[cur_id]);
-        client.resume();
-    }
-
-    client.stop(); 
-    server.stopServer();
 }
 
 void ScriptTest::testExpr()

@@ -10,6 +10,33 @@
 #include "JZNodeOperator.h"
 #include "JZNodeFunction.h"
 
+//TestServer
+class TestServer : public QThread
+{
+    Q_OBJECT
+
+public:
+    TestServer();
+
+    void init(JZProject* project);
+    void stop();
+
+protected slots:
+    void onRuntimeError();
+
+protected:
+    virtual void run() override;
+
+    void addInitFunction();
+    void addTimeoutFunction();
+
+    JZProject* m_project;
+    JZNodeProgram m_program;
+    JZNodeEngine* m_engine;
+};
+
+
+//BaseTest
 class BaseTest : public QObject
 {
     Q_OBJECT
@@ -25,7 +52,7 @@ protected slots:
 private slots:
     void initTestCase();
     void init();
-    void cleanup();
+    virtual void cleanup();
     
 protected:
     struct Promise
@@ -35,6 +62,7 @@ protected:
     };
     
     bool build();
+    bool buildAs(QString code);
     bool call(QString name,const QVariantList &in,QVariantList &out);
     void callAsync(QString name,const QVariantList &in);
     void stop();

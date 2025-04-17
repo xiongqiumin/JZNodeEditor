@@ -12,12 +12,12 @@ JZNodeDebugServer::JZNodeDebugServer()
     m_engine = nullptr;    
     m_vm = nullptr;
     m_init = false;
-    this->moveToThread(this);
+    m_preThread = nullptr;
 
-    connect(&m_server,&JZNetServer::sigNewConnect,this,&JZNodeDebugServer::onNewConnect);
-	connect(&m_server,&JZNetServer::sigDisConnect,this,&JZNodeDebugServer::onDisConnect);
-	connect(&m_server,&JZNetServer::sigNetPackRecv,this,&JZNodeDebugServer::onNetPackRecv);
-    connect(this,&JZNodeDebugServer::sigStop,this,&JZNodeDebugServer::onStop);    
+    m_server = new JZNetServer(this);
+    connect(m_server,&JZNetServer::sigNewConnect,this,&JZNodeDebugServer::onNewConnect);
+	connect(m_server,&JZNetServer::sigDisConnect,this,&JZNodeDebugServer::onDisConnect);
+	connect(m_server,&JZNetServer::sigNetPackRecv,this,&JZNodeDebugServer::onNetPackRecv); 
 }
 
 JZNodeDebugServer::~JZNodeDebugServer()
@@ -25,12 +25,21 @@ JZNodeDebugServer::~JZNodeDebugServer()
     stopServer();
 }
 
+void JZNodeDebugServer::run()
+{
+    exec();
+    m_server->stopServer();
+    moveToThread(m_preThread);
+    m_preThread = nullptr;
+}
+
 bool JZNodeDebugServer::startServer(int port)
 {
-    if(!m_server.startServer(port))
+    if(!m_server->startServer(port))
         return false;
 
-    m_server.moveToThread(this);
+    m_preThread = QThread::currentThread();
+    moveToThread(this);
     QThread::start();
     return true;
 }
@@ -40,16 +49,9 @@ void JZNodeDebugServer::stopServer()
     if(!isRunning())
         return;
     
-    emit sigStop(QThread::currentThread(), QPrivateSignal());
+    quit();
     wait();    
 } 
-
-void JZNodeDebugServer::onStop(QThread *stopThread)
-{
-    m_server.stopServer();
-    m_server.moveToThread(stopThread);
-    quit();
-}
 
 void JZNodeDebugServer::log(QString log)
 {
@@ -59,7 +61,7 @@ void JZNodeDebugServer::log(QString log)
     JZNodeDebugPacket result_pack;
     result_pack.cmd = Cmd_log;
     //result_pack.params << log;
-    m_server.sendPack(m_client,&result_pack);
+    m_server->sendPack(m_client,&result_pack);
 }
 
 void JZNodeDebugServer::setEngine(JZNodeEngine *eng)
@@ -97,7 +99,7 @@ JZNodeDebugInfo JZNodeDebugServer::debugInfo()
 void JZNodeDebugServer::onNewConnect(int netId)
 {
     if(m_client != -1)
-        m_server.closeConnect(netId);
+        m_server->closeConnect(netId);
 
     m_client = netId;
 }
@@ -171,7 +173,7 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     result_pack.cmd = cmd;
     result_pack.setId(packet->id());
     result_pack.buffer = result;
-    m_server.sendPack(netId,&result_pack);
+    m_server->sendPack(netId,&result_pack);
 }
 
 void JZNodeDebugServer::onRuntimeError(JZNodeRuntimeError error)
@@ -182,7 +184,7 @@ void JZNodeDebugServer::onRuntimeError(JZNodeRuntimeError error)
     JZNodeDebugPacket result_pack;
     result_pack.cmd = Cmd_runtimeError;
     result_pack.buffer = netDataPack(error);
-    m_server.sendPack(m_client,&result_pack);
+    m_server->sendPack(m_client,&result_pack);
 }
 
 void JZNodeDebugServer::onLog(const QString &text)
@@ -198,7 +200,7 @@ void JZNodeDebugServer::onStatusChanged(int status)
     JZNodeDebugPacket status_pack;
     status_pack.cmd = Cmd_runtimeStatus;
     //status_pack.params << status;
-    m_server.sendPack(m_client, &status_pack);
+    m_server->sendPack(m_client, &status_pack);
 }
 
 void JZNodeDebugServer::onWatchNotify()
@@ -219,7 +221,7 @@ void JZNodeDebugServer::onWatchNotify()
     JZNodeDebugPacket status_pack;
     status_pack.cmd = Cmd_watchChanged;
     status_pack.buffer = netDataPack<JZNodeRuntimeWatchResult>(info);
-    m_server.sendPack(m_client, &status_pack);
+    m_server->sendPack(m_client, &status_pack);
 }
 
 QVariant JZNodeDebugServer::getVariable(const JZNodeGetDebugParam &info)

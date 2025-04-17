@@ -14,7 +14,7 @@
 #include "JZNodeObject.h"
 #include "JZScriptEnvironment.h"
 
-enum{
+enum JZEngineStatus{
     Status_none,
     Status_running,
     Status_pause,
@@ -250,7 +250,7 @@ protected:
     bool checkIdlePause(const JZFunction *func);  //return is stop
     bool checkPause(int node_id);
     bool run();             
-    void updateStatus(int status);
+    void updateStatus(JZEngineStatus status);
 
     const JZFunction *function(QString name);
     const JZFunction *function(JZNodeIRCall *ir_call);
@@ -312,7 +312,7 @@ protected:
            
     JZFunction m_idleFunc;
     QAtomicInt m_statusCommand;
-    int m_status;     
+    JZEngineStatus m_status;
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
     bool m_debug;

@@ -33,7 +33,6 @@ void JZNodeLiteral::setDataType(int type)
 
     int out = paramOut(0);        
     pin(out)->setDataType({ JZNodeType::typeName(type) });
-    setName(JZNodeType::typeName(type));
     pin(out)->setFlag(Pin_out | Pin_param);        
     if (type == Type_bool)
         setLiteral("false");
@@ -102,7 +101,6 @@ bool JZNodeEnum::compiler(JZNodeCompiler *c, QString &error)
 
 void JZNodeEnum::setEnum(const JZNodeEnumDefine *meta)
 {    
-    setName(meta->name());
     setPinType(paramOut(0), { meta->name() });
     setKey(meta->defaultKey());
 }
@@ -141,7 +139,6 @@ bool JZNodeFlag::compiler(JZNodeCompiler *c, QString &error)
 
 void JZNodeFlag::setFlag(const JZNodeEnumDefine *meta)
 {
-    setName(meta->name());
     setPinType(paramOut(0), { meta->name() });
     setKey(meta->defaultKey());
 }
@@ -201,7 +198,6 @@ bool JZNodeConvert::updateNode(QString &error)
     auto env = environment();
     int id = paramOut(0);
     QString name = pinValue(id);
-    setName("convert to " + name + "");
     int type = env->nameToType(name);
         
     if (type != Type_none)

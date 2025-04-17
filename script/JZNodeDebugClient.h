@@ -26,13 +26,13 @@ public:
     bool getVariable(const JZNodeGetDebugParam &info,JZNodeGetDebugParamResp &ret);
     bool setVariable(const JZNodeSetDebugParam &info,JZNodeSetDebugParamResp &ret);
     
-    void detach();
-    void pause();       
-    void resume();
-    void stop();
-    void stepIn();
-    void stepOver();
-    void stepOut();    
+    bool detach();
+    bool pause();
+    bool resume();
+    bool stop();
+    bool stepIn();
+    bool stepOver();
+    bool stepOut();
 
 signals:
     void sigNetError();

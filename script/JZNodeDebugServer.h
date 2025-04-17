@@ -34,7 +34,6 @@ protected slots:
     void onNewConnect(int netId);
 	void onDisConnect(int netId);
 	void onNetPackRecv(int netId,JZNetPackPtr ptr);
-    void onStop(QThread *stopThread);
 
     void onRuntimeError(JZNodeRuntimeError error);    
     void onStatusChanged(int status);
@@ -42,6 +41,8 @@ protected slots:
     void onLog(const QString &log);
 
 protected:        
+    virtual void run() override;
+
     QVariant getVariable(const JZNodeGetDebugParam &list);
     QVariant setVariable(const JZNodeSetDebugParam &list);
     JZNodeDebugParamValue toDebugParam(const QVariant &value);          
@@ -50,9 +51,10 @@ protected:
     int m_client;
 
     JZNodeDebugInfo m_debugInfo;
-    JZNetServer m_server;    
+    JZNetServer *m_server;    
     JZNodeEngine *m_engine;    
     JZNodeVM *m_vm;        
+    QThread* m_preThread;
 };
 
 

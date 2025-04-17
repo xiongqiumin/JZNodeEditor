@@ -33,7 +33,7 @@ enum
     OP_bitand,
     OP_bitor,
     OP_bitxor,
-    OP_bitresver,
+    OP_bitreverse,
     OP_eq,  // ==
     OP_ne,  // !=
     OP_le,  // <=

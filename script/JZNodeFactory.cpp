@@ -102,7 +102,7 @@ void JZNodeFactory::init()
     registNode(Node_bitand, createJZNode<JZNodeBitAnd>);
     registNode(Node_bitor, createJZNode<JZNodeBitOr>);
     registNode(Node_bitxor, createJZNode<JZNodeBitXor>);
-    registNode(Node_bitresver, createJZNode<JZNodeBitResver>);
+    registNode(Node_bitreverse, createJZNode<JZNodeBitReverse>);
     registNode(Node_and,createJZNode<JZNodeAnd>);
     registNode(Node_or,createJZNode<JZNodeOr>);
     registNode(Node_not, createJZNode<JZNodeNot>);

@@ -9,6 +9,47 @@
 #include "JZNodeProgramDumper.h"
 #include "JZProjectTemplate.h"
 
+//TestServer
+TestServer::TestServer()
+{
+    m_project = nullptr;
+    m_engine = nullptr;
+}
+
+void TestServer::init(JZProject* project)
+{
+
+}
+
+void TestServer::addInitFunction()
+{
+
+}
+
+void TestServer::addTimeoutFunction()
+{
+
+}
+
+void TestServer::stop()
+{
+    if (m_engine)
+        m_engine->stop();
+    quit();
+    wait();
+}
+
+void TestServer::onRuntimeError()
+{
+    quit();
+}
+
+void TestServer::run()
+{
+
+}
+
+//BaseTest
 BaseTest::BaseTest()
 {
     makeDump();
@@ -90,6 +131,25 @@ bool BaseTest::build()
     m_engine.setProgram(&m_program);
     m_engine.init();    
     return true;
+}
+
+bool BaseTest::buildAs(QString code)
+{
+    auto script_file = m_project.mainFile();
+
+    JZFunctionDefine as_func;
+    as_func.name = "as_func";
+    auto script_item = script_file->addFunction(as_func);
+
+    JZScriptConvert convert;
+    convert.init(script_item);
+    if (!convert.convertFunction(code))
+    {
+        QTest::qVerify(false, "convert", convert.error().toLocal8Bit().data(), __FILE__, __LINE__);
+        return false;
+    }
+
+    return build();
 }
 
 bool BaseTest::call(QString name,const QVariantList &in,QVariantList &out)

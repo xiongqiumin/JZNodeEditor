@@ -38,7 +38,6 @@ void JZNodeModbusConfig::initFunction()
     pin(in)->setDataType({ class_type });
 
     addParamIn("");
-    setName(m_functionName);
 }
 
 bool JZNodeModbusConfig::compiler(JZNodeCompiler *c, QString &error)

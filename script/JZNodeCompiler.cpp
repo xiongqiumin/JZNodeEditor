@@ -379,7 +379,7 @@ void JZMacroIRReplace::replace(QList<JZNodeIRPtr>& ir_list)
             replaceIr(ir_expr->src2);
             break;
         }
-        case OP_bitresver:
+        case OP_bitreverse:
         case OP_not:
         {
             JZNodeIRExpr* ir_expr = (JZNodeIRExpr*)op;

@@ -35,7 +35,6 @@ void JZNodeFunction::updateName()
         return;
 
     auto func_inst = environment()->functionManager();
-    setName(m_functionName);
     auto meta = func_inst->function(m_functionName);
     if(meta && meta->isMemberFunction())
     {
@@ -48,8 +47,7 @@ void JZNodeFunction::updateName()
             v = "this";
         }
 
-        QString name = v + "." + meta->name;
-        setName(name);       
+        QString name = v + "." + meta->name;  
     }
 }
 
@@ -124,8 +122,6 @@ void JZNodeFunction::setFunction(const JZFunctionDefine *define)
         auto pin = this->pin(paramIn(0));
         pin->setFlag(pin->flag());
     }
-
-    setName(define->fullName());
 }
 
 QString JZNodeFunction::function() const

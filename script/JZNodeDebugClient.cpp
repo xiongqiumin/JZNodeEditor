@@ -92,48 +92,50 @@ bool JZNodeDebugClient::setVariable(const JZNodeSetDebugParam &info,JZNodeSetDeb
     return true;
 }
 
-void JZNodeDebugClient::detach()
+bool JZNodeDebugClient::detach()
 {
     QByteArray params,result;
-    sendCommand(Cmd_detach,params,result);
+    bool ret = sendCommand(Cmd_detach,params,result);
     disconnectFromServer();
+    return ret;
 }
 
-void JZNodeDebugClient::pause()
+bool JZNodeDebugClient::pause()
 {
     QByteArray params,result;
-    sendCommand(Cmd_pause,params,result);    
+    return sendCommand(Cmd_pause,params,result);    
 }
 
-void JZNodeDebugClient::resume()
+bool JZNodeDebugClient::resume()
 {
     QByteArray params,result;
-    sendCommand(Cmd_resume,params,result);    
+    return sendCommand(Cmd_resume,params,result);
 }
 
-void JZNodeDebugClient::stop()
+bool JZNodeDebugClient::stop()
 {
     QByteArray params,result;
-    sendCommand(Cmd_stop,params,result);
+    bool ret = sendCommand(Cmd_stop,params,result);
     disconnectFromServer();
+    return ret;
 }
 
-void JZNodeDebugClient::stepIn()
+bool JZNodeDebugClient::stepIn()
 {
     QByteArray params,result;
-    sendCommand(Cmd_stepIn,params,result);
+    return sendCommand(Cmd_stepIn,params,result);
 }
 
-void JZNodeDebugClient::stepOver()
+bool JZNodeDebugClient::stepOver()
 {
     QByteArray params,result;
-    sendCommand(Cmd_stepOver,params,result);
+    return sendCommand(Cmd_stepOver,params,result);
 }
 
-void JZNodeDebugClient::stepOut()
+bool JZNodeDebugClient::stepOut()
 {
     QByteArray params,result;
-    sendCommand(Cmd_stepOut,params,result);
+    return sendCommand(Cmd_stepOut,params,result);
 }
 
 void JZNodeDebugClient::onConnect()
@@ -175,6 +177,7 @@ bool JZNodeDebugClient::sendCommand(int command,const QByteArray &buffer,QByteAr
 
     JZNodeDebugPacket packet;
     packet.cmd = command;
+    packet.setId(m_client.genPackId());
     packet.buffer = buffer;
     if(!m_client.sendPack(&packet))
         return false;

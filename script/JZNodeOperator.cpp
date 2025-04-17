@@ -383,25 +383,25 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
 }
 
 
-//JZNodeBitResver
-JZNodeBitResver::JZNodeBitResver()
+//JZNodeBitReverse
+JZNodeBitReverse::JZNodeBitReverse()
 {
-    m_name = "~";
-    m_type = Node_bitresver;
-    int in = addParamIn("");
-    int out = addParamOut("");
+    m_name = "bit reverse";
+    m_type = Node_bitreverse;
+    int in = addParamIn("input");
+    int out = addParamOut("reverse");
     setPinTypeInt(in);
     setPinTypeInt(out);
 }
 
-bool JZNodeBitResver::compiler(JZNodeCompiler* c, QString& error)
+bool JZNodeBitReverse::compiler(JZNodeCompiler* c, QString& error)
 {
     if (!c->addDataInput(m_id, error))
         return false;
 
     int id_in = c->paramId(m_id, paramIn(0));
     int id_out = c->paramId(m_id, paramOut(0));
-    c->addSingleExpr(irId(id_out), irId(id_in), OP_bitresver);
+    c->addSingleExpr(irId(id_out), irId(id_in), OP_bitreverse);
     return true;
 }
 
@@ -411,7 +411,7 @@ JZNodeNot::JZNodeNot()
     m_name = "not";
     m_type = Node_not;
     int in = addParamIn("input");
-    int out = addParamOut("invert");
+    int out = addParamOut("not");
     setPinTypeBool(in);
     setPinTypeBool(out);
 }

@@ -44,7 +44,7 @@ enum
     Node_bitxor,
     Node_and,
     Node_or,
-    Node_bitresver,
+    Node_bitreverse,
     Node_not,
     Node_expr,
     Node_for,
@@ -139,9 +139,6 @@ public:
     const JZScriptEnvironment *environment() const;
 
     const QString &name() const;
-    void setName(const QString &name);
-
-    QString idName() const;
 
     int id() const;
     void setId(int id);

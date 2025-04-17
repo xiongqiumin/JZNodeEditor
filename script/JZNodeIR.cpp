@@ -145,7 +145,7 @@ JZNodeIR *createNodeIR(int type)
     case OP_bitand:
     case OP_bitor:
     case OP_bitxor:
-    case OP_bitresver:
+    case OP_bitreverse:
         return new JZNodeIRExpr(type);    
     case OP_set:    
         return new JZNodeIRSet();

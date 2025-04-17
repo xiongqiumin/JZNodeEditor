@@ -139,11 +139,11 @@ public:
 };
 
 
-//JZNodeBitResver
-class JZNodeBitResver : public JZNode
+//JZNodeBitReverse
+class JZNodeBitReverse : public JZNode
 {
 public:
-    JZNodeBitResver();
+    JZNodeBitReverse();
 
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };

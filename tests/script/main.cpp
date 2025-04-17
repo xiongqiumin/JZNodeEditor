@@ -5,15 +5,17 @@
 #include "test_script.h"
 #include "test_opencv.h"
 #include "test_anglescript.h"
+#include "test_debug.h"
 
 int main(int argc,char *argv[])
 {
     QCoreApplication a(argc,argv);
     JZNodeInit();
 
-    test_script(argc, argv);
-    test_benchmark(argc, argv);
-    test_anglescript(argc, argv);
+    //test_script(argc, argv);
+    //test_benchmark(argc, argv);
+    //test_anglescript(argc, argv);
+    test_debug(argc, argv);
 
     return 0;
 }

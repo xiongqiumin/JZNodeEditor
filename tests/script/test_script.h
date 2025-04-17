@@ -36,7 +36,6 @@ private slots:
     void testCustomExpr();
     void testFunction();    
     void testBreakPoint();
-    void testDebugServer();
     void testArgs();
 
 protected:

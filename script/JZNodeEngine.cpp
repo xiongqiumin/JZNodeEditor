@@ -1590,7 +1590,7 @@ QVariant JZNodeEngine::dealSingleExpr(const QVariant &a, int op)
         else
             unSupportSingleOp(dataType, op);
     }
-    else if (op == OP_bitresver)
+    else if (op == OP_bitreverse)
     {
         if (dataType == Type_int)
             return ~(a.toInt());
@@ -1657,7 +1657,7 @@ bool JZNodeEngine::breakPointTrigger(int node_id)
     return false;
 }
 
-void JZNodeEngine::updateStatus(int status)
+void JZNodeEngine::updateStatus(JZEngineStatus status)
 {
     Q_ASSERT((m_status == Status_none && (status == Status_running || status == Status_idlePause))
         || (m_status == Status_running && (status == Status_none || status == Status_pause || status == Status_error))
@@ -1746,7 +1746,7 @@ bool JZNodeEngine::run()
             break; 
         }
         case OP_not:
-        case OP_bitresver:
+        case OP_bitreverse:
         {
             m_stat.exprTime++;
 

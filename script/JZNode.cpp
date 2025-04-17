@@ -553,16 +553,6 @@ const QString& JZNode::name() const
     return m_name;
 }
 
-void JZNode::setName(const QString &name)
-{
-    m_name = name;
-}
-
-QString JZNode::idName() const
-{
-    return m_name + "(" + QString::number(m_id) + ")";
-}
-
 bool JZNode::canRemove()
 {
     return !(m_flag & NodeProp_noRemove);
