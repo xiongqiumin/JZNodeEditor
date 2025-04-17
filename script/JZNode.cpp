@@ -180,9 +180,17 @@ int JZNode::addPin(const JZNodePin &pin)
     Q_ASSERT(pin.isInput() || pin.isOutput());
     Q_ASSERT(pin.isFlow() || pin.isParam() || pin.isSubFlow());
 
+    auto list = pinList();
+    std::sort(list.begin(), list.end());
+
     int max_id = 0;
-    for (int i = 0; i < m_pinList.size(); i++)
-        max_id = qMax(max_id, m_pinList[i].id() + 1);
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (list[i] == max_id)
+            max_id++;
+        else
+            break;
+    }
 
     JZNodePin new_prop = pin;
     new_prop.setId(max_id);

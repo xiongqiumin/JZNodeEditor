@@ -3,6 +3,7 @@
 
 #include <QGraphicsItem>
 #include <QWidget>
+#include <QGraphicsProxyWidget>
 #include "JZNodeBaseItem.h"
 #include "JZNode.h"
 
@@ -10,12 +11,16 @@ class JZNodeLineItem;
 class JZNodeGraphItem : public JZNodeBaseItem
 {
 public:
-    JZNodeGraphItem(JZNode *node);
+    JZNodeGraphItem();
     ~JZNodeGraphItem();
+
+    void init(JZNode *node);
 
     virtual QRectF boundingRect() const override;
     virtual void updateNode() override;    
     void updateSize();
+
+    void setPinValue(int pin, QString name);
 
     JZNode *node();
     int pinAt(QPointF pos);        //连接框
@@ -56,13 +61,16 @@ protected:
         int id;
         int pri;
         bool isInput;
-        JZNodePin *pin;
+        bool isShowValue;        
         IconType iconType;
         QString name;
 
         QRect iconRect;
         QRect nameRect;
-        QRect valueRect; //valueRect 就是 widget 显示范围        
+        QRect valueRect; //valueRect 就是 widget 显示范围       
+
+        QGraphicsProxyWidget *proxy;
+        QWidget *widget;
     };    
     typedef QSharedPointer<Block> BlockPtr;
 
@@ -74,22 +82,37 @@ protected:
     virtual void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
 
-    virtual Block fromPin(JZNodePin *pin);
+    void notifyPropChanged(const QByteArray &buffer);    
+    
+    BlockPtr fromPin(JZNodePin *pin);
+    BlockPtr fromWidget(QWidget *widget,bool isInput);
+
+    QList<int> blockList(bool isInput);
+    JZNodePin *pin(int pin_id);
     void drawProp(QPainter *painter,int pinId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
     void calcGemo(int pin, int x, int y, Block *gemo);
-    void updatePin();
+    virtual void updatePin();
     void updateErrorGemo();            
 
-    QSize m_size;    
+    QSize m_size;
+    QString m_title;
     JZNode *m_node;    
     QRectF m_errorRect;    
     QString m_error;
-    QMap<int,Block> m_blocks;
+    QMap<int, BlockPtr> m_blocks;
     QMap<int, QString> m_runtimeValue;
     
+    int m_widgetIndex;
     int m_downPin;
-    int m_longPress;        
+    int m_longPress;
+};
+
+//JZNodeFunctionItem
+class JZNodeFunctionItem : public JZNodeGraphItem
+{
+public:
+    JZNodeFunctionItem();
 };
 
 #endif

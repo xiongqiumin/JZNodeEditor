@@ -103,7 +103,8 @@ public:
 
 protected:    
     virtual void loadFromStream(QDataStream &s) override;
-    QList<int> m_condOp;        
+    QList<int> m_condOpList;        
+    int m_condOp;
 };
 
 //JZNodeForEach
@@ -141,9 +142,12 @@ class JZNodeIf : public JZNode
 public:
     JZNodeIf();
 
-    void addCondPin();
-    void addElsePin();    
+    void addCondPin();    
     void removeCond(int index);
+    int  condCount();
+
+    bool hasElse();
+    void addElsePin();
     void removeElse();
 
 protected:

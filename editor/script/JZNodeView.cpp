@@ -239,7 +239,7 @@ void JZNodeView::udpateFlowPanel()
 void JZNodeView::setFile(JZScriptItem *file)
 {
     m_file = file;
-    connect(m_file->project(), &JZProject::sigScriptNodeChanged, this, &JZNodeView::onNodeChanged);    
+    connect(m_file->project(), &JZProject::sigScriptNodeChanged, this, &JZNodeView::onScrpitNodeChanged);    
 
     initGraph();
     autoCompiler();    
@@ -341,7 +341,7 @@ void JZNodeView::setNodePinValue(int node_id, int pin, QString value)
 {
     auto node = getNode(node_id);
     node->setPinValue(pin, value);
-    getNodeItem(node_id)->update();
+    getNodeItem(node_id)->setPinValue(pin, value);
     if (node_id == m_propEditor->node()->id())
         m_propEditor->setPinValue(pin, value);
 }
@@ -354,7 +354,20 @@ bool JZNodeView::isPropEditable(int id,int prop_id)
 
 JZNodeGraphItem *JZNodeView::createNodeItem(int id)
 {        
-    JZNodeGraphItem *item = new JZNodeGraphItem(m_file->getNode(id));
+    auto e = editorManager();
+
+    auto node = m_file->getNode(id);
+
+    JZNodeGraphItem *item; 
+    if (e->hasNodeItemCreator(node->type()))
+    {
+        auto func = e->nodeItemCreator(node->type());
+        item = func();
+    }
+    else
+        item = new JZNodeGraphItem();
+
+    item->init(node);
     m_scene->addItem(item);
     item->updateNode();
     item->update();    
@@ -1448,14 +1461,14 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         int index = pin_actions.indexOf(ret);
         auto node = dynamic_cast<JZNodeGraphItem*>(item)->node();        
         auto old = getNodeData(node->id());
-        onNodeChanged(m_file, node->id(), old);        
+        onNodeChanged(node->id(), old);        
     }
     else if(node_actions.contains(ret))
     {
         int index = node_actions.indexOf(ret);
         auto node = dynamic_cast<JZNodeGraphItem*>(item)->node(); 
         auto old = getNodeData(node->id());
-        onNodeChanged(m_file, node->id(), old);  
+        onNodeChanged(node->id(), old);  
     }
     else if(ret == actFuncGoto)
     {
@@ -1478,7 +1491,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         auto node_func = dynamic_cast<JZNodeFunction*>(node);
         auto old = getNodeData(node_func->id());        
         node_func->setFunction(func_inst->function(text));
-        onNodeChanged(m_file,node_func->id(), old);
+        onNodeChanged(node_func->id(), old);
     }
     else if(ret == actSetExpr)
     {        
@@ -1490,7 +1503,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         auto old = getNodeData(node_expr->id());
         QString error;
         node_expr->setExpr(expr);
-        onNodeChanged(m_file,node_expr->id(),old);
+        onNodeChanged(node_expr->id(),old);
     }   
     else if (ret == actEditGroup)
     {
@@ -2074,11 +2087,8 @@ void JZNodeView::onItemSizeChanged()
     getNodeItem(node_id)->updateNode();
 }
 
-void JZNodeView::onNodeChanged(JZScriptItem *file, int node_id, const QByteArray &old)
-{
-    if (m_file != file)
-        return;
-    
+void JZNodeView::onNodeChanged(int node_id, const QByteArray &old)
+{        
     auto old_node = JZNodeFactory::instance()->loadNode(old);
     auto pre_list = old_node->pinList();
     delete old_node;
@@ -2095,6 +2105,14 @@ void JZNodeView::onNodeChanged(JZScriptItem *file, int node_id, const QByteArray
     }    
     addNodeChangedCommand(node->id(), old);
     m_commandStack.endMacro();
+}
+
+void JZNodeView::onScrpitNodeChanged(JZScriptItem *item, int nodeId, const QByteArray &buffer)
+{
+    if (m_file != item)
+        return;
+
+    onNodeChanged(nodeId, buffer);
 }
 
 void JZNodeView::onNodePinValueChanged(int id,int pinId,const QString &value)

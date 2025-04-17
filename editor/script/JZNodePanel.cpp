@@ -465,12 +465,25 @@ void JZNodePanel::initConstParam(QTreeWidgetItem *root)
     node_string.setDataType(Type_string);
     node_null.setDataType(Type_nullptr);
 
-    root->addChild(createNode(&node_bool));    
-    root->addChild(createNode(&node_int));
-    root->addChild(createNode(&node_int64));
-    root->addChild(createNode(&node_double));
-    root->addChild(createNode(&node_string));
-    root->addChild(createNode(&node_null));
+    auto item_bool = createNode(&node_bool);
+    auto item_int = createNode(&node_int);
+    auto item_int64 = createNode(&node_int64);
+    auto item_double = createNode(&node_double);
+    auto item_string = createNode(&node_string);
+    auto item_null = createNode(&node_null);
+    item_bool->setText(0, "bool");
+    item_int->setText(0, "int");
+    item_int64->setText(0, "int64");
+    item_double->setText(0, "double");
+    item_string->setText(0, "string");
+    item_null->setText(0, "null");
+
+    root->addChild(item_bool);
+    root->addChild(item_int);
+    root->addChild(item_int64);
+    root->addChild(item_double);
+    root->addChild(item_string);
+    root->addChild(item_null);
 
     JZNodeFunctionPointer node_func;
     root->addChild(createNode(&node_func));

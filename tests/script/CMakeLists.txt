@@ -5,8 +5,10 @@ set(JZNodeTest_SOURCES
 	test_base.h
 	test_benchmark.cpp
 	test_benchmark.h
-	test_server.cpp
-	test_server.h
+	test_debug.cpp
+	test_debug.h
+    test_project.cpp
+	test_project.h
 	test_script.cpp
 	test_script.h
 	test_opencv.cpp

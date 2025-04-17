@@ -305,6 +305,8 @@ set(JZNodeEditor_SOURCES
     editor/script/items/JZNodeGraphItem.h
     editor/script/items/JZNodeFlowItem.cpp
     editor/script/items/JZNodeFlowItem.h
+    editor/script/items/JZNodeValueItem.cpp
+    editor/script/items/JZNodeValueItem.h
     editor/script/items/JZNodeOperatorItem.cpp
     editor/script/items/JZNodeOperatorItem.h    
     editor/ui/formresizer.cpp

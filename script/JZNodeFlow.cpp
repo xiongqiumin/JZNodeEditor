@@ -215,26 +215,24 @@ JZNodeFor::JZNodeFor()
 
     int id_start = addParamIn("Index");
     int id_step = addParamIn("Step");
-    int id_end = addParamIn("End index");
-    int id_op = addParamIn("Cond");
+    int id_end = addParamIn("End index");    
     int id_index = addParamOut("Index");
     setPinTypeInt(id_start);
     setPinTypeInt(id_step);
     setPinTypeInt(id_index);
-    setPinTypeInt(id_end);
-    setPinTypeInt(id_op);
+    setPinTypeInt(id_end);    
 
     setPinValue(id_start, "0");
     setPinValue(id_step, "1");
-    setPinValue(id_end, "1");
-    setPinValue(id_op, "0");
+    setPinValue(id_end, "1");    
 
-    m_condOp.push_back(OP_lt);
-    m_condOp.push_back(OP_le);
-    m_condOp.push_back(OP_gt);
-    m_condOp.push_back(OP_ge);
-    m_condOp.push_back(OP_eq);
-    m_condOp.push_back(OP_ne);
+    m_condOp = OP_lt;
+    m_condOpList.push_back(OP_lt);
+    m_condOpList.push_back(OP_le);
+    m_condOpList.push_back(OP_gt);
+    m_condOpList.push_back(OP_ge);
+    m_condOpList.push_back(OP_eq);
+    m_condOpList.push_back(OP_ne);
 }
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
@@ -246,9 +244,8 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     int indexStart = paramIn(0);
     int indexStep = paramIn(1);
     int indexEnd = paramIn(2);
-    int indexOut = paramOut(0);    
-    int op_id = pinValue(paramIn(3)).toInt();
-    int op = m_condOp[op_id];
+    int indexOut = paramOut(0);        
+    int op = m_condOp;
 
     bool need_runtime_check = true;
     if (c->isPinLiteral(m_id, indexStart)
@@ -346,10 +343,9 @@ void JZNodeFor::setEnd(int end)
 }
 
 void JZNodeFor::setOp(int op)
-{
-    int index = m_condOp.indexOf(op);
-    Q_ASSERT(index >= 0);
-    setParamInValue(3, QString::number(index));
+{    
+    Q_ASSERT(m_condOpList.contains(op));
+    m_condOp = op;
 }
 
 //JZNodeForEach
@@ -634,10 +630,21 @@ void JZNodeIf::addCondPin()
     updateCondName();    
 }
 
+bool JZNodeIf::hasElse()
+{
+    int last = subFlowList().back();
+    return pin(last)->name() == "else";
+}
+
 void JZNodeIf::addElsePin()
 {
     addSubFlowOut("else"); 
     updateCondName();
+}
+
+int JZNodeIf::condCount()
+{
+    return paramInCount();
 }
 
 void JZNodeIf::removeCond(int index)
@@ -651,6 +658,9 @@ void JZNodeIf::removeCond(int index)
 
 void JZNodeIf::removeElse()
 {
+    if (!hasElse())
+        return;
+
     int id = subFlowList().back();
     removePin(id);
     updateCondName();

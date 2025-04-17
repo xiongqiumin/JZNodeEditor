@@ -16,41 +16,6 @@
 #include "JZNodeUtils.h"
 #include "JZNodeEditor.h"
 
-//JZListInitFunct
-bool JZListInitFunction(JZNode *node)
-{
-    QString value = node->paramInValue(0);
-    value.replace(",", "\n");
-    QDialog dialog;
-
-    QVBoxLayout *l = new QVBoxLayout();
-    l->addWidget(new QLabel("init"));
-
-    QTextEdit *edit = new QTextEdit();
-    edit->setPlainText(value);
-    l->addWidget(edit);
-
-    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-        | QDialogButtonBox::Cancel);
-    dialog.connect(buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    dialog.connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    l->addWidget(buttonBox);
-    dialog.setLayout(l);
-    if (dialog.exec() != QDialog::Accepted)
-        return false;
-
-    QStringList result;
-    QStringList lines = edit->toPlainText().split("\n");
-    for (int i = 0; i < lines.size(); i++)
-    {
-        QString line = lines[i].simplified();
-        if (!line.isEmpty())
-            result.push_back(line);
-    }
-    node->setParamInValue(0, result.join(","));
-    return true;
-}
-
 //JZNodeEditor
 JZNodeEditor::JZNodeEditor()
 {

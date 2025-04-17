@@ -17,6 +17,8 @@ constexpr int name_max_width = 120;
 
 JZNodeGraphItem::Block::Block()
 {
+    proxy = nullptr;
+    widget = nullptr;
     clear();
 }
 
@@ -27,19 +29,27 @@ JZNodeGraphItem::Block::~Block()
 
 bool JZNodeGraphItem::Block::isPin()
 {
-    return (pin != nullptr);
+    return (id >= 0 && id < 100);
 }
 
 void JZNodeGraphItem::Block::clear()
 {
+    if (proxy)
+    {
+        delete proxy;
+    }    
+    proxy = nullptr;
+    widget = nullptr;
+
+    widget = nullptr;
     iconRect = QRect();
     nameRect = QRect();
     valueRect = QRect(); //valueRect 就是 widget 显示范围
 
     pri = 0;
-    id = -1;
-    pin = nullptr;
+    id = -1;    
     isInput = false;
+    isShowValue = false;
 }
 
 int JZNodeGraphItem::Block::width()
@@ -55,15 +65,14 @@ int JZNodeGraphItem::Block::height()
 }
 
 // JZNodeGraphItem
-JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
-{
-    Q_ASSERT(node);
-
-    m_type = Item_node;
-    m_node = node;
-    m_id = node->id();    
+JZNodeGraphItem::JZNodeGraphItem()
+{    
+    m_type = Item_node;    
     m_longPress = false;
     m_downPin = -1;
+    m_node = nullptr;
+    m_id = -1;
+    m_widgetIndex = 100;
 
     setOpacity(0.9);
     setFlag(QGraphicsItem::ItemIsMovable);
@@ -75,51 +84,64 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 JZNodeGraphItem::~JZNodeGraphItem()
 {
     clear();
-    auto it = m_blocks.begin();
-    while (it != m_blocks.end())
-    {
-        it->clear();
-        it++;
-    }
-    m_blocks.clear();
 }
 
-
-JZNodeGraphItem::Block JZNodeGraphItem::fromPin(JZNodePin *pin)
+void JZNodeGraphItem::init(JZNode *node)
 {
-    Block block;
-    block.id = pin->id();
-    block.pin = pin;
-    block.isInput = pin->isInput();
+    m_node = node;
+    m_id = node->id();
+}
+
+JZNodeGraphItem::BlockPtr JZNodeGraphItem::fromPin(JZNodePin *pin)
+{
+    BlockPtr block = BlockPtr(new Block());
+    block->id = pin->id();
+    block->isInput = pin->isInput();
+    block->isShowValue = pin->isParam() && pin->isInput();
 
     if (pin->isFlow() || pin->isSubFlow())
     {
-        block.iconType = IconType::Flow;
+        block->iconType = IconType::Flow;
         if (pin->isInput())
-            block.pri = 0;
+            block->pri = 0;
         else
         {
             if (m_node->subFlowCount() > 0)
-                block.pri = pin->isFlow() ? 2 : 1;
+                block->pri = pin->isFlow() ? 2 : 1;
             else
-                block.pri = 0;
+                block->pri = 0;
         }
     }
     else
     {
-        block.iconType = IconType::Circle;
+        block->iconType = IconType::Circle;
         if (pin->isInput())
-            block.pri = 1;
+            block->pri = 1;
         else
         {
             if (m_node->subFlowCount() > 0)
-                block.pri = 0;
+                block->pri = 0;
             else
-                block.pri = 1;
+                block->pri = 1;
         }
     }
 
-    block.name = pin->name();
+    block->name = pin->name();
+    return block;
+}
+
+JZNodeGraphItem::BlockPtr JZNodeGraphItem::fromWidget(QWidget *widget, bool isInput)
+{
+    BlockPtr block = BlockPtr(new Block());
+    block->isInput = isInput;
+
+    QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+    proxy->setWidget(widget);
+    proxy->setParentItem(this);
+    block->widget = widget;
+    block->proxy = proxy;
+    block->id = m_widgetIndex++;
+    m_blocks[block->id] = block;
     return block;
 }
 
@@ -140,7 +162,8 @@ void JZNodeGraphItem::updatePin()
     auto it = m_blocks.begin();
     while (it != m_blocks.end())
     {
-        if (it->isPin() && !m_node->hasPin(it.key()) )
+        auto block = it->data();
+        if (block->isPin() && !m_node->hasPin(it.key()) )
         {
             it->clear();
             it = m_blocks.erase(it);
@@ -174,7 +197,7 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
     QTextOption text_opt;
     text_opt.setWrapMode(QTextOption::NoWrap);
     text_opt.setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    QString title = m_node->name();
+    QString title = m_title;
     painter->fillRect(title_rc, QColor(220,220,220));
     painter->drawText(title_rc, title, text_opt);
 
@@ -241,12 +264,12 @@ int JZNodeGraphItem::pinAtInName(QPointF pos)
 
 QRectF JZNodeGraphItem::pinRect(int pin)
 {
-    return m_blocks[pin].iconRect;
+    return m_blocks[pin]->iconRect;
 }
 
 QRectF JZNodeGraphItem::pinNameRect(int pin)
 {
-    return m_blocks[pin].nameRect;
+    return m_blocks[pin]->nameRect;
 }
 
 QSize JZNodeGraphItem::size() const
@@ -254,63 +277,93 @@ QSize JZNodeGraphItem::size() const
     return m_size;
 }
 
-void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, Block *gemo)
+QList<int> JZNodeGraphItem::blockList(bool isInput)
 {
-    auto pin = m_node->pin(pin_id);
+    QList<int> list;
+    for (auto block : m_blocks)
+    {
+        if (block->isInput == isInput)
+            list << block->id;
+    }
+
+    auto cmp = [this](int i, int j)->bool {
+        if(m_blocks[i]->pri == m_blocks[j]->pri)
+        {
+            return m_blocks[i]->name < m_blocks[j]->name;
+        }
+        else
+        {
+            return m_blocks[i]->pri < m_blocks[j]->pri;
+        }
+    };
+    std::sort(list.begin(), list.end(), cmp);
+    return list;
+}
+
+
+JZNodePin *JZNodeGraphItem::pin(int pin_id)
+{
+    if (pin_id >= 100)
+        return nullptr;
+
+    return m_node->pin(pin_id);
+}
+
+void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, Block *gemo)
+{    
     gemo->iconRect = QRect(x, y, 24, 24);
 
     x = gemo->iconRect.right() + 5;
     if (!gemo->name.isEmpty())
     {
         QFontMetrics ft(scene()->font());
-        int w = qMin(name_max_width, ft.horizontalAdvance(pin->name()));
+        int w = qMin(name_max_width, ft.horizontalAdvance(gemo->name));
         gemo->nameRect = QRect(x, y, w, 24);
         x = gemo->nameRect.right() + 5;
-    }
-    if (gemo->pin && gemo->pin->isParam())
+    }    
+    if (gemo->isPin() && pin(pin_id)->isParam())
     {
         gemo->valueRect = QRect(x, y, 80, 24);
-    }
+    }    
 }
 
 void JZNodeGraphItem::updateNode()
 {    
+    m_title = m_node->name();
     updatePin();
     updateSize();    
 }
 
-void JZNodeGraphItem::updateSize()
+void JZNodeGraphItem::setPinValue(int pin, QString name)
 {
-    auto cmp = [this](int i, int j)->bool {
-        return m_blocks[i].pri < m_blocks[j].pri;
-    };
+    update();
+}
 
-    QString title = m_node->name();
+void JZNodeGraphItem::updateSize()
+{        
     QFontMetrics title_ft(scene()->font());
-    int title_w = title_ft.horizontalAdvance(title) + 20;
+    int title_w = title_ft.horizontalAdvance(m_title) + 20;
 
     int in_x = 0, out_x = 0;
     int in_y = 24, out_y = 24;
     int y_gap = 4;
 
-    auto in_list = m_node->pinInList(Pin_none);
-    std::stable_sort(in_list.begin(), in_list.end(), cmp);
+    auto in_list = blockList(true);
     for (int i = 0; i < in_list.size(); i++)
     {
         auto &gemo = m_blocks[in_list[i]];
-        calcGemo(in_list[i], 4, in_y, &gemo);
-        in_x = qMax(in_x, gemo.width());
-        in_y += gemo.height() + y_gap;
+        calcGemo(in_list[i], 4, in_y, gemo.data());
+        in_x = qMax(in_x, gemo->width());
+        in_y += gemo->height() + y_gap;
     }
 
-    QList<int> out_list = m_node->pinOutList(Pin_none);
-    std::stable_sort(out_list.begin(), out_list.end(), cmp);
+    QList<int> out_list = blockList(false);
     for (int i = 0; i < out_list.size(); i++)
     {
         auto &gemo = m_blocks[out_list[i]];
-        calcGemo(out_list[i], 4, out_y, &gemo);
-        out_x = qMax(out_x, gemo.width());
-        out_y += gemo.height() + y_gap;
+        calcGemo(out_list[i], 4, out_y, gemo.data());
+        out_x = qMax(out_x, gemo->width());
+        out_y += gemo->height() + y_gap;
     }
 
     QList<int> pinList = m_node->pinList();
@@ -327,16 +380,16 @@ void JZNodeGraphItem::updateSize()
     for (int i = 0; i < out_list.size(); i++)
     {
         auto &info = m_blocks[out_list[i]];
-        info.iconRect.moveRight(w - 4);
-        QRectF last = info.iconRect;
-        if (!info.nameRect.isEmpty())
+        info->iconRect.moveRight(w - 4);
+        QRectF last = info->iconRect;
+        if (!info->nameRect.isEmpty())
         {
-            info.nameRect.moveRight(last.left() - 5);
-            last = info.nameRect;
+            info->nameRect.moveRight(last.left() - 5);
+            last = info->nameRect;
         }
-        if (!info.valueRect.isEmpty())
+        if (!info->valueRect.isEmpty())
         {
-            info.valueRect.moveRight(last.left() - 5);
+            info->valueRect.moveRight(last.left() - 5);
         }
     }
     for (int i = 0; i < pinList.size(); i++)
@@ -372,7 +425,7 @@ void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {    
     if (event->buttons() & Qt::LeftButton)
     {               
-        if (m_downPin != -1 && (event->pos() - m_blocks[m_downPin].iconRect.center()).manhattanLength() > 10)
+        if (m_downPin != -1 && (event->pos() - m_blocks[m_downPin]->iconRect.center()).manhattanLength() > 10)
         {
             JZNodeGemo gemo(m_node->id(), m_downPin);
             editor()->startLine(gemo);
@@ -406,6 +459,11 @@ void JZNodeGraphItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
     setZValue(0);
     event->accept();
+}
+
+void JZNodeGraphItem::notifyPropChanged(const QByteArray &buffer)
+{
+    editor()->onNodeChanged(m_id, buffer);
 }
 
 void JZNodeGraphItem::updateErrorGemo()
@@ -482,7 +540,8 @@ void JZNodeGraphItem::onTimerEvent(int event)
 
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
 {        
-    const Block &block = m_blocks[prop_id];
+    const Block *block = m_blocks[prop_id].data();
+    auto pin = this->pin(block->id);
 
     /*
     case PinType::Flow:     return ImColor(255, 255, 255);
@@ -495,10 +554,13 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
     case PinType::Delegate: return ImColor(255,  48,  48);
     */
     QColor color;
-    IconType type = block.iconType;
+    QColor innerColor = QColor(40, 40, 40, 80);
+    IconType type = block->iconType;
     if(type == IconType::Flow)
     {
         color = QColor(255, 255, 255);        
+        if (pin && pin->isSubFlow())
+            innerColor = QColor(255, 223, 131, 80);
     }
     else if(type == IconType::Circle)
     {
@@ -508,24 +570,23 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
     {
         color = QColor(120, 48, 128);
     }
-
-    QColor innerColor = QColor(40,40,40,80);
-    drawIcon(painter, block.iconRect,type,false,color,innerColor);
+    
+    drawIcon(painter, block->iconRect,type,false,color,innerColor);
 
     QTextOption text_opt;
     text_opt.setWrapMode(QTextOption::NoWrap);
-    if(!block.name.isEmpty())
+    if(!block->name.isEmpty())
     {        
-        auto opt = block.isInput? Qt::AlignLeft : Qt::AlignRight;
+        auto opt = block->isInput? Qt::AlignLeft : Qt::AlignRight;
         text_opt.setAlignment(Qt::AlignVCenter | opt);
-        painter->drawText(block.nameRect, block.name, text_opt);
+        painter->drawText(block->nameRect, block->name, text_opt);
     }
-    if (block.pin && block.pin->isParam())
+    if (block->isShowValue && pin && pin->isParam())
     {
-        auto opt = block.isInput ? Qt::AlignLeft : Qt::AlignRight;
+        auto opt = block->isInput ? Qt::AlignLeft : Qt::AlignRight;
         text_opt.setAlignment(Qt::AlignVCenter | opt);
-        painter->fillRect(block.valueRect, Qt::white);
-        painter->drawText(block.valueRect, block.pin->value(), text_opt);
+        painter->fillRect(block->valueRect, Qt::white);
+        painter->drawText(block->valueRect, pin->value(), text_opt);
     }
 }
 
@@ -1068,3 +1129,8 @@ JZNodePinWidget* JZNodeDisplay::createWidget(int id)
     }
 }
 */
+
+//JZNodeFunctionItem
+JZNodeFunctionItem::JZNodeFunctionItem()
+{
+}

@@ -4,6 +4,9 @@
 #include "JZScriptEnvironment.h"
 #include "JZNodeParamDisplayWidget.h"
 #include "JZNodeParamEditWidget.h"
+#include "JZNodeFlowItem.h"
+#include "JZNodeValueItem.h"
+#include "JZNodeOperatorItem.h"
 
 JZNodeParamDelegate::JZNodeParamDelegate()
 {
@@ -60,6 +63,21 @@ void JZNodeEditorManager::init()
 {    
 }
 
+void JZNodeEditorManager::registNodeItemCreator(int node_type, CreateJZNodeGraphItemFunc func)
+{
+    m_nodeItemMap[node_type] = func;
+}
+
+bool JZNodeEditorManager::hasNodeItemCreator(int node_type)
+{
+    return m_nodeItemMap.contains(node_type);
+}
+
+CreateJZNodeGraphItemFunc JZNodeEditorManager::nodeItemCreator(int node_type)
+{
+    return m_nodeItemMap.value(node_type,nullptr);
+}
+
 void JZNodeEditorManager::setUserRegist(bool flag)
 {
     m_userRegist = true;
@@ -109,4 +127,30 @@ JZNodeParamDelegate *JZNodeEditorManager::delegate(int data_type)
         return nullptr;
 
     return &m_delegateMap[data_type];
+}
+
+
+//JZNodeEditorInit
+void JZNodeEditorInit()
+{
+    auto inst = JZNodeEditorManager::instance();
+
+    inst->registNodeItemCreator(Node_for, CreateJZNodeGraphItem<JZNodeForItem>);
+    inst->registNodeItemCreator(Node_if, CreateJZNodeGraphItem<JZNodeIfItem>);
+    inst->registNodeItemCreator(Node_switch, CreateJZNodeGraphItem<JZNodeSwitchItem>);
+
+    for (int i = Node_add; i < Node_expr; i++)
+    {
+        inst->registNodeItemCreator(i, CreateJZNodeGraphItem<JZNodeOperatorItem>);
+    }
+    inst->registNodeItemCreator(Node_expr, CreateJZNodeGraphItem<JZNodeExpressionItem>);
+
+
+    inst->registNodeItemCreator(Node_function, CreateJZNodeGraphItem<JZNodeFunctionItem>);
+
+    inst->registNodeItemCreator(Node_literal, CreateJZNodeGraphItem<JZNodeLiteralItem>);    
+    inst->registNodeItemCreator(Node_setParam, CreateJZNodeGraphItem<JZNodeSetParamItem>);
+    inst->registNodeItemCreator(Node_param, CreateJZNodeGraphItem<JZNodeParamItem>);    
+    inst->registNodeItemCreator(Node_enum, CreateJZNodeGraphItem<JZNodeEnumItem>);
+    inst->registNodeItemCreator(Node_flag, CreateJZNodeGraphItem<JZNodeFlagItem>);
 }

@@ -139,6 +139,11 @@ signals:
     void sigAutoRun();
     void sigRuntimeValueChanged(int id,QString value);
 
+public slots:    
+    void onNodePinValueChanged(int nodeId, int pinId, const QString &value);
+    void onNodeChanged(int nodeId, const QByteArray &buffer);
+    void onScrpitNodeChanged(JZScriptItem *item, int nodeId, const QByteArray &buffer);
+
 protected slots:
     void onContextMenu(const QPoint &pos);
     void onItemPropChanged();     
@@ -148,10 +153,7 @@ protected slots:
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
     void onMapSceneChanged(QRectF rc);
-    void onMapSceneScaled(bool flag);
-
-    void onNodeChanged(JZScriptItem *file, int nodeId, const QByteArray &buffer);
-    void onNodePinValueChanged(int nodeId, int pinId, const QString &value);
+    void onMapSceneScaled(bool flag);    
     void onDependChanged();
 
 protected:

@@ -14,6 +14,7 @@
 JZNodeLiteral::JZNodeLiteral()
 {
     m_type = Node_literal;
+    m_name = "literal";
     addParamOut("out");    
 }
 

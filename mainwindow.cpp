@@ -67,6 +67,8 @@ MainWindow::MainWindow(QWidget *parent)
     g_mainWindow = this;
     m_editor = nullptr;    
     m_processMode = Process_none;    
+
+    JZNodeEditorInit();
     
     LogManagerInit();
     JZLogManager::instance()->addObserver(Log_Compiler,this);
