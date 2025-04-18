@@ -88,6 +88,8 @@ protected:
     void dump(QString dir);
     void msleep(int ms);
     void makeDump();
+
+    virtual void resetTestCase();
     virtual void clearTestCase();
     
     JZProject m_project;

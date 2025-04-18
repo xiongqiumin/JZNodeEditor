@@ -568,7 +568,6 @@ bool JZNodeWhile::compiler(JZNodeCompiler *c,QString &error)
         c->buildSubControlFlow(sub_node, ir_list);
         c->appendStatementList(ir_list);
     }
-
     JZNodeIRJmp* jmp = c->addJmp(OP_jmp);
     jmp->jmpPc = continuePc;
 

@@ -120,13 +120,10 @@ struct NodeCompilerInfo
     QList<NodeRange> ranges; //用于断点信息   
     QMap<int, QList<NodeRange>> dataRanges;
     QList<JZNodeIRPtr> statmentList;
-    bool autoAddDebugStart;
+    bool autoAddDebugStart;    
 
-    //调转信息    
-    int parentId;           //用于subFlow 指明父节点
-    int continuePc;         //父节点continuet跳出的地址
-    int breakPc;
-    int allSubReturn;
+    QWeakPointer<JZNodeIR> breakIr;
+    QWeakPointer<JZNodeIR> continueIr;
 
     QString error;
 };
@@ -261,7 +258,7 @@ public:
     JZNodeIRJmp* addJmp(JZNodeIRType type);
     int addContinue(int node_id);
     int addBreak(int node_id);
-    void setBreakContinue(int breakPc,int continuePC);
+    void setBreakContinue(int breakPc, int continuePC);
     JZNode* breakContinueParentNode(int child_id);
     
     void addAlloc(int allocType, QString name, int dataType);
@@ -271,12 +268,13 @@ public:
     void addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAssert(const JZNodeIRParam &tips);       
-
     
     JZNode* nextFlowNode(JZNode* node, int pin);
     bool buildSubControlFlow(JZNode* node, QList<JZNodeIRPtr>& list);
 
+    JZNodeIR *statment(int index);
     JZNodeIR *lastStatment();
+    int indexOfStatment(JZNodeIR *);
     void removeStatement(int pc);
     void replaceStatement(int pc,JZNodeIRPtr ir);
     void replaceStatementList(int pc,QList<JZNodeIRPtr> ir_list);    
@@ -333,8 +331,7 @@ protected:
     void popCompilerNode();    
     
     void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
-    void updateFlowOut();  
-    void addNodeFlowPc(int node_id, int pc_cond, int pc);
+    void updateFlowOut();      
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
     void dealAddCall(bool isVirtual,const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     bool hasStatementDepend(int pc);

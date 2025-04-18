@@ -579,6 +579,119 @@ void ScriptTest::testWhileLoop()
     QCOMPARE(sum,11);
 }
 
+void ScriptTest::testBreakContinue()
+{
+    /*
+    int n = 0;
+    int i = 0;
+    while(i <= 10)
+    {
+        i = i + 1;
+        if(i > 5)
+            continue/break;
+        
+        n = i;
+    }
+    return n;
+    */    
+    for (int i = 0; i < 2; i++)
+    {
+        resetTestCase();
+
+        JZFunctionDefine define;
+        define.name = "testBreak";
+        define.paramOut.push_back(JZParamDefine("n", "int"));
+
+        JZScriptItem *script = m_file->addFunction(define);
+        script->addLocalVariable("i", "int");
+        script->addLocalVariable("n", "int");
+
+        JZNodeFunctionStart *start = script->startNode();
+        JZNodeWhile *node_while = new JZNodeWhile();
+        script->addNode(node_while);
+
+        JZNodeParam *node_i = new JZNodeParam();
+        node_i->setVariable("i");
+
+        JZNodeLT *node_lt = new JZNodeLT();
+        script->addNode(node_i);
+        script->addNode(node_lt);
+
+        //while i < 10
+        script->addConnect(node_i->paramOutGemo(0), node_lt->paramInGemo(0));
+        node_lt->setParamInValue(1, "10");
+        script->addConnect(node_lt->paramOutGemo(0), node_while->paramInGemo(0));
+        script->addConnect(start->flowOutGemo(0), node_while->flowInGemo());
+
+        //i = i + 1
+        JZNodeSetParam *node_set_i = new JZNodeSetParam();
+        node_set_i->setVariable("i");
+
+        JZNodeAdd *node_add = new JZNodeAdd();
+        script->addNode(node_set_i);
+        script->addNode(node_add);
+        script->addConnect(node_i->paramOutGemo(0), node_add->paramInGemo(0));
+        node_add->setParamInValue(1, "1");
+        script->addConnect(node_add->paramOutGemo(0), node_set_i->paramInGemo(1));
+        script->addConnect(node_while->subFlowOutGemo(0), node_set_i->flowInGemo());
+
+        // i > 5
+        JZNodeGT *node_gt = new JZNodeGT();
+        script->addNode(node_gt);
+        script->addConnect(node_i->paramOutGemo(0), node_gt->paramInGemo(0));
+        node_gt->setParamInValue(1, "5");
+
+        //if
+        JZNodeIf *node_if = new JZNodeIf();
+        script->addNode(node_if);
+        script->addConnect(node_gt->paramOutGemo(0), node_if->paramInGemo(0));
+
+        script->addConnect(node_set_i->flowOutGemo(0), node_if->flowInGemo());
+        if (i == 0)
+        {
+            JZNodeBreak *node_break = new JZNodeBreak();
+            script->addNode(node_break);
+            script->addConnect(node_if->subFlowOutGemo(0), node_break->flowInGemo());            
+        }
+        else
+        {
+            JZNodeContinue *node_co = new JZNodeContinue();
+            script->addNode(node_co);
+            script->addConnect(node_if->subFlowOutGemo(0), node_co->flowInGemo());            
+        }
+
+        // i = n    
+        JZNodeSetParam *node_set_n = new JZNodeSetParam();
+        node_set_n->setVariable("n");
+        script->addNode(node_set_n);
+        script->addConnect(node_i->paramOutGemo(0), node_set_n->paramInGemo(1));
+        script->addConnect(node_if->flowOutGemo(0), node_set_n->flowInGemo());
+
+        //return
+        JZNodeReturn *node_return = new JZNodeReturn();
+        node_return->setFunction(&define);
+
+        JZNodeParam *node_n = new JZNodeParam();
+        node_n->setVariable("n");
+        script->addNode(node_return);
+        script->addNode(node_n);
+        node_n->setVariable("n");
+        script->addConnect(node_n->paramOutGemo(0), node_return->paramInGemo(0));
+        script->addConnect(node_while->flowOutGemo(0), node_return->flowInGemo());
+
+        if (!build())
+            return;
+        dump("testBreak");
+
+        QVariantList in, out;
+        bool ret = call("testBreak", in, out);
+        QVERIFY(ret);
+        QCOMPARE(out[0].toInt(), 5);
+
+        clearTestCase();
+    }
+}
+
 bool ScriptTest::initWhileCase(QList<int> &id_list,QList<int> &value_list)
 {
     auto script = m_project.mainFunction();

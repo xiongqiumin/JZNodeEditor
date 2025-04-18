@@ -115,15 +115,20 @@ void BaseTest::initTestCase()
 
 void BaseTest::init()
 {
-    m_project.clear();
-    JZProjectTemplate::instance()->initProject(&m_project, "console");
-    m_file = m_project.mainFile();
-    m_engine.setDebug(false);
+    resetTestCase();    
 }
 
 void BaseTest::cleanup()
 {
     clearTestCase();
+}
+
+void BaseTest::resetTestCase()
+{
+    m_project.clear();
+    JZProjectTemplate::instance()->initProject(&m_project, "console");
+    m_file = m_project.mainFile();
+    m_engine.setDebug(false);
 }
 
 void BaseTest::clearTestCase()

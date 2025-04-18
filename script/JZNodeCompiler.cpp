@@ -289,11 +289,7 @@ NodeCompilerInfo::NodeCompilerInfo()
 {
     node_id = -1;
     node_type = Node_none;    
-    start = -1;
-    parentId = -1;    
-    breakPc = -1;
-    continuePc = -1;
-    allSubReturn = -1;    
+    start = -1;          
     autoAddDebugStart = true;
 }
 
@@ -913,27 +909,12 @@ void JZNodeCompiler::updateFlowOut()
 
             m_statmentList = &it->statmentList;
             replaceStatementList(i, new_list);
-            i = i + new_list.size() - 1;       //跳过新加的语句
-
-            addNodeFlowPc(it.key(), i, new_list.size() - 1);
+            i = i + new_list.size() - 1;       //跳过新加的语句            
         }
         m_statmentList = nullptr;
 
         it++;
     }
-}
-
-void JZNodeCompiler::addNodeFlowPc(int node_id, int cond,int pc)
-{
-    auto add_pc = [](int &jmp_pc, int pc_cond, int add_pc) 
-    {
-        if (jmp_pc >= pc_cond)
-            jmp_pc += add_pc;
-    };
-
-    auto &node_info = m_nodeInfo[node_id];
-    add_pc(node_info.continuePc, cond, pc);
-    add_pc(node_info.breakPc, cond, pc);
 }
 
 JZNode* JZNodeCompiler::currentNode()
@@ -1490,13 +1471,19 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
         return false;
 
     m_statmentList = &m_script->statmentList;
-    appendStatementList(list);
-    addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
+    appendStatementList(list);    
 
     if (isBuildError())
         return false;
     if (!isAllFlowReturn(start_node))
         return false;
+
+    //void 类型的末尾添加return
+    if (m_scriptItem->function().paramOut.size() == 0
+        && m_statmentList->back()->type != OP_return)
+    {
+        addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
+    }
    
     for (int i = 0; i < m_statmentList->size(); i++)
     {
@@ -1507,8 +1494,12 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
             JZNode* parent = breakContinueParentNode(complier_jmp->nodeId);
             auto &info = m_nodeInfo[parent->id()];
 
+            int break_pc = indexOfStatment(info.breakIr.data());
+            int continue_pc = indexOfStatment(info.continueIr.data());
+            Q_ASSERT(break_pc >= 0 && continue_pc >= 0);
+
             JZNodeIRJmp* jmp = new JZNodeIRJmp(OP_jmp);
-            jmp->jmpPc = complier_jmp->isBreak() ? info.breakPc : info.continuePc;
+            jmp->jmpPc = complier_jmp->isBreak() ? break_pc : continue_pc;
             replaceStatement(i, JZNodeIRPtr(jmp));
         }
     }
@@ -1530,6 +1521,7 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
         if (m_statmentList->at(pc)->type != OP_ComilerStackInit)
             continue;
 
+        //节点变量
         QList<JZNodeIRPtr> ir_list;        
         for (int node_idx = 0; node_idx < m_buildGraph->topolist.size(); node_idx++)
         {
@@ -1557,6 +1549,7 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
             }
         }
 
+        //栈变量
         auto it = m_stackType.begin();
         while(it != m_stackType.end())
         {
@@ -1695,12 +1688,27 @@ const JZFunctionDefine *JZNodeCompiler::function(QString name)
     return m_env->functionManager()->function(name);
 }
 
+JZNodeIR *JZNodeCompiler::statment(int index)
+{
+    return m_statmentList->at(index).data();
+}
+
 JZNodeIR *JZNodeCompiler::lastStatment()
 {
     if (m_statmentList->size() > 0)
         return m_statmentList->back().data();
     else
         return nullptr;
+}
+
+int JZNodeCompiler::indexOfStatment(JZNodeIR *ir)
+{
+    for (int i = 0; i < m_statmentList->size(); i++)
+    {
+        if (m_statmentList->at(i).data() == ir)
+            return i;
+    }
+    return -1;
 }
 
 void JZNodeCompiler::removeStatement(int pc)
@@ -1743,23 +1751,20 @@ void JZNodeCompiler::appendStatementList(const QList<JZNodeIRPtr>& ir_list)
 
 void JZNodeCompiler::setBreakContinue(int breakPc, int continuePc)
 {
-    currentNodeInfo()->breakPc = breakPc;
-    currentNodeInfo()->continuePc = continuePc;
+    currentNodeInfo()->breakIr = m_statmentList->at(breakPc).toWeakRef();
+    currentNodeInfo()->continueIr = m_statmentList->at(continuePc).toWeakRef();
 }
 
 JZNode* JZNodeCompiler::breakContinueParentNode(int child_id)
 {
     QVector<int> allow_node = { Node_for,Node_while,Node_foreach };
     int parent_id = m_scriptItem->parentNode(child_id);
-    bool allow = false;
     while (parent_id != -1)
     {
         auto node = m_scriptItem->getNode(parent_id);
-        if (allow_node.contains(node->type()))
-        {
-            allow = true;
-            break;
-        }
+        if (allow_node.contains(node->type()))        
+            return node;
+        
         parent_id = m_scriptItem->parentNode(node->id());
     }
     return nullptr;
@@ -1774,12 +1779,12 @@ JZNodeIRJmp* JZNodeCompiler::addJmp(JZNodeIRType type)
 
 int JZNodeCompiler::addContinue(int node_id)
 {
-    return addStatement(JZNodeIRPtr(new JZNodeComilerBreakContinue(node_id, JZNodeComilerBreakContinue::Jmp_break)));
+    return addStatement(JZNodeIRPtr(new JZNodeComilerBreakContinue(node_id, JZNodeComilerBreakContinue::Jmp_continue)));
 }
 
 int JZNodeCompiler::addBreak(int node_id)
 {
-    return addStatement(JZNodeIRPtr(new JZNodeComilerBreakContinue(node_id, JZNodeComilerBreakContinue::Jmp_continue)));
+    return addStatement(JZNodeIRPtr(new JZNodeComilerBreakContinue(node_id, JZNodeComilerBreakContinue::Jmp_break)));
 }
 
 void JZNodeCompiler::addCall(const QString &function_name, const QList<JZNodeIRParam> &paramIn,const QList<JZNodeIRParam> &paramOut)

@@ -520,11 +520,12 @@ const JZParamDefine *JZScriptItem::localVariable(QString name)
 
     if (m_itemType == ProjectItem_scriptFunction)
     {
+        //param out 作为return 返回，不作为局部变量
         for (int i = 0; i < m_function.paramIn.size(); i++)
         {
             if (m_function.paramIn[i].name == name)
                 return &m_function.paramIn[i];
-        }
+        }        
     }
 
     return nullptr;

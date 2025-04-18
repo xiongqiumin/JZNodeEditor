@@ -11,8 +11,7 @@ class ScriptTest : public BaseTest
 public:
     ScriptTest();
 
-private slots:
-    void testWhileLoop();
+private slots:    
     void testMatchType();
     void testClone();
     void testContainer();
@@ -26,7 +25,9 @@ private slots:
     void testBind();
     
     void testFor();
+    void testWhileLoop();
     void testForEach();
+    void testBreakContinue();    
     
     void testIf();
     void testSwitch();
