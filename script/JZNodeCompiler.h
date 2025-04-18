@@ -70,7 +70,24 @@ typedef QSharedPointer<Graph> GraphPtr;
 //编译时占位的 statment
 enum {
     OP_ComilerFlowOut = 0x8000,
-    OP_ComilerStackInit,    
+    OP_ComilerStackInit, 
+    OP_ComilerBreakContinue,
+};
+
+//JZNodeIRFlowOut
+class JZNodeComilerBreakContinue : public JZNodeIR
+{
+public:
+    enum JumpType{
+        Jmp_break,
+        Jmp_continue,
+    };
+
+    JZNodeComilerBreakContinue(int nod_id, JumpType jump_type);
+    bool isBreak();
+
+    JumpType jumpType;
+    int nodeId;
 };
 
 //JZNodeIRFlowOut
@@ -95,14 +112,6 @@ struct NodeCompilerInfo
 {
     NodeCompilerInfo();
 
-    struct Jump
-    {
-        Jump();
-
-        int pin;
-        int pc;
-    };
-
     int node_id;
     int node_type;    
     QMap<int,int> pinType;   //pin 类型
@@ -115,10 +124,8 @@ struct NodeCompilerInfo
 
     //调转信息    
     int parentId;           //用于subFlow 指明父节点
-    QList<int> continuePc;  //父节点continuet跳出的地址
-    QList<int> breakPc;
-    QList<int> continueList; //子节点continue语句地址
-    QList<int> breakList;
+    int continuePc;         //父节点continuet跳出的地址
+    int breakPc;
     int allSubReturn;
 
     QString error;
@@ -238,11 +245,11 @@ public:
     int addNop();
     int addNodeDebug(int id);
     void setAutoAddNodeDebug(int m_id,bool flag);
-    int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
-    void addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
-    int addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1,int op);
-    int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
-    void addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op);
+    int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
+    void addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
+    int addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, JZNodeIRType op);
+    int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
+    void addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
     void addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value);
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
@@ -250,12 +257,12 @@ public:
 
     void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
     int addStatement(JZNodeIRPtr ir);  
-    void addStatementList(const QList<JZNodeIRPtr> &ir_list);
-    void adjustStatementPc(int pc_cond, int adjust);
     
-    int addContinue();
-    int addBreak();    
-    void setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePC);
+    JZNodeIRJmp* addJmp(JZNodeIRType type);
+    int addContinue(int node_id);
+    int addBreak(int node_id);
+    void setBreakContinue(int breakPc,int continuePC);
+    JZNode* breakContinueParentNode(int child_id);
     
     void addAlloc(int allocType, QString name, int dataType);
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
@@ -265,8 +272,7 @@ public:
     void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAssert(const JZNodeIRParam &tips);       
 
-    void addExpr(JZNodeIRParam dst, int op, JZNodeIRParam in1, JZNodeIRParam in2);
-
+    
     JZNode* nextFlowNode(JZNode* node, int pin);
     bool buildSubControlFlow(JZNode* node, QList<JZNodeIRPtr>& list);
 
@@ -274,7 +280,9 @@ public:
     void removeStatement(int pc);
     void replaceStatement(int pc,JZNodeIRPtr ir);
     void replaceStatementList(int pc,QList<JZNodeIRPtr> ir_list);    
-    
+    void appendStatementList(const QList<JZNodeIRPtr>& ir_list);
+    void adjustStatementPc(int start_index, int jmp_cond, int adjust);
+
     JZScriptItem *currentFile();
     Graph *currentGraph();
     JZNode *currentNode();
@@ -312,8 +320,7 @@ protected:
     先编译各个flow节点，最后连接，分开编译是因为out的时候无法确定对应输入节点的类型
     */
     bool buildControlFlow(JZNode* node);
-    void replaceSubNode(int id,int parentId,int flow_index);
-    int isAllFlowReturn(int id,bool root);
+    bool isAllFlowReturn(JZNode *node);
     void addFunction(const JZFunctionDefine &define,int start_addr,int end_addr);    
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);         
@@ -326,9 +333,7 @@ protected:
     void popCompilerNode();    
     
     void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
-    void updateFlowOut();    
-    void linkNodes(QList<GraphNode *> flow_list);
-    void updateDebugInfo();
+    void updateFlowOut();  
     void addNodeFlowPc(int node_id, int pc_cond, int pc);
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
     void dealAddCall(bool isVirtual,const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);

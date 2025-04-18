@@ -124,38 +124,3 @@ bool JZNodeSignalDisconnect::compiler(JZNodeCompiler *c, QString &error)
 {
     return false;
 }
-
-//JZNodeParamChangedEvent
-JZNodeParamChangedEvent::JZNodeParamChangedEvent()
-{
-    m_name = "ParamChanged";
-    m_type = Node_paramChangedEvent;
-
-    addParamIn("");
-}
-
-JZNodeParamChangedEvent::~JZNodeParamChangedEvent()
-{
-
-}
-
-void JZNodeParamChangedEvent::setVariable(const QString &name)
-{
-
-}
-
-QString JZNodeParamChangedEvent::variable() const
-{
-    return QString();
-}
-
-JZFunctionDefine JZNodeParamChangedEvent::function()
-{
-    JZFunctionDefine def;
-    return def;
-}
-
-bool JZNodeParamChangedEvent::compiler(JZNodeCompiler *compiler, QString &error)
-{
-    return false;
-}

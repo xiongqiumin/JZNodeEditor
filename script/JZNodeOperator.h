@@ -6,7 +6,7 @@
 class JZNodeOperator: public JZNode
 {
 public:
-    JZNodeOperator(int node_type,int op_type);
+    JZNodeOperator(int node_type,JZNodeIRType op_type);
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
@@ -19,7 +19,7 @@ protected:
     bool checkPinInput(JZNodeCompiler *compiler,QString &error);
     void calcPinOutType(JZNodeCompiler *compiler);
 
-    int m_op;    
+    JZNodeIRType m_op;
 };
 
 //JZNodeAdd

@@ -24,9 +24,8 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
 {
     m_debug = debug;
     m_engine.setProgram(&m_program);
-    if (!m_program.load(path))
+    if (!m_program.load(path, error))
     {
-        error = m_program.error();
         return false;
     }
 

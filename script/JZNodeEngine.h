@@ -16,9 +16,9 @@
 
 enum JZEngineStatus{
     Status_none,
+    Status_idle,
     Status_running,
     Status_pause,
-    Status_idlePause,
     Status_error,
 };
 
@@ -36,7 +36,7 @@ public:
 
     const JZFunction *function;
     QVariantPtr  object;  //this    
-    JZNodeScript *script;    
+    const JZNodeScript *script;
     int pc;
     int inCount;          //传入参数数量
     int printNode;
@@ -149,14 +149,15 @@ public:
     JZNodeEngine();
     virtual ~JZNodeEngine();
 
+    bool isInit() const;
     void init();
     void deinit();
 
     void statClear();
     void statReport();
 
-    void setProgram(JZNodeProgram *program);
-    JZNodeProgram *program();        
+    void setProgram(const JZNodeProgram *program);
+    const JZNodeProgram *program();
 
     int status();
     JZNodeRuntimeInfo runtimeInfo();    
@@ -194,6 +195,7 @@ public:
     
     const QVariant &getReg(int reg);
     void setReg(int reg, const QVariant &value);
+    int regInCount();
 
     QVariant getSender();    
 
@@ -212,7 +214,6 @@ public:
     void onSlot(const QString &function,const QVariantList &in,QVariantList &out);
     void print(const QString &log);
     void printMemory();
-    int regInCount();
 
 signals:    
     void sigRuntimeError(JZNodeRuntimeError error);
@@ -231,6 +232,13 @@ protected:
         Command_stop,
     };
 
+    struct TryCatchInfo
+    {
+        int stack;
+        int catchPc;
+        JZNodeIRParam irExcep;
+    };
+
     struct Stat
     {
         Stat();
@@ -247,18 +255,17 @@ protected:
 
     virtual void customEvent(QEvent *event) override;    
     void clear();
-    bool checkIdlePause(const JZFunction *func);  //return is stop
     bool checkPause(int node_id);
     bool run();             
     void updateStatus(JZEngineStatus status);
 
     const JZFunction *function(QString name);
-    const JZFunction *function(JZNodeIRCall *ir_call);
+    const JZFunction *function(const JZNodeIRCall *ir_call);
     const JZFunction *virtualFunction(JZNodeObject *obj,QString name);
 
     void checkFunctionIn(const JZFunction *func);
     void checkFunctionOut(const JZFunction *func);
-    void callCFunction(const JZFunction *func);    
+    void callCFunction(const JZFunction *func);
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprInt64(const QVariant &va, const QVariant &vb, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
@@ -280,12 +287,12 @@ protected:
     JZNodeObject *getVariableObject(QVariant *ref, const QStringList &name);        
         
     int nodeIdByPc(int pc);        
-    int nodeIdByPc(JZNodeScript *script,QString func, int pc);    
+    int nodeIdByPc(const JZNodeScript *script,QString func, int pc);
     NodeRange nodeDebugRange(int node_id, int pc);
     int breakNodeId();
-    JZFunctionDebugInfo *currentFunctionDebugInfo();
+    const JZFunctionDebugInfo *currentFunctionDebugInfo();
 
-    JZNodeScript *getScript(QString path); 
+    const JZNodeScript *getScript(QString path);
         
     void unSupportSingleOp(int a,int op);
     void unSupportOp(int a,int b,int op);
@@ -293,9 +300,13 @@ protected:
     bool isWidgetFunction(const JZFunction *function);
     void autoConnect();
     
+    void pushTryCatch(JZNodeIRTry *ir);
+    void popTryCatch();
+    bool catchException(QString tips);
+
     int m_pc;    
-    JZNodeProgram *m_program;    
-    JZNodeScript *m_script;
+    const JZNodeProgram *m_program;
+    const JZNodeScript *m_script;
     QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
@@ -304,7 +315,6 @@ protected:
 
     JZScriptEnvironment m_env;
     Stack m_stack;
-    int m_regInCount;
     QMap<QString,QVariantPtr> m_global;
     QVector<QVariant> m_regs;
     JZNodeObject *m_sender;
@@ -318,6 +328,7 @@ protected:
     bool m_debug;
     bool m_watch;
     JZNodeRuntimeError m_error;
+    QList<TryCatchInfo> m_tryCatchList;
 
     QTimer *m_watchTimer;
     

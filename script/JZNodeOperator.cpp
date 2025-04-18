@@ -4,7 +4,7 @@
 #include "JZNodeCompiler.h"
 #include "JZRegExpHelp.h"
 
-JZNodeOperator::JZNodeOperator(int node_type,int op_type)
+JZNodeOperator::JZNodeOperator(int node_type, JZNodeIRType op_type)
 {
     m_type = node_type;
     m_op = op_type;

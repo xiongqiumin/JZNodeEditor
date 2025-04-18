@@ -68,11 +68,11 @@ public:
     JZNodeScript();
     void clear();    
 
-    JZFunction *function(QString name);
-    JZFunctionDebugInfo *functionDebug(QString name);
+    const JZFunction *function(QString name) const;
+    const JZFunctionDebugInfo *functionDebug(QString name) const;
     
-    void copyTo(JZNodeScript *other);
-    void saveToStream(QDataStream &s);
+    void copyTo(JZNodeScript *other) const;
+    void saveToStream(QDataStream &s) const;
     void loadFromStream(QDataStream &s);
 
     QString file;
@@ -119,32 +119,31 @@ public:
     JZNodeProgram();
     ~JZNodeProgram();
 
-    bool isNull();
+    bool isNull() const;
 
-    bool load(QString file);
+    bool load(QString file,QString &error);
     bool save(QString file);
     void clear();
-    void copyTo(JZNodeProgram *other);
+    void copyTo(JZNodeProgram *other) const;
     
-    void initEnv(JZScriptEnvironment *env);
+    void initEnv(JZScriptEnvironment *env) const;
 
     const JZNodeTypeMeta &typeMeta() const;       
-    QString applicationFilePath();
+    QString applicationFilePath() const;
     
-    JZFunction* function(QString name);
+    const JZFunction* function(QString name) const;
 
-    QList<JZNodeScript*> scriptList();
-    JZNodeScript *script(QString path);   
+    QList<JZNodeScript*> scriptList() const;
+    const JZNodeScript *script(QString path) const;
     
-    const JZFunctionDebugInfo *debugInfo(QString name);        
-    QString error();
+    const JZFunctionDebugInfo *debugInfo(QString name) const;
     
 protected:
     Q_DISABLE_COPY(JZNodeProgram);
 
     friend JZNodeBuilder;        
 
-    void saveToStream(QDataStream &s);
+    void saveToStream(QDataStream &s) const;
     void loadFromStream(QDataStream &s);
      
     QString m_filePath;

@@ -14,10 +14,10 @@ public:
     DebugTest();
 
 private slots:
-    void cleanup();
     void testDebugServer();
 
 protected:
+    virtual void clearTestCase() override;
     void startServer(QString func,QVariantList input);
     void stopServer();
 

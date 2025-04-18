@@ -36,6 +36,24 @@ protected:
 };
 
 
+//EngineThread
+class EngineThread : public QThread
+{
+public:
+    EngineThread();
+
+    void start(QString func, QVariantList input);
+
+    QThread* mainThread;
+    JZNodeEngine* engine;
+    QString function;
+    QVariantList input;
+    QVariantList output;
+
+protected:
+    void run();
+};
+
 //BaseTest
 class BaseTest : public QObject
 {
@@ -52,7 +70,7 @@ protected slots:
 private slots:
     void initTestCase();
     void init();
-    virtual void cleanup();
+    void cleanup();
     
 protected:
     struct Promise
@@ -70,6 +88,7 @@ protected:
     void dump(QString dir);
     void msleep(int ms);
     void makeDump();
+    virtual void clearTestCase();
     
     JZProject m_project;
     JZNodeObjectManager *m_objInst;
@@ -80,7 +99,7 @@ protected:
     JZNodeBuilder m_builder;
     Promise m_callResult;
     QString m_dumpPath;
-    std::thread m_thread;
+    EngineThread m_thread;
 };
 
 

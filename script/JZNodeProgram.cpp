@@ -139,7 +139,7 @@ void JZNodeScript::clear()
     functionDebugList.clear();
 }
 
-JZFunction *JZNodeScript::function(QString name)
+const JZFunction *JZNodeScript::function(QString name) const
 {
     for(int i = 0; i < functionList.size(); i++)
     {
@@ -149,7 +149,7 @@ JZFunction *JZNodeScript::function(QString name)
     return nullptr;
 }
 
-JZFunctionDebugInfo *JZNodeScript::functionDebug(QString name)
+const JZFunctionDebugInfo *JZNodeScript::functionDebug(QString name) const
 {
     for (int i = 0; i < functionList.size(); i++)
     {
@@ -159,7 +159,7 @@ JZFunctionDebugInfo *JZNodeScript::functionDebug(QString name)
     return nullptr;
 }
 
-void JZNodeScript::copyTo(JZNodeScript *other)
+void JZNodeScript::copyTo(JZNodeScript *other) const
 {
     QByteArray buffer;
     QDataStream out(&buffer, QIODevice::WriteOnly);
@@ -169,7 +169,7 @@ void JZNodeScript::copyTo(JZNodeScript *other)
     other->loadFromStream(in);    
 }
 
-void JZNodeScript::saveToStream(QDataStream &s)
+void JZNodeScript::saveToStream(QDataStream &s) const
 {
     s << file;    
     s << className;
@@ -191,7 +191,7 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     s >> stmt_size;
     for(int i = 0; i < stmt_size; i++)
     {
-        int type;
+        JZNodeIRType type;
         s >> type;
         JZNodeIR *ir = createNodeIR(type);
         ir->loadFromStream(s);
@@ -295,7 +295,7 @@ JZNodeProgram::~JZNodeProgram()
 {
 }
 
-bool JZNodeProgram::isNull()
+bool JZNodeProgram::isNull() const
 {
     return m_filePath.isEmpty();
 }
@@ -307,17 +307,13 @@ void JZNodeProgram::clear()
     m_typeMeta.clear();        
 }
 
-QString JZNodeProgram::error()
-{
-    return m_error;
-}
 
-QString JZNodeProgram::applicationFilePath()
+QString JZNodeProgram::applicationFilePath() const
 {
     return m_filePath;
 }
 
-void JZNodeProgram::saveToStream(QDataStream &s)
+void JZNodeProgram::saveToStream(QDataStream &s) const
 {
     int script_size = m_scripts.size();
     s << script_size;
@@ -348,12 +344,12 @@ void JZNodeProgram::loadFromStream(QDataStream &s)
     s >> m_typeMeta;
 }
 
-bool JZNodeProgram::load(QString filepath)
+bool JZNodeProgram::load(QString filepath,QString &error)
 {   
     QFile file(filepath);
     if (!file.open(QFile::ReadOnly))
     {
-        m_error = "open file failed";
+        error = "open file failed";
         return false;
     }
 
@@ -362,7 +358,7 @@ bool JZNodeProgram::load(QString filepath)
     s >> magic;
     if(magic != NodeIRMagic())
     {
-        m_error = "version not support";
+        error = "version not support";
         return false;
     }
         
@@ -386,7 +382,7 @@ bool JZNodeProgram::save(QString filepath)
     return true;
 }
 
-void JZNodeProgram::copyTo(JZNodeProgram *other)
+void JZNodeProgram::copyTo(JZNodeProgram *other) const
 {
     QByteArray buffer;
     QDataStream out(&buffer,QIODevice::WriteOnly);
@@ -396,13 +392,13 @@ void JZNodeProgram::copyTo(JZNodeProgram *other)
     other->loadFromStream(in);
 }
 
-JZFunction* JZNodeProgram::function(QString name)
+const JZFunction* JZNodeProgram::function(QString name) const
 {
     auto it = m_scripts.begin();
     while (it != m_scripts.end())
     {
         JZNodeScript* s = it->data();
-        JZFunction *func = s->function(name);
+        const JZFunction *func = s->function(name);
         if (func)
             return func;
 
@@ -411,12 +407,12 @@ JZFunction* JZNodeProgram::function(QString name)
     return nullptr;
 }
 
-JZNodeScript *JZNodeProgram::script(QString path)
+const JZNodeScript *JZNodeProgram::script(QString path) const
 {
     return m_scripts.value(path, JZNodeScriptPtr()).data();
 }
 
-const JZFunctionDebugInfo *JZNodeProgram::debugInfo(QString name)
+const JZFunctionDebugInfo *JZNodeProgram::debugInfo(QString name) const
 {
     auto it = m_scripts.begin();
     while(it != m_scripts.end())
@@ -431,7 +427,7 @@ const JZFunctionDebugInfo *JZNodeProgram::debugInfo(QString name)
     return nullptr;
 }    
 
-QList<JZNodeScript*> JZNodeProgram::scriptList()
+QList<JZNodeScript*> JZNodeProgram::scriptList() const
 {
     QList<JZNodeScript*> list;
     auto it = m_scripts.begin();
@@ -448,7 +444,7 @@ const JZNodeTypeMeta &JZNodeProgram::typeMeta() const
     return m_typeMeta;
 }
 
-void JZNodeProgram::initEnv(JZScriptEnvironment *env)
+void JZNodeProgram::initEnv(JZScriptEnvironment *env) const
 {
     env->registType(this->typeMeta());
     auto script_list = this->scriptList();

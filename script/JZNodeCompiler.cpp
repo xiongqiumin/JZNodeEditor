@@ -257,10 +257,23 @@ bool Graph::toposort()
     return true;
 }
 
+//JZNodeComilerIR
+JZNodeComilerBreakContinue::JZNodeComilerBreakContinue(int node_id, JumpType jmp)
+    :JZNodeIR((JZNodeIRType)OP_ComilerBreakContinue)
+{
+    nodeId = node_id;
+    jumpType = jmp;
+}
+
+bool JZNodeComilerBreakContinue::isBreak()
+{
+    return (jumpType == Jmp_break);
+}
+
 //JZNodeIRFlowOut
 JZNodeIRFlowOut::JZNodeIRFlowOut()
 {
-    type = OP_ComilerFlowOut;
+    type = (JZNodeIRType)OP_ComilerFlowOut;
     fromId = -1;
     toId = -1;
 }
@@ -268,22 +281,18 @@ JZNodeIRFlowOut::JZNodeIRFlowOut()
 //JZNodeIRStackInit
 JZNodeIRStackInit::JZNodeIRStackInit()
 {
-    type = OP_ComilerStackInit;
+    type = (JZNodeIRType)OP_ComilerStackInit;
 }
 
 //NodeCompilerInfo
-NodeCompilerInfo::Jump::Jump()
-{
-    pin = -1;
-    pc = -1;
-}
-
 NodeCompilerInfo::NodeCompilerInfo()
 {
     node_id = -1;
     node_type = Node_none;    
     start = -1;
     parentId = -1;    
+    breakPc = -1;
+    continuePc = -1;
     allSubReturn = -1;    
     autoAddDebugStart = true;
 }
@@ -831,8 +840,11 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
             
             QList<JZNodeIRPtr> flow_statment;
             int start_pc = m_script->statmentList.size();
-            if(!buildControlFlow(func_start))
+            if (!buildControlFlow(func_start))
+            {
+                buildRet = false;
                 goto buildEnd;
+            }
 
             int end_pc = m_script->statmentList.size();
 
@@ -886,28 +898,22 @@ void JZNodeCompiler::updateFlowOut()
     auto it = m_nodeInfo.begin();
     while (it != m_nodeInfo.end())
     {
-        m_statmentList = &it->statmentList;
-        for (int i = 0; i < m_statmentList->size(); i++)
+        //可能有推送到多个
+        for (int i = 0; i < it->statmentList.size(); i++)
         {
-            if (m_statmentList->at(i)->type != OP_ComilerFlowOut)
+            if (it->statmentList[i]->type != OP_ComilerFlowOut)
                 continue;
 
-            JZNodeIRFlowOut *stmt = (JZNodeIRFlowOut*)m_statmentList->at(i).data();
+            JZNodeIRFlowOut* stmt = (JZNodeIRFlowOut*)it->statmentList[i].data();
             auto to_gemo = paramGemo(stmt->toId);
-            if (!m_nodeInfo[to_gemo.nodeId].pinType.contains(to_gemo.pinId))
-            {
-                replaceStatement(i, JZNodeIRPtr(new JZNodeIR(OP_nop)));
-                continue;
-            }
 
-            int next_pc = m_statmentList->size();
+            QList<JZNodeIRPtr> new_list;
+            m_statmentList = &new_list;
             addSetVariableConvert(irId(stmt->toId), irId(stmt->fromId));
 
-            QList<JZNodeIRPtr> new_list = m_statmentList->mid(next_pc);
-            for (int j = 0; j < new_list.size(); j++)
-                new_list[j]->pc = -1;
-            *m_statmentList = m_statmentList->mid(0, next_pc);
+            m_statmentList = &it->statmentList;
             replaceStatementList(i, new_list);
+            i = i + new_list.size() - 1;       //跳过新加的语句
 
             addNodeFlowPc(it.key(), i, new_list.size() - 1);
         }
@@ -919,149 +925,15 @@ void JZNodeCompiler::updateFlowOut()
 
 void JZNodeCompiler::addNodeFlowPc(int node_id, int cond,int pc)
 {
-    auto add_pc1 = [](QList<NodeCompilerInfo::Jump> &list, int pc_cond,int add_pc)
+    auto add_pc = [](int &jmp_pc, int pc_cond, int add_pc) 
     {
-        for (int i = 0; i < list.size(); i++)
-        {
-            if(list[i].pc >= pc_cond)
-                list[i].pc += add_pc;
-        }
-    };
-
-    auto add_pc2 = [](QList<int> &list, int pc_cond, int add_pc) 
-    {
-        for (int i = 0; i < list.size(); i++)
-        {
-            if (list[i] >= pc_cond)
-                list[i] += add_pc;
-        }
+        if (jmp_pc >= pc_cond)
+            jmp_pc += add_pc;
     };
 
     auto &node_info = m_nodeInfo[node_id];
-    add_pc2(node_info.continuePc, cond, pc);
-    add_pc2(node_info.breakPc, cond, pc);
-    add_pc2(node_info.continueList, cond, pc);
-    add_pc2(node_info.breakList, cond, pc);
-}
-
-//连接节点
-void JZNodeCompiler::linkNodes(QList<GraphNode *> flow_list)
-{
-/*
-    m_statmentList = &m_script->statmentList;
-    for (int node_idx = 0; node_idx < m_buildGraph->topolist.size(); node_idx++)
-    {
-        auto node = m_buildGraph->topolist[node_idx]->node;
-        if (!node->isFlowNode())
-            continue;
-
-        auto &node_info = m_nodeInfo[node->id()];
-        node_info.start = m_statmentList->size();
-        addNodeFlowPc(node->id(), 0, node_info.start);
-
-        addStatementList(node_info.statmentList);        
-        
-        auto &dataRanges = m_nodeInfo[node->id()].dataRanges;
-        auto it = dataRanges.begin();
-        while (it != dataRanges.end())
-        {
-            auto &rg_list = it.value();
-            for (int i = 0; i < rg_list.size(); i++)
-            {
-                auto rg = rg_list[i];
-                rg.start += node_info.start;
-                rg.debugStart += node_info.start;
-                rg.end += node_info.start;
-                m_nodeInfo[it.key()].ranges << rg;
-            }
-            it++;
-        }
-        
-        auto &flow_rng = m_nodeInfo[node->id()].ranges[0];
-        flow_rng.start += node_info.start;
-        flow_rng.debugStart += node_info.start;
-        flow_rng.end += node_info.start;
-    }
-
-    //替换 subFlowOut 为实际子节点地址, 子节点的后续节点也在此处处理
-    for(int node_idx = 0; node_idx < flow_list.size(); node_idx++)
-    {   
-        GraphNode *graph_node = flow_list[node_idx];
-        NodeCompilerInfo &info = m_nodeInfo[graph_node->node->id()];
-        for(int i = 0; i < info.jmpSubList.size(); i++)
-        {
-            int pin = info.jmpSubList[i].pin;
-            if(!graph_node->paramOut.contains(pin))
-                continue;
-
-            auto &out_list = graph_node->paramOut[pin];
-            Q_ASSERT(out_list.size() == 1);
-            JZNodeGemo next_gemo = out_list[0];            
-
-            JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
-            jmp->jmpPc = m_nodeInfo[next_gemo.nodeId].start;
-            replaceStatement(info.jmpSubList[i].pc,JZNodeIRPtr(jmp));
-
-            replaceSubNode(out_list[0].nodeId,graph_node->node->id(),i);
-        }                            
-    }
-
-    //替换 flowOut 为实际节点地址
-    bool is_return_value = (m_scriptItem->itemType() == ProjectItem_scriptFunction &&
-        m_scriptItem->function().paramOut.size() != 0);
-    for(int node_idx = 0; node_idx < flow_list.size(); node_idx++)
-    {   
-        GraphNode *graph_node = flow_list[node_idx];
-        NodeCompilerInfo &info = m_nodeInfo[graph_node->node->id()];
-        if(info.parentId != -1)
-            continue;
-
-        info.allSubReturn = isAllFlowReturn(info.node_id, true);
-        //connect next
-        for(int jmp_idx = 0; jmp_idx < info.jmpList.size(); jmp_idx++)
-        {
-            int pin = info.jmpList[jmp_idx].pin;
-            int pc = info.jmpList[jmp_idx].pc;
-
-            if(graph_node->paramOut.contains(pin))
-            {
-                auto &out_list = graph_node->paramOut[info.jmpList[jmp_idx].pin];
-                Q_ASSERT(out_list.size() == 1);
-
-                JZNodeGemo next_gemo = out_list[0];
-                JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
-                jmp->jmpPc = m_nodeInfo[next_gemo.nodeId].start;   //子流程结束
-                replaceStatement(pc,JZNodeIRPtr(jmp));
-            }
-            else
-            {                
-                if (is_return_value && !info.allSubReturn)
-                {
-                    QString error_tips = graph_node->node->idName() + ",输出" + QString::number(jmp_idx + 1) + "需要连接return,并给与返回值";
-                    m_nodeInfo[graph_node->node->id()].error = error_tips;
-                    continue;
-                }
-
-                if (!is_return_value)
-                {
-                    JZNodeIR *ir_return = new JZNodeIR(OP_return);
-                    replaceStatement(pc, JZNodeIRPtr(ir_return));
-                }
-                else
-                {
-                    //应当已经在子节点中return
-                    JZNodeIRAssert *ir_assert = new JZNodeIRAssert();
-                    ir_assert->tips = irLiteral("unexception flow return");
-                    replaceStatement(pc, JZNodeIRPtr(ir_assert));
-                }                
-            }
-        }
-    }   
-*/
-}
-
-void JZNodeCompiler::updateDebugInfo()
-{
+    add_pc(node_info.continuePc, cond, pc);
+    add_pc(node_info.breakPc, cond, pc);
 }
 
 JZNode* JZNodeCompiler::currentNode()
@@ -1604,7 +1476,7 @@ bool JZNodeCompiler::buildSubControlFlow(JZNode* node, QList<JZNodeIRPtr>& list)
             continue;
 
         auto& node_info = m_nodeInfo[node->id()];
-        addStatementList(node_info.statmentList);
+        appendStatementList(node_info.statmentList);
     }
 
     m_statmentList = pre_list;
@@ -1618,15 +1490,28 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
         return false;
 
     m_statmentList = &m_script->statmentList;
-    addStatementList(list);
+    appendStatementList(list);
     addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
 
-/*    
-    linkNodes(flow_list);
-    updateDebugInfo();   
-*/
     if (isBuildError())
         return false;
+    if (!isAllFlowReturn(start_node))
+        return false;
+   
+    for (int i = 0; i < m_statmentList->size(); i++)
+    {
+        int op_type = m_statmentList->at(i)->type;
+        if (op_type == OP_ComilerBreakContinue)
+        {
+            JZNodeComilerBreakContinue* complier_jmp = (JZNodeComilerBreakContinue*)(m_statmentList->at(i).data());
+            JZNode* parent = breakContinueParentNode(complier_jmp->nodeId);
+            auto &info = m_nodeInfo[parent->id()];
+
+            JZNodeIRJmp* jmp = new JZNodeIRJmp(OP_jmp);
+            jmp->jmpPc = complier_jmp->isBreak() ? info.breakPc : info.continuePc;
+            replaceStatement(i, JZNodeIRPtr(jmp));
+        }
+    }
 
     //init function stack
     auto createAlloc = [](int id,int dataType)->JZNodeIRPtr
@@ -1706,107 +1591,48 @@ bool JZNodeCompiler::buildDataFlow(const QList<GraphNode*> &graph_list)
     return ok;
 }
 
-int JZNodeCompiler::isAllFlowReturn(int id, bool root)
+bool JZNodeCompiler::isAllFlowReturn(JZNode* node)
 {
-    NodeCompilerInfo &info = m_nodeInfo[id];
-    auto graph_node = m_buildGraph->graphNode(id);
-    if (info.allSubReturn != -1)
-        return info.allSubReturn;
-/*
-    int all_sub_return = 0;
-    if (info.jmpList.size() == 0 && info.jmpSubList.size() == 0)
-    {
-        all_sub_return = (info.node_type == Node_return);        
-    }
-    else
-    {
-        //子节点
-        int ret_count = 0;
-        for (int i = 0; i < info.jmpSubList.size(); i++)
-        {
-            int pin = info.jmpSubList[i].pin;
-            if (!graph_node->paramOut.contains(pin))
-                continue;
+    if (m_scriptItem->function().paramOut.size() == 0)
+        return true;
 
-            auto &out_list = graph_node->paramOut[pin];
-            if (isAllFlowReturn(out_list[0].nodeId, false))
-                ret_count++;
+    while (node)
+    {
+        if (node->type() == Node_throw || node->type() == Node_return)
+            return true;
+
+        QList<int> sub_list = node->subFlowList();
+        int sub_return_size = 0;
+        for (int i = 0; i < sub_list.size(); i++)
+        {
+            JZNode* sub_node = nextFlowNode(node, sub_list[i]);
+            if (isAllFlowReturn(sub_node))
+                sub_return_size++;
         }
-        if (ret_count != 0 && ret_count == info.jmpSubList.size())
-            all_sub_return = 1;
 
-        //兄弟节点
-        if (all_sub_return != 1 && !root)
+        if (sub_return_size == sub_list.size())
         {
-            ret_count = 0;
-            for (int i = 0; i < info.jmpList.size(); i++)
+            if (node->type() == Node_if)
             {
-                int pin = info.jmpList[i].pin;
-                if (!graph_node->paramOut.contains(pin))
-                    continue;
-
-                auto &out_list = graph_node->paramOut[pin];
-                if (isAllFlowReturn(out_list[0].nodeId, false))
-                    ret_count++;
+                JZNodeIf* node_if = (JZNodeIf*)node;
+                if (node_if->hasElse())
+                    return true;
             }
-            if (ret_count == info.jmpList.size())
-                all_sub_return = 1;
+            else if (node->type() == Node_switch)
+            {
+                JZNodeSwitch* node_switch = (JZNodeSwitch*)node;
+                if (node_switch->hasDefault())
+                    return true;
+            }
+            else
+                return true;
         }
+
+        node = nextFlowNode(node, node->flowOut());
     }
 
-    info.allSubReturn = all_sub_return;
-*/
-    return info.allSubReturn;
-}
-
-void JZNodeCompiler::replaceSubNode(int id,int parent_id,int flow_index)
-{
-    NodeCompilerInfo &parent_info = m_nodeInfo[parent_id];
-    NodeCompilerInfo &info = m_nodeInfo[id];
-    info.parentId = parent_id;
-/*
-    //替换continue
-    for(int i = 0; i < info.continueList.size(); i++)
-    {        
-        JZNodeIRJmp *ir_jmp = new JZNodeIRJmp(OP_jmp);
-        ir_jmp->jmpPc = parent_info.continuePc[flow_index];
-        replaceStatement(info.continueList[i],JZNodeIRPtr(ir_jmp));
-    }
-    //替换break
-    for(int i = 0; i < info.breakList.size(); i++)
-    {
-        JZNodeIRJmp *ir_jmp = new JZNodeIRJmp(OP_jmp);
-        ir_jmp->jmpPc = parent_info.breakPc[flow_index];
-        replaceStatement(info.breakList[i],JZNodeIRPtr(ir_jmp));
-    }
-
-    //替换子节点后续
-    auto graph_node = m_buildGraph->graphNode(id);
-    for(int i = 0; i < info.jmpList.size(); i++)
-    {   
-        int pin = info.jmpList[i].pin;
-        int pc = info.jmpList[i].pc;
-        if(graph_node->paramOut.contains(pin))
-        {
-            auto &out_list = graph_node->paramOut[pin];
-            Q_ASSERT(out_list.size() == 1);
-
-            JZNodeGemo next_gemo = out_list[0];
-            JZNodeIRJmp *jmp = new JZNodeIRJmp(OP_jmp);
-            jmp->jmpPc = m_nodeInfo[next_gemo.nodeId].start;
-            replaceStatement(pc,JZNodeIRPtr(jmp));
-
-            replaceSubNode(next_gemo.nodeId,parent_id,flow_index);
-        }
-        else
-        {
-            int continuePc = m_nodeInfo[info.parentId].continuePc[flow_index];
-            JZNodeIRJmp *ir_continue = new JZNodeIRJmp(OP_jmp);            
-            ir_continue->jmpPc = continuePc;
-            replaceStatement(pc,JZNodeIRPtr(ir_continue));    
-        }                    
-    }
-*/
+    m_nodeInfo[node->id()].error = "需要连接return";
+    return false;
 }
 
 int JZNodeCompiler::addStatement(JZNodeIRPtr ir)
@@ -1817,38 +1643,25 @@ int JZNodeCompiler::addStatement(JZNodeIRPtr ir)
     return ir->pc;
 }
 
-void JZNodeCompiler::addStatementList(const QList<JZNodeIRPtr>& ir_list)
-{    
-    Q_ASSERT(m_statmentList != &ir_list);
-
-    int start = m_statmentList->size();
-    for (int i = 0; i < ir_list.size(); i++)
-    {
-        auto stmt = ir_list[i];        
-        stmt->pc = m_statmentList->size();
-        if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
-        {
-            JZNodeIRJmp *jmp = (JZNodeIRJmp*)stmt.data();
-            int new_jmp = jmp->jmpPc + start;
-            jmp->jmpPc = new_jmp;
-        }
-        m_statmentList->push_back(stmt);
-    }    
-}
-
-void JZNodeCompiler::adjustStatementPc(int pc_cond, int adjust)
+void JZNodeCompiler::adjustStatementPc(int start_idx,int jmp_cond, int adjust)
 {
-    for (int i = 0; i < m_statmentList->size(); i++)
+    for (int i = start_idx; i < m_statmentList->size(); i++)
     {
         auto stmt = m_statmentList->at(i);
         if (stmt->type == OP_jmp || stmt->type == OP_je || stmt->type == OP_jne)
         {            
             JZNodeIRJmp *jmp = (JZNodeIRJmp*)stmt.data();
-            if (jmp->jmpPc > pc_cond)
+            if (jmp->jmpPc > jmp_cond)
             {
                 int new_jmp = jmp->jmpPc + adjust;
                 jmp->jmpPc = new_jmp;
             }
+        }
+        else if (stmt->type == OP_try)
+        {
+            JZNodeIRTry* ir_try = (JZNodeIRTry*)stmt.data();
+            if(ir_try->catchType == JZNodeIRTry::InTry && ir_try->catchPc > jmp_cond)
+                ir_try->catchPc += adjust;
         }
     }
 }
@@ -1894,12 +1707,11 @@ void JZNodeCompiler::removeStatement(int pc)
 {
     Q_ASSERT(!hasStatementDepend(pc));
     m_statmentList->removeAt(pc);
-    adjustStatementPc(pc, -1);
+    adjustStatementPc(0, pc, -1);
 }
 
 void JZNodeCompiler::replaceStatement(int pc,JZNodeIRPtr ir)
 {
-    Q_ASSERT(ir->pc == -1 && pc < m_statmentList->size());
     ir->pc = pc;        
     m_statmentList->replace(pc, ir);
 }
@@ -1917,31 +1729,57 @@ void JZNodeCompiler::replaceStatementList(int pc, QList<JZNodeIRPtr> ir_list)
         m_statmentList->insert(pc + i, ir_list[i]);
 
     int pc_add = ir_list.size() - 1;
-    adjustStatementPc(pc, pc_add);
+    adjustStatementPc(0, pc, pc_add); //这里要用pc，是替换前的地址
 }
 
-void JZNodeCompiler::setBreakContinue(const QList<int> &breakPc, const QList<int> &continuePc)
+void JZNodeCompiler::appendStatementList(const QList<JZNodeIRPtr>& ir_list)
+{
+    Q_ASSERT(m_statmentList != &ir_list);
+
+    int start = m_statmentList->size();
+    m_statmentList->append(ir_list);
+    adjustStatementPc(start, -1, start);
+}
+
+void JZNodeCompiler::setBreakContinue(int breakPc, int continuePc)
 {
     currentNodeInfo()->breakPc = breakPc;
     currentNodeInfo()->continuePc = continuePc;
 }
 
-int JZNodeCompiler::addContinue()
+JZNode* JZNodeCompiler::breakContinueParentNode(int child_id)
 {
-    JZNodeIR *jmp = new JZNodeIRJmp(OP_jmp);
-    addStatement(JZNodeIRPtr(jmp));
-
-    currentNodeInfo()->continueList.push_back(jmp->pc);
-    return jmp->pc;
+    QVector<int> allow_node = { Node_for,Node_while,Node_foreach };
+    int parent_id = m_scriptItem->parentNode(child_id);
+    bool allow = false;
+    while (parent_id != -1)
+    {
+        auto node = m_scriptItem->getNode(parent_id);
+        if (allow_node.contains(node->type()))
+        {
+            allow = true;
+            break;
+        }
+        parent_id = m_scriptItem->parentNode(node->id());
+    }
+    return nullptr;
 }
 
-int JZNodeCompiler::addBreak()
+JZNodeIRJmp* JZNodeCompiler::addJmp(JZNodeIRType type)
 {
-    JZNodeIR *jmp = new JZNodeIRJmp(OP_jmp);
+    JZNodeIRJmp* jmp = new JZNodeIRJmp(type);
     addStatement(JZNodeIRPtr(jmp));
+    return jmp;
+}
 
-    currentNodeInfo()->breakList.push_back(jmp->pc);
-    return jmp->pc;
+int JZNodeCompiler::addContinue(int node_id)
+{
+    return addStatement(JZNodeIRPtr(new JZNodeComilerBreakContinue(node_id, JZNodeComilerBreakContinue::Jmp_break)));
+}
+
+int JZNodeCompiler::addBreak(int node_id)
+{
+    return addStatement(JZNodeIRPtr(new JZNodeComilerBreakContinue(node_id, JZNodeComilerBreakContinue::Jmp_continue)));
 }
 
 void JZNodeCompiler::addCall(const QString &function_name, const QList<JZNodeIRParam> &paramIn,const QList<JZNodeIRParam> &paramOut)
@@ -2502,15 +2340,6 @@ void JZNodeCompiler::addAssert(const JZNodeIRParam &tips)
     addStatement(JZNodeIRPtr(assert));
 }
 
-void JZNodeCompiler::addExpr(JZNodeIRParam dst, int op, JZNodeIRParam in1, JZNodeIRParam in2)
-{
-    JZNodeIRExpr* expr = new JZNodeIRExpr(op);
-    expr->dst = dst;
-    expr->src1 = in1;
-    expr->src2 = in2;
-    addStatement(JZNodeIRPtr(expr));
-}
-
 int JZNodeCompiler::addNop()
 {
     JZNodeIR *nop = new JZNodeIR(OP_nop);
@@ -2532,7 +2361,7 @@ void JZNodeCompiler::setAutoAddNodeDebug(int m_id,bool flag)
     m_nodeInfo[m_id].autoAddDebugStart = flag;
 }
 
-int JZNodeCompiler::addExpr(const JZNodeIRParam &dst,const JZNodeIRParam &p1,const JZNodeIRParam &p2,int op)
+int JZNodeCompiler::addExpr(const JZNodeIRParam &dst,const JZNodeIRParam &p1,const JZNodeIRParam &p2, JZNodeIRType op)
 {
     Q_ASSERT(irParamTypeMatch(p1,p2,false));
     Q_ASSERT(JZNodeType::calcExprType(irParamType(p1),irParamType(p2),op) == irParamType(dst));
@@ -2544,7 +2373,7 @@ int JZNodeCompiler::addExpr(const JZNodeIRParam &dst,const JZNodeIRParam &p1,con
     return addStatement(JZNodeIRPtr(expr));
 }
 
-int JZNodeCompiler::addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1,int op)
+int JZNodeCompiler::addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, JZNodeIRType op)
 {
     JZNodeIRExpr *expr = new JZNodeIRExpr(op);
     expr->src1 = p1;
@@ -2552,7 +2381,7 @@ int JZNodeCompiler::addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam 
     return addStatement(JZNodeIRPtr(expr));
 }
 
-void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op)
+void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op)
 {   
     auto env = project()->environment();
     int t1 = irParamType(p1);
@@ -2587,13 +2416,13 @@ void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRPara
         addConvert(tmp_dst,tDst,dst);
 }
 
-int JZNodeCompiler::addCompare(const JZNodeIRParam &p1,const JZNodeIRParam &p2,int op)
+int JZNodeCompiler::addCompare(const JZNodeIRParam &p1,const JZNodeIRParam &p2, JZNodeIRType op)
 {
     Q_ASSERT(irParamTypeMatch(p1,p2,false));
     return addExpr(irId(Reg_Cmp),p1,p2,op);    
 }
 
-void JZNodeCompiler::addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2,int op)
+void JZNodeCompiler::addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op)
 {
     addCompare(p1,p2,op);
 }

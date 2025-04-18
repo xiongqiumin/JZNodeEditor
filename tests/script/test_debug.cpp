@@ -43,27 +43,31 @@ void DebugTest::stopServer()
     m_server.stopServer();
 }
 
-void DebugTest::cleanup()
+void DebugTest::clearTestCase()
 {
+    BaseTest::clearTestCase();
     stopServer();
 }
 
 void DebugTest::testDebugServer()
 {
-    QString code = R"(int testFor(int n) {       
+    QString code = R"(int testWhile(int n) {
         int result = 0;
-        for (int i = 0; i < n; i++) {
+        int i = 0;
+        while(i < n) {
             result = i;
+            i = i + 1;
         }
-        return result;        
+        return result;
     })";
 
     if(!buildAs(code))
         return;
+    dump("debug_testWhile");
 
     QVariantList in;
-    in << 1000000;
-    startServer("testFor", in);
+    in << 100;
+    startServer("testWhile", in);
    
     bool cmd_ret = false;
     for (int i = 0; i < 10; i++)
@@ -71,13 +75,18 @@ void DebugTest::testDebugServer()
         cmd_ret = m_client.pause();
         QVERIFY(cmd_ret);
 
-        msleep(100);
+        msleep(10);
         
         cmd_ret = m_client.resume();
         QVERIFY(cmd_ret);
+
+        msleep(50);
     }
 
     stopServer();
+
+    QVERIFY(m_thread.output.size() == 1);
+    QCOMPARE(m_thread.output[0].toInt(), 99);
 }
 
 

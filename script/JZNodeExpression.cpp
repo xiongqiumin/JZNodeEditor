@@ -147,6 +147,6 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
 
     ir_list.front()->memo = "macro begin";
     ir_list.back()->memo = "macro end";
-    c->addStatementList(ir_list);
+    c->appendStatementList(ir_list);
     return true;
 }

@@ -6,6 +6,7 @@
 #include "test_opencv.h"
 #include "test_anglescript.h"
 #include "test_debug.h"
+#include "test_tx.h"
 
 int main(int argc,char *argv[])
 {
@@ -13,9 +14,10 @@ int main(int argc,char *argv[])
     JZNodeInit();
 
     //test_script(argc, argv);
-    //test_benchmark(argc, argv);
+    test_benchmark(argc, argv);
     //test_anglescript(argc, argv);
-    test_debug(argc, argv);
+    //test_debug(argc, argv);
+    //test_tx(argc, argv);
 
     return 0;
 }

@@ -308,7 +308,7 @@ JZNodeEngine::JZNodeEngine()
     m_status = Status_none;
     m_statusCommand = Command_none;
     m_regs.resize(Reg_End - Reg_Start);
-    m_regInCount = 0;
+    m_idleFunc.define.name = "idle";
 
     m_watchTimer = new QTimer(this);
     connect(m_watchTimer, &QTimer::timeout, this, &JZNodeEngine::onWatchTimer);
@@ -319,12 +319,12 @@ JZNodeEngine::~JZNodeEngine()
     clear();
 }
 
-void JZNodeEngine::setProgram(JZNodeProgram *program)
+void JZNodeEngine::setProgram(const JZNodeProgram *program)
 {
     m_program = program;
 }
 
-JZNodeProgram *JZNodeEngine::program()
+const JZNodeProgram *JZNodeEngine::program()
 {
     return m_program;
 }
@@ -347,11 +347,15 @@ void JZNodeEngine::clear()
     m_status = Status_none;
     m_breakNodeId = -1;    
     m_watchTime = 0;
-    m_regInCount = 0;
-
+    
     clearReg();
     if (g_engine == this)
         g_engine = nullptr;
+}
+
+bool JZNodeEngine::isInit() const
+{
+    return (g_engine == this);
 }
 
 void JZNodeEngine::init()
@@ -360,6 +364,7 @@ void JZNodeEngine::init()
 
     // regist type
     m_program->initEnv(&m_env);
+    updateStatus(Status_idle);
 
     g_engine = this;
     QVariantList in, out;
@@ -370,6 +375,12 @@ void JZNodeEngine::init()
     if(m_debug)
         m_watchTimer->start(50);
 }   
+
+void JZNodeEngine::deinit()
+{
+    updateStatus(Status_none);
+    clear();
+}
 
 void JZNodeEngine::autoConnect()
 {
@@ -423,11 +434,6 @@ void JZNodeEngine::autoConnect()
     }
 }
 
-void JZNodeEngine::deinit()
-{
-    clear();    
-}
-
 void JZNodeEngine::statClear()
 {
     m_stat.clear();
@@ -438,13 +444,13 @@ void JZNodeEngine::statReport()
     m_stat.report();
 }
 
-JZFunctionDebugInfo *JZNodeEngine::currentFunctionDebugInfo()
+const JZFunctionDebugInfo *JZNodeEngine::currentFunctionDebugInfo()
 {
     QString function = m_stack.currentEnv()->function->fullName();
     return m_script->functionDebug(function);
 }
 
-int JZNodeEngine::nodeIdByPc(JZNodeScript *script,QString function, int pc)
+int JZNodeEngine::nodeIdByPc(const JZNodeScript *script,QString function, int pc)
 {
     int min_range = INT_MAX;
     int node_id = -1;
@@ -499,7 +505,7 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
     JZNodeRuntimeInfo info;
     QMutexLocker lock(&m_mutex);
     info.status = m_status;
-    if (m_status == Status_idlePause)
+    if (m_status == Status_pause && m_stack.size() == 0)
     {
         JZNodeRuntimeInfo::Stack s;
         s.file = "__idle__";
@@ -543,7 +549,7 @@ void JZNodeEngine::pushStack(const JZFunction *func)
     {          
         m_pc = func->addr;
         m_script = getScript(func->path);
-        Q_ASSERT_X(m_script,"Error",qUtf8Printable(func->path));
+        Q_ASSERT_X(m_script,"No Scrpit in path:",qUtf8Printable(func->path));
 
         m_stack.currentEnv()->pc = m_pc;
         m_stack.currentEnv()->script = m_script;
@@ -583,44 +589,17 @@ void JZNodeEngine::customEvent(QEvent *qevent)
 {
     if (qevent->type() == JZNodeEngineIdlePauseEvent::Event)
     {
-        QVariantList in,out;
-        call(&m_idleFunc, in, out);
-    }
-}
-
-bool JZNodeEngine::checkIdlePause(const JZFunction *func)
-{
-    m_mutex.lock();    
-    if (m_status == Status_none)
-    {
-        if (m_statusCommand == Command_pause)
+        m_mutex.lock();
+        if (m_status == Status_idle && m_statusCommand == Command_pause)
         {
             m_statusCommand = Command_none;
-            updateStatus(Status_idlePause);
+            updateStatus(Status_pause);
             m_waitCond.wait(&m_mutex);
-
-            int cmd = m_statusCommand;
-            m_statusCommand = Command_none;                        
-            if (cmd == Command_stop || func == &m_idleFunc)
-            {
-                updateStatus(Status_none);
-                m_mutex.unlock();
-                return true;
-            }
-        }   
-        updateStatus(Status_running);
+            m_statusCommand = Command_none;
+            updateStatus(Status_idle);
+        }
         m_mutex.unlock();
     }
-    else if (m_status == Status_running) //嵌套事件,多次调用
-    {
-        m_mutex.unlock();
-    }
-    else if (m_status == Status_error)   //错误直接返回
-    {
-        m_mutex.unlock();
-        return true;
-    }
-    return false;    
 }
 
 bool JZNodeEngine::call(const QString &name,const QVariantList &in,QVariantList &out)
@@ -638,18 +617,17 @@ bool JZNodeEngine::callVirtual(const QString& function, const QVariantList& in, 
 
 bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantList &out)
 {    
-    if (checkIdlePause(func))
-        return false;    
-    if (m_error.isError())
+    Q_ASSERT(m_stack.size() == 0);
+    if (m_status == Status_error)
         return false;                
     
     try
     {
+        updateStatus(Status_running);
         m_error = JZNodeRuntimeError();
         Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
         for (int i = 0; i < in.size(); i++)
             setReg(Reg_CallIn + i,in[i]);
-        m_regInCount = in.size();
         
         if(func->isCFunction())
         {
@@ -658,9 +636,9 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         else
         {            
             pushStack(func);            
-            if(!run())
+            if(!run())  //停止运行会返回false, 异常在catch处理
             {                
-                updateStatus(Status_none);
+                updateStatus(Status_idle);
                 m_statusCommand = Command_none;                                                
                 m_breakStep.clear();
                 m_stack.clear();
@@ -675,7 +653,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         
         if (m_stack.size() == 0)
         {
-            updateStatus(Status_none);
+            updateStatus(Status_idle);
             m_statusCommand = Command_none;        
         }
         return true;
@@ -703,15 +681,13 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
             m_statusCommand = Command_none;
             m_mutex.unlock();
         }
-
-        updateStatus(Status_none);
         return false;
     }
 }
 
 void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantList &out)
 {
-    if (status() == Status_none)
+    if (status() == Status_idle) //顶层调用,需要try catch
     {
         call(name, in, out);
         return;
@@ -721,7 +697,6 @@ void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantLis
     Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
     for (int i = 0; i < in.size(); i++)
         setReg(Reg_CallIn + i,in[i]);
-    m_regInCount = in.size();
 
     if(func->isCFunction())
     {
@@ -889,7 +864,6 @@ void JZNodeEngine::clearReg()
         setReg(Reg_CallIn + i,QVariant());
         setReg(Reg_CallOut + i,QVariant());
     }
-    m_regInCount = 0;
 }
 
 Stack *JZNodeEngine::stack()
@@ -978,11 +952,6 @@ void JZNodeEngine::print(const QString &log)
     emit sigLog(log);
 }
 
-int JZNodeEngine::regInCount()
-{
-    return m_regInCount;
-}
-
 void JZNodeEngine::printMemory()
 {
     QString text;
@@ -1021,7 +990,17 @@ void JZNodeEngine::setReg(int id, const QVariant &value)
     m_regs[id] = value;
 }
 
-JZNodeScript *JZNodeEngine::getScript(QString path)
+int JZNodeEngine::regInCount()
+{
+    for (int i = 0; i < 16; i++)
+    {
+        if (!m_regs[i].isValid())
+            return i;
+    }
+    return 16;
+}
+
+const JZNodeScript *JZNodeEngine::getScript(QString path)
 {
     return m_program->script(path);
 }
@@ -1177,11 +1156,13 @@ void JZNodeEngine::clearBreakPoint()
 
 void JZNodeEngine::pause()
 {
+    Q_ASSERT(m_status != Status_none);
+
     QMutexLocker lock(&m_mutex);
-    if (m_status != Status_none && m_status != Status_running)
+    if (m_status != Status_running && m_status != Status_idle)
         return;
 
-    if (m_status == Status_none) 
+    if (m_status == Status_idle)
     {
         auto *event = new JZNodeEngineIdlePauseEvent();
         qApp->postEvent(this, event);
@@ -1195,7 +1176,7 @@ void JZNodeEngine::pause()
 void JZNodeEngine::resume()
 {
     QMutexLocker lock(&m_mutex);
-    if (m_status != Status_pause && m_status != Status_idlePause)
+    if (m_status != Status_pause)
         return;    
     
     m_statusCommand = Command_resume;
@@ -1207,12 +1188,12 @@ void JZNodeEngine::resume()
 void JZNodeEngine::stop()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status == Status_none )
+    if(m_status == Status_idle || m_status == Status_none)
         return;
         
     m_statusCommand = Command_stop;
     lock.unlock();
-    if(m_status == Status_idlePause || m_status == Status_pause || m_status == Status_error)
+    if(m_status == Status_pause || m_status == Status_error)
         m_waitCond.wakeOne();
     waitCommand();
 }
@@ -1322,7 +1303,16 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
             paramIn.push_back(getReg(Reg_CallIn + i));
         
         // call function
-        func->cfunc->call(paramIn,paramOut);
+        try {
+            func->cfunc->call(paramIn, paramOut);
+        }
+        catch (const std::exception& e) 
+        {
+            if (catchException(e.what()))
+                return;
+
+            throw e;
+        }
 
         // set output
         auto &outList = func->define.paramOut;
@@ -1339,7 +1329,7 @@ const JZFunction* JZNodeEngine::virtualFunction(JZNodeObject* obj, QString name)
 
     auto func = obj->function(memberName);
     Q_ASSERT_X(func, "Error", qUtf8Printable("no function " + memberName));
-    return m_env.functionManager()->functionImpl(func->fullName());;
+    return m_env.functionManager()->functionImpl(func->fullName());
 }
 
 const JZFunction *JZNodeEngine::function(QString name)
@@ -1348,7 +1338,7 @@ const JZFunction *JZNodeEngine::function(QString name)
     return func_ptr;
 }
 
-const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
+const JZFunction *JZNodeEngine::function(const JZNodeIRCall *ir_call)
 {
     if(ir_call->isVirtual)
     {
@@ -1357,11 +1347,7 @@ const JZFunction *JZNodeEngine::function(JZNodeIRCall *ir_call)
     }
     else
     {
-        if (ir_call->cache)
-            return ir_call->cache;
-
         auto func = function(ir_call->function);
-        ir_call->cache = func;
         return func;
     }
 }
@@ -1659,10 +1645,10 @@ bool JZNodeEngine::breakPointTrigger(int node_id)
 
 void JZNodeEngine::updateStatus(JZEngineStatus status)
 {
-    Q_ASSERT((m_status == Status_none && (status == Status_running || status == Status_idlePause))
-        || (m_status == Status_running && (status == Status_none || status == Status_pause || status == Status_error))
-        || (m_status == Status_pause && (status == Status_none || status == Status_running))
-        || (m_status == Status_idlePause && (status == Status_none))
+    Q_ASSERT((m_status == Status_none && (status == Status_idle))
+        || (m_status == Status_idle && (status == Status_running || status == Status_none || status == Status_pause))
+        || (m_status == Status_running && (status == Status_idle || status == Status_pause || status == Status_error))
+        || (m_status == Status_pause && (status == Status_idle || status == Status_running))
         || (m_status == Status_error && (status == Status_none)));
 
     int pre_status = m_status;
@@ -1681,6 +1667,37 @@ bool JZNodeEngine::isWidgetFunction(const JZFunction *function)
     return m_env.isInherits(function->className(),"QWidget");
 }
 
+void JZNodeEngine::pushTryCatch(JZNodeIRTry *ir)
+{
+    TryCatchInfo info;
+    info.stack = m_stack.size() - 1;
+    info.catchPc = ir->catchPc;
+    info.irExcep = ir->irExcep;
+    m_tryCatchList.push_back(info);
+}
+
+void JZNodeEngine::popTryCatch()
+{
+    m_tryCatchList.pop_back();
+}
+
+bool JZNodeEngine::catchException(QString tips)
+{
+    if (m_tryCatchList.size() == 0)
+        return false;
+
+    TryCatchInfo info = m_tryCatchList.back();
+    m_tryCatchList.pop_back();
+    
+    Q_ASSERT(info.stack + 1 <= m_stack.size());
+    while (info.stack + 1 < m_stack.size())
+        m_stack.pop();
+    
+    setParam(info.irExcep, tips);
+    m_pc = info.catchPc;
+    return true;
+}
+
 bool JZNodeEngine::run()
 {    
     auto obj_inst = m_env.objectManager();
@@ -1694,14 +1711,14 @@ bool JZNodeEngine::run()
         m_stat.statmentTime++;
 
         auto &op_list = m_script->statmentList;
-        JZNodeIR *op = op_list[m_pc].data();
+        const JZNodeIR* op = op_list[m_pc].data();
         switch (op->type)
         {
         case OP_nodeId:
         {
             if(m_debug)
             {
-                JZNodeIRNodeId *ir_id =  dynamic_cast<JZNodeIRNodeId*>(op);
+                const JZNodeIRNodeId *ir_id =  dynamic_cast<const JZNodeIRNodeId*>(op);
                 printNode();
 
                 if(ir_id->breakPointType == BreakPoint::print)
@@ -1737,7 +1754,7 @@ bool JZNodeEngine::run()
         {
             m_stat.exprTime++;
 
-            JZNodeIRExpr *ir_expr =  dynamic_cast<JZNodeIRExpr*>(op);
+            const JZNodeIRExpr *ir_expr =  (const JZNodeIRExpr*)(op);
             QVariant c;
             auto a = getParam(ir_expr->src1);
             auto b = getParam(ir_expr->src2);
@@ -1750,7 +1767,7 @@ bool JZNodeEngine::run()
         {
             m_stat.exprTime++;
 
-            JZNodeIRExpr *ir_expr = dynamic_cast<JZNodeIRExpr*>(op);
+            const JZNodeIRExpr* ir_expr = (const JZNodeIRExpr*)(op);
             QVariant c;
             auto a = getParam(ir_expr->src1);
             c = dealSingleExpr(a, ir_expr->type);
@@ -1761,7 +1778,7 @@ bool JZNodeEngine::run()
         case OP_je:
         case OP_jne:
         {
-            JZNodeIRJmp *ir_jmp = (JZNodeIRJmp*)op;
+            const JZNodeIRJmp* ir_jmp = (const JZNodeIRJmp*)(op);
             int jmpPc = ir_jmp->jmpPc;
             Q_ASSERT(jmpPc >= 0 && jmpPc < op_list.size());
             if(op->type == OP_jmp)
@@ -1778,7 +1795,7 @@ bool JZNodeEngine::run()
         }
         case OP_alloc:
         {
-            JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
+            const JZNodeIRAlloc *ir_alloc = (const JZNodeIRAlloc*)op;
             auto value = createVariable(ir_alloc->dataType);
             if(ir_alloc->allocType == JZNodeIRAlloc::Heap)
                 initGlobal(ir_alloc->dst.ref(), value);
@@ -1795,13 +1812,13 @@ bool JZNodeEngine::run()
         }
         case OP_set:
         {
-            JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
+            const JZNodeIRSet *ir_set = (const JZNodeIRSet*)op;
             setParam(ir_set->dst,getParam(ir_set->src));
             break;
         }
         case OP_clone:
         {
-            JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
+            const JZNodeIRClone *ir_set = (const JZNodeIRClone*)op;
             auto obj = obj_inst->clone(toJZObject(getParam(ir_set->src)));
             auto ptr = JZNodeObjectHolder(obj,true);
             setParam(ir_set->dst,QVariant::fromValue(ptr));
@@ -1809,7 +1826,7 @@ bool JZNodeEngine::run()
         }
         case OP_buffer:
         {
-            JZNodeIRBuffer *ir_buffer = (JZNodeIRBuffer*)op;
+            const JZNodeIRBuffer *ir_buffer = (const JZNodeIRBuffer*)op;
             auto v = obj_inst->objectCreateVariant<QByteArray>();
             QByteArray *buffer = obj_inst->objectCast<QByteArray>(v);
             *buffer = ir_buffer->buffer;
@@ -1818,7 +1835,7 @@ bool JZNodeEngine::run()
         }
         case OP_convert:
         {
-            JZNodeIRConvert *ir_convert = (JZNodeIRConvert*)op;
+            const JZNodeIRConvert *ir_convert = (const JZNodeIRConvert*)op;
             QVariant ret = m_env.convertTo(getParam(ir_convert->src),ir_convert->dstType);
             setParam(ir_convert->dst,ret);
             break;   
@@ -1827,11 +1844,10 @@ bool JZNodeEngine::run()
         {           
             m_stat.callTime++;
 
-            JZNodeIRCall *ir_call = (JZNodeIRCall*)op;            
+            const JZNodeIRCall *ir_call = (const JZNodeIRCall*)op;
             const JZFunction *func = function(ir_call);
             Q_ASSERT(func);            
 
-            m_regInCount = ir_call->inCount;
             if(func->isCFunction())
                 callCFunction(func);
             else
@@ -1860,6 +1876,24 @@ bool JZNodeEngine::run()
                 throw std::runtime_error(qUtf8Printable(tips));
             }
             break;
+        }
+        case OP_try:
+        {
+            JZNodeIRTry* ir_throw = (JZNodeIRTry*)op;
+            if (ir_throw->catchType == JZNodeIRTry::InTry)
+                pushTryCatch(ir_throw);
+            else
+                popTryCatch();
+            break;
+        }
+        case OP_throw:
+        {
+            JZNodeIRThrow* ir_throw = (JZNodeIRThrow*)op;
+            QString tips = getParam(ir_throw->exception).toString();
+            if (catchException(tips))
+                continue;
+            else
+                throw std::runtime_error(qUtf8Printable(tips));
         }
         default:
             Q_ASSERT(0);

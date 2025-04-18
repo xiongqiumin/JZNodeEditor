@@ -17,6 +17,7 @@ private slots:
     void testCall();
     void testSort();
     void testSum();
+    void testTryCatch();
     
 protected:
     class Benchmark
@@ -35,7 +36,7 @@ protected:
         struct RunInfo
         {
             QString name;
-            int count;
+            qint64 count;
             qint64 time;
         };
 
@@ -43,7 +44,7 @@ protected:
         qint64 m_stepStart;
         QElapsedTimer m_timer;
         qint64 m_step;
-        int m_count;
+        qint64 m_count;
         bool m_first;
         QString m_name;
     };

@@ -37,6 +37,7 @@ private slots:
     void testFunction();    
     void testBreakPoint();
     void testArgs();
+    void testTryCatch();
 
 protected:
     bool initWhileCase(QList<int> &nodeId,QList<int> &value);

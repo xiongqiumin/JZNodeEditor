@@ -371,6 +371,14 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         line += "assert(" + toString(ir_assert->tips) + ")";
         break;
     }
+    case OP_try:
+    {
+        break;
+    }
+    case OP_throw:
+    {
+        break;
+    }
     default:
         Q_ASSERT(0);
         break;

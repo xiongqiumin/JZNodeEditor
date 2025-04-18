@@ -84,7 +84,6 @@ void JZNodeFactory::init()
     registNode(Node_break,createJZNode<JZNodeBreak>);
     registNode(Node_continue,createJZNode<JZNodeContinue>);
     registNode(Node_return,createJZNode<JZNodeReturn>);
-    registNode(Node_exit,createJZNode<JZNodeExit>);
     registNode(Node_switch,createJZNode<JZNodeSwitch>);
     registNode(Node_if,createJZNode<JZNodeIf>);
 
@@ -109,7 +108,6 @@ void JZNodeFactory::init()
     
     registNode(Node_expr,createJZNode<JZNodeExpression>);
 
-    registNode(Node_paramChangedEvent,createJZNode<JZNodeParamChangedEvent>);
     registNode(Node_functionPointer, createJZNode<JZNodeFunctionPointer>);
     registNode(Node_signalConnect, createJZNode<JZNodeSignalConnect>);
 

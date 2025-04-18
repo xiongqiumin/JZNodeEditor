@@ -50,18 +50,6 @@ protected:
 
 };
 
-//JZNodeExit
-class JZNodeExit : public JZNode
-{
-public:
-    JZNodeExit();
-
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
-
-protected:
-    
-};
-
 //JZNodeSequence
 class JZNodeSequence : public JZNode
 {
@@ -99,12 +87,14 @@ public:
     void setStart(int start);
     void setStep(int step);
     void setEnd(int end);
-    void setOp(int op);
+    void setOp(JZNodeIRType op);
 
 protected:    
+    virtual void saveToStream(QDataStream& s) const override;
     virtual void loadFromStream(QDataStream &s) override;
-    QList<int> m_condOpList;        
-    int m_condOp;
+
+    QList<JZNodeIRType> m_condOpList;        
+    JZNodeIRType m_condOp;
 };
 
 //JZNodeForEach
@@ -164,6 +154,7 @@ public:
     void addDefault();
     void removeCase(int index);
     void removeDefault();
+    bool hasDefault();
     int caseCount();
     void clearCaseAndDefault();
 

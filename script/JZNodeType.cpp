@@ -769,4 +769,6 @@ QVariant JZNodeType::convertNumber(const QVariant& srcValue, int dstType)
             return QVariant::fromValue(srcValue.value<float>());
         }
     }
+    Q_ASSERT(0);
+    return QVariant();
 }

@@ -49,18 +49,5 @@ public:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
 };
 
-//JZNodeParamChangedEvent
-class JZNodeParamChangedEvent : public JZNodeEvent
-{
-public:
-    JZNodeParamChangedEvent();
-    virtual ~JZNodeParamChangedEvent();
-
-    virtual void setVariable(const QString &name);
-    virtual QString variable() const;
-
-    virtual JZFunctionDefine function() override;
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error);
-};
 
 #endif

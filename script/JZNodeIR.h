@@ -8,7 +8,7 @@
 #include <QDataStream>
 #include "JZNodeFunctionDefine.h"
 
-enum
+enum JZNodeIRType
 {
     OP_none,
     OP_nodeId,
@@ -44,6 +44,8 @@ enum
     OP_or,
     OP_not,        
     OP_assert,
+    OP_try,
+    OP_throw,
 };
 
 enum{    
@@ -60,7 +62,7 @@ enum{
 class JZNodeIRParam
 {
 public:
-    enum{
+    enum ParamType{
         None,
         StackId,
         RegId,
@@ -82,7 +84,7 @@ public:
     QString ref() const;
     const QVariant &literal() const;
 
-    int type;
+    ParamType type;
     QVariant value;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param);
@@ -96,18 +98,18 @@ class JZNodeIR
 {
 public:
     JZNodeIR();
-    JZNodeIR(int type);
+    JZNodeIR(JZNodeIRType type);
     virtual ~JZNodeIR();
 
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);    
 
-    int type;    
+    JZNodeIRType type;
     int pc;        
     QString memo;
 };
 typedef QSharedPointer<JZNodeIR> JZNodeIRPtr;
-JZNodeIR *createNodeIR(int type);
+JZNodeIR *createNodeIR(JZNodeIRType type);
 
 class JZNodeIRNodeId : public JZNodeIR
 {
@@ -146,7 +148,7 @@ public:
 class JZNodeIRExpr : public JZNodeIR
 {
 public:    
-    JZNodeIRExpr(int type);
+    JZNodeIRExpr(JZNodeIRType type);
     virtual ~JZNodeIRExpr();
 
     virtual void saveToStream(QDataStream &s) const;
@@ -213,7 +215,7 @@ public:
 class JZNodeIRJmp : public JZNodeIR
 {
 public:
-    JZNodeIRJmp(int type);
+    JZNodeIRJmp(JZNodeIRType type);
     virtual ~JZNodeIRJmp();
 
     virtual void saveToStream(QDataStream &s) const;
@@ -234,7 +236,6 @@ public:
     QString function;
     int inCount;
     bool isVirtual;
-    const JZFunction *cache;
 };
 
 class JZNodeIRAssert : public JZNodeIR
@@ -247,6 +248,37 @@ public:
     virtual void loadFromStream(QDataStream &s);
 
     JZNodeIRParam tips;
+};
+
+class JZNodeIRTry : public JZNodeIR
+{
+public:
+    enum {
+        InTry,
+        OutTry,
+    };
+
+    JZNodeIRTry();
+    virtual ~JZNodeIRTry();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
+
+    int catchType;
+    int catchPc;
+    JZNodeIRParam irExcep;
+};
+
+class JZNodeIRThrow : public JZNodeIR
+{
+public:
+    JZNodeIRThrow();
+    virtual ~JZNodeIRThrow();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
+
+    JZNodeIRParam exception;
 };
 QByteArray NodeIRMagic();
 

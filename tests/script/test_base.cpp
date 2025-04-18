@@ -49,6 +49,30 @@ void TestServer::run()
 
 }
 
+//EngineThread
+EngineThread::EngineThread()
+{
+    engine = nullptr;
+    mainThread = nullptr;
+}
+
+void EngineThread::start(QString func, QVariantList input_list)
+{
+    mainThread = QThread::currentThread();
+    engine->moveToThread(this);
+    function = func;
+    input = input_list;
+    QThread::start();
+}
+
+void EngineThread::run()
+{
+    engine->call(function, input, output);
+    exec();
+    engine->moveToThread(mainThread);
+    mainThread = nullptr;
+}
+
 //BaseTest
 BaseTest::BaseTest()
 {
@@ -56,6 +80,7 @@ BaseTest::BaseTest()
     m_file = nullptr;
     m_builder.setProject(&m_project);
     connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &BaseTest::onRuntimeError);
+    m_thread.engine = &m_engine;
 
     m_objInst = m_project.environment()->objectManager();
     m_funcInst = m_project.environment()->functionManager();
@@ -98,7 +123,12 @@ void BaseTest::init()
 
 void BaseTest::cleanup()
 {
-    stop();    
+    clearTestCase();
+}
+
+void BaseTest::clearTestCase()
+{
+    stop();
 }
 
 void BaseTest::dump(QString name)
@@ -158,18 +188,22 @@ bool BaseTest::call(QString name,const QVariantList &in,QVariantList &out)
     return ret;
 }
 
-void BaseTest::callAsync(QString name,const QVariantList &in)
+void BaseTest::callAsync(QString name, const QVariantList& in)
 {
-    m_thread = std::thread(&BaseTest::asyncThread,this,name,in);
+    m_thread.start(name, in);
 }
 
 void BaseTest::stop()
 {
-    m_engine.stop();
-    if(m_thread.joinable())
-        m_thread.join();
-        
-    m_engine.deinit();
+    if(m_engine.isInit())
+        m_engine.stop();
+    if (m_thread.isRunning())
+    {
+        m_thread.exit();
+        m_thread.wait();
+    }
+    if (m_engine.isInit())
+        m_engine.deinit();
 }
 
 void BaseTest::asyncThread(QString name,QVariantList in)

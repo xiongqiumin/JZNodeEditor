@@ -115,7 +115,7 @@ JZNodeIRParam irThis()
 }
 
 //JZNodeIR
-JZNodeIR *createNodeIR(int type)
+JZNodeIR *createNodeIR(JZNodeIRType type)
 {
     switch (type)
     {
@@ -163,6 +163,10 @@ JZNodeIR *createNodeIR(int type)
         return new JZNodeIRCall();
     case OP_assert:
         return new JZNodeIRAssert();
+    case OP_try:
+        return new JZNodeIRTry();
+    case OP_throw:
+        return new JZNodeIRThrow();
     default:
         break;
     }
@@ -177,7 +181,7 @@ JZNodeIR::JZNodeIR()
     pc = -1;
 }
 
-JZNodeIR::JZNodeIR(int t)
+JZNodeIR::JZNodeIR(JZNodeIRType t)
 {
     type = t;
     pc = -1;    
@@ -253,7 +257,7 @@ void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 }
 
 //JZNodeIRExpr
-JZNodeIRExpr::JZNodeIRExpr(int ir_type)
+JZNodeIRExpr::JZNodeIRExpr(JZNodeIRType ir_type)
     :JZNodeIR(ir_type)
 {    
 }
@@ -347,6 +351,7 @@ void JZNodeIRBuffer::loadFromStream(QDataStream &s)
 JZNodeIRConvert::JZNodeIRConvert()
 {
     type = OP_convert;
+    dstType = Type_none;
 }
 
 JZNodeIRConvert::~JZNodeIRConvert()
@@ -366,7 +371,7 @@ void JZNodeIRConvert::loadFromStream(QDataStream &s)
 }   
 
 //JZNodeIRJmp
-JZNodeIRJmp::JZNodeIRJmp(int ir_type)
+JZNodeIRJmp::JZNodeIRJmp(JZNodeIRType ir_type)
     :JZNodeIR(ir_type)
 {
     Q_ASSERT(ir_type == OP_je || ir_type == OP_jne || ir_type == OP_jmp);    
@@ -396,7 +401,6 @@ JZNodeIRCall::JZNodeIRCall()
     type = OP_call;
     inCount = 0;
     isVirtual = false;
-    cache = nullptr;
 }
 
 JZNodeIRCall::~JZNodeIRCall()
@@ -439,6 +443,52 @@ void JZNodeIRAssert::loadFromStream(QDataStream &s)
     s >> tips;
 }
 
+//JZNodeIRTry
+JZNodeIRTry::JZNodeIRTry()
+{
+    type = OP_try;
+    catchType = InTry;
+    catchPc = -1;
+}
+JZNodeIRTry::~JZNodeIRTry()
+{
+
+}
+
+void JZNodeIRTry::saveToStream(QDataStream& s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << catchType << catchPc << irExcep;
+}
+
+void JZNodeIRTry::loadFromStream(QDataStream& s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> catchPc >> catchPc >> irExcep;
+}
+
+//JZNodeIRThrow
+JZNodeIRThrow::JZNodeIRThrow()
+{
+    type = OP_throw;
+}
+JZNodeIRThrow::~JZNodeIRThrow()
+{
+
+}
+
+void JZNodeIRThrow::saveToStream(QDataStream& s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << exception;
+}
+
+void JZNodeIRThrow::loadFromStream(QDataStream& s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> exception;
+}
+
 QByteArray NodeIRMagic()
 {
     QByteArray result;
@@ -452,6 +502,7 @@ QByteArray NodeIRMagic()
     s << sizeof(JZNodeIRJmp);
     s << sizeof(JZNodeIRExpr);
     s << sizeof(JZNodeIRSet);
+    s << sizeof(JZNodeIRTry);
     s << (int)OP_assert;
 
     return result;

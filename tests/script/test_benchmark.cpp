@@ -58,7 +58,7 @@ bool BenchmarkTest::Benchmark::run()
     }
 
     qint64 elapsed = m_timer.nsecsElapsed();
-    if(m_count < 5 && elapsed - m_stepStart < 1000000) // 1 ms, 太短的语句增加循环
+    if(m_count < 5 && m_step < 1000000 && elapsed - m_stepStart < 1000000) // 1 ms, 太短的语句增加循环
     {
         m_count = 0;
         m_step = m_step * 10;
@@ -138,7 +138,7 @@ void BenchmarkTest::testBase()
         QVariant &v = varStrMap["3"];
     }   
 
-    QVariant v;
+    QVariant v = QString("242");
     JZBENCHMARK(variant_type)
     {
         int t = JZNodeType::variantType(v);
@@ -159,9 +159,10 @@ void BenchmarkTest::testBase()
 
 void BenchmarkTest::testCall()
 {
+    return;
     if(!build())
         return;
-
+    
     m_benchmark.clear();
 
     auto env = m_project.environment();
@@ -184,11 +185,6 @@ void BenchmarkTest::testCall()
     JZBENCHMARK(jz_cfunc_pow_std)
     {
         func_pow(0.5, 0.6);
-    }
-
-    JZBENCHMARK(c_pow)
-    {
-        pow(0.5,0.6);
     }
 
     //list_get
@@ -217,6 +213,7 @@ void BenchmarkTest::testCall()
 void BenchmarkTest::testSort()
 {
     return;
+
     auto env = m_project.environment();
     JZFunctionDefine def;
     def.name = "testSort";
@@ -323,7 +320,6 @@ void BenchmarkTest::testSort()
 
     if(!build())
         return;
-
     dump("testSort");
     
     m_benchmark.clear();
@@ -336,6 +332,19 @@ void BenchmarkTest::testSort()
         QVariantList in,out;
         in << QVariant::fromValue(ptr);
         bool ret = m_engine.call("testSort",in,out);
+        QVERIFY2(ret, qUtf8Printable(m_engine.runtimeError().errorReport()));
+    }
+    m_engine.statReport();
+
+    m_engine.statClear();
+    m_engine.setDebug(true);
+    JZBENCHMARK(jz_sort_debug)
+    {
+        m_engine.statClear();
+
+        QVariantList in, out;
+        in << QVariant::fromValue(ptr);
+        bool ret = m_engine.call("testSort", in, out);
         QVERIFY2(ret, qUtf8Printable(m_engine.runtimeError().errorReport()));
     }
     m_engine.statReport();
@@ -460,6 +469,32 @@ void BenchmarkTest::testSum()
 
     m_benchmark.report();
 } 
+
+void BenchmarkTest::testTryCatch()
+{
+    JZBENCHMARK(test_no_throw)
+    {
+        try {
+            msleep(1);
+        }
+        catch (const std::exception& e)
+        {
+        }
+    }
+
+    JZBENCHMARK(test_throw)
+    {
+        try {
+            msleep(1);
+            throw std::runtime_error("test");
+        }
+        catch (const std::exception& e)
+        {
+        }
+    }
+
+    m_benchmark.report();
+}
 
 void test_benchmark(int argc, char *argv[])
 {

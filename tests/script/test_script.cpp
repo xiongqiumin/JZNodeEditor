@@ -1029,6 +1029,27 @@ void ScriptTest::testArgs()
     QCOMPARE(out[0].toInt(),55);
 }
 
+void ScriptTest::testTryCatch()
+{
+    JZScriptItem *script = m_project.mainFunction();
+    JZNodeFunctionStart *start = script->startNode();
+
+    JZNodeTryCatch* node_try = new JZNodeTryCatch();
+    script->addNode(node_try);
+    script->addConnect(start->flowOutGemo(), node_try->flowInGemo());
+
+    JZNodeThrow* node_throw = new JZNodeThrow();
+    node_throw->setParamInValue(0, "test throw");
+    script->addNode(node_throw);
+    script->addConnect(node_try->subFlowOutGemo(0), node_throw->flowInGemo());
+
+    if (!build())
+        return;
+
+    QVariantList in, out;
+    m_engine.call("main", in, out);
+}
+
 void test_script(int argc, char *argv[])
 {    
     ScriptTest s; 
