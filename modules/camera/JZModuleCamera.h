@@ -4,6 +4,26 @@
 #include "JZNodeFunction.h"
 #include "JZModule.h"
 
+enum
+{
+    CameraModule_id = 16000,
+};
+
+enum CameraNode
+{
+    Node_CameraId = 1000,
+    Node_CameraInit,
+};
+
+class JZCameraInitNode : public JZNode
+{
+public:
+    JZCameraInitNode();
+    ~JZCameraInitNode();
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error);
+};
+
 class JZModuleCamera: public JZModule
 {            
 public:
@@ -16,5 +36,7 @@ public:
 protected:
 
 };
+
+void JZModuleCameraNodeInit();
 
 #endif

@@ -6,7 +6,8 @@
 JZNodeFunction::JZNodeFunction()
 {
     m_type = Node_function;
-    m_directCall = true;
+    m_name = "function";
+    m_directCall = false;
 }
 
 JZNodeFunction::~JZNodeFunction()
@@ -29,28 +30,6 @@ bool JZNodeFunction::isMemberCall()
     return false;
 }
 
-void JZNodeFunction::updateName()
-{
-    if (!m_file)
-        return;
-
-    auto func_inst = environment()->functionManager();
-    auto meta = func_inst->function(m_functionName);
-    if(meta && meta->isMemberFunction())
-    {
-        QString v = variable();
-        if (v.isEmpty())
-        {
-            if (!isMemberCall())
-                return;
-
-            v = "this";
-        }
-
-        QString name = v + "." + meta->name;  
-    }
-}
-
 void JZNodeFunction::setDirectCall(bool flag)
 {
     m_directCall = flag;
@@ -63,8 +42,7 @@ bool JZNodeFunction::isDirectCall()
 
 void JZNodeFunction::setVariable(const QString &name)
 {
-    setPinValue(paramIn(0),name);
-    updateName();
+    setPinValue(paramIn(0),name);    
 }
 
 QString JZNodeFunction::variable() const
@@ -84,45 +62,17 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
     s >> m_functionName;
 }
 
-void JZNodeFunction::setFunction(const JZFunctionDefine *define)
+void JZNodeFunction::setFunction(QString name)
 {
-    Q_ASSERT(define);            
-
-    auto env = environment();
-    m_functionName = define->fullName();
-    
-    clearPin();
-    if(define->isFlowFunction)
-    {
-        addFlowIn();
-        addFlowOut();
-    }
-
-    for(int i = 0; i < define->paramIn.size(); i++)
-    {
-        JZNodePin pin;
-        pin.setName(define->paramIn[i].name);    
-        pin.setFlag(Pin_param | Pin_in);
-        pin.setDataType({define->paramIn[i].type });        
-        pin.setValue(define->paramIn[i].value);
-        addPin(pin);
-    }
-
-    for(int i = 0; i < define->paramOut.size(); i++)
-    {
-        JZNodePin pin;
-        pin.setName(define->paramOut[i].name);
-        pin.setFlag(Pin_param | Pin_out);
-        pin.setDataType({define->paramOut[i].type});
-        addPin(pin);
-    }
-
-    if(define->isMemberFunction())
-    {
-        auto pin = this->pin(paramIn(0));
-        pin->setFlag(pin->flag());
-    }
+    m_functionName = name;
+    update();
 }
+
+void JZNodeFunction::setFunction(const JZFunctionDefine *define)
+{    
+    setFunction(define->fullName());
+}
+    
 
 QString JZNodeFunction::function() const
 {
@@ -164,14 +114,62 @@ bool JZNodeFunction::updateNode(QString &error)
         return false;
     }
 
-    JZFunctionDefine cur_def = functionDefine();
-    if (!env->isFunctionTypeMatch(func, &cur_def))
+    auto define = env->function(m_functionName);
+    m_functionName = define->fullName();
+    
+    if (define->isFlowFunction)
     {
-        error = "函数定义已改变,请更新," + func->delcare() + "," + cur_def.delcare();
-        return false;
+        if(flowInCount() == 0)
+            addFlowIn();
+        if(flowOutCount() == 0)
+            addFlowOut();
     }
 
-    updateName();
+    if (paramInCount() < define->paramIn.size())
+    {
+        int count = paramInCount();
+        for (int i = count; i < define->paramIn.size(); i++)
+        {
+            addParamIn("");
+        }        
+    }
+
+    if (paramOutCount() < define->paramOut.size())
+    {
+        int count = paramInCount();
+        for (int i = count; i < define->paramOut.size(); i++)
+        {
+            addParamOut("");
+        }
+    }
+
+    auto pin_in_list = paramInList();
+    auto pin_out_list = paramOutList();
+    for (int i = 0; i < define->paramIn.size(); i++)
+    {
+        auto pin = this->pin(pin_in_list[i]);
+        pin->setName(define->paramIn[i].name);        
+        pin->setDataType({ define->paramIn[i].type });            
+    }
+
+    for (int i = 0; i < define->paramOut.size(); i++)
+    {
+        auto pin = this->pin(pin_out_list[i]);
+        pin->setName(define->paramOut[i].name);        
+        pin->setDataType({ define->paramOut[i].type });        
+    }
+
+    if (paramInCount() != define->paramIn.size())
+    {
+        error = "函数没有" + QString::number(paramInCount()) + "输入";
+        return false;
+    }
+    if (paramOutCount() != define->paramOut.size())
+    {
+        error = "函数不存在" + QString::number(paramOutCount()) + "输出";
+        return false;
+    }
+    
     return true;
 }
 

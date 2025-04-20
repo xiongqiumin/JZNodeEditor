@@ -16,7 +16,7 @@ public:
     bool init(QString path,bool debug,QString &error);
     void quit();
 
-protected slots:    
+protected slots:        
     void onRuntimeError(JZNodeRuntimeError error);
 
 protected:
@@ -28,12 +28,5 @@ protected:
     JZNodeDebugServer m_debugServer;   
     bool m_debug;    
 };
-
-
-
-
-
-
-
 
 #endif

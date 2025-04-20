@@ -325,7 +325,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
     {
         if (!c->addFlowInput(m_id, { input_list[i]}, error))
             return false;
-        c->addNodeDebug(m_id);
+        c->addNodeEnter(m_id);
 
         int in_id = c->paramId(m_id, input_list[i]);
         c->addCompare(irId(in_id), irLiteral(false), OP_eq);
@@ -365,7 +365,7 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
     {
         if (!c->addFlowInput(m_id, { input_list[i] }, error))
             return false;
-        c->addNodeDebug(m_id);
+        c->addNodeEnter(m_id);
 
         int in_id = c->paramId(m_id, input_list[i]);
         c->addCompare(irId(in_id), irLiteral(true), OP_eq);

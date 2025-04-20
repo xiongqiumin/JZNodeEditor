@@ -720,7 +720,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
 
     m_script = result;
     m_script->clear();
-    m_script->file = scriptFile->itemPath();    
+    m_script->itemPath = scriptFile->itemPath();
     m_compilerInfo = CompilerResult();
     m_compilerInfo.result = false;
 
@@ -1290,7 +1290,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr,
     impl.define = define;
     impl.addr = start_addr;
     impl.addrEnd = end_addr;
-    impl.path = m_script->file;
+    impl.path = m_script->itemPath;
 
     m_script->functionList.push_back(impl);
     m_script->functionDebugList.push_back(func_debug);
@@ -1957,6 +1957,7 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
             addSetVariable(irRef(define.paramIn[i].name),irId(Reg_CallIn + i));
         }
     }
+    addStatement(JZNodeIRPtr(new JZNodeIR(OP_clearReg)));
     setRegCallFunction(nullptr);
 
     auto list = m_scriptItem->localVariableList(false);
@@ -2202,7 +2203,7 @@ bool JZNodeCompiler::addDataInput(int nodeId, const QList<int>& prop_list, QStri
 
     Q_ASSERT(m_compilerNodeStack.back().nodeInfo->node_id == nodeId);
     if(m_compilerNodeStack.back().debugStart == -1 && m_nodeInfo[nodeId].autoAddDebugStart)
-        addNodeDebug(nodeId);
+        addNodeEnter(nodeId);
 
     return true;
 }
@@ -2351,17 +2352,15 @@ int JZNodeCompiler::addNop()
     return addStatement(JZNodeIRPtr(nop));
 }
 
-int JZNodeCompiler::addNodeDebug(int id)
-{
-    auto node = m_scriptItem->getNode(id);    
-    JZNodeIRNodeId *node_ir = new JZNodeIRNodeId();
-    node_ir->id = id;
-    node_ir->memo = node->name() + "(" + QString::number(node->id()) + ")";
+int JZNodeCompiler::addNodeEnter(int id)
+{    
+    JZNodeIRNodeEnter *node_ir = new JZNodeIRNodeEnter();
+    node_ir->id = id;    
     m_compilerNodeStack.back().debugStart = addStatement(JZNodeIRPtr(node_ir));
     return node_ir->pc;    
 }
 
-void JZNodeCompiler::setAutoAddNodeDebug(int m_id,bool flag)
+void JZNodeCompiler::setAutoaddNodeEnter(int m_id,bool flag)
 {
     m_nodeInfo[m_id].autoAddDebugStart = flag;
 }
@@ -2481,7 +2480,7 @@ int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
         type = refType(param.ref());
     }
     else if(param.isThis())
-        type = env->nameToType(m_className);
+        type = JZNodeType::pointerType(env->nameToType(m_className));
     
     Q_ASSERT(type != Type_none);
     return type;

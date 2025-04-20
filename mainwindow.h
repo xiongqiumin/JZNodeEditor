@@ -101,8 +101,8 @@ protected slots:
     void onAutoRun();
 
     void onStackChanged(int stack);
-    void onWatchValueChanged(JZNodeIRParam coor, QString value);
-    void onWatchNameChanged(JZNodeIRParam coor);
+    void onSetWatch(JZNodeIRParam coor, QString value);
+    void onGetWatch(JZNodeIRParam coor);
     void onRuntimeWatch(const JZNodeRuntimeWatchResult &info);
     void onWatchNotify();
     void onEditorValueChanged(int id,QString value);
@@ -174,10 +174,10 @@ private:
     void setRuntimeNode(QString file, int nodeId);
     void clearRuntimeNode();
     void updateRuntime(int stack_index, bool isNew);
-    void setRuntimeValue(QString file,int node_id,int pin_id,const JZNodeDebugParamValue &value);
-    void clearWatchs();
+    void setRuntimeValue(QString file,int node_id,int pin_id,const JZNodeDebugParamValue &value);    
+    JZNodeRuntimeInfo::Stack *currentStack();
+        
     void setWatchStatus(ProcessStatus status);
-    void updateAutoWatch(int stack_index);
         
     void startProgram();
     void stopProgram();
@@ -196,7 +196,7 @@ private:
 
     LogWidget *m_log;
     JZNodeStack *m_stack;
-    JZNodeWatch *m_watchAuto,*m_watchManual;
+    JZNodeWatch *m_watch;
     JZNodeBreakPointWidget *m_breakPoint;
     JZProjectTree *m_projectTree;
     QList<QMenu*> m_menuList;
@@ -212,15 +212,13 @@ private:
     JZNodeDebugClient m_debuger;
     QProcess m_process;           
     ProcessStatus m_processMode;    
-
-    QList<JZNodeWatch*> m_debugWidgets;
+    
     QAction *m_actionRun, *m_actionResume;
     QList<QAction*> m_debugActions;
     QToolBar *m_toolDebug;        
 
     JZNodeProgram m_program;
-    JZNodeRuntimeInfo m_runtime;
-    JZScriptEnvironment m_programEnv;
+    JZNodeRuntimeInfo m_runtime;    
     MainTaskManager m_task;
     JZNodeBuildResultPtr m_buildResult;
 };

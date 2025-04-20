@@ -48,9 +48,8 @@ public:
     void addLog(int type, const QString &log);
     void showRunningLog();
 
-    JZNodeStack *stack();
-    JZNodeWatch *watchAuto();
-    JZNodeWatch *watchManual();
+    JZNodeStack *stack();    
+    JZNodeWatch *watch();
     JZNodeBreakPointWidget *breakpoint();
 
 signals:
@@ -62,9 +61,8 @@ protected slots:
 protected:    
     QMap<int,LogBrowser*> m_logs;
     QTabWidget *m_tabWidget;
-    JZNodeStack *m_stack;    
-    JZNodeWatch *m_watchAuto;
-    JZNodeWatch *m_watchManual;
+    JZNodeStack *m_stack;        
+    JZNodeWatch *m_watch;
     JZNodeBreakPointWidget *m_breakPoint;    
 };
 

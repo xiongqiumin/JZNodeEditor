@@ -191,6 +191,8 @@ void JZNodePanel::syncChildList(QTreeWidgetItem *root, QStringList new_list, int
         if (!new_list.contains(name))
             need_remove << root->child(i);
     }
+    for (int i = 0; i < need_remove.size(); i++)
+        root->removeChild(need_remove[i]);
 
     //新增，要重新排序
     QStringList cur_list = childItemText(root);
@@ -227,7 +229,7 @@ void JZNodePanel::init()
 {
     m_tree->clear();    
 
-    m_itemFunction = createFolder("函数");
+    m_itemFunction = createFolder("流程");
     m_tree->addTopLevelItem(m_itemFunction);
     m_itemFunction->addChild(createFolder("输入参数"));
     m_itemFunction->addChild(createFolder("输出参数"));
@@ -249,11 +251,12 @@ void JZNodePanel::init()
     m_tree->setItemWidget(m_itemLocalParam, 0, w);
 
     initBasic();    
+    intiLogicFlow();
 
     m_itemClassDefine = createFolder("类");
     m_tree->addTopLevelItem(m_itemClassDefine);
-    m_itemClassDefine->addChild(createFolder("成员变量"));
     m_itemClassDefine->addChild(createFolder("成员函数"));
+    m_itemClassDefine->addChild(createFolder("成员变量"));    
     if (!m_classFile) {
         m_itemClassDefine->setHidden(true);
     }       
@@ -315,28 +318,12 @@ QTreeWidgetItem *JZNodePanel::createParam(QString name)
 }
 
 QTreeWidgetItem *JZNodePanel::createFunction(QString name)
-{
-    QTreeWidgetItem *item = nullptr;
-    auto env = editorEnvironment();
-    auto func_inst = editorFunctionManager();
-    auto func_def = func_inst->function(name);
-    int node_type = JZNodeEditorManager::instance()->customFunctionNode(name);
-    if(node_type != Node_none)
-    { 
-        auto node = JZNodeFactory::instance()->createNode(node_type);
-        auto node_custom = dynamic_cast<JZNodeFunctionCustom*>(node);
-        node_custom->setFunction(name);
-        item = createNode(node_custom);
-        delete node_custom;
-    }
-    else
-    {
-        JZNodeFunction func_node;
-        func_node.setFunction(func_def);
-        item = createNode(&func_node);        
-    }
+{    
+    JZNodeFunction func_node;
+    func_node.setFunction(name);
 
-    item->setText(0, func_def->name);
+    QTreeWidgetItem *item = createNode(&func_node);
+    item->setText(0, name);
     return item;
 }
 
@@ -369,7 +356,7 @@ void JZNodePanel::initBasic()
     itemOp->addChild(createNode(&node_param));
 
     JZNodeSetParam node_setParam;
-    JZNodeCreate node_create;
+    JZNodeCreateObject node_create;
     JZNodeCreateFromString node_createFormString;
     itemOp->addChild(createNode(&node_setParam));
     itemOp->addChild(createNode(&node_create));
@@ -391,6 +378,37 @@ void JZNodePanel::initBasic()
     itemOp->addChild(createNode(&node_convert));
     itemOp->addChild(createNode(&node_print));
     itemOp->addChild(createNode(&node_display));
+}
+
+void JZNodePanel::intiLogicFlow()
+{
+    QTreeWidgetItem *item_logic = createFolder("业务流程");
+    m_tree->addTopLevelItem(item_logic);
+
+    auto logic_list = editorManager()->logicNodeList();
+    for (int i = 0; i < logic_list.size(); i++)
+    {
+        auto &node = logic_list[i];
+        
+        QStringList path = node.path.split("/");
+        QTreeWidgetItem *item = item_logic;
+        for (int i = 0; i < path.size(); i++)
+        {
+            int sub_idx = UiHelper::treeIndexOf(item, path[i]);
+            if (sub_idx >= 0)
+                item = item->child(sub_idx);
+            else
+            {
+                auto sub_item = createFolder(path[i]);
+                item->addChild(sub_item);
+                item = sub_item;
+            }
+        }
+        auto jznode = JZNodeFactory::instance()->createNode(node.nodeType);
+        item->addChild(createNode(jznode));
+        delete jznode;
+    }
+    sortChildItem(item_logic);
 }
 
 void JZNodePanel::initLocalDefine()
@@ -546,8 +564,7 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     JZNodeBreak node_break;    
     JZNodeNop node_nop;
     JZNodeReturn node_return;
-    node_return.setFunction(&m_file->function());
-    JZNodeExit node_exit;   
+    node_return.setFunction(&m_file->function());    
     JZNodeTryCatch node_try;
     JZNodeThrow node_throw;
     
@@ -562,8 +579,7 @@ void JZNodePanel::initProcess(QTreeWidgetItem *root)
     item_process->addChild(createNode(&node_break));        
     item_process->addChild(createNode(&node_return));
     item_process->addChild(createNode(&node_try));
-    item_process->addChild(createNode(&node_throw));
-    item_process->addChild(createNode(&node_exit));    
+    item_process->addChild(createNode(&node_throw));    
 
     root->addChild(item_process);
 }

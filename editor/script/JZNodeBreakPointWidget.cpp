@@ -100,7 +100,7 @@ void JZNodeBreakPointWidget::updateBreakPoint()
     {
         QTableWidgetItem *itemName = new QTableWidgetItem();
         QTableWidgetItem *itemNode = new QTableWidgetItem();
-        itemName->setText(pt_list[i].file);
+        itemName->setText(pt_list[i].scriptItemPath);
         itemNode->setText(QString::number(pt_list[i].nodeId));
 
         int row = m_table->rowCount();

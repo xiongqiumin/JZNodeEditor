@@ -61,7 +61,8 @@ protected:
         int id;
         int pri;
         bool isInput;
-        bool isShowValue;        
+        bool isShowValue;
+        bool isEditable;
         IconType iconType;
         QString name;
 
@@ -113,6 +114,8 @@ class JZNodeFunctionItem : public JZNodeGraphItem
 {
 public:
     JZNodeFunctionItem();
+
+    virtual void updatePin();
 };
 
 #endif

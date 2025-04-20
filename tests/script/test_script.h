@@ -35,13 +35,11 @@ private slots:
     
     void testExpr();
     void testCustomExpr();
-    void testFunction();    
-    void testBreakPoint();
+    void testFunction();        
     void testArgs();
     void testTryCatch();
 
-protected:
-    bool initWhileCase(QList<int> &nodeId,QList<int> &value);
+protected:    
 };
 
 void test_script(int argc, char *argv[]);

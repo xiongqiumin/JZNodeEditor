@@ -134,12 +134,8 @@ LogWidget::LogWidget()
     m_stack = new JZNodeStack();
     m_tabWidget->addTab(m_stack, "堆栈");
 
-    m_watchManual = new JZNodeWatch();
-    m_tabWidget->addTab(m_watchManual, "监控");
-
-    m_watchAuto = new JZNodeWatch();
-    m_watchAuto->setReadOnly(true);
-    m_tabWidget->addTab(m_watchAuto, "自动窗口");
+    m_watch = new JZNodeWatch();
+    m_tabWidget->addTab(m_watch, "监控");
 }
 
 LogWidget::~LogWidget()
@@ -178,14 +174,9 @@ JZNodeStack *LogWidget::stack()
     return m_stack;
 }
 
-JZNodeWatch *LogWidget::watchAuto()
+JZNodeWatch *LogWidget::watch()
 {
-    return m_watchAuto;
-}
-
-JZNodeWatch *LogWidget::watchManual()
-{
-    return m_watchManual;
+    return m_watch;
 }
 
 JZNodeBreakPointWidget *LogWidget::breakpoint()

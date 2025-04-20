@@ -17,6 +17,11 @@ JZCameraFile::~JZCameraFile()
 {
 }
 
+bool JZCameraFile::isOpen()
+{
+    return m_fileList.size() != 0;
+}
+
 bool JZCameraFile::open(QString path)
 {
     QDir dir(path);
@@ -40,6 +45,7 @@ bool JZCameraFile::open(QString path)
 
 void JZCameraFile::close()
 {
+    m_fileList.clear();
 }
 
 void JZCameraFile::start()
@@ -59,6 +65,16 @@ void JZCameraFile::startOnce()
 void JZCameraFile::stop()
 {
     m_timer->stop();
+}
+
+QString JZCameraFile::config()
+{
+    return QString();
+}
+
+bool JZCameraFile::setConfig(const QString &config)
+{
+    return true;
 }
 
 cv::Mat JZCameraFile::readFrame()

@@ -15,7 +15,6 @@
 #include "JZModbusSimulator.h"
 #include "JZModbusConfigDialog.h"
 
-
 class SimulatorWidget : public QWidget
 {
 public:

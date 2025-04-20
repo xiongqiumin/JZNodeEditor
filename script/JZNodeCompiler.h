@@ -239,9 +239,9 @@ public:
     bool addDataInput(int nodeId,const QList<int> &prop_id,QString &error); //获得指定nodeId 的 prop_id 输入
     void addFlowOutput(int nodeId);         
 
-    int addNop();
-    int addNodeDebug(int id);
-    void setAutoAddNodeDebug(int m_id,bool flag);
+    int addNop();    
+    int addNodeEnter(int id);
+    void setAutoaddNodeEnter(int m_id,bool flag);
     int addExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
     void addExprConvert(const JZNodeIRParam &dst, const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
     int addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, JZNodeIRType op);

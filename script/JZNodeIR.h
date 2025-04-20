@@ -11,7 +11,7 @@
 enum JZNodeIRType
 {
     OP_none,
-    OP_nodeId,
+    OP_nodeEnter,    //可以设置断点
     OP_nop,            
     OP_alloc, 
     OP_clearReg,
@@ -111,17 +111,16 @@ public:
 typedef QSharedPointer<JZNodeIR> JZNodeIRPtr;
 JZNodeIR *createNodeIR(JZNodeIRType type);
 
-class JZNodeIRNodeId : public JZNodeIR
+class JZNodeIRNodeEnter : public JZNodeIR
 {
 public:    
-    JZNodeIRNodeId();
-    virtual ~JZNodeIRNodeId();
+    JZNodeIRNodeEnter();
+    virtual ~JZNodeIRNodeEnter();
 
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);     
 
     int id;   
-    int breakPointType;
 };
 
 class JZNodeIRAlloc : public JZNodeIR

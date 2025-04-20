@@ -37,7 +37,8 @@ QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param)
 {
     s << param.type;
     s << param.value;
-    s << param.params;
+    s << param.subParamNames;
+    s << param.subParamValues;
     return s;
 }
 
@@ -45,7 +46,8 @@ QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param)
 {
     s >> param.type;
     s >> param.value;
-    s >> param.params;
+    s >> param.subParamNames;
+    s >> param.subParamValues;    
     return s;
 }
 

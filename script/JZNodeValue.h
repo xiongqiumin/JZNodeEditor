@@ -116,12 +116,12 @@ protected:
 
 };
 
-//JZNodeCreate
-class JZNodeCreate : public JZNode
+//JZNodeCreateObject
+class JZNodeCreateObject : public JZNode
 {
 public:
-    JZNodeCreate();
-    ~JZNodeCreate();
+    JZNodeCreateObject();
+    ~JZNodeCreateObject();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;    
     virtual bool updateNode(QString &error) override;

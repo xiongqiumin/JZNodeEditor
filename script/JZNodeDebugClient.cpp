@@ -60,7 +60,10 @@ bool JZNodeDebugClient::addBreakPoint(const BreakPoint &pt)
 bool JZNodeDebugClient::removeBreakPoint(QString file,int nodeId)
 {
     QByteArray params,result;
-    //params = file << nodeId;
+    BreakPoint pt;
+    pt.scriptItemPath = file;
+    pt.nodeId = nodeId;
+    params = netDataPack(pt);
     return sendCommand(Cmd_removeBreakPoint,params,result);
 }
 
@@ -153,7 +156,8 @@ void JZNodeDebugClient::onNetPackRecv(JZNetPackPtr ptr)
     JZNodeDebugPacket *packet = (JZNodeDebugPacket*)ptr.data();
     if (packet->cmd == Cmd_log)
     {
-        //emit sigLog(packet->buffer.toString());
+        QString log = QString::fromUtf8(packet->buffer);
+        emit sigLog(log);
     }
     else if (packet->cmd == Cmd_runtimeStatus)
     {

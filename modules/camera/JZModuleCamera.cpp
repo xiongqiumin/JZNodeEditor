@@ -3,13 +3,32 @@
 #include "JZModuleCamera.h"
 #include "JZCamera.h"
 #include "JZCameraFile.h"
+#include "JZCameraHik.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
+#include "JZNodeFactory.h"
+#include "JZNodeCompiler.h"
 
-enum 
+//JZCameraInitNode
+JZCameraInitNode::JZCameraInitNode()
 {
-    CameraModule_id = 16000,
-};
+    m_name = "CameraInit";
+    m_type = Node_CameraInit;
+
+    addFlowIn();
+    addFlowOut();
+}
+
+JZCameraInitNode::~JZCameraInitNode()
+{
+
+}
+
+bool JZCameraInitNode::compiler(JZNodeCompiler *c, QString &error)
+{
+    c->addNodeEnter(m_id);
+    return true;
+}
 
 //JZModuleCamera
 JZModuleCamera::JZModuleCamera()
@@ -31,14 +50,24 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     cls_camera.def("start",true,&JZCamera::start);
     cls_camera.def("startOnce", true, &JZCamera::startOnce);
     cls_camera.def("stop", true, &JZCamera::stop);
+    cls_camera.def("setConfig", true, &JZCamera::setConfig);
+    cls_camera.def("config", true, &JZCamera::config);
     cls_camera.defSingle("sigFrameReady", &JZCamera::sigFrameReady);
     cls_camera.regist();
 
     jzbind::ClassBind<JZCameraFile> cls_camera_file(cls_id++, "JZCameraFile", "JZCamera");
     cls_camera_file.regist();
+
+    jzbind::ClassBind<JZCameraHik> cls_camera_hik(cls_id++, "JZCameraHik", "JZCamera");
+    cls_camera_hik.regist();
 }
 
 void JZModuleCamera::unregist(JZScriptEnvironment *env)
 {
 
+}
+
+void JZModuleCameraNodeInit()
+{
+    JZNodeFactory::instance()->registNode(Node_CameraInit, createJZNode<JZCameraInitNode>);
 }

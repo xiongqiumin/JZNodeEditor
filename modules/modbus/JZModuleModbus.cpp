@@ -146,8 +146,6 @@ void JZModuleModbus::regist(JZScriptEnvironment *env)
 
     //jzbind::registFunction("initModbusMaster", true, initModbusMaster);
     //jzbind::registFunction("initModbusSlaver", true, initModbusSlaver);
-
-    JZNodeFactory::instance()->registNode(Node_modbusConfig, createJZNode<JZNodeModbusConfig>);    
 }
 
 void JZModuleModbus::unregist(JZScriptEnvironment *env)

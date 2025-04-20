@@ -53,6 +53,21 @@ NodeInfo::NodeInfo()
     isFlow = false;
 }
 
+NodeParamInfo *NodeInfo::param(int id)
+{
+    for (int i = 0; i < paramIn.size(); i++)
+    {
+        if (paramIn[i].id == id)
+            return &paramIn[i];
+    }
+    for (int i = 0; i < paramOut.size(); i++)
+    {
+        if (paramOut[i].id == id)
+            return &paramOut[i];
+    }
+    return nullptr;
+}
+
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
 {
     s << param.name;
@@ -132,7 +147,7 @@ JZNodeScript::JZNodeScript()
 
 void JZNodeScript::clear()
 {
-    file.clear();
+    itemPath.clear();
     className.clear();    
     statmentList.clear();
     functionList.clear();    
@@ -171,7 +186,7 @@ void JZNodeScript::copyTo(JZNodeScript *other) const
 
 void JZNodeScript::saveToStream(QDataStream &s) const
 {
-    s << file;    
+    s << itemPath;    
     s << className;
     s << statmentList.size();
     for(int i = 0; i < statmentList.size(); i++)
@@ -185,7 +200,7 @@ void JZNodeScript::saveToStream(QDataStream &s) const
 
 void JZNodeScript::loadFromStream(QDataStream &s)
 {
-    s >> file;
+    s >> itemPath;
     s >> className;
     int stmt_size = 0;
     s >> stmt_size;

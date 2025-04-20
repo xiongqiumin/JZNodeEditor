@@ -25,14 +25,14 @@ class BreakPoint
 public: 
     enum Type{
         none,
-        nodeEnter,    //为nodeId中断
+        nodeEnter,
         print,  
     };
 
     BreakPoint();
 
     Type type;
-    QString file;
+    QString scriptItemPath;
     int nodeId;
 };
 void operator<<(QDataStream &s, const BreakPoint &param);
@@ -66,12 +66,14 @@ public:
 
     JZScriptEnvironment *environment();
     const JZScriptEnvironment *environment() const;    
+
+    QString absoluteFilePath(QString path) const;
     
     bool open(QString filepath);
     void close();
     bool save();      //只保存工程自身，不保存项目文件
     bool saveAs(QString filepath);
-
+    
     void addTmp(JZProjectItem *item);
     void removeTmp(JZProjectItem *item);
     void takeTmp(JZProjectItem *item);
@@ -85,13 +87,13 @@ public:
     void saveCache();  //保存 breakpoint 之类的设置信息
     void loadCache();
 
-    QString error();
+    QString error() const;
 
-    QString name();    
-    QString path();
+    QString name() const;
+    QString path() const;
 
     void setFilePath(QString path);
-    QString filePath();
+    QString filePath() const;
 
     JZScriptFile *mainFile();
     QString mainFilePath();
@@ -120,7 +122,7 @@ public:
     bool saveItem(JZProjectItem *item);
     bool saveItems(QList<JZProjectItem*> item);
     bool saveAllItem();
-    void renameItem(JZProjectItem *item, QString name);    
+    bool renameItem(JZProjectItem *item, QString name);    
 
     JZScriptClassItem *getItemClass(JZProjectItem *item);    
     JZProjectItem *getItemFile(JZProjectItem *item);

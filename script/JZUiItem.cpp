@@ -10,6 +10,7 @@
 JZUiItem::JZUiItem()
     :JZProjectItem(ProjectItem_ui)
 {
+    m_name = "ui";
     m_xml =  R"(<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>widget</class>

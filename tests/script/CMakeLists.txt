@@ -17,8 +17,9 @@ set(JZNodeTest_SOURCES
     test_anglescript.h
 )
 
-add_executable(JZNodeTest ${JZNodeTest_SOURCES} ${JZNodeCore_SOURCES})
-target_link_libraries(JZNodeTest Qt${QT_VERSION_MAJOR}::Widgets
+add_executable(JZNodeTest ${JZNodeTest_SOURCES})
+target_link_libraries(JZNodeTest JZNodeCore
+    Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network          
     Qt${QT_VERSION_MAJOR}::SerialPort      
     Qt${QT_VERSION_MAJOR}::PrintSupport

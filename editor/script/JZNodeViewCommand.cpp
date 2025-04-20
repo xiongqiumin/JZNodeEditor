@@ -78,7 +78,7 @@ void JZNodeViewCommand::undo()
         auto item = m_view->insertNode(node);
         m_view->setNodePos(itemId,oldPos);
     }    
-    else if (command == NodePropertyChange)
+    else if (command == NodeChange)
     {
         m_view->setNodeData(itemId, oldValue.toByteArray());
     }
@@ -100,7 +100,11 @@ void JZNodeViewCommand::undo()
     {
         auto group = parseGroup(oldValue.toByteArray());
         m_view->insertGroup(group);
-    }    
+    }
+    else
+    {
+        Q_ASSERT(0);
+    }
 }
 
 void JZNodeViewCommand::redo()
@@ -125,7 +129,7 @@ void JZNodeViewCommand::redo()
     {
         m_view->removeNode(itemId);
     }
-    else if (command == NodePropertyChange)
+    else if (command == NodeChange)
     {
         if (newValue.isNull())
         {
@@ -184,7 +188,11 @@ void JZNodeViewCommand::redo()
         {
             m_view->setGroupData(itemId,newValue.toByteArray());
         }
-    }    
+    }
+    else
+    {
+        Q_ASSERT(0);
+    }
 }
 
 //JZNodePinValueChangedCommand

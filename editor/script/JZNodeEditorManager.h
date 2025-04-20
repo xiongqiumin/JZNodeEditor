@@ -41,6 +41,14 @@ public:
     ParamUnpackFunc unpack;
 };
 
+//JZLogicNode
+class JZLogicNode
+{
+public:
+    QString path;
+    int nodeType;
+};
+
 class JZNodeEditorManager
 {
 public:
@@ -51,26 +59,24 @@ public:
 
     void init();
     void setUserRegist(bool flag);
-    void clearUserRegist();
+    void clearUserRegist();    
+
+    void registLogicNode(JZLogicNode logic);
+    QList<JZLogicNode>  logicNodeList();
 
     void registNodeItemCreator(int node_type, CreateJZNodeGraphItemFunc func);
     bool hasNodeItemCreator(int node_type);
     CreateJZNodeGraphItemFunc nodeItemCreator(int node_type);
 
-    void registCustomFunctionNode(QString function,int node_type);
-    void unregistCustomFunctionNode(QString function);
-    int customFunctionNode(QString function);
-
     void registDelegate(int data_type, JZNodeParamDelegate delegate);
     JZNodeParamDelegate *delegate(int data_type);
 
-protected:    
-    QMap<QString, int> m_functionMap;    
+protected:        
     QMap<int, JZNodeParamDelegate> m_delegateMap;
     QMap<int, CreateJZNodeGraphItemFunc> m_nodeItemMap;
+    QList<JZLogicNode> m_logicNode;
     
-    bool m_userRegist;
-    QStringList m_userFunctionList;
+    bool m_userRegist;    
     QList<int> m_userDelegateList;
 };
 

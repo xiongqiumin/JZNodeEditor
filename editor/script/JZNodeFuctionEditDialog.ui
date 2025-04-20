@@ -55,16 +55,9 @@
           <widget class="QLineEdit" name="lineName"/>
          </item>
          <item>
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>是否纯函数</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QCheckBox" name="boxFlow">
            <property name="text">
-            <string>是</string>
+            <string>纯函数</string>
            </property>
           </widget>
          </item>

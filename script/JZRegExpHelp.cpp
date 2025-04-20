@@ -56,6 +56,13 @@ bool JZRegExpHelp::isWord(const QString &str)
     for(int i = 0; i < str.size(); i++)
     {
         QChar c = str[i];
+        if (c >= 127 || c.isLetterOrNumber() || c == '_') 
+        {
+        }
+        else
+        {
+            return false;
+        }
     }
 
     return true;

@@ -1,5 +1,4 @@
-﻿#include "JZNodeWatch.h"
-#include <QGroupBox>
+﻿#include <QGroupBox>
 #include <QPainter>
 #include <QHeaderView>
 #include <QMenu>
@@ -9,7 +8,12 @@
 #include <QStyledItemDelegate>
 #include "UiCommon.h"
 #include "JZNodeEngine.h"
-#include "mainwindow.h"
+#include "JZNodeWatch.h"
+#include "JZEditorGlobal.h"
+
+enum {
+    Data_coor = Qt::UserRole
+};
 
 class GridDelegate : public QStyledItemDelegate
 {
@@ -33,8 +37,8 @@ JZNodeWatch::JZNodeWatch(QWidget *parent)
     m_status = Process_none;
     m_readOnly = false;
     m_editColumn = 0;
-    m_editItem = nullptr;
-    m_mainWindow = nullptr;
+    m_editItem = nullptr;    
+    m_nodeItem = nullptr;
 
     m_view = new QTreeWidget();
     m_view->setColumnCount(3);
@@ -63,8 +67,8 @@ void JZNodeWatch::updateStatus()
 {
     if (m_status == Process_none)
     {
-        this->setEnabled(true);
-        clear();
+        this->setEnabled(true);     
+        setNodeInfo(NodeInfo());
     }
     else if (m_status == Process_running)
         this->setEnabled(false);
@@ -104,11 +108,6 @@ void JZNodeWatch::setRunningMode(ProcessStatus status)
     updateStatus();
 }
 
-void JZNodeWatch::setMainWindow(MainWindow *w)
-{
-    m_mainWindow = w;
-}
-
 void JZNodeWatch::onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column)
 {
     if (m_status != Process_pause)
@@ -140,7 +139,7 @@ void JZNodeWatch::onItemChanged(QTreeWidgetItem *item, int column)
         }
         else
         {            
-            sigParamNameChanged(irRef(item->text(0)));
+            sigGetWatch(irRef(item->text(0)));
         }
     }
     else
@@ -156,7 +155,7 @@ void JZNodeWatch::onItemChanged(QTreeWidgetItem *item, int column)
         {
             coor = irRef(item->text(0));
         }        
-        sigParamValueChanged(coor, item->text(1));
+        sigSetWatch(coor, item->text(1));
     }    
     updateWatchItem();
 }
@@ -183,18 +182,9 @@ QString JZNodeWatch::coorName(const JZNodeIRParam &param)
         return param.ref();
     else
     {
-/*
-        auto p = m_mainWindow->program();
-        auto stack = m_mainWindow->stackIndex();
-        auto function = m_mainWindow->runtime()->stacks[stack].function;
-        auto debug = p->debugInfo(function);
-        auto def = debug->nodeParam(param.id());
-        if (def)
-            return def->name;
-
-        return QString::number(param.id());
-*/
-        return QString();
+        JZNodeGemo gemo = JZNodeGemo::fromParamId(param.id());
+        auto pin = m_nodeInfo.param(gemo.pinId);
+        return pin->define.name;
     }
 }
 
@@ -209,31 +199,12 @@ int JZNodeWatch::indexOfItem(QTreeWidgetItem *root, const QString &name,int star
     return -1;
 }
 
-QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const QString &name, const JZNodeDebugParamValue &info)
+void JZNodeWatch::setItem(QTreeWidgetItem *item, const JZNodeDebugParamValue &info)
 {
-    QString preValue;
-    QTreeWidgetItem *item;
-    //设置item位置
-    int cur_index = indexOfItem(root, name, index);
-    if (cur_index >= 0)
-    {
-        item = root->child(cur_index);
-        if (cur_index != index)
-        {
-            root->takeChild(cur_index);
-            root->insertChild(index, item);
-        }
-        preValue = item->text(1);
-    }
-    else
-    {
-        item = new QTreeWidgetItem();       
-        item->setFlags(item->flags() | Qt::ItemIsEditable);
-        item->setText(0,name);
-        root->insertChild(index,item);        
-    }
-    
-    item->setText(2, editorEnvironment()->typeToName(info.type));
+    auto env = editorEnvironment();
+
+    QString preValue = item->text(1);
+    item->setText(2, env->typeToName(info.type));
     if (JZNodeType::isBase(info.type))
         item->setFlags(item->flags() | Qt::ItemIsEditable);
 
@@ -246,79 +217,121 @@ QTreeWidgetItem *JZNodeWatch::updateItem(QTreeWidgetItem *root, int index, const
     {       
         cur_value = info.value;
         if (info.value != "null")
-        {
-            //if (info.type == Type_list || info.type == Type_map)
-            //    cur_value = QString("{size = %1}").arg(info.params.size());
+        {            
+            if (env->isListType(info.type)|| env->isMapType(info.type))
+                cur_value = QString("{size = %1}").arg(info.subParamValues.size());
         }        
-        
-        auto it = info.params.begin();
-        int sub_index = 0;
-        while (it != info.params.end())
+                
+        QList<QTreeWidgetItem *> vaild_sub_items;
+        for(int sub_index = 0; sub_index < info.subParamValues.size(); sub_index++)
         {        
-            updateItem(item, sub_index, it.key(), it.value());            
-            sub_index++;
-            it++;
+            QString sub_name = info.subParamNames[sub_index];
+            auto &param = info.subParamValues[sub_index];
+            int tree_sub_idx = UiHelper::treeIndexOf(item, sub_name);
+            QTreeWidgetItem *sub_item = nullptr;
+            if (tree_sub_idx = -1)
+            {
+                sub_item = new QTreeWidgetItem();
+                sub_item->setText(0, sub_name);
+            }
+            else
+            {
+                sub_item = item->child(tree_sub_idx);
+            }
+            setItem(sub_item, param);
+            vaild_sub_items << sub_item;
         }
-        for (int i = item->childCount() - 1; i >= sub_index; i--)
-            delete item->takeChild(i);        
-    }    
-    item->setText(1, cur_value);    
-    if(cur_value != preValue)
+        for (int i = item->childCount() - 1; i >= 0; i--)
+        {
+            if(vaild_sub_items.contains(item->child(i)))
+                delete item->takeChild(i);
+        }
+        UiHelper::treeSortChilds(item);        
+    }            
+    if (cur_value != preValue)
+    {
+        item->setText(1, cur_value);
         item->setTextColor(1, Qt::red);
+    }
     else
         item->setTextColor(1, Qt::black);
-
-    return item;
 }
 
-void JZNodeWatch::setItem(QTreeWidgetItem *root, int index, const JZNodeIRParam &coor, const JZNodeDebugParamValue &info)
+void JZNodeWatch::setNodeInfo(const NodeInfo &info)
 {
-    auto item = updateItem(root, index, coorName(coor), info);
-    if(coor.isStack())
-        item->setData(0, Qt::UserRole, coor.id());
-}
-
-JZNodeDebugParamValue JZNodeWatch::getParamValue(QTreeWidgetItem *item)
-{
-    JZNodeDebugParamValue value;
-    return value;
-}
-
-void JZNodeWatch::setParamInfo(JZNodeGetDebugParamResp *info)
-{       
-/*
     m_view->blockSignals(true);
-    auto root = m_view->invisibleRootItem();        
-    for (int i = 0; i < info->coors.size(); i++)                      
-        setItem(root, i, info->coors[i], info->values[i]);    
-    for (int i = root->childCount() - 1; i >= info->coors.size(); i--)
-        delete root->takeChild(i);
-    
-    updateWatchItem();
+    if (m_nodeInfo.id != info.id)
+    {
+        m_nodeInfo = info;
+        
+        if (m_nodeItem)
+        {
+            int index = m_view->indexOfTopLevelItem(m_nodeItem);
+            delete m_view->takeTopLevelItem(index);
+            m_nodeItem = nullptr;
+        }
+
+        if (m_nodeInfo.id != INVALID_ID)
+        {
+            m_nodeItem = new QTreeWidgetItem();
+            m_nodeItem->setText(0, info.name);
+            m_view->insertTopLevelItem(0, m_nodeItem);
+
+            for (int i = 0; i < info.paramIn.size(); i++)
+            {
+                QTreeWidgetItem *sub = new QTreeWidgetItem();
+                sub->setText(0, info.paramIn[i].define.name);
+                m_nodeItem->addChild(sub);
+            }
+            for (int i = 0; i < info.paramOut.size(); i++)
+            {
+                QTreeWidgetItem *sub = new QTreeWidgetItem();
+                sub->setText(0, info.paramOut[i].define.name);
+                m_nodeItem->addChild(sub);
+            }
+            m_nodeItem->setExpanded(true);
+        }
+    }
     m_view->blockSignals(false);
-*/
 }
 
 void JZNodeWatch::updateParamInfo(JZNodeGetDebugParamResp *info)
-{    
-/*
-    auto root = m_view->invisibleRootItem();    
-    //m_view 中可能存在多个同名的参数，所以此处要通过tree来遍历
-    auto count = m_view->topLevelItemCount();
-    for (int i = 0; i < count; i++)
-    {
-        auto item = m_view->topLevelItem(i);        
-        for (int j = 0; j < info->coors.size(); j++)
+{
+    m_view->blockSignals(true);    
+    
+    auto findAndSet = [this,info](QTreeWidgetItem *item,bool isStack) 
+    {        
+        for (int j = 0; j < info->req.coors.size(); j++)
         {
-            auto &c = info->coors[j];           
-            if (coorName(c) == item->text(0))
-            {                
-                setItem(root, i, c, info->values[j]);
-                break;
-            }           
+            auto &c = info->req.coors[j];
+            if (coorName(c) == item->text(0) && info->req.coors[j].isStack() == isStack)
+            {
+                setItem(item, info->values[j]);
+                return;
+            }
         }
+        UiHelper::treeClearChildren(item);
+        item->setText(1, "no such item");
+    };
+
+    int start = 0;
+    if (m_nodeItem)
+    {
+        for (int i = 0; i < m_nodeItem->childCount(); i++)
+        {
+            auto item = m_nodeItem->child(i);
+            findAndSet(item, true);
+        }
+        start = 1;
     }
-*/
+    
+    for (int i = start; i < m_view->topLevelItemCount() - 1; i++) //最后一个是新建变量
+    {
+        auto item = m_view->topLevelItem(i);
+        findAndSet(item, false);
+    }
+
+    m_view->blockSignals(false);
 }
 
 QStringList JZNodeWatch::watchList()
@@ -327,15 +340,12 @@ QStringList JZNodeWatch::watchList()
     auto count = m_view->topLevelItemCount();
     for (int i = 0; i < count; i++)
     {
+        if (m_view->topLevelItem(i) == m_nodeItem)
+            continue;
+
         QString name = m_view->topLevelItem(i)->text(0);
         if(!name.isEmpty())
             list << name;
     }
     return list;
-}
-
-void JZNodeWatch::clear()
-{
-    m_view->clear();
-    updateWatchItem();
 }

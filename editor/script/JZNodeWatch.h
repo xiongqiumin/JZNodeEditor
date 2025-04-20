@@ -9,7 +9,6 @@
 #include "JZNodeDebugPacket.h"
 #include "JZProcess.h"
 
-class MainWindow;
 class JZNodeWatch : public QWidget
 {
     Q_OBJECT
@@ -19,18 +18,16 @@ public:
     ~JZNodeWatch();
 
     void setReadOnly(bool flag);
-    void setRunningMode(ProcessStatus status);
-    void setMainWindow(MainWindow *w);
+    void setRunningMode(ProcessStatus status);    
     
-    void setParamInfo(JZNodeGetDebugParamResp *info);
-    void updateParamInfo(JZNodeGetDebugParamResp *info);
-    QStringList watchList();
+    void setNodeInfo(const NodeInfo &info);    
+    void updateParamInfo(JZNodeGetDebugParamResp *info);    
 
-    void clear();
+    QStringList watchList();    
         
 signals:
-    void sigParamValueChanged(JZNodeIRParam coor,QString value);
-    void sigParamNameChanged(JZNodeIRParam coor);
+    void sigSetWatch(JZNodeIRParam coor,QString value);
+    void sigGetWatch(JZNodeIRParam coor);
     
 protected slots:   
     void onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column);
@@ -41,21 +38,19 @@ protected:
 
     void updateStatus();
     void updateWatchItem();
-    int indexOfItem(QTreeWidgetItem *root, const QString &name,int start);
+    int indexOfItem(QTreeWidgetItem *root, const QString &coor,int start);
     QString coorName(const JZNodeIRParam &param);
-
-    void setItem(QTreeWidgetItem *root, int index,const JZNodeIRParam &coor, const JZNodeDebugParamValue &info);
-    QTreeWidgetItem *updateItem(QTreeWidgetItem *root,int index,const QString &name,const JZNodeDebugParamValue &info);
-    
-    JZNodeDebugParamValue getParamValue(QTreeWidgetItem *item);    
+        
+    void setItem(QTreeWidgetItem *root, const JZNodeDebugParamValue &info);    
 
     bool m_readOnly;    
     ProcessStatus m_status;          
     QTreeWidgetItem *m_editItem;
+    QTreeWidgetItem *m_nodeItem;
+    NodeInfo m_nodeInfo;
     int m_editColumn;
 
     QTreeWidget *m_view;    
-    MainWindow *m_mainWindow;
 };
 
 

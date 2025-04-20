@@ -6,6 +6,8 @@
 #include "JZScriptEnvironment.h"
 #include "JZYolo.h"
 #include "JZYoloView.h"
+#include "JZModelNode.h"
+#include "JZNodeFactory.h"
 
 using namespace cv;
 
@@ -55,6 +57,8 @@ JZModuleOpencv::~JZModuleOpencv()
 
 void JZModuleOpencv::regist(JZScriptEnvironment *env)
 {
+    qRegisterMetaType<cv::Mat>("cv::Mat");
+
     auto func_inst = env->functionManager();
     int cls_id = OpencvModule_id;
     
@@ -119,4 +123,10 @@ void JZModuleOpencv::unregist(JZScriptEnvironment *env)
 
     m_classList.clear();
     m_functionList.clear();
+}
+
+void JZModuleModelNodeInit()
+{
+    JZNodeFactory::instance()->registNode(Node_ModelInit, createJZNode<JZModelInitNode>);
+    JZNodeFactory::instance()->registNode(Node_ModelSetting, createJZNode<JZModelSettingNode>);
 }

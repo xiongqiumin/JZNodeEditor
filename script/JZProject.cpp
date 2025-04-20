@@ -25,14 +25,14 @@ BreakPoint::BreakPoint()
 
 void operator<<(QDataStream &s, const BreakPoint &param)
 {
-    s << param.file;
+    s << param.scriptItemPath;
     s << param.nodeId;
     s << param.type;
 }
 
 void operator>>(QDataStream &s, BreakPoint &param)
 {
-    s >> param.file;
+    s >> param.scriptItemPath;
     s >> param.nodeId;
     s >> param.type;
 }
@@ -135,6 +135,17 @@ void JZProject::registType()
 void JZProject::unregistType()
 {
     m_env.unregistType();
+}
+
+QString JZProject::absoluteFilePath(QString path) const
+{    
+    if (m_filepath.isEmpty())
+        return path;
+    else
+    {
+        QDir dir(this->path());            
+        return dir.absoluteFilePath(path);
+    }    
 }
 
 bool JZProject::open(QString filepath)
@@ -277,7 +288,7 @@ void JZProject::saveCommit()
     m_saveCache.clear();
 }
 
-QString JZProject::error()
+QString JZProject::error() const
 {
     return m_error;
 }
@@ -318,7 +329,7 @@ void JZProject::loadCache()
 
         for(int i = 0; i < breakPoints.size(); i++)
         {
-            auto item = getItem(breakPoints[i].file);
+            auto item = getItem(breakPoints[i].scriptItemPath);
             if (item)
                 m_breakPoints[item] << breakPoints[i];
         }
@@ -327,7 +338,7 @@ void JZProject::loadCache()
     }
 }
 
-QString JZProject::name()
+QString JZProject::name() const
 {    
     QFileInfo info(m_filepath);
     return info.baseName();
@@ -338,12 +349,12 @@ void JZProject::setFilePath(QString path)
     m_filepath = path;
 }
 
-QString JZProject::filePath()
+QString JZProject::filePath() const
 {
     return m_filepath;
 }
 
-QString JZProject::path()
+QString JZProject::path() const
 {
     QFileInfo info(m_filepath);
     return info.path();
@@ -380,10 +391,22 @@ JZProjectItem *JZProject::root()
     return &m_root;
 }
 
-bool JZProject::addItem(QString dir, JZProjectItem *item)
+bool JZProject::addItem(QString dir_path, JZProjectItem *item)
 {
-    auto parent = getItem(dir);
+    if (!m_filepath.isEmpty() && QDir::isAbsolutePath(dir_path))
+    {
+        QDir dir(path());
+        QString relative = dir.relativeFilePath(dir_path);
+        if (relative == "." || relative.startsWith("./"))
+        {
+            dir_path = relative;
+        }
+    }
+
+    auto parent = getItem(dir_path);
     if (!parent)
+        return false;
+    if (getItem(dir_path + "/" + item->name()))
         return false;
 
     Q_ASSERT(!item->project());
@@ -498,8 +521,14 @@ bool JZProject::saveAllItem()
     return saveItems(items);
 }
 
-void JZProject::renameItem(JZProjectItem *item, QString newname)
+bool JZProject::renameItem(JZProjectItem *item, QString newname)
 {    
+    QString new_name = item->path() + "/" + newname;
+    if (getItem(newname))
+    {
+        return false;
+    }
+
     item->setName(newname);
     saveItem(item);
 
@@ -510,6 +539,7 @@ void JZProject::renameItem(JZProjectItem *item, QString newname)
         f.rename(newname);
         save();
     }
+    return true;
 }
 
 JZProjectItem *JZProject::getItem(QString path)
@@ -746,12 +776,12 @@ BreakPoint JZProject::breakPoint(QString file, int id)
 
 void JZProject::addBreakPoint(const BreakPoint &pt)
 {
-    if(hasBreakPoint(pt.file,pt.nodeId))
+    if(hasBreakPoint(pt.scriptItemPath,pt.nodeId))
         return;    
 
-    auto item = getItem(pt.file);
+    auto item = getItem(pt.scriptItemPath);
     m_breakPoints[item].push_back(pt);
-    sigBreakPointChanged(BreakPoint_add, pt.file, pt.nodeId);
+    sigBreakPointChanged(BreakPoint_add, pt.scriptItemPath, pt.nodeId);
 }
 
 int JZProject::indexOfBreakPoint(QString file,int id)
@@ -793,7 +823,7 @@ QList<BreakPoint> JZProject::breakPoints()
         for(int i = 0; i < it.value().size(); i++)
         {
             auto pt = list[i];
-            pt.file = it.key()->itemPath();
+            pt.scriptItemPath = it.key()->itemPath();
             result << pt;
         }
         it++;

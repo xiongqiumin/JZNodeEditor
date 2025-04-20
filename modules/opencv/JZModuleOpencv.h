@@ -13,5 +13,6 @@ public:
     virtual void unregist(JZScriptEnvironment *env) override;        
 };
 
+void JZModuleModelNodeInit();
 
 #endif

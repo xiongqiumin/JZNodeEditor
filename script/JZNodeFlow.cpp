@@ -12,7 +12,7 @@ JZNodeNop::JZNodeNop()
    
 bool JZNodeNop::compiler(JZNodeCompiler *c, QString &error)
 {
-    c->addNodeDebug(m_id);
+    c->addNodeEnter(m_id);
     c->addNop();
     return true;
 }
@@ -35,7 +35,7 @@ bool JZNodeContinue::compiler(JZNodeCompiler *c,QString &error)
         return false;
     }
 
-    c->addNodeDebug(m_id);
+    c->addNodeEnter(m_id);
     c->addContinue(m_id);
     return true;
 }
@@ -56,7 +56,7 @@ bool JZNodeBreak::compiler(JZNodeCompiler *c,QString &error)
         error = "break 需要在for,foreach,while中使用";
         return false;
     }
-    c->addNodeDebug(m_id);
+    c->addNodeEnter(m_id);
     c->addBreak(m_id);
     return true;
 }
@@ -163,7 +163,7 @@ void JZNodeSequence::removeSequeue(int id)
 
 bool JZNodeSequence::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->addNodeDebug(m_id);
+    c->addNodeEnter(m_id);
     //设置continue, 最后一个是跳出
     auto list = subFlowList();
     for(int i = 0; i < list.size(); i++)
@@ -219,7 +219,7 @@ JZNodeFor::JZNodeFor()
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
 {
-    c->setAutoAddNodeDebug(m_id, false);
+    c->setAutoaddNodeEnter(m_id, false);
     if (!c->addFlowInput(m_id, error))    
         return false;        
 
@@ -259,7 +259,7 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     c->addSetVariable(irId(id_out_index), irId(id_index));
 
     //start 
-    int start = c->addNodeDebug(m_id);
+    int start = c->addNodeEnter(m_id);
     c->addCompare(irId(id_index), irId(id_end), op);
     JZNodeIRJmp *jmp_cond_break = c->addJmp(OP_jne); 
     c->lastStatment()->memo = "body";    
@@ -327,6 +327,11 @@ void JZNodeFor::setStep(int step)
 void JZNodeFor::setEnd(int end)
 {
     setPinValue(paramIn(2), QString::number(end));
+}
+
+JZNodeIRType JZNodeFor::op()
+{
+    return m_condOp;
 }
 
 void JZNodeFor::setOp(JZNodeIRType op)
@@ -991,18 +996,7 @@ JZNodeMainLoop::~JZNodeMainLoop()
 bool JZNodeMainLoop::compiler(JZNodeCompiler *c, QString &error)
 {
     if(!c->addFlowInput(m_id,error))
-        return false;
-
-    int id = c->paramId(m_id,paramIn(0));
-    c->addAlloc(JZNodeIRAlloc::Heap,"__mainwindow__", Type_widget);
-
-    JZNodeIRSet *ir_set = new JZNodeIRSet();    
-    ir_set->dst = irRef("__mainwindow__");
-    ir_set->src = irId(id);
-    c->addStatement(JZNodeIRPtr(ir_set));
-
-    JZNodeIR *ir_return = new JZNodeIR(OP_return);
-    c->addStatement(JZNodeIRPtr(ir_return));
-
+        return false;    
+    
     return true;    
 }

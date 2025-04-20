@@ -35,14 +35,17 @@ QDataStream &operator>>(QDataStream &s, NodeParamInfo &param);
 struct NodeInfo
 {        
     NodeInfo();    
+    NodeParamInfo *param(int id);
     
     QString name;
     int id;
     int type;
     bool isFlow;       
     
+    //paramIn,paramOut 不保存全部的节点，只保存运行时可以修改的节点信息
     QList<NodeParamInfo> paramIn;
     QList<NodeParamInfo> paramOut;
+
     QList<NodeRange> pcRanges;
 };
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
@@ -75,7 +78,7 @@ public:
     void saveToStream(QDataStream &s) const;
     void loadFromStream(QDataStream &s);
 
-    QString file;
+    QString itemPath;
     QString className; 
     QList<JZNodeIRPtr> statmentList;
     QList<JZFunction> functionList;

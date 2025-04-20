@@ -9,8 +9,7 @@
 JZNodeDebugServer::JZNodeDebugServer()
 {
     m_client = -1;
-    m_engine = nullptr;    
-    m_vm = nullptr;
+    m_engine = nullptr;       
     m_init = false;
     m_preThread = nullptr;
 
@@ -73,11 +72,6 @@ void JZNodeDebugServer::setEngine(JZNodeEngine *eng)
     connect(m_engine,&JZNodeEngine::sigWatchNotify, this, &JZNodeDebugServer::onWatchNotify);
 }
 
-void JZNodeDebugServer::setVM(JZNodeVM *vm)
-{
-    m_vm = vm;
-}
-
 bool JZNodeDebugServer::waitForAttach(int timeout)
 {
     QElapsedTimer e;
@@ -108,8 +102,8 @@ void JZNodeDebugServer::onDisConnect(int netId)
 {
     if(m_client == netId)
         m_client = -1;    
-    if (m_vm)
-        m_vm->quit();
+    
+    exit(1);
 }
 
 void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
@@ -140,7 +134,8 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     }
     else if (cmd == Cmd_removeBreakPoint)
     {
-        //m_engine->removeBreakPoint(params[0].toString(), params[1].toInt());
+        auto pt = netDataUnPack<BreakPoint>(params);
+        m_engine->removeBreakPoint(pt.scriptItemPath, pt.nodeId);
     }
     else if(cmd == Cmd_clearBreakPoint)
         m_engine->clearBreakPoint();
@@ -161,12 +156,12 @@ void JZNodeDebugServer::onNetPackRecv(int netId,JZNetPackPtr ptr)
     else if (cmd == Cmd_getVariable)
     {
         JZNodeGetDebugParam info = netDataUnPack<JZNodeGetDebugParam>(params);        
-        //result = getVariable(info);
+        result = netDataPack(getVariable(info));
     }
     else if (cmd == Cmd_setVariable)
     {
         JZNodeSetDebugParam info = netDataUnPack<JZNodeSetDebugParam>(params);
-        //result = setVariable(info);
+        result = netDataPack(setVariable(info));
     }
 
     JZNodeDebugPacket result_pack;
@@ -199,7 +194,7 @@ void JZNodeDebugServer::onStatusChanged(int status)
 
     JZNodeDebugPacket status_pack;
     status_pack.cmd = Cmd_runtimeStatus;
-    //status_pack.params << status;
+    status_pack.buffer.setNum(status);
     m_server->sendPack(m_client, &status_pack);
 }
 
@@ -224,25 +219,55 @@ void JZNodeDebugServer::onWatchNotify()
     m_server->sendPack(m_client, &status_pack);
 }
 
-QVariant JZNodeDebugServer::getVariable(const JZNodeGetDebugParam &info)
+JZNodeGetDebugParamResp JZNodeDebugServer::getVariable(const JZNodeGetDebugParam &info)
 {        
     JZNodeGetDebugParamResp result;
     result.req = info;
-    
+    if (!m_engine->isPauseOrError())
+    {
+        result.ret = false;
+        return result;
+    }
+    result.ret = true;
     for (int i = 0; i < info.coors.size(); i++)
     {
-        auto v= m_engine->getParam(info.stack, info.coors[i]);
-        result.values << toDebugParam(v);
-    }
-    
-    return netDataPack(result);
+        if (m_engine->hasParam(info.stack, info.coors[i]))
+        {
+            auto v = m_engine->getParam(info.stack, info.coors[i]);
+            result.values << toDebugParam(v);
+        }
+        else
+        {
+            result.values << JZNodeDebugParamValue();
+        }
+    }    
+    return result;
 }
 
-QVariant JZNodeDebugServer::setVariable(const JZNodeSetDebugParam &info)
+JZNodeSetDebugParamResp JZNodeDebugServer::setVariable(const JZNodeSetDebugParam &info)
 {    
     JZNodeSetDebugParamResp result;
-    m_engine->setParam(info.stack,info.coor, info.value);    
-    return netDataPack(result);
+    result.req = info;
+    QVariantPtr *ref = m_engine->getParamRef(info.stack, info.coor);
+    if (!ref)
+    {
+        QVariant value = m_engine->environment()->tryConvertTo(info.value, ref->type);
+        if (value.isValid())
+        {
+            m_engine->dealSet(ref, value);            
+            result.ret = true;
+        }
+        else
+        {
+            result.ret = false;
+        }
+    }
+    else
+    {
+        result.ret = false;
+    }
+
+    return result;
 }
 
 JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
@@ -260,27 +285,28 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
         }
         else if(JZObjectIsList(obj))
         {
-            ret.type = obj->type();            
-/*
-            JZList *list = (JZList*)obj->cobj();
-            for (int i = 0; i < list->list.size(); i++)
-                ret.params[QString::number(i)] = toDebugParam(list->list[i]);
-*/
+            ret.type = obj->type();
+            
+            listForeach(obj, [this, &ret](int key, QVariant value)->bool
+            {
+                QString str_key = JZNodeType::debugString(key);
+                ret.subParamNames << str_key;
+                ret.subParamValues << toDebugParam(value);
+                return true;
+            });
+
         }
         else if(JZObjectIsMap(obj))
         {
             ret.type = obj->type();
-/*
-            JZMap *map = (JZMap*)obj->cobj();          
-                        
-            auto it = map->map.begin();
-            while (it != map->map.end())
+
+            mapForeach(obj, [this,&ret](QVariant key, QVariant value)->bool
             {
-                QString key = JZNodeType::debugString(it.key().v);
-                ret.params[key] = toDebugParam(it.value());
-                it++;
-            }
-*/
+                QString str_key = JZNodeType::debugString(key);
+                ret.subParamNames << str_key;
+                ret.subParamValues << toDebugParam(value);
+                return true;
+            });
         }
         else 
         {
@@ -290,7 +316,8 @@ JZNodeDebugParamValue JZNodeDebugServer::toDebugParam(const QVariant &value)
             for (int i = 0; i < params.size(); i++)
             {
                 QString name = params[i];
-                ret.params[name] = toDebugParam(obj->param(name));
+                ret.subParamNames << name;
+                ret.subParamValues << toDebugParam(obj->param(name));
             }
             ret.value = JZNodeType::debugString(obj);
         }                  

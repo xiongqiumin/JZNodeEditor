@@ -157,7 +157,7 @@ bool JZNodeType::isBaseOrEnum(int type)
 bool JZNodeType::isNullObject(const QVariant &v)
 {
     auto obj = toJZObject(v);
-    return (obj == nullptr);
+    return (obj == nullptr || (obj->isCObject() && !obj->cobj()));
 }
 
 bool JZNodeType::isNullptr(const QVariant &v)

@@ -247,9 +247,9 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
 
     switch (op->type)
     {
-    case OP_nodeId:
+    case OP_nodeEnter:
     {
-        JZNodeIRNodeId *ir_node = (JZNodeIRNodeId*)op;
+        JZNodeIRNodeEnter *ir_node = (JZNodeIRNodeEnter*)op;
         line += "//node" + QString::number(ir_node->id);
         break;
     }

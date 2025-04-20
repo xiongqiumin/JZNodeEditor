@@ -11,7 +11,7 @@ int JZNodeGemo::paramId(int nodeId, int pinId)
     return nodeId * 100 + pinId;
 }
 
-JZNodeGemo JZNodeGemo::paramGemo(int param_id)
+JZNodeGemo JZNodeGemo::fromParamId(int param_id)
 {
     int node_id = param_id / 100;
     int pin_id = param_id % 100;
@@ -181,15 +181,11 @@ int JZNode::addPin(const JZNodePin &pin)
     Q_ASSERT(pin.isFlow() || pin.isParam() || pin.isSubFlow());
 
     auto list = pinList();
-    std::sort(list.begin(), list.end());
-
+    
     int max_id = 0;
     for (int i = 0; i < list.size(); i++)
     {
-        if (list[i] == max_id)
-            max_id++;
-        else
-            break;
+        max_id = qMax(max_id, list[i] + 1);
     }
 
     JZNodePin new_prop = pin;

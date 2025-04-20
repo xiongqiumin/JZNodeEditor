@@ -73,6 +73,7 @@ public:
     bool canConvert(int from,int to) const;    //隐式转换
     bool canConvertExplicitly(int from,int to) const;    //被 convertTo 支持的
     QVariant convertTo(const QVariant &v, int type) const;
+    QVariant tryConvertTo(const QVariant &v, int type) const;
     QVariant clone(const QVariant &v) const;        
 
     bool isVaildType(QString type) const;

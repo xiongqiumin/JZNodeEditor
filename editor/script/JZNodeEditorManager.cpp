@@ -7,6 +7,9 @@
 #include "JZNodeFlowItem.h"
 #include "JZNodeValueItem.h"
 #include "JZNodeOperatorItem.h"
+#include "modules/camera/JZModuleCameraEditor.h"
+#include "modules/communication/JZModuleCommEditor.h"
+#include "modules/opencv/JZModuleModelEditor.h"
 
 JZNodeParamDelegate::JZNodeParamDelegate()
 {
@@ -85,33 +88,21 @@ void JZNodeEditorManager::setUserRegist(bool flag)
 
 void JZNodeEditorManager::clearUserRegist()
 {
-    m_userRegist = false;
-    for (auto f : m_userFunctionList)
-        m_functionMap.remove(f);
+    m_userRegist = false;    
     for (auto d : m_userDelegateList)
         m_delegateMap.remove(d);
-
-    m_userFunctionList.clear();
+    
     m_userDelegateList.clear();
 }
 
-void JZNodeEditorManager::registCustomFunctionNode(QString function, int node_type)
+void JZNodeEditorManager::registLogicNode(JZLogicNode logic)
 {
-    Q_ASSERT(!m_functionMap.contains(function));
-    m_functionMap[function] = node_type;
-    if (m_userRegist)
-        m_userFunctionList << function;
+    m_logicNode.push_back(logic);
 }
 
-int JZNodeEditorManager::customFunctionNode(QString function)
+QList<JZLogicNode>  JZNodeEditorManager::logicNodeList()
 {
-    return m_functionMap.value(function, Node_none);
-}
-
-void JZNodeEditorManager::unregistCustomFunctionNode(QString function)
-{
-    m_functionMap.remove(function);
-    m_userFunctionList.removeAll(function);
+    return m_logicNode;
 }
 
 void JZNodeEditorManager::registDelegate(int data_type, JZNodeParamDelegate delegate)
@@ -153,4 +144,8 @@ void JZNodeEditorInit()
     inst->registNodeItemCreator(Node_param, CreateJZNodeGraphItem<JZNodeParamItem>);    
     inst->registNodeItemCreator(Node_enum, CreateJZNodeGraphItem<JZNodeEnumItem>);
     inst->registNodeItemCreator(Node_flag, CreateJZNodeGraphItem<JZNodeFlagItem>);
+
+    JZCameraEditorInit();
+    JZModuleCommEditorInit();
+    JZModuleModelEditorInit();
 }

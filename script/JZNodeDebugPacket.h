@@ -71,7 +71,7 @@ public:
 class DebugNodeGemo
 {
 public:
-    QString filePath;
+    QString functionPath;
     int nodeId;
     int pinId;
     int statck;
@@ -84,10 +84,13 @@ class JZNodeDebugParamValue
 {
 public:
     JZNodeDebugParamValue();
-
+    
     int type;           //数据类型
     QString value;      //值
-    QMap<QString, JZNodeDebugParamValue> params;  //子项的值
+
+    //子项
+    QStringList subParamNames;
+    QList<JZNodeDebugParamValue> subParamValues;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeDebugParamValue &param);
 QDataStream &operator>>(QDataStream &s, JZNodeDebugParamValue &param);
@@ -98,7 +101,7 @@ class JZNodeGetDebugParam
 public:
     JZNodeGetDebugParam();
 
-    QString filePath;
+    QString functionPath;
     int stack;
     QList<JZNodeIRParam> coors;
 };
@@ -112,7 +115,8 @@ public:
     JZNodeGetDebugParamResp();
 
     JZNodeGetDebugParam req;
-    QList<JZNodeDebugParamValue> values;
+    bool ret;
+    QList<JZNodeDebugParamValue> values;    
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param);
 QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParamResp &param);
@@ -123,7 +127,7 @@ class JZNodeGetDebugParamBin
 public:
     JZNodeGetDebugParamBin();
 
-    QString filePath;
+    QString functionPath;
     int stack;
     QList<JZNodeIRParam> coors;
 };
@@ -136,7 +140,7 @@ class JZNodeGetDebugParamBinResp
 public:
     JZNodeGetDebugParamBinResp();
 
-    QString filePath;
+    QString functionPath;
     int stack;
     QList<JZNodeIRParam> coors;
 };
@@ -149,9 +153,10 @@ class JZNodeSetDebugParam
 public:
     JZNodeSetDebugParam();
 
-    QString filePath;
+    QString functionPath;
     int stack;
     JZNodeIRParam coor;
+    QString member;
     QString value;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParam &param);
@@ -175,7 +180,7 @@ class JZNodeSetDebugParamBin
 public:
     JZNodeSetDebugParamBin();
 
-    QString filePath;
+    QString functionPath;
     int stack;
     JZNodeIRParam coor;
     QByteArray value;

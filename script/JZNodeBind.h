@@ -557,7 +557,7 @@ public:
         JZNodeObject *jzobj = qobjectToJZObject(this);
         Q_ASSERT(jzobj);
         
-        auto jz_func = jzobj->function("paintEvent");
+        auto jz_func = jzobj->function(function);
         if(!jz_func)
             return func();
     

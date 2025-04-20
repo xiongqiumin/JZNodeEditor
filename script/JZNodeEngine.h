@@ -28,18 +28,17 @@ public:
     RunnerEnv();
     ~RunnerEnv();
     
-    void initVariable(QString name, const QVariant &value);
-    void initVariable(int id, const QVariant &value);
+    void initVariable(QString name, int data_type);
+    void initVariable(int id, int data_type);
 
     QVariantPtr *getRef(int id);
     QVariantPtr *getRef(const QString &name);
 
     const JZFunction *function;
-    QVariantPtr  object;  //this    
+    QVariantPtr  self;  //this    
     const JZNodeScript *script;
     int pc;
-    int inCount;          //传入参数数量
-    int printNode;
+    int inCount;          //传入参数数量    
     QMap<int, QVariant> watchMap;
     
     QMap<QString,QVariantPtr> locals;
@@ -74,7 +73,7 @@ public:
         Stack();
 
         QString function;
-        QString file;
+        QString scriptItemPath;
         int nodeId;
         int pc;
     };
@@ -132,7 +131,7 @@ public:
     void clear();
 
     Type type;
-    QString file;
+    QString scriptItemPath;
     int nodeId;            
     int stack;
 };
@@ -171,19 +170,22 @@ public:
     void removeBreakPoint(QString filepath,int nodeId);
     void clearBreakPoint();    
 
+    bool isPauseOrError();
+    
     void pause();
     void resume();    
     void stop();
     void stepIn();
     void stepOver();
-    void stepOut();        
-       
+    void stepOut();      
+
     Stack *stack();    
     JZScriptEnvironment *environment();
     
     QVariant createVariable(int type,const QString &value = QString());
     QWidget *createWidget(const QString &xml);
 
+    bool hasParam(int stack_level, const JZNodeIRParam &param);
     QVariant getParam(int stack_level,const JZNodeIRParam &param);
     void setParam(int stack_level, const JZNodeIRParam &param, const QVariant &value);
 
@@ -197,10 +199,13 @@ public:
     void setReg(int reg, const QVariant &value);
     int regInCount();
 
+    QVariantPtr *getParamRef(int stack_level, const JZNodeIRParam &param);
+    void dealSet(QVariantPtr *ref, const QVariant &value);
+
     QVariant getSender();    
 
     void watchNotify();         //node display
-    void printNode();
+    void printNode(int node_id);
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
 
     //外部用
@@ -269,12 +274,11 @@ protected:
     QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
     QVariant dealExprInt64(const QVariant &va, const QVariant &vb, int op);
     QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
-    QVariant dealSingleExpr(const QVariant &a, int op);
-    void dealSet(QVariantPtr *ref, const QVariant &value);
+    QVariant dealSingleExpr(const QVariant &a, int op);    
 
-    void initGlobal(QString name, const QVariant &v);
-    void initLocal(QString name, const QVariant &v);
-    void initLocal(int id, const QVariant &v);
+    void initGlobal(QString name, int data_type);
+    void initLocal(QString name, int data_type);
+    void initLocal(int id, int data_type);
     void clearReg();
 
     void pushStack(const JZFunction *define);
@@ -282,9 +286,8 @@ protected:
     int indexOfBreakPoint(QString filepath,int nodeId);
     void waitCommand();
     bool breakPointTrigger(int node_id);    
-    
-    QVariantPtr *getParamRef(int stack_level,const JZNodeIRParam &param);
-    JZNodeObject *getVariableObject(QVariant *ref, const QStringList &name);        
+        
+    JZNodeObject *getVariableObject(QVariant *ref, const QStringList &name);
         
     int nodeIdByPc(int pc);        
     int nodeIdByPc(const JZNodeScript *script,QString func, int pc);
@@ -329,6 +332,7 @@ protected:
     bool m_watch;
     JZNodeRuntimeError m_error;
     QList<TryCatchInfo> m_tryCatchList;
+    QSet<const JZNodeIRNodeEnter*> m_breakIr;
 
     QTimer *m_watchTimer;
     

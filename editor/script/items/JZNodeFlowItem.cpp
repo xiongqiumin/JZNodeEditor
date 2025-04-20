@@ -19,12 +19,13 @@ void JZNodeForItem::updatePin()
     m_blocks[m_node->paramIn(1)]->pri = 2;
     m_blocks[m_node->paramIn(2)]->pri = 4;
 
+    JZNodeFor *node_for = dynamic_cast<JZNodeFor*>(m_node);
     if (!m_opBlock)
     {                
         auto box = new QComboBox();
         box->addItem("<", OP_lt);
         box->addItem("<=", OP_le);
-        box->addItem(">", OP_lt);
+        box->addItem(">", OP_gt);
         box->addItem(">=", OP_ge);
         box->addItem("==", OP_eq);
         box->addItem("!=", OP_ne);        
@@ -34,8 +35,15 @@ void JZNodeForItem::updatePin()
         });
 
         m_opBlock = fromWidget(box, true);
+        m_opBlock->name = "op";
         m_opBlock->pri = 3;
     }
+
+    QComboBox *box_op = qobject_cast<QComboBox*>(m_opBlock->widget);
+    box_op->blockSignals(true);
+    int index = box_op->findData(node_for->op());
+    box_op->setCurrentIndex(index);
+    box_op->blockSignals(false);
 }
 
 void JZNodeForItem::onCompareOpChanged(int op)
@@ -43,7 +51,7 @@ void JZNodeForItem::onCompareOpChanged(int op)
     QByteArray oldValue = JZNodeFactory::instance()->saveNode(m_node);
 
     JZNodeFor *node_for = (JZNodeFor*)m_node;
-    node_for->setOp(op);
+    node_for->setOp((JZNodeIRType)op);
     notifyPropChanged(oldValue); 
 }
 

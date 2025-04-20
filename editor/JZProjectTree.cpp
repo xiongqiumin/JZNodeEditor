@@ -7,6 +7,7 @@
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <JZRegExpHelp.h>
+#include <QDebug>
 #include "JZNodeFuctionEditDialog.h"
 #include "JZNewFileDialog.h"
 #include "JZNodeClassEditDialog.h"
@@ -15,9 +16,6 @@
 #include "JZNodeSlotEditDialog.h"
 #include "JZEditorGlobal.h"
 
-enum {
-    Role_itemPath = Qt::UserRole,    
-};
 
 JZProjectTree::JZProjectTree()
 {
@@ -68,24 +66,25 @@ void JZProjectTree::init()
     if(!m_project)
         return;
 
-    QTreeWidgetItem *root = new QTreeWidgetItem();
-    root->setText(0,m_project->name());
-    m_tree->addTopLevelItem(root);
-    setItem(root,m_project->root());
+    auto root = addItem(m_tree->invisibleRootItem(), m_project->root());
+    root->setText(0, m_project->name());
     sortItem(root);
 
     m_tree->expandAll();
 }
 
-void JZProjectTree::addItem(QTreeWidgetItem *parent, JZProjectItem *item)
+QTreeWidgetItem* JZProjectTree::addItem(QTreeWidgetItem *parent, JZProjectItem *item)
 {
     Q_ASSERT(getProjectItem(parent) == item->parent());
 
     QTreeWidgetItem *view_item = new QTreeWidgetItem();
-    view_item->setText(0,item->name());
-    view_item->setData(0, Role_itemPath, item->name());
+    m_itemMap[item] = view_item;
+
+    view_item->setText(0,item->name());    
     parent->addChild(view_item);
     setItem(view_item, item);
+
+    return view_item;
 }
 
 void JZProjectTree::keyPressEvent(QKeyEvent *e)
@@ -106,7 +105,8 @@ void JZProjectTree::keyPressEvent(QKeyEvent *e)
 bool JZProjectTree::canItemRename(QTreeWidgetItem *view_item)
 {
     JZProjectItem *item = getProjectItem(view_item);
-    if (item == m_project->mainFunction() || item->itemType() == ProjectItem_param)
+    if (item == m_project->mainFunction() || item == m_project->mainFile()
+        || item->itemType() == ProjectItem_ui || item->itemType() == ProjectItem_param)
         return false;
 
     return true;
@@ -130,12 +130,16 @@ void JZProjectTree::addItem(JZProjectItem *item)
 
 void JZProjectTree::sortItem(QTreeWidgetItem *item)
 {
+    if (item->childCount() == 0)
+        return;
+
     for (int i = 0; i < item->childCount(); i++)
         sortItem(item->child(i));
 
     UiHelper::treeSortChilds(item, [this](QTreeWidgetItem *a, QTreeWidgetItem *b)->bool {
         int a_pri = getProjectItem(a)->itemType();
         int b_pri = getProjectItem(b)->itemType();
+        qDebug() << a->text(0) << a_pri << b->text(0) << b_pri;
         if (a_pri != b_pri)
             return a_pri < b_pri;
         else
@@ -154,6 +158,8 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
         icon_path = ":/JZNodeEditor/Resources/icons/iconClass.png";
     else if (item->itemType() == ProjectItem_scriptFunction)
         icon_path = ":/JZNodeEditor/Resources/icons/iconFunction.png";
+    else if (item->itemType() == ProjectItem_ui)
+        icon_path = ":/JZNodeEditor/Resources/icons/iconUi.png";
     else
         icon_path = ":/JZNodeEditor/Resources/icons/iconFile.png";
 
@@ -163,11 +169,7 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
     for(int i = 0; i < list.size(); i++)
     {   
         JZProjectItem *sub_item = list[i];
-        QTreeWidgetItem *sub_view = new QTreeWidgetItem();
-        sub_view->setText(0,sub_item->name());        
-        sub_view->setData(0, Role_itemPath, sub_item->name());
-        view_item->addChild(sub_view);
-        setItem(sub_view,sub_item);
+        addItem(sub_item);
     }
 }
 
@@ -183,34 +185,21 @@ bool JZProjectTree::canOpenItem(JZProjectItem *item)
 
 QTreeWidgetItem *JZProjectTree::getItem(QString path)
 {
-    QStringList list = path.split("/");
-    Q_ASSERT(list[0] == ".");
+    JZProjectItem *proj_item = m_project->getItem(path);
+    if (!proj_item)
+        return nullptr;
 
-    QTreeWidgetItem *item = m_tree->topLevelItem(0);
-    for (int level = 1; level < list.size(); level++)
-    {
-        item = nullptr;
-        for (int i = 0; i < item->childCount(); i++)
-        {
-            auto child = item->child(i);
-            if (child->text(0) == list[i])
-            {
-                item = child;
-                break;
-            }
-        }
-        if (!item)
-            return nullptr;
-    }
-    return item;
+    return getViewItem(proj_item);
+}
+
+QTreeWidgetItem *JZProjectTree::getViewItem(JZProjectItem *proj_item)
+{
+    return m_itemMap.value(proj_item);
 }
 
 JZProjectItem *JZProjectTree::getProjectItem(QTreeWidgetItem *view_item)
 {
-    QString path = filepath(view_item);
-    auto item = m_project->getItem(path);
-    Q_ASSERT(item);
-    return item;
+    return m_itemMap.key(view_item);
 }
 
 void JZProjectTree::cancelEdit()
@@ -229,16 +218,19 @@ void JZProjectTree::cancelEdit()
 
 QString JZProjectTree::filepath(QTreeWidgetItem *item)
 {
-    QTreeWidgetItem *root = m_tree->topLevelItem(0);
-    QString path;
-    while (item != root)
+    return getProjectItem(item)->itemPath();
+}
+
+bool JZProjectTree::dealRenameItem(JZProjectItem *item,QString name)
+{
+    if(!m_project->renameItem(item,name))
     {
-        if (!path.isEmpty())
-            path = "/" + path;;
-        path = item->data(0, Role_itemPath).toString() + path;
-        item = item->parent();
+        QMessageBox::information(this,"","重命名失败");
+        return false;
     }
-    return "./" + path;
+
+    sortItem(getViewItem(item)->parent());
+    return true;
 }
 
 void JZProjectTree::renameItem(QTreeWidgetItem *view_item)
@@ -275,22 +267,13 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     m_editItem->setFlags(m_editItem->flags() & ~Qt::ItemIsEditable);
     if(name_error.isEmpty())
     {
+        bool pre_select = (m_tree->currentItem() == item);
         auto project_item = getProjectItem(m_editItem);
-        project_item->setName(name);
-        
-        m_project->renameItem(project_item,name);
-        item->setData(0, Role_itemPath, project_item->name());
+        if(!dealRenameItem(project_item,name))        
+            return;        
 
-        int old_idx = item_parent->indexOfChild(item);
-        int new_idx = project_item->parent()->indexOfItem(project_item);
-        if(old_idx != new_idx)
-        {
-            bool pre_select = (m_tree->currentItem() == item);
-            item_parent->takeChild(old_idx);
-            item_parent->insertChild(new_idx,item);
-            if(pre_select)
-                m_tree->setCurrentItem(item);
-        }
+        if(pre_select)
+            m_tree->setCurrentItem(item);
         m_project->saveItem(project_item);
     }
     else
@@ -433,39 +416,53 @@ void JZProjectTree::onContextMenu(QPoint pos)
     else if (act == actOpen)
         emit sigActionTrigged(Action_open, item->itemPath());
     else if (act == actNewFile)
-    {
+    {        
         JZNewFileDialog dlg(this);
+        dlg.init(m_project->path());
         if (dlg.exec() == QDialog::Accepted)
         {
             QString path = dlg.path();
             QString name = dlg.name();
 
-            JZProjectItem *new_item = nullptr;
-            if (dlg.type() == "jz")
+            JZScriptFile *new_item = new JZScriptFile();
+            new_item->setName(name + ".jz");
+            
+            QString file_path = path + "/" + name + ".jz";
+            if (QFile::exists(file_path))
             {
-                new_item = new JZScriptFile();
-                new_item->setName(name + ".jz");                
+                QMessageBox::information(this, "", "文件已存在");
+                return;
             }
-            else
+            if (!m_project->addItem(path, new_item))
             {
-                new_item = new JZUiItem();
-                new_item->setName(name + ".ui");                
+                QMessageBox::information(this, "", "添加项目失败");
+                return;
             }
-
-            if (new_item)
+            if (dlg.type() == JZNewFileDialog::NewClass)
+            {                
+                new_item->addClass(name);
+            }
+            else if (dlg.type() == JZNewFileDialog::NewUiClass)
             {
-                m_project->addItem(path, new_item);
-                addItem(new_item);
-                m_project->saveItem(new_item);
+                JZScriptClassItem *class_item = new_item->addClass(name,"QWidget");
+                class_item->addUi(new JZUiItem());
             }
+            
+            addItem(new_item);
+            m_project->saveItem(new_item);            
         }
     }
     else if (act == actExistFile)
     {
-        QStringList filelist = QFileDialog::getOpenFileNames(this, "", QString(), "All(*.ui *.jz)");
+        QStringList filelist = QFileDialog::getOpenFileNames(this, "", QString(), "All(*.jz)");
         for (int i = 0; i < filelist.size(); i++)
         {
             auto new_item = m_project->addFile(filelist[i]);
+            if (!new_item) {
+                QMessageBox::information(this, "", "添加" + filelist[i] + "失败");
+                return;
+            }
+
             addItem(new_item);            
         }
     }
@@ -559,13 +556,17 @@ void JZProjectTree::onContextMenu(QPoint pos)
             if (dialog.exec() != QDialog::Accepted)
                 return;
             
-            JZFunctionDefine def = dialog.functionInfo(); 
-            func_item->setFunction(def);
+            JZFunctionDefine def = dialog.functionInfo();             
             if (oldName != def.name)
-            {
-                m_project->renameItem(func_item, def.name);
+            {                
+                if(!m_project->renameItem(func_item, def.name))
+                {
+                    QMessageBox::information(this,"","重命名失败");
+                    return;
+                }
                 view_item->setText(0, def.name);
             }
+            func_item->setFunction(def);
             m_project->saveItem(func_item);
         }
         else if (item->itemType() == ProjectItem_class)

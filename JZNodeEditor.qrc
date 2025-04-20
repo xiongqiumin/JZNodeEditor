@@ -6,6 +6,7 @@
     <file>Resources/icons/iconDelete.png</file>
     <file>Resources/icons/iconFile.png</file>
     <file>Resources/icons/iconFolder.png</file>
+    <file>Resources/icons/iconUi.png</file>
     <file>Resources/icons/iconFunction.png</file>
     <file>Resources/icons/iconLibrary.png</file>
     <file>Resources/icons/iconNewFolder.png</file>
@@ -18,10 +19,11 @@
     <file>Resources/icons/iconSave.png</file>
     <file>Resources/icons/iconSaveAll.png</file>
     <file>Resources/icons/iconSearch.png</file>
+    <file>Resources/icons/iconExcl.png</file>
     <file>Resources/icons/iconStop.png</file>
     <file>Resources/icons/iconUndo.png</file>
-	  <file>Resources/icons/iconSetting.png</file>
+    <file>Resources/icons/iconSetting.png</file>
     <file>Resources/moduleList.json</file>
-	  <file>Resources/widgetBox.xml</file>
+    <file>Resources/widgetBox.xml</file>
   </qresource>
 </RCC>

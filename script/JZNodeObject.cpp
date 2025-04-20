@@ -259,11 +259,17 @@ bool JZNodeObjectDefine::check(QString &error) const
     const JZFunctionDefine *func = nullptr;
     for (int i = 0; i < functions.size(); i++)
     {
+        auto &func = functions[i];
+        if (func.isMemberFunction() && func.paramIn[0].type != JZNodeType::pointerType(className))
+        {
+            error = "函数" + func.name + " this 类型不正确";
+            return false;
+        }
+
         for (int j = 0; j < functions.size(); j++)
         {
             if (i != j && functions[i].name == functions[j].name)
-            {
-                func = &functions[i];
+            {                
                 error = "存在重名函数" + functions[i].name;
                 return false;
             }
@@ -528,6 +534,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param)
 JZNodeObject::JZNodeObject(const JZNodeObjectDefine *def)
 {    
     m_define = def;
+    m_parent = nullptr;
     m_cobj = nullptr;
     m_cobjOwner = false;
 }
@@ -978,6 +985,7 @@ JZNodeObjectHolder::JZNodeObjectHolder()
 
 JZNodeObjectHolder::JZNodeObjectHolder(JZNodeObject *obj,bool isOwner)
 {
+    Q_ASSERT(obj);
     m_data = QSharedPointer<JZNodeObjectData>(new JZNodeObjectData());
     m_data->isOwner = isOwner;
     m_data->object = obj;
@@ -1464,8 +1472,16 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
     Q_ASSERT(def);    
     if (def->isCObject)
     {
-        auto cobj = def->cMeta.create();
-        obj->setCObject(cobj,true);
+        if (!def->cMeta.isAbstract)
+        {
+            auto cobj = def->cMeta.create();
+            obj->setCObject(cobj, true);
+        }
+        else
+        {
+            obj->m_cobj = nullptr;
+            obj->m_cobjOwner = false;
+        }
         return;
     }        
 

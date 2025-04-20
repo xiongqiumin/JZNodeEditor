@@ -14,6 +14,7 @@ public:
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
     
+    void setFunction(QString name);
     void setFunction(const JZFunctionDefine *define);
     QString function() const;
     JZFunctionDefine functionDefine();
@@ -23,11 +24,10 @@ public:
 
     void setDirectCall(bool flag);
     bool isDirectCall();
+    bool isMemberCall();
 
 protected:
-    virtual bool updateNode(QString &error) override;
-    void updateName();
-    bool isMemberCall();
+    virtual bool updateNode(QString &error) override;    
 
     bool m_directCall;
     QString m_functionName;

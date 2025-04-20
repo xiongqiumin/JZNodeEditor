@@ -6,7 +6,7 @@
 #include "3rd/JZCommon/jzModbus/JZModbusParam.h"
 
 enum {
-    Node_modbusConfig = 1000,    
+    Node_modbusConfig = 3000,    
 };
 
 class JZNodeModbusConfig : public JZNodeFunctionCustom

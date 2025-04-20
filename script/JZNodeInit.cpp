@@ -13,7 +13,9 @@
 #include "modules/opencv/JZModuleOpencv.h"
 #include "modules/camera/JZModuleCamera.h"
 #include "modules/modbus/JZModuleModbus.h"
+#include "modules/communication/JZModuleComm.h"
 #include "LogManager.h"
+#include "runtime/JZWidgetBind.h"
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectHolder ptr)
 {
@@ -40,13 +42,18 @@ void JZNodeInit()
     JZNodeEngine::regist();
 
     JZNetPackManager::instance()->init();
-    JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);          
+    JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);              
 
     BindManager::instance()->init();    
 
     auto module_inst = JZModuleManager::instance();
     module_inst->addModule(new JZModuleOpencv());
     module_inst->addModule(new JZModuleCamera());
-    //module_inst->addModule(new JZModuleModbus());
+    module_inst->addModule(new JZModuleModbus());
+    module_inst->addModule(new JZModuleComm());
     module_inst->initModules();
+
+    JZModuleCameraNodeInit();
+    JZModuleModelNodeInit();
+    JZModuleCommNodeInit();
 }

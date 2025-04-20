@@ -3,23 +3,63 @@
 #include <QMessageBox>
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QDir>
 #include "JZNodeBind.h"
 #include "JZRegExpHelp.h"
 #include "JZNodeInit.h"
 #include "JZNodeVM.h"
 #include "mainwindow.h"
+#include "JZNodeProgramDumper.h"
 
 using namespace std;
 
 int runProgram(QString name,bool debug)
 {
-    QString path = qApp->applicationDirPath() + "/project/" + name + "/build/" + name + ".program";
+    QString project_dir = qApp->applicationDirPath() + "/project/" + name;
 
-    QString error;
-    JZNodeVM vm;
-    if (!vm.init(path, debug, error))
+    QString project_path = project_dir + "/" + name + ".jzproj";
+
+    JZProject project;
+    if (!project.open(project_path))
     {
-        QMessageBox::information(nullptr, "", "init program failed.\n" + error);
+        qDebug() << "load project failed";
+        return 1;
+    }
+
+    QString program_path = project.path() + "/build/" + name + ".program";
+    QString dump_path = project.path() + "/build/dump";
+    if (!QFile::exists(project.path() + "/build"))
+        QDir().mkdir(project.path() + "/build");
+    if (!QFile::exists(dump_path))
+        QDir().mkdir(dump_path);
+
+    JZNodeBuilder builder;
+    builder.setProject(&project);
+
+    JZNodeProgram program;
+    if (!builder.build(&program))
+    {
+        qDebug().noquote() << builder.error();
+        return false;
+    }
+
+    //save asm    
+    JZNodeProgramDumper dumper;
+    dumper.init(&project, &program);
+    dumper.dump(dump_path);
+
+    //save bin
+    if (!program.save(program_path))
+    {
+        qDebug() << "save failed";
+        return false;
+    }
+
+    JZNodeVM vm;
+    QString error;
+    if (!vm.init(program_path, false, error))
+    {
+        QMessageBox::information(nullptr, "", "init program \"" + program_path + "\" failed\n" + error);
         return 1;
     }
     return qApp->exec();
@@ -31,7 +71,7 @@ int main(int argc,char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();               
 
-    //return runProgram("Project34", false);
+    //return runProgram("Project10", false);
 
     QCommandLineParser parser;
 
@@ -44,14 +84,7 @@ int main(int argc,char *argv[])
     parser.addOption(debugOption);
     parser.process(a);
 
-    bool debug = parser.isSet(debugOption);
-    QFileInfo app_info(QString::fromLocal8Bit(argv[0]));
-    if (app_info.fileName() != "JZNodeEditor.exe")
-    {
-        QString program = app_info.baseName() + ".prog";
-        return runProgram(program, debug);        
-    }       
-
+    bool debug = parser.isSet(debugOption);    
     if(parser.isSet(runOption))
     {   
         QString error;

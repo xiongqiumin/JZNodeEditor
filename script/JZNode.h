@@ -78,7 +78,7 @@ enum
 struct JZNodeGemo
 {
     static int paramId(int nodeId, int pinId);
-    static JZNodeGemo paramGemo(int param_id);
+    static JZNodeGemo fromParamId(int param_id);
 
     JZNodeGemo();
     JZNodeGemo(int id, int pin_id);

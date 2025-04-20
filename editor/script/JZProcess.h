@@ -7,6 +7,7 @@ enum ProcessStatus
     Process_pause,
     Process_running,
     Process_error,
+    Process_waitFinish,
 };
 
 #endif // !JZ_PROCESS_H_

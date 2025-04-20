@@ -11,8 +11,12 @@ public:
     JZCameraFile(QObject *parent = nullptr);
     ~JZCameraFile();
 
+    virtual bool isOpen() override;
     virtual bool open(QString path) override;
     virtual void close() override;
+
+    virtual QString config() override;
+    virtual bool setConfig(const QString &config) override;
 
     virtual void start() override;
     virtual void startOnce() override;

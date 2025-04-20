@@ -123,7 +123,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     QList<JZNodeIRPtr> ir_list = script.statmentList;
     for (int i = 0; i < ir_list.size(); i++)
     {
-        if (ir_list[i].data()->type == OP_nodeId)
+        if (ir_list[i].data()->type == OP_nodeEnter)
         {
             ir_list = ir_list.mid(i);
             break;

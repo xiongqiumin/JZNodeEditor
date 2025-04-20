@@ -87,6 +87,8 @@ public:
     void setStart(int start);
     void setStep(int step);
     void setEnd(int end);
+
+    JZNodeIRType op();
     void setOp(JZNodeIRType op);
 
 protected:    

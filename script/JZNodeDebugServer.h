@@ -21,14 +21,13 @@ public:
     void stopServer();
     void log(QString log);
     
-    void setEngine(JZNodeEngine *eng);
-    void setVM(JZNodeVM *vm);
+    void setEngine(JZNodeEngine *eng);    
 
     bool waitForAttach(int timeout = 30 * 1000);
     JZNodeDebugInfo debugInfo();
 
-signals:
-    void sigStop(QThread *stopThread, QPrivateSignal);
+signals:    
+    
 
 protected slots:
     void onNewConnect(int netId);
@@ -43,8 +42,8 @@ protected slots:
 protected:        
     virtual void run() override;
 
-    QVariant getVariable(const JZNodeGetDebugParam &list);
-    QVariant setVariable(const JZNodeSetDebugParam &list);
+    JZNodeGetDebugParamResp getVariable(const JZNodeGetDebugParam &list);
+    JZNodeSetDebugParamResp setVariable(const JZNodeSetDebugParam &list);
     JZNodeDebugParamValue toDebugParam(const QVariant &value);          
 
     bool m_init;
@@ -52,8 +51,7 @@ protected:
 
     JZNodeDebugInfo m_debugInfo;
     JZNetServer *m_server;    
-    JZNodeEngine *m_engine;    
-    JZNodeVM *m_vm;        
+    JZNodeEngine *m_engine;        
     QThread* m_preThread;
 };
 

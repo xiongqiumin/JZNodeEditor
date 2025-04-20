@@ -14,12 +14,15 @@ public:
     DebugTest();
 
 private slots:
+    void testBreakPoint();
     void testDebugServer();
+    void testBreakPointServer();
 
 protected:
     virtual void clearTestCase() override;
     void startServer(QString func,QVariantList input);
     void stopServer();
+    bool initWhileCase(QList<int> &id_list, QList<int> &value_list);
 
     JZNodeDebugServer m_server;
     JZNodeDebugClient m_client;

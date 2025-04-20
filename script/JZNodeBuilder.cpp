@@ -17,7 +17,7 @@ JZNodeCustomBuild::JZNodeCustomBuild()
 
 bool JZNodeCustomBuild::compiler(JZNodeCompiler *c, QString &error)
 {
-    c->addNodeDebug(m_id);
+    c->addNodeEnter(m_id);
     if (!buildFunction(c, error))
         return false;
 

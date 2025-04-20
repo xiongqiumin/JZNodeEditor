@@ -8,15 +8,18 @@
 #include <QComboBox>
 #include <QTimer>
 #include <math.h>
+#include <QPixmap>
 #include "JZNodeGraphItem.h"
 #include "JZNodeView.h"
 #include "JZScriptEnvironment.h"
+#include "JZIconManager.h"
+#include "JZNodeFunction.h"
 
 constexpr int name_max_width = 120;
 
-
 JZNodeGraphItem::Block::Block()
 {
+    iconType = Diamond;    
     proxy = nullptr;
     widget = nullptr;
     clear();
@@ -50,6 +53,7 @@ void JZNodeGraphItem::Block::clear()
     id = -1;    
     isInput = false;
     isShowValue = false;
+    isEditable = false;
 }
 
 int JZNodeGraphItem::Block::width()
@@ -158,6 +162,8 @@ void JZNodeGraphItem::clear()
 
 void JZNodeGraphItem::updatePin()
 {
+    m_title = m_node->name();
+
     //remove
     auto it = m_blocks.begin();
     while (it != m_blocks.end())
@@ -201,10 +207,11 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
     painter->fillRect(title_rc, QColor(220,220,220));
     painter->drawText(title_rc, title, text_opt);
 
-    auto in_list = m_node->pinList();
-    for (int i = 0; i < in_list.size(); i++)
-        drawProp(painter,in_list[i]);   
+    auto block_list = m_blocks.keys();
+    for (int i = 0; i < block_list.size(); i++)
+        drawProp(painter, block_list[i]);
 
+    painter->save();
     if (editor()->runtimeNode() == m_id)
     {
         painter->setPen(QPen(Qt::green, 4));
@@ -220,16 +227,21 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
         painter->setPen(QPen(QColor(128,128,128),1));
         painter->drawRect(rc.adjusted(0,0,-1,-1));
     }
+    painter->restore();
 
     if(editor()->isBreakPoint(m_id))
     {
         QRect bt_rc = QRect(5,5,15,15);
-        painter->fillRect(bt_rc,Qt::green);
+        painter->save();
+        painter->setBrush(Qt::red);
+        painter->drawEllipse(bt_rc);
+        painter->restore();
     }
 
     if(!m_error.isEmpty())
     {
-        painter->fillRect(m_errorRect,Qt::red);
+        auto icon = JZIconManager::instance()->icon("iconExcl");
+        painter->drawPixmap(m_errorRect, icon.pixmap(m_errorRect.size().toSize()), QRectF());
     }
 }
 
@@ -289,7 +301,7 @@ QList<int> JZNodeGraphItem::blockList(bool isInput)
     auto cmp = [this](int i, int j)->bool {
         if(m_blocks[i]->pri == m_blocks[j]->pri)
         {
-            return m_blocks[i]->name < m_blocks[j]->name;
+            return m_blocks[i]->id < m_blocks[j]->id;
         }
         else
         {
@@ -324,12 +336,15 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, Block *gemo)
     if (gemo->isPin() && pin(pin_id)->isParam())
     {
         gemo->valueRect = QRect(x, y, 80, 24);
-    }    
+    }
+    else if(gemo->widget)
+    {
+        gemo->valueRect = QRect(x, y, 80, 24);
+    }
 }
 
 void JZNodeGraphItem::updateNode()
-{    
-    m_title = m_node->name();
+{        
     updatePin();
     updateSize();    
 }
@@ -366,12 +381,6 @@ void JZNodeGraphItem::updateSize()
         out_y += gemo->height() + y_gap;
     }
 
-    QList<int> pinList = m_node->pinList();
-    for (int i = 0; i < pinList.size(); i++)
-    {
-        auto pin = m_node->pin(pinList[i]);        
-    }
-
     int w = qMax(100, in_x + out_x + 30);
     w = qMax(title_w, w);
 
@@ -392,9 +401,11 @@ void JZNodeGraphItem::updateSize()
             info->valueRect.moveRight(last.left() - 5);
         }
     }
-    for (int i = 0; i < pinList.size(); i++)
+
+    for(auto b : m_blocks)
     {
-        auto &info = m_blocks[pinList[i]];        
+        if (b->widget)
+            b->widget->move(b->valueRect.topLeft());
     }
 
     m_size = QSize(w, qMax(h, 50));
@@ -865,272 +876,34 @@ void JZNodeGraphItem::drawIcon(QPainter *painter,QRectF rect, IconType type, boo
     }
     painter->restore();
 }
-/*
-int JZNode::pinPri(int id) const
-{
-    auto ptr = pin(id);
-    if (ptr->isSubFlow())
-        return Pri_sub_flow;
-    else if (ptr->isFlow())
-        return Pri_flow;
-    else if (ptr->isParam())
-        return Pri_param;
-    else if(ptr->isWidget())
-        return Pri_widget;
-    else
-        return Pri_none;        
-}
-
-
-QStringList JZNodeDisplay::pinActionList(int id)
-{
-    QStringList ret;
-    if (paramInCount() > 2)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeDisplay::pinActionTriggered(int id, int index)
-{
-    int pin_index = paramInList().indexOf(id);
-    removeInput(pin_index);
-    return true;
-}
-
-
-QStringList JZNodeOperator::pinActionList(int id)
-{
-    QStringList ret;
-    if (paramInCount() > 2)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeOperator::pinActionTriggered(int id, int index)
-{
-    int pin_index = paramInList().indexOf(id);
-    removeInput(pin_index);
-    return true;
-}
-
-
-QStringList JZNodeIf::pinActionList(int id)
-{
-    int param_index = paramInList().indexOf(id);
-    int sub_index = subFlowList().indexOf(id);
-    if (param_index == -1 && sub_index == -1)
-        return QStringList();
-
-    bool isElse = (subFlowCount() > paramInCount()) && (sub_index == subFlowCount() - 1);
-
-    QStringList ret;
-    if (paramInCount() > 1 || isElse)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeIf::pinActionTriggered(int id, int)
-{
-    int pin_index = paramInList().indexOf(id);
-    if(pin_index == -1)
-        pin_index = subFlowList().indexOf(id);
-
-    bool isElse = (subFlowCount() > paramInCount()) && (pin_index == subFlowCount() - 1);
-    if (isElse)
-        removeElse();
-    else
-        removeCond(pin_index);
-
-    return true;
-}
-
-
-QStringList JZNodeSwitch::pinActionList(int id)
-{    
-    int sub_index = subFlowList().indexOf(id);
-    if (sub_index == -1)
-        return QStringList();
-
-    bool isDefault = !(pin(id)->flag() & Pin_editValue);
-
-    QStringList ret;
-    if (caseCount() > 1 || isDefault)
-        ret.push_back("删除");
-
-    return ret;
-}
-
-bool JZNodeSwitch::pinActionTriggered(int id, int index)
-{
-    int pin_index = subFlowList().indexOf(id);
-
-    bool isDefault = !(pin(id)->flag() & Pin_editValue);
-    if (isDefault)
-        removeDefault();
-    else
-        removeCase(pin_index);
-
-    return true;
-}
-
-
-QStringList JZNodeSequence::pinActionList(int id)
-{
-    int sub_index = subFlowList().indexOf(id);
-    if (sub_index == -1)
-        return QStringList();
-    if (subFlowCount() < 2)
-        return QStringList();
-    
-    QStringList ret;
-    ret.push_back("删除");
-    return ret;
-}
-
-bool JZNodeSequence::pinActionTriggered(int id, int index)
-{
-    int pin_index = subFlowList().indexOf(id);
-    if (pin_index == -1)
-        return false;
-
-    removeSequeue(id);
-    return true;
-}
-
-
-bool JZNodeEngine::callUnitTest(ScriptDepend *depend,QVariantList &out)
-{
-    auto obj_inst = m_env.objectManager();
-    m_depend = depend;    
-    obj_inst->setUnitTest(true);
-
-    //init hook function
-    m_dependHook.clear();
-    for (int hook_idx = 0; hook_idx < depend->hook.size(); hook_idx++)
-    {
-        auto &hook = depend->hook[hook_idx]; 
-        if(!hook.enable)
-            continue;
-
-        auto func = m_env.functionManager()->function(hook.function);
-
-        QVariantList value_list;
-        auto &hook_list = hook.params;
-        for(int i = 0; i < hook_list.size(); i++)
-        {
-            QVariant v = createVariable(m_env.nameToType(func->paramOut[i].type), hook_list[i]);
-            
-            value_list << v;
-        }
-        
-        m_dependHook[hook.pc] = value_list;
-    }
-
-    //global
-    auto global_it = depend->global.begin();
-    while(global_it != depend->global.end())
-    {
-        auto ptr = m_global[global_it.key()];
-        int data_type = JZNodeType::variantType(*ptr);
-        *ptr = createVariable(data_type, global_it.value());
-        
-        global_it++;
-    }
-
-    //init input
-    QVariantList in;
-    for (int i = 0; i < depend->function.paramIn.size(); i++)
-    {
-        auto &p = depend->function.paramIn[i];
-        if(depend->function.isMemberFunction() && i == 0)
-        {
-            auto obj = obj_inst->create(depend->function.className);
-            JZNodeObjectHolder ptr(obj,true);
-            in << QVariant::fromValue(ptr);
-
-            auto mem_it = depend->member.begin();
-            while (mem_it != depend->member.end())
-            {   
-                auto param_def = obj->meta()->param(mem_it.key());
-                auto v = createVariable(m_env.nameToType(param_def->type), mem_it.value());
-                obj->setParam(mem_it.key(),v);
-                mem_it++;
-            }
-        }
-        else
-        {
-            auto d = m_env.editorManager()->delegate(m_env.nameToType(p.type));
-
-            QVariant v;
-            if(d && d->createParam)
-                v = d->createParam(&m_env,p.value);
-            else
-                v = createVariable(m_env.nameToType(p.type), p.value);
-
-            in << v;
-        }
-    }
-
-    //call    
-    bool ret = call(depend->function.fullName(),in,out);
-    obj_inst->setUnitTest(false);
-    m_depend = nullptr;
-    return ret;
-}
-
-
-
-JZNodePinWidget* JZNodeOperator::createWidget(int id)
-{
-    Q_UNUSED(id);    
-
-    JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
-    QPushButton *btn = w->button();
-    btn->setText("Add Input");
-    btn->connect(btn, &QPushButton::clicked, [this] {
-        QByteArray old = toBuffer();
-        addInput();
-        propertyChangedNotify(old);        
-    });                
-    return w;
-}
-
-JZNodePinWidget* JZNodeConvert::createWidget(int id)
-{
-    auto w = new JZNodePinValueWidget(this, id);
-    w->initWidget(Type_string);
-    return w;
-}
-
-
-JZNodePinWidget* JZNodeDisplay::createWidget(int id)
-{
-    Q_UNUSED(id);    
-
-    auto in_list = paramInList();
-    if(in_list.contains(id))
-    {
-        return new JZNodePinDisplayWidget(this,id);
-    }
-    else
-    {
-        JZNodePinButtonWidget *w = new JZNodePinButtonWidget(this, id);
-        QPushButton *btn = w->button();
-        btn->setText("Add Input");
-        btn->connect(btn, &QPushButton::clicked, [this] {
-            QByteArray old = toBuffer();
-            addInput();
-            propertyChangedNotify(old);        
-        });                
-        return w;
-    }
-}
-*/
 
 //JZNodeFunctionItem
 JZNodeFunctionItem::JZNodeFunctionItem()
 {
+}
+
+void JZNodeFunctionItem::updatePin()
+{
+    JZNodeGraphItem::updatePin();
+
+    JZNodeFunction *node_func = dynamic_cast<JZNodeFunction*>(m_node);
+    m_title = node_func->function();
+
+    auto env = m_node->environment();
+    auto func_inst = env->functionManager();
+    auto meta = func_inst->function(m_title);
+    if (meta && meta->isMemberFunction() && !node_func->isDirectCall())
+    {
+        QString v = node_func->variable();
+        if (v.isEmpty())
+        {
+            if (!node_func->isMemberCall())
+                return;
+
+            v = "this";
+        }
+
+        QString name = v + "." + meta->name;
+        m_title = name;
+    }
 }

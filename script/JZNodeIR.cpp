@@ -119,8 +119,8 @@ JZNodeIR *createNodeIR(JZNodeIRType type)
 {
     switch (type)
     {
-    case OP_nodeId:
-        return new JZNodeIRNodeId();
+    case OP_nodeEnter:        
+        return new JZNodeIRNodeEnter();
     case OP_nop:
     case OP_return:
     case OP_exit:
@@ -206,26 +206,25 @@ void JZNodeIR::loadFromStream(QDataStream &s)
     s >> memo;
 }
 
-//JZNodeIRNodeId
-JZNodeIRNodeId::JZNodeIRNodeId()    
+//JZNodeIRNodeEnter
+JZNodeIRNodeEnter::JZNodeIRNodeEnter()
 {
-    type = OP_nodeId;
+    type = OP_nodeEnter;
     id = -1;
-    breakPointType = 0;
 }
 
-JZNodeIRNodeId::~JZNodeIRNodeId()
+JZNodeIRNodeEnter::~JZNodeIRNodeEnter()
 {
-    
+
 }
 
-void JZNodeIRNodeId::saveToStream(QDataStream &s) const
+void JZNodeIRNodeEnter::saveToStream(QDataStream &s) const
 {
     JZNodeIR::saveToStream(s);
     s << id;
 }
 
-void JZNodeIRNodeId::loadFromStream(QDataStream &s)
+void JZNodeIRNodeEnter::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
     s >> id;
@@ -497,7 +496,7 @@ QByteArray NodeIRMagic()
     //node ir
     s << sizeof(JZNodeIRParam);
     s << sizeof(JZNodeIR);
-    s << sizeof(JZNodeIRNodeId);
+    s << sizeof(JZNodeIRNodeEnter);
     s << sizeof(JZNodeIRCall);
     s << sizeof(JZNodeIRJmp);
     s << sizeof(JZNodeIRExpr);

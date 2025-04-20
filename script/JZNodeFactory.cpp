@@ -13,6 +13,7 @@ JZNodeFactory *JZNodeFactory::instance()
 
 void JZNodeFactory::registNode(int type,JZNodeCreateFunc func)
 {
+    Q_ASSERT(!m_nodes.count(type));
     m_nodes[type] = func;
 }
 
@@ -62,7 +63,7 @@ void JZNodeFactory::init()
     registNode(Node_literal,createJZNode<JZNodeLiteral>);    
     registNode(Node_enum,createJZNode<JZNodeEnum>);
     registNode(Node_flag,createJZNode<JZNodeFlag>);
-    registNode(Node_create,createJZNode<JZNodeCreate>);
+    registNode(Node_create,createJZNode<JZNodeCreateObject>);
     registNode(Node_createFromString, createJZNode<JZNodeCreateFromString>);
     registNode(Node_this,createJZNode<JZNodeThis>);
     registNode(Node_param,createJZNode<JZNodeParam>);

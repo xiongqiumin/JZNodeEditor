@@ -40,7 +40,7 @@ JZFunctionDefine JZNodeFunctionStart::function()
 bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
 {    
     c->addFunctionAlloc(m_file->function());
-    c->addNodeDebug(m_id);
+    c->addNodeEnter(m_id);
     c->addFlowOutput(m_id);
     return true;
 }

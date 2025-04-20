@@ -4,6 +4,7 @@
 #include "JZContainer.h"
 #include "JZNodeEngine.h"
 #include "JZScriptBuildInFunction.h"
+#include "runtime/JZWidgetBind.h"
 
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
@@ -15,6 +16,7 @@ JZScriptEnvironment::JZScriptEnvironment()
     m_funcManager.init();
 
     InitBuildInFunction();
+    JZWidgetBindInit();
 
     JZModuleManager::instance()->regist(this);
 
@@ -348,10 +350,19 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
     if(type1 == type2)
         return true;
 
-    if (!JZNodeType::isPointer(type1) && JZNodeType::isPointer(type2)
-        && isInherits(type1, JZNodeType::baseType(type2)))
+    bool is_type1_ptr = JZNodeType::isPointer(type1);
+    bool is_type2_ptr = JZNodeType::isPointer(type2);
+    if (is_type1_ptr && is_type2_ptr)
     {
-        return true;
+        return isInherits(JZNodeType::baseType(type1), JZNodeType::baseType(type2));
+    }
+    else if (!is_type1_ptr && is_type2_ptr)
+    {
+        return isInherits(type1,JZNodeType::baseType(type2));
+    }
+    else if (is_type1_ptr && !is_type2_ptr)
+    {
+        return false;
     }
     
     if(type2 == Type_any)
@@ -410,7 +421,7 @@ bool JZScriptEnvironment::canConvertExplicitly(int from,int to) const
     return false;
 }
 
-QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
+QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) const
 {
     int src_type = variantType(v);
     if (src_type == dst_type)
@@ -429,51 +440,51 @@ QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
         JZNodeVariantAny any;
         any.value = v;
         return QVariant::fromValue(any);
-    }   
-    else if(src_type == Type_any)
+    }
+    else if (src_type == Type_any)
     {
         auto *ptr = (const JZNodeVariantAny*)v.data();
-        return convertTo(ptr->value,dst_type);
+        return convertTo(ptr->value, dst_type);
     }
     else if (src_type == Type_nullptr && dst_type >= Type_class)
-    {        
+    {
         return QVariant::fromValue(JZNodeObjectNull());
     }
-    else if(src_type >= Type_class && dst_type >= Type_class)
+    else if (src_type >= Type_class && dst_type >= Type_class)
     {
-        if(m_objectManager.isInherits(src_type,dst_type))
+        if (m_objectManager.isInherits(src_type, dst_type))
             return v;
     }
-    else if(JZNodeType::isNumber(src_type) && JZNodeType::isNumber(dst_type))
+    else if (JZNodeType::isNumber(src_type) && JZNodeType::isNumber(dst_type))
     {
-        if(src_type == Type_int)
+        if (src_type == Type_int)
         {
             int i = v.toInt();
-            if(dst_type == Type_bool)
+            if (dst_type == Type_bool)
                 return (bool)i;
-            else if(dst_type == Type_int64)
+            else if (dst_type == Type_int64)
                 return (qint64)i;
-            else 
+            else
                 return (double)i;
         }
-        else if(src_type == Type_int64)
+        else if (src_type == Type_int64)
         {
             qint64 i = (qint64)v.toLongLong();
-            if(dst_type == Type_bool)
+            if (dst_type == Type_bool)
                 return (int)i;
-            else if(dst_type == Type_int)
+            else if (dst_type == Type_int)
                 return (int)i;
-            else 
+            else
                 return (double)i;
         }
         else
         {
             double d = v.toDouble();
-            if(dst_type == Type_bool)
+            if (dst_type == Type_bool)
                 return (bool)d;
-            else if(dst_type == Type_int)
+            else if (dst_type == Type_int)
                 return (int)d;
-            else 
+            else
                 return (qint64)d;
         }
     }
@@ -524,37 +535,43 @@ QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
         else if (dst_type == Type_double)
             return (bool)v.value<double>();
     }
-    else if(src_type == Type_string && JZNodeType::isNumber(dst_type))
+    else if (src_type == Type_string && JZNodeType::isNumber(dst_type))
     {
         QString str = v.toString();
-        if(dst_type == Type_bool)
+        if (dst_type == Type_bool)
             return str == "true";
-        else if(dst_type == Type_int)
+        else if (dst_type == Type_int)
             return str.toInt();
-        else if(dst_type == Type_int64)
+        else if (dst_type == Type_int64)
             return str.toLongLong();
         else
             return str.toDouble();
     }
-    else if(JZNodeType::isNumber(src_type) && dst_type == Type_string)
+    else if (JZNodeType::isNumber(src_type) && dst_type == Type_string)
     {
-        if(src_type == Type_bool)
-            return v.toBool()? "true" : "false";
-        else if(src_type == Type_int)
+        if (src_type == Type_bool)
+            return v.toBool() ? "true" : "false";
+        else if (src_type == Type_int)
             return QString::number(v.toInt());
-        else if(src_type == Type_int64)
+        else if (src_type == Type_int64)
             return QString::number(v.toLongLong());
         else
-            return QString::number(v.toDouble(),'f');
+            return QString::number(v.toDouble(), 'f');
     }
 
     int64_t cvt_id = makeConvertId(src_type, dst_type);
     auto it = convertMap.find(cvt_id);
     if (it != convertMap.end())
-        return it.value()(this,v);
-
-    Q_ASSERT_X(0,"Convert Failed",qUtf8Printable(typeToName(src_type) + " -> " + typeToName(dst_type)));
+        return it.value()(this, v);
+    
     return QVariant();
+}
+
+QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
+{
+    QVariant value = tryConvertTo(v, dst_type);
+    Q_ASSERT_X(v.isValid(), "Convert Failed", qUtf8Printable(variantType(v) + " -> " + typeToName(dst_type)));
+    return value;
 }
 
 QVariant JZScriptEnvironment::clone(const QVariant &v) const

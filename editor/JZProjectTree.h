@@ -44,37 +44,25 @@ protected:
     
     bool canItemRename(QTreeWidgetItem *item);
     void addItem(JZProjectItem *item);
-    void addItem(QTreeWidgetItem *parent, JZProjectItem *item);
+    QTreeWidgetItem *addItem(QTreeWidgetItem *parent, JZProjectItem *item);
     void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);    
     void sortItem(QTreeWidgetItem *item);
 
     QTreeWidgetItem *getItem(QString path);
+    QTreeWidgetItem *getViewItem(JZProjectItem *proj_item);
     JZProjectItem *getProjectItem(QTreeWidgetItem *view_item);
     bool canOpenItem(JZProjectItem *item);
     
     void cancelEdit();
     QString filepath(QTreeWidgetItem *item);
-    void renameItem(QTreeWidgetItem *item);        
+    void renameItem(QTreeWidgetItem *item);
+    bool dealRenameItem(JZProjectItem *item,QString name);
 
     JZProject *m_project;   
     QTreeWidget *m_tree; 
 
     QTreeWidgetItem *m_editItem;    
+    QMap<JZProjectItem *, QTreeWidgetItem *> m_itemMap;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif

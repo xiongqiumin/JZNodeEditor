@@ -31,9 +31,8 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
 
     if (m_debug)
     {
-        m_debugServer.setEngine(&m_engine);
-        m_debugServer.setVM(this);
-        m_engine.setDebug(true);
+        m_debugServer.setEngine(&m_engine);        
+        m_engine.setDebug(true);        
 
         m_debugServer.startServer(19888);
         if (!m_debugServer.waitForAttach(30000)) 
@@ -80,6 +79,7 @@ void JZNodeVM::quit()
     m_engine.deinit();
     qApp->exit();
 }
+
 
 void JZNodeVM::onRuntimeError(JZNodeRuntimeError error)
 {    

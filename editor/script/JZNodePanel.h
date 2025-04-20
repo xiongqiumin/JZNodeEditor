@@ -55,6 +55,7 @@ protected:
     void init();       
     void initBasic();    
     void initLocalDefine();        
+    void intiLogicFlow();
 
     void initThis(QTreeWidgetItem *root);
     void initConstParam(QTreeWidgetItem *root);        

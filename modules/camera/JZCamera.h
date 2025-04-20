@@ -12,8 +12,12 @@ public:
     JZCamera(QObject *parent = nullptr);
     virtual ~JZCamera();
 
+    virtual bool isOpen() = 0;
     virtual bool open(QString path) = 0;
     virtual void close() = 0;
+
+    virtual QString config() = 0;
+    virtual bool setConfig(const QString &config) = 0;
 
     virtual void start() = 0;
     virtual void startOnce() = 0;

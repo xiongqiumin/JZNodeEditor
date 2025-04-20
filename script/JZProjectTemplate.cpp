@@ -42,6 +42,8 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
     }
     else if (temp == "ui")
     {  
+        project->addGlobalVariable("__mainwindow__", "MainWindow");
+
         auto func_inst = project->environment()->functionManager();
         auto window_file = new JZScriptFile();
         window_file->setName("MainWindow.jz");
@@ -58,37 +60,26 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         define.className = "MainWindow";
         define.name = "init";        
         define.isFlowFunction = true;
-        define.paramIn.push_back(JZParamDefine("this", "MainWindow"));
+        define.paramIn.push_back(JZParamDefine("this", "MainWindow*"));
         class_item->addMemberFunction(define);
-        project->onItemChanged(class_item);
+        project->onItemChanged(class_item);        
 
-        main_flow->addLocalVariable("mainwindow", class_item->className());
-
-        JZNodeParam *get_param = new JZNodeParam();
-        JZNodeSetParam *set_param = new JZNodeSetParam();
-        JZNodeCreate *create = new JZNodeCreate();
+        JZNodeParam *get_param = new JZNodeParam();        
         JZNodeFunction *func_init = new JZNodeFunction();
         JZNodeFunction *func_show = new JZNodeFunction();
         JZNodeMainLoop *main_loop = new JZNodeMainLoop();
-
-        main_flow->addNode(create);
-        main_flow->addNode(set_param);
+                
         main_flow->addNode(get_param);
         main_flow->addNode(func_init);
         main_flow->addNode(func_show);
         main_flow->addNode(main_loop);
 
-        get_param->setVariable("mainwindow");
-        set_param->setVariable("mainwindow");
-        create->setClassName("MainWindow");
+        get_param->setVariable("__mainwindow__");        
         func_init->setFunction(&define);
         func_show->setFunction(func_inst->function("QWidget::show"));        
 
         JZNode *start = main_flow->getNode(0);
-        main_flow->addConnect(start->flowOutGemo(), set_param->flowInGemo());
-        main_flow->addConnect(create->paramOutGemo(0), set_param->paramInGemo(1));
-
-        main_flow->addConnect(set_param->flowOutGemo(0), func_init->flowInGemo());
+        main_flow->addConnect(start->flowOutGemo(), func_init->flowInGemo());
         main_flow->addConnect(get_param->paramOutGemo(0), func_init->paramInGemo(0));
 
         main_flow->addConnect(func_init->flowOutGemo(0), func_show->flowInGemo());

@@ -10,12 +10,20 @@ class JZNewFileDialog : public QDialog
     Q_OBJECT
     
 public:
+    enum {
+        NewFile,
+        NewClass,
+        NewUiClass,
+    };
+
     JZNewFileDialog(QWidget *p = nullptr);
     ~JZNewFileDialog();
 
+    void init(QString path);
+
     QString name();
     QString path();
-    QString type();
+    int type();
 
 protected slots:
     void on_btnOk_clicked();

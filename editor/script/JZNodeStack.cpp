@@ -69,7 +69,7 @@ void JZNodeStack::setRuntime(const JZNodeRuntimeInfo &info)
 
         QTableWidgetItem *itemName = new QTableWidgetItem();
         auto &s = info.stacks[i];
-        QString line = s.file;
+        QString line = s.scriptItemPath;
         if (!s.function.isEmpty())
         {
             line += "(" + s.function + ")";

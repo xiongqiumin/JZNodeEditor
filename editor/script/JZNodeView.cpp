@@ -342,7 +342,7 @@ void JZNodeView::setNodePinValue(int node_id, int pin, QString value)
     auto node = getNode(node_id);
     node->setPinValue(pin, value);
     getNodeItem(node_id)->setPinValue(pin, value);
-    if (node_id == m_propEditor->node()->id())
+    if (node_id == propEditorNodeId())
         m_propEditor->setPinValue(pin, value);
 }
 
@@ -369,8 +369,8 @@ JZNodeGraphItem *JZNodeView::createNodeItem(int id)
 
     item->init(node);
     m_scene->addItem(item);
-    item->updateNode();
-    item->update();    
+    item->setPos(node->pos());
+    item->updateNode();    
     m_map->updateMap();
     return item;
 }
@@ -432,16 +432,15 @@ void JZNodeView::updateNode(int id)
     if (group != -1)
         getGroupItem(group)->updateNode();
 
-    if(getNode(id) == m_propEditor->node())    
+    if(id == propEditorNodeId())
         m_propEditor->updateNode();
 }
 
 void JZNodeView::updatePropEditable(const JZNodeGemo &gemo)
 {
     getNodeItem(gemo.nodeId)->updateNode();
-
-    auto node = m_propEditor->node();    
-    if(node && gemo.nodeId == node->id())
+    
+    if(gemo.nodeId == propEditorNodeId())
         m_propEditor->setPropEditable(gemo.pinId,isPropEditable(gemo.nodeId,gemo.pinId));
 }
 
@@ -805,9 +804,7 @@ void JZNodeView::initGraph()
     QList<int> node_list = m_file->nodeList();
     for (int i = 0; i < node_list.size(); i++)
     {
-        auto item = createNodeItem(node_list[i]);
-        item->setPos(m_file->getNodePos(item->id()));
-        item->updateNode();
+        createNodeItem(node_list[i]);                
     }
     auto lines = m_file->connectList();
     for (int i = 0; i < lines.size(); i++)
@@ -1104,7 +1101,7 @@ void JZNodeView::breakPointTrigger()
             else
             {
                 BreakPoint pt;
-                pt.file = filepath;
+                pt.scriptItemPath = filepath;
                 pt.nodeId = node_item->id();
                 pt.type = BreakPoint::nodeEnter;
                 project->addBreakPoint(pt);
@@ -2088,21 +2085,29 @@ void JZNodeView::onItemSizeChanged()
 }
 
 void JZNodeView::onNodeChanged(int node_id, const QByteArray &old)
-{        
-    auto old_node = JZNodeFactory::instance()->loadNode(old);
-    auto pre_list = old_node->pinList();
-    delete old_node;
-
+{            
     auto node = getNode(node_id);
     m_commandStack.beginMacro("node changed");
-    auto new_list = node->pinList();
-    auto remove_set = pre_list.toSet() - new_list.toSet();
-    for (auto remove_prop : remove_set)
+    auto pin_list = node->pinList();
+
+    //删除输入线
+    QList<int> lines = m_file->getConnectInput(node_id);
+    for (int i = 0; i < lines.size(); i++)
     {
-        auto lines = m_file->getConnectPin(node->id(), remove_prop);
-        for (int i = 0; i < lines.size(); i++)
+        auto line = m_file->getConnect(lines[i]);
+        if (!pin_list.contains(line->to.pinId))
             addRemoveLineCommand(lines[i]);
-    }    
+    }
+
+    //删除输出线
+    lines = m_file->getConnectOut(node_id);
+    for(int i = 0; i < lines.size(); i++)
+    {
+        auto line = m_file->getConnect(lines[i]);
+        if(!pin_list.contains(line->from.pinId))
+            addRemoveLineCommand(lines[i]);
+    }
+    
     addNodeChangedCommand(node->id(), old);
     m_commandStack.endMacro();
 }
