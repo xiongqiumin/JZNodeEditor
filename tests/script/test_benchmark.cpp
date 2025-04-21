@@ -4,6 +4,7 @@
 #include "test_benchmark.h"
 #include "JZContainer.h"
 #include "JZNodeFunction.h"
+#include "JZNodeFlow.h"
 #include "JZNodeValue.h"
 
 #define JZBENCHMARK(name) m_benchmark.reset(#name);  \

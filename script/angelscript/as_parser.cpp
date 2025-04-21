@@ -136,11 +136,7 @@ void asCParser::Reset()
 	script = 0;
 
 	lastToken.pos = size_t(-1);
-    for (int i = 0; i < m_nodeList.size(); i++)
-    {
-        if(!m_nodeList[i]->parent)
-            m_nodeList[i]->Destroy();
-    }
+	qDeleteAll(m_nodeList);
     m_nodeList.clear();
 }
 
@@ -3862,5 +3858,8 @@ asCScriptNode *asCParser::ParseContinue()
 
 bool asCParser::IsTemplateType(QString text)
 {
+	if (text == "QList" || text == "QMap" || text == "QSet")
+		return true;
+
     return false;
 }

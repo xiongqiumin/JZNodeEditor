@@ -42,11 +42,11 @@ bool JZNodeExpression::updateNode(QString &error)
     auto project = m_file->project();
 
     JZTempItemGuard guard(project, m_exprItem, true);        
-    m_exprItem->clear();
-    m_convert.init(m_exprItem);
-    if (!m_convert.convertExpression(m_expression))
+
+    JZScriptConvert convert;
+    if (!convert.convertExpression(m_expression,m_exprItem))
     {
-        error = m_convert.error();
+        error = convert.error();
         return false;
     }
 

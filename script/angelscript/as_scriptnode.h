@@ -104,6 +104,7 @@ public:
     static const char *GetDefinition(int nodeType);
 
 	asCScriptNode(eScriptNode nodeType);
+	~asCScriptNode();
 
 	void Destroy();
 	asCScriptNode *CreateCopy();
@@ -127,7 +128,6 @@ public:
 
 protected:
 	// Must call Destroy instead
-	~asCScriptNode() {}
 };
 
 #endif

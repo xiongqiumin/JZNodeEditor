@@ -2,7 +2,6 @@
 #define JZNODE_EXPRESSION_H_
 
 #include "JZNode.h"
-#include "JZScriptConvert.h"
 
 //JZNodeExpression
 class JZNodeExpression: public JZNode
@@ -24,7 +23,6 @@ protected:
     
     QString m_expression;
     JZScriptItem *m_exprItem;    
-    JZScriptConvert m_convert;
 };
 
 #endif

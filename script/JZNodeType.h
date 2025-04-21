@@ -198,6 +198,8 @@ public:
     static QString pointerType(const QString& type);
     static bool isPointer(const QString& type);
     
+    static bool isContainerType(QString value);
+
     static QString listType(QString value);
     static QString listIteratorType(QString list_type);
     static bool listValueType(QString list_type,QString &value_type);

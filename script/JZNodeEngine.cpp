@@ -1525,6 +1525,8 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
 {   
     int dataType1 = JZNodeType::variantType(a);
     int dataType2 = JZNodeType::variantType(b);
+    Q_ASSERT(dataType1 == dataType2);
+
     if(dataType1 == Type_string && dataType2 == Type_string)
     {
         QString str_a = a.toString();
@@ -1594,6 +1596,15 @@ QVariant JZNodeEngine::dealSingleExpr(const QVariant &a, int op)
     {
         if (dataType == Type_int)
             return ~(a.toInt());
+        else
+            unSupportSingleOp(dataType, op);
+    }
+    else if (op == OP_neg)
+    {
+        if (dataType == Type_int)
+        {
+            return -(a.toInt());
+        }
         else
             unSupportSingleOp(dataType, op);
     }
@@ -1771,6 +1782,7 @@ bool JZNodeEngine::run()
             break; 
         }
         case OP_not:
+        case OP_neg:
         case OP_bitreverse:
         {
             m_stat.exprTime++;

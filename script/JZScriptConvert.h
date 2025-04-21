@@ -2,6 +2,7 @@
 #define JZ_ScriptItem_Help_H_
 
 #include "JZScriptItem.h"
+#include "JZScriptFile.h"
 #include "JZNodeFlow.h"
 
 class asCScriptNode;
@@ -11,20 +12,22 @@ public:
 	JZScriptConvert();
 	~JZScriptConvert();
 
-    void init(JZScriptItem* item);
-	bool convertFunction(QString code);
-	bool convertStatments(QString code);
-    bool convertExpression(QString code);	
+	bool convertScript(QString code,JZScriptFile *file);
+	bool convertFunction(QString code,JZScriptItem *script);
+	bool convertStatments(QString code, JZScriptItem* script);
+    bool convertExpression(QString code, JZScriptItem* script);
 
 	QString error();
 
 protected:
-    struct Flow{
-        Flow();
+    struct BlockEnv
+	{ 
+		BlockEnv();
 
-        QList<JZNode*> nodes;
-        int index;
+		QList<JZNode*> flowList;
+		JZNode* postStatment;
     };    
+	typedef QSharedPointer<BlockEnv> BlockEnvPtr;
 
 	template<class T>
 	T* createNode() {
@@ -34,39 +37,52 @@ protected:
 	}
 	
 	JZScriptEnvironment* environment();
+	void init(JZScriptItem* script);
 	
-	bool updateFunction(asCScriptNode* node);
+	bool addFunction(asCScriptNode* node);
 	void nodeDebug(asCScriptNode* root, QString& result, int level);
 	QString nodeDebug(asCScriptNode* node);
 	void printNode(asCScriptNode* node);
 	QString nodeText(asCScriptNode* node);
 	asCScriptNode* nextNode(asCScriptNode* node, int count);
 	QList<asCScriptNode*> nodeChilds(asCScriptNode* node);
-
+	
 	QList<JZParamDefine> toParamList(asCScriptNode* node);
-	JZNode* toStatement(asCScriptNode* node);
-	QList<JZNode*> toStatementBlock(asCScriptNode* node);
 
-	JZNode* toReturn(asCScriptNode* node);
-	JZNode* toIf(asCScriptNode* node);
-	void setNodeIf(JZNodeIf* node_if, asCScriptNode* as_node, int cond);
-	JZNode* toFor(asCScriptNode* node);
-	JZNode* toWhile(asCScriptNode* node);
-	JZNode* toSwitch(asCScriptNode* node);
-	JZNode* toBreak(asCScriptNode* node);
-	JZNode* toContinue(asCScriptNode* node);
-	JZNode* toExpression(asCScriptNode* node);
 	JZNode* toExprTerm(asCScriptNode* node);
+	JZNode* toExpression(asCScriptNode* node);
 	JZNode* toAssignment(asCScriptNode* node);
+	JZNode* toExpressionStatement(asCScriptNode* node);
+	JZNode* toExpressionStatementFlow(asCScriptNode* node);
 	JZNode* toFunctionCall(asCScriptNode* node);
-    JZNode* toDeclaration(asCScriptNode* node);
 
+	const JZFunctionDefine *function(QString name);
+	const JZParamDefine* getVariableInfo(QString name);
+
+	bool toStatement(asCScriptNode* node);
+	bool toStatementBlock(asCScriptNode* node, QList<JZNode*>& list);
+
+	bool toReturn(asCScriptNode* node);
+	bool toIf(asCScriptNode* node);
+	bool setNodeIf(JZNodeIf* node_if, asCScriptNode* as_node, int cond);
+	bool toFor(asCScriptNode* node);
+	bool toWhile(asCScriptNode* node);
+	bool toSwitch(asCScriptNode* node);
+	bool toBreak(asCScriptNode* node);
+	bool toContinue(asCScriptNode* node);
+	bool toFunctionCallStatement(asCScriptNode* node);
+	bool toDeclarationStatement(asCScriptNode* node);
+	
 	JZNode* createOpNode(QString op);
+	JZNode* createSingleOpNode(QString op);
+	BlockEnv* currentBlock();
+	void pushBlock();
+	void popBlock();
 
 	JZScriptItem* m_script;
 	QString m_code;
-	QList<Flow> m_flowStack;
 	QString m_error;
+	QList<BlockEnvPtr> m_blockEnv;
 };
 
 #endif // !JZScriptConvert

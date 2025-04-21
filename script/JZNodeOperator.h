@@ -157,4 +157,13 @@ public:
     bool compiler(JZNodeCompiler *c, QString &error);
 };
 
+//JZNodeNeg
+class JZNodeNeg : public JZNode
+{
+public:
+    JZNodeNeg();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
+};
+
 #endif

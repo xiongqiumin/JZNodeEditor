@@ -132,61 +132,7 @@ QString expressionSolver(const QString &expr_text, QString &error)
 
 bool JZExpressRunner::init(QString expr, QString &error, QMap<QString, int> typeMap)
 {    
-    JZScriptFile *file = new JZScriptFile();
-
-    JZNodeExpression *node_expr = new JZNodeExpression();
-   
-
-    JZFunctionDefine define;
-    define.name = "JZExpressRunner";
-    
-    auto func_file = file->addFunction(define);
-    auto in_list = node_expr->paramInList();
-    for (int i = 0; i < in_list.size(); i++)
-    {
-        auto p = node_expr->pin(in_list[i]);
-        JZParamDefine param;
-        param.type = p->name();
-        define.paramIn.push_back(param);
-    }
-
-    auto out_list = node_expr->paramOutList();
-    for (int i = 0; i < out_list.size(); i++)
-    {
-        auto p = node_expr->pin(in_list[i]);
-        JZParamDefine param;
-        param.type = p->name();
-        define.paramOut.push_back(param);
-    }
-
-    auto node_start = func_file->getNode(0);    
-    JZNodeReturn *node_ret = new JZNodeReturn();
-    node_ret->setFunction(&define);
-
-    func_file->addNode(node_expr);
-    func_file->addNode(node_ret);
-    func_file->addConnect(node_start->paramOutGemo(0), node_ret->paramInGemo(0));        
-
-    for (int i = 0; i < in_list.size(); i++)
-    {
-        JZNodeParam *param = new JZNodeParam();
-        param->setVariable(define.paramIn[i].name);
-        func_file->addNode(param);
-        func_file->addConnect(param->paramOutGemo(0), node_expr->paramInGemo(i));
-    }
-
-    for (int i = 0; i < out_list.size(); i++)
-        func_file->addConnect(node_expr->paramOutGemo(i), node_ret->paramInGemo(i));
-
-    m_script = JZNodeScriptPtr(new JZNodeScript());
-    JZNodeCompiler compiler;
-    if (!compiler.build(func_file, m_script.data()))
-    {
-        error = compiler.error();
-        return false;
-    }
-
-    return true;
+    return false;
 }
 
 bool JZExpressRunner::call(const QVariantList &in, QVariantList &out)

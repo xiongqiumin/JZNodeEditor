@@ -177,6 +177,9 @@ bool JZScriptEnvironment::hasType(int type) const
 
 QString JZScriptEnvironment::typeToName(int id) const
 {   
+    if (id == Type_none)
+        return JZNodeType::typeName(id);
+
     bool isPoint = JZNodeType::isPointer(id);
     id = JZNodeType::baseType(id);
     QString suffix = isPoint ? "*" : "";
@@ -516,23 +519,23 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
     {
         if (src_type == Type_int8)
             return (bool)v.value<int8_t>();
-        else if (dst_type == Type_int16)
+        else if (src_type == Type_int16)
             return (bool)v.value<int16_t>();
-        else if (dst_type == Type_int)
+        else if (src_type == Type_int)
             return (bool)v.value<int>();
-        else if (dst_type == Type_int64)
+        else if (src_type == Type_int64)
             return (bool)v.value<int64_t>();
-        else if (dst_type == Type_uint8)
+        else if (src_type == Type_uint8)
             return (bool)v.value<uint8_t>();
-        else if (dst_type == Type_uint16)
+        else if (src_type == Type_uint16)
             return (bool)v.value<uint16_t>();
-        else if (dst_type == Type_uint)
+        else if (src_type == Type_uint)
             return (bool)v.value<uint>();
-        else if (dst_type == Type_uint64)
+        else if (src_type == Type_uint64)
             return (bool)v.value<uint64_t>();
-        else if (dst_type == Type_float)
+        else if (src_type == Type_float)
             return (bool)v.value<float>();
-        else if (dst_type == Type_double)
+        else if (src_type == Type_double)
             return (bool)v.value<double>();
     }
     else if (src_type == Type_string && JZNodeType::isNumber(dst_type))
@@ -570,7 +573,7 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
 QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
 {
     QVariant value = tryConvertTo(v, dst_type);
-    Q_ASSERT_X(v.isValid(), "Convert Failed", qUtf8Printable(variantType(v) + " -> " + typeToName(dst_type)));
+    Q_ASSERT_X(value.isValid(), "Convert Failed", qUtf8Printable(variantType(v) + " -> " + typeToName(dst_type)));
     return value;
 }
 

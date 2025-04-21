@@ -28,7 +28,7 @@ JZNodeContinue::JZNodeContinue()
 
 bool JZNodeContinue::compiler(JZNodeCompiler *c,QString &error)
 {   
-    JZNode* parent = c->breakContinueParentNode(m_id);
+    JZNode* parent = c->continueParentNode(m_id);
     if (!parent)
     {
         error = "continue 需要在for,foreach,while中使用";
@@ -50,10 +50,10 @@ JZNodeBreak::JZNodeBreak()
 
 bool JZNodeBreak::compiler(JZNodeCompiler *c,QString &error)
 {       
-    JZNode* parent = c->breakContinueParentNode(m_id);
+    JZNode* parent = c->breakParentNode(m_id);
     if (!parent)
     {
-        error = "break 需要在for,foreach,while中使用";
+        error = "break 需要在for,foreach,while,switch中使用";
         return false;
     }
     c->addNodeEnter(m_id);
@@ -593,26 +593,13 @@ JZNodeIf::JZNodeIf()
     addCondPin();    
 }
 
-void JZNodeIf::updateCondName()
-{
-    auto list = paramInList();
-    auto flow_list = subFlowList();
-    for (int i = 0; i < list.size(); i++)
-    {
-        setPinName(list[i], "cond" + QString::number(i + 1));        
-        setPinName(flow_list[i], "cond" + QString::number(i + 1));
-    }
-    if (flow_list.size() > list.size())
-        setPinName(flow_list.back(), "else");
-}
-
-void JZNodeIf::addCondPin()
+int JZNodeIf::addCondPin()
 {
     int in = addParamIn("cond");
     setPinTypeBool(in);
 
-    addSubFlowOut("cond");    
-    updateCondName();    
+    int id = addSubFlowOut("cond");    
+    return in;
 }
 
 bool JZNodeIf::hasElse()
@@ -624,7 +611,6 @@ bool JZNodeIf::hasElse()
 void JZNodeIf::addElsePin()
 {
     addSubFlowOut("else"); 
-    updateCondName();
 }
 
 int JZNodeIf::condCount()
@@ -632,13 +618,15 @@ int JZNodeIf::condCount()
     return paramInCount();
 }
 
-void JZNodeIf::removeCond(int index)
+void JZNodeIf::removeCond(int id)
 {
+    int index = paramInList().indexOf(id);
+    Q_ASSERT(index >= 0);
+
     int flow_id = paramInList()[index];
     int in_id = subFlowList()[index];
     removePin(in_id);
     removePin(flow_id);
-    updateCondName();
 }
 
 void JZNodeIf::removeElse()
@@ -648,7 +636,6 @@ void JZNodeIf::removeElse()
 
     int id = subFlowList().back();
     removePin(id);
-    updateCondName();
 }
 
 bool JZNodeIf::compiler(JZNodeCompiler *c, QString &error) 
@@ -732,20 +719,20 @@ JZNodeSwitch::JZNodeSwitch()
     addCase();
 }
 
-void JZNodeSwitch::addCase()
+int JZNodeSwitch::addCase()
 {
     int sub_id = addSubFlowOut("case");
     setPinType(sub_id, m_caseType);
+    return sub_id;
 }
 
-void JZNodeSwitch::addDefault()
+int JZNodeSwitch::addDefault()
 {
-    addSubFlowOut("default");    
+    return addSubFlowOut("default");    
 }
 
-void JZNodeSwitch::removeCase(int index)
+void JZNodeSwitch::removeCase(int id)
 {
-    int id = subFlowList()[index];
     removePin(id);
 }
 
@@ -774,7 +761,9 @@ int JZNodeSwitch::caseCount()
 
 void JZNodeSwitch::clearCaseAndDefault()
 {
-
+    auto sub_list = subFlowList();
+    for (int i = 0; i < sub_list.size(); i++)
+        removePin(sub_list[i]);
 }
 
 void JZNodeSwitch::setCaseValue(int index, const QString &v)
@@ -866,6 +855,7 @@ bool JZNodeSwitch::compiler(JZNodeCompiler *c, QString &error)
     for (int i = 0; i < jump_end_list.size(); i++)
         jump_end_list[i]->jmpPc = out_pc;
 
+    c->setBreakContinue(out_pc ,-1);
     return true;
 }
 

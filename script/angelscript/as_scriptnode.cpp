@@ -103,8 +103,13 @@ asCScriptNode::asCScriptNode(eScriptNode type)
 	lastChild   = 0;
 }
 
+asCScriptNode::~asCScriptNode()
+{
+}
+
 void asCScriptNode::Destroy()
 {
+	/*
 	// Destroy all children
 	asCScriptNode *node = firstChild;
 	asCScriptNode *nxt;
@@ -116,10 +121,12 @@ void asCScriptNode::Destroy()
 		node = nxt;
 	}
     delete this;
+	*/
 }
 
 asCScriptNode *asCScriptNode::CreateCopy()
 {	
+	Q_ASSERT(0);
     asCScriptNode *node = new asCScriptNode(nodeType);
 	node->tokenLength = tokenLength;
 	node->tokenPos    = tokenPos;

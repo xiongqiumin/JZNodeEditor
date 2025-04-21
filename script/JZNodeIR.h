@@ -42,7 +42,8 @@ enum JZNodeIRType
     OP_gt,  // >
     OP_and,
     OP_or,
-    OP_not,        
+    OP_not,       
+    OP_neg,
     OP_assert,
     OP_try,
     OP_throw,

@@ -134,8 +134,8 @@ class JZNodeIf : public JZNode
 public:
     JZNodeIf();
 
-    void addCondPin();    
-    void removeCond(int index);
+    int addCondPin();  //返回参数的id
+    void removeCond(int id);
     int  condCount();
 
     bool hasElse();
@@ -143,8 +143,7 @@ public:
     void removeElse();
 
 protected:
-    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
-    void updateCondName();
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 };
 
 //JZNodeSwitch
@@ -152,9 +151,9 @@ class JZNodeSwitch : public JZNode
 {
 public:
     JZNodeSwitch();
-    void addCase();
-    void addDefault();
-    void removeCase(int index);
+    int addCase();
+    int addDefault();
+    void removeCase(int id);
     void removeDefault();
     bool hasDefault();
     int caseCount();
