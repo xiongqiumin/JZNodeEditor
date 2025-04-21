@@ -2,6 +2,7 @@
 #include "JZNodeValue.h"
 #include "JZNodeExpression.h"
 #include "JZNodeEvent.h"
+#include "JZNodeFlow.h"
 #include "JZNodeFunction.h"
 #include "JZNodeOperator.h"
 
@@ -106,6 +107,7 @@ void JZNodeFactory::init()
     registNode(Node_and,createJZNode<JZNodeAnd>);
     registNode(Node_or,createJZNode<JZNodeOr>);
     registNode(Node_not, createJZNode<JZNodeNot>);
+    registNode(Node_neg, createJZNode<JZNodeNeg>);
     
     registNode(Node_expr,createJZNode<JZNodeExpression>);
 

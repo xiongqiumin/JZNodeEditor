@@ -12,6 +12,7 @@
 #include "JZNodeFunction.h"
 #include "JZNodeExpression.h"
 #include "JZNodeBind.h"
+#include "JZNodeFlow.h"
 #include "JZContainer.h"
 
 ScriptTest::ScriptTest()

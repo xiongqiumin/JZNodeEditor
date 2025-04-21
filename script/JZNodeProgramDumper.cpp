@@ -25,6 +25,75 @@ QString JZNodeProgramDumper::paramDefine(const JZParamDefine* define)
     return line;
 }
 
+bool JZNodeProgramDumper::isFunctionInParam(JZNodeIRParam param)
+{
+    if (param.isRef())
+    {
+        auto &func = m_script->function();
+        for (int i = 0; i < func.paramIn.size(); i++)
+        {
+            if (func.paramIn[i].name == param.ref())
+                return true;
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool JZNodeProgramDumper::isIrSetReg(int pc, RegSetType regType)
+{
+    if (pc < 0 || pc >= m_scriptImpl->statmentList.size())
+        return false;
+
+    if (m_scriptImpl->statmentList[pc]->type != OP_set)
+        return false;
+
+    JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_scriptImpl->statmentList[pc].data());
+    if (regType == SrcRegIn)
+    {
+        return isRegInParam(ir_set->src);
+    }
+    else if (regType == SrcRegOut)
+    {
+        return isRegOutParam(ir_set->src);
+    }
+    else if (regType == DstRegIn)
+    {
+        return isRegInParam(ir_set->dst);
+    }
+    else if(regType == DstRegOut)
+    {
+        return isRegOutParam(ir_set->dst);
+    }
+
+    Q_ASSERT(0);
+    return false;
+}
+
+bool JZNodeProgramDumper::isRegInParam(JZNodeIRParam param)
+{
+    if (param.isReg())
+    {
+        int id = param.id();
+        return id >= Reg_CallIn && id < Reg_CallOut;
+    }
+    else
+        return false;
+}
+
+bool JZNodeProgramDumper::isRegOutParam(JZNodeIRParam param)
+{
+    if (param.isReg())
+    {
+        int id = param.id();
+        return id >= Reg_CallOut;
+    }
+    else
+        return false;
+}
 
 QString JZNodeProgramDumper::tab(int count)
 {
@@ -167,45 +236,52 @@ void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QS
     QString source;
     QString header;
 
-    QString fuction_name = func_item->function().fullName();
+    auto func_impl = m_program->function(func_item->function().fullName());
 
-    auto sc_list = m_program->scriptList();
-    for (int sc_idx = 0; sc_idx < sc_list.size(); sc_idx++)
+    m_script = func_item;
+    m_scriptImpl = m_program->script(func_impl->path);
+    
+    auto& opList = m_scriptImpl->statmentList;
+
+    source += functionDeclare(func_impl) + "\n{\n";
+    m_jumpList.clear();
+
+    source += tab(1) + "bool Reg_Cmp = false;\n";
+
+    QString space = QString().leftJustified(8,' ');
+    QStringList lines;
+    for (int i = func_impl->addr; i < func_impl->addrEnd; i++)
     {
-        JZNodeScript* script = sc_list[sc_idx];
+        QString line;
 
-        auto& opList = script->statmentList;
-        for (int func_idx = 0; func_idx < script->functionList.size(); func_idx++)
+        //函数调用前加{
+        if (!isIrSetReg(i - 1, DstRegIn) && isIrSetReg(i, DstRegIn))
+            line += space + "{\n";
+
+        line += irToString(opList[i].data());
+
+        //函数调用后加}
+        if ((opList[i]->type == OP_call && !isIrSetReg(i - 1, DstRegIn) && !isIrSetReg(i + 1, SrcRegOut))
+            || (isIrSetReg(i, SrcRegOut)))
         {
-            auto& func = script->functionList[func_idx];
-            if (func.fullName() == fuction_name)
-            {
-                source += functionDeclare(&func) + "\n{\n";
-                m_jumpList.clear();
-
-                source += tab(1) + "bool Reg_Cmp = false;\n";
-
-                QStringList lines;
-                for (int i = func.addr; i < func.addrEnd; i++)
-                {
-                    lines += irToString(opList[i].data());
-                }
-
-                //处理跳转
-                std::sort(m_jumpList.begin(), m_jumpList.end());
-                for (int i = m_jumpList.size() - 1; i >= 0; i--)
-                {
-                    int addr = m_jumpList[i];
-                    lines.insert(addr - func.addr, "Line" + QString::number(addr) + ":");
-                }
-
-                source += lines.join("\n");
-                source += "\n}";
-
-                header += functionDeclare(&func);
-            }
+            line += space + "\n}";
         }
+
+        lines.push_back(line);
     }
+
+    //处理跳转
+    std::sort(m_jumpList.begin(), m_jumpList.end());
+    for (int i = m_jumpList.size() - 1; i >= 0; i--)
+    {
+        int addr = m_jumpList[i];
+        lines.insert(addr - func_impl->addr, "Line" + QString::number(addr) + ":");
+    }
+
+    source += lines.join("\n");
+    source += "\n}";
+
+    header += functionDeclare(func_impl);
 
     def = header;
     impl = source;
@@ -276,15 +352,29 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
             line += " = nullptr";
         }
         line += ";";
+        if (isFunctionInParam(ir_alloc->dst))
+            line = "// " + line;
         break;
     }
     case OP_clearReg:
-        line += "//clear reg";
+        line += "// clear reg";
         break;
     case OP_set:
     {
         JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
         line += toString(ir_set->dst) + " = " + toString(ir_set->src) + ";";
+        if (isRegInParam(ir_set->dst)) //调用函数
+        {
+            line = "auto " + line;
+        }
+        if (isRegInParam(ir_set->src)) //函数入参
+        {
+            line = "// " + line;
+        }
+        if (isRegOutParam(ir_set->dst)) //函数出参
+        {
+            line = "// " + line;
+        }
         break;
     }
     case OP_clone:
@@ -309,11 +399,24 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     {
         JZNodeIRCall *ir_call = (JZNodeIRCall *)op;
         line += dealCall(ir_call->function);
+
+        if (isIrSetReg(op->pc + 1, SrcRegOut))
+        {
+            line = "auto Reg_CallOut_0 = " + line;
+        }
         break;
     }
     case OP_return:
-        line += "return;";
+    {
+        if (isIrSetReg(op->pc - 1, DstRegOut))
+        {
+            JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_scriptImpl->statmentList[op->pc - 1].data());
+            line = "return " + toString(ir_set->src) + ";";
+        }
+        else
+            line += "return;";
         break;
+    }
     case OP_exit:
         line += "exit(0);";
         break;
@@ -341,7 +444,9 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         line += c + " = " + a + " " + JZNodeType::opName(op->type) + " " + b + ";";
         break;
     }
+    case OP_neg:
     case OP_not:
+    case OP_bitreverse:
     {
         JZNodeIRExpr *ir_expr = (JZNodeIRExpr *)op;
         QString c = toString(ir_expr->dst);
@@ -396,7 +501,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     return line;
 }    
 
-QString JZNodeProgramDumper::functionDeclare(JZFunction* func)
+QString JZNodeProgramDumper::functionDeclare(const JZFunction* func)
 {
     auto& define = func->define;
 

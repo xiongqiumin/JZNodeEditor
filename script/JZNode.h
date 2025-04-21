@@ -46,6 +46,7 @@ enum
     Node_or,
     Node_bitreverse,
     Node_not,
+    Node_neg,
     Node_expr,
     Node_for,
     Node_foreach,

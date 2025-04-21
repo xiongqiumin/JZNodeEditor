@@ -124,9 +124,11 @@ void JZNodeType::init()
     opNameMap[OP_and] = "&&";
     opNameMap[OP_or] = "||";
     opNameMap[OP_not] = "!";
+    opNameMap[OP_neg] = "-";
     opNameMap[OP_bitor] = "|";
     opNameMap[OP_bitand] = "&";
-    opNameMap[OP_bitxor] = "~";
+    opNameMap[OP_bitxor] = "^";
+    opNameMap[OP_bitreverse] = "~";
 }
 
 bool JZNodeType::isBool(int type)
@@ -415,6 +417,11 @@ int JZNodeType::variantType(const QVariant &v)
 bool JZNodeType::variantIsPointer(const QVariant& v)
 {
     return v.userType() == qMetaTypeId<JZNodeObjectPointer>();
+}
+
+bool JZNodeType::isContainerType(QString value)
+{
+    return value.startsWith("QList<") || value.startsWith("QMap<") || value.startsWith("QSet<");
 }
 
 QString JZNodeType::listType(QString value)

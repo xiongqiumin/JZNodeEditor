@@ -1,13 +1,9 @@
 ﻿#ifndef JZNODE_COMPILER_H_
 #define JZNODE_COMPILER_H_
 
-#include "JZProject.h"
 #include "JZNodeProgram.h"
-#include "JZNodeExpression.h"
-#include "JZNodeOperator.h"
 #include "JZScriptItem.h"
 #include "JZProject.h"
-#include "JZRegExpHelp.h"
 
 enum VariableCoor{
     Variable_none,
@@ -259,7 +255,8 @@ public:
     int addContinue(int node_id);
     int addBreak(int node_id);
     void setBreakContinue(int breakPc, int continuePC);
-    JZNode* breakContinueParentNode(int child_id);
+    JZNode* breakParentNode(int child_id);
+    JZNode* continueParentNode(int child_id);
     
     void addAlloc(int allocType, QString name, int dataType);
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
@@ -318,7 +315,7 @@ protected:
     先编译各个flow节点，最后连接，分开编译是因为out的时候无法确定对应输入节点的类型
     */
     bool buildControlFlow(JZNode* node);
-    bool isAllFlowReturn(JZNode *node);
+    bool isAllFlowReturn(JZNode *node,int level);
     void addFunction(const JZFunctionDefine &define,int start_addr,int end_addr);    
     QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);         

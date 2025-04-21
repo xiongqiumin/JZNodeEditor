@@ -3,7 +3,6 @@
 #include <QUiLoader>
 #include "JZNodeUiLoader.h"
 #include "JZNodeBind.h"
-#include "modules/opencv/JZYoloView.h"
 
 JZNodeUiLoader::JZNodeUiLoader()
 {

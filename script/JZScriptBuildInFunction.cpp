@@ -75,8 +75,9 @@ class JZCreate: public BuiltInFunction
 public:
     virtual void call(JZNodeEngine *engine) override
     {
-        QString type = engine->getReg(Reg_CallIn).toString();    
+        QString type = engine->getReg(Reg_CallIn).toString();
         JZNodeObject *obj = engine->environment()->objectManager()->create(type);
+        Q_ASSERT(!obj->isValueType());
         engine->setReg(Reg_CallOut,QVariant::fromValue(JZNodeObjectHolder(obj,true)));
     }
 };

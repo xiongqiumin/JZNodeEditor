@@ -9,6 +9,8 @@
 #include "JZNodeUtils.h"
 #include "JZNodeBuilder.h"
 #include "JZRegExpHelp.h"
+#include "JZNodeFlow.h"
+#include "JZNodeOperator.h"
 
 // GraphNode
 GraphNode::GraphNode()
@@ -1475,7 +1477,7 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
 
     if (isBuildError())
         return false;
-    if (!isAllFlowReturn(start_node))
+    if (!isAllFlowReturn(start_node, 0))
         return false;
 
     //void 类型的末尾添加return
@@ -1491,15 +1493,24 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
         if (op_type == OP_ComilerBreakContinue)
         {
             JZNodeComilerBreakContinue* complier_jmp = (JZNodeComilerBreakContinue*)(m_statmentList->at(i).data());
-            JZNode* parent = breakContinueParentNode(complier_jmp->nodeId);
-            auto &info = m_nodeInfo[parent->id()];
-
-            int break_pc = indexOfStatment(info.breakIr.data());
-            int continue_pc = indexOfStatment(info.continueIr.data());
-            Q_ASSERT(break_pc >= 0 && continue_pc >= 0);
-
+            
+            int jmp_pc = -1;
+            if (complier_jmp->isBreak())
+            {
+                JZNode* parent = breakParentNode(complier_jmp->nodeId);
+                auto& info = m_nodeInfo[parent->id()];
+                jmp_pc = indexOfStatment(info.breakIr.data());
+            }
+            else
+            {
+                JZNode* parent = continueParentNode(complier_jmp->nodeId);
+                auto& info = m_nodeInfo[parent->id()];
+                jmp_pc = indexOfStatment(info.continueIr.data());
+            }
+            Q_ASSERT(jmp_pc >= 0);
+            
             JZNodeIRJmp* jmp = new JZNodeIRJmp(OP_jmp);
-            jmp->jmpPc = complier_jmp->isBreak() ? break_pc : continue_pc;
+            jmp->jmpPc = jmp_pc;
             replaceStatement(i, JZNodeIRPtr(jmp));
         }
     }
@@ -1584,47 +1595,58 @@ bool JZNodeCompiler::buildDataFlow(const QList<GraphNode*> &graph_list)
     return ok;
 }
 
-bool JZNodeCompiler::isAllFlowReturn(JZNode* node)
+bool JZNodeCompiler::isAllFlowReturn(JZNode* node, int level)
 {
     if (m_scriptItem->function().paramOut.size() == 0)
         return true;
+    if (!node)
+        return false;
 
+    JZNode* pre_node = node;
     while (node)
     {
         if (node->type() == Node_throw || node->type() == Node_return)
             return true;
+        if (node->type() == Node_break || node->type() == Node_continue)
+            return false;
 
         QList<int> sub_list = node->subFlowList();
-        int sub_return_size = 0;
-        for (int i = 0; i < sub_list.size(); i++)
+        if (sub_list.size() != 0)
         {
-            JZNode* sub_node = nextFlowNode(node, sub_list[i]);
-            if (isAllFlowReturn(sub_node))
-                sub_return_size++;
-        }
-
-        if (sub_return_size == sub_list.size())
-        {
-            if (node->type() == Node_if)
+            int sub_return_size = 0;
+            for (int i = 0; i < sub_list.size(); i++)
             {
-                JZNodeIf* node_if = (JZNodeIf*)node;
-                if (node_if->hasElse())
+                JZNode* sub_node = nextFlowNode(node, sub_list[i]);
+                if (isAllFlowReturn(sub_node, level + 1))
+                    sub_return_size++;
+            }
+
+            if (sub_return_size == sub_list.size())
+            {
+                if (node->type() == Node_if)
+                {
+                    JZNodeIf* node_if = (JZNodeIf*)node;
+                    if (node_if->hasElse())
+                        return true;
+                }
+                else if (node->type() == Node_switch)
+                {
+                    JZNodeSwitch* node_switch = (JZNodeSwitch*)node;
+                    if (node_switch->hasDefault())
+                        return true;
+                }
+                else
                     return true;
             }
-            else if (node->type() == Node_switch)
-            {
-                JZNodeSwitch* node_switch = (JZNodeSwitch*)node;
-                if (node_switch->hasDefault())
-                    return true;
-            }
-            else
-                return true;
         }
 
+        pre_node = node;
         node = nextFlowNode(node, node->flowOut());
     }
 
-    m_nodeInfo[node->id()].error = "需要连接return";
+    if(level == 0)
+        m_nodeInfo[pre_node->id()].error = "需要连接return";
+
     return false;
 }
 
@@ -1751,13 +1773,15 @@ void JZNodeCompiler::appendStatementList(const QList<JZNodeIRPtr>& ir_list)
 
 void JZNodeCompiler::setBreakContinue(int breakPc, int continuePc)
 {
-    currentNodeInfo()->breakIr = m_statmentList->at(breakPc).toWeakRef();
-    currentNodeInfo()->continueIr = m_statmentList->at(continuePc).toWeakRef();
+    if(breakPc >= 0)
+        currentNodeInfo()->breakIr = m_statmentList->at(breakPc).toWeakRef();
+    if(continuePc >= 0)
+        currentNodeInfo()->continueIr = m_statmentList->at(continuePc).toWeakRef();
 }
 
-JZNode* JZNodeCompiler::breakContinueParentNode(int child_id)
+JZNode* JZNodeCompiler::breakParentNode(int child_id)
 {
-    QVector<int> allow_node = { Node_for,Node_while,Node_foreach };
+    QVector<int> allow_node = { Node_for,Node_while,Node_foreach,Node_switch };
     int parent_id = m_scriptItem->parentNode(child_id);
     while (parent_id != -1)
     {
@@ -1765,6 +1789,21 @@ JZNode* JZNodeCompiler::breakContinueParentNode(int child_id)
         if (allow_node.contains(node->type()))        
             return node;
         
+        parent_id = m_scriptItem->parentNode(node->id());
+    }
+    return nullptr;
+}
+
+JZNode* JZNodeCompiler::continueParentNode(int child_id)
+{
+    QVector<int> allow_node = { Node_for,Node_while,Node_foreach };
+    int parent_id = m_scriptItem->parentNode(child_id);
+    while (parent_id != -1)
+    {
+        auto node = m_scriptItem->getNode(parent_id);
+        if (allow_node.contains(node->type()))
+            return node;
+
         parent_id = m_scriptItem->parentNode(node->id());
     }
     return nullptr;
@@ -1968,6 +2007,13 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
         addAlloc(JZNodeIRAlloc::Stack, param->name, data_type);
         if(!param->value.isEmpty())
             addInitVariable(irRef(param->name), data_type, param->value);
+        else
+        {
+            if(JZNodeType::isBaseOrEnum(data_type))
+                addInitVariable(irRef(param->name), data_type, param->value);
+            else if(m_env->meta(param->type)->isValueType())
+                addInitVariable(irRef(param->name), data_type, param->value);
+        }
     }
     addStatement(JZNodeIRPtr(new JZNodeIRStackInit()));
 }

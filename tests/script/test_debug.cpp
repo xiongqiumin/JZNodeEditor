@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QTest>
 #include "JZNodeFactory.h"
+#include "JZNodeFlow.h"
 #include "test_debug.h"
 
 DebugTest::DebugTest()

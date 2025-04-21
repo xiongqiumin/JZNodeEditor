@@ -15,11 +15,15 @@ public:
 
 private slots:
     void testHello();
+    void testExpr();
     void testIf();
     void testFor();
     void testWhile();
     void testSwitch();
-    
+    void testComplex();
+
+    void testFab();
+    void testSort();
 protected:
 
 };
