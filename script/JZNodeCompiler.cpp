@@ -1974,6 +1974,9 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
 
 const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QString &name)
 {
+    if (name.isEmpty())
+        return nullptr;
+
     auto project = file->project();    
     auto obj_inst = project->environment()->objectManager();
     JZScriptClassItem *class_item = file->getClassItem();
@@ -1997,15 +2000,6 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QS
     else
         def = file->localVariable(base_name);
     if (!def)
-    {
-        JZScriptClassItem *class_file = project->getItemClass(file);
-        if (class_file)
-        {
-            auto class_meta = obj_inst->meta(class_file->className());
-            def = class_meta->param(base_name);
-        }
-    }
-    if (!def)
         def = project->globalVariable(base_name);
     if (!def)
         return nullptr;
@@ -2014,7 +2008,7 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QS
         return def;
     else
     {
-        auto obj_def = obj_inst->meta(def->type);
+        auto obj_def = obj_inst->meta(JZNodeType::baseType(def->type));
         if (!obj_def)
             return nullptr;
 

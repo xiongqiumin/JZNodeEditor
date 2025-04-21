@@ -14,10 +14,9 @@ public:
     virtual void saveToStream(QDataStream &s) const override;
     virtual void loadFromStream(QDataStream &s) override;
     
-    void setFunction(QString name);
+    void setFunction(QString fullName);
     void setFunction(const JZFunctionDefine *define);
-    QString function() const;
-    JZFunctionDefine functionDefine();
+    QString function() const;    
 
     void setVariable(const QString& name);  //在当前作用域的变量名，用于成员函数调用
     QString variable() const;
@@ -27,7 +26,8 @@ public:
     bool isMemberCall();
 
 protected:
-    virtual bool updateNode(QString &error) override;    
+    virtual bool updateNode(QString &error) override;
+    bool updateFunctionDefine(const JZFunctionDefine *define, QString &error);
 
     bool m_directCall;
     QString m_functionName;

@@ -751,10 +751,10 @@ QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &para
         }
         return ref;
     };
-
-    QVariantPtr *ref = nullptr;
+    
     if (m_stack.size() == 0)
     {
+        QVariantPtr *ref = nullptr;
         auto it = m_global.find(obj_list[0]);
         if (it != m_global.end())
             ref = &it.value();
@@ -768,11 +768,12 @@ QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &para
     {
         RunnerEnv *env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
         if (param.isStack())
-            ref = env->getRef(param.id());
+            return env->getRef(param.id());
         else if (param.isThis())
-            ref = &env->self;
+            return &env->self;
         else
         {
+            QVariantPtr *ref = nullptr;
             if (obj_list[0] == "this")
                 ref = &env->self;
             else
@@ -789,8 +790,6 @@ QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &para
                 return memberRef(ref);
         }
     }
-    Q_ASSERT(ref);
-    return ref;
 }
 
 bool JZNodeEngine::hasParam(int stack_level, const JZNodeIRParam &param)
@@ -809,6 +808,7 @@ QVariant JZNodeEngine::getParam(int stack_level, const JZNodeIRParam &param)
     else    
     {                
         auto ref = getParamRef(stack_level,param);
+        Q_ASSERT(ref);
         return *ref->ptr;        
     }
 }

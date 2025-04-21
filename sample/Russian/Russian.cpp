@@ -13,6 +13,9 @@
 
 SampleRussian::SampleRussian()
 {    
+    QFileInfo info(__FILE__);
+    m_root = info.path();
+    
     newProject("russian");        
 
     JZUiItem *ui_file = dynamic_cast<JZUiItem*>(m_project.getItem("./mainwindow.ui"));

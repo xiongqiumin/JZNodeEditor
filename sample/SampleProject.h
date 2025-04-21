@@ -12,11 +12,10 @@ public:
     JZProject *project();
     void loadProject();
     void saveProject();
-    bool run();
+    int run();
 
 protected:    
-    void newProject(QString project);
-    void addClassFile(QString class_name,QString super, QString ui_file = QString());
+    void newProject(QString project);    
     void addResources(QString path);
     bool copyDir(QString fromDir, QString toDir);
 

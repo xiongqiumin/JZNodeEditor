@@ -138,8 +138,7 @@ void JZProjectTree::sortItem(QTreeWidgetItem *item)
 
     UiHelper::treeSortChilds(item, [this](QTreeWidgetItem *a, QTreeWidgetItem *b)->bool {
         int a_pri = getProjectItem(a)->itemType();
-        int b_pri = getProjectItem(b)->itemType();
-        qDebug() << a->text(0) << a_pri << b->text(0) << b_pri;
+        int b_pri = getProjectItem(b)->itemType();        
         if (a_pri != b_pri)
             return a_pri < b_pri;
         else

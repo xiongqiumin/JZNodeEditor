@@ -319,11 +319,15 @@ QTreeWidgetItem *JZNodePanel::createParam(QString name)
 
 QTreeWidgetItem *JZNodePanel::createFunction(QString name)
 {    
+    QString className;
+    QString memberName;
+    JZRegExpHelp::splitDefine(name, className, memberName);
+
     JZNodeFunction func_node;
     func_node.setFunction(name);
 
     QTreeWidgetItem *item = createNode(&func_node);
-    item->setText(0, name);
+    item->setText(0, memberName);
     return item;
 }
 

@@ -356,6 +356,8 @@ set(JZNodeEditor_SOURCES
     #sample
     sample/Russian/Russian.cpp
     sample/Russian/Russian.h
+    sample/VisionDemo/VisionDemo.cpp
+    sample/VisionDemo/VisionDemo.h
     sample/SampleProject.cpp
     sample/SampleProject.h
 

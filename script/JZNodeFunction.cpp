@@ -62,15 +62,17 @@ void JZNodeFunction::loadFromStream(QDataStream &s)
     s >> m_functionName;
 }
 
-void JZNodeFunction::setFunction(QString name)
+void JZNodeFunction::setFunction(QString fullName)
 {
-    m_functionName = name;
+    m_functionName = fullName;
     update();
 }
 
 void JZNodeFunction::setFunction(const JZFunctionDefine *define)
 {    
-    setFunction(define->fullName());
+    m_functionName = define->fullName();
+    QString error;
+    updateFunctionDefine(define,error);
 }
     
 
@@ -79,49 +81,29 @@ QString JZNodeFunction::function() const
     return m_functionName;
 }
 
-JZFunctionDefine JZNodeFunction::functionDefine()
-{
-    JZFunctionDefine def;
-    def.setFullName(m_functionName);
-    def.isFlowFunction = isFlowNode();
-
-    auto in_list = paramInList();
-    for(int i = 0; i < in_list.size(); i++)
-    {
-        auto in = pin(in_list[i]);
-        QString in_type = in->dataType()[0];
-        def.paramIn.push_back(JZParamDefine(in->name(),in_type));
-    }
-
-    auto out_list = paramOutList();
-    for(int i = 0; i < out_list.size(); i++)
-    {
-        auto out = pin(out_list[i]);
-        QString out_type = out->dataType()[0];
-        def.paramOut.push_back(JZParamDefine(out->name(),out_type));
-    } 
-    
-    return def;
-}
-
 bool JZNodeFunction::updateNode(QString &error)
 {
     auto env = environment();
-    auto func = env->functionManager()->function(m_functionName);
-    if (!func)
+    auto define = env->functionManager()->function(m_functionName);
+    if (!define)
     {
         error = "函数不存在";
         return false;
     }
 
-    auto define = env->function(m_functionName);
-    m_functionName = define->fullName();
-    
+    if (!updateFunctionDefine(define, error))
+        return false;
+                
+    return true;
+}
+
+bool JZNodeFunction::updateFunctionDefine(const JZFunctionDefine *define,QString &error)
+{
     if (define->isFlowFunction)
     {
-        if(flowInCount() == 0)
+        if (flowInCount() == 0)
             addFlowIn();
-        if(flowOutCount() == 0)
+        if (flowOutCount() == 0)
             addFlowOut();
     }
 
@@ -131,12 +113,12 @@ bool JZNodeFunction::updateNode(QString &error)
         for (int i = count; i < define->paramIn.size(); i++)
         {
             addParamIn("");
-        }        
+        }
     }
 
     if (paramOutCount() < define->paramOut.size())
     {
-        int count = paramInCount();
+        int count = paramOutCount();
         for (int i = count; i < define->paramOut.size(); i++)
         {
             addParamOut("");
@@ -148,15 +130,15 @@ bool JZNodeFunction::updateNode(QString &error)
     for (int i = 0; i < define->paramIn.size(); i++)
     {
         auto pin = this->pin(pin_in_list[i]);
-        pin->setName(define->paramIn[i].name);        
-        pin->setDataType({ define->paramIn[i].type });            
+        pin->setName(define->paramIn[i].name);
+        pin->setDataType({ define->paramIn[i].type });
     }
 
     for (int i = 0; i < define->paramOut.size(); i++)
     {
         auto pin = this->pin(pin_out_list[i]);
-        pin->setName(define->paramOut[i].name);        
-        pin->setDataType({ define->paramOut[i].type });        
+        pin->setName(define->paramOut[i].name);
+        pin->setDataType({ define->paramOut[i].type });
     }
 
     if (paramInCount() != define->paramIn.size())
@@ -169,7 +151,7 @@ bool JZNodeFunction::updateNode(QString &error)
         error = "函数不存在" + QString::number(paramOutCount()) + "输出";
         return false;
     }
-    
+
     return true;
 }
 
@@ -177,7 +159,7 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
 {
     auto env = environment();
     auto def = c->function(m_functionName);       
-
+    
     QList<int> in_list = pinInList(Pin_param);
     QList<int> out_list = pinOutList(Pin_param);
     Q_ASSERT(def->paramIn.size() == in_list.size() && def->paramOut.size() == out_list.size());

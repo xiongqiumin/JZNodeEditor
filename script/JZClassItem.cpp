@@ -141,7 +141,7 @@ const JZParamDefine *JZScriptClassItem::memberVariable(QString name, bool hasUi)
 const JZParamDefine *JZScriptClassItem::memberThis()
 {
     m_this.name = "this";
-    m_this.type = m_name;
+    m_this.type = JZNodeType::pointerType(m_name);
     return &m_this;
 }
 
@@ -212,6 +212,7 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
     define.className = m_name;
     define.superName = m_super;
     define.id = m_classId;
+    define.manager = project()->environment()->objectManager();
 
     auto item_list = itemList(ProjectItem_any);
     for (int item_idx = 0; item_idx < item_list.size(); item_idx++)

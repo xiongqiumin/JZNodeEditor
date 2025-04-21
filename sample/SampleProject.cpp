@@ -13,10 +13,7 @@
 #include "JZEditorUtils.h"
 
 SampleProject::SampleProject()
-{
-    QFileInfo info(__FILE__);
-    m_root = info.path();
-
+{    
     m_objInst = m_project.environment()->objectManager();
     m_funcInst = m_project.environment()->functionManager();
 }
@@ -28,7 +25,7 @@ SampleProject::~SampleProject()
 
 QString SampleProject::loadUi(QString filename)
 {    
-    QString filepath = m_root + "/" + m_name + "/" + filename;
+    QString filepath = m_root + "/" + filename;
     QFile file(filepath);
     if (!file.open(QFile::ReadOnly | QFile::Text))
     {
@@ -41,32 +38,25 @@ QString SampleProject::loadUi(QString filename)
 
 void SampleProject::newProject(QString name)
 {
+    Q_ASSERT(!m_root.isEmpty());
+    
     m_name = name;
-
     QString dir = qApp->applicationDirPath() + "/sample/" + m_name;
     if (!QDir().exists(dir))
         QDir().mkpath(dir);
+
+    QString project_path = dir + "/" + m_name + ".jzproj";
         
     JZProjectTemplate temp;
     temp.initProject(&m_project, "ui");
-}
-
-void SampleProject::addClassFile(QString class_name, QString super, QString ui_file)
-{
-    JZScriptFile *file = new JZScriptFile();
-    file->setName(class_name + ".jz");
-    m_project.addItem("./", file);
-
-    auto class_item = file->addClass(class_name, super);
-
-    JZUiItem *file_ui = new JZUiItem();    
-    file_ui->setXml(loadUi(ui_file));    
-    class_item->addUi(file_ui);
+    
+    m_project.saveAllItem();
+    m_project.saveAs(project_path);
 }
 
 void SampleProject::addResources(QString name)
 {
-    m_resources = m_root + "/" + m_name + "/" + name;
+    m_resources = m_root + "/" + name;
 }
 
 bool SampleProject::copyDir(QString srcPath, QString dstPath)
@@ -129,7 +119,7 @@ void SampleProject::saveProject()
     }
 }
 
-bool SampleProject::run()
+int SampleProject::run()
 {    
     QString program_path = m_project.path() + "/build/" + m_name + ".program";
     QString dump_path = m_project.path() + "/build/dump";
@@ -145,7 +135,7 @@ bool SampleProject::run()
     if (!builder.build(&program))
     {
         qDebug().noquote() << builder.error();
-        return false;
+        return 1;
     }
     QDir::setCurrent(m_project.path());
 
@@ -158,7 +148,7 @@ bool SampleProject::run()
     if (!program.save(program_path))
     {
         qDebug() << "save failed";
-        return false;
+        return 1;
     }
 
     JZNodeVM vm;

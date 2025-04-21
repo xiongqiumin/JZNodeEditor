@@ -96,7 +96,7 @@ JZNodeObjectDefine::JZNodeObjectDefine()
     isCObject = false;
     isUiWidget = false;    
     valueType = false;
-    this->manager = manager;
+    manager = nullptr;
 }
 
 QString JZNodeObjectDefine::fullname() const

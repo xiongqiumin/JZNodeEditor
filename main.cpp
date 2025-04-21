@@ -10,6 +10,7 @@
 #include "JZNodeVM.h"
 #include "mainwindow.h"
 #include "JZNodeProgramDumper.h"
+#include "sample/VisionDemo/VisionDemo.h"
 
 using namespace std;
 
@@ -65,6 +66,13 @@ int runProgram(QString name,bool debug)
     return qApp->exec();
 }
 
+int runSample()
+{
+    SampleVisionDemo demo;
+    demo.initCameraHik();
+    return demo.run();    
+}
+
 int main(int argc,char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -72,6 +80,7 @@ int main(int argc,char *argv[])
     JZNodeInit();               
 
     //return runProgram("Project10", false);
+    //return runSample();
 
     QCommandLineParser parser;
 
