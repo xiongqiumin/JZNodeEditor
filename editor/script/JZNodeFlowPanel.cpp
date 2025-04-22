@@ -3,6 +3,8 @@
 #include "JZScriptItem.h"
 #include "JZNodeView.h"
 #include "JZNodeValue.h"
+#include "JZNodeFlow.h"
+#include "JZNodeOperator.h"
 
 // JZNodeFlowPanel
 JZNodeFlowPanel::JZNodeFlowPanel(QWidget *widget)

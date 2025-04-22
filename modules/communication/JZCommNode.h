@@ -1,4 +1,4 @@
-#ifndef JZ_COMM_NODE_H_
+﻿#ifndef JZ_COMM_NODE_H_
 #define JZ_COMM_NODE_H_
 
 #include "JZNode.h"

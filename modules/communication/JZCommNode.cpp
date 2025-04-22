@@ -1,4 +1,4 @@
-#include "JZCommNode.h"
+﻿#include "JZCommNode.h"
 #include "JZNodeCompiler.h"
 
 //JZCommInitNode

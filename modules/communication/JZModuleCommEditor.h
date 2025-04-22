@@ -1,4 +1,4 @@
-#ifndef JZ_MODULE_COMM_EDITOR_H_
+﻿#ifndef JZ_MODULE_COMM_EDITOR_H_
 #define JZ_MODULE_COMM_EDITOR_H_
 
 void JZModuleCommEditorInit();

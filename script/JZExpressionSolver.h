@@ -1,4 +1,4 @@
-#ifndef JZ_EXPRESSION_SOLVER_H_
+﻿#ifndef JZ_EXPRESSION_SOLVER_H_
 #define JZ_EXPRESSION_SOLVER_H_
 
 #include <QString>

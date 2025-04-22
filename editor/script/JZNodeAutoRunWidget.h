@@ -1,4 +1,4 @@
-#ifndef JZNODE_AUTO_RUN_EDIT_DIALOG_H_
+﻿#ifndef JZNODE_AUTO_RUN_EDIT_DIALOG_H_
 #define JZNODE_AUTO_RUN_EDIT_DIALOG_H_
 
 #include <QWidget>

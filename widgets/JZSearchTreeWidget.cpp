@@ -1,4 +1,4 @@
-#include <QVBoxLayout>
+﻿#include <QVBoxLayout>
 #include "JZSearchTreeWidget.h"
 
 JZSearchTreeWidget::JZSearchTreeWidget()

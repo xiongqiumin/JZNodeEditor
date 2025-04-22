@@ -1,4 +1,4 @@
-#ifndef JZ_CAMERA_FILE_H_
+﻿#ifndef JZ_CAMERA_FILE_H_
 #define JZ_CAMERA_FILE_H_
 
 #include "JZCamera.h"

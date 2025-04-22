@@ -1,4 +1,4 @@
-#ifndef JZEDITOR_GLOBAL_H_
+﻿#ifndef JZEDITOR_GLOBAL_H_
 #define JZEDITOR_GLOBAL_H_
 
 #include "JZScriptEnvironment.h"

@@ -201,7 +201,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         if (!m_compiler.checkParamDefine(def, error))
         {
             auto global_item = m_project->globalDefine();
-            m_error += makeParamLink(error, global_item->path(),false, i);
+            m_error += makeParamLink(error, global_item->itemPath(),false, i);
         }
     }
     

@@ -1,4 +1,4 @@
-#include <QHBoxLayout>
+﻿#include <QHBoxLayout>
 #include <QFileDialog>
 #include <QIcon>
 #include <QComboBox>
@@ -112,12 +112,13 @@ bool ItemFocusEventFilter::eventFilter(QObject *object, QEvent *event)
         auto main = object->parent();
         while (main)
         {
-            if (main->property("isEditor").toBool())
+            if (main->property("isParamEditor").isValid())
                 break;
             main = main->parent();
         }
 
-        // Forward focus events to editor because the QStyledItemDelegate relies on them                  
+        // Forward focus events to editor because the QStyledItemDelegate relies on them         
+        Q_ASSERT(main);
         QCoreApplication::sendEvent(main, event);
         break;
     }
@@ -136,6 +137,8 @@ JZNodeParamValueWidget::JZNodeParamValueWidget()
     QHBoxLayout *l = new QHBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);
     setLayout(l);
+
+    setProperty("isParamEditor", true);
 }
 
 JZNodeParamValueWidget::~JZNodeParamValueWidget()

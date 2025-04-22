@@ -672,9 +672,11 @@ void JZNodeView::showTip(QPointF pt,QString text)
     if (QToolTip::isVisible() && (tip - m_tipPoint).manhattanLength() < 15)
         return;
 
+    LinkInfo link = JZNodeUtils::parseLink(text);
+
     m_tipPoint = tip;
     tip = mapToGlobal(tip);    
-    QToolTip::showText(tip , text, nullptr, QRect(), 15 * 1000);    
+    QToolTip::showText(tip , link.text, nullptr, QRect(), 15 * 1000);
 }
 
 void JZNodeView::clearTip()
@@ -1312,8 +1314,8 @@ void JZNodeView::onContextMenu(const QPoint &pos)
     if (!item)
     {
         QMenu* addMenu = menu.addMenu("添加节点");
-        QMenu* menu_op = addMenu->addMenu("操作符");
-        /*
+        QMenu* menu_op = addMenu->addMenu("操作");
+        
         auto item_op = m_panel->itemOp();
         for (int i = 0; i < item_op->childCount(); i++)
         {
@@ -1322,7 +1324,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
             actAddList << menu_op->addAction(child->text(0));
         }
 
-        QMenu* menu_stat = addMenu->addMenu("流程");
+        QMenu* menu_stat = addMenu->addMenu("过程");
         auto item_process = m_panel->itemProcess();
         for (int i = 0; i < item_process->childCount(); i++)
         {
@@ -1330,7 +1332,7 @@ void JZNodeView::onContextMenu(const QPoint &pos)
             actAddItemList << child;
             actAddList << menu_stat->addAction(child->text(0));
         }
-        */
+        
         actPaste = menu.addAction("粘贴");                
     }
     else
@@ -1349,45 +1351,8 @@ void JZNodeView::onContextMenu(const QPoint &pos)
             auto item_pos = node_item->mapFromScene(scene_pos);            
             pin_id = node_item->pinAtInName(item_pos);
 
-            QStringList actions_list;
-
-            /*
-            if(pin_id >= 0)
-                actions_list = node_item->node()->pinActionList(pin_id);            
-
-            if (actions_list.size() > 0)
-            {
-                for (int i = 0; i < actions_list.size(); i++)
-                    pin_actions << menu.addAction(actions_list[i]);
-            }
-            else
-            {                
-                actions_list = node_item->node()->actionList();
-                for (int i = 0; i < actions_list.size(); i++)
-                    node_actions << menu.addAction(actions_list[i]);
-
-                if (node->type() == Node_function)
-                {
-                    auto func = (JZNodeFunction*)node;
-                    auto func_def = func_inst->function(func->function());
-                    if (func_def && !func_def->isCFunction)
-                    {
-                        QString fullName = func->function();
-                        actFuncGoto = menu.addAction("跳转到");
-                        actFuncGoto->setData(fullName);
-                    }
-                    actFuncRename = menu.addAction("修改");
-                    actFuncRename->setData(func->function());
-                }
-                else if (node->type() == Node_expr)
-                {
-                    actSetExpr = menu.addAction("设置表达式");
-                }
-
-                actCpy = menu.addAction("复制节点");
-                actDel = menu.addAction("删除节点");
-            }
-            */
+            actCpy = menu.addAction("复制节点");
+            actDel = menu.addAction("删除节点");            
         }
         else if (item->type() == Item_line)
             actDel = menu.addAction("删除连线");
@@ -1490,18 +1455,6 @@ void JZNodeView::onContextMenu(const QPoint &pos)
         node_func->setFunction(func_inst->function(text));
         onNodeChanged(node_func->id(), old);
     }
-    else if(ret == actSetExpr)
-    {        
-        auto node_expr = dynamic_cast<JZNodeExpression*>(node);
-        QString expr = getExpr(node_expr->expr());
-        if(expr.isEmpty() || expr == node_expr->expr())
-            return;
-
-        auto old = getNodeData(node_expr->id());
-        QString error;
-        node_expr->setExpr(expr);
-        onNodeChanged(node_expr->id(),old);
-    }   
     else if (ret == actEditGroup)
     {
         int group_id = dynamic_cast<JZNodeGroupItem*>(item)->id();
@@ -1663,22 +1616,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
     auto factory = JZNodeFactory::instance();
     if(event->mimeData()->hasFormat("node_data"))
     {
-        QByteArray node_data = event->mimeData()->data("node_data");
-        QDataStream s(node_data);
-
-        int node_type;
-        s >> node_type;
-        if(node_type == Node_expr)
-        {
-            QString expr = getExpr();
-            if(expr.isEmpty())
-                return;
-            
-            JZNodeExpression node_expr;
-            node_expr.setExpr(expr);
-            node_data = factory->saveNode(&node_expr);
-        }        
-        
+        QByteArray node_data = event->mimeData()->data("node_data");                       
         addCreateNodeCommand(node_data,mapToScene(event->pos()));
         event->accept();
     }

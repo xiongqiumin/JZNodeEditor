@@ -1,4 +1,4 @@
-#include "JZModuleModbusEditor.h"
+﻿#include "JZModuleModbusEditor.h"
 
 /*
 JZNodeModbusConfig::JZNodeModbusConfig()

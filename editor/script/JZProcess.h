@@ -1,4 +1,4 @@
-#ifndef JZ_PROCESS_H_
+﻿#ifndef JZ_PROCESS_H_
 #define JZ_PROCESS_H_
 
 enum ProcessStatus

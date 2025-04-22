@@ -1,4 +1,4 @@
-#ifndef JZNODE_UTILS_H_
+﻿#ifndef JZNODE_UTILS_H_
 #define JZNODE_UTILS_H_
 
 #include <QString>
@@ -17,11 +17,18 @@ struct FunctionInfo
 };
 
 
+struct LinkInfo {
+    QString name;    
+    QString text;
+    QVariantMap params;
+};
+
 class JZNodeUtils
 {
 public:    
     static MemberInfo splitMember(QString name);
     static QString makeLink(QString tips, QString path, QString args);
+    static LinkInfo parseLink(QString line);
 };
 
 #endif // !JZNODE_UTILS_H_

@@ -1,4 +1,4 @@
-#include <QPainter>
+﻿#include <QPainter>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include "JZNodeViewMap.h"

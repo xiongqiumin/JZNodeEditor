@@ -1,4 +1,4 @@
-#ifndef JZ_MODEL_NODE_H_
+﻿#ifndef JZ_MODEL_NODE_H_
 #define JZ_MODEL_NODE_H_
 
 #include "JZNode.h"

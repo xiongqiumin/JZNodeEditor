@@ -1,7 +1,12 @@
-#ifndef JZNODE_SAMPLE_PROJECT_H_
+﻿#ifndef JZNODE_SAMPLE_PROJECT_H_
 #define JZNODE_SAMPLE_PROJECT_H_
 
 #include "JZProject.h"
+#include "JZNodeFlow.h"
+#include "JZNodeValue.h"
+#include "JZNodeOperator.h"
+#include "JZNodeFunction.h"
+#include "JZNodeExpression.h"
 
 class SampleProject
 {

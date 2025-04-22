@@ -1,4 +1,4 @@
-#ifndef JZ_MODEL_MANAGER_EDITOR_H_
+﻿#ifndef JZ_MODEL_MANAGER_EDITOR_H_
 #define JZ_MODEL_MANAGER_EDITOR_H_
 
 void JZModuleModelEditorInit();

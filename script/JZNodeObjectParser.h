@@ -1,4 +1,4 @@
-#ifndef JZNODE_OBJECT_PARSER_H_
+﻿#ifndef JZNODE_OBJECT_PARSER_H_
 #define JZNODE_OBJECT_PARSER_H_
 
 #include "JZNodeObject.h"

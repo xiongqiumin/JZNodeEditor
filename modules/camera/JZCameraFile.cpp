@@ -1,4 +1,4 @@
-#include <QTimer>
+﻿#include <QTimer>
 #include <QDir>
 #include <QFileInfo>
 #include "JZCameraFile.h"

@@ -1,4 +1,4 @@
-#ifndef LOG_WIDGET_H_
+﻿#ifndef LOG_WIDGET_H_
 #define LOG_WIDGET_H_
 
 #include <QWidget>
@@ -23,14 +23,6 @@ protected slots:
     void onLogContextMenu(QPoint pos);
 
 protected:
-    struct TagInfo {
-        QString name;
-        QString text;
-        QVariantMap params;
-    };
-
-    TagInfo parseTag(QString line);
-
     QTextCharFormat m_baseForamt;
 };
 

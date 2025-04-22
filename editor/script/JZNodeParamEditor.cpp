@@ -50,16 +50,15 @@ public:
 
     virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {        
-        auto item = m_table->item(index.row(), index.column());
-        QString type_text = m_table->item(index.row(), 1)->text();        
-        int dataType = editorEnvironment()->nameToType(type_text);
+        const JZParamDefine *define = m_editor->param(index.row());        
+        int dataType = editorEnvironment()->nameToType(define->type);
         if (dataType == Type_none)
             return nullptr;
 
         auto edit = new JZNodeParamValueWidget();
         edit->setParent(parent);
         edit->initWidget(dataType);
-        edit->setValue(option.text);
+        edit->setValue(define->value);
 
         ItemFocusEventFilter *filter = new ItemFocusEventFilter(edit);
         edit->focusWidget()->installEventFilter(filter);
@@ -72,14 +71,15 @@ public:
     {
         auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
         model->setData(index, edit->value());
+        edit->deleteLater();
     }
 
-    void setTable(QTableWidget *table)
+    void setEditor(JZNodeParamEditor *table)
     {
-        m_table = table;
+        m_editor = table;
     }
 
-    QTableWidget *m_table;
+    JZNodeParamEditor *m_editor;
 };
 
 //JZNodeParamEditorCommand
@@ -173,7 +173,7 @@ JZNodeParamEditor::JZNodeParamEditor()
     m_table->setItemDelegateForColumn(1, type_delegate);
 
     ValueItemDelegate *value_delegate = new ValueItemDelegate(this);
-    value_delegate->setTable(m_table);
+    value_delegate->setEditor(this);
     m_table->setItemDelegateForColumn(2, value_delegate);        
     
     connect(m_table, &QTableWidget::itemChanged, this, &JZNodeParamEditor::onItemChanged);
@@ -186,6 +186,12 @@ JZNodeParamEditor::JZNodeParamEditor()
 JZNodeParamEditor::~JZNodeParamEditor()
 {
     delete ui;
+}
+
+const JZParamDefine *JZNodeParamEditor::param(int row)
+{
+    QString param_name = m_table->item(row, 0)->text();
+    return m_file->variable(param_name);
 }
 
 JZScriptClassItem *JZNodeParamEditor::classItem()
@@ -225,6 +231,9 @@ void JZNodeParamEditor::updateItem(int row, const JZParamDefine *def)
     
     QTableWidgetItem *itemType = new QTableWidgetItem(def->type);    
     m_table->setItem(row, 1, itemType);    
+
+    QTableWidgetItem *itemValue = new QTableWidgetItem(def->value);
+    m_table->setItem(row, 2, itemValue);
 }
 
 void JZNodeParamEditor::updateUiItem(int row,const JZParamDefine *def)

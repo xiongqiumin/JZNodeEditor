@@ -1,4 +1,4 @@
-#ifndef TEST_OPENCV_H_
+﻿#ifndef TEST_OPENCV_H_
 #define TEST_OPENCV_H_
 
 #include <QObject>

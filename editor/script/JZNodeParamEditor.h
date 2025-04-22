@@ -47,6 +47,8 @@ class JZNodeParamEditor : public JZEditor
 public:
     JZNodeParamEditor();
     ~JZNodeParamEditor();
+
+    const JZParamDefine *param(int index);
     
     virtual void open(JZProjectItem *item) override;
     virtual void close() override;

@@ -1,4 +1,4 @@
-#include "JZCamera.h"
+﻿#include "JZCamera.h"
 
 JZCamera::JZCamera(QObject *parent)
     :QObject(parent)

@@ -17,17 +17,18 @@
 #include "JZNodeExpression.h"
 #include "JZRegExpHelp.h"
 #include "JZNodeFunctionManager.h"
-#include "JZNodeValue.h"
-#include "JZNodeFactory.h"
 #include "JZProjectItem.h"
 #include "JZNodeObject.h"
 #include "JZProject.h"
 #include "JZScriptItem.h"
 #include "JZNodeFunction.h"
 #include "JZNodeEvent.h"
+#include "JZNodeView.h"
+#include "JZNodeFlow.h"
+#include "JZNodeValue.h"
+#include "JZNodeFactory.h"
 #include "JZNodeLocalParamEditDialog.h"
 #include "JZNodeEditorManager.h"
-#include "JZNodeView.h"
 
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
@@ -94,6 +95,16 @@ void JZNodePanel::setFile(JZScriptItem *file)
 void JZNodePanel::setView(JZNodeView *view)
 {
     m_view = view;
+}
+
+QTreeWidgetItem *JZNodePanel::itemOp()
+{
+    return m_itemOp;
+}
+
+QTreeWidgetItem *JZNodePanel::itemProcess()
+{
+    return m_itemProcess;
 }
 
 void JZNodePanel::updateDefine()
@@ -355,6 +366,7 @@ void JZNodePanel::initBasic()
 
     QTreeWidgetItem *itemOp = createFolder("操作");
     item_basic->addChild(itemOp);
+    m_itemOp = itemOp;
 
     JZNodeParam node_param;
     itemOp->addChild(createNode(&node_param));
@@ -557,7 +569,8 @@ void JZNodePanel::initExpression(QTreeWidgetItem *root)
 void JZNodePanel::initProcess(QTreeWidgetItem *root)
 {
     QTreeWidgetItem *item_process = createFolder("过程");    ;
-    
+    m_itemProcess = item_process;
+
     JZNodeIf node_if;
     JZNodeSwitch node_switch;
     JZNodeSequence node_sequence;

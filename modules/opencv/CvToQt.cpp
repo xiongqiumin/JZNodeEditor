@@ -1,4 +1,4 @@
-#include "CvToQt.h"
+﻿#include "CvToQt.h"
 
 QRect toQRect(const cv::Rect& cvRect) {
     return QRect(cvRect.x, cvRect.y, cvRect.width, cvRect.height);

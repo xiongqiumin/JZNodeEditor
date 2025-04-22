@@ -801,7 +801,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
                 {
                     NodeCompilerInfo info;
                     info.node_id = graph_node->node->id();
-                    info.error = "需要连接输入";
+                    info.error = "需要连接输入流程";
                     m_nodeInfo[info.node_id] = info;
                 }
             }            
@@ -1709,11 +1709,7 @@ int JZNodeCompiler::nextPc()
 
 const JZFunctionDefine *JZNodeCompiler::function(QString name)
 {
-    const JZFunctionDefine *func = project()->function(name);
-    if(func)
-        return func;
-        
-    return m_env->functionManager()->function(name);
+    return function(m_scriptItem, name);
 }
 
 JZNodeIR *JZNodeCompiler::statment(int index)
@@ -2072,6 +2068,16 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QS
 
         return obj_def->param(param_name);
     }
+}
+
+const JZFunctionDefine* JZNodeCompiler::function(JZScriptItem* file, const QString& name)
+{
+    const JZFunctionDefine* func = file->project()->function(name);
+    if (func)
+        return func;
+
+    auto env = file->project()->environment();
+    return env->functionManager()->function(name);
 }
 
 void JZNodeCompiler::setRegCallFunction(const JZFunctionDefine *func)

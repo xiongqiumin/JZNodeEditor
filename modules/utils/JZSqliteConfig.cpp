@@ -1,4 +1,4 @@
-#include "JZSqliteConfig.h"
+﻿#include "JZSqliteConfig.h"
 
 JZSqliteConfig::JZSqliteConfig()
 {

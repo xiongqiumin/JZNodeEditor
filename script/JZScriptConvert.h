@@ -1,9 +1,11 @@
-#ifndef JZ_ScriptItem_Help_H_
+﻿#ifndef JZ_ScriptItem_Help_H_
 #define JZ_ScriptItem_Help_H_
 
 #include "JZScriptItem.h"
 #include "JZScriptFile.h"
 #include "JZNodeFlow.h"
+#include "JZNodeValue.h"
+#include "JZNodeFunction.h"
 
 class asCScriptNode;
 class JZScriptConvert
@@ -24,6 +26,7 @@ protected:
 	{ 
 		BlockEnv();
 
+		QList<JZParamDefine> paramList;  //ԭʼ����
 		QList<JZNode*> flowList;
 		JZNode* postStatment;
     };    
@@ -35,9 +38,14 @@ protected:
 		m_script->addNode(node);
 		return node;
 	}
+	JZNodeParam* createGetParam(QString name);
+	JZNodeSetParam* createSetParam(QString name);
+	JZNode* createOpNode(QString op);
+	JZNode* createSingleOpNode(QString op);
 	
 	JZScriptEnvironment* environment();
 	void init(JZScriptItem* script);
+	JZNodeFunction *createFunction(QString function, asCScriptNode* node);
 	
 	bool addFunction(asCScriptNode* node);
 	void nodeDebug(asCScriptNode* root, QString& result, int level);
@@ -55,9 +63,11 @@ protected:
 	JZNode* toExpressionStatement(asCScriptNode* node);
 	JZNode* toExpressionStatementFlow(asCScriptNode* node);
 	JZNode* toFunctionCall(asCScriptNode* node);
+	JZNode* toMemberFunctionCall(JZNode *self,asCScriptNode* node);
 
 	const JZFunctionDefine *function(QString name);
 	const JZParamDefine* getVariableInfo(QString name);
+	void addLocalVariable(QString name, QString data_type);
 
 	bool toStatement(asCScriptNode* node);
 	bool toStatementBlock(asCScriptNode* node, QList<JZNode*>& list);
@@ -73,8 +83,6 @@ protected:
 	bool toFunctionCallStatement(asCScriptNode* node);
 	bool toDeclarationStatement(asCScriptNode* node);
 	
-	JZNode* createOpNode(QString op);
-	JZNode* createSingleOpNode(QString op);
 	BlockEnv* currentBlock();
 	void pushBlock();
 	void popBlock();
@@ -83,6 +91,7 @@ protected:
 	QString m_code;
 	QString m_error;
 	QList<BlockEnvPtr> m_blockEnv;
+	QMap<QString, JZParamDefine> m_localVaribaleMap;  //block变量到局部变量的转换
 };
 
 #endif // !JZScriptConvert

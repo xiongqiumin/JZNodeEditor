@@ -18,7 +18,8 @@ JZNodeExpression::JZNodeExpression()
 {
     m_type = Node_expr;
     m_name = "expr";
-    m_exprItem = new JZScriptItem(ProjectItem_scriptFunction);    
+    m_exprItem = new JZScriptItem(ProjectItem_scriptFunction);
+    m_expression = "c = a + b;";
 }
 
 JZNodeExpression::~JZNodeExpression()

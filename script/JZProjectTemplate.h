@@ -1,4 +1,4 @@
-#ifndef JZ_PROJECT_TEMPLATE_
+﻿#ifndef JZ_PROJECT_TEMPLATE_
 #define JZ_PROJECT_TEMPLATE_
 
 #include <QString>

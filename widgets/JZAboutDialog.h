@@ -1,4 +1,4 @@
-#ifndef JZ_ABOUT_DIALOG_H_
+﻿#ifndef JZ_ABOUT_DIALOG_H_
 #define JZ_ABOUT_DIALOG_H_
 
 #include "JZBaseDialog.h"

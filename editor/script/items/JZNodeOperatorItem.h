@@ -1,4 +1,4 @@
-#ifndef JZNODE_OPERATOR_ITEM_H_
+﻿#ifndef JZNODE_OPERATOR_ITEM_H_
 #define JZNODE_OPERATOR_ITEM_H_
 
 #include "JZNodeGraphItem.h"

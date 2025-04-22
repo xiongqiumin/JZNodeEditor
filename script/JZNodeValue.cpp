@@ -39,6 +39,8 @@ void JZNodeLiteral::setDataType(int type)
         setLiteral("false");
     else if (type == Type_int)
         setLiteral("0");
+    else if (type == Type_int64)
+        setLiteral("0");
     else if (type == Type_double)
         setLiteral("0.0");
     else if (type == Type_string)

@@ -7,7 +7,9 @@
 #include <QMenu>
 #include <QTextDocument>
 #include <QScrollBar>
+#include <QUrlQuery>
 #include "LogManager.h"
+#include "JZNodeUtils.h"
 
 //LogBrowser
 LogBrowser::LogBrowser()
@@ -36,31 +38,6 @@ void LogBrowser::onLogContextMenu(QPoint pos)
         this->copy();
 }
 
-LogBrowser::TagInfo LogBrowser::parseTag(QString text)
-{
-    LogBrowser::TagInfo tg;
-
-    int s1 = text.indexOf("<");
-    int e1 = text.indexOf(" ");
-    tg.name = text.mid(s1 + 1, e1 - (s1 + 1));
-    s1 = e1 + 1;
-    e1 = text.indexOf(">");
-
-    QString param_line = text.mid(s1, e1 - s1);
-    QStringList lines = param_line.split(" ");
-    for (int i = 0; i < lines.size(); i++)
-    {
-        QString attr = lines[i];
-        int idx = attr.indexOf("=");
-        tg.params[attr.left(idx)] = attr.mid(idx+1);
-    }
-
-    int s2 = text.indexOf("<", e1);
-    tg.text = text.mid(e1 + 1, s2 - (e1 + 1));
-
-    return tg;
-}
-
 void LogBrowser::addLog(QString log)
 {
     QStringList list  = log.split("\n");
@@ -78,16 +55,17 @@ void LogBrowser::addLog(QString log)
             tc.movePosition(QTextCursor::End);
             tc.setCharFormat(m_baseForamt);
 
-            auto tg = parseTag(link);
+            auto tg = JZNodeUtils::parseLink(link);    
 
-            QString pre_text = line.left(s);
+            QString href = tg.params["href"].toString();
+            QString pre_text = QUrl(href).path() + ": ";
             tc.insertBlock();
             tc.insertText(pre_text);
 
             QTextCharFormat fmt;
             fmt.setForeground(QColor("blue"));
             fmt.setAnchor(true);
-            fmt.setAnchorHref(tg.params["href"].toString());
+            fmt.setAnchorHref(href);
             fmt.setToolTip("address");
             fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);                        
             tc.insertText(tg.text, fmt);            

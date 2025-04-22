@@ -1,4 +1,4 @@
-#include "JZModuleComm.h"
+﻿#include "JZModuleComm.h"
 #include "JZCommNode.h"
 #include "JZNodeFactory.h"
 

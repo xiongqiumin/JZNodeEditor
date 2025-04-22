@@ -1,4 +1,4 @@
-#include <QDebug>
+ï»¿#include <QDebug>
 #include <QStack>
 #include "JZProject.h"
 #include "JZScriptConvert.h"
@@ -40,16 +40,48 @@ JZScriptEnvironment* JZScriptConvert::environment()
 
 const JZFunctionDefine* JZScriptConvert::function(QString name)
 {
-	if (name == m_script->name())
-		return &m_script->function();
-
-	auto env = environment();
-	return env->function(name);
+	return JZNodeCompiler::function(m_script, name);
 }
 
 const JZParamDefine* JZScriptConvert::getVariableInfo(QString name)
 {
+	for (int i = m_blockEnv.size() - 1; i >= 0; i--)
+	{
+		auto b = m_blockEnv[i].data();
+		for (int param_idx = 0; param_idx < b->paramList.size(); param_idx++)
+		{
+			if (b->paramList[param_idx].name == name)
+			{
+				QString param_name = b->paramList[param_idx].name;
+				Q_ASSERT(m_localVaribaleMap.contains(param_name));
+				
+				return &m_localVaribaleMap[param_name];
+			}
+		}
+	}
+
 	return JZNodeCompiler::getVariableInfo(m_script, name);
+}
+
+void JZScriptConvert::addLocalVariable(QString name, QString data_type)
+{
+	currentBlock()->paramList.push_back(JZParamDefine(name, data_type));
+
+	QStringList variables;
+	for (auto& v : m_localVaribaleMap)
+		variables << v.name;
+
+	QString replace_name;
+	if (!m_localVaribaleMap.contains(name))
+		replace_name = name;
+	else
+		replace_name = JZRegExpHelp::uniqueString("__tmp__" + name, variables);
+	
+	JZParamDefine define;
+	define.name = replace_name;
+	define.type = data_type;
+	m_localVaribaleMap.insert(name, define);
+	m_script->addLocalVariable(replace_name, data_type);
 }
 
 QString JZScriptConvert::error()
@@ -180,6 +212,7 @@ bool JZScriptConvert::convertExpression(QString code, JZScriptItem* jz_script)
 bool JZScriptConvert::addFunction(asCScriptNode* node)
 {
     JZFunctionDefine func;
+	func.isFlowFunction = false;
 
     auto child = node->firstChild;
 
@@ -281,7 +314,6 @@ QList<asCScriptNode*> JZScriptConvert::nodeChilds(asCScriptNode* node)
 QList<JZParamDefine> JZScriptConvert::toParamList(asCScriptNode* node)
 {
     QList<JZParamDefine> list;
-
     auto child = node->firstChild;
     while (child)
     {
@@ -295,9 +327,15 @@ QList<JZParamDefine> JZScriptConvert::toParamList(asCScriptNode* node)
 			{
 				p.type = nodeText(type_list[0]) + "<" + nodeText(type_list[1]) + ">";
 			}
-            child = nextNode(child, 2);
+            child = nextNode(child, 1);
         }
-
+		if (child->nodeType == snDataType && child->firstChild)
+		{
+			QString post = nodeText(child->firstChild);
+			Q_ASSERT(post == "&");
+			p.type += "*";
+		}
+		child = child->next;
         if (child && child->nodeType == snIdentifier)
         {
             p.name = nodeText(child);
@@ -358,6 +396,34 @@ JZNode* JZScriptConvert::createSingleOpNode(QString op)
 
 	Q_ASSERT(0);
 	return nullptr;
+}
+
+JZNodeParam* JZScriptConvert::createGetParam(QString name)
+{
+	auto info = getVariableInfo(name);
+	if (!info)
+	{
+		m_error = "no such variable " + name;
+		return nullptr;
+	}
+
+	JZNodeParam* node = createNode<JZNodeParam>();
+	node->setVariable(info->name);
+	return node;
+}
+
+JZNodeSetParam* JZScriptConvert::createSetParam(QString name)
+{
+	auto info = getVariableInfo(name);
+	if (!info)
+	{
+		m_error = "no such variable " + name;
+		return nullptr;
+	}
+
+	JZNodeSetParam* node = createNode<JZNodeSetParam>();
+	node->setVariable(info->name);
+	return node;
 }
 
 JZNode* JZScriptConvert::createOpNode(QString op)
@@ -572,6 +638,15 @@ JZNode* JZScriptConvert::toAssignment(asCScriptNode* node)
 {
 	Q_ASSERT(node->nodeType == snAssignment);
 
+	auto isContainerGet = [this](JZNode *node)->bool {
+		if (node->type() != Node_function)
+			return false;
+
+		auto node_func = dynamic_cast<JZNodeFunction*>(node);
+		auto func_def = this->function(node_func->function());
+		return func_def && func_def->name == "get" && JZNodeType::isContainerType(func_def->className);
+	};
+
 	auto list = nodeChilds(node);
 	if (list.size() == 1)
 	{
@@ -581,33 +656,110 @@ JZNode* JZScriptConvert::toAssignment(asCScriptNode* node)
 	{
 		if (list[1]->nodeType == snExprOperator)
 		{
-            QString param_name = nodeText(list[0]);
 			QString op = nodeText(list[1]);			
-			auto node_set = createNode<JZNodeSetParam>();
-			node_set->setVariable(param_name);
-            
+			JZNode* node_get = toExpression(list[0]->firstChild);
+            if (!node_get)
+                return nullptr;
+			
+			JZNode* node_set = nullptr;
+			int node_set_index = -1;
+			if (node_get->type() == Node_param)
+			{
+				node_set = createSetParam(node_get->paramOutValue(0));
+				if (!node_set)
+					return nullptr;
+
+				node_set_index = 1;
+			}
+			else if(isContainerGet(node_get))
+			{
+				auto get_func = dynamic_cast<JZNodeFunction*>(node_get);
+				auto func_def = this->function(get_func->function());
+				QString set_func_name = func_def->className + "::set";
+
+				JZNodeFunction *set_func = createNode<JZNodeFunction>();
+				set_func->setFunction(set_func_name);
+				node_set = set_func;
+
+				//self
+				auto get_self_line_id = m_script->getConnectInput(get_func->id(), get_func->paramIn(0));
+				auto get_self_line = m_script->getConnect(get_self_line_id[0]);
+				m_script->addConnect(get_self_line->from, set_func->paramInGemo(0));
+
+				//index
+				auto get_index_line_id = m_script->getConnectInput(get_func->id(), get_func->paramIn(1));
+				auto get_index_line = m_script->getConnect(get_index_line_id[0]);
+				m_script->addConnect(get_index_line->from, set_func->paramInGemo(1));
+
+				node_set_index = 2;
+			}
+			else
+			{
+				m_error = nodeText(list[0]) + " ï¿½ï¿½ï¿½Ü¸ï¿½Öµ";
+				return nullptr;
+			}
+
             auto node_value = toAssignment(list[2]);
             if (op == "=")
             {
-                m_script->addConnectForce(node_value->paramOutGemo(0), node_set->paramInGemo(1));
+				m_script->removeNode(node_get->id());
+                m_script->addConnectForce(node_value->paramOutGemo(0), node_set->paramInGemo(node_set_index));
             }
-            else
+            else if(op.endsWith("="))
             {
                 JZNode *op_node = createOpNode(op.left(1));
-                auto node_get = createNode<JZNodeParam>();
-                node_get->setVariable(param_name);
+                
                 m_script->addConnectForce(node_get->paramOutGemo(0), op_node->paramInGemo(0));
                 m_script->addConnectForce(node_value->paramOutGemo(0), op_node->paramInGemo(1));
-
-                m_script->addConnectForce(op_node->paramOutGemo(0), node_set->paramInGemo(1));
+                m_script->addConnectForce(op_node->paramOutGemo(0), node_set->paramInGemo(node_set_index));
             }
+			else
+			{
+				Q_ASSERT(0);
+			}
 			return node_set;
-			
 		}
 	}
 	
 	Q_ASSERT(0);
 	return nullptr;
+}
+
+JZNodeFunction* JZScriptConvert::createFunction(QString function_name, asCScriptNode* node)
+{
+	auto func_define = function(function_name);
+	if (!func_define)
+	{
+		m_error = "no find " + function_name + "";
+		return nullptr;
+	}
+
+	//check param
+	auto node_name = node->firstChild;
+	auto arg_list = nodeChilds(node_name->next);
+	int allow_in = func_define->paramIn.size();
+	int param_start = 0;
+	if (func_define->isMemberFunction())
+	{
+		param_start++;
+		allow_in--;
+	}
+	if (arg_list.size() != allow_in)
+	{
+		m_error = "funcion not give " + QString::number(arg_list.size()) + " param";
+		return nullptr;
+	}
+
+	//create node
+	JZNodeFunction* func = createNode<JZNodeFunction>();
+	func->setFunction(func_define);
+	for (int i = 0; i < arg_list.size(); i++)
+	{
+		auto param = toAssignment(arg_list[i]);
+		m_script->addConnectForce(param->paramOutGemo(0), func->paramInGemo(i + param_start));
+	}
+
+	return func;
 }
 
 JZNode* JZScriptConvert::toFunctionCall(asCScriptNode* node)
@@ -616,30 +768,17 @@ JZNode* JZScriptConvert::toFunctionCall(asCScriptNode* node)
 
 	auto node_name = node->firstChild;
 	QString func_name = nodeText(node_name);
-	auto func_define = function(func_name);
-	if (!func_define)
-	{
-		m_error = "º¯Êý" + func_name + "Î´¶¨Òå";
-		return nullptr;
-	}
+	return createFunction(func_name, node);
+}
 
-	JZNodeFunction* func = createNode<JZNodeFunction>();
-	func->setFunction(func_define);
+JZNode* JZScriptConvert::toMemberFunctionCall(JZNode* self, asCScriptNode* node)
+{
+	QStringList pin_list = self->pinType(self->paramOut(0));
+	Q_ASSERT(pin_list.size() == 1);
 
-	auto arg_list = nodeChilds(node_name->next);
-	if (func_define->paramIn.size() != arg_list.size())
-	{
-		m_error = "º¯Êý²»½ÓÊÜ" + QString::number(arg_list.size()) + "¸ö²ÎÊý";
-		return nullptr;
-	}
-
-	for (int i = 0; i < arg_list.size(); i++)
-	{
-		auto param = toAssignment(arg_list[i]);
-		m_script->addConnectForce(param->paramOutGemo(0), func->paramInGemo(i));
-	}
-
-	return func;
+	QString class_name = pin_list[0];
+	QString func_name = JZNodeType::baseType(class_name) + "::" + nodeText(node->firstChild);
+	return createFunction(func_name, node);
 }
 
 bool JZScriptConvert::toFunctionCallStatement(asCScriptNode* node)
@@ -681,8 +820,7 @@ JZNode* JZScriptConvert::toExprTerm(asCScriptNode* root)
 	}
 	else if (node->nodeType == snVariableAccess)
 	{
-		auto param = createNode<JZNodeParam>();
-		param->setVariable(nodeText(node));
+		auto param = createGetParam(nodeText(node));
 		ret = param;
 	}
 	else if (node->nodeType == snFunctionCall)
@@ -701,60 +839,69 @@ JZNode* JZScriptConvert::toExprTerm(asCScriptNode* root)
 	{
 		Q_ASSERT(0);
 	}
+	if (!ret)
+		return nullptr;
 
-	if (node_value->next)
+
+	asCScriptNode* post = node_value->next;
+	if (post && post->nodeType == snExprPostOp)
 	{
-		asCScriptNode* post = node_value->next;
-		if (post->nodeType == snExprPostOp)
+		if (currentBlock()->postStatment)
 		{
-			if (currentBlock()->postStatment)
-			{
-				m_error = "two post statment in one statment";
-				return nullptr;
-			}
-
-			auto param = createNode<JZNodeParam>();
-			param->setVariable(nodeText(node));
-
-			auto set_param = createNode<JZNodeSetParam>();
-			set_param->setVariable(nodeText(node));
-
-			if (post->tokenType == ttDec || post->tokenType == ttInc)
-			{
-				JZNode *op = createOpNode(post->tokenType == ttDec? "-":"+");
-
-				m_script->addConnectForce(param->paramOutGemo(0), op->paramInGemo(0));
-				op->setParamInValue(1, "1");
-				m_script->addConnectForce(op->paramOutGemo(0), set_param->paramInGemo(1));
-				currentBlock()->postStatment = set_param;
-			}
-			else if (post->tokenType == ttDot)
-			{
-				//printNode(root);
-				JZNode* node_call = toFunctionCall(post->firstChild);
-			}
-			else if (post->tokenType == ttOpenBracket)
-			{
-				printNode(root);
-				QString param_name = nodeText(node);
-				auto var_def = getVariableInfo(param_name);
-				if (!JZNodeType::isContainerType(var_def->type))
-				{
-					m_error = param_name + "is node container";
-					return nullptr;
-				}
-				JZNodeFunction* func = createNode<JZNodeFunction>();
-				func->setFunction(var_def->type + "::get");
-				func->setVariable(param_name);
-				printNode(root);
-			}
-			else
-			{
-				m_error = "un support post op " + nodeText(post);
-				return nullptr;
-			}
-			
+			m_error = "two post statment in one statment";
+			return nullptr;
 		}
+
+		if (post->tokenType == ttDec || post->tokenType == ttInc)
+		{
+			JZNode *op = createOpNode(post->tokenType == ttDec? "-":"+");
+
+			auto param = createGetParam(nodeText(node));
+			auto set_param = createSetParam(nodeText(node));
+
+			m_script->addConnectForce(param->paramOutGemo(0), op->paramInGemo(0));
+			op->setParamInValue(1, "1");
+			m_script->addConnectForce(op->paramOutGemo(0), set_param->paramInGemo(1));
+			currentBlock()->postStatment = set_param;
+		}
+		else if (post->tokenType == ttDot)
+		{
+			JZNode* node_call = toMemberFunctionCall(ret, post->firstChild);
+			if (!node_call)
+				return nullptr;
+
+			m_script->addConnect(ret->paramOutGemo(0), node_call->paramInGemo(0));
+			ret = node_call;
+		}
+		else if (post->tokenType == ttOpenBracket)
+		{
+			QString param_name = nodeText(node);
+			auto var_def = getVariableInfo(param_name);
+			if (!JZNodeType::isContainerType(var_def->type))
+			{
+				m_error = param_name + "is node container";
+				return nullptr;
+			}
+			JZNodeFunction* func = createNode<JZNodeFunction>();
+			func->setFunction(JZNodeType::baseType(var_def->type) + "::get");
+
+			JZNode *assign = toAssignment(post->firstChild->firstChild);
+			if (!assign)
+				return nullptr;
+
+			m_script->addConnect(ret->paramOutGemo(0), func->paramInGemo(0));
+			m_script->addConnect(assign->paramOutGemo(0), func->paramInGemo(1));
+			ret = func;
+		}
+		else
+		{
+			m_error = "un support post op " + nodeText(post);
+			return nullptr;
+		}
+	}
+	else if (post)
+	{
+		Q_ASSERT(0);
 	}
 
 	if (pre_node)
@@ -994,15 +1141,14 @@ bool JZScriptConvert::toDeclarationStatement(asCScriptNode* node)
 		return false;
 	Q_ASSERT(!expr->isFlowNode());
 
-	if(m_blockEnv.size() == 1)
-		m_script->addLocalVariable(name, data_type);
-	else
+	if (getVariableInfo(name))
 	{
-
+		m_error = "ï¿½ï¿½ï¿½ï¿½" + name + "ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½";
+		return false;
 	}
+	addLocalVariable(name, data_type);
 
-	JZNodeSetParam* set = createNode<JZNodeSetParam>();
-	set->setVariable(name);
+	JZNodeSetParam* set = createSetParam(name);
 	m_script->addConnectForce(expr->paramOutGemo(0), set->paramInGemo(1));
 
 	currentBlock()->flowList << set;

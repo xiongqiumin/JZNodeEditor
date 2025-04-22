@@ -1,4 +1,4 @@
-#include <QBuffer>
+﻿#include <QBuffer>
 #include "JZNodeEditorManager.h"
 #include "JZNode.h"
 #include "JZScriptEnvironment.h"

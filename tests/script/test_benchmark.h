@@ -1,4 +1,4 @@
-#ifndef TEST_BENCH_MARK_H_
+﻿#ifndef TEST_BENCH_MARK_H_
 #define TEST_BENCH_MARK_H_
 
 #include <QObject>

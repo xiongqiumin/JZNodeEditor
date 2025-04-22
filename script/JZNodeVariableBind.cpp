@@ -1,4 +1,4 @@
-#include <QMetaProperty>
+﻿#include <QMetaProperty>
 #include <QLineEdit>
 #include <QDebug>
 #include <QSlider>

@@ -45,16 +45,15 @@ void JZNodeInit()
     JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);              
 
     BindManager::instance()->init();    
-/*
+
     auto module_inst = JZModuleManager::instance();
     module_inst->addModule(new JZModuleOpencv());
     module_inst->addModule(new JZModuleCamera());
     module_inst->addModule(new JZModuleModbus());
     module_inst->addModule(new JZModuleComm());
     module_inst->initModules();
-
+    
     JZModuleCameraNodeInit();
     JZModuleModelNodeInit();
     JZModuleCommNodeInit();
-*/
 }

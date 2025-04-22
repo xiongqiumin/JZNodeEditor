@@ -52,6 +52,7 @@ void JZNodeGraphItem::Block::clear()
     pri = 0;
     id = -1;    
     isInput = false;
+    isShowName = true;
     isShowValue = false;
     isEditable = false;
 }
@@ -111,7 +112,7 @@ JZNodeGraphItem::BlockPtr JZNodeGraphItem::fromPin(JZNodePin *pin)
         else
         {
             if (m_node->subFlowCount() > 0)
-                block->pri = pin->isFlow() ? 2 : 1;
+                block->pri = pin->isSubFlow()? 0:2;
             else
                 block->pri = 0;
         }
@@ -119,15 +120,7 @@ JZNodeGraphItem::BlockPtr JZNodeGraphItem::fromPin(JZNodePin *pin)
     else
     {
         block->iconType = IconType::Circle;
-        if (pin->isInput())
-            block->pri = 1;
-        else
-        {
-            if (m_node->subFlowCount() > 0)
-                block->pri = 0;
-            else
-                block->pri = 1;
-        }
+        block->pri = 1;        
     }
 
     block->name = pin->name();
@@ -284,6 +277,14 @@ QRectF JZNodeGraphItem::pinNameRect(int pin)
     return m_blocks[pin]->nameRect;
 }
 
+JZNodeGraphItem::Block *JZNodeGraphItem::block(int id)
+{
+    if (!m_blocks.contains(id))
+        return nullptr;
+
+    return m_blocks[id].data();
+}
+
 QSize JZNodeGraphItem::size() const
 {
     return m_size;
@@ -326,7 +327,7 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, Block *gemo)
     gemo->iconRect = QRect(x, y, 24, 24);
 
     x = gemo->iconRect.right() + 5;
-    if (!gemo->name.isEmpty())
+    if (gemo->isShowName)
     {
         QFontMetrics ft(scene()->font());
         int w = qMin(name_max_width, ft.horizontalAdvance(gemo->name));
@@ -586,7 +587,7 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
 
     QTextOption text_opt;
     text_opt.setWrapMode(QTextOption::NoWrap);
-    if(!block->name.isEmpty())
+    if(block->isShowName)
     {        
         auto opt = block->isInput? Qt::AlignLeft : Qt::AlignRight;
         text_opt.setAlignment(Qt::AlignVCenter | opt);

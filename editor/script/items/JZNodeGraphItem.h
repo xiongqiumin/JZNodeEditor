@@ -11,6 +11,35 @@ class JZNodeLineItem;
 class JZNodeGraphItem : public JZNodeBaseItem
 {
 public:
+    enum IconType { Flow, Circle, Square, Grid, RoundSquare, Diamond };
+    struct Block
+    {
+        Block();
+        ~Block();
+
+        int width();
+        int height();
+        void clear();
+        bool isPin();
+
+        int id;
+        int pri;
+        bool isInput;
+        bool isShowName;
+        bool isShowValue;
+        bool isEditable;
+        IconType iconType;
+        QString name;
+
+        QRect iconRect;
+        QRect nameRect;
+        QRect valueRect; //valueRect 就是 widget 显示范围       
+
+        QGraphicsProxyWidget *proxy;
+        QWidget *widget;
+    };    
+    typedef QSharedPointer<Block> BlockPtr;
+
     JZNodeGraphItem();
     ~JZNodeGraphItem();
 
@@ -28,6 +57,7 @@ public:
     QRectF pinRect(int pin);
     QRectF pinNameRect(int pin);
     QSize size() const;
+    Block *block(int id);
     
     QString getTip(QPointF pt);
         
@@ -45,35 +75,7 @@ protected:
     enum
     {
         Timer_longPress,
-    };
-
-    enum IconType{ Flow, Circle, Square, Grid, RoundSquare, Diamond };        
-    struct Block
-    {                
-        Block();
-        ~Block();
-        
-        int width();        
-        int height();
-        void clear();
-        bool isPin();
-                
-        int id;
-        int pri;
-        bool isInput;
-        bool isShowValue;
-        bool isEditable;
-        IconType iconType;
-        QString name;
-
-        QRect iconRect;
-        QRect nameRect;
-        QRect valueRect; //valueRect 就是 widget 显示范围       
-
-        QGraphicsProxyWidget *proxy;
-        QWidget *widget;
     };    
-    typedef QSharedPointer<Block> BlockPtr;
 
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) override;

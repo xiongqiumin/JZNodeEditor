@@ -1,4 +1,4 @@
-#include <QUrl>
+﻿#include <QUrl>
 #include <QThread>
 #include <QJsonParseError>
 #include <QJsonObject>

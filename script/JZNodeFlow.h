@@ -1,4 +1,4 @@
-#ifndef JZNODE_FLOW_H_
+ï»¿#ifndef JZNODE_FLOW_H_
 #define JZNODE_FLOW_H_
 
 #include "JZNode.h"
@@ -134,7 +134,7 @@ class JZNodeIf : public JZNode
 public:
     JZNodeIf();
 
-    int addCondPin();  //·µ»Ø²ÎÊýµÄid
+    int addCondPin();  //ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ï¿½id
     void removeCond(int id);
     int  condCount();
 

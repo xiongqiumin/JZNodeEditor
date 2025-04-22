@@ -1,4 +1,4 @@
-#include <QPainter>
+﻿#include <QPainter>
 #include "JZImageLabel.h"
 
 JZImageLabel::JZImageLabel(QWidget *parent)

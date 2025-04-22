@@ -1,4 +1,4 @@
-#ifndef MAIN_TASK_H_
+Ôªø#ifndef MAIN_TASK_H_
 #define MAIN_TASK_H_
 
 #include <QObject>
@@ -12,9 +12,9 @@ struct BuildInfo
     void clear();
 
     bool success;
-    qint64 changeTimestamp;    //∏ƒ∂Ø ±º‰
-    qint64 buildVersion;       //±‡“Î∞Ê±æ
-    qint64 buildTimestamp;     //±‡“Î≥…π¶ ±º‰
+    qint64 changeTimestamp;    
+    qint64 buildVersion;       
+    qint64 buildTimestamp;     
     qint64 saveTimestamp;    
 };
 

@@ -1,4 +1,4 @@
-#include <QScopeGuard>
+﻿#include <QScopeGuard>
 #include <QDebug>
 #include "JZExpressionSolver.h"
 #include "JZProject.h"

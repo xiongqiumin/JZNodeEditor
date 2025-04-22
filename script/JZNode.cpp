@@ -335,6 +335,11 @@ QList<int> JZNode::pinListByType(int flag) const
     return ret;
 }
 
+int JZNode::pinCount() const
+{
+    return m_pinList.size();
+}
+
 int JZNode::pinCount(int flag) const
 {
     int count = 0;

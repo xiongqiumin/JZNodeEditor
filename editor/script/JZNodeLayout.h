@@ -1,4 +1,4 @@
-#ifndef JZNODE_LAYOUT_H_
+﻿#ifndef JZNODE_LAYOUT_H_
 #define JZNODE_LAYOUT_H_
 
 #include <QList>

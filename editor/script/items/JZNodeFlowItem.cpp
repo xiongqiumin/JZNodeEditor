@@ -1,4 +1,4 @@
-#include <QComboBox>
+﻿#include <QComboBox>
 #include <QPushButton>
 #include "JZNodeFlowItem.h"
 #include "JZNodeFlow.h"
@@ -37,7 +37,7 @@ void JZNodeForItem::updatePin()
         m_opBlock = fromWidget(box, true);
         m_opBlock->name = "op";
         m_opBlock->pri = 3;
-    }
+    }    
 
     QComboBox *box_op = qobject_cast<QComboBox*>(m_opBlock->widget);
     box_op->blockSignals(true);
@@ -71,7 +71,13 @@ void JZNodeIfItem::updatePin()
     {
         QPushButton *btnAdd = new QPushButton("Add Cond");
         QPushButton *btnElse = new QPushButton("Add Else");
-
+        btnAdd->connect(btnAdd, &QPushButton::clicked, [this] {
+            this->onAddClicked();
+        });
+        btnAdd->connect(btnElse, &QPushButton::clicked, [this] {
+            this->onElseClicked();
+        });
+        
         m_addCond = fromWidget(btnAdd,true);
         m_addCond->pri = 8;
 
@@ -84,6 +90,16 @@ void JZNodeIfItem::updatePin()
         btn_else->setText("Remove Else");
     else
         btn_else->setText("Add Else");
+
+    QList<int> cond_list = m_node->paramInList();
+    QList<int> flow_list = m_node->subFlowList();
+    for (int i = 0; i < cond_list.size(); i++)
+    {
+        m_blocks[cond_list[i]]->name = "Cond" + QString::number(i);
+        m_blocks[flow_list[i]]->name = "Cond" + QString::number(i);
+    }
+    if (node_if->hasElse())
+        m_blocks[flow_list.back()]->name = "Else";
 }
 
 void JZNodeIfItem::onAddClicked()

@@ -66,6 +66,7 @@ enum
     Node_throw,   
     Node_signalConnect,
     Node_mainLoop,
+    Node_unitTest,
     Node_custom,
 };
 
@@ -171,6 +172,7 @@ public:
     QList<int> pinOutList(int flag = 0) const;
     QList<int> pinListByType(int flag) const;
     QList<int> pinList() const;
+    int pinCount() const;
     int pinCount(int flag) const;
               
     int addParamIn(QString name,int extFlag = 0);    

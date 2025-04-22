@@ -1,4 +1,4 @@
-#include <QTest>
+﻿#include <QTest>
 #include <QFile>
 #include <QTextStream>
 #include "test_anglescript.h"
@@ -380,14 +380,62 @@ void AngleScriptTest::testSwitch()
     }
 }
 
+void AngleScriptTest::testList()
+{
+    QString code = R"(
+    int getList(QList<int> &input,int n ) {
+        return input[n];
+    }
+
+    int getListSize(QList<int> &input) {
+        return input.size();
+    }
+    
+    void setList(QList<int> &input,int index,int n) {
+        input[index] = n;
+    }
+    )";
+
+
+    m_project.addGlobalVariable("list_int", "QList<int>", "{1,2,3,4,5,6,7,8}");
+
+    if (!buildAs(code))
+        return;
+    dump("as_testList");
+
+    auto env = m_project.environment();
+    auto list_holder = m_engine.getVariable("list_int");
+    auto list_ptr = env->convertTo(list_holder, env->nameToType("QList<int>*"));
+
+    QList<int>* clist_ptr = JZObjectCast<QList<int>>(toJZObject(list_holder));
+
+    QVariantList in, out;
+    for (int i = 0; i < 8; i++)
+    {
+        in.clear();
+        in << list_ptr << i;
+        m_engine.call("getList", in, out);
+        QCOMPARE(out[0].toInt(), i+1);
+    }
+
+    in.clear();
+    in << list_ptr;
+    m_engine.call("getListSize", in, out);
+    QCOMPARE(out[0].toInt(), 8);
+
+    in.clear();
+    in << list_ptr << 0 << 100;
+    m_engine.call("setList", in, out);
+    QCOMPARE(clist_ptr->at(0), 100);
+}
 
 void AngleScriptTest::testSort()
 {
     QString code = R"(
     QList<int> testSort(QList<int> input) {
-        for(int i = 0; i < input.size(22); i++)
+        for(int i = 0; i < input.size(); i++)
         {
-            for(int j = 0; j < input.size(22); j++)
+            for(int j = 0; j < input.size(); j++)
             {
                 if(input[i] < input[j])
                 {

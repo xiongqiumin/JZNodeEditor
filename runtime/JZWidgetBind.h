@@ -1,4 +1,4 @@
-#ifndef JZ_WIDGET_BIND_H_
+﻿#ifndef JZ_WIDGET_BIND_H_
 #define JZ_WIDGET_BIND_H_
 
 class JZWidgetBind

@@ -248,7 +248,7 @@ void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QS
 
     source += tab(1) + "bool Reg_Cmp = false;\n";
 
-    QString space = QString().leftJustified(8,' ');
+    QString space = QString().leftJustified(12,' ');
     QStringList lines;
     for (int i = func_impl->addr; i < func_impl->addrEnd; i++)
     {
@@ -264,7 +264,7 @@ void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QS
         if ((opList[i]->type == OP_call && !isIrSetReg(i - 1, DstRegIn) && !isIrSetReg(i + 1, SrcRegOut))
             || (isIrSetReg(i, SrcRegOut)))
         {
-            line += space + "\n}";
+            line += "\n" + space + "}";
         }
 
         lines.push_back(line);
@@ -532,9 +532,7 @@ QString JZNodeProgramDumper::dealCall(QString function)
     QStringList param_in_list;
     for(int i = reg_idx; i < func_def->paramIn.size(); i++)
         param_in_list << JZNodeCompiler::paramName(Reg_CallIn + i);
-    line = line + func_def->name + "(" + param_in_list.join(",") + ")";
-    if (func_def->paramOut.size() != 0)
-        line = JZNodeCompiler::paramName(Reg_CallOut) + " = " + line + ";";
+    line = line + func_def->name + "(" + param_in_list.join(",") + ");";
 
     return line;
 }

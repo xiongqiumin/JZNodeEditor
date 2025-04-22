@@ -1,4 +1,4 @@
-#ifndef JZREG_EXP_HELP_H_
+﻿#ifndef JZREG_EXP_HELP_H_
 #define JZREG_EXP_HELP_H_
 
 #include <QString>

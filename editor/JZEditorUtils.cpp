@@ -1,4 +1,4 @@
-#include "JZEditorUtils.h"
+﻿#include "JZEditorUtils.h"
 #include "JZNodeView.h"
 
 void JZEditorUtils::projectUpdateLayout(JZProject *project)

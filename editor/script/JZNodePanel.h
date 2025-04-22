@@ -37,6 +37,8 @@ public:
     void setView(JZNodeView *view);
     void updateDefine();    
 
+    QTreeWidgetItem *itemOp();
+    QTreeWidgetItem *itemProcess();
     QTreeWidgetItem *localVariableItem(QString name);    
 
 protected slots:
@@ -98,6 +100,8 @@ protected:
     QTreeWidgetItem *m_itemClassDefine;
     QTreeWidgetItem *m_itemLocalDefine;    
     QTreeWidgetItem *m_itemGlobalVariable;
+    QTreeWidgetItem *m_itemOp;
+    QTreeWidgetItem *m_itemProcess;
 };
 
 #endif

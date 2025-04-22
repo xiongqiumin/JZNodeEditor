@@ -1,4 +1,4 @@
-#include <QVBoxLayout>
+﻿#include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QDialogButtonBox>

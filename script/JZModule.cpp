@@ -1,4 +1,4 @@
-#include <QPluginLoader>
+﻿#include <QPluginLoader>
 #include <QDir>
 #include <QApplication>
 #include <QSysInfo>

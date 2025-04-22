@@ -1,4 +1,4 @@
-#include "JZEditorGlobal.h"
+﻿#include "JZEditorGlobal.h"
 #include "mainwindow.h"
 
 JZNodeEditorManager *editorManager()

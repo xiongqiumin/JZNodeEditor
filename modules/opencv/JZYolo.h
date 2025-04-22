@@ -1,4 +1,4 @@
-#ifndef JZ_YOLO_H_
+﻿#ifndef JZ_YOLO_H_
 #define JZ_YOLO_H_
 
 #include <QString>

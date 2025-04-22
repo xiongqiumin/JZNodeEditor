@@ -1,4 +1,4 @@
-#ifndef CV_TO_QT_H_
+﻿#ifndef CV_TO_QT_H_
 #define CV_TO_QT_H_
 
 #include <QRect>

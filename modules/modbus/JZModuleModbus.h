@@ -1,12 +1,14 @@
-#ifndef JZ_MODULE_MODBUS_H_
+﻿#ifndef JZ_MODULE_MODBUS_H_
 #define JZ_MODULE_MODBUS_H_
 
 #include "JZNodeFunction.h"
 #include "JZModule.h"
 #include "3rd/JZCommon/jzModbus/JZModbusParam.h"
+#include "../JZModuleDefine.h"
 
-enum {
-    Node_modbusConfig = 3000,    
+enum 
+{
+    Node_modbusConfig = Module_ModbusType,    
 };
 
 class JZNodeModbusConfig : public JZNodeFunctionCustom

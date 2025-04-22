@@ -1,4 +1,4 @@
-#ifndef JZNODE_VARIABLE_BIND_H_
+﻿#ifndef JZNODE_VARIABLE_BIND_H_
 #define JZNODE_VARIABLE_BIND_H_
 
 #include <QWidget>

@@ -83,8 +83,7 @@ QString JZNodeFunction::function() const
 
 bool JZNodeFunction::updateNode(QString &error)
 {
-    auto env = environment();
-    auto define = env->functionManager()->function(m_functionName);
+    auto define = JZNodeCompiler::function(file(),m_functionName);
     if (!define)
     {
         error = "函数不存在";

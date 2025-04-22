@@ -1,4 +1,4 @@
-#ifndef JZNODE_PARAM_EDIT_WIDGET_H_
+﻿#ifndef JZNODE_PARAM_EDIT_WIDGET_H_
 #define JZNODE_PARAM_EDIT_WIDGET_H_
 
 #include <QLabel>
