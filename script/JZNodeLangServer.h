@@ -18,11 +18,12 @@ public:
     QStringList param(const QString &path);
     QStringList member(const QString &class_name);
 
-signals:
+protected slots:
     void onDefineChanged();    
 
-protected:
-    onDefineChanged();
+protected:    
+    JZNodeLangServer();
+    ~JZNodeLangServer();
 
     JZProject *m_project;
 };

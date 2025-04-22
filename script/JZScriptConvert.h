@@ -26,7 +26,7 @@ protected:
 	{ 
 		BlockEnv();
 
-		QList<JZParamDefine> paramList;  //原始名称
+		QList<JZParamDefine> paramList;  //原始锟斤拷锟斤拷
 		QList<JZNode*> flowList;
 		JZNode* postStatment;
     };    
@@ -91,7 +91,7 @@ protected:
 	QString m_code;
 	QString m_error;
 	QList<BlockEnvPtr> m_blockEnv;
-	QMap<QString, JZParamDefine> m_localVaribaleMap;  //原始名称到本地名称映射
+	QMap<QString, JZParamDefine> m_localVaribaleMap;  //block鍙橀噺鍒板眬閮ㄥ彉閲忕殑杞崲
 };
 
 #endif // !JZScriptConvert

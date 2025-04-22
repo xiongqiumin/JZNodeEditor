@@ -12,10 +12,18 @@ JZNodeLangServer::JZNodeLangServer()
     m_project = nullptr;
 }
 
+JZNodeLangServer::~JZNodeLangServer()
+{
+}
+
 void JZNodeLangServer::setProject(JZProject *project)
 {
     m_project = project;
-    connect(m_project,&JZProject::sigDefineChanged,lang_inst, &JZNodeLangServer::onDefineChanged);
+    connect(m_project,&JZProject::sigDefineChanged, this, &JZNodeLangServer::onDefineChanged);
+}
+
+void JZNodeLangServer::onDefineChanged()
+{
 }
 
 QStringList JZNodeLangServer::type(const QString &path)

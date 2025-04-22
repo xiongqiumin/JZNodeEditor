@@ -659,7 +659,7 @@ JZNode* JZScriptConvert::toAssignment(asCScriptNode* node)
 			QString op = nodeText(list[1]);			
 			JZNode* node_get = toExpression(list[0]->firstChild);
 			
-			//左值转右值
+			//锟斤拷值转锟斤拷值
 			JZNode* node_set = nullptr;
 			int node_set_index = -1;
 			if (node_get->type() == Node_param)
@@ -694,7 +694,7 @@ JZNode* JZScriptConvert::toAssignment(asCScriptNode* node)
 			}
 			else
 			{
-				m_error = nodeText(list[0]) + " 不能赋值";
+				m_error = nodeText(list[0]) + " 锟斤拷锟杰革拷值";
 				return nullptr;
 			}
 
@@ -729,7 +729,7 @@ JZNodeFunction* JZScriptConvert::createFunction(QString function_name, asCScript
 	auto func_define = function(function_name);
 	if (!func_define)
 	{
-		m_error = "函数" + function_name + "未定义";
+		m_error = "no find " + function_name + "";
 		return nullptr;
 	}
 
@@ -745,7 +745,7 @@ JZNodeFunction* JZScriptConvert::createFunction(QString function_name, asCScript
 	}
 	if (arg_list.size() != allow_in)
 	{
-		m_error = "函数不接受" + QString::number(arg_list.size()) + "个参数";
+		m_error = "funcion not give " + QString::number(arg_list.size()) + " param";
 		return nullptr;
 	}
 
@@ -1142,7 +1142,7 @@ bool JZScriptConvert::toDeclarationStatement(asCScriptNode* node)
 
 	if (getVariableInfo(name))
 	{
-		m_error = "参数" + name + "重复定义";
+		m_error = "锟斤拷锟斤拷" + name + "锟截革拷锟斤拷锟斤拷";
 		return false;
 	}
 	addLocalVariable(name, data_type);
