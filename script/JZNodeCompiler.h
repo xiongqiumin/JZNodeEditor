@@ -175,6 +175,7 @@ public:
     static JZNodeGemo paramGemo(int id);    
     static VariableCoor variableCoor(JZScriptItem *file, QString name);
     static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
+    static const JZFunctionDefine* function(JZScriptItem* file, const QString& name);
     static QString errorString(CompilerTip tip,QStringList args);
 
     JZNodeCompiler();

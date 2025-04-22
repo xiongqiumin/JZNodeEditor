@@ -104,7 +104,7 @@ void SampleProject::loadProject()
 void SampleProject::saveProject()
 {
     Q_ASSERT(!m_name.isEmpty());    
-    JZEditorUtils::projectUpdateLayout(&m_project);
+    //JZEditorUtils::projectUpdateLayout(&m_project);
     m_project.saveAllItem();
     if (!m_project.save())
     {

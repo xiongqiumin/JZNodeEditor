@@ -77,6 +77,19 @@ void registList(JZScriptEnvironment *env,int type = Type_none)
     cls_list.def("contains", false, [](QList<T>* l, const T& t)->bool { return l->contains(t);  });
     cls_list.def("mid", false, [](QList<T>* l, int pos, int len) { return l->mid(pos, len);  });
     cls_list.def("append", true, [](QList<T>* l, QList<T>* other) { l->append(*other);  });
+    cls_list.def("resize", true, [](QList<T>* l, int size) { 
+        
+        if (l->size() > size)
+        {
+            while (l->size() > size)
+                l->pop_back();
+        }
+        else
+        {
+            for(int i = l->size(); i < size; i++)
+                l->append(T());
+        }
+    });
 
     cls_list.regist();    
 }

@@ -117,6 +117,7 @@ void QtWrapper::initBase()
     registList<int>(m_env,Type_intList);
     registList<double>(m_env,Type_doubleList);
     registList<JZNodeVariantAny>(m_env,Type_varList);
+    registList<QList<int>>(m_env);
 
     registMap<int,int>(m_env,Type_intIntMap);
     registMap<int,QString>(m_env,Type_intStringMap);
@@ -272,6 +273,8 @@ void QtWrapper::initBase()
     cls_color.def("green", false, &QColor::green);
     cls_color.def("blue", false, &QColor::blue);    
     cls_color.regist();    
+
+    registList<QColor>(m_env);
 }
 
 void QtWrapper::initCore()

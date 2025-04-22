@@ -21,8 +21,8 @@ private slots:
     void testWhile();
     void testSwitch();
     void testComplex();
-
     void testFab();
+    void testList();
     void testSort();
 protected:
 
