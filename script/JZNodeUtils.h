@@ -1,4 +1,4 @@
-#ifndef JZNODE_UTILS_H_
+﻿#ifndef JZNODE_UTILS_H_
 #define JZNODE_UTILS_H_
 
 #include <QString>

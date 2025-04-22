@@ -1,4 +1,4 @@
-#include <QApplication>
+﻿#include <QApplication>
 #include <QEventLoop>
 #include <QMessageBox>
 #include <QCommandLineParser>

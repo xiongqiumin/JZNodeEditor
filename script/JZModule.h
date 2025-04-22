@@ -1,4 +1,4 @@
-#ifndef JZ_MODULE_H_
+ï»¿#ifndef JZ_MODULE_H_
 #define JZ_MODULE_H_
 
 #include "JZNodeObject.h"
@@ -30,8 +30,8 @@ class JZModuleManager
 public:
     static JZModuleManager *instance();
     
-    void initModules();                   //´ÓÎÄ¼þ¼ÓÔØmodule
-    void addModule(JZModule *module);     //¾²Ì¬module
+    void initModules();                   
+    void addModule(JZModule *module);     
     void regist(JZScriptEnvironment *env);
 
     QStringList moduleList();    

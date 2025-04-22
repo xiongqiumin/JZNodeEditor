@@ -1,4 +1,4 @@
-#ifndef JZ_SCRIPT_FILE_H_
+﻿#ifndef JZ_SCRIPT_FILE_H_
 #define JZ_SCRIPT_FILE_H_
 
 #include "JZNode.h"

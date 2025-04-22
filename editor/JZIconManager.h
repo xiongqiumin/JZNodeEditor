@@ -1,4 +1,4 @@
-#ifndef JZ_ICON_MANAGER_H_
+﻿#ifndef JZ_ICON_MANAGER_H_
 #define JZ_ICON_MANAGER_H_
 
 #include <QIcon>

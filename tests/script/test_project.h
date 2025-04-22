@@ -1,4 +1,4 @@
-#ifndef TEST_TEST_PROJECT_H_
+﻿#ifndef TEST_TEST_PROJECT_H_
 #define TEST_TEST_PROJECT_H_
 
 #include <QObject>

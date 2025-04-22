@@ -1,4 +1,4 @@
-#ifndef JZ_NEW_PROJECT_DIALOG_H_
+﻿#ifndef JZ_NEW_PROJECT_DIALOG_H_
 #define JZ_NEW_PROJECT_DIALOG_H_
 
 #include <QDialog>

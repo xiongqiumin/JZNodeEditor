@@ -1,4 +1,4 @@
-#ifndef JZNODE_ENUM_DEFINE_H_
+﻿#ifndef JZNODE_ENUM_DEFINE_H_
 #define JZNODE_ENUM_DEFINE_H_
 
 #include <QStringList>

@@ -1,4 +1,4 @@
-#ifndef JZ_RUNTIME_H_
+﻿#ifndef JZ_RUNTIME_H_
 #define JZ_RUNTIME_H_
 
 

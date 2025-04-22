@@ -1,4 +1,4 @@
-#include "JZNodeLangServer.h"
+﻿#include "JZNodeLangServer.h"
 #include "JZProject.h"
 
 JZNodeLangServer *JZNodeLangServer::instance()
@@ -15,6 +15,7 @@ JZNodeLangServer::JZNodeLangServer()
 void JZNodeLangServer::setProject(JZProject *project)
 {
     m_project = project;
+    connect(m_project,&JZProject::sigDefineChanged,lang_inst, &JZNodeLangServer::onDefineChanged);
 }
 
 QStringList JZNodeLangServer::type(const QString &path)

@@ -1,4 +1,4 @@
-#ifndef JZ_SQLITE_CONFIG_H_
+﻿#ifndef JZ_SQLITE_CONFIG_H_
 #define JZ_SQLITE_CONFIG_H_
 
 

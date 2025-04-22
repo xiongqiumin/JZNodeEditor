@@ -1,4 +1,4 @@
-#include "JZIconManager.h"
+﻿#include "JZIconManager.h"
 
 JZIconManager *JZIconManager::instance()
 {

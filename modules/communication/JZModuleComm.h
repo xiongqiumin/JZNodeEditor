@@ -1,4 +1,4 @@
-#ifndef JZ_MODULE_COMM_H_
+﻿#ifndef JZ_MODULE_COMM_H_
 #define JZ_MODULE_COMM_H_
 
 #include "JZModule.h"

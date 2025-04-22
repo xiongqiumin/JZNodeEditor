@@ -1,4 +1,4 @@
-#ifndef JZ_SEARCH_TREE_WIDGET_H_
+﻿#ifndef JZ_SEARCH_TREE_WIDGET_H_
 #define JZ_SEARCH_TREE_WIDGET_H_
 
 #include <QTreeWidget>

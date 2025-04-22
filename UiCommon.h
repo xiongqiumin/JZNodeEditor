@@ -1,4 +1,4 @@
-#ifndef UI_COMMON_H_
+﻿#ifndef UI_COMMON_H_
 #define UI_COMMON_H_
 
 #include <QMessageBox>

@@ -24,6 +24,7 @@
 #include "JZEditorUtils.h"
 #include "JZNodeUtils.h"
 #include "LogManager.h"
+#include "JZNodeLangServer.h"
 #include "modules/modbus/JZModbusSimulator.h"
 
 //Setting
@@ -73,6 +74,9 @@ MainWindow::MainWindow(QWidget *parent)
     LogManagerInit();
     JZLogManager::instance()->addObserver(Log_Compiler,this);
     JZLogManager::instance()->addObserver(Log_Runtime, this);
+
+    auto lang_inst = JZNodeLangServer::instance();
+    lang_inst->setProject(&m_project);
 
     connect(&m_debuger,&JZNodeDebugClient::sigLog,this,&MainWindow::onRuntimeLog, Qt::QueuedConnection);
     connect(&m_debuger,&JZNodeDebugClient::sigRuntimeError,this,&MainWindow::onRuntimeError, Qt::QueuedConnection);

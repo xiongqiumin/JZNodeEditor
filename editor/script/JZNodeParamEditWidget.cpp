@@ -1,4 +1,4 @@
-#include <QHBoxLayout>
+﻿#include <QHBoxLayout>
 #include <QFileDialog>
 #include <QIcon>
 #include <QComboBox>

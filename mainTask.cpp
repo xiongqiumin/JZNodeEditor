@@ -1,4 +1,4 @@
-#include <QDebug>
+﻿#include <QDebug>
 #include <QDateTime>
 #include <QDir>
 #include "MainTask.h"

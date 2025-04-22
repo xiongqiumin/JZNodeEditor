@@ -1,4 +1,4 @@
-#ifndef JZNODE_FLOW_ITEM_H_
+﻿#ifndef JZNODE_FLOW_ITEM_H_
 #define JZNODE_FLOW_ITEM_H_
 
 #include "JZNodeGraphItem.h"

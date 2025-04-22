@@ -1,4 +1,4 @@
-#include <QCoreApplication>
+﻿#include <QCoreApplication>
 #include <QDebug>
 #include "JZNodeInit.h"
 #include "test_benchmark.h"
@@ -7,20 +7,16 @@
 #include "test_anglescript.h"
 #include "test_debug.h"
 #include "test_tx.h"
-#include "sample/Russian/Russian.h"
 
 int main(int argc,char *argv[])
 {
     QCoreApplication a(argc,argv);
     JZNodeInit();
 
-    SampleRussian russian;
-    russian.saveProject();
-
     //test_script(argc, argv);
-    //test_benchmark(argc, argv);
-    //test_anglescript(argc, argv);
-    //test_debug(argc, argv);
+    test_benchmark(argc, argv);
+    test_anglescript(argc, argv);
+    test_debug(argc, argv);
     //test_tx(argc, argv);
 
     return 0;

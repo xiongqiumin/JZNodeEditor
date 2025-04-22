@@ -1,4 +1,4 @@
-#include "JZModuleOpencvEditor.h"
+﻿#include "JZModuleOpencvEditor.h"
 #include "JZNodeParamDisplayWidget.h"
 
 JZModuleOpencvEditor::JZModuleOpencvEditor()

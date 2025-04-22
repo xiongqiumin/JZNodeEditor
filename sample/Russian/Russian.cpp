@@ -34,7 +34,6 @@ SampleRussian::~SampleRussian()
 
 class Russian : public QMainWindow
 {
-    Q_OBJECT
 
 public:
     Russian(QWidget *parent = nullptr);

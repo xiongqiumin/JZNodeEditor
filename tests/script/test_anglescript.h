@@ -1,4 +1,4 @@
-#ifndef TEST_ANGLE_SCRIPT_H_
+﻿#ifndef TEST_ANGLE_SCRIPT_H_
 #define TEST_ANGLE_SCRIPT_H_
 
 #include <QObject>

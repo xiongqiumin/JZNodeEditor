@@ -1,4 +1,4 @@
-#ifndef JZ_ScriptItem_Help_H_
+﻿#ifndef JZ_ScriptItem_Help_H_
 #define JZ_ScriptItem_Help_H_
 
 #include "JZScriptItem.h"

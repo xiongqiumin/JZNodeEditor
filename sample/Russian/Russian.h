@@ -5,6 +5,7 @@
 
 class SampleRussian : public SampleProject
 {
+
 public:
     SampleRussian();
     ~SampleRussian();

@@ -1,4 +1,4 @@
-#include <QTest>
+﻿#include <QTest>
 #include <QFile>
 #include <QTextStream>
 #include "test_anglescript.h"

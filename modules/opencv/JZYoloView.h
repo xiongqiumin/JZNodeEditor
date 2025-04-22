@@ -1,4 +1,4 @@
-#ifndef JZ_YOLO_VIEW_H_
+﻿#ifndef JZ_YOLO_VIEW_H_
 #define JZ_YOLO_VIEW_H_
 
 #include "3rd/JZCommon/jzWidgets/JZImageView.h"

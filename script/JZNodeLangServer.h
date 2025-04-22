@@ -1,4 +1,4 @@
-#ifndef JZNODE_LANG_SERVER_H_
+﻿#ifndef JZNODE_LANG_SERVER_H_
 #define JZNODE_LANG_SERVER_H_
 
 #include <QObject>
@@ -19,10 +19,10 @@ public:
     QStringList member(const QString &class_name);
 
 signals:
-    void sigClassChanged();    
+    void onDefineChanged();    
 
 protected:
-    JZNodeLangServer();
+    onDefineChanged();
 
     JZProject *m_project;
 };

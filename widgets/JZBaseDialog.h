@@ -1,4 +1,4 @@
-#ifndef JZBASE_DIALOG_H_
+﻿#ifndef JZBASE_DIALOG_H_
 #define JZBASE_DIALOG_H_
 
 #include <QDialog>

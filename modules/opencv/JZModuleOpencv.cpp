@@ -11,11 +11,6 @@
 
 using namespace cv;
 
-enum 
-{
-    OpencvModule_id = 15000,
-};
-
 QVariant createMat(JZScriptEnvironment *env,const QString &value)
 {
     Mat *mat = new Mat();
@@ -60,7 +55,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     qRegisterMetaType<cv::Mat>("cv::Mat");
 
     auto func_inst = env->functionManager();
-    int cls_id = OpencvModule_id;
+    int cls_id = Module_OpencvType;
     
     jzbind::ClassBind<Mat> cls_mat(cls_id++, "Mat");
     cls_mat.setValueType(true);

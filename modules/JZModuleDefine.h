@@ -1,0 +1,20 @@
+﻿#ifndef MODULE_DEFINE_H_
+#define MODULE_DEFINE_H_
+
+enum ModuleClass
+{
+    Module_CameraType = 16000,
+    Module_ModbusType = 17000,
+    Module_OpencvType = 18000,
+    Module_CommType   = 19000
+};
+
+enum ModuleNode
+{
+    Module_CameraNode = 1000,
+    Module_ModbusNode = 1100,
+    Module_OpencvNode = 1200,
+    Module_CommNode   = 1300,
+};
+
+#endif

@@ -1,4 +1,4 @@
-#ifndef TEST_PARAM_BIND_H_
+﻿#ifndef TEST_PARAM_BIND_H_
 #define TEST_PARAM_BIND_H_
 
 #include <QObject>

@@ -1,4 +1,4 @@
-#ifndef QIMAGE_LABEL_H_
+﻿#ifndef QIMAGE_LABEL_H_
 #define QIMAGE_LABEL_H_
 
 #include <QWidget>

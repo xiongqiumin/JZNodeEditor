@@ -1,4 +1,4 @@
-#include "JZRegExpHelp.h"
+﻿#include "JZRegExpHelp.h"
 #include <QRegularExpression>
 
 void JZRegExpHelp::splitDefine(QString fullName,QString &className,QString &memberName)

@@ -1,4 +1,4 @@
-#ifndef JZCONTAINER_H_
+﻿#ifndef JZCONTAINER_H_
 #define JZCONTAINER_H_
 
 #include <QMap>
