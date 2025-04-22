@@ -286,6 +286,12 @@ JZNodeIRStackInit::JZNodeIRStackInit()
     type = (JZNodeIRType)OP_ComilerStackInit;
 }
 
+//JZNodeIRAutoInit
+JZNodeIRAutoInit::JZNodeIRAutoInit()
+{
+    type = (JZNodeIRType)OP_ComilerAllocAuto;
+}
+
 //NodeCompilerInfo
 NodeCompilerInfo::NodeCompilerInfo()
 {
@@ -2002,7 +2008,13 @@ void JZNodeCompiler::addFunctionAlloc(const JZFunctionDefine &define)
     auto list = m_scriptItem->localVariableList(false);
     for (int i = 0; i < list.size(); i++)
     {
-        auto param = m_scriptItem->localVariable(list[i]);        
+        auto param = m_scriptItem->localVariable(list[i]);
+        if (param->type == "auto")
+        {
+            addAllocAuto(param->name);
+            continue;
+        }
+        
         int data_type = env->nameToType(param->type);
         addAlloc(JZNodeIRAlloc::Stack, param->name, data_type);
         if(!param->value.isEmpty())
@@ -2376,6 +2388,13 @@ void JZNodeCompiler::addAlloc(int allocType, QString name, int dataType)
     alloc->allocType = allocType;
     alloc->dst = irRef(name);
     alloc->dataType = dataType;
+    addStatement(JZNodeIRPtr(alloc));
+}
+
+void JZNodeCompiler::addAllocAuto(QString memberName)
+{
+    JZNodeIRAutoInit *alloc = new JZNodeIRAutoInit();
+    alloc->param = memberName;
     addStatement(JZNodeIRPtr(alloc));
 }
 

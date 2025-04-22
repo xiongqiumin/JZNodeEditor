@@ -357,10 +357,16 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
     bool is_type2_ptr = JZNodeType::isPointer(type2);
     if (is_type1_ptr && is_type2_ptr)
     {
+        if (JZNodeType::baseType(type2) == Type_arg)
+            return true;
+
         return isInherits(JZNodeType::baseType(type1), JZNodeType::baseType(type2));
     }
     else if (!is_type1_ptr && is_type2_ptr)
     {
+        if (JZNodeType::baseType(type2) == Type_arg)
+            return true;
+
         return isInherits(type1,JZNodeType::baseType(type2));
     }
     else if (is_type1_ptr && !is_type2_ptr)
@@ -373,9 +379,7 @@ bool JZScriptEnvironment::canConvert(int type1,int type2) const
     else if(type1 == Type_auto || type2 == Type_auto)
         return true;
     else if(type1 == Type_arg || type2 == Type_arg)
-        return true;
-    else if (JZNodeType::baseType(type1) >= Type_class && type2 == Type_argPointer)
-        return true;
+        return true;    
     else if(JZNodeType::isNumber(type1) && JZNodeType::isNumber(type2))
         return true;
     else if (type1 == Type_bool && JZNodeType::isNumber(type2))

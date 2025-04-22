@@ -68,6 +68,7 @@ enum {
     OP_ComilerFlowOut = 0x8000,
     OP_ComilerStackInit, 
     OP_ComilerBreakContinue,
+    OP_ComilerAllocAuto,
 };
 
 //JZNodeIRFlowOut
@@ -102,6 +103,16 @@ class JZNodeIRStackInit : public JZNodeIR
 public:
     JZNodeIRStackInit();
 };
+
+//JZNodeIRAutoInit
+class JZNodeIRAutoInit : public JZNodeIR
+{
+public:
+    JZNodeIRAutoInit();
+
+    QString param;
+};
+
 
 //NodeCompilerInfo
 struct NodeCompilerInfo
@@ -259,6 +270,7 @@ public:
     JZNode* continueParentNode(int child_id);
     
     void addAlloc(int allocType, QString name, int dataType);
+    void addAllocAuto(QString memberName);
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallVirtual(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);  

@@ -294,7 +294,6 @@ void AngleScriptTest::testComplex()
 
 void AngleScriptTest::testFab()
 {
-    return;
     QString code = R"(
     int fab(int n) {
         if (n <= 1) {
@@ -384,7 +383,6 @@ void AngleScriptTest::testSwitch()
 
 void AngleScriptTest::testSort()
 {
-    return;
     QString code = R"(
     QList<int> testSort(QList<int> input) {
         for(int i = 0; i < input.size(22); i++)
