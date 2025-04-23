@@ -11,11 +11,11 @@ class JZUnitTestHook : public BuiltInFunction
 public:
     virtual void call(JZNodeEngine *engine) override
     {        
-        int node_id = engine->getReg(Reg_CallIn).toInt();
-        Q_ASSERT(hook->hasHook(node_id));
+        int hook_id = engine->getReg(Reg_CallIn).toInt();
+        Q_ASSERT(hook->hasHook(hook_id));
 
         int count = engine->regInCount();
-        for (int i = 1; i < count; i++)
+        for (int i = 0; i < count; i++)
         {
             int out_id = engine->getReg(Reg_CallIn + i).toInt();
             engine->setReg(Reg_CallOut, hook->hookValue(out_id));
@@ -97,12 +97,13 @@ bool JZNodeUnitTest::compiler(JZNodeCompiler* c, QString& error)
     }
 
     QList<int> param_out_list = paramOutList();
-    QList<JZNodeIRParam> in, out;
-    in << irLiteral(m_id);
+    QList<JZNodeIRParam> in, out;    
     for (int i = 0; i < param_out_list.size(); i++)
     {
         int out_id = c->paramId(m_id, param_out_list[i]);
         out << irId(out_id);
+
+        in << irLiteral(out_id);
 
         int out_type = JZNodeType::variantType(hook->hookValue(out_id));
         c->setPinType(m_id, param_out_list[i], out_type);
@@ -149,9 +150,37 @@ JZScriptUnitTest::~JZScriptUnitTest()
 }
 
 void JZScriptUnitTest::setProject(JZProject* project)
+{    
+    m_project = project;
+    registEnv(project->environment());
+}
+
+void JZScriptUnitTest::registEnv(JZScriptEnvironment *env)
 {
-    auto func_inst = project->environment()->functionManager();
-    m_project = project;    
+    auto func_inst = env->functionManager();
+
+    JZFunctionDefine hook;
+    hook.name = "JZUnitTestHook";
+    hook.isCFunction = true;
+    hook.isFlowFunction = false;
+    hook.paramIn.push_back(JZParamDefine("nodeId", "int"));
+    hook.paramIn.push_back(JZParamDefine("outId", "args"));
+    hook.paramOut.push_back(JZParamDefine("outValue", "arg"));
+
+    auto test_hook = new JZUnitTestHook();
+    test_hook->hook = this;
+    auto hook_func = BuiltInFunctionPtr(test_hook);
+    func_inst->registBuiltInFunction(hook, hook_func);
+
+    JZFunctionDefine widget_hook;
+    widget_hook.name = "JZUnitWidgetHook";
+    widget_hook.isCFunction = true;
+    widget_hook.isFlowFunction = false;
+    widget_hook.paramIn.push_back(JZParamDefine("input", "args"));
+    widget_hook.paramIn.push_back(JZParamDefine("output", "args"));
+
+    auto widget_hook_func = BuiltInFunctionPtr(new JZUnitTestHook());
+    func_inst->registBuiltInFunction(widget_hook, hook_func);
 }
 
 bool JZScriptUnitTest::hasHook(int id)
@@ -218,33 +247,6 @@ JZScriptItem *JZScriptUnitTest::createUnitScript(JZScriptItemDependPtr depend)
     }
 
     return m_script;
-}
-
-//JZScriptUnitTestBuildinInit
-void JZScriptUnitTestBuildinInit(JZScriptEnvironment *env)
-{
-    JZFunctionDefine hook;
-    hook.name = "JZUnitTestHook";
-    hook.isCFunction = true;
-    hook.isFlowFunction = false;
-    hook.paramIn.push_back(JZParamDefine("nodeId", "int"));
-    hook.paramIn.push_back(JZParamDefine("outId", "args"));
-    hook.paramOut.push_back(JZParamDefine("outValue", "arg"));
-
-    auto test_hook = new JZUnitTestHook();
-    test_hook->hook = this;
-    auto hook_func = BuiltInFunctionPtr(test_hook);
-    func_inst->registBuiltInFunction(hook, hook_func);
-
-    JZFunctionDefine widget_hook;
-    widget_hook.name = "JZUnitWidgetHook";
-    widget_hook.isCFunction = true;
-    widget_hook.isFlowFunction = false;
-    widget_hook.paramIn.push_back(JZParamDefine("input", "args"));
-    widget_hook.paramIn.push_back(JZParamDefine("output", "args"));
-
-    auto widget_hook_func = BuiltInFunctionPtr(new JZUnitTestHook());
-    func_inst->registBuiltInFunction(widget_hook, hook_func);
 }
 
 //JZScriptUnitTestInit

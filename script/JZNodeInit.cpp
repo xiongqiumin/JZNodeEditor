@@ -47,7 +47,7 @@ void JZNodeInit()
 
     BindManager::instance()->init();    
     
-    JZScriptUnitTestInit();
+    JZScriptUnitTestNodeInit();
 /*
     auto module_inst = JZModuleManager::instance();
     module_inst->addModule(new JZModuleOpencv());

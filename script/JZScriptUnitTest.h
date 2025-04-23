@@ -60,6 +60,7 @@ public:
     ~JZScriptUnitTest();
 
     void setProject(JZProject* project);
+    void registEnv(JZScriptEnvironment *env);
 
     JZScriptItemDependPtr genDepend(const JZScriptItem *script);
     JZScriptItem *createUnitScript(JZScriptItemDependPtr depend);
@@ -74,7 +75,6 @@ protected:
     QMap<int,QVariant> m_hookValues;
 };
 
-void JZScriptUnitTestBuildinInit(JZScriptEnvironment *env);
 void JZScriptUnitTestNodeInit();
 
 #endif

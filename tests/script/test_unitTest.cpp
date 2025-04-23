@@ -57,11 +57,13 @@ void TestUnitTest::testHello()
         return;
 
     QString unit_test = unit_script_item->function().fullName();
+    unit.registEnv(m_engine.environment());
     
     QVariantList in, out;
     in << 1 << 2;
     bool ret = call(unit_test,in,out);
     QVERIFY(ret);    
+    QCOMPARE(out[0].toInt(), 803);
 }
 
 
