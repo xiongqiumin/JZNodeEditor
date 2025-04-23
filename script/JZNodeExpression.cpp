@@ -42,7 +42,7 @@ bool JZNodeExpression::updateNode(QString &error)
 {    
     auto project = m_file->project();
 
-    JZTempItemGuard guard(project, m_exprItem, true);        
+    JZProjectTempGuard guard(project, m_exprItem, true);        
 
     JZScriptConvert convert;
     if (!convert.convertExpression(m_expression,m_exprItem))
@@ -93,7 +93,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     auto env = environment();
     
     auto project = m_file->project();
-    JZTempItemGuard guard(project, m_exprItem, true);
+    JZProjectTempGuard guard(project, m_exprItem, true);
     m_exprItem->clearLocalVariable();
 
     QMap<QString, int> localMap;

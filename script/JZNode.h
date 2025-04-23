@@ -165,6 +165,7 @@ public:
     JZNodePin *pin(int id);
     const JZNodePin *pin(int id) const;
     JZNodePin* pinByIndex(int index);
+    const JZNodePin* pinByIndex(int index) const;
     JZNodePin *pin(QString name);
     bool hasPin(int id) const;
     int indexOfPin(int id) const;

@@ -7,32 +7,40 @@
 class JZScriptItemDepend
 {
 public:
+    //这里存的node节点是原脚本的
     struct ParamDepend
     {
-        int id;
+        const JZNodeParam *param;
         QVariant value;
     };
 
     struct FunctionDepend
     {
-        int id;
+        const JZNodeFunction *func;
         QVariant value;
     };
     
-    QVariantList inputList;
+    JZScriptItemDepend();
+    void setParam(QString name,const QVariant &value);
+    void setFunction(QString func, const QVariant &value);
+        
     QList<ParamDepend> paramList;
     QList<FunctionDepend> functionList;
+    const JZScriptItem *script;
 };
 typedef QSharedPointer<JZScriptItemDepend> JZScriptItemDependPtr;
 
+class JZScriptUnitTest;
 class JZNodeUnitTest : public JZNode
 {
 public:
     JZNodeUnitTest();
     ~JZNodeUnitTest();
 
-    void fromNode(JZNode *node);
+    void copyFrom(const JZNode *node);
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+
+    JZScriptUnitTest *hook;
 };
 
 class JZScriptUnitTestVistor: public JZScriptItemVistor
@@ -40,23 +48,22 @@ class JZScriptUnitTestVistor: public JZScriptItemVistor
 public:
     JZScriptUnitTestVistor();
 
-    virtual void visitorSelf(JZNode *node) override;
+    virtual void visitorSelf(const JZNode *node) override;
 
     JZScriptItemDependPtr depend;
 };
 
 class JZScriptUnitTest
 {
-public:
-    static JZScriptUnitTest *instance();
-
+public:    
     JZScriptUnitTest();
     ~JZScriptUnitTest();
 
     void setProject(JZProject* project);
-    JZScriptItemDependPtr init(JZScriptItem *script);
-    void build();
-    void applyDepends(JZScriptItemDependPtr depend);
+
+    JZScriptItemDependPtr genDepend(const JZScriptItem *script);
+    JZScriptItem *createUnitScript(JZScriptItemDependPtr depend);
+    JZScriptItem *script();    
 
     bool hasHook(int id);
     QVariant hookValue(int id);
@@ -67,7 +74,8 @@ protected:
     QMap<int,QVariant> m_hookValues;
 };
 
-void JZScriptUnitTestInit();
+void JZScriptUnitTestBuildinInit(JZScriptEnvironment *env);
+void JZScriptUnitTestNodeInit();
 
 #endif
 

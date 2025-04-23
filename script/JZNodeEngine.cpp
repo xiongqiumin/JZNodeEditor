@@ -1475,6 +1475,15 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
                 break;
         }
     }
+    else if (dataType1 == Type_bool)
+    {
+        if (op == OP_eq)
+            return a.toBool() == b.toBool();
+        else if(op == OP_ne)
+            return a.toBool() != b.toBool();
+
+        Q_ASSERT(0);
+    }
     else if(dataType1 == Type_int8)
         return dealExprInt(a.value<int8_t>(), b.value<int8_t>(), op);
     else if (dataType1 == Type_int16)

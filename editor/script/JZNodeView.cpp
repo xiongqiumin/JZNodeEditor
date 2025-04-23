@@ -968,7 +968,7 @@ void JZNodeView::updateNodeLayout()
     QVector<GraphPtr> graph_list;
     if (!compiler.genGraphs(m_file, graph_list))
     {
-        QMessageBox::information(this, "", compiler.error());
+        QMessageBox::information(this, "", "编译失败");
         return;
     }
 

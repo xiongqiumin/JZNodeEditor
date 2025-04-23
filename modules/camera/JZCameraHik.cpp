@@ -37,7 +37,7 @@ bool JZCameraHikApi::enumDevices()
 {
     memset(&m_stDevList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 
-    // ch:ö�������������豸 | en:Enumerate all devices within subnet
+    // en:Enumerate all devices within subnet
     int nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE | MV_GENTL_GIGE_DEVICE | MV_GENTL_CAMERALINK_DEVICE |
         MV_GENTL_CXP_DEVICE | MV_GENTL_XOF_DEVICE, &m_stDevList);
     return nRet == MV_OK;    
@@ -56,6 +56,124 @@ JZCameraHik::JZCameraHik()
 JZCameraHik::~JZCameraHik()
 {
     close();
+}
+
+QString JZCameraHik::errorString(int errorCode)
+{
+    switch (errorCode) {
+    case MV_E_HANDLE:
+        return "错误或无效的句柄";
+    case MV_E_SUPPORT:
+        return "不支持的功能";
+    case MV_E_BUFOVER:
+        return "缓存已满";
+    case MV_E_CALLORDER:
+        return "函数调用顺序错误";
+    case MV_E_PARAMETER:
+        return "错误的参数";
+    case MV_E_RESOURCE:
+        return "资源申请失败";
+    case MV_E_NODATA:
+        return "无数据";
+    case MV_E_PRECONDITION:
+        return "前置条件有误，或运行环境已发生变化";
+    case MV_E_VERSION:
+        return "版本不匹配";
+    case MV_E_NOENOUGH_BUF:
+        return "传入的内存空间不足";
+    case MV_E_ABNORMAL_IMAGE:
+        return "异常图像，可能是丢包导致图像不完整";
+    case MV_E_LOAD_LIBRARY:
+        return "动态导入DLL失败";
+    case MV_E_NOOUTBUF:
+        return "没有可输出的缓存";
+    case MV_E_ENCRYPT:
+        return "加密错误";
+    case MV_E_OPENFILE:
+        return "打开文件出现错误";
+    case MV_E_BUF_IN_USE:
+        return "缓存地址已使用";
+    case MV_E_BUF_INVALID:
+        return "无效的缓存地址";
+    case MV_E_NOALIGN_BUF:
+        return "缓存对齐异常";
+    case MV_E_NOENOUGH_BUF_NUM:
+        return "缓存个数不足";
+    case MV_E_PORT_IN_USE:
+        return "串口被占用";
+    case MV_E_IMAGE_DECODEC:
+        return "解码错误(SDK校验图像异常)";
+    case MV_E_UINT32_LIMIT:
+        return "图像大小超过unsigned int返回，接口不支持";
+    case MV_E_UNKNOW:
+        return "未知的错误";
+    case MV_E_GC_GENERIC:
+        return "通用错误";
+    case MV_E_GC_ARGUMENT:
+        return "参数非法";
+    case MV_E_GC_RANGE:
+        return "值超出范围";
+    case MV_E_GC_PROPERTY:
+        return "属性";
+    case MV_E_GC_RUNTIME:
+        return "运行环境有问题";
+    case MV_E_GC_LOGICAL:
+        return "逻辑错误";
+    case MV_E_GC_ACCESS:
+        return "节点访问条件有误";
+    case MV_E_GC_TIMEOUT:
+        return "超时";
+    case MV_E_GC_DYNAMICCAST:
+        return "转换异常";
+    case MV_E_GC_UNKNOW:
+        return "GenICam未知错误";
+    case MV_E_NOT_IMPLEMENTED:
+        return "命令不被设备支持";
+    case MV_E_INVALID_ADDRESS:
+        return "访问的目标地址不存在";
+    case MV_E_WRITE_PROTECT:
+        return "目标地址不可写";
+    case MV_E_ACCESS_DENIED:
+        return "设备无访问权限";
+    case MV_E_BUSY:
+        return "设备忙，或网络断开";
+    case MV_E_PACKET:
+        return "网络包数据错误";
+    case MV_E_NETER:
+        return "网络相关错误";
+    case MV_E_SUPPORT_MODIFY_DEVICE_IP:
+        return "在固定IP模式下不支持修改设备IP模式";
+    case MV_E_KEY_VERIFICATION:
+        return "秘钥校验错误";
+    case MV_E_IP_CONFLICT:
+        return "设备IP冲突";
+    case MV_E_USB_READ:
+        return "读usb出错";
+    case MV_E_USB_WRITE:
+        return "写usb出错";
+    case MV_E_USB_DEVICE:
+        return "设备异常";
+    case MV_E_USB_GENICAM:
+        return "GenICam相关错误";
+    case MV_E_USB_BANDWIDTH:
+        return "带宽不足";
+    case MV_E_USB_DRIVER:
+        return "驱动不匹配或者未装驱动";
+    case MV_E_USB_UNKNOW:
+        return "USB未知的错误";
+    case MV_E_UPG_FILE_MISMATCH:
+        return "升级固件不匹配";
+    case MV_E_UPG_LANGUSGE_MISMATCH:
+        return "升级固件语言不匹配";
+    case MV_E_UPG_CONFLICT:
+        return "升级冲突（设备已经在升级了再次请求升级即返回此错误）";
+    case MV_E_UPG_INNER_ERR:
+        return "升级时设备内部出现错误";
+    case MV_E_UPG_UNKNOW:
+        return "升级时未知错误";
+    default:
+        return "未知错误码";
+    }
 }
 
 bool JZCameraHik::isOpen()
@@ -149,8 +267,7 @@ void JZCameraHik::GrabbingThread()
             int h = pFrame.stFrameInfo.nHeight;
 
             cv::Mat image(h,w, CV_8UC3);
-            
-            //ת��ͼ���ʽΪBGR8
+                       
             MV_CC_PIXEL_CONVERT_PARAM stConvertParam = { 0 };
             memset(&stConvertParam, 0, sizeof(MV_CC_PIXEL_CONVERT_PARAM));
             stConvertParam.nWidth = stImageInfo.nWidth;
@@ -188,7 +305,11 @@ void JZCameraHik::startOnce()
         return;
 
     startGrabbing();    
-    MV_CC_SetEnumValue(m_hDevHandle, "TriggerMode", MV_TRIGGER_MODE_ON);
+    int nRet = MV_CC_SetEnumValue(m_hDevHandle, "TriggerMode", MV_TRIGGER_MODE_ON);
+    if (nRet != MV_OK)
+    {
+        qDebug() << errorString(nRet);
+    }
     CommandExecute("TriggerSoftware");
 }
 
@@ -206,6 +327,10 @@ void JZCameraHik::stop()
 bool JZCameraHik::CommandExecute(QString command)
 {
     int nRet = MV_CC_SetCommandValue(m_hDevHandle, qUtf8Printable(command));
+    if (nRet != MV_OK)
+    {
+        qDebug() << errorString(nRet);
+    }
     return (MV_OK == nRet);
 }
 
@@ -242,7 +367,7 @@ bool JZCameraHik::setConfig(const QString &config)
     return true;
 }
 
-double JZCameraHik::GetExposureTime()  // ch:�����ع�ʱ�� | en:Set Exposure Time
+double JZCameraHik::GetExposureTime()  // en:Set Exposure Time
 {
     MVCC_FLOATVALUE stFloatValue = { 0 };
 
@@ -256,7 +381,7 @@ bool JZCameraHik::SetExposureTime(double time)
     return MV_CC_SetFloatValue(m_hDevHandle, "ExposureTime", (float)time) == MV_OK;
 }
 
-double JZCameraHik::GetGain()  // ch:�������� | en:Set Gain
+double JZCameraHik::GetGain()  // en:Set Gain
 {
     MVCC_FLOATVALUE stFloatValue = { 0 };
 

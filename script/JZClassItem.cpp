@@ -200,11 +200,15 @@ JZParamItem *JZScriptClassItem::paramFile()
 
 JZNodeObjectDefine JZScriptClassItem::objectDefine()
 {    
+    JZNodeObjectManager *obj_inst = nullptr;
+    if(project())
+        obj_inst = project()->environment()->objectManager();
+
     JZNodeObjectDefine define;
     define.className = m_name;
     define.superName = m_super;
-    define.id = m_classId;
-    define.manager = project()->environment()->objectManager();
+    define.id = obj_inst->getClassId(m_name);
+    define.manager = obj_inst;
 
     auto item_list = itemList(ProjectItem_any);
     for (int item_idx = 0; item_idx < item_list.size(); item_idx++)

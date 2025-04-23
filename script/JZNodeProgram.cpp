@@ -422,6 +422,11 @@ const JZFunction* JZNodeProgram::function(QString name) const
     return nullptr;
 }
 
+void JZNodeProgram::addScript(QString path, JZNodeScriptPtr script)
+{
+    m_scripts[path] = script;
+}
+
 const JZNodeScript *JZNodeProgram::script(QString path) const
 {
     return m_scripts.value(path, JZNodeScriptPtr()).data();

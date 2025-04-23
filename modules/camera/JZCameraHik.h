@@ -25,10 +25,11 @@ protected:
     void GrabbingThread();
     void startGrabbing();
     
-    double GetExposureTime();               // ch:设置曝光时间 | en:Set Exposure Time
+    double GetExposureTime();               
     bool SetExposureTime(double time);
-    double GetGain();                       // ch:设置增益 | en:Set Gain
+    double GetGain();                       
     bool SetGain(double gain);
+    QString errorString(int code);
 
     bool m_isStartGrabbing;
     void *m_hDevHandle;

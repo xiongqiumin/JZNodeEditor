@@ -272,6 +272,11 @@ JZNodePin* JZNode::pinByIndex(int index)
     return &m_pinList[index];
 }
 
+const JZNodePin* JZNode::pinByIndex(int index) const
+{
+    return &m_pinList[index];
+}
+
 JZNodePin *JZNode::pin(QString name)
 {
     int index = indexOfPinByName(name);

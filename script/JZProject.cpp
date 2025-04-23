@@ -37,16 +37,20 @@ void operator>>(QDataStream &s, BreakPoint &param)
     s >> param.type;
 }
 
-//JZTempItemGuard
-JZTempItemGuard::JZTempItemGuard(JZProject *project, JZProjectItem *item,bool isTake)
+//JZProjectTempGuard
+JZProjectTempGuard::JZProjectTempGuard(JZProject *project, JZProjectItem *item,bool isTake)
 {
     m_project = project;
     m_item = item;
     m_isTake = isTake;
     project->addTmp(item);
+    if (item->itemType() == ProjectItem_scriptFunction)
+    {
+        ((JZScriptItem*)item)->loadFinish();
+    }
 }
 
-JZTempItemGuard::~JZTempItemGuard()
+JZProjectTempGuard::~JZProjectTempGuard()
 {
     if (m_isTake)
         m_project->takeTmp(m_item);

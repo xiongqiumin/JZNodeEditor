@@ -38,12 +38,12 @@ public:
 void operator<<(QDataStream &s, const BreakPoint &param);
 void operator>>(QDataStream &s, BreakPoint &param);
 
-//JZTempItemGuard
-class JZTempItemGuard
+//JZProjectTempGuard
+class JZProjectTempGuard
 {
 public:
-    JZTempItemGuard(JZProject *project, JZProjectItem *item,bool isTake = false);
-    ~JZTempItemGuard();
+    JZProjectTempGuard(JZProject *project, JZProjectItem *item,bool isTake = false);
+    ~JZProjectTempGuard();
 
 protected:
     JZProject *m_project;

@@ -15,6 +15,8 @@ set(JZNodeTest_SOURCES
 	test_opencv.h    
     test_anglescript.cpp
     test_anglescript.h
+    test_unitTest.cpp
+    test_unitTest.h
 )
 
 add_executable(JZNodeTest ${JZNodeTest_SOURCES})

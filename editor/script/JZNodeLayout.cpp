@@ -78,11 +78,9 @@ void JZNodeLayoutTree::make(Graph *graph)
             top_list.push_back(node_id);
     }
     
-    //先计算固定深度
     for (int node_idx = 0; node_idx < graph->topolist.size(); node_idx++)
         calcCol(graph->topolist[node_idx]->node->id());
 
-    //压缩列数
     bool compress = false;
     do
     {
@@ -119,7 +117,6 @@ void JZNodeLayoutTree::make(Graph *graph)
         calcNodeOuput(top_list[i], row);        
     }
 
-    //计算max
     auto it = m_nodeMap.begin();
     while (it != m_nodeMap.end())
     {
@@ -129,8 +126,7 @@ void JZNodeLayoutTree::make(Graph *graph)
         max_col = qMax(max_col, tree_node->col);
         it++;
     }
-
-    //压缩行数
+   
     compress = false;
     do
     {

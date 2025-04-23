@@ -488,7 +488,7 @@ QVariant JZNodeType::convertToPointer(const QVariant& srcValue)
 {
     if (srcValue.type() == QVariant::UserType && srcValue.userType() == qMetaTypeId<JZNodeObjectHolder>())
     {
-        JZNodeObjectHolder* obj_ptr = (JZNodeObjectHolder*)v.data();
+        JZNodeObjectHolder* obj_ptr = (JZNodeObjectHolder*)srcValue.data();
         JZNodeObjectPointer pointer = obj_ptr->toPointer();
         return QVariant::fromValue(pointer);
     }

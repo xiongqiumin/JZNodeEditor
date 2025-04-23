@@ -24,12 +24,15 @@ public:
     void setFunction(JZFunctionDefine def);
 
     JZNodeFunctionStart* startNode();
+    const JZNodeFunctionStart* startNode() const;
 
     int addNode(JZNode *node);
     void insertNode(JZNode *node);
     void removeNode(int id);
+    void removeNodeOnly(int id);
 
     JZNode *getNode(int id);
+    const JZNode *getNode(int id) const;
     JZNodePin *getPin(const JZNodeGemo &gemo);    
     QList<int> nodeList();            
 
@@ -55,10 +58,11 @@ public:
     void removeConnect(int id);
     void removeConnectByNode(int node_id, int pinId);
     JZNodeConnect *getConnect(int id);
-    QList<int> getConnectPin(int node_id, int pinId = -1);    // pinId = -1 得到节点所有连线
-    QList<int> getConnectOut(int node_id, int pinId = -1);
-    QList<int> getConnectInput(int node_id, int pinId = -1);
-    QList<JZNodeConnect> connectList();   
+    const JZNodeConnect *getConnect(int id) const;
+    QList<int> getConnectPin(int node_id, int pinId = -1) const;    // pinId = -1 得到节点所有连线
+    QList<int> getConnectOut(int node_id, int pinId = -1) const;
+    QList<int> getConnectInput(int node_id, int pinId = -1) const;
+    QList<JZNodeConnect> connectList() const;
 
     void addLocalVariable(const JZParamDefine &def);
     void addLocalVariable(const QString &name,QString dataType,const QString &value = QString());            

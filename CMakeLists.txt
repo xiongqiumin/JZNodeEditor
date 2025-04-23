@@ -125,7 +125,11 @@ set(JZNodeCore_SOURCES
     script/JZRegExpHelp.cpp
     script/JZRegExpHelp.h
     script/JZScriptBuildInFunction.cpp
-    script/JZScriptBuildInFunction.h   
+    script/JZScriptBuildInFunction.h
+    script/JZScriptUnitTest.cpp
+    script/JZScriptUnitTest.h
+    script/JZScriptItemVisitor.cpp
+    script/JZScriptItemVisitor.h
     script/JZScriptConvert.cpp
     script/JZScriptConvert.h  
     script/angelscript/as_parser.cpp

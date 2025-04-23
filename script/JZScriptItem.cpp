@@ -75,6 +75,12 @@ JZNodeFunctionStart* JZScriptItem::startNode()
     return (JZNodeFunctionStart*)m_nodes[0];
 }
 
+const JZNodeFunctionStart* JZScriptItem::startNode() const
+{
+    Q_ASSERT(m_nodes[0]->type() == Node_functionStart);
+    return (JZNodeFunctionStart*)m_nodes[0];
+}
+
 int JZScriptItem::addNode(JZNode *node)
 {
     Q_ASSERT(node->id() == -1);
@@ -104,6 +110,13 @@ void JZScriptItem::removeNode(int id)
         delete it.value();
         m_nodes.erase(it);
     }
+}
+
+void JZScriptItem::removeNodeOnly(int id)
+{
+    Q_ASSERT(m_nodes.contains(id));
+    delete m_nodes[id];
+    m_nodes.remove(id);
 }
 
 int JZScriptItem::addGroup(const JZNodeGroup &group)
@@ -173,6 +186,15 @@ JZNodePin *JZScriptItem::getPin(const JZNodeGemo &gemo)
 }
 
 JZNode *JZScriptItem::getNode(int id)
+{
+    auto it = m_nodes.find(id);
+    if (it != m_nodes.end())
+        return it.value();
+    else
+        return nullptr;
+}
+
+const JZNode *JZScriptItem::getNode(int id) const
 {
     auto it = m_nodes.find(id);
     if (it != m_nodes.end())
@@ -431,7 +453,7 @@ void JZScriptItem::removeConnectByNode(int node_id, int prop_id)
         removeConnect(list[i]);
 }
 
-QList<int> JZScriptItem::getConnectPin(int id, int pinId)
+QList<int> JZScriptItem::getConnectPin(int id, int pinId) const
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
@@ -445,7 +467,7 @@ QList<int> JZScriptItem::getConnectPin(int id, int pinId)
     return list;
 }
 
-QList<int> JZScriptItem::getConnectOut(int id, int pinId)
+QList<int> JZScriptItem::getConnectOut(int id, int pinId) const
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
@@ -458,7 +480,7 @@ QList<int> JZScriptItem::getConnectOut(int id, int pinId)
     return list;
 }
 
-QList<int> JZScriptItem::getConnectInput(int id, int pinId)
+QList<int> JZScriptItem::getConnectInput(int id, int pinId) const
 {
     QList<int> list;
     for (int i = 0; i < m_connects.size(); i++)
@@ -481,7 +503,17 @@ JZNodeConnect *JZScriptItem::getConnect(int id)
     return nullptr;
 }
 
-QList<JZNodeConnect> JZScriptItem::connectList()
+const JZNodeConnect *JZScriptItem::getConnect(int id) const
+{
+    for (int i = 0; i < m_connects.size(); i++)
+    {
+        if (m_connects[i].id == id)
+            return &m_connects[i];
+    }
+    return nullptr;
+}
+
+QList<JZNodeConnect> JZScriptItem::connectList() const
 {
     return m_connects;
 }

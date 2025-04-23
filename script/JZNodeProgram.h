@@ -138,6 +138,7 @@ public:
 
     QList<JZNodeScript*> scriptList() const;
     const JZNodeScript *script(QString path) const;
+    void addScript(QString path, JZNodeScriptPtr);
     
     const JZFunctionDebugInfo *debugInfo(QString name) const;
     

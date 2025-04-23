@@ -46,9 +46,7 @@ public:
 
 protected:
     virtual void saveToStream(QDataStream &s) const override;
-    virtual bool loadFromStream(QDataStream &s) override;
-
-    int m_classId;
+    virtual bool loadFromStream(QDataStream &s) override;    
     QString m_super;  
 
     JZParamDefine m_this;

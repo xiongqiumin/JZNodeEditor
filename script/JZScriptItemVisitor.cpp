@@ -10,7 +10,7 @@ JZScriptItemVistor::~JZScriptItemVistor()
 {
 }
 
-void JZScriptItemVistor::visitorScript(JZScriptItem *item)
+void JZScriptItemVistor::visitorScript(const JZScriptItem *item)
 {
     m_script = item;
 
@@ -18,11 +18,11 @@ void JZScriptItemVistor::visitorScript(JZScriptItem *item)
     visitor(start);
 }
 
-void JZScriptItemVistor::visitor(JZNode *node)
+void JZScriptItemVistor::visitor(const JZNode *node)
 {
     while(node)
     {
-        QList<JZNode*> input_list = dataInputNode(node);
+        QList<const JZNode*> input_list = dataInputNode(node);
         for(int i = 0; i < input_list.size(); i++)
             visitor(input_list[i]);
 
@@ -42,21 +42,21 @@ void JZScriptItemVistor::visitor(JZNode *node)
     }
 }
 
-void JZScriptItemVistor::visitorSelf(JZNode *node)
+void JZScriptItemVistor::visitorSelf(const JZNode *node)
 {
 
 }
 
-JZNode *JZScriptItemVistor::flowInputNode(JZNode *node,int id)
+const JZNode *JZScriptItemVistor::flowInputNode(const JZNode *node,int id)
 {
-    QList<JZNode*> pre_list = getPinNode(node,node->flowIn());
+    QList<const JZNode*> pre_list = getPinNode(node,node->flowIn());
     if(pre_list.size() == 0)
         return nullptr;
 
     return pre_list[0];
 }
 
-JZNode *JZScriptItemVistor::nextFlowNode(JZNode *node,int flow_out)
+const JZNode *JZScriptItemVistor::nextFlowNode(const JZNode *node,int flow_out)
 {
     Q_ASSERT(node->pin(flow_out)->isFlow() || node->pin(flow_out)->isSubFlow());
 
@@ -73,16 +73,16 @@ JZNode *JZScriptItemVistor::nextFlowNode(JZNode *node,int flow_out)
     }
 }
 
-QList<JZNode*> JZScriptItemVistor::allDataInputNode(JZNode *node)
+QList<const JZNode*> JZScriptItemVistor::allDataInputNode(const JZNode *node)
 {
-    QList<JZNode*> all_in_list = dataInputNode(node);
-    QList<JZNode*> cur_list = all_in_list;
-    QList<JZNode*> next_list; 
+    QList<const JZNode*> all_in_list = dataInputNode(node);
+    QList<const JZNode*> cur_list = all_in_list;
+    QList<const JZNode*> next_list;
     while(cur_list.size() != 0)
     {
         for(int i = 0; i < cur_list.size(); i++)
         {
-            QList<JZNode*> tmp_in_list = dataInputNode(cur_list[i]);
+            QList<const JZNode*> tmp_in_list = dataInputNode(cur_list[i]);
             for(auto tmp : tmp_in_list)
             {
                 if(!all_in_list.contains(tmp))
@@ -98,9 +98,9 @@ QList<JZNode*> JZScriptItemVistor::allDataInputNode(JZNode *node)
     return all_in_list;
 }
 
-QList<JZNode*> JZScriptItemVistor::getPinNode(JZNode *node,int pin)
+QList<const JZNode*> JZScriptItemVistor::getPinNode(const JZNode *node,int pin)
 {
-    QSet<JZNode*> from_nodes;
+    QSet<const JZNode*> from_nodes;
 
     QList<int> in_line_list = m_script->getConnectPin(node->id(), pin);
     for(int line_idx = 0; line_idx < in_line_list.size(); line_idx++)
@@ -113,9 +113,9 @@ QList<JZNode*> JZScriptItemVistor::getPinNode(JZNode *node,int pin)
     return from_nodes.values();
 }
 
-QList<JZNode*> JZScriptItemVistor::dataInputNode(JZNode *node)
+QList<const JZNode*> JZScriptItemVistor::dataInputNode(const JZNode *node)
 {
-    QSet<JZNode*> from_nodes;
+    QSet<const JZNode*> from_nodes;
 
     auto in_list = node->paramInList();
     for(int i = 0; i < in_list.size(); i++)
@@ -129,18 +129,4 @@ QList<JZNode*> JZScriptItemVistor::dataInputNode(JZNode *node)
         }
     }
     return from_nodes.toList();
-}
-
-void JZScriptItemVistor::replaceNode(JZNode *m_node)
-{
-    int node_id = 0;
-    //QList<int> in_line_list = m_script->getConnectInput(m_node->id());
-    //QList<int> out_line_list = m_script->getConnectInput(m_node->id());
-    
-    
-    QList<JZNodeConnect> out_line_list;
-    for(int line_idx = 0; line_idx < out_line_list.size(); line_idx++)
-    {
-        m_script->addConnect(out_line_list[line_idx].from, JZNodeGemo(node_id,out_line_list[line_idx].to.pinId));
-    }
 }
