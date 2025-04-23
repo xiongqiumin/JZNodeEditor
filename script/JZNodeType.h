@@ -213,7 +213,9 @@ public:
     static QString debugString(const JZNodeObject *obj);
         
     static bool sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefine *slot);
-    QVariant convertNumber(const QVariant& srcValue, int dstType);
+    
+    static QVariant convertNumber(const QVariant& srcValue, int dstType);
+    static QVariant convertToPointer(const QVariant& srcValue);
 };
 
 #endif

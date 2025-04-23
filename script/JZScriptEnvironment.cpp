@@ -437,9 +437,7 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
     if (!JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type)
         && isInherits(src_type, JZNodeType::baseType(dst_type)))
     {
-        JZNodeObjectHolder* obj_ptr = (JZNodeObjectHolder*)v.data();
-        JZNodeObjectPointer pointer = obj_ptr->toPointer();
-        return QVariant::fromValue(pointer);
+        return JZNodeType::convertToPointer(v);
     }
 
     if (dst_type == Type_any)

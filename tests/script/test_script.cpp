@@ -377,6 +377,43 @@ void ScriptTest::testSequeue()
     QCOMPARE(d,9);
 }
 
+void ScriptTest::testAuto()
+{
+    JZFunctionDefine func;
+    func.name = "testAuto";
+    func.paramOut.push_back(JZParamDefine("n", "int"));
+
+    JZScriptItem *script = m_file->addFunction(func);
+    script->addLocalVariable("n", "auto");
+
+    auto start = script->startNode();
+
+    JZNodeSetParam* set_n = new JZNodeSetParam();
+    set_n->setVariable("n");
+    set_n->setValue("1");
+
+    JZNodeReturn* ret = new JZNodeReturn();
+    ret->setFunction(&func);
+
+    script->addNode(set_n);
+    script->addNode(ret);
+    script->addConnect(start->flowOutGemo(), set_n->flowInGemo());
+    
+    JZNodeParam* get_n = new JZNodeParam();
+    get_n->setVariable("n");
+    script->addNode(get_n);
+
+    script->addConnect(get_n->paramOutGemo(0), ret->paramInGemo(0));
+    script->addConnect(set_n->flowOutGemo(), ret->flowInGemo());
+
+    if (!build())
+        return;
+
+    QVariantList in, out;
+    call("testAuto", in, out);
+    QCOMPARE(out[0].toInt(), 1);
+}
+
 void ScriptTest::testFor()
 {        
     auto env = m_project.environment();

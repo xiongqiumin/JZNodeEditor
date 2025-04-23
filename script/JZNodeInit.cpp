@@ -16,6 +16,7 @@
 #include "modules/communication/JZModuleComm.h"
 #include "LogManager.h"
 #include "runtime/JZWidgetBind.h"
+#include "JZScriptUnitTest.h"
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectHolder ptr)
 {
@@ -45,7 +46,9 @@ void JZNodeInit()
     JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);              
 
     BindManager::instance()->init();    
-
+    
+    JZScriptUnitTestInit();
+/*
     auto module_inst = JZModuleManager::instance();
     module_inst->addModule(new JZModuleOpencv());
     module_inst->addModule(new JZModuleCamera());
@@ -56,4 +59,5 @@ void JZNodeInit()
     JZModuleCameraNodeInit();
     JZModuleModelNodeInit();
     JZModuleCommNodeInit();
+*/
 }

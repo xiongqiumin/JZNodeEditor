@@ -10,6 +10,7 @@
 enum
 {
     Node_none,    
+    Node_unknown,
     Node_nop,
     Node_param,
     Node_create,
@@ -163,6 +164,7 @@ public:
     void clearPin();
     JZNodePin *pin(int id);
     const JZNodePin *pin(int id) const;
+    JZNodePin* pinByIndex(int index);
     JZNodePin *pin(QString name);
     bool hasPin(int id) const;
     int indexOfPin(int id) const;
@@ -249,6 +251,15 @@ protected:
     QString m_memo;
     QList<JZNodePin> m_pinList;
     JZScriptItem *m_file;
+};
+
+class JZNodeUnknown : public JZNode
+{
+public:
+    JZNodeUnknown();
+    virtual ~JZNodeUnknown();
+
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error);
 };
 
 #endif

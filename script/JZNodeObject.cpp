@@ -1173,6 +1173,7 @@ int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
     //可以先声明在注册
     Q_ASSERT(!info.className.isEmpty());
+    //没有定义或者声明的id和之前一直
     Q_ASSERT(!meta(info.className) || (info.id == Type_none || meta(info.className)->id == info.id));
 
     JZNodeObjectDefine *def = new JZNodeObjectDefine();

@@ -553,10 +553,24 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
 
     auto env = environment();
     auto def = c->getVariableInfo(name);    
-    c->addNodeEnter(m_id);
     int out_id = c->paramId(m_id,paramOut(0));
+
+    c->addNodeEnter(m_id);
     JZNodeIRParam ref = c->paramRef(name);    
-    c->setPinType(m_id, paramOut(0), env->nameToType(def->type));
+    if (def->type == "auto")
+    {
+        int data_type = c->refType(name);
+        if (data_type == Type_auto)
+        {
+            error = "类型未定义";
+            return false;
+        }
+        c->setPinType(m_id, paramOut(0), data_type);
+    }
+    else
+    {
+        c->setPinType(m_id, paramOut(0), env->nameToType(def->type));
+    }
     c->addSetVariable(irId(out_id), ref);
     return true;
 }
@@ -619,9 +633,9 @@ QString JZNodeSetParam::variable() const
     return pinValue(paramIn(0));
 }
 
-void JZNodeSetParam::setValue(const QString &name)
+void JZNodeSetParam::setValue(const QString &value)
 {
-    setPinValue(paramIn(1), name);
+    setPinValue(paramIn(1), value);
 }
 
 QString JZNodeSetParam::value() const
@@ -675,67 +689,14 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-//JZNodeAbstractMember
-JZNodeAbstractMember::JZNodeAbstractMember()
-{
-    addParamIn("class");    
-}
-
-JZNodeAbstractMember::~JZNodeAbstractMember()
-{
-
-}
-
-void JZNodeAbstractMember::setClassName(QString className)
-{
-    setPinName(paramIn(0), className);
-}
-
-QString JZNodeAbstractMember::className()
-{
-    return pinName(paramIn(0));
-}
-
-void JZNodeAbstractMember::setMember(QString params)
-{
-    setPinValue(m_memberId, params);
-}
-
-QString JZNodeAbstractMember::member()
-{
-    return pinValue(m_memberId);
-}
-
-bool JZNodeAbstractMember::update(QString &error)
-{
-    auto class_name = className();
-    auto env = environment();
-    auto obj_inst = environment()->objectManager();
-    auto meta = obj_inst->meta(class_name);
-    if (!meta)
-    {
-        error = JZNodeCompiler::errorString(Error_noType, { class_name });
-        return false;
-    }
-
-    auto def = meta->param(member());
-    if(!def || env->nameToType(def->type) == Type_none)
-    {
-        error = JZNodeCompiler::errorString(Error_classNoMember, { class_name,member() });
-        return false;
-    }
-    m_memberType = def->type;
-    setPinType(paramIn(0), { meta->className });
-    return true;
-}
-
 //JZNodeMemberParam
 JZNodeMemberParam::JZNodeMemberParam()
 {
     m_name = "getMember";
     m_type = Node_memberParam;
 
-    m_memberId = addParamOut("");
+    addParamIn("object");
+    addParamOut("");
 }
 
 JZNodeMemberParam::~JZNodeMemberParam()
@@ -745,10 +706,6 @@ JZNodeMemberParam::~JZNodeMemberParam()
 
 bool JZNodeMemberParam::update(QString &error)
 {
-    if (!JZNodeAbstractMember::update(error))
-        return false;
-    
-    setPinType(paramOut(0), { m_memberType });
     return true;
 }
 
@@ -771,8 +728,8 @@ JZNodeSetMemberParam::JZNodeSetMemberParam()
     m_name = "setMember";
     m_type = Node_setMemberParam;
 
-    m_memberId = addParamIn("");
-    addParamIn("value");
+    addParamIn("object");
+    addParamIn("");
 
     addFlowIn();
     addFlowOut();    
@@ -785,12 +742,6 @@ JZNodeSetMemberParam::~JZNodeSetMemberParam()
 
 bool JZNodeSetMemberParam::update(QString &error)
 {
-    if (!JZNodeAbstractMember::update(error))
-        return false;
-
-    auto env = environment();
-    auto pin_value = pin(paramIn(2));
-    pin_value->setDataType({ m_memberType });
     return true;
 }
 

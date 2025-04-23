@@ -13,6 +13,7 @@
 
 JZScriptConvert::BlockEnv::BlockEnv()
 {
+	preStatment = nullptr;
 	postStatment = nullptr;
 }
 
@@ -87,6 +88,18 @@ void JZScriptConvert::addLocalVariable(QString name, QString data_type)
 QString JZScriptConvert::error()
 {
     return m_error;
+}
+
+void JZScriptConvert::visitNode(asCScriptNode* node,std::function<void(asCScriptNode*)> vistor)
+{
+	while (node)
+	{
+		if (node->firstChild)
+			visitNode(node->firstChild, vistor);
+
+		vistor(node);
+		node = node->next;
+	}
 }
 
 bool JZScriptConvert::convertScript(QString code, JZScriptFile* file)
@@ -199,6 +212,17 @@ bool JZScriptConvert::convertExpression(QString code, JZScriptItem* jz_script)
 	init(jz_script);
 
 	node = node_list[0]->firstChild;
+	
+	QStringList param_list;
+	auto visitParma = [this,&param_list](asCScriptNode *node) 
+	{
+		if (node->nodeType == snVariableAccess)
+			param_list << nodeText(node);
+	};
+	visitNode(node, visitParma);
+	for (int i = 0; i < param_list.size(); i++)
+		m_script->addLocalVariable(param_list[i], "double");
+	
 	pushBlock();
     auto jz_node = toAssignment(node);
 	if (!jz_node)
@@ -619,7 +643,12 @@ JZNode* JZScriptConvert::toExpressionStatementFlow(asCScriptNode* node)
 	if (!jz_node->isFlowNode())
 	{
 		m_script->removeNode(jz_node->id());
-		if (cur_block->postStatment)
+		if (cur_block->preStatment)
+		{
+			jz_node = cur_block->preStatment;
+			cur_block->preStatment = nullptr;
+		}
+		else if (cur_block->postStatment)
 		{
 			jz_node = cur_block->postStatment;
 			cur_block->postStatment = nullptr;
@@ -730,7 +759,7 @@ JZNodeFunction* JZScriptConvert::createFunction(QString function_name, asCScript
 	auto func_define = function(function_name);
 	if (!func_define)
 	{
-		m_error = "no find " + function_name + "";
+		m_error = JZNodeCompiler::errorString(Error_noFunction, { function_name });
 		return nullptr;
 	}
 
@@ -746,7 +775,7 @@ JZNodeFunction* JZScriptConvert::createFunction(QString function_name, asCScript
 	}
 	if (arg_list.size() != allow_in)
 	{
-		m_error = "funcion not give " + QString::number(arg_list.size()) + " param";
+		m_error = JZNodeCompiler::errorString(Error_functionParamIn, { QString::number(allow_in), QString::number(arg_list.size()) }); 
 		return nullptr;
 	}
 
@@ -799,9 +828,32 @@ JZNode* JZScriptConvert::toExprTerm(asCScriptNode* root)
 	JZNode* ret = nullptr;
 	auto node_value = root->firstChild;
 	JZNode* pre_node = nullptr;
+	asCScriptNode* pre = nullptr;
 	if (node_value->nodeType == snExprPreOp) 
 	{
-		pre_node = createSingleOpNode(nodeText(node_value));
+		pre = node_value;
+		if (pre->tokenType == ttDec || pre->tokenType == ttInc)
+		{
+			if (currentBlock()->preStatment)
+			{
+				m_error = "two pre in one statment";
+				return nullptr;
+			}
+
+			JZNode* op = createOpNode(pre->tokenType == ttDec ? "-" : "+");
+
+			auto param = createGetParam(nodeText(pre->next));
+			auto set_param = createSetParam(nodeText(pre->next));
+
+			m_script->addConnectForce(param->paramOutGemo(0), op->paramInGemo(0));
+			op->setParamInValue(1, "1");
+			m_script->addConnectForce(op->paramOutGemo(0), set_param->paramInGemo(1));
+			currentBlock()->preStatment = set_param;
+		}
+		else
+		{
+			pre_node = createSingleOpNode(nodeText(node_value));
+		}
 		node_value = node_value->next;
 	}
 
@@ -842,13 +894,18 @@ JZNode* JZScriptConvert::toExprTerm(asCScriptNode* root)
 	if (!ret)
 		return nullptr;
 
-
 	asCScriptNode* post = node_value->next;
+	if (pre && post)
+	{
+		m_error = "pre post in one statment";
+		return nullptr;
+	}
+
 	if (post && post->nodeType == snExprPostOp)
 	{
-		if (currentBlock()->postStatment)
+		if (currentBlock()->preStatment)
 		{
-			m_error = "two post statment in one statment";
+			m_error = "two post in one statment";
 			return nullptr;
 		}
 
@@ -1010,10 +1067,17 @@ bool JZScriptConvert::toStatementBlock(asCScriptNode* node, QList<JZNode*> &list
 			return false;
 
 		auto cur_block = currentBlock();
-		if (pre)
+		if (cur_block->preStatment)
 		{
-			m_script->addConnect(pre->flowOutGemo(), cur_block->flowList.front()->flowInGemo());
+			list.push_back(cur_block->preStatment);
+			if(pre)
+				m_script->addConnect(pre->flowOutGemo(), cur_block->preStatment->flowInGemo());
+			pre = cur_block->preStatment;
+			cur_block->preStatment = nullptr;
 		}
+		if (pre)
+			m_script->addConnect(pre->flowOutGemo(), cur_block->flowList.front()->flowInGemo());
+
 		list.append(cur_block->flowList);
 		pre = cur_block->flowList.back();
 		cur_block->flowList.clear();
@@ -1023,6 +1087,7 @@ bool JZScriptConvert::toStatementBlock(asCScriptNode* node, QList<JZNode*> &list
 			list.push_back(cur_block->postStatment);
 			m_script->addConnect(pre->flowOutGemo(), cur_block->postStatment->flowInGemo());
 			pre = cur_block->postStatment;
+			cur_block->postStatment = nullptr;
 		}
 		
 		child = nextNode(child, 1);
@@ -1143,7 +1208,7 @@ bool JZScriptConvert::toDeclarationStatement(asCScriptNode* node)
 
 	if (getVariableInfo(name))
 	{
-		m_error = "����" + name + "�ظ�����";
+		m_error = JZNodeCompiler::errorString(Error_noVariable, { name });
 		return false;
 	}
 	addLocalVariable(name, data_type);

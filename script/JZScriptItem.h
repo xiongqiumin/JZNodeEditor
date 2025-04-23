@@ -28,6 +28,7 @@ public:
     int addNode(JZNode *node);
     void insertNode(JZNode *node);
     void removeNode(int id);
+
     JZNode *getNode(int id);
     JZNodePin *getPin(const JZNodeGemo &gemo);    
     QList<int> nodeList();            

@@ -110,7 +110,7 @@ class JZNodeIRAutoInit : public JZNodeIR
 public:
     JZNodeIRAutoInit();
 
-    QString param;
+    QString name;
 };
 
 
@@ -146,9 +146,13 @@ public:
 enum CompilerTip{
     Error_noType,
     Error_noVariable,
+    Error_noFunction,
     Error_noImplement,
+    Error_noClassMember,
     Errro_initVariableFailed,
-    Error_classNoMember,
+
+    Error_functionParamIn,
+    Error_functionParamOut,
 };
 
 class JZNodeCompiler;
@@ -271,7 +275,7 @@ public:
     JZNode* continueParentNode(int child_id);
     
     void addAlloc(int allocType, QString name, int dataType);
-    void addAllocAuto(QString memberName);
+    void addAllocAuto(const QString& ir);
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallVirtual(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);  
@@ -299,7 +303,7 @@ public:
     int nextPc();
     const JZFunctionDefine *function(QString name);
 
-    QString error();    
+    bool isError();    
 
 protected:    
     friend JZNodeBuilder;
@@ -340,11 +344,19 @@ protected:
     void pushCompilerNode(int id);
     void popCompilerNode();    
     
+    void initStatmentStack(QList<JZNodeIRPtr>* statments);
+    void pushStatmentList(QList<JZNodeIRPtr> *statments);
+    void popStatmentList();
+    int indexOfStatmentList(QList<JZNodeIRPtr>* statments,int op_type);
+    
     void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
     void updateFlowOut();      
     bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
     void dealAddCall(bool isVirtual,const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     bool hasStatementDepend(int pc);
+    
+    void log(QString error);
+    void logE(QString error);
 
     NodeCompilerInfo *currentNodeInfo();
     JZProject *project();
@@ -362,6 +374,7 @@ protected:
         
     QList<NodeCompilerStack> m_compilerNodeStack;       //编译时node栈
     QList<JZNodeIRPtr> *m_statmentList;   
+    QList<QList<JZNodeIRPtr>*> m_statmentStak;
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
     QMap<int,NodeCompilerInfo> m_nodeInfo;
@@ -372,7 +385,7 @@ protected:
     
     const JZScriptEnvironment *m_env = nullptr;
     JZNodeBuilder *m_builder;
-    QString m_error;
+    bool m_error;
     QString m_ignoreError;  // 由于buildData 错误引起, 后续节点不在记录错误
 };
 

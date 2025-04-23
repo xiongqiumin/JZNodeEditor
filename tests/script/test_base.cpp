@@ -160,7 +160,7 @@ bool BaseTest::build()
 {
     if(!m_builder.build(&m_program))
     {        
-        QTest::qVerify(false, "build", m_builder.error().toLocal8Bit().data(), __FILE__, __LINE__);
+        QTest::qVerify(false, "build", qPrintable(m_builder.error()), __FILE__, __LINE__);
         return false;
     }        
 

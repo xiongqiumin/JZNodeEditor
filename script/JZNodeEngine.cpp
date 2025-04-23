@@ -295,7 +295,8 @@ void JZNodeEngine::regist()
 }
 
 JZNodeEngine::JZNodeEngine()
-{    
+{ 
+    m_watchTime = -1;
     m_program = nullptr;
     m_script = nullptr;
     m_sender = nullptr;
@@ -343,7 +344,6 @@ void JZNodeEngine::clear()
     m_sender = nullptr;
     m_statusCommand = Command_none;
     m_status = Status_none;
-    m_breakNodeId = -1;    
     m_watchTime = 0;
     
     clearReg();
@@ -480,10 +480,7 @@ NodeRange JZNodeEngine::nodeDebugRange(int node_id, int pc)
 
 int JZNodeEngine::breakNodeId()
 {
-    if (m_breakNodeId != -1)
-        return m_breakNodeId;
-    else
-        return nodeIdByPc(m_pc);
+    return nodeIdByPc(m_pc);
 }
 
 int JZNodeEngine::nodeIdByPc(int pc)
@@ -946,7 +943,7 @@ JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &
 
 void JZNodeEngine::dealSet(QVariantPtr *ref, const QVariant &value)
 {
-    Q_ASSERT_X(m_env.isSameType(JZNodeType::variantType(value),ref->type),"",qUtf8Printable("set " + m_env.variantTypeName(value) 
+    Q_ASSERT_X(ref && m_env.isSameType(JZNodeType::variantType(value),ref->type),"",qUtf8Printable("set " + m_env.variantTypeName(value) 
         + " to " + m_env.typeToName(ref->type)));
     *ref->ptr = value;
 }
@@ -1366,42 +1363,25 @@ const JZFunction *JZNodeEngine::function(const JZNodeIRCall *ir_call)
     }
 }
 
-void JZNodeEngine::unSupportSingleOp(int a, int op)
+template<class T>
+QVariant dealExprInt(T a, T b, int op)
 {
-    QString error = QString("不支持的操作,操作符%1,数据类型%2").arg(JZNodeType::opName(op),
-        m_env.typeToName(a));
-
-    Q_ASSERT_X(0,"unSupportOp:",qUtf8Printable(error));
-}
-
-void JZNodeEngine::unSupportOp(int a, int b, int op)
-{    
-    QString error = QString("操作符%1,数据类型%2,%3").arg(JZNodeType::opName(op), 
-        m_env.typeToName(a), m_env.typeToName(b));
-
-    Q_ASSERT_X(0,"unSupportOp:",qUtf8Printable(error));
-}
-
-QVariant JZNodeEngine::dealExprInt(const QVariant &va, const QVariant &vb, int op)
-{
-    int a = va.toInt();
-    int b = vb.toInt();
     switch (op)
     {
     case OP_add:
-        return a + b;
+        return QVariant::fromValue<T>(a + b);
     case OP_sub:
-        return a - b;
+        return QVariant::fromValue<T>(a - b);
     case OP_mul:
-        return a * b;
+        return QVariant::fromValue<T>(a * b);
     case OP_div:
     {
         if(b == 0)
             throw std::runtime_error("divide zero");
-        return a / b;
+        return QVariant::fromValue<T>(a / b);
     }
     case OP_mod:
-        return a % b;
+        return QVariant::fromValue<T>(a % b);
     case OP_eq:
         return a == b;
     case OP_ne:
@@ -1418,41 +1398,33 @@ QVariant JZNodeEngine::dealExprInt(const QVariant &va, const QVariant &vb, int o
         return a && b;
     case OP_or:
         return a || b;
-    case OP_not:
-        return !a;
     case OP_bitand:
-        return a & b;
+        return QVariant::fromValue<T>(a & b);
     case OP_bitor:
-        return a | b;
+        return QVariant::fromValue<T>(a | b);
     case OP_bitxor:
-        return a ^ b;
+        return QVariant::fromValue<T>(a ^ b);
     default:
-        unSupportOp(Type_int, Type_int,op);
-        break;
+        Q_ASSERT(0);
+        return QVariant();
     }
-    return QVariant();
 }
 
-QVariant JZNodeEngine::dealExprInt64(const QVariant &va, const QVariant &vb, int op)
+template<class T>
+QVariant dealExprDouble(T a, T b, int op)
 {
-    qint64 a = va.toLongLong();
-    qint64 b = vb.toLongLong();
     switch (op)
     {
     case OP_add:
-        return a + b;
+        return QVariant::fromValue<T>(a + b);
     case OP_sub:
-        return a - b;
+        return QVariant::fromValue<T>(a - b);
     case OP_mul:
-        return a * b;
+        return QVariant::fromValue<T>(a * b);
     case OP_div:
-    {
-        if(b == 0)
-            throw std::runtime_error("divide zero");
-        return a / b;
-    }
+        return QVariant::fromValue<T>(a / b);
     case OP_mod:
-        return a % b;
+        return QVariant::fromValue<T>(fmod(a, b));
     case OP_eq:
         return a == b;
     case OP_ne:
@@ -1465,60 +1437,10 @@ QVariant JZNodeEngine::dealExprInt64(const QVariant &va, const QVariant &vb, int
         return a < b;
     case OP_gt:
         return a > b;
-    case OP_and:
-        return a && b;
-    case OP_or:
-        return a || b;
-    case OP_not:
-        return !a;
-    case OP_bitand:
-        return a & b;
-    case OP_bitor:
-        return a | b;
-    case OP_bitxor:
-        return a ^ b;
     default:
-        unSupportOp(Type_int, Type_int,op);
-        break;
+        Q_ASSERT(0);
+        return QVariant();
     }
-    return QVariant();
-}
-
-QVariant JZNodeEngine::dealExprDouble(const QVariant &va, const QVariant &vb, int op)
-{
-    double a = va.toDouble();
-    double b = vb.toDouble();
-    switch (op)
-    {
-    case OP_add:
-        return a + b;
-    case OP_sub:
-        return a - b;
-    case OP_mul:
-        return a * b;
-    case OP_div:
-        return a / b;
-    case OP_mod:
-        return fmod(a, b);
-    case OP_eq:
-        return a == b;
-    case OP_ne:
-        return a != b;
-    case OP_not:
-        return !a;
-    case OP_le:
-        return a <= b;
-    case OP_ge:
-        return a >= b;
-    case OP_lt:
-        return a < b;
-    case OP_gt:
-        return a > b;
-    default:
-        unSupportOp(Type_double, Type_double, op);
-        break;
-    }
-    return QVariant();
 }
 
 QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
@@ -1549,22 +1471,30 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
             case OP_gt:
                 return str_a > str_b;
             default:
-                unSupportOp(dataType1, dataType2, op);
+                Q_ASSERT(0);
                 break;
         }
     }
-    else if((dataType1 >= Type_bool && dataType1 <= Type_int64)
-            && (dataType2 >= Type_bool && dataType2 <= Type_int64))
-    {
-        if(dataType1 == Type_int64 || dataType2 == Type_int64)
-            return dealExprInt64(a, b, op);
-        else
-            return dealExprInt(a, b, op);
-    }
-    else if(JZNodeType::isNumber(dataType1) && JZNodeType::isNumber(dataType2))
-    {
-        return dealExprDouble(a, b,op);
-    }
+    else if(dataType1 == Type_int8)
+        return dealExprInt(a.value<int8_t>(), b.value<int8_t>(), op);
+    else if (dataType1 == Type_int16)
+        return dealExprInt(a.value<int16_t>(), b.value<int16_t>(), op);
+    else if (dataType1 == Type_int)
+        return dealExprInt(a.value<int>(), b.value<int>(), op);
+    else if (dataType1 == Type_int64)
+        return dealExprInt(a.value<int64_t>(), b.value<int64_t>(), op);
+    else if (dataType1 == Type_uint8)
+        return dealExprInt(a.value<uint8_t>(), b.value<uint8_t>(), op);
+    else if (dataType1 == Type_uint16)
+        return dealExprInt(a.value<uint16_t>(), b.value<uint16_t>(), op);
+    else if (dataType1 == Type_uint)
+        return dealExprInt(a.value<uint>(), b.value<uint>(), op);
+    else if (dataType1 == Type_uint64)
+        return dealExprInt(a.value<uint64_t>(), b.value<uint64_t>(), op);
+    else if (dataType1 == Type_float)
+        return dealExprDouble(a.value<float>(), b.value<float>(), op);
+    else if (dataType1 == Type_double)
+        return dealExprDouble(a.value<double>(), b.value<double>(), op);
     else
     {
         if (op == OP_eq || op == OP_ne)
@@ -1577,7 +1507,7 @@ QVariant JZNodeEngine::dealExpr(const QVariant &a, const QVariant &b,int op)
             else
                 return !ret;
         } 
-        unSupportOp(dataType1, dataType2, op);
+        Q_ASSERT(0);
     }
     return QVariant();
 }
@@ -1587,27 +1517,45 @@ QVariant JZNodeEngine::dealSingleExpr(const QVariant &a, int op)
     int dataType = JZNodeType::variantType(a);
     if (op == OP_not)
     {
-        if (dataType == Type_bool)
-            return !a.toBool();
-        else
-            unSupportSingleOp(dataType, op);
-    }
-    else if (op == OP_bitreverse)
-    {
-        if (dataType == Type_int)
-            return ~(a.toInt());
-        else
-            unSupportSingleOp(dataType, op);
+        Q_ASSERT(dataType == Type_bool);
+        return !a.toBool();
     }
     else if (op == OP_neg)
     {
-        if (dataType == Type_int)
-        {
-            return -(a.toInt());
-        }
-        else
-            unSupportSingleOp(dataType, op);
+        if (dataType == Type_int8)
+            return QVariant::fromValue<int8_t>(-a.value<int8_t>());
+        else if (dataType == Type_int16)
+            return QVariant::fromValue<int16_t>(-a.value<int16_t>());
+        else if (dataType == Type_int)
+            return QVariant::fromValue<int>(-a.value<int>());
+        else if (dataType == Type_int64)
+            return QVariant::fromValue<int64_t>(-a.value<int64_t>());
+        else if (dataType == Type_float)
+            return QVariant::fromValue<float>(-a.value<float>());
+        else if (dataType == Type_double)
+            return QVariant::fromValue<double>(-a.value<double>());
     }
+    else if (op == OP_bitreverse)
+    {
+        if (dataType == Type_int8)
+            return QVariant::fromValue<int8_t>(~a.value<int8_t>());
+        else if (dataType == Type_int16)
+            return QVariant::fromValue<int16_t>(~a.value<int16_t>());
+        else if (dataType == Type_int)
+            return QVariant::fromValue(~a.value<int>());
+        else if (dataType == Type_int64)
+            return QVariant::fromValue(~a.value<int64_t>());
+        else if (dataType == Type_uint8)
+            return QVariant::fromValue<uint8_t>(~a.value<uint8_t>());
+        else if (dataType == Type_uint16)
+            return QVariant::fromValue<uint16_t>(~a.value<uint16_t>());
+        else if (dataType == Type_uint)
+            return QVariant::fromValue(~a.value<uint>());
+        else if (dataType == Type_uint64)
+            return QVariant::fromValue(~a.value<uint64_t>());
+    }
+
+    Q_ASSERT(0);
     return QVariant();
 }
 
@@ -1647,14 +1595,12 @@ bool JZNodeEngine::checkPause(int node_id)
 bool JZNodeEngine::breakPointTrigger(int node_id)
 {
     m_mutex.lock();
-    m_breakNodeId = node_id;
     m_breakStep.clear();
     m_stack.currentEnv()->pc = m_pc;
     m_statusCommand = Command_none;
     updateStatus(Status_pause);
     m_waitCond.wait(&m_mutex);
-    m_breakNodeId = -1;
-
+    
     int cmd = m_statusCommand;
     if (m_statusCommand == Command_resume) //stop 等到最外层设置
     {

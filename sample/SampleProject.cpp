@@ -134,7 +134,7 @@ int SampleProject::run()
     JZNodeProgram program;
     if (!builder.build(&program))
     {
-        qDebug().noquote() << builder.error();
+        qDebug().noquote() << "build failed";
         return 1;
     }
     QDir::setCurrent(m_project.path());

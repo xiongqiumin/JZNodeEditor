@@ -260,12 +260,22 @@ void JZProject::removeTmp(JZProjectItem *item)
 
 void JZProject::takeTmp(JZProjectItem *item)
 {
-    m_tmp.takeItem(item);;
+    m_tmp.takeItem(item);
 }
 
 bool JZProject::isTmp(JZProjectItem *item)
 {
     return item->itemPath().startsWith("/tmp");
+}
+
+JZScriptClassItem* JZProject::tmpClassItem(JZProjectItem* item)
+{
+    int cls_idx = item->name().indexOf("::");
+    if (cls_idx == -1)
+        return nullptr;
+
+    QString class_name = item->name().left(cls_idx);
+    return getClass(class_name);
 }
 
 bool JZProject::isFile(JZProjectItem *item)
@@ -636,6 +646,9 @@ QStringList JZProject::classList()
 
 JZScriptClassItem *JZProject::getItemClass(JZProjectItem *item)
 {    
+    if (isTmp(item))
+        return tmpClassItem(item);
+
     while (item)
     {
         if (item->itemType() == ProjectItem_class)
@@ -858,19 +871,7 @@ void JZProject::onItemChanged(JZProjectItem *item)
     auto registClass = [this](JZScriptClassItem *class_file)
     {
         //起到声明作用
-        JZNodeObjectDefine base;
-        base.className = class_file->name();
-        base.superName = class_file->superClass();
-        base.id = class_file->classType();                
-        if (base.id == Type_none)
-        {
-            int id = m_env.objectManager()->regist(base);
-            class_file->setClassType(id);
-        }
-        else
-        {
-            m_env.objectManager()->replace(base);            
-        }
+        m_env.objectManager()->delcare(class_file->className());
 
         //覆盖注册
         auto new_def = class_file->objectDefine();                        

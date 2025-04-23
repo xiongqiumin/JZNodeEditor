@@ -189,35 +189,15 @@ public:
     void setVariable(const QString &name);
     QString variable() const;
 
-    void setValue(const QString &name);
+    void setValue(const QString & value);
     QString value() const;
 
 protected:        
 
 };
 
-//JZNodeAbstractMember
-class JZNodeAbstractMember : public JZNode
-{
-public:
-    JZNodeAbstractMember();
-    ~JZNodeAbstractMember();
-
-    QString className();
-    void setClassName(QString className);
-
-    QString member();
-    void setMember(QString params);    
-
-protected:
-    bool update(QString &error);
-    int m_classType;
-    int m_memberId;
-    QString m_memberType;
-};
-
 //JZNodeMemberParam
-class JZNodeMemberParam : public JZNodeAbstractMember
+class JZNodeMemberParam : public JZNode
 {
 public:
     JZNodeMemberParam();
@@ -225,10 +205,12 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
     bool update(QString &error);
+
+    QString m_calssName;
 };
 
 //JZNodeSetMemberParam
-class JZNodeSetMemberParam : public JZNodeAbstractMember
+class JZNodeSetMemberParam : public JZNode
 {
 public:
     JZNodeSetMemberParam();
@@ -236,6 +218,8 @@ public:
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
     bool update(QString &error);
+    
+    QString m_calssName;
 };
 
 //JZNodeClone

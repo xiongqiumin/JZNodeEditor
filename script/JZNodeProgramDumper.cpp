@@ -291,10 +291,11 @@ QString JZNodeProgramDumper::toString(JZNodeIRParam param)
 {
     if (param.type == JZNodeIRParam::Literal)
     {
-        auto var_type = JZNodeType::variantType(param.value);
+        QVariant value = param.literal();
+        auto var_type = JZNodeType::variantType(value);
         if (var_type == Type_string)
         {
-            return "R\"(" + param.value.toString() + ")\"";
+            return "R\"(" + value.toString() + ")\"";
         }
         else if (var_type == Type_class)
         {
@@ -302,7 +303,7 @@ QString JZNodeProgramDumper::toString(JZNodeIRParam param)
         }
         else
         {
-            return JZNodeType::debugString(param.value);
+            return JZNodeType::debugString(value);
         }
     }
     else if(param.type == JZNodeIRParam::Reference)

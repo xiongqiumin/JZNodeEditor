@@ -69,6 +69,7 @@ public:
         RegId,
         Literal,
         Reference,
+        MemberReference,
         This,
     };    
 
@@ -86,7 +87,9 @@ public:
     const QVariant &literal() const;
 
     ParamType type;
-    QVariant value;
+    int m_id;
+    QString m_ref;
+    QVariant m_literal;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param);
 QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param);
@@ -94,6 +97,7 @@ JZNodeIRParam irRef(const QString &id);
 JZNodeIRParam irId(int id);
 JZNodeIRParam irLiteral(const QVariant &value);
 JZNodeIRParam irThis();
+JZNodeIRParam irMemberRef(int id,const QString& member);
 
 class JZNodeIR
 {

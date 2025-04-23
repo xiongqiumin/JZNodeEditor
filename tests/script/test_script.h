@@ -24,6 +24,7 @@ private slots:
     
     void testBind();
     
+    void testAuto();
     void testFor();
     void testWhileLoop();
     void testForEach();

@@ -55,7 +55,7 @@ bool JZNodeExpression::updateNode(QString &error)
     JZNodeCompiler c;
     if (!c.genNodeInputOuput(m_exprItem, result))
     {
-        error = c.error();
+        error = "get input ouput failed";
         return false;
     }
     
@@ -118,7 +118,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     JZNodeCompiler tmp_c;
     if (!tmp_c.build(m_exprItem, &script))
     {
-        error = tmp_c.error();
+        error = "gen express failed";
         return false;
     }
     QList<JZNodeIRPtr> ir_list = script.statmentList;

@@ -8,7 +8,6 @@
 JZScriptClassItem::JZScriptClassItem()
     :JZProjectItem(ProjectItem_class)
 {
-    m_classId = Type_none;
 }
 
 JZScriptClassItem::~JZScriptClassItem()
@@ -20,14 +19,12 @@ void JZScriptClassItem::saveToStream(QDataStream &s) const
 {
     s << m_name;    
     s << m_super;
-    s << m_classId;    
 }
 
 bool JZScriptClassItem::loadFromStream(QDataStream &s)
 {
     s >> m_name;
     s >> m_super;
-    s >> m_classId;    
     return true;
 }
 
@@ -74,11 +71,6 @@ void JZScriptClassItem::removeUi()
 int JZScriptClassItem::classType()
 {
     return project()->environment()->objectManager()->getClassId(m_name);
-}
-
-void JZScriptClassItem::setClassType(int classId)
-{
-    m_classId = classId;
 }
 
 QString JZScriptClassItem::superClass() const

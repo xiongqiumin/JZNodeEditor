@@ -11,6 +11,7 @@
 #include "JZRegExpHelp.h"
 #include "JZNodeFlow.h"
 #include "JZNodeOperator.h"
+#include "LogManager.h"
 
 // GraphNode
 GraphNode::GraphNode()
@@ -495,12 +496,18 @@ QString JZNodeCompiler::errorString(CompilerTip tip, QStringList args)
         return "no such type " + args[0];
     else if(tip == Error_noVariable)
         return "no such variable " + args[0];
-    else if (tip == Error_noVariable)
+    else if(tip == Error_noFunction)
+        return "no such function " + args[0];
+    else if(tip == Error_noImplement)
         return args[0] + "no implement " + args[1];
-    else if(tip == Error_classNoMember)
+    else if (tip == Error_noClassMember)
         return args[0] + " no member " + args[1];
     else if(tip == Errro_initVariableFailed)
         return "can't init " + args[0] + " by " + args[1];
+    else if (tip == Error_functionParamIn)
+        return "function need " + args[0] + " param, but give " + args[1];
+    else if (tip == Error_functionParamOut)
+        return "function no output ";
 
     return "error";
 }
@@ -514,6 +521,7 @@ JZNodeCompiler::JZNodeCompiler()
     m_regCallFunction = nullptr;
     m_builder = nullptr;
     m_env = nullptr;
+    m_stackId = Stack_User;
 
     m_buildGraph = GraphPtr(new Graph());
     m_ignoreError = "#IGNORE_ERROR#";
@@ -536,7 +544,7 @@ void JZNodeCompiler::init(JZScriptItem *scriptFile)
     m_nodeInfo.clear();
     m_className.clear();    
     m_graphList.clear();        
-    m_error.clear();
+    m_error = false;
     resetStack();
 }
 
@@ -602,6 +610,22 @@ bool JZNodeCompiler::genNodeInputOuput(JZScriptItem *file,JZScriptInOutInfo &res
     result.inList = inList;
     result.outList = outList;    
     return true;
+}
+
+void JZNodeCompiler::log(QString error)
+{
+    if (!m_builder)
+        return;
+
+    m_builder->log(LOG_INFO, error);
+}
+
+void JZNodeCompiler::logE(QString error)
+{
+    if (!m_builder)
+        return;
+
+    m_builder->log(LOG_ERROR, error);
 }
 
 CompilerResult JZNodeCompiler::compilerResult()
@@ -1111,7 +1135,38 @@ void JZNodeCompiler::popCompilerNode()
         m_statmentList = &currentNodeInfo()->statmentList;
 }
 
-QString JZNodeCompiler::error()
+int JZNodeCompiler::indexOfStatmentList(QList<JZNodeIRPtr>* statments, int ir_type)
+{
+    for (int i = 0; i < statments->size(); i++)
+    {
+        if (statments->at(i)->type == ir_type)
+            return i;
+    }
+    return -1;
+}
+
+void JZNodeCompiler::initStatmentStack(QList<JZNodeIRPtr>* statments)
+{
+    m_statmentStak.clear();
+    pushStatmentList(statments);
+}
+
+void JZNodeCompiler::pushStatmentList(QList<JZNodeIRPtr>* statments)
+{
+    m_statmentList = statments;
+    m_statmentStak.push_back(statments);
+}
+
+void JZNodeCompiler::popStatmentList()
+{
+    m_statmentStak.pop_back();
+    if (m_statmentStak.size() == 0)
+        m_statmentList = nullptr;
+    else
+        m_statmentList = m_statmentStak.back();
+}
+
+bool JZNodeCompiler::isError()
 {
     return m_error;
 }
@@ -1180,7 +1235,8 @@ bool JZNodeCompiler::genGraphs()
         Graph *graph = m_graphList[i].data();        
         if(!graph->toposort())
         {
-            m_error += graph->error;
+            logE(graph->error);
+            m_error = true;
             return false;
         }
     }
@@ -1194,7 +1250,8 @@ bool JZNodeCompiler::checkGraphs()
         Graph *graph = m_graphList[i].data();
         if(!graph->check())
         {
-            m_error += graph->error;
+            logE(graph->error);
+            m_error = true;
             return false;
         }
     }
@@ -1228,10 +1285,11 @@ bool JZNodeCompiler::checkBuildResult()
         if(!nodeInfo.error.isEmpty())
         {
             QString name = node->name();
-            QString error = JZNodeUtils::makeLink(nodeInfo.error,m_scriptItem->itemPath(),"id=" + QString::number(nodeInfo.node_id)) + "\n";
-            m_error += error;
+            QString error = JZNodeUtils::makeLink(nodeInfo.error,m_scriptItem->itemPath(),"id=" + QString::number(nodeInfo.node_id));
+            logE(error);
 
-            m_compilerInfo.nodeError[node->id()] = error;
+            m_error = true;
+            m_compilerInfo.nodeError[node->id()] = nodeInfo.error;
             ok = false;
         }   
         it++;     
@@ -1381,7 +1439,7 @@ bool JZNodeCompiler::checkPinInType(int node_id, const QList<int> &prop_list, QS
                 if(pin->dataType().size() == 1)
                 {
                     pin_type = pin_type_list[0];
-                    if(pin_type == Type_arg)
+                    if(pin_type == Type_arg || pin_type == Type_auto)
                         pin_type = env->stringType(pin->value());
                     else
                     {
@@ -1478,7 +1536,7 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
     if (!buildSubControlFlow(start_node, list))
         return false;
 
-    m_statmentList = &m_script->statmentList;
+    initStatmentStack(&m_script->statmentList);
     appendStatementList(list);    
 
     if (isBuildError())
@@ -1492,14 +1550,33 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
     {
         addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
     }
-   
+    
+    while(true)
+    {
+        int index = indexOfStatmentList(m_statmentList, OP_ComilerAllocAuto);
+        if (index == -1)
+            break;
+
+        JZNodeIRAutoInit* auto_alloc = dynamic_cast<JZNodeIRAutoInit*>(m_statmentList->at(index).data());
+        
+        QList<JZNodeIRPtr> tmp_list;
+        pushStatmentList(&tmp_list);
+
+        int data_type = refType(auto_alloc->name);
+        addAlloc(JZNodeIRAlloc::Stack, auto_alloc->name, data_type);
+        addInitVariable(irRef(auto_alloc->name), data_type, "");
+
+        popStatmentList();
+        replaceStatementList(index, tmp_list);
+    }
+
     for (int i = 0; i < m_statmentList->size(); i++)
     {
         int op_type = m_statmentList->at(i)->type;
         if (op_type == OP_ComilerBreakContinue)
         {
             JZNodeComilerBreakContinue* complier_jmp = (JZNodeComilerBreakContinue*)(m_statmentList->at(i).data());
-            
+
             int jmp_pc = -1;
             if (complier_jmp->isBreak())
             {
@@ -1514,7 +1591,7 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
                 jmp_pc = indexOfStatment(info.continueIr.data());
             }
             Q_ASSERT(jmp_pc >= 0);
-            
+
             JZNodeIRJmp* jmp = new JZNodeIRJmp(OP_jmp);
             jmp->jmpPc = jmp_pc;
             replaceStatement(i, JZNodeIRPtr(jmp));
@@ -1650,9 +1727,10 @@ bool JZNodeCompiler::isAllFlowReturn(JZNode* node, int level)
         node = nextFlowNode(node, node->flowOut());
     }
 
-    if(level == 0)
+    if (level == 0)
+    {
         m_nodeInfo[pre_node->id()].error = "需要连接return";
-
+    }
     return false;
 }
 
@@ -2397,10 +2475,10 @@ void JZNodeCompiler::addAlloc(int allocType, QString name, int dataType)
     addStatement(JZNodeIRPtr(alloc));
 }
 
-void JZNodeCompiler::addAllocAuto(QString memberName)
+void JZNodeCompiler::addAllocAuto(const QString& name)
 {
     JZNodeIRAutoInit *alloc = new JZNodeIRAutoInit();
-    alloc->param = memberName;
+    alloc->name = name;
     addStatement(JZNodeIRPtr(alloc));
 }
 
@@ -2570,7 +2648,7 @@ void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, con
         addSetVariable(dst,irLiteral(env->initValue(dataType,value)));
     else
     {   
-        if (value.isEmpty())
+        if (value.isEmpty() || value == "{}")
         {
             QList<JZNodeIRParam> in, out;
             in << irLiteral(env->typeToName(dataType));

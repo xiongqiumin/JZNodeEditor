@@ -267,6 +267,11 @@ const JZNodePin *JZNode::pin(int id) const
         return nullptr;
 }
 
+JZNodePin* JZNode::pinByIndex(int index)
+{
+    return &m_pinList[index];
+}
+
 JZNodePin *JZNode::pin(QString name)
 {
     int index = indexOfPinByName(name);
@@ -676,4 +681,20 @@ void JZNode::loadFromStream(QDataStream &s)
     s >> m_group;
     s >> m_memo;
     s >> m_pinList;  
+}
+
+//JZNodeUnknown
+JZNodeUnknown::JZNodeUnknown()
+{
+    m_type = Node_unknown;
+}
+
+JZNodeUnknown::~JZNodeUnknown()
+{
+}
+
+bool JZNodeUnknown::compiler(JZNodeCompiler* compiler, QString& error)
+{
+    error = "Unknown Node";
+    return false;
 }

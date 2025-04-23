@@ -380,6 +380,42 @@ void AngleScriptTest::testSwitch()
     }
 }
 
+void AngleScriptTest::testCalcPi()
+{
+    QString code = R"(
+    double calculatePi(int n) {
+        double pi = 0.0;
+        int sign = 1;
+        for (int i = 0; i < n; ++i) {
+            pi += sign / (2.0 * i + 1);
+            sign = -sign;
+        }
+        return pi * 4;
+    })";
+
+    auto calculatePi = [](int n)->double {
+        double pi = 0.0;
+        int sign = 1;
+        for (int i = 0; i < n; ++i) {
+            pi += sign / (2.0 * i + 1);
+            sign = -sign;
+        }
+        return pi * 4;
+    };
+
+
+    if (!buildAs(code))
+        return;
+    dump("as_testCalcPi");
+
+    QVariantList in, out;
+    in << 100;
+
+    bool ret = call("calculatePi", in, out);
+    QVERIFY(ret);
+    QVERIFY(abs(out[0].toDouble() - calculatePi(100)) < 0.01);
+}
+
 void AngleScriptTest::testList()
 {
     QString code = R"(
@@ -427,6 +463,50 @@ void AngleScriptTest::testList()
     in << list_ptr << 0 << 100;
     m_engine.call("setList", in, out);
     QCOMPARE(clist_ptr->at(0), 100);
+}
+
+void AngleScriptTest::testNewton()
+{
+    QString code = R"(
+    double arctan_newton(double x, int n_iterations) {
+        // 初始猜测值
+        double t = x;
+        for (int i = 0; i < n_iterations; ++i) {
+            // 定义 f(t) = t - x - (t^3)/3 + (t^5)/5 - (t^7)/7 + (t^9)/9
+            double f = t - x - (t * t * t) / 3 + (t * t * t * t * t) / 5 - (t * t * t * t * t * t * t) / 7 + (t * t * t * t * t * t * t * t * t) / 9;
+            // 定义 f'(t) = 1 - t^2 + t^4 - t^6 + t^8
+            double df = 1 - t * t + t * t * t * t - t * t * t * t * t * t + t * t * t * t * t * t * t * t;
+            // 牛顿迭代公式
+            t = t - f / df;
+        }
+        return t;
+    })";
+
+    auto arctan_newton = [](double x, int n_iterations)->double {
+        // 初始猜测值
+        double t = x;
+        for (int i = 0; i < n_iterations; ++i) {
+            // 定义 f(t) = t - x - (t^3)/3 + (t^5)/5 - (t^7)/7 + (t^9)/9
+            double f = t - x - (t * t * t) / 3 + (t * t * t * t * t) / 5 - (t * t * t * t * t * t * t) / 7 + (t * t * t * t * t * t * t * t * t) / 9;
+            // 定义 f'(t) = 1 - t^2 + t^4 - t^6 + t^8
+            double df = 1 - t * t + t * t * t * t - t * t * t * t * t * t + t * t * t * t * t * t * t * t;
+            // 牛顿迭代公式
+            t = t - f / df;
+        }
+        return t;
+    };
+
+
+    if (!buildAs(code))
+        return;
+    dump("as_testNewton");
+
+    QVariantList in, out;
+    in << 1.0 / 239 << 10;
+
+    bool ret = call("arctan_newton", in, out);
+    QVERIFY(ret);
+    QVERIFY(abs(out[0].toDouble() - arctan_newton(1.0 / 239,10)) < 0.01);
 }
 
 void AngleScriptTest::testSort()

@@ -18,7 +18,7 @@ public:
     QString className() const;
 
     int classType();
-    void setClassType(int classId);
+
 
     QString superClass() const;
 

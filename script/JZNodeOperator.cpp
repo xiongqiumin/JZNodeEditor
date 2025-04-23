@@ -438,8 +438,8 @@ JZNodeNeg::JZNodeNeg()
     m_type = Node_not;
     int in = addParamIn("input");
     int out = addParamOut("neg");
-    setPinTypeNumber(in);
-    setPinTypeNumber(out);
+    setPinType(in, { "int8","int16","int","int64" });
+    setPinType(out, { "int8","int16","int","int64" });
 }
 
 bool JZNodeNeg::compiler(JZNodeCompiler *c, QString &error)

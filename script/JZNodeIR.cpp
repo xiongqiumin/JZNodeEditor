@@ -4,6 +4,7 @@
 //JZNodeIRParam
 JZNodeIRParam::JZNodeIRParam()
 {
+    m_id = -1;
     type = None;
 }
 
@@ -45,42 +46,47 @@ bool JZNodeIRParam::isThis() const
 int JZNodeIRParam::id() const
 {
     Q_ASSERT(type == StackId || type == RegId);
-    return value.toInt();
+    return m_id;
 }
 
 QString JZNodeIRParam::ref() const
 {
     Q_ASSERT(type == Reference);
-    return value.toString();
+    return m_ref;
 }
 
 const QVariant &JZNodeIRParam::literal() const
 {
     Q_ASSERT(type == Literal);
-    return value;
+    return m_literal;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeIRParam &param)
 {
     s << param.type;
-    s << param.value;
+    s << param.m_id;
+    s << param.m_ref;
+    s << param.m_literal;
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, JZNodeIRParam &param)
 {
     s >> param.type;
-    s >> param.value;
+    s >> param.m_id;
+    s >> param.m_ref;
+    s >> param.m_literal;
     return s;
 }
 
-JZNodeIRParam irRef(const QString &id)
+JZNodeIRParam irRef(const QString &ref)
 {    
+    if (ref == "this")
+        return irThis();
+
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Reference;
-    param.value = id;
-    if (param.value == "this")
-        param.type = JZNodeIRParam::This;
+    param.m_ref = ref;
     return param;        
 }
 
@@ -93,7 +99,7 @@ JZNodeIRParam irId(int id)
         param.type = JZNodeIRParam::StackId;
     else
         param.type = JZNodeIRParam::RegId;
-    param.value = id;
+    param.m_id = id;
     return param;
 }
 
@@ -103,7 +109,7 @@ JZNodeIRParam irLiteral(const QVariant &value)
     
     JZNodeIRParam param;
     param.type = JZNodeIRParam::Literal;
-    param.value = value;
+    param.m_literal = value;
     return param;
 }
 
@@ -111,6 +117,13 @@ JZNodeIRParam irThis()
 {
     JZNodeIRParam param;
     param.type = JZNodeIRParam::This;
+    return param;
+}
+
+JZNodeIRParam irMemberRef(int id, const QString& member)
+{
+    JZNodeIRParam param;
+    param.type = JZNodeIRParam::MemberReference;
     return param;
 }
 

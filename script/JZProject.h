@@ -74,10 +74,11 @@ public:
     bool save();      //只保存工程自身，不保存项目文件
     bool saveAs(QString filepath);
     
-    void addTmp(JZProjectItem *item);
+    void addTmp(JZProjectItem* item);
     void removeTmp(JZProjectItem *item);
     void takeTmp(JZProjectItem *item);
     bool isTmp(JZProjectItem *item);
+    JZScriptClassItem* tmpClassItem(JZProjectItem* item); //根据tmp名称
 
     bool isFile(JZProjectItem *item);
 

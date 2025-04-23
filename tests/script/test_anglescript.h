@@ -23,6 +23,8 @@ private slots:
     void testComplex();
     void testFab();
     void testList();
+    void testCalcPi();
+    void testNewton();
     void testSort();
 protected:
 

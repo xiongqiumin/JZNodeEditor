@@ -26,8 +26,10 @@ protected:
 	{ 
 		BlockEnv();
 
-		QList<JZParamDefine> paramList;  //ԭʼ����
+		QList<JZParamDefine> paramList;
 		QList<JZNode*> flowList;
+		
+		JZNode* preStatment;
 		JZNode* postStatment;
     };    
 	typedef QSharedPointer<BlockEnv> BlockEnvPtr;
@@ -42,6 +44,7 @@ protected:
 	JZNodeSetParam* createSetParam(QString name);
 	JZNode* createOpNode(QString op);
 	JZNode* createSingleOpNode(QString op);
+	void visitNode(asCScriptNode* node, std::function<void(asCScriptNode*)> vistor);
 	
 	JZScriptEnvironment* environment();
 	void init(JZScriptItem* script);

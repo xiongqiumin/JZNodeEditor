@@ -56,26 +56,49 @@ JZProject *JZNodeBuilder::project()
     return m_project;
 }
 
-QString JZNodeBuilder::error() const
+bool JZNodeBuilder::isError() const
 {
     return m_error;
+}
+
+QString JZNodeBuilder::error() const
+{
+    QString result;
+
+    auto it = m_scripts.begin();
+    while (it != m_scripts.end())
+    {
+        auto err_it = it->compilerInfo.nodeError.begin();
+        while(err_it != it->compilerInfo.nodeError.end())
+        {
+            result += "node" + QString::number(err_it.key()) + ":" + err_it.value() + "\n";
+            err_it++;
+        }
+
+        it++;
+    }
+    return result;
 }
 
 void JZNodeBuilder::clear()
 {
     m_build = false;
     m_stopBuild = false;
-    
-    m_error.clear();
+    m_error = false;
     m_scripts.clear();
 }
 
-void JZNodeBuilder::log(const QString &text)
+void JZNodeBuilder::log(int level, const QString &text)
 {
     if (!m_logEnable)
         return;
 
-    LOGMOD_I(Log_Compiler, text);
+    JZLogManager::instance()->log(Log_Compiler, level, text);
+}
+
+void JZNodeBuilder::logE(const QString& text)
+{
+    log(LOG_ERROR, text);
 }
 
 bool JZNodeBuilder::initGlobal()
@@ -128,7 +151,6 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
 {
     if(m_stopBuild)
     {
-        m_error += "Cancled";
         return false;
     }
 
@@ -143,7 +165,7 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
     m_scripts[path].compilerInfo = m_compiler.compilerResult();
     if(!ret)
     {        
-        m_error += m_compiler.error();        
+        m_error = true;        
         return false;
     }
     
@@ -158,15 +180,16 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         m_stopBuild = false;
     }
 
+    m_error = false;
     auto cleanup = qScopeGuard([this]{ 
         QMutexLocker locker(&m_mutex);
         m_build = false;
         m_stopBuild = false;
 
-        if(!m_error.isEmpty())
-            log("build failed");
+        if(m_error)
+            log(LOG_INFO,"build failed");
         else
-            log("build finish");
+            log(LOG_INFO,"build finish");
     });
 
     auto makeParamLink = [](QString tips, QString path, bool ui, int row)->QString
@@ -184,7 +207,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     m_program = program;        
     m_program->clear();    
 
-    log("start build");
+    log(LOG_INFO, "start build");
     
     auto env = m_project->environment();
     auto obj_inst = env->objectManager();
@@ -201,7 +224,8 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         if (!m_compiler.checkParamDefine(def, error))
         {
             auto global_item = m_project->globalDefine();
-            m_error += makeParamLink(error, global_item->itemPath(),false, i);
+            logE(makeParamLink(error, global_item->itemPath(),false, i));
+            m_error = true;
         }
     }
     
@@ -213,16 +237,22 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         type_meta.objectList << *obj_def;
                 
         QString error;
-        if(!obj_def->check(error))        
-            m_error += error;        
+        if (!obj_def->check(error))
+        {
+            logE(JZNodeUtils::makeLink(error, class_item->itemPath(), QString()));
+            m_error = true;
+        }
 
         JZParamItem *param = class_item->paramFile();
         auto var_list = param->variableList();
         for(int i = 0; i < var_list.size(); i++)
         {
             auto var_def = param->variable(var_list[i]);            
-            if(!m_compiler.checkParamDefine(var_def,error))
-                m_error += makeParamLink(error,param->itemPath(),false, i);
+            if (!m_compiler.checkParamDefine(var_def, error))
+            {
+                logE(makeParamLink(error, param->itemPath(), false, i));
+                m_error = true;
+            }
         }
 
         auto bind_list = param->bindVariableList();
@@ -231,12 +261,13 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             auto bind = param->bindVariable(bind_list[i]);
             if (!var_list.contains(bind->variable))
             {
-                error = JZNodeCompiler::errorString(Error_classNoMember, { obj_def->className,bind->variable});
-                m_error += makeParamLink(error, param->itemPath(),true, i);
+                error = JZNodeCompiler::errorString(Error_noClassMember, { obj_def->className,bind->variable});
+                logE(makeParamLink(error, param->itemPath(),true, i));
+                m_error = true;
             }
         }
     }
-    if(!m_error.isEmpty())
+    if(m_error)
         return false;
         
     auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
@@ -313,8 +344,11 @@ bool JZNodeBuilder::isBuildInterrupt()
 
 bool JZNodeBuilder::link()
 {    
-    if(!initGlobal())
+    if (!initGlobal())
+    {
+        logE("initGlobal failed");
         return false;
+    }
 
     auto it_s = m_scripts.begin();
     while (it_s != m_scripts.end())

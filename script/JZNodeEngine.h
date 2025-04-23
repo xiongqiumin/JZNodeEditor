@@ -207,6 +207,7 @@ public:
     void watchNotify();         //node display
     void printNode(int node_id);
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
+    QVariant dealSingleExpr(const QVariant& a, int op);
 
     //外部用
     bool call(const QString &function,const QVariantList &in,QVariantList &out);
@@ -270,11 +271,7 @@ protected:
 
     void checkFunctionIn(const JZFunction *func);
     void checkFunctionOut(const JZFunction *func);
-    void callCFunction(const JZFunction *func);
-    QVariant dealExprInt(const QVariant &a, const QVariant &b, int op);
-    QVariant dealExprInt64(const QVariant &va, const QVariant &vb, int op);
-    QVariant dealExprDouble(const QVariant &a, const QVariant &b, int op);        
-    QVariant dealSingleExpr(const QVariant &a, int op);    
+    void callCFunction(const JZFunction *func); 
 
     void initGlobal(QString name, int data_type);
     void initLocal(QString name, int data_type);
@@ -297,9 +294,6 @@ protected:
 
     const JZNodeScript *getScript(QString path);
         
-    void unSupportSingleOp(int a,int op);
-    void unSupportOp(int a,int b,int op);
-
     bool isWidgetFunction(const JZFunction *function);
     void autoConnect();
     
@@ -310,11 +304,9 @@ protected:
     int m_pc;    
     const JZNodeProgram *m_program;
     const JZNodeScript *m_script;
-    QWidget *m_window;    
         
     QList<BreakPoint> m_breakPoints;
     BreakStep m_breakStep; 
-    int m_breakNodeId;
 
     JZScriptEnvironment m_env;
     Stack m_stack;

@@ -483,6 +483,20 @@ bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefi
     return true;
 }
 
+
+QVariant JZNodeType::convertToPointer(const QVariant& srcValue)
+{
+    if (srcValue.type() == QVariant::UserType && srcValue.userType() == qMetaTypeId<JZNodeObjectHolder>())
+    {
+        JZNodeObjectHolder* obj_ptr = (JZNodeObjectHolder*)v.data();
+        JZNodeObjectPointer pointer = obj_ptr->toPointer();
+        return QVariant::fromValue(pointer);
+    }
+
+    Q_ASSERT(0);
+    return QVariant();
+}
+
 QVariant JZNodeType::convertNumber(const QVariant& srcValue, int dstType)
 {
     int srcType = variantType(srcValue);

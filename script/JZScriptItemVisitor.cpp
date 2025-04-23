@@ -10,9 +10,41 @@ JZScriptItemVistor::~JZScriptItemVistor()
 {
 }
 
-void JZScriptItemVistor::init(JZScriptItem *item)
+void JZScriptItemVistor::visitorScript(JZScriptItem *item)
 {
     m_script = item;
+
+    auto start = m_script->startNode();
+    visitor(start);
+}
+
+void JZScriptItemVistor::visitor(JZNode *node)
+{
+    while(node)
+    {
+        QList<JZNode*> input_list = dataInputNode(node);
+        for(int i = 0; i < input_list.size(); i++)
+            visitor(input_list[i]);
+
+        auto sub_list = node->subFlowList();
+        for(int i = 0; i < sub_list.size(); i++)
+        {
+            auto sub_node = nextFlowNode(node,sub_list[i]);
+            visitor(sub_node);
+        }
+
+        visitorSelf(node);
+
+        if(node->flowOut() != -1)
+            node = nextFlowNode(node,node->flowOut());
+        else
+            node = nullptr;
+    }
+}
+
+void JZScriptItemVistor::visitorSelf(JZNode *node)
+{
+
 }
 
 JZNode *JZScriptItemVistor::flowInputNode(JZNode *node,int id)
