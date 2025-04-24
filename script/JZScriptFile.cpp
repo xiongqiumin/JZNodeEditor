@@ -79,7 +79,7 @@ QStringList JZScriptFile::functionList() const
     QStringList functions;
     for (int i = 0; i < m_childs.size(); i++)
     {
-        if (m_childs[i]->itemType() == ProjectItem_scriptFunction)
+        if (m_childs[i]->itemType() == ProjectItem_scriptItem)
             functions << m_childs[i]->name();
     }
     return functions;
@@ -87,7 +87,7 @@ QStringList JZScriptFile::functionList() const
 
 JZScriptItem *JZScriptFile::addFunction(const JZFunctionDefine &define)
 {    
-    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    
+    JZScriptItem *file = new JZScriptItem(JZScriptItem::Function);
     file->setFunction(define);
     project()->addItem(itemPath(), file);
     return file;
@@ -102,9 +102,8 @@ void JZScriptFile::removeFunction(QString name)
 
 JZScriptItem *JZScriptFile::getFunction(QString name)
 {
-    name.replace(".", "/");
     auto item = getItem(name);
-    if (item && item->itemType() == ProjectItem_scriptFunction)
+    if (item && item->itemType() == ProjectItem_scriptItem)
         return (JZScriptItem *)item;
     else
         return nullptr;

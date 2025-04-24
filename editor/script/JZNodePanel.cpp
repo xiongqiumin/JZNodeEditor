@@ -304,7 +304,7 @@ void JZNodePanel::setNode(QTreeWidgetItem *item,JZNode *node)
     item->setText(0, node->name());
     item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
     item->setData(0, TreeItem_type, "node_data");
-    item->setData(0,TreeItem_value, JZNodeFactory::instance()->saveNode(node));
+    item->setData(0,TreeItem_value, editorNodeFactory()->saveNode(node));
 }
 
 QTreeWidgetItem *JZNodePanel::createNode(JZNode *node)
@@ -420,7 +420,7 @@ void JZNodePanel::intiLogicFlow()
                 item = sub_item;
             }
         }
-        auto jznode = JZNodeFactory::instance()->createNode(node.nodeType);
+        auto jznode = editorNodeFactory()->createNode(node.nodeType);
         item->addChild(createNode(jznode));
         delete jznode;
     }
@@ -558,7 +558,7 @@ void JZNodePanel::initExpression(QTreeWidgetItem *root)
 
     for (int i = Node_add; i <= Node_expr; i++)
     {   
-        auto node = JZNodeFactory::instance()->createNode(i);
+        auto node = editorNodeFactory()->createNode(i);
         QTreeWidgetItem *sub = createNode(node);
         itemExpr->addChild(sub);
         delete node;

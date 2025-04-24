@@ -1,6 +1,5 @@
 ﻿#include <QDebug>
 #include "JZNodeFunctionDefine.h"
-#include "JZEvent.h"
 #include "JZNodeObject.h"
 #include "JZRegExpHelp.h"
 
@@ -97,7 +96,7 @@ void JZFunctionDefine::setFullName(const QString &full_name)
     QString class_name,member_name;
     JZRegExpHelp::splitDefine(full_name,class_name,member_name);
     
-    if(!className.isEmpty())
+    if(!class_name.isEmpty())
     {
         className = class_name;
         name = member_name;

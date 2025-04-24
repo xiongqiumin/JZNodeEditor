@@ -7,7 +7,7 @@ void JZEditorUtils::projectUpdateLayout(JZProject *project)
     for (int i = 0; i < item_list.size(); i++)
     {
         int item_type = item_list[i]->itemType();
-        if (item_type == ProjectItem_scriptFunction)
+        if (item_type == ProjectItem_scriptItem)
         {
             JZScriptItem *item = (JZScriptItem *)item_list[i];
             scriptItemUpdateLayout(item);

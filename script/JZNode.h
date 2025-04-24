@@ -68,7 +68,23 @@ enum
     Node_signalConnect,
     Node_mainLoop,
     Node_unitTest,
-    Node_custom,
+
+    Node_showEvent,
+    Node_closeEvent,
+    Node_resizeEvent,
+    Node_paintEvent,
+
+    Node_mousePressEvent,
+    Node_mouseMoveEvent,
+    Node_mouseReleaseEvent,
+    
+    Node_keyPressEvent,
+    Node_keyReleaseEvent,
+
+    Node_buttonClikedEvnet,
+    Node_timerEvnet,
+
+    Node_custom = 0x1000,
 };
 
 enum

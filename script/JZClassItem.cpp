@@ -141,7 +141,7 @@ JZScriptItem *JZScriptClassItem::addMemberFunction(JZFunctionDefine func)
 {
     Q_ASSERT(!func.isCFunction && !func.name.isEmpty() && func.className == m_name);
 
-    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);    
+    JZScriptItem *file = new JZScriptItem(JZScriptItem::Function);
     file->setFunction(func);
     project()->addItem(itemPath(), file);
     return file;
@@ -152,7 +152,7 @@ QStringList JZScriptClassItem::memberFunctionList()
     QStringList list;
     for (int i = 0; i < m_childs.size(); i++)
     {
-        if (m_childs[i]->itemType() == ProjectItem_scriptFunction)
+        if (m_childs[i]->itemType() == ProjectItem_scriptItem)
             list << m_childs[i]->name();
     }
     return list;
@@ -162,7 +162,7 @@ JZScriptItem *JZScriptClassItem::memberFunction(QString func)
 {    
     for (int i = 0; i < m_childs.size(); i++)
     {
-        if (m_childs[i]->name() == func && m_childs[i]->itemType() == ProjectItem_scriptFunction)
+        if (m_childs[i]->name() == func && isFlowScriptItem(m_childs[i]))
             return (JZScriptItem *)m_childs[i];
     }
     return nullptr;
@@ -172,6 +172,31 @@ void JZScriptClassItem::removeMemberFunction(QString func)
 {
     JZScriptItem *item = memberFunction(func);
     project()->removeItem(item->itemPath());
+}
+
+JZScriptItem* JZScriptClassItem::addFlow(QString name)
+{
+    JZScriptItem* file = new JZScriptItem(JZScriptItem::Flow);
+    file->setName(name);
+    bool ret = project()->addItem(itemPath(), file);
+    Q_ASSERT(ret);
+    return file;
+}
+
+void JZScriptClassItem::removeFlow(QString name)
+{
+    auto file = getFlow(name);
+    if (file)
+        project()->removeItem(file->itemPath());
+}
+
+JZScriptItem* JZScriptClassItem::getFlow(QString name)
+{
+    auto item = getItem(name);
+    if (item && isFlowScriptItem(item))
+        return (JZScriptItem*)item;
+    else
+        return nullptr;
 }
 
 QList<JZParamDefine> JZScriptClassItem::uiWidgets()
@@ -221,7 +246,7 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
             for (int i = 0; i < var_list.size(); i++)
                 define.params[var_list[i]] = *param_item->variable(var_list[i]);
         }
-        else if (item->itemType() == ProjectItem_scriptFunction)
+        else if (item->itemType() == ProjectItem_scriptItem)
         {
             auto function_item = dynamic_cast<JZScriptItem*>(item);
             define.addFunction(function_item->function());

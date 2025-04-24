@@ -16,7 +16,6 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
 #include "JZScriptEnvironment.h"
-#include "JZEvent.h"
 
 extern void JZScriptInvoke(const QString &function,const QVariantList &in, QVariantList &out);
 

@@ -290,6 +290,12 @@ QSize JZNodeGraphItem::size() const
     return m_size;
 }
 
+QByteArray JZNodeGraphItem::saveNode()
+{
+    auto node_factory = m_node->environment()->factoryManager();
+    return node_factory->saveNode(m_node);
+}
+
 QList<int> JZNodeGraphItem::blockList(bool isInput)
 {
     QList<int> list;

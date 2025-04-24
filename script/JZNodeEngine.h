@@ -293,9 +293,6 @@ protected:
     const JZFunctionDebugInfo *currentFunctionDebugInfo();
 
     const JZNodeScript *getScript(QString path);
-        
-    bool isWidgetFunction(const JZFunction *function);
-    void autoConnect();
     
     void pushTryCatch(JZNodeIRTry *ir);
     void popTryCatch();

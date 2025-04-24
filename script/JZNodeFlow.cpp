@@ -75,7 +75,7 @@ bool JZNodeReturn::updateNode(QString &error)
     auto env = environment();
     auto inList = paramInList();
     QList<JZParamDefine> ret_list;
-    if(m_file->itemType() == ProjectItem_scriptFunction)
+    if(m_file->itemType() == ProjectItem_scriptItem)
         ret_list = m_file->function().paramOut;
 
     if(inList.size() != ret_list.size())

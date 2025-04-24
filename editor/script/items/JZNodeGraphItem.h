@@ -90,13 +90,14 @@ protected:
     BlockPtr fromPin(JZNodePin *pin);
     BlockPtr fromWidget(QWidget *widget,bool isInput);
 
+    QByteArray saveNode();
     QList<int> blockList(bool isInput);
     JZNodePin *pin(int pin_id);
     void drawProp(QPainter *painter,int pinId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
     void calcGemo(int pin, int x, int y, Block *gemo);
     virtual void updatePin();
-    void updateErrorGemo();            
+    void updateErrorGemo();   
 
     QSize m_size;
     QString m_title;

@@ -18,7 +18,7 @@ JZNodeExpression::JZNodeExpression()
 {
     m_type = Node_expr;
     m_name = "expr";
-    m_exprItem = new JZScriptItem(ProjectItem_scriptFunction);
+    m_exprItem = new JZScriptItem(JZScriptItem::Function);
     m_expression = "c = a + b;";
 }
 
@@ -42,7 +42,7 @@ bool JZNodeExpression::updateNode(QString &error)
 {    
     auto project = m_file->project();
 
-    JZProjectTempGuard guard(project, m_exprItem, true);        
+    JZProjectTempGuard guard(project, m_exprItem, JZProjectTempGuard::TakeItem);
 
     JZScriptConvert convert;
     if (!convert.convertExpression(m_expression,m_exprItem))
@@ -93,7 +93,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     auto env = environment();
     
     auto project = m_file->project();
-    JZProjectTempGuard guard(project, m_exprItem, true);
+    JZProjectTempGuard guard(project, m_exprItem, JZProjectTempGuard::TakeItem);
     m_exprItem->clearLocalVariable();
 
     QMap<QString, int> localMap;

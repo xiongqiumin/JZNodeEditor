@@ -48,7 +48,7 @@ void JZNodeForItem::updatePin()
 
 void JZNodeForItem::onCompareOpChanged(int op)
 {    
-    QByteArray oldValue = JZNodeFactory::instance()->saveNode(m_node);
+    QByteArray oldValue = saveNode(m_node);
 
     JZNodeFor *node_for = (JZNodeFor*)m_node;
     node_for->setOp((JZNodeIRType)op);
@@ -106,7 +106,7 @@ void JZNodeIfItem::onAddClicked()
 {
     JZNodeIf *node_if = (JZNodeIf *)m_node;
 
-    QByteArray oldValue = JZNodeFactory::instance()->saveNode(m_node);
+    QByteArray oldValue = saveNode(m_node);
     node_if->addCondPin();
     notifyPropChanged(oldValue);
 }
@@ -115,7 +115,7 @@ void JZNodeIfItem::onElseClicked()
 {
     JZNodeIf *node_if = (JZNodeIf *)m_node;
 
-    QByteArray oldValue = JZNodeFactory::instance()->saveNode(m_node);
+    QByteArray oldValue = saveNode(m_node);
     if (!node_if->hasElse())
         node_if->addElsePin();
     else
@@ -154,7 +154,7 @@ void JZNodeSwitchItem::onAddClicked()
 {
     JZNodeSwitch *node_switch = (JZNodeSwitch *)m_node;
 
-    QByteArray oldValue = JZNodeFactory::instance()->saveNode(m_node);
+    QByteArray oldValue = saveNode();
     node_switch->addCase();
     notifyPropChanged(oldValue);
 }

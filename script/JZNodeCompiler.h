@@ -46,6 +46,8 @@ public:
     bool toposort(); //拓扑排序
     void clear();
 
+    QList<GraphNode*> eventList();
+
     GraphNode *graphNode(int id);
     JZNode *node(int id);
     JZNodePin *pin(JZNodeGemo gemo);
@@ -140,6 +142,7 @@ class CompilerResult
 {
 public:
     bool result;
+    QString checkError;
     QMap<int, QString> nodeError;    
 };
 
@@ -210,7 +213,7 @@ public:
     bool checkInitValue(int data_type,const QString &value);   //检查能否用字符串初始化    
 
     void resetStack();
-    int allocStack(int dataType);
+    int allocStack(int dataType);  //只是标记分配
     void setStackId(int id);
     int stackId();   //指向下一个stack
     int stackType(int id);
@@ -273,6 +276,8 @@ public:
     void setBreakContinue(int breakPc, int continuePC);
     JZNode* breakParentNode(int child_id);
     JZNode* continueParentNode(int child_id);
+
+    void addConstructor(QString function,QByteArray buffer);
     
     void addAlloc(int allocType, QString name, int dataType);
     void addAllocAuto(const QString& ir);
@@ -303,8 +308,6 @@ public:
     int nextPc();
     const JZFunctionDefine *function(QString name);
 
-    bool isError();    
-
 protected:    
     friend JZNodeBuilder;
 
@@ -322,7 +325,6 @@ protected:
     bool genGraphs();
     bool checkGraphs();
     bool isBuildError();
-    bool checkBuildResult();
     bool checkBuildStop();
     Graph *getGraph(JZNode *node);
     void connectGraph(Graph *,JZNode *node);
@@ -377,6 +379,8 @@ protected:
     QList<QList<JZNodeIRPtr>*> m_statmentStak;
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
+
+    QString m_checkError;
     QMap<int,NodeCompilerInfo> m_nodeInfo;
     int m_stackId;       //当前栈位置，用于分配内存    
     QMap<int,int> m_stackType;     //stack 参数类型
@@ -385,7 +389,6 @@ protected:
     
     const JZScriptEnvironment *m_env = nullptr;
     JZNodeBuilder *m_builder;
-    bool m_error;
     QString m_ignoreError;  // 由于buildData 错误引起, 后续节点不在记录错误
 };
 

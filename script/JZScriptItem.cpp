@@ -7,9 +7,10 @@
 #include "JZProject.h"
 
 //JZScriptItem
-JZScriptItem::JZScriptItem(int type)
-    :JZProjectItem(type)
+JZScriptItem::JZScriptItem(ScriptType type)
+    :JZProjectItem(ProjectItem_scriptItem)
 {
+    m_scriptType = type;
     clear();
 }
 
@@ -20,7 +21,7 @@ JZScriptItem::~JZScriptItem()
 
 bool JZScriptItem::isFunction() const
 {
-    return (itemType() == ProjectItem_scriptFunction);
+    return (itemType() == ProjectItem_scriptItem);
 }
 
 void JZScriptItem::loadFinish()
@@ -32,7 +33,7 @@ void JZScriptItem::loadFinish()
         it++;
     }
 
-    if (m_itemType == ProjectItem_scriptFunction)
+    if (m_scriptType == Function)
         m_function.name = m_name;
 }
 
@@ -47,8 +48,16 @@ void JZScriptItem::clear()
     m_function = JZFunctionDefine();
     m_function.name = m_name;
 
-    JZNodeFunctionStart* node_start = new JZNodeFunctionStart();
-    addNode(node_start);
+    if (m_scriptType == Function)
+    {
+        JZNodeFunctionStart* node_start = new JZNodeFunctionStart();
+        addNode(node_start);
+    }
+}
+
+JZScriptItem::ScriptType JZScriptItem::scriptType() const
+{
+    return m_scriptType;
 }
 
 int JZScriptItem::nextId()
@@ -58,27 +67,57 @@ int JZScriptItem::nextId()
 
 const JZFunctionDefine &JZScriptItem::function()
 {
-    Q_ASSERT(m_itemType == ProjectItem_scriptFunction);
-    m_function.name = m_name;
-    return m_function;
+    QString class_name;
+    if (getClassItem())
+        class_name = getClassItem()->className();
+
+    if (m_scriptType == Function)
+    {
+        m_function.name = m_name;
+        m_function.className = class_name;
+        return m_function;
+    }
+    else
+    {
+        JZNodeEvent *node = startNode();
+        if (!node)
+        {
+            m_function = JZFunctionDefine();
+            return m_function;
+        }
+
+        m_function = node->function();
+        m_function.className = class_name;
+        return m_function;
+    }
 }
 
 void JZScriptItem::setFunction(JZFunctionDefine def)
 {
+    Q_ASSERT(m_itemType == ProjectItem_scriptItem);
     m_name = def.name;
-    m_function = def;    
+    m_function.isFlowFunction = def.isFlowFunction;
+    m_function.paramIn = def.paramIn;
+    m_function.paramOut = def.paramOut;
 }
 
-JZNodeFunctionStart* JZScriptItem::startNode()
+JZNodeEvent* JZScriptItem::startNode()
 {
-    Q_ASSERT(m_nodes[0]->type() == Node_functionStart);
-    return (JZNodeFunctionStart*)m_nodes[0];
+    auto it = m_nodes.begin();
+    while (it != m_nodes.end())
+    {
+        auto start_node = dynamic_cast<JZNodeEvent*>(it.value());
+        if (start_node)
+            return start_node;
+
+        it++;
+    }
+    return nullptr;
 }
 
-const JZNodeFunctionStart* JZScriptItem::startNode() const
+const JZNodeEvent* JZScriptItem::startNode() const
 {
-    Q_ASSERT(m_nodes[0]->type() == Node_functionStart);
-    return (JZNodeFunctionStart*)m_nodes[0];
+    return const_cast<JZScriptItem*>(this)->startNode();
 }
 
 int JZScriptItem::addNode(JZNode *node)
@@ -550,7 +589,7 @@ const JZParamDefine *JZScriptItem::localVariable(QString name)
     if (it != m_variables.end())
         return &it.value();
 
-    if (m_itemType == ProjectItem_scriptFunction)
+    if (m_itemType == ProjectItem_scriptItem)
     {
         //param out 作为return 返回，不作为局部变量
         for (int i = 0; i < m_function.paramIn.size(); i++)
@@ -566,11 +605,11 @@ const JZParamDefine *JZScriptItem::localVariable(QString name)
 QStringList JZScriptItem::localVariableList(bool hasFunc)
 {
     QStringList list = m_variables.keys();
-    if (hasFunc && m_itemType == ProjectItem_scriptFunction) 
+    if (hasFunc) 
     {        
         for (int i = 0; i < m_function.paramIn.size(); i++)
         {
-            if (i == 0 && m_function.isMemberFunction())
+            if (m_function.paramIn[i].name == "this")
                 continue;
 
             list << m_function.paramIn[i].name;
@@ -581,9 +620,14 @@ QStringList JZScriptItem::localVariableList(bool hasFunc)
 
 void JZScriptItem::saveToStream(QDataStream &s) const
 {    
+    s << m_scriptType;
     s << m_name;
-    s << m_function;    
-
+    if (m_scriptType == Function)
+    {
+        s << m_function.isFlowFunction;
+        s << m_function.paramIn;
+        s << m_function.paramOut;
+    }
     s << m_nodeId;
     QList<QByteArray> node_list;
     auto it = m_nodes.begin();
@@ -600,8 +644,16 @@ void JZScriptItem::saveToStream(QDataStream &s) const
 
 bool JZScriptItem::loadFromStream(QDataStream &s)
 {    
+    auto node_factory = project()->environment()->factoryManager();
+
+    s >> m_scriptType;
     s >> m_name;
-    s >> m_function;    
+    if (m_scriptType == Function)
+    {
+        s >> m_function.isFlowFunction;
+        s >> m_function.paramIn;
+        s >> m_function.paramOut;
+    }
     s >> m_nodeId;
     QList<QByteArray> node_list;
     s >> node_list;
@@ -612,7 +664,7 @@ bool JZScriptItem::loadFromStream(QDataStream &s)
         int node_type;
         node_s >> node_type;
 
-        JZNode *node = JZNodeFactory::instance()->createNode(node_type);
+        JZNode *node = node_factory->createNode(node_type);
         node->fromBuffer(node_buffer);
         m_nodes.insert(node->id(), node);
     }
@@ -620,4 +672,20 @@ bool JZScriptItem::loadFromStream(QDataStream &s)
     s >> m_variables;    
     s >> m_groups;
     return true;
+}
+
+bool isFunctionScriptItem(JZProjectItem* item)
+{
+    if (item->itemType() != ProjectItem_scriptItem)
+        return false;
+
+    return ((JZScriptItem*)item)->scriptType() == JZScriptItem::Function;
+}
+
+bool isFlowScriptItem(JZProjectItem* item)
+{
+    if (item->itemType() != ProjectItem_scriptItem)
+        return false;
+
+    return ((JZScriptItem*)item)->scriptType() == JZScriptItem::Flow;
 }

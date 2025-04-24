@@ -4,7 +4,6 @@
 #include <QThread>
 #include "JZNode.h"
 #include "JZNodeEvent.h"
-#include "JZEvent.h"
 #include "JZNodeIR.h"
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
@@ -79,10 +78,8 @@ public:
     void loadFromStream(QDataStream &s);
 
     QString itemPath;
-    QString className; 
     QList<JZNodeIRPtr> statmentList;
     QList<JZFunction> functionList;
-
     QList<JZFunctionDebugInfo> functionDebugList;
 
 protected:

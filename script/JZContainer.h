@@ -21,6 +21,7 @@ template<class T>
 void registList(JZScriptEnvironment *env,int type = Type_none)
 {
     Q_ASSERT(env == jzbind::bindEnvironment());
+    Q_ASSERT(env->ctypeidToType(typeid(T).name()) != Type_none);
 
     QString list_type = "QList<" + env->ctypeidToName(typeid(T).name()) + ">";
 

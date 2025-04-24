@@ -49,6 +49,15 @@ public:
     int nodeType;
 };
 
+//JZModuleEditor
+class JZNodeEditorManager;
+class JZModuleEditor
+{
+public:
+    virtual void regist(JZNodeEditorManager *manger) = 0;
+    virtual void unregist(JZNodeEditorManager *manger) = 0;
+};
+
 class JZNodeEditorManager
 {
 public:
@@ -60,6 +69,8 @@ public:
     void init();
     void setUserRegist(bool flag);
     void clearUserRegist();    
+
+    void addModule(JZModuleEditor *module); 
 
     void registLogicNode(JZLogicNode logic);
     QList<JZLogicNode>  logicNodeList();
@@ -78,6 +89,7 @@ protected:
     
     bool m_userRegist;    
     QList<int> m_userDelegateList;
+    QList<JZModuleEditor*> m_editorModules;
 };
 
 void JZNodeEditorInit();

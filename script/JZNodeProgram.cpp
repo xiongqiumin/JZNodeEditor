@@ -148,7 +148,6 @@ JZNodeScript::JZNodeScript()
 void JZNodeScript::clear()
 {
     itemPath.clear();
-    className.clear();    
     statmentList.clear();
     functionList.clear();    
     functionDebugList.clear();
@@ -187,7 +186,6 @@ void JZNodeScript::copyTo(JZNodeScript *other) const
 void JZNodeScript::saveToStream(QDataStream &s) const
 {
     s << itemPath;    
-    s << className;
     s << statmentList.size();
     for(int i = 0; i < statmentList.size(); i++)
     {
@@ -201,7 +199,6 @@ void JZNodeScript::saveToStream(QDataStream &s) const
 void JZNodeScript::loadFromStream(QDataStream &s)
 {
     s >> itemPath;
-    s >> className;
     int stmt_size = 0;
     s >> stmt_size;
     for(int i = 0; i < stmt_size; i++)
@@ -275,14 +272,19 @@ const JZFunctionDefine *JZNodeTypeMeta::function(QString name) const
     }
 }
 
-const JZNodeObjectDefine *JZNodeTypeMeta::object(QString name) const
+JZNodeObjectDefine* JZNodeTypeMeta::object(QString name)
 {
-    for(int i = 0; i < objectList.size(); i++)
+    for (int i = 0; i < objectList.size(); i++)
     {
-        if(objectList[i].className == name)
+        if (objectList[i].className == name)
             return &objectList[i];
     }
     return nullptr;
+}
+
+const JZNodeObjectDefine *JZNodeTypeMeta::object(QString name) const
+{
+    return const_cast<JZNodeTypeMeta*>(this)->object(name);
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeTypeMeta &param)

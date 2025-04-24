@@ -50,8 +50,6 @@ set(JZNodeCore_SOURCES
     script/JZUiItem.h
     script/JZContainer.cpp
     script/JZContainer.h
-    script/JZEvent.cpp
-    script/JZEvent.h
     script/JZExpressionSolver.cpp
     script/JZExpressionSolver.h
     script/JZModule.cpp

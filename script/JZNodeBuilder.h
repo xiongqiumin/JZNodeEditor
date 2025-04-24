@@ -5,15 +5,7 @@
 #include <functional>
 #include "JZNodeCompiler.h"
 
-class JZNodeBuilder;
-class JZNodeCustomBuild: public JZNode
-{
-public:    
-    JZNodeCustomBuild();
-
-    bool compiler(JZNodeCompiler *compiler, QString &error);    
-    std::function<bool(JZNodeCompiler*, QString&)> buildFunction;    
-};
+class JZNodeConstructBuild;
 
 //JZNodeBuilder
 class JZNodeBuilder
@@ -39,8 +31,16 @@ public:
     QMap<QString, CompilerResult> compilerResult();
     const CompilerResult *compilerInfo(JZScriptItem *file) const;
 
+    void addClassConstructor(QString class_name, QString function,const QByteArray &buffer);
+
 protected:    
-    friend JZNodeCustomBuild;
+    friend JZNodeConstructBuild;
+
+    struct ClassConstructor 
+    {
+        QStringList functionList;
+        QList<QByteArray> bufferList;
+    };
 
     struct ScriptInfo
     {
@@ -49,20 +49,23 @@ protected:
     };
 
     void clear();      
-    bool buildScript(JZScriptItem *file);
-    bool buildCustom(JZFunctionDefine define,std::function<bool(JZNodeCompiler*, QString&)> func);
+    bool buildScript(JZScriptItem *file, JZNodeScript* script);
+    bool buildCustom(JZFunctionDefine define, JZNode *node, JZNodeScript* script_impl);
     bool link();        
     bool initGlobal();
+    bool initConstructor();
 
     JZNodeProgram *m_program;    
     JZProject *m_project;    
 
+    QMap<QString, ClassConstructor> m_classConstructor;
+    QString m_checkError;
     QMap<QString, ScriptInfo> m_scripts;
     JZNodeCompiler m_compiler;
 
+    QMutex m_mutex;
     bool m_logEnable;
     bool m_error;
-    QMutex m_mutex;
     bool m_build;
     bool m_stopBuild;
 };

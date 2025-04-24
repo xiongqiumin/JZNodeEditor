@@ -4,7 +4,6 @@
 #include <QMap>
 #include <QWidget>
 #include <functional>
-#include "JZEvent.h"
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeEnum.h"
 
@@ -142,6 +141,7 @@ public:
     void updateUiWidget(QWidget *widget);
     void autoConnect();
     void autoBind();
+    void autoInit();
 
     const JZNodeObjectManager *manager() const;
 

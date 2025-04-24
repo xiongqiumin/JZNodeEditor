@@ -6,54 +6,7 @@
 #include "JZNodeFunction.h"
 #include "JZNodeOperator.h"
 
-JZNodeFactory *JZNodeFactory::instance()
-{
-    static JZNodeFactory inst;
-    return &inst;
-}
-
-void JZNodeFactory::registNode(int type,JZNodeCreateFunc func)
-{
-    Q_ASSERT(!m_nodes.count(type));
-    m_nodes[type] = func;
-}
-
-QList<int> JZNodeFactory::nodeTypeList()
-{
-    QList<int> types;
-    auto it = m_nodes.begin();
-    while(it != m_nodes.end())
-    {
-        types << it.key();
-        it++;
-    }
-    return types;
-}
-
-JZNode *JZNodeFactory::createNode(int type)
-{
-    auto it = m_nodes.find(type);
-    Q_ASSERT(it != m_nodes.end());
-    return it.value()();
-}
-
-JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
-{
-    QDataStream node_s(buffer);
-    int node_type;
-    node_s >> node_type;
-
-    JZNode *node = JZNodeFactory::instance()->createNode(node_type);
-    node->fromBuffer(buffer);
-    return node;
-}
-
-QByteArray JZNodeFactory::saveNode(JZNode *node)
-{
-    return node->toBuffer();
-}
-
-void JZNodeFactory::init()
+JZNodeFactory::JZNodeFactory()
 {   
     registNode(Node_print,createJZNode<JZNodePrint>);  
     registNode(Node_format,createJZNode<JZNodeFormat>);  
@@ -115,4 +68,62 @@ void JZNodeFactory::init()
     registNode(Node_signalConnect, createJZNode<JZNodeSignalConnect>);
 
     registNode(Node_mainLoop, createJZNode<JZNodeMainLoop>);
+
+    registNode(Node_showEvent, createJZNode<JZNodeShowEvent>);
+    registNode(Node_closeEvent, createJZNode<JZNodeCloseEvent>);
+    registNode(Node_resizeEvent, createJZNode<JZNodeResizeEvent>);
+    registNode(Node_paintEvent, createJZNode<JZNodePaintEvent>);
+
+    registNode(Node_mouseMoveEvent, createJZNode<JZNodeMouseMoveEvent>);
+    registNode(Node_mousePressEvent, createJZNode<JZNodeMousePressEvent>);
+    registNode(Node_mouseReleaseEvent, createJZNode<JZNodeMouseReleaseEvent>);
+    
+    registNode(Node_buttonClikedEvnet, createJZNode<JZNodeButtonClickedEvent>);
+    registNode(Node_timerEvnet, createJZNode<JZNodeTimerEvent>);
+}
+
+JZNodeFactory::~JZNodeFactory()
+{
+
+}
+
+void JZNodeFactory::registNode(int type,JZNodeCreateFunc func)
+{
+    Q_ASSERT(!m_nodes.count(type));
+    m_nodes[type] = func;
+}
+
+QList<int> JZNodeFactory::nodeTypeList()
+{
+    QList<int> types;
+    auto it = m_nodes.begin();
+    while(it != m_nodes.end())
+    {
+        types << it.key();
+        it++;
+    }
+    return types;
+}
+
+JZNode *JZNodeFactory::createNode(int type)
+{
+    auto it = m_nodes.find(type);
+    Q_ASSERT(it != m_nodes.end());
+    return it.value()();
+}
+
+JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
+{
+    QDataStream node_s(buffer);
+    int node_type;
+    node_s >> node_type;
+
+    JZNode *node = createNode(node_type);
+    node->fromBuffer(buffer);
+    return node;
+}
+
+QByteArray JZNodeFactory::saveNode(JZNode *node)
+{
+    return node->toBuffer();
 }

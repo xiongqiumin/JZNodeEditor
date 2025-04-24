@@ -833,7 +833,7 @@ bool MainWindow::openProject(QString filepath)
 JZEditor *MainWindow::createEditor(int type)
 {
     JZEditor *editor = nullptr;
-    if(type == ProjectItem_scriptFunction)
+    if(type == ProjectItem_scriptItem)
         editor = new JZNodeEditor();
     else if(type == ProjectItem_param)
         editor = new JZNodeParamEditor();

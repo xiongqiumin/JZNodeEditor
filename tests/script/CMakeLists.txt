@@ -17,6 +17,8 @@ set(JZNodeTest_SOURCES
     test_anglescript.h
     test_unitTest.cpp
     test_unitTest.h
+	test_event.cpp
+	test_event.h
 )
 
 add_executable(JZNodeTest ${JZNodeTest_SOURCES})

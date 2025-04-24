@@ -13,7 +13,7 @@ enum {
     ProjectItem_param,
     ProjectItem_class,
     ProjectItem_scriptFile,
-    ProjectItem_scriptFunction,
+    ProjectItem_scriptItem,
 };
 
 class JZProject;

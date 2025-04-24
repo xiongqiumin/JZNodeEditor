@@ -10,9 +10,8 @@ typedef JZNode *(*JZNodeCreateFunc)();
 class JZNodeFactory
 {
 public:
-    static JZNodeFactory *instance();
-
-    void init();
+    JZNodeFactory();
+    ~JZNodeFactory();
 
     void registNode(int type, JZNodeCreateFunc func);
     QList<int> nodeTypeList();

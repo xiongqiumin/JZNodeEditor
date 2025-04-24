@@ -60,14 +60,12 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
 
     jzbind::ClassBind<JZCameraHik> cls_camera_hik(cls_id++, "JZCameraHik", "JZCamera");
     cls_camera_hik.regist();
+
+    JZNodeE
+    JZNodeFactory::instance()->registNode(Node_CameraInit, createJZNode<JZCameraInitNode>);
 }
 
 void JZModuleCamera::unregist(JZScriptEnvironment *env)
 {
 
-}
-
-void JZModuleCameraNodeInit()
-{
-    JZNodeFactory::instance()->registNode(Node_CameraInit, createJZNode<JZCameraInitNode>);
 }

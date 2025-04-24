@@ -38,7 +38,6 @@ void JZNodeInit()
     QMetaType::registerEqualsComparator<JZNodeObjectHolder>();    
 
     JZNodeType::init();
-    JZNodeFactory::instance()->init();
     JZProjectInit();
     JZNodeEngine::regist();
 
@@ -47,7 +46,6 @@ void JZNodeInit()
 
     BindManager::instance()->init();    
     
-    JZScriptUnitTestNodeInit();
 /*
     auto module_inst = JZModuleManager::instance();
     module_inst->addModule(new JZModuleOpencv());

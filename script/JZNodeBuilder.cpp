@@ -8,22 +8,68 @@
 #include "JZContainer.h"
 
 //JZNodeCustomBuild
-JZNodeCustomBuild::JZNodeCustomBuild()
+class JZNodeGlobalBuild : public JZNode
 {
-    m_type = Node_custom;
-    addFlowIn();
-    addFlowOut();
-}
+public:
+    JZNodeGlobalBuild()
+    {
+        m_type = Node_custom;
+        addFlowIn();
+        addFlowOut();
+    }
 
-bool JZNodeCustomBuild::compiler(JZNodeCompiler *c, QString &error)
+    bool compiler(JZNodeCompiler *c, QString &error)
+    {
+        c->addNodeEnter(m_id);
+
+        auto project = m_file->project();
+        auto global_params = project->globalVariableList();
+        for (int i = 0; i < global_params.size(); i++)
+        {
+            auto def = project->globalVariable(global_params[i]);
+            int data_type = project->environment()->nameToType(def->type);
+            c->addAlloc(JZNodeIRAlloc::Heap, def->name, data_type);
+            c->addInitVariable(irRef(def->name), data_type, def->value);
+        }
+        c->addFlowOutput(m_id);
+        return true;
+    }
+};
+
+//JZNodeConstructBuild
+class JZNodeConstructBuild : public JZNode
 {
-    c->addNodeEnter(m_id);
-    if (!buildFunction(c, error))
-        return false;
+public:
+    JZNodeConstructBuild()
+    {
+        m_type = Node_custom;
+        addFlowIn();
+        addFlowOut();
+    }
 
-    c->addFlowOutput(m_id);
-    return true;
-}
+    bool compiler(JZNodeCompiler* c, QString& error)
+    {
+        c->addNodeEnter(m_id);
+
+        QString class_name = m_file->getClassItem()->className();
+
+        auto &info = build->m_classConstructor[class_name];
+        for (int i = 0; i < info.functionList.size(); i++)
+        {
+            int id = c->allocStack(Type_byteArray); 
+            c->addSetBuffer(irId(id), info.bufferList[i]);
+
+            QList<JZNodeIRParam> in, out;
+            in << irThis() << irId(id);
+            c->addCall(info.functionList[i], in, out);
+        }
+
+        return true;
+    }
+
+    JZNodeBuilder* build;
+};
+
 
 //JZNodeBuilder
 JZNodeBuilder::JZNodeBuilder()
@@ -63,7 +109,9 @@ bool JZNodeBuilder::isError() const
 
 QString JZNodeBuilder::error() const
 {
-    QString result;
+    QString result = m_checkError;
+    if (!result.isEmpty())
+        result += "\n";
 
     auto it = m_scripts.begin();
     while (it != m_scripts.end())
@@ -82,10 +130,12 @@ QString JZNodeBuilder::error() const
 
 void JZNodeBuilder::clear()
 {
+    m_checkError.clear();
     m_build = false;
     m_stopBuild = false;
     m_error = false;
     m_scripts.clear();
+    m_classConstructor.clear();
 }
 
 void JZNodeBuilder::log(int level, const QString &text)
@@ -99,30 +149,6 @@ void JZNodeBuilder::log(int level, const QString &text)
 void JZNodeBuilder::logE(const QString& text)
 {
     log(LOG_ERROR, text);
-}
-
-bool JZNodeBuilder::initGlobal()
-{            
-    // init variable
-    auto func = [this](JZNodeCompiler *c, QString &ret_error)->bool{
-        auto global_params = m_project->globalVariableList();
-        for(int i = 0; i < global_params.size(); i++)
-        {
-            auto def = m_project->globalVariable(global_params[i]);
-            int data_type = m_project->environment()->nameToType(def->type);
-            c->addAlloc(JZNodeIRAlloc::Heap, def->name, data_type);
-            m_compiler.addInitVariable(irRef(def->name), data_type,def->value);
-        }
-        return ret_error.isEmpty();
-    };
-
-    JZFunctionDefine global_func;
-    global_func.name = "__init__";
-    global_func.isFlowFunction = true;
-    if(!buildCustom(global_func, func))
-        return false;
-
-    return true;
 }
 
 QMap<QString, CompilerResult> JZNodeBuilder::compilerResult()
@@ -147,7 +173,7 @@ const CompilerResult *JZNodeBuilder::compilerInfo(JZScriptItem *file) const
     return &it->compilerInfo;
 }
 
-bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
+bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile,JZNodeScript* script)
 {
     if(m_stopBuild)
     {
@@ -155,11 +181,8 @@ bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile)
     }
 
     QString path = scriptFile->itemPath();
-    if(m_logEnable && !scriptFile->itemPath().startsWith("/tmp"))
-        LOGMOD_I(Log_Compiler, "build " + scriptFile->itemPath());
-
-    m_scripts[path].script = JZNodeScriptPtr(new JZNodeScript());
-    JZNodeScript *script = m_scripts[path].script.data();
+    if(!scriptFile->itemPath().startsWith("/tmp"))
+        log(LOG_INFO, "build " + scriptFile->itemPath());
 
     bool ret = m_compiler.build(scriptFile, script);
     m_scripts[path].compilerInfo = m_compiler.compilerResult();
@@ -225,6 +248,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         {
             auto global_item = m_project->globalDefine();
             logE(makeParamLink(error, global_item->itemPath(),false, i));
+            m_checkError += error + "\n";
             m_error = true;
         }
     }
@@ -240,6 +264,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         if (!obj_def->check(error))
         {
             logE(JZNodeUtils::makeLink(error, class_item->itemPath(), QString()));
+            m_checkError += error + "\n";
             m_error = true;
         }
 
@@ -251,6 +276,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             if (!m_compiler.checkParamDefine(var_def, error))
             {
                 logE(makeParamLink(error, param->itemPath(), false, i));
+                m_checkError += error + "\n";
                 m_error = true;
             }
         }
@@ -263,6 +289,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
             {
                 error = JZNodeCompiler::errorString(Error_noClassMember, { obj_def->className,bind->variable});
                 logE(makeParamLink(error, param->itemPath(),true, i));
+                m_checkError += error + "\n";
                 m_error = true;
             }
         }
@@ -270,13 +297,15 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     if(m_error)
         return false;
         
-    auto function_list = m_project->itemList("./", ProjectItem_scriptFunction);
+    auto function_list = m_project->itemList("./", ProjectItem_scriptItem);
     for (int i = 0; i < function_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
-        if (!buildScript(script))
+        JZNodeScriptPtr script_impl = JZNodeScriptPtr(new JZNodeScript());
+        if (!buildScript(script, script_impl.data()))
             return false;
 
+        m_scripts[script->itemPath()].script = script_impl;
         auto func_def = script->function();
         if(!func_def.isMemberFunction())
             type_meta.functionList << func_def;        
@@ -289,27 +318,22 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     return true;
 }
 
-bool JZNodeBuilder::buildCustom(JZFunctionDefine func, std::function<bool(JZNodeCompiler*, QString&)> buildFunction)
+bool JZNodeBuilder::buildCustom(JZFunctionDefine func, JZNode* custom_node, JZNodeScript * script_impl)
 {
-    JZScriptItem *file = new JZScriptItem(ProjectItem_scriptFunction);
-    file->setName(func.name);
+    JZScriptItem *file = new JZScriptItem(JZScriptItem::Function);
     file->setFunction(func);
-    m_project->addTmp(file);
-    
-    auto cleanup = qScopeGuard([file,this] {
-        m_project->removeTmp(file);
-    });
+
+    JZProjectTempGuard guard(m_project, file, JZProjectTempGuard::RemoveItem);
+    if (!func.className.isEmpty())
+        guard.setClass(func.className);
 
     auto start = file->getNode(0);
-    JZNodeCustomBuild *custom = new JZNodeCustomBuild();
-    custom->buildFunction = buildFunction;
-    file->addNode(custom);
-    file->addConnect(start->flowOutGemo(), custom->flowInGemo());
+    file->addNode(custom_node);
+    file->addConnect(start->flowOutGemo(), custom_node->flowInGemo());
  
-    if(!buildScript(file))
+    if(!buildScript(file, script_impl))
         return false;
     
-    m_program->m_typeMeta.functionList << file->function();
     return true;
 }
 
@@ -342,6 +366,74 @@ bool JZNodeBuilder::isBuildInterrupt()
     return m_stopBuild;
 }
 
+void JZNodeBuilder::addClassConstructor(QString class_name, QString function, const QByteArray& buffer)
+{
+    if (!m_classConstructor.contains(class_name))
+        m_classConstructor[class_name] = ClassConstructor();
+
+    auto& func = m_classConstructor[class_name];
+    func.functionList << function;
+    func.bufferList << buffer;
+}
+
+bool JZNodeBuilder::initGlobal()
+{
+    // init variable
+    JZNodeGlobalBuild* global = new JZNodeGlobalBuild();
+
+    JZFunctionDefine global_func;
+    global_func.name = "__init__";
+    global_func.isFlowFunction = true;
+    
+    JZNodeScriptPtr script_impl = JZNodeScriptPtr(new JZNodeScript());
+    if (!buildCustom(global_func, global, script_impl.data()))
+        return false;
+
+    m_program->m_typeMeta.functionList << global_func;
+    m_scripts[script_impl->itemPath].script = script_impl;
+
+    return true;
+}
+
+
+bool JZNodeBuilder::initConstructor()
+{
+    if (m_classConstructor.size() == 0)
+        return true;
+
+    JZNodeScriptPtr con_script = JZNodeScriptPtr(new JZNodeScript());
+    con_script->itemPath = "__ClassConstructorImpl__";
+
+    auto it = m_classConstructor.begin();
+    while (it != m_classConstructor.end())
+    {
+        auto class_meta = m_program->m_typeMeta.object(it.key());
+        JZFunctionDefine function = class_meta->initMemberFunction("__init__");
+
+        JZNodeConstructBuild* node = new JZNodeConstructBuild();
+        node->build = this;
+
+        JZNodeScriptPtr script_impl = JZNodeScriptPtr(new JZNodeScript());
+        if(!buildCustom(function, node, script_impl.data()))
+            return false;
+
+        class_meta->addFunction(function);
+
+        JZFunction jz_func;
+        jz_func.define = function;
+        jz_func.addr = con_script->statmentList.size();
+        jz_func.addrEnd = jz_func.addr + script_impl->statmentList.size();
+        jz_func.path = con_script->itemPath;
+
+        con_script->functionList << jz_func;
+        con_script->statmentList << script_impl->statmentList;
+
+        it++;
+    }
+    m_program->m_scripts[con_script->itemPath] = con_script;
+    return true;
+}
+
 bool JZNodeBuilder::link()
 {    
     if (!initGlobal())
@@ -356,6 +448,7 @@ bool JZNodeBuilder::link()
         m_program->m_scripts[it_s.key()] = it_s->script;
         it_s++;
     }
+    initConstructor();
 
     return true;
 }

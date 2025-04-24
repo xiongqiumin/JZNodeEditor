@@ -140,7 +140,7 @@ void JZScriptUnitTestVistor::visitorSelf(const JZNode *node)
 //JZScriptUnitTest
 JZScriptUnitTest::JZScriptUnitTest()
 {
-    m_script = new JZScriptItem(ProjectItem_scriptFunction);
+    m_script = new JZScriptItem(JZScriptItem::Function);
     m_project = nullptr;
 }
 
@@ -181,6 +181,8 @@ void JZScriptUnitTest::registEnv(JZScriptEnvironment *env)
 
     auto widget_hook_func = BuiltInFunctionPtr(new JZUnitTestHook());
     func_inst->registBuiltInFunction(widget_hook, hook_func);
+
+    env->factoryManager()->registNode(Node_unitTest,createJZNode<JZNodeUnitTest>);
 }
 
 bool JZScriptUnitTest::hasHook(int id)
@@ -247,10 +249,4 @@ JZScriptItem *JZScriptUnitTest::createUnitScript(JZScriptItemDependPtr depend)
     }
 
     return m_script;
-}
-
-//JZScriptUnitTestInit
-void JZScriptUnitTestNodeInit()
-{
-    JZNodeFactory::instance()->registNode(Node_unitTest,createJZNode<JZNodeUnitTest>);
 }

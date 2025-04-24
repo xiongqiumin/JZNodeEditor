@@ -103,6 +103,9 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZYoloView> cls_yolo_view(cls_id++, "JZYoloView", "QWidget");
     cls_yolo_view.def("setYoloResult", true, &JZYoloView::setYoloResult);
     cls_yolo_view.regist();
+
+    env->factoryManager()->registNode(Node_ModelInit, createJZNode<JZModelInitNode>);
+    env->factoryManager()->registNode(Node_ModelSetting, createJZNode<JZModelSettingNode>);
 }
 
 void JZModuleOpencv::unregist(JZScriptEnvironment *env)
@@ -118,10 +121,4 @@ void JZModuleOpencv::unregist(JZScriptEnvironment *env)
 
     m_classList.clear();
     m_functionList.clear();
-}
-
-void JZModuleModelNodeInit()
-{
-    JZNodeFactory::instance()->registNode(Node_ModelInit, createJZNode<JZModelInitNode>);
-    JZNodeFactory::instance()->registNode(Node_ModelSetting, createJZNode<JZModelSettingNode>);
 }

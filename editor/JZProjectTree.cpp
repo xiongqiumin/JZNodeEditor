@@ -155,7 +155,7 @@ void JZProjectTree::setItem(QTreeWidgetItem *view_item,JZProjectItem *item)
         icon_path = ":/JZNodeEditor/Resources/icons/iconFolder.png";    
     else if (item->itemType() == ProjectItem_class)
         icon_path = ":/JZNodeEditor/Resources/icons/iconClass.png";
-    else if (item->itemType() == ProjectItem_scriptFunction)
+    else if (item->itemType() == ProjectItem_scriptItem)
         icon_path = ":/JZNodeEditor/Resources/icons/iconFunction.png";
     else if (item->itemType() == ProjectItem_ui)
         icon_path = ":/JZNodeEditor/Resources/icons/iconUi.png";
@@ -176,7 +176,7 @@ bool JZProjectTree::canOpenItem(JZProjectItem *item)
 {
     if (item->itemType() == ProjectItem_ui
         || item->itemType() == ProjectItem_param
-        || item->itemType() == ProjectItem_scriptFunction)
+        || item->itemType() == ProjectItem_scriptItem)
         return true;
 
     return false;
@@ -506,7 +506,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
             function = meta->initVirtualFunction(act->text());
         }
 
-        JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptFunction);
+        JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptItem);
         func_item->setFunction(function);
         m_project->addItem(item->itemPath(), func_item);
         m_project->saveItem(item);
@@ -544,7 +544,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     }
     else if (act == actProp)
     {        
-        if (item->itemType() == ProjectItem_scriptFunction)
+        if (item->itemType() == ProjectItem_scriptItem)
         {
             JZScriptItem *func_item = dynamic_cast<JZScriptItem*>(item);
             QString oldName = func_item->name();

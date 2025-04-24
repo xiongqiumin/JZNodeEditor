@@ -60,10 +60,13 @@ JZNodeEditorManager::JZNodeEditorManager()
 
 JZNodeEditorManager::~JZNodeEditorManager()
 {
+    qDeleteAll(m_editorModules);
 }
 
 void JZNodeEditorManager::init()
 {    
+    for(int i = 0; i < m_editorModules.size(); i++)
+        m_editorModules[i]->regist(this);
 }
 
 void JZNodeEditorManager::registNodeItemCreator(int node_type, CreateJZNodeGraphItemFunc func)

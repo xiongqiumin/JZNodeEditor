@@ -42,13 +42,21 @@ void operator>>(QDataStream &s, BreakPoint &param);
 class JZProjectTempGuard
 {
 public:
-    JZProjectTempGuard(JZProject *project, JZProjectItem *item,bool isTake = false);
+    enum AfterOpertaor
+    {
+        RemoveItem,
+        TakeItem,
+    };
+
+    JZProjectTempGuard(JZProject *project, JZProjectItem *item, AfterOpertaor op);
     ~JZProjectTempGuard();
+
+    void setClass(QString className);
 
 protected:
     JZProject *m_project;
     JZProjectItem *m_item;
-    bool m_isTake;
+    AfterOpertaor m_after;
 };
 
 //JZProject
@@ -75,6 +83,7 @@ public:
     bool saveAs(QString filepath);
     
     void addTmp(JZProjectItem* item);
+    void setTmpClass(JZProjectItem* item, QString className);
     void removeTmp(JZProjectItem *item);
     void takeTmp(JZProjectItem *item);
     bool isTmp(JZProjectItem *item);
@@ -162,7 +171,8 @@ protected:
             
     QString m_filepath;
     JZProjectItemRoot m_root;
-    JZProjectItemRoot m_tmp;    
+    JZProjectItemRoot m_tmp;  
+    QMap<JZProjectItem*, QString> m_tmpClass;
 
     QMap<JZProjectItem*, QList<BreakPoint>> m_breakPoints;
     

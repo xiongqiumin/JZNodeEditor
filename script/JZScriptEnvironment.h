@@ -4,6 +4,7 @@
 #include "JZNodeObject.h"
 #include "JZModule.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeFactory.h"
 
 class JZScriptEnvironment;
 typedef QVariant (*ConvertFunc)(const JZScriptEnvironment *env,const QVariant& v);
@@ -15,6 +16,8 @@ public:
     void clear();
 
     const JZFunctionDefine *function(QString name) const;
+    
+    JZNodeObjectDefine* object(QString name);
     const JZNodeObjectDefine *object(QString name) const;
 
     QList<JZFunctionDefine> functionList;
@@ -35,6 +38,9 @@ public:
 
     bool loadModule(QString name);
     void unloadModule(QString name);
+
+    JZNodeFactory *factoryManager();
+    const JZNodeFactory *factoryManager() const;
 
     JZNodeObjectManager *objectManager();
     const JZNodeObjectManager *objectManager() const;
@@ -102,6 +108,7 @@ protected:
 
     JZNodeFunctionManager m_funcManager;
     JZNodeObjectManager m_objectManager;
+    JZNodeFactory m_nodeFactory;
     QList<ModuleInfo*> m_moduleList;
 
     QMap<int64_t,ConvertFunc> convertMap;    

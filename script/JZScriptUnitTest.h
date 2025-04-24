@@ -75,7 +75,5 @@ protected:
     QMap<int,QVariant> m_hookValues;
 };
 
-void JZScriptUnitTestNodeInit();
-
 #endif
 

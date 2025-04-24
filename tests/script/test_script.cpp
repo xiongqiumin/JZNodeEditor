@@ -752,6 +752,7 @@ void ScriptTest::testExpr()
     script->addNode(node_a);
     script->addNode(node_b);    
 
+    auto node_factory = m_project.environment()->factoryManager();
     JZNodeSetParam *pre_node = nullptr;
     for(int i = 0; i < op_type.size(); i++)
     {
@@ -765,7 +766,7 @@ void ScriptTest::testExpr()
         node_set->setVariable("i" + QString::number(i));
         script->addNode(node_set);
 
-        auto node_op = JZNodeFactory::instance()->createNode(op_type[i]);
+        auto node_op = node_factory->createNode(op_type[i]);
         script->addNode(node_op);
 
         script->addConnect(node_a->paramOutGemo(0),node_op->paramInGemo(0));

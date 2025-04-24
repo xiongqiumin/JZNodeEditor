@@ -894,14 +894,14 @@ void JZNodeView::paste()
 
     for(int i = 0; i < copyData.nodesPos.size(); i++)
     {
-        JZNode *node = JZNodeFactory::instance()->loadNode(copyData.nodes[i]);
+        JZNode *node = editorNodeFactory()->loadNode(copyData.nodes[i]);
         int old_id = node->id();
         node->setId(-1);
         node->setGroup(-1);
 
         JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::CreateNode);
         cmd->itemId = -1;
-        cmd->newValue = JZNodeFactory::instance()->saveNode(node);
+        cmd->newValue = editorNodeFactory()->saveNode(node);
         cmd->newPos = copyData.nodesPos[i] + offset;
         m_commandStack.push(cmd);
 
@@ -1222,7 +1222,7 @@ void JZNodeView::removeItem(QGraphicsItem *item)
 
         JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::RemoveNode);
         cmd->itemId = node->id(); 
-        cmd->oldValue = JZNodeFactory::instance()->saveNode(node);
+        cmd->oldValue = editorNodeFactory()->saveNode(node);
         cmd->oldPos = item->pos();
         m_commandStack.push(cmd);
         
@@ -1613,7 +1613,7 @@ void JZNodeView::dropEvent(QDropEvent *event)
     auto env = editorEnvironment();
     auto obj_inst = env->objectManager();
     auto func_inst = env->functionManager();
-    auto factory = JZNodeFactory::instance();
+    auto factory = editorNodeFactory();
     if(event->mimeData()->hasFormat("node_data"))
     {
         QByteArray node_data = event->mimeData()->data("node_data");                       
@@ -2093,7 +2093,7 @@ void JZNodeView::copyItems(QList<QGraphicsItem*> items)
             if (node->node()->canRemove())
             {
                 node_ids << ((JZNodeGraphItem*)item)->id();
-                QByteArray node_data = JZNodeFactory::instance()->saveNode(node->node());
+                QByteArray node_data = editorNodeFactory()->saveNode(node->node());
                 copydata.nodes.append(node_data);
                 copydata.nodesPos.append(item->pos());
             }

@@ -5,6 +5,7 @@
 #include "JZNodeEngine.h"
 #include "JZScriptBuildInFunction.h"
 #include "runtime/JZWidgetBind.h"
+#include "JZNodeEvent.h"
 
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
@@ -20,9 +21,10 @@ JZScriptEnvironment::JZScriptEnvironment()
 
     JZModuleManager::instance()->regist(this);
 
+    JZNodeEventFunctionInit(this);
+
     m_objectManager.setUserRegist(true);
     m_funcManager.setUserRegist(true);
-
     jzbind::setBindEnvironment(nullptr);
 }
 
@@ -66,6 +68,16 @@ void JZScriptEnvironment::unregistType()
 
     m_funcManager.clearUserReigst();
     m_objectManager.clearUserReigst();    
+}
+
+JZNodeFactory *JZScriptEnvironment::factoryManager()
+{
+    return &m_nodeFactory;
+}
+
+const JZNodeFactory *JZScriptEnvironment::factoryManager() const
+{
+    return &m_nodeFactory;
 }
 
 JZNodeObjectManager *JZScriptEnvironment::objectManager()

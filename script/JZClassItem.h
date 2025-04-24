@@ -38,6 +38,10 @@ public:
     JZScriptItem *memberFunction(QString func);    
     QStringList memberFunctionList();
 
+    JZScriptItem* addFlow(QString name);
+    void removeFlow(QString name);
+    JZScriptItem* getFlow(QString name);
+
     JZUiItem *ui();
     bool hasUi();
     void addUi(JZUiItem *item);

@@ -8,5 +8,6 @@ JZNodeEditorManager *editorManager();
 JZScriptEnvironment *editorEnvironment();
 JZNodeObjectManager *editorObjectManager();
 JZNodeFunctionManager *editorFunctionManager();
+JZNodeFactory *editorNodeFactory();
 
 #endif

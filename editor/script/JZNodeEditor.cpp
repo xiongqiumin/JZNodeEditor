@@ -302,7 +302,7 @@ void JZNodeEditor::setCompilerResult(const CompilerResult *info)
     m_view->setCompilerResult(info);
 
     auto s = script();
-    if (s->itemType() == ProjectItem_scriptFunction)
+    if (s->itemType() == ProjectItem_scriptItem)
     {
         QString function = script()->function().fullName();        
     }

@@ -44,6 +44,18 @@ Graph::~Graph()
 {
 }
 
+QList<GraphNode*> Graph::eventList()
+{
+    QList<GraphNode*> event_list;
+    for (int i = 0; i < topolist.size(); i++)
+    {
+        auto event_node = dynamic_cast<JZNodeEvent*>(topolist[i]->node);
+        if (event_node)
+            event_list << topolist[i];
+    }
+    return event_list;
+}
+
 void Graph::clear()
 {
     topolist.clear();
@@ -544,7 +556,6 @@ void JZNodeCompiler::init(JZScriptItem *scriptFile)
     m_nodeInfo.clear();
     m_className.clear();    
     m_graphList.clear();        
-    m_error = false;
     resetStack();
 }
 
@@ -654,7 +665,7 @@ void JZNodeCompiler::updateBuildGraph(const QList<GraphNode*> &root_list)
         m_buildGraph->topolist.push_back(node);
     }
 
-    //filter
+    //遍历所有flow节点
     for (auto node : m_buildGraph->topolist)
         node->isReached = false;
     for (int i = 0; i < root_list.size(); i++)
@@ -733,10 +744,7 @@ bool JZNodeCompiler::checkFunction()
 check_end:
     if(!check_error.isEmpty())
     {
-        NodeCompilerInfo info;
-        info.node_id = start_node->id();
-        info.error = check_error;
-        m_nodeInfo[start_node->id()] = info;
+        m_checkError = check_error;
     }
 
     return check_error.isEmpty();
@@ -760,134 +768,126 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     if (class_file)
     {
         m_className = class_file->className();
-        m_script->className = m_className;    
     }
            
-    bool buildRet = true;
+    //多个连通图
     for(int graph_idx = 0; graph_idx < m_graphList.size(); graph_idx++)
     {
+        m_checkError.clear();
         m_originGraph = m_graphList[graph_idx].data();                
-        
-        int buildType = m_scriptItem->itemType();
-
+       
         resetStack();
-        if (buildType == ProjectItem_scriptFunction)
-        {   
-            QList<GraphNode*> event_list;
-            event_list.push_back(m_originGraph->topolist[0]);
-            if (!checkFunction())
-                goto buildEnd;
 
-            //更新输入输出
-            for (int i = 0; i < m_originGraph->topolist.size(); i++)
+        //每个连通图有多个event节点
+        QList<GraphNode*> event_list = m_originGraph->eventList();
+        if (event_list.size() != 1) 
+        {    
+            m_checkError = "需要一个event节点";
+            break;
+        }
+        if (!checkFunction())
+            break;
+
+        //更新输入输出
+        for (int i = 0; i < m_originGraph->topolist.size(); i++)
+        {
+            QString error;
+            auto graph_node = m_originGraph->topolist[i];
+            if (!graph_node->node->updateNode(error))
             {
-                QString error;
-                auto graph_node = m_originGraph->topolist[i];
-                if (!graph_node->node->updateNode(error))
-                {
-                    NodeCompilerInfo info;
-                    info.node_id = graph_node->node->id();
-                    info.error = error;
-                    m_nodeInfo[info.node_id] = info;
-                }
-            }
-            if (isBuildError())
-                goto buildEnd;
-
-            //未连接的语句
-            JZNode *start_node = m_originGraph->topolist[0]->node;
-            if(start_node->type() != Node_functionStart)
-            {
-                JZNode *flow_node = start_node;
-                for(int i = 0; i < m_originGraph->topolist.size(); i++)
-                {
-                    if(m_originGraph->topolist[i]->node->isFlowNode())
-                    {
-                        flow_node = m_originGraph->topolist[i]->node;
-                        break;
-                    }
-                }
-
                 NodeCompilerInfo info;
-                info.node_id = flow_node->id();
-                info.error = "孤立节点,未连接";
+                info.node_id = graph_node->node->id();
+                info.error = error;
                 m_nodeInfo[info.node_id] = info;
             }
-            if (isBuildError())
-                goto buildEnd;            
+        }
+        if (isBuildError())
+            break;
 
-            //确保每个flowIn 都被连接
-            for(int i = 0; i < m_originGraph->topolist.size(); i++)
+        //确保每个flowIn 都被连接
+        for(int i = 0; i < m_originGraph->topolist.size(); i++)
+        {
+            auto graph_node = m_originGraph->topolist[i];
+            if(graph_node->node->flowInCount() == 1 && 
+                !graph_node->paramIn.contains(graph_node->node->flowIn()))
             {
-                auto graph_node = m_originGraph->topolist[i];
-                if(graph_node->node->flowInCount() == 1 && 
-                    !graph_node->paramIn.contains(graph_node->node->flowIn()))
-                {
-                    NodeCompilerInfo info;
-                    info.node_id = graph_node->node->id();
-                    info.error = "需要连接输入流程";
-                    m_nodeInfo[info.node_id] = info;
-                }
-            }            
-            if (isBuildError())
-                goto buildEnd;
+                NodeCompilerInfo info;
+                info.node_id = graph_node->node->id();
+                info.error = "需要连接输入流程";
+                m_nodeInfo[info.node_id] = info;
+            }
+        }            
+        if (isBuildError())
+            break;
 
-            //重新检测连接
-            for(int i = 0; i < m_originGraph->topolist.size(); i++)
+        //重新检测连接
+        for(int i = 0; i < m_originGraph->topolist.size(); i++)
+        {
+            QString error;
+            auto graph_node = m_originGraph->topolist[i];
+
+            auto in_it = graph_node->paramIn.begin();
+            while(in_it != graph_node->paramIn.end())
             {
-                QString error;
-                auto graph_node = m_originGraph->topolist[i];
+                JZNodeGemo to = JZNodeGemo(graph_node->node->id(),in_it.key());
 
-                auto in_it = graph_node->paramIn.begin();
-                while(in_it != graph_node->paramIn.end())
+                auto &in_list = in_it.value();
+                for(int in_idx = 0; in_idx < in_list.size(); in_idx++)
                 {
-                    JZNodeGemo to = JZNodeGemo(graph_node->node->id(),in_it.key());
-
-                    auto &in_list = in_it.value();
-                    for(int in_idx = 0; in_idx < in_list.size(); in_idx++)
+                    JZNodeGemo from = in_list[in_idx];
+                    if(!m_scriptItem->checkConnectType(from,to,error))
                     {
-                        JZNodeGemo from = in_list[in_idx];
-                        if(!m_scriptItem->checkConnectType(from,to,error))
-                        {
-                            NodeCompilerInfo info;
-                            info.node_id = graph_node->node->id();
-                            info.error = error;
-                            m_nodeInfo[info.node_id] = info;
-                        }
+                        NodeCompilerInfo info;
+                        info.node_id = graph_node->node->id();
+                        info.error = error;
+                        m_nodeInfo[info.node_id] = info;
                     }
-                    in_it++;
                 }
+                in_it++;
             }
-            if(isBuildError())
-                goto buildEnd;
+        }
+        if(isBuildError())
+            break;
 
-            updateBuildGraph(event_list); //todo 似乎不需要这个了
-            Q_ASSERT(m_buildGraph->topolist.size() > 0);
+        updateBuildGraph(event_list); //todo 似乎不需要这个了
+        Q_ASSERT(m_buildGraph->topolist.size() > 0);
 
-            auto func_start = m_scriptItem->startNode();
+        auto func_start = m_scriptItem->startNode();
             
-            QList<JZNodeIRPtr> flow_statment;
-            int start_pc = m_script->statmentList.size();
-            if (!buildControlFlow(func_start))
-            {
-                buildRet = false;
-                goto buildEnd;
-            }
+        QList<JZNodeIRPtr> flow_statment;
+        int start_pc = m_script->statmentList.size();
+        if (!buildControlFlow(func_start))
+        {
+            break;
+        }
 
-            int end_pc = m_script->statmentList.size();
+        int end_pc = m_script->statmentList.size();
 
-            JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(event_list[0]->node);
-            JZFunctionDefine define = node_event->function();
-            addFunction(define, start_pc, end_pc);
-        }                        
-
-buildEnd:        
-        if(!checkBuildResult())
-            buildRet = false;
+        JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(event_list[0]->node);
+        JZFunctionDefine define = node_event->function();
+        addFunction(define, start_pc, end_pc);                
     }
     
-    m_compilerInfo.result = buildRet;
-    return buildRet;
+    m_compilerInfo.checkError = m_checkError;
+
+    auto it = m_nodeInfo.begin();
+    while (it != m_nodeInfo.end())
+    {
+        auto node = m_originGraph->node(it.key());
+
+        auto& nodeInfo = it.value();
+        if (!nodeInfo.error.isEmpty())
+        {
+            QString name = node->name();
+            QString error = JZNodeUtils::makeLink(nodeInfo.error, m_scriptItem->itemPath(), "id=" + QString::number(nodeInfo.node_id));
+            logE(error);
+
+            m_compilerInfo.nodeError[node->id()] = nodeInfo.error;
+        }
+        it++;
+    }
+    m_compilerInfo.result = !isBuildError();
+    return m_compilerInfo.result;
 }
 
 QString JZNodeCompiler::nodeName(JZNode *node)
@@ -1166,11 +1166,6 @@ void JZNodeCompiler::popStatmentList()
         m_statmentList = m_statmentStak.back();
 }
 
-bool JZNodeCompiler::isError()
-{
-    return m_error;
-}
-
 void JZNodeCompiler::connectGraph(Graph *graph,JZNode *node)
 {
     auto it = m_nodeGraph.find(node);
@@ -1236,7 +1231,6 @@ bool JZNodeCompiler::genGraphs()
         if(!graph->toposort())
         {
             logE(graph->error);
-            m_error = true;
             return false;
         }
     }
@@ -1251,7 +1245,6 @@ bool JZNodeCompiler::checkGraphs()
         if(!graph->check())
         {
             logE(graph->error);
-            m_error = true;
             return false;
         }
     }
@@ -1260,6 +1253,9 @@ bool JZNodeCompiler::checkGraphs()
 
 bool JZNodeCompiler::isBuildError()
 {
+    if (!m_checkError.isEmpty())
+        return false;
+
     auto it = m_nodeInfo.begin();
     while(it != m_nodeInfo.end())
     {
@@ -1270,32 +1266,6 @@ bool JZNodeCompiler::isBuildError()
         it++;     
     }
     return false;
-}
-
-bool JZNodeCompiler::checkBuildResult()
-{
-    bool ok = true;
-
-    auto it = m_nodeInfo.begin();
-    while(it != m_nodeInfo.end())
-    {
-        auto node = m_originGraph->node(it.key());
-
-        auto &nodeInfo = it.value();
-        if(!nodeInfo.error.isEmpty())
-        {
-            QString name = node->name();
-            QString error = JZNodeUtils::makeLink(nodeInfo.error,m_scriptItem->itemPath(),"id=" + QString::number(nodeInfo.node_id));
-            logE(error);
-
-            m_error = true;
-            m_compilerInfo.nodeError[node->id()] = nodeInfo.error;
-            ok = false;
-        }   
-        it++;     
-    }
-
-    return ok;
 }
 
 bool JZNodeCompiler::checkBuildStop()
@@ -1887,6 +1857,11 @@ JZNode* JZNodeCompiler::continueParentNode(int child_id)
         parent_id = m_scriptItem->parentNode(node->id());
     }
     return nullptr;
+}
+
+void JZNodeCompiler::addConstructor(QString function,QByteArray buffer)
+{
+    m_builder->addClassConstructor(m_className, function, buffer);
 }
 
 JZNodeIRJmp* JZNodeCompiler::addJmp(JZNodeIRType type)

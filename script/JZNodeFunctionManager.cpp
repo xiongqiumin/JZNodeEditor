@@ -90,7 +90,9 @@ void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSha
     JZFunction impl;
     impl.define = define;
     impl.cfunc = func; 
-    registFunction(define);
+    if(define.className.isEmpty())
+        registFunction(define);
+    
     m_funcImpl[define.fullName()] = impl;
 }
 
@@ -171,6 +173,7 @@ void JZNodeFunctionManager::clearUserReigst()
 void JZNodeFunctionManager::registFunction(const JZFunctionDefine &define)
 {
     QString fullName = define.fullName();
+    Q_ASSERT(define.className.isEmpty());
     Q_ASSERT_X(!m_funcDefine.contains(fullName),"Error",qUtf8Printable(fullName + " already regist"));
     Q_ASSERT(define.paramIn.size() <= 16 && define.paramOut.size() <= 16);
 

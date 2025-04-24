@@ -1,6 +1,5 @@
 ﻿#include "JZNodeEngine.h"
 #include "JZNodeFunctionManager.h"
-#include "JZEvent.h"
 #include <QPushButton>
 #include <QApplication>
 #include <math.h>
@@ -368,8 +367,6 @@ void JZNodeEngine::init()
     QVariantList in, out;
     call("__init__", in,out);
 
-    autoConnect();
-
     if(m_debug)
         m_watchTimer->start(50);
 }   
@@ -378,58 +375,6 @@ void JZNodeEngine::deinit()
 {
     updateStatus(Status_none);
     clear();
-}
-
-void JZNodeEngine::autoConnect()
-{
-    auto script_list = m_program->scriptList();
-    for (int i = 0; i < script_list.size(); i++)
-    {
-        auto& func_list = script_list[i]->functionList;
-        for (int func_idx = 0; func_idx < func_list.size(); func_idx++)
-        {
-            if (func_list[func_idx].isMemberFunction())
-                continue;
-
-            QString func = func_list[func_idx].name();
-            if (!func.startsWith("on_"))
-                continue;
-
-            int idx1 = 3;
-            int idx2 = func.lastIndexOf("_");
-            if (idx2 == -1 || idx2 == idx1)
-                continue;
-
-            QString param_name = func.mid(3, idx2 - idx1);
-            if(!m_global.contains(param_name))
-            {
-                LOGMOD_D(Log_Runtime,"connect slot by name no param: " + param_name);
-                continue;
-            }
-
-            QString sig = func.mid(idx2 + 1);
-            auto jz_obj = toJZObject(*m_global[param_name].ptr);
-            if (!jz_obj)
-            {
-                LOGMOD_D(Log_Runtime, "connect slot by name object not init");
-                continue;
-            }
-
-            auto sig_func = jz_obj->signal(sig);
-            if (!sig_func)
-            {
-                LOGMOD_D(Log_Runtime, "connect slot by name no single: " + sig);
-                continue;
-            }
-
-            JZFunctionPointer sig_func_ptr;
-            sig_func_ptr.functionName = sig_func->fullName();
-
-            JZFunctionPointer slot_func_ptr;
-            slot_func_ptr.functionName = func;
-            JZObjectConnect(jz_obj, sig_func_ptr, slot_func_ptr);
-        }
-    }
 }
 
 void JZNodeEngine::statClear()
@@ -1637,14 +1582,6 @@ void JZNodeEngine::updateStatus(JZEngineStatus status)
         m_status = status;
         sigStatusChanged(m_status);
     }
-}
-
-bool JZNodeEngine::isWidgetFunction(const JZFunction *function)
-{
-    if(!function->isCFunction() || !function->isMemberFunction())
-        return false;
-
-    return m_env.isInherits(function->className(),"QWidget");
 }
 
 void JZNodeEngine::pushTryCatch(JZNodeIRTry *ir)

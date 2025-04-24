@@ -73,7 +73,7 @@ void JZNodeViewCommand::undo()
     }
     else if(command == RemoveNode)
     {
-        auto node = JZNodeFactory::instance()->loadNode(oldValue.toByteArray());
+        auto node = editorNodeFactory()->loadNode(oldValue.toByteArray());
         node->setId(itemId);
         auto item = m_view->insertNode(node);
         m_view->setNodePos(itemId,oldPos);
@@ -111,7 +111,7 @@ void JZNodeViewCommand::redo()
 {
     if(command == CreateNode)
     {        
-        auto node = JZNodeFactory::instance()->loadNode(newValue.toByteArray());
+        auto node = editorNodeFactory()->loadNode(newValue.toByteArray());
         JZNodeGraphItem *item = nullptr;
         if(itemId == -1)
         {

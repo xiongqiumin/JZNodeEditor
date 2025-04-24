@@ -30,7 +30,7 @@ void JZNodeOperatorItem::onBtnAddClicked()
 {
     JZNodeOperator *node = (JZNodeOperator*)m_node;
 
-    QByteArray buffer = JZNodeFactory::instance()->saveNode(node);
+    QByteArray buffer = saveNode();
     node->addInput();
     notifyPropChanged(buffer);
 }
@@ -63,7 +63,7 @@ void JZNodeExpressionItem::onBtnSetClicked()
     JZNodeExpression *node = (JZNodeExpression*)m_node;
     QString expr;
 
-    QByteArray buffer = JZNodeFactory::instance()->saveNode(node);
+    QByteArray buffer = saveNode();
     node->setExpr(expr);
     notifyPropChanged(buffer);
 }

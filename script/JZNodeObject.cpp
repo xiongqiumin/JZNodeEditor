@@ -5,6 +5,7 @@
 #include <QTreeWidgetItem>
 #include <QListWidgetItem>
 #include <QTableWidgetItem>
+#include <QPointer>
 #include "JZNodeObject.h"
 #include "JZNodeQtWrapper.h"
 #include "JZNodeEngine.h"
@@ -568,12 +569,14 @@ void JZNodeObject::clearCObj()
 {
     if(m_cobjOwner)
     {        
+        QPointer<QObject> ptr;
         if (isInherits(Type_object))
         {
             auto qobj = (QObject*)m_cobj;
             if(qobj->parent())
                 return;
 
+            ptr = QPointer<QObject>(qobj);
             qobj->disconnect(qobj,&QObject::destroyed,this,&JZNodeObject::onDestory);
         }
         else if(isInherits(Type_tableWidgetItem))
@@ -891,6 +894,19 @@ void JZNodeObject::autoBind()
             it++;
         }
     }               
+}
+
+void JZNodeObject::autoInit()
+{
+    QString init_func = className() + "::__init__";
+    auto func = manager()->env()->functionManager()->function(init_func);
+    if (func)
+    {
+        JZNodeObjectHolder self(this, false);
+        QVariantList in, out;
+        in << QVariant::fromValue(self.toPointer());
+        JZScriptInvoke(init_func, in, out);
+    }
 }
 
 void JZNodeObject::onSigTrigger(QString name,const QVariantList &params)
@@ -1535,6 +1551,7 @@ JZNodeObject* JZNodeObjectManager::create(int type) const
     create(def,obj);
     obj->autoConnect();
     obj->autoBind();
+    obj->autoInit();
     return obj;
 }
 

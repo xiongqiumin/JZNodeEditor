@@ -38,6 +38,4 @@ protected:
 
 };
 
-void JZModuleCameraNodeInit();
-
 #endif

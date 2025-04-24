@@ -257,7 +257,7 @@ JZProjectItemFolder::~JZProjectItemFolder()
 int JZProjectItemIsScript(JZProjectItem *item)
 {
     auto type = item->itemType();
-    if (type == ProjectItem_scriptFunction)
+    if (type == ProjectItem_scriptItem)
         return true;
 
     return false;

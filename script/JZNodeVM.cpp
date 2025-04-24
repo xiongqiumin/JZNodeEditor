@@ -63,7 +63,7 @@ bool JZNodeVM::init(QString path,bool debug, QString &error)
 
 void JZNodeVM::customEvent(QEvent *event)
 {    
-    JZEvent *e = (JZEvent *)event;
+    
 }
 
 void JZNodeVM::quitLater()

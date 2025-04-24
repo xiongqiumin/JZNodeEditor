@@ -7,11 +7,17 @@
 #include "JZNodeObject.h"
 
 class JZScriptClassItem;
-class JZNodeFunctionStart;
+class JZNodeEvent;
 class JZScriptItem : public JZProjectItem
 {
 public:    
-    JZScriptItem(int type);
+    enum ScriptType{
+        None,
+        Function,
+        Flow,
+    };
+
+    JZScriptItem(ScriptType type);
     virtual ~JZScriptItem();
 
     bool isFunction() const;
@@ -20,11 +26,13 @@ public:
     void clear();
     int nextId();    
 
+    ScriptType scriptType() const;
+
     const JZFunctionDefine &function();
     void setFunction(JZFunctionDefine def);
 
-    JZNodeFunctionStart* startNode();
-    const JZNodeFunctionStart* startNode() const;
+    JZNodeEvent* startNode();
+    const JZNodeEvent* startNode() const;
 
     int addNode(JZNode *node);
     void insertNode(JZNode *node);
@@ -76,6 +84,7 @@ protected:
     virtual void saveToStream(QDataStream &s) const override;
     virtual bool loadFromStream(QDataStream &s) override;
 
+    ScriptType m_scriptType;
     int m_nodeId;
     QMap<int, JZNode*> m_nodes;        
     QList<JZNodeGroup> m_groups;
@@ -84,5 +93,8 @@ protected:
         
     QMap<QString, JZParamDefine> m_variables;    
 };
+
+bool isFunctionScriptItem(JZProjectItem* item);
+bool isFlowScriptItem(JZProjectItem*item);
 
 #endif
