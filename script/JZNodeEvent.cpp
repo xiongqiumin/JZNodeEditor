@@ -262,7 +262,13 @@ JZFunctionDefine JZNodeSignalEvent::function()
 
     QString file_name = m_file->name();
     JZFunctionDefine define = meta->initMemberFunction(m_name + "_" + QString::number(m_id) + "_" + file_name);
+    define.paramOut = functionParamOut();
     return define;    
+}
+
+QList<JZParamDefine> JZNodeSignalEvent::functionParamOut()
+{
+    return QList<JZParamDefine>();
 }
 
 bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c,const QJsonObject &object, QString& error)
@@ -292,7 +298,7 @@ JZNodeTimerEvent::JZNodeTimerEvent()
     m_timeout = 1000;
     m_name = "timerEvent";
 
-    m_constructor = "JZTimerEventConnect";
+    m_constructor.function = "JZTimerEventConnect";
 }
 
 JZNodeTimerEvent::~JZNodeTimerEvent()

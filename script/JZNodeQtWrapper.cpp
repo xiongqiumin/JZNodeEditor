@@ -28,7 +28,10 @@
 #include <QTableWidget>
 #include <QListWidget>
 #include <QComboBox>
+#include <QJsonObject>
 #include <stdexcept>
+#include <QJsonArray>
+#include <QSerialPort>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -54,6 +57,7 @@ public:
     void initDialogs();
     void initPainter();
     void initFiles();
+    void initSerial();
     void registConvert();
 
 protected:
@@ -78,6 +82,7 @@ void QtWrapper::regist(JZScriptEnvironment *env)
     initDialogs();
     initPainter();
     initFiles();
+    initSerial();
     registConvert();
 }
 
@@ -348,6 +353,27 @@ void QtWrapper::initCore()
 
     jzbind::ClassBind<QByteArray> cls_byte_array(Type_byteArray,"ByteArray");
     cls_byte_array.regist();
+
+    jzbind::ClassBind<QJsonValue> cls_json_value(Type_jsonValue, "JsonValue");
+    cls_json_value.regist();
+
+    jzbind::ClassBind<QJsonArray> cls_json_array(Type_jsonArray, "JsonArray");
+    cls_json_array.def("get", false, [](QJsonArray *obj,int idx)->QJsonValue{ 
+        return (*obj)[idx];
+    });
+    cls_json_array.def("set", true, [](QJsonArray *obj,int idx,QJsonValue value){ 
+        (*obj)[idx] = value;
+    });
+    cls_json_array.regist();
+
+    jzbind::ClassBind<QJsonObject> cls_json_obj(Type_jsonObject, "JsonObject");
+    cls_json_obj.def("get", false, [](QJsonObject *obj,QString name)->QJsonValue{ 
+        return (*obj)[name];
+    });
+    cls_json_obj.def("set", true, [](QJsonObject *obj,QString name,QJsonValue value){ 
+        (*obj)[name] = value;
+    });
+    cls_json_obj.regist();
 
     jzbind::ClassBind<QDataStream> cls_data_stream(Type_dataStream,"DataStream");
     cls_data_stream.regist();
@@ -676,6 +702,21 @@ QVariant color_to_brush(const JZScriptEnvironment *env,const QVariant &v)
     return QVariant::fromValue(ptr);
 }
 
+void QtWrapper::initSerial()
+{
+    jzbind::registEnum<QSerialPort::BaudRate>("QSerialPort::BaudRate");
+    jzbind::registEnum<QSerialPort::StopBits>("QSerialPort::StopBits");
+    jzbind::registEnum<QSerialPort::Parity>("QSerialPort::Parity");
+    jzbind::registEnum<QSerialPort::DataBits>("QSerialPort::DataBits");
+}
+
+template<class T>
+QVariant to_json_value(const JZScriptEnvironment *env, const QVariant &v)
+{
+    T t = jzbind::fromVariant<T>(v);
+    return QVariant::fromValue(QJsonValue(t));
+}
+
 void QtWrapper::registConvert()
 {
     auto inst = m_objInst;
@@ -689,6 +730,11 @@ void QtWrapper::registConvert()
     from_id = inst->getClassId("QColor");
     to_id = inst->getClassId("QBrush");
     m_env->registConvert(from_id, to_id, color_to_brush);
+
+    m_env->registConvert(Type_int, Type_jsonValue, to_json_value<int>);
+    m_env->registConvert(Type_double, Type_jsonValue, to_json_value<double>);
+    m_env->registConvert(Type_string, Type_jsonValue, to_json_value<QString>);
+    m_env->registConvert(Type_bool, Type_jsonValue, to_json_value<bool>);
 }
 
 void registQtClass(JZScriptEnvironment *env)

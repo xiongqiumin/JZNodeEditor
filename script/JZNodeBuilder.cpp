@@ -53,15 +53,23 @@ public:
 
         QString class_name = m_file->getClassItem()->className();
 
-        auto &info = build->m_classConstructor[class_name];
-        for (int i = 0; i < info.functionList.size(); i++)
+        auto &class_info = build->m_classConstructor[class_name];
+        for (int i = 0; i < class_info.infoList.size(); i++)
         {
+            auto& info = class_info.infoList[i];
+            QString function = info.function;
+            QList<JZNodeIRParam> in;
+            in << irThis();
+            for (int param_idx = 0; param_idx < info.irList.size(); param_idx++)
+            {
+                in << info.irList[param_idx];
+            }
             int id = c->allocStack(Type_byteArray); 
-            c->addSetBuffer(irId(id), info.bufferList[i]);
+            c->addSetBuffer(irId(id), class_info.bufferList[i]);
 
-            QList<JZNodeIRParam> in, out;
-            in << irThis() << irId(id);
-            c->addCall(info.functionList[i], in, out);
+            in << irId(id);
+            QList<JZNodeIRParam> out;
+            c->addCall(function, in, out);
         }
 
         return true;
@@ -366,13 +374,13 @@ bool JZNodeBuilder::isBuildInterrupt()
     return m_stopBuild;
 }
 
-void JZNodeBuilder::addClassConstructor(QString class_name, QString function, const QByteArray& buffer)
+void JZNodeBuilder::addClassConstructor(QString class_name, ConstructorInfo function, const QByteArray& buffer)
 {
     if (!m_classConstructor.contains(class_name))
         m_classConstructor[class_name] = ClassConstructor();
 
     auto& func = m_classConstructor[class_name];
-    func.functionList << function;
+    func.infoList << function;
     func.bufferList << buffer;
 }
 

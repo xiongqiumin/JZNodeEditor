@@ -367,6 +367,34 @@ bool JZNodeType::isDoubleOp(const QString &op)
     return false;
 }
 
+int JZNodeType::byteSize(QString dataType)
+{
+    return JZNodeType::nameToType(dataType);
+}
+
+int JZNodeType::byteSize(int dataType)
+{
+    if (dataType == Type_bool)
+        return 1;
+    else if (dataType == Type_int8 || dataType == Type_uint8)
+        return 1;
+    else if (dataType == Type_int16 || dataType == Type_uint16)
+        return 2;
+    else if (dataType == Type_int || dataType == Type_uint)
+        return 4;
+    else if (dataType == Type_int64 || dataType == Type_uint64)
+        return 8;
+    else if (dataType == Type_float)
+        return 4;
+    else if (dataType == Type_double)
+        return 8;
+    else
+    {
+        Q_ASSERT(0);
+        return 0;
+    }
+}
+
 int JZNodeType::variantType(const QVariant &v)
 {
     int v_type = v.type(); 

@@ -37,7 +37,7 @@ void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
 {
     unregistType();
     
-    auto &define_list = type_info.objectList;
+    auto define_list = type_info.objectList;
     auto &cobj_list = type_info.cobjectList;
     auto &function_list = type_info.functionList;
     QList<int> cobj_id;
@@ -46,8 +46,8 @@ void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
     for (int i = 0; i < define_list.size(); i++)
     {
         QString error;
-        m_objectManager.delcare(define_list[i].className, define_list[i].id);
-    }    
+        define_list[i].id = m_objectManager.delcare(define_list[i].className, define_list[i].id);
+    }
    
     //regist
     for (int i = 0; i < define_list.size(); i++)

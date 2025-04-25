@@ -120,8 +120,9 @@ const JZScriptEnvironment *JZProject::environment() const
 
 void JZProject::registType()
 {
-    JZNodeTypeMeta meta;
+    unregistType();
 
+    JZNodeTypeMeta meta;
     QList<JZProjectItem *> class_list = itemList("./",ProjectItem_class);
     for(int i = 0; i < class_list.size(); i++)    
     {

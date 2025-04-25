@@ -156,6 +156,19 @@ void BaseTest::msleep(int ms)
     QThread::msleep(ms);
 }
 
+JZScriptClassItem *BaseTest::makeTestClass()
+{
+    auto class_item = m_file->addClass("testClass", "QObject");
+    m_project.addGlobalVariable("test", "testClass");
+
+    class_item->addFlow("testFlow");
+
+    JZFunctionDefine define = class_item->objectDefine().initMemberFunction("testFunction");
+    class_item->addMemberFunction(define);
+
+    return class_item;
+}
+
 bool BaseTest::build()
 {
     if(!m_builder.build(&m_program))

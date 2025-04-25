@@ -67,18 +67,6 @@ public:
     QByteArray buffer;
 };
 
-//DebugNodeGemo
-class DebugNodeGemo
-{
-public:
-    QString functionPath;
-    int nodeId;
-    int pinId;
-    int statck;
-};
-QDataStream &operator<<(QDataStream &s, const DebugNodeGemo &param);
-QDataStream &operator>>(QDataStream &s, DebugNodeGemo &param);
-
 //JZNodeDebugParamValue
 class JZNodeDebugParamValue
 {
@@ -156,7 +144,6 @@ public:
     QString functionPath;
     int stack;
     JZNodeIRParam coor;
-    QString member;
     QString value;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParam &param);
@@ -243,7 +230,7 @@ class JZNodeRuntimeWatch
 public:
     JZNodeRuntimeWatch();
 
-    QList<DebugNodeGemo> m_watchs;
+    QList<JZNodeIRParam> watchs;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeWatch &param);

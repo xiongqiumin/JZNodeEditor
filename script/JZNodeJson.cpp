@@ -2,6 +2,7 @@
 #include <QJsonParseError>
 #include <stdexcept>
 #include "JZNodeJson.h"
+#include "3rd/JZCommon/jzJson/JZJsonHelper.h"
 
 QByteArray JZNodeJson::toBuffer(const QJsonObject &object)
 {
@@ -18,3 +19,12 @@ QJsonObject JZNodeJson::formBuffer(const QByteArray &buffer)
     }
     return doc.object();
 }        
+
+QJsonValue JZNodeJson::getValue(const QJsonValue& obj, const QString& path)
+{
+    QJsonValue value;
+    if(!JZJsonHelper::getValue(obj, path, value))
+        throw std::runtime_error("no such varible");
+
+    return value;
+}

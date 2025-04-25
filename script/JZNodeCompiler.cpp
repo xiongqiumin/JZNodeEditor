@@ -564,6 +564,11 @@ void JZNodeCompiler::setBuilder(JZNodeBuilder *builder)
     m_builder = builder;
 }
 
+const JZScriptEnvironment* JZNodeCompiler::env()
+{
+    return m_env;
+}
+
 JZProject *JZNodeCompiler::project()
 {
     if (m_builder)
@@ -1859,7 +1864,7 @@ JZNode* JZNodeCompiler::continueParentNode(int child_id)
     return nullptr;
 }
 
-void JZNodeCompiler::addConstructor(QString function,QByteArray buffer)
+void JZNodeCompiler::addConstructor(ConstructorInfo function,QByteArray buffer)
 {
     m_builder->addClassConstructor(m_className, function, buffer);
 }
@@ -1998,6 +2003,11 @@ void JZNodeCompiler::resetStack()
     m_stackType.clear();
     m_statmentList = nullptr;
     m_regCallFunction = nullptr;
+}
+
+int JZNodeCompiler::allocStack(QString type)
+{
+    return allocStack(m_env->nameToType(type));
 }
 
 int JZNodeCompiler::allocStack(int dataType)
@@ -2697,6 +2707,11 @@ void JZNodeCompiler::addSetVariableConvert(const JZNodeIRParam &dst,const JZNode
     {
         addConvert(src,to_type,dst);
     }
+}
+
+void JZNodeCompiler::addSetJson(const JZNodeIRParam& dst,const QString &name, const JZNodeIRParam& obj)
+{
+
 }
 
 void JZNodeCompiler::addSetBuffer(const JZNodeIRParam &id, const QByteArray &buffer)

@@ -81,6 +81,9 @@ public:
     void close();
     bool save();      //只保存工程自身，不保存项目文件
     bool saveAs(QString filepath);
+
+    void registType();
+    void unregistType();
     
     void addTmp(JZProjectItem* item);
     void setTmpClass(JZProjectItem* item, QString className);
@@ -165,9 +168,6 @@ protected:
     QString dir(const QString &filepath);    
     int indexOfBreakPoint(QString file,int id);
     void loadFinish();
-
-    void registType();
-    void unregistType();
             
     QString m_filepath;
     JZProjectItemRoot m_root;

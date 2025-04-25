@@ -200,6 +200,7 @@ public:
     ~JZNodeCompiler();
 
     void setBuilder(JZNodeBuilder *builder);
+    const JZScriptEnvironment* env();
     
     bool genGraphs(JZScriptItem *file, QVector<GraphPtr> &result);
     bool genNodeInputOuput(JZScriptItem *file, JZScriptInOutInfo &result);
@@ -213,6 +214,7 @@ public:
     bool checkInitValue(int data_type,const QString &value);   //检查能否用字符串初始化    
 
     void resetStack();
+    int allocStack(QString type);
     int allocStack(int dataType);  //只是标记分配
     void setStackId(int id);
     int stackId();   //指向下一个stack
@@ -266,6 +268,7 @@ public:
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
     void addSetBuffer(const JZNodeIRParam &dst, const QByteArray &buffer);
+    void addSetJson(const JZNodeIRParam& dst, const QString &name, const JZNodeIRParam &src);
 
     void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
     int addStatement(JZNodeIRPtr ir);  
@@ -277,7 +280,7 @@ public:
     JZNode* breakParentNode(int child_id);
     JZNode* continueParentNode(int child_id);
 
-    void addConstructor(QString function,QByteArray buffer);
+    void addConstructor(ConstructorInfo function,QByteArray buffer);
     
     void addAlloc(int allocType, QString name, int dataType);
     void addAllocAuto(const QString& ir);

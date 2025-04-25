@@ -173,7 +173,6 @@ protected:
     void clearCObj();
 
     const JZNodeObjectDefine *m_define;
-    JZNodeObject *m_parent;
     void *m_cobj;
     bool m_cobjOwner;
     QMap<QString, QVariantPtr> m_params;

@@ -5,6 +5,12 @@
 #include "JZNode.h"
 #include "JZNodeObject.h"
 
+struct ConstructorInfo
+{
+    QString function;
+    QList<JZNodeIRParam> irList;
+};
+
 //JZNodeSignalConnect
 class JZNodeSignalConnect : public JZNode
 {
@@ -142,7 +148,9 @@ public:
     bool compilerSignal(JZNodeCompiler* compiler, const QJsonObject &object,QString& error);
 
 protected:
-    QString m_constructor;
+    virtual QList<JZParamDefine> functionParamOut();
+
+    ConstructorInfo m_constructor;
 };
 
 //JZNodeTimerEvent

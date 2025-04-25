@@ -152,7 +152,7 @@ QStringList JZScriptClassItem::memberFunctionList()
     QStringList list;
     for (int i = 0; i < m_childs.size(); i++)
     {
-        if (m_childs[i]->itemType() == ProjectItem_scriptItem)
+        if (m_childs[i]->itemType() == ProjectItem_scriptItem && isFunctionScriptItem(m_childs[i]))
             list << m_childs[i]->name();
     }
     return list;
@@ -162,7 +162,7 @@ JZScriptItem *JZScriptClassItem::memberFunction(QString func)
 {    
     for (int i = 0; i < m_childs.size(); i++)
     {
-        if (m_childs[i]->name() == func && isFlowScriptItem(m_childs[i]))
+        if (m_childs[i]->name() == func && isFunctionScriptItem(m_childs[i]))
             return (JZScriptItem *)m_childs[i];
     }
     return nullptr;

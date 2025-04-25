@@ -78,6 +78,8 @@ protected:
         bool ret;
         QVariantList output;
     };
+
+    JZScriptClassItem *makeTestClass();
     
     bool build();
     bool buildAs(QString code);

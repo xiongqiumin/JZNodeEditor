@@ -535,7 +535,6 @@ QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param)
 JZNodeObject::JZNodeObject(const JZNodeObjectDefine *def)
 {    
     m_define = def;
-    m_parent = nullptr;
     m_cobj = nullptr;
     m_cobjOwner = false;
 }
@@ -745,6 +744,7 @@ QStringList JZNodeObject::signalList() const
 
 void JZNodeObject::onDestory(QObject *obj)
 {
+    m_cobjOwner = false;
     delete this;
 }
 
@@ -1516,6 +1516,10 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
             create(def->super(), obj);
     }
 
+    QObject* qobj = nullptr;
+    if (def->isInherits(Type_object))
+        qobj = JZObjectCast<QObject>(obj);
+
     auto it = def->params.begin();
     while(it != def->params.end())
     {
@@ -1537,6 +1541,13 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj
             ptr.cparam = obj->cparam(param->name);
         }
         obj->m_params[param->name] = ptr;
+        
+        if (qobj && isInherits(ptr.type,Type_object))
+        {
+            QObject* child = JZObjectCast<QObject>(toJZObject(*ptr.ptr));
+            child->setObjectName(param->name);
+            child->setParent(qobj);
+        }
 
         it++;
     }

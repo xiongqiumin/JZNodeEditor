@@ -49,6 +49,9 @@ enum
     Type_stringStringMap,
 
     Type_byteArray,
+    Type_jsonValue,
+    Type_jsonArray,
+    Type_jsonObject,
     Type_dataStream,
     Type_point,
     Type_pointF,
@@ -176,6 +179,9 @@ public:
     static int opType(const QString &name);
     static int opPri(const QString &op);
     static bool isDoubleOp(const QString &op);    
+
+    static int byteSize(QString dataType);
+    static int byteSize(int dataType);
         
     static int variantType(const QVariant &v);
     static bool variantIsPointer(const QVariant& v);

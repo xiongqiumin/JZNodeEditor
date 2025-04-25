@@ -12,7 +12,6 @@
 #include "JZNodeInit.h"
 #include "modules/opencv/JZModuleOpencv.h"
 #include "modules/camera/JZModuleCamera.h"
-#include "modules/modbus/JZModuleModbus.h"
 #include "modules/communication/JZModuleComm.h"
 #include "LogManager.h"
 #include "runtime/JZWidgetBind.h"
@@ -46,16 +45,12 @@ void JZNodeInit()
 
     BindManager::instance()->init();    
     
-/*
+
     auto module_inst = JZModuleManager::instance();
-    module_inst->addModule(new JZModuleOpencv());
-    module_inst->addModule(new JZModuleCamera());
-    module_inst->addModule(new JZModuleModbus());
     module_inst->addModule(new JZModuleComm());
+
+    //module_inst->addModule(new JZModuleOpencv());
+    //module_inst->addModule(new JZModuleCamera());
     module_inst->initModules();
-    
-    JZModuleCameraNodeInit();
-    JZModuleModelNodeInit();
-    JZModuleCommNodeInit();
-*/
+
 }

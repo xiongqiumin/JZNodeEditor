@@ -74,10 +74,12 @@ QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParam &param)
 //JZNodeGetDebugParam
 JZNodeGetDebugParamResp::JZNodeGetDebugParamResp()
 {
+    ret = false;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param)
 {
+    s << param.ret;
     s << param.req;
     s << param.values;
     return s;
@@ -85,6 +87,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeGetDebugParamResp &param)
 
 QDataStream &operator>>(QDataStream &s, JZNodeGetDebugParamResp &param)
 {
+    s >> param.ret;
     s >> param.req;
     s >> param.values;
     return s;
@@ -98,6 +101,7 @@ JZNodeSetDebugParam::JZNodeSetDebugParam()
 
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParam &param)
 {
+    s << param.functionPath;
     s << param.stack;
     s << param.coor;
     s << param.value;
@@ -106,6 +110,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParam &param)
 
 QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParam &param)
 {
+    s >> param.functionPath;
     s >> param.stack;
     s >> param.coor;
     s >> param.value;
@@ -115,14 +120,59 @@ QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParam &param)
 //JZNodeSetDebugParamResp
 JZNodeSetDebugParamResp::JZNodeSetDebugParamResp()
 {
+    ret = false;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZNodeSetDebugParamResp &param)
 {
+    s << param.ret << param.req;
     return s;
 }
 QDataStream &operator>>(QDataStream &s, JZNodeSetDebugParamResp &param)
 {
+    s >> param.ret >> param.req;
+    return s;
+}
+
+//JZNodeSetDebugParamBinR
+JZNodeSetDebugParamBin::JZNodeSetDebugParamBin()
+{
+    stack = -1;
+}
+
+QDataStream& operator<<(QDataStream& s, const JZNodeSetDebugParamBin& param)
+{
+    s << param.functionPath;
+    s << param.stack;
+    s << param.coor;
+    s << param.value;
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, JZNodeSetDebugParamBin& param)
+{
+    s >> param.functionPath;
+    s >> param.stack;
+    s >> param.coor;
+    s >> param.value;
+    return s;
+}
+
+//JZNodeSetDebugParamBinResp
+JZNodeSetDebugParamBinResp::JZNodeSetDebugParamBinResp()
+{
+    ret = false;
+}
+
+QDataStream& operator<<(QDataStream& s, const JZNodeSetDebugParamBinResp& param)
+{
+    s << param.req << param.ret;
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, JZNodeSetDebugParamBinResp& param)
+{
+    s >> param.req >> param.ret;
     return s;
 }
 
@@ -198,11 +248,13 @@ JZNodeRuntimeWatch::JZNodeRuntimeWatch()
 
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param)
 {
+    s << param.watchs;
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeWatch &param)
 {
+    s >> param.watchs;
     return s;
 }
 

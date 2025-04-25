@@ -214,23 +214,3 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     }
     return true;
 }
-
-//JZNodeFunctionCustom
-JZNodeFunctionCustom::JZNodeFunctionCustom()
-{
-}
-
-JZNodeFunctionCustom::~JZNodeFunctionCustom()
-{
-}
-
-void JZNodeFunctionCustom::setFunction(const QString &name)
-{
-    m_functionName = name;
-    initFunction();
-}
-
-QString JZNodeFunctionCustom::function() const
-{
-    return m_functionName;
-}

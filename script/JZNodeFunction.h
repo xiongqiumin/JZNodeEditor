@@ -33,20 +33,4 @@ protected:
     QString m_functionName;
 };
 
-class JZNodeFunctionCustom : public JZNode
-{
-public:
-    JZNodeFunctionCustom();
-    ~JZNodeFunctionCustom();
-
-public:
-    void setFunction(const QString &name);    
-    QString function() const;
-
-protected:
-    virtual void initFunction() = 0;
-
-    QString m_functionName;
-};
-
 #endif
