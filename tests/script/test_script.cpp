@@ -644,7 +644,7 @@ void ScriptTest::testBreakContinue()
         script->addLocalVariable("i", "int");
         script->addLocalVariable("n", "int");
 
-        JZNodeFunctionStart *start = script->startNode();
+        JZNode *start = script->startNode();
         JZNodeWhile *node_while = new JZNodeWhile();
         script->addNode(node_while);
 
@@ -1107,7 +1107,7 @@ void ScriptTest::testArgs()
 void ScriptTest::testTryCatch()
 {
     JZScriptItem *script = m_project.mainFunction();
-    JZNodeFunctionStart *start = script->startNode();
+    JZNode *start = script->startNode();
 
     JZNodeTryCatch* node_try = new JZNodeTryCatch();
     script->addNode(node_try);

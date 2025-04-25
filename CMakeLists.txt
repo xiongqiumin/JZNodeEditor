@@ -112,6 +112,8 @@ set(JZNodeCore_SOURCES
     script/JZNodeQtWrapper.h
     script/JZNodeType.cpp
     script/JZNodeType.h    
+    script/JZNodeJson.cpp
+    script/JZNodeJson.h
     script/JZNodeUtils.cpp
     script/JZNodeUtils.h
     script/JZNodeValue.cpp
@@ -325,7 +327,9 @@ set(JZNodeEditor_SOURCES
     editor/script/items/JZNodeValueItem.cpp
     editor/script/items/JZNodeValueItem.h
     editor/script/items/JZNodeOperatorItem.cpp
-    editor/script/items/JZNodeOperatorItem.h    
+    editor/script/items/JZNodeOperatorItem.h  
+    editor/script/items/JZNodeSettingDialog.cpp
+    editor/script/items/JZNodeSettingDialog.h    
     editor/ui/formresizer.cpp
     editor/ui/formresizer.h
     editor/ui/JZDesignerEditor.cpp

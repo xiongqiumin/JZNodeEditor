@@ -644,6 +644,7 @@ void JZScriptItem::saveToStream(QDataStream &s) const
 
 bool JZScriptItem::loadFromStream(QDataStream &s)
 {    
+    Q_ASSERT(project());
     auto node_factory = project()->environment()->factoryManager();
 
     s >> m_scriptType;

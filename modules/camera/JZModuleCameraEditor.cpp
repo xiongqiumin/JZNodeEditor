@@ -11,4 +11,9 @@ void JZCameraEditorInit()
     logic.nodeType = Node_CameraInit;
     logic.path = "相机";
     inst->registLogicNode(logic);
+
+    JZLogicNode logic_frameReady;
+    logic_frameReady.nodeType = Node_CameraFrameReady;
+    logic_frameReady.path = "相机";
+    inst->registLogicNode(logic_frameReady);
 }

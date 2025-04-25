@@ -253,26 +253,50 @@ bool JZNodeButtonClickedEvent::compiler(JZNodeCompiler* compiler, QString& error
     return false;
 }
 
-
-//JZNodeTimerEvent
-JZNodeTimerEvent::JZNodeTimerEvent()
-{
-    m_timeout = 1000;
-}
-
-JZNodeTimerEvent::~JZNodeTimerEvent()
-{
-}
-
-JZFunctionDefine JZNodeTimerEvent::function()
+//JZNodeSignalEvent
+JZFunctionDefine JZNodeSignalEvent::function()
 {
     auto meta = classMeta();
     if (!meta)
         return JZFunctionDefine();
 
     QString file_name = m_file->name();
-    JZFunctionDefine define = meta->initMemberFunction("timerEvent_" + QString::number(m_id) + "_" + file_name);
-    return define;
+    JZFunctionDefine define = meta->initMemberFunction(m_name + "_" + QString::number(m_id) + "_" + file_name);
+    return define;    
+}
+
+bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c,const QJsonObject &object, QString& error)
+{
+    auto meta = classMeta();
+    if (!meta || !meta->isInherits(Type_object))
+    {
+        error = "only support define in object";
+        return false;
+    }
+
+    c->addFunctionAlloc(function());
+    c->addNodeEnter(m_id);
+
+    QString function_name = function().fullName();
+    QJsonObject obj = object;
+    obj["function"] = function_name;    
+
+    QByteArray buffer = QJsonDocument(obj).toJson();
+    c->addConstructor(m_constructor,buffer);
+    return true;
+}
+
+//JZNodeTimerEvent
+JZNodeTimerEvent::JZNodeTimerEvent()
+{
+    m_timeout = 1000;
+    m_name = "timerEvent";
+
+    m_constructor = "JZTimerEventConnect";
+}
+
+JZNodeTimerEvent::~JZNodeTimerEvent()
+{
 }
 
 void JZNodeTimerEvent::setTimeOut(int ms)
@@ -286,39 +310,23 @@ int JZNodeTimerEvent::timeOut()
 }
 
 bool JZNodeTimerEvent::compiler(JZNodeCompiler* c, QString& error)
-{
-    auto meta = classMeta();
-    if (!meta || !meta->isInherits(Type_object))
-    {
-        error = "only support define in object";
-        return false;
-    }
-
-    c->addFunctionAlloc(function());
-    c->addNodeEnter(m_id);
-
-    QString function_name = function().fullName();
+{    
     QJsonObject obj;
-    obj["function"] = function_name;
     obj["timeout"] = m_timeout;
-
-    QByteArray buffer = QJsonDocument(obj).toJson();
-    c->addConstructor("JZTimerEventConnect",buffer);
-    return true;
+    return compilerSignal(c,obj,error);
 }
 
 void JZNodeTimerEvent::saveToStream(QDataStream &s) const
 {
-    JZNodeEvent::saveToStream(s);
+    JZNodeSignalEvent::saveToStream(s);
     s << m_timeout;
 }
 
 void JZNodeTimerEvent::loadFromStream(QDataStream &s)
 {
-    JZNodeEvent::loadFromStream(s);
+    JZNodeSignalEvent::loadFromStream(s);
     s >> m_timeout;
 }
-
 
 void JZTimerEventConnect(QObject *object,const QByteArray &buffer)
 {

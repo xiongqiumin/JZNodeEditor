@@ -1,6 +1,7 @@
 ﻿#ifndef JZNODE_EVENT_H_
 #define JZNODE_EVENT_H_
 
+#include <QJsonObject>
 #include "JZNode.h"
 #include "JZNodeObject.h"
 
@@ -133,8 +134,19 @@ protected:
     QString m_object;
 };
 
+//JZNodeSignalEvent
+class JZNodeSignalEvent : public JZNodeEvent
+{
+public:
+    virtual JZFunctionDefine function() override;
+    bool compilerSignal(JZNodeCompiler* compiler, const QJsonObject &object,QString& error);
+
+protected:
+    QString m_constructor;
+};
+
 //JZNodeTimerEvent
-class JZNodeTimerEvent : public JZNodeEvent
+class JZNodeTimerEvent : public JZNodeSignalEvent
 {
 public:
     JZNodeTimerEvent();
@@ -142,8 +154,6 @@ public:
 
     void setTimeOut(int ms);
     int timeOut();
-
-    virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 
 protected:

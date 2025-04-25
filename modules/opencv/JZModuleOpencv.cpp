@@ -104,8 +104,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     cls_yolo_view.def("setYoloResult", true, &JZYoloView::setYoloResult);
     cls_yolo_view.regist();
 
-    env->factoryManager()->registNode(Node_ModelInit, createJZNode<JZModelInitNode>);
-    env->factoryManager()->registNode(Node_ModelSetting, createJZNode<JZModelSettingNode>);
+    env->factoryManager()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);    
 }
 
 void JZModuleOpencv::unregist(JZScriptEnvironment *env)

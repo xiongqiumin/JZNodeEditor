@@ -14,11 +14,11 @@ public:
     ~JZNodeFactory();
 
     void registNode(int type, JZNodeCreateFunc func);
-    QList<int> nodeTypeList();
+    QList<int> nodeTypeList() const;
 
-    JZNode *createNode(int type);        
-    JZNode *loadNode(const QByteArray &buffer);
-    QByteArray saveNode(JZNode *node);
+    JZNode *createNode(int type) const;
+    JZNode *loadNode(const QByteArray &buffer) const;
+    QByteArray saveNode(JZNode *node) const;
 
 protected:
     QMap<int,JZNodeCreateFunc> m_nodes;

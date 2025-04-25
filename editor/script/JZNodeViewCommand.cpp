@@ -2,6 +2,7 @@
 #include "JZNodeGraphItem.h"
 #include "JZNodeFactory.h"
 #include "JZNodeViewCommand.h"
+#include "JZEditorGlobal.h"
 
 //line
 JZNodeConnect parseLine(const QByteArray &buffer)

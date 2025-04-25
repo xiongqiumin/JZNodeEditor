@@ -30,6 +30,34 @@ bool JZCameraInitNode::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
+//JZCameraFrameReadyEvent
+JZCameraFrameReadyEvent::JZCameraFrameReadyEvent()
+{    
+    m_type = Node_CameraFrameReady;
+    m_name = "sigFrameReadyEvent";
+    m_constructor = "JZCameraConnect";
+}
+
+JZCameraFrameReadyEvent::~JZCameraFrameReadyEvent()
+{
+}
+
+bool JZCameraFrameReadyEvent::compiler(JZNodeCompiler* c, QString& error)
+{
+    QJsonObject obj;
+    return compilerSignal(c, obj, error);
+}
+
+void JZCameraFrameReadyEvent::saveToStream(QDataStream &s) const
+{
+    JZNodeSignalEvent::saveToStream(s);
+}
+
+void JZCameraFrameReadyEvent::loadFromStream(QDataStream &s)
+{
+    JZNodeSignalEvent::loadFromStream(s);
+}
+
 //JZModuleCamera
 JZModuleCamera::JZModuleCamera()
 {    
@@ -61,8 +89,8 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZCameraHik> cls_camera_hik(cls_id++, "JZCameraHik", "JZCamera");
     cls_camera_hik.regist();
 
-    JZNodeE
-    JZNodeFactory::instance()->registNode(Node_CameraInit, createJZNode<JZCameraInitNode>);
+    env->factoryManager()->registNode(Node_CameraInit, createJZNode<JZCameraInitNode>);
+    env->factoryManager()->registNode(Node_CameraFrameReady, createJZNode<JZCameraFrameReadyEvent>);
 }
 
 void JZModuleCamera::unregist(JZScriptEnvironment *env)

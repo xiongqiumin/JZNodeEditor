@@ -506,7 +506,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
             function = meta->initVirtualFunction(act->text());
         }
 
-        JZScriptItem *func_item = new JZScriptItem(ProjectItem_scriptItem);
+        JZScriptItem *func_item = new JZScriptItem(JZScriptItem::Function);
         func_item->setFunction(function);
         m_project->addItem(item->itemPath(), func_item);
         m_project->saveItem(item);

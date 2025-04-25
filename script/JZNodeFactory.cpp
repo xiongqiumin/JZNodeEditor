@@ -93,7 +93,7 @@ void JZNodeFactory::registNode(int type,JZNodeCreateFunc func)
     m_nodes[type] = func;
 }
 
-QList<int> JZNodeFactory::nodeTypeList()
+QList<int> JZNodeFactory::nodeTypeList() const
 {
     QList<int> types;
     auto it = m_nodes.begin();
@@ -105,14 +105,14 @@ QList<int> JZNodeFactory::nodeTypeList()
     return types;
 }
 
-JZNode *JZNodeFactory::createNode(int type)
+JZNode *JZNodeFactory::createNode(int type) const
 {
     auto it = m_nodes.find(type);
     Q_ASSERT(it != m_nodes.end());
     return it.value()();
 }
 
-JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
+JZNode *JZNodeFactory::loadNode(const QByteArray &buffer) const
 {
     QDataStream node_s(buffer);
     int node_type;
@@ -123,7 +123,7 @@ JZNode *JZNodeFactory::loadNode(const QByteArray &buffer)
     return node;
 }
 
-QByteArray JZNodeFactory::saveNode(JZNode *node)
+QByteArray JZNodeFactory::saveNode(JZNode *node) const
 {
     return node->toBuffer();
 }

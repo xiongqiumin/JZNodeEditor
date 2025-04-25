@@ -13,7 +13,7 @@ TestUnitTest::TestUnitTest()
 
 bool TestUnitTest::buidUnitTest(JZScriptItem *unit_script_item)
 {
-    JZProjectTempGuard guard(&m_project, unit_script_item, true);
+    JZProjectTempGuard guard(&m_project, unit_script_item, JZProjectTempGuard::TakeItem);
 
     m_engine.deinit();
     if (!build())

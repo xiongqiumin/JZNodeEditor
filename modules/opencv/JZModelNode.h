@@ -6,25 +6,14 @@
 enum ModelNode
 {
     Node_ModelId = 1400,
-    Node_ModelInit,
-    Node_ModelSetting,
+    Node_ModelForward,
 };
 
-class JZModelInitNode : public JZNode
+class JZNodeModelForward : public JZNode
 {
 public:
-    JZModelInitNode();
-    ~JZModelInitNode();
-
-    bool compiler(JZNodeCompiler *c, QString &error);
-};
-
-
-class JZModelSettingNode : public JZNode
-{
-public:
-    JZModelSettingNode();
-    ~JZModelSettingNode();
+    JZNodeModelForward();
+    ~JZNodeModelForward();
 
     bool compiler(JZNodeCompiler *c, QString &error);
 };

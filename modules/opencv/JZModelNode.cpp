@@ -1,42 +1,22 @@
 ﻿#include "JZModelNode.h"
 #include "JZNodeCompiler.h"
 
-//JZModelInitNode
-JZModelInitNode::JZModelInitNode()
+//JZNodeModelForward
+JZNodeModelForward::JZNodeModelForward()
 {
-    m_name = "ModelInit";
-    m_type = Node_ModelInit;
+    m_name = "modelForward";
+    m_type = Node_ModelForward;
 
     addFlowIn();
     addFlowOut();
 }
 
-JZModelInitNode::~JZModelInitNode()
+JZNodeModelForward::~JZNodeModelForward()
 {
 
 }
 
-bool JZModelInitNode::compiler(JZNodeCompiler *c, QString &error)
-{
-    c->addNodeEnter(m_id);
-    return true;
-}
-
-//JZModelSettingNode
-JZModelSettingNode::JZModelSettingNode()
-{
-    m_name = "ModelSetting";
-    m_type = Node_ModelSetting;
-
-    addFlowIn();
-    addFlowOut();
-}
-
-JZModelSettingNode::~JZModelSettingNode()
-{
-}
-
-bool JZModelSettingNode::compiler(JZNodeCompiler *c, QString &error)
+bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
 {
     c->addNodeEnter(m_id);
     return true;

@@ -8,13 +8,7 @@ void JZModuleModelEditorInit()
     auto inst = editorManager()->instance();
 
     JZLogicNode logic;
-    logic.nodeType = Node_ModelInit;
-    logic.path = "模型";
+    logic.nodeType = Node_ModelForward;
+    logic.path = "模型/推理";
     inst->registLogicNode(logic);
-
-
-    JZLogicNode logic_set;
-    logic_set.nodeType = Node_ModelSetting;
-    logic_set.path = "模型";
-    inst->registLogicNode(logic_set);
 }

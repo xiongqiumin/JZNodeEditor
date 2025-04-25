@@ -215,6 +215,7 @@ JZScriptItem *JZScriptUnitTest::createUnitScript(JZScriptItemDependPtr depend)
 {
     Q_ASSERT(m_project == depend->script->project());
 
+    JZProjectTempGuard guard(m_project,m_script, JZProjectTempGuard::TakeItem);
     QByteArray buffer = depend->script->toBuffer();
     m_script->fromBuffer(buffer);    
     m_script->setName("UnitTest_" + depend->script->name());
