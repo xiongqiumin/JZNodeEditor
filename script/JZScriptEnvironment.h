@@ -88,6 +88,7 @@ public:
     int matchType(QList<int> src_types,QList<int> dst_types) const;
     QVariant defaultValue(int type) const;
     QString defaultValueString(int type) const;
+    QVariant tryInitValue(int type, const QString &v) const;
     QVariant initValue(int type, const QString &v) const;
 
     bool isListType(int type) const;

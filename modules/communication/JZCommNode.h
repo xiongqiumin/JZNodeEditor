@@ -20,9 +20,6 @@ enum {
     Node_modbusConfig,
 };
 
-
-JZModbusClient* JZModbusGet(JZCommManager* manager, int conn);
-
 //JZNodeCommInit
 class JZNodeCommInit : public JZNode
 {
@@ -36,18 +33,7 @@ public:
 //JZNodeModbusRead
 class JZNodeModbusRead : public JZNode
 {
-public:
-    enum {
-        readBit,
-        readBits,
-        readInputBit,
-        readInputBits,
-        readInputRegister,
-        readInputRegisters,
-        readRegister,
-        readRegisters,
-    };
-
+public:    
     JZNodeModbusRead();
     ~JZNodeModbusRead();
 
@@ -57,22 +43,15 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
     void setCommIndex(int comm);
-    int readComm();
 
     void setFunction(int function);
     int function();
 
     void setAddr(int addr);
     int addr();
-
-    void setCount(int count);
-    int count();
-
+    
     void setReadType(QString type);
     QString readType();
-
-    void setBitOrder(int order);
-    int bitOrder();
 
 protected:
     virtual bool updateNode(QString& error) override;
@@ -80,8 +59,7 @@ protected:
 
     int m_commIndex;
     int m_function;
-    QString m_readType;
-    int m_bitOrder;
+    QString m_readType;    
 };
 
 //JZNodeModbusWrite
@@ -97,7 +75,10 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
 protected:
-    QString addr;
+    int m_commIndex;
+    int m_function;
+    QString m_readType;
+    int m_bitOrder;
 
 };
 

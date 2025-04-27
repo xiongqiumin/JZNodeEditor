@@ -25,7 +25,7 @@
 #include "JZNodeUtils.h"
 #include "LogManager.h"
 #include "JZNodeLangServer.h"
-#include "modules/modbus/JZModbusSimulator.h"
+#include "modules/communication/modbus/JZModbusSimulator.h"
 
 //Setting
 Setting::Setting()

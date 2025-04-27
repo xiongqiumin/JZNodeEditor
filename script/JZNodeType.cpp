@@ -54,19 +54,23 @@ QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param)
     return s;
 }
 
-//JZNodeVariantAny
-JZNodeVariantAny::JZNodeVariantAny()
+//JZVariantAny
+JZVariantAny::JZVariantAny()
 {
 }
 
-bool JZNodeVariantAny::operator==(const JZNodeVariantAny& other) const
+JZVariantAny::~JZVariantAny()
 {
-    return value == other.value;
 }
 
-int JZNodeVariantAny::type()
+bool JZVariantAny::operator==(const JZVariantAny& other) const
 {
-    return JZNodeType::variantType(value);
+    return variant == other.variant;
+}
+
+int JZVariantAny::type()
+{
+    return JZNodeType::variantType(variant);
 }
 
 //JZObjectNull
@@ -102,8 +106,6 @@ void JZNodeType::init()
     typeMap["string"] = Type_string;
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;
-    typeMap["QObject"] = Type_object;
-    typeMap["QWidget"] = Type_widget;
     
     typeMap["arg"] = Type_arg;
     typeMap["argPointer"] = Type_argPointer;
@@ -281,8 +283,8 @@ QString JZNodeType::debugString(const QVariant &v)
     }
     else if (v_type == Type_any)
     {
-        JZNodeVariantAny *ptr = (JZNodeVariantAny*)v.data();
-        return "Variant{" + debugString(ptr->value) + "}";
+        JZVariantAny *ptr = (JZVariantAny*)v.data();
+        return "Variant{" + debugString(ptr->variant) + "}";
     }
     else if (v_type == Type_function)
     {
@@ -433,7 +435,7 @@ int JZNodeType::variantType(const QVariant &v)
             return Type_function;
         else if (v_usertype == qMetaTypeId<JZNodeObjectHolder>())
             return ((JZNodeObjectHolder*)v.data())->object()->type();
-        else if (v_usertype == qMetaTypeId<JZNodeVariantAny>())
+        else if (v_usertype == qMetaTypeId<JZVariantAny>())
             return Type_any;
         else if (v_usertype == qMetaTypeId<JZNodeObjectPointer>())
             return ((JZNodeObjectPointer*)v.data())->type;

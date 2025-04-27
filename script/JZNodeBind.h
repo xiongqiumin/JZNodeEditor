@@ -195,7 +195,7 @@ template<>
 QVariant fromVariant<QVariant>(const QVariant &v, std::false_type);
 
 template<>
-JZNodeVariantAny fromVariant<JZNodeVariantAny>(const QVariant &v, std::false_type);
+JZVariantAny fromVariant<JZVariantAny>(const QVariant &v, std::false_type);
 
 template<>
 JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type);
@@ -262,7 +262,7 @@ template<>
 QVariant toVariant(QVariant value);
 
 template<>
-QVariant toVariant(JZNodeVariantAny value);
+QVariant toVariant(JZVariantAny value);
 
 template<>
 QVariant toVariant(JZFunctionPointer ptr);
@@ -341,9 +341,9 @@ public:
     }    
 
     template<typename U = Return>
-    typename std::enable_if<std::is_pointer<U>::value,void>::type setRefrence(bool flag)
+    typename std::enable_if<std::is_pointer<U>::value,void>::type setRefrence(PointerRef flag)
     {
-        isRef = flag;
+        isRef = (flag == Reference);
         isPointer = true;
     }
 

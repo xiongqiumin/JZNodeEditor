@@ -271,19 +271,19 @@ void JZModbusConfigDialog::setConfigMode(bool isServer)
 
 void JZModbusConfigDialog::setConfig(const JZModbusConfig &cfg)
 {            
-    setCurrentModbusType(cfg.modbusType);
+    setCurrentModbusType(cfg.conn.modbusType);
     if (cfg.isRtu())
     {
         ui.boxType->setCurrentIndex(0);
-        m_rtuSlave = cfg.slave;
+        m_rtuSlave = cfg.conn.slave;
     }
     else
     {
         ui.boxType->setCurrentIndex(1);
-        m_tcpSlave = cfg.slave;
+        m_tcpSlave = cfg.conn.slave;
     }
 
-    int type = cfg.modbusType;
+    int type = cfg.conn.modbusType;
     if (type == Modbus_rtuClient || type == Modbus_rtuServer)
     {
         m_stack->setCurrentIndex(0);        
@@ -299,17 +299,17 @@ void JZModbusConfigDialog::setConfig(const JZModbusConfig &cfg)
         m_stack->setCurrentIndex(2);        
         ui.lineSlave->setText(QString::number(m_tcpSlave));
     }
-    ui.chkPlc->setChecked(cfg.plcMode);
+    ui.chkPlc->setChecked(cfg.conn.plcMode);
 
-    m_comboBoxCom->setCurrentText(cfg.portName);
-    m_comboBoxBotelv->setCurrentText(QString::number(cfg.baud));
-    m_comboBoxData->setCurrentIndex(cfg.dataBit);
-    m_comboBoxChk->setCurrentIndex(cfg.parityBit);
-    m_comboBoxStop->setCurrentIndex(cfg.stopBit);
+    m_comboBoxCom->setCurrentText(cfg.conn.portName);
+    m_comboBoxBotelv->setCurrentText(QString::number(cfg.conn.baud));
+    m_comboBoxData->setCurrentIndex(cfg.conn.dataBit);
+    m_comboBoxChk->setCurrentIndex(cfg.conn.parityBit);
+    m_comboBoxStop->setCurrentIndex(cfg.conn.stopBit);
     
-    m_lineIp->setText(cfg.ip);
-    m_linePort->setText(QString::number(cfg.port));
-    m_linePortServer->setText(QString::number(cfg.port));
+    m_lineIp->setText(cfg.conn.ip);
+    m_linePort->setText(QString::number(cfg.conn.port));
+    m_linePortServer->setText(QString::number(cfg.conn.port));
 
     m_map.clear();
     for (int i = 0; i < cfg.paramList.size(); i++)
@@ -324,27 +324,27 @@ JZModbusConfig JZModbusConfigDialog::config()
     JZModbusConfig cfg;
     
     int type = currentModbusType();
-    cfg.modbusType = type;
-    cfg.slave = ui.lineSlave->text().toInt();    
+    cfg.conn.modbusType = type;
+    cfg.conn.slave = ui.lineSlave->text().toInt();
     if (type == Modbus_rtuClient || type == Modbus_rtuServer)
     {
-        cfg.portName = m_comboBoxCom->currentText();
-        cfg.baud = m_comboBoxBotelv->currentText().toInt();
-        cfg.dataBit = m_comboBoxData->currentIndex();
-        cfg.parityBit = m_comboBoxChk->currentIndex();
-        cfg.stopBit = m_comboBoxStop->currentIndex();
+        cfg.conn.portName = m_comboBoxCom->currentText();
+        cfg.conn.baud = m_comboBoxBotelv->currentText().toInt();
+        cfg.conn.dataBit = m_comboBoxData->currentIndex();
+        cfg.conn.parityBit = m_comboBoxChk->currentIndex();
+        cfg.conn.stopBit = m_comboBoxStop->currentIndex();
     }
     else if (type == Modbus_tcpClient)
     {
-        cfg.ip = m_lineIp->text();
-        cfg.port = m_linePort->text().toInt();
+        cfg.conn.ip = m_lineIp->text();
+        cfg.conn.port = m_linePort->text().toInt();
     }
     else
     {
-        cfg.port = m_linePortServer->text().toInt();        
+        cfg.conn.port = m_linePortServer->text().toInt();
     }
     cfg.strategyMap = m_strategyMap;
-    cfg.plcMode = ui.chkPlc->isChecked();
+    cfg.conn.plcMode = ui.chkPlc->isChecked();
 
     auto param_list = m_map.paramList();
     for (int i = 0; i < param_list.size(); i++)

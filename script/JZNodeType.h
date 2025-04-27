@@ -142,17 +142,32 @@ QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param);
     任意类型可以隐式转换为 any
     any 必须显示转换为指定类型
 */
-class JZNodeVariantAny
+class JZVariantAny
 {
 public:
-    JZNodeVariantAny();
+    JZVariantAny();
+    ~JZVariantAny();
 
-    bool operator==(const JZNodeVariantAny &other) const;
+    bool operator==(const JZVariantAny &other) const;
+
+    template<class T>
+    static JZVariantAny fromValue(const T &value)
+    {
+        JZVariantAny any;
+        any.variant = QVariant::fromValue(value);
+        return any;
+    }
+
+    template<class T>
+    T value() const
+    {
+        return variant.value<T>();
+    }
 
     int type();
-    QVariant value;
+    QVariant variant;
 };
-Q_DECLARE_METATYPE(JZNodeVariantAny)
+Q_DECLARE_METATYPE(JZVariantAny)
 
 //这是一个值 nullptr, 不是类型
 class JZNodeObjectNull

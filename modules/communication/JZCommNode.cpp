@@ -54,15 +54,19 @@ JZNodeModbusRead::JZNodeModbusRead()
 	addFlowOut();
 
 	int in1 = addParamIn("addr");
-	int in2 = addParamIn("count");
-	setPinTypeInt(in1);
-	setPinTypeInt(in2);
+    setPinTypeInt(in1);
+
+    int in2 = addParamIn("value");
+    setPinType(in2, { "uint16"  } );
+    
+    setParamInValue(0, "40000");
+    setParamInValue(1, "1");
+    m_readType = "uint16";
 
 	addParamOut("result");
 
 	m_commIndex = 0;
-	m_function = 0;
-	m_bitOrder = 0;
+	m_function = 0;	
 }
 
 JZNodeModbusRead::~JZNodeModbusRead()
@@ -77,11 +81,6 @@ int JZNodeModbusRead::readTypeSize()
 void JZNodeModbusRead::setCommIndex(int comm)
 {
 	m_commIndex = comm;
-}
-
-int JZNodeModbusRead::readComm()
-{
-	return m_commIndex;
 }
 
 void JZNodeModbusRead::setFunction(int function)
@@ -104,16 +103,6 @@ int JZNodeModbusRead::addr()
 	return paramInValue(0).toInt();
 }
 
-void JZNodeModbusRead::setCount(int count)
-{
-	setParamInValue(1, QString::number(count));
-}
-
-int JZNodeModbusRead::count()
-{
-	return paramInValue(1).toInt();
-}
-
 void JZNodeModbusRead::setReadType(QString type)
 {
 	m_readType = type;
@@ -124,37 +113,20 @@ QString JZNodeModbusRead::readType()
 	return m_readType;
 }
 
-void JZNodeModbusRead::setBitOrder(int order)
-{
-	m_bitOrder = order;
-}
-
-int JZNodeModbusRead::bitOrder()
-{
-	return m_bitOrder;
-}
-
 bool JZNodeModbusRead::updateNode(QString& error)
 {
 	int func_type = m_function;
-	if (func_type == readBit || func_type == readInputBit || func_type == readBits || func_type == readInputBits)
-	{
-		setPinType(paramOut(0), { "QList<" + m_readType  + ">" });
-	}
-	else if (func_type == readInputRegister || func_type == readRegister)
-	{
-		setPinType(paramOut(0), { m_readType });
-	}
-
+	setPinType(paramOut(0), { m_readType });
 	return true;
 }
 
 bool JZNodeModbusRead::compiler(JZNodeCompiler* c, QString& error)
 {
 	auto env = c->env();
-	c->addNodeEnter(m_id);
+    if (!c->addFlowInput(m_id, error))
+        return false;
 
-	if (c->checkVariableType("commManager", env->nameToType("JZCommManager"), error))
+	if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
 		return false;
 
 	int client_id = c->allocStack("JZModbusClient*");
@@ -163,77 +135,24 @@ bool JZNodeModbusRead::compiler(JZNodeCompiler* c, QString& error)
 	QList<JZNodeIRParam> get_in, get_out;
 	get_in << irRef("this.commManager") << irLiteral(m_commIndex);
 	get_out << client;
-	c->addCall("JZNodeCommInit", get_in, get_out);
+	c->addCallConvert("JZCommManager::modbusClient", get_in, get_out);
 
 	QJsonObject obj;
 	
-	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(0)));
-	JZNodeIRParam ir_count = irId(c->paramId(m_id, paramIn(1)));
+	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(0)));	
 	JZNodeIRParam ir_out = irId(c->paramId(m_id, paramOut(0)));
 
-	bool need_trans = false;
-	bool need_get = false;
+    int json = c->allocStack(Type_jsonObject);
+    c->addSetJson(irId(json), "function", irLiteral(m_function));
+    c->addSetJson(irId(json), "addr", ir_addr);
 
-	int func_type = m_function;
-	QString from_type = readTypeSize() == 1? "uint8":"uint16";
-	if (func_type == readBit || func_type == readInputBit 
-		|| func_type == readInputRegister || func_type == readRegister)
-	{
-		ir_count = irLiteral(readTypeSize());
-		need_get = true;
-	}
-	else
-	{
-		c->addExpr(ir_count, ir_count, irLiteral(readTypeSize()), OP_mul);
-	}
-	
-	QList<JZNodeIRParam> in, out;
-	in << client << ir_addr << ir_count;
+    int any_id = c->allocStack(Type_any);
 
-	JZNodeIRParam read_out;
-
-	QString read_list_type = "QList<" + from_type + ">";
-	QString list_type = "QList<" + m_readType + ">";
-	QString trasFunc = "JZTransList" + from_type + "to" + m_readType;
-
-	int read_out_id = c->allocStack(read_list_type);
-	read_out = irId(read_out_id);
-	out << read_out;
-
-	QList<JZNodeIRParam> list_get_in, list_get_out;
-	list_get_in << read_out;
-	list_get_out << ir_out;
-
-	if (func_type == readBit || func_type == readBits)
-		c->addCall("JZModbusClient::readBits", in, out);
-	else if (func_type == readInputBit || func_type == readInputBits)
-		c->addCall("JZModbusClient::readInputBits", in, out);
-	else if (func_type == readInputRegister || func_type == readInputRegisters)
-		c->addCall("JZModbusClient::readInputRegisters", in, out);
-	else if (func_type == readRegister || func_type == readRegisters)
-		c->addCall("JZModbusClient::readRegisters", in, out);
-
-	if (from_type != m_readType
-		|| (from_type == "uint16" && m_bitOrder == QDataStream::BigEndian))
-	{
-		QList<JZNodeIRParam> trans_in, trans_out;
-		trans_in << read_out << irLiteral(m_bitOrder);
-
-		if (need_get)
-		{
-			int read_out_id = c->allocStack(read_list_type);
-			trans_out << irId(read_out_id);
-			list_get_in[0] = irId(read_out_id);
-		}
-		else
-		{
-			trans_out << ir_out;
-		}
-
-		c->addCall(trasFunc, trans_in, trans_out);
-	}
-	if (need_get)
-		c->addCall(list_type + "::get", list_get_in, list_get_out);
+    QList<JZNodeIRParam> read_in, read_out;
+    read_in << client << irId(json);
+    read_out << irId(any_id);
+    c->addCallConvert("JZCommModbusRead", read_in, read_out);
+    c->addConvert(ir_out, env->nameToType(m_readType), irId(any_id));
 
 	return true;
 }
@@ -256,74 +175,36 @@ void JZNodeModbusRead::loadFromStream(QDataStream& s)
 //JZNodeModbusWrite
 JZNodeModbusWrite::JZNodeModbusWrite()
 {
+    m_type = Node_ModbusWrite;
+    m_name = "ModbusWrite";
+
+    addFlowIn();
+    addFlowOut();
 }
 JZNodeModbusWrite::~JZNodeModbusWrite()
 {
 }
 
-bool JZNodeModbusWrite::compiler(JZNodeCompiler* compiler, QString& error)
+bool JZNodeModbusWrite::compiler(JZNodeCompiler* c, QString& error)
 {
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
 	return true;
 }
 
 void JZNodeModbusWrite::saveToStream(QDataStream& s) const
 {
 	JZNode::saveToStream(s);
+    s << m_commIndex;
+    s << m_function;
 }
 
 void JZNodeModbusWrite::loadFromStream(QDataStream& s)
 {
-	JZNode::loadFromStream(s);
-}
-
-void JZModbusWrite(JZCommManager* manager, const QByteArray& buffer)
-{
-	auto obj = JZNodeJson::formBuffer(buffer);
-
-	JZModbusConnetInfo conn;
-	int idx = manager->indexOfModbusClient(conn);
-
-	JZModbusClient* client = nullptr;
-	if (idx == -1)
-	{
-		client = manager->newModbusClient(conn);
-		client->open();
-	}
-	else
-		client = manager->modbusClient(idx);
-
-	if (!client->isOpen())
-	{
-		throw std::runtime_error("write failed");
-		return;
-	}
-
-	int type = obj["type"].toInt();
-	int addr = obj["addr"].toInt();
-
-	bool ret = false;
-	if (type == 0)
-	{
-		int value = JZNodeJson::getValue<int>(obj, "value");
-		ret = client->writeBit(addr, value);
-	}
-	else if (type == 1)
-	{
-		auto value = JZNodeJson::getValue<QVector<uint8_t>>(obj, "value");
-		ret = client->writeBits(addr, value);
-	}
-	else if (type == 2)
-	{
-		auto value = JZNodeJson::getValue<int>(obj, "value");
-		ret = client->writeRegister(addr, value);
-	}
-	else if (type == 3)
-	{
-		auto value = JZNodeJson::getValue<QVector<uint16_t>>(obj, "value");
-		ret = client->writeRegisters(addr, value);
-	}
-	if (!ret)
-		throw std::runtime_error("write failed");
+	JZNode::loadFromStream(s);        
+    s >> m_commIndex;
+    s >> m_function;
 }
 
 //JZNodeTcpClientRead
@@ -344,7 +225,7 @@ void JZNodeTcpClientRead::saveToStream(QDataStream& s) const
 }
 
 void JZNodeTcpClientRead::loadFromStream(QDataStream& s) 
-{
+{    
 }
 
 //JZNodeTcpClientWrite

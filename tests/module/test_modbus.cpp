@@ -24,19 +24,20 @@ void ModbusTest::testClient()
     script->addNode(comm_init);
     script->addConnect(start->flowOutGemo(), comm_init->flowInGemo());
 
-    m_project.registType();
+    JZNodeModbusWrite *modbus_write = new JZNodeModbusWrite();
+    script->addNode(modbus_write);
+    script->addConnect(comm_init->flowOutGemo(), modbus_write->flowInGemo());
+
+    JZNodeModbusRead *modbus_read = new JZNodeModbusRead();
+    script->addNode(modbus_read);
+    script->addConnect(modbus_write->flowOutGemo(), modbus_read->flowInGemo());
 
     if (!build())
         return;
     dump("modbus_testClient");
-  
-    bool result = QTest::qWaitFor([this]()->bool 
-    { 
-        return true;
-    }, 1000);
-
-    m_engine.deinit();
-    QTest::qWait(4000);
+      
+    QVariantList in, out;    
+    callMember("testFunction",in,out);
 }
 
 void test_modbus(int argc, char *argv[])

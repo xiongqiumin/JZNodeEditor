@@ -247,7 +247,7 @@ void JZModbusSimulator::startSimulator(int index)
     auto &c = info.config;
 
     bool ret = false;
-    int type = c.modbusType;
+    int type = c.conn.modbusType;
     if (type == Modbus_rtuClient || type == Modbus_tcpClient)
         ret = info.master->open();
     else if (type == Modbus_rtuServer || type == Modbus_tcpServer)
@@ -267,7 +267,7 @@ void JZModbusSimulator::stopSimulator(int index)
     auto &c = info.config;
 
     bool ret = false;
-    int type = c.modbusType;
+    int type = c.conn.modbusType;
     if (type == Modbus_rtuClient || type == Modbus_tcpClient)
         info.master->close();
     else if (type == Modbus_rtuServer || type == Modbus_tcpServer)
@@ -281,7 +281,7 @@ void JZModbusSimulator::initSimulator(int index)
     auto &info = m_simulator[index];
     
     info.close();
-    if (info.config.modbusType == Modbus_rtuClient || info.config.modbusType == Modbus_tcpClient)
+    if (info.config.conn.modbusType == Modbus_rtuClient || info.config.conn.modbusType == Modbus_tcpClient)
     {
         info.master = new JZModbusMaster();
         modbusMasterSetConfig(info.master, &info.config);

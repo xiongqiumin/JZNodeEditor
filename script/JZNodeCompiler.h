@@ -269,8 +269,9 @@ public:
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
     void addSetBuffer(const JZNodeIRParam &dst, const QByteArray &buffer);
     void addSetJson(const JZNodeIRParam& dst, const QString &name, const JZNodeIRParam &src);
+    void addGetJson(const JZNodeIRParam& dst, const QString &name, const JZNodeIRParam &src);
 
-    void addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst); //显示转换不检测能否转换
+    void addConvert(const JZNodeIRParam &dst, int dst_type, const JZNodeIRParam &src); //显示转换不检测能否转换
     int addStatement(JZNodeIRPtr ir);  
     
     JZNodeIRJmp* addJmp(JZNodeIRType type);
@@ -290,7 +291,7 @@ public:
     void addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addAssert(const JZNodeIRParam &tips);       
-    
+        
     JZNode* nextFlowNode(JZNode* node, int pin);
     bool buildSubControlFlow(JZNode* node, QList<JZNodeIRPtr>& list);
 

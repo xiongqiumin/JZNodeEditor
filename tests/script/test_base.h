@@ -80,10 +80,12 @@ protected:
     };
 
     JZScriptClassItem *makeTestClass();
+    QVariant testClassPointer();
     
     bool build();
     bool buildAs(QString code);
     bool call(QString name,const QVariantList &in,QVariantList &out);
+    bool callMember(QString name, const QVariantList &in, QVariantList &out);
     void callAsync(QString name,const QVariantList &in);
     void stop();
     void asyncThread(QString name,QVariantList in);  

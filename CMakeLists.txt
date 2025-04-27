@@ -24,6 +24,7 @@ include_directories(./
     ./editor/ui
     ./editor/script
     ./editor/script/items   
+    ./3rd/JZCommon
     ${OpenCV_INCLUDE_DIRS})
 
 set(JZNodeCore_SOURCES
@@ -147,10 +148,17 @@ set(JZNodeCore_SOURCES
     runtime/JZNodeUiLoader.h
     runtime/JZWidgetBind.cpp
     runtime/JZWidgetBind.h
-    #modbus    
-    modules/modbus/JZModuleModbus.cpp
-    modules/modbus/JZModuleModbus.h
-     
+    
+    #communication    
+    modules/communication/modbus/JZModuleModbus.cpp
+    modules/communication/modbus/JZModuleModbus.h
+    modules/communication/JZModuleComm.cpp
+    modules/communication/JZModuleComm.h
+    modules/communication/JZCommNode.cpp
+    modules/communication/JZCommNode.h
+    modules/communication/JZCommManager.cpp
+    modules/communication/JZCommManager.h
+    
     #opencv
     modules/opencv/JZModuleOpencv.h
     modules/opencv/JZModuleOpencv.cpp    
@@ -172,12 +180,7 @@ set(JZNodeCore_SOURCES
     modules/camera/JZCameraHik.h
     modules/camera/JZCameraHik.cpp
     modules/camera/JZCameraFile.h
-    modules/camera/JZCameraFile.cpp
-    #comm
-    modules/communication/JZModuleComm.cpp
-    modules/communication/JZModuleComm.h
-    modules/communication/JZCommNode.cpp
-    modules/communication/JZCommNode.h
+    modules/camera/JZCameraFile.cpp   
     
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp
@@ -210,6 +213,10 @@ set(JZNodeCore_SOURCES
     3rd/JZCommon/jzWidgets/JZImageView.h    
     3rd/JZCommon/jzWidgets/JZLogWidget.cpp
     3rd/JZCommon/jzWidgets/JZLogWidget.h    
+    3rd/JZCommon/jzJson/JZJsonStream.cpp
+    3rd/JZCommon/jzJson/JZJsonStream.h
+    3rd/JZCommon/jzJson/JZJsonHelper.cpp
+    3rd/JZCommon/jzJson/JZJsonHelper.h
     3rd/JZCommon/jzCommon/JZLogManager.cpp
     3rd/JZCommon/jzCommon/JZLogManager.h
 )
@@ -367,16 +374,19 @@ set(JZNodeEditor_SOURCES
     sample/SampleProject.cpp
     sample/SampleProject.h
 
-    #modbus        
-    modules/modbus/JZModuleModbusEditor.cpp
-    modules/modbus/JZModuleModbusEditor.h
-    modules/modbus/JZModbusConfigDialog.cpp
-    modules/modbus/JZModbusConfigDialog.h
-    modules/modbus/JZModbusConfigDialog.ui
-    modules/modbus/JZModbusSimulator.cpp
-    modules/modbus/JZModbusSimulator.h
-    modules/modbus/JZModbusTemplateDialog.cpp
-    modules/modbus/JZModbusTemplateDialog.h    
+    #communication        
+    modules/communication/modbus/JZModuleModbusEditor.cpp
+    modules/communication/modbus/JZModuleModbusEditor.h
+    modules/communication/modbus/JZModbusConfigDialog.cpp
+    modules/communication/modbus/JZModbusConfigDialog.h
+    modules/communication/modbus/JZModbusConfigDialog.ui
+    modules/communication/modbus/JZModbusSimulator.cpp
+    modules/communication/modbus/JZModbusSimulator.h
+    modules/communication/modbus/JZModbusTemplateDialog.cpp
+    modules/communication/modbus/JZModbusTemplateDialog.h    
+    modules/communication/JZModuleCommEditor.cpp
+    modules/communication/JZModuleCommEditor.h
+    
     #opencv    
     modules/opencv/JZModuleOpencvEditor.cpp
     modules/opencv/JZModuleOpencvEditor.h         
@@ -385,9 +395,7 @@ set(JZNodeEditor_SOURCES
     #camera    
     modules/camera/JZModuleCameraEditor.h
     modules/camera/JZModuleCameraEditor.cpp       
-    #comm
-    modules/communication/JZModuleCommEditor.cpp
-    modules/communication/JZModuleCommEditor.h
+        
     #3rd    
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.h

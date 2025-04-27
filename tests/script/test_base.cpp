@@ -158,8 +158,8 @@ void BaseTest::msleep(int ms)
 
 JZScriptClassItem *BaseTest::makeTestClass()
 {
-    auto class_item = m_file->addClass("testClass", "QObject");
-    m_project.addGlobalVariable("test", "testClass");
+    auto class_item = m_file->addClass("TestClass", "QObject");
+    m_project.addGlobalVariable("test_class", "TestClass");
 
     class_item->addFlow("testFlow");
 
@@ -169,13 +169,20 @@ JZScriptClassItem *BaseTest::makeTestClass()
     return class_item;
 }
 
+QVariant BaseTest::testClassPointer()
+{
+    QVariant v = m_engine.getVariable("test_class");
+    return JZNodeType::convertToPointer(v);
+}
+
 bool BaseTest::build()
 {
+    m_project.registType();
     if(!m_builder.build(&m_program))
     {        
         QTest::qVerify(false, "build", qPrintable(m_builder.error()), __FILE__, __LINE__);
         return false;
-    }        
+    }    
 
     m_engine.setProgram(&m_program);
     m_engine.init();    
@@ -200,6 +207,13 @@ bool BaseTest::call(QString name,const QVariantList &in,QVariantList &out)
 {
     bool ret = m_engine.call(name,in,out);
     return ret;
+}
+
+bool BaseTest::callMember(QString name, const QVariantList &in, QVariantList &out)
+{
+    QVariantList member_in = in;
+    member_in.insert(0, testClassPointer());
+    return call("TestClass::" + name, member_in, out);
 }
 
 void BaseTest::callAsync(QString name, const QVariantList& in)

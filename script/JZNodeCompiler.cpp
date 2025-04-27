@@ -1914,6 +1914,7 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
     Q_ASSERT(func && func->paramIn.size() == org_paramIn.size() && func->paramOut.size() >= org_paramOut.size());
 
     auto env = project()->environment();
+    //分配函数输入
     QList<JZNodeIRParam> param_in;
     for(int i = 0; i < org_paramIn.size(); i++)
     {
@@ -1926,11 +1927,12 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
         else
         {
             int id = allocStack(func_param_type);
-            addConvert(org_paramIn[i],func_param_type,irId(id));
+            addConvert(irId(id),func_param_type,org_paramIn[i]);
             param_in << irId(id);
         }
     }   
-
+    
+    //分配函数输出
     QList<JZNodeIRParam> param_out;
     for(int i = 0; i < org_paramOut.size(); i++)
     {
@@ -1948,12 +1950,13 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
     }
 
     addCall(func,param_in,param_out);
+    //转换函数输出
     for(int i = 0; i < org_paramOut.size(); i++)
     {   
         int func_param_type = env->nameToType(func->paramOut[i].type);
         int param_type = irParamType(org_paramOut[i]);
         if(func_param_type == param_type)
-            addConvert(param_out[i],param_type,org_paramOut[i]);
+            addConvert(org_paramOut[i],param_type,param_out[i]);
     }
 }
 
@@ -2251,16 +2254,10 @@ bool JZNodeCompiler::checkInitValue(int type,const QString & text)
         }
         return false;
     }
-    else if (type == Type_int || type == Type_int64 || type == Type_double)
+    else if (JZNodeType::isNumber(type))
     {
-        bool isInt = JZRegExpHelp::isInt(text);
-        bool isHex = JZRegExpHelp::isHex(text);
-        bool isFloat = JZRegExpHelp::isFloat(text);
-
-        if (isInt || isHex || isFloat)
-            return true;
-
-        return false;
+        QVariant v = m_env->tryInitValue(type, text);
+        return v.isValid();
     }
 
     return false;
@@ -2528,13 +2525,13 @@ void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRPara
     if(t1 != upType)
     {
         int id = allocStack(upType);
-        addConvert(p1,upType,irId(id));
+        addConvert(irId(id),upType,p1);
         tmp_p1 = irId(id);
     }
     if(t2 != upType)
     {
         int id = allocStack(upType);
-        addConvert(p2,upType,irId(id));
+        addConvert(irId(id),upType,p2);
         tmp_p2 = irId(id);
     }
     if(tDst != dstType)
@@ -2545,7 +2542,7 @@ void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRPara
 
     addExpr(tmp_dst,tmp_p1,tmp_p2,op);
     if(tDst != dstType)
-        addConvert(tmp_dst,tDst,dst);
+        addConvert(dst,tDst,tmp_dst);
 }
 
 int JZNodeCompiler::addCompare(const JZNodeIRParam &p1,const JZNodeIRParam &p2, JZNodeIRType op)
@@ -2705,13 +2702,27 @@ void JZNodeCompiler::addSetVariableConvert(const JZNodeIRParam &dst,const JZNode
     }
     else
     {
-        addConvert(src,to_type,dst);
+        addConvert(dst,to_type,src);
     }
 }
 
-void JZNodeCompiler::addSetJson(const JZNodeIRParam& dst,const QString &name, const JZNodeIRParam& obj)
+void JZNodeCompiler::addSetJson(const JZNodeIRParam& obj,const QString &name, const JZNodeIRParam& value)
 {
+    Q_ASSERT(irParamType(obj) == Type_jsonObject);
 
+    QList<JZNodeIRParam> in, out;
+    in << obj << irLiteral(name) << value;    
+    addCallConvert("QJsonObject::set", in, out);
+}
+
+void JZNodeCompiler::addGetJson(const JZNodeIRParam& dst, const QString &name, const JZNodeIRParam &obj)
+{
+    Q_ASSERT(irParamType(obj) == Type_jsonObject);
+
+    QList<JZNodeIRParam> in, out;
+    in << obj << irLiteral(name);
+    out << dst;
+    addCallConvert("QJsonObject::set", in, out);
 }
 
 void JZNodeCompiler::addSetBuffer(const JZNodeIRParam &id, const QByteArray &buffer)
@@ -2724,9 +2735,10 @@ void JZNodeCompiler::addSetBuffer(const JZNodeIRParam &id, const QByteArray &buf
     addStatement(JZNodeIRPtr(op));
 }
 
-void JZNodeCompiler::addConvert(const JZNodeIRParam &src, int dst_type, const JZNodeIRParam &dst)
+void JZNodeCompiler::addConvert(const JZNodeIRParam &dst, int dst_type,const JZNodeIRParam &src)
 {
-    Q_ASSERT(project()->environment()->canConvertExplicitly(irParamType(src),dst_type));
+    Q_ASSERT_X(m_env->canConvertExplicitly(irParamType(src),dst_type),"convert failed",qUtf8Printable("convert " + m_env->typeToName(irParamType(src))
+        + " to " + m_env->typeToName(irParamType(dst))));
     Q_ASSERT(project()->environment()->isSameType(dst_type,irParamType(dst)));
 
     JZNodeIRConvert *op = new JZNodeIRConvert();    

@@ -2,7 +2,8 @@
 #define JZNODE_UTILS_H_
 
 #include <QString>
-#include "JZProject.h"
+#include <QByteArray>
+#include <QDataStream>
 
 struct MemberInfo
 {
@@ -26,6 +27,24 @@ struct LinkInfo {
 class JZNodeUtils
 {
 public:    
+    template<class T>
+    static QByteArray toBuffer(const T &data)
+    {
+        QByteArray buffer;
+        QDataStream s(&buffer, QIODevice::WriteOnly);
+        s << data;
+        return buffer;
+    }
+
+    template<class T>
+    static T fromBuffer(const QByteArray &buffer)
+    {    
+        QDataStream s(buffer);
+        T data;
+        s >> data;
+        return data;
+    }
+
     static MemberInfo splitMember(QString name);
     static QString makeLink(QString tips, QString path, QString args);
     static LinkInfo parseLink(QString line);

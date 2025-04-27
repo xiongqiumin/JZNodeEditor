@@ -35,7 +35,7 @@ JZCameraFrameReadyEvent::JZCameraFrameReadyEvent()
 {    
     m_type = Node_CameraFrameReady;
     m_name = "sigFrameReadyEvent";
-    m_constructor = "JZCameraConnect";
+    m_constructor.function = "JZCameraConnect";    
 }
 
 JZCameraFrameReadyEvent::~JZCameraFrameReadyEvent()

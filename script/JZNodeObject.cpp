@@ -1126,8 +1126,8 @@ const JZScriptEnvironment *JZNodeObjectManager::env() const
 
 void JZNodeObjectManager::init()
 {          
-    jzbind::ClassBind<JZNodeVariantAny> cls_any(Type_any, "any");
-    cls_any.def("type", false, &JZNodeVariantAny::type);
+    jzbind::ClassBind<JZVariantAny> cls_any(Type_any, "any");
+    cls_any.def("type", false, &JZVariantAny::type);
     cls_any.regist();
 
     jzbind::ClassBind<JZFunctionPointer> cls_function(Type_function,"function");

@@ -42,6 +42,11 @@ class JZNodeObject;
 class CFunction
 {
 public:
+    enum PointerRef{
+        Owner,
+        Reference,
+    };
+
     CFunction();
     virtual ~CFunction();
     virtual void call(const QVariantList &in,QVariantList &out) = 0;

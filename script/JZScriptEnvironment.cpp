@@ -454,14 +454,14 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
 
     if (dst_type == Type_any)
     {
-        JZNodeVariantAny any;
-        any.value = v;
+        JZVariantAny any;
+        any.variant = v;
         return QVariant::fromValue(any);
     }
     else if (src_type == Type_any)
     {
-        auto *ptr = (const JZNodeVariantAny*)v.data();
-        return convertTo(ptr->value, dst_type);
+        auto *ptr = (const JZVariantAny*)v.data();
+        return convertTo(ptr->variant, dst_type);
     }
     else if (src_type == Type_nullptr && dst_type >= Type_class)
     {
@@ -474,36 +474,7 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
     }
     else if (JZNodeType::isNumber(src_type) && JZNodeType::isNumber(dst_type))
     {
-        if (src_type == Type_int)
-        {
-            int i = v.toInt();
-            if (dst_type == Type_bool)
-                return (bool)i;
-            else if (dst_type == Type_int64)
-                return (qint64)i;
-            else
-                return (double)i;
-        }
-        else if (src_type == Type_int64)
-        {
-            qint64 i = (qint64)v.toLongLong();
-            if (dst_type == Type_bool)
-                return (int)i;
-            else if (dst_type == Type_int)
-                return (int)i;
-            else
-                return (double)i;
-        }
-        else
-        {
-            double d = v.toDouble();
-            if (dst_type == Type_bool)
-                return (bool)d;
-            else if (dst_type == Type_int)
-                return (int)d;
-            else
-                return (qint64)d;
-        }
+        return JZNodeType::convertNumber(v, dst_type);
     }
     else if (src_type == Type_bool && JZNodeType::isNumber(dst_type))
     {
@@ -718,17 +689,29 @@ int JZScriptEnvironment::stringType(const QString &text) const
 
 QVariant JZScriptEnvironment::defaultValue(int type) const
 {
-    if(type == Type_any)
+    if (type == Type_any)
     {
-        JZNodeVariantAny any;
+        JZVariantAny any;
         return QVariant::fromValue(any);
     }
-    else if(type == Type_bool)
+    else if (type == Type_bool)
         return false;
-    else if(type == Type_int)
+    else if (type == Type_int8)
+        return QVariant::fromValue<int8_t>(0);
+    else if (type == Type_uint8)
+        return QVariant::fromValue<uint8_t>(0);
+    else if (type == Type_int16)
+        return QVariant::fromValue<int16_t>(0);
+    else if (type == Type_uint16)
+        return QVariant::fromValue<uint16_t>(0);
+    else if (type == Type_int)
         return 0;
-    else if(type == Type_int64)
+    else if (type == Type_uint)
+        return QVariant::fromValue<uint32_t>(0);
+    else if (type == Type_int64)
         return (qint64)0;
+    else if (type == Type_uint64)
+        return QVariant::fromValue<uint64_t>(0);
     else if(type == Type_double)
         return (double)0.0;
     else if(type == Type_string)
@@ -753,7 +736,7 @@ QString JZScriptEnvironment::defaultValueString(int type) const
         return QString();
     else if (type == Type_bool)
         return "false";
-    else if (type == Type_int || type == Type_int64 || type == Type_double)
+    else if (JZNodeType::isNumber(type))
         return "0";
     else if (type == Type_string)
         return QString();
@@ -770,7 +753,7 @@ QString JZScriptEnvironment::defaultValueString(int type) const
         return "{}";
 }
 
-QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
+QVariant JZScriptEnvironment::tryInitValue(int type, const QString &text) const
 {
     if (text.isEmpty())
         return JZScriptEnvironment::defaultValue(type);
@@ -786,35 +769,50 @@ QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
         else if (text == "true")
             return true;
     }
-    else if (type == Type_int || type == Type_int64 || type == Type_double)
+    else if (type >= Type_int8 && type <= Type_uint64)
     {        
         bool isInt = JZRegExpHelp::isInt(text);
-        bool isHex = JZRegExpHelp::isHex(text);
-        bool isFloat = JZRegExpHelp::isFloat(text);
+        bool isHex = JZRegExpHelp::isHex(text);        
         
-        if (isHex)
-            return text.toInt(nullptr, 16);
-        else
+        bool ok = false;
+        int base = isHex ? 16 : 10;
+        QVariant ret;
+        
+        if(type == Type_int8)
+            ret = QVariant::fromValue<int8_t>(text.toInt(&ok, base));
+        else if (type == Type_uint8)
+            ret = QVariant::fromValue<uint8_t>(text.toUInt(&ok, base));
+        else if (type == Type_int16)
+            ret = QVariant::fromValue<int16_t>(text.toShort(&ok, base));
+        else if (type == Type_uint16)
+            ret = QVariant::fromValue<uint16_t>(text.toUShort(&ok, base));
+        else if (type == Type_int)
+            ret = QVariant::fromValue<int>(text.toInt(&ok, base));
+        else if (type == Type_uint)
+            ret = QVariant::fromValue<uint>(text.toUInt(&ok, base));
+        else if (type == Type_int64)
+            ret = QVariant::fromValue<int64_t>(text.toLongLong(&ok, base));
+        else if (type == Type_uint64)
+            ret = QVariant::fromValue<uint64_t>(text.toULongLong(&ok, base));
+
+        if (ok)
+            return ret;
+    }
+    else if (type == Type_float || type == Type_double)
+    {
+        bool isInt = JZRegExpHelp::isInt(text);
+        bool isFloat = JZRegExpHelp::isFloat(text);
+        if (isInt || isFloat)
         {
-            if (type == Type_int || type == Type_int64)
-            {
-                if (isFloat)
-                    return (int)text.toDouble();
-                else if (isInt)
-                    return text.toInt();
-            }
-            else if (type == Type_double)
-            {
-                if (isFloat || isInt)
-                    return text.toDouble();
-            }
+            bool ok = false;
+            QVariant ret;
+            if (type == Type_float)
+                ret = QVariant::fromValue<float>(text.toDouble(&ok));
             else
-            {
-                if (isInt)
-                    return text.toInt();
-                if (isFloat)
-                    return text.toDouble();
-            }
+                ret = text.toDouble(&ok);
+
+            if (ok)
+                return ret;
         }
     }
     else if(type == Type_function)
@@ -836,6 +834,15 @@ QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
 
         return enum_meta->keyToValue(text);
     }    
+
+    return QVariant();
+}
+
+QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
+{
+    QVariant v = tryInitValue(type, text);
+    if (v.isValid())
+        return v;
 
     Q_ASSERT_X(0,"Type ",qUtf8Printable(typeToName(type)));
     return true;
@@ -903,6 +910,6 @@ bool JZScriptEnvironment::mapKeyValueType(int type, int& key_type, int& value_ty
 
 void JZScriptEnvironment::registConvert(int from, int to, ConvertFunc func)
 {
-    int id = (int64_t)from << 32 | (int64_t)to;
+    int64_t id = (int64_t)from << 32 | (int64_t)to;
     convertMap[id] = func;
 }

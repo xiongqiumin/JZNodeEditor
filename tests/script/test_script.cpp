@@ -34,7 +34,7 @@ void ScriptTest::testMatchType()
     QVariant vs = "true";
     QVariant vnull = QVariant::fromValue(JZNodeObjectNull());
     QVariant vfunc = QVariant::fromValue(JZFunctionPointer());
-    QVariant vany = QVariant::fromValue(JZNodeVariantAny());
+    QVariant vany = QVariant::fromValue(JZVariantAny());
 
     QCOMPARE(JZNodeType::variantType(vb),Type_bool);
     QCOMPARE(JZNodeType::variantType(vi),Type_int);
@@ -181,7 +181,7 @@ void ScriptTest::testObjectParse()
     JZList *list = (JZList*)obj_list->cobj();
     QCOMPARE(list->list.size(),4);
 
-    JZNodeVariantAny v = list->list[0].value<JZNodeVariantAny>();
+    JZVariantAny v = list->list[0].value<JZVariantAny>();
     QCOMPARE(v.type(),Type_point);
 
     QPoint *pt = (QPoint*)(toJZObject(v.value)->cobj());

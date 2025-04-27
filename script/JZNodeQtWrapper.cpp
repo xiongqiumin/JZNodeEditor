@@ -121,14 +121,14 @@ void QtWrapper::initBase()
 
     registList<int>(m_env,Type_intList);
     registList<double>(m_env,Type_doubleList);
-    registList<JZNodeVariantAny>(m_env,Type_varList);
+    registList<JZVariantAny>(m_env,Type_varList);
     registList<QList<int>>(m_env);
 
     registMap<int,int>(m_env,Type_intIntMap);
     registMap<int,QString>(m_env,Type_intStringMap);
     registMap<QString,int>(m_env,Type_stringIntMap);
     registMap<QString,QString>(m_env,Type_stringStringMap);
-    registMap<QString,JZNodeVariantAny>(m_env,Type_varMap);
+    registMap<QString,JZVariantAny>(m_env,Type_varMap);
 
     //string 全部只读
     jzbind::ClassBind<QString> cls_string(Type_string,"string");
@@ -351,13 +351,22 @@ void QtWrapper::initCore()
     });
     cls_string_list.regist();    
 
-    jzbind::ClassBind<QByteArray> cls_byte_array(Type_byteArray,"ByteArray");
+    m_objInst->delcareCClass("QJsonArray", typeid(QJsonArray).name(), Type_jsonArray);
+    m_objInst->delcareCClass("QJsonObject", typeid(QJsonObject).name(), Type_jsonObject);
+
+    jzbind::ClassBind<QByteArray> cls_byte_array(Type_byteArray,"QByteArray");
     cls_byte_array.regist();
 
-    jzbind::ClassBind<QJsonValue> cls_json_value(Type_jsonValue, "JsonValue");
+    jzbind::ClassBind<QJsonValue> cls_json_value(Type_jsonValue, "QJsonValue");
+    cls_json_value.def("toString", false, [](QJsonValue *v)->QString { return v->toString(); });
+    cls_json_value.def("toArray", false, [](QJsonValue *v)->QJsonArray { return v->toArray(); });
+    cls_json_value.def("toObject", false, [](QJsonValue *v)->QJsonObject { return v->toObject(); });
+    cls_json_value.def("toBool", false, [](QJsonValue *v)->bool { return v->toBool(); });
+    cls_json_value.def("toInt", false, [](QJsonValue *v)->int { return v->toInt(); });
+    cls_json_value.def("toDouble", false, [](QJsonValue *v)->double { return v->toDouble(); });
     cls_json_value.regist();
 
-    jzbind::ClassBind<QJsonArray> cls_json_array(Type_jsonArray, "JsonArray");
+    jzbind::ClassBind<QJsonArray> cls_json_array(Type_jsonArray, "QJsonArray");
     cls_json_array.def("get", false, [](QJsonArray *obj,int idx)->QJsonValue{ 
         return (*obj)[idx];
     });
@@ -366,7 +375,7 @@ void QtWrapper::initCore()
     });
     cls_json_array.regist();
 
-    jzbind::ClassBind<QJsonObject> cls_json_obj(Type_jsonObject, "JsonObject");
+    jzbind::ClassBind<QJsonObject> cls_json_obj(Type_jsonObject, "QJsonObject");
     cls_json_obj.def("get", false, [](QJsonObject *obj,QString name)->QJsonValue{ 
         return (*obj)[name];
     });
@@ -375,7 +384,7 @@ void QtWrapper::initCore()
     });
     cls_json_obj.regist();
 
-    jzbind::ClassBind<QDataStream> cls_data_stream(Type_dataStream,"DataStream");
+    jzbind::ClassBind<QDataStream> cls_data_stream(Type_dataStream,"QDataStream");
     cls_data_stream.regist();
 }
 
@@ -517,7 +526,7 @@ void QtWrapper::initWidgets()
     cls_stacked.def("removeWidget", true, &QStackedWidget::removeWidget);
     cls_stacked.def("currentIndex", true, &QStackedWidget::currentIndex);
     cls_stacked.def("setCurrentIndex", true, &QStackedWidget::setCurrentIndex);
-    cls_stacked.def("currentWidget", true, &QStackedWidget::currentWidget, true);
+    cls_stacked.def("currentWidget", true, &QStackedWidget::currentWidget, CFunction::Reference);
     cls_stacked.def("setCurrentWidget", true, &QStackedWidget::setCurrentWidget);
     cls_stacked.regist();
 
@@ -535,7 +544,7 @@ void QtWrapper::initWidgets()
     cls_table.def("currentRow", false, &QTableWidget::currentRow);
     cls_table.def("clearContents", true, &QTableWidget::clearContents);
     cls_table.def("setItem", true, &QTableWidget::setItem);
-    cls_table.def("item", false, &QTableWidget::item, false);
+    cls_table.def("item", false, &QTableWidget::item, CFunction::Reference);
     cls_table.regist();
 
     //list
@@ -587,7 +596,7 @@ void QtWrapper::initDialogs()
         auto dlg = new QProgressDialog();
         dlg->setWindowModality(Qt::WindowModal);
         return dlg;
-    }, false);        
+    }, CFunction::Owner);        
     cls_progress_dlg.def("setRange", true, &QProgressDialog::setRange);
     cls_progress_dlg.def("setLabelText", true, &QProgressDialog::setLabelText);
     cls_progress_dlg.def("wasCanceled", false, &QProgressDialog::wasCanceled);
@@ -600,17 +609,17 @@ void QtWrapper::initPainter()
 {
     //pen
     jzbind::ClassBind<QPen> cls_pen(Type_pen,"QPen");
-    cls_pen.def("create", false, [](QColor c,int width,Qt::PenStyle style)->QPen*{ return new QPen(c, width, style); }, false);
+    cls_pen.setValueType(true);
     cls_pen.regist();
 
     //brush
     jzbind::ClassBind<QBrush> cls_brush(Type_brush,"QBrush");
-    cls_brush.def("create", false, [](QColor c)->QBrush* { return new QBrush(c); }, false);
+    cls_brush.setValueType(true);
     cls_brush.regist();
 
     //painter
     jzbind::ClassBind<QPainter> cls_painter(Type_painter,"QPainter");
-    cls_painter.def("create", true, [](QWidget *w)->QPainter* { return new QPainter(w); }, false);
+    cls_painter.def("create", true, [](QWidget *w)->QPainter* { return new QPainter(w); }, CFunction::Owner);
     cls_painter.def("drawRect", true, QOverload<const QRect&>::of(&QPainter::drawRect));
     cls_painter.def("fillRect", true, QOverload<const QRect&, const QColor&>::of(&QPainter::fillRect));
     cls_painter.regist();
@@ -735,6 +744,8 @@ void QtWrapper::registConvert()
     m_env->registConvert(Type_double, Type_jsonValue, to_json_value<double>);
     m_env->registConvert(Type_string, Type_jsonValue, to_json_value<QString>);
     m_env->registConvert(Type_bool, Type_jsonValue, to_json_value<bool>);
+    m_env->registConvert(Type_jsonObject, Type_jsonValue, to_json_value<QJsonObject>);
+    m_env->registConvert(Type_jsonArray, Type_jsonValue, to_json_value<QJsonArray>);
 }
 
 void registQtClass(JZScriptEnvironment *env)

@@ -192,7 +192,7 @@ bool JZNodeConvert::compiler(JZNodeCompiler *c, QString &error)
 
     int in_id = c->paramId(m_id,paramIn(0));
     int out_id = c->paramId(m_id,paramOut(0));
-    c->addConvert(irId(in_id),out_type,irId(out_id));
+    c->addConvert(irId(out_id),out_type,irId(in_id));
     return true;
 }
 
