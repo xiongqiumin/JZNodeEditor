@@ -371,7 +371,7 @@ bool JZNodeType::isDoubleOp(const QString &op)
 
 int JZNodeType::byteSize(QString dataType)
 {
-    return JZNodeType::nameToType(dataType);
+    return byteSize(JZNodeType::nameToType(dataType));
 }
 
 int JZNodeType::byteSize(int dataType)
@@ -433,18 +433,30 @@ int JZNodeType::variantType(const QVariant &v)
             return Type_nullptr;
         else if (v_usertype == qMetaTypeId<JZFunctionPointer>())
             return Type_function;
-        else if (v_usertype == qMetaTypeId<JZNodeObjectHolder>())
-            return ((JZNodeObjectHolder*)v.data())->object()->type();
+        else if (v_usertype == qMetaTypeId<JZNodeObjectPointer>())
+            return ((JZNodeObjectPointer*)v.data())->type();
         else if (v_usertype == qMetaTypeId<JZVariantAny>())
             return Type_any;
-        else if (v_usertype == qMetaTypeId<JZNodeObjectPointer>())
-            return ((JZNodeObjectPointer*)v.data())->type;
     }
     
     return Type_none;
 }
 
+bool JZNodeType::variantIsVaild(const QVariant& v)
+{
+    return variantType(v) != Type_none;
+}
+
 bool JZNodeType::variantIsPointer(const QVariant& v)
+{
+    if (v.userType() != qMetaTypeId<JZNodeObjectPointer>())
+        return false;
+
+    JZNodeObjectPointer* h = (JZNodeObjectPointer*)v.data();
+    return JZNodeType::isPointer(h->type());
+}
+
+bool JZNodeType::variantIsHolder(const QVariant& v)
 {
     return v.userType() == qMetaTypeId<JZNodeObjectPointer>();
 }
@@ -516,10 +528,10 @@ bool JZNodeType::sigSlotTypeMatch(const JZSignalDefine *sig,const JZFunctionDefi
 
 QVariant JZNodeType::convertToPointer(const QVariant& srcValue)
 {
-    if (srcValue.type() == QVariant::UserType && srcValue.userType() == qMetaTypeId<JZNodeObjectHolder>())
+    if (srcValue.type() == QVariant::UserType && srcValue.userType() == qMetaTypeId<JZNodeObjectPointer>())
     {
-        JZNodeObjectHolder* obj_ptr = (JZNodeObjectHolder*)srcValue.data();
-        JZNodeObjectPointer pointer = obj_ptr->toPointer();
+        JZNodeObjectPointer* obj_ptr = (JZNodeObjectPointer*)srcValue.data();
+        JZNodeObjectPointer pointer = obj_ptr->toWeakPointer();
         return QVariant::fromValue(pointer);
     }
 

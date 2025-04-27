@@ -2,16 +2,34 @@
 #include "JZNodeEngine.h"
 #include "JZNodeUtils.h"
 
-//JZModbusManagerConfig
-QDataStream &operator<<(QDataStream &s, const JZModbusManagerConfig &param)
+//JZCommModbusInfo
+JZCommModbusInfo::JZCommModbusInfo()
 {
-    s << param.m_clientConnet;
+    bitOrder = QDataStream::LittleEndian;
+}
+
+QDataStream& operator<<(QDataStream& s, const JZCommModbusInfo& param)
+{
+    s << param.name << param.conn << param.bitOrder;
     return s;
 }
 
-QDataStream &operator >> (QDataStream &s, JZModbusManagerConfig &param)
+QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param)
 {
-    s >> param.m_clientConnet;
+    s >> param.name >> param.conn >> param.bitOrder;
+    return s;
+}
+
+//JZModbusManagerConfig
+QDataStream &operator<<(QDataStream &s, const JZCommConfig &param)
+{
+    s << param.modbusClient;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZCommConfig &param)
+{
+    s >> param.modbusClient;
     return s;
 }
 
@@ -28,38 +46,45 @@ JZCommManager::~JZCommManager()
     m_modbusServer.clear();
 }
 
-JZModbusClient* JZCommManager::modbusClient(int idx)
+JZModbusClient* JZCommManager::modbusClient(QString name)
 {
-    if (idx < 0 || idx >= m_modbusClient.size())
-        return nullptr;
-
-	return m_modbusClient[idx];
+    for (int i = 0; i < m_config.modbusClient.size(); i++)
+    {
+        if (m_config.modbusClient[i].name == name)
+            return m_modbusClient[i];
+    }
+	return nullptr;
 }
 
 void JZCommManager::init()
 {
-
+    for (int i = 0; i < m_config.modbusClient.size(); i++)
+    {
+        JZModbusClient* client = new JZModbusClient(this);
+        client->initConn(m_config.modbusClient[i].conn);
+        client->setProperty("bitOrder", m_config.modbusClient[i].bitOrder);
+        m_modbusClient.push_back(client);
+    }
 }
 
-void JZCommManager::setConfig(const JZModbusManagerConfig &config)
+void JZCommManager::setConfig(const JZCommConfig&config)
 {
     m_config = config;
 }
 
-JZModbusManagerConfig JZCommManager::config()
+JZCommConfig JZCommManager::config()
 {
     return m_config;
 }
 
 void JZCommInit(JZCommManager* inst, const QByteArray& buffer)
 {
-    JZModbusManagerConfig config = JZNodeUtils::fromBuffer<JZModbusManagerConfig>(buffer);
+    JZCommConfig config = JZNodeUtils::fromBuffer<JZCommConfig>(buffer);
     inst->setConfig(config);
     inst->init();
 }
 
 //modbus
-
 template<class T>
 static void paramPack(const JZVariantAny &any, QDataStream::ByteOrder remoteByteOrder, QVector<uint16_t>& out)
 {
@@ -75,17 +100,20 @@ static void paramUnpack(JZVariantAny &any, QDataStream::ByteOrder remoteByteOrde
     any = JZVariantAny::fromValue<T>(out[0]);
 }
 
-JZVariantAny JZCommModbusRead(JZModbusClient *client, const QJsonObject &param)
+JZVariantAny JZCommModbusRead(JZCommManager* mgr, const QString& name, const QJsonObject &param)
 {
+    auto client = mgr->modbusClient(name);
+    if (!client)
+        throw std::runtime_error("client is nullptr");
+
     QDataStream::ByteOrder bit_order = (QDataStream::ByteOrder)client->property("BitOrder").toInt();
-    if (!client->isOpen())
-        throw std::runtime_error("client is not open");
+    if (!client->isOpen() && !client->open())
+        throw std::runtime_error("client open failed");
     
     JZVariantAny any;
     bool ret = false;
     int addr = param["addr"].toInt();
     int function = param["function"].toInt();
-    int count = param["count"].toInt();
     QString read_type = param["readType"].toString();
     if (function == Function_Bit || function == Function_InputBit)
     {
@@ -103,6 +131,8 @@ JZVariantAny JZCommModbusRead(JZModbusClient *client, const QJsonObject &param)
     }
     else if (function == Function_InputRegister || function == Function_Register)
     {
+        int count = JZNodeType::byteSize(read_type) / 2;
+
         QVector<uint16_t> buffer;
         if (function == Function_InputRegister)
             ret = client->readInputRegisters(addr, count, buffer);
@@ -133,17 +163,20 @@ JZVariantAny JZCommModbusRead(JZModbusClient *client, const QJsonObject &param)
     return any;
 }
 
-void JZCommModbusWrite(JZModbusClient *client, const QJsonObject &param, JZVariantAny value)
+void JZCommModbusWrite(JZCommManager* mgr, const QString& name, const QJsonObject &param, JZVariantAny value)
 {
+    auto client = mgr->modbusClient(name);
+    if (!client)
+        throw std::runtime_error("client is nullptr");
+
     QDataStream::ByteOrder bit_order = (QDataStream::ByteOrder)client->property("BitOrder").toInt();
-    if (!client->isOpen())
-        throw std::runtime_error("client is not open");    
+    if (!client->isOpen() && !client->open())
+        throw std::runtime_error("client open failed");
 
     JZVariantAny any;
     bool ret = false;
     int addr = param["addr"].toInt();
     int function = param["function"].toInt();
-    int count = param["count"].toInt();
     QString read_type = param["readType"].toString();
     if (function == Function_Bit)
     {        
@@ -172,4 +205,60 @@ void JZCommModbusWrite(JZModbusClient *client, const QJsonObject &param, JZVaria
 
     if (!ret)
         throw std::runtime_error("write param failed");
+}
+
+//net
+QString JZCommTcpRead(JZCommManager* mgr, const QString& name, const QJsonObject& param)
+{
+    return QString();
+}
+
+void JZCommTcpWrite(JZCommManager* mgr, const QString& name, const QJsonObject& param, QString any)
+{
+}
+
+QByteArray JZCommTcpReadBin(JZCommManager* mgr, const QString& name, const QJsonObject& param)
+{
+    return QByteArray();
+}
+
+void JZCommTcpWriteBin(JZCommManager* mgr, const QString& name, const QJsonObject& param, const QByteArray& any)
+{
+}
+
+QString JZCommUdpRead(JZCommManager* mgr, const QString& name, const QJsonObject& param)
+{
+    return QString();
+}
+
+void JZCommUdpWrite(JZCommManager* mgr, const QString& name, const QJsonObject& param, QString any)
+{
+}
+
+QByteArray JZCommUdpReadBin(JZCommManager* mgr, const QString& name, const QJsonObject& param)
+{
+    return QByteArray();
+}
+
+void JZCommUdpWriteBin(JZCommManager* mgr, const QString& name, const QJsonObject& param, const QByteArray& any)
+{
+}
+
+//serial
+QString JZCommSerialRead(JZCommManager* mgr, const QString& name, const QJsonObject& param)
+{
+    return QString();
+}
+
+void JZCommSerialWrite(JZCommManager* mgr, const QString& name, const QJsonObject& param, QString any)
+{
+}
+
+QByteArray JZCommSerialReadBin(JZCommManager* mgr, const QString& name, const QJsonObject& param)
+{
+    return QByteArray();
+}
+
+void JZCommSerialWriteBin(JZCommManager* mgr, const QString& name, const QJsonObject& param, const QByteArray& any)
+{
 }

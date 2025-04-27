@@ -114,6 +114,6 @@ protected:
 
     QMap<int64_t,ConvertFunc> convertMap;    
 };
-
+JZScriptEnvironment *runtimeEnvironment();
 
 #endif

@@ -28,8 +28,8 @@ public:
     RunnerEnv();
     ~RunnerEnv();
     
-    void initVariable(QString name, int data_type);
-    void initVariable(int id, int data_type);
+    void initVariable(QString name, QVariantPtr ptr);
+    void initVariable(int id, QVariantPtr ptr);
 
     QVariantPtr *getRef(int id);
     QVariantPtr *getRef(const QString &name);
@@ -273,6 +273,7 @@ protected:
     void checkFunctionOut(const JZFunction *func);
     void callCFunction(const JZFunction *func); 
 
+    QVariantPtr initVariantPtr(int data_type);
     void initGlobal(QString name, int data_type);
     void initLocal(QString name, int data_type);
     void initLocal(int id, int data_type);

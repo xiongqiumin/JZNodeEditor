@@ -70,17 +70,13 @@ RunnerEnv::~RunnerEnv()
 {       
 }
 
-void RunnerEnv::initVariable(QString name,int data_type)
+void RunnerEnv::initVariable(QString name, QVariantPtr ptr)
 {
-    QVariantPtr ptr;
-    ptr.type = data_type;    
     locals[name] = ptr;
 }
 
-void RunnerEnv::initVariable(int id, int data_type)
-{
-    QVariantPtr ptr;
-    ptr.type = data_type;    
+void RunnerEnv::initVariable(int id, QVariantPtr ptr)
+{ 
     stacks[id] = ptr;
 }
 
@@ -790,23 +786,41 @@ void JZNodeEngine::setVariable(const QString &name, const QVariant &value)
     setParam(irRef(name),value);
 }
 
-void JZNodeEngine::initGlobal(QString name, int data_type)
+QVariantPtr JZNodeEngine::initVariantPtr(int data_type)
 {
     QVariantPtr ptr;
     ptr.type = data_type;    
-	m_global[name] = ptr;
+    if (JZNodeType::isPointer(data_type))
+    {
+        JZNodeObjectPointer obj_ptr(data_type);
+        *ptr.ptr = QVariant::fromValue(obj_ptr);
+    }
+    else
+    {
+        if (data_type < Type_class)
+            *ptr.ptr = m_env.defaultValue(data_type);
+        else
+            *ptr.ptr = QVariant::fromValue(JZNodeObjectPointer(data_type));
+    }
+
+    return ptr;
+}
+
+void JZNodeEngine::initGlobal(QString name, int data_type)
+{
+	m_global[name] = initVariantPtr(data_type);
 }
 
 void JZNodeEngine::initLocal(QString name, int data_type)
 {
     auto env = m_stack.currentEnv();
-    env->initVariable(name, data_type);
+    env->initVariable(name, initVariantPtr(data_type));
 }
 
 void JZNodeEngine::initLocal(int id, int data_type)
 {
     auto env = m_stack.currentEnv();
-    env->initVariable(id, data_type);
+    env->initVariable(id, initVariantPtr(data_type));
 }
 
 void JZNodeEngine::clearReg()
@@ -831,8 +845,7 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     QVariant v;
     if (JZNodeType::isPointer(type))
     {
-        JZNodeObjectPointer ref;
-        ref.type = type;
+        JZNodeObjectPointer ref(type);
         v = QVariant::fromValue(ref);
     }
     else if(type < Type_class)
@@ -858,7 +871,7 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
             else
                 sub = JZObjectFromString(type, init_text);
         }
-        v = QVariant::fromValue(JZNodeObjectHolder(sub,true));
+        v = QVariant::fromValue(JZNodeObjectPointer(sub,true));
     }
     return v;
 }
@@ -890,7 +903,16 @@ void JZNodeEngine::dealSet(QVariantPtr *ref, const QVariant &value)
 {
     Q_ASSERT_X(ref && m_env.isSameType(JZNodeType::variantType(value),ref->type),"",qUtf8Printable("set " + m_env.variantTypeName(value) 
         + " to " + m_env.typeToName(ref->type)));
-    *ref->ptr = value;
+    
+    if(!JZNodeType::variantIsPointer(value) && JZNodeType::isPointer(ref->type))
+        *ref->ptr = JZNodeType::convertToPointer(value);
+    else if (JZNodeType::isNullptr(value) && JZNodeType::variantIsHolder(*ref->ptr))
+    {
+        JZNodeObjectPointer* h = (JZNodeObjectPointer*)ref->ptr.data();
+        h->relaseObject();
+    }
+    else
+        *ref->ptr = value;
 }
 
 QVariant JZNodeEngine::getSender()
@@ -1226,9 +1248,9 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
         const QVariant &v = getReg(Reg_CallIn + i);
         Q_ASSERT_X(m_env.isSameType(JZNodeType::variantType(v), data_type), "", qUtf8Printable("set " 
             + m_env.variantTypeName(v) + " to " + m_env.typeToName(data_type)));        
-        if (JZNodeType::baseType(data_type) >= Type_class && JZNodeType::isNullObject(v))
+        if (func->isMemberFunction() && i == 0 && JZNodeType::isNullObject(v))
         {
-            QString error = "param" + QString::number(i + 1) + " is nullptr object";
+            QString error = "this is nullptr";
             throw std::runtime_error(qUtf8Printable(error));
         }
     }
@@ -1731,7 +1753,7 @@ bool JZNodeEngine::run()
         {
             const JZNodeIRClone *ir_set = (const JZNodeIRClone*)op;
             auto obj = obj_inst->clone(toJZObject(getParam(ir_set->src)));
-            auto ptr = JZNodeObjectHolder(obj,true);
+            auto ptr = JZNodeObjectPointer(obj,true);
             setParam(ir_set->dst,QVariant::fromValue(ptr));
             break;
         }

@@ -35,11 +35,10 @@ void listForeach(JZNodeObject *obj, std::function<bool(int,QVariant)> vistor)
     auto env = g_engine->environment();
 
     QString list_type = obj->className();
-    JZNodeObjectHolder holder(obj, false);
-    JZNodeObjectPointer list_ptr = holder.toPointer();
+    JZNodeObjectPointer holder(obj, false);
     
     QVariantList in, out;
-    in << QVariant::fromValue(list_ptr);
+    in << QVariant::fromValue(holder);
 
     JZScriptInvoke(list_type + "::size", in, out);
     int list_size = out[0].toInt();
@@ -64,12 +63,11 @@ void mapForeach(JZNodeObject *obj, std::function<bool(QVariant, QVariant)> visto
     QString it_type = JZNodeType::mapIteratorType(map_type);
     int it_ptr_type = env->nameToType(JZNodeType::pointerType(it_type));
 
-    JZNodeObjectHolder holder(obj, false);
-    JZNodeObjectPointer map_ptr = holder.toPointer();
+    JZNodeObjectPointer holder(obj, false);
 
     QVariant it, it_end;
     QVariantList in, out;
-    in << QVariant::fromValue(map_ptr);
+    in << QVariant::fromValue(holder);
 
     JZScriptInvoke(map_type + "::beign", in, out);
     it = out[0];

@@ -184,6 +184,10 @@ const JZNodeObjectDefine* JZScriptEnvironment::meta(const QString& name) const
 
 bool JZScriptEnvironment::hasType(int type) const
 {
+    type = JZNodeType::baseType(type);
+    if (type >= Type_bool && type <= Type_function)
+        return true;
+
     return m_objectManager.hasType(type);
 }
 
@@ -285,7 +289,7 @@ bool JZScriptEnvironment::isVaildType(QString type) const
 
 bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
 {    
-    if (JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type))
+    if (JZNodeType::isPointer(dst_type))
     {
         int base_src = JZNodeType::baseType(src_type);
         int base_dst = JZNodeType::baseType(dst_type);
@@ -300,6 +304,8 @@ bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
         return true;
     else if (src_type >= Type_class && dst_type >= Type_class)
         return isInherits(src_type, dst_type);
+    else if (src_type == Type_nullptr && dst_type >= Type_class)
+        return true;
     
     return false;
 }
@@ -352,11 +358,12 @@ bool JZScriptEnvironment::isFunctionTypeMatch(const JZFunctionDefine* func1, con
 
 JZParamDefine JZScriptEnvironment::paramDefine(QString name, int data_type, QString value) const
 {
+    Q_ASSERT(hasType(data_type) || (data_type >= Type_auto && data_type << Type_args));
+
     JZParamDefine p;
     p.name = name;
     p.type = typeToName(data_type);
     p.value = value;
-    Q_ASSERT(p.type != Type_none);
     return p;
 }
 
@@ -558,7 +565,7 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
 QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
 {
     QVariant value = tryConvertTo(v, dst_type);
-    Q_ASSERT_X(value.isValid(), "Convert Failed", qUtf8Printable(variantType(v) + " -> " + typeToName(dst_type)));
+    Q_ASSERT_X(JZNodeType::variantIsVaild(v), "Convert Failed", qUtf8Printable(variantTypeName(v) + " -> " + typeToName(dst_type)));
     return value;
 }
 
@@ -912,4 +919,9 @@ void JZScriptEnvironment::registConvert(int from, int to, ConvertFunc func)
 {
     int64_t id = (int64_t)from << 32 | (int64_t)to;
     convertMap[id] = func;
+}
+
+JZScriptEnvironment *runtimeEnvironment()
+{
+    return g_engine->environment();    
 }

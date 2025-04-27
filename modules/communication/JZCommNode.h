@@ -27,7 +27,12 @@ public:
     JZNodeCommInit();
     ~JZNodeCommInit();
 
+    void setConfig(JZCommConfig config);
+    JZCommConfig config();
+
     bool compiler(JZNodeCompiler* compiler, QString& error);
+
+    JZCommConfig m_config;
 };
 
 //JZNodeModbusRead
@@ -42,24 +47,24 @@ public:
     virtual void saveToStream(QDataStream& s) const override;
     virtual void loadFromStream(QDataStream& s) override;
 
-    void setCommIndex(int comm);
-
-    void setFunction(int function);
-    int function();
+    void setClient(QString comm);
+    QString client();
 
     void setAddr(int addr);
     int addr();
+
+    void setFunction(int function);
+    int function();
     
-    void setReadType(QString type);
-    QString readType();
+    void setDataType(QString type);
+    QString dataType();
 
 protected:
     virtual bool updateNode(QString& error) override;
-    int readTypeSize();
 
-    int m_commIndex;
+    QString m_modbus;
     int m_function;
-    QString m_readType;    
+    QString m_dataType;
 };
 
 //JZNodeModbusWrite
@@ -74,11 +79,24 @@ public:
     virtual void saveToStream(QDataStream& s) const override;
     virtual void loadFromStream(QDataStream& s) override;
 
+    void setClient(QString comm);
+    QString client();
+
+    void setAddr(int addr);
+    int addr();
+
+    void setFunction(int function);
+    int function();
+
+    void setDataType(QString type);
+    QString dataType();
+
 protected:
-    int m_commIndex;
+    bool updateNode(QString& error);
+
+    QString m_modbus;
     int m_function;
-    QString m_readType;
-    int m_bitOrder;
+    QString m_dataType;
 
 };
 

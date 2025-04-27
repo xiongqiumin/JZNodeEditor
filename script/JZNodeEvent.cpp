@@ -344,9 +344,9 @@ void JZTimerEventConnect(QObject *object,const QByteArray &buffer)
     timer->connect(timer,&QTimer::timeout,object,[object,slot_function]
     {
         JZNodeObject *jzobj = qobjectToJZObject(object);
-        JZNodeObjectHolder self(jzobj, false);
+        JZNodeObjectPointer self(jzobj, false);
         QVariantList in,out;
-        in << QVariant::fromValue(self.toPointer());
+        in << QVariant::fromValue(self);
         JZScriptInvoke(slot_function,in,out);
     });
     timer->start(ms);

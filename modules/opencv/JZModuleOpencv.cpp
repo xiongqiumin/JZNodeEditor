@@ -15,7 +15,7 @@ QVariant createMat(JZScriptEnvironment *env,const QString &value)
 {
     Mat *mat = new Mat();
     *mat = imread(qPrintable(value));
-    return env->objectManager()->objectRefrenceVariant(mat, true);
+    return env->objectManager()->objectReferenceVariant(mat, true);
 }
 
 QByteArray matPack(JZScriptEnvironment *env, const QVariant &value)
@@ -34,7 +34,7 @@ QVariant matUnpack(JZScriptEnvironment *env, const QByteArray &buffer)
 {
     QImage *image = new QImage();
     image->loadFromData(buffer);
-    return env->objectManager()->objectRefrenceVariant(image, true);
+    return env->objectManager()->objectReferenceVariant(image, true);
 }
 
 //JZModuleOpencv

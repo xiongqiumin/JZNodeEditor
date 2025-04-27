@@ -125,7 +125,6 @@ using is_enum_or_qenum = bool_constant<is_enum_or_qenum_cond<T>()>;
 
 void setBindEnvironment(JZScriptEnvironment *env);
 JZScriptEnvironment *bindEnvironment();
-JZScriptEnvironment *runtimeEnvironment();
 
 template<class T> void *createClass(){ return new T(); }
 template<class T> void destoryClass(void *ptr){ delete (T*)ptr; }
@@ -149,16 +148,14 @@ template<class T>
 T fromVariantEnum(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.type() == QVariant::UserType);
-    Q_ASSERT(!JZNodeType::variantIsPointer(v));
     JZNodeObject *obj = toJZObject(v);
-    T *cobj = (T*)(obj->cobj());
+    auto *cobj = (remove_cvr_t<T>*)(obj->cobj());
     return *cobj;
 }
 
 template<class T>
 T fromVariant(const QVariant &v, std::true_type)
 {
-    Q_ASSERT(JZNodeType::variantIsPointer(v));
     JZNodeObject *obj = toJZObject(v);
     if (obj)
         return (T)obj->cobj();
@@ -176,16 +173,40 @@ template<>
 bool fromVariant<bool>(const QVariant &v, std::false_type);
 
 template<>
+int8_t fromVariant<int8_t>(const QVariant &v, std::false_type);
+
+template<>
+uint8_t fromVariant<uint8_t>(const QVariant &v, std::false_type);
+
+template<>
+int16_t fromVariant<int16_t>(const QVariant &v, std::false_type);
+
+template<>
+uint16_t fromVariant<uint16_t>(const QVariant &v, std::false_type);
+
+template<>
 int fromVariant<int>(const QVariant &v, std::false_type);
 
 template<>
-qint64 fromVariant<qint64>(const QVariant &v, std::false_type);
+uint fromVariant<uint>(const QVariant &v, std::false_type);
+
+template<>
+int64_t fromVariant<int64_t>(const QVariant &v, std::false_type);
+
+template<>
+uint64_t fromVariant<uint64_t>(const QVariant &v, std::false_type);
+
+template<>
+float fromVariant<float>(const QVariant &v, std::false_type);
 
 template<>
 double fromVariant<double>(const QVariant &v, std::false_type);
 
 template<>
 QString fromVariant<QString>(const QVariant &v, std::false_type);
+
+template<>
+const QString& fromVariant<const QString&>(const QVariant& v, std::false_type);
 
 //为了调用QString 成员函数，比如 QString.size();
 template<>
@@ -201,9 +222,9 @@ template<>
 JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type);
 
 template<class T>
-remove_cvr_t<T> fromVariant(const QVariant &v)
+T fromVariant(const QVariant &v)
 {    
-    return fromVariant<remove_cvr_t<T>>(v, std::is_pointer<T>());
+    return fromVariant<T>(v, std::is_pointer<T>());
 }
 
 //to QVariant
@@ -239,10 +260,15 @@ template<class T>
 QVariant toVariantPointer(T value, std::true_type)
 {
     static_assert(std::is_class<std::remove_pointer_t<T>>(),"only support class pointer");
-    auto env = runtimeEnvironment();
-    JZNodeObject *object = env->objectManager()->objectRefrence<T>(value, false);
-    JZNodeObjectSharedPointer ptr;
-    ptr.init(object);
+    auto obj_inst = runtimeEnvironment()->objectManager();
+    if (!value)
+    {
+        QString c_typeid = typeid(std::remove_pointer_t<T>).name();
+        return QVariant::fromValue(JZNodeObjectPointer(obj_inst->getIdByCTypeid(c_typeid)));
+    }
+
+    JZNodeObject *object = obj_inst->objectReference<T>(value, false);
+    JZNodeObjectPointer ptr(object, false);
     return QVariant::fromValue(ptr);
 }
 
@@ -294,7 +320,7 @@ template <class type,typename T,typename... Args>
 void getFunctionParam(QStringList &list)
 {    
     QString ctype = typeid(typename std::remove_pointer<T>::type).name();
-    if (std::is_pointer<T>())
+    if (std::is_pointer<T>() || std::is_reference<T>())
         ctype += "*";
     list.push_back(ctype);
     getFunctionParam<type,Args...>(list);
@@ -341,14 +367,14 @@ public:
     }    
 
     template<typename U = Return>
-    typename std::enable_if<std::is_pointer<U>::value,void>::type setRefrence(PointerRef flag)
+    typename std::enable_if<std::is_pointer<U>::value,void>::type setReference(PointerRef flag)
     {
         isRef = (flag == Reference);
         isPointer = true;
     }
 
     template<typename U = Return>
-    typename std::enable_if<!std::is_pointer<U>::value,void>::type setRefrence()
+    typename std::enable_if<!std::is_pointer<U>::value,void>::type setReference()
     {
     }
 
@@ -372,8 +398,8 @@ CFunctionImpl<Func,Return,Args...> *createCFunction(Func func,Return (*)(Args...
 template<typename Return,typename... Args,typename... Extra>
 void extra_check(Return (*)(Args...),Extra...)
 {    
-    static_assert(!std::is_pointer<Return>::value || sizeof...(Extra) == 1,"if return point type, need set refrence type");
-    static_assert(std::is_pointer<Return>::value || sizeof...(Extra) == 0,"if return no point type, don't set refrence type");
+    static_assert(!std::is_pointer<Return>::value || sizeof...(Extra) == 1,"if return point type, need set reference type");
+    static_assert(std::is_pointer<Return>::value || sizeof...(Extra) == 0,"if return no point type, don't set reference type");
 }
 
 template <typename Func,typename... Extra>
@@ -382,7 +408,7 @@ QSharedPointer<CFunction> createFuncionImpl(Func func,Extra... extra)
     extra_check((function_signature_t<Func>*) nullptr,extra...);
 
     auto impl = createCFunction(func,(function_signature_t<Func>*) nullptr);
-    impl->setRefrence(extra...);
+    impl->setReference(extra...);
     return QSharedPointer<CFunction>(impl);
 }
 
@@ -537,15 +563,6 @@ int registEnum(QString name,int id = Type_none)
     return bindEnvironment()->objectManager()->registCEnum(define,typeid(T).name());
 }
 
-template<class ret_type>
-ret_type getReturn(const QVariantList &list)
-{
-    return fromVariant<ret_type>(list[0]);
-}
-
-template<>
-void getReturn(const QVariantList &);
-
 template<class Class>
 class WidgetWrapper : public Class
 {  
@@ -560,11 +577,11 @@ public:
         if(!jz_func)
             return func();
     
-        JZNodeObjectHolder self(jzobj, false);
-        JZNodeObjectHolder event_obj = jzobj->manager()->objectRefrenceHolder(event,false);
+        JZNodeObjectPointer self(jzobj, false);
+        JZNodeObjectPointer event_obj = jzobj->manager()->objectReferencePointer(event,false);
 
         QVariantList in,out;
-        in << QVariant::fromValue(self.toPointer()) << QVariant::fromValue(event_obj.toPointer());
+        in << QVariant::fromValue(self) << QVariant::fromValue(event_obj);
         JZScriptInvoke(jz_func->fullName(),in,out);
     }
 

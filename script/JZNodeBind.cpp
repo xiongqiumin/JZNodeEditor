@@ -17,11 +17,6 @@ JZScriptEnvironment *bindEnvironment()
     return g_bindEnv;    
 }
 
-JZScriptEnvironment *runtimeEnvironment()
-{
-    return g_engine->environment();    
-}
-
 void *createClassAssert()
 {
     Q_ASSERT(0);
@@ -59,15 +54,57 @@ bool fromVariant<bool>(const QVariant &v, std::false_type)
 }
 
 template<>
+int8_t fromVariant<int8_t>(const QVariant &v, std::false_type)
+{
+	return v.value<uint8_t>();
+}
+
+template<>
+uint8_t fromVariant<uint8_t>(const QVariant &v, std::false_type)
+{
+	return v.value<uint8_t>();
+}
+
+template<>
+int16_t fromVariant<int16_t>(const QVariant &v, std::false_type)
+{
+    return v.value<int16_t>();
+}
+
+template<>
+uint16_t fromVariant<uint16_t>(const QVariant &v, std::false_type)
+{
+	return v.value<uint16_t>();
+}
+
+template<>
 int fromVariant<int>(const QVariant &v, std::false_type)
 {
     return v.toInt();
 }
 
 template<>
-qint64 fromVariant<qint64>(const QVariant &v, std::false_type)
+uint fromVariant<uint>(const QVariant &v, std::false_type)
 {
-    return v.value<qint64>();
+    return v.toUInt();
+}
+
+template<>
+int64_t fromVariant<int64_t>(const QVariant &v, std::false_type)
+{
+    return v.value<int64_t>();
+}
+
+template<>
+uint64_t fromVariant<uint64_t>(const QVariant &v, std::false_type)
+{
+    return v.value<uint64_t>();
+}
+
+template<>
+float fromVariant<float>(const QVariant &v, std::false_type)
+{
+    return v.value<float>();
 }
 
 template<>
@@ -81,6 +118,14 @@ QString fromVariant<QString>(const QVariant &v, std::false_type)
 {
     Q_ASSERT(v.type() == QVariant::String);
     return v.toString();
+}
+
+template<>
+const QString& fromVariant<const QString&>(const QVariant& v, std::false_type)
+{
+    Q_ASSERT(v.type() == QVariant::String);
+    QString *pstr = (QString*)v.data();
+    return *pstr;
 }
 
 template<>
@@ -131,12 +176,6 @@ template<>
 QVariant toVariant(QString value)
 {
     return value;
-}
-
-template<>
-void getReturn(const QVariantList &)
-{
-
 }
 
 }

@@ -1920,7 +1920,7 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
     {
         int func_param_type = env->nameToType(func->paramIn[i].type);
         int param_type = irParamType(org_paramIn[i]);
-        if(func_param_type == param_type)
+        if(m_env->isSameType(param_type,func_param_type))
         {
             param_in << org_paramIn[i];
         }
@@ -1938,7 +1938,7 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
     {
         int func_param_type = env->nameToType(func->paramOut[i].type);
         int param_type = irParamType(org_paramOut[i]);
-        if(func_param_type == param_type)
+        if(m_env->isSameType(func_param_type, param_type))
         {
             param_out << org_paramOut[i];
         }
@@ -1955,7 +1955,7 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
     {   
         int func_param_type = env->nameToType(func->paramOut[i].type);
         int param_type = irParamType(org_paramOut[i]);
-        if(func_param_type == param_type)
+        if(!m_env->isSameType(func_param_type, param_type))
             addConvert(org_paramOut[i],param_type,param_out[i]);
     }
 }

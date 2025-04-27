@@ -33,12 +33,6 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     cls_modbus_master.def("open", true, &JZModbusMaster::open);
     cls_modbus_master.def("close", true, &JZModbusMaster::close);
     cls_modbus_master.def("param", false, &JZModbusMaster::param, CFunction::Reference);
-    cls_modbus_master.def("writeParam", true, &JZModbusMaster::writeParam);
-    cls_modbus_master.def("readParam", true, &JZModbusMaster::readParam);
-    cls_modbus_master.def("writeRemoteParam", true, &JZModbusMaster::writeRemoteParam);
-    cls_modbus_master.def("readRemoteParam", true, &JZModbusMaster::readRemoteParam);
-    cls_modbus_master.def("writeRemoteParamAsync", true, &JZModbusMaster::writeRemoteParamAsync);
-    cls_modbus_master.def("readRemoteParamAsync", true, &JZModbusMaster::readRemoteParamAsync);
     cls_modbus_master.defSingle("sigParamReceived", &JZModbusMaster::sigParamReceived);
     cls_modbus_master.defSingle("sigParamChanged", &JZModbusMaster::sigParamChanged);
     cls_modbus_master.regist();
@@ -47,8 +41,6 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     cls_modbus_slaver.def("setSlave", true, &JZModbusSlaver::setSlave);
     cls_modbus_slaver.def("startServer", true, &JZModbusSlaver::startServer);
     cls_modbus_slaver.def("stopServer", true, &JZModbusSlaver::stopServer);
-    cls_modbus_slaver.def("writeParam", true, &JZModbusSlaver::writeParam);
-    cls_modbus_slaver.def("readParam", true, &JZModbusSlaver::readParam);
     cls_modbus_slaver.defSingle("sigParamChanged", &JZModbusSlaver::sigParamChanged);
     cls_modbus_slaver.regist();
 

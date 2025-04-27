@@ -264,7 +264,7 @@ public:
     int addSingleExpr(const JZNodeIRParam &dst, const JZNodeIRParam &p1, JZNodeIRType op);
     int addCompare(const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
     void addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op);
-    void addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value);
+    void addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value = QString());
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
     void addSetBuffer(const JZNodeIRParam &dst, const QByteArray &buffer);

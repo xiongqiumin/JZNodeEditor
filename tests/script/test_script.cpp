@@ -53,7 +53,7 @@ void ScriptTest::testClone()
     auto obj_inst = m_objInst;
     auto obj1 = obj_inst->objectCreateHolder<QObject>();
     auto obj2 = obj_inst->objectCreateHolder<QObject>();
-    JZNodeObjectHolder obj3 = obj1;
+    JZNodeObjectPointer obj3 = obj1;
     QVERIFY(obj1 != obj2);
     QVERIFY(obj1 == obj3);
 
@@ -163,20 +163,20 @@ void ScriptTest::testObjectParse()
     if (!build())
         return;
 /*
-    QList<JZNodeObjectHolder> cache;
+    QList<JZNodeObjectPointer> cache;
 
     JZNodeObjectParser parser;
     auto obj_list = parser.parse("[1,2,3,4,5,6,7,8]");
     QVERIFY2(obj_list, qUtf8Printable(parser.error()));
-    cache << JZNodeObjectHolder(obj_list,true);
+    cache << JZNodeObjectPointer(obj_list,true);
 
     auto obj_map = parser.parse(R"({"a":1,"b":998})");
     QVERIFY2(obj_map, qUtf8Printable(parser.error()));
-    cache << JZNodeObjectHolder(obj_map,true);
+    cache << JZNodeObjectPointer(obj_map,true);
 
     obj_list = parser.parse("[ QPoint{1,2},QPoint{3,4},QPoint{5,6},QPoint{7,8}]");
     QVERIFY2(obj_list, qUtf8Printable(parser.error()));
-    cache << JZNodeObjectHolder(obj_list,true);
+    cache << JZNodeObjectPointer(obj_list,true);
 
     JZList *list = (JZList*)obj_list->cobj();
     QCOMPARE(list->list.size(),4);

@@ -117,7 +117,7 @@ void registMap(JZScriptEnvironment* env, int type = Type_none)
     });
     cls_map.def("__toString__", false, [](QMap<Key, Value>* l)->QString {
         JZNodeObjectFormat format;
-        JZNodeObjectHolder holder = runtimeObjectManager()->objectRefrenceHolder(l, false);
+        JZNodeObjectPointer holder = runtimeEnvironment()->objectManager()->objectReferencePointer(l, false);
         return format.format(holder.object());
     });
     cls_map.def("set", false, [](QMap<Key, Value>* map, Key key, const Value& t) {

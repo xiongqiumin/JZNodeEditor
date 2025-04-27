@@ -296,6 +296,7 @@ void QtWrapper::initCore()
 
     //stringlist , 这里需要全部使用 lambda 因为 QList<QString> 未定义
     jzbind::ClassBind<QStringList> cls_string_list(Type_stringList,"stringList");
+    cls_string_list.setValueType(true);
     cls_string_list.def("create", false, []()->QStringList {        
         return QStringList();
     });
@@ -355,9 +356,11 @@ void QtWrapper::initCore()
     m_objInst->delcareCClass("QJsonObject", typeid(QJsonObject).name(), Type_jsonObject);
 
     jzbind::ClassBind<QByteArray> cls_byte_array(Type_byteArray,"QByteArray");
+    cls_byte_array.setValueType(true);
     cls_byte_array.regist();
 
     jzbind::ClassBind<QJsonValue> cls_json_value(Type_jsonValue, "QJsonValue");
+    cls_json_value.setValueType(true);
     cls_json_value.def("toString", false, [](QJsonValue *v)->QString { return v->toString(); });
     cls_json_value.def("toArray", false, [](QJsonValue *v)->QJsonArray { return v->toArray(); });
     cls_json_value.def("toObject", false, [](QJsonValue *v)->QJsonObject { return v->toObject(); });
@@ -367,15 +370,17 @@ void QtWrapper::initCore()
     cls_json_value.regist();
 
     jzbind::ClassBind<QJsonArray> cls_json_array(Type_jsonArray, "QJsonArray");
+    cls_json_array.setValueType(true);
     cls_json_array.def("get", false, [](QJsonArray *obj,int idx)->QJsonValue{ 
         return (*obj)[idx];
     });
-    cls_json_array.def("set", true, [](QJsonArray *obj,int idx,QJsonValue value){ 
+    cls_json_array.def("set", true, [](QJsonArray *obj,int idx,const QJsonValue &value){ 
         (*obj)[idx] = value;
     });
     cls_json_array.regist();
 
     jzbind::ClassBind<QJsonObject> cls_json_obj(Type_jsonObject, "QJsonObject");
+    cls_json_obj.setValueType(true);
     cls_json_obj.def("get", false, [](QJsonObject *obj,QString name)->QJsonValue{ 
         return (*obj)[name];
     });
@@ -692,14 +697,14 @@ void QtWrapper::initFiles()
 QVariant colorEnum_to_color(const JZScriptEnvironment *env,const QVariant &v)
 {
     QColor *color = new QColor((Qt::GlobalColor)v.toInt());
-    auto ptr = env->objectManager()->objectRefrence(color,true);
+    auto ptr = env->objectManager()->objectReference(color,true);
     return QVariant::fromValue(ptr);
 }
 
 QVariant colorEnum_to_brush(const JZScriptEnvironment *env,const QVariant &v)
 {
     QBrush *brush = new QBrush((Qt::GlobalColor)v.toInt());
-    auto ptr = env->objectManager()->objectRefrence(brush,true);
+    auto ptr = env->objectManager()->objectReference(brush,true);
     return QVariant::fromValue(ptr);
 }
 
@@ -707,7 +712,7 @@ QVariant color_to_brush(const JZScriptEnvironment *env,const QVariant &v)
 {    
     QColor *c = jzbind::fromVariant<QColor*>(v);
     QBrush *brush = new QBrush(*c);
-    auto ptr = env->objectManager()->objectRefrence(brush,true);
+    auto ptr = env->objectManager()->objectReference(brush,true);
     return QVariant::fromValue(ptr);
 }
 
@@ -723,7 +728,10 @@ template<class T>
 QVariant to_json_value(const JZScriptEnvironment *env, const QVariant &v)
 {
     T t = jzbind::fromVariant<T>(v);
-    return QVariant::fromValue(QJsonValue(t));
+    QJsonValue* ptr_v = new QJsonValue();
+    *ptr_v = t;
+    JZNodeObjectPointer h = env->objectManager()->objectReferencePointer(ptr_v, true);
+    return QVariant::fromValue(h);
 }
 
 void QtWrapper::registConvert()

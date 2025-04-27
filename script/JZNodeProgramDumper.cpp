@@ -344,13 +344,14 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         else
             line += alloc + " " + toString(ir_alloc->dst);
 
-        if (JZNodeType::isBase(ir_alloc->type))
+        if (JZNodeType::isBase(ir_alloc->dataType))
         {
             line += " = " + m_env.defaultValueString(ir_alloc->dataType);
         }
-        else if (JZNodeType::isPointer(ir_alloc->type))
-        {
-            line += " = nullptr";
+        else 
+        { 
+            if (JZNodeType::isPointer(ir_alloc->dataType))
+                line += " = nullptr";
         }
         line += ";";
         if (isFunctionInParam(ir_alloc->dst))

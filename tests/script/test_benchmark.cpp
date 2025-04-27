@@ -192,7 +192,7 @@ void BenchmarkTest::testCall()
     auto obj = env->objectManager()->create(Type_intList);
     auto list = (QList<int>*)(obj->cobj());
     *list << 1 << 2 << 3 << 4 << 5;
-    JZNodeObjectHolder ptr(obj,true);
+    JZNodeObjectPointer ptr(obj,true);
 
     auto list_func = env->functionManager()->functionImpl("QList<int>::get");
     JZBENCHMARK(jz_list_get)
@@ -223,7 +223,7 @@ void BenchmarkTest::testSort()
     auto obj = m_objInst->create(Type_intList);
     QList<int> *list = JZObjectCast<QList<int>>(obj);
 
-    JZNodeObjectHolder ptr(obj,true);
+    JZNodeObjectPointer ptr(obj,true);
     QList<int> base_list;
     int list_len = 200;
     qsrand(150);

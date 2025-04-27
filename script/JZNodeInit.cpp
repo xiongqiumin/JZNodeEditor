@@ -17,7 +17,7 @@
 #include "runtime/JZWidgetBind.h"
 #include "JZScriptUnitTest.h"
 
-QDebug operator<<(QDebug dbg, const JZNodeObjectHolder ptr)
+QDebug operator<<(QDebug dbg, const JZNodeObjectPointer ptr)
 {
     Q_ASSERT(ptr.object());
     dbg << JZNodeType::debugString(ptr.object());
@@ -33,8 +33,8 @@ void JZNodeInit()
     qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");
     qRegisterMetaTypeStreamOperators<JZFunctionPointer>("JZFunctionPointer");
     
-    QMetaType::registerDebugStreamOperator<JZNodeObjectHolder>();
-    QMetaType::registerEqualsComparator<JZNodeObjectHolder>();    
+    QMetaType::registerDebugStreamOperator<JZNodeObjectPointer>();
+    QMetaType::registerEqualsComparator<JZNodeObjectPointer>();    
 
     JZNodeType::init();
     JZProjectInit();

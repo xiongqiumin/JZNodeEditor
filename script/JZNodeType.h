@@ -199,7 +199,10 @@ public:
     static int byteSize(int dataType);
         
     static int variantType(const QVariant &v);
+
+    static bool variantIsVaild(const QVariant& v);
     static bool variantIsPointer(const QVariant& v);
+    static bool variantIsHolder(const QVariant& v);
 
     static bool isBase(int type);    
     static bool isEnum(int type);

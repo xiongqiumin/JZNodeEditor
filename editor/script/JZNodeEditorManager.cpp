@@ -25,7 +25,7 @@ JZNodeParamDelegate::JZNodeParamDelegate()
 QVariant createImage(JZScriptEnvironment *env, const QString &value)
 {
     QImage *image = new QImage(value);
-    return env->objectManager()->objectRefrenceVariant(image, true);
+    return env->objectManager()->objectReferenceVariant(image, true);
 }
 
 QByteArray imagePack(JZScriptEnvironment *env,const QVariant &value)
@@ -43,7 +43,7 @@ QVariant imageUnpack(JZScriptEnvironment *env,const QByteArray &buffer)
 {    
     QImage *image = new QImage();
     image->loadFromData(buffer);
-    return env->objectManager()->objectRefrenceVariant(image, true);
+    return env->objectManager()->objectReferenceVariant(image, true);
 }
 
 //JZNodeEditorManager
