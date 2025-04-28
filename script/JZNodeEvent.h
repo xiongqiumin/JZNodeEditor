@@ -147,11 +147,7 @@ public:
     void setObject(QString name);
     QString object();
 
-    virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-
-protected:
-    QString m_object;
 };
 
 //JZNodeTimerEvent

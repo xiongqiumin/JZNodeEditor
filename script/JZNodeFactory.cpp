@@ -78,8 +78,8 @@ JZNodeFactory::JZNodeFactory()
     registNode(Node_mousePressEvent, createJZNode<JZNodeMousePressEvent>);
     registNode(Node_mouseReleaseEvent, createJZNode<JZNodeMouseReleaseEvent>);
     
-    registNode(Node_buttonClikedEvnet, createJZNode<JZNodeButtonClickedEvent>);
-    registNode(Node_timerEvnet, createJZNode<JZNodeTimerEvent>);
+    registNode(Node_buttonClickedEvent, createJZNode<JZNodeButtonClickedEvent>);
+    registNode(Node_timerEvent, createJZNode<JZNodeTimerEvent>);
 }
 
 JZNodeFactory::~JZNodeFactory()

@@ -210,7 +210,8 @@ public:
     bool checkParamDefine(const JZParamDefine *def, QString &error);
     const JZParamDefine *getVariableInfo(const QString &name);
     bool checkVariableExist(const QString &var, QString &error);              //检查是否存在
-    bool checkVariableType(const QString &var,int data_type, QString &error); //检查变量是类型
+    bool checkVariableType(const QString& var, QString data_type, QString& error); //检查变量是类型
+    bool checkVariableType(const QString &var,int data_type, QString &error); 
     bool checkInitValue(int data_type,const QString &value);   //检查能否用字符串初始化    
 
     void resetStack();

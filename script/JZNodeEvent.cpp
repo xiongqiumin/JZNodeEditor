@@ -220,37 +220,6 @@ bool JZNodeKeyPressEvent::compiler(JZNodeCompiler* compiler, QString& error)
     return false;
 }
 
-
-//JZNodeButtonClickedEvent
-JZNodeButtonClickedEvent::JZNodeButtonClickedEvent()
-{
-    m_type = Node_buttonClikedEvnet;
-}
-
-JZNodeButtonClickedEvent::~JZNodeButtonClickedEvent()
-{
-}
-
-void JZNodeButtonClickedEvent::setObject(QString name)
-{
-    m_object = name;
-}
-
-QString JZNodeButtonClickedEvent::object()
-{
-    return m_object;
-}
-
-JZFunctionDefine JZNodeButtonClickedEvent::function()
-{
-    return JZFunctionDefine();
-}
-
-bool JZNodeButtonClickedEvent::compiler(JZNodeCompiler* compiler, QString& error)
-{
-    return false;
-}
-
 //JZNodeSignalEvent
 JZFunctionDefine JZNodeSignalEvent::function()
 {
@@ -284,13 +253,69 @@ bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c, QString& error)
     return true;
 }
 
+//JZNodeButtonClickedEvent
+JZNodeButtonClickedEvent::JZNodeButtonClickedEvent()
+{
+    m_type = Node_buttonClickedEvent;
+    m_name = "timerEvent";
+
+    m_connectInfo.connectFunction = "JZButtonClickedEventConnect";
+    m_connectInfo.irList << irThis() << irThis() << irLiteral(0);
+
+    int id = addParamIn("name",Pin_noCompiler);
+    setPinTypeString(id);
+}
+
+JZNodeButtonClickedEvent::~JZNodeButtonClickedEvent()
+{
+}
+
+void JZNodeButtonClickedEvent::setObject(QString name)
+{
+    setParamInValue(0, name);
+}
+
+QString JZNodeButtonClickedEvent::object()
+{
+    return paramInValue(0);
+}
+
+bool JZNodeButtonClickedEvent::compiler(JZNodeCompiler* c, QString& error)
+{
+    QString name = object();
+    if (!c->checkVariableType(name, "QPushButton", error))
+        return false;
+
+    m_connectInfo.irList[2] = irLiteral(QVariant::fromValue(JZFunctionPointer(function().fullName())));
+    return compilerSignal(c, error);
+}
+
+void JZButtonClickedEventConnect(QObject* object, JZFunctionPointer slot_function, const QByteArray& buffer)
+{
+    QJsonObject obj = JZNodeUtils::formBuffer(buffer);
+    int ms = obj["timeout"].toInt();
+
+    QTimer* timer = new QTimer(object);
+    timer->connect(timer, &QTimer::timeout, object, [object, slot_function]
+        {
+            JZNodeObject* jzobj = qobjectToJZObject(object);
+            JZNodeObjectPointer self(jzobj, false);
+            QVariantList in, out;
+            in << QVariant::fromValue(self);
+            JZScriptInvoke(slot_function.function, in, out);
+        });
+    timer->start(ms);
+}
+
 //JZNodeTimerEvent
 JZNodeTimerEvent::JZNodeTimerEvent()
 {
     m_timeout = 1000;
+    m_type = Node_timerEvent;
     m_name = "timerEvent";
 
     m_connectInfo.connectFunction = "JZTimerEventConnect";
+    m_connectInfo.irList << irThis() << irLiteral(0);
 }
 
 JZNodeTimerEvent::~JZNodeTimerEvent()
@@ -309,6 +334,8 @@ int JZNodeTimerEvent::timeOut()
 
 bool JZNodeTimerEvent::compiler(JZNodeCompiler* c, QString& error)
 {        
+    m_connectInfo.irList[1] = irLiteral(QVariant::fromValue(JZFunctionPointer(function().fullName())));
+    m_connectInfo.param["timeout"] = m_timeout;
     return compilerSignal(c,error);
 }
 
@@ -324,10 +351,9 @@ void JZNodeTimerEvent::loadFromStream(QDataStream &s)
     s >> m_timeout;
 }
 
-void JZTimerEventConnect(QObject *object,const QByteArray &buffer)
+void JZTimerEventConnect(QObject *object,JZFunctionPointer slot_function,const QByteArray &buffer)
 {
     QJsonObject obj = JZNodeUtils::formBuffer(buffer);
-    QString slot_function = obj["function"].toString();
     int ms = obj["timeout"].toInt();
 
     QTimer *timer = new QTimer(object);
@@ -337,7 +363,7 @@ void JZTimerEventConnect(QObject *object,const QByteArray &buffer)
         JZNodeObjectPointer self(jzobj, false);
         QVariantList in,out;
         in << QVariant::fromValue(self);
-        JZScriptInvoke(slot_function,in,out);
+        JZScriptInvoke(slot_function.function,in,out);
     });
     timer->start(ms);
 }

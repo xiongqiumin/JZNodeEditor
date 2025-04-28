@@ -2194,6 +2194,12 @@ bool JZNodeCompiler::checkVariableExist(const QString &name,QString &error)
     return true;
 }
 
+bool JZNodeCompiler::checkVariableType(const QString& name, QString data_type, QString& error)
+{
+    int data_type_id = m_env->nameToType(data_type);
+    return checkVariableType(name, data_type_id, error);
+}
+
 bool JZNodeCompiler::checkVariableType(const QString &name, int data_type, QString &error)
 {
     auto env = project()->environment();

@@ -81,8 +81,8 @@ enum
     Node_keyPressEvent,
     Node_keyReleaseEvent,
 
-    Node_buttonClikedEvnet,
-    Node_timerEvnet,
+    Node_buttonClickedEvent,
+    Node_timerEvent,
 
     Node_custom = 0x1000,
 };

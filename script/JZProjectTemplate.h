@@ -11,6 +11,11 @@ public:
 
     bool initProject(JZProject *project, QString temp);
     QStringList templateList();
+
+protected:
+    void createMainWindow();
+
+    JZProject* m_project;
 };
 
 
