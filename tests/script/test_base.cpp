@@ -159,12 +159,7 @@ void BaseTest::msleep(int ms)
 JZScriptClassItem *BaseTest::makeTestClass()
 {
     auto class_item = m_file->addClass("TestClass", "QObject");
-    m_project.addGlobalVariable("test_class", "TestClass");
-
-    class_item->addFlow("testFlow");
-
-    JZFunctionDefine define = class_item->objectDefine().initMemberFunction("testFunction");
-    class_item->addMemberFunction(define);
+    m_project.addGlobalVariable("test_class", "TestClass");    
 
     return class_item;
 }

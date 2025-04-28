@@ -12,6 +12,7 @@ public:
     ModbusTest();
 
 private slots:
+    void testClientCpp();
     void testClient();
 
 protected:

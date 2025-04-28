@@ -292,7 +292,7 @@ QSize JZNodeGraphItem::size() const
 
 QByteArray JZNodeGraphItem::saveNode()
 {
-    auto node_factory = m_node->environment()->factoryManager();
+    auto node_factory = m_node->environment()->nodeFactory();
     return node_factory->saveNode(m_node);
 }
 

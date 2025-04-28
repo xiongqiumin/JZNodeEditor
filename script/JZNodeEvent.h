@@ -5,10 +5,11 @@
 #include "JZNode.h"
 #include "JZNodeObject.h"
 
-struct ConstructorInfo
+struct SignalConnectInfo
 {
-    QString function;
+    QString connectFunction;        
     QList<JZNodeIRParam> irList;
+    QJsonObject param;
 };
 
 //JZNodeSignalConnect
@@ -123,8 +124,21 @@ public:
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
 
+//JZNodeSignalEvent
+class JZNodeSignalEvent : public JZNodeEvent
+{
+public:
+    virtual JZFunctionDefine function() override;
+    bool compilerSignal(JZNodeCompiler* compiler, QString& error);
+
+protected:
+    virtual QList<JZParamDefine> functionParamOut();
+
+    SignalConnectInfo m_connectInfo;
+};
+
 //JZNodeButtonClickedEvent
-class JZNodeButtonClickedEvent : public JZNodeEvent
+class JZNodeButtonClickedEvent : public JZNodeSignalEvent
 {
 public:
     JZNodeButtonClickedEvent();
@@ -138,19 +152,6 @@ public:
 
 protected:
     QString m_object;
-};
-
-//JZNodeSignalEvent
-class JZNodeSignalEvent : public JZNodeEvent
-{
-public:
-    virtual JZFunctionDefine function() override;
-    bool compilerSignal(JZNodeCompiler* compiler, const QJsonObject &object,QString& error);
-
-protected:
-    virtual QList<JZParamDefine> functionParamOut();
-
-    ConstructorInfo m_constructor;
 };
 
 //JZNodeTimerEvent

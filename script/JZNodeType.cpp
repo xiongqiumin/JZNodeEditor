@@ -37,20 +37,29 @@ QDataStream &operator>>(QDataStream &s, JZEnum &param)
 }
 
 //JZFunctionPointer
+JZFunctionPointer::JZFunctionPointer()
+{
+}
+
+JZFunctionPointer::JZFunctionPointer(QString function)
+{
+    this->function = function;
+}
+
 bool JZFunctionPointer::operator==(const JZFunctionPointer &other)
 {
-    return this->functionName == other.functionName;
+    return this->function == other.function;
 }
 
 QDataStream &operator<<(QDataStream &s, const JZFunctionPointer &param)
 {
-    s << param.functionName;
+    s << param.function;
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, JZFunctionPointer &param)
 {
-    s >> param.functionName;
+    s >> param.function;
     return s;
 }
 
@@ -289,7 +298,7 @@ QString JZNodeType::debugString(const QVariant &v)
     else if (v_type == Type_function)
     {
         JZFunctionPointer *ptr = (JZFunctionPointer*)v.data();
-        return ptr->functionName;
+        return ptr->function;
     }
     else
     {

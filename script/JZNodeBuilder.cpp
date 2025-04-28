@@ -57,17 +57,19 @@ public:
         for (int i = 0; i < class_info.infoList.size(); i++)
         {
             auto& info = class_info.infoList[i];
-            QString function = info.function;
+            QString function = info.connectFunction;
             QList<JZNodeIRParam> in;
             in << irThis();
             for (int param_idx = 0; param_idx < info.irList.size(); param_idx++)
             {
                 in << info.irList[param_idx];
             }
-            int id = c->allocStack(Type_byteArray); 
-            c->addSetBuffer(irId(id), class_info.bufferList[i]);
-
-            in << irId(id);
+            if (!info.param.isEmpty())
+            {
+                int id = c->allocStack(Type_byteArray);
+                c->addSetBuffer(irId(id), JZNodeUtils::toBuffer(info.param));
+                in << irId(id);
+            }
             QList<JZNodeIRParam> out;
             c->addCall(function, in, out);
         }
@@ -374,14 +376,13 @@ bool JZNodeBuilder::isBuildInterrupt()
     return m_stopBuild;
 }
 
-void JZNodeBuilder::addClassConstructor(QString class_name, ConstructorInfo function, const QByteArray& buffer)
+void JZNodeBuilder::addClassConstructor(QString class_name, SignalConnectInfo info)
 {
     if (!m_classConstructor.contains(class_name))
         m_classConstructor[class_name] = ClassConstructor();
 
     auto& func = m_classConstructor[class_name];
-    func.infoList << function;
-    func.bufferList << buffer;
+    func.infoList << info;
 }
 
 bool JZNodeBuilder::initGlobal()

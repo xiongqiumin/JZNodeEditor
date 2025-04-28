@@ -2,7 +2,7 @@
 #define TEST_BASE_H_
 
 #include <QObject>
-#include <thread>
+#include <QTest>
 #include "JZProject.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBuilder.h"

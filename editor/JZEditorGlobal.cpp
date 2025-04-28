@@ -23,5 +23,5 @@ JZNodeFunctionManager *editorFunctionManager()
 
 JZNodeFactory *editorNodeFactory()
 {
-    return editorEnvironment()->factoryManager();
+    return editorEnvironment()->nodeFactory();
 }

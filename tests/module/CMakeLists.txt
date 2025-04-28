@@ -5,6 +5,8 @@ set(JZNodeModuleTest_SOURCES
     main.cpp
 	../script/test_base.cpp
 	../script/test_base.h
+    test_camera.cpp
+    test_camera.h
 	test_modbus.cpp
 	test_modbus.h
 )

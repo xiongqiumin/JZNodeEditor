@@ -419,8 +419,7 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
         return false;
     }
 
-    JZFunctionPointer ptr;
-    ptr.functionName = function_name;    
+    JZFunctionPointer ptr(function_name);
     c->addSetVariable(irId(id), irLiteral(QVariant::fromValue(ptr)));
     c->addNodeEnter(m_id);
 

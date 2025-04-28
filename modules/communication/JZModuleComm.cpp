@@ -57,16 +57,16 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZCommModbusWrite", true, jzbind::createFuncion(JZCommModbusWrite));
 
     //node
-    env->factoryManager()->registNode(Node_modbusWatch, createJZNode<JZNodeModbusWatchEvent>);
+    env->nodeFactory()->registNode(Node_modbusWatch, createJZNode<JZNodeModbusWatchEvent>);
 
-    env->factoryManager()->registNode(Node_ModbusRead,createJZNode<JZNodeModbusRead>);
-    env->factoryManager()->registNode(Node_ModbusWrite,createJZNode<JZNodeModbusWrite>);
-    env->factoryManager()->registNode(Node_TcpClientRead, createJZNode<JZNodeTcpClientRead>);
-    env->factoryManager()->registNode(Node_TcpClientWrite, createJZNode<JZNodeTcpClientWrite>);
-    env->factoryManager()->registNode(Node_UdpRead, createJZNode<JZNodeUdpRead>);
-    env->factoryManager()->registNode(Node_UdpWrite, createJZNode<JZNodeUdpWrite>);
-    env->factoryManager()->registNode(Node_SerialRead, createJZNode<JZNodeSerialRead>);
-    env->factoryManager()->registNode(Node_SerialWrite, createJZNode<JZNodeSerialWrite>);
+    env->nodeFactory()->registNode(Node_ModbusRead,createJZNode<JZNodeModbusRead>);
+    env->nodeFactory()->registNode(Node_ModbusWrite,createJZNode<JZNodeModbusWrite>);
+    env->nodeFactory()->registNode(Node_TcpClientRead, createJZNode<JZNodeTcpClientRead>);
+    env->nodeFactory()->registNode(Node_TcpClientWrite, createJZNode<JZNodeTcpClientWrite>);
+    env->nodeFactory()->registNode(Node_UdpRead, createJZNode<JZNodeUdpRead>);
+    env->nodeFactory()->registNode(Node_UdpWrite, createJZNode<JZNodeUdpWrite>);
+    env->nodeFactory()->registNode(Node_SerialRead, createJZNode<JZNodeSerialRead>);
+    env->nodeFactory()->registNode(Node_SerialWrite, createJZNode<JZNodeSerialWrite>);
 }
 
 void JZModuleComm::unregist(JZScriptEnvironment *env)

@@ -31,15 +31,14 @@ public:
     QMap<QString, CompilerResult> compilerResult();
     const CompilerResult *compilerInfo(JZScriptItem *file) const;
 
-    void addClassConstructor(QString class_name, ConstructorInfo function,const QByteArray &buffer);
+    void addClassConstructor(QString class_name, SignalConnectInfo function);
 
 protected:    
     friend JZNodeConstructBuild;
 
     struct ClassConstructor 
     {
-        QList<ConstructorInfo> infoList;
-        QList<QByteArray> bufferList;
+        QList<SignalConnectInfo> infoList;        
     };
 
     struct ScriptInfo

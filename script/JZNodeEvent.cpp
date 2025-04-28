@@ -5,7 +5,7 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeBind.h"
-#include "JZNodeJson.h"
+#include "JZNodeUtils.h"
 
 //JZNodeSignalConnect
 JZNodeSignalConnect::JZNodeSignalConnect()
@@ -59,10 +59,8 @@ bool JZNodeSignalConnect::compiler(JZNodeCompiler* c, QString& error)
         return false;
     }
 
-    JZFunctionPointer sig_ptr;
-    sig_ptr.functionName = sig;
-    JZFunctionPointer slot_ptr;
-    slot_ptr.functionName = slot;
+    JZFunctionPointer sig_ptr(sig);
+    JZFunctionPointer slot_ptr(slot);
 
     int send_id = c->paramId(m_id, paramIn(0));
     int recv_id = c->paramId(m_id, paramIn(2));
@@ -271,7 +269,7 @@ QList<JZParamDefine> JZNodeSignalEvent::functionParamOut()
     return QList<JZParamDefine>();
 }
 
-bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c,const QJsonObject &object, QString& error)
+bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c, QString& error)
 {
     auto meta = classMeta();
     if (!meta || !meta->isInherits(Type_object))
@@ -282,13 +280,7 @@ bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c,const QJsonObject &obje
 
     c->addFunctionAlloc(function());
     c->addNodeEnter(m_id);
-
-    QString function_name = function().fullName();
-    QJsonObject obj = object;
-    obj["function"] = function_name;    
-
-    QByteArray buffer = QJsonDocument(obj).toJson();
-    c->addConstructor(m_constructor,buffer);
+    c->addConstructor(m_connectInfo);
     return true;
 }
 
@@ -298,7 +290,7 @@ JZNodeTimerEvent::JZNodeTimerEvent()
     m_timeout = 1000;
     m_name = "timerEvent";
 
-    m_constructor.function = "JZTimerEventConnect";
+    m_connectInfo.connectFunction = "JZTimerEventConnect";
 }
 
 JZNodeTimerEvent::~JZNodeTimerEvent()
@@ -316,10 +308,8 @@ int JZNodeTimerEvent::timeOut()
 }
 
 bool JZNodeTimerEvent::compiler(JZNodeCompiler* c, QString& error)
-{    
-    QJsonObject obj;
-    obj["timeout"] = m_timeout;
-    return compilerSignal(c,obj,error);
+{        
+    return compilerSignal(c,error);
 }
 
 void JZNodeTimerEvent::saveToStream(QDataStream &s) const
@@ -336,7 +326,7 @@ void JZNodeTimerEvent::loadFromStream(QDataStream &s)
 
 void JZTimerEventConnect(QObject *object,const QByteArray &buffer)
 {
-    QJsonObject obj = JZNodeJson::formBuffer(buffer);
+    QJsonObject obj = JZNodeUtils::formBuffer(buffer);
     QString slot_function = obj["function"].toString();
     int ms = obj["timeout"].toInt();
 

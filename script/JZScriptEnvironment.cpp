@@ -70,12 +70,12 @@ void JZScriptEnvironment::unregistType()
     m_objectManager.clearUserReigst();    
 }
 
-JZNodeFactory *JZScriptEnvironment::factoryManager()
+JZNodeFactory *JZScriptEnvironment::nodeFactory()
 {
     return &m_nodeFactory;
 }
 
-const JZNodeFactory *JZScriptEnvironment::factoryManager() const
+const JZNodeFactory *JZScriptEnvironment::nodeFactory() const
 {
     return &m_nodeFactory;
 }
@@ -824,8 +824,7 @@ QVariant JZScriptEnvironment::tryInitValue(int type, const QString &text) const
     }
     else if(type == Type_function)
     {   
-        JZFunctionPointer func;
-        func.functionName = text;
+        JZFunctionPointer func(text);
         return QVariant::fromValue(func);
     }
     else if(type == Type_nullptr)

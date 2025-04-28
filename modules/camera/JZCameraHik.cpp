@@ -58,6 +58,11 @@ JZCameraHik::~JZCameraHik()
     close();
 }
 
+JZCameraType JZCameraHik::type()
+{
+    return Camera_File;
+}
+
 QString JZCameraHik::errorString(int errorCode)
 {
     switch (errorCode) {

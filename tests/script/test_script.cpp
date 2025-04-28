@@ -51,22 +51,22 @@ void ScriptTest::testClone()
         return;
 
     auto obj_inst = m_objInst;
-    auto obj1 = obj_inst->objectCreateHolder<QObject>();
-    auto obj2 = obj_inst->objectCreateHolder<QObject>();
+    auto obj1 = obj_inst->objectCreatePointer<QObject>();
+    auto obj2 = obj_inst->objectCreatePointer<QObject>();
     JZNodeObjectPointer obj3 = obj1;
     QVERIFY(obj1 != obj2);
     QVERIFY(obj1 == obj3);
 
-    auto pt1 = obj_inst->objectCreateHolder<QPoint>();
-    auto pt2 = obj_inst->objectCreateHolder<QPoint>();
+    auto pt1 = obj_inst->objectCreatePointer<QPoint>();
+    auto pt2 = obj_inst->objectCreatePointer<QPoint>();
     QVERIFY(pt1 == pt2);
 
     auto p_pt1 = obj_inst->objectCast<QPoint>(pt1);
     p_pt1->setX(150);
     QVERIFY(pt1 != pt2);    
 
-    auto obj_list = m_objInst->objectCreateHolder<QList<QPoint>>();
-    JZNodeObjectPointer ptr = obj_list.toPointer();
+    auto obj_list = m_objInst->objectCreatePointer<QList<QPoint>>();
+    JZNodeObjectPointer ptr = obj_list.toWeakPointer();
     QVariant list = QVariant::fromValue(ptr);
 
     QVariantList in,out;
@@ -752,7 +752,7 @@ void ScriptTest::testExpr()
     script->addNode(node_a);
     script->addNode(node_b);    
 
-    auto node_factory = m_project.environment()->factoryManager();
+    auto node_factory = m_project.environment()->nodeFactory();
     JZNodeSetParam *pre_node = nullptr;
     for(int i = 0; i < op_type.size(); i++)
     {
@@ -1001,12 +1001,12 @@ void ScriptTest::testClass()
 
     QVariantList in, out;
     in.clear();
-    in << QVariant::fromValue(obj_base.toPointer());
+    in << QVariant::fromValue(obj_base.toWeakPointer());
     m_engine.call("ClassBase::getValue", in, out);
     QCOMPARE(out[0].toInt(),0);
 
     in.clear();
-    in << QVariant::fromValue(obj_a.toPointer());
+    in << QVariant::fromValue(obj_a.toWeakPointer());
     m_engine.call("ClassBase::getValue", in, out);
     QCOMPARE(out[0].toInt(), 0);
 
@@ -1014,7 +1014,7 @@ void ScriptTest::testClass()
     QCOMPARE(out[0].toInt(), 1);
 
     in.clear();
-    in << QVariant::fromValue(obj_b.toPointer());
+    in << QVariant::fromValue(obj_b.toWeakPointer());
     m_engine.call("ClassBase::getValue", in, out);
     QCOMPARE(out[0].toInt(), 0);
 

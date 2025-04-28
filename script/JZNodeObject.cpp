@@ -13,54 +13,56 @@
 #include "JZNodeVariableBind.h"
 #include "JZScriptEnvironment.h"
 
-void JZObjectConnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot)
+void JZObjectConnect(JZNodeObject* sender, JZFunctionPointer signal, JZFunctionPointer slot)
 {
     auto env = g_engine->environment();
-    auto s = env->objectManager()->signal(single.functionName);
-    auto func = env->functionManager()->function(slot.functionName);
+    auto s = env->objectManager()->signal(signal.function);
+    auto func = env->functionManager()->function(slot.function);
     Q_ASSERT(s && func && JZNodeType::sigSlotTypeMatch(s, func));
     if (s->csignal)
         s->csignal->connect(sender, func->name);
     else
     {
-        sender->singleConnect(s->name, func->name);
+        sender->signalConnect(signal, slot);
     }
 }
 
-void JZObjectDisconnect(JZNodeObject* sender, JZFunctionPointer single, JZFunctionPointer slot)
+void JZObjectDisconnect(JZNodeObject* sender, JZFunctionPointer signal, JZFunctionPointer slot)
 {
     auto env = g_engine->environment();
-    auto s = env->objectManager()->signal(single.functionName);
-    auto func = env->functionManager()->function(slot.functionName);
+    auto s = env->objectManager()->signal(signal.function);
+    auto func = env->functionManager()->function(slot.function);
     Q_ASSERT(s && func);
     if (s->csignal)
         s->csignal->disconnect(sender, func->name);
     else
-        sender->singleDisconnect(s->name, func->name);
+    {        
+        sender->signalDisconnect(signal, slot);
+    }
 }
 
-void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer slot)
+void JZObjectConnect(JZNodeObject *sender, JZFunctionPointer signal, JZNodeObject *recv, JZFunctionPointer slot)
 {
     auto env = g_engine->environment();
-    auto s = env->objectManager()->signal(single.functionName);
-    auto func = env->functionManager()->function(slot.functionName);
+    auto s = env->objectManager()->signal(signal.function);
+    auto func = env->functionManager()->function(slot.function);
     Q_ASSERT(s && func && JZNodeType::sigSlotTypeMatch(s,func));
     if (s->csignal)
         s->csignal->connect(sender,recv,func->name);
     else
-        sender->singleConnect(s->name,recv,func->name);
+        sender->signalConnect(signal,recv, slot);
 }
 
-void JZObjectDisconnect(JZNodeObject *sender, JZFunctionPointer single, JZNodeObject *recv, JZFunctionPointer slot)
+void JZObjectDisconnect(JZNodeObject *sender, JZFunctionPointer signal, JZNodeObject *recv, JZFunctionPointer slot)
 {
     auto env = g_engine->environment();
-    auto s = env->objectManager()->signal(single.functionName);
-    auto func = env->functionManager()->function(slot.functionName);
+    auto s = env->objectManager()->signal(signal.function);
+    auto func = env->functionManager()->function(slot.function);
     Q_ASSERT(s && func);
     if (s->csignal)
         s->csignal->disconnect(sender,recv,func->name);
     else
-        sender->singleDisconnect(s->name,recv,func->name);
+        sender->signalDisconnect(signal,recv, slot);
 }
 
 bool JZObjectIsList(JZNodeObject *obj)
@@ -195,16 +197,16 @@ JZFunctionDefine JZNodeObjectDefine::initVirtualFunction(QString name) const
     return new_def;
 }
 
-JZFunctionDefine JZNodeObjectDefine::initSlotFunction(QString name,QString single) const
+JZFunctionDefine JZNodeObjectDefine::initSlotFunction(QString name,QString signal) const
 {
     const JZParamDefine *param_def = param(name);
     Q_ASSERT(param_def);
 
     auto param_meta = manager->meta(param_def->type);
-    Q_ASSERT(param_meta && param_meta->signal(single));
+    Q_ASSERT(param_meta && param_meta->signal(signal));
     
-    auto s = param_meta->signal(single);
-    QString func_name = "on_" + name + "_" + single;
+    auto s = param_meta->signal(signal);
+    QString func_name = "on_" + name + "_" + signal;
     JZFunctionDefine func_def = initMemberFunction(func_name);
     for(int i = 0; i < s->paramOut.size(); i++)
     {
@@ -359,8 +361,8 @@ QStringList JZNodeObjectDefine::JZNodeObjectDefine::signalList() const
     auto def = this;
     while(def)
     {
-        for (int i = 0; i < def->singles.size(); i++)        
-            set << def->singles[i].name;
+        for (int i = 0; i < def->signalDefines.size(); i++)
+            set << def->signalDefines[i].name;
 
         def = def->super();
     }
@@ -369,10 +371,10 @@ QStringList JZNodeObjectDefine::JZNodeObjectDefine::signalList() const
 
 const JZSignalDefine *JZNodeObjectDefine::signal(const QString &function) const
 {
-    for(int i = 0; i < singles.size(); i++)
+    for(int i = 0; i < signalDefines.size(); i++)
     {
-        if(singles[i].name == function)
-            return &singles[i];
+        if(signalDefines[i].name == function)
+            return &signalDefines[i];
     }
 
     auto def = super();
@@ -479,7 +481,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param)
 
     s << param.params;
     s << param.functions;
-    s << param.singles;
+    s << param.signalDefines;
     s << param.enums;
 
     s << param.isCObject;
@@ -500,7 +502,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
 
     s >> param.params;
     s >> param.functions;
-    s >> param.singles;
+    s >> param.signalDefines;
     s >> param.enums;
     
     s >> param.isCObject;
@@ -757,7 +759,7 @@ void JZNodeObject::onRecvDestory(QObject *obj)
     }
 }
 
-int JZNodeObject::singleConnectCount(JZNodeObject *recv) const
+int JZNodeObject::signalConnectCount(JZNodeObject *recv) const
 {
     int count = 0;
     for(int i = 0; i < m_connectList.size(); i++)
@@ -768,37 +770,37 @@ int JZNodeObject::singleConnectCount(JZNodeObject *recv) const
     return count;
 }
 
-void JZNodeObject::singleConnect(QString sig, QString slot)
+void JZNodeObject::signalConnect(JZFunctionPointer sig, JZFunctionPointer slot)
 {
 }
 
-void JZNodeObject::singleDisconnect(QString sig, QString slot)
+void JZNodeObject::signalDisconnect(JZFunctionPointer sig, JZFunctionPointer slot)
 {
 }
 
-void JZNodeObject::singleConnect(QString sig,JZNodeObject *recv,QString slot)
+void JZNodeObject::signalConnect(JZFunctionPointer sig,JZNodeObject *recv,JZFunctionPointer slot)
 {
-    if(singleConnectCount(recv) == 1)
+    if(signalConnectCount(recv) == 1)
     {
         connect(recv,&QObject::destroyed,this,&JZNodeObject::onRecvDestory);
         connect(this,&JZNodeObject::sigTrigger,recv,&JZNodeObject::onSigTrigger);
     }
 }
 
-void JZNodeObject::singleDisconnect(QString sig,JZNodeObject *recv,QString slot)
+void JZNodeObject::signalDisconnect(JZFunctionPointer sig,JZNodeObject *recv,JZFunctionPointer slot)
 {
-    if(singleConnectCount(recv) == 0)
+    if(signalConnectCount(recv) == 0)
     {
         disconnect(recv,&QObject::destroyed,this,&JZNodeObject::onRecvDestory);
         disconnect(this,&JZNodeObject::sigTrigger,recv,&JZNodeObject::onSigTrigger);
     }
 }
 
-void JZNodeObject::singleEmit(QString sig_name,const QVariantList &params)
+void JZNodeObject::signalEmit(JZFunctionPointer sig_name,const QVariantList &params)
 {
     for(int i = 0; i < m_connectList.size(); i++)
     {
-        if(m_connectList[i].single == sig_name)
+        if(m_connectList[i].signal == sig_name.function)
             emit sigTrigger(m_connectList[i].slot,params);
     }
 }
@@ -861,7 +863,7 @@ void JZNodeObject::autoConnect()
         auto sig_func = jz_obj->signal(sig);
         if(!sig_func)
         {
-            qDebug() << "connect slot by name no single: " + sig;
+            qDebug() << "connect slot by name no signal: " + sig;
             continue;
         }
 
@@ -873,10 +875,10 @@ void JZNodeObject::autoConnect()
         }
 
         JZFunctionPointer sig_func_ptr;
-        sig_func_ptr.functionName = sig_func->fullName();
+        sig_func_ptr.function = sig_func->fullName();
 
         JZFunctionPointer slot_func_ptr;
-        slot_func_ptr.functionName = slot_func->fullName();
+        slot_func_ptr.function = slot_func->fullName();
         JZObjectConnect(jz_obj,sig_func_ptr,this,slot_func_ptr);
     }
 }

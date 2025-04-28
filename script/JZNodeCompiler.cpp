@@ -1864,9 +1864,9 @@ JZNode* JZNodeCompiler::continueParentNode(int child_id)
     return nullptr;
 }
 
-void JZNodeCompiler::addConstructor(ConstructorInfo function,QByteArray buffer)
+void JZNodeCompiler::addConstructor(SignalConnectInfo info)
 {
-    m_builder->addClassConstructor(m_className, function, buffer);
+    m_builder->addClassConstructor(m_className, info);
 }
 
 JZNodeIRJmp* JZNodeCompiler::addJmp(JZNodeIRType type)

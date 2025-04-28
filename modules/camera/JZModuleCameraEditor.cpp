@@ -2,6 +2,7 @@
 #include "JZModuleCameraEditor.h"
 #include "JZModuleCamera.h"
 #include "JZEditorGlobal.h"
+#include "JZCameraNode.h"
 
 void JZCameraEditorInit()
 {

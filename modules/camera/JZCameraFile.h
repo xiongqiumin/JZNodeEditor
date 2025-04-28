@@ -11,6 +11,7 @@ public:
     JZCameraFile(QObject *parent = nullptr);
     ~JZCameraFile();
 
+    virtual JZCameraType type() override;
     virtual bool isOpen() override;
     virtual bool open(QString path) override;
     virtual void close() override;

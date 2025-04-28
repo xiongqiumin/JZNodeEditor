@@ -17,6 +17,11 @@ JZCameraFile::~JZCameraFile()
 {
 }
 
+JZCameraType JZCameraFile::type()
+{
+    return Camera_File;
+}
+
 bool JZCameraFile::isOpen()
 {
     return m_fileList.size() != 0;

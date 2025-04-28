@@ -39,8 +39,8 @@ public:
     bool loadModule(QString name);
     void unloadModule(QString name);
 
-    JZNodeFactory *factoryManager();
-    const JZNodeFactory *factoryManager() const;
+    JZNodeFactory *nodeFactory();
+    const JZNodeFactory *nodeFactory() const;
 
     JZNodeObjectManager *objectManager();
     const JZNodeObjectManager *objectManager() const;

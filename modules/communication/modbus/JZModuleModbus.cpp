@@ -11,15 +11,12 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
 #include "JZNodeEditorManager.h"
-#include "JZNodeJson.h"
 #include "../JZModuleComm.h"
 
 JZNodeModbusWatchEvent::JZNodeModbusWatchEvent()
 {
     m_type = Node_modbusWatch;
     m_name = "modbusWatch";
-
-    m_constructor.function = "JZNodeModbusWatchEventInit";
 }
 
 JZNodeModbusWatchEvent::~JZNodeModbusWatchEvent()

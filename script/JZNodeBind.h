@@ -736,7 +736,7 @@ public:
             def.type = env->typeToName(dataType);
             single.paramOut.push_back(def);
         }
-        m_define.singles.push_back(single);
+        m_define.signalDefines.push_back(single);
     }
 
     template<typename... Args>
@@ -764,7 +764,7 @@ public:
             def.type = env->typeToName(dataType);
             single.paramOut.push_back(def);
         }
-        m_define.singles.push_back(single);
+        m_define.signalDefines.push_back(single);
     }
 
     template<typename FuncRead, typename FuncWrite>

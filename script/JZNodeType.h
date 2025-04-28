@@ -130,9 +130,12 @@ Q_DECLARE_METATYPE(JZEnum)
 class JZFunctionPointer
 {
 public:
+    JZFunctionPointer();
+    JZFunctionPointer(QString function);
+
     bool operator==(const JZFunctionPointer &other);
 
-    QString functionName;
+    QString function;
 };
 Q_DECLARE_METATYPE(JZFunctionPointer)
 QDataStream &operator<<(QDataStream &s, const JZFunctionPointer &param);

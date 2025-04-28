@@ -9,6 +9,7 @@ public:
     JZCameraHik();
     ~JZCameraHik();
 
+    virtual JZCameraType type() override;
     virtual bool isOpen() override;
     virtual bool open(QString path) override;
     virtual void close() override;

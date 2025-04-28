@@ -112,9 +112,7 @@ set(JZNodeCore_SOURCES
     script/JZNodeQtWrapper.cpp
     script/JZNodeQtWrapper.h
     script/JZNodeType.cpp
-    script/JZNodeType.h    
-    script/JZNodeJson.cpp
-    script/JZNodeJson.h
+    script/JZNodeType.h        
     script/JZNodeUtils.cpp
     script/JZNodeUtils.h
     script/JZNodeValue.cpp
@@ -176,11 +174,15 @@ set(JZNodeCore_SOURCES
     modules/camera/JZModuleCamera.h
     modules/camera/JZModuleCamera.cpp
     modules/camera/JZCamera.h
-    modules/camera/JZCamera.cpp
+    modules/camera/JZCamera.cpp    
     modules/camera/JZCameraHik.h
     modules/camera/JZCameraHik.cpp
     modules/camera/JZCameraFile.h
     modules/camera/JZCameraFile.cpp   
+    modules/camera/JZCameraNode.h
+    modules/camera/JZCameraNode.cpp
+    modules/camera/JZCameraManager.h
+    modules/camera/JZCameraManager.cpp    
     
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp

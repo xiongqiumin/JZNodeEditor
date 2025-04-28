@@ -72,7 +72,7 @@ public:
     QMap<QString,JZParamDefine> params;
     QMap<QString,JZCParamDefine> cparams;
     QList<JZFunctionDefine> functions;
-    QList<JZSignalDefine> singles;
+    QList<JZSignalDefine> signalDefines;
     QStringList enums;
 
     bool isUiWidget;
@@ -127,12 +127,12 @@ public:
     const JZSignalDefine *signal(QString function) const;
     QStringList signalList() const;
 
-    void singleConnect(QString sig, QString slot);
-    void singleDisconnect(QString sig, QString slot);
+    void signalConnect(JZFunctionPointer sig, JZFunctionPointer slot);
+    void signalDisconnect(JZFunctionPointer sig, JZFunctionPointer slot);
 
-    void singleConnect(QString sig,JZNodeObject *recv,QString slot);
-    void singleDisconnect(QString sig,JZNodeObject *recv,QString slot);
-    void singleEmit(QString sig,const QVariantList &params);
+    void signalConnect(JZFunctionPointer sig,JZNodeObject *recv,JZFunctionPointer slot);
+    void signalDisconnect(JZFunctionPointer sig,JZNodeObject *recv,JZFunctionPointer slot);
+    void signalEmit(JZFunctionPointer sig,const QVariantList &params);
 
     void *cobj() const;
     void setCObject(void *cobj,bool owner);        
@@ -160,7 +160,7 @@ protected:
 
     struct ConnectInfo
     {
-        QString single;
+        QString signal;
         JZNodeObject *recv;
         QString slot;
     };         
@@ -169,7 +169,7 @@ protected:
     ~JZNodeObject();
    
     const JZCParamDefine *cparam(const QString &name) const;
-    int singleConnectCount(JZNodeObject *recv)  const;
+    int signalConnectCount(JZNodeObject *recv)  const;
     void clearCObj();
 
     const JZNodeObjectDefine *m_define;

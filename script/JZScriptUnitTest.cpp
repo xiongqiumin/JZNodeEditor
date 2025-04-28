@@ -182,7 +182,7 @@ void JZScriptUnitTest::registEnv(JZScriptEnvironment *env)
     auto widget_hook_func = BuiltInFunctionPtr(new JZUnitTestHook());
     func_inst->registBuiltInFunction(widget_hook, hook_func);
 
-    env->factoryManager()->registNode(Node_unitTest,createJZNode<JZNodeUnitTest>);
+    env->nodeFactory()->registNode(Node_unitTest,createJZNode<JZNodeUnitTest>);
 }
 
 bool JZScriptUnitTest::hasHook(int id)

@@ -114,7 +114,7 @@ JZVariantAny JZCommModbusRead(JZCommManager* mgr, const QString& name, const QJs
     bool ret = false;
     int addr = param["addr"].toInt();
     int function = param["function"].toInt();
-    QString read_type = param["readType"].toString();
+    QString read_type = param["dataType"].toString();
     if (function == Function_Bit || function == Function_InputBit)
     {
         QVector<uint8_t> dest;
@@ -141,7 +141,7 @@ JZVariantAny JZCommModbusRead(JZCommManager* mgr, const QString& name, const QJs
 
         if (ret)
         {             
-            int dataType = g_engine->environment()->nameToType(read_type);
+            int dataType = JZNodeType::nameToType(read_type);
             if (dataType == Type_int16)
                 paramUnpack<int16_t>(any,bit_order, buffer);
             else if (dataType == Type_uint16)
@@ -173,34 +173,38 @@ void JZCommModbusWrite(JZCommManager* mgr, const QString& name, const QJsonObjec
     if (!client->isOpen() && !client->open())
         throw std::runtime_error("client open failed");
 
-    JZVariantAny any;
     bool ret = false;
     int addr = param["addr"].toInt();
     int function = param["function"].toInt();
-    QString read_type = param["readType"].toString();
+    QString read_type = param["dataType"].toString();
     if (function == Function_Bit)
     {        
         ret = client->writeBit(addr, value.value<uint8_t>());
     }
     else if (function == Function_Register)
     {
-        QVector<uint16_t> buffer;
-        
-        int dataType = g_engine->environment()->nameToType(read_type);
+        QVector<uint16_t> buffer;        
+        int dataType = JZNodeType::nameToType(read_type);
         if (dataType == Type_int16)
-            paramPack<int16_t>(any, bit_order, buffer);
-        else if (dataType == Type_int16)
-            paramPack<uint16_t>(any, bit_order, buffer);
-        else if (dataType == Type_int16)
-            paramPack<int32_t>(any, bit_order, buffer);
-        else if (dataType == Type_int16)
-            paramPack<uint32_t>(any, bit_order, buffer);
-        else if (dataType == Type_int16)
-            paramPack<float>(any, bit_order, buffer);
-        else if (dataType == Type_int16)
-            paramPack<double>(any, bit_order, buffer);
+            paramPack<int16_t>(value, bit_order, buffer);
+        else if (dataType == Type_uint16)
+            paramPack<uint16_t>(value, bit_order, buffer);
+        else if (dataType == Type_int)
+            paramPack<int32_t>(value, bit_order, buffer);
+        else if (dataType == Type_uint)
+            paramPack<uint32_t>(value, bit_order, buffer);
+        else if (dataType == Type_float)
+            paramPack<float>(value, bit_order, buffer);
+        else if (dataType == Type_double)
+            paramPack<double>(value, bit_order, buffer);
+        else {
+            Q_ASSERT(0);
+        }
 
         ret = client->writeRegisters(addr, buffer);
+    }
+    else {
+        Q_ASSERT(0);
     }
 
     if (!ret)

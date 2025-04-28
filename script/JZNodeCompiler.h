@@ -281,7 +281,7 @@ public:
     JZNode* breakParentNode(int child_id);
     JZNode* continueParentNode(int child_id);
 
-    void addConstructor(ConstructorInfo function,QByteArray buffer);
+    void addConstructor(SignalConnectInfo info);
     
     void addAlloc(int allocType, QString name, int dataType);
     void addAllocAuto(const QString& ir);

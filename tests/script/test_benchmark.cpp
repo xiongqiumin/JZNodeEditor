@@ -198,7 +198,7 @@ void BenchmarkTest::testCall()
     JZBENCHMARK(jz_list_get)
     {
         QVariantList in,out;
-        in << QVariant::fromValue(ptr.toPointer()) << 1;
+        in << QVariant::fromValue(ptr.toWeakPointer()) << 1;
         bool ret = m_engine.call(list_func,in,out);
         QVERIFY(ret);
     }
