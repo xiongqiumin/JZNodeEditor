@@ -1248,7 +1248,7 @@ void JZNodeEngine::checkFunctionIn(const JZFunction *func)
         const QVariant &v = getReg(Reg_CallIn + i);
         Q_ASSERT_X(m_env.isSameType(JZNodeType::variantType(v), data_type), "", qUtf8Printable("set " 
             + m_env.variantTypeName(v) + " to " + m_env.typeToName(data_type)));        
-        if (func->isMemberFunction() && i == 0 && JZNodeType::isNullObject(v))
+        if (func->className() != "string" && func->isMemberFunction() && i == 0 && JZNodeType::isNullObject(v))
         {
             QString error = "this is nullptr";
             throw std::runtime_error(qUtf8Printable(error));

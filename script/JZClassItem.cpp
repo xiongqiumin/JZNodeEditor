@@ -185,18 +185,29 @@ JZScriptItem* JZScriptClassItem::addFlow(QString name)
 
 void JZScriptClassItem::removeFlow(QString name)
 {
-    auto file = getFlow(name);
+    auto file = flow(name);
     if (file)
         project()->removeItem(file->itemPath());
 }
 
-JZScriptItem* JZScriptClassItem::getFlow(QString name)
+JZScriptItem* JZScriptClassItem::flow(QString name)
 {
     auto item = getItem(name);
     if (item && isFlowScriptItem(item))
         return (JZScriptItem*)item;
     else
         return nullptr;
+}
+
+QStringList JZScriptClassItem::flowList()
+{
+    QStringList list;
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        if (m_childs[i]->itemType() == ProjectItem_scriptItem && isFlowScriptItem(m_childs[i]))
+            list << m_childs[i]->name();
+    }
+    return list;
 }
 
 QList<JZParamDefine> JZScriptClassItem::uiWidgets()
@@ -249,7 +260,8 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
         else if (item->itemType() == ProjectItem_scriptItem)
         {
             auto function_item = dynamic_cast<JZScriptItem*>(item);
-            define.addFunction(function_item->function());
+            if(isFunctionScriptItem(function_item))
+                define.addFunction(function_item->function());
         }
     }
      

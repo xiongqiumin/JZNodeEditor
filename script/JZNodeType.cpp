@@ -46,7 +46,16 @@ JZFunctionPointer::JZFunctionPointer(QString function)
     this->function = function;
 }
 
-bool JZFunctionPointer::operator==(const JZFunctionPointer &other)
+QString JZFunctionPointer::functionName() const
+{
+    int idx = function.indexOf("::");
+    if (idx == -1)
+        return function;
+    else
+        return function.mid(idx + 2);
+}
+
+bool JZFunctionPointer::operator==(const JZFunctionPointer &other) const
 {
     return this->function == other.function;
 }

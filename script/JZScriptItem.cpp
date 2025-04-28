@@ -96,9 +96,7 @@ void JZScriptItem::setFunction(JZFunctionDefine def)
 {
     Q_ASSERT(m_itemType == ProjectItem_scriptItem);
     m_name = def.name;
-    m_function.isFlowFunction = def.isFlowFunction;
-    m_function.paramIn = def.paramIn;
-    m_function.paramOut = def.paramOut;
+    m_function = def;
 }
 
 JZNodeEvent* JZScriptItem::startNode()
@@ -624,9 +622,10 @@ void JZScriptItem::saveToStream(QDataStream &s) const
     s << m_name;
     if (m_scriptType == Function)
     {
-        s << m_function.isFlowFunction;
-        s << m_function.paramIn;
-        s << m_function.paramOut;
+        JZFunctionDefine tmp = m_function;
+        tmp.name.clear();
+        tmp.className.clear();
+        s << tmp;
     }
     s << m_nodeId;
     QList<QByteArray> node_list;
@@ -651,9 +650,9 @@ bool JZScriptItem::loadFromStream(QDataStream &s)
     s >> m_name;
     if (m_scriptType == Function)
     {
-        s >> m_function.isFlowFunction;
-        s >> m_function.paramIn;
-        s >> m_function.paramOut;
+        JZFunctionDefine tmp;
+        s >> tmp;
+        m_function = tmp;
     }
     s >> m_nodeId;
     QList<QByteArray> node_list;
@@ -679,8 +678,8 @@ bool isFunctionScriptItem(JZProjectItem* item)
 {
     if (item->itemType() != ProjectItem_scriptItem)
         return false;
-
-    return ((JZScriptItem*)item)->scriptType() == JZScriptItem::Function;
+    
+    return dynamic_cast<JZScriptItem*>(item)->scriptType() == JZScriptItem::Function;
 }
 
 bool isFlowScriptItem(JZProjectItem* item)

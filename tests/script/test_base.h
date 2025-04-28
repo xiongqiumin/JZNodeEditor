@@ -3,12 +3,24 @@
 
 #include <QObject>
 #include <QTest>
+#include <functional>
 #include "JZProject.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeValue.h"
 #include "JZNodeOperator.h"
 #include "JZNodeFunction.h"
+#include "JZModule.h"
+
+//JZTestLambda
+void JZTestLambda();
+
+class TestModule : public JZModule
+{
+public:
+    virtual void regist(JZScriptEnvironment* env) override;
+    virtual void unregist(JZScriptEnvironment* env) override;
+};
 
 //TestServer
 class TestServer : public QThread
@@ -108,12 +120,6 @@ protected:
     EngineThread m_thread;
 };
 
-
-
-
-
-
-
-
+extern std::function<void()> g_testFunc;
 
 #endif

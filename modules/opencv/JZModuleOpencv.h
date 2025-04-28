@@ -3,6 +3,7 @@
 
 #include "JZModule.h"
 #include "../JZModuleDefine.h"
+#include "JZModelNode.h"
 
 class JZModuleOpencv: public JZModule
 {
@@ -13,7 +14,5 @@ public:
     virtual void regist(JZScriptEnvironment *env) override;
     virtual void unregist(JZScriptEnvironment *env) override;        
 };
-
-void JZModuleModelNodeInit();
 
 #endif

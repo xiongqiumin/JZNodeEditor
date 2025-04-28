@@ -29,8 +29,9 @@ enum
     Type_function,
     Type_auto,        //auto
     Type_arg,         //泛型,任意参数
-    Type_argPointer = (Type_arg | Type_pointerFlag),  //泛型,任意指针
     Type_args = Type_arg + 1,        //变长参数
+
+    Type_argPointer = (Type_arg | Type_pointerFlag),  //泛型,任意指针
 
     Type_enum = 2000,
     Type_keyCode,   //Qt::Key
@@ -133,7 +134,9 @@ public:
     JZFunctionPointer();
     JZFunctionPointer(QString function);
 
-    bool operator==(const JZFunctionPointer &other);
+    bool operator==(const JZFunctionPointer &other) const;
+
+    QString functionName() const;
 
     QString function;
 };

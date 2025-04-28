@@ -207,10 +207,23 @@ void JZNodeProgramDumper::dumpClass(JZScriptClassItem* class_item, QString& def,
     header += tab(1) + name + "();\n";
     header += tab(1) + "virtual ~" + name + "();\n\n";
 
+    //function
     auto function_list = class_item->memberFunctionList();
     for (int i = 0; i < function_list.size(); i++)
     {
         auto func = class_item->memberFunction(function_list[i]);
+        QString func_def, func_impl;
+        dumpFunction(func, func_def, func_impl);
+
+        header += tab(1) + func_def + ";\n";
+        source += func_impl + "\n\n";
+    }
+
+    //flow
+    auto flow_list =  class_item->flowList();
+    for (int i = 0; i < flow_list.size(); i++)
+    {
+        auto func = class_item->flow(flow_list[i]);
         QString func_def, func_impl;
         dumpFunction(func, func_def, func_impl);
 
@@ -225,7 +238,7 @@ void JZNodeProgramDumper::dumpClass(JZScriptClassItem* class_item, QString& def,
         header += tab(1) + member->type + " " + member->name + ";\n";
     }
 
-    header += "};";
+    header += "};\n\n";
 
     def = header;
     impl = source;

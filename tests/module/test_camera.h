@@ -12,7 +12,7 @@ public:
     CameraTest();
 
 private slots:
-    void testHik();
+    void testFile();
 
 protected:
 

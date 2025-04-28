@@ -5,6 +5,7 @@
 #include <QList>
 #include <QDataStream>
 #include "JZCamera.h"
+#include "JZNodeType.h"
 
 //JZCameraConfig
 class JZCameraConfig
@@ -44,6 +45,9 @@ public:
     void setConfig(const JZCameraManagerConfig &config);
     JZCameraManagerConfig config();
 
+signals:
+    void sigInitFinish();
+
 protected:
     JZCamera*createCamera(const JZCameraConfig &config);
 
@@ -51,21 +55,11 @@ protected:
     QList<JZCamera*> m_cameras;
 };
 
+void JZCameraConnect(QObject* qrecv, JZCameraManager* inst, QString name, JZFunctionPointer func);
 void JZCameraInit(JZCameraManager* inst, const QByteArray& buffer);
-void JZCameraConnect(QObject *object, const QByteArray &buffer);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void JZCameraStart(JZCameraManager* inst, QString name);
+void JZCameraStartOnce(JZCameraManager* inst, QString name);
+void JZCameraStop(JZCameraManager* inst, QString name);
+void JZCameraSetting(JZCameraManager* inst, QString name);
 
 #endif

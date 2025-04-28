@@ -59,7 +59,6 @@ public:
             auto& info = class_info.infoList[i];
             QString function = info.connectFunction;
             QList<JZNodeIRParam> in;
-            in << irThis();
             for (int param_idx = 0; param_idx < info.irList.size(); param_idx++)
             {
                 in << info.irList[param_idx];
@@ -311,12 +310,19 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     for (int i = 0; i < function_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
+        JZScriptClassItem* class_item = script->getClassItem();
         JZNodeScriptPtr script_impl = JZNodeScriptPtr(new JZNodeScript());
         if (!buildScript(script, script_impl.data()))
             return false;
 
         m_scripts[script->itemPath()].script = script_impl;
+
         auto func_def = script->function();
+        if (class_item && isFlowScriptItem(script))
+        {
+            auto cls_def = type_meta.object(class_item->className());
+            cls_def->addFunction(func_def);
+        }
         if(!func_def.isMemberFunction())
             type_meta.functionList << func_def;        
     }    

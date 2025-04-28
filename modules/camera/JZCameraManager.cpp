@@ -4,6 +4,8 @@
 #include "JZCameraHik.h"
 #include "JZNodeUtils.h"
 #include "JZNodeEngine.h"
+#include "JZNodeBind.h"
+#include "JZCameraUVC.h"
 
 //JZCameraConfig
 JZCameraConfig::JZCameraConfig()
@@ -67,6 +69,7 @@ void JZCameraManager::init()
         JZCamera *camera = createCamera(m_config.cameraList[i]);
         m_cameras.push_back(camera);
     }
+    emit sigInitFinish();
 }
 
 JZCamera* JZCameraManager::camera(QString name)
@@ -93,12 +96,15 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfig &config)
 
         camera = camera_file;
     }
+    else if(config.type == Camera_UVC)
+    {
+        JZCameraUVC* camera_file = new JZCameraUVC();
+    }
     else if(config.type == Camera_Hik)
     {
-        JZCamera *camera_hik = new JZCameraHik();
-        open_ret = camera_hik->open(config.path);
-
-        camera = camera_hik;
+        //JZCamera *camera_hik = new JZCameraHik();
+        //open_ret = camera_hik->open(config.path);
+        //camera = camera_hik;
     }
     else
     {
@@ -112,6 +118,15 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfig &config)
     return camera;
 }
 
+JZCamera* JZCameraGet(JZCameraManager* inst, QString name)
+{
+    JZCamera* camera = inst->camera(name);
+    if (!camera)
+        throw std::runtime_error("no camera");
+
+    return camera;
+}
+
 //JZCameraInit
 void JZCameraInit(JZCameraManager* inst, const QByteArray& buffer)
 {
@@ -120,10 +135,40 @@ void JZCameraInit(JZCameraManager* inst, const QByteArray& buffer)
     inst->init();
 }
 
-void JZCameraConnect(QObject *qrecv, JZCameraManager *inst,QString name, JZFunctionPointer func)
+void JZCameraConnect(QObject * object, JZCameraManager *inst,QString name, JZFunctionPointer func)
 {    
-    JZCamera *camera = inst->camera(name);
-    JZNodeObject *sender = qobjectToJZObject(camera);
-    JZNodeObject *recv = qobjectToJZObject(qrecv);
-    JZObjectConnect(sender, JZFunctionPointer("sigFrameReady"), recv, func);
+    inst->connect(inst, &JZCameraManager::sigInitFinish, object, [=]{
+        JZCamera* camera = JZCameraGet(inst,name);
+
+        camera->connect(camera, &JZCamera::sigFrameReady, object, [object, func](cv::Mat mat)
+        {
+            JZNodeObject* jzobj = qobjectToJZObject(object);
+            QVariantList in;
+            jzbind::createSlotParams<int>(in, mat);
+            jzobj->onSigTrigger(func.functionName(),in);
+        });
+    });
+}
+
+void JZCameraStart(JZCameraManager* inst, QString name)
+{
+    JZCamera* camera = JZCameraGet(inst, name);
+    camera->start();
+}
+
+void JZCameraStartOnce(JZCameraManager* inst, QString name)
+{
+    JZCamera* camera = JZCameraGet(inst, name);
+    camera->startOnce();
+}
+
+void JZCameraStop(JZCameraManager* inst, QString name)
+{
+    JZCamera* camera = JZCameraGet(inst, name);
+    camera->stop();
+}
+
+void JZCameraSetting(JZCameraManager* inst, QString name)
+{
+    JZCamera* camera = JZCameraGet(inst, name);
 }

@@ -8,6 +8,7 @@ enum JZCameraType
 {
     Camera_None,
     Camera_File,
+    Camera_UVC,
     Camera_Hik,
 };
 

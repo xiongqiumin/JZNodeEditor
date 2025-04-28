@@ -123,6 +123,24 @@ constexpr bool is_enum_or_qenum_cond()
 template<class T>
 using is_enum_or_qenum = bool_constant<is_enum_or_qenum_cond<T>()>;
 
+// 定义一个模板，用于判断类型 T 是否为指定类型之一
+template <typename T>
+struct is_base_type {
+    static const bool value =
+        std::is_same<T, bool>::value ||
+        std::is_same<T, int8_t>::value ||
+        std::is_same<T, uint8_t>::value ||
+        std::is_same<T, int16_t>::value ||
+        std::is_same<T, uint16_t>::value ||
+        std::is_same<T, int32_t>::value  ||
+        std::is_same<T, uint32_t>::value ||
+        std::is_same<T, int64_t>::value  ||
+        std::is_same<T, uint64_t>::value ||
+        std::is_same<T, float>::value    ||
+        std::is_same<T, double>::value   ||
+        std::is_same<T, QString>::value;
+};
+
 void setBindEnvironment(JZScriptEnvironment *env);
 JZScriptEnvironment *bindEnvironment();
 
@@ -170,60 +188,20 @@ T fromVariant(const QVariant &v, std::false_type)
 }
 
 template<>
-bool fromVariant<bool>(const QVariant &v, std::false_type);
-
-template<>
-int8_t fromVariant<int8_t>(const QVariant &v, std::false_type);
-
-template<>
-uint8_t fromVariant<uint8_t>(const QVariant &v, std::false_type);
-
-template<>
-int16_t fromVariant<int16_t>(const QVariant &v, std::false_type);
-
-template<>
-uint16_t fromVariant<uint16_t>(const QVariant &v, std::false_type);
-
-template<>
-int fromVariant<int>(const QVariant &v, std::false_type);
-
-template<>
-uint fromVariant<uint>(const QVariant &v, std::false_type);
-
-template<>
-int64_t fromVariant<int64_t>(const QVariant &v, std::false_type);
-
-template<>
-uint64_t fromVariant<uint64_t>(const QVariant &v, std::false_type);
-
-template<>
-float fromVariant<float>(const QVariant &v, std::false_type);
-
-template<>
-double fromVariant<double>(const QVariant &v, std::false_type);
-
-template<>
-QString fromVariant<QString>(const QVariant &v, std::false_type);
-
-template<>
-const QString& fromVariant<const QString&>(const QVariant& v, std::false_type);
-
-//为了调用QString 成员函数，比如 QString.size();
-template<>
-QString* fromVariant<QString*>(const QVariant &v, std::true_type);
-
-template<>
-QVariant fromVariant<QVariant>(const QVariant &v, std::false_type);
-
-template<>
 JZVariantAny fromVariant<JZVariantAny>(const QVariant &v, std::false_type);
 
 template<>
 JZFunctionPointer fromVariant<JZFunctionPointer>(const QVariant &v, std::false_type);
 
+template <typename T>
+std::enable_if_t<is_base_type<remove_cvr_t<T>>::value, remove_cvr_t<T>> fromVariant(const QVariant& v)
+{
+    return v.value<remove_cvr_t<T>>();
+}
+
 template<class T>
-T fromVariant(const QVariant &v)
-{    
+std::enable_if_t<!is_base_type<remove_cvr_t<T>>::value, T> fromVariant(const QVariant& v)
+{
     return fromVariant<T>(v, std::is_pointer<T>());
 }
 
@@ -316,12 +294,33 @@ void getFunctionParam(QStringList &)
     return;
 }
 
+template <typename T>
+std::enable_if_t<is_base_type<remove_cvr_t<T>>::value> check_function_type()
+{
+    static_assert(!std::is_pointer<T>(), "base type can't pointer");
+    static_assert(!std::is_rvalue_reference<T>(), "base type can't rvalue reference");
+}
+
+template<class T>
+std::enable_if_t<!is_base_type<remove_cvr_t<T>>::value> check_function_type()
+{
+}
+
 template <class type,typename T,typename... Args>
 void getFunctionParam(QStringList &list)
 {    
+    check_function_type<T>();
+
     QString ctype = typeid(typename std::remove_pointer<T>::type).name();
-    if (std::is_pointer<T>() || std::is_reference<T>())
-        ctype += "*";
+    if (is_base_type<remove_cvr_t<T>>::value)
+    {
+        
+    }
+    else
+    {
+        if (std::is_pointer<T>() || std::is_reference<T>())
+            ctype += "*";
+    }
     list.push_back(ctype);
     getFunctionParam<type,Args...>(list);
 }

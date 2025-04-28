@@ -89,6 +89,13 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         return out;
     }));        
 
+    jzbind::ClassBind<JZModel> cls_model(cls_id++, "JZModel");
+    cls_model.def("loadNet", true, &JZModel::loadNet);
+    cls_model.regist();
+
+    jzbind::ClassBind<JZModelManager> cls_model_manger(cls_id++, "JZModelManager");
+    cls_model_manger.regist();
+
     jzbind::ClassBind<JZYoloResult> cls_yolo_ret(cls_id++, "JZYoloResult");
     cls_yolo_ret.regist();
 
@@ -96,14 +103,16 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     cls_yolo_ret_list.regist();
 
     jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "JZYolo");
-    cls_yolo.def("loadNet", true, &JZYolo::loadNet);
     cls_yolo.def("forward", true, &JZYolo::forward);
     cls_yolo.regist();
 
     jzbind::ClassBind<JZYoloView> cls_yolo_view(cls_id++, "JZYoloView", "QWidget");
     cls_yolo_view.def("setYoloResult", true, &JZYoloView::setYoloResult);
     cls_yolo_view.regist();
+    
+    func_inst->registCFunction("JZModelInit", "true", jzbind::createFuncion(JZModelInit));
 
+    env->nodeFactory()->registNode(Node_ModelInit, createJZNode<JZNodeModelInit>);
     env->nodeFactory()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);    
 }
 

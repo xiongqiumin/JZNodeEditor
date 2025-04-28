@@ -72,6 +72,7 @@ public:
 
     void addModule(JZModuleEditor *module); 
 
+    void registLogicNode(int node_type,QString path, CreateJZNodeGraphItemFunc func = nullptr);
     void registLogicNode(JZLogicNode logic);
     QList<JZLogicNode>  logicNodeList();
 

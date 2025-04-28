@@ -3,6 +3,18 @@
 #include "JZCommManager.h"
 #include "JZNodeUtils.h"
 
+bool checkCommManager(int id, JZNodeCompiler* c, QString& error)
+{
+	if (!c->addFlowInput(id, error))
+		return false;
+
+	auto env = c->env();
+	if(!c->checkVariableType("this.commManager",env->nameToType("JZCommManager"), error))
+		return false;
+
+	return true;
+}
+
 //JZNodeCommInit
 JZNodeCommInit::JZNodeCommInit()
 {
@@ -29,11 +41,7 @@ JZCommConfig JZNodeCommInit::config()
 
 bool JZNodeCommInit::compiler(JZNodeCompiler* c, QString& error)
 {
-	if (!c->addFlowInput(m_id, error))
-		return false;
-
-	auto env = c->env();
-	if(!c->checkVariableType("this.commManager",env->nameToType("JZCommManager"), error))
+	if (!checkCommManager(m_id, c, error))
 		return false;
 
 	int id = c->allocStack(Type_byteArray);
@@ -120,13 +128,10 @@ bool JZNodeModbusRead::updateNode(QString& error)
 
 bool JZNodeModbusRead::compiler(JZNodeCompiler* c, QString& error)
 {
-	auto env = c->env();
-    if (!c->addFlowInput(m_id, error))
-        return false;
-
-	if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
+	if (!checkCommManager(m_id,c,error))
 		return false;
 
+	auto env = c->env();
 	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(0)));	
 	JZNodeIRParam ir_out = irId(c->paramId(m_id, paramOut(0)));
 
@@ -190,11 +195,7 @@ JZNodeModbusWrite::~JZNodeModbusWrite()
 
 bool JZNodeModbusWrite::compiler(JZNodeCompiler* c, QString& error)
 {
-	auto env = c->env();
-	if (!c->addFlowInput(m_id, error))
-		return false;
-
-	if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
+	if (!checkCommManager(m_id,c,error))
 		return false;
 
 	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(0)));
@@ -284,124 +285,172 @@ void JZNodeModbusWrite::loadFromStream(QDataStream& s)
 //JZNodeTcpClientRead
 JZNodeTcpClientRead::JZNodeTcpClientRead()
 {
+	m_type = Node_TcpClientRead;
+	m_name = "TcpClientRead";
 }
 JZNodeTcpClientRead::~JZNodeTcpClientRead()
 {
 }
 
-bool JZNodeTcpClientRead::compiler(JZNodeCompiler* compiler, QString& error) 
+bool JZNodeTcpClientRead::compiler(JZNodeCompiler* c, QString& error) 
 {
+	if (!checkCommManager(m_id,c,error))
+		return false;
+
 	return true;
 }
 
 void JZNodeTcpClientRead::saveToStream(QDataStream& s) const 
 {
+	JZNode::saveToStream(s);
 }
 
 void JZNodeTcpClientRead::loadFromStream(QDataStream& s) 
 {    
+	JZNode::loadFromStream(s);
 }
 
 //JZNodeTcpClientWrite
 JZNodeTcpClientWrite::JZNodeTcpClientWrite() 
 {
+	m_type = Node_TcpClientWrite;
+	m_name = "TcpClientWrite";
 }
+
 JZNodeTcpClientWrite::~JZNodeTcpClientWrite() 
 {
 }
 
-bool JZNodeTcpClientWrite::compiler(JZNodeCompiler* compiler, QString& error) 
+bool JZNodeTcpClientWrite::compiler(JZNodeCompiler* c, QString& error) 
 {
+	if (!checkCommManager(m_id,c,error))
+		return false;
+
 	return true;
 }
 
 void JZNodeTcpClientWrite::saveToStream(QDataStream& s) const 
 {
+	JZNode::saveToStream(s);
 }
+
 void JZNodeTcpClientWrite::loadFromStream(QDataStream& s) 
 {
+	JZNode::loadFromStream(s);
 }
 
 
 //JZNodeUdpRead
 JZNodeUdpRead::JZNodeUdpRead() 
 {
+	m_type = Node_UdpRead;
+	m_name = "UdpRead";
 }
 JZNodeUdpRead::~JZNodeUdpRead() 
 {
 }
 
-bool JZNodeUdpRead::compiler(JZNodeCompiler* compiler, QString& error)
+bool JZNodeUdpRead::compiler(JZNodeCompiler* c, QString& error)
 {
+	if (!checkCommManager(m_id,c,error))
+		return false;
+
 	return true;
 }
 
 void JZNodeUdpRead::saveToStream(QDataStream& s) const 
 {
+	JZNode::saveToStream(s);
 }
+
 void JZNodeUdpRead::loadFromStream(QDataStream& s)
 {
+	JZNode::loadFromStream(s);
 }
 
 
 //JZNodeUdpWrite
 JZNodeUdpWrite::JZNodeUdpWrite()
 {
+	m_type = Node_UdpWrite;
+	m_name = "UdpWrite";
 }
 JZNodeUdpWrite::~JZNodeUdpWrite()
 {
 }
 
-bool JZNodeUdpWrite::compiler(JZNodeCompiler* compiler, QString& error)
+bool JZNodeUdpWrite::compiler(JZNodeCompiler* c, QString& error)
 {
+	if (!checkCommManager(m_id,c,error))
+		return false;
+
 	return true;
 }
 
 void JZNodeUdpWrite::saveToStream(QDataStream& s) const 
 {
+	JZNode::saveToStream(s);
 }
+
 void JZNodeUdpWrite::loadFromStream(QDataStream& s) 
 {
+	JZNode::loadFromStream(s);
 }
 
 
 //JZNodeSerialRead
 JZNodeSerialRead::JZNodeSerialRead() 
 {
+	m_type = Node_SerialRead;
+	m_name = "SerialRead";
 }
 JZNodeSerialRead::~JZNodeSerialRead()
 {
 }
 
-bool JZNodeSerialRead::compiler(JZNodeCompiler* compiler, QString& error) 
+bool JZNodeSerialRead::compiler(JZNodeCompiler* c, QString& error) 
 {
+	if (!checkCommManager(m_id,c,error))
+		return false;
+
 	return true;
 }
 
 void JZNodeSerialRead::saveToStream(QDataStream& s) const 
 {
+	JZNode::saveToStream(s);
 }
+
 void JZNodeSerialRead::loadFromStream(QDataStream& s) 
 {
+	JZNode::loadFromStream(s);
 }
 
 //JZNodeSerialWrite
 JZNodeSerialWrite::JZNodeSerialWrite() 
 {
+	m_type = Node_SerialWrite;
+	m_name = "SerialWrite";
 }
 JZNodeSerialWrite::~JZNodeSerialWrite() 
 {
 }
 
-bool JZNodeSerialWrite::compiler(JZNodeCompiler* compiler, QString& error) 
+bool JZNodeSerialWrite::compiler(JZNodeCompiler* c, QString& error) 
 {
+	if (!checkCommManager(m_id,c,error))
+		return false;
+		
 	return true;
 }
 
 void JZNodeSerialWrite::saveToStream(QDataStream& s) const
 {
+	JZNode::saveToStream(s);
 }
+
 void JZNodeSerialWrite::loadFromStream(QDataStream& s)
 {
+	JZNode::loadFromStream(s);
 }
 

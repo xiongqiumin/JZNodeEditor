@@ -9,6 +9,25 @@
 #include "JZNodeProgramDumper.h"
 #include "JZProjectTemplate.h"
 #include "JZScriptConvert.h"
+#include "JZNodeBind.h"
+
+std::function<void()> g_testFunc;
+
+//JZTestLambda
+void JZTestLambda()
+{
+    g_testFunc();
+}
+
+void TestModule::regist(JZScriptEnvironment* env)
+{
+    env->functionManager()->registCFunction("JZTestLambda", true, jzbind::createFuncion(JZTestLambda));
+}
+
+void TestModule::unregist(JZScriptEnvironment* env)
+{
+
+}
 
 //TestServer
 TestServer::TestServer()

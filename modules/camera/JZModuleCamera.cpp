@@ -3,7 +3,6 @@
 #include "JZModuleCamera.h"
 #include "JZCamera.h"
 #include "JZCameraFile.h"
-#include "JZCameraHik.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
 #include "JZNodeFactory.h"
@@ -36,16 +35,31 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     cls_camera.defSingle("sigFrameReady", &JZCamera::sigFrameReady);
     cls_camera.regist();
 
+
     jzbind::ClassBind<JZCameraFile> cls_camera_file(cls_id++, "JZCameraFile", "JZCamera");
     cls_camera_file.regist();
 
-    jzbind::ClassBind<JZCameraHik> cls_camera_hik(cls_id++, "JZCameraHik", "JZCamera");
-    cls_camera_hik.regist();
+    //jzbind::ClassBind<JZCameraHik> cls_camera_hik(cls_id++, "JZCameraHik", "JZCamera");
+    //cls_camera_hik.regist();
 
-    auto func = env->functionManager();
+    jzbind::ClassBind<JZCameraManager> cls_camera_manager(cls_id++, "JZCameraManager", "QObject");
+    cls_camera_manager.regist();
+
+    auto func_inst = env->functionManager();
+    func_inst->registCFunction("JZCameraInit", true, jzbind::createFuncion(JZCameraInit));
+    func_inst->registCFunction("JZCameraConnect", true, jzbind::createFuncion(JZCameraConnect));
+    func_inst->registCFunction("JZCameraStart", true, jzbind::createFuncion(JZCameraStart));
+    func_inst->registCFunction("JZCameraStartOnce", true, jzbind::createFuncion(JZCameraStartOnce));
+    func_inst->registCFunction("JZCameraStop", true, jzbind::createFuncion(JZCameraStop));
+    func_inst->registCFunction("JZCameraSetting", true, jzbind::createFuncion(JZCameraSetting));
 
     env->nodeFactory()->registNode(Node_CameraInit, createJZNode<JZNodeCameraInit>);
+    env->nodeFactory()->registNode(Node_CameraStart, createJZNode<JZNodeCameraStart>);
+    env->nodeFactory()->registNode(Node_CameraStartOnce, createJZNode<JZNodeCameraStartOnce>);
+    env->nodeFactory()->registNode(Node_CameraStop, createJZNode<JZNodeCameraStop>);
+    env->nodeFactory()->registNode(Node_CameraSetting, createJZNode<JZNodeCameraSetting>);
     env->nodeFactory()->registNode(Node_CameraFrameReady, createJZNode<JZNodeCameraReadyEvent>);
+
 }
 
 void JZModuleCamera::unregist(JZScriptEnvironment *env)

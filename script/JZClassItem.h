@@ -40,7 +40,8 @@ public:
 
     JZScriptItem* addFlow(QString name);
     void removeFlow(QString name);
-    JZScriptItem* getFlow(QString name);
+    JZScriptItem* flow(QString name);
+    QStringList flowList();
 
     JZUiItem *ui();
     bool hasUi();

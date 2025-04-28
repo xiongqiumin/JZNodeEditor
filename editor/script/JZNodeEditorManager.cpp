@@ -98,6 +98,17 @@ void JZNodeEditorManager::clearUserRegist()
     m_userDelegateList.clear();
 }
 
+void JZNodeEditorManager::registLogicNode(int node_type,QString path, CreateJZNodeGraphItemFunc func)
+{
+    JZLogicNode logic;
+    logic.nodeType = node_type;
+    logic.path = path;
+    m_logicNode.push_back(logic);
+
+    if(func)
+        registNodeItemCreator(Node_expr, func);
+}
+
 void JZNodeEditorManager::registLogicNode(JZLogicNode logic)
 {
     m_logicNode.push_back(logic);

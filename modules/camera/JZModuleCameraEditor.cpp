@@ -8,13 +8,10 @@ void JZCameraEditorInit()
 {
     auto inst = editorManager()->instance();
 
-    JZLogicNode logic;
-    logic.nodeType = Node_CameraInit;
-    logic.path = "相机";
-    inst->registLogicNode(logic);
-
-    JZLogicNode logic_frameReady;
-    logic_frameReady.nodeType = Node_CameraFrameReady;
-    logic_frameReady.path = "相机";
-    inst->registLogicNode(logic_frameReady);
+    inst->registLogicNode(Node_CameraInit,"相机");
+    inst->registLogicNode(Node_CameraStart,"相机");
+    inst->registLogicNode(Node_CameraStartOnce,"相机");
+    inst->registLogicNode(Node_CameraStop,"相机");
+    inst->registLogicNode(Node_CameraSetting,"相机");
+    inst->registLogicNode(Node_CameraFrameReady,"相机");
 }

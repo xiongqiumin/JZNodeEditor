@@ -164,17 +164,25 @@ set(JZNodeCore_SOURCES
     modules/opencv/CvMatAndQImage.cpp
     modules/opencv/CvToQt.h
     modules/opencv/CvToQt.cpp
+	modules/opencv/JZModel.h
+    modules/opencv/JZModel.cpp
     modules/opencv/JZModelNode.h
     modules/opencv/JZModelNode.cpp
     modules/opencv/JZYolo.h
     modules/opencv/JZYolo.cpp
     modules/opencv/JZYoloView.h
     modules/opencv/JZYoloView.cpp
+	modules/opencv/JZModelNode.cpp
+	modules/opencv/JZModelNode.h
+	modules/opencv/JZModelManager.h
+	modules/opencv/JZModelManager.cpp
     #camera
     modules/camera/JZModuleCamera.h
     modules/camera/JZModuleCamera.cpp
     modules/camera/JZCamera.h
-    modules/camera/JZCamera.cpp    
+    modules/camera/JZCamera.cpp
+	modules/camera/JZCameraUVC.h   
+	modules/camera/JZCameraUVC.cpp    
     modules/camera/JZCameraHik.h
     modules/camera/JZCameraHik.cpp
     modules/camera/JZCameraFile.h

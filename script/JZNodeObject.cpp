@@ -217,7 +217,7 @@ JZFunctionDefine JZNodeObjectDefine::initSlotFunction(QString name,QString signa
 
 void JZNodeObjectDefine::addFunction(const JZFunctionDefine &def)
 {
-    Q_ASSERT(!def.name.contains(".") && !def.name.contains("::"));
+    Q_ASSERT(!def.name.contains(".") && !def.name.contains("::") && def.className == className);
     functions.push_back(def);    
 }
 
@@ -293,7 +293,7 @@ bool JZNodeObjectDefine::check(QString &error) const
                     const JZFunctionDefine *super_func = def->function(func->name);
                     if (!func->isVirtualFunction)
                     {
-                        error = "父类存在重名函数";
+                        error = "父类存在重名函数" + func->delcare();
                         return false;
                     }
 
@@ -568,6 +568,7 @@ const JZCParamDefine *JZNodeObject::cparam(const QString &name) const
 
 void JZNodeObject::clearCObj()
 {
+    m_params.clear();
     if(m_cobjOwner)
     {        
         QPointer<QObject> ptr;
@@ -1295,7 +1296,7 @@ const JZNodeObjectDefine *JZNodeObjectManager::meta(const QString &className) co
 
 const JZSignalDefine *JZNodeObjectManager::signal(const QString &name) const
 {
-    QStringList list = name.split(".");
+    QStringList list = name.split("::");
     if (list.size() != 2)
         return nullptr;
 
