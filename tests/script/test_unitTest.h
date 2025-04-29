@@ -15,9 +15,11 @@ public:
 
 private slots:
     void testHello();
+    void testTimerEvent();
+    void testCameraEvent();
 
 protected:
-    bool buidUnitTest(JZScriptItem *unit_script_item);
+
 };
 
 void test_unitTest(int argc, char *argv[]);

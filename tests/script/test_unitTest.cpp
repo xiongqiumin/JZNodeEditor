@@ -5,32 +5,11 @@
 #include "JZNodeBuilder.h"
 #include "JZNodeUtils.h"
 #include "JZScriptUnitTest.h"
+#include "modules/camera/JZCameraNode.h"
 
 TestUnitTest::TestUnitTest()
 {
     
-}
-
-bool TestUnitTest::buidUnitTest(JZScriptItem *unit_script_item)
-{
-    JZProjectTempGuard guard(&m_project, unit_script_item, JZProjectTempGuard::TakeItem);
-
-    m_engine.deinit();
-    if (!build())
-        return false;
-
-    JZNodeCompiler compiler;
-    JZNodeScriptPtr unit_script = JZNodeScriptPtr(new JZNodeScript());
-    if (!compiler.build(unit_script_item, unit_script.data()))
-    {
-        qDebug() << "build unit test failed";
-        return false;
-    }
-
-    m_program.addScript(unit_script_item->itemPath(), unit_script);
-    m_engine.deinit();
-    m_engine.init();
-    return true;
 }
 
 void TestUnitTest::testHello()
@@ -43,30 +22,58 @@ void TestUnitTest::testHello()
 
     if(!buildAs(code))
         return;
+    m_engine.deinit();
 
     JZScriptItem *add_script = m_file->getFunction("add");
 
     JZScriptUnitTest unit;
     unit.setProject(&m_project);
 
-    JZScriptItemDependPtr ptr = unit.genDepend(add_script);
-    ptr->setFunction("pow", 800.0);
+    JZScriptItemDepend *ptr = unit.genDepend(add_script);
+    ptr->functionList[0].value = 800.0;
+    ptr->input << 1 << 2;
 
-    JZScriptItem *unit_script_item = unit.createUnitScript(ptr);
-    if (!buidUnitTest(unit_script_item))
-        return;
-
-    QString unit_test = unit_script_item->function().fullName();
-    unit.registEnv(m_engine.environment());
-    
-    QVariantList in, out;
-    in << 1 << 2;
-    bool ret = call(unit_test,in,out);
+    bool ret = unit.run();
     QVERIFY(ret);    
-    QCOMPARE(out[0].toInt(), 803);
+    QCOMPARE(ptr->output[0].toInt(), 803);
 }
 
+void TestUnitTest::testTimerEvent()
+{
+    auto class_item = makeTestClass();
+    auto flow = class_item->addFlow("onTimer");
 
+    JZScriptUnitTest unit;
+    unit.setProject(&m_project);
+
+    JZScriptItemDepend* ptr = unit.genDepend(flow);
+
+    JZNodeTimerEvent* event = new JZNodeTimerEvent();
+    event->setTimeOut(100);
+    flow->addNode(event);
+
+    bool ret = unit.run();
+    QVERIFY(ret);
+}
+
+void TestUnitTest::testCameraEvent()
+{
+    auto class_item = makeTestClass();
+    class_item->addMemberVariable("cameraManager", "JZCameraManager");
+
+    auto flow = class_item->addFlow("onFrame");
+
+    JZScriptUnitTest unit;
+    unit.setProject(&m_project);
+
+    JZScriptItemDepend* ptr = unit.genDepend(flow);
+
+    JZNodeCameraReadyEvent* event = new JZNodeCameraReadyEvent();
+    flow->addNode(event);
+
+    bool ret = unit.run();
+    QVERIFY(ret);
+}
 
 void test_unitTest(int argc, char *argv[])
 {

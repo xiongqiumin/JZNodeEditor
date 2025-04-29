@@ -4,6 +4,7 @@
 #include "JZNodeEvent.h"
 #include "../JZModuleDefine.h"
 #include "JZCameraManager.h"
+#include "JZScriptUnitTest.h"
 
 enum CameraNode
 {
@@ -105,6 +106,17 @@ public:
 
 protected:
     QString m_camera;
+};
+
+//JZNodeCameraVistor
+class JZNodeCameraVistor : public JZScriptUnitTestVistor
+{
+public:
+    JZNodeCameraVistor();
+
+    virtual void visitorSelf(const JZNode* node) override;
+protected:
+
 };
 
 #endif

@@ -60,6 +60,7 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     env->nodeFactory()->registNode(Node_CameraSetting, createJZNode<JZNodeCameraSetting>);
     env->nodeFactory()->registNode(Node_CameraFrameReady, createJZNode<JZNodeCameraReadyEvent>);
 
+    JZScriptUnitTestManager::instance()->regist(new JZNodeCameraVistor());
 }
 
 void JZModuleCamera::unregist(JZScriptEnvironment *env)

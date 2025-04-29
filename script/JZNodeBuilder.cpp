@@ -182,6 +182,11 @@ const CompilerResult *JZNodeBuilder::compilerInfo(JZScriptItem *file) const
     return &it->compilerInfo;
 }
 
+void JZNodeBuilder::setScriptExt(QList<JZScriptItem*> extList)
+{
+    m_scriptExt = extList;
+}
+
 bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile,JZNodeScript* script)
 {
     if(m_stopBuild)
@@ -236,6 +241,8 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
     };
 
     clear();    
+    
+    m_project->registType();
     m_program = program;        
     m_program->clear();    
 
@@ -307,6 +314,8 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         return false;
         
     auto function_list = m_project->itemList("./", ProjectItem_scriptItem);
+    for(auto ext : m_scriptExt)
+        function_list << ext;
     for (int i = 0; i < function_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);

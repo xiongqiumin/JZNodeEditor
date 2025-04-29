@@ -16,7 +16,8 @@ JZScriptItem::JZScriptItem(ScriptType type)
 
 JZScriptItem::~JZScriptItem()
 {
-    clear();
+    qDeleteAll(m_nodes);
+    m_nodes.clear();
 }
 
 bool JZScriptItem::isFunction() const
@@ -86,6 +87,7 @@ const JZFunctionDefine &JZScriptItem::function()
             return m_function;
         }
 
+        Q_ASSERT(node->type() != Node_functionStart);
         m_function = node->function();
         m_function.className = class_name;
         return m_function;
@@ -647,6 +649,8 @@ bool JZScriptItem::loadFromStream(QDataStream &s)
     auto node_factory = project()->environment()->nodeFactory();
 
     s >> m_scriptType;
+    clear();
+
     s >> m_name;
     if (m_scriptType == Function)
     {

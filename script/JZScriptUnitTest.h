@@ -1,8 +1,10 @@
 ﻿#ifndef JZ_SCRIPT_UNIT_TEST_H_
 #define JZ_SCRIPT_UNIT_TEST_H_
 
+#include <functional>
 #include "JZScriptItem.h"
 #include "JZScriptItemVisitor.h"
+#include "JZNodeEngine.h"
 
 class JZScriptItemDepend
 {
@@ -10,23 +12,33 @@ public:
     //这里存的node节点是原脚本的
     struct ParamDepend
     {
-        const JZNodeParam *param;
+        int node_id;
         QVariant value;
     };
 
     struct FunctionDepend
     {
-        const JZNodeFunction *func;
+        int node_id;
         QVariant value;
     };
     
     JZScriptItemDepend();
-    void setParam(QString name,const QVariant &value);
-    void setFunction(QString func, const QVariant &value);
+    void clear();
+    
+    void setParam(int id,const QVariant &value);
+
+    JZFunctionDefine function;
+    std::function<bool()> isFinish;
         
+    QList<std::function<void(JZNodeObject*)>> initFuncList;
+    
     QList<ParamDepend> paramList;
     QList<FunctionDepend> functionList;
-    const JZScriptItem *script;
+    
+    QVariantList input;
+    QVariantList output;
+
+    JZScriptItem *script;
 };
 typedef QSharedPointer<JZScriptItemDepend> JZScriptItemDependPtr;
 
@@ -43,36 +55,87 @@ public:
     JZScriptUnitTest *hook;
 };
 
+//JZScriptUnitTestVistor
 class JZScriptUnitTestVistor: public JZScriptItemVistor
 {
 public:
     JZScriptUnitTestVistor();
 
-    virtual void visitorSelf(const JZNode *node) override;
+    void updateDepend(JZScriptItemDepend *depend);
 
-    JZScriptItemDependPtr depend;
+protected:    
+    JZScriptItemDepend *m_depend;
 };
 
-class JZScriptUnitTest
+//JZScriptNomarlVistor
+class JZScriptNomarlVistor: public JZScriptUnitTestVistor
 {
+public:
+    JZScriptNomarlVistor();
+
+    virtual void visitorSelf(const JZNode *node) override;
+protected:    
+
+};
+
+class JZScriptUnitTest : public QObject
+{
+    Q_OBJECT
+
 public:    
     JZScriptUnitTest();
     ~JZScriptUnitTest();
 
     void setProject(JZProject* project);
-    void registEnv(JZScriptEnvironment *env);
 
-    JZScriptItemDependPtr genDepend(const JZScriptItem *script);
-    JZScriptItem *createUnitScript(JZScriptItemDependPtr depend);
-    JZScriptItem *script();    
+    JZScriptItemDepend *genDepend(JZScriptItem *script);
+    JZNodeEngine *engine();
+    
+    bool init();
+    void deinit();
+
+    void start();
+    void stop();
+    bool isFinish();
+    bool waitFinish(int timeout = 5000);
+    
+    bool run(int timeout = 5000);
 
     bool hasHook(int id);
     QVariant hookValue(int id);
 
 protected:
+    void initEnv();
+    virtual void timerEvent(QTimerEvent* event) override;
+
     JZProject* m_project;
-    JZScriptItem *m_script;        
+    JZScriptItem *m_script;     
+    QString m_error;
+    int m_timeId;
+    
+    JZScriptItemDepend m_depend;
     QMap<int,QVariant> m_hookValues;
+
+    JZNodeProgram m_program;
+    JZNodeEngine m_engine;
+    JZNodeObjectPointer m_object;
+};
+
+//JZScriptUnitTestManager
+class JZScriptUnitTestManager
+{
+public:
+    static JZScriptUnitTestManager* instance();
+    void initEnv(JZScriptEnvironment* env);
+
+    void regist(JZScriptUnitTestVistor* replace);
+    void updateDepend(JZScriptItemDepend* depend);
+
+public:
+    JZScriptUnitTestManager();
+    ~JZScriptUnitTestManager();
+
+    QList<JZScriptUnitTestVistor*> m_replaceList;
 };
 
 #endif
