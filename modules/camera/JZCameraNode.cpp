@@ -187,3 +187,23 @@ void JZNodeCameraReadyEvent::loadFromStream(QDataStream &s)
 {
     JZNodeSignalEvent::loadFromStream(s);
 }
+
+//JZNodeCameraVistor
+JZNodeCameraVistor::JZNodeCameraVistor()
+{
+
+}
+
+void JZNodeCameraVistor::visitorSelf(const JZNode* node)
+{
+    if (node->type() == Node_CameraFrameReady)
+    {
+        JZNodeCameraReadyEvent* cam_event = (JZNodeCameraReadyEvent*)node;
+        QString camera = cam_event->camera();
+
+        auto init_cam = [](JZNodeObject *object) {
+            
+        };
+        m_depend->initFuncList.push_back(init_cam);
+    }
+}

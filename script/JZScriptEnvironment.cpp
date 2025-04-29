@@ -6,6 +6,7 @@
 #include "JZScriptBuildInFunction.h"
 #include "runtime/JZWidgetBind.h"
 #include "JZNodeEvent.h"
+#include "JZScriptUnitTest.h"
 
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
@@ -13,6 +14,7 @@ JZScriptEnvironment::JZScriptEnvironment()
      m_objectManager(this)
 {    
     jzbind::setBindEnvironment(this);
+
     m_objectManager.init();
     m_funcManager.init();
 
@@ -22,10 +24,12 @@ JZScriptEnvironment::JZScriptEnvironment()
     JZModuleManager::instance()->regist(this);
 
     JZNodeEventFunctionInit(this);
+    JZScriptUnitTestManager::instance()->initEnv(this);
+
+    jzbind::setBindEnvironment(nullptr);
 
     m_objectManager.setUserRegist(true);
     m_funcManager.setUserRegist(true);
-    jzbind::setBindEnvironment(nullptr);
 }
 
 JZScriptEnvironment::~JZScriptEnvironment()

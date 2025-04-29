@@ -424,9 +424,20 @@ const JZFunction* JZNodeProgram::function(QString name) const
     return nullptr;
 }
 
-void JZNodeProgram::addScript(QString path, JZNodeScriptPtr script)
+void JZNodeProgram::addScript(JZNodeScriptPtr script)
 {
-    m_scripts[path] = script;
+    m_scripts[script->itemPath] = script;
+    for (int i = 0; i < script->functionList.size(); i++)
+    {
+        auto func_def = script->functionList[i].define;
+        if (func_def.className.isEmpty())
+            m_typeMeta.functionList << func_def;
+        else
+        {
+            auto obj_def = m_typeMeta.object(func_def.className);
+            obj_def->addFunction(func_def);
+        }
+    }
 }
 
 const JZNodeScript *JZNodeProgram::script(QString path) const

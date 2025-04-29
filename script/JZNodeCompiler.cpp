@@ -756,19 +756,26 @@ check_end:
 }
 
 bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
-{        
+{   
     init(scriptFile);
+
+    m_compilerInfo = CompilerResult();
+    m_compilerInfo.result = false;
     if (!genGraphs())
+    {
+        m_compilerInfo.checkError = m_checkError;
         return false;
+    }
     if (!checkGraphs())
+    {
+        m_compilerInfo.checkError = m_checkError;
         return false;
+    }
 
     m_script = result;
     m_script->clear();
     m_script->itemPath = scriptFile->itemPath();
-    m_compilerInfo = CompilerResult();
-    m_compilerInfo.result = false;
-
+    
     JZScriptClassItem *class_file = project()->getItemClass(scriptFile);
     if (class_file)
     {
@@ -874,6 +881,8 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     }
     
     m_compilerInfo.checkError = m_checkError;
+    if (m_nodeInfo.isEmpty())
+        return false;
 
     auto it = m_nodeInfo.begin();
     while (it != m_nodeInfo.end())
@@ -1236,6 +1245,7 @@ bool JZNodeCompiler::genGraphs()
         if(!graph->toposort())
         {
             logE(graph->error);
+            m_checkError = graph->error;
             return false;
         }
     }
@@ -1250,9 +1260,16 @@ bool JZNodeCompiler::checkGraphs()
         if(!graph->check())
         {
             logE(graph->error);
+            m_checkError = graph->error;
             return false;
         }
     }
+    if (m_graphList.size() == 0)
+    {
+        m_checkError = "no node";
+        return false;
+    }
+
     return true;
 }    
 

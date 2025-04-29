@@ -158,6 +158,7 @@ void JZNodeFunctionManager::unregistFunction(QString name)
         return;
 
     m_funcDefine.erase(it);
+    m_funcImpl.remove(name);
 }
 
 void JZNodeFunctionManager::clearUserReigst()

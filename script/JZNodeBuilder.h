@@ -21,6 +21,8 @@ public:
     void setProject(JZProject *project);
     JZProject *project();
 
+    void setScriptExt(QList<JZScriptItem*> extList);
+
     bool build(JZNodeProgram *program);
     void stopBuild();
     bool isBuildInterrupt();
@@ -61,6 +63,7 @@ protected:
     QString m_checkError;
     QMap<QString, ScriptInfo> m_scripts;
     JZNodeCompiler m_compiler;
+    QList<JZScriptItem*> m_scriptExt;
 
     QMutex m_mutex;
     bool m_logEnable;

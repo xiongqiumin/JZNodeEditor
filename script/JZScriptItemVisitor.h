@@ -11,7 +11,7 @@ class JZScriptItemVistor
 {
 public:    
     JZScriptItemVistor();
-    ~JZScriptItemVistor();
+    virtual ~JZScriptItemVistor();
 
     void visitorScript(const JZScriptItem *item);
     void visitor(const JZNode *node);
