@@ -333,6 +333,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
     QAction *actBuild = nullptr, *actRebuild = nullptr, *actClearBuild = nullptr;
     QAction *actNewFile = nullptr, *actExistFile = nullptr;
     QAction *actSlot = nullptr;
+    QAction *actFlow = nullptr;
 
     bool canChanged = true;    
     auto item_class = m_project->getItemClass(item);
@@ -380,6 +381,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
                 actCreateVirtual << menu_virtual->addAction(virtual_list[i]);
         }
         actSlot = menu_new->addAction("槽函数");
+        actFlow = menu_new->addAction("流程");
     }
     if (canOpenItem(item))
     {
@@ -511,7 +513,14 @@ void JZProjectTree::onContextMenu(QPoint pos)
         m_project->addItem(item->itemPath(), func_item);
         m_project->saveItem(item);
         
-        addItem(view_item, func_item);        
+        addItem(view_item, func_item);
+    }
+    else if (act == actFlow)
+    {
+        QString name = JZRegExpHelp::uniqueString("flow", item_class->flowList());
+        auto flow_item = item_class->addFlow(name);
+        m_project->saveItem(flow_item);
+        addItem(view_item, flow_item);
     }
     else if (act == actCreateClass)
     {

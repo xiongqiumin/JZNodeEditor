@@ -59,6 +59,7 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     //node
     env->nodeFactory()->registNode(Node_modbusWatch, createJZNode<JZNodeModbusWatchEvent>);
 
+    env->nodeFactory()->registNode(Node_CommInit, createJZNode<JZNodeCommInit>);
     env->nodeFactory()->registNode(Node_ModbusRead,createJZNode<JZNodeModbusRead>);
     env->nodeFactory()->registNode(Node_ModbusWrite,createJZNode<JZNodeModbusWrite>);
     env->nodeFactory()->registNode(Node_TcpClientRead, createJZNode<JZNodeTcpClientRead>);

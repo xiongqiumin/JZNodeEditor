@@ -106,7 +106,7 @@ void JZNodeEditorManager::registLogicNode(int node_type,QString path, CreateJZNo
     m_logicNode.push_back(logic);
 
     if(func)
-        registNodeItemCreator(Node_expr, func);
+        registNodeItemCreator(node_type, func);
 }
 
 void JZNodeEditorManager::registLogicNode(JZLogicNode logic)

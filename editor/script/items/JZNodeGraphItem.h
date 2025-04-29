@@ -46,7 +46,7 @@ public:
     void init(JZNode *node);
 
     virtual QRectF boundingRect() const override;
-    virtual void updateNode() override;    
+    virtual void updateNode() override;
     void updateSize();
 
     void setPinValue(int pin, QString name);

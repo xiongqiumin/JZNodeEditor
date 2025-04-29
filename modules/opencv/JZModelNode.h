@@ -21,6 +21,8 @@ public:
     JZModelManagerConfig config();
 
     bool compiler(JZNodeCompiler* c, QString& error);
+    void saveToStream(QDataStream& s) const;
+    void loadFromStream(QDataStream& s);
 
 protected:
     JZModelManagerConfig m_config;

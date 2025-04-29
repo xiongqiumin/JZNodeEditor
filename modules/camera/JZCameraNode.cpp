@@ -45,6 +45,18 @@ bool JZNodeCameraInit::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
+void JZNodeCameraInit::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_config;
+}
+
+void JZNodeCameraInit::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_config;
+}
+
 //JZCameraNode
 JZCameraNode::JZCameraNode()
 {

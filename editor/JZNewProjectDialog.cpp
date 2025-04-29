@@ -3,6 +3,7 @@
 #include <QFileInfo>
 #include "JZNewProjectDialog.h"
 #include "ui_JZNewProjectDialog.h"
+#include "JZProjectTemplate.h"
 
 JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
     :QDialog(parent)
@@ -24,9 +25,9 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
     ui->setupUi(this);
 	ui->lineProjectName->setText(project_name);
 	ui->lineProjectDir->setText(project_dir);
-
-    ui->listWidget->addItem("ui");
-    ui->listWidget->addItem("console");
+    
+    auto templateList = JZProjectTemplate::instance()->templateList();
+    ui->listWidget->addItems(templateList);
 
     ui->listWidget->setCurrentRow(0);
 }

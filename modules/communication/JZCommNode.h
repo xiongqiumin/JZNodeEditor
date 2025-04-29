@@ -30,7 +30,9 @@ public:
     void setConfig(JZCommConfig config);
     JZCommConfig config();
 
-    bool compiler(JZNodeCompiler* compiler, QString& error);
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+    virtual void saveToStream(QDataStream& s) const override;
+    virtual void loadFromStream(QDataStream& s) override;
 
     JZCommConfig m_config;
 };

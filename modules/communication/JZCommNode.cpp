@@ -53,9 +53,24 @@ bool JZNodeCommInit::compiler(JZNodeCompiler* c, QString& error)
 	return true;
 }
 
+void JZNodeCommInit::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_config;
+}
+
+void JZNodeCommInit::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_config;
+}
+
 //JZNodeModbusRead
 JZNodeModbusRead::JZNodeModbusRead()
 {
+    m_type = Node_ModbusRead;
+    m_name = "ModbusRead";    
+
 	addFlowIn();
 	addFlowOut();
 

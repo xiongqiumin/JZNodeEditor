@@ -37,8 +37,8 @@ void JZNodeForItem::updatePin()
         m_opBlock = fromWidget(box, true);
         m_opBlock->name = "op";
         m_opBlock->pri = 3;
-    }    
-
+    }
+    
     QComboBox *box_op = qobject_cast<QComboBox*>(m_opBlock->widget);
     box_op->blockSignals(true);
     int index = box_op->findData(node_for->op());

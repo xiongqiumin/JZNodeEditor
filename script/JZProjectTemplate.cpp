@@ -104,6 +104,10 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         createMainWindow();
 
         auto class_item = m_project->getClass("MainWindow");
+        class_item->addMemberVariable("cameraManager", "JZCameraManager");
+        class_item->addMemberVariable("commManager", "JZCommManager");
+        class_item->addMemberVariable("modelManager", "JZModelManager");
+        
         auto func_init = class_item->memberFunction("init");
         auto start = func_init->startNode();
 

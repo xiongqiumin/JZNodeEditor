@@ -45,6 +45,18 @@ bool JZNodeModelInit::compiler(JZNodeCompiler* c, QString& error)
     return true;
 }
 
+void JZNodeModelInit::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_config;
+}
+
+void JZNodeModelInit::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_config;
+}
+
 //JZNodeModelForward
 JZNodeModelForward::JZNodeModelForward()
 {
