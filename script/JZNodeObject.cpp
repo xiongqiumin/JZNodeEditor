@@ -748,7 +748,7 @@ QStringList JZNodeObject::signalList() const
 void JZNodeObject::onDestory(QObject *obj)
 {
     m_cobjOwner = false;
-    delete this;
+    m_cobj = nullptr;
 }
 
 void JZNodeObject::onRecvDestory(QObject *obj)
@@ -935,6 +935,7 @@ void JZNodeObject::setCObject(void *obj,bool owner)
     {
         QObject *qobj = (QObject*)m_cobj;
         qobj->setProperty("JZObject",QVariant::fromValue<void*>(this));
+        qobj->connect(qobj, &QObject::destroyed, this, &JZNodeObject::onDestory);
     }
     setCOwner(owner);
 }
@@ -948,15 +949,6 @@ void JZNodeObject::setCOwner(bool owner)
 {
     if(m_cobjOwner == owner)
         return;
-
-    if(m_define->isInherits(Type_object))
-    {
-        QObject *qobj = (QObject*)m_cobj;
-        if(owner)
-            qobj->connect(qobj,&QObject::destroyed,this,&JZNodeObject::onDestory);
-        else
-            qobj->disconnect(qobj,&QObject::destroyed,this,&JZNodeObject::onDestory);
-    }
 
     m_cobjOwner = owner;
 }

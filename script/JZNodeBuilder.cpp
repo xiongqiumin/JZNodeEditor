@@ -182,9 +182,14 @@ const CompilerResult *JZNodeBuilder::compilerInfo(JZScriptItem *file) const
     return &it->compilerInfo;
 }
 
-void JZNodeBuilder::setScriptExt(QList<JZScriptItem*> extList)
+void JZNodeBuilder::setScriptInclude(QList<JZScriptItem*> extList)
 {
-    m_scriptExt = extList;
+    m_scriptInclude = extList;
+}
+
+void JZNodeBuilder::setScriptExclude(QList<JZScriptItem*> extList)
+{
+    m_scriptExclude = extList;
 }
 
 bool JZNodeBuilder::buildScript(JZScriptItem *scriptFile,JZNodeScript* script)
@@ -314,11 +319,14 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         return false;
         
     auto function_list = m_project->itemList("./", ProjectItem_scriptItem);
-    for(auto ext : m_scriptExt)
+    for(auto ext : m_scriptInclude)
         function_list << ext;
     for (int i = 0; i < function_list.size(); i++)
     {
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
+        if (m_scriptExclude.contains(script))
+            continue;
+
         JZScriptClassItem* class_item = script->getClassItem();
         JZNodeScriptPtr script_impl = JZNodeScriptPtr(new JZNodeScript());
         if (!buildScript(script, script_impl.data()))
@@ -327,12 +335,12 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         m_scripts[script->itemPath()].script = script_impl;
 
         auto func_def = script->function();
-        if (class_item && isFlowScriptItem(script))
+        if (class_item && !class_item->memberFunction(func_def.name))
         {
             auto cls_def = type_meta.object(class_item->className());
             cls_def->addFunction(func_def);
         }
-        if(!func_def.isMemberFunction())
+        if(func_def.className.isEmpty())
             type_meta.functionList << func_def;        
     }    
 

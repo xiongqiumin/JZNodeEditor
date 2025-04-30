@@ -33,6 +33,9 @@ public:
 
     JZNodeEvent* startNode();
     const JZNodeEvent* startNode() const;
+    JZNode* lastFlowNode();
+    void insertFlow(JZNode* after, JZNode* insert_node);
+    JZNode* nextFlowNode(const JZNode *node,int flow_id);
 
     int addNode(JZNode *node);
     void insertNode(JZNode *node);
@@ -43,6 +46,8 @@ public:
     const JZNode *getNode(int id) const;
     JZNodePin *getPin(const JZNodeGemo &gemo);    
     QList<int> nodeList();            
+
+    QList<JZNode*> findNodeByType(int type);
 
     int addGroup(const JZNodeGroup &group);
     void insertGroup(const JZNodeGroup &group);

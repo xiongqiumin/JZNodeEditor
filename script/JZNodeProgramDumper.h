@@ -33,14 +33,15 @@ protected:
 
     QString functionDeclare(const JZFunction* func);
     QString paramDefine(const JZParamDefine* define);
-    void dumpClass(JZScriptClassItem* class_item, QString& def, QString& impl);
-    void dumpFunction(JZScriptItem* func_item,QString &def,QString &impl);
+    void dumpClass(QString class_name, QString& def, QString& impl);
+    void dumpFunction(const JZFunction *function,QString &def,QString &impl);
     QString tab(int count);
 
     QString m_dirPath;
     
-    JZScriptItem* m_script;
-    const JZNodeScript* m_scriptImpl;
+    JZNodeScript* m_script;
+    const JZNodeObjectDefine* m_classDefine;
+    const JZFunction* m_function;
 
     JZProject* m_project;
     JZNodeProgram *m_program;

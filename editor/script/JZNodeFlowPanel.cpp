@@ -127,12 +127,7 @@ void JZNodeFlowPanel::updateFlow(JZScriptItem *file)
 
 JZNode *JZNodeFlowPanel::nextNode(JZNode *node, int pin_id)
 {
-    auto lines = m_file->getConnectPin(node->id(), pin_id);
-    if (lines.size() == 0)
-        return nullptr;
-
-    auto line = m_file->getConnect(lines[0]);
-    return m_file->getNode(line->to.nodeId);
+    return m_file->nextFlowNode(node,pin_id);
 }
 
 void JZNodeFlowPanel::addFlow(QTreeWidgetItem *parent, QTreeWidgetItem *lca_parent, JZNode *node, QList<int> flow_list)

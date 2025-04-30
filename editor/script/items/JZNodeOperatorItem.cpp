@@ -19,7 +19,7 @@ void JZNodeOperatorItem::updatePin()
     if (m_addBlock)
     {
         QPushButton *btn = new QPushButton("Add");
-        m_addBlock = fromWidget(btn,true);
+        m_addBlock = createWidgetBlock(btn,true);
         btn->connect(btn, &QPushButton::clicked, [this] {
             this->onBtnAddClicked();
         });
@@ -51,7 +51,7 @@ void JZNodeExpressionItem::updatePin()
     if (m_setBlock)
     {
         QPushButton *btn = new QPushButton("Setting");
-        m_setBlock = fromWidget(btn, true);
+        m_setBlock = createWidgetBlock(btn, true);
         btn->connect(btn, &QPushButton::clicked, [this] {
             this->onBtnSetClicked();
         });

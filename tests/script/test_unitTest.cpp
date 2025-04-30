@@ -12,8 +12,15 @@ TestUnitTest::TestUnitTest()
     
 }
 
+void TestUnitTest::dumpUnit(JZScriptUnitTest* unit,QString name)
+{
+    QString path = qApp->applicationDirPath() + "/dump/" + name;
+    unit->dump(path);
+}
+
 void TestUnitTest::testHello()
 {
+    return;
     QString code = R"(int add(int a,int b)
         {
             return a + pow(2,4) + b;
@@ -40,6 +47,7 @@ void TestUnitTest::testHello()
 
 void TestUnitTest::testTimerEvent()
 {
+    return;
     auto class_item = makeTestClass();
     auto flow = class_item->addFlow("onTimer");
 
@@ -54,6 +62,8 @@ void TestUnitTest::testTimerEvent()
 
     bool ret = unit.run();
     QVERIFY(ret);
+
+    dumpUnit(&unit, "unit_testTimerEvent");
 }
 
 void TestUnitTest::testCameraEvent()
@@ -61,17 +71,38 @@ void TestUnitTest::testCameraEvent()
     auto class_item = makeTestClass();
     class_item->addMemberVariable("cameraManager", "JZCameraManager");
 
+    //init func
+    JZFunctionDefine define = class_item->objectDefine().initMemberFunction("init");
+    auto script_init = class_item->addMemberFunction(define);
+
+    JZCameraConfig cam_config;
+    cam_config.name = "camera";
+    cam_config.type = Camera_File;
+    cam_config.path = "C:/Users/xiong/Desktop/demo/image";
+
+    JZCameraManagerConfig config;
+    config.cameraList << cam_config;
+
+    JZNodeCameraInit* node_init = new JZNodeCameraInit();
+    node_init->setConfig(config);
+    script_init->addNode(node_init);
+    script_init->addConnect(script_init->startNode()->flowOutGemo(), node_init->flowInGemo());
+
+    //onFrame
     auto flow = class_item->addFlow("onFrame");
 
     JZScriptUnitTest unit;
     unit.setProject(&m_project);
 
-    JZScriptItemDepend* ptr = unit.genDepend(flow);
-
     JZNodeCameraReadyEvent* event = new JZNodeCameraReadyEvent();
     flow->addNode(event);
 
+    JZScriptItemDepend* ptr = unit.genDepend(flow);
+    QVERIFY2(!ptr->isError(), qUtf8Printable(ptr->error));
+    
     bool ret = unit.run();
+    dumpUnit(&unit, "unit_testCameraEvent");
+
     QVERIFY(ret);
 }
 

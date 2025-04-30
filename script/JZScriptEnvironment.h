@@ -98,6 +98,8 @@ public:
     bool mapKeyValueType(int type,int &key_type, int& value_type) const;
 
 protected:
+    Q_DISABLE_COPY(JZScriptEnvironment);
+
     struct ModuleInfo
     {
         JZModule *module;

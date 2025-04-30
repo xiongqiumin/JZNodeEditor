@@ -5,7 +5,10 @@
 
 JZNodeProgramDumper::JZNodeProgramDumper()
 {    
+    m_script = nullptr;
+    m_project = nullptr;
     m_program = nullptr;
+    m_classDefine = nullptr;
 }
 
 void JZNodeProgramDumper::init(JZProject* project, JZNodeProgram* program)
@@ -29,7 +32,7 @@ bool JZNodeProgramDumper::isFunctionInParam(JZNodeIRParam param)
 {
     if (param.isRef())
     {
-        auto &func = m_script->function();
+        auto& func = m_function->define;
         for (int i = 0; i < func.paramIn.size(); i++)
         {
             if (func.paramIn[i].name == param.ref())
@@ -45,13 +48,13 @@ bool JZNodeProgramDumper::isFunctionInParam(JZNodeIRParam param)
 
 bool JZNodeProgramDumper::isIrSetReg(int pc, RegSetType regType)
 {
-    if (pc < 0 || pc >= m_scriptImpl->statmentList.size())
+    if (pc < 0 || pc >= m_script->statmentList.size())
         return false;
 
-    if (m_scriptImpl->statmentList[pc]->type != OP_set)
+    if (m_script->statmentList[pc]->type != OP_set)
         return false;
 
-    JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_scriptImpl->statmentList[pc].data());
+    JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_script->statmentList[pc].data());
     if (regType == SrcRegIn)
     {
         return isRegInParam(ir_set->src);
@@ -128,8 +131,8 @@ void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
     QString source;
     header += "#ifndef " + file_name.toUpper() + "_H_\n";
     header += "#define " + file_name.toUpper() + "_H_\n\n";
+    header += "#include \"JZRuntime.h\"\n\n";
 
-    source += "#include \"JZRuntime.h\"\n";
     source += "#include \"" + file_name + ".h\"\n\n";
 
     if (file_name == "main")
@@ -151,7 +154,7 @@ void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
     {
         JZScriptClassItem* class_item = script_file->getClass(class_list[cls_idx]);
         QString class_define, class_impl;
-        dumpClass(class_item, class_define, class_impl);
+        dumpClass(class_item->className(), class_define, class_impl);
 
         header += class_define;
         source += class_impl;
@@ -160,7 +163,7 @@ void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
     QStringList function_list = script_file->functionList();
     for (int fun_idx = 0; fun_idx < function_list.size(); fun_idx++)
     {
-        JZScriptItem* func_item = script_file->getFunction(function_list[fun_idx]);
+        const JZFunction* func_item = m_program->function(function_list[fun_idx]);
         QString func_define, func_impl;
         dumpFunction(func_item, func_define, func_impl);
 
@@ -187,12 +190,15 @@ void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
 }
 
 
-void JZNodeProgramDumper::dumpClass(JZScriptClassItem* class_item, QString& def, QString& impl)
+void JZNodeProgramDumper::dumpClass(QString class_name, QString& def, QString& impl)
 {
-    auto cls = m_env.meta(class_item->className());
+    auto cls = m_env.meta(class_name);
+    m_classDefine = cls;
 
     QString name = cls->className;
     QString super = cls->superName;
+
+    auto class_item = m_project->getClass(class_name);
     JZUiItem* ui = class_item->ui();
 
     QString header;
@@ -208,22 +214,10 @@ void JZNodeProgramDumper::dumpClass(JZScriptClassItem* class_item, QString& def,
     header += tab(1) + "virtual ~" + name + "();\n\n";
 
     //function
-    auto function_list = class_item->memberFunctionList();
+    auto function_list = cls->functions;
     for (int i = 0; i < function_list.size(); i++)
     {
-        auto func = class_item->memberFunction(function_list[i]);
-        QString func_def, func_impl;
-        dumpFunction(func, func_def, func_impl);
-
-        header += tab(1) + func_def + ";\n";
-        source += func_impl + "\n\n";
-    }
-
-    //flow
-    auto flow_list =  class_item->flowList();
-    for (int i = 0; i < flow_list.size(); i++)
-    {
-        auto func = class_item->flow(flow_list[i]);
+        auto func = m_program->function(function_list[i].fullName());
         QString func_def, func_impl;
         dumpFunction(func, func_def, func_impl);
 
@@ -242,21 +236,27 @@ void JZNodeProgramDumper::dumpClass(JZScriptClassItem* class_item, QString& def,
 
     def = header;
     impl = source;
+
+    m_classDefine = nullptr;
 }
 
-void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QString& impl)
+void JZNodeProgramDumper::dumpFunction(const JZFunction* func_impl, QString& def, QString& impl)
 {
     QString source;
     QString header;
 
-    auto func_impl = m_program->function(func_item->function().fullName());
+    m_function = func_impl;
+    m_script = m_program->script(func_impl->path);    
+    auto& opList = m_script->statmentList;
 
-    m_script = func_item;
-    m_scriptImpl = m_program->script(func_impl->path);
-    
-    auto& opList = m_scriptImpl->statmentList;
+    QString declare = functionDeclare(func_impl);
+    if (m_classDefine)
+    {
+        int idx = declare.indexOf(' ');
+        declare.insert(idx + 1, m_classDefine->className + "::");
+    }
 
-    source += functionDeclare(func_impl) + "\n{\n";
+    source += declare + "\n{\n";
     m_jumpList.clear();
 
     source += tab(1) + "bool Reg_Cmp = false;\n";
@@ -266,21 +266,39 @@ void JZNodeProgramDumper::dumpFunction(JZScriptItem* func_item, QString& def, QS
     for (int i = func_impl->addr; i < func_impl->addrEnd; i++)
     {
         QString line;
-
-        //函数调用前加{
-        if (!isIrSetReg(i - 1, DstRegIn) && isIrSetReg(i, DstRegIn))
-            line += space + "{\n";
-
         line += irToString(opList[i].data());
+        lines.push_back(line);
+    }
 
-        //函数调用后加}
-        if ((opList[i]->type == OP_call && !isIrSetReg(i - 1, DstRegIn) && !isIrSetReg(i + 1, SrcRegOut))
-            || (isIrSetReg(i, SrcRegOut)))
+    //函数加{}
+    for (int i = func_impl->addr; i < func_impl->addrEnd; i++)
+    {
+        if (opList[i].data()->type != OP_call)
+            continue;
+
+        int set_reg_in = -1;
+        for (int j = i - 1; j >= 0; j--)
         {
-            line += "\n" + space + "}";
+            if (isIrSetReg(j, DstRegIn))
+                set_reg_in = j;
+            else
+                break;
         }
 
-        lines.push_back(line);
+        if(set_reg_in != -1)
+            lines[set_reg_in] = space + "{\n" + lines[set_reg_in];
+
+
+        int set_reg_out = (set_reg_in == -1)? -1:i;
+        for (int j = i + 1; j < func_impl->addrEnd; j++)
+        {
+            if (isIrSetReg(j, SrcRegOut))
+                set_reg_out = j;
+            else
+                break;
+        }
+        if(set_reg_out != -1)
+            lines[set_reg_out] = lines[set_reg_out] + "\n" + space + "}";
     }
 
     //处理跳转
@@ -425,7 +443,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     {
         if (isIrSetReg(op->pc - 1, DstRegOut))
         {
-            JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_scriptImpl->statmentList[op->pc - 1].data());
+            JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_script->statmentList[op->pc - 1].data());
             line = "return " + toString(ir_set->src) + ";";
         }
         else

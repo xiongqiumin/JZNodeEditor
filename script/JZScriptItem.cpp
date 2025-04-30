@@ -120,6 +120,51 @@ const JZNodeEvent* JZScriptItem::startNode() const
     return const_cast<JZScriptItem*>(this)->startNode();
 }
 
+JZNode* JZScriptItem::lastFlowNode()
+{
+    JZNode *node = startNode();
+    while (true)
+    {
+        if (node->flowOutCount() > 0 && nextFlowNode(node, node->flowOut()))
+            node = nextFlowNode(node, node->flowOut());
+        else
+            return node;
+    }
+    Q_ASSERT(0);
+    return nullptr;
+}
+
+void JZScriptItem::insertFlow(JZNode* after, JZNode* insert_node)
+{
+    int flow_id = after->flowOut();
+
+    JZNode *next_node = nextFlowNode(after, flow_id);
+    if (next_node)
+    {
+        QList<int> next_flow = getConnectPin(after->id(), flow_id);
+        auto line = getConnect(next_flow[0]);
+        line->from = JZNodeGemo(insert_node->id(), insert_node->flowOut());
+    }
+    addConnect(JZNodeGemo(after->id(), flow_id), insert_node->flowInGemo());
+}
+
+JZNode* JZScriptItem::nextFlowNode(const JZNode* node, int flow_out)
+{
+    Q_ASSERT(node->pin(flow_out)->isFlow() || node->pin(flow_out)->isSubFlow());
+
+    QList<int> next_flow = getConnectPin(node->id(), flow_out);
+    if (next_flow.size() > 0)
+    {
+        Q_ASSERT(next_flow.size() == 1);
+        auto line = getConnect(next_flow[0]);
+        return getNode(line->to.nodeId);
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 int JZScriptItem::addNode(JZNode *node)
 {
     Q_ASSERT(node->id() == -1);
@@ -255,6 +300,20 @@ QPointF JZScriptItem::getNodePos(int id)
 QList<int> JZScriptItem::nodeList()
 {
     return m_nodes.keys();
+}
+
+QList<JZNode*> JZScriptItem::findNodeByType(int type)
+{
+    QList<JZNode*> list;
+
+    auto it = m_nodes.begin();
+    while (it != m_nodes.end())
+    {
+        if(it.value()->type() == type)
+            list.push_back(it.value());
+        it++;
+    }
+    return list;
 }
 
 bool JZScriptItem::hasConnect(JZNodeGemo from, JZNodeGemo to)

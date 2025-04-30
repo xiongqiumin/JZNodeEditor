@@ -7,6 +7,7 @@
 #include "JZNodeEngine.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeFunctionManager.h"
+#include "JZNodeProgramDumper.h"
 
 static JZScriptUnitTest* g_hook = nullptr;
 
@@ -28,10 +29,24 @@ public:
     }
 };
 
+//JZUnitTestFinish
+class JZUnitTestFinish : public BuiltInFunction
+{
+public:
+    virtual void call(JZNodeEngine* engine) override
+    {
+        g_hook->setFinish(true);
+    }
+};
+
 //JZScriptItemDepend    
 JZScriptItemDepend::JZScriptItemDepend()
 {
     script = nullptr;
+    initExtScript = nullptr;
+    triggerScript = nullptr;
+    unitScript = nullptr;
+    isTrigger = false;
 }
 
 void JZScriptItemDepend::clear()
@@ -39,6 +54,12 @@ void JZScriptItemDepend::clear()
     paramList.clear();
     functionList.clear();
     script = nullptr;
+    error = QString();
+}
+
+bool JZScriptItemDepend::isError()
+{
+    return !error.isEmpty();
 }
 
 void JZScriptItemDepend::setParam(int id, const QVariant &value)
@@ -124,7 +145,7 @@ JZScriptNomarlVistor::JZScriptNomarlVistor()
 {
 }
 
-void JZScriptNomarlVistor::visitorSelf(const JZNode *node)
+void JZScriptNomarlVistor::visitorSelf(JZNode *node)
 {
     if(node->type() == Node_param)
     {
@@ -144,12 +165,24 @@ void JZScriptNomarlVistor::visitorSelf(const JZNode *node)
 JZScriptUnitTest::JZScriptUnitTest()
 {
     m_script = new JZScriptItem(JZScriptItem::Function);
+    m_initExtScript = new JZScriptItem(JZScriptItem::Function);
+    m_triggerScript = new JZScriptItem(JZScriptItem::Function);
+
+    m_depend.initExtScript = m_initExtScript;
+    m_depend.triggerScript = m_triggerScript;
+    m_depend.unitScript = m_script;
+    m_isFinish = false;
+
     m_project = nullptr;
     m_timeId = -1;
+
+    connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &JZScriptUnitTest::onRuntimeError);
 }
 
 JZScriptUnitTest::~JZScriptUnitTest()
 {
+    delete m_initExtScript;
+    delete m_triggerScript;
     delete m_script;
 }
 
@@ -168,7 +201,7 @@ void JZScriptUnitTest::timerEvent(QTimerEvent* event)
     }
 }
 
-void JZScriptUnitTest::initEnv()
+void JZScriptUnitTest::initRuntime()
 {
     JZScriptEnvironment* env = m_engine.environment();
 
@@ -211,17 +244,31 @@ JZScriptItemDepend *JZScriptUnitTest::genDepend(JZScriptItem *script)
     return &m_depend;
 }
 
+void JZScriptUnitTest::dump(QString dir)
+{
+    JZNodeProgramDumper dumper;
+    dumper.init(m_project, &m_program);
+    dumper.dump(dir);
+}
+
 bool JZScriptUnitTest::init()
 {
     auto class_item = m_depend.script->getClassItem();
-    JZProjectTempGuard guard(m_project, m_script, JZProjectTempGuard::TakeItem);
-    if (class_item)
-        guard.setClass(class_item->className());
+    if (!class_item || !class_item->memberFunction("init"))
+    {
+        m_error = "no init function";
+        return false;
+    }
+
+    JZProjectTempGuard guard(m_project, { m_script, m_initExtScript, m_triggerScript }, JZProjectTempGuard::TakeItem);
+    auto meta = m_project->environment()->meta(class_item->className());
+    m_initExtScript->setFunction(meta->initMemberFunction("UnitTestInitExt"));
+    m_triggerScript->setFunction(meta->initMemberFunction("UnitTestTrigger"));
+    guard.setClass(class_item->className());
 
     //replace
     QByteArray buffer = m_depend.script->toBuffer();
     m_script->fromBuffer(buffer);
-    m_script->setName("UnitTest_" + m_depend.script->name());
     m_script->loadFinish();
 
     QString func_name = m_script->function().fullName();
@@ -254,10 +301,16 @@ bool JZScriptUnitTest::init()
             replace_node(p.node_id, p.value);
     }
 
+    JZNodeFunction* set_finish = new JZNodeFunction();
+    set_finish->setFunction("JZUnitTestFinish");
+    m_script->addNode(set_finish);
+    m_script->insertFlow(m_script->startNode(), set_finish);
+
     //build
     JZNodeBuilder builder;
     builder.setProject(m_project);
-    builder.setScriptExt({ m_script });
+    builder.setScriptInclude({ m_script,m_initExtScript, m_triggerScript });
+    builder.setScriptExclude({ m_depend.script  });
 
     if (!builder.build(&m_program))
     {
@@ -268,27 +321,23 @@ bool JZScriptUnitTest::init()
 
     m_engine.setProgram(&m_program);
     m_engine.init();
+
     g_hook = this;
-    initEnv();
+    initRuntime();
 
     QVariantList in, out;
     m_engine.call("__init__", in, out);
 
-    if (class_item)
-    {
-        JZNodeObject* object = m_engine.environment()->objectManager()->create(class_item->classType());
-        m_object = JZNodeObjectPointer(object, true);
+    JZNodeObject* object = m_engine.environment()->objectManager()->create(class_item->classType());
+    m_object = JZNodeObjectPointer(object, true);
 
-        try
-        {
-            for (int i = 0; i < m_depend.initFuncList.size(); i++)
-                m_depend.initFuncList[i](object);
-        }
-        catch (const std::exception& e)
-        {
-            m_error = e.what();
-            return false;
-        }
+    QString init_function = class_item->className() + "::init";
+
+    in << QVariant::fromValue(m_object);
+    if (!m_engine.call(init_function, in, out))
+    {
+        m_error = m_engine.runtimeError().error;
+        return false;
     }
 
     return true;
@@ -297,20 +346,33 @@ bool JZScriptUnitTest::init()
 void JZScriptUnitTest::deinit()
 {
     m_object = JZNodeObjectPointer();
+    m_engine.deinit();
 }
 
 void JZScriptUnitTest::start()
 {
     QVariantList unit_in = m_depend.input;
+    QString trigger_func;
     if (m_depend.function.isMemberFunction())
+    {
         unit_in.insert(0, QVariant::fromValue(m_object));
+        trigger_func = m_depend.function.className + "::UnitTestTrigger";
+    }
 
-    m_engine.call(m_depend.function.fullName(), unit_in, m_depend.output);
-    startTimer(50);
+    m_isFinish = false;
+    if (m_depend.isTrigger)
+        m_engine.call(trigger_func, unit_in, m_depend.output);
+    else
+        m_engine.call(m_depend.function.fullName(), unit_in, m_depend.output);
+
+    m_timeId = startTimer(50);
 }
 
 void JZScriptUnitTest::stop()
 {
+    Q_ASSERT(m_timeId != -1);
+
+    m_timeId = -1;
     killTimer(m_timeId);
     m_engine.deinit();
     g_hook = nullptr;
@@ -318,13 +380,15 @@ void JZScriptUnitTest::stop()
 
 bool JZScriptUnitTest::isFinish()
 {
-    if (m_engine.status() == Status_running)
+    if (g_engine->status() == Status_running)
         return false;
 
-    if (m_depend.isFinish)
-        return m_depend.isFinish();
+    return m_isFinish;
+}
 
-    return true;
+void JZScriptUnitTest::setFinish(bool flag)
+{
+    m_isFinish = true;
 }
 
 bool JZScriptUnitTest::waitFinish(int timeout)
@@ -342,6 +406,11 @@ bool JZScriptUnitTest::waitFinish(int timeout)
 
     stop();
     return false;
+}
+
+void JZScriptUnitTest::onRuntimeError()
+{
+    m_isFinish = true;
 }
 
 bool JZScriptUnitTest::run(int timeout)
@@ -384,9 +453,17 @@ void JZScriptUnitTestManager::initEnv(JZScriptEnvironment* env)
     hook.paramIn.push_back(JZParamDefine("outId", "args"));
     hook.paramOut.push_back(JZParamDefine("outValue", "arg"));
 
-    auto test_hook = new JZUnitTestHook();
-    auto hook_func = BuiltInFunctionPtr(test_hook);
+    auto hook_func = BuiltInFunctionPtr(new JZUnitTestHook());
     func_inst->registBuiltInFunction(hook, hook_func);
+
+    JZFunctionDefine unit_finish_def;
+    unit_finish_def.name = "JZUnitTestFinish";
+    unit_finish_def.isCFunction = true;
+    unit_finish_def.isFlowFunction = true;
+
+    auto unit_finish_func = BuiltInFunctionPtr(new JZUnitTestFinish());
+    func_inst->registBuiltInFunction(unit_finish_def, unit_finish_func);
+
     env->nodeFactory()->registNode(Node_unitTest, createJZNode<JZNodeUnitTest>);
 }
 
@@ -397,6 +474,10 @@ void JZScriptUnitTestManager::regist(JZScriptUnitTestVistor *replace)
 
 void JZScriptUnitTestManager::updateDepend(JZScriptItemDepend *depend)
 {
-    for(int i = 0; i < m_replaceList.size(); i++)
+    for (int i = 0; i < m_replaceList.size(); i++)
+    {
         m_replaceList[i]->updateDepend(depend);
+        if (depend->isError())
+            return;
+    }
 }

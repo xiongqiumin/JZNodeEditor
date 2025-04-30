@@ -18,6 +18,8 @@ public:
     JZNodeEditor();
     ~JZNodeEditor();
 
+    JZNodeView *view();
+
     virtual void open(JZProjectItem *item) override;
     virtual void close() override;
     virtual void save() override;

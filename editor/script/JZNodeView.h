@@ -126,6 +126,8 @@ public:
     void clearRuntimeValue();
     void setRuntimeValue(int node_id,int pin_id,const JZNodeDebugParamValue &value);
 
+    void displayValue(int node_id,int pin_id,QVariantPtr *ptr);
+
     bool isBreakPoint(int nodeId);
     void setCompilerResult(const CompilerResult *info);
 

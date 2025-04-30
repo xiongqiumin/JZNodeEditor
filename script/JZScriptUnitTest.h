@@ -25,12 +25,11 @@ public:
     JZScriptItemDepend();
     void clear();
     
+    bool isError();
     void setParam(int id,const QVariant &value);
-
+    
+    QString error;
     JZFunctionDefine function;
-    std::function<bool()> isFinish;
-        
-    QList<std::function<void(JZNodeObject*)>> initFuncList;
     
     QList<ParamDepend> paramList;
     QList<FunctionDepend> functionList;
@@ -38,7 +37,12 @@ public:
     QVariantList input;
     QVariantList output;
 
-    JZScriptItem *script;
+    JZScriptItem *initExtScript;
+    bool isTrigger;
+    JZScriptItem *triggerScript; //触发
+    
+    JZScriptItem *unitScript;
+    JZScriptItem *script;        //原始
 };
 typedef QSharedPointer<JZScriptItemDepend> JZScriptItemDependPtr;
 
@@ -61,7 +65,7 @@ class JZScriptUnitTestVistor: public JZScriptItemVistor
 public:
     JZScriptUnitTestVistor();
 
-    void updateDepend(JZScriptItemDepend *depend);
+    virtual void updateDepend(JZScriptItemDepend *depend);
 
 protected:    
     JZScriptItemDepend *m_depend;
@@ -73,7 +77,7 @@ class JZScriptNomarlVistor: public JZScriptUnitTestVistor
 public:
     JZScriptNomarlVistor();
 
-    virtual void visitorSelf(const JZNode *node) override;
+    virtual void visitorSelf(JZNode *node) override;
 protected:    
 
 };
@@ -90,7 +94,8 @@ public:
 
     JZScriptItemDepend *genDepend(JZScriptItem *script);
     JZNodeEngine *engine();
-    
+    void dump(QString dir);
+
     bool init();
     void deinit();
 
@@ -98,24 +103,31 @@ public:
     void stop();
     bool isFinish();
     bool waitFinish(int timeout = 5000);
+    void setFinish(bool flag);
     
     bool run(int timeout = 5000);
 
     bool hasHook(int id);
     QVariant hookValue(int id);
 
+protected slots:
+    void onRuntimeError();
+
 protected:
-    void initEnv();
+    void initRuntime();
     virtual void timerEvent(QTimerEvent* event) override;
 
     JZProject* m_project;
     JZScriptItem *m_script;     
+    JZScriptItem *m_initExtScript;
+    JZScriptItem* m_triggerScript;
     QString m_error;
     int m_timeId;
     
     JZScriptItemDepend m_depend;
     QMap<int,QVariant> m_hookValues;
 
+    bool m_isFinish;
     JZNodeProgram m_program;
     JZNodeEngine m_engine;
     JZNodeObjectPointer m_object;

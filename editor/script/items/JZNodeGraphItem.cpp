@@ -97,7 +97,7 @@ void JZNodeGraphItem::init(JZNode *node)
     m_id = node->id();
 }
 
-JZNodeGraphItem::BlockPtr JZNodeGraphItem::fromPin(JZNodePin *pin)
+JZNodeGraphItem::BlockPtr JZNodeGraphItem::createPinBlock(JZNodePin *pin)
 {
     BlockPtr block = BlockPtr(new Block());
     block->id = pin->id();
@@ -124,10 +124,11 @@ JZNodeGraphItem::BlockPtr JZNodeGraphItem::fromPin(JZNodePin *pin)
     }
 
     block->name = pin->name();
+    m_blocks[block->id] = block;
     return block;
 }
 
-JZNodeGraphItem::BlockPtr JZNodeGraphItem::fromWidget(QWidget *widget, bool isInput)
+JZNodeGraphItem::BlockPtr JZNodeGraphItem::createWidgetBlock(QWidget *widget, bool isInput)
 {
     BlockPtr block = BlockPtr(new Block());
     block->isInput = isInput;
@@ -177,7 +178,7 @@ void JZNodeGraphItem::updatePin()
     {
         int pin_id = list[i];
         if (!m_blocks.contains(pin_id))
-            m_blocks[pin_id] = fromPin(m_node->pin(pin_id));
+            createPinBlock(m_node->pin(pin_id));
     }
 }
 

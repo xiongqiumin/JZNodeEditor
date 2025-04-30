@@ -144,6 +144,11 @@ void JZNodeEditor::save()
     m_view->save();
 }
 
+JZNodeView *JZNodeEditor::view()
+{
+    return m_view;
+}
+
 void JZNodeEditor::addMenuBar(QMenuBar *menubar)
 {
     QMenu *menu = menubar->actions()[Menu_View]->menu();

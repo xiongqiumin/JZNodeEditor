@@ -291,7 +291,6 @@ void JZNodeEngine::regist()
 
 JZNodeEngine::JZNodeEngine()
 { 
-    m_watchTime = -1;
     m_program = nullptr;
     m_script = nullptr;
     m_sender = nullptr;
@@ -339,7 +338,6 @@ void JZNodeEngine::clear()
     m_sender = nullptr;
     m_statusCommand = Command_none;
     m_status = Status_none;
-    m_watchTime = 0;
     
     clearReg();
     if (g_engine == this)
@@ -430,7 +428,7 @@ int JZNodeEngine::nodeIdByPc(int pc)
     return nodeIdByPc(m_script, func, pc);
 }
 
-int JZNodeEngine::status()
+JZEngineStatus JZNodeEngine::status()
 {
     QMutexLocker lock(&m_mutex);
     return m_status;
@@ -985,11 +983,7 @@ void JZNodeEngine::watchNotify()
     if (!m_debug || m_stack.size() == 0)
         return;
 
-    if(m_stack.currentEnv()->watchMap.size() == 0)
-        return;
-
     emit sigWatchNotify();
-    m_stack.currentEnv()->watchMap.clear();
 }
 
 void JZNodeEngine::printNode(int node_id)

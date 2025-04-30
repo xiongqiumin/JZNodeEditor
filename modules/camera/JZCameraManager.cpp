@@ -26,6 +26,16 @@ QDataStream &operator>>(QDataStream &s, JZCameraConfig &param)
 
 
 //JZCameraManagerConfig
+int JZCameraManagerConfig::indexOfCamera(QString name)
+{
+    for (int i = 0; i < cameraList.size(); i++)
+    {
+        if (cameraList[i].name == name)
+            return i;
+    }
+    return -1;
+}
+
 QDataStream &operator<<(QDataStream &s, const JZCameraManagerConfig &param)
 {
     s << param.cameraList;
@@ -74,13 +84,11 @@ void JZCameraManager::init()
 
 JZCamera* JZCameraManager::camera(QString name)
 {
-    for(int i = 0; i < m_config.cameraList.size(); i++)
-    {
-        if(m_config.cameraList[i].name == name)
-            return m_cameras[i];
-    }
+    int idx = m_config.indexOfCamera(name);
+    if (idx == -1)
+        return NULL;
 
-    return nullptr;
+    return m_cameras[idx];
 }
 
 

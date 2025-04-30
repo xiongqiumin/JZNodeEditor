@@ -440,6 +440,11 @@ void JZNodeProgram::addScript(JZNodeScriptPtr script)
     }
 }
 
+JZNodeScript* JZNodeProgram::script(QString path)
+{
+    return m_scripts.value(path, JZNodeScriptPtr()).data();
+}
+
 const JZNodeScript *JZNodeProgram::script(QString path) const
 {
     return m_scripts.value(path, JZNodeScriptPtr()).data();

@@ -1222,31 +1222,36 @@ JZNodeRuntimeInfo::Stack *MainWindow::currentStack()
 
 void MainWindow::onWatchNotify()
 {
-/*
-    auto env = editorEnvironment();
-    auto inst = JZNodeEditorManager::instance();
-    if(m_runThread.engine()->stack()->size() != 1)
+    JZNodeEngine *engine = m_runThread.engine();
+ 
+    int stack_level = engine->stack()->size();
+    if(m_editor->type() != Editor_script)
         return;
 
-    QString file = m_runThread.engine()->stack()->currentEnv()->script->file;
-    auto e = nodeEditor(file);
-    if(!e || e != m_editor)
+    JZNodeEditor *e = qobject_cast<JZNodeEditor*>(m_editor);
+    int stack_level = -1;
+    for(int i = engine->stack()->size(); i >= 0; i--)
+    {
+        QString file = engine->stack()->currentEnv()->script->file;
+        if(file == e->item()->itemPath())
+        {
+            stack_level = i;
+            break;
+        }
+    }
+    if(stack_level == -1)
         return;
 
-    auto &watchMap = m_runThread.engine()->stack()->currentEnv()->watchMap;
+    auto param_env = engine->stack()->currentEnv(stack_level);
+    auto &watchMap = e->view()->watchMap();
+
     auto it = watchMap.begin();
     while(it != watchMap.end())
     {
-        JZNodeGemo gemo = JZNodeCompiler::paramGemo(it.key());
-        JZNodeDebugParamValue value;
-        value.type = m_programEnv.variantType(it.value());
-        value.value = JZNodeType::debugString(it.value());
-        
-        auto d = inst->delegate(value.type);        
-        e->setRuntimeValue(gemo.nodeId,gemo.pinId,value);
+        QVariantPtr *ref = param_env->getRef(it.key());
+        e->view()->displayValue(node_id,pin_id,ref);
         it++;
     }
-*/
 }
 
 void MainWindow::onRuntimeWatch(const JZNodeRuntimeWatchResult &info)
