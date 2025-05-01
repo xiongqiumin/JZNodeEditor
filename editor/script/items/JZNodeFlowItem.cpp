@@ -34,7 +34,7 @@ void JZNodeForItem::updatePin()
             this->onCompareOpChanged(op);
         });
 
-        m_opBlock = fromWidget(box, true);
+        m_opBlock = createWidgetBlock(box, true);
         m_opBlock->name = "op";
         m_opBlock->pri = 3;
     }
@@ -74,14 +74,14 @@ void JZNodeIfItem::updatePin()
         btnAdd->connect(btnAdd, &QPushButton::clicked, [this] {
             this->onAddClicked();
         });
-        btnAdd->connect(btnElse, &QPushButton::clicked, [this] {
+        btnElse->connect(btnElse, &QPushButton::clicked, [this] {
             this->onElseClicked();
         });
         
-        m_addCond = fromWidget(btnAdd,true);
+        m_addCond = createWidgetBlock(btnAdd,true);
         m_addCond->pri = 8;
 
-        m_addElse = fromWidget(btnElse, true);
+        m_addElse = createWidgetBlock(btnElse, true);
         m_addElse->pri = 9;
     }
     JZNodeIf *node_if = (JZNodeIf *)m_node;
@@ -145,7 +145,7 @@ void JZNodeSwitchItem::updatePin()
         btnAdd->connect(btnAdd, &QPushButton::clicked, [this] {
             this->onAddClicked();
         });
-        m_addSwitch = fromWidget(btnAdd, true);
+        m_addSwitch = createWidgetBlock(btnAdd, true);
         m_addSwitch->pri = 8;
     }
 }

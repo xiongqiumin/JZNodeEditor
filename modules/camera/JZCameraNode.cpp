@@ -27,6 +27,18 @@ JZCameraManagerConfig JZNodeCameraInit::config()
     return m_config;
 }
 
+void JZNodeCameraInit::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_config;
+}
+
+void JZNodeCameraInit::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_config;
+}
+
 bool JZNodeCameraInit::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
@@ -186,24 +198,4 @@ void JZNodeCameraReadyEvent::saveToStream(QDataStream &s) const
 void JZNodeCameraReadyEvent::loadFromStream(QDataStream &s)
 {
     JZNodeSignalEvent::loadFromStream(s);
-}
-
-//JZNodeCameraVistor
-JZNodeCameraVistor::JZNodeCameraVistor()
-{
-
-}
-
-void JZNodeCameraVistor::visitorSelf(const JZNode* node)
-{
-    if (node->type() == Node_CameraFrameReady)
-    {
-        JZNodeCameraReadyEvent* cam_event = (JZNodeCameraReadyEvent*)node;
-        QString camera = cam_event->camera();
-
-        auto init_cam = [](JZNodeObject *object) {
-            
-        };
-        m_depend->initFuncList.push_back(init_cam);
-    }
 }

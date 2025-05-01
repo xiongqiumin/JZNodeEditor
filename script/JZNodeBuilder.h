@@ -21,7 +21,8 @@ public:
     void setProject(JZProject *project);
     JZProject *project();
 
-    void setScriptExt(QList<JZScriptItem*> extList);
+    void setScriptInclude(QList<JZScriptItem*> extList);
+    void setScriptExclude(QList<JZScriptItem*> extList);
 
     bool build(JZNodeProgram *program);
     void stopBuild();
@@ -63,7 +64,9 @@ protected:
     QString m_checkError;
     QMap<QString, ScriptInfo> m_scripts;
     JZNodeCompiler m_compiler;
-    QList<JZScriptItem*> m_scriptExt;
+    
+    QList<JZScriptItem*> m_scriptInclude;
+    QList<JZScriptItem*> m_scriptExclude;
 
     QMutex m_mutex;
     bool m_logEnable;

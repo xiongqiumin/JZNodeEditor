@@ -13,21 +13,21 @@ public:
     JZScriptItemVistor();
     virtual ~JZScriptItemVistor();
 
-    void visitorScript(const JZScriptItem *item);
-    void visitor(const JZNode *node);
+    void visitorScript(JZScriptItem *item);
+    void visitor(JZNode *node);
 
 protected:
-    virtual void visitorSelf(const JZNode *node);
+    virtual void visitorSelf(JZNode *node);
 
-    QList<const JZNode*> getPinNode(const JZNode *node,int pin);
-    QList<const JZNode*> dataInputNode(const JZNode *node);
+    QList<JZNode*> getPinNode(JZNode *node,int pin);
+    QList<JZNode*> dataInputNode(JZNode *node);
 
-    const JZNode *nextFlowNode(const JZNode *node,int id);
-    const JZNode *flowInputNode(const JZNode *node,int id);
+    JZNode *nextFlowNode(JZNode *node,int id);
+    JZNode *flowInputNode(JZNode *node,int id);
 
-    QList<const JZNode*> allDataInputNode(const JZNode *node);
+    QList<JZNode*> allDataInputNode(JZNode *node);
 
-    const JZScriptItem *m_script;
+    JZScriptItem *m_script;
 
 };
 

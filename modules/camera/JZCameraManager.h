@@ -24,6 +24,8 @@ QDataStream &operator>>(QDataStream &s, JZCameraConfig &param);
 class JZCameraManagerConfig
 {
 public:
+    int indexOfCamera(QString name);
+
     QList<JZCameraConfig> cameraList;
 };
 QDataStream &operator<<(QDataStream &s, const JZCameraManagerConfig &param);

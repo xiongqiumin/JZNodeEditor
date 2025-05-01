@@ -481,15 +481,22 @@ JZNodeDisplay::JZNodeDisplay()
     m_type = Node_display;
     m_name = "diaplay";
 
-    int in = addParamIn("var1");
+    addInput();
 }
 
 JZNodeDisplay::~JZNodeDisplay()
 {
 }
 
+void JZNodeDisplay::addInput()
+{
+    int in = addParamIn("input");
+    setPinType(in,{ "arg" });
+}
+
 bool JZNodeDisplay::compiler(JZNodeCompiler *compiler, QString &error)
 {
+    Q_ASSERT(0);
     return true;
 }
 

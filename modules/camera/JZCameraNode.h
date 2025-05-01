@@ -1,11 +1,9 @@
 #ifndef JZ_CAMERA_NODE_H_
 #define JZ_CAMERA_NODE_H_
 
-#include "JZNodeEvent.h"
 #include "../JZModuleDefine.h"
 #include "JZCameraManager.h"
-#include "JZScriptUnitTest.h"
-
+#include "JZNodeEvent.h"
 enum CameraNode
 {
     Node_CameraId = Module_CameraNode,
@@ -29,6 +27,9 @@ public:
 
     void setConfig(const JZCameraManagerConfig &config);
     JZCameraManagerConfig config();
+
+    virtual void saveToStream(QDataStream& s) const override;
+    virtual void loadFromStream(QDataStream& s) override;
 
 protected:
     JZCameraManagerConfig m_config;
@@ -108,17 +109,6 @@ public:
 
 protected:
     QString m_camera;
-};
-
-//JZNodeCameraVistor
-class JZNodeCameraVistor : public JZScriptUnitTestVistor
-{
-public:
-    JZNodeCameraVistor();
-
-    virtual void visitorSelf(const JZNode* node) override;
-protected:
-
 };
 
 #endif

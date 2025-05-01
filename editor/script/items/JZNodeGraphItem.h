@@ -87,8 +87,8 @@ protected:
 
     void notifyPropChanged(const QByteArray &buffer);    
     
-    BlockPtr fromPin(JZNodePin *pin);
-    BlockPtr fromWidget(QWidget *widget,bool isInput);
+    BlockPtr createPinBlock(JZNodePin *pin);
+    BlockPtr createWidgetBlock(QWidget *widget,bool isInput);
 
     QByteArray saveNode();
     QList<int> blockList(bool isInput);

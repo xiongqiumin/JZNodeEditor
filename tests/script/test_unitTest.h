@@ -5,6 +5,7 @@
 #include "JZProject.h"
 #include "JZNodeEngine.h"
 #include "test_base.h"
+#include "JZScriptUnitTest.h"
 
 class TestUnitTest : public BaseTest
 {
@@ -19,6 +20,7 @@ private slots:
     void testCameraEvent();
 
 protected:
+    void dumpUnit(JZScriptUnitTest *unit,QString name);
 
 };
 

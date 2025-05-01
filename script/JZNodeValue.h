@@ -111,6 +111,8 @@ public:
     JZNodeDisplay();
     ~JZNodeDisplay();
 
+    void addInput();
+
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
 protected:
 

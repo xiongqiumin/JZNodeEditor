@@ -49,13 +49,14 @@ public:
     };
 
     JZProjectTempGuard(JZProject *project, JZProjectItem *item, AfterOpertaor op);
+    JZProjectTempGuard(JZProject* project, QList<JZProjectItem*> items, AfterOpertaor op);
     ~JZProjectTempGuard();
 
     void setClass(QString className);
 
 protected:
     JZProject *m_project;
-    JZProjectItem *m_item;
+    QList<JZProjectItem*> m_items;
     AfterOpertaor m_after;
 };
 

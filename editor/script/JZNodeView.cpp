@@ -39,6 +39,7 @@
 #include "JZNodeGraphItem.h"
 #include "JZEditorGlobal.h"
 #include "JZNodeView.h"
+#include "JZNodeDisplayItem.h"
 
 //CopyData
 struct CopyData
@@ -1176,6 +1177,24 @@ void JZNodeView::setRuntimeValue(int node_id,int pin_id,const JZNodeDebugParamVa
         return;
 
     //item->setPinRuntimeValue(pin_id,value);
+}
+
+void JZNodeView::displayValue(int node_id,int pin_id,QVariantPtr *ptr)
+{
+    auto item = getNodeItem(node_id);
+    if(!item)
+        return;
+
+    auto lines = m_file->getConnectOut(node_id,pin_id);
+    for(int i = 0; i < lines.size(); i++)
+    {
+        auto line = m_file->getConnect(lines[i]);
+        JZNodeDisplayItem *item = dynamic_cast<JZNodeDisplayItem*>(getNodeItem(line->from.nodeId));
+        if(item->node->type() != Node_display)
+            continue;
+
+        item->setValue(line->to.pinId, ptr);
+    }
 }
 
 bool JZNodeView::isBreakPoint(int nodeId)

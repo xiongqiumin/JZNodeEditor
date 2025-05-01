@@ -39,7 +39,6 @@ public:
     const JZNodeScript *script;
     int pc;
     int inCount;          //传入参数数量    
-    QMap<int, QVariant> watchMap;
     
     QMap<QString,QVariantPtr> locals;
     QMap<int,QVariantPtr> stacks;
@@ -158,7 +157,7 @@ public:
     void setProgram(const JZNodeProgram *program);
     const JZNodeProgram *program();
 
-    int status();
+    JZEngineStatus status();
     JZNodeRuntimeInfo runtimeInfo();    
     JZNodeRuntimeError runtimeError();
 
@@ -311,7 +310,6 @@ protected:
     QMap<QString,QVariantPtr> m_global;
     QVector<QVariant> m_regs;
     JZNodeObject *m_sender;
-    qint64 m_watchTime;
            
     JZFunction m_idleFunc;
     QAtomicInt m_statusCommand;

@@ -9,11 +9,15 @@
 #include "JZNodeCompiler.h"
 #include "JZCameraNode.h"
 #include "JZCameraManager.h"
+#include "JZCameraUnitTest.h"
 
 //JZModuleCamera
 JZModuleCamera::JZModuleCamera()
 {    
-    m_name = "modbus";
+    m_name = "camera";
+
+
+    JZScriptUnitTestManager::instance()->regist(new JZNodeCameraVistor());
 }
 
 JZModuleCamera::~JZModuleCamera()
@@ -59,8 +63,6 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     env->nodeFactory()->registNode(Node_CameraStop, createJZNode<JZNodeCameraStop>);
     env->nodeFactory()->registNode(Node_CameraSetting, createJZNode<JZNodeCameraSetting>);
     env->nodeFactory()->registNode(Node_CameraFrameReady, createJZNode<JZNodeCameraReadyEvent>);
-
-    JZScriptUnitTestManager::instance()->regist(new JZNodeCameraVistor());
 }
 
 void JZModuleCamera::unregist(JZScriptEnvironment *env)
