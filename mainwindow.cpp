@@ -428,7 +428,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }    
 
     m_task.clearTask();
-
     QMainWindow::closeEvent(event);
 }
 
@@ -442,6 +441,20 @@ const CompilerResult *MainWindow::compilerResult(const QString &path)
         return nullptr;
 
     return &it.value();
+}
+
+void MainWindow::updateAutoRunDepend()
+{
+    auto list = nodeEditorList();
+    for (int i = 0; i < list.size(); i++)
+        list[i]->setDepend(nullptr);
+
+    auto node_editor = currentNodeEditor();
+    if (!node_editor)
+        return;
+    
+    auto depend = m_task.runThread()->genDepend(node_editor->script());
+    node_editor->setDepend(depend);
 }
 
 JZProject *MainWindow::project()
@@ -759,8 +772,18 @@ void MainWindow::onActionStepOut()
 
 void MainWindow::onActionModbus()
 {
-    JZModbusSimulator *simulator = new JZModbusSimulator();
+    JZModbusSimulator *simulator = new JZModbusSimulator(this);
+    connect(simulator, &JZModbusSimulator::sigClose, this, &MainWindow::onModbusSimulatorClose);
+
+    JZModbusSimulatorConfig cfg;
+    simulator->setConfig(cfg);
     simulator->show();
+}
+
+void MainWindow::onModbusSimulatorClose()
+{
+    JZModbusSimulator *simulator = qobject_cast<JZModbusSimulator*>(sender());
+    auto cfg = simulator->config();
 }
 
 void MainWindow::onActionHelp()
@@ -912,8 +935,9 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
     }
 }
 
-void MainWindow::onAutoRunResult(UnitTestResultPtr result)
+void MainWindow::onAutoRunResult(int result)
 {
+/*
     if(result->result == UnitTestResult::Cancel)
         return;
 
@@ -927,6 +951,7 @@ void MainWindow::onAutoRunResult(UnitTestResultPtr result)
 
     JZNodeEditor *node_e = qobject_cast<JZNodeEditor*>(e);
     node_e->setAutoRunResult(*result);
+*/
 }   
 
 void MainWindow::onTaskRunning()
@@ -945,6 +970,14 @@ JZEditor *MainWindow::editor(QString filepath)
         it++;
     }
     return nullptr;    
+}
+
+JZNodeEditor *MainWindow::currentNodeEditor()
+{
+    if (m_editor && m_editor->type() == Editor_script)
+        return dynamic_cast<JZNodeEditor*>(m_editor);
+    else
+        return nullptr;
 }
 
 QList<JZNodeEditor*> MainWindow::nodeEditorList()
@@ -1222,9 +1255,7 @@ JZNodeRuntimeInfo::Stack *MainWindow::currentStack()
 
 void MainWindow::onWatchNotify()
 {
-    JZNodeEngine *engine = m_runThread.engine();
- 
-    int stack_level = engine->stack()->size();
+    JZNodeEngine *engine = m_task.runThread()->engine();
     if(m_editor->type() != Editor_script)
         return;
 
@@ -1232,7 +1263,7 @@ void MainWindow::onWatchNotify()
     int stack_level = -1;
     for(int i = engine->stack()->size(); i >= 0; i--)
     {
-        QString file = engine->stack()->currentEnv()->script->file;
+        QString file = engine->stack()->currentEnv()->script->itemPath;
         if(file == e->item()->itemPath())
         {
             stack_level = i;
@@ -1242,15 +1273,15 @@ void MainWindow::onWatchNotify()
     if(stack_level == -1)
         return;
 
-    auto param_env = engine->stack()->currentEnv(stack_level);
-    auto &watchMap = e->view()->watchMap();
+    auto param_env = engine->stack()->env(stack_level);
+    auto watchList = e->view()->watchList();
 
-    auto it = watchMap.begin();
-    while(it != watchMap.end())
+    for(int i = 0; i < watchList.size(); i++)
     {
-        QVariantPtr *ref = param_env->getRef(it.key());
-        e->view()->displayValue(node_id,pin_id,ref);
-        it++;
+        int param_id = watchList[i];
+        QVariantPtr *ref = param_env->getRef(param_id);
+        auto gemo = JZNodeGemo::fromParamId(param_id);
+        e->view()->displayValue(gemo.nodeId, gemo.pinId, ref);
     }
 }
 

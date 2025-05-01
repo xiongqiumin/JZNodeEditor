@@ -25,6 +25,7 @@ JZNodeAutoRunWidget::JZNodeAutoRunWidget(QWidget *p)
     setLayout(l);
 
     m_editor = nullptr;
+    m_depend = nullptr;
 }
 
 JZNodeAutoRunWidget::~JZNodeAutoRunWidget()
@@ -38,7 +39,7 @@ void JZNodeAutoRunWidget::setEditor(JZNodeEditor *editor)
 
 void JZNodeAutoRunWidget::clear()
 {
-    m_depend = ScriptDepend();
+    m_depend = nullptr;
     m_tree->clear();
     m_propList.clear();
 }
@@ -91,39 +92,14 @@ int JZNodeAutoRunWidget::editType(int data_type)
         return data_type;
 }
 
-void JZNodeAutoRunWidget::copyDependValue(ScriptDepend &old, ScriptDepend &dst)
-{    
-    auto copyExist = [](QMap<QString,QString> &old, QMap<QString, QString> &dst) {
-        auto it = dst.begin();
-        while (it != dst.end())
-        {
-            if (old.contains(it.key()))
-            {
-                it.value() = old[it.key()];
-            }
-            it++;
-        } 
-    };
-
-    if (typeEqual(old.function.paramIn, dst.function.paramIn))
-        dst.function.paramIn = old.function.paramIn;
-       
-    copyExist(old.member, dst.member);
-    copyExist(old.global, dst.global);
-
-    for (int i = 0; i < old.hook.size(); i++)    
-    {
-        auto ptr = dst.getHook(old.hook[i].nodeId);
-        if (ptr)
-        {
-            ptr->enable = old.hook[i].enable;
-            ptr->params = old.hook[i].params;            
-        }
-    }
-}
-
-void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
+void JZNodeAutoRunWidget::setDepend(JZScriptItemDepend *depend)
 {
+    if (depend == nullptr)
+    {
+        clear();
+        return;
+    }
+
 #if 0
     auto env = m_editor->project()->environment();
     auto obj_inst = env->objectManager();
@@ -279,7 +255,7 @@ void JZNodeAutoRunWidget::setDepend(const ScriptDepend &depend)
 #endif
 }
 
-const ScriptDepend &JZNodeAutoRunWidget::depend() const
+JZScriptItemDepend *JZNodeAutoRunWidget::depend()
 {
     return m_depend;
 }

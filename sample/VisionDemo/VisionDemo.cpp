@@ -10,6 +10,9 @@
 #include "JZNodeView.h"
 #include "JZNodeUtils.h"
 #include "JZContainer.h"
+#include "modules/camera/JZCameraNode.h"
+#include "modules/communication/JZCommNode.h"
+#include "modules/opencv/JZModelNode.h"
 
 SampleVisionDemo::SampleVisionDemo()
 {        
@@ -24,7 +27,7 @@ SampleVisionDemo::~SampleVisionDemo()
 
 void SampleVisionDemo::initProject(QString name)
 {
-    newProject(name);
+    newProject(name,"vision");
 
     auto class_item = m_project.getClass("MainWindow");
 
@@ -32,12 +35,6 @@ void SampleVisionDemo::initProject(QString name)
     QString xml = loadUi("VisionDemo.ui");
     ui_file->setXml(xml);
     m_project.saveItem(ui_file);
-
-    if(name == "VisionDemoHik")
-        class_item->addMemberVariable("camera", "JZCameraHik");
-    else
-        class_item->addMemberVariable("camera", "JZCameraFile");
-    class_item->addMemberVariable("yolo", "JZYolo");
 
     addInit();
     addOnFrameReady();
@@ -62,84 +59,124 @@ void SampleVisionDemo::addInit()
     auto script = class_item->memberFunction("init");
     auto start_node = script->startNode();
 
-    JZNodeFunction *func_load = new JZNodeFunction();
-    JZNodeFunction *func_open = new JZNodeFunction();
-    script->addNode(func_load);
-    script->addNode(func_open);
+    JZNodeCameraInit *cam_init = (JZNodeCameraInit *)script->findNodeByType(Node_CameraInit)[0];
+    JZNodeCommInit *comm_init = (JZNodeCommInit *)script->findNodeByType(Node_CommInit)[0];
+    JZNodeModelInit *model_init = (JZNodeModelInit *)script->findNodeByType(Node_ModelInit)[0];
 
-    func_load->setFunction("JZYolo::loadNet");
-    func_load->setVariable("this.yolo");
-    func_open->setFunction("JZCamera::open");
-    func_open->setVariable("this.camera");
-    
-    func_load->setParamInValue(1, "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx");
-    
-    if (class_item->memberVariable("camera", false)->type == "JZCameraFile")
-        func_open->setParamInValue(1, "C:/Users/xiong/Desktop/JZNodeEditorTest/data");
+    JZCameraManagerConfig cam_config;
+    JZCameraConfig cfg;
+    cfg.name = "camera";
+    if (m_name == "VisionDemoHik")
+    {        
+        cfg.type = Camera_Hik;
+        cfg.path = "192.168.0.150";
+    }
     else
-        func_open->setParamInValue(1, "192.168.0.150");
+    {
+        cfg.type = Camera_File;
+        cfg.path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
+    }
+    cam_config.cameraList << cfg;    
+    cam_init->setConfig(cam_config);
 
-    script->addConnect(start_node->flowOutGemo(),func_load->flowInGemo());
-    script->addConnect(func_load->flowOutGemo(), func_open->flowInGemo());
+    JZModbusConnetInfo conn;
+    conn.modbusType = Modbus_rtuClient;
+
+    JZCommManagerConfig comm_config;
+    JZCommModbusInfo modbus;
+    modbus.conn = conn;
+    modbus.name = "modbus";
+
+    comm_config.modbusClient << modbus;
+    comm_init->setConfig(comm_config);
+
+    JZModelManagerConfig model_config;
+    JZModelConfig model;
+    model.type = Model_Yolo;
+    model.name = "yolo";
+    model.modelPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx";
+
+    model_config.models << model;
+    model_init->setConfig(model_config);
 }
 
 void SampleVisionDemo::addOnFrameReady()
 {
     auto class_item = m_project.getClass("MainWindow");
-    auto def = class_item->objectDefine();
+    auto flow_script = class_item->flow("flow");
 
-    auto start_def = def.initSlotFunction("camera", "sigFrameReady");
-    auto script = class_item->addMemberFunction(start_def);
-    auto start_node = script->startNode();
+    JZNodeCameraReadyEvent *cam_ready = new JZNodeCameraReadyEvent();
+    flow_script->addNode(cam_ready);
 
-    JZNodeParam *param = new JZNodeParam();
-    script->addNode(param);
-    param->setVariable(script->function().paramIn[1].name);
+    JZNodeModelForward *model_forward = new JZNodeModelForward();
+    model_forward->setModel("yolo");
+    flow_script->addNode(model_forward);
+    flow_script->addConnect(cam_ready->flowOutGemo(), model_forward->flowInGemo());
+    flow_script->addConnect(cam_ready->paramOutGemo(0), model_forward->paramInGemo(0));
 
-    JZNodeFunction *func_load = new JZNodeFunction();
-    script->addNode(func_load);
-    func_load->setFunction("JZYolo::forward");
-    func_load->setVariable("this.yolo");
-
-    script->addConnect(start_node->flowOutGemo(), func_load->flowInGemo());
-    script->addConnect(param->paramOutGemo(0), func_load->paramInGemo(1));
-
+    //set result
     JZNodeFunction *func_cvt = new JZNodeFunction();
-    script->addNode(func_cvt);
-    func_cvt->setFunction("mat2Image");    
+    flow_script->addNode(func_cvt);
+    func_cvt->setFunction("mat2Image");
 
-    script->addConnect(param->paramOutGemo(0), func_cvt->paramInGemo(0));
+    flow_script->addConnect(cam_ready->paramOutGemo(0), func_cvt->paramInGemo(0));
 
     JZNodeFunction *func_set = new JZNodeFunction();
-    script->addNode(func_set);
+    flow_script->addNode(func_set);
     func_set->setFunction("JZYoloView::setYoloResult");
     func_set->setVariable("this.yoloView");
 
-    script->addConnect(func_cvt->paramOutGemo(0), func_set->paramInGemo(1));
-    script->addConnect(func_load->paramOutGemo(0), func_set->paramInGemo(2));
-    script->addConnect(func_load->flowOutGemo(), func_set->flowInGemo());
+    flow_script->addConnect(func_cvt->paramOutGemo(0), func_set->paramInGemo(1));
+    flow_script->addConnect(model_forward->paramOutGemo(0), func_set->paramInGemo(2));
+    flow_script->addConnect(model_forward->flowOutGemo(), func_set->flowInGemo());
+
+    //if result > 0
+    JZNodeIf *node_if = new JZNodeIf();
+    node_if->addElsePin();
+    flow_script->addNode(node_if);
+
+    JZNodeFunction *function = new JZNodeFunction();
+    flow_script->addNode(function);    
+    function->setFunction("QList<JZYoloResult>::size");    
+    flow_script->addConnect(model_forward->paramOutGemo(0), function->paramInGemo(0));
+
+    JZNodeGT *node_gt = new JZNodeGT();
+    flow_script->addNode(node_gt);
+
+    flow_script->addConnect(function->paramOutGemo(0), node_gt->paramInGemo(0));
+    node_gt->setParamInValue(1, "0");
+
+    flow_script->addConnect(node_gt->paramOutGemo(0), node_if->paramInGemo(0));
+    flow_script->addConnect(func_set->flowOutGemo(), node_if->flowInGemo());
+
+    JZNodeModbusWrite *write_true = new JZNodeModbusWrite();
+    JZNodeModbusWrite *write_false = new JZNodeModbusWrite();
+    flow_script->addNode(write_true);
+    flow_script->addNode(write_false);
+    write_true->setClient("modbus");
+    write_false->setClient("modbus");
+    write_true->setValue("1");
+    write_false->setValue("0");
+
+    flow_script->addConnect(node_if->subFlowOutGemo(0), write_true->flowInGemo());
+    flow_script->addConnect(node_if->subFlowOutGemo(1), write_false->flowInGemo());
 }
 
 void SampleVisionDemo::addBtnClicked()
 {
-    auto addBtnFunc = [this](QString btn,QString func) {
+    auto addBtnFunc = [this](QString btn,JZNode* node) {
         auto class_item = m_project.getClass("MainWindow");
         auto def = class_item->objectDefine();
 
         auto start_def = def.initSlotFunction(btn, "clicked");
         auto script = class_item->addMemberFunction(start_def);
         auto start_node = script->startNode();
+        script->addNode(node);
 
-        JZNodeFunction *camera_func = new JZNodeFunction();
-        script->addNode(camera_func);
-
-        camera_func->setFunction("JZCamera::" + func);
-        camera_func->setVariable("this.camera");
-
-        script->addConnect(start_node->flowOutGemo(), camera_func->flowInGemo());
+        script->addConnect(start_node->flowOutGemo(), node->flowInGemo());
     };
     
-    addBtnFunc("btnStartOnce","startOnce");
-    addBtnFunc("btnStart", "start");
-    addBtnFunc("btnStop", "stop");
+    addBtnFunc("btnStartOnce",new JZNodeCameraStartOnce());
+    addBtnFunc("btnStart", new JZNodeCameraStart());
+    addBtnFunc("btnStop", new JZNodeCameraStop());
 }

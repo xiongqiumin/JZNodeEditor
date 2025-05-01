@@ -330,9 +330,9 @@ JZModbusConfig JZModbusConfigDialog::config()
     {
         cfg.conn.portName = m_comboBoxCom->currentText();
         cfg.conn.baud = m_comboBoxBotelv->currentText().toInt();
-        cfg.conn.dataBit = m_comboBoxData->currentIndex();
-        cfg.conn.parityBit = m_comboBoxChk->currentIndex();
-        cfg.conn.stopBit = m_comboBoxStop->currentIndex();
+        cfg.conn.dataBit = (QSerialPort::DataBits)m_comboBoxData->currentIndex();
+        cfg.conn.parityBit = (QSerialPort::Parity)m_comboBoxChk->currentIndex();
+        cfg.conn.stopBit = (QSerialPort::StopBits)m_comboBoxStop->currentIndex();
     }
     else if (type == Modbus_tcpClient)
     {
@@ -432,9 +432,14 @@ void JZModbusConfigDialog::on_btnSelectTemplate_clicked()
     setConfig(dlg.config());
 }
 
-void JZModbusConfigDialog::on_btnClose_clicked()
+void JZModbusConfigDialog::on_btnOk_clicked()
 {
     accept();
+}
+
+void JZModbusConfigDialog::on_btnCancel_clicked()
+{
+    reject();
 }
 
 void JZModbusConfigDialog::updateTable()

@@ -17,18 +17,15 @@ public:
     void visitor(JZNode *node);
 
 protected:
-    virtual void visitorSelf(JZNode *node);
-
-    QList<JZNode*> getPinNode(JZNode *node,int pin);
+    virtual void visitorSelf(JZNode *node) = 0;
+    
     QList<JZNode*> dataInputNode(JZNode *node);
+    QList<JZNode*> dataInputNodeRecursively(JZNode *node);
 
-    JZNode *nextFlowNode(JZNode *node,int id);
-    JZNode *flowInputNode(JZNode *node,int id);
-
-    QList<JZNode*> allDataInputNode(JZNode *node);
+    JZNode *nextFlowNode(JZNode *node,int id);    
 
     JZScriptItem *m_script;
-
+    QList<JZNode*> m_hasVistorNode;
 };
 
 #endif

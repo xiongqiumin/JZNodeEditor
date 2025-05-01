@@ -12,9 +12,22 @@
 #include <QWindowStateChangeEvent>
 #include <QFileDialog>
 #include <QFile>
+#include <QMenuBar>
 #include "JZModbusSimulator.h"
 #include "JZModbusConfigDialog.h"
 
+//JZModbusSimulatorConfig
+QDataStream &operator<<(QDataStream &s, const JZModbusSimulatorConfig &param)
+{
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZModbusSimulatorConfig &param)
+{
+    return s;
+}
+
+//SimulatorWidget
 class SimulatorWidget : public QWidget
 {
 public:
@@ -51,7 +64,7 @@ public:
 };
 
 
-//
+//JZModbusSimulator
 JZModbusSimulator::Simulator::Simulator()
 {
     master = nullptr;
@@ -93,8 +106,9 @@ JZModbusSimulator::JZModbusSimulator(QWidget *parent)
     :QWidget(parent)
 {
     this->setWindowFlag(Qt::Window);
-
-    m_simIdx = 1;
+    this->setAttribute(Qt::WA_DeleteOnClose);
+    
+    m_simIdx = 0;
     m_dataBitsList << QSerialPort::Data5 << QSerialPort::Data6 << QSerialPort::Data7 << QSerialPort::Data8;
     m_stopBitsList << QSerialPort::OneStop << QSerialPort::TwoStop;
     m_parityList << QSerialPort::NoParity << QSerialPort::EvenParity << QSerialPort::OddParity;      
@@ -114,6 +128,7 @@ JZModbusSimulator::JZModbusSimulator(QWidget *parent)
     m_tree->setExpandsOnDoubleClick(false);
     m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_tree, &QWidget::customContextMenuRequested, this, &JZModbusSimulator::onContextMenu);
+    connect(m_tree, &QTreeWidget::itemDoubleClicked, this, &JZModbusSimulator::onItemDoubleClicked);
 
     //main
     QSplitter *splitterMain = new QSplitter(Qt::Horizontal);
@@ -142,14 +157,10 @@ JZModbusSimulator::JZModbusSimulator(QWidget *parent)
     splitterLeft->setCollapsible(1, false);
     splitterLeft->setStretchFactor(0, 1);
     splitterLeft->setStretchFactor(1, 0);
-
-    QVBoxLayout *main_layout = new QVBoxLayout();    
-    main_layout->setContentsMargins(0, 0, 0, 0);
-
-    QMenuBar *menubar = new QMenuBar();    
-    main_layout->addWidget(menubar);
-    main_layout->addWidget(widget);
-    this->setLayout(main_layout);
+    
+    
+    //main menu
+    QMenuBar *menubar = new QMenuBar();        
 
     QMenu *menu_file = menubar->addMenu("文件");
     auto actNew = menu_file->addAction("新建设备");
@@ -167,6 +178,12 @@ JZModbusSimulator::JZModbusSimulator(QWidget *parent)
     auto actShowAll = menu_view->addAction("显示全部");
     connect(actShowAll, &QAction::triggered, this, &JZModbusSimulator::onActionShowAll);
 
+    QVBoxLayout *l = new QVBoxLayout();
+    l->setContentsMargins(0, 0, 0, 0);
+    l->addWidget(menubar);
+    l->addWidget(widget);
+    setLayout(l);
+
     this->adjustSize();
 }
 
@@ -182,6 +199,29 @@ void JZModbusSimulator::closeAll()
         removeSimulator(0);    
     m_simulator.clear();
     m_simIdx = 0;
+}
+
+void JZModbusSimulator::setConfig(JZModbusSimulatorConfig config)
+{
+    closeAll();
+    
+    for (int i = 0; i < config.modbusList.size(); i++)
+        addSimulator(config.modbusList[i]);
+}
+
+JZModbusSimulatorConfig JZModbusSimulator::config()
+{
+    JZModbusSimulatorConfig config;
+    for (int i = 0; i < m_simulator.size(); i++)
+        config.modbusList << m_simulator[i].config;
+
+    return config;
+}
+
+void JZModbusSimulator::closeEvent(QCloseEvent *event)
+{
+    QWidget::closeEvent(event);
+    emit sigClose();
 }
 
 bool JZModbusSimulator::eventFilter(QObject *o, QEvent *e)
@@ -556,11 +596,18 @@ void JZModbusSimulator::onActionShowAll()
         m_simulator[i].window->show();
 }
 
+void JZModbusSimulator::onItemDoubleClicked(QTreeWidgetItem *item)
+{
+    int idx = m_tree->indexOfTopLevelItem(item);
+    settingSimulator(idx);
+}
+
 void JZModbusSimulator::onContextMenu(QPoint pt)
 {
     QMenu menu(this);
     auto item = m_tree->itemAt(pt);
     QAction *actDel = nullptr;
+    QAction *actSetting = nullptr;
     if (!item)
     {
         auto actNew = menu.addAction("新建");
@@ -568,6 +615,7 @@ void JZModbusSimulator::onContextMenu(QPoint pt)
     }
     else
     {
+        actSetting = menu.addAction("设置");
         actDel = menu.addAction("删除");
     }
 
@@ -581,6 +629,11 @@ void JZModbusSimulator::onContextMenu(QPoint pt)
         removeSimulator(idx);
         delete m_tree->takeTopLevelItem(idx);
     }
+    else if (act == actSetting)
+    {
+        int idx = m_tree->indexOfTopLevelItem(item);
+        settingSimulator(idx);
+    }
 }
 
 void JZModbusSimulator::onActionSaveConfig()
@@ -593,12 +646,10 @@ void JZModbusSimulator::onActionSaveConfig()
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
         return;
     
-    QList<JZModbusConfig> cfg_list;
-    for (int i = 0; i < m_simulator.size(); i++)
-        cfg_list << m_simulator[i].config;
+    auto cfg = config();
 
     QDataStream s(&file);    
-    s << cfg_list;
+    s << cfg;
     file.close();
 }
 
@@ -613,12 +664,12 @@ void JZModbusSimulator::onActionLoadConfig()
         return;
 
     closeAll();    
+    JZModbusSimulatorConfig cfg;
 
     QList<JZModbusConfig> cfg_list;
     QDataStream s(&file);            
-    s >> cfg_list;
-    for (int i = 0; i < cfg_list.size(); i++)
-        addSimulator(cfg_list[i]);
-
+    s >> cfg;
     file.close();
+
+    setConfig(cfg);
 }

@@ -94,7 +94,7 @@ protected:
     QMap<int, JZNode*> m_nodes;        
     QList<JZNodeGroup> m_groups;
     QList<JZNodeConnect> m_connects;    
-    JZFunctionDefine m_function;    
+    mutable JZFunctionDefine m_function;    
         
     QMap<QString, JZParamDefine> m_variables;    
 };

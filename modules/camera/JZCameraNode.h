@@ -22,8 +22,6 @@ public:
     ~JZNodeCameraInit();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error);
-    void saveToStream(QDataStream& s) const;
-    void loadFromStream(QDataStream& s);
 
     void setConfig(const JZCameraManagerConfig &config);
     JZCameraManagerConfig config();

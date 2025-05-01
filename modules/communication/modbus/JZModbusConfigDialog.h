@@ -48,7 +48,8 @@ protected slots :
     void onBoxTypeChanged();    
 
     void on_btnSelectTemplate_clicked();
-    void on_btnClose_clicked();
+    void on_btnOk_clicked();
+    void on_btnCancel_clicked();
 
     void on_btnAdd_clicked();
     void on_btnEdit_clicked();

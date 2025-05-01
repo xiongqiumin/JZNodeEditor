@@ -231,12 +231,19 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="btnClose">
+       <widget class="QPushButton" name="btnOk">
         <property name="text">
          <string>确定</string>
         </property>
         <property name="default">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnCancel">
+        <property name="text">
+         <string>取消</string>
         </property>
        </widget>
       </item>

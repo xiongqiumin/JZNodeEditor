@@ -16,7 +16,7 @@ SampleRussian::SampleRussian()
     QFileInfo info(__FILE__);
     m_root = info.path();
     
-    newProject("russian");        
+    newProject("russian","ui");        
     
     auto class_file = m_project.getClass("MainWindow");
 

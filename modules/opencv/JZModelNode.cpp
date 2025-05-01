@@ -29,12 +29,12 @@ JZModelManagerConfig JZNodeModelInit::config()
 
 bool JZNodeModelInit::compiler(JZNodeCompiler* c, QString& error)
 {
-    if (!c->addFlowInput(m_id, error))
-        return false;
-
     auto env = c->env();
     if (!c->checkVariableType("this.modelManager", env->nameToType("JZModelManager"), error))
         return false;
+
+    if (!c->addFlowInput(m_id, error))
+        return false;    
 
     int id = c->allocStack(Type_byteArray);
     c->addSetBuffer(irId(id), JZNodeUtils::toBuffer(m_config));
@@ -65,6 +65,12 @@ JZNodeModelForward::JZNodeModelForward()
 
     addFlowIn();
     addFlowOut();
+
+    int in = addParamIn("frame");
+    setPinType(in, { "Mat" });
+
+    int out = addParamOut("result");
+    setPinType(out, { "QList<JZYoloResult>" });
 }
 
 JZNodeModelForward::~JZNodeModelForward()
@@ -72,8 +78,44 @@ JZNodeModelForward::~JZNodeModelForward()
 
 }
 
+void JZNodeModelForward::setModel(QString name)
+{
+    m_model = name;
+}
+
+QString JZNodeModelForward::model()
+{
+    return m_model;
+}
+
+void JZNodeModelForward::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_model;
+}
+
+void JZNodeModelForward::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_model;
+}
+
 bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
 {
-    c->addNodeEnter(m_id);
+    auto env = c->env();
+    if (!c->checkVariableType("this.modelManager", env->nameToType("JZModelManager"), error))
+        return false;
+
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    int model_id = c->allocStack("JZModel*");
+    c->addCall("JZModelGet", { irRef("this.modelManager"), irLiteral(m_model) }, { irId(model_id) });
+
+    int in_id = c->paramId(m_id, paramIn(0));
+    int out_id = c->paramId(m_id, paramOut(0));
+    c->addCallConvert("JZYolo::forward", { irId(model_id) ,irId(in_id) }, {  irId(out_id) });
+
+    c->addFlowOutput(m_id);
     return true;
 }

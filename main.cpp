@@ -66,10 +66,17 @@ int runProgram(QString name,bool debug)
     return qApp->exec();
 }
 
+void createSample()
+{
+    SampleVisionDemo demo;
+    demo.initCameraFile();
+    demo.saveProject();
+}
+
 int runSample()
 {
     SampleVisionDemo demo;
-    demo.initCameraHik();
+    demo.initCameraFile();
     return demo.run();    
 }
 
@@ -79,8 +86,9 @@ int main(int argc,char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();               
 
-    //return runProgram("Project20", false);
+    createSample();
     //return runSample();
+    //return runProgram("Project20", false);    
 
     QCommandLineParser parser;
 
@@ -93,23 +101,23 @@ int main(int argc,char *argv[])
     parser.addOption(debugOption);
     parser.process(a);
 
-    bool debug = parser.isSet(debugOption);    
-    if(parser.isSet(runOption))
-    {   
+    bool debug = parser.isSet(debugOption);
+    if (parser.isSet(runOption))
+    {
         QString error;
-        QString program_path = parser.value(runOption);        
+        QString program_path = parser.value(runOption);
         JZNodeVM vm;
         if (!vm.init(program_path, debug, error))
         {
             QMessageBox::information(nullptr, "", "init program \"" + program_path + "\" failed.\n" + error);
             return 1;
         }
-        return a.exec();        
+        return a.exec();
     }
     else
-    {                  
+    {
         MainWindow w;
         w.showMaximized();
-        return a.exec();                  
+        return a.exec();
     }
 }

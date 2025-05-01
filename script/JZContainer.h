@@ -10,12 +10,34 @@
 #include "JZNodeObject.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeObjectParser.h"
+#include "JZNodeBind.h"
 
 void checkEmpty(int size);
 void checkSize(int index, int size);
 void checkContains(bool flag);
 
 extern JZNodeObject* JZObjectFromString(int type, const QString& text);
+
+template<typename T, typename = void>
+struct has_equal_operator : std::false_type {};
+
+template<typename T>
+struct has_equal_operator<T, std::void_t<decltype(std::declval<T>() == std::declval<T>())>> : std::true_type {};
+
+template<class T>
+void registListEqual(jzbind::ClassBind<QList<T>> &cls_list, std::true_type)
+{
+    cls_list.def("indexOf", false, [](QList<T>* l, const T& t, int from) { return l->indexOf(t, from); });
+    cls_list.def("lastIndexOf", true, [](QList<T>* l, const T& t, int from) { return l->lastIndexOf(t, from); });
+    cls_list.def("removeOne", true, [](QList<T>* l, const T& t) { l->removeOne(t); });
+    cls_list.def("removeAll", true, [](QList<T>* l, const T& t) { l->removeAll(t); });
+    cls_list.def("contains", false, [](QList<T>* l, const T& t)->bool { return l->contains(t);  });
+}
+
+template<class T>
+void registListEqual(jzbind::ClassBind<QList<T>> &cls_list, std::false_type)
+{
+}
 
 template<class T>
 void registList(JZScriptEnvironment *env,int type = Type_none)
@@ -65,17 +87,14 @@ void registList(JZScriptEnvironment *env,int type = Type_none)
     cls_list.def("pop_front", true, [](QList<T>* l){
         checkEmpty(l->size());
         l->pop_front();
-    });
-    cls_list.def("indexOf", false, [](QList<T>* l, const T& t, int from) { return l->indexOf(t, from); });
-    cls_list.def("lastIndexOf", true, [](QList<T>* l, const T& t, int from) { return l->lastIndexOf(t, from); });
+    });    
     cls_list.def("removeAt", true, [](QList<T>* l,int index) {
         checkSize(index, l->size()); 
         return l->removeAt(index); 
     });
-    cls_list.def("removeOne", true, [](QList<T>* l, const T& t) { l->removeOne(t); });
-    cls_list.def("removeAll", true, [](QList<T>* l, const T& t) { l->removeAll(t); });
 
-    cls_list.def("contains", false, [](QList<T>* l, const T& t)->bool { return l->contains(t);  });
+    registListEqual(cls_list, has_equal_operator<T>());    
+
     cls_list.def("mid", false, [](QList<T>* l, int pos, int len) { return l->mid(pos, len);  });
     cls_list.def("append", true, [](QList<T>* l, QList<T>* other) { l->append(*other);  });
     cls_list.def("resize", true, [](QList<T>* l, int size) { 

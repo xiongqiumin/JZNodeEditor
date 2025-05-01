@@ -27,14 +27,14 @@ public:
     JZNodeCommInit();
     ~JZNodeCommInit();
 
-    void setConfig(JZCommConfig config);
-    JZCommConfig config();
+    void setConfig(JZCommManagerConfig config);
+    JZCommManagerConfig config();
 
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
     virtual void saveToStream(QDataStream& s) const override;
     virtual void loadFromStream(QDataStream& s) override;
 
-    JZCommConfig m_config;
+    JZCommManagerConfig m_config;
 };
 
 //JZNodeModbusRead
@@ -86,6 +86,9 @@ public:
 
     void setAddr(int addr);
     int addr();
+
+    void setValue(QString value);
+    QString value();
 
     void setFunction(int function);
     int function();

@@ -229,13 +229,15 @@ JZFunctionDefine JZNodeSignalEvent::function()
 
     QString file_name = m_file->name();
     JZFunctionDefine define = meta->initMemberFunction(m_name + "_" + QString::number(m_id) + "_" + file_name);
-    define.paramOut = functionParamOut();
-    return define;    
-}
+    auto list = paramOutList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        auto pin = this->pin(list[i]);
+        Q_ASSERT(pin->dataType().size() == 1);
 
-QList<JZParamDefine> JZNodeSignalEvent::functionParamOut()
-{
-    return QList<JZParamDefine>();
+        define.paramIn << JZParamDefine(pin->name(), pin->dataType()[0]);
+    }    
+    return define;    
 }
 
 bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c, QString& error)
@@ -247,9 +249,21 @@ bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c, QString& error)
         return false;
     }
 
-    c->addFunctionAlloc(function());
+    auto func_def = function();
+    c->addFunctionAlloc(func_def);
     c->addNodeEnter(m_id);
-    c->addConstructor(m_connectInfo);
+    c->addConstructor(m_connectInfo);    
+
+    c->setRegCallFunction(&func_def);
+    auto out_list = paramOutList();
+    for (int i = 0; i < out_list.size(); i++)
+    {
+        int out_id = c->paramId(m_id, out_list[i]);
+        c->addSetVariable(irId(out_id), irRef(func_def.paramIn[i+1].name)); //跳过this
+    }
+    c->setRegCallFunction(nullptr);
+
+    c->addFlowOutput(m_id);
     return true;
 }
 

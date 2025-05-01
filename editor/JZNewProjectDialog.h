@@ -2,6 +2,7 @@
 #define JZ_NEW_PROJECT_DIALOG_H_
 
 #include <QDialog>
+#include <QListWidget>
 #include "UiCommon.h"
 
 namespace Ui {class JZNewProjectDialog;}
@@ -22,6 +23,7 @@ protected slots:
     void on_btnSelect_clicked();
     void on_btnOk_clicked();
     void on_btnCancel_clicked();
+	void onItemDoubleClicked(QListWidgetItem *item);
 
 protected:
     QString m_title;

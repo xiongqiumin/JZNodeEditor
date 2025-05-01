@@ -1,13 +1,13 @@
 ﻿#ifndef JZ_SCRIPT_ENVIRONMENT_H_
 #define JZ_SCRIPT_ENVIRONMENT_H_
 
+#include <functional>
 #include "JZNodeObject.h"
 #include "JZModule.h"
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFactory.h"
 
 class JZScriptEnvironment;
-typedef QVariant (*ConvertFunc)(const JZScriptEnvironment *env,const QVariant& v);
 
 //JZNodeTypeMeta
 class JZNodeTypeMeta
@@ -75,7 +75,8 @@ public:
     bool isFunctionTypeMatch(const JZFunctionDefine* func1, const JZFunctionDefine* func2) const;
 
     JZParamDefine paramDefine(QString name, int data_type, QString value = QString()) const;
-    void registConvert(int from, int to, ConvertFunc func);
+    void registConvert(int from, int to, JZObjectConvertFunc func);    
+    void registConvertExplicitly(int from, int to, JZObjectConvertFunc func);
     bool canConvert(int from,int to) const;    //隐式转换
     bool canConvertExplicitly(int from,int to) const;    //被 convertTo 支持的
     QVariant convertTo(const QVariant &v, int type) const;
@@ -114,7 +115,8 @@ protected:
     JZNodeFactory m_nodeFactory;
     QList<ModuleInfo*> m_moduleList;
 
-    QMap<int64_t,ConvertFunc> convertMap;    
+    QMap<int64_t, JZObjectConvertFunc> m_convertMap;
+    QMap<int64_t, JZObjectConvertFunc> m_convertMapExplicitly;
 };
 JZScriptEnvironment *runtimeEnvironment();
 

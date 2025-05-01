@@ -284,6 +284,7 @@ public:
 
     void addConstructor(SignalConnectInfo info);
     
+    void addAlloc(int allocType, QString name, QString dataType);
     void addAlloc(int allocType, QString name, int dataType);
     void addAllocAuto(const QString& ir);
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);

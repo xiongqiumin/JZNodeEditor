@@ -29,12 +29,12 @@ JZNodeCommInit::~JZNodeCommInit()
 {
 }
 
-void JZNodeCommInit::setConfig(JZCommConfig config)
+void JZNodeCommInit::setConfig(JZCommManagerConfig config)
 {
 	m_config = config;
 }
 
-JZCommConfig JZNodeCommInit::config()
+JZCommManagerConfig JZNodeCommInit::config()
 {
 	return m_config;
 }
@@ -261,6 +261,16 @@ void JZNodeModbusWrite::setAddr(int addr)
 int JZNodeModbusWrite::addr()
 {
 	return paramInValue(0).toInt();
+}
+
+void JZNodeModbusWrite::setValue(QString value)
+{
+    setParamInValue(1, value);
+}
+
+QString JZNodeModbusWrite::value()
+{
+    return paramInValue(1);
 }
 
 void JZNodeModbusWrite::setDataType(QString type)

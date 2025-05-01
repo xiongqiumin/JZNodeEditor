@@ -11,6 +11,16 @@
 #include "3rd/JZCommon/jzModbus/JZModbusSlaver.h"
 
 class SimulatorWidget;
+
+class JZModbusSimulatorConfig
+{
+public:
+    QList<JZModbusConfig> modbusList;
+};
+QDataStream &operator<<(QDataStream &s, const JZModbusSimulatorConfig &param);
+QDataStream &operator>>(QDataStream &s, JZModbusSimulatorConfig &param);
+
+//这里使用 mainwindow ， 因为mdiarea 放大窗口会和菜单重合
 class JZModbusSimulator : public QWidget
 {
     Q_OBJECT
@@ -19,10 +29,12 @@ public:
     JZModbusSimulator(QWidget *parent = nullptr);
     virtual ~JZModbusSimulator();    
     
+    void setConfig(JZModbusSimulatorConfig config);
+    JZModbusSimulatorConfig config();
     void closeAll();
 
 signals:
-
+    void sigClose();
 
 protected slots :
     void onActionNew();
@@ -39,6 +51,8 @@ protected slots :
     void onProtoWriteClicked();
     void onItemChanged(QTableWidgetItem *item);
     void onParamChanged(int addr);
+
+    void onItemDoubleClicked(QTreeWidgetItem *item);
 
     void onActionSaveConfig();
     void onActionLoadConfig();
@@ -60,7 +74,9 @@ protected:
         JZModbusConfig config;
     };
     
+    virtual void closeEvent(QCloseEvent *event) override;
     virtual bool eventFilter(QObject *o, QEvent *e) override;
+
     void addSimulator(JZModbusConfig config);
     void removeSimulator(int index);
     void startSimulator(int index);

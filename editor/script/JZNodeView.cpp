@@ -40,6 +40,7 @@
 #include "JZEditorGlobal.h"
 #include "JZNodeView.h"
 #include "JZNodeDisplayItem.h"
+#include "JZScriptItemVisitor.h"
 
 //CopyData
 struct CopyData
@@ -1190,7 +1191,7 @@ void JZNodeView::displayValue(int node_id,int pin_id,QVariantPtr *ptr)
     {
         auto line = m_file->getConnect(lines[i]);
         JZNodeDisplayItem *item = dynamic_cast<JZNodeDisplayItem*>(getNodeItem(line->from.nodeId));
-        if(item->node->type() != Node_display)
+        if(item->node()->type() != Node_display)
             continue;
 
         item->setValue(line->to.pinId, ptr);
@@ -2242,4 +2243,33 @@ void JZNodeView::setCompilerResult(const CompilerResult *compilerInfo)
 
     if(compilerInfo->result)
         autoRunning();
+}
+
+class JZScriptDisplayVistor : public JZScriptItemVistor
+{
+public:
+    void visitorSelf(JZNode *node)
+    {
+        if (node->type() != Node_display)
+            return;
+
+        auto inputs = item->getConnectInput(node->id());
+        for (int i = 0; i < inputs.size(); i++)
+        {
+            auto line = item->getConnect(inputs[i]);
+            if (!watchList.contains(line->from.paramId()))
+                watchList << line->from.paramId();
+        }
+    }
+
+    JZScriptItem *item;
+    QList<int> watchList;
+};
+
+QList<int> JZNodeView::watchList()
+{
+    JZScriptDisplayVistor visitor;
+    visitor.item = m_file;
+    visitor.visitorScript(m_file);
+    return visitor.watchList;
 }

@@ -930,7 +930,7 @@ void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
         int pin_id = list[i];
         auto pin = node->pin(pin_id);
         if(pin->dataType().size() == 1)
-            m_nodeInfo[node->id()].pinType[pin_id] = env->nameToType(pin->dataType()[0]);
+            setPinType(node->id(), pin_id, env->nameToType(pin->dataType()[0]));
     }
 }
 
@@ -1574,13 +1574,13 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
             {
                 JZNode* parent = breakParentNode(complier_jmp->nodeId);
                 auto& info = m_nodeInfo[parent->id()];
-                jmp_pc = indexOfStatment(info.breakIr.data());
+                jmp_pc = indexOfStatment(info.breakIr.toStrongRef().data());
             }
             else
             {
                 JZNode* parent = continueParentNode(complier_jmp->nodeId);
                 auto& info = m_nodeInfo[parent->id()];
-                jmp_pc = indexOfStatment(info.continueIr.data());
+                jmp_pc = indexOfStatment(info.continueIr.toStrongRef().data());
             }
             Q_ASSERT(jmp_pc >= 0);
 
@@ -2467,6 +2467,11 @@ void JZNodeCompiler::addFlowOutput(int nodeId)
         }
         it_out++;
     }
+}
+
+void JZNodeCompiler::addAlloc(int allocType, QString name, QString dataType)
+{
+    addAlloc(allocType, name, m_env->nameToType(dataType));
 }
 
 void JZNodeCompiler::addAlloc(int allocType, QString name, int dataType)

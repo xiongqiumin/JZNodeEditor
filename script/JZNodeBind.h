@@ -804,7 +804,7 @@ public:
 
         //regist
         obj_inst->replace(m_define);
-        setQObjectType(std::is_base_of<QObject, Class>());
+        setQObjectType(std::is_base_of<QObject, Class>());        
 
         return m_define.id;
     }
@@ -901,7 +901,7 @@ protected:
     {
         auto obj_inst = bindEnvironment()->objectManager();
         QString className = Class::staticMetaObject.className();
-        obj_inst->setQObjectType(className,m_define.id);
+        obj_inst->setQObjectType(m_define.id, className);
     }
 
     void setQObjectType(std::false_type)

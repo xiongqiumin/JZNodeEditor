@@ -7,6 +7,7 @@
 #include "JZNodeFlowItem.h"
 #include "JZNodeValueItem.h"
 #include "JZNodeOperatorItem.h"
+#include "JZNodeDisplayItem.h"
 #include "modules/camera/JZModuleCameraEditor.h"
 #include "modules/communication/JZModuleCommEditor.h"
 #include "modules/opencv/JZModuleModelEditor.h"
@@ -158,6 +159,8 @@ void JZNodeEditorInit()
     inst->registNodeItemCreator(Node_param, CreateJZNodeGraphItem<JZNodeParamItem>);    
     inst->registNodeItemCreator(Node_enum, CreateJZNodeGraphItem<JZNodeEnumItem>);
     inst->registNodeItemCreator(Node_flag, CreateJZNodeGraphItem<JZNodeFlagItem>);
+
+    inst->registNodeItemCreator(Node_display, CreateJZNodeGraphItem<JZNodeDisplayItem>);
 
     JZCameraEditorInit();
     JZModuleCommEditorInit();

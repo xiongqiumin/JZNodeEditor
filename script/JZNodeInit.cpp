@@ -26,8 +26,7 @@ QDebug operator<<(QDebug dbg, const JZNodeObjectPointer ptr)
 
 void JZNodeInit()
 {
-    qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");
-    qRegisterMetaType<UnitTestResultPtr>("UnitTestResultPtr");
+    qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");    
     qRegisterMetaType<JZNodeBuildResultPtr>("JZNodeBuildResultPtr");
     qRegisterMetaTypeStreamOperators<JZNodeObjectNull>("JZNodeObjectNull");
     qRegisterMetaTypeStreamOperators<JZEnum>("JZEnum");

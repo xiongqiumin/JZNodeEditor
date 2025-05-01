@@ -4,8 +4,7 @@
 JZNodeAutoRunThread::JZNodeAutoRunThread()
 {
      m_cancel = false;
-     m_engine.setWatch(true);
-     m_engine.moveToThread(this);
+     m_test.moveToThread(this);
 }
 
 JZNodeAutoRunThread::~JZNodeAutoRunThread()
@@ -14,13 +13,16 @@ JZNodeAutoRunThread::~JZNodeAutoRunThread()
 
 JZNodeEngine *JZNodeAutoRunThread::engine()
 {
-    return &m_engine;
+    return m_test.engine();
 }
 
-void JZNodeAutoRunThread::startRun(JZNodeProgram *program,const ScriptDepend &depend)
+JZScriptItemDepend *JZNodeAutoRunThread::genDepend(JZScriptItem *script)
 {
-    m_depend = depend;
-    program->copyTo(&m_program);
+    return m_test.genDepend(script);
+}
+
+void JZNodeAutoRunThread::startRun()
+{        
     start();
 }
 
@@ -30,37 +32,18 @@ void JZNodeAutoRunThread::stopRun()
         return;
 
     m_cancel = true;
-    m_engine.stop();
+    m_test.engine()->stop();
     m_cancel = false;
     wait();
 }
 
 void JZNodeAutoRunThread::run()
-{
-    auto ret = UnitTestResultPtr(new UnitTestResult());
-   
-    m_engine.setProgram(&m_program);
-    m_engine.init();
-/*
-    QVariantList out;
-    ret->function = m_depend.function.fullName();
-    if (m_engine.callUnitTest(&m_depend,out))
+{   
+    if (!m_test.init())
     {
-        ret->result = UnitTestResult::Finish;
-        ret->out = out;
+        m_test.start();
+        exec();
+        m_test.deinit();
     }
-    else
-    {
-        if(m_cancel)
-            ret->result = UnitTestResult::Cancel;
-        else
-        {
-            ret->result = UnitTestResult::Error;
-            ret->runtimeError = m_engine.runtimeError();
-        }
-    }
-*/
-    m_engine.deinit();
-    m_cancel = false;
-    emit sigResult(ret);
+    emit sigResult(0);
 }

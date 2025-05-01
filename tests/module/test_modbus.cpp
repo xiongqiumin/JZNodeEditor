@@ -35,7 +35,7 @@ ModbusTest::ModbusTest()
 
 void ModbusTest::testClientCpp()
 {
-    JZCommConfig comm_config;
+    JZCommManagerConfig comm_config;
     JZCommModbusInfo modbus;
     modbus.conn.modbusType = Modbus_tcpClient;
     modbus.name = "modbus";
@@ -84,7 +84,7 @@ void ModbusTest::testClient()
     auto script = class_item->memberFunction("testFunction");
     auto start = script->startNode();
 
-    JZCommConfig comm_config;
+    JZCommManagerConfig comm_config;
     JZCommModbusInfo modbus;
     modbus.conn.modbusType = Modbus_tcpClient;
     modbus.name = "modbus";

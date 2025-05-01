@@ -4,6 +4,7 @@
 #include "JZYolo.h"
 #include "CvToQt.h"
 
+//JZYolo
 static const char *yolo_json = R"(
     {
   "architectures": [

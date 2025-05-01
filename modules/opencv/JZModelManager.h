@@ -49,5 +49,6 @@ protected:
     QList<JZModel*> m_models;
 };
 void JZModelInit(JZModelManager *inst,const QByteArray &buffer);
+JZModel *JZModelGet(JZModelManager *inst, QString name);
 
 #endif

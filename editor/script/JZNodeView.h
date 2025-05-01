@@ -26,6 +26,7 @@ class JZNodeFlowPanel;
 class JZProject;
 class JZNodeGraphItem;
 
+//JZNodeView
 class JZNodeView : public QGraphicsView
 {
     Q_OBJECT
@@ -64,7 +65,7 @@ public:
     JZNodeGraphItem *createNodeItem(int id);    
     JZNodeGraphItem *getNodeItem(int id);
     
-    void setNodeTimer(int ms,int nodeId,int event);
+    void setNodeTimer(int ms,int nodeId,int event);    
 
     /* connect */
     JZNodeLineItem *createLine(JZNodeGemo from, JZNodeGemo to);
@@ -130,6 +131,8 @@ public:
 
     bool isBreakPoint(int nodeId);
     void setCompilerResult(const CompilerResult *info);
+
+    QList<int> watchList();
 
 signals:
     void redoAvailable(bool available);

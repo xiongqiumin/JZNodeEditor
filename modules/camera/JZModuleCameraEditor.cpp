@@ -15,9 +15,8 @@ void JZCameraInitItem::updatePin()
         btnSet->connect(btnSet, &QPushButton::clicked, [this] {
             this->onSetClicked();
         });
-        m_setting = fromWidget(btnSet,true);
-        m_setting->pri = 8;
-        m_blocks[m_setting->id] = m_setting;
+        m_setting = createWidgetBlock(btnSet,true);
+        m_setting->pri = 8;        
     }    
 }
 

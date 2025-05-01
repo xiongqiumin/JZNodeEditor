@@ -20,7 +20,7 @@ public:
     int run();
 
 protected:    
-    void newProject(QString project);    
+    void newProject(QString project,QString temp);    
     void addResources(QString path);
     bool copyDir(QString fromDir, QString toDir);
 

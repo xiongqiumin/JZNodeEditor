@@ -118,11 +118,12 @@ protected slots:
     void onBuildStart();    
     void onBuildFinish(JZNodeBuildResultPtr result);
     void onTaskRunning();
-    void onAutoRunResult(UnitTestResultPtr result);
+    void onAutoRunResult(int result);
 
     void onBreakPointClicked(QString file, int id);
     void onBreakPointChanged(BreakPointChange reason,QString file, int id);
 
+    void onModbusSimulatorClose();
 private:
     struct ActionStatus{
         enum {
@@ -162,6 +163,7 @@ private:
     bool openEditor(QString filepath);    
     void closeEditor(JZEditor *editor);
     JZEditor *editor(QString filepath);
+    JZNodeEditor *currentNodeEditor();
     QList<JZNodeEditor*> nodeEditorList();
     JZNodeEditor *nodeEditor(QString filepath);
     void updateActionStatus();    
@@ -188,9 +190,10 @@ private:
     void resetEditor(JZEditor *editor);    
     QIcon menuIcon(const QString &name);
     void showTopLevel();
-    void updateTabText(int index);
+    void updateTabText(int index);  
     
     const CompilerResult *compilerResult(const QString &path);
+    void updateAutoRunDepend();
 
     JZProject m_project;    
 

@@ -35,10 +35,7 @@ QWidget *JZNodeEditor::createMidBar()
 
     QHBoxLayout *midbar_layout = new QHBoxLayout();
     mid_bar->setLayout(midbar_layout);
-    midbar_layout->setContentsMargins(0, 0, 0, 0);
-
-    QCheckBox *boxAuto = new QCheckBox("自动运行");
-    connect(boxAuto, &QCheckBox::clicked, this, &JZNodeEditor::onAutoRunChecked);
+    midbar_layout->setContentsMargins(0, 0, 0, 0);    
 
     QPushButton *btnAutoRun = new QPushButton("运行");
     connect(btnAutoRun, &QPushButton::clicked, this, &JZNodeEditor::onAutoRuning);
@@ -48,8 +45,7 @@ QWidget *JZNodeEditor::createMidBar()
 
     QPushButton *btnScaleAll = new QPushButton("showAll");
     connect(btnScaleAll, &QPushButton::clicked, this, &JZNodeEditor::onActionFitInView);
-
-    midbar_layout->addWidget(boxAuto);
+    
     midbar_layout->addWidget(btnAutoRun);
     midbar_layout->addStretch();
     midbar_layout->addWidget(btnScaleOne);
@@ -210,16 +206,13 @@ void JZNodeEditor::selectAll()
     m_view->selectAll();
 }
 
-void JZNodeEditor::onAutoRunChecked()
-{
-    auto *box = qobject_cast<QCheckBox*>(sender());
-    m_view->setAutoRunning(box->isChecked());   
-}
-
 void JZNodeEditor::onAutoRuning()
 {
+    if (!m_runProp->depend())
+        return;
+
     auto script = this->script();    
-    if (m_runProp->depend().function.fullName() != script->function().fullName())
+    if (m_runProp->depend()->function.fullName() != script->function().fullName())
         return;
 
     emit sigAutoRun();
@@ -276,6 +269,11 @@ void JZNodeEditor::updateDefine()
     m_nodePanel->updateDefine();
 }
 
+void JZNodeEditor::setDepend(JZScriptItemDepend *depend)
+{
+    m_runProp->setDepend(depend);
+}
+
 JZScriptItem *JZNodeEditor::script()
 {
     JZScriptItem* file = dynamic_cast<JZScriptItem*>(m_item);
@@ -285,11 +283,6 @@ JZScriptItem *JZNodeEditor::script()
 void JZNodeEditor::resetFile()
 {
     m_view->resetFile();
-}
-
-ScriptDepend JZNodeEditor::scriptTestDepend()
-{
-    return m_runProp->depend();
 }
 
 void JZNodeEditor::clearRuntimeValue()
@@ -310,23 +303,6 @@ void JZNodeEditor::setCompilerResult(const CompilerResult *info)
     if (s->itemType() == ProjectItem_scriptItem)
     {
         QString function = script()->function().fullName();        
-    }
-}
-
-void JZNodeEditor::setAutoRunResult(const UnitTestResult &info)
-{
-    if(info.result == UnitTestResult::Finish)
-    {
-        QStringList out_list;        
-        for (int i = 0; i < info.out.size(); i++)        
-            out_list << JZNodeType::debugString(info.out[i]);        
-
-        LOGMOD_I(Log_Runtime, "运行完毕.");
-        m_runProp->setResult(info.out);
-    }
-    else
-    {
-        LOGMOD_I(Log_Runtime, "run filed:" + info.runtimeError.errorReport());
     }
 }
 

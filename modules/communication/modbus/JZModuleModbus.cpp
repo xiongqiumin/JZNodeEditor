@@ -38,12 +38,6 @@ void JZNodeModbusWatchEvent::loadFromStream(QDataStream& s)
     JZNodeSignalEvent::loadFromStream(s);
 }
 
-QList<JZParamDefine> JZNodeModbusWatchEvent::functionParamOut()
-{
-    QList<JZParamDefine> list;
-    return list;
-}
-
 void JZNodeModbusWatchEventInit()//QObject *qobj,QObject *modbus,const QByteArray &buffer)
 {
 /*

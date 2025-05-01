@@ -96,26 +96,6 @@ public:
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeError &param);
 QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param);
 
-//UnitTestResult
-class UnitTestResult
-{
-public:
-    enum Result{
-        None,
-        Finish,
-        Error,
-        Cancel,
-    };
-
-    UnitTestResult();
-    
-    Result result;
-    QString function;
-    QVariantList out;
-    JZNodeRuntimeError runtimeError;
-};
-typedef QSharedPointer<UnitTestResult> UnitTestResultPtr;
-
 //BreakStep
 class BreakStep
 {
@@ -161,8 +141,7 @@ public:
     JZNodeRuntimeInfo runtimeInfo();    
     JZNodeRuntimeError runtimeError();
 
-    void setDebug(bool flag);    
-    void setWatch(bool flag);
+    void setDebug(bool flag);        
 
     void addBreakPoint(QString filepath,int nodeId);
     void addBreakPoint(const BreakPoint &pt);

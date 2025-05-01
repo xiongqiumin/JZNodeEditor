@@ -131,9 +131,7 @@ public:
     virtual JZFunctionDefine function() override;
     bool compilerSignal(JZNodeCompiler* compiler, QString& error);
 
-protected:
-    virtual QList<JZParamDefine> functionParamOut();
-
+protected:    
     SignalConnectInfo m_connectInfo;
 };
 

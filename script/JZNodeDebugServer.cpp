@@ -200,17 +200,35 @@ void JZNodeDebugServer::onStatusChanged(int status)
 
 void JZNodeDebugServer::onWatchNotify()
 {
-    if (m_client == -1)
+    if (m_client == -1 || m_watch.function.isEmpty())
         return;
         
+    int stack_level = -1;    
+    for (int i = m_engine->stack()->size(); i >= 0; i--)
+    {
+        QString function = m_engine->stack()->currentEnv()->function->fullName();
+        if (function == m_watch.function)
+        {
+            stack_level = i;
+            break;
+        }
+    }
+
+    if(stack_level == -1)
+        return;
+
     JZNodeRuntimeWatchResult info;
     info.runtimInfo = m_engine->runtimeInfo();
-    auto &watchMap = m_engine->stack()->currentEnv()->watchMap;
-    auto it = watchMap.begin();
-    while(it != watchMap.end())
+    
+    auto env = m_engine->stack()->env(stack_level);
+    for (int i = 0; i < m_watch.watchs.size(); i++)
     {
-        info.values[it.key()] = toDebugParam(it.value());
-        it++;
+        auto &w = m_watch.watchs[i];
+        auto ref = env->getRef(w.id());
+        if (ref)
+            info.values[w.id()] = toDebugParam(*ref->ptr);
+        else
+            info.values[w.id()] = JZNodeDebugParamValue();
     }
 
     JZNodeDebugPacket status_pack;

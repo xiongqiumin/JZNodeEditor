@@ -30,7 +30,6 @@ public:
     };
 
     int type;
-    ScriptDepend unitDepend;
 };
 
 class MainTaskManager : public QObject

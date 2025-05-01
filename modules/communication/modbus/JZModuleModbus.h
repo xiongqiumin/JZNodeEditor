@@ -34,7 +34,6 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
 protected:
-    virtual QList<JZParamDefine> functionParamOut() override;
 };
 void JZNodeModbusWatchEventInit();
 

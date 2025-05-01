@@ -19,6 +19,10 @@ JZProjectTemplate *JZProjectTemplate::instance()
     return &inst;
 }        
 
+JZProjectTemplate::JZProjectTemplate()
+{
+}
+
 QStringList JZProjectTemplate::templateList()
 {
     QStringList list;
@@ -120,6 +124,8 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         func_init->addConnect(start->flowOutGemo(), camera_init->flowInGemo());
         func_init->addConnect(camera_init->flowOutGemo(), model_init->flowInGemo());
         func_init->addConnect(model_init->flowOutGemo(), comm_init->flowInGemo());
+
+        class_item->addFlow("flow");
     }
     else
     {

@@ -28,3 +28,9 @@ void JZNodeDisplayItem::setValue(int pin,QVariantPtr *ref)
     node_display->addInput();
     notifyPropChanged(oldValue);
 }
+
+void JZNodeDisplayItem::onAddClicked()
+{
+    JZNodeDisplay *node_display = (JZNodeDisplay *)m_node;
+    node_display->addInput();
+}

@@ -233,7 +233,7 @@ JZSignalDefine::JZSignalDefine()
 
 QString JZSignalDefine::fullName() const
 {
-    return className + "." + name;
+    return className + "::" + name;
 }
 
 bool JZSignalDefine::isCSignal() const

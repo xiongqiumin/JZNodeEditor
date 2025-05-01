@@ -21,13 +21,13 @@ QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param)
 }
 
 //JZModbusManagerConfig
-QDataStream &operator<<(QDataStream &s, const JZCommConfig &param)
+QDataStream &operator<<(QDataStream &s, const JZCommManagerConfig &param)
 {
     s << param.modbusClient;
     return s;
 }
 
-QDataStream &operator >> (QDataStream &s, JZCommConfig &param)
+QDataStream &operator >> (QDataStream &s, JZCommManagerConfig &param)
 {
     s >> param.modbusClient;
     return s;
@@ -67,19 +67,19 @@ void JZCommManager::init()
     }
 }
 
-void JZCommManager::setConfig(const JZCommConfig&config)
+void JZCommManager::setConfig(const JZCommManagerConfig&config)
 {
     m_config = config;
 }
 
-JZCommConfig JZCommManager::config()
+JZCommManagerConfig JZCommManager::config()
 {
     return m_config;
 }
 
 void JZCommInit(JZCommManager* inst, const QByteArray& buffer)
 {
-    JZCommConfig config = JZNodeUtils::fromBuffer<JZCommConfig>(buffer);
+    JZCommManagerConfig config = JZNodeUtils::fromBuffer<JZCommManagerConfig>(buffer);
     inst->setConfig(config);
     inst->init();
 }

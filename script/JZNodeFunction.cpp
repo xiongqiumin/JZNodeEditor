@@ -83,6 +83,12 @@ QString JZNodeFunction::function() const
 
 bool JZNodeFunction::updateNode(QString &error)
 {
+    if (m_functionName.isEmpty())
+    {
+        error = "函数名为空";
+        return false;
+    }
+
     auto define = JZNodeCompiler::function(file(),m_functionName);
     if (!define)
     {

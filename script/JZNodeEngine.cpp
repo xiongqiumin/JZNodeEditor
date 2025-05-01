@@ -219,12 +219,6 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeInfo &param)
     return s;
 }
 
-//UnitTestResult
-UnitTestResult::UnitTestResult()
-{
-    result = None;
-}
-
 //BreakStep
 BreakStep::BreakStep()
 {    
@@ -294,8 +288,7 @@ JZNodeEngine::JZNodeEngine()
     m_program = nullptr;
     m_script = nullptr;
     m_sender = nullptr;
-    m_pc = -1;
-    m_watch = false;
+    m_pc = -1;    
     m_debug = false;
     m_status = Status_none;
     m_statusCommand = Command_none;
@@ -1024,11 +1017,6 @@ void JZNodeEngine::onWatchTimer()
 void JZNodeEngine::setDebug(bool flag)
 {
     m_debug = flag;
-}
-
-void JZNodeEngine::setWatch(bool flag)
-{
-    m_watch = flag;
 }
 
 void JZNodeEngine::addBreakPoint(QString itemPath,int nodeId)

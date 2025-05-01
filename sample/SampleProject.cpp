@@ -36,7 +36,7 @@ QString SampleProject::loadUi(QString filename)
     return QString::fromUtf8(file.readAll());
 }
 
-void SampleProject::newProject(QString name)
+void SampleProject::newProject(QString name, QString template_name)
 {
     Q_ASSERT(!m_root.isEmpty());
     
@@ -47,8 +47,7 @@ void SampleProject::newProject(QString name)
 
     QString project_path = dir + "/" + m_name + ".jzproj";
         
-    JZProjectTemplate temp;
-    temp.initProject(&m_project, "ui");
+    JZProjectTemplate::instance()->initProject(&m_project, template_name);
     
     m_project.saveAllItem();
     m_project.saveAs(project_path);
@@ -104,7 +103,7 @@ void SampleProject::loadProject()
 void SampleProject::saveProject()
 {
     Q_ASSERT(!m_name.isEmpty());    
-    //JZEditorUtils::projectUpdateLayout(&m_project);
+    JZEditorUtils::projectUpdateLayout(&m_project);
     m_project.saveAllItem();
     if (!m_project.save())
     {
@@ -134,7 +133,7 @@ int SampleProject::run()
     JZNodeProgram program;
     if (!builder.build(&program))
     {
-        qDebug().noquote() << "build failed";
+        qDebug().noquote() << "build failed\n" << builder.error();
         return 1;
     }
     QDir::setCurrent(m_project.path());

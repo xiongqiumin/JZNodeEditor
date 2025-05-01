@@ -92,7 +92,11 @@ void JZModelInit(JZModelManager* inst, const QByteArray& buffer)
 	inst->init();
 }
 
-void JZModelForward(JZModelManager* inst, QString name)
+JZModel *JZModelGet(JZModelManager *inst, QString name)
 {
+    JZModel *model = inst->model(name);
+    if (!model)
+        throw std::runtime_error(qUtf8Printable("no model " + name));
 
+    return model;
 }

@@ -27,18 +27,6 @@ JZCameraManagerConfig JZNodeCameraInit::config()
     return m_config;
 }
 
-void JZNodeCameraInit::saveToStream(QDataStream& s) const
-{
-    JZNode::saveToStream(s);
-    s << m_config;
-}
-
-void JZNodeCameraInit::loadFromStream(QDataStream& s)
-{
-    JZNode::loadFromStream(s);
-    s >> m_config;
-}
-
 bool JZNodeCameraInit::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
@@ -157,6 +145,9 @@ JZNodeCameraReadyEvent::JZNodeCameraReadyEvent()
     m_type = Node_CameraFrameReady;
     m_name = "sigFrameReadyEvent";
     m_camera = "camera";
+
+    int pin = addParamOut("frame");
+    setPinType(pin, { "Mat" });
 
     m_connectInfo.connectFunction = "JZCameraConnect";
     m_connectInfo.irList << irRef("this") << irRef("this.cameraManager") << irLiteral("camera") << irLiteral(0);

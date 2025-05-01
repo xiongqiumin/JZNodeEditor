@@ -2,6 +2,7 @@
 #define JZNODE_AUTO_RUN_THREAD_H_
 
 #include <QWidget>
+#include "JZScriptUnitTest.h"
 #include "JZNodeEngine.h"
 
 //JZNodeAutoRunWidget
@@ -13,20 +14,19 @@ public:
     JZNodeAutoRunThread();
     ~JZNodeAutoRunThread();
 
-    JZNodeEngine *engine();
-    
-    void startRun(JZNodeProgram *program,const ScriptDepend &dpend);
+    JZNodeEngine *engine();    
+    JZScriptItemDepend *genDepend(JZScriptItem *script);
+
+    void startRun();
     void stopRun();
 
 signals:
-    void sigResult(UnitTestResultPtr result);
+    void sigResult(int result);
 
 protected:
     virtual void run() override;
     
-    JZNodeEngine m_engine;
-    JZNodeProgram m_program;
-    ScriptDepend m_depend;    
+    JZScriptUnitTest m_test;
     bool m_cancel;
 };
 

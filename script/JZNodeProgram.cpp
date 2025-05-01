@@ -213,33 +213,6 @@ void JZNodeScript::loadFromStream(QDataStream &s)
     s >> functionDebugList;
 }
 
-//ScriptDepend
-ScriptDepend::FunctionHook::FunctionHook()
-{
-    enable = false;
-    nodeId = -1;
-    pc = -1;
-}
-
-void ScriptDepend::clear()
-{
-    function = JZFunctionDefine();
-    member.clear();
-    global.clear();
-    hook.clear();
-}
-
-ScriptDepend::FunctionHook *ScriptDepend::getHook(int node_id)
-{
-    for(int i = 0; i < hook.size(); i++)
-    {
-        if(hook[i].nodeId == node_id)
-            return &hook[i];
-    }
-
-    return nullptr;
-}
-
 //JZNodeTypeMeta
 void JZNodeTypeMeta::clear()
 {

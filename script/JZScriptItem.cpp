@@ -651,10 +651,11 @@ const JZParamDefine *JZScriptItem::localVariable(QString name)
     if (m_itemType == ProjectItem_scriptItem)
     {
         //param out 作为return 返回，不作为局部变量
-        for (int i = 0; i < m_function.paramIn.size(); i++)
+        auto &func_def = function();
+        for (int i = 0; i < func_def.paramIn.size(); i++)
         {
-            if (m_function.paramIn[i].name == name)
-                return &m_function.paramIn[i];
+            if (func_def.paramIn[i].name == name)
+                return &func_def.paramIn[i];
         }        
     }
 
@@ -666,12 +667,13 @@ QStringList JZScriptItem::localVariableList(bool hasFunc)
     QStringList list = m_variables.keys();
     if (hasFunc) 
     {        
-        for (int i = 0; i < m_function.paramIn.size(); i++)
+        auto &func_def = function();
+        for (int i = 0; i < func_def.paramIn.size(); i++)
         {
-            if (m_function.paramIn[i].name == "this")
+            if (func_def.paramIn[i].name == "this")
                 continue;
 
-            list << m_function.paramIn[i].name;
+            list << func_def.paramIn[i].name;
         }            
     }
     return list;

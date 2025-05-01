@@ -87,30 +87,6 @@ protected:
 };
 typedef QSharedPointer<JZNodeScript> JZNodeScriptPtr;
 
-//Depends
-class ScriptDepend
-{
-public:
-    struct FunctionHook
-    {
-        FunctionHook();
-        
-        bool enable;
-        int nodeId;
-        int pc;
-        QString function;
-        QStringList params;
-    };
-    
-    void clear();    
-    FunctionHook *getHook(int node_id);
-
-    JZFunctionDefine function;
-    QMap<QString,QString> member;
-    QMap<QString,QString> global;
-    QList<FunctionHook> hook;
-};
-
 //JZNodeProgram
 class JZNodeBuilder;
 class JZNodeProgram 

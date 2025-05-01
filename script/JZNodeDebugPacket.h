@@ -230,6 +230,7 @@ class JZNodeRuntimeWatch
 public:
     JZNodeRuntimeWatch();
 
+    QString function;
     QList<JZNodeIRParam> watchs;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeRuntimeWatch &param);

@@ -13,6 +13,7 @@ public:
     QStringList templateList();
 
 protected:
+    JZProjectTemplate();
     void createMainWindow();
 
     JZProject* m_project;

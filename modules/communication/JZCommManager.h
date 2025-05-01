@@ -26,13 +26,13 @@ QDataStream& operator<<(QDataStream& s, const JZCommModbusInfo& param);
 QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param);
 
 //JZCommConfig
-class JZCommConfig
+class JZCommManagerConfig
 {
 public:
     QList<JZCommModbusInfo> modbusClient;
 };
-QDataStream &operator<<(QDataStream &s, const JZCommConfig &param);
-QDataStream &operator>>(QDataStream &s, JZCommConfig &param);
+QDataStream &operator<<(QDataStream &s, const JZCommManagerConfig &param);
+QDataStream &operator>>(QDataStream &s, JZCommManagerConfig &param);
 
 //JZCommManager
 class JZCommManager : public QObject
@@ -47,13 +47,13 @@ public:
 
     void init();
 
-    void setConfig(const JZCommConfig &config);
-    JZCommConfig config();
+    void setConfig(const JZCommManagerConfig &config);
+    JZCommManagerConfig config();
 
 protected:
 	QList<JZModbusClient*> m_modbusClient;
 	QList<JZModbusServer*> m_modbusServer;
-    JZCommConfig m_config;
+    JZCommManagerConfig m_config;
 };
 
 void JZCommInit(JZCommManager* inst, const QByteArray& buffer);

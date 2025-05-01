@@ -205,6 +205,8 @@ public:
     ~JZNodeObjectPointer();
 
     int type() const;
+    void setType(int type);
+
     JZNodeObject *object() const;
 
     void relaseObject();   //设置为空
@@ -268,8 +270,9 @@ public:
 
     const JZSignalDefine *signal(const QString &name) const;
     
-    int getQObjectType(const QString & type_name) const;
-    void setQObjectType(const QString & type_name,int id);
+    void setQObjectType(int id, const QString & type_name);    
+    QString getQObjectType(int id) const;
+    int getTypeByQObject(QString qmeta) const;
 
     int delcare(const QString & type_name, int id = Type_none);
     int delcareCClass(const QString & type_name, const QString &ctype_id, int id = Type_none);
@@ -373,6 +376,7 @@ protected:
     void initFunctions();
     void create(const JZNodeObjectDefine *define,JZNodeObject *obj) const;
     void copy(JZNodeObject *dst,JZNodeObject *src) const;    
+    int nextObjectId();
     
     JZScriptEnvironment *m_env;    
     
@@ -382,15 +386,26 @@ protected:
     int m_enumId;
     
     QMap<int, QSharedPointer<JZNodeObjectDefine>> m_metas;
-    QMap<QString,int> m_qobjectId;
+    QMap<int, QString> m_qobjectId;
     int m_objectId;
     bool m_userRegist;
 };
+typedef std::function<QVariant(const JZScriptEnvironment *env, const QVariant& v)> JZObjectConvertFunc;
 
 template<class T>
 T* JZObjectCast(JZNodeObject *obj)
 {
     return obj->manager()->objectCast<T>(obj);
+}
+
+template<class T,class Base>
+QVariant JZObjectCastDown(const JZScriptEnvironment *env, const QVariant& v)
+{
+    auto jz_obj = toJZObject(v);
+    Base *obj = JZObjectCast<Base>(jz_obj);
+    T *t = dynamic_cast<T*>(obj);
+    JZNodeObjectPointer ptr = jz_obj->manager()->objectReferencePointer(t, false);
+    return QVariant::fromValue(ptr);
 }
 
 #endif

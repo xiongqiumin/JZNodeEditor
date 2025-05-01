@@ -46,17 +46,17 @@ public:
     int runtimeNode();
     void setRuntimeNode(int nodeId);    
 
-    JZScriptItem *script();
-    ScriptDepend scriptTestDepend();
-    void resetFile();
+    JZScriptItem *script();    
+    void resetFile();    
 
-    void setCompilerResult(const CompilerResult *info);
-    void setAutoRunResult(const UnitTestResult &result);
+    void setCompilerResult(const CompilerResult *info);    
 
     void setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value);
-    void clearRuntimeValue();
-    void updateDefine();    
-        
+    void clearRuntimeValue();    
+
+    void setDepend(JZScriptItemDepend *depend);
+    void updateDefine();
+
 signals:
     void sigFunctionOpen(QString name);
     void sigAutoCompiler();
@@ -65,8 +65,7 @@ signals:
 
 protected slots:
     void onActionLayout();
-    void onActionFitInView();
-    void onAutoRunChecked();    
+    void onActionFitInView();    
     void onAutoRuning();
     void onScaleOne();
     

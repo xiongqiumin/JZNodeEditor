@@ -8,6 +8,7 @@
 #include "JZYoloView.h"
 #include "JZModelNode.h"
 #include "JZNodeFactory.h"
+#include "JZContainer.h"
 
 using namespace cv;
 
@@ -99,18 +100,22 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZYoloResult> cls_yolo_ret(cls_id++, "JZYoloResult");
     cls_yolo_ret.regist();
 
-    jzbind::ClassBind<QList<JZYoloResult>> cls_yolo_ret_list(cls_id++, "QList<JZYoloResult>");
-    cls_yolo_ret_list.regist();
+    registList<JZYoloResult>(env, cls_id++);
 
-    jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "JZYolo");
+    jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "JZYolo", "JZModel");
     cls_yolo.def("forward", true, &JZYolo::forward);
     cls_yolo.regist();
+
+    int model_ptr_id = JZNodeType::pointerType(cls_model.id());
+    int yolo_ptr_id = JZNodeType::pointerType(cls_yolo.id());
+    env->registConvertExplicitly(model_ptr_id, yolo_ptr_id, JZObjectCastDown<JZYolo,JZModel>);
 
     jzbind::ClassBind<JZYoloView> cls_yolo_view(cls_id++, "JZYoloView", "QWidget");
     cls_yolo_view.def("setYoloResult", true, &JZYoloView::setYoloResult);
     cls_yolo_view.regist();
     
     func_inst->registCFunction("JZModelInit", "true", jzbind::createFuncion(JZModelInit));
+    func_inst->registCFunction("JZModelGet", "false", jzbind::createFuncion(JZModelGet, CFunction::Reference));
 
     env->nodeFactory()->registNode(Node_ModelInit, createJZNode<JZNodeModelInit>);
     env->nodeFactory()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);    

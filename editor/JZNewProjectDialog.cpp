@@ -9,6 +9,7 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
     :QDialog(parent)
 {
     ui = new Ui::JZNewProjectDialog();
+    ui->setupUi(this);
     
     QString project_dir = QDir::cleanPath(QApplication::applicationDirPath() + "/project");
     QString project_name;
@@ -21,10 +22,11 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
 
         idx++;
     }    
-
-    ui->setupUi(this);
+    
 	ui->lineProjectName->setText(project_name);
 	ui->lineProjectDir->setText(project_dir);
+
+    connect(ui->listWidget,&QListWidget::itemDoubleClicked,this, &JZNewProjectDialog::onItemDoubleClicked);
     
     auto templateList = JZProjectTemplate::instance()->templateList();
     ui->listWidget->addItems(templateList);
@@ -81,4 +83,9 @@ void JZNewProjectDialog::on_btnOk_clicked()
 void JZNewProjectDialog::on_btnCancel_clicked()
 {
     QDialog::reject();
+}
+
+void JZNewProjectDialog::onItemDoubleClicked(QListWidgetItem *item)
+{
+    on_btnOk_clicked();
 }

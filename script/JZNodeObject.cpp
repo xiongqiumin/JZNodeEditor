@@ -999,6 +999,11 @@ int JZNodeObjectPointer::type() const
     return m_dataType;
 }
 
+void JZNodeObjectPointer::setType(int type)
+{
+    m_dataType = type;
+}
+
 JZNodeObject *JZNodeObjectPointer::object() const
 {
     return m_data->object;
@@ -1132,7 +1137,7 @@ int JZNodeObjectManager::getId(const QString &type_name) const
     if (type != Type_none)
         return type;
 
-    return type;
+    return Type_none;
 }
 
 int JZNodeObjectManager::getIdByCTypeid(const QString &type_name) const
@@ -1156,6 +1161,18 @@ int JZNodeObjectManager::delcareCClass(const QString &name, const QString &c_typ
     return registCClass(def, c_typeid);    
 }
 
+int JZNodeObjectManager::nextObjectId()
+{
+    int id = m_objectId;
+    while (meta(id))
+    {
+        id++;
+    }
+
+    m_objectId = id + 1;
+    return id;
+}
+
 int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
 {
     //可以先声明在注册
@@ -1168,12 +1185,11 @@ int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
     def->manager = this;
     if(info.id != Type_none)
     {
-        def->id = info.id;
-        m_objectId = qMax(m_objectId,def->id + 1);
+        def->id = info.id;        
     }
     else
     {        
-        def->id = m_objectId++;
+        def->id = nextObjectId();
     }
     Q_ASSERT((!m_userRegist && def->id < Type_userObject) || (m_userRegist && def->id >= Type_userObject));
 
@@ -1237,11 +1253,6 @@ void JZNodeObjectManager::unregist(int id)
         m_ctypeidMap.remove(ctype_id);
 }
 
-void JZNodeObjectManager::setQObjectType(const QString &name,int id)
-{
-    m_qobjectId[name] = id;
-}
-
 void JZNodeObjectManager::clearUserReigst()
 {
     auto it = m_metas.begin();
@@ -1299,9 +1310,19 @@ const JZSignalDefine *JZNodeObjectManager::signal(const QString &name) const
     return cls->signal(list[1]);
 }
 
-int JZNodeObjectManager::getQObjectType(const QString &name) const
+void JZNodeObjectManager::setQObjectType(int id, const QString & type_name)
 {
-    return m_qobjectId.value(name,Type_none);
+    m_qobjectId[id] = type_name;
+}
+
+QString JZNodeObjectManager::getQObjectType(int id) const
+{
+    return m_qobjectId.value(id, QString());
+}
+
+int JZNodeObjectManager::getTypeByQObject(QString qmeta) const
+{
+    return m_qobjectId.key(qmeta, Type_none);
 }
 
 int JZNodeObjectManager::getClassId(const QString &class_name) const

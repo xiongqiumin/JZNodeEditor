@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(QT NAMES Qt5 REQUIRED COMPONENTS widgets xml)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test designer printsupport DesignerComponents xml)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test designer printsupport DesignerComponents xml sql)
 find_package(OpenCV 4 REQUIRED)
 
 if (MSVC)
@@ -190,7 +190,9 @@ set(JZNodeCore_SOURCES
     modules/camera/JZCameraNode.h
     modules/camera/JZCameraNode.cpp
     modules/camera/JZCameraManager.h
-    modules/camera/JZCameraManager.cpp    
+    modules/camera/JZCameraManager.cpp
+    modules/camera/JZCameraUnitTest.h
+    modules/camera/JZCameraUnitTest.cpp
     
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp
@@ -241,7 +243,9 @@ set(JZNodeEditor_SOURCES
     mainwindow.cpp
     mainwindow.h
     UiCommon.cpp
-    UiCommon.h    
+    UiCommon.h   
+    database.cpp
+    database.h    
     editor/JZEditor.cpp
     editor/JZEditor.h
     editor/JZEditorGlobal.cpp
@@ -346,7 +350,9 @@ set(JZNodeEditor_SOURCES
     editor/script/items/JZNodeOperatorItem.cpp
     editor/script/items/JZNodeOperatorItem.h  
     editor/script/items/JZNodeSettingDialog.cpp
-    editor/script/items/JZNodeSettingDialog.h    
+    editor/script/items/JZNodeSettingDialog.h
+    editor/script/items/JZNodeDisplayItem.cpp
+    editor/script/items/JZNodeDisplayItem.h
     editor/ui/formresizer.cpp
     editor/ui/formresizer.h
     editor/ui/JZDesignerEditor.cpp
@@ -446,6 +452,7 @@ target_link_libraries(JZNodeEditor JZNodeCore
     Qt${QT_VERSION_MAJOR}::Designer
     Qt${QT_VERSION_MAJOR}::DesignerComponents
     Qt${QT_VERSION_MAJOR}::UiTools
+    Qt${QT_VERSION_MAJOR}::Sql
     ${OpenCV_LIBRARIES})    
 set_target_properties(JZNodeEditor PROPERTIES
     WIN32_EXECUTABLE TRUE

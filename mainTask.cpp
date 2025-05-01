@@ -180,7 +180,7 @@ void MainTaskManager::dealTask()
             }
             case MainTask::Task_unitTest:
             {
-                m_runThread.startRun(&m_buildResult->program, task.unitDepend);
+                m_runThread.startRun();
                 break;
             }
             case MainTask::Task_dumpCpp:

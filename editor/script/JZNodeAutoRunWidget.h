@@ -6,6 +6,7 @@
 #include "JZNode.h"
 #include "JZNodeCompiler.h"
 #include "3rd/JZCommon/jzWidgets/JZPropertyBrowser.h"
+#include "JZScriptUnitTest.h"
 
 //JZNodeAutoRunWidget
 class JZNodeEditor;
@@ -18,9 +19,9 @@ public:
     ~JZNodeAutoRunWidget();
 
     void setEditor(JZNodeEditor *editor);
-    
-    void setDepend(const ScriptDepend &depend);
-    const ScriptDepend &depend() const;
+
+    void setDepend(JZScriptItemDepend *depend);
+    JZScriptItemDepend *depend();
 
     void setResult(QVariantList params);
 
@@ -55,13 +56,12 @@ protected:
     void addPin(JZProperty *pin, PinType type, QString name);
     void addPin(JZProperty *pin, PinType type, int index, int nodeId);
     void clear();
-    PropCoor *propCoor(PinType type, int index);
-    void copyDependValue(ScriptDepend &old, ScriptDepend &dst);
+    PropCoor *propCoor(PinType type, int index);    
     bool typeEqual(const JZParamDefine &p1, const JZParamDefine &p2);
     bool typeEqual(const QList<JZParamDefine> &p1, const QList<JZParamDefine> &p2);
     int editType(int data_type);
 
-    ScriptDepend m_depend;
+    JZScriptItemDepend *m_depend;
     JZPropertyBrowser *m_tree;        
     QList<PropCoor> m_propList;
     JZNodeEditor *m_editor;

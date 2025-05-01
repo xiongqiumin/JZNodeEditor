@@ -34,7 +34,15 @@ public:
     JZNodeModelForward();
     ~JZNodeModelForward();
 
+    void setModel(QString name);
+    QString model();
+
     bool compiler(JZNodeCompiler *c, QString &error);
+    void saveToStream(QDataStream& s) const;
+    void loadFromStream(QDataStream& s);
+
+protected:
+    QString m_model;
 };
 
 #endif

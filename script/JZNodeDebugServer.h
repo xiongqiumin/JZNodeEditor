@@ -49,10 +49,12 @@ protected:
     bool m_init;
     int m_client;
 
+    JZNodeRuntimeWatch m_watch;
     JZNodeDebugInfo m_debugInfo;
+
     JZNetServer *m_server;    
     JZNodeEngine *m_engine;        
-    QThread* m_preThread;
+    QThread* m_preThread;    
 };
 
 
