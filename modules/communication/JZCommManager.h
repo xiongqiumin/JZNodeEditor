@@ -12,24 +12,44 @@ enum {
     Function_Register,
 };
 
+enum {
+    Comm_None,
+    Comm_ModbusRtuClient,
+    Comm_ModbusTcpClient,
+};
+
 //JZCommModbusInfo
 class JZCommModbusInfo
 {
 public:
     JZCommModbusInfo();
-
-    QString name;
+    
     JZModbusConnetInfo conn;
     QDataStream::ByteOrder bitOrder;
 };
 QDataStream& operator<<(QDataStream& s, const JZCommModbusInfo& param);
 QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param);
 
+
+//JZCommConfig
+class JZCommConfig
+{
+public:
+    JZCommConfig();
+
+    QString name;
+    int commType;
+
+    JZCommModbusInfo modbus;
+};
+QDataStream &operator<<(QDataStream &s, const JZCommConfig &param);
+QDataStream &operator>>(QDataStream &s, JZCommConfig &param);
+
 //JZCommConfig
 class JZCommManagerConfig
 {
 public:
-    QList<JZCommModbusInfo> modbusClient;
+    QList<JZCommConfig> commList;
 };
 QDataStream &operator<<(QDataStream &s, const JZCommManagerConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCommManagerConfig &param);
@@ -51,8 +71,9 @@ public:
     JZCommManagerConfig config();
 
 protected:
-	QList<JZModbusClient*> m_modbusClient;
-	QList<JZModbusServer*> m_modbusServer;
+	QMap<QString,JZModbusClient*> m_modbusClient;
+    QMap<QString,JZModbusServer*> m_modbusServer;
+
     JZCommManagerConfig m_config;
 };
 

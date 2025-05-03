@@ -364,7 +364,7 @@ protected:
     bool hasStatementDepend(int pc);
     
     void log(QString error);
-    void logE(QString error);
+    void logE(QString error,const QVariantMap &args = QVariantMap());
 
     NodeCompilerInfo *currentNodeInfo();
     JZProject *project();

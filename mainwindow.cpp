@@ -1546,7 +1546,9 @@ void MainWindow::onRuntimeError(JZNodeRuntimeError error)
     for (int i = 0; i < stack_size; i++)
     {
         auto s = error.info.stacks[stack_size - i - 1];
-        QString line = JZNodeUtils::makeLink(s.scriptItemPath, s.function, "id=" + QString::number(s.nodeId));
+        QVariantMap args;
+        args["id"] = s.nodeId;
+        QString line = JZNodeUtils::makeLink(s.function, s.scriptItemPath, args);
         m_log->addLog(Log_Runtime, line);
         
         line = s.function;

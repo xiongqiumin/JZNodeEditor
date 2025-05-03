@@ -1,28 +1,88 @@
-#include "JZNodeSettingDialog.h"
+ï»¿#include "JZNodeSettingDialog.h"
 #include <QDebug>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QHeaderView>
+
+//JZManagerPropertyDialog
+JZManagerPropertyDialog::JZManagerPropertyDialog(QWidget *parent)
+    : JZBaseDialog(parent)
+{
+    m_editor = new JZPropertyEditor();
+    setCentralWidget(m_editor);
+    m_typeProp = nullptr;    
+
+    resize(300, 400);
+}
+
+void JZManagerPropertyDialog::addPage(int type, QList<JZProperty*> propList)
+{
+    m_propType[type] = propList;
+}
+
+void JZManagerPropertyDialog::switchPage(int page)
+{    
+    //hide
+    auto it = m_propType.begin();
+    while (it != m_propType.end())
+    {        
+        if (it.key() != page)
+        {
+            auto &list = it.value();
+            for (int i = 0; i < list.size(); i++)
+                list[i]->setVisible(false);
+        }
+        it++;
+    }
+
+    //show
+    it = m_propType.find(page);
+    auto &show_list = it.value();
+    for (int i = 0; i < show_list.size(); i++)
+        show_list[i]->setVisible(true);
+}
+
+void JZManagerPropertyDialog::onPropChanged(JZProperty * prop, const QVariant &v)
+{
+    if (prop != m_typeProp)
+        return;
+
+    int page = v.toInt();
+    switchPage(page);
+}
 
 //JZNodeManagerDialog
 JZNodeManagerDialog::JZNodeManagerDialog(QWidget *parent)
     : QDialog(parent)
 {
     m_table = new QTableWidget();
+    
+    m_table->verticalHeader()->setVisible(false);
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->horizontalHeader()->setStretchLastSection(true);
+    m_table->setEditTriggers(QTableWidget::NoEditTriggers);
+    connect(m_table, &QTableWidget::itemDoubleClicked, this, &JZNodeManagerDialog::onItemDoubleClicked);
 
     QVBoxLayout *l = new QVBoxLayout();
     QHBoxLayout *h = new QHBoxLayout();
 
-    QPushButton *btnAdd = new QPushButton("Ìí¼Ó");
-    QPushButton *btnRemove = new QPushButton("É¾³ý");
-    QPushButton *btnOk = new QPushButton("È·¶¨");
-    QPushButton *btnCancel = new QPushButton("È¡Ïû");
+    QPushButton *btnAdd = new QPushButton("æ·»åŠ ");
+    QPushButton *btnRemove = new QPushButton("åˆ é™¤");
+    QPushButton *btnSetting = new QPushButton("è®¾ç½®");
+    QPushButton *btnOk = new QPushButton("ç¡®å®š");
+    QPushButton *btnCancel = new QPushButton("å–æ¶ˆ");
+    
     connect(btnAdd,&QPushButton::clicked,this, &JZNodeManagerDialog::onBtnAddClicked);
     connect(btnRemove,&QPushButton::clicked,this, &JZNodeManagerDialog::onBtnRemoveClicked);
+    connect(btnSetting,&QPushButton::clicked,this, &JZNodeManagerDialog::onBtnSettingClicked);
     connect(btnOk,&QPushButton::clicked,this, &JZNodeManagerDialog::onBtnOkClicked);
     connect(btnCancel,&QPushButton::clicked,this, &JZNodeManagerDialog::onBtnCancelClicked);
+
     h->addStretch();
     h->addWidget(btnAdd);
     h->addWidget(btnRemove);
+    h->addWidget(btnSetting);
     h->addWidget(btnOk);
     h->addWidget(btnCancel);
     h->setContentsMargins(0,0,0,0);
@@ -32,6 +92,7 @@ JZNodeManagerDialog::JZNodeManagerDialog(QWidget *parent)
     l->addLayout(h);
 
     setLayout(l);
+    resize(600, 400);
 }
 
 JZNodeManagerDialog::~JZNodeManagerDialog()
@@ -40,10 +101,31 @@ JZNodeManagerDialog::~JZNodeManagerDialog()
 
 void JZNodeManagerDialog::onBtnAddClicked()
 {
+    addConfig();
 }
 
 void JZNodeManagerDialog::onBtnRemoveClicked()
 {
+    int idx = m_table->currentRow();
+    if (idx == -1)
+        return;
+
+    removeConfig(idx);
+}
+
+void JZNodeManagerDialog::onItemDoubleClicked(QTableWidgetItem *item)
+{
+    int row = item->row();
+    settingConfig(row);
+}
+
+void JZNodeManagerDialog::onBtnSettingClicked()
+{
+    int idx = m_table->currentRow();
+    if (idx == -1)
+        return;
+
+    settingConfig(idx);
 }
 
 void JZNodeManagerDialog::onBtnOkClicked()
@@ -64,4 +146,14 @@ JZNodeSettingDialog::JZNodeSettingDialog(const QJsonObject& json, QWidget *paren
 
 JZNodeSettingDialog::~JZNodeSettingDialog()
 {
+}
+
+void JZNodeSettingDialog::setValue(const QJsonObject& json)
+{
+
+}
+
+QJsonObject JZNodeSettingDialog::value() const
+{
+    return QJsonObject();
 }

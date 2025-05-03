@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QDialogButtonBox>
+#include <QKeyEvent>
 #include "JZBaseDialog.h"
 
 //JZBaseDialog
@@ -14,8 +15,8 @@ JZBaseDialog::JZBaseDialog(QWidget *parent)
     
     QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     
-    connect(box, &QDialogButtonBox::accepted, this, &JZBaseDialog::onBtnOkClicked);
-    connect(box, &QDialogButtonBox::rejected, this, &JZBaseDialog::onBtnCancelClicked);
+    connect(box, &QDialogButtonBox::accepted, this, &JZBaseDialog::accept);
+    connect(box, &QDialogButtonBox::rejected, this, &JZBaseDialog::reject);
 
     this->setLayout(verticalLayout);
     verticalLayout->addWidget(m_mainWidget);
@@ -24,6 +25,16 @@ JZBaseDialog::JZBaseDialog(QWidget *parent)
 
 JZBaseDialog::~JZBaseDialog()
 {
+}
+
+void JZBaseDialog::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)
+    {
+
+    }
+    else
+        QDialog::keyPressEvent(event);
 }
 
 void JZBaseDialog::setCentralWidget(QWidget *w)
@@ -37,21 +48,4 @@ void JZBaseDialog::setCentralWidget(QWidget *w)
 void JZBaseDialog::showButton(int btn, bool show)
 {
     m_buttons[btn]->setVisible(show);
-}
-
-bool JZBaseDialog::onCancel()
-{
-    return true;
-}
-
-void JZBaseDialog::onBtnOkClicked()
-{
-    if(onOk())
-        QDialog::accept();
-}
-
-void JZBaseDialog::onBtnCancelClicked()
-{
-    if (onCancel())
-        QDialog::reject();
 }

@@ -10,26 +10,48 @@ JZCommModbusInfo::JZCommModbusInfo()
 
 QDataStream& operator<<(QDataStream& s, const JZCommModbusInfo& param)
 {
-    s << param.name << param.conn << param.bitOrder;
+    s << param.conn << param.bitOrder;
     return s;
 }
 
 QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param)
 {
-    s >> param.name >> param.conn >> param.bitOrder;
+    s >> param.conn >> param.bitOrder;
+    return s;
+}
+
+//JZCommConfig
+JZCommConfig::JZCommConfig()
+{
+    commType = Comm_None;
+}
+
+QDataStream &operator<<(QDataStream &s, const JZCommConfig &param)
+{
+    s << param.name;
+    s << param.commType;
+    s << param.modbus;
+    return s;
+}
+
+QDataStream &operator >> (QDataStream &s, JZCommConfig &param)
+{
+    s >> param.name;
+    s >> param.commType;
+    s >> param.modbus;
     return s;
 }
 
 //JZModbusManagerConfig
 QDataStream &operator<<(QDataStream &s, const JZCommManagerConfig &param)
 {
-    s << param.modbusClient;
+    s << param.commList;
     return s;
 }
 
 QDataStream &operator >> (QDataStream &s, JZCommManagerConfig &param)
 {
-    s >> param.modbusClient;
+    s >> param.commList;
     return s;
 }
 
@@ -48,22 +70,21 @@ JZCommManager::~JZCommManager()
 
 JZModbusClient* JZCommManager::modbusClient(QString name)
 {
-    for (int i = 0; i < m_config.modbusClient.size(); i++)
-    {
-        if (m_config.modbusClient[i].name == name)
-            return m_modbusClient[i];
-    }
-	return nullptr;
+    return m_modbusClient.value(name, nullptr);
 }
 
 void JZCommManager::init()
 {
-    for (int i = 0; i < m_config.modbusClient.size(); i++)
+    for (int i = 0; i < m_config.commList.size(); i++)
     {
-        JZModbusClient* client = new JZModbusClient(this);
-        client->initConn(m_config.modbusClient[i].conn);
-        client->setProperty("bitOrder", m_config.modbusClient[i].bitOrder);
-        m_modbusClient.push_back(client);
+        auto &cfg = m_config.commList[i];
+        if (cfg.commType == Comm_ModbusRtuClient)
+        {
+            JZModbusClient* client = new JZModbusClient(this);
+            client->initConn(cfg.modbus.conn);
+            client->setProperty("bitOrder", cfg.modbus.bitOrder);
+            m_modbusClient[cfg.name] = client;
+        }
     }
 }
 

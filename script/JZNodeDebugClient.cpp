@@ -183,7 +183,8 @@ bool JZNodeDebugClient::sendCommand(int command,const QByteArray &buffer,QByteAr
     packet.cmd = command;
     packet.setId(m_client.genPackId());
     packet.buffer = buffer;    
-    m_client.sendPack(&packet);
+    if (!m_client.sendPack(&packet))
+        return false;
 
     JZNetPackPtr ret;    
     if(!(ret = m_client.waitPackById(packet.id(), 30 * 1000)))

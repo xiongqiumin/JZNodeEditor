@@ -51,11 +51,6 @@ public:
     }
 
 protected:
-    virtual bool onOk() override
-    {
-        return true;
-    }
-
     BreakPoint m_break;
     QList<QRadioButton*> m_radioList;
 };

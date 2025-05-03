@@ -390,9 +390,7 @@ set(JZNodeEditor_SOURCES
     sample/SampleProject.cpp
     sample/SampleProject.h
 
-    #communication        
-    modules/communication/modbus/JZModuleModbusEditor.cpp
-    modules/communication/modbus/JZModuleModbusEditor.h
+    #communication            
     modules/communication/modbus/JZModbusConfigDialog.cpp
     modules/communication/modbus/JZModbusConfigDialog.h
     modules/communication/modbus/JZModbusConfigDialog.ui
@@ -415,6 +413,8 @@ set(JZNodeEditor_SOURCES
     #3rd    
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.h
+    3rd/JZCommon/jzWidgets/JZPropertyEditor.cpp
+    3rd/JZCommon/jzWidgets/JZPropertyEditor.h
     3rd/JZCommon/jzWidgets/JZPropertyWidget.cpp
     3rd/JZCommon/jzWidgets/JZPropertyWidget.h    
 )

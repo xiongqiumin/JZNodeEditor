@@ -48,8 +48,3 @@ JZAboutDialog::JZAboutDialog(QWidget *parent)
     showButton(Button_Cancel,false);
     resize(400, 500);
 }
-
-bool JZAboutDialog::onOk()
-{
-    return true;
-}

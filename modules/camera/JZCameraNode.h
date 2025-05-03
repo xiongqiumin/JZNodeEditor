@@ -49,8 +49,7 @@ public:
     QString camera();
 
 protected:
-    QString m_camera;
-    QString m_name;
+    QString m_camera;    
     QString m_function;
 };
 

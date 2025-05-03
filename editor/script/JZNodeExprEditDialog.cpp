@@ -28,9 +28,3 @@ QString JZNodeExprEditDialog::expr()
 {
     return m_edit->toPlainText();
 }
-
-bool JZNodeExprEditDialog::onOk()
-{
-    JZNodeExpression expr_node;    
-    return true;
-}

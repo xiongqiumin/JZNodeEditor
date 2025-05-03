@@ -57,11 +57,6 @@ public:
         return info;
     }
 
-    virtual bool onOk() override
-    {
-        return true;
-    }
-
 protected:
     QLineEdit *m_lineAddr;
     QLineEdit *m_lineMemo;
@@ -102,11 +97,6 @@ JZModbusStrategy ModeStargeDialog::info()
     info.recvNotify = m_boxRecv->isChecked();
     info.autoRead = m_boxRead->isChecked();
     return info;
-}
-
-bool ModeStargeDialog::onOk()
-{
-    return true;
 }
 
 JZModbusConfigDialog::JZModbusConfigDialog(QWidget *parent)

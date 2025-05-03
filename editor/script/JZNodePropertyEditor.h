@@ -10,6 +10,7 @@ enum {
     PropEditor_varType,
 };
 
+class JZNodeView;
 class JZNodePropertyEditor : public QWidget
 {
     Q_OBJECT
@@ -20,6 +21,7 @@ public:
 
     JZNode *node();
 
+    void setView(JZNodeView  *view);
     void setNode(JZNode *node);    
     void updateNode();    
 
@@ -42,6 +44,7 @@ protected:
 
     JZPropertyBrowser *m_tree;
     QMap<int, JZProperty*> m_propMap;
+    JZNodeView  *m_view;
     bool m_editing;
 };
 

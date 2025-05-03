@@ -23,7 +23,7 @@ protected slots:
     void onListParamChanged(QListWidgetItem *current);
 
 protected:    
-    virtual bool onOk();
+    virtual void accept();
 
     QListWidget *m_listParam;
     QListWidget *m_listSingle;

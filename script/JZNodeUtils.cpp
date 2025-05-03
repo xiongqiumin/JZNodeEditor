@@ -41,9 +41,18 @@ MemberInfo JZNodeUtils::splitMember(QString fullName)
     return info;
 }
 
-QString JZNodeUtils::makeLink(QString tips, QString path, QString args)
+QString JZNodeUtils::makeLink(QString tips, QString path, const QVariantMap &args)
 {
-    QString href = path + "?" + args;
+    QStringList args_text;
+
+    auto it = args.begin();
+    while(it != args.end())
+    {
+        args_text.push_back(it.key() + "=" + it.value().toString());
+        it++;
+    }
+
+    QString href = path + "?" + args_text.join("&");
     QString link = "<link href=" + href + ">" + tips + "</link>";
     return link;
 }

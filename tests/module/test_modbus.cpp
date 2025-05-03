@@ -35,11 +35,13 @@ ModbusTest::ModbusTest()
 
 void ModbusTest::testClientCpp()
 {
-    JZCommManagerConfig comm_config;
-    JZCommModbusInfo modbus;
-    modbus.conn.modbusType = Modbus_tcpClient;
-    modbus.name = "modbus";
-    comm_config.modbusClient << modbus;
+    JZCommConfig cfg;
+
+    JZCommManagerConfig comm_config;    
+    cfg.commType = Comm_ModbusTcpClient;
+    cfg.modbus.conn.modbusType = Modbus_tcpClient;
+    cfg.name = "modbus";
+    comm_config.commList << cfg;
 
     JZCommManager manager;
     JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));
@@ -84,11 +86,15 @@ void ModbusTest::testClient()
     auto script = class_item->memberFunction("testFunction");
     auto start = script->startNode();
 
-    JZCommManagerConfig comm_config;
+    JZCommConfig cfg;
+    cfg.commType = Comm_ModbusTcpClient;
+
     JZCommModbusInfo modbus;
-    modbus.conn.modbusType = Modbus_tcpClient;
-    modbus.name = "modbus";
-    comm_config.modbusClient << modbus;
+    cfg.modbus.conn.modbusType = Modbus_tcpClient;
+    cfg.name = "modbus";
+
+    JZCommManagerConfig comm_config;
+    comm_config.commList << cfg;
 
     JZNodeCommInit* comm_init = new JZNodeCommInit();
     script->addNode(comm_init);

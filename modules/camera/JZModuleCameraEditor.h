@@ -4,6 +4,49 @@
 #include "JZNode.h"
 #include "JZNodeGraphItem.h"
 #include "JZNodeSettingDialog.h"
+#include "JZCameraManager.h"
+#include "JZBaseDialog.h"
+#include "jzWidgets/JZPropertyBrowser.h"
+
+//JZCameraConfigDialog
+class JZCameraConfigDialog : public JZManagerPropertyDialog
+{
+    Q_OBJECT
+
+public:
+    JZCameraConfigDialog(QWidget *parent = nullptr);
+
+    void setConfig(JZCameraConfig cfg);
+    JZCameraConfig getConfig() const;
+
+private slots:
+    
+
+private:    
+    void accept();
+
+    JZCameraConfig m_config;
+
+};
+
+//JZCameraInitDialog
+class JZCameraInitDialog : public JZNodeManagerDialog
+{
+public:    
+    JZCameraInitDialog(QWidget *parent);
+
+    void setConfig(JZCameraManagerConfig cfg);
+    JZCameraManagerConfig config();    
+
+    virtual void addConfig() override;
+    virtual void removeConfig(int index) override;
+    virtual void settingConfig(int index) override;
+    virtual void updateConfig() override;
+
+protected:
+    JZCameraManagerConfig m_config;
+    QStringList m_camTypeList;
+};
 
 class JZCameraInitItem : public JZNodeGraphItem
 {
@@ -16,6 +59,15 @@ protected:
     BlockPtr m_setting;
 };
 
+class JZCameraNodeItem: public JZNodeGraphItem
+{
+public:
+    JZCameraNodeItem();
+
+    virtual void updatePin();
+
+protected:
+};
 
 void JZCameraEditorInit();
 

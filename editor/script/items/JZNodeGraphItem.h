@@ -57,8 +57,10 @@ public:
     QRectF pinRect(int pin);
     QRectF pinNameRect(int pin);
     QSize size() const;
-    Block *block(int id);
     
+    Block *block(int id);
+    QList<int> blockList(bool isInput);
+
     QString getTip(QPointF pt);
         
     void setPinRuntimeValue(int pin_id,const QString &value);    
@@ -90,8 +92,7 @@ protected:
     BlockPtr createPinBlock(JZNodePin *pin);
     BlockPtr createWidgetBlock(QWidget *widget,bool isInput);
 
-    QByteArray saveNode();
-    QList<int> blockList(bool isInput);
+    QByteArray saveNode();    
     JZNodePin *pin(int pin_id);
     void drawProp(QPainter *painter,int pinId);
     void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);

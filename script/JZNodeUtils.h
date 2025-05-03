@@ -64,7 +64,7 @@ public:
     }
 
     static MemberInfo splitMember(QString name);
-    static QString makeLink(QString tips, QString path, QString args);
+    static QString makeLink(QString tips, QString path, const QVariantMap &args = QVariantMap());
     static LinkInfo parseLink(QString line);
 };
 

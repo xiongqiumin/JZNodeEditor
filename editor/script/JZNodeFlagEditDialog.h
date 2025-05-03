@@ -19,8 +19,8 @@ public:
     QString flag();    
     
 private:    
-    virtual bool onOk() override;
-    
+    void accept();
+
     QString m_flagKey;
     const JZNodeEnumDefine *m_enumMeta;
     QList<QCheckBox*> m_boxList;

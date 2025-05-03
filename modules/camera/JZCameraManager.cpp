@@ -14,13 +14,25 @@ JZCameraConfig::JZCameraConfig()
 }
 QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param)
 {
-    s << param.type << param.name << param.path;
+    s << param.type << param.name;
+    
+    //file
+    s << param.filePath;
+    //hik
+    s << param.hikPath;
+
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, JZCameraConfig &param)
 {
-    s >> param.type >> param.name >> param.path;
+    s >> param.type >> param.name;
+    
+    //file
+    s >> param.filePath;
+    //hik
+    s >> param.hikPath;
+
     return s;
 }
 
@@ -100,7 +112,7 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfig &config)
     if(config.type == Camera_File)
     {
         JZCamera *camera_file = new JZCameraFile();
-        open_ret = camera_file->open(config.path);
+        open_ret = camera_file->open(config.filePath);
 
         camera = camera_file;
     }

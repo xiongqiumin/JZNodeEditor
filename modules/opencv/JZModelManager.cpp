@@ -22,13 +22,13 @@ QDataStream& operator>>(QDataStream& s, JZModelConfig& config)
 //JZModelManagerConfig
 QDataStream& operator<<(QDataStream& s, const JZModelManagerConfig& config)
 {
-	s << config.models;
+	s << config.modelList;
 	return s;
 }
 
 QDataStream& operator>>(QDataStream& s, JZModelManagerConfig& config)
 {
-	s >> config.models;
+	s >> config.modelList;
 	return s;
 }
 
@@ -55,18 +55,18 @@ JZModelManagerConfig JZModelManager::config()
 
 void JZModelManager::init()
 {
-	for (int i = 0; i < m_config.models.size(); i++)
+	for (int i = 0; i < m_config.modelList.size(); i++)
 	{
-		JZModel* model = createModel(m_config.models[i]);
+		JZModel* model = createModel(m_config.modelList[i]);
 		m_models.push_back(model);
 	}
 }
 
 JZModel* JZModelManager::model(QString name)
 {
-	for (int i = 0; i < m_config.models.size(); i++)
+	for (int i = 0; i < m_config.modelList.size(); i++)
 	{
-		if(m_config.models[i].name == name)
+		if(m_config.modelList[i].name == name)
 			return m_models[i];
 	}
 	return nullptr;

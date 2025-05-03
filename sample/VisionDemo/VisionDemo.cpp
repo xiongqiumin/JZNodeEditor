@@ -69,12 +69,12 @@ void SampleVisionDemo::addInit()
     if (m_name == "VisionDemoHik")
     {        
         cfg.type = Camera_Hik;
-        cfg.path = "192.168.0.150";
+        cfg.hikPath = "192.168.0.150";
     }
     else
     {
         cfg.type = Camera_File;
-        cfg.path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
+        cfg.filePath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
     }
     cam_config.cameraList << cfg;    
     cam_init->setConfig(cam_config);
@@ -82,13 +82,16 @@ void SampleVisionDemo::addInit()
     JZModbusConnetInfo conn;
     conn.modbusType = Modbus_rtuClient;
 
-    JZCommManagerConfig comm_config;
-    JZCommModbusInfo modbus;
-    modbus.conn = conn;
-    modbus.name = "modbus";
+    JZCommManagerConfig comm_mangare_config;
 
-    comm_config.modbusClient << modbus;
-    comm_init->setConfig(comm_config);
+    JZCommConfig comm_cfg;
+    JZCommModbusInfo modbus;
+    comm_cfg.modbus.conn = conn;
+    comm_cfg.name = "modbus";
+    comm_cfg.commType = Comm_ModbusRtuClient;
+
+    comm_mangare_config.commList << comm_cfg;
+    comm_init->setConfig(comm_mangare_config);
 
     JZModelManagerConfig model_config;
     JZModelConfig model;
@@ -96,7 +99,7 @@ void SampleVisionDemo::addInit()
     model.name = "yolo";
     model.modelPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx";
 
-    model_config.models << model;
+    model_config.modelList << model;
     model_init->setConfig(model_config);
 }
 

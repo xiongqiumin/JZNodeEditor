@@ -6,6 +6,8 @@
 #include <QTimer>
 #include "JZNodeTypeHelper.h"
 #include "JZNodePropertyEditor.h"
+#include "JZNodeGraphItem.h"
+#include "JZNodeView.h"
 
 JZNodePropertyEditor::JZNodePropertyEditor(QWidget *widget)
     :QWidget(widget)
@@ -13,6 +15,7 @@ JZNodePropertyEditor::JZNodePropertyEditor(QWidget *widget)
     m_node = nullptr;    
     m_tree = new JZPropertyBrowser();
     m_editing = false;
+    m_view = nullptr;
 
     QVBoxLayout *l = new QVBoxLayout();
     l->setContentsMargins(0,0,0,0);
@@ -34,6 +37,11 @@ void JZNodePropertyEditor::clear()
     m_propMap.clear();
     
     m_node = nullptr;    
+}
+
+void JZNodePropertyEditor::setView(JZNodeView  *view)
+{
+    m_view = view;
 }
 
 void JZNodePropertyEditor::onValueChanged(JZProperty *p, const QVariant &value)
@@ -129,15 +137,20 @@ void JZNodePropertyEditor::updateNode()
     m_editing = true;
 
     auto prop_base = new JZPropertyGroup("基本信息");
-    auto prop_name = new JZPropertyNoEdit("名称", QVariant::String);
-    auto prop_id = new JZPropertyNoEdit("Id", QVariant::Int);
+    auto prop_name = new JZProperty("名称", QVariant::String);
+    auto prop_id = new JZProperty("Id", QVariant::Int);
+    prop_name->setEditable(false);
+    prop_id->setEditable(false);
+
     prop_base->addSubProperty(prop_name);
     prop_base->addSubProperty(prop_id);    
     prop_name->setValue(m_node->name());
     prop_name->setEnabled(false);
     prop_id->setValue(m_node->id());    
     prop_id->setEnabled(false);
-    m_tree->addProperty(prop_base);            
+    m_tree->addProperty(prop_base);
+
+    auto item = m_view->getNodeItem(m_node->id());
 
     auto in_list = m_node->pinInList(Pin_param);
     addPropList("输入",in_list);

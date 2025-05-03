@@ -24,8 +24,6 @@ protected slots:
 
 
 protected:
-    virtual bool onOk();
-
     QPlainTextEdit *m_edit;
 };
 

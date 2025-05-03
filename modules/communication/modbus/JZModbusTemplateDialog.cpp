@@ -27,11 +27,6 @@ JZModbusConfig JZModbusTemplateDialog::config()
     return m_config;
 }
 
-bool JZModbusTemplateDialog::onOk()
-{
-    return true;
-}
-
 void JZModbusTemplateDialog::initConfig()
 {
 

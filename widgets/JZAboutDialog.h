@@ -9,7 +9,6 @@ public:
     JZAboutDialog(QWidget *parent);
 
 protected:
-    virtual bool onOk() override;
 };
 
 

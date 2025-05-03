@@ -13,9 +13,14 @@ class JZCameraConfig
 public:
     JZCameraConfig();
 
-    JZCameraType type;
+    int type;
     QString name;
-    QString path;
+    
+    //file
+    QString filePath;
+
+    //hix
+    QString hikPath;
 };
 QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCameraConfig &param);

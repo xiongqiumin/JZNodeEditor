@@ -50,7 +50,7 @@ QString JZNodeFlagEditDialog::flag()
     return m_flagKey;
 }
 
-bool JZNodeFlagEditDialog::onOk()
+void JZNodeFlagEditDialog::accept()
 {
     auto meta = m_enumMeta;
     QStringList keyList;
@@ -63,6 +63,4 @@ bool JZNodeFlagEditDialog::onOk()
         m_flagKey = keyList.join("|");
     else
         m_flagKey = meta->defaultKey();
-
-    return true;
 }

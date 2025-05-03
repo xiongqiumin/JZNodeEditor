@@ -236,12 +236,13 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
 
     auto makeParamLink = [](QString tips, QString path, bool ui, int row)->QString
     {
-        QString args;
+        QVariantMap  args;
         if (ui)
-            args = "type=ui";
+            args["type"] = "ui";
         else
-            args = "type=param";
-        args += "&row=" + QString::number(row);
+            args["type"] = "param";
+
+        args["row"] = row;
         return JZNodeUtils::makeLink(tips, path, args);
     };
 
@@ -284,7 +285,7 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         QString error;
         if (!obj_def->check(error))
         {
-            logE(JZNodeUtils::makeLink(error, class_item->itemPath(), QString()));
+            logE(JZNodeUtils::makeLink(error, class_item->itemPath()));
             m_checkError += error + "\n";
             m_error = true;
         }

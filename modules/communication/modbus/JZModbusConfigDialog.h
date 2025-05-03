@@ -22,8 +22,6 @@ public:
     JZModbusStrategy info();
     
 protected:
-    virtual bool onOk() override;
-
     QCheckBox *m_boxRead;
     QCheckBox *m_boxRecv;
     QLineEdit *m_lineTime;

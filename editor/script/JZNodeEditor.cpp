@@ -87,6 +87,8 @@ void JZNodeEditor::init()
 
     //right
     m_nodeProp = new JZNodePropertyEditor();
+    m_nodeProp->setView(m_view);
+
     m_runProp = new JZNodeAutoRunWidget();
     m_runProp->setEditor(this);
 

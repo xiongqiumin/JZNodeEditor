@@ -18,8 +18,7 @@ public:
     
     JZModbusConfig config();
 
-protected:
-    virtual bool onOk() override;
+protected:    
     void initConfig();
 
     JZModbusConfig m_config;

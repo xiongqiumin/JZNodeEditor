@@ -25,7 +25,7 @@ QDataStream& operator>>(QDataStream& s, JZModelConfig& config);
 class JZModelManagerConfig
 {
 public:    
-    QList<JZModelConfig> models;
+    QList<JZModelConfig> modelList;
 };
 QDataStream& operator<<(QDataStream &s,const JZModelManagerConfig &config);
 QDataStream& operator>>(QDataStream &s, JZModelManagerConfig &config);

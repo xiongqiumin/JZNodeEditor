@@ -636,11 +636,12 @@ void JZNodeCompiler::log(QString error)
     m_builder->log(LOG_INFO, error);
 }
 
-void JZNodeCompiler::logE(QString error)
+void JZNodeCompiler::logE(QString tips, const QVariantMap &args)
 {
     if (!m_builder)
         return;
 
+    QString error = JZNodeUtils::makeLink(tips, m_scriptItem->itemPath(), args);
     m_builder->log(LOG_ERROR, error);
 }
 
@@ -762,12 +763,12 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     m_compilerInfo = CompilerResult();
     m_compilerInfo.result = false;
     if (!genGraphs())
-    {
+    {        
         m_compilerInfo.checkError = m_checkError;
         return false;
     }
     if (!checkGraphs())
-    {
+    {        
         m_compilerInfo.checkError = m_checkError;
         return false;
     }
@@ -893,8 +894,9 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
         if (!nodeInfo.error.isEmpty())
         {
             QString name = node->name();
-            QString error = JZNodeUtils::makeLink(nodeInfo.error, m_scriptItem->itemPath(), "id=" + QString::number(nodeInfo.node_id));
-            logE(error);
+            QVariantMap args;
+            args["id"] = nodeInfo.node_id;
+            logE(nodeInfo.error);
 
             m_compilerInfo.nodeError[node->id()] = nodeInfo.error;
         }
@@ -1264,12 +1266,6 @@ bool JZNodeCompiler::checkGraphs()
             return false;
         }
     }
-    if (m_graphList.size() == 0)
-    {
-        m_checkError = "no node";
-        return false;
-    }
-
     return true;
 }    
 

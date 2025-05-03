@@ -5,13 +5,133 @@
 #include "JZCameraNode.h"
 #include "JZNodeView.h"
 
+//JZCameraConfigDialog
+JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
+    :JZManagerPropertyDialog(parent)
+{
+    auto browser = m_editor->browser();
+    connect(browser, &JZPropertyBrowser::valueChanged, this, &JZCameraConfigDialog::onPropChanged);
+
+    auto group = m_editor->addGroup("基本");    
+    m_editor->addProp("名称", &m_config.name, group );
+
+    QList<int> enmuList = { Camera_File, Camera_Hik };
+    QStringList enumTextList = {"File" ,"Hik"};
+    m_typeProp = m_editor->addPropIntEnum("类型", &m_config.type, enmuList, enumTextList, group);
+
+    auto prop_group = m_editor->addGroup("属性");
+
+    QList<JZProperty*> file_prop, hik_prop;
+    //file
+    file_prop << m_editor->addPropDir("路径", &m_config.filePath, prop_group);
+
+    //hik
+    hik_prop << m_editor->addProp("路径", &m_config.hikPath,  prop_group);
+
+    addPage(Camera_File, file_prop);
+    addPage(Camera_Hik, hik_prop);
+}
+
+void JZCameraConfigDialog::setConfig(JZCameraConfig cfg)
+{
+    m_config = cfg;
+    m_editor->dataToUi();
+    switchPage(m_config.type);
+}
+
+JZCameraConfig JZCameraConfigDialog::getConfig() const
+{
+    return m_config;
+}
+
+void JZCameraConfigDialog::accept()
+{
+    m_editor->uiToData();
+    JZManagerPropertyDialog::accept();
+}
+
+//JZCameraInitDialog
+JZCameraInitDialog::JZCameraInitDialog(QWidget *parent)
+    :JZNodeManagerDialog(parent)
+{
+    QStringList strListHeader = { "名称", "类型" };
+    m_table->setColumnCount(strListHeader.size());
+    m_table->setHorizontalHeaderLabels(strListHeader);
+
+    m_camTypeList = QStringList{ "None","File","UVC","Hik" };
+}
+
+void JZCameraInitDialog::setConfig(JZCameraManagerConfig cfg)
+{
+    m_config = cfg;
+    updateConfig();
+}
+
+JZCameraManagerConfig JZCameraInitDialog::config()
+{
+    return m_config;
+}
+
+void JZCameraInitDialog::addConfig() 
+{
+    QStringList camera_list;
+    for (int i = 0; i < m_config.cameraList.size(); i++)
+        camera_list << m_config.cameraList[i].name;
+
+    JZCameraConfig cfg;
+    cfg.name = JZRegExpHelp::uniqueString("camera", camera_list);
+    cfg.type = Camera_File;
+
+    JZCameraConfigDialog dlg(this);
+    dlg.setConfig(cfg);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    m_config.cameraList << cfg;
+    updateConfig();
+}
+
+void JZCameraInitDialog::removeConfig(int index) 
+{
+    m_config.cameraList.removeAt(index);
+    updateConfig();
+}
+
+void JZCameraInitDialog::settingConfig(int index) 
+{
+    JZCameraConfigDialog dlg(this);
+    dlg.setConfig(m_config.cameraList[index]);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    m_config.cameraList[index] = dlg.getConfig();
+    updateConfig();
+}
+
+void JZCameraInitDialog::updateConfig()
+{
+    m_table->setRowCount(m_config.cameraList.size());
+
+    QTableWidget *item = new QTableWidget();    
+    for (int i = 0; i < m_config.cameraList.size(); i++)
+    {
+        auto &cfg = m_config.cameraList[i];
+        QTableWidgetItem *item = new QTableWidgetItem(cfg.name);
+        m_table->setItem(i, 0, item);
+
+        QTableWidgetItem *item_type = new QTableWidgetItem(m_camTypeList[cfg.type]);
+        m_table->setItem(i, 1, item_type);
+    }
+}
+
+//JZCameraInitItem    
 void JZCameraInitItem::updatePin()
 {
     JZNodeGraphItem::updatePin();
 
     if (!m_setting)
     {
-        QPushButton *btnSet = new QPushButton("Add Cond");        
+        QPushButton *btnSet = new QPushButton("Setting");        
         btnSet->connect(btnSet, &QPushButton::clicked, [this] {
             this->onSetClicked();
         });
@@ -22,14 +142,14 @@ void JZCameraInitItem::updatePin()
 
 void JZCameraInitItem::onSetClicked()
 {
-    JZNodeCameraInit *node = (JZNodeCameraInit *)m_node;
-    JZCameraManagerConfig config = node->config();
-    JZNodeManagerDialog dlg(editor());
+    JZNodeCameraInit *node = (JZNodeCameraInit *)m_node;    
+    JZCameraInitDialog dlg(editor());
+    dlg.setConfig(node->config());
     if(dlg.exec() != QDialog::Accepted)
         return;
 
     QByteArray oldValue = saveNode();
-    node->setConfig(config);
+    node->setConfig(dlg.config());
     QByteArray newValue = saveNode();
     if(newValue == oldValue)
         return;
@@ -37,14 +157,25 @@ void JZCameraInitItem::onSetClicked()
     notifyPropChanged(oldValue);
 }
 
+//JZCameraNodeItem
+JZCameraNodeItem::JZCameraNodeItem()
+{
+
+}
+
+void JZCameraNodeItem::updatePin()
+{
+    JZNodeGraphItem::updatePin();    
+}
+
 void JZCameraEditorInit()
 {
     auto inst = editorManager()->instance();
 
     inst->registLogicNode(Node_CameraInit,"相机", CreateJZNodeGraphItem<JZCameraInitItem>);
-    inst->registLogicNode(Node_CameraStart,"相机");
-    inst->registLogicNode(Node_CameraStartOnce,"相机");
-    inst->registLogicNode(Node_CameraStop,"相机");
-    inst->registLogicNode(Node_CameraSetting,"相机");
-    inst->registLogicNode(Node_CameraFrameReady,"相机");
+    inst->registLogicNode(Node_CameraStart,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraStartOnce,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraStop,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraSetting,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraFrameReady,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
 }

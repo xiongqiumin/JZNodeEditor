@@ -12,20 +12,14 @@ public:
     JZBaseDialog(QWidget *parent = Q_NULLPTR);
     ~JZBaseDialog();           
 
-protected slots:
-    void onBtnOkClicked();
-    void onBtnCancelClicked();    
-
 protected:
     enum {
         Button_Ok,
         Button_Cancel,
-    };
-
-	virtual bool onOk() = 0;
-	virtual bool onCancel();
+    };	
+    virtual void keyPressEvent(QKeyEvent *event) override;
     void setCentralWidget(QWidget *w);
-    void showButton(int btn, bool show);    
+    void showButton(int btn, bool show);        
 
     QWidget *m_mainWidget;	
     QList<QPushButton*> m_buttons;
