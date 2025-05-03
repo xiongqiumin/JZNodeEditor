@@ -101,6 +101,9 @@ MainWindow::MainWindow(QWidget *parent)
     loadSetting();    
     initUi();     
     updateActionStatus();    
+
+    m_config.init(qApp->applicationDirPath() + "/config.db");
+    m_config.addConfig("JZModbusSimulatorConfig");
 }
 
 MainWindow::~MainWindow()
@@ -426,6 +429,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }    
+
+    for (int i = 0; i < m_floatWidgets.size(); i++)
+        m_floatWidgets[i]->close();
+    m_floatWidgets.clear();
 
     m_task.clearTask();
     QMainWindow::closeEvent(event);
@@ -772,18 +779,21 @@ void MainWindow::onActionStepOut()
 
 void MainWindow::onActionModbus()
 {
-    JZModbusSimulator *simulator = new JZModbusSimulator(this);
+    JZModbusSimulator *simulator = new JZModbusSimulator();
     connect(simulator, &JZModbusSimulator::sigClose, this, &MainWindow::onModbusSimulatorClose);
 
-    JZModbusSimulatorConfig cfg;
+    JZModbusSimulatorConfig cfg = m_config.getConfig<JZModbusSimulatorConfig>("JZModbusSimulatorConfig");
     simulator->setConfig(cfg);
     simulator->show();
+    m_floatWidgets << simulator;
 }
 
 void MainWindow::onModbusSimulatorClose()
 {
     JZModbusSimulator *simulator = qobject_cast<JZModbusSimulator*>(sender());
     auto cfg = simulator->config();
+    m_config.setConfig<JZModbusSimulatorConfig>("JZModbusSimulatorConfig",cfg);
+    m_floatWidgets.removeAll(simulator);
 }
 
 void MainWindow::onActionHelp()

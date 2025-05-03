@@ -1,0 +1,49 @@
+﻿#ifndef JZ_DESIGNER_EDITOR_H_
+#define JZ_DESIGNER_EDITOR_H_
+
+#include "JZEditor.h"
+#include "JZUiItem.h"
+#include "JZDesinger.h"
+#include <QStackedWidget>
+#include <QtDesigner/QDesignerFormEditorInterface>
+#include "JZMenuExtension.h"
+
+class JZDesignerFormWindow;
+class JZDesignerEditor : public QWidget
+{
+    Q_OBJECT
+    
+public:
+    static JZDesignerFormWindow *activeWidgetHost();
+
+    JZDesignerEditor();
+    ~JZDesignerEditor();
+
+    void init(QDesignerFormEditorInterface *core);
+    QDesignerFormEditorInterface *core();
+
+    JZDesignerFormWindow *open(JZUiItem *file);
+    void close(JZDesignerFormWindow *window);
+
+    void showForm(JZDesignerFormWindow *window);
+    void hideForm(JZDesignerFormWindow *window);
+
+protected slots:    
+    void slotSubWindowActivated(int index);
+    void formSizeChanged(int w, int h);
+
+protected:                
+    Qt::WindowFlags windowFlag();            
+
+    void initWidgetBox(QDesignerWidgetBoxInterface *box);
+    void initializeCorePlugins();
+
+    QList<JZDesignerFormWindow*> m_windows;    
+    QWidget *m_empty;
+    QStackedWidget *m_view;
+    QDesignerFormEditorInterface *m_core;
+    static JZDesignerFormWindow *m_active;
+    JZMenuExtensionFactory m_menuFactor;
+};
+
+#endif

@@ -4,7 +4,7 @@
 #include <QLabel>
 #include <QToolButton>
 #include "JZNodePinWidget.h"
-#include "JZImageLabel.h"
+#include "jzWidgets/JZImageLabel.h"
 
 //JZNodeParamDisplayWidget
 class JZNodeParamDisplayWidget : public QWidget

@@ -15,15 +15,18 @@
 #include <QMenuBar>
 #include "JZModbusSimulator.h"
 #include "JZModbusConfigDialog.h"
+#include "JZRegExpHelp.h"
 
 //JZModbusSimulatorConfig
 QDataStream &operator<<(QDataStream &s, const JZModbusSimulatorConfig &param)
 {
+    s << param.modbusList;
     return s;
 }
 
 QDataStream &operator >> (QDataStream &s, JZModbusSimulatorConfig &param)
 {
+    s >> param.modbusList;
     return s;
 }
 
@@ -107,8 +110,7 @@ JZModbusSimulator::JZModbusSimulator(QWidget *parent)
 {
     this->setWindowFlag(Qt::Window);
     this->setAttribute(Qt::WA_DeleteOnClose);
-    
-    m_simIdx = 0;
+        
     m_dataBitsList << QSerialPort::Data5 << QSerialPort::Data6 << QSerialPort::Data7 << QSerialPort::Data8;
     m_stopBitsList << QSerialPort::OneStop << QSerialPort::TwoStop;
     m_parityList << QSerialPort::NoParity << QSerialPort::EvenParity << QSerialPort::OddParity;      
@@ -197,8 +199,7 @@ void JZModbusSimulator::closeAll()
     int count = m_simulator.size();
     for (int i = 0; i < count; i++)
         removeSimulator(0);    
-    m_simulator.clear();
-    m_simIdx = 0;
+    m_simulator.clear();    
 }
 
 void JZModbusSimulator::setConfig(JZModbusSimulatorConfig config)
@@ -237,6 +238,26 @@ bool JZModbusSimulator::eventFilter(QObject *o, QEvent *e)
     return QWidget::eventFilter(o, e);
 }
 
+QString JZModbusSimulator::genSimulatorName(int index)
+{
+    QStringList nameList;
+    for (int i = 0; i < m_tree->topLevelItemCount(); i++)
+        nameList << m_tree->topLevelItem(i)->text(0);
+
+    int type = m_simulator[index].config.conn.modbusType;
+    QString name;
+    if(type == Modbus_rtuClient)       
+        name = JZRegExpHelp::uniqueString("RtuMaster", nameList);
+    else if (type == Modbus_tcpClient)
+        name = JZRegExpHelp::uniqueString("TcpMaster", nameList);
+    else if (type == Modbus_rtuServer)
+        name = JZRegExpHelp::uniqueString("RtuSlaver", nameList);
+    else if (type == Modbus_tcpServer)
+        name = JZRegExpHelp::uniqueString("TcpSlaver", nameList);
+
+    return name;
+}
+
 void JZModbusSimulator::addSimulator(JZModbusConfig config)
 {
     Simulator info;
@@ -264,11 +285,9 @@ void JZModbusSimulator::addSimulator(JZModbusConfig config)
     info.window->installEventFilter(this);         
 
     QTreeWidgetItem *item = new QTreeWidgetItem();
-    info.item = item;
-    item->setText(0,"Device" + QString::number(m_simIdx++));
-    info.window->setWindowTitle(item->text(0));
+    info.item = item;    
     m_tree->addTopLevelItem(item);
-
+    
     m_simulator.push_back(info);
     initSimulator(m_simulator.size() - 1);    
 }
@@ -320,7 +339,10 @@ void JZModbusSimulator::initSimulator(int index)
 {
     auto &info = m_simulator[index];
     
-    info.close();
+    info.close(); 
+    info.item->setText(0, genSimulatorName(index));
+    info.window->setWindowTitle(info.item->text(0));
+
     if (info.config.conn.modbusType == Modbus_rtuClient || info.config.conn.modbusType == Modbus_tcpClient)
     {
         info.master = new JZModbusMaster();
@@ -427,15 +449,18 @@ void JZModbusSimulator::updateTable(int index)
 
         QPushButton *btnRead = new QPushButton("读取");
         btnRead->setProperty("table", QVariant::fromValue(table));
+        btnRead->setProperty("addr", proto->addr);
         connect(btnRead, SIGNAL(clicked()), this, SLOT(onProtoReadClicked()));
         layout->addWidget(btnRead);
 
-        QPushButton *btnWrite = new QPushButton("写入");
-        btnWrite->setProperty("table", QVariant::fromValue(table));
-        connect(btnWrite, SIGNAL(clicked()), this, SLOT(onProtoWriteClicked()));
-        layout->addWidget(btnWrite);
-        if (proto->addrType == Param_DiscreteInput || proto->addrType == Param_InputRegister)
-            btnWrite->setEnabled(false);
+        if (proto->addrType == Param_Coil || proto->addrType == Param_HoldingRegister)
+        {
+            QPushButton *btnWrite = new QPushButton("写入");
+            btnWrite->setProperty("table", QVariant::fromValue(table));
+            btnWrite->setProperty("addr", proto->addr);
+            connect(btnWrite, SIGNAL(clicked()), this, SLOT(onProtoWriteClicked()));
+            layout->addWidget(btnWrite);
+        }
 
         widget->setLayout(layout);
         table->setCellWidget(i, 4, widget);
@@ -508,7 +533,7 @@ void JZModbusSimulator::onParamChanged(int addr)
     int idx = indexOfRow(table,addr);
     table->item(idx, 3)->setText(v.toString());
 
-    m_log->appendPlainText("收到数据");
+    m_log->appendPlainText(QString::number(addr) + "变化");
 }
 
 void JZModbusSimulator::onProtoReadClicked()

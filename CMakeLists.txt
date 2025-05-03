@@ -223,6 +223,8 @@ set(JZNodeCore_SOURCES
     3rd/JZCommon/jzModbus/JZModbusTcp.h
     3rd/JZCommon/jzWidgets/JZImageView.cpp
     3rd/JZCommon/jzWidgets/JZImageView.h    
+    3rd/JZCommon/jzWidgets/JZImageLabel.cpp 
+    3rd/JZCommon/jzWidgets/JZImageLabel.h     
     3rd/JZCommon/jzWidgets/JZLogWidget.cpp
     3rd/JZCommon/jzWidgets/JZLogWidget.h    
     3rd/JZCommon/jzJson/JZJsonStream.cpp
@@ -379,8 +381,6 @@ set(JZNodeEditor_SOURCES
     widgets/JZBaseDialog.h
     widgets/JZSearchTreeWidget.cpp
     widgets/JZSearchTreeWidget.h  
-    widgets/JZImageLabel.cpp 
-    widgets/JZImageLabel.h     
     
     #sample
     sample/Russian/Russian.cpp

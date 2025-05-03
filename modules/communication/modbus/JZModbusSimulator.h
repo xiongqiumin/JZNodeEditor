@@ -83,6 +83,7 @@ protected:
     void stopSimulator(int index);
     void settingSimulator(int index);
     void initSimulator(int index);    
+    QString genSimulatorName(int index);
     
     void updateStatus(int index);
     void updateTable(int index);
@@ -96,8 +97,7 @@ protected:
     QList<Simulator> m_simulator;
     QMdiArea *m_mdiArea;
     QPlainTextEdit *m_log;
-    QTreeWidget *m_tree;
-    int m_simIdx;
+    QTreeWidget *m_tree;    
 };
 
 #endif

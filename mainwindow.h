@@ -19,6 +19,7 @@
 #include "LogManager.h"
 #include "JZNodeEditor.h"
 #include "mainTask.h"
+#include "database.h"
 
 class Setting
 {
@@ -224,6 +225,9 @@ private:
     JZNodeRuntimeInfo m_runtime;    
     MainTaskManager m_task;
     JZNodeBuildResultPtr m_buildResult;
+    DataBaseConfig m_config;
+
+    QList<QWidget*> m_floatWidgets;
 };
 extern MainWindow *g_mainWindow;
 

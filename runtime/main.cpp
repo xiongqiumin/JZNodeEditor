@@ -7,17 +7,14 @@
 #include "JZRegExpHelp.h"
 #include "JZNodeInit.h"
 #include "JZNodeVM.h"
-#include "mainwindow.h"
 
 using namespace std;
 
-int runProgram(QString name, bool debug)
-{
-    QString path = qApp->applicationDirPath() + "/project/" + name + "/build/" + name + ".program";
-
+int runProgram(QString program, bool debug)
+{    
     QString error;
     JZNodeVM vm;
-    if (!vm.init(path, debug, error))
+    if (!vm.init(program, debug, error))
     {
         QMessageBox::information(nullptr, "", "init program failed.\n" + error);
         return 1;
@@ -31,7 +28,6 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();
 
-    return runProgram("Project3", true);
-
-    return qApp->exec();
+    QString program = R"(C:\Users\xiong\Desktop\JZNodeEditor\build\Debug\sample\VisionDemo\build\VisionDemo.program)";
+    return runProgram(program,false);
 }

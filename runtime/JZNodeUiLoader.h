@@ -2,6 +2,30 @@
 #define JZNODE_UI_LOADER_H_
 
 #include <QUiLoader>
+#include <QMap>
+
+template<class T>
+QWidget *createWidget(QWidget *parent)
+{
+    T *w = new T();
+    w->setParent(parent);
+    return w;
+}
+typedef QWidget *(*CreateWidgetFunc)(QWidget *parent);
+
+class JZNodeWidgetManger
+{
+public:
+    static JZNodeWidgetManger *instance();
+
+    void registWidget(QString name, CreateWidgetFunc func);
+    const QMap<QString, CreateWidgetFunc> &widgetMap();
+
+protected:
+    JZNodeWidgetManger();
+
+    QMap<QString, CreateWidgetFunc> m_widgetMap;
+};
 
 class JZNodeUiLoader : public QUiLoader
 {

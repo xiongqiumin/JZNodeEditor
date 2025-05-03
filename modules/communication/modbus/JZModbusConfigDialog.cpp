@@ -171,21 +171,21 @@ void JZModbusConfigDialog::initComm()
         comboBoxBotelv->setEditable(true);
 
         auto comboBoxData = new QComboBox();
-        comboBoxData->addItem("5");
-        comboBoxData->addItem("6");
-        comboBoxData->addItem("7");
-        comboBoxData->addItem("8");
+        comboBoxData->addItem("5", (int)QSerialPort::Data5);
+        comboBoxData->addItem("6", (int)QSerialPort::Data6);
+        comboBoxData->addItem("7", (int)QSerialPort::Data7);
+        comboBoxData->addItem("8", (int)QSerialPort::Data8);
         comboBoxData->setCurrentIndex(3);
 
         auto comboBoxStop = new QComboBox();
-        comboBoxStop->addItem("1");
-        comboBoxStop->addItem("2");
+        comboBoxStop->addItem("1", (int)QSerialPort::OneStop);
+        comboBoxStop->addItem("2", (int)QSerialPort::TwoStop);
         comboBoxStop->setCurrentIndex(0);
 
         auto comboBoxChk = new QComboBox();
-        comboBoxChk->addItem("NONE无");
-        comboBoxChk->addItem("EVEN偶");
-        comboBoxChk->addItem("ODD奇");
+        comboBoxChk->addItem("NONE无", (int)QSerialPort::NoParity);
+        comboBoxChk->addItem("EVEN偶", (int)QSerialPort::EvenParity);
+        comboBoxChk->addItem("ODD奇", (int)QSerialPort::OddParity);
         comboBoxChk->setCurrentIndex(0);
         
         l->addRow("串口号:", comboBoxCom);
@@ -273,13 +273,11 @@ void JZModbusConfigDialog::setConfig(const JZModbusConfig &cfg)
 {            
     setCurrentModbusType(cfg.conn.modbusType);
     if (cfg.isRtu())
-    {
-        ui.boxType->setCurrentIndex(0);
+    {        
         m_rtuSlave = cfg.conn.slave;
     }
     else
-    {
-        ui.boxType->setCurrentIndex(1);
+    {        
         m_tcpSlave = cfg.conn.slave;
     }
 
@@ -303,9 +301,9 @@ void JZModbusConfigDialog::setConfig(const JZModbusConfig &cfg)
 
     m_comboBoxCom->setCurrentText(cfg.conn.portName);
     m_comboBoxBotelv->setCurrentText(QString::number(cfg.conn.baud));
-    m_comboBoxData->setCurrentIndex(cfg.conn.dataBit);
-    m_comboBoxChk->setCurrentIndex(cfg.conn.parityBit);
-    m_comboBoxStop->setCurrentIndex(cfg.conn.stopBit);
+    m_comboBoxData->setCurrentIndex(m_comboBoxData->findData(cfg.conn.dataBit));
+    m_comboBoxChk->setCurrentIndex(m_comboBoxChk->findData(cfg.conn.parityBit));
+    m_comboBoxStop->setCurrentIndex(m_comboBoxStop->findData(cfg.conn.stopBit));
     
     m_lineIp->setText(cfg.conn.ip);
     m_linePort->setText(QString::number(cfg.conn.port));
@@ -330,9 +328,9 @@ JZModbusConfig JZModbusConfigDialog::config()
     {
         cfg.conn.portName = m_comboBoxCom->currentText();
         cfg.conn.baud = m_comboBoxBotelv->currentText().toInt();
-        cfg.conn.dataBit = (QSerialPort::DataBits)m_comboBoxData->currentIndex();
-        cfg.conn.parityBit = (QSerialPort::Parity)m_comboBoxChk->currentIndex();
-        cfg.conn.stopBit = (QSerialPort::StopBits)m_comboBoxStop->currentIndex();
+        cfg.conn.dataBit = (QSerialPort::DataBits)m_comboBoxData->currentData().toInt();
+        cfg.conn.parityBit = (QSerialPort::Parity)m_comboBoxChk->currentData().toInt();
+        cfg.conn.stopBit = (QSerialPort::StopBits)m_comboBoxStop->currentData().toInt();
     }
     else if (type == Modbus_tcpClient)
     {

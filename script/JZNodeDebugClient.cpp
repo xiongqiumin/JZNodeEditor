@@ -182,12 +182,11 @@ bool JZNodeDebugClient::sendCommand(int command,const QByteArray &buffer,QByteAr
     JZNodeDebugPacket packet;
     packet.cmd = command;
     packet.setId(m_client.genPackId());
-    packet.buffer = buffer;
-    if(!m_client.sendPack(&packet))
-        return false;
+    packet.buffer = buffer;    
+    m_client.sendPack(&packet);
 
     JZNetPackPtr ret;    
-    if(!(ret = m_client.waitPackById(packet.id(),30 * 1000)))
+    if(!(ret = m_client.waitPackById(packet.id(), 30 * 1000)))
     {
         emit sigNetError();
         return false;
