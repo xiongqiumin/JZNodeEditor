@@ -1,14 +1,72 @@
-﻿#include "JZNodeAutoRunThread.h"
+﻿#include <QEvent>
+#include <QCoreApplication>
+#include <QTimer>
+#include "JZNodeAutoRunThread.h"
+#include "LogManager.h"
 
-//PropCoor
+//JZNodeAutoRunEvent
+class JZNodeAutoRunEvent : public QEvent
+{
+public:
+    static int Event;
+
+    enum
+    {
+        StartRun,
+        StopRun,
+        StopThread,
+    };
+
+    JZNodeAutoRunEvent()
+        :QEvent((QEvent::Type)Event)
+    {
+    }
+
+    virtual ~JZNodeAutoRunEvent()
+    {
+    }
+
+    int cmd;
+};
+int JZNodeAutoRunEvent::Event = QEvent::registerEventType();
+
+//JZNodeAutoRunThread
 JZNodeAutoRunThread::JZNodeAutoRunThread()
 {
-     m_cancel = false;
-     m_test.moveToThread(this);
+    m_timer = new QTimer(this);
+    connect(m_timer, &QTimer::timeout, this, &JZNodeAutoRunThread::onTimer);    
+
+    moveToThread(this);
+    m_test.moveToThread(this);
 }
 
 JZNodeAutoRunThread::~JZNodeAutoRunThread()
 {
+}
+
+void JZNodeAutoRunThread::onTimer()
+{
+    if (m_test.isFinish())
+    {
+        JZScriptItemDepend *d = m_test.depend();
+        if(d->status == JZScriptItemDepend::Successed)
+            LOGMOD_I(Log_Runtime, "测试结束");
+        else if (d->status == JZScriptItemDepend::Failed)
+            LOGMOD_I(Log_Runtime, "测试失败:" + d->error);
+        else if(d->status == JZScriptItemDepend::Cancel)
+            LOGMOD_I(Log_Runtime, "测试中断");
+        else {
+            Q_ASSERT(0);
+        }
+
+        m_timer->stop();
+        emit sigResult(d->status);
+    }
+}
+
+JZScriptUnitTest *JZNodeAutoRunThread::unitTest()
+{
+    return &m_test;
 }
 
 JZNodeEngine *JZNodeAutoRunThread::engine()
@@ -16,34 +74,57 @@ JZNodeEngine *JZNodeAutoRunThread::engine()
     return m_test.engine();
 }
 
-JZScriptItemDepend *JZNodeAutoRunThread::genDepend(JZScriptItem *script)
+void JZNodeAutoRunThread::customEvent(QEvent *e)
 {
-    return m_test.genDepend(script);
+    JZNodeAutoRunEvent *event = dynamic_cast<JZNodeAutoRunEvent*>(e);    
+    if (event->cmd == JZNodeAutoRunEvent::StartRun)
+    {
+        if (!m_test.isFinish())
+            return;
+
+        LOGMOD_I(Log_Runtime, "开始测试");
+        m_test.init();
+        m_test.engine()->startWatch();
+        m_test.start();
+        m_timer->start(50);
+    }
+    else if (event->cmd == JZNodeAutoRunEvent::StopRun)
+    {        
+        m_test.engine()->stopWatch();
+        m_test.deinit();
+        m_timer->stop();
+    }
+    else if (event->cmd == JZNodeAutoRunEvent::StopThread)
+    {        
+
+    }
 }
 
 void JZNodeAutoRunThread::startRun()
 {        
-    start();
+    JZNodeAutoRunEvent *event = new JZNodeAutoRunEvent();
+    event->cmd = JZNodeAutoRunEvent::StartRun;
+    qApp->postEvent(this, event);
 }
 
 void JZNodeAutoRunThread::stopRun()
-{
-    if (!isRunning())
-        return;
+{    
+    m_test.stop();
 
-    m_cancel = true;
-    m_test.engine()->stop();
-    m_cancel = false;
-    wait();
+    JZNodeAutoRunEvent *event = new JZNodeAutoRunEvent();
+    event->cmd = JZNodeAutoRunEvent::StopRun;
+    qApp->postEvent(this, event);    
 }
 
-void JZNodeAutoRunThread::run()
-{   
-    if (!m_test.init())
-    {
-        m_test.start();
-        exec();
-        m_test.deinit();
-    }
-    emit sigResult(0);
+void JZNodeAutoRunThread::stopThread()
+{
+    stopRun();
+
+    JZNodeAutoRunEvent *event = new JZNodeAutoRunEvent();
+    event->cmd = JZNodeAutoRunEvent::StopThread;
+    qApp->postEvent(this, event);
+
+    QThread::msleep(50); //post后马上quit 不进入消息循环
+    quit();
+    wait();
 }

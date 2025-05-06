@@ -37,8 +37,22 @@ public:
     JZCommManagerConfig m_config;
 };
 
+//JZCommNode
+class JZCommNode : public JZNode
+{
+public:
+    JZCommNode();
+    ~JZCommNode();
+
+    void setName(QString comm);
+    QString name();
+
+protected:
+    bool checkCommManager(JZNodeCompiler *c, QString &error);
+};
+
 //JZNodeModbusRead
-class JZNodeModbusRead : public JZNode
+class JZNodeModbusRead : public JZCommNode
 {
 public:    
     JZNodeModbusRead();
@@ -70,7 +84,7 @@ protected:
 };
 
 //JZNodeModbusWrite
-class JZNodeModbusWrite : public JZNode
+class JZNodeModbusWrite : public JZCommNode
 {
 public:
     JZNodeModbusWrite();
@@ -79,10 +93,7 @@ public:
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 
     virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
-
-    void setClient(QString comm);
-    QString client();
+    virtual void loadFromStream(QDataStream& s) override;    
 
     void setAddr(int addr);
     int addr();
@@ -99,14 +110,12 @@ public:
 protected:
     bool updateNode(QString& error);
 
-    QString m_modbus;
     int m_function;
     QString m_dataType;
-
 };
 
 //JZNodeTcpClientRead
-class JZNodeTcpClientRead : public JZNode
+class JZNodeTcpClientRead : public JZCommNode
 {
 public:
     JZNodeTcpClientRead();
@@ -121,7 +130,7 @@ protected:
 };
 
 //JZNodeTcpClientWrite
-class JZNodeTcpClientWrite : public JZNode
+class JZNodeTcpClientWrite : public JZCommNode
 {
 public:
     JZNodeTcpClientWrite();
@@ -133,12 +142,11 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
 protected:
-    QString addr;
 
 };
 
 //JZNodeUdpRead
-class JZNodeUdpRead : public JZNode
+class JZNodeUdpRead : public JZCommNode
 {
 public:
     JZNodeUdpRead();
@@ -150,12 +158,11 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
 protected:
-    QString addr;
 
 };
 
 //JZNodeUdpWrite
-class JZNodeUdpWrite : public JZNode
+class JZNodeUdpWrite : public JZCommNode
 {
 public:
     JZNodeUdpWrite();
@@ -167,12 +174,11 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
 protected:
-    QString addr;
 
 };
 
 //JZNodeSerialRead
-class JZNodeSerialRead : public JZNode
+class JZNodeSerialRead : public JZCommNode
 {
 public:
     JZNodeSerialRead();
@@ -184,12 +190,11 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
 protected:
-    QString addr;
 
 };
 
 //JZNodeSerialWrite
-class JZNodeSerialWrite : public JZNode
+class JZNodeSerialWrite : public JZCommNode
 {
 public:
     JZNodeSerialWrite();
@@ -201,7 +206,6 @@ public:
     virtual void loadFromStream(QDataStream& s) override;
 
 protected:
-    QString addr;
 
 };
 

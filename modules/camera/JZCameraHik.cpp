@@ -60,7 +60,7 @@ JZCameraHik::~JZCameraHik()
 
 JZCameraType JZCameraHik::type()
 {
-    return Camera_File;
+    return Camera_Hik;
 }
 
 QString JZCameraHik::errorString(int errorCode)

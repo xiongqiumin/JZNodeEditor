@@ -49,7 +49,6 @@ public:
     QString camera();
 
 protected:
-    QString m_camera;    
     QString m_function;
 };
 
@@ -105,7 +104,7 @@ public:
     QString camera();
 
 protected:
-    QString m_camera;
+    
 };
 
 #endif

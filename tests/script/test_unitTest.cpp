@@ -36,7 +36,8 @@ void TestUnitTest::testHello()
     JZScriptUnitTest unit;
     unit.setProject(&m_project);
 
-    JZScriptItemDepend *ptr = unit.genDepend(add_script);
+    unit.setScript(add_script);
+    JZScriptItemDepend *ptr = unit.depend();
     ptr->functionList[0].value = 800.0;
     ptr->input << 1 << 2;
 
@@ -54,7 +55,8 @@ void TestUnitTest::testTimerEvent()
     JZScriptUnitTest unit;
     unit.setProject(&m_project);
 
-    JZScriptItemDepend* ptr = unit.genDepend(flow);
+    unit.setScript(flow);
+    JZScriptItemDepend *ptr = unit.depend();
 
     JZNodeTimerEvent* event = new JZNodeTimerEvent();
     event->setTimeOut(100);
@@ -97,7 +99,8 @@ void TestUnitTest::testCameraEvent()
     JZNodeCameraReadyEvent* event = new JZNodeCameraReadyEvent();
     flow->addNode(event);
 
-    JZScriptItemDepend* ptr = unit.genDepend(flow);
+    unit.setScript(flow);
+    JZScriptItemDepend* ptr = unit.depend();
     QVERIFY2(!ptr->isError(), qUtf8Printable(ptr->error));
     
     bool ret = unit.run();

@@ -24,8 +24,8 @@ public:
     virtual void close() override;
     virtual void save() override;
 
-    virtual void addMenuBar(QMenuBar *menubar) override;
-    virtual void removeMenuBar(QMenuBar *menubar) override;
+    virtual void active() override;
+    virtual void inactive‌() override;
 
     virtual bool isModified() override;
     virtual void navigate(QUrl url) override;
@@ -54,8 +54,9 @@ public:
     void setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugParamValue &value);
     void clearRuntimeValue();    
 
-    void setDepend(JZScriptItemDepend *depend);
     void updateDefine();
+    void setDepend(JZScriptItemDepend *depend);
+    void setAutoRunResult();
 
 signals:
     void sigFunctionOpen(QString name);

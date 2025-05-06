@@ -26,7 +26,9 @@ JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
     file_prop << m_editor->addPropDir("路径", &m_config.filePath, prop_group);
 
     //hik
-    hik_prop << m_editor->addProp("路径", &m_config.hikPath,  prop_group);
+    hik_prop << m_editor->addProp("路径", &m_config.hikConfig.path,  prop_group);
+    hik_prop << m_editor->addProp("增益", &m_config.hikConfig.gain, prop_group);
+    hik_prop << m_editor->addProp("曝光", &m_config.hikConfig.exposureTime, prop_group);
 
     addPage(Camera_File, file_prop);
     addPage(Camera_Hik, hik_prop);

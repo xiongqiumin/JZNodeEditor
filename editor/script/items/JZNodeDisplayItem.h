@@ -12,8 +12,10 @@ public:
     void setValue(int pin,QVariantPtr *ref);
 
 protected:
-    virtual void updatePin() override;
+    virtual void updatePin() override;    
+
     void onAddClicked();
+    QString getInputType(int id);
 
     BlockPtr m_addBlock;
 };

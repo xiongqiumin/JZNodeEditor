@@ -21,15 +21,16 @@ public:
     virtual void startOnce() override;
     virtual void stop() override;
 
+    double GetExposureTime();
+    bool SetExposureTime(double time);
+    double GetGain();
+    bool SetGain(double gain);
+
 protected:    
     bool CommandExecute(QString command);
     void GrabbingThread();
     void startGrabbing();
-    
-    double GetExposureTime();               
-    bool SetExposureTime(double time);
-    double GetGain();                       
-    bool SetGain(double gain);
+        
     QString errorString(int code);
 
     bool m_isStartGrabbing;

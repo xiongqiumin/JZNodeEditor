@@ -302,9 +302,7 @@ set(JZNodeEditor_SOURCES
     editor/script/JZNodeParamBindEditDialog.ui
     editor/script/JZNodeParamEditor.cpp
     editor/script/JZNodeParamEditor.h
-    editor/script/JZNodeParamEditor.ui
-    editor/script/JZNodePinWidget.cpp
-    editor/script/JZNodePinWidget.h
+    editor/script/JZNodeParamEditor.ui    
     editor/script/JZNodeParamEditWidget.cpp
     editor/script/JZNodeParamEditWidget.h
     editor/script/JZNodeParamDisplayWidget.cpp

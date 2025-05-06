@@ -56,6 +56,20 @@ QList<GraphNode*> Graph::eventList()
     return event_list;
 }
 
+GraphNode* Graph::firstNode()
+{
+    if (topolist.size() == 0)
+        return nullptr;
+
+    GraphNode *first = nullptr;
+    for (int i = 0; i < topolist.size(); i++)
+    {        
+        if (topolist[i]->node->isFlowNode())
+            return topolist[i];
+    }
+    return topolist.front();
+}
+
 void Graph::clear()
 {
     topolist.clear();
@@ -508,8 +522,12 @@ QString JZNodeCompiler::errorString(CompilerTip tip, QStringList args)
         return "no such type " + args[0];
     else if(tip == Error_noVariable)
         return "no such variable " + args[0];
+    else if(tip == Error_varNameEmpty)
+        return "variable name is empty";
+    else if (tip == Error_varNameInvaild)
+        return "variable name " + args[0] + " is invaild";
     else if(tip == Error_noFunction)
-        return "no such function " + args[0];
+        return "no such function " + args[0];    
     else if(tip == Error_noImplement)
         return args[0] + "no implement " + args[1];
     else if (tip == Error_noClassMember)
@@ -718,9 +736,7 @@ void JZNodeCompiler::updateBuildGraph(const QList<GraphNode*> &root_list)
 }
 
 bool JZNodeCompiler::checkFunction()
-{
-    JZNode *start_node = m_originGraph->topolist[0]->node;
-
+{    
     QString check_error;
     auto class_file = m_scriptItem->getClassItem();     
     if(check_error.isEmpty())
@@ -781,23 +797,62 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     if (class_file)
     {
         m_className = class_file->className();
+    }    
+
+    m_originGraph = nullptr;
+
+    bool check_graph = true;
+
+    QList<GraphNode*> all_event_list;    
+    for (int graph_idx = 0; graph_idx < m_graphList.size(); graph_idx++)
+    {
+        QList<GraphNode*> event_list = m_graphList[graph_idx]->eventList();
+        all_event_list << event_list;
+        if (event_list.size() == 0)
+        {
+            auto first = m_graphList[graph_idx]->firstNode();
+
+            NodeCompilerInfo info;
+            info.node_id = first->node->id();
+            info.error = "孤立节点";
+            m_nodeInfo[first->node->id()] = info;
+            
+            check_graph = false;
+        }
+        else if (event_list.size() == 1)
+        {
+            m_originGraph = m_graphList[graph_idx].data();
+        }
     }
+
+    if (all_event_list.size() > 1)
+    {
+        check_graph = false;        
+        for (int event_idx = 0; event_idx < all_event_list.size(); event_idx++)
+        {
+            auto node = all_event_list[event_idx]->node;
+            
+            NodeCompilerInfo info;
+            info.node_id = node->id();
+            info.error = "只能有一个event节点";
+            m_nodeInfo[node->id()] = info;
+        }            
+    }    
+
+    if (!check_graph)
+        m_originGraph = nullptr;
+    if (!m_originGraph)
+        goto buildEnd;
            
     //多个连通图
-    for(int graph_idx = 0; graph_idx < m_graphList.size(); graph_idx++)
+    do
     {
+        QList<GraphNode*> event_list = m_originGraph->eventList();
+
         m_checkError.clear();
-        m_originGraph = m_graphList[graph_idx].data();                
-       
-        resetStack();
+        resetStack();        
 
         //每个连通图有多个event节点
-        QList<GraphNode*> event_list = m_originGraph->eventList();
-        if (event_list.size() != 1) 
-        {    
-            m_checkError = "需要一个event节点";
-            break;
-        }
         if (!checkFunction())
             break;
 
@@ -879,16 +934,17 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
         JZNodeEvent *node_event = dynamic_cast<JZNodeEvent*>(event_list[0]->node);
         JZFunctionDefine define = node_event->function();
         addFunction(define, start_pc, end_pc);                
-    }
-    
+    }while(0);
+  
+buildEnd:
     m_compilerInfo.checkError = m_checkError;
-    if (m_nodeInfo.isEmpty())
-        return false;
+    if(!m_compilerInfo.checkError.isEmpty())
+        logE(m_compilerInfo.checkError);
 
     auto it = m_nodeInfo.begin();
     while (it != m_nodeInfo.end())
-    {
-        auto node = m_originGraph->node(it.key());
+    {        
+        auto node = m_scriptItem->getNode(it.key());
 
         auto& nodeInfo = it.value();
         if (!nodeInfo.error.isEmpty())
@@ -896,8 +952,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
             QString name = node->name();
             QVariantMap args;
             args["id"] = nodeInfo.node_id;
-            logE(nodeInfo.error);
-
+            logE(nodeInfo.error, args);
             m_compilerInfo.nodeError[node->id()] = nodeInfo.error;
         }
         it++;
@@ -1245,8 +1300,7 @@ bool JZNodeCompiler::genGraphs()
     {
         Graph *graph = m_graphList[i].data();        
         if(!graph->toposort())
-        {
-            logE(graph->error);
+        {            
             m_checkError = graph->error;
             return false;
         }
@@ -1260,8 +1314,7 @@ bool JZNodeCompiler::checkGraphs()
     {
         Graph *graph = m_graphList[i].data();
         if(!graph->check())
-        {
-            logE(graph->error);
+        {            
             m_checkError = graph->error;
             return false;
         }
@@ -1879,6 +1932,10 @@ JZNode* JZNodeCompiler::continueParentNode(int child_id)
 
 void JZNodeCompiler::addConstructor(SignalConnectInfo info)
 {
+    for (int i = 0; i < info.irList.size(); i++)
+    {
+        Q_ASSERT(!info.irList[i].isStack());
+    }
     m_builder->addClassConstructor(m_className, info);
 }
 
@@ -2169,12 +2226,21 @@ bool JZNodeCompiler::checkParamDefine(const JZParamDefine *def, QString &error)
 {
     auto env = project()->environment();
     int data_type = env->nameToType(def->type);
+    if (def->name.isEmpty())
+    {
+        error = errorString(Error_varNameEmpty, {});
+        return false;
+    }
+    if(!JZRegExpHelp::isIdentify(def->name))
+    {
+        error = errorString(Error_varNameInvaild, { def->name });
+        return false;
+    }
     if (data_type == Type_none)
     {
         error = errorString(Error_noType, { def->type});
         return false;
     }
-
     if(!checkInitValue(data_type,def->value))
     {
         error = errorString(Errro_initVariableFailed, { def->name, def->value });

@@ -1,25 +1,29 @@
 ﻿#include <QSet>
 #include "JZScriptItemVisitor.h"
 
-JZScriptItemVistor::JZScriptItemVistor()
-{
-    m_script = nullptr;
-}
-
-JZScriptItemVistor::~JZScriptItemVistor()
-{
-}
-
-void JZScriptItemVistor::visitorScript(JZScriptItem *item)
+JZScriptItemVisitor::JZScriptItemVisitor(JZScriptItem *item)
 {
     m_script = item;
+}
+
+JZScriptItemVisitor::~JZScriptItemVisitor()
+{
+}
+
+void JZScriptItemVisitor::setScript(JZScriptItem *item)
+{
+    m_script = item;
+}
+
+void JZScriptItemVisitor::visitor()
+{    
     m_hasVistorNode.clear();
 
     auto start = m_script->startNode();
-    visitor(start);
+    visitorNode(start);
 }
 
-void JZScriptItemVistor::visitor(JZNode *node)
+void JZScriptItemVisitor::visitorNode(JZNode *node)
 {
     if (m_hasVistorNode.contains(node))
         return;
@@ -29,13 +33,13 @@ void JZScriptItemVistor::visitor(JZNode *node)
     {
         QList<JZNode*> input_list = dataInputNode(node);
         for(int i = 0; i < input_list.size(); i++)
-            visitor(input_list[i]);
+            visitorNode(input_list[i]);
 
         auto sub_list = node->subFlowList();
         for(int i = 0; i < sub_list.size(); i++)
         {
             auto sub_node = nextFlowNode(node,sub_list[i]);
-            visitor(sub_node);
+            visitorNode(sub_node);
         }
 
         visitorSelf(node);
@@ -47,12 +51,30 @@ void JZScriptItemVistor::visitor(JZNode *node)
     }
 }
 
-JZNode *JZScriptItemVistor::nextFlowNode(JZNode *node,int flow_out)
+void JZScriptItemVisitor::visitorSelf(JZNode *node)
+{
+
+}
+
+JZNode *JZScriptItemVisitor::prevFlowNode(JZNode *node)
+{
+    if (node->flowInCount() == 0)
+        return nullptr;
+
+    auto input = m_script->getConnectInput(node->id(), node->flowIn());
+    if (input.size() == 0)
+        return nullptr;
+
+    auto c = m_script->getConnect(input[0]);
+    return m_script->getNode(c->from.nodeId);
+}
+
+JZNode *JZScriptItemVisitor::nextFlowNode(JZNode *node,int flow_out)
 {
     return m_script->nextFlowNode(node,flow_out);
 }
 
-QList<JZNode*> JZScriptItemVistor::dataInputNodeRecursively(JZNode *node)
+QList<JZNode*> JZScriptItemVisitor::dataInputNodeRecursively(JZNode *node)
 {
     QList<JZNode*> all_in_list = dataInputNode(node);
     QList<JZNode*> cur_list = all_in_list;
@@ -77,7 +99,7 @@ QList<JZNode*> JZScriptItemVistor::dataInputNodeRecursively(JZNode *node)
     return all_in_list;
 }
 
-QList<JZNode*> JZScriptItemVistor::dataInputNode(JZNode *node)
+QList<JZNode*> JZScriptItemVisitor::dataInputNode(JZNode *node)
 {
     QSet<JZNode*> from_nodes;
 
@@ -93,4 +115,16 @@ QList<JZNode*> JZScriptItemVistor::dataInputNode(JZNode *node)
         }
     }
     return from_nodes.toList();
+}
+
+QList<JZNodePin*> JZScriptItemVisitor::inputPin(int node_id, int pin_id)
+{
+    QList<JZNodePin*> ret;
+    QList<int> in_line_list = m_script->getConnectInput(node_id, pin_id);
+    for (int line_idx = 0; line_idx < in_line_list.size(); line_idx++)
+    {
+        auto line = m_script->getConnect(in_line_list[line_idx]);
+        ret << m_script->getNode(line->from.nodeId)->pin(line->from.pinId);        
+    }
+    return ret;
 }

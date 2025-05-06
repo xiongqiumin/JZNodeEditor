@@ -4,7 +4,7 @@
 #include <QTableWidget>
 #include <QLineEdit>
 #include "JZNodeValue.h"
-#include "JZNodePinWidget.h"
+#include "JZNodeParamEditWidget.h"
 
 namespace Ui { class JZNodeLocalParamEditDialog; }
 

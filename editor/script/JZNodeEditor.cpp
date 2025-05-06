@@ -70,12 +70,12 @@ void JZNodeEditor::init()
     QWidget *mid_bar = createMidBar();
     
     m_view = new JZNodeView();
+    setFocusProxy(m_view);
     connect(m_view, &JZNodeView::redoAvailable, this, &JZNodeEditor::redoAvailable);
     connect(m_view, &JZNodeView::undoAvailable, this, &JZNodeEditor::undoAvailable);
     connect(m_view, &JZNodeView::modifyChanged, this, &JZNodeEditor::modifyChanged);
     connect(m_view, &JZNodeView::sigFunctionOpen, this, &JZNodeEditor::sigFunctionOpen);
     connect(m_view, &JZNodeView::sigAutoCompiler, this, &JZNodeEditor::sigAutoCompiler);
-    connect(m_view, &JZNodeView::sigAutoRun, this, &JZNodeEditor::sigAutoRun);
     connect(m_view, &JZNodeView::sigRuntimeValueChanged, this, &JZNodeEditor::sigRuntimeValueChanged);
 
     QWidget *mid_widget = new QWidget();
@@ -147,9 +147,9 @@ JZNodeView *JZNodeEditor::view()
     return m_view;
 }
 
-void JZNodeEditor::addMenuBar(QMenuBar *menubar)
+void JZNodeEditor::active()
 {
-    QMenu *menu = menubar->actions()[Menu_View]->menu();
+    QMenu *menu = menuBar()->actions()[Menu_View]->menu();
     m_actionList << menu->addSeparator();
     m_actionList << menu->addAction("自动布局");
     m_actionList << menu->addAction("显示全部");
@@ -157,9 +157,9 @@ void JZNodeEditor::addMenuBar(QMenuBar *menubar)
     connect(m_actionList[2], &QAction::triggered, this, &JZNodeEditor::onActionFitInView);
 }
 
-void JZNodeEditor::removeMenuBar(QMenuBar *menubar)
+void JZNodeEditor::inactive‌()
 {
-    QMenu *menu = menubar->actions()[Menu_View]->menu();
+    QMenu *menu = menuBar()->actions()[Menu_View]->menu();
     for (int i = 0; i < m_actionList.size(); i++)
     {
         menu->removeAction(m_actionList[i]);
@@ -212,9 +212,8 @@ void JZNodeEditor::onAutoRuning()
 {
     if (!m_runProp->depend())
         return;
-
-    auto script = this->script();    
-    if (m_runProp->depend()->function.fullName() != script->function().fullName())
+    
+    if (m_runProp->depend()->originScript != this->script())
         return;
 
     emit sigAutoRun();
@@ -276,6 +275,11 @@ void JZNodeEditor::setDepend(JZScriptItemDepend *depend)
     m_runProp->setDepend(depend);
 }
 
+void JZNodeEditor::setAutoRunResult()
+{
+
+}
+
 JZScriptItem *JZNodeEditor::script()
 {
     JZScriptItem* file = dynamic_cast<JZScriptItem*>(m_item);
@@ -299,13 +303,7 @@ void JZNodeEditor::setRuntimeValue(int nodeId, int prop_id, const JZNodeDebugPar
 
 void JZNodeEditor::setCompilerResult(const CompilerResult *info)
 {
-    m_view->setCompilerResult(info);
-
-    auto s = script();
-    if (s->itemType() == ProjectItem_scriptItem)
-    {
-        QString function = script()->function().fullName();        
-    }
+    m_view->setCompilerResult(info);    
 }
 
 void JZNodeEditor::navigate(QUrl url)

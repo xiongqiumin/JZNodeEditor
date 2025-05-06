@@ -7,6 +7,23 @@
 #include "JZNodeBind.h"
 #include "JZCameraUVC.h"
 
+//JZCamerHikConfig
+QDataStream &operator<<(QDataStream &s, const JZCamerHikConfig &param)
+{
+    s << param.path;
+    s << param.gain;
+    s << param.exposureTime;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZCamerHikConfig &param)
+{
+    s >> param.path;
+    s >> param.gain;
+    s >> param.exposureTime;
+    return s;
+}
+
 //JZCameraConfig
 JZCameraConfig::JZCameraConfig()
 {
@@ -19,7 +36,7 @@ QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param)
     //file
     s << param.filePath;
     //hik
-    s << param.hikPath;
+    s << param.hikConfig;
 
     return s;
 }
@@ -31,7 +48,7 @@ QDataStream &operator>>(QDataStream &s, JZCameraConfig &param)
     //file
     s >> param.filePath;
     //hik
-    s >> param.hikPath;
+    s >> param.hikConfig;
 
     return s;
 }
@@ -122,9 +139,16 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfig &config)
     }
     else if(config.type == Camera_Hik)
     {
-        //JZCamera *camera_hik = new JZCameraHik();
-        //open_ret = camera_hik->open(config.path);
-        //camera = camera_hik;
+        JZCameraHik *camera_hik = new JZCameraHik();
+        camera = camera_hik;
+
+        auto cfg = config.hikConfig;
+        open_ret = camera_hik->open(cfg.path);
+        if (open_ret)
+        {
+            camera_hik->SetGain(cfg.gain);
+            camera_hik->SetExposureTime(cfg.exposureTime);
+        }
     }
     else
     {

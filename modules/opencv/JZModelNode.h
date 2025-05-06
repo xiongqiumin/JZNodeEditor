@@ -42,7 +42,6 @@ public:
     void loadFromStream(QDataStream& s);
 
 protected:
-    QString m_model;
 };
 
 #endif

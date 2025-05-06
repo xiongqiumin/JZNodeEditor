@@ -97,6 +97,9 @@ public:
     void removeLocalVariable(QString name);
     void changeLocalVariable(QString name,JZParamDefine def);
 
+    void editPinValue(int node_id, int pin_id);
+    void editFinish();
+
     void showTip(QPointF pt,QString tip);    
     void clearTip();
     QVariant onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsItemChange change, const QVariant &value);
@@ -119,8 +122,7 @@ public:
     void breakPointTrigger();
 
     ProcessStatus runningMode();
-    void setRunningMode(ProcessStatus mode);
-    void setAutoRunning(bool flag);
+    void setRunningMode(ProcessStatus mode);    
 
     int runtimeNode();
     void setRuntimeNode(int nodeId);
@@ -140,8 +142,7 @@ signals:
     void modifyChanged(bool modify);    
 
     void sigFunctionOpen(QString name);
-    void sigAutoCompiler();
-    void sigAutoRun();
+    void sigAutoCompiler();    
     void sigRuntimeValueChanged(int id,QString value);
 
 public slots:    
@@ -158,8 +159,8 @@ protected slots:
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
     void onMapSceneChanged(QRectF rc);
-    void onMapSceneScaled(bool flag);    
-    void onDependChanged();
+    void onMapSceneScaled(bool flag);        
+    void onEditFinish();
 
 protected:
     friend JZNodeViewCommand;
@@ -217,8 +218,7 @@ protected:
     void addSetGroupCommand(int id, const JZNodeGroup &group);
     int propEditorNodeId();
      
-    void autoCompiler();
-    void autoRunning();
+    void autoCompiler();    
 
     QString getExpr(const QString &text = QString());
     int popMenu(QStringList list);
@@ -248,9 +248,10 @@ protected:
     QTimer *m_mouseMoveTimer;
     NodeTimerInfo m_nodeTimeInfo;
 
-    ProcessStatus m_runningMode;
-    bool m_autoRunning;    
+    ProcessStatus m_runningMode;    
     int m_runNode;
+
+    QGraphicsProxyWidget *m_editProxy;    
 };
 
 #endif

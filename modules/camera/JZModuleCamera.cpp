@@ -3,6 +3,7 @@
 #include "JZModuleCamera.h"
 #include "JZCamera.h"
 #include "JZCameraFile.h"
+#include "JZCameraHik.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
 #include "JZNodeFactory.h"
@@ -43,8 +44,8 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZCameraFile> cls_camera_file(cls_id++, "JZCameraFile", "JZCamera");
     cls_camera_file.regist();
 
-    //jzbind::ClassBind<JZCameraHik> cls_camera_hik(cls_id++, "JZCameraHik", "JZCamera");
-    //cls_camera_hik.regist();
+    jzbind::ClassBind<JZCameraHik> cls_camera_hik(cls_id++, "JZCameraHik", "JZCamera");
+    cls_camera_hik.regist();
 
     jzbind::ClassBind<JZCameraManager> cls_camera_manager(cls_id++, "JZCameraManager", "QObject");
     cls_camera_manager.regist();

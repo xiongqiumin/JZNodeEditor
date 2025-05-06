@@ -26,7 +26,6 @@ JZNodeParamEditWidget *CreateParamEditWidget() { return new T(); }
 template <class T>
 JZNodeParamDisplayWidget *CreateParamDisplayWidget() { return new T(); }
 
-
 //JZNodeParamDelegate
 class JZNodeParamDelegate
 {

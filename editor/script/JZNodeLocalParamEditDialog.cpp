@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include "JZNodeLocalParamEditDialog.h"
+#include "JZEditorGlobal.h"
 
 //JZNodeLocalParamEditDialog
 JZNodeLocalParamEditDialog::JZNodeLocalParamEditDialog(QWidget *parent)

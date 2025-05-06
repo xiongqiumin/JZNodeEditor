@@ -47,6 +47,7 @@ public:
     void clear();
 
     QList<GraphNode*> eventList();
+    GraphNode* firstNode();
 
     GraphNode *graphNode(int id);
     JZNode *node(int id);
@@ -149,6 +150,8 @@ public:
 enum CompilerTip{
     Error_noType,
     Error_noVariable,
+    Error_varNameEmpty,
+    Error_varNameInvaild,
     Error_noFunction,
     Error_noImplement,
     Error_noClassMember,

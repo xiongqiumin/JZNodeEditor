@@ -66,8 +66,11 @@ JZNodeModelForward::JZNodeModelForward()
     addFlowIn();
     addFlowOut();
 
-    int in = addParamIn("frame");
-    setPinType(in, { "Mat" });
+    int in = addParamIn("name", Pin_constValue | Pin_noCompiler);
+    setPinTypeString(in);
+
+    int in_frame = addParamIn("frame");
+    setPinType(in_frame, { "Mat" });
 
     int out = addParamOut("result");
     setPinType(out, { "QList<JZYoloResult>" });
@@ -80,24 +83,22 @@ JZNodeModelForward::~JZNodeModelForward()
 
 void JZNodeModelForward::setModel(QString name)
 {
-    m_model = name;
+    setParamInValue(0,name);
 }
 
 QString JZNodeModelForward::model()
 {
-    return m_model;
+    return paramInValue(0);
 }
 
 void JZNodeModelForward::saveToStream(QDataStream& s) const
 {
-    JZNode::saveToStream(s);
-    s << m_model;
+    JZNode::saveToStream(s);    
 }
 
 void JZNodeModelForward::loadFromStream(QDataStream& s)
 {
-    JZNode::loadFromStream(s);
-    s >> m_model;
+    JZNode::loadFromStream(s);    
 }
 
 bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
@@ -110,9 +111,9 @@ bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
         return false;
 
     int model_id = c->allocStack("JZModel*");
-    c->addCall("JZModelGet", { irRef("this.modelManager"), irLiteral(m_model) }, { irId(model_id) });
+    c->addCall("JZModelGet", { irRef("this.modelManager"), irLiteral(model()) }, { irId(model_id) });
 
-    int in_id = c->paramId(m_id, paramIn(0));
+    int in_id = c->paramId(m_id, paramIn(1));
     int out_id = c->paramId(m_id, paramOut(0));
     c->addCallConvert("JZYolo::forward", { irId(model_id) ,irId(in_id) }, {  irId(out_id) });
 

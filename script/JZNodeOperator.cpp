@@ -8,8 +8,8 @@ JZNodeOperator::JZNodeOperator(int node_type, JZNodeIRType op_type)
 {
     m_type = node_type;
     m_op = op_type;
-    int in1 = addParamIn("");
-    int in2 = addParamIn("");
+    int in1 = addParamIn("in0");
+    int in2 = addParamIn("in1");
     setPinTypeNumber(in1);
     setPinTypeNumber(in2);
     pin(in1)->setValue("0");
@@ -22,17 +22,26 @@ int JZNodeOperator::op() const
     return m_op;
 }
 
+void JZNodeOperator::updatePinName()
+{
+    auto in_list = paramInList();
+    for (int i = 0; i < in_list.size(); i++)
+        setPinName(in_list[i], QString::asprintf("input%d", i));
+}
+
 void JZNodeOperator::addInput()
 {
     auto pin0 = pin(paramIn(0));
     int in = addParamIn("", pin0->flag());    
     pin(in)->setDataType(pin0->dataType());
+    updatePinName();
 }
 
 void JZNodeOperator::removeInput(int index)
 {
     int id = paramInList()[index];
     removePin(id);
+    updatePinName();
 }
 
 bool JZNodeOperator::checkPinInput(JZNodeCompiler *c,QString &error)

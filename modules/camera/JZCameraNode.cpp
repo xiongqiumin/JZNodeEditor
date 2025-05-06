@@ -63,7 +63,10 @@ JZCameraNode::JZCameraNode()
     addFlowIn();
     addFlowOut();
 
-    m_camera = "camera";
+    int in = addParamIn("name", Pin_constValue | Pin_noCompiler);
+    setPinTypeString(in);
+
+    setPinValue(in, "camera");
 }
 
 JZCameraNode::~JZCameraNode()
@@ -79,8 +82,10 @@ bool JZCameraNode::compiler(JZNodeCompiler* c, QString& error)
     if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager"), error))
         return false;
 
+    int cam_id = c->paramId(m_id, paramIn(0));
+
     QList<JZNodeIRParam> in, out;
-    in << irRef("this.cameraManager") << irLiteral(m_camera);
+    in << irRef("this.cameraManager") << irLiteral(c->pinLiteral(m_id, paramIn(0)));
     c->addCallConvert(m_function, in, out);
     return true;
 }
@@ -88,23 +93,21 @@ bool JZCameraNode::compiler(JZNodeCompiler* c, QString& error)
 void JZCameraNode::saveToStream(QDataStream& s) const
 {
     JZNode::saveToStream(s);
-    s << m_camera;
 }
 
 void JZCameraNode::loadFromStream(QDataStream& s)
 {
     JZNode::loadFromStream(s);
-    s >> m_camera;
 }
 
 void JZCameraNode::setCamera(QString name)
 {
-    m_camera = name;
+    setParamInValue(0, name);
 }
 
 QString JZCameraNode::camera()
 {
-    return m_camera;
+    return paramInValue(0);
 }
 
 //JZNodeCameraStart
@@ -144,13 +147,16 @@ JZNodeCameraReadyEvent::JZNodeCameraReadyEvent()
 {    
     m_type = Node_CameraFrameReady;
     m_name = "sigFrameReadyEvent";
-    m_camera = "camera";
+
+    int in = addParamIn("name", Pin_constValue | Pin_noCompiler);
+    setPinTypeString(in);
+    setPinValue(in, "camera");
 
     int pin = addParamOut("frame");
     setPinType(pin, { "Mat" });
 
     m_connectInfo.connectFunction = "JZCameraConnect";
-    m_connectInfo.irList << irRef("this") << irRef("this.cameraManager") << irLiteral("camera") << irLiteral(0);
+    m_connectInfo.irList << irRef("this") << irRef("this.cameraManager") << irId(0) << irLiteral(0);
 }
 
 JZNodeCameraReadyEvent::~JZNodeCameraReadyEvent()
@@ -159,12 +165,12 @@ JZNodeCameraReadyEvent::~JZNodeCameraReadyEvent()
 
 void JZNodeCameraReadyEvent::setCamera(QString name)
 {
-    m_camera = name;
+    setParamInValue(0, name);
 }
 
 QString JZNodeCameraReadyEvent::camera()
 {
-    return m_camera;
+    return paramInValue(0);
 }
 
 bool JZNodeCameraReadyEvent::compiler(JZNodeCompiler* c, QString& error)
@@ -175,8 +181,8 @@ bool JZNodeCameraReadyEvent::compiler(JZNodeCompiler* c, QString& error)
     auto env = c->env();
     if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager"), error))
         return false;
-
-    m_connectInfo.irList[2].m_literal = m_camera;
+    
+    m_connectInfo.irList[2] = irLiteral(c->pinLiteral(m_id, paramIn(0)));
     m_connectInfo.irList[3].m_literal = QVariant::fromValue(JZFunctionPointer(function().fullName()));
     return compilerSignal(c, error);
 }

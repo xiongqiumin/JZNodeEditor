@@ -41,6 +41,7 @@
 #include "JZNodeView.h"
 #include "JZNodeDisplayItem.h"
 #include "JZScriptItemVisitor.h"
+#include "JZNodeParamEditWidget.h"
 
 //CopyData
 struct CopyData
@@ -97,9 +98,9 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_recordMove = true;    
     m_runningMode = Process_none;
     m_runNode = -1;        
-    m_groupIsMoving = false;
-    m_autoRunning = false;
-    m_isUpdateFlowPanel = false;    
+    m_groupIsMoving = false;    
+    m_isUpdateFlowPanel = false;
+    m_editProxy = nullptr;
     
     connect(&m_commandStack,&QUndoStack::cleanChanged, this, &JZNodeView::onCleanChanged);
     connect(&m_commandStack,&QUndoStack::canRedoChanged,this,&JZNodeView::redoAvailable);
@@ -207,8 +208,7 @@ void JZNodeView::setPropertyEditor(JZNodePropertyEditor *propEditor)
 
 void JZNodeView::setRunEditor(JZNodeAutoRunWidget *runEditor)
 {
-    m_runEditor = runEditor;
-    connect(m_runEditor, &JZNodeAutoRunWidget::sigDependChanged, this, &JZNodeView::onDependChanged);
+    m_runEditor = runEditor;    
 }
 
 JZScriptItem *JZNodeView::file()
@@ -436,6 +436,51 @@ void JZNodeView::updateNode(int id)
 
     if(id == propEditorNodeId())
         m_propEditor->updateNode();
+}
+
+void JZNodeView::editPinValue(int node_id, int pin_id)
+{
+    auto item = getNodeItem(node_id);
+    auto block = item->block(pin_id);
+    QRectF rect = item->mapToScene(block->valueRect).boundingRect();
+
+    JZNodeParamValueWidget *widget = new JZNodeParamValueWidget();
+    widget->setProperty("nodeId", node_id);
+    widget->setProperty("pinId", pin_id);
+    connect(widget, &JZNodeParamValueWidget::sigEditFinish, this, &JZNodeView::onEditFinish);
+
+    m_editProxy = new QGraphicsProxyWidget();  
+    m_editProxy->setZValue(10);
+    m_editProxy->setWidget(widget);
+    m_editProxy->setGeometry(rect);
+    m_scene->addItem(m_editProxy);
+
+    widget->setValue(item->pinValue(pin_id));
+    widget->setFocus();
+}
+
+void JZNodeView::editFinish()
+{
+    JZNodeParamValueWidget *w = qobject_cast<JZNodeParamValueWidget*>(sender());
+    if (m_editProxy)
+    {
+        int node_id = w->property("nodeId").toInt();
+        int pin_id = w->property("pinId").toInt();
+        QString value = w->value();
+
+        m_scene->removeItem(m_editProxy);
+        m_editProxy = nullptr;
+
+        if (pin_id < MAX_PIN_ID)
+            onNodePinValueChanged(node_id, pin_id, value);
+        else
+            getNodeItem(node_id)->setPinValue(pin_id, value);
+    }
+}
+
+void JZNodeView::onEditFinish()
+{
+    editFinish();
 }
 
 void JZNodeView::updatePropEditable(const JZNodeGemo &gemo)
@@ -1116,12 +1161,6 @@ void JZNodeView::breakPointTrigger()
     }
 }
 
-void JZNodeView::setAutoRunning(bool flag)
-{
-    m_autoRunning = flag;
-    autoRunning();
-}
-
 ProcessStatus JZNodeView::runningMode()
 {
     return m_runningMode;
@@ -1190,10 +1229,10 @@ void JZNodeView::displayValue(int node_id,int pin_id,QVariantPtr *ptr)
     for(int i = 0; i < lines.size(); i++)
     {
         auto line = m_file->getConnect(lines[i]);
-        JZNodeDisplayItem *item = dynamic_cast<JZNodeDisplayItem*>(getNodeItem(line->from.nodeId));
-        if(item->node()->type() != Node_display)
+        if (getNode(line->to.nodeId)->type() != Node_display)
             continue;
-
+        
+        JZNodeDisplayItem *item = dynamic_cast<JZNodeDisplayItem*>(getNodeItem(line->to.nodeId));        
         item->setValue(line->to.pinId, ptr);
     }
 }
@@ -2094,10 +2133,6 @@ void JZNodeView::onNodePinValueChanged(int id,int pinId,const QString &value)
     addPinValueChangedCommand(id, pinId, value);
 }
 
-void JZNodeView::onDependChanged()
-{       
-    autoRunning();
-}
 
 void JZNodeView::copyItems(QList<QGraphicsItem*> items)
 {
@@ -2178,12 +2213,6 @@ void JZNodeView::autoCompiler()
     emit sigAutoCompiler();
 }
 
-void JZNodeView::autoRunning()
-{
-    if (m_autoRunning)
-        emit sigAutoRun();
-}
-
 QString JZNodeView::getExpr(const QString &text)
 {
     JZNodeExprEditDialog dlg(this);
@@ -2240,36 +2269,27 @@ void JZNodeView::setCompilerResult(const CompilerResult *compilerInfo)
         it++;
     }   
     m_map->updateMap();
-
-    if(compilerInfo->result)
-        autoRunning();
 }
 
-class JZScriptDisplayVistor : public JZScriptItemVistor
-{
-public:
-    void visitorSelf(JZNode *node)
-    {
-        if (node->type() != Node_display)
-            return;
+QList<int> JZNodeView::watchList()
+{    
+    QList<int> watchList;
 
-        auto inputs = item->getConnectInput(node->id());
+    auto node_list = m_file->nodeList();
+    for (int i = 0; i < node_list.size(); i++)
+    {
+        auto node = m_file->getNode(node_list[i]);
+        if (node->type() != Node_display)
+            continue;
+
+        auto inputs = m_file->getConnectInput(node->id());
         for (int i = 0; i < inputs.size(); i++)
         {
-            auto line = item->getConnect(inputs[i]);
+            auto line = m_file->getConnect(inputs[i]);
             if (!watchList.contains(line->from.paramId()))
                 watchList << line->from.paramId();
         }
     }
 
-    JZScriptItem *item;
-    QList<int> watchList;
-};
-
-QList<int> JZNodeView::watchList()
-{
-    JZScriptDisplayVistor visitor;
-    visitor.item = m_file;
-    visitor.visitorScript(m_file);
-    return visitor.watchList;
+    return watchList;
 }

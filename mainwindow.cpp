@@ -97,6 +97,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto engine = m_task.runThread()->engine();
     connect(engine,&JZNodeEngine::sigWatchNotify,this,&MainWindow::onWatchNotify,Qt::BlockingQueuedConnection);
+    m_task.runThread()->unitTest()->setProject(&m_project);
 
     loadSetting();    
     initUi();     
@@ -435,6 +436,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     m_floatWidgets.clear();
 
     m_task.clearTask();
+    m_task.stopRunThread();    
     QMainWindow::closeEvent(event);
 }
 
@@ -459,9 +461,13 @@ void MainWindow::updateAutoRunDepend()
     auto node_editor = currentNodeEditor();
     if (!node_editor)
         return;
-    
-    auto depend = m_task.runThread()->genDepend(node_editor->script());
-    node_editor->setDepend(depend);
+
+    if (m_buildResult->status == Build_Successed)
+    {
+        auto test = m_task.runThread()->unitTest();
+        test->setScript(node_editor->script());
+        node_editor->setDepend(test->depend());
+    }
 }
 
 JZProject *MainWindow::project()
@@ -873,8 +879,11 @@ JZEditor *MainWindow::createEditor(int type)
     else if(type == ProjectItem_ui)
         editor = new JZUiEditor();
 
-    if(editor)
-        editor->setProject(&m_project);
+    if (editor)
+    {
+        editor->setMainWindow(this);
+        editor->setProject(&m_project);        
+    }
     return editor;
 }
 
@@ -943,25 +952,12 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
         }
         it++;
     }
+    updateAutoRunDepend();
 }
 
 void MainWindow::onAutoRunResult(int result)
 {
-/*
-    if(result->result == UnitTestResult::Cancel)
-        return;
-
-    auto script_item = m_project.functionItem(result->function);
-    if(!script_item)
-        return;
-    
-    JZEditor *e = editor(script_item->itemPath());
-    if(!e)
-        return;
-
-    JZNodeEditor *node_e = qobject_cast<JZNodeEditor*>(e);
-    node_e->setAutoRunResult(*result);
-*/
+    auto engine = m_task.runThread()->engine();    
 }   
 
 void MainWindow::onTaskRunning()
@@ -1019,16 +1015,20 @@ JZNodeEditor *MainWindow::nodeEditor(QString filepath)
 
 void MainWindow::switchEditor(JZEditor *editor)
 {
-    if(m_editor)
-        m_editor->removeMenuBar(this->menuBar());
+    if (editor == m_editor)
+        return;
 
-    m_editor = editor;
+    if (m_editor)    
+        m_editor->inactive‌();    
+
+    m_editor = editor;    
     if(editor != nullptr)
     {                
         m_editorStack->setCurrentWidget(m_editor);
-        m_editor->addMenuBar(this->menuBar());
         m_editor->active();
         m_editor->setFocus();
+
+        updateAutoRunDepend();
     }
     else
         m_editorStack->setCurrentIndex(0);
@@ -1165,10 +1165,9 @@ void MainWindow::onEditorClose(int index)
 void MainWindow::onEditorActivite(int index)
 {
     if (index == -1)
-        return;
+        return;    
 
-    JZEditor *editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
-    editor->active();
+    JZEditor *editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));        
     switchEditor(editor);
 }
 
@@ -1269,21 +1268,12 @@ void MainWindow::onWatchNotify()
     if(m_editor->type() != Editor_script)
         return;
 
-    JZNodeEditor *e = qobject_cast<JZNodeEditor*>(m_editor);
-    int stack_level = -1;
-    for(int i = engine->stack()->size(); i >= 0; i--)
-    {
-        QString file = engine->stack()->currentEnv()->script->itemPath;
-        if(file == e->item()->itemPath())
-        {
-            stack_level = i;
-            break;
-        }
-    }
-    if(stack_level == -1)
+    JZNodeEditor *e = qobject_cast<JZNodeEditor*>(m_editor);    
+    QString file = engine->stack()->currentEnv()->script->itemPath;
+    if (file != e->item()->itemPath())
         return;
-
-    auto param_env = engine->stack()->env(stack_level);
+    
+    auto param_env = engine->stack()->currentEnv();
     auto watchList = e->view()->watchList();
 
     for(int i = 0; i < watchList.size(); i++)
@@ -1424,6 +1414,7 @@ void MainWindow::startUnitTest(QString unitTestItemPath)
 {    
     Q_ASSERT(m_processMode == Process_none);        
 
+    auto engine = m_task.runThread()->engine();    
     m_task.addUnitTestTask(unitTestItemPath);    
 }
 

@@ -27,10 +27,12 @@ MainTaskManager::MainTaskManager()
     connect(m_compilerTimer, &QTimer::timeout, this, &MainTaskManager::onAutoCompilerTimer);
     connect(&m_buildThread, &JZNodeBuildThread::sigResult, this, &MainTaskManager::onBuildFinish);
     m_compilerTimer->start(100);
+
+    m_runThread.start();
 }
 
 MainTaskManager::~MainTaskManager()
-{
+{    
 }
 
 void MainTaskManager::setProject(JZProject *project)
@@ -46,6 +48,11 @@ JZNodeBuildThread *MainTaskManager::buildThread()
 JZNodeAutoRunThread *MainTaskManager::runThread()
 {
     return &m_runThread;
+}
+
+void MainTaskManager::stopRunThread()
+{
+    m_runThread.stopThread();
 }
 
 void MainTaskManager::addTask(MainTask task)
@@ -163,6 +170,7 @@ void MainTaskManager::onBuildFinish(JZNodeBuildResultPtr result)
     if (result->status != Build_Successed)
         return;
 
+    m_buildInfo.buildTimestamp = QDateTime::currentMSecsSinceEpoch();
     dealTask();
 }
 

@@ -102,8 +102,8 @@ void ModbusTest::testClient()
     script->addConnect(start->flowOutGemo(), comm_init->flowInGemo());
 
     JZNodeModbusWrite *modbus_write = new JZNodeModbusWrite();
-    modbus_write->setClient("modbus");
-    modbus_write->setParamInValue(1, "100");
+    modbus_write->setName("modbus");
+    modbus_write->setParamInValue(2, "100");
     script->addNode(modbus_write);
     script->addConnect(comm_init->flowOutGemo(), modbus_write->flowInGemo());
 

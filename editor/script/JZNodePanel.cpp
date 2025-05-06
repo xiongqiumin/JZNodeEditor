@@ -29,6 +29,7 @@
 #include "JZNodeFactory.h"
 #include "JZNodeLocalParamEditDialog.h"
 #include "JZNodeEditorManager.h"
+#include "JZEditorGlobal.h"
 
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const

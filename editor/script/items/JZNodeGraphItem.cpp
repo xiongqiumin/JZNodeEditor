@@ -17,11 +17,12 @@
 
 constexpr int name_max_width = 120;
 
-JZNodeGraphItem::Block::Block()
+JZNodeGraphItem::Block::Block(JZNodeGraphItem *item)
 {
+    this->item = item;
     iconType = Diamond;    
     proxy = nullptr;
-    widget = nullptr;
+    widget = nullptr;    
     clear();
 }
 
@@ -35,16 +36,31 @@ bool JZNodeGraphItem::Block::isPin()
     return (id >= 0 && id < 100);
 }
 
-void JZNodeGraphItem::Block::clear()
+void JZNodeGraphItem::Block::setWidget(QWidget *w)
+{
+    Q_ASSERT(!widget);
+
+    QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
+    proxy->setWidget(w);
+    proxy->setParentItem(item);
+    this->widget = w;
+    this->proxy = proxy;    
+}
+
+
+void JZNodeGraphItem::Block::clearWidget()
 {
     if (proxy)
     {
         delete proxy;
-    }    
+    }
     proxy = nullptr;
     widget = nullptr;
+}
 
-    widget = nullptr;
+void JZNodeGraphItem::Block::clear()
+{    
+    clearWidget();
     iconRect = QRect();
     nameRect = QRect();
     valueRect = QRect(); //valueRect 就是 widget 显示范围
@@ -99,7 +115,7 @@ void JZNodeGraphItem::init(JZNode *node)
 
 JZNodeGraphItem::BlockPtr JZNodeGraphItem::createPinBlock(JZNodePin *pin)
 {
-    BlockPtr block = BlockPtr(new Block());
+    BlockPtr block = BlockPtr(new Block(this));
     block->id = pin->id();
     block->isInput = pin->isInput();
     block->isShowValue = pin->isParam() && pin->isInput();
@@ -122,6 +138,8 @@ JZNodeGraphItem::BlockPtr JZNodeGraphItem::createPinBlock(JZNodePin *pin)
         block->iconType = IconType::Circle;
         block->pri = 1;        
     }
+    if (pin->isInput())
+        block->isEditable = true;
 
     block->name = pin->name();
     m_blocks[block->id] = block;
@@ -130,7 +148,7 @@ JZNodeGraphItem::BlockPtr JZNodeGraphItem::createPinBlock(JZNodePin *pin)
 
 JZNodeGraphItem::BlockPtr JZNodeGraphItem::createWidgetBlock(QWidget *widget, bool isInput)
 {
-    BlockPtr block = BlockPtr(new Block());
+    BlockPtr block = BlockPtr(new Block(this));
     block->isInput = isInput;
 
     QGraphicsProxyWidget *proxy = new QGraphicsProxyWidget();
@@ -268,6 +286,20 @@ int JZNodeGraphItem::pinAtInName(QPointF pos)
     return -1;
 }
 
+int JZNodeGraphItem::pinAtInValueRect(QPointF pos)
+{
+    auto it = m_blocks.begin();
+    while (it != m_blocks.end())
+    {
+        QRectF rc = it->data()->valueRect;
+        if (rc.contains(pos))
+            return it.key();
+
+        it++;
+    }
+    return -1;
+}
+
 QRectF JZNodeGraphItem::pinRect(int pin)
 {
     return m_blocks[pin]->iconRect;
@@ -276,6 +308,15 @@ QRectF JZNodeGraphItem::pinRect(int pin)
 QRectF JZNodeGraphItem::pinNameRect(int pin)
 {
     return m_blocks[pin]->nameRect;
+}
+
+bool JZNodeGraphItem::isPinEditable(int pin)
+{
+    bool flag;
+    if (pin < 100 && !editor()->isPropEditable(m_id, pin))
+        return false;
+
+    return m_blocks[pin]->isEditable;
 }
 
 JZNodeGraphItem::Block *JZNodeGraphItem::block(int id)
@@ -340,12 +381,12 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, Block *gemo)
         int w = qMin(name_max_width, ft.horizontalAdvance(gemo->name));
         gemo->nameRect = QRect(x, y, w, 24);
         x = gemo->nameRect.right() + 5;
-    }    
-    if (gemo->isPin() && pin(pin_id)->isParam())
+    }        
+    if(gemo->widget)
     {
-        gemo->valueRect = QRect(x, y, 80, 24);
+        gemo->valueRect = QRect(x, y, gemo->widget->width(), gemo->widget->height());
     }
-    else if(gemo->widget)
+    else if (gemo->isPin() && pin(pin_id)->isParam())
     {
         gemo->valueRect = QRect(x, y, 80, 24);
     }
@@ -357,9 +398,31 @@ void JZNodeGraphItem::updateNode()
     updateSize();    
 }
 
-void JZNodeGraphItem::setPinValue(int pin, QString name)
+void JZNodeGraphItem::setPinValue(int pin, QString value)
 {
-    update();
+    if (pin < MAX_PIN_ID)
+        update();
+    else
+        setBlockValue(pin, value);
+}
+
+QString JZNodeGraphItem::pinValue(int pin)
+{
+    if (pin < MAX_PIN_ID)
+        return m_node->pinValue(pin);
+    else
+        return blockValue(pin);
+}
+
+void JZNodeGraphItem::setBlockValue(int pin, QString value)
+{
+    Q_ASSERT(0);
+}
+
+QString JZNodeGraphItem::blockValue(int pin)
+{
+    Q_ASSERT(0);
+    return QString();
 }
 
 void JZNodeGraphItem::updateSize()
@@ -423,6 +486,7 @@ void JZNodeGraphItem::updateSize()
 void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {    
     auto pin_id = pinAt(event->pos());
+    auto pin_value_id = pinAtInValueRect(event->pos());
     if (pin_id >= 0)
     {        
         auto pin = m_node->pin(pin_id);
@@ -431,6 +495,12 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
             m_downPin = pin_id;
         else
             m_downPin = -1;
+    }   
+    else if (pin_value_id >= 0)
+    {
+        auto block = m_blocks[pin_value_id];
+        if (isPinEditable(pin_value_id))
+            editor()->editPinValue(m_id, pin_value_id);
     }
     else
     {

@@ -41,9 +41,6 @@ void JZNodeBuildThread::stopBuild()
 void JZNodeBuildThread::run()
 {
     bool ret = m_builder.build(&m_program);
-    if(!ret)
-        LOGMOD_E(Log_Compiler, m_builder.error());
-    
     JZNodeBuildResultPtr ptr = JZNodeBuildResultPtr(new JZNodeBuildResult());
     ptr->status = ret ? Build_Successed : Build_Failed;        
     ptr->compilerResult = m_builder.compilerResult();

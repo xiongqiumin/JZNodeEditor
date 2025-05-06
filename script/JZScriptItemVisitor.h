@@ -7,23 +7,27 @@
 #include "JZNodeEvent.h"
 #include "JZNodeValue.h"
 
-class JZScriptItemVistor
+class JZScriptItemVisitor
 {
 public:    
-    JZScriptItemVistor();
-    virtual ~JZScriptItemVistor();
+    JZScriptItemVisitor(JZScriptItem *item = nullptr);
+    virtual ~JZScriptItemVisitor();
 
-    void visitorScript(JZScriptItem *item);
-    void visitor(JZNode *node);
+    void setScript(JZScriptItem *item);        
+    void visitor();
 
-protected:
-    virtual void visitorSelf(JZNode *node) = 0;
-    
+    QList<JZNodePin*> inputPin(int node_id, int pin_id);
+
     QList<JZNode*> dataInputNode(JZNode *node);
     QList<JZNode*> dataInputNodeRecursively(JZNode *node);
 
-    JZNode *nextFlowNode(JZNode *node,int id);    
+    JZNode *nextFlowNode(JZNode *node, int id);    
+    JZNode *prevFlowNode(JZNode *node);
 
+protected:
+    void visitorNode(JZNode *node);
+    virtual void visitorSelf(JZNode *node);
+        
     JZScriptItem *m_script;
     QList<JZNode*> m_hasVistorNode;
 };

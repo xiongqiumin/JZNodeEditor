@@ -9,6 +9,15 @@
 class JZScriptItemDepend
 {
 public:
+    enum RunStatus
+    {
+        None,
+        Running,
+        Successed,
+        Failed,
+        Cancel,
+    };
+
     //这里存的node节点是原脚本的
     struct ParamDepend
     {
@@ -23,26 +32,26 @@ public:
     };
     
     JZScriptItemDepend();
-    void clear();
+    void init(JZScriptItem *script);
     
     bool isError();
     void setParam(int id,const QVariant &value);
-    
-    QString error;
     JZFunctionDefine function;
+
+    QString error;    
     
     QList<ParamDepend> paramList;
-    QList<FunctionDepend> functionList;
-    
-    QVariantList input;
-    QVariantList output;
+    QList<FunctionDepend> functionList;       
 
     JZScriptItem *initExtScript;
     bool isTrigger;
-    JZScriptItem *triggerScript; //触发
-    
+    JZScriptItem *triggerScript; //触发    
     JZScriptItem *unitScript;
-    JZScriptItem *script;        //原始
+    JZScriptItem *originScript;        //原始
+
+    RunStatus status;
+    QVariantList input;
+    QVariantList output;
 };
 typedef QSharedPointer<JZScriptItemDepend> JZScriptItemDependPtr;
 
@@ -60,7 +69,7 @@ public:
 };
 
 //JZScriptUnitTestVistor
-class JZScriptUnitTestVistor: public JZScriptItemVistor
+class JZScriptUnitTestVistor: public JZScriptItemVisitor
 {
 public:
     JZScriptUnitTestVistor();
@@ -71,11 +80,11 @@ protected:
     JZScriptItemDepend *m_depend;
 };
 
-//JZScriptNomarlVistor
-class JZScriptNomarlVistor: public JZScriptUnitTestVistor
+//JZScriptHookVistor
+class JZScriptHookVistor : public JZScriptUnitTestVistor
 {
 public:
-    JZScriptNomarlVistor();
+    JZScriptHookVistor();
 
     virtual void visitorSelf(JZNode *node) override;
 protected:    
@@ -91,8 +100,9 @@ public:
     ~JZScriptUnitTest();
 
     void setProject(JZProject* project);
+    void setScript(JZScriptItem *script);
 
-    JZScriptItemDepend *genDepend(JZScriptItem *script);
+    JZScriptItemDepend *depend();
     JZNodeEngine *engine();
     void dump(QString dir);
 
@@ -110,26 +120,27 @@ public:
     bool hasHook(int id);
     QVariant hookValue(int id);
 
+signals:
+
 protected slots:
     void onRuntimeError();
 
 protected:
-    void initRuntime();
-    virtual void timerEvent(QTimerEvent* event) override;
+    void hookEngine();
+    void initRuntime();    
+    void updateStatus(JZScriptItemDepend::RunStatus status);
 
     JZProject* m_project;
     JZScriptItem *m_script;     
     JZScriptItem *m_initExtScript;
     JZScriptItem* m_triggerScript;
-    QString m_error;
-    int m_timeId;
+    QString m_error;    
     
     JZScriptItemDepend m_depend;
     QMap<int,QVariant> m_hookValues;
-
-    bool m_isFinish;
+    
     JZNodeProgram m_program;
-    JZNodeEngine m_engine;
+    JZNodeEngine *m_engine;
     JZNodeObjectPointer m_object;
 };
 

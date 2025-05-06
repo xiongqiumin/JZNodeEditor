@@ -6,6 +6,7 @@
 #include <QGraphicsProxyWidget>
 #include "JZNodeBaseItem.h"
 #include "JZNode.h"
+#include "JZScriptEnvironment.h"
 
 class JZNodeLineItem;
 class JZNodeGraphItem : public JZNodeBaseItem
@@ -14,12 +15,14 @@ public:
     enum IconType { Flow, Circle, Square, Grid, RoundSquare, Diamond };
     struct Block
     {
-        Block();
+        Block(JZNodeGraphItem *item);
         ~Block();
 
         int width();
         int height();
         void clear();
+        void setWidget(QWidget *widget);
+        void clearWidget();
         bool isPin();
 
         int id;
@@ -37,6 +40,7 @@ public:
 
         QGraphicsProxyWidget *proxy;
         QWidget *widget;
+        JZNodeGraphItem *item;
     };    
     typedef QSharedPointer<Block> BlockPtr;
 
@@ -44,18 +48,24 @@ public:
     ~JZNodeGraphItem();
 
     void init(JZNode *node);
-
+    
     virtual QRectF boundingRect() const override;
     virtual void updateNode() override;
     void updateSize();
 
-    void setPinValue(int pin, QString name);
+    void setPinValue(int pin, QString value);
+    QString pinValue(int pin);
+
+    virtual void setBlockValue(int pin, QString value);
+    virtual QString blockValue(int pin);
 
     JZNode *node();
     int pinAt(QPointF pos);        //连接框
     int pinAtInName(QPointF pos);  //包含连接框和名称矩形  
+    int pinAtInValueRect(QPointF pos);    
     QRectF pinRect(int pin);
     QRectF pinNameRect(int pin);
+    bool isPinEditable(int pin);
     QSize size() const;
     
     Block *block(int id);
@@ -90,7 +100,7 @@ protected:
     void notifyPropChanged(const QByteArray &buffer);    
     
     BlockPtr createPinBlock(JZNodePin *pin);
-    BlockPtr createWidgetBlock(QWidget *widget,bool isInput);
+    BlockPtr createWidgetBlock(QWidget *widget,bool isInput);    
 
     QByteArray saveNode();    
     JZNodePin *pin(int pin_id);

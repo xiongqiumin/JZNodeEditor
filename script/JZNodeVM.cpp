@@ -18,6 +18,7 @@ JZNodeVM::JZNodeVM()
 JZNodeVM::~JZNodeVM()
 {
     m_debugServer.stopServer();
+    m_engine.deinit();
 }
 
 bool JZNodeVM::init(QString path,bool debug, QString &error)

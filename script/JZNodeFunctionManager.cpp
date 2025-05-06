@@ -199,6 +199,11 @@ void JZNodeFunctionManager::registFunctionImpl(JZFunction &impl)
         m_userFuncs << full_name;
 }
 
+void JZNodeFunctionManager::replaceFunctionImpl(JZFunction &impl)
+{
+    m_funcImpl[impl.fullName()] = impl;
+}
+
 const JZFunction *JZNodeFunctionManager::functionImpl(QString funcName) const
 {
     auto it = m_funcImpl.find(funcName);

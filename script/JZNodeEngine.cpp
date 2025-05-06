@@ -283,7 +283,8 @@ void JZNodeEngine::regist()
     JZNodeEngineIdlePauseEvent::Event = QEvent::registerEventType();      
 }
 
-JZNodeEngine::JZNodeEngine()
+JZNodeEngine::JZNodeEngine(QObject *parent)
+    :QObject(parent)
 { 
     m_program = nullptr;
     m_script = nullptr;
@@ -294,14 +295,12 @@ JZNodeEngine::JZNodeEngine()
     m_statusCommand = Command_none;
     m_regs.resize(Reg_End - Reg_Start);
     m_idleFunc.define.name = "idle";
-
-    m_watchTimer = new QTimer(this);
-    connect(m_watchTimer, &QTimer::timeout, this, &JZNodeEngine::onWatchTimer);
+    m_watch = false;
 }
 
 JZNodeEngine::~JZNodeEngine()
 {    
-    clear();
+    Q_ASSERT(!isInit());
 }
 
 void JZNodeEngine::setProgram(const JZNodeProgram *program)
@@ -319,30 +318,12 @@ JZScriptEnvironment *JZNodeEngine::environment()
     return &m_env;
 }
 
-void JZNodeEngine::clear()
-{    
-    m_watchTimer->stop();
-    m_breakPoints.clear();
-    m_breakIr.clear();
-    m_breakStep.clear();    
-
-    m_stack.clear();
-    m_global.clear();   
-    m_sender = nullptr;
-    m_statusCommand = Command_none;
-    m_status = Status_none;
-    
-    clearReg();
-    if (g_engine == this)
-        g_engine = nullptr;
-}
-
 bool JZNodeEngine::isInit() const
 {
     return (g_engine == this);
 }
 
-void JZNodeEngine::init()
+bool JZNodeEngine::init()
 {
     Q_ASSERT(!g_engine);
 
@@ -352,16 +333,32 @@ void JZNodeEngine::init()
 
     g_engine = this;
     QVariantList in, out;
-    call("__init__", in,out);
-
-    if(m_debug)
-        m_watchTimer->start(50);
+    if (!call("__init__", in, out))
+    {        
+        updateStatus(Status_none);
+        g_engine = nullptr;
+        return false;
+    }
+    
+    return true;
 }   
 
 void JZNodeEngine::deinit()
-{
+{        
+    m_watch = false;
+    m_breakPoints.clear();
+    m_breakIr.clear();
+    m_breakStep.clear();
+
+    m_stack.clear();
+    m_global.clear();
+    m_sender = nullptr;
+    m_statusCommand = Command_none;
     updateStatus(Status_none);
-    clear();
+
+    clearReg();
+    if (g_engine == this)
+        g_engine = nullptr;
 }
 
 void JZNodeEngine::statClear()
@@ -971,9 +968,21 @@ const JZNodeScript *JZNodeEngine::getScript(QString path)
     return m_program->script(path);
 }
 
+void JZNodeEngine::startWatch()
+{    
+    QMutexLocker lock(&m_mutex);
+    m_watch = true;
+}
+
+void JZNodeEngine::stopWatch()
+{
+    QMutexLocker lock(&m_mutex);
+    m_watch = false;
+}
+
 void JZNodeEngine::watchNotify()
 {
-    if (!m_debug || m_stack.size() == 0)
+    if(!m_watch || m_stack.size() == 0)
         return;
 
     emit sigWatchNotify();
@@ -1031,7 +1040,7 @@ void JZNodeEngine::addBreakPoint(QString itemPath,int nodeId)
 
 void JZNodeEngine::addBreakPoint(const BreakPoint &pt)
 {
-    QMutexLocker lock(&m_mutex);    
+    QMutexLocker lock(&m_mutex);
     int idx = indexOfBreakPoint(pt.scriptItemPath,pt.nodeId);
     if(idx != -1)
     {
@@ -1149,6 +1158,9 @@ void JZNodeEngine::stop()
 {
     QMutexLocker lock(&m_mutex);
     if(m_status == Status_idle || m_status == Status_none)
+        return;
+
+    if (m_status == Status_error && !m_debug)
         return;
         
     m_statusCommand = Command_stop;
@@ -1773,7 +1785,8 @@ bool JZNodeEngine::run()
             break;
         }
         case OP_return:
-        {                            
+        {              
+            watchNotify();
             popStack();                  
             if(m_stack.size() < in_stack_size)
                 goto RunEnd;

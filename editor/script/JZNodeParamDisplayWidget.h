@@ -3,7 +3,6 @@
 
 #include <QLabel>
 #include <QToolButton>
-#include "JZNodePinWidget.h"
 #include "jzWidgets/JZImageLabel.h"
 
 //JZNodeParamDisplayWidget
@@ -13,24 +12,7 @@ class JZNodeParamDisplayWidget : public QWidget
 
 public:
     JZNodeParamDisplayWidget();
-    virtual ~JZNodeParamDisplayWidget();
-
-    virtual void setRuntimeValue(const JZNodeDebugParamValue &value) = 0;
-};
-
-//JZNodeImageNomarlDisplayWidget
-class JZNodeImageNomarlDisplayWidget : public JZNodeParamDisplayWidget
-{
-    Q_OBJECT
-
-public:
-    JZNodeImageNomarlDisplayWidget();
-    virtual ~JZNodeImageNomarlDisplayWidget();
-
-    virtual void setRuntimeValue(const JZNodeDebugParamValue &value) override;    
-
-protected:
-    QLineEdit *m_lineEdit;
+    virtual ~JZNodeParamDisplayWidget();    
 };
 
 //JZNodeImageDisplayWidget
@@ -41,8 +23,6 @@ class JZNodeImageDisplayWidget : public JZNodeParamDisplayWidget
 public:
     JZNodeImageDisplayWidget();
     virtual ~JZNodeImageDisplayWidget();
-
-    virtual void setRuntimeValue(const JZNodeDebugParamValue &value) override;    
 
 protected:
     JZImageLabel *m_label;

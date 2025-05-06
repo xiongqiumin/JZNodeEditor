@@ -4,7 +4,7 @@
 #include <QThread>
 #include "JZNodeBuilder.h"
 
-enum {
+enum BuildResult{
     Build_Successed,
     Build_Failed,        
 };
@@ -12,7 +12,7 @@ enum {
 class JZNodeBuildResult
 {
 public:
-    int status;
+    BuildResult status;
     JZNodeProgram program;
     QMap<QString, CompilerResult>  compilerResult;
 };

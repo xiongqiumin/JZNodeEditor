@@ -69,7 +69,9 @@ void SampleVisionDemo::addInit()
     if (m_name == "VisionDemoHik")
     {        
         cfg.type = Camera_Hik;
-        cfg.hikPath = "192.168.0.150";
+        cfg.hikConfig.path = "192.168.0.150";
+        cfg.hikConfig.exposureTime = 0.5;
+        cfg.hikConfig.gain = 50;
     }
     else
     {
@@ -115,7 +117,7 @@ void SampleVisionDemo::addOnFrameReady()
     model_forward->setModel("yolo");
     flow_script->addNode(model_forward);
     flow_script->addConnect(cam_ready->flowOutGemo(), model_forward->flowInGemo());
-    flow_script->addConnect(cam_ready->paramOutGemo(0), model_forward->paramInGemo(0));
+    flow_script->addConnect(cam_ready->paramOutGemo(0), model_forward->paramInGemo(1));
 
     //set result
     JZNodeFunction *func_cvt = new JZNodeFunction();
@@ -132,6 +134,13 @@ void SampleVisionDemo::addOnFrameReady()
     flow_script->addConnect(func_cvt->paramOutGemo(0), func_set->paramInGemo(1));
     flow_script->addConnect(model_forward->paramOutGemo(0), func_set->paramInGemo(2));
     flow_script->addConnect(model_forward->flowOutGemo(), func_set->flowInGemo());
+
+    JZNodeDisplay *display = new JZNodeDisplay();
+    display->addInput();
+    flow_script->addNode(display);    
+
+    flow_script->addConnect(cam_ready->paramOutGemo(0), display->paramInGemo(0));
+    flow_script->addConnect(model_forward->paramOutGemo(0), display->paramInGemo(1));
 
     //if result > 0
     JZNodeIf *node_if = new JZNodeIf();
@@ -156,8 +165,8 @@ void SampleVisionDemo::addOnFrameReady()
     JZNodeModbusWrite *write_false = new JZNodeModbusWrite();
     flow_script->addNode(write_true);
     flow_script->addNode(write_false);
-    write_true->setClient("modbus");
-    write_false->setClient("modbus");
+    write_true->setName("modbus");
+    write_false->setName("modbus");
     write_true->setValue("1");
     write_false->setValue("0");
 

@@ -24,6 +24,7 @@ enum {
 };
 
 class JZProject;
+class MainWindow;
 class JZEditor : public QWidget
 {
     Q_OBJECT
@@ -33,19 +34,19 @@ public:
     virtual ~JZEditor();
 
     int type();
+    
+    void setMainWindow(MainWindow *window);
     void setProject(JZProject *project);
     JZProject *project();
 
     void setItem(JZProjectItem *item);
     JZProjectItem *item();
 
-    virtual void addMenuBar(QMenuBar *menubar);
-    virtual void removeMenuBar(QMenuBar *menubar);
-
     virtual void open(JZProjectItem *item) = 0;
     virtual void close() = 0;
     virtual void save() = 0;
     virtual void active();
+    virtual void inactive‌();
     virtual void navigate(QUrl url);
     virtual bool isModified();   
 
@@ -64,8 +65,11 @@ signals:
     void modifyChanged(bool changed);
 
 protected:    
+    QMenuBar *menuBar();
+
     JZProjectItem *m_item;
     JZProject *m_project;
+    MainWindow *m_window;
     int m_type;    
 };
 

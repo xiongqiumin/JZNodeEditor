@@ -151,6 +151,8 @@ void JZNodePropertyEditor::updateNode()
     m_tree->addProperty(prop_base);
 
     auto item = m_view->getNodeItem(m_node->id());
+    item->blockList(true);
+    item->blockList(false);
 
     auto in_list = m_node->pinInList(Pin_param);
     addPropList("输入",in_list);

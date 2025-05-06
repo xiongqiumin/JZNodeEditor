@@ -3,18 +3,6 @@
 #include "JZCommManager.h"
 #include "JZNodeUtils.h"
 
-bool checkCommManager(int id, JZNodeCompiler* c, QString& error)
-{
-	if (!c->addFlowInput(id, error))
-		return false;
-
-	auto env = c->env();
-	if(!c->checkVariableType("this.commManager",env->nameToType("JZCommManager"), error))
-		return false;
-
-	return true;
-}
-
 //JZNodeCommInit
 JZNodeCommInit::JZNodeCommInit()
 {
@@ -41,8 +29,12 @@ JZCommManagerConfig JZNodeCommInit::config()
 
 bool JZNodeCommInit::compiler(JZNodeCompiler* c, QString& error)
 {
-	if (!checkCommManager(m_id, c, error))
-		return false;
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    auto env = c->env();
+    if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
+        return false;
 
 	int id = c->allocStack(Type_byteArray);
 	c->addSetBuffer(irId(id), JZNodeUtils::toBuffer(m_config));
@@ -65,14 +57,48 @@ void JZNodeCommInit::loadFromStream(QDataStream& s)
     s >> m_config;
 }
 
+//JZCommNode
+JZCommNode::JZCommNode()
+{
+    addFlowIn();
+    addFlowOut();
+
+    int in = addParamIn("name", Pin_constValue | Pin_noCompiler);
+    setPinTypeString(in);
+}
+
+JZCommNode::~JZCommNode()
+{
+}
+
+void JZCommNode::setName(QString name)
+{
+    setParamInValue(0, name);
+}
+
+QString JZCommNode::name()
+{
+    return paramInValue(0);
+}
+
+bool JZCommNode::checkCommManager(JZNodeCompiler *c, QString& error)
+{
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    auto env = c->env();
+    if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
+        return false;
+    
+    return true;
+}
+
+
 //JZNodeModbusRead
 JZNodeModbusRead::JZNodeModbusRead()
 {
     m_type = Node_ModbusRead;
-    m_name = "ModbusRead";    
-
-	addFlowIn();
-	addFlowOut();
+    m_name = "ModbusRead";    	
 
 	m_modbus = "modbus";
 	m_dataType = "uint16";
@@ -81,7 +107,7 @@ JZNodeModbusRead::JZNodeModbusRead()
 	int in1 = addParamIn("addr");
     setPinTypeInt(in1);
 
-    setParamInValue(0, "40000");
+    setPinValue(in1, "40000");
 	addParamOut("result");
 }
 
@@ -115,12 +141,12 @@ int JZNodeModbusRead::function()
 
 void JZNodeModbusRead::setAddr(int addr)
 {
-	setParamInValue(0, QString::number(addr));
+	setParamInValue(1, QString::number(addr));
 }
 
 int JZNodeModbusRead::addr()
 {
-	return paramInValue(0).toInt();
+	return paramInValue(1).toInt();
 }
 
 void JZNodeModbusRead::setDataType(QString type)
@@ -143,11 +169,11 @@ bool JZNodeModbusRead::updateNode(QString& error)
 
 bool JZNodeModbusRead::compiler(JZNodeCompiler* c, QString& error)
 {
-	if (!checkCommManager(m_id,c,error))
+	if (!checkCommManager(c,error))
 		return false;
 
 	auto env = c->env();
-	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(0)));	
+	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(1)));	
 	JZNodeIRParam ir_out = irId(c->paramId(m_id, paramOut(0)));
 
     int json = c->allocStack(Type_jsonObject);
@@ -189,20 +215,15 @@ JZNodeModbusWrite::JZNodeModbusWrite()
 {
     m_type = Node_ModbusWrite;
     m_name = "ModbusWrite";
-
-    addFlowIn();
-    addFlowOut();
+    m_dataType = "uint16";
+    m_function = Function_Register;
 
 	int in1 = addParamIn("addr");
-	setPinTypeInt(in1);
+	setPinTypeInt(in1);    
 
 	int in2 = addParamIn("value");
 	setPinType(in2, { m_dataType });
-
-	setParamInValue(0, "40000");
-	
-	m_dataType = "uint16";
-	m_function = Function_Register;
+    setPinValue(in1, "40000");		
 }
 JZNodeModbusWrite::~JZNodeModbusWrite()
 {
@@ -210,11 +231,11 @@ JZNodeModbusWrite::~JZNodeModbusWrite()
 
 bool JZNodeModbusWrite::compiler(JZNodeCompiler* c, QString& error)
 {
-	if (!checkCommManager(m_id,c,error))
-		return false;
+    if (!checkCommManager(c, error))
+        return false;
 
-	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(0)));
-	JZNodeIRParam ir_value = irId(c->paramId(m_id, paramIn(1)));
+	JZNodeIRParam ir_addr = irId(c->paramId(m_id, paramIn(1)));
+	JZNodeIRParam ir_value = irId(c->paramId(m_id, paramIn(2)));
 
 	int json = c->allocStack(Type_jsonObject);
 	c->addInitVariable(irId(json), Type_jsonObject);
@@ -223,20 +244,10 @@ bool JZNodeModbusWrite::compiler(JZNodeCompiler* c, QString& error)
 	c->addSetJson(irId(json), "dataType", irLiteral(m_dataType));
 
 	QList<JZNodeIRParam> write_in, write_out;
-	write_in << irRef("this.commManager") << irLiteral(m_modbus) << irId(json) << ir_value;
+	write_in << irRef("this.commManager") << irLiteral(name()) << irId(json) << ir_value;
 	c->addCallConvert("JZCommModbusWrite", write_in, write_out);
 
 	return true;
-}
-
-void JZNodeModbusWrite::setClient(QString comm)
-{
-	m_modbus = comm;
-}
-
-QString JZNodeModbusWrite::client()
-{
-	return m_modbus;
 }
 
 void JZNodeModbusWrite::setFunction(int function)
@@ -255,22 +266,22 @@ int JZNodeModbusWrite::function()
 
 void JZNodeModbusWrite::setAddr(int addr)
 {
-	setParamInValue(0, QString::number(addr));
+	setParamInValue(1, QString::number(addr));
 }
 
 int JZNodeModbusWrite::addr()
 {
-	return paramInValue(0).toInt();
+	return paramInValue(1).toInt();
 }
 
 void JZNodeModbusWrite::setValue(QString value)
 {
-    setParamInValue(1, value);
+    setParamInValue(2, value);
 }
 
 QString JZNodeModbusWrite::value()
 {
-    return paramInValue(1);
+    return paramInValue(2);
 }
 
 void JZNodeModbusWrite::setDataType(QString type)
@@ -287,14 +298,13 @@ QString JZNodeModbusWrite::dataType()
 bool JZNodeModbusWrite::updateNode(QString& error)
 {
 	int func_type = m_function;
-	setPinType(paramIn(1), { m_dataType });
+	setPinType(paramIn(2), { m_dataType });
 	return true;
 }
 
 void JZNodeModbusWrite::saveToStream(QDataStream& s) const
 {
 	JZNode::saveToStream(s);
-    s << m_modbus;
     s << m_function;
 	s << m_dataType;
 }
@@ -302,7 +312,6 @@ void JZNodeModbusWrite::saveToStream(QDataStream& s) const
 void JZNodeModbusWrite::loadFromStream(QDataStream& s)
 {
 	JZNode::loadFromStream(s);        
-    s >> m_modbus;
     s >> m_function;
 	s >> m_dataType;
 }
@@ -319,8 +328,8 @@ JZNodeTcpClientRead::~JZNodeTcpClientRead()
 
 bool JZNodeTcpClientRead::compiler(JZNodeCompiler* c, QString& error) 
 {
-	if (!checkCommManager(m_id,c,error))
-		return false;
+    if (!checkCommManager(c, error))
+        return false;
 
 	return true;
 }
@@ -348,8 +357,8 @@ JZNodeTcpClientWrite::~JZNodeTcpClientWrite()
 
 bool JZNodeTcpClientWrite::compiler(JZNodeCompiler* c, QString& error) 
 {
-	if (!checkCommManager(m_id,c,error))
-		return false;
+    if (!checkCommManager(c, error))
+        return false;
 
 	return true;
 }
@@ -377,8 +386,8 @@ JZNodeUdpRead::~JZNodeUdpRead()
 
 bool JZNodeUdpRead::compiler(JZNodeCompiler* c, QString& error)
 {
-	if (!checkCommManager(m_id,c,error))
-		return false;
+    if (!checkCommManager(c, error))
+        return false;
 
 	return true;
 }
@@ -406,8 +415,8 @@ JZNodeUdpWrite::~JZNodeUdpWrite()
 
 bool JZNodeUdpWrite::compiler(JZNodeCompiler* c, QString& error)
 {
-	if (!checkCommManager(m_id,c,error))
-		return false;
+    if (!checkCommManager(c, error))
+        return false;
 
 	return true;
 }
@@ -435,8 +444,8 @@ JZNodeSerialRead::~JZNodeSerialRead()
 
 bool JZNodeSerialRead::compiler(JZNodeCompiler* c, QString& error) 
 {
-	if (!checkCommManager(m_id,c,error))
-		return false;
+    if (!checkCommManager(c, error))
+        return false;
 
 	return true;
 }
@@ -463,8 +472,8 @@ JZNodeSerialWrite::~JZNodeSerialWrite()
 
 bool JZNodeSerialWrite::compiler(JZNodeCompiler* c, QString& error) 
 {
-	if (!checkCommManager(m_id,c,error))
-		return false;
+    if (!checkCommManager(c, error))
+        return false;
 		
 	return true;
 }

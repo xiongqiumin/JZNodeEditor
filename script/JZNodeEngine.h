@@ -124,11 +124,11 @@ class JZNodeEngine : public QObject
 public:        
     static void regist();
 
-    JZNodeEngine();
+    JZNodeEngine(QObject *parent = nullptr);
     virtual ~JZNodeEngine();
 
     bool isInit() const;
-    void init();
+    bool init();
     void deinit();
 
     void statClear();
@@ -182,7 +182,11 @@ public:
 
     QVariant getSender();    
 
+    void startWatch();
+    void stopWatch();
     void watchNotify();         //node display
+
+
     void printNode(int node_id);
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
     QVariant dealSingleExpr(const QVariant& a, int op);
@@ -237,8 +241,7 @@ protected:
         int setTime;
     };
 
-    virtual void customEvent(QEvent *event) override;    
-    void clear();
+    virtual void customEvent(QEvent *event) override;        
     bool checkPause(int node_id);
     bool run();             
     void updateStatus(JZEngineStatus status);
@@ -296,13 +299,13 @@ protected:
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
     bool m_debug;
-    bool m_watch;
+    
     JZNodeRuntimeError m_error;
     QList<TryCatchInfo> m_tryCatchList;
-    QSet<const JZNodeIRNodeEnter*> m_breakIr;
+    QSet<const JZNodeIRNodeEnter*> m_breakIr;    
 
-    QTimer *m_watchTimer;
-    
+    bool m_watch;
+
     Stat m_stat;
 };
 extern JZNodeEngine *g_engine;

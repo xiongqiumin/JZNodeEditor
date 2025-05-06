@@ -93,6 +93,8 @@ enum
     NodeProp_noRemove = 0x1,
 };
 
+#define MAX_PIN_ID 100
+
 //JZNodeGemo
 struct JZNodeGemo
 {

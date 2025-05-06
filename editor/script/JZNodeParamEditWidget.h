@@ -3,66 +3,21 @@
 
 #include <QLabel>
 #include <QToolButton>
+#include "jzWidgets/JZPropertyWidget.h"
 
-
-//JZNodeParamEditWidget
-class JZNodeParamEditWidget : public QWidget
+//JZNodeParamTypeWidget
+class JZNodeParamTypeWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    JZNodeParamEditWidget();
-    virtual ~JZNodeParamEditWidget();
-    
-    virtual QString value() const = 0;
-    virtual void setValue(const QString &text) = 0;
+    JZNodeParamTypeWidget();
 
-signals:
-    void sigValueChanged();
-};
-
-//JZNodeParamPopupWidget
-class JZNodeParamPopupWidget : public QWidget
-{
-    Q_OBJECT
-
-public:
-    JZNodeParamPopupWidget(QWidget *parent = nullptr);
-    ~JZNodeParamPopupWidget();
-
-    QString value();
-    void setValue(QString text);
-
-signals:
-    void sigSettingClicked();
-
-protected:
-    QLineEdit *m_line;
-};
-
-class JZNodeParamTypeWidget : public QComboBox
-{
-    Q_OBJECT
-
-public:
-    JZNodeParamTypeWidget(QWidget *parent = nullptr);
-
-    void init(JZNodeObjectManager *inst);
-    QString type();
     void setType(QString type);
-
-signals:
-    void sigTypeChanged();
+    QString type();
 
 protected:
-};
-
-//ItemFocusEventFilter
-class ItemFocusEventFilter : public QObject
-{
-public:
-    ItemFocusEventFilter(QObject *parent);
-    virtual bool eventFilter(QObject *object, QEvent *event) override;
+    QLineEdit *m_lineEdit;
 };
 
 //JZNodeParamValueWidget
@@ -72,26 +27,18 @@ class JZNodeParamValueWidget : public QWidget
 
 public:
     JZNodeParamValueWidget();
-    ~JZNodeParamValueWidget();
 
-    void initWidget(int data_type, QString widget_type = QString());
-    QWidget *focusWidget();
-
-    QString value() const;
-    void setValue(const QString &value);
+    void initWidget(int type);
+    void setValue(QString type);
+    QString value();
 
 signals:
-    void sigValueChanged();
+    void sigEditFinish();
 
 protected:
-    QString getWidgetType(int data_type);
-    void createWidget();
-    void clearWidget();
+    bool eventFilter(QObject *object, QEvent *event);
 
-    QWidget *m_widget;
-
-    int m_dataType;
-    QString m_widgetType;
+    QLineEdit *m_lineEdit;
 };
 
 

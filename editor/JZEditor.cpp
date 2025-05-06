@@ -1,6 +1,7 @@
 ﻿#include <QUrl>
 #include <QShortcut>
 #include "JZEditor.h"
+#include "mainwindow.h"
 
 JZEditor::JZEditor()
 {
@@ -19,6 +20,16 @@ JZEditor::JZEditor()
 
 JZEditor::~JZEditor()
 {
+}
+
+void JZEditor::setMainWindow(MainWindow *window)
+{
+    m_window = window;
+}
+
+QMenuBar *JZEditor::menuBar()
+{
+    return m_window->menuBar();
 }
 
 int JZEditor::type()
@@ -51,17 +62,12 @@ bool JZEditor::isModified()
     return false;
 }
 
-void JZEditor::addMenuBar(QMenuBar *menubar)
-{
-
-}
-
-void JZEditor::removeMenuBar(QMenuBar *menubar)
-{
-
-}
-
 void JZEditor::active()
+{
+
+}
+
+void JZEditor::inactive‌()
 {
 
 }

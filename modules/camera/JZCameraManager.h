@@ -7,6 +7,16 @@
 #include "JZCamera.h"
 #include "JZNodeType.h"
 
+class JZCamerHikConfig
+{
+public:
+    QString path;
+    int gain;
+    double exposureTime;
+};
+QDataStream &operator<<(QDataStream &s, const JZCamerHikConfig &param);
+QDataStream &operator>>(QDataStream &s, JZCamerHikConfig &param);
+
 //JZCameraConfig
 class JZCameraConfig
 {
@@ -19,8 +29,8 @@ public:
     //file
     QString filePath;
 
-    //hix
-    QString hikPath;
+    //hik
+    JZCamerHikConfig hikConfig;
 };
 QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCameraConfig &param);

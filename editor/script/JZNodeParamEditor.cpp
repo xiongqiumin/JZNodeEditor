@@ -15,7 +15,6 @@
 #include "JZNodeTypeHelper.h"
 #include "JZBaseDialog.h"
 #include "JZNodeParamBindEditDialog.h"
-#include "JZNodePinWidget.h"
 #include "JZNodeUtils.h"
 #include "JZEditorGlobal.h"
 
@@ -50,28 +49,14 @@ public:
 
     virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {        
-        const JZParamDefine *define = m_editor->param(index.row());        
-        int dataType = editorEnvironment()->nameToType(define->type);
-        if (dataType == Type_none)
-            return nullptr;
-
-        auto edit = new JZNodeParamValueWidget();
-        edit->setParent(parent);
-        edit->initWidget(dataType);
-        edit->setValue(define->value);
-
-        ItemFocusEventFilter *filter = new ItemFocusEventFilter(edit);
-        edit->focusWidget()->installEventFilter(filter);
-        return edit;
+        return nullptr;
     }
 
     void setModelData(QWidget *editor,
         QAbstractItemModel *model,
         const QModelIndex &index) const override
     {
-        auto edit = qobject_cast<JZNodeParamValueWidget*>(editor);
-        model->setData(index, edit->value());
-        edit->deleteLater();
+        return;
     }
 
     void setEditor(JZNodeParamEditor *table)

@@ -31,6 +31,8 @@ public:
     void unregistFunction(QString name);       
 
     void registFunctionImpl(JZFunction &impl);    
+    void replaceFunctionImpl(JZFunction &impl);
+
     const JZFunction *functionImpl(QString name) const;
 
     void setParam(JZFunctionDefine *def,CFunction *func);

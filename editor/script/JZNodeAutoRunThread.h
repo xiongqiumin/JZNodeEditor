@@ -15,19 +15,24 @@ public:
     ~JZNodeAutoRunThread();
 
     JZNodeEngine *engine();    
-    JZScriptItemDepend *genDepend(JZScriptItem *script);
+    JZScriptUnitTest *unitTest();
 
     void startRun();
     void stopRun();
+    void stopThread();
 
 signals:
     void sigResult(int result);
 
+protected slots:
+    void onTimer();
+
 protected:
-    virtual void run() override;
-    
+    virtual void customEvent(QEvent *event) override;
+
+    QTimer *m_timer;
+    bool m_watchFinish;
     JZScriptUnitTest m_test;
-    bool m_cancel;
 };
 
 #endif

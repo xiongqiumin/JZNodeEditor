@@ -413,6 +413,18 @@ void JZNodeProgram::addScript(JZNodeScriptPtr script)
     }
 }
 
+void JZNodeProgram::removeScript(QString path)
+{
+    m_scripts.remove(path);
+}
+
+JZNodeScriptPtr JZNodeProgram::takeScript(QString path)
+{
+    JZNodeScriptPtr script = m_scripts[path];
+    m_scripts.remove(path);
+    return script;
+}
+
 JZNodeScript* JZNodeProgram::script(QString path)
 {
     return m_scripts.value(path, JZNodeScriptPtr()).data();
@@ -448,6 +460,11 @@ QList<JZNodeScript*> JZNodeProgram::scriptList() const
         it++;
     }
     return list;
+}
+
+void JZNodeProgram::setTypeMeta(JZNodeTypeMeta meta)
+{
+    m_typeMeta = meta;
 }
 
 const JZNodeTypeMeta &JZNodeProgram::typeMeta() const

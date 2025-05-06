@@ -43,6 +43,7 @@ public:
     void setProject(JZProject *project);
     JZNodeBuildThread *buildThread();
     JZNodeAutoRunThread *runThread();
+    void stopRunThread();
 
     void removeTask(int type);
     void clearTask();

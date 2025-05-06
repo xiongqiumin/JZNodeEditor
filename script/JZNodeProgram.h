@@ -104,7 +104,9 @@ public:
     
     void initEnv(JZScriptEnvironment *env) const;
 
-    const JZNodeTypeMeta &typeMeta() const;       
+    void setTypeMeta(JZNodeTypeMeta meta);
+    const JZNodeTypeMeta &typeMeta() const;   
+
     QString applicationFilePath() const;
     
     const JZFunction* function(QString name) const;
@@ -114,13 +116,15 @@ public:
     JZNodeScript* script(QString path);
     const JZNodeScript *script(QString path) const;
     void addScript(JZNodeScriptPtr script);
+    void removeScript(QString path);
+    JZNodeScriptPtr takeScript(QString path);
     
     const JZFunctionDebugInfo *debugInfo(QString name) const;
     
 protected:
     Q_DISABLE_COPY(JZNodeProgram);
 
-    friend JZNodeBuilder;        
+    friend JZNodeBuilder;            
 
     void saveToStream(QDataStream &s) const;
     void loadFromStream(QDataStream &s);
