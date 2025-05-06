@@ -156,20 +156,6 @@ public:
 
     bool operator==(const JZVariantAny &other) const;
 
-    template<class T>
-    static JZVariantAny fromValue(const T &value)
-    {
-        JZVariantAny any;
-        any.variant = QVariant::fromValue(value);
-        return any;
-    }
-
-    template<class T>
-    T value() const
-    {
-        return variant.value<T>();
-    }
-
     int type();
     QVariant variant;
 };

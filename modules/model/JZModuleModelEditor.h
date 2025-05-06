@@ -16,7 +16,7 @@ public:
     void setConfig(JZModelConfig cfg);
     JZModelConfig getConfig() const;
 
-    private slots:
+private slots:
 
 
 private:

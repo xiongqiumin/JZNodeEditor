@@ -35,8 +35,6 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     cls_camera.def("start",true,&JZCamera::start);
     cls_camera.def("startOnce", true, &JZCamera::startOnce);
     cls_camera.def("stop", true, &JZCamera::stop);
-    cls_camera.def("setConfig", true, &JZCamera::setConfig);
-    cls_camera.def("config", true, &JZCamera::config);
     cls_camera.defSingle("sigFrameReady", &JZCamera::sigFrameReady);
     cls_camera.regist();
 

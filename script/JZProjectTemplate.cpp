@@ -12,6 +12,7 @@
 #include "modules/communication/JZModuleComm.h"
 #include "modules/camera/JZModuleCamera.h"
 #include "modules/opencv/JZModuleOpencv.h"
+#include "modules/model/JZModuleModel.h"
 
 JZProjectTemplate *JZProjectTemplate::instance()
 {

@@ -44,13 +44,3 @@ void JZCameraUVC::startOnce()
 void JZCameraUVC::stop()
 {
 }
-
-QString JZCameraUVC::config()
-{
-    return QString();
-}
-
-bool JZCameraUVC::setConfig(const QString &config)
-{
-    return true;
-}

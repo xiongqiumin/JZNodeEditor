@@ -164,18 +164,23 @@ set(JZNodeCore_SOURCES
     modules/opencv/CvMatAndQImage.cpp
     modules/opencv/CvToQt.h
     modules/opencv/CvToQt.cpp
-	modules/opencv/JZModel.h
-    modules/opencv/JZModel.cpp
-    modules/opencv/JZModelNode.h
-    modules/opencv/JZModelNode.cpp
-    modules/opencv/JZYolo.h
-    modules/opencv/JZYolo.cpp
-    modules/opencv/JZYoloView.h
-    modules/opencv/JZYoloView.cpp
-	modules/opencv/JZModelNode.cpp
-	modules/opencv/JZModelNode.h
-	modules/opencv/JZModelManager.h
-	modules/opencv/JZModelManager.cpp
+	modules/opencv/JZOpencvNode.h
+    modules/opencv/JZOpencvNode.cpp
+	
+	#model
+    modules/model/JZYolo.h
+    modules/model/JZYolo.cpp
+    modules/model/JZYoloView.h
+    modules/model/JZYoloView.cpp
+    modules/model/JZModel.h
+    modules/model/JZModel.cpp
+    modules/model/JZModelNode.cpp
+	modules/model/JZModelNode.h
+	modules/model/JZModelManager.h
+	modules/model/JZModelManager.cpp
+	modules/model/JZModuleModel.h
+    modules/model/JZModuleModel.cpp    
+
     #camera
     modules/camera/JZModuleCamera.h
     modules/camera/JZModuleCamera.cpp
@@ -402,9 +407,12 @@ set(JZNodeEditor_SOURCES
     #opencv    
     modules/opencv/JZModuleOpencvEditor.cpp
     modules/opencv/JZModuleOpencvEditor.h         
+	
+	#model
     modules/opencv/JZModuleModelEditor.cpp
     modules/opencv/JZModuleModelEditor.h
-    #camera    
+    
+	#camera    
     modules/camera/JZModuleCameraEditor.h
     modules/camera/JZModuleCameraEditor.cpp       
         

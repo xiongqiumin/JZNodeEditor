@@ -14,9 +14,6 @@ public:
     virtual bool open(QString path) override;
     virtual void close() override;
 
-    virtual QString config() override;
-    virtual bool setConfig(const QString &config) override;
-
     virtual void start() override;
     virtual void startOnce() override;
     virtual void stop() override;

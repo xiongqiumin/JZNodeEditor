@@ -407,7 +407,7 @@ bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &er
         error = "输入输出不能是同一节点";
         return false;
     }
-    
+   
     JZNodePin *pin_from = node_from->pin(from.pinId);
     JZNodePin *pin_to = node_to->pin(to.pinId);
     Q_ASSERT(pin_from && pin_to);
@@ -426,6 +426,11 @@ bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &er
             error = "数据节点只能连接数据";
         else
             error = "流程节点只能连接流程";
+        return false;
+    }
+    if (pin_to->isConstValue())
+    {
+        error = "常量无法连接输入";
         return false;
     }
 
@@ -465,11 +470,6 @@ bool JZScriptItem::checkConnectNormal(JZNodeGemo from, JZNodeGemo to,QString &er
             error = "已有数据输入,只能连接一个输入";
             return false;
         }
-    }
-    if(!pin_from->isConstValue() && pin_to->isConstValue())
-    {
-        error = "输入需为常量";
-        return false;
     }
     if (!node_to->canLink(from.nodeId, from.pinId, error))
         return false;

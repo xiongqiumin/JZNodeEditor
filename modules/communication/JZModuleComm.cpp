@@ -56,6 +56,18 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZCommModbusRead", true, jzbind::createFuncion(JZCommModbusRead));
     func_inst->registCFunction("JZCommModbusWrite", true, jzbind::createFuncion(JZCommModbusWrite));
 
+    func_inst->registCFunction("JZCommTcpRead", true, jzbind::createFuncion(JZCommTcpRead));
+    func_inst->registCFunction("JZCommTcpWrite", true, jzbind::createFuncion(JZCommTcpWrite));
+    func_inst->registCFunction("JZCommTcpReadText", true, jzbind::createFuncion(JZCommTcpReadText));
+    func_inst->registCFunction("JZCommTcpWriteText", true, jzbind::createFuncion(JZCommTcpWriteText));
+    func_inst->registCFunction("JZCommUdpRead", true, jzbind::createFuncion(JZCommUdpRead));
+    func_inst->registCFunction("JZCommUdpWrite", true, jzbind::createFuncion(JZCommUdpWrite));
+
+    func_inst->registCFunction("JZCommSerialRead", true, jzbind::createFuncion(JZCommSerialRead));
+    func_inst->registCFunction("JZCommSerialWrite", true, jzbind::createFuncion(JZCommSerialWrite));
+    func_inst->registCFunction("JZCommSerialReadText", true, jzbind::createFuncion(JZCommSerialReadText));
+    func_inst->registCFunction("JZCommSerialWriteText", true, jzbind::createFuncion(JZCommSerialWriteText));
+
     //node
     env->nodeFactory()->registNode(Node_modbusWatch, createJZNode<JZNodeModbusWatchEvent>);
 
@@ -64,10 +76,14 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     env->nodeFactory()->registNode(Node_ModbusWrite,createJZNode<JZNodeModbusWrite>);
     env->nodeFactory()->registNode(Node_TcpClientRead, createJZNode<JZNodeTcpClientRead>);
     env->nodeFactory()->registNode(Node_TcpClientWrite, createJZNode<JZNodeTcpClientWrite>);
+    env->nodeFactory()->registNode(Node_TcpClientReadText, createJZNode<JZNodeTcpClientReadText>);
+    env->nodeFactory()->registNode(Node_TcpClientWriteText, createJZNode<JZNodeSerialWriteText>);
     env->nodeFactory()->registNode(Node_UdpRead, createJZNode<JZNodeUdpRead>);
     env->nodeFactory()->registNode(Node_UdpWrite, createJZNode<JZNodeUdpWrite>);
     env->nodeFactory()->registNode(Node_SerialRead, createJZNode<JZNodeSerialRead>);
     env->nodeFactory()->registNode(Node_SerialWrite, createJZNode<JZNodeSerialWrite>);
+    env->nodeFactory()->registNode(Node_SerialReadText, createJZNode<JZNodeSerialReadText>);
+    env->nodeFactory()->registNode(Node_SerialWriteText, createJZNode<JZNodeSerialWriteText>);
 }
 
 void JZModuleComm::unregist(JZScriptEnvironment *env)

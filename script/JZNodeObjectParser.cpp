@@ -385,43 +385,6 @@ JZNodeObject *JZNodeObjectParser::readObject()
         ptr.releaseOwner();
         return ptr.object();
     }
-    else
-    {
-        auto map = readMap("string", "any");
-        if (!map)
-            return nullptr;
-                
-        JZNodeObjectPointer map_holder(map,true);
-        
-        auto obj = inst->create(meta->id);
-        JZNodeObjectPointer ptr(obj, true);
-
-        mapForeach(map, [this, obj, env](QVariant key, QVariant value)->bool
-            {
-                QString param_name = key.toString();
-                auto param_def = obj->meta()->param(param_name);
-                if (!param_def)
-                {
-                    makeError("no param " + param_name);
-                    return false;
-                }
-
-                int param_type = env->nameToType(param_def->type);
-                if (!checkVariable(value, param_type))
-                    return false;
-
-                obj->setParam(param_name, env->convertTo(value, param_type));
-                return true;
-            });
-
-        if (m_error.isEmpty())
-        {
-            ptr.releaseOwner();
-            return obj;
-        }
-        else
-            return nullptr;
-    }
 
     return nullptr;
 }
@@ -659,19 +622,6 @@ QString JZNodeObjectFormat::objectToString(JZNodeObject *obj)
             JZScriptInvoke(func_def->fullName(), in, out);
             text += out[0].toString();
         }
-        else
-        {
-            auto params = obj->paramList();
-            for (int i = 0; i < params.size(); i++)
-            {
-                QString name = "\"" + params[i] + "\"";
-                QString value = variantToString(obj->param(params[i]));
-                text += name + ":" + value;
-                if (i != params.size() - 1)
-                    text += ",";
-            }
-        }
-        text += "}";
     }
 */
     return text;

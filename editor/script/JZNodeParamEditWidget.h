@@ -20,6 +20,25 @@ protected:
     QLineEdit *m_lineEdit;
 };
 
+class JZParamEdit
+{
+public:
+    enum{
+        Edit_none,
+        Edit_normal,
+        Edit_enum,
+        Edit_flag,
+        Edit_file,
+    };
+
+    JZParamEdit();
+
+    int type;
+    QString fileFilter;
+    QStringList enumList;
+};
+
+
 //JZNodeParamValueWidget
 class JZNodeParamValueWidget : public QWidget
 {
@@ -28,7 +47,8 @@ class JZNodeParamValueWidget : public QWidget
 public:
     JZNodeParamValueWidget();
 
-    void initWidget(int type);
+    void init(const JZParamEdit &edit);
+
     void setValue(QString type);
     QString value();
 
@@ -38,7 +58,7 @@ signals:
 protected:
     bool eventFilter(QObject *object, QEvent *event);
 
-    QLineEdit *m_lineEdit;
+    QWidget *m_editWidget;
 };
 
 

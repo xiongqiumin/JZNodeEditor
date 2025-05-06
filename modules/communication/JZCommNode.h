@@ -11,10 +11,14 @@ enum {
     Node_ModbusWrite,
     Node_TcpClientRead,
     Node_TcpClientWrite,
+    Node_TcpClientReadText,
+    Node_TcpClientWriteText,
     Node_UdpRead,
     Node_UdpWrite,
     Node_SerialRead,
     Node_SerialWrite,
+    Node_SerialReadText,
+    Node_SerialWriteText,
 
     Node_modbusWatch,
     Node_modbusConfig,
@@ -48,7 +52,12 @@ public:
     QString name();
 
 protected:
-    bool checkCommManager(JZNodeCompiler *c, QString &error);
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+    QList<JZNodeIRParam> toParamId(QList<JZNodeIRParam> ir_list);
+    
+    QString m_function;
+    QList<JZNodeIRParam> m_input;
+    QList<JZNodeIRParam> m_output;
 };
 
 //JZNodeModbusRead
@@ -79,7 +88,7 @@ protected:
     virtual bool updateNode(QString& error) override;
 
     QString m_modbus;
-    int m_function;
+    int m_modbusFunc;
     QString m_dataType;
 };
 
@@ -110,7 +119,7 @@ public:
 protected:
     bool updateNode(QString& error);
 
-    int m_function;
+    int m_modbusFunc;
     QString m_dataType;
 };
 
@@ -120,11 +129,6 @@ class JZNodeTcpClientRead : public JZCommNode
 public:
     JZNodeTcpClientRead();
     ~JZNodeTcpClientRead();
-
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
 
 protected:
 };
@@ -136,10 +140,26 @@ public:
     JZNodeTcpClientWrite();
     ~JZNodeTcpClientWrite();
 
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+protected:
 
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
+};
+
+//JZNodeTcpClientReadText
+class JZNodeTcpClientReadText : public JZCommNode
+{
+public:
+    JZNodeTcpClientReadText();
+    ~JZNodeTcpClientReadText();
+
+protected:
+};
+
+//JZNodeTcpClientWriteText
+class JZNodeTcpClientWriteText : public JZCommNode
+{
+public:
+    JZNodeTcpClientWriteText();
+    ~JZNodeTcpClientWriteText();
 
 protected:
 
@@ -152,11 +172,6 @@ public:
     JZNodeUdpRead();
     ~JZNodeUdpRead();
 
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
-
 protected:
 
 };
@@ -167,11 +182,6 @@ class JZNodeUdpWrite : public JZCommNode
 public:
     JZNodeUdpWrite();
     ~JZNodeUdpWrite();
-
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
 
 protected:
 
@@ -184,11 +194,6 @@ public:
     JZNodeSerialRead();
     ~JZNodeSerialRead();
 
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
-
 protected:
 
 };
@@ -200,11 +205,30 @@ public:
     JZNodeSerialWrite();
     ~JZNodeSerialWrite();
 
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+protected:
 
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
+};
 
+
+//JZNodeSerialReadText
+class JZNodeSerialReadText : public JZCommNode
+{
+public:
+    JZNodeSerialReadText();
+    ~JZNodeSerialReadText();
+
+protected:
+
+};
+
+//JZNodeSerialWriteText
+class JZNodeSerialWriteText : public JZCommNode
+{
+public:
+    JZNodeSerialWriteText();
+    ~JZNodeSerialWriteText();
+
+ 
 protected:
 
 };

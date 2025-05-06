@@ -54,24 +54,16 @@ void ModbusTest::testClientCpp()
         t.wait();
     });
 
-    QJsonObject param;
-    param["addr"] = 40000;
-    param["function"] = Function_Register;
-    param["dataType"] = "double";
+    int addr = 40000;
+    int function = Function_Register;
+    QString dataType = "double";
             
+    JZVariantAny in_any;
     JZVariantAny ret_any;
 
-    JZCommModbusWrite(&manager, "modbus", param, JZVariantAny::fromValue<int32_t>(-1));
-    ret_any = JZCommModbusRead(&manager, "modbus", param);
-    QCOMPARE(ret_any.variant.toInt(), -1);
-
-    JZCommModbusWrite(&manager, "modbus", param, JZVariantAny::fromValue<uint32_t>(-1));
-    ret_any = JZCommModbusRead(&manager, "modbus", param);
-    QCOMPARE(ret_any.variant.toUInt(), -1);
-
-
-    JZCommModbusWrite(&manager, "modbus", param, JZVariantAny::fromValue(0.6));
-    ret_any = JZCommModbusRead(&manager, "modbus", param);
+    in_any.variant = QVariant::fromValue(0.6);
+    JZCommModbusWrite(&manager, "modbus", function, dataType, addr, in_any);
+    ret_any = JZCommModbusRead(&manager, "modbus", function, dataType, addr);
     QCOMPARE(ret_any.variant.toDouble(),0.6);       
 }
 

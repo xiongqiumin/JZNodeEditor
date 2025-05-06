@@ -22,7 +22,7 @@ protected:
     QString m_name;
     QStringList m_classList;
     QStringList m_functionList;
-    QStringList m_depends;    
+    QStringList m_depends;
 };
 
 class JZModuleManager

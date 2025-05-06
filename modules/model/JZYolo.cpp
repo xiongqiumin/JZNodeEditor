@@ -2,7 +2,7 @@
 #include <QJsonObject>
 #include <QDebug>
 #include "JZYolo.h"
-#include "CvToQt.h"
+#include "../opencv/CvToQt.h"
 
 //JZYolo
 static const char *yolo_json = R"(

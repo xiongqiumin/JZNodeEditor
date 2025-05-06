@@ -860,7 +860,7 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
                 in << irId(c->paramId(node->id(), node->paramIn(0)));
                 in << irId(c->paramId(node->id(), node->paramIn(1)));
                 in << irId(id);
-                c->addCall(func_info.className + ".set", in, out);
+                c->addCall(func_info.className + "::set", in, out);
             }
         }
         return swap_none;
@@ -890,7 +890,6 @@ bool JZNodeSwap::compiler(JZNodeCompiler *c, QString &error)
     auto in2_id = c->paramId(m_id, in2);
     setType(in1_type, in1_node, in2_id);
     setType(in2_type, in2_node, in1_id);
-
-
+    
     return true;
 }

@@ -2,8 +2,11 @@
 #define JZNODE_PROPERTY_EDITOR_H_
 
 #include <QWidget>
+#include <functional>
 #include "JZNode.h"
 #include "3rd/JZCommon/jzWidgets/JZPropertyBrowser.h"
+#include "JZNodeGraphItem.h"
+#include "JZNodeParamEditWidget.h"
 
 enum {
     PropEditor_varName,
@@ -19,9 +22,9 @@ public:
     JZNodePropertyEditor(QWidget *widget = nullptr);
     ~JZNodePropertyEditor();
 
-    JZNode *node();
+    void setView(JZNodeView *view);
 
-    void setView(JZNodeView  *view);
+    JZNode *node();
     void setNode(JZNode *node);    
     void updateNode();    
 
@@ -36,16 +39,32 @@ protected slots:
     void onValueChanged(JZProperty *pin, const QVariant &value);
 
 protected:
+    struct PropTrans{
+        std::function<JZProperty*(QString name)> creator;
+        std::function<QVariant(const QString &)> fromString;
+        std::function<QString(const QVariant &)> toString;
+    };
+
     void clear();
+    void initTransMap();
     void addPropList(QString name,const QList<int> &list);    
-    JZProperty *createPropValue(JZNodePin *pin);
+
+    JZProperty *createPropValue(JZNodeGraphItem::Block *block);
+    void setPropValue(JZProperty *pin,const QString &value);
+    QString propValue(JZProperty *pin);
+
+    
+    JZNodeView  *m_view;
 
     JZNode *m_node;    
+    JZNodeGraphItem *m_item;
 
     JZPropertyBrowser *m_tree;
-    QMap<int, JZProperty*> m_propMap;
-    JZNodeView  *m_view;
     bool m_editing;
+    QMap<int, JZProperty*> m_propMap;
+    QMap<JZProperty*,QString> m_propTrans;
+    
+    QMap<QString,PropTrans> m_transMap;
 };
 
 #endif

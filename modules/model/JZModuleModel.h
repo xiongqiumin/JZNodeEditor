@@ -1,15 +1,15 @@
-﻿#ifndef JZ_MODULE_OPENCV_H_
-#define JZ_MODULE_OPENCV_H_
+﻿#ifndef JZ_MODULE_MODEL_H_
+#define JZ_MODULE_MODEL_H_
 
 #include "JZModule.h"
 #include "../JZModuleDefine.h"
-#include "CvMatAndQImage.h"
+#include "JZModelNode.h"
 
-class JZModuleOpencv: public JZModule
+class JZModuleModel: public JZModule
 {
 public:
-    JZModuleOpencv();
-    virtual ~JZModuleOpencv();
+    JZModuleModel();
+    virtual ~JZModuleModel();
 
     virtual void regist(JZScriptEnvironment *env) override;
     virtual void unregist(JZScriptEnvironment *env) override;        

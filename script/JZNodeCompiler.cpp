@@ -980,14 +980,20 @@ QString JZNodeCompiler::pinName(JZNodePin *pin)
 
 void JZNodeCompiler::setOutPinTypeDefault(JZNode *node)
 {    
+    QList<int> ingore = { Type_auto , Type_arg , Type_argPointer , Type_args };
+
     auto env = project()->environment();
     auto list = node->paramOutList();
     for (int i = 0; i < list.size(); i++)
     {
         int pin_id = list[i];
         auto pin = node->pin(pin_id);
-        if(pin->dataType().size() == 1)
-            setPinType(node->id(), pin_id, env->nameToType(pin->dataType()[0]));
+        if (pin->dataType().size() == 1)
+        {
+            int data_type = env->nameToType(pin->dataType()[0]);
+            if(!ingore.contains(data_type))
+                setPinType(node->id(), pin_id, data_type);
+        }
     }
 }
 

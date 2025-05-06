@@ -670,12 +670,12 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
         text_opt.setAlignment(Qt::AlignVCenter | opt);
         painter->drawText(block->nameRect, block->name, text_opt);
     }
-    if (block->isShowValue && pin && pin->isParam())
+    if (block->isShowValue)
     {
         auto opt = block->isInput ? Qt::AlignLeft : Qt::AlignRight;
         text_opt.setAlignment(Qt::AlignVCenter | opt);
         painter->fillRect(block->valueRect, Qt::white);
-        painter->drawText(block->valueRect, pin->value(), text_opt);
+        painter->drawText(block->valueRect, pinValue(prop_id), text_opt);
     }
 }
 

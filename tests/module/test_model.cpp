@@ -1,5 +1,6 @@
 #include "test_model.h"
 #include "modules/opencv/JZModuleOpencv.h"
+#include "modules/model/JZModuleModel.h"
 
 //ModelTest
 ModelTest::ModelTest()
@@ -20,7 +21,7 @@ void ModelTest::testYolo()
     cam_config.modelPath = "C:/Users/xiong/Desktop/demo/image/a.onnx";
 
     JZModelManagerConfig config;
-    config.models << cam_config;
+    config.modelList << cam_config;
 
     JZNodeModelInit *node_init = new JZNodeModelInit();
     node_init->setConfig(config);

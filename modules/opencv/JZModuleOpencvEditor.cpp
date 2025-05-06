@@ -1,25 +1,125 @@
-﻿#include "JZModuleOpencvEditor.h"
+﻿#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include "JZModuleOpencvEditor.h"
 #include "JZNodeParamDisplayWidget.h"
+#include "CvToQt.h"
+using namespace cv;
 
-JZModuleOpencvEditor::JZModuleOpencvEditor()
+//JZOpencvTemplateDialog
+JZOpencvTemplateDialog::JZOpencvTemplateDialog(QWidget *parent)
 {
+    m_label = new JZImageLabel();
+    m_tempLabel = new JZImageLabel();
+    m_propEditor = new JZPropertyEditor();
+
+    QWidget *w = new QWidget();
+    
+    QHBoxLayout *main_layout = new QHBoxLayout();
+    main_layout->setContentsMargins(0,0,0,0);
+    main_layout->addWidget(m_label);
+
+    QVBoxLayout *r_layout = new QVBoxLayout();
+    r_layout->setContentsMargins(0,0,0,0);
+    r_layout->addWidget(new QLabel("模板"));
+    r_layout->addWidget(m_tempLabel);
+    r_layout->addWidget(new QLabel("匹配参数"));
+    r_layout->addWidget(m_propEditor);
+    main_layout->addLayout(r_layout);
+
+    QPushButton *loadImageButton = m_btnBox->addButton("Load Image",QDialogButtonBox::ActionRole);
+    QPushButton *loadTemplateButton = m_btnBox->addButton("Load Template",QDialogButtonBox::ActionRole);
+    QPushButton *matchButton = m_btnBox->addButton("Match",QDialogButtonBox::ActionRole);
+
+    connect(loadImageButton, &QPushButton::clicked, this, &TemplateMatchingDialog::on_loadImageButton_clicked);
+    connect(loadTemplateButton, &QPushButton::clicked, this, &TemplateMatchingDialog::on_loadTemplateButton_clicked);
+    connect(matchButton, &QPushButton::clicked, this, &TemplateMatchingDialog::on_matchButton_clicked);
+
+    auto prop_group = m_propEditor->addAction("属性");
+    auto pin = m_propEditor->addProp("置信度",m_config.confidence, prop_group);
+    pin->setRange(0,1);
+
+    w->setLayout(main_layout);
+    setCentralWidget(w);
 }
 
-JZModuleOpencvEditor::~JZModuleOpencvEditor()
+void JZOpencvTemplateDialog::setConfig(JZTemplateConfig cfg)
 {
+    m_config = cfg;
+    m_propEditor->dataToUi();
 }
 
-/*
-void JZModuleOpencvEditor::regist(JZScriptEnvironment *env)
+JZTemplateConfig JZOpencvTemplateDialog::getConfig() const
 {
-    auto d_inst = JZNodeEditorManager::instance();
-
-    JZNodeParamDelegate d_mat;
-    d_mat.editType = Type_imageEdit;
-    d_mat.createDisplay = CreateParamDisplayWidget<JZNodeImageDisplayWidget>;
-    d_mat.createParam = createMat;    
-    d_mat.pack = matPack;
-    d_mat.unpack = matUnpack;
-    d_inst->registDelegate(cls_mat.id(), d_mat);
+    m_propEditor->uiToData();
+    return m_config;
 }
-*/
+
+void JZOpencvTemplateDialog::on_loadImageButton_clicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Open Image", "", "Image Files (*.png *.jpg *.bmp)");
+    if (!filePath.isEmpty()) {
+        m_image = cv::imread(filePath.toStdString());
+        QImage image = QtOcv::mat2Image(m_image);
+        m_label->setImage(image);
+    }
+}
+
+void JZOpencvTemplateDialog::on_loadTemplateButton_clicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Open Template", "", "Image Files (*.png *.jpg *.bmp)");
+    if (!filePath.isEmpty()) {
+        m_templ = cv::imread(filePath.toStdString());
+        QImage image = QtOcv::mat2Image(m_templ);
+        m_tempLabel->setImage(image);
+
+        m_config.templatePath = filePath;
+    }
+}
+
+void JZOpencvTemplateDialog::on_matchButton_clicked()
+{
+    if (m_image.empty() || m_templ.empty()) {
+        return;
+    }
+}    
+
+//JZOpencvTemplateItem    
+void JZOpencvTemplateItem::updatePin()
+{
+    JZNodeGraphItem::updatePin();
+
+    if (!m_setting)
+    {
+        QPushButton *btnSet = new QPushButton("Setting");
+        btnSet->connect(btnSet, &QPushButton::clicked, [this] {
+            this->onSetClicked();
+        });
+        m_setting = createWidgetBlock(btnSet, true);
+        m_setting->pri = 8;
+    }
+}
+
+void JZOpencvTemplateItem::onSetClicked()
+{
+    JZNodeTemplateMatch *node = (JZNodeTemplateMatch *)m_node;
+    JZOpencvTemplateDialog dlg(editor());
+    dlg.setConfig(node->config());
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    QByteArray oldValue = saveNode();
+    node->setConfig(dlg.config());
+    QByteArray newValue = saveNode();
+    if (newValue == oldValue)
+        return;
+
+    notifyPropChanged(oldValue);
+}
+
+//JZModuleModelEditorInit
+void JZModuleOpencvEditorInit()
+{
+    auto inst = editorManager()->instance();
+    
+    inst->registLogicNode(Node_OpencvTemplate, "模型", CreateJZNodeGraphItem<JZOpencvTemplateItem>);
+}

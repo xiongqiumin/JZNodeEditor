@@ -7,12 +7,14 @@
 #include "JZNodeBaseItem.h"
 #include "JZNode.h"
 #include "JZScriptEnvironment.h"
+#include "JZNodeParamEditWidget.h"
 
 class JZNodeLineItem;
 class JZNodeGraphItem : public JZNodeBaseItem
 {
 public:
     enum IconType { Flow, Circle, Square, Grid, RoundSquare, Diamond };
+
     struct Block
     {
         Block(JZNodeGraphItem *item);
@@ -31,8 +33,10 @@ public:
         bool isShowName;
         bool isShowValue;
         bool isEditable;
+        
         IconType iconType;
         QString name;
+        JZParamEdit edit;
 
         QRect iconRect;
         QRect nameRect;

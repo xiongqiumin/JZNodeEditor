@@ -4,47 +4,16 @@
 #include "JZNodeBind.h"
 #include "CvMatAndQImage.h"
 #include "JZScriptEnvironment.h"
-#include "JZYolo.h"
-#include "JZYoloView.h"
-#include "JZModelNode.h"
+#include "JZOpencvNode.h"
 #include "JZNodeFactory.h"
 #include "JZContainer.h"
 
 using namespace cv;
 
-QVariant createMat(JZScriptEnvironment *env,const QString &value)
-{
-    Mat *mat = new Mat();
-    *mat = imread(qPrintable(value));
-    return env->objectManager()->objectReferenceVariant(mat, true);
-}
-
-QByteArray matPack(JZScriptEnvironment *env, const QVariant &value)
-{
-    Mat *mat = env->objectManager()->objectCast<Mat>(value);
-    
-    QImage image = QtOcv::mat2Image(*mat);
-    QByteArray ba;
-    QBuffer buffer(&ba);
-    buffer.open(QIODevice::WriteOnly);
-    image.save(&buffer, "PNG");
-    return ba;
-}
-
-QVariant matUnpack(JZScriptEnvironment *env, const QByteArray &buffer)
-{
-    QImage *image = new QImage();
-    image->loadFromData(buffer);
-    return env->objectManager()->objectReferenceVariant(image, true);
-}
-
 //JZModuleOpencv
 JZModuleOpencv::JZModuleOpencv()
 {        
     m_name = "opencv";
-
-    m_classList << "Mat";
-    m_functionList << "imread" << "threshold" << "medianBlur";
 }
 
 JZModuleOpencv::~JZModuleOpencv()
@@ -90,48 +59,10 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         return out;
     }));        
 
-    jzbind::ClassBind<JZModel> cls_model(cls_id++, "JZModel");
-    cls_model.def("loadNet", true, &JZModel::loadNet);
-    cls_model.regist();
-
-    jzbind::ClassBind<JZModelManager> cls_model_manger(cls_id++, "JZModelManager");
-    cls_model_manger.regist();
-
-    jzbind::ClassBind<JZYoloResult> cls_yolo_ret(cls_id++, "JZYoloResult");
-    cls_yolo_ret.regist();
-
-    registList<JZYoloResult>(env, cls_id++);
-
-    jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "JZYolo", "JZModel");
-    cls_yolo.def("forward", true, &JZYolo::forward);
-    cls_yolo.regist();
-
-    int model_ptr_id = JZNodeType::pointerType(cls_model.id());
-    int yolo_ptr_id = JZNodeType::pointerType(cls_yolo.id());
-    env->registConvertExplicitly(model_ptr_id, yolo_ptr_id, JZObjectCastDown<JZYolo,JZModel>);
-
-    jzbind::ClassBind<JZYoloView> cls_yolo_view(cls_id++, "JZYoloView", "QWidget");
-    cls_yolo_view.def("setYoloResult", true, &JZYoloView::setYoloResult);
-    cls_yolo_view.regist();
-    
-    func_inst->registCFunction("JZModelInit", "true", jzbind::createFuncion(JZModelInit));
-    func_inst->registCFunction("JZModelGet", "false", jzbind::createFuncion(JZModelGet, CFunction::Reference));
-
-    env->nodeFactory()->registNode(Node_ModelInit, createJZNode<JZNodeModelInit>);
-    env->nodeFactory()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);    
+    env->nodeFactory()->registNode(Node_OpencvInit, createJZNode<JZNodeOpencvInit>);
+    env->nodeFactory()->registNode(Node_OpencvTemplate, createJZNode<JZNodeTemplateMatch>);    
 }
 
 void JZModuleOpencv::unregist(JZScriptEnvironment *env)
 {
-    auto func_inst = env->functionManager();
-    auto obj_inst = env->objectManager();
-
-    for(auto cls_name : m_classList)
-        obj_inst->unregist(obj_inst->meta(cls_name)->id);
-
-    for (auto func_id : m_functionList)
-        func_inst->unregistFunction(func_id);
-
-    m_classList.clear();
-    m_functionList.clear();
 }

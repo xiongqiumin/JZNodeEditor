@@ -2,6 +2,7 @@
 #define JZBASE_DIALOG_H_
 
 #include <QDialog>
+#include <QDialogButtonBox>
 #include "UiCommon.h"
 
 class JZBaseDialog : public QDialog
@@ -22,7 +23,7 @@ protected:
     void showButton(int btn, bool show);        
 
     QWidget *m_mainWidget;	
-    QList<QPushButton*> m_buttons;
+    QDialogButtonBox *m_btnBox;
 };
 
 #endif

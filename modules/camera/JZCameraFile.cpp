@@ -72,16 +72,6 @@ void JZCameraFile::stop()
     m_timer->stop();
 }
 
-QString JZCameraFile::config()
-{
-    return QString();
-}
-
-bool JZCameraFile::setConfig(const QString &config)
-{
-    return true;
-}
-
 cv::Mat JZCameraFile::readFrame()
 {
     QString path = m_fileList[m_fileIndex];

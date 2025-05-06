@@ -455,6 +455,7 @@ void JZNodeView::editPinValue(int node_id, int pin_id)
     m_editProxy->setGeometry(rect);
     m_scene->addItem(m_editProxy);
 
+    widget->init(block->edit);
     widget->setValue(item->pinValue(pin_id));
     widget->setFocus();
 }

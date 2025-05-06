@@ -1,7 +1,6 @@
 ﻿#include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
-#include <QDialogButtonBox>
 #include <QKeyEvent>
 #include "JZBaseDialog.h"
 
@@ -13,14 +12,14 @@ JZBaseDialog::JZBaseDialog(QWidget *parent)
 
     m_mainWidget = new QWidget();
     
-    QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    m_btnBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     
-    connect(box, &QDialogButtonBox::accepted, this, &JZBaseDialog::accept);
-    connect(box, &QDialogButtonBox::rejected, this, &JZBaseDialog::reject);
+    connect(m_btnBox, &QDialogButtonBox::accepted, this, &JZBaseDialog::accept);
+    connect(m_btnBox, &QDialogButtonBox::rejected, this, &JZBaseDialog::reject);
 
     this->setLayout(verticalLayout);
     verticalLayout->addWidget(m_mainWidget);
-    verticalLayout->addWidget(box);
+    verticalLayout->addWidget(m_btnBox);
 }
 
 JZBaseDialog::~JZBaseDialog()
