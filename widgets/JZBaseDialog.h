@@ -19,8 +19,7 @@ protected:
         Button_Cancel,
     };	
     virtual void keyPressEvent(QKeyEvent *event) override;
-    void setCentralWidget(QWidget *w);
-    void showButton(int btn, bool show);        
+    void setCentralWidget(QWidget *w);         
 
     QWidget *m_mainWidget;	
     QDialogButtonBox *m_btnBox;

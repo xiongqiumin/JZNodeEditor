@@ -302,6 +302,11 @@ QList<int> JZScriptItem::nodeList()
     return m_nodes.keys();
 }
 
+int JZScriptItem::nodeCount()
+{
+    return m_nodes.size();
+}
+
 QList<JZNode*> JZScriptItem::findNodeByType(int type)
 {
     QList<JZNode*> list;

@@ -120,6 +120,12 @@ void JZModelInitDialog::updateConfig()
 }
 
 //JZModelInitItem    
+JZModelInitItem::JZModelInitItem(JZNode *node)
+    :JZNodeGraphItem(node)
+{
+
+}
+
 void JZModelInitItem::updatePin()
 {
     JZNodeGraphItem::updatePin();

@@ -10,7 +10,7 @@
 #include "JZNodeDisplayItem.h"
 #include "modules/camera/JZModuleCameraEditor.h"
 #include "modules/communication/JZModuleCommEditor.h"
-#include "modules/opencv/JZModuleModelEditor.h"
+#include "modules/model/JZModuleModelEditor.h"
 
 JZNodeParamDelegate::JZNodeParamDelegate()
 {
@@ -80,9 +80,13 @@ bool JZNodeEditorManager::hasNodeItemCreator(int node_type)
     return m_nodeItemMap.contains(node_type);
 }
 
-CreateJZNodeGraphItemFunc JZNodeEditorManager::nodeItemCreator(int node_type)
+JZNodeGraphItem* JZNodeEditorManager::createNodeItem(JZNode* node)
 {
-    return m_nodeItemMap.value(node_type,nullptr);
+    int node_type = node->type();
+    if (m_nodeItemMap.contains(node_type))
+        return m_nodeItemMap[node_type](node);
+    else
+        return new JZNodeGraphItem(node);
 }
 
 void JZNodeEditorManager::setUserRegist(bool flag)
@@ -97,6 +101,11 @@ void JZNodeEditorManager::clearUserRegist()
         m_delegateMap.remove(d);
     
     m_userDelegateList.clear();
+}
+
+void JZNodeEditorManager::addModule(JZModuleEditor *module)
+{
+    m_editorModules.push_back(module);
 }
 
 void JZNodeEditorManager::registLogicNode(int node_type,QString path, CreateJZNodeGraphItemFunc func)
@@ -142,6 +151,7 @@ void JZNodeEditorInit()
     auto inst = JZNodeEditorManager::instance();
 
     inst->registNodeItemCreator(Node_for, CreateJZNodeGraphItem<JZNodeForItem>);
+    inst->registNodeItemCreator(Node_foreach, CreateJZNodeGraphItem<JZNodeForeachItem>);
     inst->registNodeItemCreator(Node_if, CreateJZNodeGraphItem<JZNodeIfItem>);
     inst->registNodeItemCreator(Node_switch, CreateJZNodeGraphItem<JZNodeSwitchItem>);
 
@@ -150,7 +160,6 @@ void JZNodeEditorInit()
         inst->registNodeItemCreator(i, CreateJZNodeGraphItem<JZNodeOperatorItem>);
     }
     inst->registNodeItemCreator(Node_expr, CreateJZNodeGraphItem<JZNodeExpressionItem>);
-
 
     inst->registNodeItemCreator(Node_function, CreateJZNodeGraphItem<JZNodeFunctionItem>);
 

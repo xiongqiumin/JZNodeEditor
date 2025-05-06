@@ -5,8 +5,7 @@
 #include "JZCommNode.h"
 
 class JZModuleComm: public JZModule
-{        
-    
+{          
 public:
     JZModuleComm();
     virtual ~JZModuleComm();

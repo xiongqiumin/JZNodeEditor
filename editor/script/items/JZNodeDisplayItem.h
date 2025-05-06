@@ -7,7 +7,7 @@
 class JZNodeDisplayItem : public JZNodeGraphItem
 {
 public:
-    JZNodeDisplayItem();
+    JZNodeDisplayItem(JZNode *node);
 
     void setValue(int pin,QVariantPtr *ref);
 

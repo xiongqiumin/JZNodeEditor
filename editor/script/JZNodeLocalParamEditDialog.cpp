@@ -60,8 +60,7 @@ void JZNodeLocalParamEditDialog::setParam(JZParamDefine define)
     auto env = editorEnvironment();
 
     m_lineName->setText(define.name);
-    m_typeWidget->setType(define.type);    
-    m_valueWidget->initWidget(env->nameToType(define.type));
+    m_typeWidget->setType(define.type);
     m_valueWidget->setValue(define.value);
 }
 
@@ -73,7 +72,9 @@ JZParamDefine JZNodeLocalParamEditDialog::param()
 void JZNodeLocalParamEditDialog::onTypeChanged()
 {
     int data_type = editorEnvironment()->nameToType(m_typeWidget->type());
-    m_valueWidget->initWidget(data_type);
+
+    JZParamEditInfo info;
+    m_valueWidget->init(info);
 }
 
 void JZNodeLocalParamEditDialog::onBtnOkClicked()

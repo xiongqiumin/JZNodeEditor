@@ -156,6 +156,16 @@ set(JZNodeCore_SOURCES
     modules/communication/JZCommNode.h
     modules/communication/JZCommManager.cpp
     modules/communication/JZCommManager.h
+    modules/communication/JZCommPack.cpp
+    modules/communication/JZCommPack.h
+    modules/communication/net/JZTcpClient.cpp
+    modules/communication/net/JZTcpClient.h
+    modules/communication/net/JZTcpServer.cpp
+    modules/communication/net/JZTcpServer.h
+    modules/communication/net/JZUdpSocket.cpp
+    modules/communication/net/JZUdpSocket.h
+    modules/communication/serialPort/JZSerialPort.cpp
+    modules/communication/serialPort/JZSerialPort.h
     
     #opencv
     modules/opencv/JZModuleOpencv.h
@@ -409,8 +419,8 @@ set(JZNodeEditor_SOURCES
     modules/opencv/JZModuleOpencvEditor.h         
 	
 	#model
-    modules/opencv/JZModuleModelEditor.cpp
-    modules/opencv/JZModuleModelEditor.h
+    modules/model/JZModuleModelEditor.cpp
+    modules/model/JZModuleModelEditor.h
     
 	#camera    
     modules/camera/JZModuleCameraEditor.h

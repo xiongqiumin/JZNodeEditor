@@ -339,39 +339,6 @@ bool JZCameraHik::CommandExecute(QString command)
     return (MV_OK == nRet);
 }
 
-QString JZCameraHik::config()
-{
-    if (!m_hDevHandle)
-        return QString();
-
-    QJsonObject obj;
-    double ExposureTime = GetExposureTime();
-    double Gain = GetGain();
-    obj["ExposureTime"] = ExposureTime;
-    obj["Gain"] = Gain;
-
-    return QString::fromUtf8(QJsonDocument(obj).toJson());
-}
-
-bool JZCameraHik::setConfig(const QString &config)
-{
-    if (!m_hDevHandle)
-        return false;
-
-    QJsonParseError parse_error;
-    QJsonDocument doc = QJsonDocument::fromJson(config.toUtf8(), &parse_error);
-    if (parse_error.error != QJsonParseError::NoError)    
-        return false;
-    
-    QJsonObject obj = doc.object();
-    double ExposureTime = obj["ExposureTime"].toDouble();
-    double Gain = obj["Gain"].toDouble();
-    SetExposureTime(ExposureTime);
-    SetGain(Gain);
-        
-    return true;
-}
-
 double JZCameraHik::GetExposureTime()  // en:Set Exposure Time
 {
     MVCC_FLOATVALUE stFloatValue = { 0 };

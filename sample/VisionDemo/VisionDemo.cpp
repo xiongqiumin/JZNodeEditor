@@ -12,7 +12,7 @@
 #include "JZContainer.h"
 #include "modules/camera/JZCameraNode.h"
 #include "modules/communication/JZCommNode.h"
-#include "modules/opencv/JZModelNode.h"
+#include "modules/model/JZModelNode.h"
 
 SampleVisionDemo::SampleVisionDemo()
 {        

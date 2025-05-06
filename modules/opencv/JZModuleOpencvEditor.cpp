@@ -1,8 +1,13 @@
 ﻿#include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QFileDialog>
 #include "JZModuleOpencvEditor.h"
 #include "JZNodeParamDisplayWidget.h"
 #include "CvToQt.h"
+#include "JZNodeView.h"
+#include "JZNodeEditorManager.h"
+#include "JZEditorGlobal.h"
+
 using namespace cv;
 
 //JZOpencvTemplateDialog
@@ -30,12 +35,12 @@ JZOpencvTemplateDialog::JZOpencvTemplateDialog(QWidget *parent)
     QPushButton *loadTemplateButton = m_btnBox->addButton("Load Template",QDialogButtonBox::ActionRole);
     QPushButton *matchButton = m_btnBox->addButton("Match",QDialogButtonBox::ActionRole);
 
-    connect(loadImageButton, &QPushButton::clicked, this, &TemplateMatchingDialog::on_loadImageButton_clicked);
-    connect(loadTemplateButton, &QPushButton::clicked, this, &TemplateMatchingDialog::on_loadTemplateButton_clicked);
-    connect(matchButton, &QPushButton::clicked, this, &TemplateMatchingDialog::on_matchButton_clicked);
+    connect(loadImageButton, &QPushButton::clicked, this, &JZOpencvTemplateDialog::on_loadImageButton_clicked);
+    connect(loadTemplateButton, &QPushButton::clicked, this, &JZOpencvTemplateDialog::on_loadTemplateButton_clicked);
+    connect(matchButton, &QPushButton::clicked, this, &JZOpencvTemplateDialog::on_matchButton_clicked);
 
-    auto prop_group = m_propEditor->addAction("属性");
-    auto pin = m_propEditor->addProp("置信度",m_config.confidence, prop_group);
+    auto prop_group = m_propEditor->addGroup("属性");
+    auto pin = m_propEditor->addProp("置信度", &m_config.confidence, prop_group);
     pin->setRange(0,1);
 
     w->setLayout(main_layout);
@@ -48,7 +53,7 @@ void JZOpencvTemplateDialog::setConfig(JZTemplateConfig cfg)
     m_propEditor->dataToUi();
 }
 
-JZTemplateConfig JZOpencvTemplateDialog::getConfig() const
+JZTemplateConfig JZOpencvTemplateDialog::config() const
 {
     m_propEditor->uiToData();
     return m_config;
@@ -84,19 +89,10 @@ void JZOpencvTemplateDialog::on_matchButton_clicked()
 }    
 
 //JZOpencvTemplateItem    
-void JZOpencvTemplateItem::updatePin()
+JZOpencvTemplateItem::JZOpencvTemplateItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
-    JZNodeGraphItem::updatePin();
-
-    if (!m_setting)
-    {
-        QPushButton *btnSet = new QPushButton("Setting");
-        btnSet->connect(btnSet, &QPushButton::clicked, [this] {
-            this->onSetClicked();
-        });
-        m_setting = createWidgetBlock(btnSet, true);
-        m_setting->pri = 8;
-    }
+    m_setting = createButtonBlock("Setting", [this] { onSetClicked();  });
 }
 
 void JZOpencvTemplateItem::onSetClicked()

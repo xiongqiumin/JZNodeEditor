@@ -56,6 +56,7 @@ public:
 
     bool hasType(int type) const;
     QString typeToName(int id) const;
+    QStringList typeListToNameList(QList<int> id) const;
     int nameToType(const QString &name) const;
     QList<int> nameListToTypeList(const QStringList &names) const;
     

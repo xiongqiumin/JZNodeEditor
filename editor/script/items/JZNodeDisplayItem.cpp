@@ -8,8 +8,11 @@
 #include "jzWidgets/JZImageLabel.h"
 #include "modules/opencv/JZModuleOpencv.h"
 
+using namespace cv;
+
 //JZNodeDisplayItem
-JZNodeDisplayItem::JZNodeDisplayItem()
+JZNodeDisplayItem::JZNodeDisplayItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
     QPushButton *btnAdd = new QPushButton("Add");
     btnAdd->connect(btnAdd, &QPushButton::clicked, [this] {

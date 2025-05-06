@@ -360,16 +360,7 @@ JZNodeGraphItem *JZNodeView::createNodeItem(int id)
 
     auto node = m_file->getNode(id);
 
-    JZNodeGraphItem *item; 
-    if (e->hasNodeItemCreator(node->type()))
-    {
-        auto func = e->nodeItemCreator(node->type());
-        item = func();
-    }
-    else
-        item = new JZNodeGraphItem();
-
-    item->init(node);
+    JZNodeGraphItem *item = JZNodeEditorManager::instance()->createNodeItem(node);
     m_scene->addItem(item);
     item->setPos(node->pos());
     item->updateNode();    

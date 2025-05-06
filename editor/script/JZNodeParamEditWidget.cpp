@@ -36,10 +36,18 @@ QString JZNodeParamTypeWidget::type()
     return m_lineEdit->text();
 }
 
-//JZParamEdit
-JZParamEdit::JZParamEdit()
+//JZParamEditInfo
+JZParamEditInfo JZParamEditInfo::createEnum(QStringList list)
 {
-    type = Edit_none;
+    JZParamEditInfo info;
+    info.type = Edit_enum;
+    info.enumList = list;
+    return info;
+}
+
+JZParamEditInfo::JZParamEditInfo()
+{
+    type = Edit_normal;
 }
 
 //JZNodeParamValueWidget
@@ -49,21 +57,22 @@ JZNodeParamValueWidget::JZNodeParamValueWidget()
     h->setContentsMargins(0, 0, 0, 0);
     setLayout(h);
 
-    m_editWidget = nullptr;
+    m_editWidget = nullptr;    
+    init(JZParamEditInfo());
 }
 
-void JZNodeParamValueWidget::init(const JZParamEdit &edit)
+void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
 {
     if(m_editWidget)
         delete m_editWidget;
 
-    if(edit.type == JZParamEdit::Edit_normal)
+    if(edit.type == JZParamEditInfo::Edit_normal)
     {
         QLineEdit *lineEdit = new QLineEdit();
         connect(lineEdit, &QLineEdit::returnPressed, this, &JZNodeParamValueWidget::sigEditFinish); 
         m_editWidget = lineEdit;
     }
-    else if(edit.type == JZParamEdit::Edit_enum)
+    else if(edit.type == JZParamEditInfo::Edit_enum)
     {
         QComboBox *box = new QComboBox();
         box->addItems(edit.enumList);

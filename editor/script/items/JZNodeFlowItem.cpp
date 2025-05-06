@@ -4,7 +4,8 @@
 #include "JZNodeFlow.h"
 #include "JZNodeFactory.h"
 
-JZNodeForItem::JZNodeForItem()
+JZNodeForItem::JZNodeForItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 
@@ -15,9 +16,9 @@ JZNodeForItem::~JZNodeForItem()
 void JZNodeForItem::updatePin()
 {
     JZNodeGraphItem::updatePin();
-    m_blocks[m_node->paramIn(0)]->pri = 1;
-    m_blocks[m_node->paramIn(1)]->pri = 2;
-    m_blocks[m_node->paramIn(2)]->pri = 4;
+    m_blocks[m_node->paramIn(0)]->pri = Pri_user + 1;
+    m_blocks[m_node->paramIn(1)]->pri = Pri_user + 2;
+    m_blocks[m_node->paramIn(2)]->pri = Pri_user + 4;
 
     JZNodeFor *node_for = dynamic_cast<JZNodeFor*>(m_node);
     if (!m_opBlock)
@@ -36,7 +37,7 @@ void JZNodeForItem::updatePin()
 
         m_opBlock = createWidgetBlock(box, true);
         m_opBlock->name = "op";
-        m_opBlock->pri = 3;
+        m_opBlock->pri = Pri_user + 3;
     }
     
     QComboBox *box_op = qobject_cast<QComboBox*>(m_opBlock->widget);
@@ -55,8 +56,31 @@ void JZNodeForItem::onCompareOpChanged(int op)
     notifyPropChanged(oldValue); 
 }
 
+//JZNodeForeachItem
+JZNodeForeachItem::JZNodeForeachItem(JZNode *node)
+    :JZNodeGraphItem(node)
+{
+}
+
+JZNodeForeachItem::~JZNodeForeachItem()
+{
+
+}
+
+void JZNodeForeachItem::updatePin()
+{
+    JZNodeGraphItem::updatePin();
+
+    auto pin_list = m_node->paramOutList();
+    m_blocks[pin_list[0]]->pri = Pri_user + 0;
+    m_blocks[pin_list[1]]->pri = Pri_user + 1;
+    m_blocks[pin_list[2]]->pri = Pri_user + 2;
+    m_blocks[pin_list[3]]->pri = Pri_user + 3;
+}
+
 //JZNodeIfItem
-JZNodeIfItem::JZNodeIfItem()
+JZNodeIfItem::JZNodeIfItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 JZNodeIfItem::~JZNodeIfItem()
@@ -124,7 +148,8 @@ void JZNodeIfItem::onElseClicked()
 }
 
 //JZNodeSwitchItem
-JZNodeSwitchItem::JZNodeSwitchItem()
+JZNodeSwitchItem::JZNodeSwitchItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 
 }

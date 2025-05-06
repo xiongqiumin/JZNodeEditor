@@ -86,14 +86,15 @@ int JZNodeGraphItem::Block::height()
 }
 
 // JZNodeGraphItem
-JZNodeGraphItem::JZNodeGraphItem()
+JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
 {    
-    m_type = Item_node;    
+    m_type = Item_node;
+    m_node = node;
+    m_id = node->id();
+    
     m_longPress = false;
-    m_downPin = -1;
-    m_node = nullptr;
-    m_id = -1;
-    m_widgetIndex = 100;
+    m_downPin = -1;    
+    m_blockExtId = 100;
 
     setOpacity(0.9);
     setFlag(QGraphicsItem::ItemIsMovable);
@@ -107,12 +108,6 @@ JZNodeGraphItem::~JZNodeGraphItem()
     clear();
 }
 
-void JZNodeGraphItem::init(JZNode *node)
-{
-    m_node = node;
-    m_id = node->id();
-}
-
 JZNodeGraphItem::BlockPtr JZNodeGraphItem::createPinBlock(JZNodePin *pin)
 {
     BlockPtr block = BlockPtr(new Block(this));
@@ -123,20 +118,15 @@ JZNodeGraphItem::BlockPtr JZNodeGraphItem::createPinBlock(JZNodePin *pin)
     if (pin->isFlow() || pin->isSubFlow())
     {
         block->iconType = IconType::Flow;
-        if (pin->isInput())
-            block->pri = 0;
+        if (pin->isFlow())
+            block->pri = Pri_flow;
         else
-        {
-            if (m_node->subFlowCount() > 0)
-                block->pri = pin->isSubFlow()? 0:2;
-            else
-                block->pri = 0;
-        }
+            block->pri = Pri_subFlow;
     }
     else
     {
         block->iconType = IconType::Circle;
-        block->pri = 1;        
+        block->pri = Pri_flowParam;
     }
     if (pin->isInput())
         block->isEditable = true;
@@ -156,9 +146,33 @@ JZNodeGraphItem::BlockPtr JZNodeGraphItem::createWidgetBlock(QWidget *widget, bo
     proxy->setParentItem(this);
     block->widget = widget;
     block->proxy = proxy;
-    block->id = m_widgetIndex++;
+    block->pri = Pri_widget;
+    block->id = m_blockExtId++;
+    m_blocks[block->id] = block;    
+    return block;
+}
+
+JZNodeGraphItem::BlockPtr JZNodeGraphItem::createEditBlock(QString name, JZParamEditInfo info, bool isInput)
+{
+    BlockPtr block = BlockPtr(new Block(this));
+    block->isInput = isInput;
+    
+    block->name = name;
+    block->edit = info;
+    block->isShowValue = true;
+    block->isShowName = true;
+    block->isEditable = true;
+    block->pri = Pri_flowParam;
+    block->id = m_blockExtId++;
     m_blocks[block->id] = block;
     return block;
+}
+
+JZNodeGraphItem::BlockPtr JZNodeGraphItem::createButtonBlock(QString name, std::function<void()> func, bool isInput)
+{
+    QPushButton *btnSet = new QPushButton(name);
+    btnSet->connect(btnSet, &QPushButton::clicked, func);
+    return createWidgetBlock(btnSet, isInput);    
 }
 
 void JZNodeGraphItem::clear()
@@ -386,7 +400,7 @@ void JZNodeGraphItem::calcGemo(int pin_id, int x, int y, Block *gemo)
     {
         gemo->valueRect = QRect(x, y, gemo->widget->width(), gemo->widget->height());
     }
-    else if (gemo->isPin() && pin(pin_id)->isParam())
+    else if (gemo->isShowValue)
     {
         gemo->valueRect = QRect(x, y, 80, 24);
     }
@@ -956,7 +970,8 @@ void JZNodeGraphItem::drawIcon(QPainter *painter,QRectF rect, IconType type, boo
 }
 
 //JZNodeFunctionItem
-JZNodeFunctionItem::JZNodeFunctionItem()
+JZNodeFunctionItem::JZNodeFunctionItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 

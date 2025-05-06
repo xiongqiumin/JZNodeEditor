@@ -40,7 +40,7 @@ void JZNodePropertyEditor::initTransMap()
         auto pt = v.toPoint();
         return QString::asprintf("%d,%d",pt.x(),pt.y());
     };
-    pt_trans.fromString = [](const QString &v){
+    pt_trans.fromString = [](const QString &text){
         JZNodeObjectParser parser;
         QVariantList list;
         if(!parser.parseVariantList("i,i",text,list)){
@@ -116,14 +116,14 @@ void JZNodePropertyEditor::setPropEditable(int prop_id,bool editable)
 
 JZProperty *JZNodePropertyEditor::createPropValue(JZNodeGraphItem::Block *block)
 {
-    const JZParamEdit &edit = block->edit;
+    const JZParamEditInfo &edit = block->edit;
 
     auto env = editorEnvironment();    
     JZProperty *pin_prop = nullptr;
-    if(edit.type == JZParamEdit::Edit_enum)
-        pin_prop = new JZPropertyStringEnum(pin->name(), edit.enumList);
-    else if(edit.type == JZParamEdit::Edit_file)
-        pin_prop == new JZPropertyFilePath(pin->name(), edit.fileFilter);
+    if(edit.type == JZParamEditInfo::Edit_enum)
+        pin_prop = new JZPropertyStringEnum(block->name, edit.enumList);
+    else if(edit.type == JZParamEditInfo::Edit_file)
+        pin_prop = new JZPropertyFilePath(block->name, edit.fileFilter);
     else
     {
         QString pin_type;
@@ -136,15 +136,15 @@ JZProperty *JZNodePropertyEditor::createPropValue(JZNodeGraphItem::Block *block)
         
         if(m_transMap.contains(pin_type))
         {
-            pin_prop = m_transMap[pin_type].creator();
+            pin_prop = m_transMap[pin_type].creator(block->name);
             m_propTrans[pin_prop] = pin_type;
         }
         else
-            pin_prop = new JZProperty(pin->name(),QVariant::String);
+            pin_prop = new JZProperty(block->name,QVariant::String);
     }
 
-    m_propMap[pin->id()] = pin_prop;
-    setPinValue(m_item->pinValue(block->id));
+    m_propMap[block->id] = pin_prop;
+    setPinValue(block->id, m_item->pinValue(block->id));
     return pin_prop;
 }
 
@@ -171,19 +171,18 @@ QString JZNodePropertyEditor::propValue(JZProperty *pin)
 }
 
 void JZNodePropertyEditor::addPropList(QString name,const QList<int> &list)
-{
-    auto block = m_item->block(list[i]);
-
+{    
     JZProperty *prop_group = nullptr;
     for(int i = 0; i < list.size(); i++)
     {
         int pin_id = list[i];
+        auto block = m_item->block(list[i]);
         if(pin_id < MAX_PIN_ID || block->isEditable)
         {
             if(prop_group == nullptr)
                 prop_group = new JZPropertyGroup(name);
             
-            auto pin_prop = createPropValue(block->edit);
+            auto pin_prop = createPropValue(block);
             prop_group->addSubProperty(pin_prop);
             if(!block->isEditable)
                 pin_prop->setEnabled(false);
@@ -207,11 +206,12 @@ void JZNodePropertyEditor::setNode(JZNode *node)
 
 void JZNodePropertyEditor::updateNode()
 {
-    auto tmp_node = m_node;
-    clear();    
-    m_node = tmp_node;
-    if(!m_node)
+    if (!m_node)
         return;
+
+    m_tree->clear();
+    m_propMap.clear();
+    m_propTrans.clear();
 
     m_editing = true;
 

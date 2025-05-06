@@ -46,6 +46,7 @@ public:
     const JZNode *getNode(int id) const;
     JZNodePin *getPin(const JZNodeGemo &gemo);    
     QList<int> nodeList();            
+    int nodeCount();
 
     QList<JZNode*> findNodeByType(int type);
 

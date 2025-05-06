@@ -7,7 +7,7 @@
 class JZNodeLiteralItem : public JZNodeGraphItem
 {
 public:
-    JZNodeLiteralItem();
+    JZNodeLiteralItem(JZNode *node);
 
 protected:
     virtual void updatePin() override;
@@ -17,7 +17,7 @@ protected:
 class JZNodeParamItem : public JZNodeGraphItem
 {
 public:
-    JZNodeParamItem();
+    JZNodeParamItem(JZNode *node);
 
     virtual void updatePin() override;
 };
@@ -26,14 +26,14 @@ public:
 class JZNodeSetParamItem : public JZNodeGraphItem
 {
 public:
-    JZNodeSetParamItem();
+    JZNodeSetParamItem(JZNode *node);
 };
 
 //JZNodeEnumItem
 class JZNodeEnumItem : public JZNodeGraphItem
 {
 public:
-    JZNodeEnumItem();
+    JZNodeEnumItem(JZNode *node);
 
     virtual void updatePin() override;
 };
@@ -42,7 +42,7 @@ public:
 class JZNodeFlagItem : public JZNodeGraphItem
 {
 public:
-    JZNodeFlagItem();
+    JZNodeFlagItem(JZNode *node);
 
     virtual void updatePin() override;
 };

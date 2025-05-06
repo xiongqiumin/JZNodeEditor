@@ -15,6 +15,16 @@ class JZNodeGraphItem : public JZNodeBaseItem
 public:
     enum IconType { Flow, Circle, Square, Grid, RoundSquare, Diamond };
 
+    enum {        
+        Pri_subFlow = 0,
+        Pri_subFlowParam = 1,
+        Pri_flow = 2,
+        Pri_flowParam = 3,
+        Pri_widget = 4,
+
+        Pri_user = 10,
+    };
+
     struct Block
     {
         Block(JZNodeGraphItem *item);
@@ -36,7 +46,7 @@ public:
         
         IconType iconType;
         QString name;
-        JZParamEdit edit;
+        JZParamEditInfo edit;
 
         QRect iconRect;
         QRect nameRect;
@@ -48,13 +58,11 @@ public:
     };    
     typedef QSharedPointer<Block> BlockPtr;
 
-    JZNodeGraphItem();
+    JZNodeGraphItem(JZNode *node);
     ~JZNodeGraphItem();
-
-    void init(JZNode *node);
     
     virtual QRectF boundingRect() const override;
-    virtual void updateNode() override;
+    virtual void updateNode() override;   //虚函数不能放在构造调用
     void updateSize();
 
     void setPinValue(int pin, QString value);
@@ -105,6 +113,8 @@ protected:
     
     BlockPtr createPinBlock(JZNodePin *pin);
     BlockPtr createWidgetBlock(QWidget *widget,bool isInput);    
+    BlockPtr createEditBlock(QString name, JZParamEditInfo info, bool isInput = true);
+    BlockPtr createButtonBlock(QString name, std::function<void()> func, bool isInput = true);
 
     QByteArray saveNode();    
     JZNodePin *pin(int pin_id);
@@ -122,7 +132,7 @@ protected:
     QMap<int, BlockPtr> m_blocks;
     QMap<int, QString> m_runtimeValue;
     
-    int m_widgetIndex;
+    int m_blockExtId;
     int m_downPin;
     int m_longPress;
 };
@@ -131,7 +141,7 @@ protected:
 class JZNodeFunctionItem : public JZNodeGraphItem
 {
 public:
-    JZNodeFunctionItem();
+    JZNodeFunctionItem(JZNode *node);
 
     virtual void updatePin();
 };

@@ -327,6 +327,8 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         JZScriptItem *script = dynamic_cast<JZScriptItem*>(function_list[i]);
         if (m_scriptExclude.contains(script))
             continue;
+        if (script->nodeCount() == 0)
+            continue;
 
         JZScriptClassItem* class_item = script->getClassItem();
         JZNodeScriptPtr script_impl = JZNodeScriptPtr(new JZNodeScript());

@@ -48,6 +48,8 @@ protected:
 class JZModelInitItem : public JZNodeGraphItem
 {
 public:
+    JZModelInitItem(JZNode *node);
+
     virtual void updatePin();
 
 protected:

@@ -7,7 +7,7 @@
 class JZNodeOperatorItem : public JZNodeGraphItem
 {
 public:
-    JZNodeOperatorItem();
+    JZNodeOperatorItem(JZNode *node);
     ~JZNodeOperatorItem();
 
 protected:
@@ -21,7 +21,7 @@ protected:
 class JZNodeExpressionItem : public JZNodeGraphItem
 {
 public:
-    JZNodeExpressionItem();
+    JZNodeExpressionItem(JZNode *node);
     ~JZNodeExpressionItem();
 
 protected:

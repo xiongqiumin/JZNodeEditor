@@ -126,7 +126,14 @@ void JZCameraInitDialog::updateConfig()
     }
 }
 
-//JZCameraInitItem    
+//JZCameraInitItem   
+JZCameraInitItem::JZCameraInitItem(JZNode *node)
+    :JZNodeGraphItem(node)
+{
+
+}
+
+
 void JZCameraInitItem::updatePin()
 {
     JZNodeGraphItem::updatePin();
@@ -160,7 +167,8 @@ void JZCameraInitItem::onSetClicked()
 }
 
 //JZCameraNodeItem
-JZCameraNodeItem::JZCameraNodeItem()
+JZCameraNodeItem::JZCameraNodeItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 
 }

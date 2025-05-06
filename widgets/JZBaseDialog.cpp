@@ -43,8 +43,3 @@ void JZBaseDialog::setCentralWidget(QWidget *w)
     l->insertWidget(0, w);
     m_mainWidget = w;
 }
-
-void JZBaseDialog::showButton(int btn, bool show)
-{
-    m_buttons[btn]->setVisible(show);
-}

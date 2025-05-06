@@ -48,12 +48,31 @@ protected:
 class JZCommInitItem : public JZNodeGraphItem
 {
 public:
-    virtual void updatePin();
+    JZCommInitItem(JZNode *node);
 
 protected:    
     void onSetClicked();
     
     BlockPtr m_setting;
+};
+
+
+class JZCommModbusRWItem : public JZNodeGraphItem
+{
+public:
+    JZCommModbusRWItem(JZNode *node);
+    
+    virtual void setBlockValue(int pin, QString value) override;
+    virtual QString blockValue(int pin) override;
+
+protected:
+    virtual void updatePin() override;
+
+    QStringList m_funcList;
+    QStringList m_dataTypeList;
+
+    BlockPtr m_modbusFunc;
+    BlockPtr m_modbusDataType;
 };
 
 void JZModuleCommEditorInit();

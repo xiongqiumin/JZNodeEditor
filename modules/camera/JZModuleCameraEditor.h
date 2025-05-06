@@ -51,6 +51,8 @@ protected:
 class JZCameraInitItem : public JZNodeGraphItem
 {
 public:
+    JZCameraInitItem(JZNode *node);
+
     virtual void updatePin();
 
 protected:    
@@ -62,7 +64,7 @@ protected:
 class JZCameraNodeItem: public JZNodeGraphItem
 {
 public:
-    JZCameraNodeItem();
+    JZCameraNodeItem(JZNode *node);
 
     virtual void updatePin();
 

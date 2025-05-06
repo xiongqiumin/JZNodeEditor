@@ -4,7 +4,8 @@
 #include "JZNodeFactory.h"
 #include "JZNodeExpression.h"
 
-JZNodeOperatorItem::JZNodeOperatorItem()
+JZNodeOperatorItem::JZNodeOperatorItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 
@@ -36,7 +37,8 @@ void JZNodeOperatorItem::onBtnAddClicked()
 }
 
 //JZNodeExpressionItem
-JZNodeExpressionItem::JZNodeExpressionItem()
+JZNodeExpressionItem::JZNodeExpressionItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 

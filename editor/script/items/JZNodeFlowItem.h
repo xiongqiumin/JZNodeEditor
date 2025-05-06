@@ -3,10 +3,11 @@
 
 #include "JZNodeGraphItem.h"
 
+//JZNodeForItem
 class JZNodeForItem : public JZNodeGraphItem
 {
 public:    
-    JZNodeForItem();
+    JZNodeForItem(JZNode *node);
     ~JZNodeForItem();
 
 protected:
@@ -16,10 +17,22 @@ protected:
     BlockPtr m_opBlock;
 };
 
+//JZNodeForEachItem
+class JZNodeForeachItem : public JZNodeGraphItem
+{
+public:
+    JZNodeForeachItem(JZNode *node);
+    ~JZNodeForeachItem();
+
+protected:
+    virtual void updatePin() override;    
+};
+
+//JZNodeIfItem
 class JZNodeIfItem : public JZNodeGraphItem
 {
 public:
-    JZNodeIfItem();
+    JZNodeIfItem(JZNode *node);
     ~JZNodeIfItem();
 
 protected:    
@@ -31,10 +44,11 @@ protected:
     BlockPtr m_addElse;
 };
 
+//JZNodeSwitchItem
 class JZNodeSwitchItem : public JZNodeGraphItem
 {
 public:
-    JZNodeSwitchItem();
+    JZNodeSwitchItem(JZNode *node);
     ~JZNodeSwitchItem();
 
 protected:

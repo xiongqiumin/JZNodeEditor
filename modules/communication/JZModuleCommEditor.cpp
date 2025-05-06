@@ -151,19 +151,15 @@ void JZCommInitDialog::updateConfig()
 }
 
 //JZCommInitItem    
-void JZCommInitItem::updatePin()
+JZCommInitItem::JZCommInitItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
-    JZNodeGraphItem::updatePin();
-
-    if (!m_setting)
-    {
-        QPushButton *btnSet = new QPushButton("Setting");
-        btnSet->connect(btnSet, &QPushButton::clicked, [this] {
-            this->onSetClicked();
-        });
-        m_setting = createWidgetBlock(btnSet, true);
-        m_setting->pri = 8;
-    }
+    QPushButton *btnSet = new QPushButton("Setting");
+    btnSet->connect(btnSet, &QPushButton::clicked, [this] {
+        this->onSetClicked();
+    });
+    m_setting = createWidgetBlock(btnSet, true);
+    m_setting->pri = 8;
 }
 
 void JZCommInitItem::onSetClicked()
@@ -183,14 +179,67 @@ void JZCommInitItem::onSetClicked()
     notifyPropChanged(oldValue);
 }
 
+//JZCommModbusRWItem
+JZCommModbusRWItem::JZCommModbusRWItem(JZNode *node)
+    :JZNodeGraphItem(node)
+{
+    QList<int> type_list = { Type_int16, Type_uint16, Type_int, Type_uint, Type_float, Type_double };
+
+    m_funcList = QStringList{"Bit", "InputBit", "InputRegister", "Register"};
+    m_dataTypeList = editorEnvironment()->typeListToNameList(type_list);
+    
+    m_modbusFunc = createEditBlock("Func",JZParamEditInfo::createEnum(m_funcList));
+    m_modbusDataType = createEditBlock("Type", JZParamEditInfo::createEnum(m_dataTypeList));
+}
+
+void JZCommModbusRWItem::updatePin()
+{
+    JZNodeGraphItem::updatePin();
+
+    auto in_list = m_node->paramInList();
+    m_blocks[in_list[0]]->pri = Pri_user;
+    m_modbusFunc->pri = Pri_user + 1;
+    m_modbusDataType->pri = Pri_user + 2;
+    for(int i = 1; i < in_list.size(); i++)
+        m_blocks[in_list[i]]->pri = Pri_user + i + 3;
+}
+
+void JZCommModbusRWItem::setBlockValue(int pin, QString value)
+{
+    auto node = dynamic_cast<JZNodeModbusRW*>(m_node);
+    if (pin == m_modbusFunc->id)
+        node->setFunction(m_funcList.indexOf(value));
+    else if (pin == m_modbusDataType->id)
+        node->setDataType(value);
+    else {
+        Q_ASSERT(0);        
+    }
+}
+
+QString JZCommModbusRWItem::blockValue(int pin)
+{
+    QByteArray buffer = saveNode();
+
+    auto node = dynamic_cast<JZNodeModbusRW*>(m_node);
+    if (pin == m_modbusFunc->id)
+        return m_funcList[node->function()];
+    else if (pin == m_modbusDataType->id)
+        return node->dataType();
+    else {
+        Q_ASSERT(0);
+        return QString();
+    }    
+    notifyPropChanged(buffer);
+}
+
 //JZModuleCommEditorInit
 void JZModuleCommEditorInit()
 {
     auto inst = editorManager()->instance();
 
     inst->registLogicNode(Node_CommInit,"通信", CreateJZNodeGraphItem<JZCommInitItem>);
-    inst->registLogicNode(Node_ModbusRead,"通信");
-    inst->registLogicNode(Node_ModbusWrite,"通信");
+    inst->registLogicNode(Node_ModbusRead,"通信", CreateJZNodeGraphItem<JZCommModbusRWItem>);
+    inst->registLogicNode(Node_ModbusWrite,"通信", CreateJZNodeGraphItem<JZCommModbusRWItem>);
     inst->registLogicNode(Node_TcpClientRead,"通信");
     inst->registLogicNode(Node_TcpClientWrite,"通信");
     inst->registLogicNode(Node_UdpRead,"通信");

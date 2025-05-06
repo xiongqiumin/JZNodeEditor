@@ -60,67 +60,56 @@ protected:
     QList<JZNodeIRParam> m_output;
 };
 
-//JZNodeModbusRead
-class JZNodeModbusRead : public JZCommNode
+//JZNodeModbusRW
+class JZNodeModbusRW : public JZCommNode
 {
-public:    
-    JZNodeModbusRead();
-    ~JZNodeModbusRead();
-
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;
-
-    void setClient(QString comm);
-    QString client();
+public:
+    JZNodeModbusRW();
 
     void setAddr(int addr);
     int addr();
 
     void setFunction(int function);
     int function();
-    
+
     void setDataType(QString type);
     QString dataType();
 
+    virtual void saveToStream(QDataStream& s) const override;
+    virtual void loadFromStream(QDataStream& s) override;
+    
 protected:
-    virtual bool updateNode(QString& error) override;
-
-    QString m_modbus;
     int m_modbusFunc;
     QString m_dataType;
 };
 
+//JZNodeModbusRead
+class JZNodeModbusRead : public JZNodeModbusRW
+{
+public:
+    JZNodeModbusRead();
+    ~JZNodeModbusRead();
+
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;        
+
+protected:
+    virtual bool updateNode(QString& error) override;
+};
+
 //JZNodeModbusWrite
-class JZNodeModbusWrite : public JZCommNode
+class JZNodeModbusWrite : public JZNodeModbusRW
 {
 public:
     JZNodeModbusWrite();
     ~JZNodeModbusWrite();
 
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream& s) override;    
-
-    void setAddr(int addr);
-    int addr();
-
+    
     void setValue(QString value);
     QString value();
 
-    void setFunction(int function);
-    int function();
-
-    void setDataType(QString type);
-    QString dataType();
-
 protected:
     bool updateNode(QString& error);
-
-    int m_modbusFunc;
-    QString m_dataType;
 };
 
 //JZNodeTcpClientRead

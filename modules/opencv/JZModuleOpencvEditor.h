@@ -16,29 +16,27 @@ public:
     JZOpencvTemplateDialog(QWidget *parent = nullptr);
 
     void setConfig(JZTemplateConfig cfg);
-    JZTemplateConfig getConfig() const;
+    JZTemplateConfig config() const;
 
 protected slots:
     void on_loadImageButton_clicked();
     void on_loadTemplateButton_clicked();
     void on_matchButton_clicked();
 
-private:
-    void accept();
-
+private:    
     JZTemplateConfig m_config;
     JZImageLabel *m_label;
     JZImageLabel *m_tempLabel;
     JZPropertyEditor *m_propEditor;
 
     cv::Mat m_templ;
-    cv::MAT m_image;
+    cv::Mat m_image;
 };
 
 class JZOpencvTemplateItem : public JZNodeGraphItem
 {
 public:
-    virtual void updatePin();
+    JZOpencvTemplateItem(JZNode *node);
 
 protected:
     void onSetClicked();

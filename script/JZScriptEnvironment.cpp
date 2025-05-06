@@ -214,6 +214,15 @@ QString JZScriptEnvironment::typeToName(int id) const
         return JZNodeType::typeName(id) + suffix;
 }
 
+QStringList JZScriptEnvironment::typeListToNameList(QList<int> types) const
+{
+    QStringList ret;
+    for (int i = 0; i < types.size(); i++)
+        ret << typeToName(types[i]);
+
+    return ret;
+}
+
 int JZScriptEnvironment::nameToType(const QString &name) const
 {   
     bool isPoint = JZNodeType::isPointer(name);

@@ -102,38 +102,94 @@ bool JZCommNode::compiler(JZNodeCompiler* c, QString& error)
         return false;
     
 	QList<JZNodeIRParam> ir_in = toParamId(m_input);
-	QList<JZNodeIRParam> ir_out = toParamId(m_output);
+	QList<JZNodeIRParam> output = toParamId(m_output);
 
-	QList<JZNodeIRParam> in;
-	in << irRef("this.commManager");
-	in << irLiteral(name());
-	in << ir_in;
-	c->addCallConvert(m_function, m_input, ir_out);
+	QList<JZNodeIRParam> input;
+    input << irRef("this.commManager");
+    input << irLiteral(name());
+    input << ir_in;
+	c->addCallConvert(m_function, input, output);
     return true;
 }
 
+//JZNodeModbusRW
+JZNodeModbusRW::JZNodeModbusRW()
+{
+    m_dataType = "uint16";
+    m_modbusFunc = Function_Register;
+
+    int in1 = addParamIn("addr");
+    setPinTypeInt(in1);    
+    setPinValue(in1, "40000");
+
+    setName("modbus");
+}
+
+void JZNodeModbusRW::setFunction(int function)
+{
+    Q_ASSERT(function >= Function_Bit && function <= Function_Register);
+    m_modbusFunc = function;
+    if (m_modbusFunc == Function_Bit || m_modbusFunc == Function_InputBit)
+        m_dataType = "uint8";
+    else
+        m_dataType = "uint16";
+
+    update();
+}
+
+int JZNodeModbusRW::function()
+{
+    return m_modbusFunc;
+}
+
+void JZNodeModbusRW::setAddr(int addr)
+{
+    setParamInValue(1, QString::number(addr));
+}
+
+int JZNodeModbusRW::addr()
+{
+    return paramInValue(1).toInt();
+}
+
+void JZNodeModbusRW::setDataType(QString type)
+{
+    m_dataType = type;
+    update();
+}
+
+QString JZNodeModbusRW::dataType()
+{
+    return m_dataType;
+}
+
+void JZNodeModbusRW::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_modbusFunc;
+    s << m_dataType;
+}
+
+void JZNodeModbusRW::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_modbusFunc;
+    s >> m_dataType;
+}
 
 //JZNodeModbusRead
 JZNodeModbusRead::JZNodeModbusRead()
 {
     m_type = Node_ModbusRead;
     m_name = "ModbusRead";    	
-
-	m_modbus = "modbus";
-	m_dataType = "uint16";
-	m_modbusFunc = Function_Register;
-
-	int in1 = addParamIn("addr");
-    setPinTypeInt(in1);
-
-    setPinValue(in1, "40000");
-	int out = addParamOut("result");
+	    
+    int out = addParamOut("result");
 
 	m_function = "JZCommModbusRead";
 	m_input << irLiteral(0);
 	m_input << irLiteral(0);
-	m_input << irId(in1);
-	m_output << irId(out);
+	m_input << irId(paramIn(1));
+	m_output << irId(paramOut(0));
 }
 
 JZNodeModbusRead::~JZNodeModbusRead()
@@ -147,54 +203,6 @@ bool JZNodeModbusRead::compiler(JZNodeCompiler* compiler, QString& error)
 	return JZCommNode::compiler(compiler, error);
 }
 
-
-void JZNodeModbusRead::setClient(QString comm)
-{
-	m_modbus = comm;
-}
-
-QString JZNodeModbusRead::client()
-{
-	return m_modbus;
-}
-
-void JZNodeModbusRead::setFunction(int function)
-{
-	m_modbusFunc = function;
-	if (m_modbusFunc == Function_Bit || m_modbusFunc == Function_InputBit)
-		m_dataType = "uint8";
-	else
-		m_dataType = "uint16";
-
-	update();
-}
-
-int JZNodeModbusRead::function()
-{
-	return m_modbusFunc;
-}
-
-void JZNodeModbusRead::setAddr(int addr)
-{
-	setParamInValue(1, QString::number(addr));
-}
-
-int JZNodeModbusRead::addr()
-{
-	return paramInValue(1).toInt();
-}
-
-void JZNodeModbusRead::setDataType(QString type)
-{
-	m_dataType = type;
-	update();
-}
-
-QString JZNodeModbusRead::dataType()
-{
-	return m_dataType;
-}
-
 bool JZNodeModbusRead::updateNode(QString& error)
 {
 	int func_type = m_modbusFunc;
@@ -202,43 +210,19 @@ bool JZNodeModbusRead::updateNode(QString& error)
 	return true;
 }
 
-void JZNodeModbusRead::saveToStream(QDataStream& s) const
-{
-	JZNode::saveToStream(s);
-	s << m_modbus;
-	s << m_function;
-	s << m_dataType;
-}
-
-void JZNodeModbusRead::loadFromStream(QDataStream& s)
-{
-	JZNode::loadFromStream(s);
-	s >> m_modbus;
-	s >> m_function;
-	s >> m_dataType;
-}
-
-
 //JZNodeModbusWrite
 JZNodeModbusWrite::JZNodeModbusWrite()
 {
     m_type = Node_ModbusWrite;
-    m_name = "ModbusWrite";
-    m_dataType = "uint16";
-	m_modbusFunc = Function_Register;
+    m_name = "ModbusWrite";	
 
-	int in1 = addParamIn("addr");
-	setPinTypeInt(in1);    
-
-	int in2 = addParamIn("value");
-	setPinType(in2, { m_dataType });
-    setPinValue(in1, "40000");		
+    int out = addParamIn("value");
 
 	m_function = "JZCommModbusWrite";
 	m_input << irLiteral(0);
 	m_input << irLiteral(0);
-	m_input << irId(in1);
-	m_input << irId(in2);
+	m_input << irId(paramIn(1));
+	m_input << irId(paramIn(2));
 }
 
 JZNodeModbusWrite::~JZNodeModbusWrite()
@@ -252,33 +236,6 @@ bool JZNodeModbusWrite::compiler(JZNodeCompiler* compiler, QString& error)
 	return JZCommNode::compiler(compiler, error);
 }
 
-
-void JZNodeModbusWrite::setFunction(int function)
-{
-	m_modbusFunc = function;
-	if (m_modbusFunc == Function_Bit || m_modbusFunc == Function_InputBit)
-		m_dataType = "uint8";
-	else
-		m_dataType = "uint16";
-
-	update();
-}
-
-int JZNodeModbusWrite::function()
-{
-	return m_modbusFunc;
-}
-
-void JZNodeModbusWrite::setAddr(int addr)
-{
-	setParamInValue(1, QString::number(addr));
-}
-
-int JZNodeModbusWrite::addr()
-{
-	return paramInValue(1).toInt();
-}
-
 void JZNodeModbusWrite::setValue(QString value)
 {
     setParamInValue(2, value);
@@ -289,36 +246,12 @@ QString JZNodeModbusWrite::value()
     return paramInValue(2);
 }
 
-void JZNodeModbusWrite::setDataType(QString type)
-{
-	m_dataType = type;
-	update();
-}
-
-QString JZNodeModbusWrite::dataType()
-{
-	return m_dataType;
-}
-
 bool JZNodeModbusWrite::updateNode(QString& error)
 {
 	setPinType(paramIn(2), { m_dataType });
 	return true;
 }
 
-void JZNodeModbusWrite::saveToStream(QDataStream& s) const
-{
-	JZNode::saveToStream(s);
-    s << m_function;
-	s << m_dataType;
-}
-
-void JZNodeModbusWrite::loadFromStream(QDataStream& s)
-{
-	JZNode::loadFromStream(s);        
-    s >> m_function;
-	s >> m_dataType;
-}
 
 //JZNodeTcpClientRead
 JZNodeTcpClientRead::JZNodeTcpClientRead()

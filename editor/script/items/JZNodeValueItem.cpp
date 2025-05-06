@@ -5,7 +5,8 @@
 #include "JZNodeFactory.h"
 
 //JZNodeLiteralItem
-JZNodeLiteralItem::JZNodeLiteralItem()
+JZNodeLiteralItem::JZNodeLiteralItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 
@@ -28,7 +29,8 @@ void JZNodeLiteralItem::updatePin()
 }
 
 //JZNodeParamItem
-JZNodeParamItem::JZNodeParamItem()
+JZNodeParamItem::JZNodeParamItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 
@@ -43,13 +45,15 @@ void JZNodeParamItem::updatePin()
 }
 
 //JZNodeSetParamItem
-JZNodeSetParamItem::JZNodeSetParamItem()
+JZNodeSetParamItem::JZNodeSetParamItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 
 }
 
 //JZNodeEnumItem
-JZNodeEnumItem::JZNodeEnumItem()
+JZNodeEnumItem::JZNodeEnumItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 
@@ -66,7 +70,8 @@ void JZNodeEnumItem::updatePin()
 }
 
 //JZNodeFlagItem
-JZNodeFlagItem::JZNodeFlagItem()
+JZNodeFlagItem::JZNodeFlagItem(JZNode *node)
+    :JZNodeGraphItem(node)
 {
 }
 
