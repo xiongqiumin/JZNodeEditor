@@ -1,7 +1,6 @@
 ﻿#include <QDebug>
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeObject.h"
-#include "JZRegExpHelp.h"
 
 //JZParamDefine
 JZParamDefine::JZParamDefine()
@@ -93,18 +92,17 @@ bool JZFunctionDefine::isNull() const
 
 void JZFunctionDefine::setFullName(const QString &full_name)
 {
-    QString class_name,member_name;
-    JZRegExpHelp::splitDefine(full_name,class_name,member_name);
+    auto coor = JZFunctionHelper::splitFunction(full_name);
     
-    if(!class_name.isEmpty())
+    if(!coor.className.isEmpty())
     {
-        className = class_name;
-        name = member_name;
+        className = coor.className;
+        name = coor.name;
     }
     else
     {
         className.clear();
-        name = member_name;
+        name = full_name;
     }
 }
 
@@ -185,6 +183,25 @@ QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param)
     s >> param.paramIn;
     s >> param.paramOut;          
     return s;
+}
+
+//JZFunctionHelper
+JZFunctionName JZFunctionHelper::splitFunction(const QString& fullname)
+{
+    JZFunctionName coor;
+    QStringList list = fullname.split("::");
+    if (list.size() == 1)
+    {
+        coor.name = list[0];
+    }
+    else
+    {
+        Q_ASSERT(list.size() == 2);
+
+        coor.className = list[0];
+        coor.name = list[1];
+    }
+    return coor;
 }
 
 //CSignal

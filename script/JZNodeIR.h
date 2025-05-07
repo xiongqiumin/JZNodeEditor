@@ -13,7 +13,8 @@ enum JZNodeIRType
     OP_none,
     OP_nodeEnter,    //可以设置断点
     OP_nop,            
-    OP_alloc, 
+    OP_alloc,
+    OP_reference,
     OP_clearReg,
     OP_set,
     OP_buffer,
@@ -77,10 +78,12 @@ public:
     bool isNull() const;
     bool isLiteral() const;
     bool isRef() const;
+    bool isThis() const;
+
+    bool isId() const;
     bool isNodeId() const;
     bool isStack() const;
     bool isReg() const;
-    bool isThis() const;
 
     int id() const;
     QString ref() const;
@@ -147,6 +150,19 @@ public:
     int allocType;
     JZNodeIRParam dst;
     int dataType;
+};
+
+class JZNodeIRReference : public JZNodeIR
+{
+public:
+    JZNodeIRReference();
+    virtual ~JZNodeIRReference();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
+
+    JZNodeIRParam ref;
+    JZNodeIRParam orig;
 };
 
 class JZNodeIRExpr : public JZNodeIR

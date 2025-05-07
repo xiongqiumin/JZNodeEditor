@@ -24,8 +24,9 @@ QDataStream &operator>>(QDataStream &s, NodeRange &param);
 //NodeParamInfo
 struct NodeParamInfo
 {
-    JZParam define;
     int id;
+    bool isInput;
+    JZParam define;
 };
 QDataStream &operator<<(QDataStream &s, const NodeParamInfo &param);
 QDataStream &operator>>(QDataStream &s, NodeParamInfo &param);
@@ -34,17 +35,15 @@ QDataStream &operator>>(QDataStream &s, NodeParamInfo &param);
 struct NodeInfo
 {        
     NodeInfo();    
-    NodeParamInfo *param(int id);
+    const NodeParamInfo *param(int id) const;
     
     QString name;
     int id;
     int type;
     bool isFlow;       
     
-    //paramIn,paramOut 不保存全部的节点，只保存运行时可以修改的节点信息
-    QList<NodeParamInfo> paramIn;
-    QList<NodeParamInfo> paramOut;
-
+    //paramIn,paramOut 不保存全部的节点，只保存运行时存在的节点信息
+    QList<NodeParamInfo> params;
     QList<NodeRange> pcRanges;
 };
 QDataStream &operator<<(QDataStream &s, const NodeInfo &param);
@@ -54,11 +53,11 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param);
 class JZFunctionDebugInfo
 {
 public:
-    const JZParamDefine *localParam(QString name) const;
+    const JZParam *localParam(QString name) const;
     const JZParam *nodeParam(int id) const;
 
     QMap<int, NodeInfo> nodeInfo;
-    QList<JZParamDefine> localVariables;
+    QList<JZParam> localVariables;
 };
 QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionDebugInfo &param);
@@ -78,6 +77,7 @@ public:
     void loadFromStream(QDataStream &s);
 
     QString itemPath;
+    QString className;
     QList<JZNodeIRPtr> statmentList;
     QList<JZFunction> functionList;
     QList<JZFunctionDebugInfo> functionDebugList;

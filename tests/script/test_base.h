@@ -120,6 +120,14 @@ protected:
     EngineThread m_thread;
 };
 
+struct CallArg
+{
+    int argc;
+    QVector<char*> argv;
+    QSharedPointer<QByteArrayList> buffers;
+};
+CallArg genCallUnitArg(QStringList list);
+
 extern std::function<void()> g_testFunc;
 
 #endif

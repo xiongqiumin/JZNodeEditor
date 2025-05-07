@@ -25,7 +25,6 @@ public:
     ~JZNodeExpressionItem();
 
 protected:
-    virtual void updatePin() override;
     void onBtnSetClicked();
 
     BlockPtr m_setBlock;

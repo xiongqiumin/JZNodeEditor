@@ -4,23 +4,13 @@
 #include <opencv2/opencv.hpp>
 #include "JZNode.h"
 #include "../JZModuleDefine.h"
+#include "JZOpencv.h"
 
 enum ModelNode
 {
     Node_OpencvInit = Module_OpencvNode,
     Node_OpencvTemplate, 
 };
-
-class JZTemplateConfig
-{
-public:
-    JZTemplateConfig();
-
-    QString templatePath;
-    double confidence;
-};
-QDataStream& operator<<(QDataStream& s, const JZTemplateConfig& config);
-QDataStream& operator>>(QDataStream& s, JZTemplateConfig& config);
 
 class JZNodeOpencvInit : public JZNode
 {

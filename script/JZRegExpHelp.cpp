@@ -1,21 +1,6 @@
 ﻿#include "JZRegExpHelp.h"
 #include <QRegularExpression>
 
-void JZRegExpHelp::splitDefine(QString fullName,QString &className,QString &memberName)
-{    
-    QStringList list = fullName.split("::");
-    Q_ASSERT(list.size() <= 2);
-    if (list.size() > 1)
-        className = list[0];
-            
-    memberName = list.back();    
-}
-
-QString JZRegExpHelp::makeDefine(QString className,QString memberName)
-{
-    return className + "::" + memberName;
-}
-
 bool JZRegExpHelp::isInt(const QString &str)
 {
     QRegularExpression exp("^-?[0-9]+[0-9]*$");    

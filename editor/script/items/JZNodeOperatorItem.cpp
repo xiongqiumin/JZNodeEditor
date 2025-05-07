@@ -3,6 +3,8 @@
 #include "JZNodeOperator.h"
 #include "JZNodeFactory.h"
 #include "JZNodeExpression.h"
+#include "JZNodeExprEditDialog.h"
+#include "JZNodeView.h"
 
 JZNodeOperatorItem::JZNodeOperatorItem(JZNode *node)
     :JZNodeGraphItem(node)
@@ -44,26 +46,23 @@ JZNodeExpressionItem::JZNodeExpressionItem(JZNode *node)
 
 JZNodeExpressionItem::~JZNodeExpressionItem()
 {
-}
-
-void JZNodeExpressionItem::updatePin()
-{
-    JZNodeGraphItem::updatePin();
-
-    if (m_setBlock)
-    {
-        QPushButton *btn = new QPushButton("Setting");
-        m_setBlock = createWidgetBlock(btn, true);
-        btn->connect(btn, &QPushButton::clicked, [this] {
-            this->onBtnSetClicked();
-        });
-    }
+    QPushButton *btn = new QPushButton("Setting");
+    m_setBlock = createWidgetBlock(btn, true);
+    btn->connect(btn, &QPushButton::clicked, [this] {
+        this->onBtnSetClicked();
+    });
 }
 
 void JZNodeExpressionItem::onBtnSetClicked()
 {
     JZNodeExpression *node = (JZNodeExpression*)m_node;
-    QString expr;
+     
+    JZNodeExprEditDialog dlg(editor());
+    dlg.setExpr(node->expr());
+    if(dlg.exec() != QDialog::Accepted)
+        return;
+
+    QString expr = dlg.expr();
 
     QByteArray buffer = saveNode();
     node->setExpr(expr);

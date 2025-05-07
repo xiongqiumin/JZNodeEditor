@@ -524,8 +524,10 @@ QString JZNodeCompiler::errorString(CompilerTip tip, QStringList args)
         return "no such variable " + args[0];
     else if(tip == Error_varNameEmpty)
         return "variable name is empty";
-    else if (tip == Error_varNameInvaild)
+    else if(tip == Error_varNameInvaild)
         return "variable name " + args[0] + " is invaild";
+    else if(tip == Error_varAllreadyDefined)
+        return "variable name " + args[0] + " is allready defined";
     else if(tip == Error_noFunction)
         return "no such function " + args[0];    
     else if(tip == Error_noImplement)
@@ -563,8 +565,13 @@ JZNodeCompiler::~JZNodeCompiler()
 
 void JZNodeCompiler::init(JZScriptItem *scriptFile)
 {    
+    if (!m_builder)
+        m_env = project()->environment();
+    else {
+        Q_ASSERT(m_builder->project() == scriptFile->project());
+    }
+
     m_scriptItem = scriptFile;     
-    m_env = project()->environment();
     m_script = nullptr;    
     m_originGraph = nullptr;
     m_statmentList = nullptr;
@@ -580,6 +587,7 @@ void JZNodeCompiler::init(JZScriptItem *scriptFile)
 void JZNodeCompiler::setBuilder(JZNodeBuilder *builder)
 {
     m_builder = builder;
+    m_env = m_builder->project()->environment();
 }
 
 const JZScriptEnvironment* JZNodeCompiler::env()
@@ -797,6 +805,7 @@ bool JZNodeCompiler::build(JZScriptItem *scriptFile,JZNodeScript *result)
     if (class_file)
     {
         m_className = class_file->className();
+        m_script->className = m_className;
     }    
 
     m_originGraph = nullptr;
@@ -1369,34 +1378,32 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr,
         info.isFlow = node->isFlowNode();
         info.pcRanges << it->ranges;
 
-        auto in_list = node->paramInList();
-        for (int i = 0; i < in_list.size(); i++)
+        auto param_list = node->pinListByType(Pin_param);
+        for (int i = 0; i < param_list.size(); i++)
         {
-            if (node->pin(in_list[i])->flag() & Pin_noCompiler)
+            auto pin = node->pin(param_list[i]);
+            if (pin->flag() & Pin_noCompiler)
                 continue;
 
             NodeParamInfo param_info;
-            param_info.define.name = node->pin(in_list[i])->name();
-            param_info.define.dataType = pinType(node->id(), in_list[i]);
-            param_info.id = in_list[i];
-            info.paramIn.push_back(param_info);
+            param_info.define.name = pin->name();
+            param_info.define.dataType = pinType(node->id(), pin->id());
+            param_info.id = pin->id();
+            param_info.isInput = pin->isInput();
+            info.params.push_back(param_info);
         }
-
-        auto out_list = node->paramOutList();
-        for (int i = 0; i < out_list.size(); i++)
-        {
-            if (node->pin(out_list[i])->flag() & Pin_noCompiler)
-                continue;
-
-            NodeParamInfo param_info;
-            param_info.define.name = node->pin(out_list[i])->name();
-            param_info.define.dataType = pinType(node->id(), out_list[i]);
-            param_info.id = out_list[i];
-            info.paramOut.push_back(param_info);
-        }
-        func_debug.nodeInfo[it.key()] = info;
 
         it++;
+    }
+
+    auto local_list = m_scriptItem->localVariableList(true);
+    for (int i = 0; i < local_list.size(); i++)
+    {
+        auto def = m_scriptItem->localVariable(local_list[i]);
+        JZParam jz_def;
+        jz_def.name = def->name;
+        jz_def.dataType = refType(def->name);
+        func_debug.localVariables << jz_def;
     }
 
     JZFunction impl;
@@ -1598,6 +1605,7 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
         addStatement(JZNodeIRPtr(new JZNodeIR(OP_return)));
     }
     
+    //替换auto
     while(true)
     {
         int index = indexOfStatmentList(m_statmentList, OP_ComilerAllocAuto);
@@ -1611,12 +1619,12 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
 
         int data_type = refType(auto_alloc->name);
         addAlloc(JZNodeIRAlloc::Stack, auto_alloc->name, data_type);
-        addInitVariable(irRef(auto_alloc->name), data_type, "");
 
         popStatmentList();
         replaceStatementList(index, tmp_list);
     }
 
+    //替换break continue
     for (int i = 0; i < m_statmentList->size(); i++)
     {
         int op_type = m_statmentList->at(i)->type;
@@ -1646,9 +1654,19 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
     }
 
     //init function stack
-    auto createAlloc = [](int id,int dataType)->JZNodeIRPtr
+    auto createAlloc = [this](int id,int dataType)->JZNodeIRPtr
     {
         Q_ASSERT(id < Reg_Start);
+        for (int i = 0; i < m_irRefList.size(); i++)
+        {
+            if (m_irRefList[i].ref.id() == id)
+            {
+                JZNodeIRReference* ir_ref = new JZNodeIRReference();
+                ir_ref->ref = m_irRefList[i].ref;
+                ir_ref->orig = m_irRefList[i].orig;
+                return JZNodeIRPtr(ir_ref);
+            }
+        }
 
         JZNodeIRAlloc *alloc = new JZNodeIRAlloc();
         alloc->allocType = JZNodeIRAlloc::StackId;
@@ -2077,11 +2095,15 @@ bool JZNodeCompiler::hasStatementDepend(int pc)
 
 void JZNodeCompiler::resetStack()
 {
+    m_statmentList = nullptr;
+    m_regCallFunction = nullptr;
+
     m_stackId = Stack_User;
     m_nodeInfo.clear();
     m_stackType.clear();
-    m_statmentList = nullptr;
-    m_regCallFunction = nullptr;
+    m_refType.clear();
+    m_checkError.clear();
+    m_irRefList.clear();
 }
 
 int JZNodeCompiler::allocStack(QString type)
@@ -2800,6 +2822,14 @@ void JZNodeCompiler::addSetVariableConvert(const JZNodeIRParam &dst,const JZNode
     {
         addConvert(dst,to_type,src);
     }
+}
+
+void JZNodeCompiler::setIRParamReference(const JZNodeIRParam& ref, const JZNodeIRParam& original)
+{
+    IRParamReference ref_info;
+    ref_info.ref = ref;
+    ref_info.orig = original;
+    m_irRefList.push_back(ref_info);
 }
 
 void JZNodeCompiler::addSetJson(const JZNodeIRParam& obj,const QString &name, const JZNodeIRParam& value)

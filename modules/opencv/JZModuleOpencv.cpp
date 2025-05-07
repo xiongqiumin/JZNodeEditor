@@ -59,6 +59,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         return out;
     }));        
 
+    
     env->nodeFactory()->registNode(Node_OpencvInit, createJZNode<JZNodeOpencvInit>);
     env->nodeFactory()->registNode(Node_OpencvTemplate, createJZNode<JZNodeTemplateMatch>);    
 }

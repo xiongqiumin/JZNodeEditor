@@ -137,13 +137,4 @@ protected:
     int m_longPress;
 };
 
-//JZNodeFunctionItem
-class JZNodeFunctionItem : public JZNodeGraphItem
-{
-public:
-    JZNodeFunctionItem(JZNode *node);
-
-    virtual void updatePin();
-};
-
 #endif

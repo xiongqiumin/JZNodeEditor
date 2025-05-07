@@ -80,6 +80,13 @@ public:
     CFunctionPtr write;
 };
 
+class JZFunctionName
+{
+public:
+    QString className;
+    QString name;
+};
+
 class JZFunctionDefine
 {
 public:
@@ -110,6 +117,12 @@ public:
 };
 QDataStream &operator<<(QDataStream &s, const JZFunctionDefine &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param);
+
+class JZFunctionHelper
+{
+public:
+    static JZFunctionName splitFunction(const QString &fullname);
+};
 
 //signal
 class CSignal

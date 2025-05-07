@@ -36,12 +36,14 @@ protected:
     void dumpClass(QString class_name, QString& def, QString& impl);
     void dumpFunction(const JZFunction *function,QString &def,QString &impl);
     QString tab(int count);
+    int irParamType(const JZNodeIRParam& param);
 
     QString m_dirPath;
     
     JZNodeScript* m_script;
     const JZNodeObjectDefine* m_classDefine;
     const JZFunction* m_function;
+    const JZFunctionDebugInfo* m_debug;
 
     JZProject* m_project;
     JZNodeProgram *m_program;

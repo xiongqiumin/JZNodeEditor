@@ -44,6 +44,7 @@ protected:
 	JZNodeSetParam* createSetParam(QString name);
 	JZNode* createOpNode(QString op);
 	JZNode* createSingleOpNode(QString op);
+	JZNode* createObject(QString type);
 	void visitNode(asCScriptNode* node, std::function<void(asCScriptNode*)> vistor);
 	
 	JZScriptEnvironment* environment();
@@ -57,8 +58,10 @@ protected:
 	QString nodeText(asCScriptNode* node);
 	asCScriptNode* nextNode(asCScriptNode* node, int count);
 	QList<asCScriptNode*> nodeChilds(asCScriptNode* node);
-	
+
+	QString toDataType(asCScriptNode* node);
 	QList<JZParamDefine> toParamList(asCScriptNode* node);
+	bool toArgList(asCScriptNode* node, QList<JZNode*>& arg_list);
 
 	JZNode* toExprTerm(asCScriptNode* node);
 	JZNode* toExpression(asCScriptNode* node);

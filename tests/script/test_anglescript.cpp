@@ -525,12 +525,18 @@ void AngleScriptTest::testSort()
                 }
             }
         }
+        return input;
     })";
+
+    m_project.addGlobalVariable("list_int", "QList<int>", "{9,8,3,114,53,6,47,88378,0}");
 
     if (!buildAs(code))
         return;
     dump("as_testSort");
 
+    auto list_holder = m_engine.getVariable("list_int");
+    QList<int> c_list = { 9, 8, 3, 114, 53, 6, 47, 88378, 0 };
+    
     auto testSort = [](QList<int> input)->QList<int> {
         for (int i = 0; i < input.size(); i++)
         {
@@ -544,16 +550,128 @@ void AngleScriptTest::testSort()
                 }
             }
         }
+        return input;
     };
 
-    for (int i = 0; i < 9; i++)
-    {
-        QVariantList in, out;
-        in << i;
+    QList<int> c_sort_list = testSort(c_list);
+    
+    QVariantList in, out;
+    in << list_holder;
 
-        bool ret = call("testSort", in, out);
-        QVERIFY(ret);
+    bool ret = call("testSort", in, out);
+    QVERIFY(ret);
+
+    QList<int> *jz_list = JZObjectCast<QList<int>>(toJZObject(list_holder));
+    QList<int> *jz_sort_list = JZObjectCast<QList<int>>(toJZObject(out[0]));
+    QCOMPARE(c_list, *jz_list);
+    QCOMPARE(c_sort_list, *jz_sort_list);
+}
+
+// 检查四个数能否算出 24
+static bool solve_24(QVector<int> nums, int n) {
+    if (n == 1) {
+        return nums[0] == 24;
     }
+
+    QVector<int> new_nums(4);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (i == j) continue;
+
+            int index = 0;
+            for (int k = 0; k < n; k++) {
+                if (k != i && k != j) {
+                    new_nums[index++] = nums[k];
+                }
+            }
+
+            int a = nums[i];
+            int b = nums[j];
+
+            // 加法
+            new_nums[index] = a + b;
+            if (solve_24(new_nums, index + 1)) return true;
+
+            // 减法
+            new_nums[index] = a - b;
+            if (solve_24(new_nums, index + 1)) return true;
+
+            // 乘法
+            new_nums[index] = a * b;
+            if (solve_24(new_nums, index + 1)) return true;
+
+            // 除法，要求能整除
+            if (b != 0 && a % b == 0) {
+                new_nums[index] = a / b;
+                if (solve_24(new_nums, index + 1)) return true;
+            }
+        }
+    }
+    return false;
+}
+
+void AngleScriptTest::testNum24()
+{
+    QString code = R"(
+        bool solve_24(QList<int> nums, int n) {
+        if (n == 1) {
+            return nums[0] == 24;
+        }
+
+        QList<int> new_nums;
+        new_nums.resize(4);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == j) continue;
+
+                int index = 0;
+                for (int k = 0; k < n; k++) {
+                    if (k != i && k != j) {
+                        new_nums[index++] = nums[k];
+                    }
+                }
+
+                int a = nums[i];
+                int b = nums[j];
+
+                // 加法
+                new_nums[index] = a + b;
+                if (solve_24(new_nums, index + 1)) return true;
+
+                // 减法
+                new_nums[index] = a - b;
+                if (solve_24(new_nums, index + 1)) return true;
+
+                // 乘法
+                new_nums[index] = a * b;
+                if (solve_24(new_nums, index + 1)) return true;
+
+                // 除法，要求能整除
+                if (b != 0 && a % b == 0) {
+                    new_nums[index] = a / b;
+                    if (solve_24(new_nums, index + 1)) return true;
+                }
+            }
+        }
+        return false;
+    })";
+
+    m_project.addGlobalVariable("list_int", "QList<int>", "{4,5,1,3}");
+
+    if (!buildAs(code))
+        return;
+    dump("as_testNum24");
+
+    auto list_holder = m_engine.getVariable("list_int");
+    QVector<int> c_list = { 4,5,1,3 };
+
+    QVariantList in, out;
+    in << list_holder << 0;
+
+    bool ret = call("solve_24", in, out);
+    QVERIFY(ret);
+
+    bool solve_ret = solve_24(c_list, 0);
 }
 
 

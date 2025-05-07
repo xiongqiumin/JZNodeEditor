@@ -1,7 +1,8 @@
 ﻿#include <QDir>
 #include <QFile>
 #include "JZNodeProgramDumper.h"
-#include "JZNodeCompiler.h"    
+#include "JZNodeCompiler.h"
+#include "JZParamHelper.h"
 
 JZNodeProgramDumper::JZNodeProgramDumper()
 {    
@@ -9,6 +10,8 @@ JZNodeProgramDumper::JZNodeProgramDumper()
     m_project = nullptr;
     m_program = nullptr;
     m_classDefine = nullptr;
+    m_function = nullptr;
+    m_debug = nullptr;
 }
 
 void JZNodeProgramDumper::init(JZProject* project, JZNodeProgram* program)
@@ -51,25 +54,41 @@ bool JZNodeProgramDumper::isIrSetReg(int pc, RegSetType regType)
     if (pc < 0 || pc >= m_script->statmentList.size())
         return false;
 
-    if (m_script->statmentList[pc]->type != OP_set)
-        return false;
+    JZNodeIRParam src, dst;
 
-    JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_script->statmentList[pc].data());
+    if (m_script->statmentList[pc]->type == OP_set)
+    {
+        JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_script->statmentList[pc].data());
+        src = ir_set->src;
+        dst = ir_set->dst;
+    }
+    else if (m_script->statmentList[pc]->type == OP_clone)
+    {
+        JZNodeIRClone* ir_set = dynamic_cast<JZNodeIRClone*>(m_script->statmentList[pc].data());
+        src = ir_set->src;
+        dst = ir_set->dst;
+    }
+    else
+    {
+        return false;
+    }
+
+    
     if (regType == SrcRegIn)
     {
-        return isRegInParam(ir_set->src);
+        return isRegInParam(src);
     }
     else if (regType == SrcRegOut)
     {
-        return isRegOutParam(ir_set->src);
+        return isRegOutParam(src);
     }
     else if (regType == DstRegIn)
     {
-        return isRegInParam(ir_set->dst);
+        return isRegInParam(dst);
     }
     else if(regType == DstRegOut)
     {
-        return isRegOutParam(ir_set->dst);
+        return isRegOutParam(dst);
     }
 
     Q_ASSERT(0);
@@ -189,6 +208,52 @@ void JZNodeProgramDumper::dumpFile(JZScriptFile* script_file)
     }
 }
 
+int JZNodeProgramDumper::irParamType(const JZNodeIRParam& param)
+{
+    int type = Type_none;
+
+    if (param.isLiteral())
+        type = JZNodeType::variantType(param.literal());
+    else if (param.isThis())
+        type = JZNodeType::pointerType(m_classDefine->id);
+    else if (param.isRef())
+    {
+        auto coor = JZParamHelper::splitMember(param.ref());
+        if (coor.baseName == "this")
+            type = m_classDefine->id;
+        else
+        {
+            auto local_def = m_debug->localParam(coor.baseName);
+            if (local_def)
+                type = local_def->dataType;
+            else
+            {
+                auto global_def = m_project->globalVariable(coor.baseName);
+                type = m_env.nameToType(global_def->type);
+            }
+        }
+
+        if (coor.memberList.size() != 0)
+        {
+            auto obj_def = m_env.meta(type);
+            Q_ASSERT(obj_def);
+                
+            auto param_def = JZParamHelper::memberDefine(obj_def, coor.memberList);
+            type = m_env.nameToType(param_def->type);
+        }
+    }
+    else if (param.isId())
+    {
+        auto gemo = JZNodeGemo::fromParamId(param.id());
+        auto node_info = m_debug->nodeParam(param.id());
+        Q_ASSERT(node_info);
+
+        type = node_info->dataType;
+    }
+
+    Q_ASSERT(type != Type_none);
+    return type;
+}
 
 void JZNodeProgramDumper::dumpClass(QString class_name, QString& def, QString& impl)
 {
@@ -247,6 +312,7 @@ void JZNodeProgramDumper::dumpFunction(const JZFunction* func_impl, QString& def
 
     m_function = func_impl;
     m_script = m_program->script(func_impl->path);    
+    m_debug = m_script->functionDebug(func_impl->fullName());
     auto& opList = m_script->statmentList;
 
     QString declare = functionDeclare(func_impl);
@@ -258,7 +324,6 @@ void JZNodeProgramDumper::dumpFunction(const JZFunction* func_impl, QString& def
 
     source += declare + "\n{\n";
     m_jumpList.clear();
-
     source += tab(1) + "bool Reg_Cmp = false;\n";
 
     QString space = QString().leftJustified(12,' ');
@@ -288,7 +353,6 @@ void JZNodeProgramDumper::dumpFunction(const JZFunction* func_impl, QString& def
         if(set_reg_in != -1)
             lines[set_reg_in] = space + "{\n" + lines[set_reg_in];
 
-
         int set_reg_out = (set_reg_in == -1)? -1:i;
         for (int j = i + 1; j < func_impl->addrEnd; j++)
         {
@@ -299,6 +363,19 @@ void JZNodeProgramDumper::dumpFunction(const JZFunction* func_impl, QString& def
         }
         if(set_reg_out != -1)
             lines[set_reg_out] = lines[set_reg_out] + "\n" + space + "}";
+    }
+
+    //return 返回值
+    for (int i = func_impl->addr; i < func_impl->addrEnd; i++)
+    {
+        if (opList[i].data()->type != OP_return)
+            continue;
+
+        if (isIrSetReg(i - 1, DstRegOut))
+        {
+            lines[i - 1] = space + "{\n" + lines[i - 1];
+            lines[i] = lines[i] + "\n" + space + "}";
+        }
     }
 
     //处理跳转
@@ -369,6 +446,7 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     case OP_alloc:
     {
         JZNodeIRAlloc *ir_alloc = (JZNodeIRAlloc*)op;
+
         QString alloc = m_env.typeToName(ir_alloc->dataType);
         if (ir_alloc->allocType == JZNodeIRAlloc::Heap || ir_alloc->allocType == JZNodeIRAlloc::Stack)
             line += alloc + " " + toString(ir_alloc->dst);
@@ -389,6 +467,15 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
             line = "// " + line;
         break;
     }
+    case OP_reference:
+    {
+        JZNodeIRReference* ir_ref = (JZNodeIRReference*)op;
+        int data_type = irParamType(ir_ref->orig);
+
+        QString alloc = m_env.typeToName(data_type);
+        line += alloc + " &" + toString(ir_ref->ref)  + " = " + toString(ir_ref->orig) + ";";
+        break;
+    }
     case OP_clearReg:
         line += "// clear reg";
         break;
@@ -396,15 +483,11 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     {
         JZNodeIRSet *ir_set = (JZNodeIRSet*)op;
         line += toString(ir_set->dst) + " = " + toString(ir_set->src) + ";";
-        if (isRegInParam(ir_set->dst)) //调用函数
+        if (isRegInParam(ir_set->dst) || isRegOutParam(ir_set->dst)) //调用函数
         {
-            line = "auto " + line;
+            line = "auto&& " + line;
         }
-        if (isRegInParam(ir_set->src)) //函数入参
-        {
-            line = "// " + line;
-        }
-        if (isRegOutParam(ir_set->dst)) //函数出参
+        if (isRegInParam(ir_set->src))  //函数入参
         {
             line = "// " + line;
         }
@@ -412,8 +495,16 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     }
     case OP_clone:
     {
-        JZNodeIRClone *ir_set = (JZNodeIRClone*)op;
+        JZNodeIRClone* ir_set = (JZNodeIRClone*)op;   
         line += toString(ir_set->dst) + " = " + toString(ir_set->src) + "; //clone";
+        if (isRegInParam(ir_set->dst) || isRegOutParam(ir_set->dst)) //调用函数
+        {
+            line = "auto&& " + line;
+        }
+        if (isRegInParam(ir_set->src)) //函数入参
+        {
+            line = "// " + line;
+        }
         break;
     }
     case OP_buffer:
@@ -425,7 +516,10 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     case OP_convert:
     {
         JZNodeIRConvert *ir_cvt = (JZNodeIRConvert*)op;
-        line += toString(ir_cvt->dst) + " = (" + m_env.typeToName(ir_cvt->dstType) + ")" + toString(ir_cvt->src) + ";";
+        if(!JZNodeType::isPointer(irParamType(ir_cvt->src)) && JZNodeType::isPointer(ir_cvt->dstType))
+            line += toString(ir_cvt->dst) + " = &" + toString(ir_cvt->src) + ";";
+        else
+            line += toString(ir_cvt->dst) + " = (" + m_env.typeToName(ir_cvt->dstType) + ")" + toString(ir_cvt->src) + ";";
         break;
     }
     case OP_call:
@@ -435,17 +529,14 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
 
         if (isIrSetReg(op->pc + 1, SrcRegOut))
         {
-            line = "auto Reg_CallOut_0 = " + line;
+            line = "auto&& Reg_CallOut_0 = " + line;
         }
         break;
     }
     case OP_return:
     {
         if (isIrSetReg(op->pc - 1, DstRegOut))
-        {
-            JZNodeIRSet* ir_set = dynamic_cast<JZNodeIRSet*>(m_script->statmentList[op->pc - 1].data());
-            line = "return " + toString(ir_set->src) + ";";
-        }
+            line = "return Reg_CallOut_0;";
         else
             line += "return;";
         break;
@@ -556,16 +647,25 @@ QString JZNodeProgramDumper::functionDeclare(const JZFunction* func)
 QString JZNodeProgramDumper::dealCall(QString function)
 {
     auto func_def = m_env.function(function);
+    QString c_func = func_def->name;
+    if (func_def->className.startsWith("QList<"))
+    {
+        if (func_def->name == "set")
+            c_func = "replace";
+        else if (func_def->name == "get")
+            c_func = "at";
+    }
+
     QString line;
     int reg_idx = 0;
     if (func_def->isMemberFunction())
     {
-        line = JZNodeCompiler::paramName(Reg_CallIn + reg_idx++) + ".";
+        line = JZNodeCompiler::paramName(Reg_CallIn + reg_idx++) + "->";
     }
     QStringList param_in_list;
     for(int i = reg_idx; i < func_def->paramIn.size(); i++)
         param_in_list << JZNodeCompiler::paramName(Reg_CallIn + i);
-    line = line + func_def->name + "(" + param_in_list.join(",") + ");";
+    line = line + c_func + "(" + param_in_list.join(",") + ");";
 
     return line;
 }

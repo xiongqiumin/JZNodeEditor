@@ -1,26 +1,12 @@
 ﻿#include "JZOpencvNode.h"
-
-//JZTemplateConfig
-JZTemplateConfig::JZTemplateConfig()
-{
-	confidence = 0.95;
-}
-
-QDataStream& operator<<(QDataStream& s, const JZTemplateConfig& config)
-{
-	s << config.templatePath;
-	return s;
-}
-
-QDataStream& operator>>(QDataStream& s, JZTemplateConfig& config)
-{
-	s >> config.templatePath;
-	return s;
-}
+#include "JZNodeCompiler.h"
+#include "JZNodeUtils.h"
 
 //JZNodeOpencvInit
 JZNodeOpencvInit::JZNodeOpencvInit()
 {
+	m_type = Node_OpencvInit;
+	m_name = "OpencvInit";
 }
 JZNodeOpencvInit::~JZNodeOpencvInit()
 {
@@ -54,6 +40,12 @@ JZTemplateConfig JZNodeTemplateMatch::config()
 
 bool JZNodeTemplateMatch::compiler(JZNodeCompiler* c, QString& error)
 {
+	if (!c->addFlowInput(m_id, error))
+		return false;
+
+	QByteArray buffer = JZNodeUtils::toBuffer(m_config);
+	//int id = c->addGetOrInitCall(m_id,"JZTemplate","", buffer);
+
 	return true;
 }
 

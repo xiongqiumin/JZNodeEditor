@@ -5,7 +5,6 @@
 #include "JZNodeFunctionManager.h"
 #include "JZContainer.h"
 #include "JZModule.h"
-#include "JZRegExpHelp.h"
 
 //NodeRange
 NodeRange::NodeRange()
@@ -33,15 +32,17 @@ QDataStream &operator>>(QDataStream &s, NodeRange &param)
 //NodeParamInfo
 QDataStream &operator<<(QDataStream &s, const NodeParamInfo &param)
 {
-    s << param.define;
     s << param.id;
+    s << param.isInput;
+    s << param.define;
     return s;
 }
 
 QDataStream &operator>>(QDataStream &s, NodeParamInfo &param)
 {
-    s >> param.define;
     s >> param.id;
+    s >> param.isInput;
+    s >> param.define;
     return s;
 }
 
@@ -53,18 +54,14 @@ NodeInfo::NodeInfo()
     isFlow = false;
 }
 
-NodeParamInfo *NodeInfo::param(int id)
+const NodeParamInfo *NodeInfo::param(int id) const
 {
-    for (int i = 0; i < paramIn.size(); i++)
+    for (int i = 0; i < params.size(); i++)
     {
-        if (paramIn[i].id == id)
-            return &paramIn[i];
+        if (params[i].id == id)
+            return &params[i];
     }
-    for (int i = 0; i < paramOut.size(); i++)
-    {
-        if (paramOut[i].id == id)
-            return &paramOut[i];
-    }
+
     return nullptr;
 }
 
@@ -74,8 +71,7 @@ QDataStream &operator<<(QDataStream &s, const NodeInfo &param)
     s << param.id;
     s << param.type;
     s << param.isFlow;
-    s << param.paramIn;    
-    s << param.paramOut;
+    s << param.params;
     s << param.pcRanges;
     return s;
 }
@@ -86,14 +82,13 @@ QDataStream &operator>>(QDataStream &s, NodeInfo &param)
     s >> param.id;
     s >> param.type;
     s >> param.isFlow;
-    s >> param.paramIn;    
-    s >> param.paramOut;    
+    s >> param.params;
     s >> param.pcRanges;
     return s;
 }
 
 //JZFunctionDebugInfo
-const JZParamDefine *JZFunctionDebugInfo::localParam(QString name) const
+const JZParam *JZFunctionDebugInfo::localParam(QString name) const
 {
     for(int i = 0; i < localVariables.size(); i++)
     {
@@ -110,19 +105,7 @@ const JZParam *JZFunctionDebugInfo::nodeParam(int id) const
     if(it == nodeInfo.end())
         return nullptr;
 
-    auto &info = it.value();
-    for(int i = 0; i < info.paramIn.size(); i++)
-    {
-        if(info.paramIn[i].id == gemo.pinId)
-            return &info.paramIn[i].define;
-    }
-    for(int i = 0; i < info.paramOut.size(); i++)
-    {
-        if(info.paramOut[i].id == gemo.pinId)
-            return &info.paramOut[i].define;
-    }
-
-    return nullptr;
+    return &it->param(gemo.pinId)->define;
 }   
 
 QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param)
@@ -186,6 +169,7 @@ void JZNodeScript::copyTo(JZNodeScript *other) const
 void JZNodeScript::saveToStream(QDataStream &s) const
 {
     s << itemPath;    
+    s << className;
     s << statmentList.size();
     for(int i = 0; i < statmentList.size(); i++)
     {
@@ -200,6 +184,7 @@ void JZNodeScript::loadFromStream(QDataStream &s)
 {
     s >> itemPath;
     int stmt_size = 0;
+    s >> className;
     s >> stmt_size;
     for(int i = 0; i < stmt_size; i++)
     {
@@ -223,16 +208,15 @@ void JZNodeTypeMeta::clear()
 
 const JZFunctionDefine *JZNodeTypeMeta::function(QString name) const
 {
-    QString className,memberName;
-    JZRegExpHelp::splitDefine(name,memberName,memberName);
+    auto func_name = JZFunctionHelper::splitFunction(name);
 
-    if (!className.isEmpty())
+    if (!func_name.className.isEmpty())
     {        
-        auto obj = object(className);
+        auto obj = object(func_name.className);
         if (!obj)
             return nullptr;
 
-        return obj->function(memberName);
+        return obj->function(func_name.name);
     }
     else
     {

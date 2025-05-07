@@ -2205,16 +2205,6 @@ void JZNodeView::autoCompiler()
     emit sigAutoCompiler();
 }
 
-QString JZNodeView::getExpr(const QString &text)
-{
-    JZNodeExprEditDialog dlg(this);
-    dlg.setExpr(text);
-    if(dlg.exec() != QDialog::Accepted)
-        return QString();
-
-    return dlg.expr();
-}
-
 int JZNodeView::popMenu(QStringList list)
 {
     QMenu menu;

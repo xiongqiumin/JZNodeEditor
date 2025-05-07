@@ -30,7 +30,9 @@ include_directories(./
 set(JZNodeCore_SOURCES
     LogManager.cpp
     LogManager.h
-
+	
+	script/JZParamHelper.cpp
+	script/JZParamHelper.h
     script/JZParamItem.cpp
     script/JZParamItem.h
     script/JZProject.cpp
@@ -358,6 +360,8 @@ set(JZNodeEditor_SOURCES
     editor/script/items/JZNodeLineItem.h
     editor/script/items/JZNodeGraphItem.cpp
     editor/script/items/JZNodeGraphItem.h
+	editor/script/items/JZNodeFunctionItem.cpp
+	editor/script/items/JZNodeFunctionItem.h
     editor/script/items/JZNodeFlowItem.cpp
     editor/script/items/JZNodeFlowItem.h
     editor/script/items/JZNodeValueItem.cpp

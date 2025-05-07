@@ -26,6 +26,7 @@ private slots:
     void testCalcPi();
     void testNewton();
     void testSort();
+    void testNum24();
 protected:
 
 };

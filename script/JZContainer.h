@@ -139,17 +139,13 @@ void registMap(JZScriptEnvironment* env, int type = Type_none)
         JZNodeObjectPointer holder = runtimeEnvironment()->objectManager()->objectReferencePointer(l, false);
         return format.format(holder.object());
     });
-    cls_map.def("set", false, [](QMap<Key, Value>* map, Key key, const Value& t) {
-        checkContains(map->contains(key));
-        (*map)[key] = t;
-    });
-    cls_map.def("get", false, [](QMap<Key, Value>* map, Key key)->Value {
-        checkContains(map->contains(key));
-        return (*map)[key];
-    });
     cls_map.def("insert", false, [](QMap<Key, Value>* map, Key key, const Value& t) {
         checkContains(!map->contains(key));
         map->insert(key, t);
+    });
+    cls_map.def("value", false, [](QMap<Key, Value>* map, Key key)->Value {
+        checkContains(map->contains(key));
+        return map->value(key);
     });
     cls_map.def("size", false, [](QMap<Key, Value>* map) ->int { return map->size(); });
     cls_map.def("clear", false, [](QMap<Key, Value>* map) { map->clear(); });

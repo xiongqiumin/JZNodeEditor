@@ -18,6 +18,11 @@ bool JZNodeIRParam::isLiteral() const
     return type == Literal;
 }
 
+bool JZNodeIRParam::isId() const
+{
+    return (type == StackId || type == RegId);
+}
+
 bool JZNodeIRParam::isNodeId() const
 {
     return (type == StackId && id() < Stack_User);
@@ -141,6 +146,8 @@ JZNodeIR *createNodeIR(JZNodeIRType type)
         return new JZNodeIR(type);
     case OP_alloc:
         return new JZNodeIRAlloc();
+    case OP_reference:
+        return new JZNodeIRReference();
     case OP_add:
     case OP_sub:
     case OP_mul:
@@ -266,6 +273,28 @@ void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
     s >> allocType >> dst >> dataType;
+}
+
+//JZNodeIRReference
+JZNodeIRReference::JZNodeIRReference()
+{
+    type = OP_reference;
+}
+
+JZNodeIRReference::~JZNodeIRReference()
+{
+}
+
+void JZNodeIRReference::saveToStream(QDataStream& s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << ref << orig;
+}
+
+void JZNodeIRReference::loadFromStream(QDataStream& s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> ref >> orig;
 }
 
 //JZNodeIRExpr

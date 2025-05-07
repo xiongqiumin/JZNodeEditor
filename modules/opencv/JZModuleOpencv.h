@@ -4,6 +4,7 @@
 #include "JZModule.h"
 #include "../JZModuleDefine.h"
 #include "CvMatAndQImage.h"
+#include "JZOpencv.h"
 
 class JZModuleOpencv: public JZModule
 {

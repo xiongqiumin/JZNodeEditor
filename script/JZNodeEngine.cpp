@@ -63,6 +63,7 @@ RunnerEnv::RunnerEnv()
 {
     function = nullptr;
     script = nullptr;
+    inCount = 0;
     pc = -1;    
 }
 
@@ -993,7 +994,7 @@ void JZNodeEngine::printNode(int node_id)
     auto env = m_stack.currentEnv();         
     auto info = currentFunctionDebugInfo();
     auto &node_info = info->nodeInfo[node_id];
-
+/*
     QString line = node_info.name + "(id=" + QString::number(node_info.id);
     if(node_info.paramIn.size() > 0)
         line += ",";
@@ -1016,6 +1017,7 @@ void JZNodeEngine::printNode(int node_id)
     }
     line += ")";
     print(line);
+*/
 }
 
 void JZNodeEngine::onWatchTimer()
@@ -1296,11 +1298,10 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
 
 const JZFunction* JZNodeEngine::virtualFunction(JZNodeObject* obj, QString name)
 {
-    QString className,memberName;
-    JZRegExpHelp::splitDefine(name,memberName,memberName);
+    auto def = JZFunctionHelper::splitFunction(name);
 
-    auto func = obj->function(memberName);
-    Q_ASSERT_X(func, "Error", qUtf8Printable("no function " + memberName));
+    auto func = obj->function(def.name);
+    Q_ASSERT_X(func, "Error", qUtf8Printable("no function " + def.name));
     return m_env.functionManager()->functionImpl(func->fullName());
 }
 
@@ -1730,6 +1731,15 @@ bool JZNodeEngine::run()
                 initLocal(ir_alloc->dst.ref(), ir_alloc->dataType);            
             else            
                 initLocal(ir_alloc->dst.id(), ir_alloc->dataType);
+            break;
+        }
+        case OP_reference:
+        {
+            const JZNodeIRReference* ir_ref = (const JZNodeIRReference*)op;
+
+            QVariantPtr ptr = *getParamRef(-1, ir_ref->orig);
+            auto env = m_stack.currentEnv();
+            env->initVariable(ir_ref->ref.id(), ptr);
             break;
         }
         case OP_clearReg:

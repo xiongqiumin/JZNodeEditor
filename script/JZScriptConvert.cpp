@@ -239,8 +239,8 @@ bool JZScriptConvert::addFunction(asCScriptNode* node)
 	func.isFlowFunction = false;
 
     auto child = node->firstChild;
-
-    auto func_ret = nodeText(child);
+	
+    auto func_ret = toDataType(child);
     if (func_ret != "void")
         func.paramOut.push_back(JZParamDefine("output", func_ret));
 
@@ -335,6 +335,29 @@ QList<asCScriptNode*> JZScriptConvert::nodeChilds(asCScriptNode* node)
     return list;
 }
 
+QString JZScriptConvert::toDataType(asCScriptNode* child)
+{
+	Q_ASSERT(child->nodeType == snDataType);
+	
+	QString data_type;
+
+	auto type_list = nodeChilds(child);
+	if (type_list.size() == 1)
+		data_type = nodeText(type_list[0]);
+	else
+	{
+		data_type = nodeText(type_list[0]) + "<" + nodeText(type_list[1]) + ">";
+	}
+	child = nextNode(child, 1);
+	if (child->firstChild)
+	{
+		QString post = nodeText(child->firstChild);
+		Q_ASSERT(post == "&");
+		data_type += "*";
+	}
+	return data_type;
+}
+
 QList<JZParamDefine> JZScriptConvert::toParamList(asCScriptNode* node)
 {
     QList<JZParamDefine> list;
@@ -420,6 +443,13 @@ JZNode* JZScriptConvert::createSingleOpNode(QString op)
 
 	Q_ASSERT(0);
 	return nullptr;
+}
+
+JZNode* JZScriptConvert::createObject(QString type)
+{
+	JZNodeCreateObject* create = createNode<JZNodeCreateObject>();
+	create->setClassName(type);
+	return create;
 }
 
 JZNodeParam* JZScriptConvert::createGetParam(QString name)
@@ -724,7 +754,7 @@ JZNode* JZScriptConvert::toAssignment(asCScriptNode* node)
 			}
 			else
 			{
-				m_error = nodeText(list[0]) + " ���ܸ�ֵ";
+				m_error = nodeText(list[0]) + " 不支持ֵ";
 				return nullptr;
 			}
 
@@ -789,6 +819,24 @@ JZNodeFunction* JZScriptConvert::createFunction(QString function_name, asCScript
 	}
 
 	return func;
+}
+
+bool JZScriptConvert::toArgList(asCScriptNode* node, QList<JZNode*>& ret_list)
+{
+	Q_ASSERT(node->nodeType == snArgList);
+
+	QList<JZNode*> jz_list;
+	auto arg_list = nodeChilds(node);
+	for (int i = 0; i < arg_list.size(); i++)
+	{
+		auto param = toAssignment(arg_list[i]);
+		if (!param)
+			return false;
+
+		jz_list << param;
+	}
+	ret_list = jz_list;
+	return true;
 }
 
 JZNode* JZScriptConvert::toFunctionCall(asCScriptNode* node)
@@ -1067,6 +1115,7 @@ bool JZScriptConvert::toStatementBlock(asCScriptNode* node, QList<JZNode*> &list
 			return false;
 
 		auto cur_block = currentBlock();
+		//pre
 		if (cur_block->preStatment)
 		{
 			list.push_back(cur_block->preStatment);
@@ -1075,13 +1124,19 @@ bool JZScriptConvert::toStatementBlock(asCScriptNode* node, QList<JZNode*> &list
 			pre = cur_block->preStatment;
 			cur_block->preStatment = nullptr;
 		}
-		if (pre)
-			m_script->addConnect(pre->flowOutGemo(), cur_block->flowList.front()->flowInGemo());
 
-		list.append(cur_block->flowList);
-		pre = cur_block->flowList.back();
-		cur_block->flowList.clear();
+		//flow
+		if (cur_block->flowList.size() > 0)
+		{
+			if (pre)
+				m_script->addConnect(pre->flowOutGemo(), cur_block->flowList.front()->flowInGemo());
 
+			list.append(cur_block->flowList);
+			pre = cur_block->flowList.back();
+			cur_block->flowList.clear();
+		}
+
+		//post
 		if (cur_block->postStatment)
 		{
 			list.push_back(cur_block->postStatment);
@@ -1198,25 +1253,47 @@ bool JZScriptConvert::toDeclarationStatement(asCScriptNode* node)
 	Q_ASSERT(node->nodeType == snDeclaration);
 
 	auto list = nodeChilds(node);
-	QString data_type = nodeText(list[0]);
+	
+	QString data_type = toDataType(list[0]);
 	QString name = nodeText(list[1]);
-
-	JZNode* expr = toAssignment(list[2]);
-	if (!expr)
-		return false;
-	Q_ASSERT(!expr->isFlowNode());
-
+	
 	if (getVariableInfo(name))
 	{
-		m_error = JZNodeCompiler::errorString(Error_noVariable, { name });
+		m_error = JZNodeCompiler::errorString(Error_varAllreadyDefined, { name });
 		return false;
 	}
 	addLocalVariable(name, data_type);
 
-	JZNodeSetParam* set = createSetParam(name);
-	m_script->addConnectForce(expr->paramOutGemo(0), set->paramInGemo(1));
+	JZNode* expr = nullptr;
+	if (list.size() == 2)
+	{
 
-	currentBlock()->flowList << set;
+	}
+	else
+	{
+		if (list[2]->nodeType == snArgList)
+		{
+			QList<JZNode*> arg_list;
+			if (!toArgList(list[2], arg_list))
+				return false;
+
+			//构造函数
+			expr = createObject(data_type);
+		}
+		else
+		{
+			expr = toAssignment(list[2]);
+			if (!expr)
+				return false;
+
+			Q_ASSERT(!expr->isFlowNode());
+		}
+
+		JZNodeSetParam* set = createSetParam(name);
+		m_script->addConnectForce(expr->paramOutGemo(0), set->paramInGemo(1));
+		currentBlock()->flowList << set;
+	}
+
 	return true;
 }
 

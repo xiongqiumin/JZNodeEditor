@@ -87,7 +87,6 @@ JZNodeBuilder::JZNodeBuilder()
     m_project = nullptr;
     m_build = false;
     m_stopBuild = false;
-    m_compiler.setBuilder(this);
 }
 
 JZNodeBuilder::~JZNodeBuilder()
@@ -102,8 +101,9 @@ void JZNodeBuilder::setMute(bool mute)
 
 void JZNodeBuilder::setProject(JZProject *project)
 {
-    m_project = project;
     clear();
+    m_project = project;
+    m_compiler.setBuilder(this);
 }
 
 JZProject *JZNodeBuilder::project()

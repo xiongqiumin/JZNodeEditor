@@ -688,7 +688,6 @@ public:
         m_define.valueType = flag;
     }
     
-    // extre isRef 为ture 不管理内存
     template<typename Return, typename... Args,typename... Extra>
     JZFunctionDefine *def(QString name,bool isflow,Return (Class::*f)(Args...),Extra ...extra)
     {

@@ -155,7 +155,7 @@ protected slots:
     void onItemPropChanged();     
     void onItemSizeChanged();
     void onNodeTimer();
-    void onMouseMoveTimer();
+    void onMouseMoveTimer();   //边缘滚屏
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
     void onMapSceneChanged(QRectF rc);
@@ -220,7 +220,6 @@ protected:
      
     void autoCompiler();    
 
-    QString getExpr(const QString &text = QString());
     int popMenu(QStringList list);
     QStringList matchParmas(const JZNodeObjectDefine *define,int type,QString pre);    
 

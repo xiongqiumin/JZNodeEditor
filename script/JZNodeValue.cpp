@@ -560,9 +560,10 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
     auto env = environment();
     auto def = c->getVariableInfo(name);    
     int out_id = c->paramId(m_id,paramOut(0));
+    JZNodeIRParam ref = c->paramRef(name);
 
-    c->addNodeEnter(m_id);
-    JZNodeIRParam ref = c->paramRef(name);    
+    c->setIRParamReference(irId(out_id), ref);
+    c->addNodeEnter(m_id);   
     if (def->type == "auto")
     {
         int data_type = c->refType(name);
@@ -577,7 +578,6 @@ bool JZNodeParam::compiler(JZNodeCompiler *c,QString &error)
     {
         c->setPinType(m_id, paramOut(0), env->nameToType(def->type));
     }
-    c->addSetVariable(irId(out_id), ref);
     return true;
 }
 

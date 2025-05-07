@@ -20,7 +20,6 @@ void TestUnitTest::dumpUnit(JZScriptUnitTest* unit,QString name)
 
 void TestUnitTest::testHello()
 {
-    return;
     QString code = R"(int add(int a,int b)
         {
             return a + pow(2,4) + b;
@@ -48,7 +47,6 @@ void TestUnitTest::testHello()
 
 void TestUnitTest::testTimerEvent()
 {
-    return;
     auto class_item = makeTestClass();
     auto flow = class_item->addFlow("onTimer");
 

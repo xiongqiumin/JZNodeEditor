@@ -152,6 +152,7 @@ enum CompilerTip{
     Error_noVariable,
     Error_varNameEmpty,
     Error_varNameInvaild,
+    Error_varAllreadyDefined,
     Error_noFunction,
     Error_noImplement,
     Error_noClassMember,
@@ -242,6 +243,7 @@ public:
     int irParamType(const JZNodeIRParam &param);    
 
     void setRegCallFunction(const JZFunctionDefine *func);
+    void setIRParamReference(const JZNodeIRParam& ref, const JZNodeIRParam& original);
 
     /*
     节点数据传递规则:
@@ -320,6 +322,12 @@ public:
 protected:    
     friend JZNodeBuilder;
 
+    struct IRParamReference
+    {
+        JZNodeIRParam orig;
+        JZNodeIRParam ref;
+    };
+
     struct NodeCompilerStack
     {
         NodeCompilerStack();
@@ -388,13 +396,14 @@ protected:
     QList<QList<JZNodeIRPtr>*> m_statmentStak;
 
     QMap<JZNode*,Graph*> m_nodeGraph;     //构建连通图使用
+    CompilerResult m_compilerInfo;
 
     QString m_checkError;
     QMap<int,NodeCompilerInfo> m_nodeInfo;
     int m_stackId;       //当前栈位置，用于分配内存    
     QMap<int,int> m_stackType;     //stack 参数类型
     QMap<QString, int> m_refType;
-    CompilerResult m_compilerInfo;
+    QList<IRParamReference> m_irRefList;
     
     const JZScriptEnvironment *m_env = nullptr;
     JZNodeBuilder *m_builder;

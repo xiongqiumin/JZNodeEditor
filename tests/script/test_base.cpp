@@ -191,12 +191,15 @@ QVariant BaseTest::testClassPointer()
 
 bool BaseTest::build()
 {
+    QElapsedTimer t;
+    t.start();
     m_project.registType();
     if(!m_builder.build(&m_program))
     {        
         QTest::qVerify(false, "build", qPrintable(m_builder.error()), __FILE__, __LINE__);
         return false;
     }    
+    qDebug() << "build cost:" << t.elapsed();
 
     m_engine.setProgram(&m_program);
     m_engine.init();    
@@ -254,4 +257,25 @@ void BaseTest::asyncThread(QString name,QVariantList in)
     m_callResult.ret = m_engine.call(name,in,out);
     if(m_callResult.ret)
         m_callResult.output = out;
+}
+
+//genCallUnitArg
+CallArg genCallUnitArg(QStringList list)
+{
+    QSharedPointer<QByteArrayList> buffer = QSharedPointer<QByteArrayList>(new QByteArrayList());
+    QByteArrayList &buffer_list = *buffer;
+    buffer_list.push_back("app");
+    for (int i = 0; i < list.size(); i++)
+        buffer_list.push_back(list[i].toUtf8());
+
+    int argc = buffer_list.size();
+    QVector<char*> argv(argc);
+    for (int i = 0; i < buffer_list.size(); i++)
+        argv[i] = buffer_list[i].data();
+
+    CallArg arg;
+    arg.argc = argc;
+    arg.argv = argv;
+    arg.buffers = buffer;
+    return arg;
 }
