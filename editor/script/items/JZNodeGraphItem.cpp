@@ -101,6 +101,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);    
+    m_baseZValue = 0;
 }
 
 JZNodeGraphItem::~JZNodeGraphItem()
@@ -439,6 +440,12 @@ QString JZNodeGraphItem::blockValue(int pin)
     return QString();
 }
 
+void JZNodeGraphItem::setBaseZValue(int value)
+{
+    m_baseZValue = value;
+    setZValue(value);
+}
+
 void JZNodeGraphItem::updateSize()
 {        
     QFontMetrics title_ft(scene()->font());
@@ -501,12 +508,17 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {    
     auto pin_id = pinAt(event->pos());
     auto pin_value_id = pinAtInValueRect(event->pos());
+
+    bool no_move = false;
     if (pin_id >= 0)
     {        
         auto pin = m_node->pin(pin_id);
-        if ((event->buttons() & Qt::LeftButton) && pin->isOutput() && 
+        if ((event->buttons() & Qt::LeftButton) && pin->isOutput() &&
             (pin->isParam() || pin->isFlow() || pin->isSubFlow()))
+        {
             m_downPin = pin_id;
+            no_move = true;
+        }
         else
             m_downPin = -1;
     }   
@@ -515,8 +527,8 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
         auto block = m_blocks[pin_value_id];
         if (isPinEditable(pin_value_id))
         {
-            editor()->editPinValue(m_id, pin_value_id);
-            event->accept();
+            no_move = true;
+            editor()->editPinValue(m_id, pin_value_id);            
         }
     }
     else
@@ -524,7 +536,11 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
         m_longPress = 1;
         editor()->setNodeTimer(500,m_node->id(),Timer_longPress);
     }
-    return JZNodeBaseItem::mousePressEvent(event);
+
+    JZNodeBaseItem::mousePressEvent(event);
+
+    if(no_move)
+        setFlag(QGraphicsItem::ItemIsMovable, false);
 }
 
 void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
@@ -546,13 +562,16 @@ void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     m_longPress = 0;
-    m_downPin = -1;
-    return JZNodeBaseItem::mouseReleaseEvent(event);
+    m_downPin = -1;    
+    
+    JZNodeBaseItem::mouseReleaseEvent(event);
+
+    setFlag(QGraphicsItem::ItemIsMovable, true);
 }
 
 void JZNodeGraphItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
-    setZValue(0.5);
+    setZValue(m_baseZValue + 0.5);
     event->accept();
 }
 
@@ -563,7 +582,7 @@ void JZNodeGraphItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 
 void JZNodeGraphItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    setZValue(0);
+    setZValue(m_baseZValue);
     event->accept();
 }
 

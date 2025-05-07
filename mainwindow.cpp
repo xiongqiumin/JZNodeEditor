@@ -1353,14 +1353,9 @@ void MainWindow::updateRuntime(int stack_index,bool isNew)
             param_info_watch.coors << irThis();
         }
         const auto &node_info = func_debug->nodeInfo[stack->nodeId];        
-        for (int i = 0; i < node_info.paramIn.size(); i++)
+        for (int i = 0; i < node_info.params.size(); i++)
         {
-            int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramIn[i].id);
-            param_info_watch.coors << irId(param_id);
-        }
-        for (int i = 0; i < node_info.paramOut.size(); i++)
-        {
-            int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramOut[i].id);
+            int param_id = JZNodeCompiler::paramId(node_info.id, node_info.params[i].id);
             param_info_watch.coors << irId(param_id);
         }
 

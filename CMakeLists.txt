@@ -178,6 +178,8 @@ set(JZNodeCore_SOURCES
     modules/opencv/CvToQt.cpp
 	modules/opencv/JZOpencvNode.h
     modules/opencv/JZOpencvNode.cpp
+    modules/opencv/JZOpencv.h
+    modules/opencv/JZOpencv.cpp
 	
 	#model
     modules/model/JZYolo.h

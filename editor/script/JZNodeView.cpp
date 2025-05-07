@@ -133,6 +133,9 @@ JZNodeView::JZNodeView(QWidget *widget)
     m_mouseMoveTimer = new QTimer(this);
     connect(m_mouseMoveTimer, &QTimer::timeout, this, &JZNodeView::onMouseMoveTimer);
 
+    m_editWidgetTimer = new QTimer(this);
+    connect(m_editWidgetTimer, &QTimer::timeout, this, &JZNodeView::onEditWidgetTimer);
+
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &JZNodeView::customContextMenuRequested, this, &JZNodeView::onContextMenu);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);        
@@ -431,35 +434,46 @@ void JZNodeView::updateNode(int id)
 
 void JZNodeView::editPinValue(int node_id, int pin_id)
 {
+    if (m_editProxy)
+        editFinish();
+
     auto item = getNodeItem(node_id);
+    item->setBaseZValue(5);
+
     auto block = item->block(pin_id);
     QRectF rect = item->mapToScene(block->valueRect).boundingRect();
 
     JZNodeParamValueWidget *widget = new JZNodeParamValueWidget();
-    widget->setProperty("nodeId", node_id);
-    widget->setProperty("pinId", pin_id);
     connect(widget, &JZNodeParamValueWidget::sigEditFinish, this, &JZNodeView::onEditFinish);
+    widget->setProperty("nodeId", node_id);
+    widget->setProperty("pinId", pin_id);    
+    widget->setProperty("JZNodeViewEdit", true);    
 
-    m_editProxy = new QGraphicsProxyWidget();  
+    widget->init(block->edit);
+    widget->setValue(item->pinValue(pin_id));    
+
+    m_editProxy = new QGraphicsProxyWidget();
     m_editProxy->setZValue(10);
     m_editProxy->setWidget(widget);
     m_editProxy->setGeometry(rect);
     m_scene->addItem(m_editProxy);
 
-    widget->init(block->edit);
-    widget->setValue(item->pinValue(pin_id));
-    widget->setFocus();
+    QTimer::singleShot(0, [this] {
+        m_editProxy->widget()->setFocus();
+    });
+    m_editWidgetTimer->start(100);
 }
 
 void JZNodeView::editFinish()
-{
-    JZNodeParamValueWidget *w = qobject_cast<JZNodeParamValueWidget*>(sender());
+{    
     if (m_editProxy)
     {
+        JZNodeParamValueWidget *w = qobject_cast<JZNodeParamValueWidget*>(m_editProxy->widget());
         int node_id = w->property("nodeId").toInt();
         int pin_id = w->property("pinId").toInt();
         QString value = w->value();
 
+        getNodeItem(node_id)->setBaseZValue(0);
         m_scene->removeItem(m_editProxy);
         m_editProxy = nullptr;
 
@@ -468,6 +482,26 @@ void JZNodeView::editFinish()
         else
             getNodeItem(node_id)->setPinValue(pin_id, value);
     }
+    m_editWidgetTimer->stop();
+}
+
+void JZNodeView::onEditWidgetTimer()
+{
+    bool has_focus = false;
+
+    auto item = m_scene->focusItem();
+    while (item)
+    {
+        if (item == m_editProxy)
+        {
+            has_focus = true;
+            break;
+        }
+        item = item->parentItem();
+    }
+    
+    if(!has_focus)
+        editFinish();    
 }
 
 void JZNodeView::onEditFinish()
@@ -815,10 +849,10 @@ QVariant JZNodeView::onItemChange(JZNodeBaseItem *item, QGraphicsItem::GraphicsI
         return value;
     }
     else if(change == QGraphicsItem::ItemSelectedHasChanged)
-    {
+    {        
         auto list = m_scene->selectedItems();
         if(list.size() > 0)
-        {
+        {            
             for(int i = 0; i < list.size(); i++)
             {
                 if(list[i]->type() == Item_node)
@@ -1326,6 +1360,18 @@ QStringList JZNodeView::matchParmas(const JZNodeObjectDefine *meta, int match_ty
         }
     }
     return list;
+}
+
+QList<JZNodeGraphItem*> JZNodeView::nodeItems()
+{
+    QList<JZNodeGraphItem*> result;
+    auto list = m_scene->items();
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (list[i]->type() == Item_node)
+            result << dynamic_cast<JZNodeGraphItem *>(list[i]);
+    }
+    return result;
 }
 
 QList<JZNodeGraphItem*> JZNodeView::selectNodeItems()

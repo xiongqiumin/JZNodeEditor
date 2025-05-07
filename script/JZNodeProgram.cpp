@@ -112,6 +112,7 @@ QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param)
 {
     s << param.localVariables;
     s << param.nodeInfo;
+    s << param.stackType;
     return s;
 }
 
@@ -119,6 +120,7 @@ QDataStream &operator>>(QDataStream &s, JZFunctionDebugInfo &param)
 {
     s >> param.localVariables;
     s >> param.nodeInfo;
+    s >> param.stackType;
     return s;
 }
 

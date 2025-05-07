@@ -330,16 +330,14 @@ QTreeWidgetItem *JZNodePanel::createParam(QString name)
 }
 
 QTreeWidgetItem *JZNodePanel::createFunction(QString name)
-{    
-    QString className;
-    QString memberName;
-    JZRegExpHelp::splitDefine(name, className, memberName);
+{        
+    auto coor = JZFunctionHelper::splitFunction(name);
 
     JZNodeFunction func_node;
     func_node.setFunction(name);
 
     QTreeWidgetItem *item = createNode(&func_node);
-    item->setText(0, memberName);
+    item->setText(0, coor.name);
     return item;
 }
 

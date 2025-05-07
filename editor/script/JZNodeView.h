@@ -154,13 +154,16 @@ protected slots:
     void onContextMenu(const QPoint &pos);
     void onItemPropChanged();     
     void onItemSizeChanged();
+    
     void onNodeTimer();
     void onMouseMoveTimer();   //边缘滚屏
+    void onEditWidgetTimer();  //监控焦点
+    void onEditFinish();
+
     void onCleanChanged(bool modify);
     void onUndoStackChanged();
     void onMapSceneChanged(QRectF rc);
-    void onMapSceneScaled(bool flag);        
-    void onEditFinish();
+    void onMapSceneScaled(bool flag);            
 
 protected:
     friend JZNodeViewCommand;
@@ -197,6 +200,7 @@ protected:
     void removeItem(QGraphicsItem *item);
     bool canRemoveItem(QGraphicsItem *item);
     QList<JZNodeGraphItem*> selectNodeItems();
+    QList<JZNodeGraphItem*> nodeItems();
     void initGraph();            
     void setSelectNode(int id);
     void updatePropEditable(const JZNodeGemo &gemo);
@@ -245,6 +249,7 @@ protected:
     QPointF m_downCenter;
     QTimer *m_nodeTimer;
     QTimer *m_mouseMoveTimer;
+    QTimer *m_editWidgetTimer;
     NodeTimerInfo m_nodeTimeInfo;
 
     ProcessStatus m_runningMode;    

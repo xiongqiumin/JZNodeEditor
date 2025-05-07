@@ -373,6 +373,23 @@ void JZMacroIRReplace::replace(QList<JZNodeIRPtr>& ir_list)
         auto op = ir_list[i].data();
         switch (op->type)
         {
+        case OP_nodeEnter:
+        case OP_nop:
+        case OP_clearReg:
+        case OP_jmp:
+        case OP_je:
+        case OP_jne:
+        case OP_return:
+        case OP_assert:
+        case OP_try :
+        case OP_throw:
+            break;
+        case OP_buffer:
+        {
+            JZNodeIRBuffer* ir_buffer = (JZNodeIRBuffer*)op;
+            replaceIr(ir_buffer->id);
+            break;
+        }
         case OP_alloc:
         {
             JZNodeIRAlloc* ir_alloc = (JZNodeIRAlloc*)op;
@@ -382,9 +399,23 @@ void JZMacroIRReplace::replace(QList<JZNodeIRPtr>& ir_list)
             }
             break;
         }
+        case OP_reference:
+        {
+            JZNodeIRReference *ir_ref = (JZNodeIRReference*)op;
+            replaceIr(ir_ref->ref);
+            replaceIr(ir_ref->orig);
+            break;
+        }
         case OP_set:
         {
             JZNodeIRSet* ir_set = (JZNodeIRSet*)op;
+            replaceIr(ir_set->dst);
+            replaceIr(ir_set->src);
+            break;
+        }
+        case OP_clone:
+        {
+            JZNodeIRClone* ir_set = (JZNodeIRClone*)op;
             replaceIr(ir_set->dst);
             replaceIr(ir_set->src);
             break;
@@ -427,6 +458,11 @@ void JZMacroIRReplace::replace(QList<JZNodeIRPtr>& ir_list)
             replaceIr(ir_expr->src1);
             break;
         }
+        case OP_call:
+            break;
+        default:
+            Q_ASSERT(0);
+            break;
         }
     }
 }
@@ -1392,6 +1428,7 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr,
             param_info.isInput = pin->isInput();
             info.params.push_back(param_info);
         }
+        func_debug.nodeInfo.insert(info.id, info);
 
         it++;
     }
@@ -1405,6 +1442,8 @@ void JZNodeCompiler::addFunction(const JZFunctionDefine &define, int start_addr,
         jz_def.dataType = refType(def->name);
         func_debug.localVariables << jz_def;
     }
+
+    func_debug.stackType = m_stackType;
 
     JZFunction impl;
     impl.define = define;

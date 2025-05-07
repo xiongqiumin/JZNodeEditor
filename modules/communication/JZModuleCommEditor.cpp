@@ -206,6 +206,8 @@ void JZCommModbusRWItem::updatePin()
 
 void JZCommModbusRWItem::setBlockValue(int pin, QString value)
 {
+    QByteArray buffer = saveNode();
+
     auto node = dynamic_cast<JZNodeModbusRW*>(m_node);
     if (pin == m_modbusFunc->id)
         node->setFunction(m_funcList.indexOf(value));
@@ -214,12 +216,11 @@ void JZCommModbusRWItem::setBlockValue(int pin, QString value)
     else {
         Q_ASSERT(0);        
     }
+    notifyPropChanged(buffer);
 }
 
 QString JZCommModbusRWItem::blockValue(int pin)
-{
-    QByteArray buffer = saveNode();
-
+{    
     auto node = dynamic_cast<JZNodeModbusRW*>(m_node);
     if (pin == m_modbusFunc->id)
         return m_funcList[node->function()];
@@ -228,8 +229,7 @@ QString JZCommModbusRWItem::blockValue(int pin)
     else {
         Q_ASSERT(0);
         return QString();
-    }    
-    notifyPropChanged(buffer);
+    }        
 }
 
 //JZModuleCommEditorInit

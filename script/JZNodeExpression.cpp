@@ -121,9 +121,13 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
         error = "gen express failed";
         return false;
     }
+
+    QList<JZNodeIRPtr> ir_ref_list;
     QList<JZNodeIRPtr> ir_list = script.statmentList;
     for (int i = 0; i < ir_list.size(); i++)
-    {
+    {        
+        if (ir_list[i].data()->type == OP_reference)
+            ir_ref_list << ir_list[i];
         if (ir_list[i].data()->type == OP_nodeEnter)
         {
             ir_list = ir_list.mid(i);
@@ -143,6 +147,15 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
     for (int i = pre_stack_id; i < replace.stackId(); i++)
     {
         c->allocStack(replace.stackType(i));
+    }
+    for (int i = 0; i < ir_ref_list.size(); i++)
+    {
+        JZNodeIRReference *ir_ref = dynamic_cast<JZNodeIRReference*>(ir_ref_list[i].data());
+        JZNodeIRParam ref = ir_ref->ref;
+        JZNodeIRParam orig = ir_ref->orig;
+        replace.replaceIr(ref);
+        replace.replaceIr(orig);
+        c->setIRParamReference(ref, orig);
     }
     Q_ASSERT(c->stackId() == replace.stackId());
 

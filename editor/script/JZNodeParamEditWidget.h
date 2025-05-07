@@ -56,9 +56,7 @@ public:
 signals:
     void sigEditFinish();
 
-protected:
-    bool eventFilter(QObject *object, QEvent *event);
-
+protected:    
     QWidget *m_editWidget;
 };
 

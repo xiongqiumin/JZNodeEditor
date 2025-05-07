@@ -242,13 +242,17 @@ int JZNodeProgramDumper::irParamType(const JZNodeIRParam& param)
             type = m_env.nameToType(param_def->type);
         }
     }
-    else if (param.isId())
+    else if (param.isNodeId())
     {
         auto gemo = JZNodeGemo::fromParamId(param.id());
         auto node_info = m_debug->nodeParam(param.id());
         Q_ASSERT(node_info);
 
         type = node_info->dataType;
+    }
+    else if (param.isStack())
+    {        
+        type = m_debug->stackType.value(param.id(), Type_none);
     }
 
     Q_ASSERT(type != Type_none);
@@ -541,9 +545,6 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
             line += "return;";
         break;
     }
-    case OP_exit:
-        line += "exit(0);";
-        break;
     case OP_add:
     case OP_sub:
     case OP_mul:

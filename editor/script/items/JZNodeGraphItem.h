@@ -71,6 +71,8 @@ public:
     virtual void setBlockValue(int pin, QString value);
     virtual QString blockValue(int pin);
 
+    void setBaseZValue(int value);
+
     JZNode *node();
     int pinAt(QPointF pos);        //连接框
     int pinAtInName(QPointF pos);  //包含连接框和名称矩形  
@@ -135,6 +137,7 @@ protected:
     int m_blockExtId;
     int m_downPin;
     int m_longPress;
+    int m_baseZValue;
 };
 
 #endif

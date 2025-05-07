@@ -190,16 +190,13 @@ QVariant BaseTest::testClassPointer()
 }
 
 bool BaseTest::build()
-{
-    QElapsedTimer t;
-    t.start();
+{    
     m_project.registType();
     if(!m_builder.build(&m_program))
     {        
         QTest::qVerify(false, "build", qPrintable(m_builder.error()), __FILE__, __LINE__);
         return false;
-    }    
-    qDebug() << "build cost:" << t.elapsed();
+    }        
 
     m_engine.setProgram(&m_program);
     m_engine.init();    

@@ -168,6 +168,7 @@ class JZMacroIRReplace
 public:
     JZMacroIRReplace(JZNodeCompiler *c);
     void replace(QList<JZNodeIRPtr> &ir_list);
+    void replaceIr(JZNodeIRParam& ir);
 
     void setLocalMap(QMap<QString, int> localMap);
 
@@ -175,8 +176,7 @@ public:
     void setStackId(int stackId);
     int stackType(int stackId);
 
-protected:
-    void replaceIr(JZNodeIRParam& ir);
+protected:    
     
     int m_stackId;
     QMap<QString, int> m_localMap;

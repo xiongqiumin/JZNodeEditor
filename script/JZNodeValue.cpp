@@ -621,8 +621,7 @@ JZNodeSetParam::JZNodeSetParam()
     int in = addParamIn("name", Pin_constValue | Pin_noCompiler);
     setPinTypeString(in);
 
-    addParamIn("value");
-    addParamOut("");
+    addParamIn("value");   
 }
 
 JZNodeSetParam::~JZNodeSetParam()
@@ -658,14 +657,12 @@ bool JZNodeSetParam::updateNode(QString &error)
     if (dataType != Type_none)
     {
         setPinType(paramIn(1), { def->type });
-        setPinType(paramOut(0), { def->type });
         return true;
     }
     else
     {
         error = JZNodeCompiler::errorString(Error_noVariable, { variable() });
         clearPinType(paramIn(1));
-        clearPinType(paramOut(0));
         return false;
     }    
 }
@@ -679,18 +676,15 @@ bool JZNodeSetParam::compiler(JZNodeCompiler *c,QString &error)
         return false;
         
     int id = c->paramId(m_id,paramIn(1));
-    int m_out = c->paramId(m_id,paramOut(0));
     
     JZNodeIRParam ref = c->paramRef(name);
     if (c->refType(name) == Type_auto)
     {
         auto in_type = c->pinType(m_id, paramIn(1));
         c->setRefType(name, in_type);
-        c->setPinType(m_id, paramOut(0), in_type);
     }
 
     c->addSetVariable(ref,irId(id));
-    c->addSetVariable(irId(m_out),irId(id));    
     c->addFlowOutput(m_id);
     return true;
 }

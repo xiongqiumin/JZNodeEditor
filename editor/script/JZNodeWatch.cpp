@@ -277,16 +277,10 @@ void JZNodeWatch::setNodeInfo(const NodeInfo &info)
             m_nodeItem->setText(0, info.name);
             m_view->insertTopLevelItem(0, m_nodeItem);
 
-            for (int i = 0; i < info.paramIn.size(); i++)
+            for (int i = 0; i < info.params.size(); i++)
             {
                 QTreeWidgetItem *sub = new QTreeWidgetItem();
-                sub->setText(0, info.paramIn[i].define.name);
-                m_nodeItem->addChild(sub);
-            }
-            for (int i = 0; i < info.paramOut.size(); i++)
-            {
-                QTreeWidgetItem *sub = new QTreeWidgetItem();
-                sub->setText(0, info.paramOut[i].define.name);
+                sub->setText(0, info.params[i].define.name);
                 m_nodeItem->addChild(sub);
             }
             m_nodeItem->setExpanded(true);

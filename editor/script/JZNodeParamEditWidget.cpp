@@ -57,8 +57,7 @@ JZNodeParamValueWidget::JZNodeParamValueWidget()
     h->setContentsMargins(0, 0, 0, 0);
     setLayout(h);
 
-    m_editWidget = nullptr;    
-    init(JZParamEditInfo());
+    m_editWidget = nullptr;        
 }
 
 void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
@@ -77,10 +76,7 @@ void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
         QComboBox *box = new QComboBox();
         box->addItems(edit.enumList);
 
-        connect(box, SIGNAL(currentIndexChanged(int)), this, SIGNAL(sigEditFinish()));  
-        QTimer::singleShot(0, [box]() {        
-            box->showPopup();        
-        });
+        connect(box, SIGNAL(currentIndexChanged(int)), this, SIGNAL(sigEditFinish()));          
         m_editWidget = box;
     }
     else
@@ -90,7 +86,6 @@ void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
 
     layout()->addWidget(m_editWidget);
     setFocusProxy(m_editWidget);
-    m_editWidget->installEventFilter(this);
 }
 
 void JZNodeParamValueWidget::setValue(QString value)
@@ -128,19 +123,4 @@ QString JZNodeParamValueWidget::value()
         Q_ASSERT(0);
         return QString();
     }
-}
-
-bool JZNodeParamValueWidget::eventFilter(QObject *object, QEvent *event)
-{
-    switch (event->type())
-    {    
-    case QEvent::FocusOut:   
-    {
-        emit sigEditFinish();
-        break;
-    }
-    default:
-        break;
-    }
-    return QObject::eventFilter(object, event);
 }

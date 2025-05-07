@@ -1802,8 +1802,6 @@ bool JZNodeEngine::run()
                 goto RunEnd;
             break;
         }
-        case OP_exit:
-            goto RunEnd;
         case OP_assert:
         {            
             if (!getReg(Reg_Cmp).toBool())

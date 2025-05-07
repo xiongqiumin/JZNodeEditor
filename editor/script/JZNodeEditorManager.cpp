@@ -8,6 +8,7 @@
 #include "JZNodeValueItem.h"
 #include "JZNodeOperatorItem.h"
 #include "JZNodeDisplayItem.h"
+#include "JZNodeFunctionItem.h"
 #include "modules/camera/JZModuleCameraEditor.h"
 #include "modules/communication/JZModuleCommEditor.h"
 #include "modules/model/JZModuleModelEditor.h"

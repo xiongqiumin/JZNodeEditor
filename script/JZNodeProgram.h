@@ -58,6 +58,7 @@ public:
 
     QMap<int, NodeInfo> nodeInfo;
     QList<JZParam> localVariables;
+    QMap<int, int> stackType;
 };
 QDataStream &operator<<(QDataStream &s, const JZFunctionDebugInfo &param);
 QDataStream &operator>>(QDataStream &s, JZFunctionDebugInfo &param);
