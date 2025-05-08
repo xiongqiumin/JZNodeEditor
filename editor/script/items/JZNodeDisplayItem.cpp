@@ -1,11 +1,13 @@
 ﻿#include <QComboBox>
 #include <QPushButton>
+#include <QScrollArea>
 #include "JZNodeDisplayItem.h"
 #include "JZNodeValue.h"
 #include "JZScriptItem.h"
 #include "JZScriptItemVisitor.h"
 #include "JZEditorGlobal.h"
 #include "jzWidgets/JZImageLabel.h"
+#include "jzWidgets/JZSelfLayout.h"
 #include "modules/opencv/JZModuleOpencv.h"
 
 using namespace cv;
@@ -48,11 +50,23 @@ void JZNodeDisplayItem::updatePin()
         {                      
             if (!b->widget || !b->widget->inherits("JZImageLabel"))
             {
-                b->clearWidget();
+                b->clearWidget();                                
 
-                QWidget *widget = new JZImageLabel();
-                widget->resize(160, 160);
-                b->setWidget(widget);
+                JZImageLabel *label = new JZImageLabel();
+
+                QPushButton *btn = new QPushButton("...", label);
+                btn->connect(btn, &QPushButton::clicked, [this, label]{
+                    onLabelExpand(label);
+                });
+
+                btn->resize(32, 20);
+                JZSelfLayout *layout = new JZSelfLayout(btn);
+                layout->setWidget(btn);
+                layout->setAlignment(Qt::AlignRight | Qt::AlignBottom);
+                layout->setOffset(-2, -2);
+
+                label->resize(160, 160);
+                b->setWidget(label);
             }
         }
         else
@@ -100,4 +114,22 @@ void JZNodeDisplayItem::onAddClicked()
     QByteArray oldValue = saveNode();
     node_display->addInput();
     notifyPropChanged(oldValue);
+}
+
+void JZNodeDisplayItem::onLabelExpand(JZImageLabel *label)
+{
+    QScrollArea *area = new QScrollArea();
+    area->setAttribute(Qt::WA_DeleteOnClose, true);
+
+    QImage image = label->image();
+
+    JZImageLabel *w = new JZImageLabel();
+    w->setImage(image);    
+    if (!image.isNull())
+        w->setFixedSize(image.width(), image.height());
+
+    w->setGraphics(label->graphics());
+    area->setWidget(w);
+    area->resize(600, 400);
+    area->show();
 }

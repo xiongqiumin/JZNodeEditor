@@ -57,7 +57,7 @@ JZNodeParamValueWidget::JZNodeParamValueWidget()
     h->setContentsMargins(0, 0, 0, 0);
     setLayout(h);
 
-    m_editWidget = nullptr;        
+    m_editWidget = nullptr; 
 }
 
 void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)

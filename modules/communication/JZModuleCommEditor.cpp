@@ -182,14 +182,11 @@ void JZCommInitItem::onSetClicked()
 //JZCommModbusRWItem
 JZCommModbusRWItem::JZCommModbusRWItem(JZNode *node)
     :JZNodeGraphItem(node)
-{
-    QList<int> type_list = { Type_int16, Type_uint16, Type_int, Type_uint, Type_float, Type_double };
+{    
+    m_funcList = QStringList{ "Bit", "InputBit", "InputRegister", "Register" };    
 
-    m_funcList = QStringList{"Bit", "InputBit", "InputRegister", "Register"};
-    m_dataTypeList = editorEnvironment()->typeListToNameList(type_list);
-    
-    m_modbusFunc = createEditBlock("Func",JZParamEditInfo::createEnum(m_funcList));
-    m_modbusDataType = createEditBlock("Type", JZParamEditInfo::createEnum(m_dataTypeList));
+    m_modbusFunc = createEditBlock("Func", JZParamEditInfo::createEnum(m_funcList));
+    m_modbusDataType = createEditBlock("Type", JZParamEditInfo()); 
 }
 
 void JZCommModbusRWItem::updatePin()
@@ -202,6 +199,19 @@ void JZCommModbusRWItem::updatePin()
     m_modbusDataType->pri = Pri_user + 2;
     for(int i = 1; i < in_list.size(); i++)
         m_blocks[in_list[i]]->pri = Pri_user + i + 3;
+    
+    auto node = dynamic_cast<JZNodeModbusRW*>(m_node);
+    if (node->function() == Function_Bit || node->function() == Function_InputBit)
+    {
+        m_modbusDataType->isEditable = false;        
+    }
+    else
+    {
+        QList<int> type_list = { Type_int16, Type_uint16, Type_int, Type_uint, Type_float, Type_double };
+        m_dataTypeList = editorEnvironment()->typeListToNameList(type_list);
+        m_modbusDataType->isEditable = true;
+        m_modbusDataType->edit = JZParamEditInfo::createEnum(m_dataTypeList);
+    }
 }
 
 void JZCommModbusRWItem::setBlockValue(int pin, QString value)

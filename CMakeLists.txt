@@ -245,7 +245,9 @@ set(JZNodeCore_SOURCES
     3rd/JZCommon/jzWidgets/JZImageLabel.cpp 
     3rd/JZCommon/jzWidgets/JZImageLabel.h     
     3rd/JZCommon/jzWidgets/JZLogWidget.cpp
-    3rd/JZCommon/jzWidgets/JZLogWidget.h    
+    3rd/JZCommon/jzWidgets/JZLogWidget.h
+    3rd/JZCommon/jzWidgets/JZSelfLayout.cpp
+    3rd/JZCommon/jzWidgets/JZSelfLayout.h
     3rd/JZCommon/jzJson/JZJsonStream.cpp
     3rd/JZCommon/jzJson/JZJsonStream.h
     3rd/JZCommon/jzJson/JZJsonHelper.cpp

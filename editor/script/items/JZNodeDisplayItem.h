@@ -4,6 +4,7 @@
 #include "JZNodeGraphItem.h"
 
 //JZNodeDisplayItem
+class JZImageLabel;
 class JZNodeDisplayItem : public JZNodeGraphItem
 {
 public:
@@ -15,6 +16,8 @@ protected:
     virtual void updatePin() override;    
 
     void onAddClicked();
+    void onLabelExpand(JZImageLabel *label);
+
     QString getInputType(int id);
 
     BlockPtr m_addBlock;

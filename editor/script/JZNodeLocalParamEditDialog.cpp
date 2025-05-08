@@ -61,6 +61,7 @@ void JZNodeLocalParamEditDialog::setParam(JZParamDefine define)
 
     m_lineName->setText(define.name);
     m_typeWidget->setType(define.type);
+    m_valueWidget->init(JZParamEditInfo());
     m_valueWidget->setValue(define.value);
 }
 

@@ -457,6 +457,7 @@ void JZNodePanel::addModule(QTreeWidgetItem *item_root,QString name)
     }
 
     auto classList = m->classList();
+    classList.sort(Qt::CaseInsensitive);
     for (int cls_idx = 0; cls_idx < classList.size(); cls_idx++)
     {   
         QTreeWidgetItem *item_class = createClass(classList[cls_idx]);
@@ -531,8 +532,11 @@ void JZNodePanel::initAll(QTreeWidgetItem *root)
     root->addChild(global_class);
 
     QStringList func_list = m_file->project()->functionList();
+    func_list.sort(Qt::CaseInsensitive);
+
     QStringList class_list = m_file->project()->classList();
-    
+    class_list.sort(Qt::CaseInsensitive);
+
     auto func_inst = editorFunctionManager();
     auto list = func_inst->functionList();
     for (int i = 0; i < list.size(); i++)

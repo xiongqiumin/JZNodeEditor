@@ -1692,7 +1692,7 @@ void JZNodeView::dragEnterEvent(QDragEnterEvent *event)
 {    
     if (event->mimeData()->hasFormat("node_data")
         || event->mimeData()->hasFormat("node_param")
-        || event->mimeData()->hasFormat("node_memberParam"))
+        || event->mimeData()->hasFormat("node_class"))
         event->acceptProposedAction();
 }
 
@@ -1706,7 +1706,6 @@ void JZNodeView::dropEvent(QDropEvent *event)
     if (m_runningMode != Process_none)
         return;
     
-
     auto env = editorEnvironment();
     auto obj_inst = env->objectManager();
     auto func_inst = env->functionManager();

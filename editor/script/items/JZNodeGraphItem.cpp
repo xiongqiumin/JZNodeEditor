@@ -326,8 +326,7 @@ QRectF JZNodeGraphItem::pinNameRect(int pin)
 }
 
 bool JZNodeGraphItem::isPinEditable(int pin)
-{
-    bool flag;
+{    
     if (pin < 100 && !editor()->isPropEditable(m_id, pin))
         return false;
 
@@ -711,7 +710,8 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
         auto opt = block->isInput ? Qt::AlignLeft : Qt::AlignRight;
         text_opt.setAlignment(Qt::AlignVCenter | opt);
         painter->fillRect(block->valueRect, Qt::white);
-        painter->drawText(block->valueRect, pinValue(prop_id), text_opt);
+        if(isPinEditable(prop_id))
+            painter->drawText(block->valueRect, pinValue(prop_id), text_opt);
     }
 }
 
