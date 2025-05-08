@@ -117,6 +117,19 @@ QList<JZNode*> JZScriptItemVisitor::dataInputNode(JZNode *node)
     return from_nodes.toList();
 }
 
+QList<JZNode*> JZScriptItemVisitor::dataInputNode(JZNode* node, int pin_id)
+{
+    QSet<JZNode*> from_nodes;
+    QList<int> in_line_list = m_script->getConnectInput(node->id(), pin_id);
+    for (int line_idx = 0; line_idx < in_line_list.size(); line_idx++)
+    {
+        auto line = m_script->getConnect(in_line_list[line_idx]);
+        auto from_node = m_script->getNode(line->from.nodeId);
+        from_nodes << from_node;
+    }
+    return from_nodes.toList();
+}
+
 QList<JZNodePin*> JZScriptItemVisitor::inputPin(int node_id, int pin_id)
 {
     QList<JZNodePin*> ret;

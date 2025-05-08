@@ -374,6 +374,8 @@ void JZMacroIRReplace::replace(QList<JZNodeIRPtr>& ir_list)
         switch (op->type)
         {
         case OP_nodeEnter:
+            ir_list[i] = JZNodeIRPtr(new JZNodeIR(OP_nop));
+            break;
         case OP_nop:
         case OP_clearReg:
         case OP_jmp:

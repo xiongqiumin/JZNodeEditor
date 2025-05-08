@@ -189,7 +189,7 @@ bool JZNodeType::isNullptr(const QVariant &v)
 
 bool JZNodeType::isBase(int type)
 {
-    return (type >= Type_none) && (type <= Type_nullptr);
+    return (type > Type_none) && (type <= Type_nullptr);
 }
 
 bool JZNodeType::isObject(int type)

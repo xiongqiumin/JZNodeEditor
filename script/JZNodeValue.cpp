@@ -30,7 +30,7 @@ int JZNodeLiteral::dataType() const
 
 void JZNodeLiteral::setDataType(int type)
 {    
-    Q_ASSERT(JZNodeType::isBase(type) || type == Type_nullptr);
+    Q_ASSERT(JZNodeType::isBase(type));
 
     int out = paramOut(0);        
     pin(out)->setDataType({ JZNodeType::typeName(type) });

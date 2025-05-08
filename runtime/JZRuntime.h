@@ -6,7 +6,7 @@
 #define JE(addr)    do{ if(Reg_Cmp){ goto Line##addr; } }while(0);
 #define JNE(addr)   do{ if(!Reg_Cmp){ goto Line##addr; } }while(0);
 
-
+void forRuntimeCheck(int, int, int, int) {}
 
 
 

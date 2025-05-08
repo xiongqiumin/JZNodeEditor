@@ -10,6 +10,7 @@
 #include "JZNodeValue.h"
 #include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
+#include "JZScriptItemVisitor.h"
 
 JZScriptConvert::BlockEnv::BlockEnv()
 {
@@ -603,6 +604,8 @@ bool JZScriptConvert::toFor(asCScriptNode* node)
 {
     Q_ASSERT(node->nodeType == snFor);
 
+	JZScriptItemVisitor visitor(m_script);
+
 	pushBlock();
     auto childs = nodeChilds(node);
 	auto cur_block = currentBlock();
@@ -624,32 +627,103 @@ bool JZScriptConvert::toFor(asCScriptNode* node)
 			return false;
 	}
 
+	QString var_name = delcare->paramInValue(0);
+	auto init_list = visitor.dataInputNode(delcare, delcare->paramIn(1));
+	if (init_list.size() != 1)
+	{
+		m_error = "no support init";
+		return false;
+	}
+
+	m_script->removeNode(delcare->id());
+	auto init = init_list[0];
+
 	//cmp
 	JZNode* cmp = toExpressionStatement(childs[1]);
 	if (!cmp)
 		return false;
+
+	JZNodeIRType for_op = OP_none;
+	if (cmp->type() == Node_lt)
+		for_op = OP_lt;
+	else if (cmp->type() == Node_le)
+		for_op = OP_le;
+	else if (cmp->type() == Node_gt)
+		for_op = OP_gt;
+	else if (cmp->type() == Node_ge)
+		for_op = OP_ge;
+	else if (cmp->type() == Node_eq)
+		for_op = OP_eq;
+	else if (cmp->type() == Node_ne)
+		for_op = OP_ne;
+	else
+	{
+		m_error = "not support";
+		return false;
+	}
 	
-	//next
-	JZNode* next = toExpressionStatementFlow(childs[2]);
-	if (!next)
+	auto var_list = visitor.dataInputNode(cmp, cmp->paramIn(0));
+	auto cond_list = visitor.dataInputNode(cmp, cmp->paramIn(1));
+	if (var_list.size() != 1 || cond_list.size() != 1)
 		return false;
 
+	JZNode* var = var_list[0];
+	JZNode* cond = cond_list[0];
+	m_script->removeNode(var->id());
+	m_script->removeNode(cmp->id());
+
+	//next， 解析后应该是 i = i + step_cond 这样的格式，提取出 step_cond
+	JZNode* next = toExpressionStatementFlow(childs[2]);
+	auto next_list = visitor.dataInputNode(next, next->paramIn(1));
+	Q_ASSERT(next_list.size() == 1);
+
+	m_script->removeNode(next->id());
+	auto step = next_list[0];
+	JZNode* step_cond = nullptr;
+	if (step->type() == Node_add || step->type() == Node_sub)
+	{
+		auto var_list = visitor.dataInputNode(step, step->paramIn(0));
+		auto step_list = visitor.dataInputNode(step, step->paramIn(1));
+		step_cond = step_list[0];
+		m_script->removeNode(var_list[0]->id());
+		m_script->removeNode(step->id());
+
+		if (step->type() == Node_sub)
+		{
+			auto jz_not = createNode<JZNodeNot>();
+			m_script->addConnect(step_cond->paramInGemo(0), jz_not->paramOutGemo(0));
+			step_cond = jz_not;
+		}
+	}
+	else
+	{
+		m_error = "only support +/-";
+		return false;
+	}
+	
 	//body
-	JZNodeWhile * node_while = createNode<JZNodeWhile>();
-	m_script->addConnect(delcare->flowOutGemo(), node_while->flowInGemo());
-	m_script->addConnect(cmp->paramOutGemo(0), node_while->paramInGemo(0));
+	JZNodeFor* node_for = createNode<JZNodeFor>();
+	node_for->setOp(for_op);
+	
+	m_script->addConnect(init->paramOutGemo(0), node_for->paramInGemo(0));  //start
+	m_script->addConnect(step_cond->paramOutGemo(0), node_for->paramInGemo(1));  //step
+	m_script->addConnect(cond->paramOutGemo(0), node_for->paramInGemo(2));  //end
 
 	QList<JZNode*> sub_list;
 	if (!toStatementBlock(childs[3], sub_list))
 		return false;
 
-	m_script->addConnect(node_while->subFlowOutGemo(0), sub_list[0]->flowInGemo());
-	m_script->addConnect(sub_list.back()->flowOutGemo(), next->flowInGemo());
+	JZNodeSetParam* set_param = createNode<JZNodeSetParam>();
+	set_param->setVariable(var_name);
+	m_script->addConnect(node_for->paramOutGemo(0), set_param->paramInGemo(1));
+
+	m_script->addConnect(node_for->subFlowOutGemo(0), set_param->flowInGemo());
+	m_script->addConnect(set_param->flowOutGemo(0), sub_list[0]->flowInGemo());
 	
 	popBlock();
 
-	currentBlock()->flowList << delcare << node_while;
-	return node_while;
+	currentBlock()->flowList << node_for;
+	return node_for;
 }
 
 JZNode *JZScriptConvert::toExpressionStatement(asCScriptNode* node)
@@ -892,9 +966,12 @@ JZNode* JZScriptConvert::toExprTerm(asCScriptNode* root)
 
 			auto param = createGetParam(nodeText(pre->next));
 			auto set_param = createSetParam(nodeText(pre->next));
+			auto literal = createNode<JZNodeLiteral>();
+			literal->setDataType(Type_int);
+			literal->setLiteral("1");
 
 			m_script->addConnectForce(param->paramOutGemo(0), op->paramInGemo(0));
-			op->setParamInValue(1, "1");
+			m_script->addConnectForce(literal->paramOutGemo(0), op->paramInGemo(1));
 			m_script->addConnectForce(op->paramOutGemo(0), set_param->paramInGemo(1));
 			currentBlock()->preStatment = set_param;
 		}
@@ -963,9 +1040,12 @@ JZNode* JZScriptConvert::toExprTerm(asCScriptNode* root)
 
 			auto param = createGetParam(nodeText(node));
 			auto set_param = createSetParam(nodeText(node));
+			auto literal = createNode<JZNodeLiteral>();
+			literal->setDataType(Type_int);
+			literal->setLiteral("1");
 
 			m_script->addConnectForce(param->paramOutGemo(0), op->paramInGemo(0));
-			op->setParamInValue(1, "1");
+			m_script->addConnectForce(literal->paramOutGemo(0), op->paramInGemo(1));
 			m_script->addConnectForce(op->paramOutGemo(0), set_param->paramInGemo(1));
 			currentBlock()->postStatment = set_param;
 		}

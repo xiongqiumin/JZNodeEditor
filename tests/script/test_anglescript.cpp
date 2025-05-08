@@ -568,18 +568,18 @@ void AngleScriptTest::testSort()
 }
 
 // 检查四个数能否算出 24
-static bool solve_24(QVector<int> nums, int n) {
-    if (n == 1) {
-        return nums[0] == 24;
+static bool solve_24(QVector<int> nums, int start) {
+    if (start == 3) {
+        return nums[start] == 24;
     }
 
     QVector<int> new_nums(4);
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
+    for (int i = start; i < 4; i++) {
+        for (int j = start; j < 4; j++) {
             if (i == j) continue;
 
-            int index = 0;
-            for (int k = 0; k < n; k++) {
+            int index = start + 2;
+            for (int k = start + 2; k < 4; k++) {
                 if (k != i && k != j) {
                     new_nums[index++] = nums[k];
                 }
@@ -589,21 +589,21 @@ static bool solve_24(QVector<int> nums, int n) {
             int b = nums[j];
 
             // 加法
-            new_nums[index] = a + b;
-            if (solve_24(new_nums, index + 1)) return true;
+            new_nums[start + 1] = a + b;
+            if (solve_24(new_nums, start + 1)) return true;
 
             // 减法
-            new_nums[index] = a - b;
-            if (solve_24(new_nums, index + 1)) return true;
+            new_nums[start + 1] = a - b;
+            if (solve_24(new_nums, start + 1)) return true;
 
             // 乘法
-            new_nums[index] = a * b;
-            if (solve_24(new_nums, index + 1)) return true;
+            new_nums[start + 1] = a * b;
+            if (solve_24(new_nums, start + 1)) return true;
 
             // 除法，要求能整除
             if (b != 0 && a % b == 0) {
-                new_nums[index] = a / b;
-                if (solve_24(new_nums, index + 1)) return true;
+                new_nums[start + 1] = a / b;
+                if (solve_24(new_nums, start + 1)) return true;
             }
         }
     }
@@ -613,48 +613,49 @@ static bool solve_24(QVector<int> nums, int n) {
 void AngleScriptTest::testNum24()
 {
     QString code = R"(
-        bool solve_24(QList<int> nums, int n) {
-        if (n == 1) {
-            return nums[0] == 24;
-        }
+bool solve_24(QList<int> nums, int start) {
+    if (start == 3) {
+        return nums[start] == 24;
+    }
 
-        QList<int> new_nums;
-        new_nums.resize(4);
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (i == j) continue;
+    QList<int> new_nums;
+    new_nums.resize(4);
+    for (int i = start; i < 4; i++) {
+        for (int j = start; j < 4; j++) {
+            if (i == j) continue;
 
-                int index = 0;
-                for (int k = 0; k < n; k++) {
-                    if (k != i && k != j) {
-                        new_nums[index++] = nums[k];
-                    }
-                }
-
-                int a = nums[i];
-                int b = nums[j];
-
-                // 加法
-                new_nums[index] = a + b;
-                if (solve_24(new_nums, index + 1)) return true;
-
-                // 减法
-                new_nums[index] = a - b;
-                if (solve_24(new_nums, index + 1)) return true;
-
-                // 乘法
-                new_nums[index] = a * b;
-                if (solve_24(new_nums, index + 1)) return true;
-
-                // 除法，要求能整除
-                if (b != 0 && a % b == 0) {
-                    new_nums[index] = a / b;
-                    if (solve_24(new_nums, index + 1)) return true;
+            int index = start + 2;
+            for (int k = start + 2; k < 4; k++) {
+                if (k != i && k != j) {
+                    new_nums[index++] = nums[k];
                 }
             }
+
+            int a = nums[i];
+            int b = nums[j];
+
+            // 加法
+            new_nums[start + 1] = a + b;
+            if (solve_24(new_nums, start + 1)) return true;
+
+            // 减法
+            new_nums[start + 1] = a - b;
+            if (solve_24(new_nums, start + 1)) return true;
+
+            // 乘法
+            new_nums[start + 1] = a * b;
+            if (solve_24(new_nums, start + 1)) return true;
+
+            // 除法，要求能整除
+            if (b != 0 && a % b == 0) {
+                new_nums[start + 1] = a / b;
+                if (solve_24(new_nums, start + 1)) return true;
+            }
         }
-        return false;
-    })";
+    }
+    return false;
+}
+)";
 
     m_project.addGlobalVariable("list_int", "QList<int>", "{4,5,1,3}");
 
@@ -672,6 +673,7 @@ void AngleScriptTest::testNum24()
     QVERIFY(ret);
 
     bool solve_ret = solve_24(c_list, 0);
+    QCOMPARE(out[0].toBool(), solve_ret);
 }
 
 

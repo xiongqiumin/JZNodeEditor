@@ -19,6 +19,7 @@ public:
     QList<JZNodePin*> inputPin(int node_id, int pin_id);
 
     QList<JZNode*> dataInputNode(JZNode *node);
+    QList<JZNode*> dataInputNode(JZNode* node, int pin_id);
     QList<JZNode*> dataInputNodeRecursively(JZNode *node);
 
     JZNode *nextFlowNode(JZNode *node, int id);    
