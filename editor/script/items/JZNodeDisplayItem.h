@@ -17,6 +17,7 @@ protected:
 
     void onAddClicked();
     void onLabelExpand(JZImageLabel *label);
+    void updateGraphics();
 
     QString getInputType(int id);
 

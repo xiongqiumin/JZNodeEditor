@@ -47,6 +47,7 @@ protected:
     QTreeWidgetItem *addItem(QTreeWidgetItem *parent, JZProjectItem *item);
     void setItem(QTreeWidgetItem *view_item,JZProjectItem *item);    
     void sortItem(QTreeWidgetItem *item);
+    bool checkRenameItem(JZProjectItem *item,QString new_name);
 
     QTreeWidgetItem *getItem(QString path);
     QTreeWidgetItem *getViewItem(JZProjectItem *proj_item);

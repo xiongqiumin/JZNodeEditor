@@ -81,4 +81,10 @@ QVariant toVariant(QString value)
     return value;
 }
 
+template<>
+QVariant toVariant(QByteArray value)
+{
+    return value;
+}
+
 }

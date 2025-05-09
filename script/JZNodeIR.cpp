@@ -172,8 +172,6 @@ JZNodeIR *createNodeIR(JZNodeIRType type)
         return new JZNodeIRClone();
     case OP_convert:
         return new JZNodeIRConvert();
-    case OP_buffer:
-        return new JZNodeIRBuffer();
     case OP_jmp:
     case OP_je:
     case OP_jne:
@@ -363,28 +361,6 @@ void JZNodeIRClone::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
     s >> src >> dst;
-}
-
-//JZNodeIRBuffer
-JZNodeIRBuffer::JZNodeIRBuffer()
-{
-    type = OP_buffer;
-}
-
-JZNodeIRBuffer::~JZNodeIRBuffer()
-{
-}
-
-void JZNodeIRBuffer::saveToStream(QDataStream &s) const
-{
-    JZNodeIR::saveToStream(s);
-    s << id << buffer;
-}
-
-void JZNodeIRBuffer::loadFromStream(QDataStream &s)
-{
-    JZNodeIR::loadFromStream(s);
-    s >> id >> buffer;
 }
 
 //JZNodeIRConvert

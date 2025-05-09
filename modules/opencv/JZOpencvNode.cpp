@@ -22,6 +22,9 @@ JZNodeTemplateMatch::JZNodeTemplateMatch()
 {
 	m_type = Node_OpencvTemplate;
 	m_name = "OpencvTemplate";
+
+	int in = addParamIn("image");
+	setPinType(in, { "Mat" });
 }
 
 JZNodeTemplateMatch::~JZNodeTemplateMatch()
@@ -43,8 +46,16 @@ bool JZNodeTemplateMatch::compiler(JZNodeCompiler* c, QString& error)
 	if (!c->addFlowInput(m_id, error))
 		return false;
 
+	QString obj_name = m_file->name() + "_" + QString::number(m_id);
+
 	QByteArray buffer = JZNodeUtils::toBuffer(m_config);
-	//int id = c->addGetOrInitCall(m_id,"JZTemplate","", buffer);
+	
+	int obj_id;
+	c->addGetOrInit(obj_name,"JZTemplate", buffer, obj_id);
+
+	QList<JZNodeIRParam> in,out;
+	in << irId(obj_id) << irId(c->paramId(m_id,paramIn(0)));
+	c->addCall("JZOpencvTemplateMatch",in,out);
 
 	return true;
 }

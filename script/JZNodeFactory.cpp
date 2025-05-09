@@ -77,6 +77,9 @@ JZNodeFactory::JZNodeFactory()
     registNode(Node_mouseMoveEvent, createJZNode<JZNodeMouseMoveEvent>);
     registNode(Node_mousePressEvent, createJZNode<JZNodeMousePressEvent>);
     registNode(Node_mouseReleaseEvent, createJZNode<JZNodeMouseReleaseEvent>);
+
+    registNode(Node_keyPressEvent, createJZNode<JZNodeKeyPressEvent>);
+    registNode(Node_keyReleaseEvent, createJZNode<JZNodeKeyReleaseEvent>);
     
     registNode(Node_buttonClickedEvent, createJZNode<JZNodeButtonClickedEvent>);
     registNode(Node_timerEvent, createJZNode<JZNodeTimerEvent>);
@@ -89,7 +92,7 @@ JZNodeFactory::~JZNodeFactory()
 
 void JZNodeFactory::registNode(int type,JZNodeCreateFunc func)
 {
-    Q_ASSERT(!m_nodes.count(type));
+    Q_ASSERT(type != Node_none && !m_nodes.count(type));
     m_nodes[type] = func;
 }
 

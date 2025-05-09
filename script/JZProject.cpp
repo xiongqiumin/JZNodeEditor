@@ -250,7 +250,7 @@ void JZProject::loadFinish()
     auto script_list = itemList("./", ProjectItem_any);
     for (int i = 0; i < script_list.size(); i++)
     {
-        if (JZProjectItemIsScript(script_list[i]))
+        if (script_list[i]->itemType() == ProjectItem_scriptItem)
         {
             auto item = dynamic_cast<JZScriptItem*>(script_list[i]);
             item->loadFinish();
@@ -561,24 +561,56 @@ bool JZProject::saveAllItem()
     return saveItems(items);
 }
 
+void JZProject::saveItemMeta(QString old_item_path, JZProjectItem* item)
+{
+    if (!m_filepath.isEmpty())
+    {
+        //由于只保存局部部分，这里先读取，设置局部，保存
+        auto file = getItemFile(item);
+        QString filepath = path() + "/" + file->itemPath();
+
+        JZScriptFile script_file;
+        JZProjectTempGuard guard(this, &script_file, JZProjectTempGuard::TakeItem);
+        script_file.load(filepath);
+
+        QString temp_item_path = "/tmp/" + old_item_path.mid(2);
+
+        JZProjectItem *tmp_item = getItem(temp_item_path);
+        if (tmp_item->itemType() == ProjectItem_scriptItem)
+        {
+            JZScriptItem* dst_item = dynamic_cast<JZScriptItem*>(tmp_item);
+            JZScriptItem* ori_item = dynamic_cast<JZScriptItem*>(item);
+            if (isFunctionScriptItem(dst_item))
+                dst_item->setFunction(ori_item->function());
+            else
+                dst_item->setName(ori_item->name());
+        }
+        else if (tmp_item->itemType() == ProjectItem_class)
+        {
+            JZScriptClassItem* dst_item = dynamic_cast<JZScriptClassItem*>(tmp_item);
+            JZScriptClassItem* ori_item = dynamic_cast<JZScriptClassItem*>(item);
+            dst_item->setClass(ori_item->className(), ori_item->superClass());
+        }
+        script_file.save(filepath);
+    }
+    onItemChanged(item);
+}
+
 bool JZProject::renameItem(JZProjectItem *item, QString newname)
 {    
-    QString new_name = item->path() + "/" + newname;
-    if (getItem(newname))
-    {
+    QString old_item_path = item->itemPath();
+    QString new_path = item->path() + "/" + newname;
+    if (getItem(new_path))
         return false;
-    }
 
     item->setName(newname);
-    saveItem(item);
-
     if(isFile(item))
     {
         QString item_path = path() + "/" + item->itemPath();
         QFile f(item_path);
         f.rename(newname);
-        save();
     }
+    saveItemMeta(old_item_path, item);
     return true;
 }
 
@@ -586,24 +618,24 @@ JZProjectItem *JZProject::getItem(QString path)
 {    
     if(path.isEmpty() || path == "." || path == "./")
         return &m_root;    
-    if (path == "/tmp")
+    if (path == "/tmp" || path == "/tmp/")
         return &m_tmp;
 
     JZProjectItem *folder = nullptr;
     if (path.startsWith("/tmp/"))
     {
         folder = &m_tmp;
-        path = path.mid(1);
+        path = path.mid(5);
     }
     else
     {
-        if (!path.startsWith("./"))
-            path = "./" + path;
+        if (path.startsWith("./"))
+            path = path.mid(2);
         folder = &m_root;
     }
 
     QStringList path_list = path.split("/",Qt::KeepEmptyParts);    
-    for(int i = 1; i < path_list.size(); i++)
+    for(int i = 0; i < path_list.size(); i++)
     {        
         folder = folder->getItem(path_list[i]);
         if(!folder)

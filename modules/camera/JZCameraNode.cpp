@@ -36,11 +36,8 @@ bool JZNodeCameraInit::compiler(JZNodeCompiler *c, QString &error)
     if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager"), error))
         return false;
 
-    int id = c->allocStack(Type_byteArray);
-    c->addSetBuffer(irId(id), JZNodeUtils::toBuffer(m_config));
-
     QList<JZNodeIRParam> in, out;
-    in << irRef("this.cameraManager") << irId(id);
+    in << irRef("this.cameraManager") << irLiteral(JZNodeUtils::toBuffer(m_config));
     c->addCallConvert("JZCameraInit", in, out);
     return true;
 }

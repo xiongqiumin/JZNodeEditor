@@ -500,6 +500,28 @@ bool JZNodeDisplay::compiler(JZNodeCompiler *compiler, QString &error)
     return true;
 }
 
+void JZNodeDisplay::saveToStream(QDataStream &s) const
+{
+    QList<JZNodePin> &pin_list = const_cast<QList<JZNodePin>&>(m_pinList);
+
+    QStringList values;
+    for(int i = 0; i < pin_list.size(); i++)
+    {
+        values << pin_list[i].value();
+        pin_list[i].setValue(QString());
+    }
+
+    JZNode::saveToStream(s);
+
+    for(int i = 0; i < pin_list.size(); i++)
+        pin_list[i].setValue(values[i]);
+}
+
+void JZNodeDisplay::loadFromStream(QDataStream &s)
+{
+    JZNode::loadFromStream(s);
+}
+
 //JZNodeThis
 JZNodeThis::JZNodeThis()
 {

@@ -36,11 +36,8 @@ bool JZNodeModelInit::compiler(JZNodeCompiler* c, QString& error)
     if (!c->addFlowInput(m_id, error))
         return false;    
 
-    int id = c->allocStack(Type_byteArray);
-    c->addSetBuffer(irId(id), JZNodeUtils::toBuffer(m_config));
-
     QList<JZNodeIRParam> in, out;
-    in << irRef("this.modelManager") << irId(id);
+    in << irRef("this.modelManager") << irLiteral(JZNodeUtils::toBuffer(m_config));
     c->addCallConvert("JZModelInit", in, out);
     return true;
 }

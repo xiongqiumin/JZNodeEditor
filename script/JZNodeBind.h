@@ -138,7 +138,8 @@ struct is_base_type {
         std::is_same<T, uint64_t>::value ||
         std::is_same<T, float>::value    ||
         std::is_same<T, double>::value   ||
-        std::is_same<T, QString>::value;
+        std::is_same<T, QString>::value  ||
+        std::is_same<T, QByteArray>::value;
 };
 
 void setBindEnvironment(JZScriptEnvironment *env);
@@ -262,6 +263,7 @@ QVariant toVariant(T value)
     return toVariantPointer<remove_cvr_t<T>>(value,std::is_pointer<T>());
 }
 
+//返回 QVariant 会被封装成 JZVarianAny
 template<>
 QVariant toVariant(QVariant value);
 
@@ -273,6 +275,9 @@ QVariant toVariant(JZFunctionPointer ptr);
 
 template<>
 QVariant toVariant(QString value);
+
+template<>
+QVariant toVariant(QByteArray value);
 
 template <class type>
 void toVariantList(QVariantList &list)

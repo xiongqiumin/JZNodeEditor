@@ -150,6 +150,11 @@ void QtWrapper::initBase()
     cls_string.def("isEmpty", false, [](const QString& in)->bool { return in.isEmpty(); });
     cls_string.regist();
 
+    //QByteArray
+    jzbind::ClassBind<QByteArray> cls_byte_array(Type_byteArray, "QByteArray");
+    cls_byte_array.setValueType(true);
+    cls_byte_array.regist();
+
     //Point
     jzbind::ClassBind<QPoint> cls_pt(Type_point,"QPoint");
     cls_pt.setValueType(true);
@@ -354,10 +359,6 @@ void QtWrapper::initCore()
 
     m_objInst->delcareCClass("QJsonArray", typeid(QJsonArray).name(), Type_jsonArray);
     m_objInst->delcareCClass("QJsonObject", typeid(QJsonObject).name(), Type_jsonObject);
-
-    jzbind::ClassBind<QByteArray> cls_byte_array(Type_byteArray,"QByteArray");
-    cls_byte_array.setValueType(true);
-    cls_byte_array.regist();
 
     jzbind::ClassBind<QJsonValue> cls_json_value(Type_jsonValue, "QJsonValue");
     cls_json_value.setValueType(true);

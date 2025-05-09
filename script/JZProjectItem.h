@@ -95,9 +95,6 @@ public:
     virtual ~JZProjectItemFolder();
 };
 
-int JZProjectItemIsScript(JZProjectItem *item);
-
-
 typedef JZProjectItem *(*JZProjectItemCreateFunc)();
 template<class T>
 JZProjectItem *createJZProjectItem(){ return new T(); }

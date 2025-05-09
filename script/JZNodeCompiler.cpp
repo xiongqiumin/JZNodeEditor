@@ -386,12 +386,6 @@ void JZMacroIRReplace::replace(QList<JZNodeIRPtr>& ir_list)
         case OP_try :
         case OP_throw:
             break;
-        case OP_buffer:
-        {
-            JZNodeIRBuffer* ir_buffer = (JZNodeIRBuffer*)op;
-            replaceIr(ir_buffer->id);
-            break;
-        }
         case OP_alloc:
         {
             JZNodeIRAlloc* ir_alloc = (JZNodeIRAlloc*)op;
@@ -2004,6 +1998,27 @@ void JZNodeCompiler::addConstructor(SignalConnectInfo info)
     m_builder->addClassConstructor(m_className, info);
 }
 
+void JZNodeCompiler::addGetOrInit(QString objName, QString typeName, const QByteArray& init_buffer, int& ptr_id)
+{
+    ptr_id = allocStack(JZNodeType::pointerType(typeName));
+    int obj_id = allocStack(typeName);
+
+    QList<JZNodeIRParam> in, out;
+    in << irThis() << irLiteral(objName);
+    out << irId(ptr_id);
+    addCall("QObject::getChild",in,out);
+
+    addCompare(irId(ptr_id),irLiteral(QVariant::fromValue(JZNodeObjectNull())), OP_eq);
+    auto jne = addJmp(OP_jne);
+
+    addCall("createObject", { irLiteral(typeName) }, { irId(obj_id) });
+    addCall("QObject::setParent", { irId(obj_id), irLiteral(objName), irThis()}, {});
+    addCall(typeName + "::init", { irId(obj_id), irLiteral(init_buffer) }, {});
+    
+    int nop_pc = addNop();
+    jne->jmpPc = nop_pc;
+}
+
 JZNodeIRJmp* JZNodeCompiler::addJmp(JZNodeIRType type)
 {
     JZNodeIRJmp* jmp = new JZNodeIRJmp(type);
@@ -2890,16 +2905,6 @@ void JZNodeCompiler::addGetJson(const JZNodeIRParam& dst, const QString &name, c
     in << obj << irLiteral(name);
     out << dst;
     addCallConvert("QJsonObject::set", in, out);
-}
-
-void JZNodeCompiler::addSetBuffer(const JZNodeIRParam &id, const QByteArray &buffer)
-{
-    Q_ASSERT(irParamType(id) == Type_byteArray);
-
-    JZNodeIRBuffer *op = new JZNodeIRBuffer();
-    op->id = id;
-    op->buffer = buffer;
-    addStatement(JZNodeIRPtr(op));
 }
 
 void JZNodeCompiler::addConvert(const JZNodeIRParam &dst, int dst_type,const JZNodeIRParam &src)

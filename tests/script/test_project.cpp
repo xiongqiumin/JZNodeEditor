@@ -8,39 +8,90 @@ ProjectTest::ProjectTest()
 {
 }
 
-void ProjectTest::saveLoad()
+void ProjectTest::saveLoadNode()
 {
-    auto main = m_project.mainFunction();
-    JZNode* pre = main->startNode();
-    for (int i = 0; i < 100; i++)
+    auto node_factory = m_project.environment()->nodeFactory();
+    auto node_list = node_factory->nodeTypeList();
+    for (int i = 0; i < node_list.size(); i++)
     {
-        JZNode* nop = new JZNodeSetParam();
-        main->addNode(nop);
-        main->addConnect(pre->flowOutGemo(), nop->flowInGemo());
-        pre = nop;
-    }
+        JZNode *node = node_factory->createNode(node_list[i]);
+        QByteArray buffer = node_factory->saveNode(node);
+        JZNode* node2 = node_factory->loadNode(buffer);
+        QByteArray buffer2 = node_factory->saveNode(node2);
+        delete node;
+        delete node2;
 
-    QString context = "nodes{\n";
-    auto list = main->nodeList();
-    for (int i = 0; i < list.size(); i++)
-    {
-        auto node = main->getNode(list[i]);
-        context += node->name() + "{\"id\":8,\"values\":[\"\",\"\"] }" + "\n";
+        QVERIFY(buffer == buffer2);
     }
-    context += "}\n";
-    
-    context += "connects{\n";
-    auto conn_list = main->connectList();
-    for (int i = 0; i < conn_list.size(); i++)
-    {
-        auto& line = conn_list[i];
-        QString text = QString::asprintf("%d.%d->%d.%d", line.from.nodeId, line.from.pinId, line.to.nodeId, line.to.pinId);
-        context += text + "\n";
-    }
-    context += "}\n";
-    
+}
 
-    qDebug().noquote() << context.size();
+void ProjectTest::projectRename()
+{
+    QDir dir;
+    dir.mkdir(qApp->applicationDirPath() + "/dump/test_saveProject");
+    QString project_path = qApp->applicationDirPath() + "/dump/test_saveProject/pro.jsproj";
+
+    JZFunctionDefine define;
+    define.name = "hahahaha";
+    JZScriptItem *script = m_file->addFunction(define);
+    
+    JZScriptItem *script2 = m_file->addFunction(define);
+    QVERIFY(!script2);
+
+    define.name = "hahahaha2";
+    script2 = m_file->addFunction(define);
+    QVERIFY(script2);
+    for (int i = 0; i < 5; i++)
+        script2->addNode(new JZNodeAdd());
+
+    auto class_item = m_file->addClass("TetLu", "NXUX");
+
+    JZScriptItem* flow = class_item->addFlow("flow");
+    QVERIFY(flow);
+
+    bool save_ret = m_project.saveAs(project_path);
+    QVERIFY(save_ret);
+
+    //save
+    save_ret = m_project.saveAllItem();
+    QVERIFY(save_ret);
+
+    //rename
+    m_project.renameItem(script, "nohahaha");
+    QCOMPARE(script->name(), "nohahaha");
+    script->addNode(new JZNodeAdd());
+    QCOMPARE(script->nodeCount(), 2);
+
+    m_project.renameItem(script2, "nohahaha");
+    QCOMPARE(script2->name(), "hahahaha2");
+    script2->addNode(new JZNodeAdd());
+    QCOMPARE(script2->nodeCount(), 7);
+
+    QString old_class_path = class_item->itemPath();
+    class_item->setClass("NewClass", "NewSuper");
+    m_project.saveItemMeta(old_class_path, class_item);
+
+    m_project.renameItem(flow, "newFlow");
+    
+    //load and check
+    bool open_ret = m_project.open(project_path);
+    QVERIFY(open_ret);
+
+    m_file = m_project.mainFile();
+    script = (JZScriptItem*)m_file->getItem("nohahaha");
+    QVERIFY(script);
+    QCOMPARE(script->nodeCount(), 1);
+
+    script2 = (JZScriptItem * )m_file->getItem("hahahaha2");
+    QVERIFY(script2);
+    QCOMPARE(script2->nodeCount(), 6);
+
+    class_item = (JZScriptClassItem*)m_file->getItem("NewClass");
+    QVERIFY(class_item);
+    QCOMPARE(class_item->superClass(), "NewSuper");
+
+    flow = (JZScriptItem*)class_item->flow("newFlow");
+    QVERIFY(flow);
 }
 
 void test_project(int argc, char* argv[])

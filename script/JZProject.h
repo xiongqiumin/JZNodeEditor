@@ -135,6 +135,7 @@ public:
     QList<JZProjectItem*> itemList(QString path, int type);
     bool saveItem(JZProjectItem *item);
     bool saveItems(QList<JZProjectItem*> item);
+    void saveItemMeta(QString old_item_path, JZProjectItem* item);
     bool saveAllItem();
     bool renameItem(JZProjectItem *item, QString name);    
 
@@ -152,7 +153,7 @@ public:
     BreakPoint breakPoint(QString file, int id);
     QList<BreakPoint> breakPoints();
 
-    void onItemChanged(JZProjectItem *item);     
+    void onItemChanged(JZProjectItem *item);
 
 signals:
     void sigDefineChanged();

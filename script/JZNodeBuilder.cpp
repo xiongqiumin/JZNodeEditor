@@ -65,9 +65,7 @@ public:
             }
             if (!info.param.isEmpty())
             {
-                int id = c->allocStack(Type_byteArray);
-                c->addSetBuffer(irId(id), JZNodeUtils::toBuffer(info.param));
-                in << irId(id);
+                in << irLiteral(JZNodeUtils::toBuffer(info.param));
             }
             QList<JZNodeIRParam> out;
             c->addCall(function, in, out);

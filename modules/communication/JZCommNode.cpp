@@ -36,11 +36,8 @@ bool JZNodeCommInit::compiler(JZNodeCompiler* c, QString& error)
     if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
         return false;
 
-	int id = c->allocStack(Type_byteArray);
-	c->addSetBuffer(irId(id), JZNodeUtils::toBuffer(m_config));
-
 	QList<JZNodeIRParam> in, out;
-	in << irRef("this.commManager") << irId(id);
+	in << irRef("this.commManager") << irLiteral(JZNodeUtils::toBuffer(m_config));
 	c->addCallConvert("JZCommInit",in,out);
 	return true;
 }

@@ -12,7 +12,8 @@ public:
     ProjectTest();
 
 private slots:
-    void saveLoad();
+    void saveLoadNode();
+    void projectRename();
 
 protected:
 

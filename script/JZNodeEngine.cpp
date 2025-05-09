@@ -1761,15 +1761,6 @@ bool JZNodeEngine::run()
             setParam(ir_set->dst,QVariant::fromValue(ptr));
             break;
         }
-        case OP_buffer:
-        {
-            const JZNodeIRBuffer *ir_buffer = (const JZNodeIRBuffer*)op;
-            auto v = obj_inst->objectCreateVariant<QByteArray>();
-            QByteArray *buffer = obj_inst->objectCast<QByteArray>(v);
-            *buffer = ir_buffer->buffer;
-            setParam(ir_buffer->id, v);
-            break;
-        }
         case OP_convert:
         {
             const JZNodeIRConvert *ir_convert = (const JZNodeIRConvert*)op;

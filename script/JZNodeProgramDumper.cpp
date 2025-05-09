@@ -511,12 +511,6 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
         }
         break;
     }
-    case OP_buffer:
-    {
-        JZNodeIRBuffer *ir_set = (JZNodeIRBuffer*)op;
-        line += toString(ir_set->id) + QString::asprintf("= QByteArray(%d);",ir_set->buffer.size());
-        break;
-    }
     case OP_convert:
     {
         JZNodeIRConvert *ir_cvt = (JZNodeIRConvert*)op;

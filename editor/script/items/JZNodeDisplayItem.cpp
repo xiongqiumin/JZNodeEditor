@@ -8,6 +8,7 @@
 #include "JZEditorGlobal.h"
 #include "jzWidgets/JZImageLabel.h"
 #include "jzWidgets/JZSelfLayout.h"
+#include "JZYolo.h"
 #include "modules/opencv/JZModuleOpencv.h"
 
 using namespace cv;
@@ -77,8 +78,16 @@ void JZNodeDisplayItem::updatePin()
     }
 }
 
+
+void JZNodeDisplayItem::updateGraphics()
+{
+
+}
+
 void JZNodeDisplayItem::setValue(int pin,QVariantPtr *ref)
 {
+    m_node->setPinValue(JZNodeType::debugString(pin, *ref->ptr));
+
     QString type_name = editorEnvironment()->typeToName(ref->type);
     if (type_name == "Mat" || type_name == "QImage")
     {
@@ -98,11 +107,29 @@ void JZNodeDisplayItem::setValue(int pin,QVariantPtr *ref)
     }
     else if (type_name == "QList<JZYoloResult>")
     {
+        QList<JZYoloResult> *yolo_ret = JZObjectCast<QList<JZYoloResult>>(toJZObject(*ref->ptr));
+        QList<JZGraphic> graphList;
+        for(int i = 0; i < yolo_ret->size(); i++)
+        {
+            JZGraphic g;
+            g.type = JZGraphic::Rect;
+            QRect rc = yolo_ret->at(i)->rect;
+            g.points << rc.topLeft() << rc.bottomRight();
+            g.color = Qt::red;
+            graphList.push_back(g);
+        }
 
-    }
-    else
-    {
-
+        int in_list = blockList(true);
+        int index = in_list.indexOf(pin);
+        for(int i = index - 1; i >= 0; i--)
+        {
+            int pin_id = in_list[i];
+            if(m_blocks[pin_id]->widget && m_blocks[pin_id]->widget->inherits("JZImageLabel"))
+            {
+                JZImageLabel *label = qobject_cast<JZImageLabel*>(m_blocks[pin]->widget);
+                label->setGraphics(graphList);
+            }
+        }
     }
     update();
 }

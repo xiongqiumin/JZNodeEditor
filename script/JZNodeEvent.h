@@ -63,6 +63,8 @@ protected:
 class JZNodeShowEvent : public JZNodeEvent
 {
 public:
+    JZNodeShowEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
@@ -71,6 +73,8 @@ public:
 class JZNodeCloseEvent : public JZNodeEvent
 {
 public:
+    JZNodeCloseEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
@@ -79,6 +83,8 @@ public:
 class JZNodeResizeEvent : public JZNodeEvent
 {
 public:
+    JZNodeResizeEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
@@ -87,6 +93,8 @@ public:
 class JZNodePaintEvent : public JZNodeEvent
 {
 public:
+    JZNodePaintEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
@@ -96,6 +104,8 @@ public:
 class JZNodeMousePressEvent : public JZNodeEvent
 {
 public:
+    JZNodeMousePressEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
@@ -104,6 +114,8 @@ public:
 class JZNodeMouseReleaseEvent : public JZNodeEvent
 {
 public:
+    JZNodeMouseReleaseEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
@@ -112,6 +124,8 @@ public:
 class JZNodeMouseMoveEvent : public JZNodeEvent
 {
 public:
+    JZNodeMouseMoveEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
@@ -120,6 +134,18 @@ public:
 class JZNodeKeyPressEvent : public JZNodeEvent
 {
 public:
+    JZNodeKeyPressEvent();
+
+    virtual JZFunctionDefine function() override;
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+};
+
+//JZNodeKeyReleaseEvent
+class JZNodeKeyReleaseEvent : public JZNodeEvent
+{
+public:
+    JZNodeKeyReleaseEvent();
+
     virtual JZFunctionDefine function() override;
     virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };

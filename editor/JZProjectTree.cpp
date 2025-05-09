@@ -242,6 +242,23 @@ void JZProjectTree::renameItem(QTreeWidgetItem *view_item)
     m_tree->editItem(view_item);
 }
 
+bool JZProjectTree::checkRenameItem(JZProjectItem *item,QString new_name)
+{
+    if(new_name == item->name())
+        return true;
+
+    auto p = item->parent();
+    QString name_error;
+    if(name.isEmpty())
+        name_error = "名称不能为空";
+    else if(name.contains("/"))
+        name_error = "无效名称";
+    else if(p->getItem(new_name))
+        name_error = "名称重复";  
+
+    return name_error.isEmpty();
+}
+
 void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
 {
     if(m_editItem != item)
@@ -557,6 +574,7 @@ void JZProjectTree::onContextMenu(QPoint pos)
         {
             JZScriptItem *func_item = dynamic_cast<JZScriptItem*>(item);
             QString oldName = func_item->name();
+            QString old_path = func_item->itemPath(); 
 
             JZNodeFuctionEditDialog dialog(this);
             dialog.setFunctionInfo(func_item->function(), false);
@@ -564,34 +582,33 @@ void JZProjectTree::onContextMenu(QPoint pos)
             if (dialog.exec() != QDialog::Accepted)
                 return;
             
-            JZFunctionDefine def = dialog.functionInfo();             
-            if (oldName != def.name)
-            {                
-                if(!m_project->renameItem(func_item, def.name))
-                {
-                    QMessageBox::information(this,"","重命名失败");
-                    return;
-                }
-                view_item->setText(0, def.name);
-            }
+            JZFunctionDefine def = dialog.functionInfo();     
+            if(!checkRenameItem(func_item,def.name))
+                return;        
+            
             func_item->setFunction(def);
-            m_project->saveItem(func_item);
+            m_project->saveItemMeta(old_path, func_item);
         }
         else if (item->itemType() == ProjectItem_class)
         {
             JZScriptClassItem *class_item = (JZScriptClassItem*)item;
-            
+            QString old_path = class_item->itemPath(); 
+
             JZNodeClassEditDialog dlg(this);
             dlg.setClass(class_item);
             if (dlg.exec() != QDialog::Accepted)
                 return;
+
+            if(!checkRenameItem(class_item,dlg.className()))
+                return;  
              
             class_item->setClass(dlg.className(), dlg.super());
             if (dlg.isUi() && class_item->hasUi())
                 class_item->addUi(new JZUiItem());
             else
                 class_item->removeUi();
-            m_project->saveItem(class_item);
+
+            m_project->saveItemMeta(old_path, class_item);
         } 
         else if(item->itemType() == ProjectItem_root)
         {

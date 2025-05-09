@@ -28,18 +28,16 @@ bool JZScriptClassItem::loadFromStream(QDataStream &s)
     return true;
 }
 
-
 void JZScriptClassItem::setClass(QString className, QString super)
 {
     m_name = className;    
-    m_super = super;    
+    m_super = super;
 }
 
 QString JZScriptClassItem::className() const
 {
     return m_name;
 }
-
 
 JZUiItem *JZScriptClassItem::ui()
 {

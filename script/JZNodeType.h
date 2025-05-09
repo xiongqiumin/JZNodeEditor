@@ -24,6 +24,7 @@ enum
     Type_float,
     Type_double,
     Type_string,
+    Type_byteArray,
     Type_nullptr,
     Type_any,
     Type_function,
@@ -49,7 +50,6 @@ enum
     Type_stringIntMap,
     Type_stringStringMap,
 
-    Type_byteArray,
     Type_jsonValue,
     Type_jsonArray,
     Type_jsonObject,

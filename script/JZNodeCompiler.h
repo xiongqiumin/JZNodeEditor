@@ -273,7 +273,6 @@ public:
     void addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value = QString());
     void addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src);   
     void addSetVariableConvert(const JZNodeIRParam &dst, const JZNodeIRParam &src);  //包含显示类型转换
-    void addSetBuffer(const JZNodeIRParam &dst, const QByteArray &buffer);
     void addSetJson(const JZNodeIRParam& dst, const QString &name, const JZNodeIRParam &src);
     void addGetJson(const JZNodeIRParam& dst, const QString &name, const JZNodeIRParam &src);
 
@@ -288,6 +287,7 @@ public:
     JZNode* continueParentNode(int child_id);
 
     void addConstructor(SignalConnectInfo info);
+    void addGetOrInit(QString objName, QString typeName,const QByteArray &init_buffer,int &obj_id);
     
     void addAlloc(int allocType, QString name, QString dataType);
     void addAlloc(int allocType, QString name, int dataType);
@@ -297,7 +297,7 @@ public:
     void addCallVirtual(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);  
     void addCallConvert(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallConvert(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
-    void addAssert(const JZNodeIRParam &tips);       
+    void addAssert(const JZNodeIRParam &tips);
         
     JZNode* nextFlowNode(JZNode* node, int pin);
     bool buildSubControlFlow(JZNode* node, QList<JZNodeIRPtr>& list);

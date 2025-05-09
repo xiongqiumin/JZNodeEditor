@@ -17,7 +17,6 @@ enum JZNodeIRType
     OP_reference,
     OP_clearReg,
     OP_set,
-    OP_buffer,
     OP_clone,
     OP_convert,
     OP_jmp,
@@ -202,19 +201,6 @@ public:
 
     JZNodeIRParam dst;
     JZNodeIRParam src;
-};
-
-class JZNodeIRBuffer : public JZNodeIR
-{
-public:
-    JZNodeIRBuffer();
-    virtual ~JZNodeIRBuffer();
-
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
-
-    JZNodeIRParam id;
-    QByteArray buffer;
 };
 
 class JZNodeIRConvert: public JZNodeIR

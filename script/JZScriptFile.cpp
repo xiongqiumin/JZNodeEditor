@@ -87,6 +87,10 @@ QStringList JZScriptFile::functionList() const
 
 JZScriptItem *JZScriptFile::addFunction(const JZFunctionDefine &define)
 {    
+    auto func = getFunction(define.name);
+    if (func)
+        return nullptr;
+
     JZScriptItem *file = new JZScriptItem(JZScriptItem::Function);
     file->setFunction(define);
     project()->addItem(itemPath(), file);

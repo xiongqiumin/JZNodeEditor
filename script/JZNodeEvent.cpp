@@ -136,7 +136,13 @@ bool JZNodeFunctionStart::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-///JZNodeShowEvent
+//JZNodeShowEvent
+JZNodeShowEvent::JZNodeShowEvent()
+{
+    m_name = "ShowEvent";
+    m_type = Node_showEvent;
+}
+
 JZFunctionDefine JZNodeShowEvent::function()
 {
     return JZFunctionDefine();
@@ -147,6 +153,12 @@ bool JZNodeShowEvent::compiler(JZNodeCompiler* compiler, QString& error)
 }
 
 //JZNodeCloseEvent
+JZNodeCloseEvent::JZNodeCloseEvent()
+{
+    m_name = "CloseEvent";
+    m_type = Node_closeEvent;
+}
+
 JZFunctionDefine JZNodeCloseEvent::function()
 {
     return JZFunctionDefine();
@@ -158,6 +170,12 @@ bool JZNodeCloseEvent::compiler(JZNodeCompiler* compiler, QString& error)
 }
 
 //JZNodeResizeEvent
+JZNodeResizeEvent::JZNodeResizeEvent()
+{
+    m_name = "ResizeEvent";
+    m_type = Node_resizeEvent;
+}
+
 JZFunctionDefine JZNodeResizeEvent::function()
 {
     return JZFunctionDefine();
@@ -169,6 +187,12 @@ bool JZNodeResizeEvent::compiler(JZNodeCompiler* compiler, QString& error)
 }
 
 //JZNodePaintEvent
+JZNodePaintEvent::JZNodePaintEvent()
+{
+    m_name = "PaintEvent";
+    m_type = Node_paintEvent;
+}
+
 JZFunctionDefine JZNodePaintEvent::function()
 {
     return JZFunctionDefine();
@@ -179,6 +203,12 @@ bool JZNodePaintEvent::compiler(JZNodeCompiler* compiler, QString& error)
 }
 
 //JZNodeMousePressEvent
+JZNodeMousePressEvent::JZNodeMousePressEvent()
+{
+    m_name = "MousePressEvent";
+    m_type = Node_mousePressEvent;
+}
+
 JZFunctionDefine JZNodeMousePressEvent::function()
 {
     return JZFunctionDefine();
@@ -189,6 +219,12 @@ bool JZNodeMousePressEvent::compiler(JZNodeCompiler* compiler, QString& error)
 }
 
 //JZNodeMouseReleaseEvent
+JZNodeMouseReleaseEvent::JZNodeMouseReleaseEvent()
+{
+    m_name = "MouseReleaseEvent";
+    m_type = Node_mouseReleaseEvent;
+}
+
 JZFunctionDefine JZNodeMouseReleaseEvent::function()
 {
     return JZFunctionDefine();
@@ -199,6 +235,12 @@ bool JZNodeMouseReleaseEvent::compiler(JZNodeCompiler* compiler, QString& error)
 }
 
 //JZNodeMouseMoveEvent
+JZNodeMouseMoveEvent::JZNodeMouseMoveEvent()
+{
+    m_name = "MouseMoveEvent";
+    m_type = Node_mouseMoveEvent;
+}
+
 JZFunctionDefine JZNodeMouseMoveEvent::function()
 {
     return JZFunctionDefine();
@@ -210,12 +252,35 @@ bool JZNodeMouseMoveEvent::compiler(JZNodeCompiler* compiler, QString& error)
 }
 
 //JZNodeKeyPressEvent
+JZNodeKeyPressEvent::JZNodeKeyPressEvent()
+{
+    m_name = "KeyPressEvent";
+    m_type = Node_keyPressEvent;
+}
+
 JZFunctionDefine JZNodeKeyPressEvent::function()
 {
     return JZFunctionDefine();
 }
 
 bool JZNodeKeyPressEvent::compiler(JZNodeCompiler* compiler, QString& error)
+{
+    return false;
+}
+
+//JZNodeKeyReleaseEvent
+JZNodeKeyReleaseEvent::JZNodeKeyReleaseEvent()
+{
+    m_name = "KeyReleaseEvent";
+    m_type = Node_keyReleaseEvent;
+}
+
+JZFunctionDefine JZNodeKeyReleaseEvent::function()
+{
+    return JZFunctionDefine();
+}
+
+bool JZNodeKeyReleaseEvent::compiler(JZNodeCompiler* compiler, QString& error)
 {
     return false;
 }
