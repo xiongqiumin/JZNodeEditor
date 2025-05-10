@@ -12,15 +12,15 @@ void JZEditorUtils::projectUpdateLayout(JZProject *project)
             JZScriptItem *item = (JZScriptItem *)item_list[i];
             scriptItemUpdateLayout(item);
         }
-    }    
+    }
+    project->saveAllItem();
 }
 
 void JZEditorUtils::scriptItemUpdateLayout(JZScriptItem *item)
 {
     JZNodeView *view = new JZNodeView();
     view->setFile(item);
-    view->updateNodeLayout();
-    view->save();
+    view->updateNodeLayout();    
     delete view;
 }
 

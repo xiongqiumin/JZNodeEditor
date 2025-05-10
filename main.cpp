@@ -70,6 +70,7 @@ void createSample()
 {
     SampleVisionDemo demo;
     demo.initCameraFile();
+    //demo.initCameraHik();
     demo.saveProject();
 }
 
@@ -86,8 +87,8 @@ int main(int argc,char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();               
 
-    createSample();
-    //return runSample();
+    //createSample();
+    return runSample();
     //return runProgram("Project20", false);    
 
     QCommandLineParser parser;

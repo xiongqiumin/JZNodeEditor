@@ -199,7 +199,12 @@ bool JZProject::open(QString filepath)
         else
             sub_path = dir + "/" + file_list[i];
         
-        addFile(sub_path);        
+        if (!addFile(sub_path))
+        {
+            m_blockRegist = false;
+            m_error = "load file " + sub_path + " failed";
+            return false;
+        }
     }    
     m_blockRegist = false;
 
@@ -227,7 +232,7 @@ bool JZProject::save()
         return false;
     }
 
-    auto item_list = m_root.itemList({ProjectItem_scriptFile, ProjectItem_ui});
+    auto item_list = m_root.itemList({ProjectItem_scriptFile});
     QStringList file_list;
     for (int i = 0; i < item_list.size(); i++)    
         file_list << item_list[i]->itemPath();    
@@ -563,8 +568,10 @@ bool JZProject::saveAllItem()
 
 void JZProject::saveItemMeta(QString old_item_path, JZProjectItem* item)
 {
-    if (!m_filepath.isEmpty())
-    {
+    QList<int> save_meta_type = { ProjectItem_scriptItem , ProjectItem_class };
+
+    if (!m_filepath.isEmpty() && save_meta_type.contains(item->itemType()))
+    {        
         //由于只保存局部部分，这里先读取，设置局部，保存
         auto file = getItemFile(item);
         QString filepath = path() + "/" + file->itemPath();
@@ -602,15 +609,23 @@ bool JZProject::renameItem(JZProjectItem *item, QString newname)
     QString new_path = item->path() + "/" + newname;
     if (getItem(new_path))
         return false;
-
-    item->setName(newname);
+    
     if(isFile(item))
     {
         QString item_path = path() + "/" + item->itemPath();
-        QFile f(item_path);
-        f.rename(newname);
+        QString new_item_path = path() + "/" + new_path;        
+        if (!QFile::rename(item_path, new_item_path))
+            return false;
+
+        item->setName(newname);
+        save();
     }
-    saveItemMeta(old_item_path, item);
+    else
+    {
+        item->setName(newname);
+        saveItemMeta(old_item_path, item);
+    }
+
     return true;
 }
 
@@ -663,17 +678,12 @@ JZProjectItem *JZProject::addFile(QString filepath)
         JZScriptFile *script_file = new JZScriptFile();
         script_file->setName(fileName);
         addItem(sub_dir, script_file);
-        script_file->load(filepath);
+        if (!script_file->load(filepath))
+            return nullptr;
+
         item = script_file;
     }
-    else if (ext == "ui")
-    {
-        JZUiItem *ui_file = new JZUiItem();
-        ui_file->setName(fileName);
-        addItem(sub_dir, ui_file);
-        ui_file->load(filepath);        
-        item = ui_file;
-    }
+
     return item;
 }
 

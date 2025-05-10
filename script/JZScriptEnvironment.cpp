@@ -263,14 +263,30 @@ int JZScriptEnvironment::ctypeidToType(const QString &name) const
 
     if(name == typeid(bool).name())
         return Type_bool;
+    else if(name == typeid(int8_t).name())
+        return Type_int8;
+    else if(name == typeid(uint8_t).name())
+        return Type_uint8;
+    else if(name == typeid(int16_t).name())
+        return Type_int16;
+    else if(name == typeid(uint16_t).name())
+        return Type_uint16;
     else if(name == typeid(int).name())
         return Type_int;
+    else if(name == typeid(uint).name())
+        return Type_uint;
     else if(name == typeid(int64_t).name())
         return Type_int64;
+    else if(name == typeid(uint64_t).name())
+        return Type_uint64;
+    else if(name == typeid(float).name())
+        return Type_float;
     else if(name == typeid(double).name())
         return Type_double;
     else if(name == typeid(QString).name())
         return Type_string;
+    else if(name == typeid(QByteArray).name())
+        return Type_byteArray;
     else    
         return m_objectManager.getIdByCTypeid(name);
 }

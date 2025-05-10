@@ -83,7 +83,9 @@ void JZNodeAutoRunThread::customEvent(QEvent *e)
             return;
 
         LOGMOD_I(Log_Runtime, "开始测试");
-        m_test.init();
+        if (!m_test.init())
+            return;
+
         m_test.engine()->startWatch();
         m_test.start();
         m_timer->start(50);

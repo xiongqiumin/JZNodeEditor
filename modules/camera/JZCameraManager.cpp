@@ -1,7 +1,5 @@
 ﻿#include <stdexcept>
 #include "JZCameraManager.h"
-#include "JZCameraFile.h"
-#include "JZCameraHik.h"
 #include "JZNodeUtils.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
@@ -27,7 +25,7 @@ QDataStream &operator>>(QDataStream &s, JZCamerHikConfig &param)
 //JZCameraConfig
 JZCameraConfig::JZCameraConfig()
 {
-    type = Camera_None;
+    type = Camera_File;
 }
 QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param)
 {
@@ -146,8 +144,7 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfig &config)
         open_ret = camera_hik->open(cfg.path);
         if (open_ret)
         {
-            camera_hik->SetGain(cfg.gain);
-            camera_hik->SetExposureTime(cfg.exposureTime);
+            camera_hik->setConfig(cfg);
         }
     }
     else

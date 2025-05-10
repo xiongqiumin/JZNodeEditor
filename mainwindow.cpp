@@ -1191,13 +1191,15 @@ void MainWindow::onProjectChanged()
 }
 
 void MainWindow::onProjectItemChanged(JZProjectItem *item)
-{
+{    
     //editor
-    if (m_editors.contains(item))
+    auto it = m_editors.begin();
+    while(it != m_editors.end())
     {
-        int index = m_editorStack->indexOf(m_editors[item]);
-        if (m_editorStack->tabText(index) != item->itemPath())
-            updateTabText(index);
+        int index = m_editorStack->indexOf(it.value());                
+        updateTabText(index);
+
+        it++;
     }
     onProjectChanged();
 }

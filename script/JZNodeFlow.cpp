@@ -988,5 +988,13 @@ bool JZNodeMainLoop::compiler(JZNodeCompiler *c, QString &error)
     if(!c->addFlowInput(m_id,error))
         return false;    
     
+    int id = c->paramId(m_id, paramIn(0));
+    c->addAlloc(JZNodeIRAlloc::Heap, "__mainwindow__", Type_widget);
+
+    JZNodeIRSet *ir_set = new JZNodeIRSet();
+    ir_set->dst = irRef("__mainwindow__");
+    ir_set->src = irId(id);
+    c->addStatement(JZNodeIRPtr(ir_set));
+
     return true;    
 }

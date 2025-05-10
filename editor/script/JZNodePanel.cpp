@@ -491,12 +491,14 @@ void JZNodePanel::initConstParam(QTreeWidgetItem *root)
     JZNodeLiteral node_double;
     JZNodeLiteral node_string;
     JZNodeLiteral node_null;
+    JZNodeLiteral node_byteArray;
 
     node_bool.setDataType(Type_bool);
     node_int.setDataType(Type_int);
     node_int64.setDataType(Type_int64);
     node_double.setDataType(Type_double);
     node_string.setDataType(Type_string);
+    node_byteArray.setDataType(Type_byteArray);
     node_null.setDataType(Type_nullptr);
 
     auto item_bool = createNode(&node_bool);

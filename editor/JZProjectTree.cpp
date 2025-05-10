@@ -225,6 +225,7 @@ bool JZProjectTree::dealRenameItem(JZProjectItem *item,QString name)
     if(!m_project->renameItem(item,name))
     {
         QMessageBox::information(this,"","重命名失败");
+        getViewItem(item)->setText(0, item->name());
         return false;
     }
 
@@ -244,14 +245,13 @@ void JZProjectTree::renameItem(QTreeWidgetItem *view_item)
 
 bool JZProjectTree::checkRenameItem(JZProjectItem *item,QString new_name)
 {
-    if(new_name == item->name())
-        return true;
+    Q_ASSERT(new_name != item->name());        
 
     auto p = item->parent();
     QString name_error;
-    if(name.isEmpty())
+    if(new_name.isEmpty())
         name_error = "名称不能为空";
-    else if(name.contains("/"))
+    else if(new_name.contains("/"))
         name_error = "无效名称";
     else if(p->getItem(new_name))
         name_error = "名称重复";  
@@ -269,35 +269,27 @@ void JZProjectTree::onItemChanged(QTreeWidgetItem *item)
     if (old_name == name)
         return;
 
-    auto item_parent = m_editItem->parent();
-    auto p = getProjectItem(item_parent);
-    QString name_error;
-    if(name.isEmpty())
-        name_error = "名称不能为空";
-    else if(name.contains("/"))
-        name_error = "无效名称";
-    else if(p->getItem(name))
-        name_error = "名称重复";    
-
+    auto project_item = getProjectItem(m_editItem);
+    if (!checkRenameItem(project_item, name))
+    {
+        m_editItem->setText(0, old_name);
+        return;
+    }
+    
     m_tree->blockSignals(true);
     m_editItem->setFlags(m_editItem->flags() & ~Qt::ItemIsEditable);
-    if(name_error.isEmpty())
+    
+    bool pre_select = (m_tree->currentItem() == item);
+    if (!dealRenameItem(project_item, name))
     {
-        bool pre_select = (m_tree->currentItem() == item);
-        auto project_item = getProjectItem(m_editItem);
-        if(!dealRenameItem(project_item,name))        
-            return;        
+        m_tree->blockSignals(false);
+        return;
+    }
 
-        if(pre_select)
-            m_tree->setCurrentItem(item);
-        m_project->saveItem(project_item);
-    }
-    else
-    {
-        QMessageBox::information(this,"",name_error);
-        m_editItem->setText(0, old_name);
-    }
-    m_tree->blockSignals(false);    
+    if(pre_select)
+        m_tree->setCurrentItem(item);        
+    
+    m_tree->blockSignals(false);
     m_editItem = nullptr;    
 }
 
@@ -582,9 +574,12 @@ void JZProjectTree::onContextMenu(QPoint pos)
             if (dialog.exec() != QDialog::Accepted)
                 return;
             
-            JZFunctionDefine def = dialog.functionInfo();     
-            if(!checkRenameItem(func_item,def.name))
-                return;        
+            JZFunctionDefine def = dialog.functionInfo();
+            if (def.name != func_item->name())
+            {
+                if (!checkRenameItem(func_item, def.name))
+                    return;
+            }
             
             func_item->setFunction(def);
             m_project->saveItemMeta(old_path, func_item);
@@ -599,8 +594,11 @@ void JZProjectTree::onContextMenu(QPoint pos)
             if (dlg.exec() != QDialog::Accepted)
                 return;
 
-            if(!checkRenameItem(class_item,dlg.className()))
-                return;  
+            if (class_item->name() != dlg.className())
+            {
+                if (!checkRenameItem(class_item, dlg.className()))
+                    return;
+            }
              
             class_item->setClass(dlg.className(), dlg.super());
             if (dlg.isUi() && class_item->hasUi())

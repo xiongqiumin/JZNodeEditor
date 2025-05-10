@@ -34,8 +34,7 @@ QStringList JZProjectTemplate::templateList()
 void JZProjectTemplate::createMainWindow()
 {
     auto* main_flow = m_project->mainFunction();
-    auto project = m_project;
-    project->addGlobalVariable("__mainwindow__", "MainWindow");
+    auto project = m_project;    
 
     auto func_inst = project->environment()->functionManager();
     auto window_file = new JZScriptFile();
@@ -57,22 +56,36 @@ void JZProjectTemplate::createMainWindow()
     class_item->addMemberFunction(define);
     project->onItemChanged(class_item);
 
+    QString window = "window";
+    main_flow->addLocalVariable(window, "MainWindow");
+
     JZNodeParam* get_param = new JZNodeParam();
     JZNodeFunction* func_init = new JZNodeFunction();
     JZNodeFunction* func_show = new JZNodeFunction();
     JZNodeMainLoop* main_loop = new JZNodeMainLoop();
+
+    JZNodeCreateObject *create_object = new JZNodeCreateObject();
+    create_object->setClassName("MainWindow");
+    JZNodeSetParam *set_param = new JZNodeSetParam();
+    set_param->setVariable(window);
+
+    main_flow->addNode(create_object);
+    main_flow->addNode(set_param);
 
     main_flow->addNode(get_param);
     main_flow->addNode(func_init);
     main_flow->addNode(func_show);
     main_flow->addNode(main_loop);
 
-    get_param->setVariable("__mainwindow__");
+    get_param->setVariable(window);
     func_init->setFunction(&define);
     func_show->setFunction(func_inst->function("QWidget::show"));
 
     JZNode* start = main_flow->getNode(0);
-    main_flow->addConnect(start->flowOutGemo(), func_init->flowInGemo());
+    main_flow->addConnect(start->flowOutGemo(), set_param->flowInGemo());
+    main_flow->addConnect(create_object->paramOutGemo(0), set_param->paramInGemo(1));
+
+    main_flow->addConnect(set_param->flowOutGemo(), func_init->flowInGemo());
     main_flow->addConnect(get_param->paramOutGemo(0), func_init->paramInGemo(0));
 
     main_flow->addConnect(func_init->flowOutGemo(0), func_show->flowInGemo());

@@ -458,8 +458,9 @@ bool JZNodeBuilder::initConstructor()
         jz_func.addrEnd = jz_func.addr + script_impl->statmentList.size();
         jz_func.path = con_script->itemPath;
 
-        con_script->functionList << jz_func;
         con_script->statmentList << script_impl->statmentList;
+        con_script->functionList << jz_func;
+        con_script->functionDebugList << script_impl->functionDebugList[0];        
 
         it++;
     }

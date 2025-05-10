@@ -45,6 +45,19 @@ bool JZCameraHikApi::enumDevices()
 
 #define g_api JZCameraHikApi::instance()
 
+//JZCamerHikConfig
+JZCamerHikConfig::JZCamerHikConfig()
+{
+    triggerMode = TRIGGER_MODE_OFF;
+    triggerSource = TRIGGER_SOURCE_SOFTWARE;   //触发
+
+    gainMode = GAIN_MODE_OFF;
+    gain = 0;
+
+    exposureMode = EXPOSURE_AUTO_MODE_OFF;
+    exposureTime = 20000;
+}
+
 //JZCameraHik
 JZCameraHik::JZCameraHik()
 {
@@ -329,6 +342,41 @@ void JZCameraHik::stop()
     }
 }
 
+void JZCameraHik::setConfig(JZCamerHikConfig config)
+{
+    MV_CC_SetEnumValue(m_hDevHandle, "TriggerSource", config.triggerSource);
+    MV_CC_SetEnumValue(m_hDevHandle, "TriggerMode", config.triggerMode);
+
+    if (config.gainMode == JZCamerHikConfig::GAIN_MODE_OFF)
+    {
+        MV_CC_SetEnumValue(m_hDevHandle, "GainAuto", 0);
+        MV_CC_SetFloatValue(m_hDevHandle, "Gain", (float)config.gain);
+    }
+    else if (config.gainMode == JZCamerHikConfig::GAIN_MODE_ONCE)
+    {
+        MV_CC_SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_ONCE);
+    }
+    else if (config.gainMode == JZCamerHikConfig::GAIN_MODE_CONTINUOUS)
+    {
+        MV_CC_SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_CONTINUOUS);
+    }
+
+    //exposure
+    if (config.exposureMode == JZCamerHikConfig::EXPOSURE_AUTO_MODE_OFF)
+    {
+        MV_CC_SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
+        MV_CC_SetFloatValue(m_hDevHandle, "ExposureTime", (float)config.exposureTime);
+    }
+    else if (config.exposureMode == JZCamerHikConfig::EXPOSURE_AUTO_MODE_ONCE)
+    {
+        MV_CC_SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_ONCE);
+    }
+    else
+    {
+        MV_CC_SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_CONTINUOUS);
+    }
+}
+
 bool JZCameraHik::CommandExecute(QString command)
 {
     int nRet = MV_CC_SetCommandValue(m_hDevHandle, qUtf8Printable(command));
@@ -337,32 +385,4 @@ bool JZCameraHik::CommandExecute(QString command)
         qDebug() << errorString(nRet);
     }
     return (MV_OK == nRet);
-}
-
-double JZCameraHik::GetExposureTime()  // en:Set Exposure Time
-{
-    MVCC_FLOATVALUE stFloatValue = { 0 };
-
-    int nRet = MV_CC_GetFloatValue(m_hDevHandle, "ExposureTime", &stFloatValue);
-    return stFloatValue.fCurValue;
-}
-
-bool JZCameraHik::SetExposureTime(double time)
-{
-    MV_CC_SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
-    return MV_CC_SetFloatValue(m_hDevHandle, "ExposureTime", (float)time) == MV_OK;
-}
-
-double JZCameraHik::GetGain()  // en:Set Gain
-{
-    MVCC_FLOATVALUE stFloatValue = { 0 };
-
-    int nRet = MV_CC_GetFloatValue(m_hDevHandle, "Gain", &stFloatValue);
-    return stFloatValue.fCurValue;
-}
-
-bool JZCameraHik::SetGain(double gain)
-{
-    MV_CC_SetEnumValue(m_hDevHandle, "GainAuto", 0);
-    return MV_CC_SetFloatValue(m_hDevHandle, "Gain", (float)gain) == MV_OK;
 }

@@ -100,6 +100,7 @@ enum
     Type_tableWidgetItem,
     Type_treeWidget,
     Type_treeWidgetItem,
+    Type_mainWindow,
 
     Type_internalObject = 8000, // 内部注册起始
     Type_userObject = 50000,    // 用户注册起始

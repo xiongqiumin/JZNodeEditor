@@ -485,8 +485,7 @@ bool JZScriptUnitTest::waitFinish(int timeout)
 
         QThread::msleep(20);
     }
-
-    stop();
+    
     return false;
 }
 

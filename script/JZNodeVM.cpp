@@ -77,7 +77,6 @@ void JZNodeVM::quitLater()
 void JZNodeVM::quit()
 {    
     m_debugServer.stopServer();
-    m_engine.deinit();
     qApp->exit();
 }
 

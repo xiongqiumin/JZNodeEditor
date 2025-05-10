@@ -70,8 +70,9 @@ void SampleVisionDemo::addInit()
     {        
         cfg.type = Camera_Hik;
         cfg.hikConfig.path = "192.168.0.150";
-        cfg.hikConfig.exposureTime = 0.5;
-        cfg.hikConfig.gain = 50;
+        cfg.hikConfig.path = "169.254.120.253";
+        cfg.hikConfig.exposureTime = 0;
+        cfg.hikConfig.gain = 0;
     }
     else
     {

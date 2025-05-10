@@ -122,6 +122,7 @@ void JZNodeType::init()
     typeMap["float"] = Type_float;
     typeMap["double"] = Type_double;
     typeMap["string"] = Type_string;
+    typeMap["QByteArray"] = Type_byteArray;
     typeMap["null"] = Type_nullptr;
     typeMap["function"] = Type_function;
     
@@ -442,6 +443,8 @@ int JZNodeType::variantType(const QVariant &v)
         return Type_double;
     else if(v_type == QVariant::String)
         return Type_string;
+    else if (v_type == QVariant::ByteArray)
+        return Type_byteArray;
     else if(v_type == QVariant::UserType)
     {
         int v_usertype = v.userType(); 

@@ -155,6 +155,7 @@ void JZNodeEditorInit()
     inst->registNodeItemCreator(Node_foreach, CreateJZNodeGraphItem<JZNodeForeachItem>);
     inst->registNodeItemCreator(Node_if, CreateJZNodeGraphItem<JZNodeIfItem>);
     inst->registNodeItemCreator(Node_switch, CreateJZNodeGraphItem<JZNodeSwitchItem>);
+    inst->registNodeItemCreator(Node_tryCatch, CreateJZNodeGraphItem<JZNodeTryCatchItem>);
 
     for (int i = Node_add; i < Node_expr; i++)
     {

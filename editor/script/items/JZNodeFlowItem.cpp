@@ -40,6 +40,12 @@ void JZNodeForItem::updatePin()
         m_opBlock->pri = Pri_user + 3;
     }
     
+    auto pin_list = m_node->paramOutList();
+    m_blocks[pin_list[0]]->pri = Pri_user + 0;    
+
+    int out_flow = m_node->flowOut();
+    m_blocks[out_flow]->pri = Pri_user + 1;
+
     QComboBox *box_op = qobject_cast<QComboBox*>(m_opBlock->widget);
     box_op->blockSignals(true);
     int index = box_op->findData(node_for->op());
@@ -74,8 +80,9 @@ void JZNodeForeachItem::updatePin()
     auto pin_list = m_node->paramOutList();
     m_blocks[pin_list[0]]->pri = Pri_user + 0;
     m_blocks[pin_list[1]]->pri = Pri_user + 1;
-    m_blocks[pin_list[2]]->pri = Pri_user + 2;
-    m_blocks[pin_list[3]]->pri = Pri_user + 3;
+
+    int out_flow = m_node->flowOut();
+    m_blocks[out_flow]->pri = Pri_user + 2;
 }
 
 //JZNodeIfItem
@@ -182,4 +189,22 @@ void JZNodeSwitchItem::onAddClicked()
     QByteArray oldValue = saveNode();
     node_switch->addCase();
     notifyPropChanged(oldValue);
+}
+
+
+//JZNodeTryCatchItem
+JZNodeTryCatchItem::JZNodeTryCatchItem(JZNode *node)
+    :JZNodeGraphItem(node)
+{
+}
+
+void JZNodeTryCatchItem::updatePin()
+{
+    JZNodeGraphItem::updatePin();
+
+    auto pin_list = m_node->paramOutList();
+    m_blocks[pin_list[0]]->pri = Pri_user + 0;
+
+    int out_flow = m_node->flowOut();
+    m_blocks[out_flow]->pri = Pri_user + 1;
 }

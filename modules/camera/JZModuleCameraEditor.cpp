@@ -8,7 +8,7 @@
 //JZCameraConfigDialog
 JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
     :JZManagerPropertyDialog(parent)
-{
+{    
     auto browser = m_editor->browser();
     connect(browser, &JZPropertyBrowser::valueChanged, this, &JZCameraConfigDialog::onPropChanged);
 
@@ -27,7 +27,25 @@ JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
 
     //hik
     hik_prop << m_editor->addProp("路径", &m_config.hikConfig.path,  prop_group);
+
+    QStringList trigger_list = { "连续模式","触发模式" };
+    hik_prop << m_editor->addPropIntEnum("触发模式", &m_config.hikConfig.triggerMode, { 0,1 }, trigger_list, prop_group);
+
+    QList<int> trigger_source_list = { JZCamerHikConfig::TRIGGER_SOURCE_LINE0,
+        JZCamerHikConfig::TRIGGER_SOURCE_LINE1,
+        JZCamerHikConfig::TRIGGER_SOURCE_LINE2,
+        JZCamerHikConfig::TRIGGER_SOURCE_LINE3,
+        JZCamerHikConfig::TRIGGER_SOURCE_SOFTWARE, 
+    };
+    QStringList trigger_source_text_list = { "Line0","Line1","Line2","Line3","Software" };
+    hik_prop << m_editor->addPropIntEnum("触发源", &m_config.hikConfig.triggerMode, trigger_source_list, trigger_source_text_list, prop_group);
+
+    QStringList gain_list = { "关闭","一次", "连续" };
+    hik_prop << m_editor->addPropIntEnum("增益模式", &m_config.hikConfig.gainMode, {0,1,2}, gain_list, prop_group);
     hik_prop << m_editor->addProp("增益", &m_config.hikConfig.gain, prop_group);
+
+    QStringList exposure_list = { "关闭","一次", "连续" };
+    hik_prop << m_editor->addPropIntEnum("曝光模式", &m_config.hikConfig.exposureMode, { 0,1,2 }, exposure_list, prop_group);
     hik_prop << m_editor->addProp("曝光", &m_config.hikConfig.exposureTime, prop_group);
 
     addPage(Camera_File, file_prop);

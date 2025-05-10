@@ -59,4 +59,14 @@ protected:
     BlockPtr m_addDefault;
 };
 
+//JZNodeTryCatchItem
+class JZNodeTryCatchItem : public JZNodeGraphItem
+{
+public:
+    JZNodeTryCatchItem(JZNode *node);
+
+protected:
+    virtual void updatePin() override;
+};
+
 #endif

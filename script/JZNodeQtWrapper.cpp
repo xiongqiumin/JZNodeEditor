@@ -32,6 +32,7 @@
 #include <stdexcept>
 #include <QJsonArray>
 #include <QSerialPort>
+#include <QMainWindow>
 
 #include "JZNodeQtWrapper.h"
 #include "JZNodeObject.h"
@@ -566,6 +567,9 @@ void QtWrapper::initWidgets()
 
     jzbind::ClassBind<QTreeWidget> cls_tree(Type_treeWidget,"QTreeWidget", "QWidget");
     cls_tree.regist(); 
+
+    jzbind::ClassBind<QMainWindow> cls_mainwindow(Type_mainWindow, "QMainWindow", "QWidget");
+    cls_mainwindow.regist();
 }
 
 void QtWrapper::initDialogs()
