@@ -1,6 +1,7 @@
 ﻿#include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileDialog>
+#include <QSplitter>
 #include "JZModuleOpencvEditor.h"
 #include "JZNodeParamDisplayWidget.h"
 #include "CvToQt.h"
@@ -17,27 +18,36 @@ JZOpencvTemplateDialog::JZOpencvTemplateDialog(QWidget *parent)
     m_tempLabel = new JZImageLabel();
     m_propEditor = new JZPropertyEditor();
 
+    m_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     QWidget *w = new QWidget();
     
     QHBoxLayout *main_layout = new QHBoxLayout();
-    main_layout->setContentsMargins(0,0,0,0);
-    main_layout->addWidget(m_label);
+    main_layout->setContentsMargins(0,0,0,0);    
 
+    QWidget *r_widget = new QWidget();
     QVBoxLayout *r_layout = new QVBoxLayout();
     r_layout->setContentsMargins(0,0,0,0);
     r_layout->addWidget(new QLabel("模板"));
     r_layout->addWidget(m_tempLabel);
     r_layout->addWidget(new QLabel("匹配参数"));
-    r_layout->addWidget(m_propEditor);
-    main_layout->addLayout(r_layout);
+    r_layout->addWidget(m_propEditor);    
+    r_widget->setLayout(r_layout);
 
-    QPushButton *loadImageButton = m_btnBox->addButton("Load Image",QDialogButtonBox::ActionRole);
-    QPushButton *loadTemplateButton = m_btnBox->addButton("Load Template",QDialogButtonBox::ActionRole);
-    QPushButton *matchButton = m_btnBox->addButton("Match",QDialogButtonBox::ActionRole);
+    QSplitter *spiltter = new QSplitter();
+    QPushButton *loadImageButton = m_btnBox->addButton("Load Image",QDialogButtonBox::YesRole);
+    QPushButton *loadTemplateButton = m_btnBox->addButton("Load Template",QDialogButtonBox::YesRole);
+    QPushButton *matchButton = m_btnBox->addButton("Match",QDialogButtonBox::YesRole);
 
     connect(loadImageButton, &QPushButton::clicked, this, &JZOpencvTemplateDialog::on_loadImageButton_clicked);
     connect(loadTemplateButton, &QPushButton::clicked, this, &JZOpencvTemplateDialog::on_loadTemplateButton_clicked);
     connect(matchButton, &QPushButton::clicked, this, &JZOpencvTemplateDialog::on_matchButton_clicked);
+
+    spiltter->addWidget(m_label);
+    spiltter->addWidget(r_widget);
+    spiltter->setChildrenCollapsible(false);
+    spiltter->setSizes({ 600,200 });
+    main_layout->addWidget(spiltter);
 
     auto prop_group = m_propEditor->addGroup("属性");
     auto pin = m_propEditor->addProp("置信度", &m_config.confidence, prop_group);
@@ -45,6 +55,7 @@ JZOpencvTemplateDialog::JZOpencvTemplateDialog(QWidget *parent)
 
     w->setLayout(main_layout);
     setCentralWidget(w);
+    resize(800, 600);
 }
 
 void JZOpencvTemplateDialog::setConfig(JZTemplateConfig cfg)
@@ -57,6 +68,13 @@ JZTemplateConfig JZOpencvTemplateDialog::config() const
 {
     m_propEditor->uiToData();
     return m_config;
+}
+
+void JZOpencvTemplateDialog::loadTemplate(QString filePath)
+{
+    m_templ = cv::imread(filePath.toStdString());
+    QImage image = QtOcv::mat2Image(m_templ);
+    m_tempLabel->setImage(image);
 }
 
 void JZOpencvTemplateDialog::on_loadImageButton_clicked()
@@ -72,13 +90,11 @@ void JZOpencvTemplateDialog::on_loadImageButton_clicked()
 void JZOpencvTemplateDialog::on_loadTemplateButton_clicked()
 {
     QString filePath = QFileDialog::getOpenFileName(this, "Open Template", "", "Image Files (*.png *.jpg *.bmp)");
-    if (!filePath.isEmpty()) {
-        m_templ = cv::imread(filePath.toStdString());
-        QImage image = QtOcv::mat2Image(m_templ);
-        m_tempLabel->setImage(image);
+    if (filePath.isEmpty())
+        return;
 
-        m_config.templatePath = filePath;
-    }
+    m_config.templatePath = filePath;
+    loadTemplate(filePath);        
 }
 
 void JZOpencvTemplateDialog::on_matchButton_clicked()
@@ -86,6 +102,17 @@ void JZOpencvTemplateDialog::on_matchButton_clicked()
     if (m_image.empty() || m_templ.empty()) {
         return;
     }
+
+    m_temp.init(m_config);
+    QRect rc = m_temp.match(m_image);
+    if (rc.isValid())
+    {
+        m_label->clearGraphic();
+
+        JZGraphic g = JZGraphic::fromRect(rc, Qt::red);        
+        m_label->addGraphics(g);
+    }
+
 }    
 
 //JZOpencvTemplateItem    
@@ -117,5 +144,5 @@ void JZModuleOpencvEditorInit()
 {
     auto inst = editorManager()->instance();
     
-    inst->registLogicNode(Node_OpencvTemplate, "模型", CreateJZNodeGraphItem<JZOpencvTemplateItem>);
+    inst->registLogicNode(Node_OpencvTemplate, "CV", QString(), CreateJZNodeGraphItem<JZOpencvTemplateItem>);
 }

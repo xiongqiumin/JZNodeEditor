@@ -14,6 +14,7 @@
 #include "modules/camera/JZModuleCamera.h"
 #include "modules/communication/JZModuleComm.h"
 #include "modules/model/JZModuleModel.h"
+#include "modules/vision/JZModuleVision.h"
 #include "LogManager.h"
 #include "runtime/JZWidgetBind.h"
 #include "JZScriptUnitTest.h"
@@ -50,5 +51,6 @@ void JZNodeInit()
     module_inst->addModule(new JZModuleOpencv());
     module_inst->addModule(new JZModuleCamera());
     module_inst->addModule(new JZModuleModel());
+    module_inst->addModule(new JZModuleVision());
     module_inst->initModules();
 }

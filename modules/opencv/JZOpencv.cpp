@@ -28,12 +28,15 @@ void JZTemplate::init(const JZTemplateConfig& config)
 
 QRect JZTemplate::match(cv::Mat img)
 {
+    if(img.type() != CV_8U)
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+
 	// 创建结果矩阵
 	Mat result;
 	int result_cols = img.cols - m_templ.cols + 1;
 	int result_rows = img.rows - m_templ.rows + 1;
 	result.create(result_rows, result_cols, CV_32FC1);
-
+    
 	// 进行模板匹配
 	matchTemplate(img, m_templ, result, TM_CCOEFF_NORMED);
 

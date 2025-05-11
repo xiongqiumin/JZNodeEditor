@@ -213,6 +213,12 @@ set(JZNodeCore_SOURCES
     modules/camera/JZCameraUnitTest.h
     modules/camera/JZCameraUnitTest.cpp
     
+    #vision
+    modules/vision/JZVisionNode.cpp
+    modules/vision/JZVisionNode.h
+    modules/vision/JZModuleVision.cpp
+    modules/vision/JZModuleVision.h
+    
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp
     3rd/JZCommon/jzNet/JZNetClient.h
@@ -433,6 +439,11 @@ set(JZNodeEditor_SOURCES
 	#camera    
     modules/camera/JZModuleCameraEditor.h
     modules/camera/JZModuleCameraEditor.cpp       
+    
+    #vision
+    modules/vision/JZModuleVisionEditor.h
+    modules/vision/JZModuleVisionEditor.cpp
+    modules/vision/vision.qrc
         
     #3rd    
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp

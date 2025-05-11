@@ -247,9 +247,9 @@ void JZModuleCommEditorInit()
 {
     auto inst = editorManager()->instance();
 
-    inst->registLogicNode(Node_CommInit,"通信", CreateJZNodeGraphItem<JZCommInitItem>);
-    inst->registLogicNode(Node_ModbusRead,"通信", CreateJZNodeGraphItem<JZCommModbusRWItem>);
-    inst->registLogicNode(Node_ModbusWrite,"通信", CreateJZNodeGraphItem<JZCommModbusRWItem>);
+    inst->registLogicNode(Node_CommInit,"通信", QString(), CreateJZNodeGraphItem<JZCommInitItem>);
+    inst->registLogicNode(Node_ModbusRead,"通信", QString(), CreateJZNodeGraphItem<JZCommModbusRWItem>);
+    inst->registLogicNode(Node_ModbusWrite,"通信", QString(), CreateJZNodeGraphItem<JZCommModbusRWItem>);
     inst->registLogicNode(Node_TcpClientRead,"通信");
     inst->registLogicNode(Node_TcpClientWrite,"通信");
     inst->registLogicNode(Node_UdpRead,"通信");

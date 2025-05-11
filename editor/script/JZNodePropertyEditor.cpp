@@ -176,9 +176,16 @@ void JZNodePropertyEditor::addPropList(QString name,const QList<int> &list)
     for(int i = 0; i < list.size(); i++)
     {
         int pin_id = list[i];
-        auto block = m_item->block(list[i]);
-        if(pin_id < MAX_PIN_ID || block->isEditable)
+        if (pin_id < MAX_PIN_ID)
         {
+            auto pin = m_node->pin(pin_id);
+            if (!pin->isParam())
+                continue;
+        }
+
+        auto block = m_item->block(list[i]);        
+        if(pin_id < MAX_PIN_ID || block->isEditable)
+        {            
             if(prop_group == nullptr)
                 prop_group = new JZPropertyGroup(name);
             

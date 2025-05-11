@@ -24,10 +24,13 @@ protected slots:
     void on_matchButton_clicked();
 
 private:    
+    void loadTemplate(QString path);
+
     JZTemplateConfig m_config;
+    JZTemplate m_temp;
     JZImageLabel *m_label;
     JZImageLabel *m_tempLabel;
-    JZPropertyEditor *m_propEditor;
+    JZPropertyEditor *m_propEditor;    
 
     cv::Mat m_templ;
     cv::Mat m_image;

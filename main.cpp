@@ -88,7 +88,7 @@ int main(int argc,char *argv[])
     JZNodeInit();               
 
     //createSample();
-    return runSample();
+    //return runSample();
     //return runProgram("Project20", false);    
 
     QCommandLineParser parser;

@@ -20,7 +20,7 @@ public:
     void setUserRegist(bool flag);
     void clearUserReigst();     
 
-    QList<const JZFunctionDefine*> functionList() const;
+    QStringList functionList() const;
     const JZFunctionDefine *function(QString name) const;
 
     void registFunction(const JZFunctionDefine &define);

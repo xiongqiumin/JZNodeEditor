@@ -1,0 +1,18 @@
+<RCC>
+  <qresource prefix="/Modules/Vision">
+    <file>res/blob.png</file>
+    <file>res/brightness.png</file>
+    <file>res/color_r.png</file>
+    <file>res/crop.png</file>
+    <file>res/find_circle.png</file>
+    <file>res/find_line.png</file>
+    <file>res/flip.png</file>
+    <file>res/image_splice.png</file>
+    <file>res/rotate_x.png</file>
+    <file>res/match.png</file>
+    <file>res/morphology.png</file>
+    <file>res/perspective.png</file>
+    <file>res/shape_match.png</file>
+    <file>res/skeleton.png</file>
+  </qresource>
+</RCC>

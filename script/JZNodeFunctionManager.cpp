@@ -69,16 +69,9 @@ void JZNodeFunctionManager::setUserRegist(bool flag)
     m_userRegist = flag;
 }
 
-QList<const JZFunctionDefine*> JZNodeFunctionManager::functionList() const
-{
-    QList<const JZFunctionDefine*>  list;
-    auto it = m_funcDefine.begin();
-    while(it != m_funcDefine.end())
-    {
-        list << &it.value();
-        it++;
-    }
-    return list;
+QStringList JZNodeFunctionManager::functionList() const
+{    
+    return m_funcDefine.keys();
 }
 
 void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func)

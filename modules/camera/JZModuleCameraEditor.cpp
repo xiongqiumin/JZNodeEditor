@@ -200,10 +200,10 @@ void JZCameraEditorInit()
 {
     auto inst = editorManager()->instance();
 
-    inst->registLogicNode(Node_CameraInit,"相机", CreateJZNodeGraphItem<JZCameraInitItem>);
-    inst->registLogicNode(Node_CameraStart,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
-    inst->registLogicNode(Node_CameraStartOnce,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
-    inst->registLogicNode(Node_CameraStop,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
-    inst->registLogicNode(Node_CameraSetting,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
-    inst->registLogicNode(Node_CameraFrameReady,"相机", CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraInit,"相机", QString(), CreateJZNodeGraphItem<JZCameraInitItem>);
+    inst->registLogicNode(Node_CameraStart,"相机", QString(), CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraStartOnce,"相机", QString(), CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraStop,"相机", QString(), CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraSetting,"相机", QString(), CreateJZNodeGraphItem<JZCameraNodeItem>);
+    inst->registLogicNode(Node_CameraFrameReady,"相机", QString(), CreateJZNodeGraphItem<JZCameraNodeItem>);
 }

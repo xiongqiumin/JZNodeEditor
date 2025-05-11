@@ -12,6 +12,8 @@
 #include "modules/camera/JZModuleCameraEditor.h"
 #include "modules/communication/JZModuleCommEditor.h"
 #include "modules/model/JZModuleModelEditor.h"
+#include "modules/opencv/JZModuleOpencvEditor.h"
+#include "modules/vision/JZModuleVisionEditor.h"
 
 JZNodeParamDelegate::JZNodeParamDelegate()
 {
@@ -109,11 +111,12 @@ void JZNodeEditorManager::addModule(JZModuleEditor *module)
     m_editorModules.push_back(module);
 }
 
-void JZNodeEditorManager::registLogicNode(int node_type,QString path, CreateJZNodeGraphItemFunc func)
+void JZNodeEditorManager::registLogicNode(int node_type,QString path, QString icon, CreateJZNodeGraphItemFunc func)
 {
     JZLogicNode logic;
     logic.nodeType = node_type;
     logic.path = path;
+    logic.icon = icon;
     m_logicNode.push_back(logic);
 
     if(func)
@@ -176,4 +179,6 @@ void JZNodeEditorInit()
     JZCameraEditorInit();
     JZModuleCommEditorInit();
     JZModuleModelEditorInit();
+    JZModuleOpencvEditorInit();
+    JZModuleVisionEditorInit();
 }

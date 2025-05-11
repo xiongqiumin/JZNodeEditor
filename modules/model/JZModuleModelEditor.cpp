@@ -163,5 +163,5 @@ void JZModuleModelEditorInit()
 {
     auto inst = editorManager()->instance();
     
-    inst->registLogicNode(Node_ModelInit, "模型", CreateJZNodeGraphItem<JZModelInitItem>);
+    inst->registLogicNode(Node_ModelInit, "模型", QString(), CreateJZNodeGraphItem<JZModelInitItem>);
 }

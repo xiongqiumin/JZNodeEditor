@@ -31,6 +31,23 @@
 #include "JZNodeEditorManager.h"
 #include "JZEditorGlobal.h"
 
+static bool name_sort(const QString &a, const QString &b)
+{
+    // 获取两个字符串的首字母，并转换为大写进行比较
+    QChar firstA = a[0].toUpper();
+    QChar firstB = b[0].toUpper();
+
+    // 如果首字母的大写形式相同，则比较原始首字母（小写在前）
+    if (firstA == firstB) 
+    {
+        if(a[0] != b[0])
+            return a[0] < b[0]; // 小写字母的 Unicode 值更小
+    }
+
+    // 首字母不同时，按大写形式排序
+    return a.toLower() < b.toLower();
+}
+
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
 {
@@ -184,7 +201,7 @@ void JZNodePanel::sortChildItem(QTreeWidgetItem *root)
         sort_list << root->takeChild(i);
     }
     std::sort(sort_list.begin(), sort_list.end(), [](const QTreeWidgetItem *a,const QTreeWidgetItem *b)->bool {
-        return a->text(0).toLower() < b->text(0).toLower();
+        return name_sort(a->text(0),b->text(0));
     });
 
     for (int i = 0; i < sort_list.size(); i++)
@@ -231,8 +248,8 @@ void JZNodePanel::updateLocalDefine()
 {
     QStringList function_list = m_file->project()->functionList();
     function_list.removeAll("main");
-
-    QStringList class_list = m_file->project()->classList();        
+    
+    QStringList class_list = m_file->project()->classList();     
     syncChildList(m_itemLocalDefine->child(0), function_list, Create_Function);
     syncChildList(m_itemLocalDefine->child(1), class_list, Create_Class);
 }
@@ -419,8 +436,13 @@ void JZNodePanel::intiLogicFlow()
                 item = sub_item;
             }
         }
-        auto jznode = editorNodeFactory()->createNode(node.nodeType);
-        item->addChild(createNode(jznode));
+
+        auto jznode = editorNodeFactory()->createNode(node.nodeType);        
+        auto sub_item = createNode(jznode);
+        if(!node.icon.isEmpty())
+            sub_item->setIcon(0, QIcon(node.icon));
+
+        item->addChild(sub_item);
         delete jznode;
     }
     sortChildItem(item_logic);
@@ -533,26 +555,27 @@ void JZNodePanel::initAll(QTreeWidgetItem *root)
     root->addChild(global_func);    
     root->addChild(global_class);
 
-    QStringList func_list = m_file->project()->functionList();
-    func_list.sort(Qt::CaseInsensitive);
-
-    QStringList class_list = m_file->project()->classList();
-    class_list.sort(Qt::CaseInsensitive);
+    QStringList local_func_list = m_file->project()->functionList();        
+    QStringList local_class_list = m_file->project()->classList();
 
     auto func_inst = editorFunctionManager();
     auto list = func_inst->functionList();
+    std::sort(list.begin(), list.end(), name_sort);
     for (int i = 0; i < list.size(); i++)
     {
-        QString func_name = list[i]->fullName();
-        if(list[i]->className.isEmpty() && !func_list.contains(func_name))
+        QString func_name = list[i];
+        if(!local_func_list.contains(func_name))
             global_func->addChild(createFunction(func_name));
     }
-
+    
+    bool flag = QString("QBrush") < QString("QImage");
+    flag = name_sort(QString("QBrush"), QString("QImage"));
     auto obj_list = editorObjectManager()->getClassList();
+    std::sort(obj_list.begin(), obj_list.end(), name_sort);
     for(int i = 0; i < obj_list.size(); i++)
     {
         QString class_name = obj_list[i];
-        if (!class_list.contains(class_name))
+        if (!local_class_list.contains(class_name))
             global_class->addChild(createClass(class_name));
     }    
 }
