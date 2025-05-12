@@ -10,6 +10,7 @@ JZNodeFactory::JZNodeFactory()
 {   
     registNode(Node_print,createJZNode<JZNodePrint>);  
     registNode(Node_format,createJZNode<JZNodeFormat>);  
+    registNode(Node_formatBin, createJZNode<JZNodeFormatBin>);
     registNode(Node_nop, createJZNode<JZNodeNop>);
     registNode(Node_assert, createJZNode<JZNodeAssert>);
     registNode(Node_display, createJZNode<JZNodeDisplay>);

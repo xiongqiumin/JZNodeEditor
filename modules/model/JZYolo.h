@@ -9,6 +9,17 @@
 
 using namespace cv;
 
+class JZModelYoloConfig
+{
+public:
+    JZModelYoloConfig();
+
+    QString modelPath;
+    QString idPath;
+};
+QDataStream& operator<<(QDataStream& s, const JZModelYoloConfig& param);
+QDataStream& operator>>(QDataStream& s, JZModelYoloConfig& param);
+
 class JZYoloResult
 {
 public:

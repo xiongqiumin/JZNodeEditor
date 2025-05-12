@@ -8,11 +8,6 @@
 #include "JZNodeType.h"
 #include "JZScriptEnvironment.h"
 
-enum WidgetProp{        
-    WidgetProp_Value,
-    WidgetProp_Index,
-};
-
 enum{
     Dir_none,
     Dir_dataToUi = 0x1,
@@ -29,30 +24,31 @@ class BindInfo
 {
 public:
     QString widget;
-    QList<int> dataType;
+    QList<int> dataType;   //支持的数据类型
 };
 
-class BindObject : public QObject
+class JZBindManager;
+class JZBindObject : public QObject
 {
     Q_OBJECT
 
 public:
-    BindObject(QString widget,int widget_prop,QList<int> data_type,int dir);
-    virtual ~BindObject();    
+    JZBindObject();
+    virtual ~JZBindObject();
     
-    virtual void bind(QWidget *widget,JZNodeObject *object,QString path);
     void uiToData();
     void dataToUi();    
 
 protected slots:    
     void onWidgetChanged();
-    void onDataChanged();
 
 protected:
-    void connectPropChanged(QObject *object,QString prop);
-    int variableType(const QString &path);
-    QVariant getVariable(const QString &path);
-    void setVariable(const QString &path, const QVariant &value);
+    friend JZBindManager;
+
+    virtual void bind(QWidget* widget, JZNodeObject* object, QString param);
+    int variableType(const QString & param);
+    QVariant getVariable(const QString & param);
+    void setVariable(const QString & param, const QVariant &value);
     const JZScriptEnvironment* environment();
 
     virtual void uiToDataImpl() = 0;
@@ -60,13 +56,28 @@ protected:
 
     QWidget *m_widget;
     JZNodeObject *m_context;
-    QString m_path;
+    QString m_param;
     int m_dataType;
     bool m_changed;
 };
 
+//LabelBind
+class LabelBind : public JZBindObject
+{
+    Q_OBJECT
+
+public:
+    LabelBind();
+    virtual ~LabelBind();
+
+protected slots:
+    virtual void bind(QWidget* widget, JZNodeObject* object, QString prop) override;
+    virtual void uiToDataImpl() override;
+    virtual void dataToUiImpl() override;
+};
+
 //LineEditBind
-class LineEditBind : public BindObject
+class LineEditBind : public JZBindObject
 {
     Q_OBJECT
 
@@ -81,7 +92,7 @@ protected slots:
 };
 
 //SliderBind
-class SliderBind : public BindObject
+class SliderBind : public JZBindObject
 {
     Q_OBJECT
 
@@ -95,8 +106,38 @@ protected slots:
     virtual void dataToUiImpl() override;
 };
 
+//SpinBoxBind
+class SpinBoxBind : public JZBindObject
+{
+    Q_OBJECT
+
+public:
+    SpinBoxBind();
+    virtual ~SpinBoxBind();
+
+protected slots:
+    virtual void bind(QWidget* widget, JZNodeObject* object, QString prop) override;
+    virtual void uiToDataImpl() override;
+    virtual void dataToUiImpl() override;
+};
+
+//DoubleSpinBoxBind
+class DoubleSpinBoxBind : public JZBindObject
+{
+    Q_OBJECT
+
+public:
+    DoubleSpinBoxBind();
+    virtual ~DoubleSpinBoxBind();
+
+protected slots:
+    virtual void bind(QWidget* widget, JZNodeObject* object, QString prop) override;
+    virtual void uiToDataImpl() override;
+    virtual void dataToUiImpl() override;
+};
+
 //ComboBoxBind
-class ComboBoxBind : public BindObject
+class ComboBoxBind : public JZBindObject
 {
     Q_OBJECT
 
@@ -118,7 +159,7 @@ public:
     virtual ~BindFactory();
 
     const QMap<QString, BindInfo> &widgetMap() const;
-    virtual BindObject *createBind(QString class_name) = 0;
+    virtual JZBindObject *createBind(QString class_name) = 0;
 
 
 protected:
@@ -131,24 +172,25 @@ class QtBindFactory : public BindFactory
 public:
     QtBindFactory();
 
-    virtual BindObject *createBind(QString class_name);
+    virtual JZBindObject *createBind(QString class_name);
 };
 
-//BindManager
-class BindManager : public QObject
+//JZBindManager
+class JZBindManager : public QObject
 {
     Q_OBJECT
 
 public:
-    static BindManager *instance();
+    static JZBindManager*instance();
 
-    BindManager();
-    ~BindManager();
+    JZBindManager();
+    ~JZBindManager();
 
     void init();
     void regist(BindFactory *factory);
 
-    BindObject *bind(QWidget *w,int prop_type, JZNodeObject *context,QString prop,int dir);
+    QList<int> supportBind(QString widget_class, int data_type);
+    JZBindObject *bind(QWidget *w,JZNodeObject *context,QString prop,int dir);
 
 protected:
     QList<BindFactory*> m_binds;

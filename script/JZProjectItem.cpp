@@ -65,6 +65,12 @@ bool JZProjectItem::loadFromStream(QDataStream &s)
     return true;
 }
 
+void JZProjectItem::notifyItemChanged()
+{
+    if (project())
+        project()->onItemChanged(this);
+}
+
 const JZProject *JZProjectItem::project() const
 {
     auto item = const_cast<JZProjectItem*>(this);

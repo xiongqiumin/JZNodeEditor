@@ -105,6 +105,25 @@ static const char *yolo_json = R"(
 }
 )";
 
+//JZModelYoloConfig
+JZModelYoloConfig::JZModelYoloConfig()
+{
+
+}
+
+QDataStream& operator<<(QDataStream& s, const JZModelYoloConfig& param)
+{
+    s << param.modelPath << param.idPath;
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, JZModelYoloConfig& param)
+{
+    s >> param.modelPath >> param.idPath;
+    return s;
+}
+
+//JZYolo
 JZYolo::JZYolo()
 {
     QJsonObject obj = QJsonDocument::fromJson(yolo_json).object();

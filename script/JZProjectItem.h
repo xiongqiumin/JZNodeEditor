@@ -64,6 +64,7 @@ protected:
 
     virtual void saveToStream(QDataStream &s) const;
     virtual bool loadFromStream(QDataStream &s);
+    void notifyItemChanged();
 
     JZProjectItem *m_parent;
     QList<JZProjectItem*> m_childs;

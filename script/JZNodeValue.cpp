@@ -426,37 +426,73 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-//JZNodePrint
-JZNodePrint::JZNodePrint()
+//JZNodeFormat
+//JZNodeFormatImpl
+JZNodeFormatImpl::JZNodeFormatImpl()
 {
-    m_type = Node_print;
-    m_name = "print";
+    m_type = Node_format;
+    m_name = "format";
 
-    addFlowIn();
-    addFlowOut();
-    int in = addParamIn("var");
-    setPinTypeArg(in);
+    addParamOut("out");
 }
 
-JZNodePrint::~JZNodePrint()
+JZNodeFormatImpl::~JZNodeFormatImpl()
 {
 }
 
-bool JZNodePrint::compiler(JZNodeCompiler *c,QString &error)
+void JZNodeFormatImpl::setFormat(QString format)
 {
-    if (c->pinInputCount(m_id,paramIn(0)) == 0 && !pin(paramIn(0))->value().isEmpty())
-        c->setPinType(m_id,paramIn(0),Type_string);
+    m_format = format;
+}
 
+QString JZNodeFormatImpl::format()
+{
+    return m_format;
+}
+
+bool JZNodeFormatImpl::updateNode(QString& error)
+{
+    int brace_count = countBraces(m_format, error);
+    if (brace_count == -1)
+        return false;
+
+    paramInResize(brace_count);
+    auto list = paramInList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        setPinName(list[i], "in" + QString::number(i+1));
+    }
+
+    return true;
+}
+
+bool JZNodeFormatImpl::compiler(JZNodeCompiler* c, QString& error)
+{
     if (!c->addFlowInput(m_id, error))
         return false;
 
-    auto in_id = irId(c->paramId(m_id, paramIn(0)));
-
     QList<JZNodeIRParam> in, out;
-    in << in_id;
-    c->addCall("print", in, out);    
+    auto param_in_list = paramInList();
+    in << irLiteral(m_format);
+    for (int i = 0; i < param_in_list.size(); i++)
+        in << irId(c->paramId(m_id, paramIn(0)));
+    
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall(m_formatFunction, in, out);
 
     return true;
+}
+
+void JZNodeFormatImpl::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_format;
+}
+
+void JZNodeFormatImpl::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_format;
 }
 
 //JZNodeFormat
@@ -464,16 +500,56 @@ JZNodeFormat::JZNodeFormat()
 {
     m_type = Node_format;
     m_name = "format";
+    m_formatFunction = "JZFormat";
+
+    setPinTypeString(paramOut(0));
 }
 
 JZNodeFormat::~JZNodeFormat()
 {
 }
 
-bool JZNodeFormat::compiler(JZNodeCompiler* compiler, QString& error)
+//JZNodeFormatBin
+JZNodeFormatBin::JZNodeFormatBin()
 {
-    return false;
+    m_type = Node_formatBin;
+    m_name = "formatBin";
+    m_formatFunction = "JZFormatBin";
+
+    setPinType(paramOut(0), { JZNodeType::typeName(Type_byteArray) });
 }
+
+JZNodeFormatBin::~JZNodeFormatBin()
+{
+}
+
+//JZNodePrint
+JZNodePrint::JZNodePrint()
+{
+    m_type = Node_print;
+    m_name = "print";
+    m_formatFunction = "JZPrint";
+
+    addFlowIn();
+    addFlowOut();
+}
+
+JZNodePrint::~JZNodePrint()
+{
+}
+
+//JZNodeLog
+JZNodeLog::JZNodeLog()
+{
+    m_type = Node_log;
+    m_name = "log";
+    m_formatFunction = "JZLog";
+}
+
+JZNodeLog::~JZNodeLog()
+{
+}
+
 
 //JZNodeDisplay
 JZNodeDisplay::JZNodeDisplay()

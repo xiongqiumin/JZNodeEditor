@@ -587,6 +587,36 @@ void JZNode::setId(int id)
     m_id = id;
 }
 
+void JZNode::paramInResize(int size)
+{
+    QList<int> in_list = paramInList();
+    if (in_list.size() < size)
+    {
+        for (int i = in_list.size(); i < size; i++)
+            addParamIn("input");
+    }
+    else
+    {
+        for (int i = in_list.size() - 1; i >= 0; i--)
+            removePin(in_list[i]);
+    }
+}
+
+void JZNode::paramOutResize(int size)
+{
+    QList<int> out_list = paramOutList();
+    if (out_list.size() < size)
+    {
+        for (int i = out_list.size(); i < size; i++)
+            addParamOut("output");
+    }
+    else
+    {
+        for (int i = out_list.size() - 1; i >= 0; i--)
+            removePin(out_list[i]);
+    }
+}
+
 const QStringList &JZNode::pinType(int id) const
 {
     return pin(id)->dataType();

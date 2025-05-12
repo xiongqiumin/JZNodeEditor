@@ -6,7 +6,7 @@
 #include "JZNodeObject.h"
 #include "JZNodeEngine.h"
 #include "LogManager.h"
-#include "JZNodeVariableBind.h"
+#include "mvvm/JZNodeVariableBind.h"
 #include "JZNodeBuildThread.h"
 #include "JZModule.h"
 #include "JZNodeInit.h"
@@ -44,7 +44,7 @@ void JZNodeInit()
     JZNetPackManager::instance()->init();
     JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);              
 
-    BindManager::instance()->init();    
+    JZBindManager::instance()->init();    
     
     auto module_inst = JZModuleManager::instance();
     module_inst->addModule(new JZModuleComm());

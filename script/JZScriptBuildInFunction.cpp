@@ -90,7 +90,67 @@ public:
     }
 };
 
+class JZFormatFunc: public BuiltInFunction
+{
+public:
+    virtual void call(JZNodeEngine *engine) override
+    {
+        QStringList list;
+        int count = engine->regInCount();
+
+        QString format_str = engine->getReg(Reg_CallIn).toString(); 
+        QVariantList var_list;
+        for (int i = 1; i < count; i++)
+            var_list << engine->getReg(Reg_CallIn + i);
+        
+        QString error;
+        JZFormat format;
+        format.init(format_str,error);
+
+        QString text = format.formatString(var_list);
+        engine->setReg(Reg_CallOut, text);
+    }
+};
+
+class JZFormatBinFunc: public BuiltInFunction
+{
+public:
+    virtual void call(JZNodeEngine *engine) override
+    {
+        QStringList list;
+        int count = engine->regInCount();
+
+        QString format_str = engine->getReg(Reg_CallIn).toString(); 
+        QVariantList var_list;
+        for (int i = 1; i < count; i++)
+            var_list << engine->getReg(Reg_CallIn + i);
+        
+        QString error;
+        JZFormatBinary format;
+        format.init(format_str, error);
+
+        QByteArray text = format.formatBinary(var_list);
+        engine->setReg(Reg_CallOut, text);
+    }
+};
+
+
 class JZPrint: public BuiltInFunction
+{
+public:
+    virtual void call(JZNodeEngine *engine) override
+    {
+        QStringList list;
+        int count = engine->regInCount();
+        for (int i = 0; i < count; i++)
+        {
+            list << JZNodeType::debugString(engine->getReg(Reg_CallIn + i));
+        }
+        engine->print(list.join(" "));
+    }
+};
+
+class JZPrintLog: public BuiltInFunction
 {
 public:
     virtual void call(JZNodeEngine *engine) override
@@ -107,16 +167,51 @@ public:
 
 void InitBuildInFunction()
 {
+    
     auto env = jzbind::bindEnvironment();
     auto func_inst = env->functionManager();
+
+    //format
+    JZFunctionDefine format;
+    format.name = "format";
+    format.isCFunction = true;
+    format.paramIn.push_back(env->paramDefine("format", Type_string));
+    format.paramIn.push_back(env->paramDefine("args", Type_args));
+    auto format_func = BuiltInFunctionPtr(new JZFormatFunc());
+    func_inst->registBuiltInFunction(format, format_func);
+
+    //format
+    JZFunctionDefine format_bin;
+    format_bin.name = "formatBinary";
+    format_bin.isCFunction = true;
+    format_bin.paramIn.push_back(env->paramDefine("format", Type_string));
+    format_bin.paramIn.push_back(env->paramDefine("args", Type_args));
+    auto format_bin_func = BuiltInFunctionPtr(new JZFormatBinFunc());
+    func_inst->registBuiltInFunction(format_bin, format_bin_func);
+
+    //print
     JZFunctionDefine print;
     print.name = "print";
     print.isCFunction = true;
-    print.isFlowFunction = true;    
+    print.isFlowFunction = true;
+    format_bin.paramIn.push_back(env->paramDefine("format", Type_string));
     print.paramIn.push_back(env->paramDefine("args", Type_args));
     auto print_func = BuiltInFunctionPtr(new JZPrint());
     func_inst->registBuiltInFunction(print, print_func);
 
+    //print
+    JZFunctionDefine log;
+    log.name = "log";
+    log.isCFunction = true;
+    log.isFlowFunction = true;
+    log.paramIn.push_back(env->paramDefine("module", Type_int));
+    log.paramIn.push_back(env->paramDefine("level",  Type_int));
+    log.paramIn.push_back(env->paramDefine("format", Type_string));    
+    log.paramIn.push_back(env->paramDefine("args", Type_args));
+    auto log_func = BuiltInFunctionPtr(new JZLog());
+    func_inst->registBuiltInFunction(log, log_func);
+
+    //createObject
     JZFunctionDefine create;
     create.name = "createObject";
     create.isCFunction = true;
@@ -126,6 +221,7 @@ void InitBuildInFunction()
     auto create_func = BuiltInFunctionPtr(new JZCreate());
     func_inst->registBuiltInFunction(create, create_func);
  
+    //clone
     JZFunctionDefine clone;
     clone.name = "clone";
     clone.isCFunction = true;

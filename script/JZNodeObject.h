@@ -100,6 +100,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeCObjectDelcare &param);
 
 class JZNodeObjectManager;
 class JZScriptEnvironment;
+class JZBindObject;
 class JZNodeObject : public QObject
 {
     Q_OBJECT
@@ -137,6 +138,8 @@ public:
     void *cobj() const;
     void setCObject(void *cobj,bool owner);        
     void setCOwner(bool owner);
+
+    void addBind(QString param, JZBindObject* object);
 
     void updateUiWidget(QWidget *widget);
     void autoConnect();
@@ -176,6 +179,7 @@ protected:
     void *m_cobj;
     bool m_cobjOwner;
     QMap<QString, QVariantPtr> m_params;
+    QMap<QString, QList<JZBindObject*>> m_paramBind;
     QList<ConnectInfo> m_connectList;
 };
 

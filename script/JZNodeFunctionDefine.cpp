@@ -38,18 +38,16 @@ JZNodeParamBind::JZNodeParamBind()
 
 QDataStream &operator<<(QDataStream &s, const JZNodeParamBind &param)
 {
+    s << param.path;
     s << param.widget;
-    s << param.widgetProp;
-    s << param.variable;
     s << param.dir;
     return s;
 }
 
 QDataStream &operator >> (QDataStream &s, JZNodeParamBind &param)
 {
+    s >> param.path;
     s >> param.widget;
-    s >> param.widgetProp;
-    s >> param.variable;
     s >> param.dir;
     return s;
 }

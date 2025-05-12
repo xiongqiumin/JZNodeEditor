@@ -38,6 +38,7 @@ void JZParamItem::addVariable(QString name, QString type, const QString &v)
     info.type = type;
     info.value = v;
     m_variables[name] = info;    
+    notifyItemChanged();
 }
 
 void JZParamItem::addVariable(QString name,int type, const QString &v)
@@ -54,7 +55,8 @@ void JZParamItem::addVariable(JZParamDefine define)
 
 void JZParamItem::removeVariable(QString name)
 {
-    m_variables.remove(name);        
+    m_variables.remove(name);
+    notifyItemChanged();
 }
 
 void JZParamItem::setVariable(QString name, JZParamDefine define)
@@ -65,7 +67,8 @@ void JZParamItem::setVariable(QString name, JZParamDefine define)
         Q_ASSERT(!m_variables.contains(define.name));
         m_variables.remove(name);        
     }
-    m_variables[define.name] = define;    
+    m_variables[define.name] = define;
+    notifyItemChanged();
 }
 
 const JZParamDefine *JZParamItem::variable(QString name) const
@@ -81,7 +84,6 @@ QStringList JZParamItem::variableList()
 {    
     return m_variables.keys();
 }
-
 
 void JZParamItem::addBind(JZNodeParamBind info)
 {

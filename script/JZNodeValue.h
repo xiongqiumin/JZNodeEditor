@@ -79,29 +79,60 @@ public:
 protected:
 };
 
-//JZNodePrint
-class JZNodePrint : public JZNode
+//JZNodeFormatImpl
+class JZNodeFormatImpl : public JZNode
 {
 public:
-    JZNodePrint();
-    ~JZNodePrint();
+    JZNodeFormatImpl();
+    ~JZNodeFormatImpl();
 
-    virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;   
+    void setFormat(QString format);
+    QString format();
+
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+
 protected:
+    virtual bool updateNode(QString& error) override;
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
 
+    QString m_format;
+    QString m_formatFunction;
 };
 
 //JZNodeFormat
-class JZNodeFormat : public JZNode
+class JZNodeFormat : public JZNodeFormatImpl
 {
 public:
     JZNodeFormat();
     ~JZNodeFormat();
-
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
-protected:
-
 };
+
+//JZNodeFormatBin
+class JZNodeFormatBin : public JZNodeFormatImpl
+{
+public:
+    JZNodeFormatBin();
+    ~JZNodeFormatBin();
+};
+
+//JZNodePrint
+class JZNodePrint : public JZNodeFormatImpl
+{
+public:
+    JZNodePrint();
+    ~JZNodePrint();
+};
+
+
+//JZNodeLog
+class JZNodeLog : public JZNodeFormatImpl
+{
+public:
+    JZNodeLog();
+    ~JZNodeLog();
+};
+
 
 //JZNodeDisplay
 class JZNodeDisplay : public JZNode

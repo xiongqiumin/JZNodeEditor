@@ -305,9 +305,9 @@ bool JZNodeBuilder::build(JZNodeProgram *program)
         for (int i = 0; i < bind_list.size(); i++)
         {
             auto bind = param->bindVariable(bind_list[i]);
-            if (!var_list.contains(bind->variable))
+            if (!obj_def->param(bind->path))
             {
-                error = JZNodeCompiler::errorString(Error_noClassMember, { obj_def->className,bind->variable});
+                error = JZNodeCompiler::errorString(Error_noClassMember, { obj_def->className,bind->path});
                 logE(makeParamLink(error, param->itemPath(),true, i));
                 m_checkError += error + "\n";
                 m_error = true;

@@ -55,9 +55,11 @@ enum
     Node_sequence,
     Node_if,                
     Node_parallel,    
-    Node_view,        
-    Node_print,
+    Node_view,
     Node_format,
+    Node_formatBin,
+    Node_print,
+    Node_log,
     Node_display,
     Node_switch,
     Node_break,
@@ -248,6 +250,9 @@ protected:
     friend JZScriptItem;
     virtual void saveToStream(QDataStream &s) const;
     virtual void loadFromStream(QDataStream &s);
+
+    void paramInResize(int size);
+    void paramOutResize(int size);
 
     virtual void onPinLinked(int pin_id);
     virtual void onPinUnlinked(int pin_id);

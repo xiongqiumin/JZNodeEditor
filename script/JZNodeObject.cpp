@@ -10,7 +10,7 @@
 #include "JZNodeQtWrapper.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
-#include "JZNodeVariableBind.h"
+#include "mvvm/JZNodeVariableBind.h"
 #include "JZScriptEnvironment.h"
 
 void JZObjectConnect(JZNodeObject* sender, JZFunctionPointer signal, JZFunctionPointer slot)
@@ -693,6 +693,8 @@ void JZNodeObject::setParam(const QString &name, const QVariant &value)
     if (it != m_params.end())
     {
         Q_ASSERT(env->isSameType(JZNodeType::variantType(value), it->type));
+        if (value == *it->ptr)
+            return;
         
         if(!it->cparam)
         {
@@ -708,6 +710,14 @@ void JZNodeObject::setParam(const QString &name, const QVariant &value)
             in << value;
             c->write->call(in, out);
         }
+
+        if (m_paramBind.contains(name))
+        {
+            auto& bind_list = m_paramBind[name];
+            for (int i = 0; i < bind_list.size(); i++)
+                bind_list[i]->dataToUi();
+        }
+
         emit sigValueChanged(name);
     }
     else
@@ -893,9 +903,24 @@ void JZNodeObject::autoBind()
         if (def != m_params.end())
         {
             QWidget *w = manager()->objectCast<QWidget>(*def->ptr.data());
-            BindManager::instance()->bind(w, WidgetProp_Value, this, it->variable, it->dir);
-            it++;
+            
+            QStringList path_list = it->path.split(".");
+            if (path_list.size() == 1)
+            {
+                JZBindManager::instance()->bind(w, this, it->path, it->dir);
+            }
+            else
+            {
+                QString variable = path_list.back();
+                path_list.pop_back();
+                QString context_path = path_list.join(".");
+                JZNodeObject *context_obj = toJZObject(param(context_path));
+
+                JZBindManager::instance()->bind(w, context_obj, variable, it->dir);
+            }
         }
+
+        it++;
     }               
 }
 
@@ -951,6 +976,11 @@ void JZNodeObject::setCOwner(bool owner)
         return;
 
     m_cobjOwner = owner;
+}
+
+void JZNodeObject::addBind(QString param, JZBindObject* object)
+{
+    m_paramBind[param].push_back(object);
 }
 
 //JZNodeObjectData

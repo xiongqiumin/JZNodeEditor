@@ -29,9 +29,8 @@ public:
 
     JZNodeParamBind();
 
+    QString path;
     QString widget;
-    int widgetProp;
-    QString variable;
     int dir;
 };
 QDataStream &operator<<(QDataStream &s, const JZNodeParamBind &param);
