@@ -47,6 +47,7 @@ public:
     JZCameraManager();
     ~JZCameraManager();
 
+    QStringList cameraList();
 	JZCamera* camera(QString name);
 
     void init();

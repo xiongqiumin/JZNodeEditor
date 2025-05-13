@@ -208,6 +208,56 @@ void QtWrapper::initBase()
     cls_ptf.regist();
     registList<QPointF>(m_env);
 
+    //size
+    jzbind::ClassBind<QSize> cls_size(Type_size,"QSize");
+    cls_size.setValueType(true);
+    cls_size.def("create", false, [](int x, int y)->QSize { return QSize(x, y); });
+    cls_size.def("__fromString__", false, [](const QString &text)->QSize {
+        JZNodeObjectParser parser;
+        QVariantList list;
+        if(!parser.parseVariantList("i,i",text,list)){
+            throw std::runtime_error(qUtf8Printable(parser.error()));
+        }
+
+        QSize pt;
+        pt.setWidth(list[0].toDouble());
+        pt.setHeight(list[1].toDouble());
+        return pt;
+    });
+    cls_size.def("__toString__", false, [](QSize *pt)->QString {
+        return QString::number(pt->width()) + "," + QString::number(pt->height());
+    });
+    cls_size.def("x", false, &QPointF::x);
+    cls_size.def("y", false, &QPointF::y);
+    cls_size.def("setX", true, &QPointF::setX);
+    cls_size.def("setY", true, &QPointF::setY);
+    cls_size.regist();
+
+    jzbind::ClassBind<QSizeF> cls_sizef(Type_sizeF,"QSizeF");
+    cls_sizef.setValueType(true);
+    cls_sizef.def("create", false, [](double x, double y)->QSizeF { return QSizeF(x, y); });
+    cls_sizef.def("__fromString__", false, [](const QString &text)->QSizeF {
+        JZNodeObjectParser parser;
+        QVariantList list;
+        if(!parser.parseVariantList("i,i",text,list)){
+            throw std::runtime_error(qUtf8Printable(parser.error()));
+        }
+
+        QSizeF pt;
+        pt.setWidth(list[0].toDouble());
+        pt.setHeight(list[1].toDouble());
+        return pt;
+    });
+    cls_sizef.def("__toString__", false, [](QSizeF *pt)->QString {
+        return QString::number(pt->width()) + "," + QString::number(pt->height());
+    });
+    cls_sizef.def("width", false, &QSizeF::width);
+    cls_sizef.def("height", false, &QSizeF::height);
+    cls_sizef.def("setWidth", true, &QSizeF::setWidth);
+    cls_sizef.def("setHeight", true, &QSizeF::setHeight);
+    cls_sizef.regist();
+
+    //rect
     jzbind::ClassBind<QRect> cls_rect(Type_rect,"QRect");
     cls_rect.setValueType(true);
     cls_rect.def("create", false, [](int x, int y, int w, int h)->QRect {

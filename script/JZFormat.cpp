@@ -253,6 +253,17 @@ QString JZFormat::formatString(const QVariantList& list)
     return result;
 }
 
+int JZFormat::paramCount()
+{
+    int count = 0;
+    for (int i = 0; i < m_blocks.size(); i++)
+    {
+        if (m_blocks[i].type == JZFormat::Placeholder)
+            count++;
+    }
+    return count;
+}
+
 QString JZFormat::applyFormat(const QVariant& value, const FormatSpec& format)
 {
     if (value.isNull()) {
@@ -644,4 +655,15 @@ QByteArray JZFormatBinary::formatBinary(const QVariantList& list)
     }
 
     return result;
+}
+
+int JZFormatBinary::paramCount()
+{
+    int count = 0;
+    for (int i = 0; i < m_blocks.size(); i++)
+    {
+        if (m_blocks[i].type == JZFormat::Placeholder)
+            count++;
+    }
+    return count;
 }

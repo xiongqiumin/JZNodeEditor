@@ -9,6 +9,7 @@
 #include "JZNodeFunctionManager.h"
 #include "JZNodeFunction.h"
 #include "JZNodeUtils.h"
+#include "JZFormat.h"
 
 //JZNodeLiteral
 JZNodeLiteral::JZNodeLiteral()
@@ -426,14 +427,15 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
-//JZNodeFormat
 //JZNodeFormatImpl
 JZNodeFormatImpl::JZNodeFormatImpl()
 {
     m_type = Node_format;
     m_name = "format";
+    m_argIndex = 0;
 
-    addParamOut("out");
+    int in = addParamIn("format", Pin_constValue | Pin_noCompiler);
+    setPinTypeString(in);
 }
 
 JZNodeFormatImpl::~JZNodeFormatImpl()
@@ -442,26 +444,40 @@ JZNodeFormatImpl::~JZNodeFormatImpl()
 
 void JZNodeFormatImpl::setFormat(QString format)
 {
-    m_format = format;
+    setParamInValue(0, format);
 }
 
 QString JZNodeFormatImpl::format()
 {
-    return m_format;
+    return paramInValue(0);
 }
 
 bool JZNodeFormatImpl::updateNode(QString& error)
 {
-    int brace_count = countBraces(m_format, error);
-    if (brace_count == -1)
-        return false;
+    QString format_str = this->format();
 
-    paramInResize(brace_count);
-    auto list = paramInList();
-    for (int i = 0; i < list.size(); i++)
+    int brace_count = -1;
+    if (m_isText)
     {
-        setPinName(list[i], "in" + QString::number(i+1));
+        JZFormat format;
+        if (!format.init(format_str, error))
+            return false;
+
+        brace_count = format.paramCount();
     }
+    else
+    {
+        JZFormatBinary format;
+        if (!format.init(format_str, error))
+            return false;
+
+        brace_count = format.paramCount();
+    }
+
+    paramInResize(m_argIndex + brace_count);
+    auto list = paramInList();
+    for (int i = m_argIndex; i < list.size(); i++)
+        setPinName(list[i], "in" + QString::number(i));
 
     return true;
 }
@@ -473,35 +489,25 @@ bool JZNodeFormatImpl::compiler(JZNodeCompiler* c, QString& error)
 
     QList<JZNodeIRParam> in, out;
     auto param_in_list = paramInList();
-    in << irLiteral(m_format);
+    in << irLiteral(format());
     for (int i = 0; i < param_in_list.size(); i++)
         in << irId(c->paramId(m_id, paramIn(0)));
     
     out << irId(c->paramId(m_id, paramOut(0)));
-    c->addCall(m_formatFunction, in, out);
+    c->addCall(m_function, in, out);
 
     return true;
 }
 
-void JZNodeFormatImpl::saveToStream(QDataStream& s) const
-{
-    JZNode::saveToStream(s);
-    s << m_format;
-}
-
-void JZNodeFormatImpl::loadFromStream(QDataStream& s)
-{
-    JZNode::loadFromStream(s);
-    s >> m_format;
-}
 
 //JZNodeFormat
 JZNodeFormat::JZNodeFormat()
 {
     m_type = Node_format;
     m_name = "format";
-    m_formatFunction = "JZFormat";
+    m_function = "JZFormat";
 
+    addParamOut("out");
     setPinTypeString(paramOut(0));
 }
 
@@ -514,8 +520,9 @@ JZNodeFormatBin::JZNodeFormatBin()
 {
     m_type = Node_formatBin;
     m_name = "formatBin";
-    m_formatFunction = "JZFormatBin";
+    m_function = "JZFormatBin";
 
+    addParamOut("out");
     setPinType(paramOut(0), { JZNodeType::typeName(Type_byteArray) });
 }
 
@@ -528,7 +535,7 @@ JZNodePrint::JZNodePrint()
 {
     m_type = Node_print;
     m_name = "print";
-    m_formatFunction = "JZPrint";
+    m_function = "JZPrint";
 
     addFlowIn();
     addFlowOut();
@@ -543,7 +550,15 @@ JZNodeLog::JZNodeLog()
 {
     m_type = Node_log;
     m_name = "log";
-    m_formatFunction = "JZLog";
+    m_function = "JZLog";
+
+    int m = addParamIn("module");
+    int l = addParamIn("level");
+    setPinTypeInt(m);
+    setPinTypeInt(l);
+
+    addFlowIn();
+    addFlowOut();
 }
 
 JZNodeLog::~JZNodeLog()

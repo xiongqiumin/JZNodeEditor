@@ -93,11 +93,10 @@ public:
 
 protected:
     virtual bool updateNode(QString& error) override;
-    virtual void saveToStream(QDataStream& s) const;
-    virtual void loadFromStream(QDataStream& s);
 
-    QString m_format;
-    QString m_formatFunction;
+    bool m_isText;
+    int m_argIndex;
+    QString m_function;
 };
 
 //JZNodeFormat

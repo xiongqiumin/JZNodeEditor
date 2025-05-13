@@ -16,8 +16,8 @@ JZModuleComm::~JZModuleComm()
 void JZModuleComm::regist(JZScriptEnvironment *env)
 {        
     jzbind::ClassBind<JZModbusParam> cls_modbus_param("JZModbusParam");
-    cls_modbus_param.defProperty("name", JZBIND_PROPERTY_IMPL(JZModbusParam,name));    
-    cls_modbus_param.defProperty("value", JZBIND_PROPERTY_IMPL(JZModbusParam,value));
+    cls_modbus_param.defProperty("name", JZBIND_PROPERTY_IMPL(JZModbusParam, name));
+    cls_modbus_param.defProperty("value", JZBIND_PROPERTY_IMPL(JZModbusParam, value));
     cls_modbus_param.regist();
 
     jzbind::ClassBind<JZModbusClient> cls_modbus_client("JZModbusClient", "QObject");

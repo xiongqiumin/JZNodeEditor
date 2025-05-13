@@ -7,6 +7,11 @@
 #include <QPointF>
 #include "CvMatAndQImage.h"
 
+QSize toQSize(const cv::Size& cvRect);
+QSizeF toQSizeF(const cv::Size2d& cvRectF);
+cv::Size fromQSize(const QSize& qRect);
+cv::Size2d fromQSizeF(const QSizeF& qRectF);
+
 QRect toQRect(const cv::Rect& cvRect);
 QRectF toQRectF(const cv::Rect2d& cvRectF);
 cv::Rect fromQRect(const QRect& qRect);

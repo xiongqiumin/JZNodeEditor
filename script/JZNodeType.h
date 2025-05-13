@@ -54,6 +54,8 @@ enum
     Type_jsonArray,
     Type_jsonObject,
     Type_dataStream,
+    Type_size,
+    Type_sizeF,
     Type_point,
     Type_pointF,
     Type_rect,

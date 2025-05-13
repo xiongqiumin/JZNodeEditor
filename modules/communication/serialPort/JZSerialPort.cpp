@@ -1,5 +1,28 @@
-﻿#include "JZSerialPort.h"
+﻿#include <QDataStream>
+#include "JZSerialPort.h"
 
+//JZSerialPortInfo
+JZSerialPortInfo::JZSerialPortInfo()
+{
+    portName = "COM1";
+    baud = 9600;
+    dataBit = QSerialPort::Data8;
+    parityBit = QSerialPort::NoParity;
+    stopBit = QSerialPort::OneStop;
+}
+
+QDataStream& operator<<(QDataStream& s, const JZSerialPortInfo& param)
+{
+    s << param.portName << param.baud << param.dataBit << param.parityBit << param.stopBit;
+    return s;
+}
+QDataStream& operator>>(QDataStream& s, JZSerialPortInfo& param)
+{
+    s >> param.portName >> param.baud >> param.dataBit >> param.parityBit >> param.stopBit;
+    return s;
+}
+
+//JZSerialPort
 JZSerialPort::JZSerialPort(QObject* parent)
     :QObject(parent)
 {
@@ -11,16 +34,27 @@ JZSerialPort::~JZSerialPort()
     close();
 }
 
-void JZSerialPort::open(QString com, int baud, QSerialPort::DataBits data_bit, QSerialPort::StopBits stop_bit, QSerialPort::Parity parity_bit)
+void JZSerialPort::init(const JZSerialPortInfo& info)
 {
-    m_com->setPortName(com);
-    if (!m_com->open(QIODevice::ReadWrite))
-        return;
+    m_info = info;
+}
 
-    m_com->setBaudRate(baud);
-    m_com->setDataBits(data_bit);
-    m_com->setStopBits(stop_bit);
-    m_com->setParity(parity_bit);
+bool JZSerialPort::isOpen()
+{
+    return m_com->isOpen();
+}
+
+bool JZSerialPort::open()
+{
+    m_com->setPortName(m_info.portName);
+    if (!m_com->open(QIODevice::ReadWrite))
+        return false;
+
+    m_com->setBaudRate(m_info.baud);
+    m_com->setDataBits(m_info.dataBit);
+    m_com->setStopBits(m_info.stopBit);
+    m_com->setParity(m_info.parityBit);
+    return true;
 }
 
 void JZSerialPort::close()

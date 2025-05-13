@@ -11,14 +11,16 @@ set(JZNodeTest_SOURCES
 	test_project.h
 	test_script.cpp
 	test_script.h
-	test_opencv.cpp
-	test_opencv.h    
     test_anglescript.cpp
     test_anglescript.h
     test_unitTest.cpp
     test_unitTest.h
 	test_event.cpp
 	test_event.h
+	test_paramBind.cpp
+	test_paramBind.h
+	test_runtime.cpp
+	test_runtime.h
 )
 
 add_executable(JZNodeTest ${JZNodeTest_SOURCES})

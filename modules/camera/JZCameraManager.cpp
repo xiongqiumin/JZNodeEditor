@@ -109,6 +109,15 @@ void JZCameraManager::init()
     emit sigInitFinish();
 }
 
+QStringList JZCameraManager::cameraList()
+{
+    QStringList cameras;
+    for (int i = 0; i < m_cameras.size(); i++)
+        cameras << m_cameras[i]->objectName();
+
+    return cameras;
+}
+
 JZCamera* JZCameraManager::camera(QString name)
 {
     int idx = m_config.indexOfCamera(name);

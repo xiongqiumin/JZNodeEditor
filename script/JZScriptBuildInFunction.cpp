@@ -1,7 +1,7 @@
 ﻿#include "JZScriptBuildInFunction.h"
 #include "JZNodeBind.h"
 #include "JZNodeEngine.h"
-
+#include "3rd/JZCommon/jzCommon/JZLogManager.h"
 
 bool JZForCheck(int first, int last, int step, int op, QString &error)
 {
@@ -95,20 +95,25 @@ class JZFormatFunc: public BuiltInFunction
 public:
     virtual void call(JZNodeEngine *engine) override
     {
-        QStringList list;
+        QString text = format(engine, 0);
+        engine->setReg(Reg_CallOut, text);
+    }
+
+    QString format(JZNodeEngine* engine, int start)
+    {
         int count = engine->regInCount();
 
-        QString format_str = engine->getReg(Reg_CallIn).toString(); 
+        QString format_str = engine->getReg(Reg_CallIn + start).toString();
         QVariantList var_list;
-        for (int i = 1; i < count; i++)
+        for (int i = start + 1; i < count; i++)
             var_list << engine->getReg(Reg_CallIn + i);
-        
+
         QString error;
         JZFormat format;
-        format.init(format_str,error);
+        format.init(format_str, error);
 
-        QString text = format.formatString(var_list);
-        engine->setReg(Reg_CallOut, text);
+        QString reuslt = format.formatString(var_list);
+        return reuslt;
     }
 };
 
@@ -140,29 +145,26 @@ class JZPrint: public BuiltInFunction
 public:
     virtual void call(JZNodeEngine *engine) override
     {
-        QStringList list;
-        int count = engine->regInCount();
-        for (int i = 0; i < count; i++)
-        {
-            list << JZNodeType::debugString(engine->getReg(Reg_CallIn + i));
-        }
-        engine->print(list.join(" "));
+        QString text = func->format(engine,0);
+        JZScriptLog(text);
     }
+
+    JZFormatFunc* func;
 };
 
-class JZPrintLog: public BuiltInFunction
+class JZLog: public BuiltInFunction
 {
 public:
     virtual void call(JZNodeEngine *engine) override
     {
-        QStringList list;
-        int count = engine->regInCount();
-        for (int i = 0; i < count; i++)
-        {
-            list << JZNodeType::debugString(engine->getReg(Reg_CallIn + i));
-        }
-        engine->print(list.join(" "));
+        int module = engine->getReg(Reg_CallIn).toInt();
+        int level = engine->getReg(Reg_CallIn + 1).toInt();
+
+        QString text = func->format(engine, 2);
+        JZLogManager::instance()->log(module, level, text);
     }
+
+    JZFormatFunc* func;
 };
 
 void InitBuildInFunction()

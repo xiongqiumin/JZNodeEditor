@@ -9,12 +9,26 @@ JZNodeVisionCropImage::JZNodeVisionCropImage()
 
     addFlowIn();
     addFlowOut();
+    
+    int in1 = addParamIn("mat");
+    int in2 = addParamIn("roi");
+    setPinType(in1, { "Mat" });
+    setPinType(in2, { "Rect" });
+
+    int out = addParamOut("out");
+    setPinType(out, { "Mat" });
 }
 
 bool JZNodeVisionCropImage::compiler(JZNodeCompiler *c, QString &error)
 {    
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionCropImage",in,out);
 
     return true;
 }
@@ -24,6 +38,16 @@ JZNodeVisionImageFlip::JZNodeVisionImageFlip()
 {
     m_type = Node_VisionImageFlip;
     m_name = "Í¼Ïñ·­×ª";
+
+    int in1 = addParamIn("mat");
+    int in2 = addParamIn("horizontal");
+    int in3 = addParamIn("vertical");
+    setPinType(in1, { "Mat" });
+    setPinTypeInt(in2);
+    setPinTypeInt(in3);
+
+    int out = addParamOut("out");
+    setPinType(out, { "Mat" });
 
     addFlowIn();
     addFlowOut();
@@ -37,11 +61,59 @@ bool JZNodeVisionImageFlip::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
+//JZNodeVisionImageConvert
+JZNodeVisionImageConvert::JZNodeVisionImageConvert()
+{
+    m_type = Node_VisionImageFlip;
+    m_name = "Í¼Ïñ×ª»»";
+
+    addFlowIn();
+    addFlowOut();
+
+    int in1 = addParamIn("mat");
+    setPinType(in1, { "Mat" });
+
+    int out = addParamOut("out");
+    setPinType(out, { "Mat" });
+}
+
+bool JZNodeVisionImageConvert::compiler(JZNodeCompiler *c, QString& error)
+{
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    return true;
+}
+
+//JZNodeVisionImageFilter
+JZNodeVisionImageFilter::JZNodeVisionImageFilter()
+{
+    m_type = Node_VisionImageFlip;
+    m_name = "Í¼ÏñÂË²¨";
+
+    int in1 = addParamIn("mat");
+    setPinType(in1, { "Mat" });
+
+    int out = addParamOut("out");
+    setPinType(out, { "Mat" });
+
+    addFlowIn();
+    addFlowOut();
+}
+
+bool JZNodeVisionImageFilter::compiler(JZNodeCompiler* c, QString& error)
+{
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    return true;
+}
+
 //JZNodeVisionImageMorphology
 JZNodeVisionImageMorphology::JZNodeVisionImageMorphology()
 {
     m_type = Node_VisionImageMorphology;
-    m_name = "Ô¤´¦Àí";
+    m_name = "Í¼ÏñÐÎÌ¬Ñ§";
 
     addFlowIn();
     addFlowOut();
@@ -97,6 +169,16 @@ JZNodeVisionPerspectiveTransform::JZNodeVisionPerspectiveTransform()
     m_type = Node_VisionPerspectiveTransform;
     m_name = "Í¸ÊÓ±ä»»";
 
+    int in1 = addParamIn("mat");
+    int in2 = addParamIn("from");
+    int in3 = addParamIn("to");
+    setPinType(in1, { "Mat" });
+    setPinType(in2, { "Rect" });
+    setPinType(in3, { "Rect" });
+
+    int out = addParamOut("out");
+    setPinType(out, { "Mat" });
+
     addFlowIn();
     addFlowOut();
 }
@@ -105,6 +187,13 @@ bool JZNodeVisionPerspectiveTransform::compiler(JZNodeCompiler *c, QString &erro
 {
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    in << irId(c->paramId(m_id, paramIn(2)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionPerspective", in, out);
 
     return true;
 }
@@ -117,12 +206,26 @@ JZNodeVisionSkeleton::JZNodeVisionSkeleton()
 
     addFlowIn();
     addFlowOut();
+
+    int in1 = addParamIn("mat");
+    int in2 = addParamIn("size");
+    setPinType(in1, { "Mat" });
+    setPinTypeInt(in2);
+
+    int out = addParamOut("out");
+    setPinType(out, { "Mat" });
 }
 
 bool JZNodeVisionSkeleton::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionSkeleton", in, out);
 
     return true;
 }
@@ -135,12 +238,20 @@ JZNodeVisionBlobDetector::JZNodeVisionBlobDetector()
 
     addFlowIn();
     addFlowOut();
+
+    int in1 = addParamIn("mat");
 }
 
 bool JZNodeVisionBlobDetector::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionBlobDetector", in, out);
 
     return true;
 }
@@ -160,6 +271,12 @@ bool JZNodeVisionBrightnessDetector::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionBrightnessDetector", in, out);
+
     return true;
 }
 
@@ -177,6 +294,12 @@ bool JZNodeVisionColorIdentify::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionColorIdentify", in, out);
 
     return true;
 }
@@ -196,6 +319,12 @@ bool JZNodeVisionShapeMatch::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionShapeMatch", in, out);
+
     return true;
 }
 
@@ -213,6 +342,12 @@ bool JZNodeVisionTemplateMatch::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionTemplateMatch", in, out);
 
     return true;
 }
@@ -232,6 +367,12 @@ bool JZNodeVisionFindCircle::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionFindCircle", in, out);
+
     return true;
 }
 
@@ -249,6 +390,12 @@ bool JZNodeVisionFindLine::compiler(JZNodeCompiler *c, QString &error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(c->paramId(m_id, paramIn(0)));
+    in << irId(c->paramId(m_id, paramIn(1)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZVisionFindLine", in, out);
 
     return true;
 }

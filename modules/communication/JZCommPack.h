@@ -3,25 +3,34 @@
 
 #include <QByteArray>
 
+class JZCommPackFormat
+{
+public:
+	JZCommPackFormat();
+
+	void setHeader(QByteArray head);
+	void addPackType(int size);
+	void addPackSize(int size);
+	void addCheckSum(int type, int size);
+	void setTail(QByteArray head);
+
+	QByteArray head;
+	QByteArray tail;
+};
+
 class JZCommPack
 {
 public:
 	JZCommPack();
 
-	void addHeader(QByteArray head);
-	void addPackType(int size);
-	void addPackSize(int size);
-	void addCheckSum(int type, int size);
-	void addTail(QByteArray head);
+	void setFormat(JZCommPackFormat format);
 
 	void appendBuffer(QByteArray buffer);
 	bool takePack(QByteArray& pack);
-
 	QByteArray makePack(QByteArray body);
 
 protected:
-	QByteArray m_head;
-	QByteArray m_tail;
+	JZCommPackFormat m_format;
 
 	QByteArray m_buffer;
 };

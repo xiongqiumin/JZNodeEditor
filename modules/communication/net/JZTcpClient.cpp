@@ -1,6 +1,26 @@
 #include <QHostAddress>
+#include <QDataStream>
 #include "JZTcpClient.h"
 
+//JZTcpClientInfo
+JZTcpClientInfo::JZTcpClientInfo()
+{
+    ip = "127.0.0.1";
+    port = 8888;
+}
+
+QDataStream& operator<<(QDataStream& s, const JZTcpClientInfo& param)
+{
+    s << param.ip << param.port;
+    return s;
+}
+QDataStream& operator>>(QDataStream& s, JZTcpClientInfo& param)
+{
+    s >> param.ip >> param.port;
+    return s;
+}
+
+//JZTcpClient
 JZTcpClient::JZTcpClient(QObject* parent)
     : QObject(parent)
 {
@@ -9,15 +29,31 @@ JZTcpClient::JZTcpClient(QObject* parent)
 
 JZTcpClient::~JZTcpClient()
 {
-    disconnectFromHost();
+    close();
 }
 
-void JZTcpClient::connectToHost(QString ip, int port)
+void JZTcpClient::init(JZTcpClientInfo info)
 {
-    m_socket->connectToHost(QHostAddress(ip), port);
+    m_info = info;
 }
 
-void JZTcpClient::disconnectFromHost()
+void JZTcpClient::setFormat(JZCommPackFormat format)
+{
+    m_pack.setFormat(format);
+}
+
+bool JZTcpClient::isOpen()
+{
+    return (m_socket->state() == QTcpSocket::ConnectedState);
+}
+
+bool JZTcpClient::open()
+{
+    m_socket->connectToHost(QHostAddress(m_info.ip), m_info.port);
+    return m_socket->waitForConnected();
+}
+
+void JZTcpClient::close()
 {
     m_socket->disconnectFromHost();
 }

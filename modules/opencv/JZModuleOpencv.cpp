@@ -2,11 +2,11 @@
 #include <QBuffer>
 #include "JZModuleOpencv.h"
 #include "JZNodeBind.h"
-#include "CvMatAndQImage.h"
 #include "JZScriptEnvironment.h"
 #include "JZOpencvNode.h"
 #include "JZNodeFactory.h"
 #include "JZContainer.h"
+#include "CvToQt.h"
 
 using namespace cv;
 
@@ -32,7 +32,47 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     cls_mat.def("create", false, [](int col,int row){ return Mat(row,col,CV_8UC3); });
     cls_mat.def("clone", true, &Mat::clone);
     cls_mat.regist();    
+
+    jzbind::ClassBind<Size> cls_size(cls_id++, "Size");
+    cls_size.setValueType(true);
+    cls_size.defProperty("width", JZBIND_PROPERTY_IMPL(Size, width));
+    cls_size.defProperty("height", JZBIND_PROPERTY_IMPL(Size, height));
+    cls_size.regist();
+
+    jzbind::ClassBind<Size2d> cls_size_2d(cls_id++, "Size2d");
+    cls_size_2d.setValueType(true);
+    cls_size_2d.defProperty("width", JZBIND_PROPERTY_IMPL(Size, width));
+    cls_size_2d.defProperty("height", JZBIND_PROPERTY_IMPL(Size, height));
+    cls_size_2d.regist();
+
+    jzbind::ClassBind<Point> cls_point(cls_id++, "Point");
+    cls_point.setValueType(true);
+    cls_point.defProperty("x", JZBIND_PROPERTY_IMPL(Point, x));
+    cls_point.defProperty("y", JZBIND_PROPERTY_IMPL(Point, y));
+    cls_point.regist();
+
+    jzbind::ClassBind<Point2d> cls_point_2d(cls_id++, "Point2d");
+    cls_point_2d.setValueType(true);
+    cls_point_2d.defProperty("x", JZBIND_PROPERTY_IMPL(Point2d, x));
+    cls_point_2d.defProperty("y", JZBIND_PROPERTY_IMPL(Point2d, y));
+    cls_point_2d.regist();
     
+    jzbind::ClassBind<Rect> cls_rect(cls_id++, "Rect");
+    cls_rect.setValueType(true);
+    cls_rect.defProperty("x", JZBIND_PROPERTY_IMPL(Rect, x));
+    cls_rect.defProperty("y", JZBIND_PROPERTY_IMPL(Rect, y));
+    cls_rect.defProperty("width", JZBIND_PROPERTY_IMPL(Rect, width));
+    cls_rect.defProperty("height", JZBIND_PROPERTY_IMPL(Rect, height));
+    cls_rect.regist();
+
+    jzbind::ClassBind<Rect2d> cls_rect_2d(cls_id++, "Rect2d");
+    cls_rect_2d.setValueType(true);
+    cls_rect_2d.defProperty("x", JZBIND_PROPERTY_IMPL(Rect2d, x));
+    cls_rect_2d.defProperty("y", JZBIND_PROPERTY_IMPL(Rect2d, y));
+    cls_rect_2d.defProperty("width", JZBIND_PROPERTY_IMPL(Rect2d, width));
+    cls_rect_2d.defProperty("height", JZBIND_PROPERTY_IMPL(Rect2d, height));
+    cls_rect_2d.regist();
+
     func_inst->registCFunction("image2Mat", false, jzbind::createFuncion([](QImage image)->Mat {
         return QtOcv::image2Mat(image);
     }));
@@ -53,15 +93,49 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         return out;
     }));
 
+    func_inst->registCFunction("blur", false, jzbind::createFuncion([](Mat in, Size size) {
+        Mat out;
+        blur(in, out, size);
+        return out;
+    }));
+
+    func_inst->registCFunction("GaussianBlur", false, jzbind::createFuncion([](Mat in, Size size, double sigmaX,double sigmaY) {
+        Mat out;
+        GaussianBlur(in, out, size, sigmaX, sigmaY);
+        return out;
+    }));
+
     func_inst->registCFunction("medianBlur", false, jzbind::createFuncion([](Mat in, int size) {
         Mat out;
         medianBlur(in, out, size);
         return out;
-    }));        
+    }));
+
+    func_inst->registCFunction("bilateralFilter", false, jzbind::createFuncion([](Mat in, int d, double sigmaColor, double sigmaSpace) {
+        Mat out;
+        bilateralFilter(in, out, d, sigmaColor, sigmaSpace);
+        return out;
+    }));
 
     
     env->nodeFactory()->registNode(Node_OpencvInit, createJZNode<JZNodeOpencvInit>);
     env->nodeFactory()->registNode(Node_OpencvTemplate, createJZNode<JZNodeTemplateMatch>);    
+
+    //convert
+    env->registConvert(cls_point.id(), Type_point, jzbind::createConvert<cv::Point,QPoint>(toQPoint));
+    env->registConvert(cls_point_2d.id(), Type_pointF, jzbind::createConvert<cv::Point2d, QPointF>(toQPoint));
+    env->registConvert(Type_point, cls_point_2d.id(), jzbind::createConvert<QPoint,cv::Point>(fromQPoint));
+    env->registConvert(Type_pointF, cls_point_2d.id(), jzbind::createConvert<QPointF, cv::Point2d>(fromQPointF));
+
+    env->registConvert(cls_size.id(), Type_size, jzbind::createConvert<cv::Size, QSize>(toQSize));
+    env->registConvert(cls_size_2d.id(), Type_sizeF, jzbind::createConvert<cv::Size2d, QSizeF>(toQSizeF));
+    env->registConvert(Type_size, cls_size_2d.id(), jzbind::createConvert<QSize, cv::Size>(fromQSize));
+    env->registConvert(Type_sizeF, cls_size_2d.id(), jzbind::createConvert<QSizeF, cv::Size2d>(fromQSizeF));
+
+    env->registConvert(cls_rect.id(), Type_rect, jzbind::createConvert<cv::Rect, QRect>(toQRect));
+    env->registConvert(cls_rect_2d.id(), Type_rectF, jzbind::createConvert<cv::Rect2d, QRectF>(toQRectF));
+    env->registConvert(Type_point, cls_rect_2d.id(), jzbind::createConvert<QRect, cv::Rect>(fromQRect));
+    env->registConvert(Type_pointF, cls_rect_2d.id(), jzbind::createConvert<QRectF, cv::Rect2d>(fromQRectF));
 }
 
 void JZModuleOpencv::unregist(JZScriptEnvironment *env)

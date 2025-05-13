@@ -16,7 +16,6 @@
 void JZScriptLog(const QString &log)
 {
     g_engine->print(log);
-    qDebug() << log;
 }
 
 QVariant JZConvertVariant(const QVariant &in, int type)

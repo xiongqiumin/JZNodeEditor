@@ -1,5 +1,25 @@
 ﻿#include "CvToQt.h"
 
+QSize toQSize(const cv::Size& cv_size)
+{
+    return QSize(cv_size.width, cv_size.height);
+}
+
+QSizeF toQSizeF(const cv::Size2d& cv_size)
+{
+    return QSizeF(cv_size.width, cv_size.height);
+}
+
+cv::Size fromQSize(const QSize& q_size)
+{
+    return cv::Size(q_size.width(), q_size.height());
+}
+
+cv::Size2d fromQSizeF(const QSizeF& q_size)
+{
+    return cv::Size2d(q_size.width(), q_size.height());
+}
+
 QRect toQRect(const cv::Rect& cvRect) {
     return QRect(cvRect.x, cvRect.y, cvRect.width, cvRect.height);
 }

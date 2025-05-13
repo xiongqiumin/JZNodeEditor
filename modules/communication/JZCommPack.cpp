@@ -1,30 +1,42 @@
 #include <QDebug>
 #include "JZCommPack.h"
 
+//JZCommPackFormat
+JZCommPackFormat::JZCommPackFormat()
+{
+	tail.push_back('\n');
+}
+
+void JZCommPackFormat::setHeader(QByteArray head)
+{
+	head = head;
+}
+
+void JZCommPackFormat::addPackType(int size)
+{
+}
+
+void JZCommPackFormat::addPackSize(int size)
+{
+}
+
+void JZCommPackFormat::addCheckSum(int type, int size)
+{
+}
+
+void JZCommPackFormat::setTail(QByteArray tail)
+{
+	tail = tail;
+}
+
+//JZCommPack
 JZCommPack::JZCommPack()
 {
 }
 
-void JZCommPack::addHeader(QByteArray head) 
+void JZCommPack::setFormat(JZCommPackFormat format)
 {
-	m_head = head;
-}
-
-void JZCommPack::addPackType(int size) 
-{
-}
-
-void JZCommPack::addPackSize(int size) 
-{
-}
-
-void JZCommPack::addCheckSum(int type, int size) 
-{
-}
-
-void JZCommPack::addTail(QByteArray tail)
-{
-	m_tail = tail;
+	m_format = format;
 }
 
 void JZCommPack::appendBuffer(QByteArray buffer)
@@ -34,16 +46,18 @@ void JZCommPack::appendBuffer(QByteArray buffer)
 
 bool JZCommPack::takePack(QByteArray& pack)
 {
-	int min_pack_len = m_head.size() + m_tail.size();
-	
+	auto& head = m_format.head;
+	auto& tail = m_format.tail;
+
+	int min_pack_len = head.size() + tail.size();
 	bool get_pack = false;
 	int buffer_start = 0;
 	while (m_buffer.length() - buffer_start >= min_pack_len)
 	{
 		int start = 0;
-		if (!m_head.isEmpty())
+		if (!head.isEmpty())
 		{
-			m_buffer.indexOf(m_head, buffer_start);
+			m_buffer.indexOf(head, buffer_start);
 			if (start < 0)
 			{
 				qDebug() << "invaild packet data.";
@@ -51,17 +65,17 @@ bool JZCommPack::takePack(QByteArray& pack)
 				break;
 			}
 
-			start += m_head.size();
+			start += head.size();
 		}
 		
-		if (!m_tail.isEmpty())
+		if (!tail.isEmpty())
 		{
-			int tail_end = m_buffer.indexOf(m_tail, start);
+			int tail_end = m_buffer.indexOf(tail, start);
 			if (tail_end >= 0)
 			{
 				get_pack = true;
 				pack = m_buffer.mid(start, tail_end - start);
-				buffer_start = tail_end + m_tail.size();
+				buffer_start = tail_end + tail.size();
 			}
 			break;
 		}
@@ -75,13 +89,13 @@ bool JZCommPack::takePack(QByteArray& pack)
 QByteArray JZCommPack::makePack(QByteArray body)
 {
 	QByteArray buffer;
-	if (!m_head.isEmpty())
-		buffer.append(m_head);
+	if (!m_format.head.isEmpty())
+		buffer.append(m_format.head);
 
 	buffer.append(body);
 
-	if (!m_tail.isEmpty())
-		buffer.append(m_tail);
+	if (!m_format.tail.isEmpty())
+		buffer.append(m_format.tail);
 
 	return buffer;
 }

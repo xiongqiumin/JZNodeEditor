@@ -6,7 +6,7 @@
 #include <QPointer>
 #include <QScopeGuard>
 #include "JZNodeFactory.h"
-#include "test_modbus.h"
+#include "test_comm.h"
 #include "modules/communication/JZModuleComm.h"
 #include "JZNodeUtils.h"
 
@@ -28,17 +28,67 @@ class ModbusThread : public QThread
     }
 };
 
-//ModbusTest
-ModbusTest::ModbusTest()
+//TcpThread
+TcpThread::TcpThread()
+{
+    moveToThread(this);
+}
+
+void TcpThread::run()
+{
+    JZTcpServer server;
+    connect(&server, &JZTcpServer::sigNetPackRecv, this, &TcpThread::onPackRecv);
+
+    JZTcpServerInfo info;
+    info.port = 5000;
+    server.init(info);
+    server.startServer();
+
+    exec();
+}
+ 
+void TcpThread::onPackRecv(int netId, const QByteArray& buffer)
+{
+    JZTcpServer* server = qobject_cast<JZTcpServer*>(sender());
+    server->sendPack(netId,buffer);
+}
+
+//UdpThread
+UdpThread::UdpThread()
+{
+    moveToThread(this);
+}
+
+void UdpThread::run()
+{
+    JZUdpSocket server;
+    connect(&server, &JZUdpSocket::sigDataRecv, this, &UdpThread::onPackRecv);
+
+    JZUdpInfo info;
+    info.port = 15000;
+    server.init(info);
+    server.open();
+
+    exec();
+}
+
+void UdpThread::onPackRecv(const QNetworkDatagram& data)
+{
+    JZUdpSocket* server = qobject_cast<JZUdpSocket*>(sender());
+    server->write(data.data(), data.senderAddress().toString(), data.senderPort());
+}
+
+//CommTest
+CommTest::CommTest()
 {
 }
 
-void ModbusTest::testClientCpp()
+void CommTest::testModbusClientCpp()
 {
     JZCommConfig cfg;
 
     JZCommManagerConfig comm_config;    
-    cfg.commType = Comm_ModbusTcpClient;
+    cfg.commType = Comm_ModbusClient;
     cfg.modbus.conn.modbusType = Modbus_tcpClient;
     cfg.name = "modbus";
     comm_config.commList << cfg;
@@ -67,7 +117,7 @@ void ModbusTest::testClientCpp()
     QCOMPARE(ret_any.variant.toDouble(),0.6);       
 }
 
-void ModbusTest::testClient()
+void CommTest::testModbusClient()
 {
     auto class_item = makeTestClass();
     class_item->addMemberVariable("commManager", "JZCommManager");
@@ -79,7 +129,7 @@ void ModbusTest::testClient()
     auto start = script->startNode();
 
     JZCommConfig cfg;
-    cfg.commType = Comm_ModbusTcpClient;
+    cfg.commType = Comm_ModbusClient;
 
     JZCommModbusInfo modbus;
     cfg.modbus.conn.modbusType = Modbus_tcpClient;
@@ -121,8 +171,67 @@ void ModbusTest::testClient()
         callMember("testFunction", in, out);   
 }
 
-void test_modbus(int argc, char *argv[])
+void CommTest::testTcpCpp()
+{
+    TcpThread t;
+    t.start();
+    QTest::qWait(200);
+    auto cleanup = qScopeGuard([&t] {
+        t.quit();
+        t.wait();
+        });
+
+    JZCommConfig cfg;
+    cfg.commType = Comm_TcpClient;
+    cfg.name = "tcpClient";
+    cfg.tcpClient.port = 5000;
+
+    JZCommManagerConfig comm_config;
+    comm_config.commList << cfg;
+
+    JZCommManager manager;
+    JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));
+
+    QByteArray send("123456");
+    JZCommTcpWrite(&manager, "tcpClient", send);
+    QByteArray recv = JZCommTcpRead(&manager, "tcpClient");
+
+    QCOMPARE(send, recv);
+}
+
+void CommTest::testUdpCpp()
+{
+    UdpThread t;
+    t.start();
+    QTest::qWait(200);
+    auto cleanup = qScopeGuard([&t] {
+        t.quit();
+        t.wait();
+        });
+
+    JZCommConfig cfg;
+    cfg.commType = Comm_Udp;
+    cfg.name = "udpClient";
+    
+    JZCommManagerConfig comm_config;
+    comm_config.commList << cfg;
+
+    JZCommManager manager;
+    JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));
+
+    QByteArray send("123456");
+    JZCommUdpWrite(&manager, "udpClient", send, "127.0.0.1", 15000);
+    QByteArray recv = JZCommUdpRead(&manager, "udpClient");
+
+    QCOMPARE(send, recv);
+}
+
+void CommTest::testComCpp()
+{
+}
+
+void test_comm(int argc, char *argv[])
 {    
-    ModbusTest s; 
+    CommTest s; 
     QTest::qExec(&s,argc,argv);
 }

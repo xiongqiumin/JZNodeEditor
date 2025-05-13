@@ -7,8 +7,14 @@ set(JZNodeModuleTest_SOURCES
 	../script/test_base.h
     test_camera.cpp
     test_camera.h
-	test_modbus.cpp
-	test_modbus.h
+	test_comm.cpp
+	test_comm.h
+	test_model.cpp
+	test_model.h
+	test_opencv.cpp
+	test_opencv.h
+	test_vision.cpp
+	test_vision.h
 )
 
 add_executable(JZNodeModuleTest ${JZNodeModuleTest_SOURCES})

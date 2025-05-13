@@ -23,7 +23,8 @@ void JZNodeFunctionManager::init()
 {
     registCFunction("rand", false, jzbind::createFuncion(rand));
     registCFunction("exp",false,jzbind::createFuncion((double (*)(double))(exp)));
-    registCFunction("log",false,jzbind::createFuncion((double (*)(double))(log)));
+    registCFunction("loge",false,jzbind::createFuncion((double (*)(double))(log)));
+    registCFunction("log2", false, jzbind::createFuncion((double (*)(double))(log2)));
     registCFunction("log10",false,jzbind::createFuncion((double (*)(double))(log10)));
     registCFunction("pow",false,jzbind::createFuncion((double (*)(double,double))(pow)));
     registCFunction("sqrt",false,jzbind::createFuncion((double (*)(double))(sqrt)));
@@ -74,7 +75,7 @@ QStringList JZNodeFunctionManager::functionList() const
     return m_funcDefine.keys();
 }
 
-void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func)
+JZFunctionDefine* JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func)
 {
     Q_ASSERT(define.isCFunction);
 
@@ -85,6 +86,7 @@ void JZNodeFunctionManager::registCFunction(const JZFunctionDefine &define, QSha
         registFunction(define);
     
     m_funcImpl[define.fullName()] = impl;
+    return &m_funcDefine[define.fullName()];
 }
 
 void JZNodeFunctionManager::setParam(JZFunctionDefine *def,CFunction *func)
@@ -111,7 +113,7 @@ void JZNodeFunctionManager::setParam(JZFunctionDefine *def,CFunction *func)
     }
 }
 
-void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> cfunc)
+JZFunctionDefine *JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> cfunc)
 {
     JZFunctionDefine define;
 
@@ -128,7 +130,7 @@ void JZNodeFunctionManager::registCFunction(QString fullName,bool isFlow, QShare
     setParam(&define,cfunc.data());
     define.isFlowFunction = isFlow;
     define.isCFunction = true;
-    registCFunction(define, cfunc);       
+    return registCFunction(define, cfunc);       
 }
 
 void JZNodeFunctionManager::registBuiltInFunction(const JZFunctionDefine &define, QSharedPointer<BuiltInFunction> func)

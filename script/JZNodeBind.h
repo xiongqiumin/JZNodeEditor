@@ -291,6 +291,17 @@ void toVariantList(QVariantList &list,T t,Args... args)
     toVariantList<type,Args...>(list,args...);
 }
 
+template<class From, class To, class Func>
+JZObjectConvertFunc createConvert(Func func)
+{
+    auto impl = [func](const JZScriptEnvironment* env, const QVariant& v)->QVariant {
+        From src = jzbind::fromVariant<From>(v);
+        To dst = func(src);
+        return jzbind::toVariant<To>(dst);
+    };
+    return impl;
+}
+
 //这里加一个空模板函数是为了编译可以通过，否则编译期间调用printAmt<int>(int&)就会找不到可匹配的函数
 //模板参数第一个类型实际上是用不到的，但是这里必须要加上，否则就是调用printAmt<>(int&)，模板实参为空，但是模板形参列表是不能为空的
 template<class type>
@@ -644,9 +655,9 @@ public:
     }
 };
 
-#define JZBIND_PROPERTY_IMPL(Class,prop) \
+#define JZBIND_PROPERTY_IMPL(Class, prop) \
     [](Class *obj)->decltype(Class::prop){ return obj->prop; }, \
-    [](Class *obj, decltype(Class::prop) v) { obj->prop = v; }
+    [](Class *obj, const decltype(Class::prop) &v) { obj->prop = v; }
 
 template<class Class>
 class ClassBind

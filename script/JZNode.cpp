@@ -634,7 +634,7 @@ void JZNode::setPinTypeInt(int id)
 
 void JZNode::setPinTypeNumber(int id)
 {
-    pin(id)->setDataType({ JZNodeType::typeName(Type_bool),JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),JZNodeType::typeName(Type_double)});
+    pin(id)->setDataType({ JZNodeType::typeName(Type_int64),JZNodeType::typeName(Type_uint64),JZNodeType::typeName(Type_double)});
 }
 
 void JZNode::setPinTypeBool(int id)

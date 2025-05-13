@@ -3,6 +3,7 @@
 
 #include "JZNode.h"
 #include "../JZModuleDefine.h"
+#include "JZVision.h"
 
 enum VisionNode
 {
@@ -41,6 +42,23 @@ public:
     JZNodeVisionImageFlip();
 
     virtual bool compiler(JZNodeCompiler *, QString &error) override;
+};
+
+class JZNodeVisionImageConvert : public JZNode
+{
+public:
+    JZNodeVisionImageConvert();
+
+    virtual bool compiler(JZNodeCompiler*, QString& error) override;
+};
+
+
+class JZNodeVisionImageFilter : public JZNode
+{
+public:
+    JZNodeVisionImageFilter();
+
+    virtual bool compiler(JZNodeCompiler*, QString& error) override;
 };
 
 class JZNodeVisionImageMorphology : public JZNode

@@ -36,6 +36,7 @@ public:
 
     bool init(const QString& text, QString& error);
     QString formatString(const QVariantList& list);
+    int paramCount();
 
 protected:
     bool parseFormatSpec(const QString& spec, FormatSpec& format, QString& error);
@@ -55,6 +56,7 @@ public:
 
     bool init(const QString& text, QString& error);
     QByteArray formatBinary(const QVariantList& list);
+    int paramCount();
 
 protected:
     enum BlockType {

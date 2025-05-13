@@ -20,80 +20,6 @@ QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param)
     return s;
 }
 
-//JZCommTcpClientInfo
-JZCommTcpClientInfo::JZCommTcpClientInfo()
-{
-    ip = "127.0.0.1";
-    port = 0;
-}
-
-QDataStream& operator<<(QDataStream& s, const JZCommTcpClientInfo& param) 
-{
-    s << param.ip << param.port;
-    return s;
-}
-QDataStream& operator>>(QDataStream& s, JZCommTcpClientInfo& param) 
-{
-    s >> param.ip >> param.port;
-    return s;
-}
-
-//JZCommTcpServerInfo
-JZCommTcpServerInfo::JZCommTcpServerInfo()
-{
-    ip = "127.0.0.1";
-    port = 0;
-}
-
-QDataStream& operator<<(QDataStream& s, const JZCommTcpServerInfo& param) 
-{
-    s << param.ip << param.port;
-    return s;
-}
-QDataStream& operator>>(QDataStream& s, JZCommTcpServerInfo& param) 
-{
-    s >> param.ip >> param.port;
-    return s;
-}
-
-//JZCommUdpInfo
-JZCommUdpInfo::JZCommUdpInfo()
-{
-    port = 0;
-}
-
-QDataStream& operator<<(QDataStream& s, const JZCommUdpInfo& param) 
-{
-    s << param.port;
-    return s;
-}
-QDataStream& operator>>(QDataStream& s, JZCommUdpInfo& param) 
-{
-    s >> param.port;
-    return s;
-}
-
-//JZCommSerialPortInfo
-JZCommSerialPortInfo::JZCommSerialPortInfo()
-{
-    portName = "COM1";
-    baud = 9600;
-    dataBit = QSerialPort::Data8;
-    parityBit = QSerialPort::NoParity;
-    stopBit = QSerialPort::OneStop;
-}
-
-QDataStream& operator<<(QDataStream& s, const JZCommSerialPortInfo& param) 
-{
-    s << param.portName << param.baud << param.dataBit << param.parityBit << param.stopBit;
-    return s;
-}
-QDataStream& operator>>(QDataStream& s, JZCommSerialPortInfo& param) 
-{
-    s >> param.portName >> param.baud >> param.dataBit >> param.parityBit >> param.stopBit;
-    return s;
-}
-
 //JZCommConfig
 JZCommConfig::JZCommConfig()
 {
@@ -105,6 +31,10 @@ QDataStream &operator<<(QDataStream &s, const JZCommConfig &param)
     s << param.name;
     s << param.commType;
     s << param.modbus;
+    s << param.tcpClient;
+    s << param.tcpServer;
+    s << param.udp;
+    s << param.serial;
     return s;
 }
 
@@ -113,6 +43,10 @@ QDataStream &operator >> (QDataStream &s, JZCommConfig &param)
     s >> param.name;
     s >> param.commType;
     s >> param.modbus;
+    s >> param.tcpClient;
+    s >> param.tcpServer;
+    s >> param.udp;
+    s >> param.serial;
     return s;
 }
 
@@ -139,13 +73,13 @@ JZCommManager::~JZCommManager()
     qDeleteAll(m_modbusClient);
     qDeleteAll(m_modbusServer);
     qDeleteAll(m_tcpClient);
-    qDeleteAll(m_udpClient);
+    qDeleteAll(m_udp);
     qDeleteAll(m_serialPort);
 
     m_modbusClient.clear();
     m_modbusServer.clear();
     m_tcpClient.clear();
-    m_udpClient.clear();
+    m_udp.clear();
     m_serialPort.clear();
 }
 
@@ -154,14 +88,24 @@ JZModbusClient* JZCommManager::modbusClient(QString name)
     return m_modbusClient.value(name, nullptr);
 }
 
+JZModbusServer* JZCommManager::modbusServer(QString name)
+{
+    return m_modbusServer.value(name, nullptr);
+}
+
 JZTcpClient* JZCommManager::tcpClient(QString name)
 {
     return m_tcpClient.value(name, nullptr);
 }
 
-JZUdpSocket* JZCommManager::udpClient(QString name)
+JZTcpServer* JZCommManager::tcpServer(QString name)
 {
-    return m_udpClient.value(name, nullptr);
+    return m_tcpServer.value(name, nullptr);
+}
+
+JZUdpSocket* JZCommManager::udp(QString name)
+{
+    return m_udp.value(name, nullptr);
 }
 
 JZSerialPort* JZCommManager::serial(QString name)
@@ -171,46 +115,83 @@ JZSerialPort* JZCommManager::serial(QString name)
 
 void JZCommManager::init()
 {
-    
     for (int i = 0; i < m_config.commList.size(); i++)
     {
         auto &cfg = m_config.commList[i];
         //modbus
-        if (cfg.commType == Comm_ModbusRtuClient)
+        if (cfg.commType == Comm_ModbusClient)
         {
             JZModbusClient* client = new JZModbusClient(this);
             client->initConn(cfg.modbus.conn);
-            client->setProperty("bitOrder", cfg.modbus.bitOrder);
+            client->setProperty("BitOrder", cfg.modbus.bitOrder);
             m_modbusClient[cfg.name] = client;
         }
-        else if (cfg.commType == Comm_ModbusRtuServer)
+        else if (cfg.commType == Comm_ModbusServer)
         {
-
+            JZModbusServer* server = new JZModbusServer(this);
+            server->initConn(cfg.modbus.conn);
+            server->setProperty("BitOrder", cfg.modbus.bitOrder);
+            m_modbusServer[cfg.name] = server;
         }
-        else if (cfg.commType == Comm_ModbusTcpClient)
+        else if (cfg.commType == Comm_TcpClient)
         {
             JZTcpClient* client = new JZTcpClient(this);
-            client->connectToHost(cfg.tcpClient.ip, cfg.tcpClient.port);
+            client->init(cfg.tcpClient);
             m_tcpClient[cfg.name] = client;
         }
-        else if (cfg.commType == Comm_ModbusTcpServer)
+        else if (cfg.commType == Comm_TcpServer)
         {
+            JZTcpServer* server = new JZTcpServer(this);
+            server->init(cfg.tcpServer);
+            m_tcpServer[cfg.name] = server;
         }
-        else if (cfg.commType == Comm_ModbusUdp)
+        else if (cfg.commType == Comm_Udp)
         {
-            JZUdpSocket* client = new JZUdpSocket(this);
-            m_udpClient[cfg.name] = client;
+            JZUdpSocket* udp = new JZUdpSocket(this);
+            udp->init(cfg.udp);
+            m_udp[cfg.name] = udp;
         }
-        else if (cfg.commType == Comm_ModbusSerialPort)
+        else if (cfg.commType == Comm_SerialPort)
         {
             auto& conn = cfg.serial;
 
-            JZSerialPort* client = new JZSerialPort(this);
-            client->open(conn.portName, conn.baud, conn.dataBit, conn.stopBit, conn.parityBit);
-            m_serialPort[cfg.name] = client;
+            JZSerialPort* com = new JZSerialPort(this);
+            com->init(conn);
+            m_serialPort[cfg.name] = com;
         }
     }
+}
 
+void JZCommManager::openAll()
+{
+    for (auto c : m_modbusClient)
+        c->open();
+    for (auto s : m_modbusServer)
+        s->start();
+    for (auto c : m_tcpClient)
+        c->open();
+    for (auto s : m_tcpServer)
+        s->startServer();
+    for (auto u : m_udp)
+        u->open();
+    for (auto com : m_serialPort)
+        com->open();
+}
+
+void JZCommManager::closeAll()
+{
+    for (auto c : m_modbusClient)
+        c->close();
+    for (auto s : m_modbusServer)
+        s->stop();
+    for (auto c : m_tcpClient)
+        c->close();
+    for (auto s : m_tcpServer)
+        s->stopServer();
+    for (auto u : m_udp)
+        u->close();
+    for (auto com : m_serialPort)
+        com->close();
 }
 
 void JZCommManager::setConfig(const JZCommManagerConfig&config)
@@ -221,6 +202,43 @@ void JZCommManager::setConfig(const JZCommManagerConfig&config)
 JZCommManagerConfig JZCommManager::config()
 {
     return m_config;
+}
+
+//func
+JZTcpClient* getTcpClient(JZCommManager* mgr, QString name)
+{
+    JZTcpClient* client = mgr->tcpClient(name);
+    if(!client)
+        throw std::runtime_error("client is nullptr");
+
+    if (!client->isOpen() && !client->open())
+        throw std::runtime_error("client open failed");
+
+    return client;
+}
+
+JZSerialPort* getSerial(JZCommManager* mgr, QString name)
+{
+    auto client = mgr->serial(name);
+    if (!client)
+        throw std::runtime_error("client is nullptr");
+
+    if (!client->isOpen() && !client->open())
+        throw std::runtime_error("client open failed");
+
+    return client;
+}
+
+JZUdpSocket* getUdp(JZCommManager* mgr, QString name)
+{
+    auto udp = mgr->udp(name);
+    if (!udp)
+        throw std::runtime_error("client is nullptr");
+
+    if (!udp->isOpen() && !udp->open())
+        throw std::runtime_error("client open failed");
+
+    return udp;
 }
 
 void JZCommInit(JZCommManager* inst, const QByteArray& buffer)
@@ -354,82 +372,61 @@ void JZCommModbusWrite(JZCommManager* mgr, const QString& name, int function, co
 //net
 QByteArray JZCommTcpRead(JZCommManager* mgr, const QString& name)
 {
-    auto client = mgr->tcpClient(name);
-    if (!client)
-        throw std::runtime_error("client is nullptr");
-
+    auto client = getTcpClient(mgr, name);
     return client->read();
 }
 
 void JZCommTcpWrite(JZCommManager* mgr, const QString& name, const QByteArray& param)
 {
-    auto client = mgr->tcpClient(name);
-    if (!client)
-        throw std::runtime_error("client is nullptr");
-
+    auto client = getTcpClient(mgr, name);
     client->write(param);
 }
 
 QString JZCommTcpReadText(JZCommManager* mgr, const QString& name)
 {
-    auto client = mgr->tcpClient(name);
-    if (!client)
-        throw std::runtime_error("client is nullptr");
-
+    auto client = getTcpClient(mgr, name);
     return client->readText();
 }
 
 void JZCommTcpWriteText(JZCommManager* mgr, const QString& name, const QString& param)
 {
-    auto client = mgr->tcpClient(name);
-    if (!client)
-        throw std::runtime_error("client is nullptr");
-
+    auto client = getTcpClient(mgr,name);
     client->writeText(param);
 }
 
 QByteArray JZCommUdpRead(JZCommManager* mgr, const QString& name)
 {
-    return QByteArray();
+    auto com = getUdp(mgr, name);
+    return com->read().data();
 }
 
-void JZCommUdpWrite(JZCommManager* mgr, const QString& name, const QByteArray& param)
+void JZCommUdpWrite(JZCommManager* mgr, const QString& name, const QByteArray& buffer, QString ip, int port)
 {
+    auto com = getUdp(mgr, name);
+    com->write(buffer, ip, port);
 }
 
 //serial
 QByteArray JZCommSerialRead(JZCommManager* mgr, const QString& name)
 {
-    auto com = mgr->serial(name);
-    if (!com)
-        throw std::runtime_error("client is nullptr");
-
+    auto com = getSerial(mgr, name);
     return com->read();
 }
 
 void JZCommSerialWrite(JZCommManager* mgr, const QString& name, const QByteArray& param) 
 {
-    auto com = mgr->serial(name);
-    if (!com)
-        throw std::runtime_error("client is nullptr");
-
+    auto com = getSerial(mgr, name);
     return com->write(param);
 }
 
 QString JZCommSerialReadText(JZCommManager* mgr, const QString& name)
 {
-    auto com = mgr->serial(name);
-    if (!com)
-        throw std::runtime_error("client is nullptr");
-
+    auto com = getSerial(mgr, name);
     return com->readText();
 }
 
 void JZCommSerialWriteText(JZCommManager* mgr, const QString& name, const QString& param)
 {
-    auto com = mgr->serial(name);
-    if (!com)
-        throw std::runtime_error("client is nullptr");
-
+    auto com = getSerial(mgr, name);
     return com->writeText(param);
 }
