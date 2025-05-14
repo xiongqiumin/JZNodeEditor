@@ -24,7 +24,6 @@ public:
         QChar sign = '\0'; // 符号选项（+, -, 空格）
         bool alt = false;  // 替代形式
         bool zero = false; // 用0填充
-        QChar grouping = '\0'; // 千位分隔符（', _）
     };
 
     struct Block {

@@ -7,6 +7,7 @@
 #include "JZNodeFactory.h"
 #include "JZContainer.h"
 #include "CvToQt.h"
+#include "jzWidgets/JZImageLabel.h"
 
 using namespace cv;
 
@@ -48,44 +49,54 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
 
     jzbind::ClassBind<Size> cls_size(cls_id++, "Size");
     cls_size.setValueType(true);
-    cls_size.defProperty("width", JZBIND_PROPERTY_IMPL(Size, width));
-    cls_size.defProperty("height", JZBIND_PROPERTY_IMPL(Size, height));
+    cls_size.defProperty("width", &Size::width);
+    cls_size.defProperty("height", &Size::height);
     cls_size.regist();
 
     jzbind::ClassBind<Size2d> cls_size_2d(cls_id++, "Size2d");
     cls_size_2d.setValueType(true);
-    cls_size_2d.defProperty("width", JZBIND_PROPERTY_IMPL(Size, width));
-    cls_size_2d.defProperty("height", JZBIND_PROPERTY_IMPL(Size, height));
+    cls_size_2d.defProperty("width", &Size2d::height);
+    cls_size_2d.defProperty("height", &Size2d::height);
     cls_size_2d.regist();
 
     jzbind::ClassBind<Point> cls_point(cls_id++, "Point");
     cls_point.setValueType(true);
-    cls_point.defProperty("x", JZBIND_PROPERTY_IMPL(Point, x));
-    cls_point.defProperty("y", JZBIND_PROPERTY_IMPL(Point, y));
+    cls_point.defProperty("x", &Point::x);
+    cls_point.defProperty("y", &Point::y);
     cls_point.regist();
 
     jzbind::ClassBind<Point2d> cls_point_2d(cls_id++, "Point2d");
     cls_point_2d.setValueType(true);
-    cls_point_2d.defProperty("x", JZBIND_PROPERTY_IMPL(Point2d, x));
-    cls_point_2d.defProperty("y", JZBIND_PROPERTY_IMPL(Point2d, y));
+    cls_point_2d.defProperty("x", &Point2d::x);
+    cls_point_2d.defProperty("y", &Point2d::y);
     cls_point_2d.regist();
     
     jzbind::ClassBind<Rect> cls_rect(cls_id++, "Rect");
     cls_rect.setValueType(true);
-    cls_rect.defProperty("x", JZBIND_PROPERTY_IMPL(Rect, x));
-    cls_rect.defProperty("y", JZBIND_PROPERTY_IMPL(Rect, y));
-    cls_rect.defProperty("width", JZBIND_PROPERTY_IMPL(Rect, width));
-    cls_rect.defProperty("height", JZBIND_PROPERTY_IMPL(Rect, height));
+    cls_rect.defProperty("x", &Rect::x);
+    cls_rect.defProperty("y", &Rect::y);
+    cls_rect.defProperty("width", &Rect::width);
+    cls_rect.defProperty("height", &Rect::height);
     cls_rect.regist();
 
     jzbind::ClassBind<Rect2d> cls_rect_2d(cls_id++, "Rect2d");
     cls_rect_2d.setValueType(true);
-    cls_rect_2d.defProperty("x", JZBIND_PROPERTY_IMPL(Rect2d, x));
-    cls_rect_2d.defProperty("y", JZBIND_PROPERTY_IMPL(Rect2d, y));
-    cls_rect_2d.defProperty("width", JZBIND_PROPERTY_IMPL(Rect2d, width));
-    cls_rect_2d.defProperty("height", JZBIND_PROPERTY_IMPL(Rect2d, height));
+    cls_rect_2d.defProperty("x", &Rect2d::x);
+    cls_rect_2d.defProperty("y", &Rect2d::y);
+    cls_rect_2d.defProperty("width", &Rect2d::width);
+    cls_rect_2d.defProperty("height", &Rect2d::height);
     cls_rect_2d.regist();
 
+    jzbind::ClassBind<JZGraphic> cls_jz_graphic(cls_id++, "JZGraphic");
+    cls_jz_graphic.regist();
+    registList<JZGraphic>(env);
+
+    jzbind::ClassBind<JZImageLabel> cls_jz_label(cls_id++, "JZImageLabel", "QWidget");
+    cls_jz_label.def("setImage", true, &JZImageLabel::setImage);
+    cls_jz_label.def("setGraphics", true, &JZImageLabel::setGraphics);
+    cls_jz_label.def("clearGraphic", true, &JZImageLabel::clearGraphic);
+    cls_jz_label.regist();
+    
     func_inst->registCFunction("image2Mat", false, jzbind::createFuncion([](QImage image)->Mat {
         return QtOcv::image2Mat(image);
     }));
@@ -138,7 +149,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     }));
 
     
-    env->nodeFactory()->registNode(Node_OpencvInit, createJZNode<JZNodeOpencvInit>);        
+    env->nodeFactory()->registNode(Node_OpencvInit, createJZNode<JZNodeOpencvInit>);
 
     //convert
     env->registConvert(cls_point.id(), Type_point, jzbind::createConvert<cv::Point,QPoint>(toQPoint));

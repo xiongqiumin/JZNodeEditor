@@ -13,9 +13,11 @@ public:
 
 private slots:
     void testTemplateMatch();
+    void testBrightnessDetector();
+    void testColorIdentify();
 
 protected:
-   
+    void addReadImage();
 
 };
 

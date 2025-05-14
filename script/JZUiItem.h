@@ -10,8 +10,16 @@
 class JZUiItem : public JZProjectItem
 {
 public:
+    enum UiType{
+        Ui_Widget,
+        Ui_Dialog,
+        Ui_MainWindow,
+    };
+
     JZUiItem();
     virtual ~JZUiItem();
+
+    void initXml(UiType type);
 
     QString xml();
     void setXml(QString xml);

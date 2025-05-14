@@ -48,15 +48,20 @@ bool JZNodeIRParam::isThis() const
     return type == This;
 }
 
+bool JZNodeIRParam::isIdRef() const
+{
+    return type == StackIdReference;
+}
+
 int JZNodeIRParam::id() const
 {
-    Q_ASSERT(type == StackId || type == RegId);
+    Q_ASSERT(type == StackId || type == RegId || type == StackIdReference);
     return m_id;
 }
 
 QString JZNodeIRParam::ref() const
 {
-    Q_ASSERT(type == Reference);
+    Q_ASSERT(type == Reference || type == StackIdReference);
     return m_ref;
 }
 
@@ -125,10 +130,12 @@ JZNodeIRParam irThis()
     return param;
 }
 
-JZNodeIRParam irMemberRef(int id, const QString& member)
+JZNodeIRParam irIdRef(int id, const QString& member)
 {
     JZNodeIRParam param;
-    param.type = JZNodeIRParam::MemberReference;
+    param.type = JZNodeIRParam::StackIdReference;
+    param.m_id = id;
+    param.m_ref = member;
     return param;
 }
 

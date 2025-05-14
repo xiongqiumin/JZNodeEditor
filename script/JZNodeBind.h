@@ -583,14 +583,13 @@ class WidgetWrapper : public Class
 {  
 public:    
     template<class Event>
-    void event_impl(QString function, std::function<void()> func, Event *event)
+    void event_impl(QString function,  Event *event)
     {
         JZNodeObject *jzobj = qobjectToJZObject(this);
         Q_ASSERT(jzobj);
         
         auto jz_func = jzobj->function(function);
-        if(!jz_func)
-            return func();
+        Q_ASSERT(jz_func);
     
         JZNodeObjectPointer self(jzobj, false);
         JZNodeObjectPointer event_obj = jzobj->manager()->objectReferencePointer(event,false);
@@ -602,62 +601,95 @@ public:
 
     void paintEvent(QPaintEvent *event) override
     {
-        auto func = [this, event]{ Class::paintEvent(event); };        
-        event_impl("paintEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if(!has_virtual)
+            Class::paintEvent(event);  
+        else
+            event_impl("paintEvent", event);
     }
 
     void showEvent(QShowEvent *event) override
     {
-        auto func = [this, event]{ Class::showEvent(event); };
-        event_impl("showEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::showEvent(event);
+        else
+            event_impl("showEvent", event);
     }
 
-    void resizeEvent(QResizeEvent *event)override
+    void resizeEvent(QResizeEvent *event) override
     {
-        auto func = [this, event]{ Class::resizeEvent(event); };
-        event_impl("resizeEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::resizeEvent(event);
+        else
+            event_impl("resizeEvent", event);
     }
 
     void closeEvent(QCloseEvent *event) override
     {
-        auto func = [this, event]{ Class::closeEvent(event); };
-        event_impl("closeEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::closeEvent(event);
+        else
+            event_impl("closeEvent", event);
     }
 
     void keyPressEvent(QKeyEvent *event) override
     {
-        auto func = [this, event]{ Class::keyPressEvent(event); };
-        event_impl("keyPressEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::keyPressEvent(event);
+        else
+            event_impl("keyPressEvent", event);
     }
 
     void keyReleaseEvent(QKeyEvent *event) override
     {
-        auto func = [this, event]{ Class::keyReleaseEvent(event); };
-        event_impl("keyReleaseEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::keyReleaseEvent(event);
+        else
+            event_impl("keyReleaseEvent", event);
     }
 
     void mousePressEvent(QMouseEvent *event) override
     {
-        auto func = [this, event]{ Class::mousePressEvent(event); };
-        event_impl("mousePressEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::mousePressEvent(event);
+        else
+            event_impl("mousePressEvent", event);
     }
 
     void mouseMoveEvent(QMouseEvent *event) override
     {
-        auto func = [this, event]{ Class::mouseMoveEvent(event); };
-        event_impl("mouseMoveEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::mouseMoveEvent(event);
+        else
+            event_impl("mouseMoveEvent", event);
     }
 
     void mouseReleaseEvent(QMouseEvent *event) override
     {
-        auto func = [this, event]{ Class::mouseReleaseEvent(event); };
-        event_impl("mouseReleaseEvent", func, event);
+        static bool has_virtual = hasFunc("paintEvent");
+        if (!has_virtual)
+            Class::mouseReleaseEvent(event);
+        else
+            event_impl("mouseReleaseEvent", event);
+    }
+
+protected:
+    bool hasFunc(const QString &function)
+    {
+        JZNodeObject* jzobj = qobjectToJZObject(this);
+        Q_ASSERT(jzobj);
+
+        auto jz_func = jzobj->function(function);
+        return jz_func;
     }
 };
-
-#define JZBIND_PROPERTY_IMPL(Class, prop) \
-    [](Class *obj)->decltype(Class::prop){ return obj->prop; }, \
-    [](Class *obj, const decltype(Class::prop) &v) { obj->prop = v; }
 
 template<class Class>
 class ClassBind
@@ -781,17 +813,24 @@ public:
         m_define.signalDefines.push_back(single);
     }
 
-    template<typename FuncRead, typename FuncWrite>
-    void defProperty(QString name, FuncRead read, FuncWrite write)
+    template <typename PropertyType>
+    void defProperty(QString name, PropertyType Class::* member)
     {        
-        auto obj_inst = bindEnvironment()->objectManager();
-        auto func_read = createFuncion(read);
-        auto func_write = createFuncion(write);
+        auto func_read = [member](void *ptr)->QVariant
+            { 
+                Class* obj = (Class*)ptr;
+                return toVariant<PropertyType>(obj->*member); 
+            };
+        auto func_write = [member](void* ptr, const QVariant &v) 
+            {
+                Class* obj = (Class*)ptr;
+                PropertyType t = fromVariant<PropertyType>(v);
+                obj->*member = t; 
+            };
      
-        int ret_type = obj_inst->getIdByCTypeid(func_read->result);
         JZParamDefine def;
         def.name = name;
-        def.type = obj_inst->getClassName(ret_type);
+        def.type = bindEnvironment()->ctypeidToName(typeid(PropertyType).name());
         m_define.params[def.name] = def;
 
         JZCParamDefine cdef;

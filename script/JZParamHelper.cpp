@@ -17,6 +17,11 @@ JZParamCoor JZParamHelper::splitMember(const QString &name)
     return coor;
 }
 
+const JZParamDefine* JZParamHelper::memberDefine(const JZNodeObjectDefine* obj_def, const QString& member)
+{
+    return memberDefine(obj_def, member.split("."));
+}
+
 const JZParamDefine *JZParamHelper::memberDefine(const JZNodeObjectDefine* obj_def, const QStringList& obj_list)
 {
     auto obj_inst = obj_def->manager;

@@ -195,10 +195,12 @@ public:
     static QString paramName(int id);
     static QString paramName(const JZNodeGemo& gemo);
     static JZNodeGemo paramGemo(int id);    
-    static VariableCoor variableCoor(JZScriptItem *file, QString name);
-    static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
     static const JZFunctionDefine* function(JZScriptItem* file, const QString& name);
     static QString errorString(CompilerTip tip,QStringList args);
+    static VariableCoor variableCoor(JZScriptItem *file, QString name);
+    static const JZParamDefine *getVariableInfo(JZScriptItem *file, const QString &name);
+    static bool checkVariableExist(JZScriptItem *file, const QString &var, QString &error);
+    static bool checkVariableType(JZScriptItem *file, const QString& var, int data_type, QString& error);
 
     JZNodeCompiler();
     ~JZNodeCompiler();
@@ -286,7 +288,8 @@ public:
     JZNode* breakParentNode(int child_id);
     JZNode* continueParentNode(int child_id);
 
-    void addConstructor(SignalConnectInfo info);
+    void addClassInitFunction(ClassInitInfo info);
+    void addGet(QString objName, QString typeName, int& ptr_id);
     void addGetOrInit(QString objName, QString typeName,const QByteArray &init_buffer,int &obj_id);
     
     void addAlloc(int allocType, QString name, QString dataType);

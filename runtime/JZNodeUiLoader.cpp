@@ -41,22 +41,20 @@ JZNodeUiLoader::~JZNodeUiLoader()
 {
 }
 
-QWidget *JZNodeUiLoader::create(QString xml)
+void JZNodeUiLoader::create(QWidget *w,QString xml)
 {    
+    m_widget = w;
+
     QBuffer buffer;
     QByteArray data = xml.toUtf8();
     buffer.setData(data);
-    return QUiLoader::load(&buffer);
+    QUiLoader::load(&buffer);
 }
 
 QWidget *JZNodeUiLoader::createWidget(const QString &className, QWidget *parent, const QString &name)
 {
-    if (className == "QWidget" && parent == nullptr)
-    {
-        auto *w = new jzbind::WidgetWrapper<QWidget>();
-        w->setObjectName(name);
-        return w;
-    }    
+    if (parent == nullptr)
+        return m_widget; 
 
     auto &widget_map = JZNodeWidgetManger::instance()->widgetMap();
     if (widget_map.contains(className))

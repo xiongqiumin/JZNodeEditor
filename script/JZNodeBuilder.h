@@ -34,14 +34,14 @@ public:
     QMap<QString, CompilerResult> compilerResult();
     const CompilerResult *compilerInfo(JZScriptItem *file) const;
 
-    void addClassConstructor(QString class_name, SignalConnectInfo function);
+    void addClassInitFunction(QString class_name, ClassInitInfo function);
 
 protected:    
     friend JZNodeConstructBuild;
 
     struct ClassConstructor 
     {
-        QList<SignalConnectInfo> infoList;        
+        QList<ClassInitInfo> infoList;        
     };
 
     struct ScriptInfo

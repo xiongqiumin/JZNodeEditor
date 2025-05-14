@@ -567,31 +567,31 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
             if(!run())  //停止运行会返回false, 异常在catch处理
             {                
                 updateStatus(Status_idle);
-                m_statusCommand = Command_none;                                                
+                m_statusCommand = Command_none;
                 m_breakStep.clear();
                 m_stack.clear();
                 return false;
             }
         }
 
-        out.clear();    
+        out.clear();
         for (int i = 0; i < func->define.paramOut.size(); i++)
-            out.push_back(getReg(Reg_CallOut + i));    
+            out.push_back(getReg(Reg_CallOut + i));
         clearReg();
-        
+
         if (m_stack.size() == 0)
         {
             updateStatus(Status_idle);
-            m_statusCommand = Command_none;        
+            m_statusCommand = Command_none;
         }
         return true;
     }
-    catch(const std::exception& e)
-    {           
+    catch (const std::exception& e)
+    {
         qDebug() << "Runtime Exception: " << e.what();
 
         m_mutex.lock();
-        m_stack.currentEnv()->pc = m_pc;                                
+        m_stack.currentEnv()->pc = m_pc;
         m_statusCommand = Command_none;
         updateStatus(Status_error);
         m_mutex.unlock();
@@ -600,7 +600,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         error.error = e.what();
         error.info = runtimeInfo();
         m_error = error;
-        emit sigRuntimeError(error);        
+        emit sigRuntimeError(error);
 
         if (m_debug) //保留错误现场
         {
@@ -613,7 +613,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
     }
 }
 
-void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantList &out)
+void JZNodeEngine::invoke(const QString& name, const QVariantList& in, QVariantList& out)
 {
     if (status() == Status_idle) //顶层调用,需要try catch
     {
@@ -621,23 +621,23 @@ void JZNodeEngine::invoke(const QString &name,const QVariantList &in,QVariantLis
         return;
     }
 
-    const JZFunction *func = function(name);
+    const JZFunction* func = function(name);
     Q_ASSERT(func && (func->define.isVariadicFunction() || in.size() == func->define.paramIn.size()));
     for (int i = 0; i < in.size(); i++)
-        setReg(Reg_CallIn + i,in[i]);
+        setReg(Reg_CallIn + i, in[i]);
 
-    if(func->isCFunction())
+    if (func->isCFunction())
     {
         callCFunction(func);
     }
     else
-    {            
-        pushStack(func);            
-        if(!run())
+    {
+        pushStack(func);
+        if (!run())
             return;
     }
 
-    out.clear();    
+    out.clear();
     for (int i = 0; i < func->define.paramOut.size(); i++)
         out.push_back(getReg(Reg_CallOut + i));
     clearReg();
@@ -651,19 +651,24 @@ void JZNodeEngine::invokeVirtual(const QString& function, const QVariantList& in
     return invoke(func->fullName(), in, out);
 }
 
-void JZNodeEngine::onSlot(const QString &function,const QVariantList &in,QVariantList &out)
+void JZNodeEngine::onSlot(const QString& function, const QVariantList& in, QVariantList& out)
 {
     m_sender = toJZObject(in[0]);
-    invoke(function,in,out);
+    invoke(function, in, out);
     m_sender = nullptr;
 }
 
-QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &param)
+QVariantPtr* JZNodeEngine::getParamRef(int stack_level, const JZNodeIRParam& param)
 {
     QStringList obj_list;
     if (param.isRef())
     {
         obj_list = param.ref().split(".");
+    }
+    else if(param.isIdRef())
+    {
+        obj_list = param.ref().split(".");
+        obj_list.insert(0, "__id__");
     }
 
     auto memberRef = [&obj_list](QVariantPtr* ref)->QVariantPtr* {
@@ -700,16 +705,25 @@ QVariantPtr *JZNodeEngine::getParamRef(int stack_level,const JZNodeIRParam &para
         else
         {
             QVariantPtr *ref = nullptr;
-            if (obj_list[0] == "this")
-                ref = &env->self;
+            if (param.isIdRef())
+                ref = env->getRef(param.id());
             else
-                ref = env->getRef(obj_list[0]);
-            if (!ref)
             {
-                auto it = m_global.find(obj_list[0]);
-                if (it != m_global.end())
-                    ref = &it.value();
+                if (obj_list[0] == "this")
+                    ref = &env->self;
+                else
+                    ref = env->getRef(obj_list[0]);
+
+                if (!ref)
+                {
+                    auto it = m_global.find(obj_list[0]);
+                    if (it != m_global.end())
+                        ref = &it.value();
+                }
             }
+            if (!ref)
+                return nullptr;
+
             if (obj_list.size() == 1)
                 return ref;
             else
@@ -735,7 +749,7 @@ QVariant JZNodeEngine::getParam(int stack_level, const JZNodeIRParam &param)
     {                
         auto ref = getParamRef(stack_level,param);
         Q_ASSERT(ref);
-        return *ref->ptr;        
+        return ref->value();        
     }
 }
 
@@ -864,12 +878,6 @@ QVariant JZNodeEngine::createVariable(int type,const QString &value)
     return v;
 }
 
-QWidget* JZNodeEngine::createWidget(const QString& xml)
-{
-    JZNodeUiLoader ui;
-    return ui.create(xml);
-}
-
 JZNodeObject *JZNodeEngine::getVariableObject(QVariant *ref, const QStringList &obj_list)
 {        
     JZNodeObject *obj = toJZObject(*ref);
@@ -900,7 +908,12 @@ void JZNodeEngine::dealSet(QVariantPtr *ref, const QVariant &value)
         h->relaseObject();
     }
     else
-        *ref->ptr = value;
+    {
+        if (ref->isCParam())
+            ref->setValue(value);
+        else
+            *ref->ptr = value;
+    }
 }
 
 QVariant JZNodeEngine::getSender()

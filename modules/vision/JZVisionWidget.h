@@ -39,7 +39,8 @@ class JZCameraViewWidget : public QWidget
     Q_OBJECT
 
 public:
-    enum{
+    enum
+    {
 
     };
 
@@ -47,10 +48,19 @@ public:
     ~JZCameraViewWidget();
 
     void init();
+
     JZImageLabel* label(QString name);
     
-private:
-    QMap<QString, JZImageLabel*> m_label;
+protected:
+    struct LabelInfo
+    {
+        QString name;
+        JZImageLabel* label;
+    };
+
+    virtual void resizeEvent(QResizeEvent *event) override;
+
+    QList<LabelInfo> m_labelList;
 };
 
 #endif // ! JZ_VISON_WIDGET_H_

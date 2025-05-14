@@ -68,8 +68,8 @@ public:
         RegId,
         Literal,
         Reference,
-        MemberReference,
         This,
+        StackIdReference,
     };    
 
     JZNodeIRParam();
@@ -82,6 +82,7 @@ public:
     bool isNodeId() const;
     bool isStack() const;
     bool isReg() const;
+    bool isIdRef() const;
 
     int id() const;
     QString ref() const;
@@ -98,7 +99,7 @@ JZNodeIRParam irRef(const QString &id);
 JZNodeIRParam irId(int id);
 JZNodeIRParam irLiteral(const QVariant &value);
 JZNodeIRParam irThis();
-JZNodeIRParam irMemberRef(int id,const QString& member);
+JZNodeIRParam irIdRef(int id,const QString& member);
 
 class JZNodeIR
 {

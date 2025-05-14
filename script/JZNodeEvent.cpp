@@ -317,7 +317,7 @@ bool JZNodeSignalEvent::compilerSignal(JZNodeCompiler* c, QString& error)
     auto func_def = function();
     c->addFunctionAlloc(func_def);
     c->addNodeEnter(m_id);
-    c->addConstructor(m_connectInfo);    
+    c->addClassInitFunction(m_connectInfo);    
 
     c->setRegCallFunction(&func_def);
     auto out_list = paramOutList();
@@ -338,7 +338,7 @@ JZNodeButtonClickedEvent::JZNodeButtonClickedEvent()
     m_type = Node_buttonClickedEvent;
     m_name = "timerEvent";
 
-    m_connectInfo.connectFunction = "JZButtonClickedEventConnect";
+    m_connectInfo.function = "JZButtonClickedEventConnect";
     m_connectInfo.irList << irThis() << irThis() << irLiteral(0);
 
     int id = addParamIn("name",Pin_noCompiler);
@@ -393,8 +393,8 @@ JZNodeTimerEvent::JZNodeTimerEvent()
     m_type = Node_timerEvent;
     m_name = "timerEvent";
 
-    m_connectInfo.connectFunction = "JZTimerEventConnect";
-    m_connectInfo.irList << irThis() << irLiteral(0);
+    m_connectInfo.function = "JZTimerEventConnect";
+    m_connectInfo.irList << irThis() << irLiteral(0) << irLiteral(0);
 }
 
 JZNodeTimerEvent::~JZNodeTimerEvent()
@@ -414,7 +414,8 @@ int JZNodeTimerEvent::timeOut()
 bool JZNodeTimerEvent::compiler(JZNodeCompiler* c, QString& error)
 {        
     m_connectInfo.irList[1] = irLiteral(QVariant::fromValue(JZFunctionPointer(function().fullName())));
-    m_connectInfo.param["timeout"] = m_timeout;
+    m_connectInfo.irList[2] = irLiteral(m_timeout);
+    
     return compilerSignal(c,error);
 }
 
@@ -430,11 +431,8 @@ void JZNodeTimerEvent::loadFromStream(QDataStream &s)
     s >> m_timeout;
 }
 
-void JZTimerEventConnect(QObject *object,JZFunctionPointer slot_function,const QByteArray &buffer)
+void JZTimerEventConnect(QObject *object,JZFunctionPointer slot_function,int ms)
 {
-    QJsonObject obj = JZNodeUtils::formBuffer(buffer);
-    int ms = obj["timeout"].toInt();
-
     QTimer *timer = new QTimer(object);
     timer->connect(timer,&QTimer::timeout,object,[object,slot_function]
     {

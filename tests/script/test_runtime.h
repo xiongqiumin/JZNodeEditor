@@ -14,6 +14,7 @@ public:
 private slots:
     void testFormatString();
     void testFormatBinary();
+    void testUiLoader();
 
 protected:
 

@@ -25,5 +25,8 @@
     <file>Resources/icons/iconSetting.png</file>
     <file>Resources/moduleList.json</file>
     <file>Resources/widgetBox.xml</file>
+	<file>Resources/WidgetXml/Widget.ui</file>
+	<file>Resources/WidgetXml/Dialog.ui</file>
+	<file>Resources/WidgetXml/MainWindow.ui</file>
   </qresource>
 </RCC>

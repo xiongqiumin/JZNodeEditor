@@ -35,10 +35,13 @@ public:
     JZNodeUiLoader();
     ~JZNodeUiLoader();
 
-    QWidget *create(QString text);
+    void create(QWidget *w,QString text);
 
 private:
     virtual QWidget *createWidget(const QString &className, QWidget *parent = Q_NULLPTR, const QString &name = QString()) override;
+
+protected:
+    QWidget* m_widget;
 };
 
 #endif

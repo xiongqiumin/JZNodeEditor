@@ -159,6 +159,7 @@ public:
     const JZScriptEnvironment *environment() const;
 
     const QString &name() const;
+    QString uniqueName() const;
 
     int id() const;
     void setId(int id);

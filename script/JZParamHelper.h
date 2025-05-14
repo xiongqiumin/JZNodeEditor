@@ -16,6 +16,7 @@ class JZParamHelper
 {
 public:
     static JZParamCoor splitMember(const QString &name);
+    static const JZParamDefine* memberDefine(const JZNodeObjectDefine* obj_def, const QString& member);
     static const JZParamDefine* memberDefine(const JZNodeObjectDefine *obj_def, const QStringList &memberList);
 };
 

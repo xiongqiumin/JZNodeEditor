@@ -42,6 +42,7 @@ public:
     void loadFromStream(QDataStream& s);
 
 protected:
+    virtual bool updateNode(QString &error);
 };
 
 #endif

@@ -20,6 +20,7 @@ bool JZFormat::init(const QString& text, QString& error)
     int braceDepth = 0;
     int placeholderIndex = 0;
 
+    QList<int> arg_list;
     for (int i = 0; i < text.size(); ++i) {
         QChar c = text[i];
 
@@ -83,14 +84,41 @@ bool JZFormat::init(const QString& text, QString& error)
                         Block block;
                         block.type = Placeholder;
                         block.content = currentPlaceholder;
-                        block.argIndex = placeholderIndex++;
 
-                        // 解析格式规范
-                        FormatSpec format;
-                        if (!parseFormatSpec(currentPlaceholder, format, error)) {
-                            return false;
+                        currentPlaceholder = currentPlaceholder.trimmed();
+
+                        int format_idx = currentPlaceholder.indexOf(":");
+                        
+                        QString arg_text;              
+                        if (format_idx >= 1)
+                            arg_text = currentPlaceholder.left(format_idx);
+                        else
+                            arg_text = currentPlaceholder;
+                        
+                        if (!arg_text.isEmpty())
+                        {
+                            block.argIndex = arg_text.toInt();
+                            arg_list << block.argIndex;
                         }
-                        block.format = format;
+                        else
+                        {
+                            //跳过显示分配的
+                            while (arg_list.contains(placeholderIndex))
+                                placeholderIndex++;
+
+                            block.argIndex = placeholderIndex++;
+                        }
+
+                        if (format_idx >= 0)
+                        {
+                            QString format_text = currentPlaceholder.mid(format_idx + 1);
+                            // 解析格式规范
+                            FormatSpec format;
+                            if (!parseFormatSpec(format_text, format, error)) {
+                                return false;
+                            }
+                            block.format = format;
+                        }
 
                         m_blocks.append(block);
                         state = Normal;
@@ -130,16 +158,23 @@ bool JZFormat::init(const QString& text, QString& error)
 
 bool JZFormat::parseFormatSpec(const QString& spec, FormatSpec& format, QString& error)
 {
-    // 格式规范语法: [[fill]align][sign][#][0][width][grouping][.precision][type]
+    // 格式规范语法: [[fill]align][sign][#][0][width][.precision][type]
 
     QString s = spec.trimmed();
     int pos = 0;
 
     // 解析填充和对齐
+    if (pos < s.size()) {
+        QChar align = s[pos];
+        if ((align == '<' || align == '>' || align == '^' || align == '=')) {
+            format.fill = ' ';
+            format.align = align;
+            pos += 1;
+        }
+    }
     if (pos < s.size() - 1) {
         QChar fill = s[pos];
         QChar align = s[pos + 1];
-
         if ((align == '<' || align == '>' || align == '^' || align == '=')) {
             format.fill = fill;
             format.align = align;
@@ -163,17 +198,12 @@ bool JZFormat::parseFormatSpec(const QString& spec, FormatSpec& format, QString&
     }
 
     // 解析零填充 (修正逻辑)
-    if (pos < s.size() && s[pos] == '0') {
-        // 检查是否是零填充标志还是宽度的一部分
-        if (pos + 1 < s.size() && s[pos + 1].isDigit()) {
-            // 是宽度的一部分，不处理为零填充
-        }
-        else if (format.align == '\0') {
-            // 是零填充标志
-            format.align = '=';
-            format.fill = '0';
-            pos++;
-        }
+    if (pos < s.size() && s[pos] == '0') 
+    {
+        // 是零填充标志
+        format.align = '=';
+        format.fill = '0';
+        pos++;
     }
 
     // 解析宽度 (修正逻辑)
@@ -182,15 +212,6 @@ bool JZFormat::parseFormatSpec(const QString& spec, FormatSpec& format, QString&
     if (widthMatch.hasMatch()) {
         format.width = widthMatch.captured(1).toInt();
         pos += widthMatch.capturedLength(1);
-    }
-
-    // 解析千位分隔符
-    if (pos < s.size()) {
-        QChar c = s[pos];
-        if (c == ',' || c == '_') {
-            format.grouping = c;
-            pos++;
-        }
     }
 
     // 解析精度
@@ -219,6 +240,7 @@ bool JZFormat::parseFormatSpec(const QString& spec, FormatSpec& format, QString&
             error = QString("Invalid type specifier '%1'").arg(format.type);
             return false;
         }
+        pos++;
     }
 
     // 检查是否有未解析的字符
@@ -340,51 +362,6 @@ QString JZFormat::formatInt(qint64 value, const FormatSpec& format)
     }
     else if (format.sign == ' ') {
         result.prepend(' ');
-    }
-
-    // 处理千位分隔符
-    if (format.grouping == ',') {
-        QString grouped;
-        int len = result.length();
-        int pos = 0;
-
-        // 跳过符号
-        if (result[0] == '+' || result[0] == '-' || result[0] == ' ') {
-            grouped.append(result[0]);
-            pos++;
-        }
-
-        int count = 0;
-        for (int i = len - 1; i >= pos; i--) {
-            grouped.prepend(result[i]);
-            count++;
-            if (count % 3 == 0 && i > pos) {
-                grouped.prepend(',');
-            }
-        }
-        result = grouped;
-    }
-    else if (format.grouping == '_') {
-        // 类似逗号分隔，但使用下划线
-        // 简化实现，实际应根据数字类型确定分组方式
-        QString grouped;
-        int len = result.length();
-        int pos = 0;
-
-        if (result[0] == '+' || result[0] == '-' || result[0] == ' ') {
-            grouped.append(result[0]);
-            pos++;
-        }
-
-        int count = 0;
-        for (int i = len - 1; i >= pos; i--) {
-            grouped.prepend(result[i]);
-            count++;
-            if (count % 3 == 0 && i > pos) {
-                grouped.prepend('_');
-            }
-        }
-        result = grouped;
     }
 
     // 处理宽度和对齐
@@ -561,7 +538,9 @@ bool JZFormatBinary::init(const QString& text, QString& error)
     QString current;
     int argIndex = 0;
 
-    for (int i = 0; i < text.size(); ++i) {
+    QList<int> arg_list;
+    for (int i = 0; i < text.size(); ++i) 
+    {
         QChar c = text[i];
 
         if (c == '{')
@@ -576,9 +555,26 @@ bool JZFormatBinary::init(const QString& text, QString& error)
         }
         else if (c == "}")
         {
+            current = current.trimmed();
+
+
             Block block;
             block.type = Placeholder;
-            block.argIndex = argIndex++;
+
+            if (!current.isEmpty())
+            {
+                block.argIndex = current.toInt();
+                arg_list << block.argIndex;
+            }
+            else
+            {
+                //跳过显示分配的
+                while (arg_list.contains(argIndex))
+                    argIndex++;
+
+                block.argIndex = argIndex++;
+            }
+            
             m_blocks.push_back(block);
             state = Normal;
         }

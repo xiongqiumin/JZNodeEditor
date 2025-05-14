@@ -1,6 +1,7 @@
 ﻿#ifndef JZNODE_FUNCTION_DEFINE_H_
 #define JZNODE_FUNCTION_DEFINE_H_
 
+#include <functional>
 #include <QSharedPointer>
 #include "JZNodeType.h"
 
@@ -75,8 +76,8 @@ typedef QSharedPointer<BuiltInFunction> BuiltInFunctionPtr;
 class JZCParamDefine
 {
 public:
-    CFunctionPtr read;
-    CFunctionPtr write;
+    std::function<QVariant(void*)> read;
+    std::function<void(void*,const QVariant &v)> write;
 };
 
 class JZFunctionName

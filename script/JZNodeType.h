@@ -109,13 +109,21 @@ enum
 };
 
 class JZCParamDefine;
+class JZNodeObject;
 class QVariantPtr
 {
 public:
     QVariantPtr();
+    bool isCParam() const;
+
+    QVariant value() const;
+    void setValue(const QVariant& v);
 
     int type;
+
     QSharedPointer<QVariant> ptr;
+
+    void* cobj;
     const JZCParamDefine* cparam;
 };
 
@@ -174,7 +182,6 @@ QDataStream &operator<<(QDataStream &s, const JZNodeObjectNull&param);
 QDataStream &operator>>(QDataStream &s, JZNodeObjectNull&param);
 Q_DECLARE_METATYPE(JZNodeObjectNull)
 
-class JZNodeObject;
 class JZSignalDefine;
 class JZFunctionDefine;
 class JZNodeType

@@ -1,5 +1,6 @@
 #include <QVBoxLayout>
 #include "JZVisionWidget.h"
+#include "modules/opencv/CvToQt.h"
 
 //JZCameraListWidget
 JZCameraListWidget::JZCameraListWidget(QWidget* parent)
@@ -60,6 +61,9 @@ void JZCameraListWidget::onCameraSetting()
 
 void JZCameraListWidget::onFrameReady(cv::Mat mat)
 {
+	JZCamera *camera = qobject_cast<JZCamera*>(sender());
+	QString name = camera->objectName();
+	m_view->label(name)->setImage(QtOcv::mat2Image(mat));
 }
 
 //JZCameraViewWidget
@@ -73,10 +77,33 @@ JZCameraViewWidget::~JZCameraViewWidget()
 
 void JZCameraViewWidget::init()
 {
+	for (int i = 0; i < m_labelList.size(); i++)
+		delete m_labelList[i].label;
 
+	m_labelList.clear();
 }
 
 JZImageLabel* JZCameraViewWidget::label(QString name)
 {
-	return m_label.value(name, nullptr);
+	for (int i = 0; i < m_labelList.size(); i++)
+	{
+		if (m_labelList[i].name == name)
+			return m_labelList[i].label;
+	}
+	
+	return nullptr;
+}
+
+void JZCameraViewWidget::resizeEvent(QResizeEvent* event)
+{
+	QWidget::resizeEvent(event);
+
+	if (m_labelList.size() == 1)
+	{
+		m_labelList[0].label->setGeometry(0, 0, width(), height());
+	}
+	else
+	{
+
+	}
 }

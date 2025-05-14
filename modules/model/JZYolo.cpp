@@ -123,6 +123,31 @@ QDataStream& operator>>(QDataStream& s, JZModelYoloConfig& param)
     return s;
 }
 
+//JZYoloResult
+QList<JZGraphic> JZYoloResult::toGraphics(const QList<JZYoloResult>& result)
+{
+    QList<QColor> color_list;
+    color_list.push_back(QColor(255, 0, 0));    // 蓝色
+    color_list.push_back(QColor(0, 255, 0));    // 绿色
+    color_list.push_back(QColor(0, 0, 255));   // 红色
+    color_list.push_back(QColor(255, 255, 0));  // 青色
+    color_list.push_back(QColor(255, 0, 255));  // 品红色
+    color_list.push_back(QColor(0, 255, 255));  // 黄色
+    color_list.push_back(QColor(128, 0, 0));    // 深蓝色
+    color_list.push_back(QColor(0, 128, 0));    // 深绿色
+    color_list.push_back(QColor(0, 0, 128));   // 深红色
+    color_list.push_back(QColor(128, 128, 0));   // 深青色);
+
+    QList<JZGraphic> g_list;
+    for (int i = 0; i < result.size(); i++)
+    {
+        auto& ret = result[i];
+        JZGraphic g = JZGraphic::fromRect(ret.rect, color_list[ret.id % 10]);
+        g_list.push_back(g);
+    }
+    return g_list;
+}
+
 //JZYolo
 JZYolo::JZYolo()
 {
@@ -218,6 +243,7 @@ QList<JZYoloResult> JZYolo::forward(Mat frame)
         QString label = m_classList[classIds[idx]];
     
         JZYoloResult ret;
+        ret.id = classIds[idx];
         ret.name = label;
         ret.rect = toQRect(box);
         ret.confidence = confidence;

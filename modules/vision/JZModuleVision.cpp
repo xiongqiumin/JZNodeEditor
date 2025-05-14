@@ -27,7 +27,18 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZCameraViewWidget> cls_camera_view(cls_id++, "JZCameraViewWidget", "QWidget");
     cls_camera_view.regist();
 
+    jzbind::ClassBind<JZTemplateMatch> cls_template_match(cls_id++, "JZTemplateMatch", "QObject");
+    cls_template_match.def("match", true, &JZTemplateMatch::match);
+    cls_template_match.regist();
+
+    jzbind::ClassBind<BrightnessDetectorResult> cls_birghtness_ret(cls_id++, "BrightnessDetectorResult");
+    cls_birghtness_ret.setValueType(true);
+    cls_birghtness_ret.defProperty("cast", &BrightnessDetectorResult::cast);
+    cls_birghtness_ret.defProperty("da", &BrightnessDetectorResult::da);
+    cls_birghtness_ret.regist();
+
     auto func_inst = env->functionManager();
+    func_inst->registCFunction("JZTemplateMatchInit", true, jzbind::createFuncion(JZTemplateMatchInit));
    
     func_inst->registCFunction("JZVisionCropImage", true, jzbind::createFuncion(JZVisionCropImage));
     func_inst->registCFunction("JZVisionImageFlip", true, jzbind::createFuncion(JZVisionImageFlip));
@@ -35,7 +46,7 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZVisionPerspectiveTransform", true, jzbind::createFuncion(JZVisionPerspectiveTransform));
     func_inst->registCFunction("JZVisionSkeleton", true, jzbind::createFuncion(JZVisionSkeleton));
 
-    func_inst->registCFunction("JZVisionBlobDetector", true, jzbind::createFuncion(JZVisionBlobDetector));
+    //func_inst->registCFunction("JZVisionBlobDetector", true, jzbind::createFuncion(JZVisionBlobDetector));
     func_inst->registCFunction("JZVisionBrightnessDetector", true, jzbind::createFuncion(JZVisionBrightnessDetector));
     func_inst->registCFunction("JZVisionColorIdentify", true, jzbind::createFuncion(JZVisionColorIdentify));
 

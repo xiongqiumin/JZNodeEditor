@@ -110,6 +110,7 @@ public:
     bool isInherits(const QString &name) const;
     bool isCopyable() const;
     bool isCObject() const;
+    bool isNull() const;
     bool isValueType() const;
     const QString &className() const;
     int type() const;
@@ -211,6 +212,7 @@ public:
     int type() const;
     void setType(int type);
 
+    bool isNull() const;
     JZNodeObject *object() const;
 
     void relaseObject();   //设置为空

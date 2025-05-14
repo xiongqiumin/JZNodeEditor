@@ -12,6 +12,7 @@
 #include "JZNodeFlow.h"
 #include "JZNodeOperator.h"
 #include "LogManager.h"
+#include "JZParamHelper.h"
 
 // GraphNode
 GraphNode::GraphNode()
@@ -1989,28 +1990,37 @@ JZNode* JZNodeCompiler::continueParentNode(int child_id)
     return nullptr;
 }
 
-void JZNodeCompiler::addConstructor(SignalConnectInfo info)
+void JZNodeCompiler::addClassInitFunction(ClassInitInfo info)
 {
     for (int i = 0; i < info.irList.size(); i++)
     {
         Q_ASSERT(!info.irList[i].isStack());
     }
-    m_builder->addClassConstructor(m_className, info);
+    m_builder->addClassInitFunction(m_className, info);
+}
+
+void JZNodeCompiler::addGet(QString objName, QString typeName, int& ptr_id)
+{
+    int ptr_type = m_env->nameToType(JZNodeType::pointerType(typeName));
+    int obj_id = allocStack(JZNodeType::pointerType("QObject"));
+    ptr_id = allocStack(ptr_type);
+
+    QList<JZNodeIRParam> in, out;
+    in << irThis() << irLiteral(objName);
+    out << irId(obj_id);
+    addCall("QObject::getChild",in,out);
+
+    addConvert(irId(ptr_id), ptr_type, irId(obj_id));
 }
 
 void JZNodeCompiler::addGetOrInit(QString objName, QString typeName, const QByteArray& init_buffer, int& ptr_id)
 {
-    ptr_id = allocStack(JZNodeType::pointerType(typeName));
-    int obj_id = allocStack(typeName);
-
-    QList<JZNodeIRParam> in, out;
-    in << irThis() << irLiteral(objName);
-    out << irId(ptr_id);
-    addCall("QObject::getChild",in,out);
+    addGet(objName, typeName, ptr_id);
 
     addCompare(irId(ptr_id),irLiteral(QVariant::fromValue(JZNodeObjectNull())), OP_eq);
     auto jne = addJmp(OP_jne);
 
+    int obj_id = allocStack(typeName);
     addCall("createObject", { irLiteral(typeName) }, { irId(obj_id) });
     addCall("QObject::setParent", { irId(obj_id), irLiteral(objName), irThis()}, {});
     addCall(typeName + "::init", { irId(obj_id), irLiteral(init_buffer) }, {});
@@ -2290,6 +2300,40 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(JZScriptItem *file,const QS
     }
 }
 
+bool JZNodeCompiler::checkVariableExist(JZScriptItem *file, const QString &name, QString &error)
+{
+    if(name.isEmpty())
+    {
+        error = errorString(Error_varNameEmpty, {});
+        return false;
+    }
+
+    auto info = getVariableInfo(file, name);
+    if(!info)
+    {
+        error = errorString(Error_noVariable, { name });
+        return false;
+    }
+
+    return true;   
+}
+
+bool JZNodeCompiler::checkVariableType(JZScriptItem *file, const QString& name, int data_type, QString& error)
+{
+    auto env = file->project()->environment();
+    if (!checkVariableExist(file, name, error))
+        return false;
+
+    auto def = getVariableInfo(file, name);
+    if (!env->isSameType(env->nameToType(def->type),data_type))
+    {
+        error = name + "不是" + env->typeToName(data_type);
+        return false;
+    }
+
+    return true;
+}
+
 const JZFunctionDefine* JZNodeCompiler::function(JZScriptItem* file, const QString& name)
 {
     const JZFunctionDefine* func = file->project()->function(name);
@@ -2341,20 +2385,7 @@ const JZParamDefine *JZNodeCompiler::getVariableInfo(const QString &name)
 
 bool JZNodeCompiler::checkVariableExist(const QString &name,QString &error)
 {
-    if(name.isEmpty())
-    {
-        error = "no variable name input";
-        return false;
-    }
-
-    auto info = getVariableInfo(name);
-    if(!info)
-    {
-        error = "no such element " + name;
-        return false;
-    }
-
-    return true;
+    return checkVariableExist(m_scriptItem,name,error);
 }
 
 bool JZNodeCompiler::checkVariableType(const QString& name, QString data_type, QString& error)
@@ -2365,18 +2396,7 @@ bool JZNodeCompiler::checkVariableType(const QString& name, QString data_type, Q
 
 bool JZNodeCompiler::checkVariableType(const QString &name, int data_type, QString &error)
 {
-    auto env = project()->environment();
-    if (!checkVariableExist(name, error))
-        return false;
-
-    auto def = getVariableInfo(name);
-    if (!env->canConvert(env->nameToType(def->type),data_type))
-    {
-        error = name + "不是" + env->typeToName(data_type);
-        return false;
-    }
-
-    return true;    
+    return checkVariableType(m_scriptItem,name,data_type,error);
 }
 
 bool JZNodeCompiler::checkInitValue(int type,const QString & text)
@@ -2780,6 +2800,14 @@ int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
     }
     else if(param.isThis())
         type = JZNodeType::pointerType(env->nameToType(m_className));
+    else if (param.isIdRef())
+    {
+        int class_type = irParamType(irId(param.id()));
+        auto meta = m_env->meta(class_type);
+        auto def = JZParamHelper::memberDefine(meta, param.ref());
+        if (def)
+            type = m_env->nameToType(def->type);
+    }
     
     Q_ASSERT(type != Type_none);
     return type;

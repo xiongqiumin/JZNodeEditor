@@ -36,9 +36,10 @@ void JZModuleModel::regist(JZScriptEnvironment *env)
     cls_model_manger.regist();
 
     jzbind::ClassBind<JZYoloResult> cls_yolo_ret(cls_id++, "JZYoloResult");
-    cls_yolo_ret.regist();
-
     registList<JZYoloResult>(env, cls_id++);
+
+    cls_yolo_ret.def("toGraphics", true, &JZYoloResult::toGraphics);
+    cls_yolo_ret.regist();
 
     jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "JZYolo", "JZModel");
     cls_yolo.def("forward", true, &JZYolo::forward);
@@ -52,8 +53,8 @@ void JZModuleModel::regist(JZScriptEnvironment *env)
     cls_yolo_view.def("setYoloResult", true, &JZYoloView::setYoloResult);
     cls_yolo_view.regist();
     
-    func_inst->registCFunction("JZModelInit", "true", jzbind::createFuncion(JZModelInit));
-    func_inst->registCFunction("JZModelGet", "false", jzbind::createFuncion(JZModelGet, CFunction::Reference));
+    func_inst->registCFunction("JZModelInit", true, jzbind::createFuncion(JZModelInit));
+    func_inst->registCFunction("JZModelGet", false, jzbind::createFuncion(JZModelGet, CFunction::Reference));
 
     env->nodeFactory()->registNode(Node_ModelInit, createJZNode<JZNodeModelInit>);
     env->nodeFactory()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);    

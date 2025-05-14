@@ -10,8 +10,9 @@
 #include "JZNodeQtWrapper.h"
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
-#include "mvvm/JZNodeVariableBind.h"
 #include "JZScriptEnvironment.h"
+#include "runtime/JZNodeUiLoader.h"
+#include "mvvm/JZNodeVariableBind.h"
 
 void JZObjectConnect(JZNodeObject* sender, JZFunctionPointer signal, JZFunctionPointer slot)
 {
@@ -629,6 +630,11 @@ bool JZNodeObject::isCObject() const
     return m_define->isCObject;
 }
 
+bool JZNodeObject::isNull() const
+{
+    return m_define->isCObject && !m_cobj;
+}
+
 bool JZNodeObject::isValueType() const
 {
     return m_define->isValueType();
@@ -672,15 +678,7 @@ QVariant JZNodeObject::param(const QString &name) const
         if (!it->cparam)
             return *it->ptr.data();
         else
-        {
-            auto c = it->cparam;
-            Q_ASSERT(c);
-
-            QVariantList in, out;
-            in << QVariant::fromValue(JZNodeObjectPointer((JZNodeObject*)this, false));
-            c->read->call(in, out);
-            return out[0];
-        }
+            return it->value();
     }
     Q_ASSERT(0);
     return QVariant();
@@ -702,13 +700,7 @@ void JZNodeObject::setParam(const QString &name, const QVariant &value)
         }
         else
         {
-            auto c = it->cparam;
-            Q_ASSERT(c);
-
-            QVariantList in, out;
-            in << QVariant::fromValue(JZNodeObjectPointer((JZNodeObject*)this, false));
-            in << value;
-            c->write->call(in, out);
+            it->setValue(value);
         }
 
         if (m_paramBind.contains(name))
@@ -1032,6 +1024,14 @@ int JZNodeObjectPointer::type() const
 void JZNodeObjectPointer::setType(int type)
 {
     m_dataType = type;
+}
+
+bool JZNodeObjectPointer::isNull() const
+{
+    if (!m_data || !m_data->object || m_data->object->isNull())
+        return true;
+
+    return false;
 }
 
 JZNodeObject *JZNodeObjectPointer::object() const
@@ -1478,12 +1478,6 @@ void JZNodeObjectManager::copy(JZNodeObject *src,JZNodeObject *dst) const
 {
     Q_ASSERT(dst->isCopyable());
     
-    if(src->isCObject())    
-    {
-        src->meta()->cMeta.copy(src->cobj(), dst->cobj());
-        return;
-    }
-
     auto cBase = src->meta()->cSuper();
     if (cBase)
         cBase->cMeta.copy(src->cobj(), dst->cobj());
@@ -1491,87 +1485,98 @@ void JZNodeObjectManager::copy(JZNodeObject *src,JZNodeObject *dst) const
     auto it = dst->m_params.begin();
     while(it != dst->m_params.end())
     {       
-        QVariant* v1 = src->m_params[it.key()].ptr.data();
-        QVariant* v2 = it->ptr.data();
-        if (isJZObject(*v1))
+        if (!it->isCParam())
         {
-            JZNodeObject *src_ptr = toJZObject(*v1);
-            JZNodeObject *dst_ptr = toJZObject(*v2);
-            copy(src_ptr, dst_ptr);
+            QVariant* v1 = src->m_params[it.key()].ptr.data();
+            QVariant* v2 = it->ptr.data();
+            if (isJZObject(*v1))
+            {
+                JZNodeObject* src_ptr = toJZObject(*v1);
+                JZNodeObject* dst_ptr = toJZObject(*v2);
+                copy(src_ptr, dst_ptr);
+            }
+            else
+                *v2 = *v1;
         }
-        else
-            *v2 = *v1;
         
         it++;
     }
 }
 
-void JZNodeObjectManager::create(const JZNodeObjectDefine *def,JZNodeObject *obj) const
+void JZNodeObjectManager::create(const JZNodeObjectDefine *in_def,JZNodeObject *obj) const
 {    
-    Q_ASSERT(def);    
-    if (def->isCObject)
-    {
-        if (!def->cMeta.isAbstract)
-        {
-            auto cobj = def->cMeta.create();
-            obj->setCObject(cobj, true);
-        }
-        else
-        {
-            obj->m_cobj = nullptr;
-            obj->m_cobjOwner = false;
-        }
-        return;
-    }        
+    Q_ASSERT(in_def);
 
-    if (def->isUiWidget)
-    {
-        QWidget* widget = g_engine->createWidget(def->widgetXml);
-        Q_ASSERT(widget);
+    QList<const JZNodeObjectDefine*> def_list;
+    const JZNodeObjectDefine* obj_def = in_def;
 
-        obj->setCObject(widget, true);
-        obj->updateUiWidget(widget);
-    }
-    else
+    bool c_init = false;
+    while (obj_def)
     {
-        if (!def->superName.isEmpty())
-            create(def->super(), obj);
+        def_list << obj_def;
+        if (obj_def->isCObject && !c_init)
+        {
+            c_init = true;
+            if (!obj_def->cMeta.isAbstract)
+            {
+                auto cobj = obj_def->cMeta.create();
+                obj->setCObject(cobj, true);
+            }
+            else
+            {
+                obj->m_cobj = nullptr;
+                obj->m_cobjOwner = false;
+            }
+        }
+
+        obj_def = obj_def->super();
     }
+
 
     QObject* qobj = nullptr;
-    if (def->isInherits(Type_object))
+    if (in_def->isInherits(Type_object))
         qobj = JZObjectCast<QObject>(obj);
 
-    auto it = def->params.begin();
-    while(it != def->params.end())
+    for (int i = def_list.size() - 1; i >= 0; i--)
     {
-        auto *param = &it.value();
-        if (obj->m_params.contains(param->name)) //widget param, 前面已经创建
+        obj_def = def_list[i];
+        if (obj_def->isUiWidget)
         {
+            QWidget* widget = JZObjectCast<QWidget>(obj);
+
+            JZNodeUiLoader ui;
+            ui.create(widget, obj_def->widgetXml);
+            obj->updateUiWidget(widget);
+        }
+
+        auto it = obj_def->params.begin();
+        while(it != obj_def->params.end())
+        {
+            auto *param = &it.value();
+            Q_ASSERT(!obj->m_params.contains(param->name));
+
+            QVariantPtr ptr;
+            ptr.type = m_env->nameToType(param->type);
+            if (!obj->cparam(param->name))
+            {
+                *ptr.ptr = g_engine->createVariable(m_env->nameToType(param->type), param->value);        
+                
+                if (qobj && isInherits(ptr.type, Type_object))
+                {
+                    QObject* child = JZObjectCast<QObject>(toJZObject(*ptr.ptr));
+                    child->setObjectName(param->name);
+                    child->setParent(qobj);
+                }
+            }
+            else
+            {
+                ptr.cobj = obj->m_cobj;
+                ptr.cparam = obj->cparam(param->name);
+            }
+            obj->m_params[param->name] = ptr;
+
             it++;
-            continue;
         }
-
-        QVariantPtr ptr;
-        ptr.type = m_env->nameToType(param->type);
-        if (!obj->cparam(param->name))
-        {
-            *ptr.ptr = g_engine->createVariable(m_env->nameToType(param->type), param->value);            
-        }
-        else
-        {
-            ptr.cparam = obj->cparam(param->name);
-        }
-        obj->m_params[param->name] = ptr;
-        
-        if (qobj && isInherits(ptr.type,Type_object))
-        {
-            QObject* child = JZObjectCast<QObject>(toJZObject(*ptr.ptr));
-            child->setObjectName(param->name);
-            child->setParent(qobj);
-        }
-
-        it++;
     }
 }
 

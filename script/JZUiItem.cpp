@@ -11,29 +11,30 @@ JZUiItem::JZUiItem()
     :JZProjectItem(ProjectItem_ui)
 {
     m_name = "ui";
-    m_xml =  R"(<?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>widget</class>
- <widget class="QWidget" name="widget">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>640</width>
-    <height>480</height>
-   </rect>
-  </property>        
- </widget>
- <resources/>
- <connections/>
-</ui>
-)";
-
+    initXml(Ui_Widget);
 }
 
 JZUiItem::~JZUiItem()
 {
     
+}
+
+void JZUiItem::initXml(UiType type)
+{
+    QString temp;
+    if (type == Ui_Widget)
+        temp = "Widget.ui";
+    else if (type == Ui_Dialog)
+        temp = "Dialog.ui";
+    else if (type == Ui_MainWindow)
+        temp = "MainWindow.ui";
+
+    QFile file(":/JZNodeEditor/Resources/WidgetXml/" + temp);
+    if (file.open(QIODevice::ReadOnly))
+    {
+        m_xml = QString::fromUtf8(file.readAll());
+        file.close();
+    }
 }
 
 bool JZUiItem::save(QString filepath)

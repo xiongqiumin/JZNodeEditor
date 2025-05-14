@@ -14,7 +14,31 @@ QVariantPtr::QVariantPtr()
 {
     type = Type_none;
     ptr = QSharedPointer<QVariant>(new QVariant());
+    
+    cobj = nullptr;
     cparam = nullptr;
+}
+
+bool QVariantPtr::isCParam() const
+{
+    return (cparam != nullptr);
+}
+
+QVariant QVariantPtr::value() const
+{
+    if (!cparam)
+        return *ptr;
+    else
+        return cparam->read(cobj);
+}
+
+void QVariantPtr::setValue(const QVariant& v)
+{
+    Q_ASSERT(JZNodeType::variantType(v) == type);
+    if (!cparam)
+        *ptr = v;
+    else
+        cparam->write(cobj,v);
 }
 
 //JZEnum

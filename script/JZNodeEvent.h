@@ -4,13 +4,7 @@
 #include <QJsonObject>
 #include "JZNode.h"
 #include "JZNodeObject.h"
-
-struct SignalConnectInfo
-{
-    QString connectFunction;        
-    QList<JZNodeIRParam> irList;
-    QJsonObject param;
-};
+#include "JZNodeCompilerInfo.h"
 
 //JZNodeSignalConnect
 class JZNodeSignalConnect : public JZNode
@@ -158,7 +152,7 @@ public:
     bool compilerSignal(JZNodeCompiler* compiler, QString& error);
 
 protected:    
-    SignalConnectInfo m_connectInfo;
+    ClassInitInfo m_connectInfo;
 };
 
 //JZNodeButtonClickedEvent

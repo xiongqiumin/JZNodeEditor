@@ -6,6 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include "JZNodeObject.h"
 #include "JZModel.h"
+#include "jzWidgets/JZImageLabel.h"
 
 using namespace cv;
 
@@ -23,7 +24,10 @@ QDataStream& operator>>(QDataStream& s, JZModelYoloConfig& param);
 class JZYoloResult
 {
 public:
+    QList<JZGraphic> toGraphics(const QList<JZYoloResult>& result);
+
     QRect rect;
+    int id;
     QString name;
     double confidence;
 };

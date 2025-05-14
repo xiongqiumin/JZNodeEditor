@@ -98,12 +98,28 @@ void JZNodeModelForward::loadFromStream(QDataStream& s)
     JZNode::loadFromStream(s);    
 }
 
+bool JZNodeModelForward::updateNode(QString &error)
+{
+    auto init_script = m_file->getClassItem()->memberFunction("init");
+    auto init_list = init_script->findNodeByType(Node_ModelInit);
+    if(init_list.size() != 1)
+    {
+        error = "no JZNodeModelInit in init";
+        return false;
+    }
+
+    auto env = m_file->project()->environment();
+    if (!JZNodeCompiler::checkVariableType(m_file,"this.modelManager", env->nameToType("JZModelManager"), error))
+        return false;
+
+
+
+    return true;
+}
+
 bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
 {
     auto env = c->env();
-    if (!c->checkVariableType("this.modelManager", env->nameToType("JZModelManager"), error))
-        return false;
-
     if (!c->addFlowInput(m_id, error))
         return false;
 

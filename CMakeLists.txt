@@ -222,6 +222,8 @@ set(JZNodeCore_SOURCES
     modules/vision/JZVision.h
     modules/vision/JZVisionWidget.cpp
     modules/vision/JZVisionWidget.h
+	modules/vision/JZVisonWindow.cpp
+	modules/vision/JZVisonWindow.h
     modules/vision/JZVisionNode.cpp
     modules/vision/JZVisionNode.h  
     modules/vision/JZShapeMatch.cpp

@@ -1,5 +1,6 @@
 #include "JZTemplateMatch.h"
 #include "modules/opencv/CvToQt.h"
+#include "JZNodeUtils.h"
 
 using namespace cv;
 
@@ -28,10 +29,11 @@ void JZTemplateMatch::init(const JZTemplateConfig& config)
     m_templ = imread(config.templatePath.toLocal8Bit().data(), IMREAD_GRAYSCALE);
 }
 
-QRect JZTemplateMatch::match(cv::Mat img)
+QRect JZTemplateMatch::match(cv::Mat src)
 {
-    if (img.type() != CV_8U)
-        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+    cv::Mat img = src;
+    if (src.type() != CV_8U)
+        cv::cvtColor(src, img, cv::COLOR_BGR2GRAY);
 
     // 创建结果矩阵
     Mat result;
@@ -51,4 +53,14 @@ QRect JZTemplateMatch::match(cv::Mat img)
         return QRect();
 
     return toQRect(cv::Rect(maxLoc, Point(maxLoc.x + m_templ.cols, maxLoc.y + m_templ.rows)));
+}
+
+void JZTemplateMatchInit(QObject* obj, QString name, QByteArray buffer)
+{
+    JZTemplateMatch* temp_match = new JZTemplateMatch();
+    temp_match->setObjectName(name);
+    temp_match->setParent(obj);
+
+    JZTemplateConfig cfg = JZNodeUtils::fromBuffer<JZTemplateConfig>(buffer);
+    temp_match->init(cfg);
 }

@@ -161,7 +161,6 @@ public:
     JZScriptEnvironment *environment();
     
     QVariant createVariable(int type,const QString &value = QString());
-    QWidget *createWidget(const QString &xml);
 
     bool hasParam(int stack_level, const JZNodeIRParam &param);
     QVariant getParam(int stack_level,const JZNodeIRParam &param);

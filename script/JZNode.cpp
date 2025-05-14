@@ -572,6 +572,12 @@ const QString& JZNode::name() const
     return m_name;
 }
 
+QString JZNode::uniqueName() const
+{
+    QString unique = m_file->name() + "_" + name() + "_" + QString::number(m_id);
+    return unique;
+}
+
 bool JZNode::canRemove()
 {
     return !(m_flag & NodeProp_noRemove);

@@ -152,7 +152,7 @@ JZNodeCameraReadyEvent::JZNodeCameraReadyEvent()
     int pin = addParamOut("frame");
     setPinType(pin, { "Mat" });
 
-    m_connectInfo.connectFunction = "JZCameraConnect";
+    m_connectInfo.function = "JZCameraConnect";
     m_connectInfo.irList << irRef("this") << irRef("this.cameraManager") << irId(0) << irLiteral(0);
 }
 

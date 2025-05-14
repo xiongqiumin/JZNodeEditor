@@ -31,5 +31,6 @@ protected:
     JZTemplateConfig m_config;
 };
 
+void JZTemplateMatchInit(QObject *obj,QString name,QByteArray buffer);
 
 #endif

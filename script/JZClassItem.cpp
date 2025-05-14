@@ -241,7 +241,8 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
     JZNodeObjectDefine define;
     define.className = m_name;
     define.superName = m_super;
-    define.id = obj_inst->getClassId(m_name);
+    if(obj_inst)
+        define.id = obj_inst->getClassId(m_name);
     define.manager = obj_inst;
 
     auto item_list = itemList(ProjectItem_any);

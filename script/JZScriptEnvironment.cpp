@@ -514,13 +514,16 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
 
         if (isInherits(src_base_type, Type_object))
         {
-            auto obj = toJZObject(v);
+            JZNodeObjectPointer ptr = v.value<JZNodeObjectPointer>();
+            if (ptr.isNull())
+                return QVariant();
+
+            auto obj = ptr.object();
             QObject *qobj = (QObject*)obj->cobj();
-            QString qobject_name = m_objectManager.getQObjectType(dst_type);
+            QString qobject_name = m_objectManager.getQObjectType(dst_base_type);
             if (!qobj->inherits(qUtf8Printable(qobject_name)))
                 return QVariant();
 
-            JZNodeObjectPointer ptr = v.value<JZNodeObjectPointer>();
             ptr.setType(dst_type);
             return QVariant::fromValue(ptr);
         }
