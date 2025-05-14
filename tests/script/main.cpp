@@ -3,7 +3,6 @@
 #include "JZNodeInit.h"
 #include "test_benchmark.h"
 #include "test_script.h"
-#include "test_opencv.h"
 #include "test_anglescript.h"
 #include "test_debug.h"
 #include "test_tx.h"

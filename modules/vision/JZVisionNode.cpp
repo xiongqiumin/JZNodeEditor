@@ -1,5 +1,6 @@
 #include "JZVisionNode.h"
 #include "JZNodeCompiler.h"
+#include "JZNodeUtils.h"
 
 //JZNodeVisionCropImage
 JZNodeVisionCropImage::JZNodeVisionCropImage()
@@ -336,20 +337,54 @@ JZNodeVisionTemplateMatch::JZNodeVisionTemplateMatch()
 
     addFlowIn();
     addFlowOut();
+
+    int in = addParamIn("image");
+    setPinType(in, { "Mat" });
 }
 
-bool JZNodeVisionTemplateMatch::compiler(JZNodeCompiler *c, QString &error)
+JZNodeVisionTemplateMatch::~JZNodeVisionTemplateMatch()
+{
+}
+
+void JZNodeVisionTemplateMatch::setConfig(const JZTemplateConfig& config)
+{
+    m_config = config;
+}
+
+JZTemplateConfig JZNodeVisionTemplateMatch::config()
+{
+    return m_config;
+}
+
+bool JZNodeVisionTemplateMatch::compiler(JZNodeCompiler* c, QString& error)
 {
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    QString obj_name = m_file->name() + "_" + QString::number(m_id);
+
+    QByteArray buffer = JZNodeUtils::toBuffer(m_config);
+
+    int obj_id;
+    c->addGetOrInit(obj_name, "JZTemplate", buffer, obj_id);
+
     QList<JZNodeIRParam> in, out;
-    in << irId(c->paramId(m_id, paramIn(0)));
-    in << irId(c->paramId(m_id, paramIn(1)));
-    out << irId(c->paramId(m_id, paramOut(0)));
-    c->addCall("JZVisionTemplateMatch", in, out);
+    in << irId(obj_id) << irId(c->paramId(m_id, paramIn(0)));
+    c->addCall("JZOpencvTemplateMatch", in, out);
 
     return true;
+}
+
+void JZNodeVisionTemplateMatch::saveToStream(QDataStream& s) const
+{
+    JZNode::saveToStream(s);
+    s << m_config;
+}
+
+void JZNodeVisionTemplateMatch::loadFromStream(QDataStream& s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_config;
 }
 
 //JZNodeVisionFindCircle

@@ -14,7 +14,7 @@ JZCommConfigDialog::JZCommConfigDialog(QWidget *parent)
     auto group = m_editor->addGroup("基本");    
     m_editor->addProp("名称", &m_config.name, group );
 
-    QList<int> enmuList = { Comm_ModbusRtuClient, Comm_ModbusTcpClient };
+    QList<int> enmuList = { Modbus_rtuClient, Modbus_tcpClient };
     QStringList enumTextList = {"ModbusRtuClient" ,"ModbusTcpClient"};
     m_typeProp = m_editor->addPropIntEnum("类型", &m_config.commType, enmuList, enumTextList, group);
 
@@ -54,8 +54,8 @@ JZCommConfigDialog::JZCommConfigDialog(QWidget *parent)
     modbus_tcp << m_editor->addProp("Ip", &m_config.modbus.conn.ip, comm_group);
     modbus_tcp << m_editor->addProp("Port", &m_config.modbus.conn.port, comm_group);
 
-    addPage(Comm_ModbusRtuClient, modbus_rtu);
-    addPage(Comm_ModbusTcpClient, modbus_tcp);
+    addPage(Modbus_rtuClient, modbus_rtu);
+    addPage(Modbus_tcpClient, modbus_tcp);
 }
 
 void JZCommConfigDialog::setConfig(JZCommConfig cfg)
@@ -106,7 +106,7 @@ void JZCommInitDialog::addConfig()
 
     JZCommConfig cfg;
     cfg.name = JZRegExpHelp::uniqueString("comm", camera_list);
-    cfg.commType = Comm_ModbusRtuClient;
+    cfg.commType = Modbus_rtuClient;
 
     JZCommConfigDialog dlg(this);
     dlg.setConfig(cfg);

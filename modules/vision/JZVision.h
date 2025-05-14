@@ -2,26 +2,32 @@
 #define JZ_VISION_H_
 
 #include <opencv2/opencv.hpp>
+#include <QObject>
+
+#include "JZShapeMatch.h"
+#include "JZTemplateMatch.h"
 
 using namespace cv;
 
-Mat JZVisionCropImage(Mat mat,cv::Rect rc);
-Mat JZVisionImageFlip(Mat mat,int h,int v);
+Mat JZVisionCropImage(Mat mat,QRect rc);
+Mat JZVisionImageFlip(Mat mat,bool h,bool v);
 void JZVisionImageMorphology();
-void JZVisionImageRotate();
-void JZVisionImageSplice();
-void JZVisionPerspectiveTransform();
-void JZVisionSkeleton();
+Mat JZVisionPerspectiveTransform(Mat mat,QRect from, QRect to);
+Mat JZVisionSkeleton(Mat src, int intera);
 
-void JZVisionBlobDetector();
-void JZVisionBrightnessDetector();
-void JZVisionColorIdentify();
+std::vector<cv::KeyPoint> JZVisionBlobDetector(Mat src, cv::SimpleBlobDetector::Params param);
 
-void JZVisionShapeMatch();
-void JZVisionTemplateMatch();
+struct BrightnessDetectorResult
+{
+    double cast;
+    double da;
+};
 
-void JZVisionFindCircle();
-void JZVisionFindLine();
+BrightnessDetectorResult JZVisionBrightnessDetector(Mat gary_img);
+double JZVisionColorIdentify(Mat src_ori, Mat src_mat);
+
+void JZVisionFindCircle(Mat in);
+void JZVisionFindLine(Mat in);
 
 
 

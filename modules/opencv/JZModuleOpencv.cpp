@@ -20,10 +20,23 @@ JZModuleOpencv::~JZModuleOpencv()
 {
 }
 
+void JZModuleOpencv::registCvtEnum(JZScriptEnvironment *env)
+{
+    auto obj_inst = env->objectManager();
+    QStringList keyList = { "COLOR_BGR2GRAY",  "COLOR_GRAY2BGR" };
+    QVector<int> valueList = { COLOR_BGR2GRAY,  COLOR_GRAY2BGR };
+
+    JZNodeEnumDefine define;
+    define.init("ColorConversionCodes",keyList, valueList);
+    obj_inst->registEnum(define);
+}
+
 void JZModuleOpencv::regist(JZScriptEnvironment *env)
 {
     qRegisterMetaType<cv::Mat>("cv::Mat");
 
+    auto obj_inst = env->objectManager();
+    
     auto func_inst = env->functionManager();
     int cls_id = Module_OpencvType;
     
@@ -87,6 +100,13 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
         return out;
     }));
 
+    auto cvt_func = func_inst->registCFunction("cvtColor", false, jzbind::createFuncion([](Mat mat, int type)->Mat {
+        Mat out;
+        cv::cvtColor(mat, out, type);
+        return out;
+    }));
+    cvt_func->paramIn[0].type = "ColorConversionCodes";
+
     func_inst->registCFunction("threshold", false, jzbind::createFuncion([](Mat in, int thres){
         Mat out;
         threshold(in, out, thres, 255, THRESH_BINARY);
@@ -118,8 +138,7 @@ void JZModuleOpencv::regist(JZScriptEnvironment *env)
     }));
 
     
-    env->nodeFactory()->registNode(Node_OpencvInit, createJZNode<JZNodeOpencvInit>);
-    env->nodeFactory()->registNode(Node_OpencvTemplate, createJZNode<JZNodeTemplateMatch>);    
+    env->nodeFactory()->registNode(Node_OpencvInit, createJZNode<JZNodeOpencvInit>);        
 
     //convert
     env->registConvert(cls_point.id(), Type_point, jzbind::createConvert<cv::Point,QPoint>(toQPoint));

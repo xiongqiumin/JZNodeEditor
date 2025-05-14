@@ -32,17 +32,12 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZVisionCropImage", true, jzbind::createFuncion(JZVisionCropImage));
     func_inst->registCFunction("JZVisionImageFlip", true, jzbind::createFuncion(JZVisionImageFlip));
     func_inst->registCFunction("JZVisionImageMorphology", true, jzbind::createFuncion(JZVisionImageMorphology));
-    func_inst->registCFunction("JZVisionImageRotate", true, jzbind::createFuncion(JZVisionImageRotate));
-    func_inst->registCFunction("JZVisionImageSplice", true, jzbind::createFuncion(JZVisionImageSplice));
     func_inst->registCFunction("JZVisionPerspectiveTransform", true, jzbind::createFuncion(JZVisionPerspectiveTransform));
     func_inst->registCFunction("JZVisionSkeleton", true, jzbind::createFuncion(JZVisionSkeleton));
 
     func_inst->registCFunction("JZVisionBlobDetector", true, jzbind::createFuncion(JZVisionBlobDetector));
     func_inst->registCFunction("JZVisionBrightnessDetector", true, jzbind::createFuncion(JZVisionBrightnessDetector));
     func_inst->registCFunction("JZVisionColorIdentify", true, jzbind::createFuncion(JZVisionColorIdentify));
-
-    func_inst->registCFunction("JZVisionShapeMatch", true, jzbind::createFuncion(JZVisionShapeMatch));
-    func_inst->registCFunction("JZVisionTemplateMatch", true, jzbind::createFuncion(JZVisionTemplateMatch));
 
     func_inst->registCFunction("JZVisionFindCircle", true, jzbind::createFuncion(JZVisionFindCircle));
     func_inst->registCFunction("JZVisionFindLine", true, jzbind::createFuncion(JZVisionFindLine));

@@ -13,7 +13,10 @@ public:
     virtual ~JZModuleOpencv();
 
     virtual void regist(JZScriptEnvironment *env) override;
-    virtual void unregist(JZScriptEnvironment *env) override;        
+    virtual void unregist(JZScriptEnvironment *env) override;      
+
+protected:
+    void registCvtEnum(JZScriptEnvironment *env);
 };
 
 #endif

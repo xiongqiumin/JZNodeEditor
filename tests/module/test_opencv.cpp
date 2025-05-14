@@ -22,11 +22,7 @@ void OpencvTest::testTemplateMatch()
 
     JZNodeFunction* node_imread = new JZNodeFunction();
     node_imread->setFunction("imread");
-    script->addNode(node_imread);
-
-    JZNodeTemplateMatch* node_match = new JZNodeTemplateMatch();
-    script->addNode(node_match);
-    script->addConnect(node_imread->paramOutGemo(0), node_match->paramInGemo(0));
+    script->addNode(node_imread);    
 }
 
 void test_opencv(int argc, char *argv[])

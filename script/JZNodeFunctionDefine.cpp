@@ -187,17 +187,15 @@ QDataStream &operator>>(QDataStream &s, JZFunctionDefine &param)
 JZFunctionName JZFunctionHelper::splitFunction(const QString& fullname)
 {
     JZFunctionName coor;
-    QStringList list = fullname.split("::");
-    if (list.size() == 1)
+    int idx = fullname.lastIndexOf("::");
+    if (idx == -1)
     {
-        coor.name = list[0];
+        coor.name = fullname;
     }
     else
     {
-        Q_ASSERT(list.size() == 2);
-
-        coor.className = list[0];
-        coor.name = list[1];
+        coor.className = fullname.left(idx);
+        coor.name = fullname.mid(idx + 2);
     }
     return coor;
 }

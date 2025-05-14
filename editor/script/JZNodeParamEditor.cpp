@@ -241,7 +241,7 @@ void JZNodeParamEditor::updateUiItem(int row,const JZParamDefine *def)
     QLineEdit *line = new QLineEdit();
     line->setReadOnly(true);
     if (bind)
-        line->setText(bind->variable);
+        line->setText(bind->path);
     l->addWidget(line);
 
     QPushButton *btn = new QPushButton("设置");
@@ -340,7 +340,7 @@ void JZNodeParamEditor::onUiItemChanged(QTableWidgetItem *item)
     {
         QStringList value = item->text().split("|");        
         JZNodeParamBind info;
-        info.variable = varName;
+        info.path = varName;
         if (value.size() == 2)
         {            
             info.widget = value[0];
@@ -399,7 +399,7 @@ void JZNodeParamEditor::addBindCommand(QString name, JZNodeParamBind define)
     if(oldBind)
         cmd->oldBind = *oldBind;
     else
-        cmd->oldBind.variable = name;
+        cmd->oldBind.path = name;
     cmd->newBind = define;
     m_commandStack.push(cmd);
 }
@@ -474,7 +474,7 @@ void JZNodeParamEditor::changeParam(QString name, JZParamDefine define)
 
 void JZNodeParamEditor::bindParam(QString name, JZNodeParamBind define)
 {
-    if (define.variable.isEmpty())
+    if (define.path.isEmpty())
         m_file->removeBind(name);
     else
         m_file->addBind(define);
@@ -485,7 +485,7 @@ void JZNodeParamEditor::bindParam(QString name, JZNodeParamBind define)
     
     auto item = m_tableUi->item(row, 0);
     auto line = (QLineEdit*)item->data(Qt::UserRole + 1).value<void*>();
-    line->setText(define.variable);
+    line->setText(define.path);
 
     m_tableUi->blockSignals(false);
 }

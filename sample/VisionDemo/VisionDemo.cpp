@@ -91,7 +91,7 @@ void SampleVisionDemo::addInit()
     JZCommModbusInfo modbus;
     comm_cfg.modbus.conn = conn;
     comm_cfg.name = "modbus";
-    comm_cfg.commType = Comm_ModbusRtuClient;
+    comm_cfg.commType = Comm_ModbusClient;
 
     comm_mangare_config.commList << comm_cfg;
     comm_init->setConfig(comm_mangare_config);

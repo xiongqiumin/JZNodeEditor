@@ -8,7 +8,7 @@
 #include "JZNodeTypeHelper.h"
 #include "JZClassItem.h"
 #include "JZProject.h"
-#include "JZNodeVariableBind.h"
+#include "mvvm/JZNodeVariableBind.h"
 
 //JZNodeParamBindEditDialog
 JZNodeParamBindEditDialog::JZNodeParamBindEditDialog(QWidget *parent)
@@ -30,7 +30,7 @@ void JZNodeParamBindEditDialog::init(QString widget)
 void JZNodeParamBindEditDialog::setParamBind(JZNodeParamBind bind)
 {
     m_bind = bind;    
-    ui->boxWidget->setCurrentText(bind.variable);
+    ui->boxWidget->setCurrentText(bind.path);
 }
 
 JZNodeParamBind JZNodeParamBindEditDialog::paramBind()
@@ -45,7 +45,7 @@ JZNodeParamBindEditDialog::~JZNodeParamBindEditDialog()
 
 void JZNodeParamBindEditDialog::on_btnOk_clicked()
 {
-    m_bind.variable = ui->boxWidget->currentText();
+    m_bind.path = ui->boxWidget->currentText();
 
     int index = ui->boxDir->currentIndex();
     if (index == 0)

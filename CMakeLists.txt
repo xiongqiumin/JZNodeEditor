@@ -119,12 +119,12 @@ set(JZNodeCore_SOURCES
     script/JZNodeUtils.h
     script/JZNodeValue.cpp
     script/JZNodeValue.h
-    script/JZNodeVariableBind.cpp
-    script/JZNodeVariableBind.h
     script/JZNodeVM.cpp
     script/JZNodeVM.h
     script/JZRegExpHelp.cpp
     script/JZRegExpHelp.h
+    script/JZFormat.cpp
+    script/JZFormat.h
     script/JZScriptBuildInFunction.cpp
     script/JZScriptBuildInFunction.h
     script/JZScriptUnitTest.cpp
@@ -132,7 +132,9 @@ set(JZNodeCore_SOURCES
     script/JZScriptItemVisitor.cpp
     script/JZScriptItemVisitor.h
     script/JZScriptConvert.cpp
-    script/JZScriptConvert.h  
+    script/JZScriptConvert.h      
+    script/mvvm/JZNodeVariableBind.cpp
+    script/mvvm/JZNodeVariableBind.h
     script/angelscript/as_parser.cpp
     script/angelscript/as_parser.h
     script/angelscript/as_scriptcode.cpp
@@ -214,10 +216,18 @@ set(JZNodeCore_SOURCES
     modules/camera/JZCameraUnitTest.cpp
     
     #vision
-    modules/vision/JZVisionNode.cpp
-    modules/vision/JZVisionNode.h
     modules/vision/JZModuleVision.cpp
     modules/vision/JZModuleVision.h
+    modules/vision/JZVision.cpp
+    modules/vision/JZVision.h
+    modules/vision/JZVisionWidget.cpp
+    modules/vision/JZVisionWidget.h
+    modules/vision/JZVisionNode.cpp
+    modules/vision/JZVisionNode.h  
+    modules/vision/JZShapeMatch.cpp
+    modules/vision/JZShapeMatch.h
+    modules/vision/JZTemplateMatch.cpp
+    modules/vision/JZTemplateMatch.h    
     
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp

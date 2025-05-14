@@ -138,8 +138,17 @@ class JZNodeVisionTemplateMatch : public JZNode
 {
 public:
     JZNodeVisionTemplateMatch();
+    ~JZNodeVisionTemplateMatch();
 
-    virtual bool compiler(JZNodeCompiler *, QString &error) override;
+    void setConfig(const JZTemplateConfig &config);
+    JZTemplateConfig config();
+
+    bool compiler(JZNodeCompiler* c, QString& error);
+    void saveToStream(QDataStream& s) const;
+    void loadFromStream(QDataStream& s);
+
+protected:
+    JZTemplateConfig m_config;
 };
 
 class JZNodeVisionFindCircle : public JZNode
