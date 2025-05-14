@@ -142,7 +142,7 @@ void SampleVisionDemo::addOnFrameReady()
 
     flow_script->addConnect(cam_ready->paramOutGemo(0), display->paramInGemo(0));
     flow_script->addConnect(model_forward->paramOutGemo(0), display->paramInGemo(1));
-
+/*
     //if result > 0
     JZNodeIf *node_if = new JZNodeIf();
     node_if->addElsePin();
@@ -173,6 +173,7 @@ void SampleVisionDemo::addOnFrameReady()
 
     flow_script->addConnect(node_if->subFlowOutGemo(0), write_true->flowInGemo());
     flow_script->addConnect(node_if->subFlowOutGemo(1), write_false->flowInGemo());
+*/
 }
 
 void SampleVisionDemo::addBtnClicked()

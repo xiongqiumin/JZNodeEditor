@@ -1553,7 +1553,11 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *in_def,JZNodeObject *
         while(it != obj_def->params.end())
         {
             auto *param = &it.value();
-            Q_ASSERT(!obj->m_params.contains(param->name));
+            if (obj->m_params.contains(param->name)) //ui widget
+            {
+                it++;
+                continue;
+            }
 
             QVariantPtr ptr;
             ptr.type = m_env->nameToType(param->type);

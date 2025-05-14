@@ -1,4 +1,4 @@
-#include "JZVisionWindow.h"
+#include "JZVisonWindow.h"
 
 JZVisonWindow::JZVisonWindow()
 {

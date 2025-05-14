@@ -472,8 +472,7 @@ target_link_libraries(JZNodeCore Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::SerialPort      
     Qt${QT_VERSION_MAJOR}::PrintSupport
     Qt${QT_VERSION_MAJOR}::Xml    
-    Qt${QT_VERSION_MAJOR}::UiTools
-    E:/libs/MVS/Development/Libraries/win64/MvCameraControl.lib
+    Qt${QT_VERSION_MAJOR}::UiTools    
     ${OpenCV_LIBRARIES})   
     
 add_executable(JZNodeUiRuntime runtime/main.cpp)

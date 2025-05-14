@@ -42,7 +42,7 @@ JZNodeUiLoader::~JZNodeUiLoader()
 }
 
 void JZNodeUiLoader::create(QWidget *w,QString xml)
-{    
+{
     m_widget = w;
 
     QBuffer buffer;

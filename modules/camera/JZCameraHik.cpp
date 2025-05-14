@@ -2,15 +2,46 @@
 #include <QThread>
 #include <QJsonParseError>
 #include <QJsonObject>
+#include <QLibrary>
+#include <QDebug>
 #include "JZCameraHik.h"
 #include "E:\libs\MVS\Development\Includes\MvCameraControl.h"
+
+// 函数指针类型定义
+typedef int(__stdcall *MV_CC_CreateHandleFunc)(void** handle, const MV_CC_DEVICE_INFO* pstDevInfo);
+typedef int(__stdcall *MV_CC_DestroyHandleFunc)(void* handle);
+typedef int(__stdcall *MV_CC_EnumDevicesFunc)(unsigned int nTLayerType, MV_CC_DEVICE_INFO_LIST* pstDevList);
+typedef int(__stdcall *MV_CC_OpenDeviceFunc)(void* handle, unsigned int nAccessMode, unsigned short nSwitchoverKey);
+typedef int(__stdcall *MV_CC_CloseDeviceFunc)(void* handle);
+typedef int(__stdcall *MV_CC_StartGrabbingFunc)(void* handle);
+typedef int(__stdcall *MV_CC_StopGrabbingFunc)(void* handle);
+typedef int(__stdcall *MV_CC_GetImageBufferFunc)(void* handle, MV_FRAME_OUT* pstFrame, unsigned int nMsec);
+typedef int(__stdcall *MV_CC_FreeImageBufferFunc)(void* handle, MV_FRAME_OUT* pstFrame);
+typedef int(__stdcall *MV_CC_SetEnumValueFunc)(void* handle, const char* strKey, unsigned int nValue);
+typedef int(__stdcall *MV_CC_SetFloatValueFunc)(void* handle, const char* strKey, float fValue);
+typedef int(__stdcall *MV_CC_SetCommandValueFunc)(void* handle, const char* strKey);
+typedef int(__stdcall *MV_CC_ConvertPixelTypeFunc)(void* handle, MV_CC_PIXEL_CONVERT_PARAM* pstCvtParam);
 
 class JZCameraHikApi
 {
 public:
     static JZCameraHikApi *instance();
 
-    bool enumDevices();
+    bool updateDeviceList();
+    
+    MV_CC_CreateHandleFunc CreateHandle;
+    MV_CC_DestroyHandleFunc DestroyHandle;
+    MV_CC_EnumDevicesFunc EnumDevices;
+    MV_CC_OpenDeviceFunc OpenDevice;
+    MV_CC_CloseDeviceFunc CloseDevice;
+    MV_CC_StartGrabbingFunc StartGrabbing;
+    MV_CC_StopGrabbingFunc StopGrabbing;
+    MV_CC_GetImageBufferFunc GetImageBuffer;
+    MV_CC_FreeImageBufferFunc FreeImageBuffer;
+    MV_CC_SetEnumValueFunc SetEnumValue;
+    MV_CC_SetFloatValueFunc SetFloatValue;
+    MV_CC_SetCommandValueFunc SetCommandValue;
+    MV_CC_ConvertPixelTypeFunc ConvertPixelType;
 
     MV_CC_DEVICE_INFO_LIST  m_stDevList;
 
@@ -27,18 +58,46 @@ JZCameraHikApi *JZCameraHikApi::instance()
 
 JZCameraHikApi::JZCameraHikApi()
 {
+    // 加载DLL
+    QLibrary mvLibrary("MvCameraControl.dll");
+    if (!mvLibrary.load()) {
+        qCritical() << "Failed to load library:" << mvLibrary.errorString();
+        return;
+    }
+
+    // 解析函数地址
+    CreateHandle = (MV_CC_CreateHandleFunc)mvLibrary.resolve("MV_CC_CreateHandle");
+    DestroyHandle = (MV_CC_DestroyHandleFunc)mvLibrary.resolve("MV_CC_DestroyHandle");
+    EnumDevices = (MV_CC_EnumDevicesFunc)mvLibrary.resolve("MV_CC_EnumDevices");
+    OpenDevice = (MV_CC_OpenDeviceFunc)mvLibrary.resolve("MV_CC_OpenDevice");
+    CloseDevice = (MV_CC_CloseDeviceFunc)mvLibrary.resolve("MV_CC_CloseDevice");
+    StartGrabbing = (MV_CC_StartGrabbingFunc)mvLibrary.resolve("MV_CC_StartGrabbing");
+    StopGrabbing = (MV_CC_StopGrabbingFunc)mvLibrary.resolve("MV_CC_StopGrabbing");
+    GetImageBuffer = (MV_CC_GetImageBufferFunc)mvLibrary.resolve("MV_CC_GetImageBuffer");
+    FreeImageBuffer = (MV_CC_FreeImageBufferFunc)mvLibrary.resolve("MV_CC_FreeImageBuffer");
+    SetEnumValue = (MV_CC_SetEnumValueFunc)mvLibrary.resolve("MV_CC_SetEnumValue");
+    SetFloatValue = (MV_CC_SetFloatValueFunc)mvLibrary.resolve("MV_CC_SetFloatValue");
+    SetCommandValue = (MV_CC_SetCommandValueFunc)mvLibrary.resolve("MV_CC_SetCommandValue");
+    ConvertPixelType = (MV_CC_ConvertPixelTypeFunc)mvLibrary.resolve("MV_CC_ConvertPixelType");
+
+    if (!CreateHandle || !DestroyHandle || !EnumDevices || !OpenDevice ||
+        !CloseDevice || !StartGrabbing || !StopGrabbing || !GetImageBuffer || !FreeImageBuffer ||
+        !SetEnumValue || !SetFloatValue || !SetCommandValue || !ConvertPixelType) {        
+        mvLibrary.unload();
+        qFatal("Failed to load MvCameraControl.dll");
+    }
 }
 
 JZCameraHikApi::~JZCameraHikApi()
 {
 }
 
-bool JZCameraHikApi::enumDevices()
+bool JZCameraHikApi::updateDeviceList()
 {
     memset(&m_stDevList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
 
     // en:Enumerate all devices within subnet
-    int nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE | MV_GENTL_GIGE_DEVICE | MV_GENTL_CAMERALINK_DEVICE |
+    int nRet = EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE | MV_GENTL_GIGE_DEVICE | MV_GENTL_CAMERALINK_DEVICE |
         MV_GENTL_CXP_DEVICE | MV_GENTL_XOF_DEVICE, &m_stDevList);
     return nRet == MV_OK;    
 }
@@ -201,7 +260,7 @@ bool JZCameraHik::isOpen()
 
 bool JZCameraHik::open(QString path)
 {
-    g_api->enumDevices();
+    g_api->updateDeviceList();
     
     MV_CC_DEVICE_INFO* pstDeviceInfo = nullptr;
     for (int i = 0; i < g_api->m_stDevList.nDeviceNum; i++)
@@ -229,16 +288,16 @@ bool JZCameraHik::open(QString path)
     if (!pstDeviceInfo)
         return false;
 
-    int nRet = MV_CC_CreateHandle(&m_hDevHandle, pstDeviceInfo);
+    int nRet = g_api->CreateHandle(&m_hDevHandle, pstDeviceInfo);
     if (MV_OK != nRet)
     {
         return nRet;
     }
     
-    nRet = MV_CC_OpenDevice(m_hDevHandle, MV_ACCESS_Exclusive,0);
+    nRet = g_api->OpenDevice(m_hDevHandle, MV_ACCESS_Exclusive,0);
     if (MV_OK != nRet)
     {
-        MV_CC_DestroyHandle(m_hDevHandle);
+        g_api->DestroyHandle(m_hDevHandle);
         m_hDevHandle = nullptr;
         return false;
     }
@@ -253,8 +312,8 @@ void JZCameraHik::close()
 
     stop();
 
-    MV_CC_CloseDevice(m_hDevHandle);
-    int nRet = MV_CC_DestroyHandle(m_hDevHandle);
+    g_api->CloseDevice(m_hDevHandle);
+    int nRet = g_api->DestroyHandle(m_hDevHandle);
     m_hDevHandle = nullptr;
 }
 
@@ -262,7 +321,7 @@ void JZCameraHik::startGrabbing()
 {
     if (!m_isStartGrabbing)
     {
-        MV_CC_StartGrabbing(m_hDevHandle);
+        g_api->StartGrabbing(m_hDevHandle);
         m_isStartGrabbing = true;
         m_thread = QThread::create([this] {
             this->GrabbingThread();
@@ -277,7 +336,7 @@ void JZCameraHik::GrabbingThread()
     {
         MV_FRAME_OUT pFrame = {};
         int nMsec = 1000;
-        int nRet = MV_CC_GetImageBuffer(m_hDevHandle, &pFrame, nMsec);
+        int nRet = g_api->GetImageBuffer(m_hDevHandle, &pFrame, nMsec);
         if (nRet == MV_OK)
         {            
             auto &stImageInfo = pFrame.stFrameInfo;
@@ -296,9 +355,9 @@ void JZCameraHik::GrabbingThread()
             stConvertParam.enDstPixelType = PixelType_Gvsp_BGR8_Packed;
             stConvertParam.pDstBuffer = image.data;
             stConvertParam.nDstBufferSize = image.total() * image.elemSize();
-            MV_CC_ConvertPixelType(m_hDevHandle, &stConvertParam);            
+            g_api->ConvertPixelType(m_hDevHandle, &stConvertParam);                        
 
-            MV_CC_FreeImageBuffer(m_hDevHandle, &pFrame);
+            g_api->FreeImageBuffer(m_hDevHandle, &pFrame);
             emit sigFrameReady(image);
         }
         else
@@ -314,7 +373,7 @@ void JZCameraHik::start()
         return;
 
     startGrabbing();    
-    MV_CC_SetEnumValue(m_hDevHandle, "TriggerMode", MV_TRIGGER_MODE_OFF);
+    g_api->SetEnumValue(m_hDevHandle, "TriggerMode", MV_TRIGGER_MODE_OFF);
 }
 
 void JZCameraHik::startOnce()
@@ -323,7 +382,7 @@ void JZCameraHik::startOnce()
         return;
 
     startGrabbing();    
-    int nRet = MV_CC_SetEnumValue(m_hDevHandle, "TriggerMode", MV_TRIGGER_MODE_ON);
+    int nRet = g_api->SetEnumValue(m_hDevHandle, "TriggerMode", MV_TRIGGER_MODE_ON);
     if (nRet != MV_OK)
     {
         qDebug() << errorString(nRet);
@@ -338,48 +397,48 @@ void JZCameraHik::stop()
         m_isStartGrabbing = false;
         m_thread->wait();
         m_thread = nullptr;
-        MV_CC_StopGrabbing(m_hDevHandle);
+        g_api->StopGrabbing(m_hDevHandle);
     }
 }
 
 void JZCameraHik::setConfig(JZCamerHikConfig config)
 {
-    MV_CC_SetEnumValue(m_hDevHandle, "TriggerSource", config.triggerSource);
-    MV_CC_SetEnumValue(m_hDevHandle, "TriggerMode", config.triggerMode);
+    g_api->SetEnumValue(m_hDevHandle, "TriggerSource", config.triggerSource);
+    g_api->SetEnumValue(m_hDevHandle, "TriggerMode", config.triggerMode);
 
     if (config.gainMode == JZCamerHikConfig::GAIN_MODE_OFF)
     {
-        MV_CC_SetEnumValue(m_hDevHandle, "GainAuto", 0);
-        MV_CC_SetFloatValue(m_hDevHandle, "Gain", (float)config.gain);
+        g_api->SetEnumValue(m_hDevHandle, "GainAuto", 0);
+        g_api->SetFloatValue(m_hDevHandle, "Gain", (float)config.gain);
     }
     else if (config.gainMode == JZCamerHikConfig::GAIN_MODE_ONCE)
     {
-        MV_CC_SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_ONCE);
+        g_api->SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_ONCE);
     }
     else if (config.gainMode == JZCamerHikConfig::GAIN_MODE_CONTINUOUS)
     {
-        MV_CC_SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_CONTINUOUS);
+        g_api->SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_CONTINUOUS);
     }
 
     //exposure
     if (config.exposureMode == JZCamerHikConfig::EXPOSURE_AUTO_MODE_OFF)
     {
-        MV_CC_SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
-        MV_CC_SetFloatValue(m_hDevHandle, "ExposureTime", (float)config.exposureTime);
+        g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
+        g_api->SetFloatValue(m_hDevHandle, "ExposureTime", (float)config.exposureTime);
     }
     else if (config.exposureMode == JZCamerHikConfig::EXPOSURE_AUTO_MODE_ONCE)
     {
-        MV_CC_SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_ONCE);
+        g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_ONCE);
     }
     else
     {
-        MV_CC_SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_CONTINUOUS);
+        g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_CONTINUOUS);
     }
 }
 
 bool JZCameraHik::CommandExecute(QString command)
 {
-    int nRet = MV_CC_SetCommandValue(m_hDevHandle, qUtf8Printable(command));
+    int nRet = g_api->SetCommandValue(m_hDevHandle, qUtf8Printable(command));
     if (nRet != MV_OK)
     {
         qDebug() << errorString(nRet);

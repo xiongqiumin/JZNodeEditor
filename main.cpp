@@ -87,7 +87,7 @@ int main(int argc,char *argv[])
     QApplication a(argc, argv);
     JZNodeInit();               
 
-    createSample();
+    //createSample();
     //return runSample();
     //return runProgram("Project20", false);    
 
