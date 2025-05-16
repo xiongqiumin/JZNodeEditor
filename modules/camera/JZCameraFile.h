@@ -3,6 +3,15 @@
 
 #include "JZCamera.h"
 
+class JZCameraFileConfig
+{
+public:
+    QString path;
+};
+QDataStream& operator<<(QDataStream& s, const JZCameraFileConfig& param);
+QDataStream& operator>>(QDataStream& s, JZCameraFileConfig& param);
+
+
 class JZCameraFile : public JZCamera
 {
     Q_OBJECT

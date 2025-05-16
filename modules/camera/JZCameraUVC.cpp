@@ -5,6 +5,17 @@
 
 using namespace cv;
 
+QDataStream& operator<<(QDataStream& s, const JZCameraUvcConfig& param)
+{
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, JZCameraUvcConfig& param)
+{
+    return s;
+}
+
+//JZCameraUVC
 JZCameraUVC::JZCameraUVC(QObject *parent)
     :JZCamera(parent)
 {

@@ -3,7 +3,7 @@
 
 #include "JZCamera.h"
 
-class JZCamerHikConfig
+class JZCameraHikConfig
 {
 public:
     enum {        
@@ -34,7 +34,7 @@ public:
         EXPOSURE_AUTO_MODE_CONTINUOUS,
     };
 
-    JZCamerHikConfig();
+    JZCameraHikConfig();
 
     QString path;
     int triggerSource;
@@ -46,8 +46,8 @@ public:
     int exposureMode;    
     double exposureTime;
 };
-QDataStream &operator<<(QDataStream &s, const JZCamerHikConfig &param);
-QDataStream &operator>>(QDataStream &s, JZCamerHikConfig &param);
+QDataStream &operator<<(QDataStream &s, const JZCameraHikConfig &param);
+QDataStream &operator>>(QDataStream &s, JZCameraHikConfig &param);
 
 class JZCameraHik : public JZCamera
 {
@@ -64,7 +64,7 @@ public:
     virtual void startOnce() override;
     virtual void stop() override;
 
-    void setConfig(JZCamerHikConfig config);
+    void setConfig(JZCameraHikConfig config);
 
 protected:    
     bool CommandExecute(QString command);

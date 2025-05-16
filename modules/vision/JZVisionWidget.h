@@ -20,6 +20,9 @@ public:
     void setCameraManager(JZCameraManager *cameraManager);
     void setViewWidget(JZCameraViewWidget *view);
 
+protected slots:
+    void onContexMenu(QPoint pt);
+
 protected:
     void onCameraStart();
     void onCameraStop();
@@ -47,20 +50,26 @@ public:
     JZCameraViewWidget(QWidget* parent = nullptr);
     ~JZCameraViewWidget();
 
-    void init();
-
+    void init(JZCameraManager* cameraManager);
     JZImageLabel* label(QString name);
     
+protected slots:
+    void onContexMenu(QPoint pt);
+
 protected:
     struct LabelInfo
     {
         QString name;
+        int index;
         JZImageLabel* label;
     };
 
     virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void paintEvent(QPaintEvent *event) override;
+    LabelInfo* labelAt(QPoint pt);
 
     QList<LabelInfo> m_labelList;
+    JZCameraManager* m_cameraManager;
 };
 
 #endif // ! JZ_VISON_WIDGET_H_

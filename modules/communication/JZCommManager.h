@@ -72,7 +72,7 @@ class JZCommManager : public QObject
 	Q_OBJECT
 
 public:
-    JZCommManager();
+    JZCommManager(QObject *parent = nullptr);
     ~JZCommManager();
 
     void init();

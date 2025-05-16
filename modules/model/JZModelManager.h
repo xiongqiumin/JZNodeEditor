@@ -30,10 +30,12 @@ public:
 QDataStream& operator<<(QDataStream &s,const JZModelManagerConfig &config);
 QDataStream& operator>>(QDataStream &s, JZModelManagerConfig &config);
 
-class JZModelManager
+class JZModelManager : public QObject
 {
+    Q_OBJECT
+
 public:
-    JZModelManager();
+    JZModelManager(QObject* parent = nullptr);
     ~JZModelManager();
     
     void setConfig(const JZModelManagerConfig &config);

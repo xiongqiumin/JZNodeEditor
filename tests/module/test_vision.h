@@ -15,6 +15,7 @@ private slots:
     void testTemplateMatch();
     void testBrightnessDetector();
     void testColorIdentify();
+    void testVisonWindow();
 
 protected:
     void addReadImage();

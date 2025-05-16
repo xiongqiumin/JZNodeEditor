@@ -7,6 +7,7 @@
 #include <QScopeGuard>
 #include "test_vision.h"
 #include "modules/vision/JZVisionNode.h"
+#include "modules/vision/JZVisonWindow.h"
 
 //VisionTest
 VisionTest::VisionTest()
@@ -93,6 +94,19 @@ void VisionTest::testColorIdentify()
     script->addConnect(node_imread->paramOutGemo(0), node_color->paramInGemo(0));
     script->addConnect(node_imread->paramOutGemo(0), node_color->paramInGemo(1));
     script->addConnect(start->flowOutGemo(0), node_color->flowInGemo());
+}
+
+void VisionTest::testVisonWindow()
+{
+    JZVisonWindowConfig cfg;
+
+    JZVisonWindow w;
+    w.init(cfg);
+    w.show();
+
+    QTest::qWaitFor([&w]()->bool {
+        return !w.isVisible();
+    }, 100000);
 }
 
 void test_vision(int argc, char *argv[])

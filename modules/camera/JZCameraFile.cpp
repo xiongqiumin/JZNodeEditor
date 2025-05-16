@@ -5,6 +5,19 @@
 
 using namespace cv;
 
+QDataStream& operator<<(QDataStream& s, const JZCameraFileConfig& param)
+{
+    s << param.path;
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, JZCameraFileConfig& param)
+{
+    s >> param.path;
+    return s;
+}
+
+//JZCameraFile
 JZCameraFile::JZCameraFile(QObject *parent)
     :JZCamera(parent)
 {

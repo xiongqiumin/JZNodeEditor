@@ -8,6 +8,7 @@
 #include "JZNodeType.h"
 #include "JZCameraFile.h"
 #include "JZCameraHik.h"
+#include "JZCameraUVC.h"
 
 //JZCameraConfig
 class JZCameraConfig
@@ -18,11 +19,9 @@ public:
     int type;
     QString name;
     
-    //file
-    QString filePath;
-
-    //hik
-    JZCamerHikConfig hikConfig;
+    JZCameraFileConfig fileConfig;
+    JZCameraUvcConfig uvcConfig;
+    JZCameraHikConfig hikConfig;
 };
 QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCameraConfig &param);
@@ -44,7 +43,7 @@ class JZCameraManager : public QObject
 	Q_OBJECT
 
 public:
-    JZCameraManager();
+    JZCameraManager(QObject* parent = nullptr);
     ~JZCameraManager();
 
     QStringList cameraList();

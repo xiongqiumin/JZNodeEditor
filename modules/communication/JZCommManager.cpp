@@ -64,7 +64,8 @@ QDataStream &operator >> (QDataStream &s, JZCommManagerConfig &param)
 }
 
 //JZCommManager
-JZCommManager::JZCommManager()
+JZCommManager::JZCommManager(QObject* parent)
+    :QObject(parent)
 {
 }
 

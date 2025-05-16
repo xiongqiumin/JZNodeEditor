@@ -78,7 +78,7 @@ void TestUnitTest::testCameraEvent()
     JZCameraConfig cam_config;
     cam_config.name = "camera";
     cam_config.type = Camera_File;
-    cam_config.filePath = "C:/Users/xiong/Desktop/demo/image";
+    cam_config.fileConfig.path = "C:/Users/xiong/Desktop/demo/image";
 
     JZCameraManagerConfig config;
     config.cameraList << cam_config;

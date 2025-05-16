@@ -33,7 +33,8 @@ QDataStream& operator>>(QDataStream& s, JZModelManagerConfig& config)
 }
 
 //JZModelManager
-JZModelManager::JZModelManager()
+JZModelManager::JZModelManager(QObject* parent)
+	:QObject(parent)
 {
 }
 

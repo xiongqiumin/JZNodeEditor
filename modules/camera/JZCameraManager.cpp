@@ -6,7 +6,7 @@
 #include "JZCameraUVC.h"
 
 //JZCamerHikConfig
-QDataStream &operator<<(QDataStream &s, const JZCamerHikConfig &param)
+QDataStream &operator<<(QDataStream &s, const JZCameraHikConfig &param)
 {
     s << param.path;
     s << param.gain;
@@ -14,7 +14,7 @@ QDataStream &operator<<(QDataStream &s, const JZCamerHikConfig &param)
     return s;
 }
 
-QDataStream &operator>>(QDataStream &s, JZCamerHikConfig &param)
+QDataStream &operator>>(QDataStream &s, JZCameraHikConfig &param)
 {
     s >> param.path;
     s >> param.gain;
@@ -30,10 +30,7 @@ JZCameraConfig::JZCameraConfig()
 QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param)
 {
     s << param.type << param.name;
-    
-    //file
-    s << param.filePath;
-    //hik
+    s << param.fileConfig;
     s << param.hikConfig;
 
     return s;
@@ -43,9 +40,7 @@ QDataStream &operator>>(QDataStream &s, JZCameraConfig &param)
 {
     s >> param.type >> param.name;
     
-    //file
-    s >> param.filePath;
-    //hik
+    s >> param.fileConfig;
     s >> param.hikConfig;
 
     return s;
@@ -75,7 +70,8 @@ QDataStream &operator>>(QDataStream &s, JZCameraManagerConfig &param)
 }
 
 //JZCameraManager
-JZCameraManager::JZCameraManager()
+JZCameraManager::JZCameraManager(QObject* parent)
+    :QObject(parent)
 {
 }
 
@@ -136,7 +132,7 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfig &config)
     if(config.type == Camera_File)
     {
         JZCamera *camera_file = new JZCameraFile();
-        open_ret = camera_file->open(config.filePath);
+        open_ret = camera_file->open(config.fileConfig.path);
 
         camera = camera_file;
     }
