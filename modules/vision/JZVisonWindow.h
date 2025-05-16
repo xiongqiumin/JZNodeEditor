@@ -29,6 +29,10 @@ public:
 	void init(JZVisonWindowConfig config);
 	JZVisonWindowConfig config();
 
+	JZModelManager* modelManager();
+	JZCameraManager* cameraManager();
+	JZCommManager* commManager();
+
 protected slots:
 	void onActionClose();
 

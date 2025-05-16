@@ -4,6 +4,7 @@
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
 #include "JZVisionWidget.h"
+#include "JZVisonWindow.h"
 
 using namespace cv;
 
@@ -26,6 +27,12 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
 
     jzbind::ClassBind<JZCameraViewWidget> cls_camera_view(cls_id++, "JZCameraViewWidget", "QWidget");
     cls_camera_view.regist();
+
+    jzbind::ClassBind<JZVisonWindow> cls_vision_window(cls_id++, "JZVisonWindow", "QMainWindow");
+    cls_vision_window.defPropertyFunc("cameraManager", &JZVisonWindow::cameraManager);
+    cls_vision_window.defPropertyFunc("commManager", &JZVisonWindow::commManager);
+    cls_vision_window.defPropertyFunc("modelManager", &JZVisonWindow::modelManager);
+    cls_vision_window.regist();
 
     jzbind::ClassBind<JZTemplateMatch> cls_template_match(cls_id++, "JZTemplateMatch", "QObject");
     cls_template_match.def("match", true, &JZTemplateMatch::match);

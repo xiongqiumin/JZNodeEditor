@@ -57,6 +57,21 @@ JZVisonWindowConfig JZVisonWindow::config()
     return m_config;
 }
 
+JZModelManager* JZVisonWindow::modelManager()
+{
+    return m_modelManager;
+}
+
+JZCameraManager* JZVisonWindow::cameraManager()
+{
+    return m_cameraManager;
+}
+
+JZCommManager* JZVisonWindow::commManager()
+{
+    return m_commManager;
+}
+
 void JZVisonWindow::init(JZVisonWindowConfig config)
 {
     m_config = config;

@@ -405,7 +405,7 @@ public:
 };
 
 template <typename Func,typename Return, typename... Args>
-CFunctionImpl<Func,Return,Args...> *createCFunction(Func func,Return (*)(Args...))
+CFunctionImpl<Func,Return,Args...> *dealCreateFunctionImpl(Func func,Return (*)(Args...))
 {
     return new CFunctionImpl<Func,Return,Args...>(func);
 }
@@ -422,7 +422,7 @@ QSharedPointer<CFunction> createFuncionImpl(Func func,Extra... extra)
 {
     extra_check((function_signature_t<Func>*) nullptr,extra...);
 
-    auto impl = createCFunction(func,(function_signature_t<Func>*) nullptr);
+    auto impl = dealCreateFunctionImpl(func,(function_signature_t<Func>*) nullptr);
     impl->setReference(extra...);
     return QSharedPointer<CFunction>(impl);
 }
@@ -836,6 +836,27 @@ public:
         JZCParamDefine cdef;
         cdef.read = func_read;
         cdef.write = func_write;
+        m_define.cparams[def.name] = cdef;
+    }
+
+    template <typename ReadFunc>
+    void defPropertyFunc(QString name, ReadFunc func)
+    {   
+        using PropertyType = decltype((((Class*)nullptr)->*func)());
+
+        auto func_read = [func](void *ptr)->QVariant
+            { 
+                Class* obj = (Class*)ptr;
+                return toVariant<PropertyType>((obj->*func)()); 
+            };
+     
+        JZParamDefine def;
+        def.name = name;
+        def.type = bindEnvironment()->ctypeidToName(typeid(PropertyType).name());
+        m_define.params[def.name] = def;
+
+        JZCParamDefine cdef;
+        cdef.read = func_read;
         m_define.cparams[def.name] = cdef;
     }
 
