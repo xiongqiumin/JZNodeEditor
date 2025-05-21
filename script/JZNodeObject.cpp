@@ -93,12 +93,29 @@ CMeta::CMeta()
     destory = nullptr;
 }
 
+//JZNodeObjectWidgetDefine
+JZNodeObjectWidgetDefine::JZNodeObjectWidgetDefine()
+{
+    type = Widget_None;
+}
+
+QDataStream &operator<<(QDataStream &s, const JZNodeObjectWidgetDefine &param)
+{
+    s << param.type << param.buffer;
+    return s;
+}
+
+QDataStream &operator>>(QDataStream &s, JZNodeObjectWidgetDefine &param)
+{
+    s >> param.type >> param.buffer;
+    return s;
+}
+
 //JZNodeObjectDefine
 JZNodeObjectDefine::JZNodeObjectDefine()
 {
     id = Type_none;
-    isCObject = false;
-    isUiWidget = false;    
+    isCObject = false;    
     valueType = false;
     manager = nullptr;
 }
@@ -155,13 +172,10 @@ const JZParamDefine *JZNodeObjectDefine::param(const QString &name) const
         if(it != def->params.end())
             return &it.value();
 
-        if (isUiWidget)
+        for (int i = 0; i < widgetParams.size(); i++)
         {
-            for (int i = 0; i < widgetParams.size(); i++)
-            {
-                if (widgetParams[i].name == name)
-                    return &widgetParams[i];
-            }
+            if (widgetParams[i].name == name)
+                return &widgetParams[i];
         }
 
         def = def->super();
@@ -486,8 +500,7 @@ QDataStream &operator<<(QDataStream &s, const JZNodeObjectDefine &param)
     s << param.enums;
 
     s << param.isCObject;
-    s << param.isUiWidget;
-    s << param.widgetXml;
+    s << param.widgetDefine;
     s << param.widgetParams;
     s << param.widgetBind;
     return s;
@@ -507,8 +520,7 @@ QDataStream &operator>>(QDataStream &s, JZNodeObjectDefine &param)
     s >> param.enums;
     
     s >> param.isCObject;
-    s >> param.isUiWidget;
-    s >> param.widgetXml;
+    s >> param.widgetDefine;    
     s >> param.widgetParams;
     s >> param.widgetBind;
     return s;
@@ -660,6 +672,11 @@ const JZNodeObjectDefine *JZNodeObject::meta() const
     return m_define;
 }
 
+void JZNodeObject::initParam(const QString &name, const QVariantPtr &ptr)
+{
+    m_params[name] = ptr;
+}
+
 bool JZNodeObject::hasParam(const QString &name) const
 {
     return m_params.contains(name);
@@ -805,32 +822,6 @@ void JZNodeObject::signalEmit(JZFunctionPointer sig_name,const QVariantList &par
     {
         if(m_connectList[i].signal == sig_name.function)
             emit sigTrigger(m_connectList[i].slot,params);
-    }
-}
-
-void JZNodeObject::updateUiWidget(QWidget *widget)
-{
-    Q_ASSERT(isInherits("QWidget"));
-
-    QObject *obj = (QObject*)m_cobj;
-    auto inst = manager();
-
-    auto def = m_define;
-    for (int i = 0; i < m_define->widgetParams.size(); i++)
-    {
-        auto &param_def = m_define->widgetParams[i];
-
-        QWidget *w = obj->findChild<QWidget*>(param_def.name);
-        if (w)
-        {
-            JZNodeObject *jzobj = new JZNodeObject(inst->meta(param_def.type));
-            jzobj->setCObject(w, false);
-            JZNodeObjectPointer ptr(jzobj, true);
-            QVariantPtr qptr;
-            qptr.type = jzobj->type();
-            *qptr.ptr = QVariant::fromValue(ptr);
-            m_params[param_def.name] = qptr;
-        }
     }
 }
 
@@ -1304,6 +1295,20 @@ JZEnum JZNodeObjectManager::createEnum(int enumType) const
     return e;
 }
 
+void JZNodeObjectManager::registWidgetFactory(int type, JZNodeObjectWidgetFactory define)
+{
+    m_widgetFactory[type] = define;
+}
+
+const JZNodeObjectWidgetFactory *JZNodeObjectManager::widgetFactory(int type) const
+{
+    auto it = m_widgetFactory.find(type);
+    if (it == m_widgetFactory.end())
+        return nullptr;
+
+    return &it.value();
+}
+
 bool JZNodeObjectManager::hasType(int type_id) const
 {
     return meta(type_id) || enumMeta(type_id);
@@ -1540,13 +1545,10 @@ void JZNodeObjectManager::create(const JZNodeObjectDefine *in_def,JZNodeObject *
     for (int i = def_list.size() - 1; i >= 0; i--)
     {
         obj_def = def_list[i];
-        if (obj_def->isUiWidget)
-        {
-            QWidget* widget = JZObjectCast<QWidget>(obj);
-
-            JZNodeUiLoader ui;
-            ui.create(widget, obj_def->widgetXml);
-            obj->updateUiWidget(widget);
+        if (obj_def->widgetDefine.type != Widget_None)
+        {            
+            auto widget_factory = widgetFactory(obj_def->widgetDefine.type);
+            widget_factory->creator(obj);
         }
 
         auto it = obj_def->params.begin();

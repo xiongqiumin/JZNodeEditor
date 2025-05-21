@@ -7,6 +7,9 @@
 #include "JZNodeFunctionDefine.h"
 #include "JZNodeEnum.h"
 
+class JZNodeObject;
+class JZNodeObjectManager;
+
 class CMeta
 {
 public:
@@ -21,9 +24,32 @@ public:
     std::function<void(void*)> destory;
 };
 
-/* 对于虚函数，this 参数应当为基类指针
-*/
-class JZNodeObjectManager;
+enum JZNodeObjectWidgetType 
+{
+    Widget_None,
+    Widget_Xml,
+    Widget_Vision,
+};
+
+class JZNodeObjectWidgetFactory
+{
+public:    
+    std::function<void(JZNodeObject*)> creator;    
+};
+
+//JZNodeObjectWidgetDefine
+class JZNodeObjectWidgetDefine
+{
+public:
+    JZNodeObjectWidgetDefine();
+
+    JZNodeObjectWidgetType type;
+    QByteArray buffer;
+};
+QDataStream &operator<<(QDataStream &s, const JZNodeObjectWidgetDefine &param);
+QDataStream &operator>>(QDataStream &s, JZNodeObjectWidgetDefine &param);
+
+//JZNodeObjectDefine
 class JZNodeObjectDefine
 {
 public:
@@ -75,8 +101,7 @@ public:
     QList<JZSignalDefine> signalDefines;
     QStringList enums;
 
-    bool isUiWidget;
-    QString widgetXml;
+    JZNodeObjectWidgetDefine widgetDefine;
     QList<JZParamDefine> widgetParams;
     QMap<QString,JZNodeParamBind> widgetBind;
 
@@ -117,6 +142,7 @@ public:
     int baseType() const;
     const JZNodeObjectDefine *meta() const;
 
+    void initParam(const QString &name, const QVariantPtr &value);
     bool hasParam(const QString &name) const;
     QVariant param(const QString &name) const;
     void setParam(const QString &name,const QVariant &value);    
@@ -142,7 +168,6 @@ public:
 
     void addBind(QString param, JZBindObject* object);
 
-    void updateUiWidget(QWidget *widget);
     void autoConnect();
     void autoBind();
     void autoInit();
@@ -292,8 +317,7 @@ public:
     JZNodeObject* createByCTypeid(const QString &ctype_id) const;
     JZNodeObject* createReference(int type_id, void *cobj, bool owner) const;
     JZNodeObject* createReference(const QString &type_name,void *cobj,bool owner) const;
-    JZNodeObject* createReferenceByCTypeid(const QString &ctype_id,void *cobj,bool owner) const;
-    
+    JZNodeObject* createReferenceByCTypeid(const QString &ctype_id,void *cobj,bool owner) const;    
     void destory(JZNodeObject *obj) const;
 
     JZNodeObjectPointer createHolder(int type_id) const;
@@ -309,6 +333,10 @@ public:
     void unregist(int id);        
 
     JZEnum createEnum(int enumType) const;
+
+    //widget
+    void registWidgetFactory(int type, JZNodeObjectWidgetFactory define);
+    const JZNodeObjectWidgetFactory *widgetFactory(int type) const;
 
     //template
     template<class T>
@@ -393,6 +421,7 @@ protected:
     
     QMap<int, QSharedPointer<JZNodeObjectDefine>> m_metas;
     QMap<int, QString> m_qobjectId;
+    QMap<int, JZNodeObjectWidgetFactory> m_widgetFactory;
     int m_objectId;
     bool m_userRegist;
 };

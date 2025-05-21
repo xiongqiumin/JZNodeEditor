@@ -5,9 +5,10 @@
 #include "JZProjectItem.h"
 #include "JZNode.h"
 #include "JZNodeObject.h"
+#include "JZUiBaseItem.h"
 
 //JZUiItem
-class JZUiItem : public JZProjectItem
+class JZUiItem : public JZUiBaseItem
 {
 public:
     enum UiType{
@@ -19,16 +20,14 @@ public:
     JZUiItem();
     virtual ~JZUiItem();
 
-    void initXml(UiType type);
-
+    virtual JZNodeObjectWidgetDefine define();
+    
+    void initXml(UiType type);    
     QString xml();
     void setXml(QString xml);
 
     bool save(QString filepath);
-    bool load(QString filepath);
-
-    const JZParamDefine *widgetVariable(QString name);
-    QList<JZParamDefine> widgets();
+    bool load(QString filepath);    
     
 protected:
     virtual void saveToStream(QDataStream &s) const override;
@@ -38,7 +37,6 @@ protected:
     void walkChild(const QDomElement &root);    
 
     QString m_xml;
-    QList<JZParamDefine> m_widgets;
 };
 
 

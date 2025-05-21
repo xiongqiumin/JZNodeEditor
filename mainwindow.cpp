@@ -189,7 +189,8 @@ void MainWindow::initMenu()
     {
         auto tmp = recent->addAction(m_setting.recentFile[i]);
         connect(tmp, &QAction::triggered, this, &MainWindow::onActionRecentProject);
-    }
+    }    
+
     menu_file->addSeparator();
     auto actExit = menu_file->addAction("退出");
     connect(actExit, &QAction::triggered, this, &MainWindow::close);
@@ -256,7 +257,7 @@ void MainWindow::initMenu()
     auto actModbus = menu_tool->addAction("Modbus");
     menu_tool->addAction("性能分析");
 
-    QMenu *menu_debug = menubar->addMenu("调试");    
+    QMenu *menu_debug = menubar->addMenu("调试");        
     auto actRun = menu_debug->addAction(menuIcon("iconRun.png"), "开始调试");
     auto actDetach = menu_debug->addAction("脱离调试器");
     auto actPause = menu_debug->addAction(menuIcon("iconPause.png"), "中断");
@@ -274,6 +275,9 @@ void MainWindow::initMenu()
     actStepOut->setShortcut(QKeySequence("Shift+F11"));
     actBreakPoint->setShortcut(QKeySequence("F9"));
 
+    menu_debug->addSeparator();
+    auto actDebugSetting = menu_debug->addAction("选项");
+
     m_debugActions << actDetach << actPause << actResume << actStop << actStepOver 
         << actStepIn << actStepOut;
 
@@ -290,6 +294,7 @@ void MainWindow::initMenu()
     connect(actStepIn,&QAction::triggered,this,&MainWindow::onActionStepIn);
     connect(actStepOut,&QAction::triggered,this,&MainWindow::onActionStepOut);
     connect(actBreakPoint,&QAction::triggered,this,&MainWindow::onActionBreakPoint);
+    connect(actDebugSetting, &QAction::triggered, this, &MainWindow::onActionDebugSetting);
 
     m_actionStatus << ActionStatus(actRun, { as::ProjectVaild, as::ProcessIsEmpty })
         << ActionStatus(actDetach, { as::ProcessIsVaild })
@@ -524,6 +529,7 @@ void MainWindow::updateActionStatus()
         act->setEnabled(enabled);
     }
     
+    m_toolDebug->setVisible(isProcess);
     for (auto act : m_debugActions)
         act->setVisible(isProcess);
 
@@ -536,7 +542,7 @@ void MainWindow::updateActionStatus()
     {
         m_actionResume->setShortcut(QKeySequence());
         m_actionRun->setShortcut(QKeySequence("F5"));
-    }
+    }    
 }
 
 void MainWindow::onActionNewProject()
@@ -783,6 +789,16 @@ void MainWindow::onActionStepOut()
     updateActionStatus();
 }
 
+void MainWindow::onActionDebugSetting()
+{
+    JZDebugSettingDialog dlg(this);
+    dlg.setConfig(m_debugSettting);
+    if (dlg.exec() != JZDebugSettingDialog::Accepted)
+        return;
+
+    m_debugSettting = dlg.config();
+}
+
 void MainWindow::onActionModbus()
 {
     JZModbusSimulator *simulator = new JZModbusSimulator();
@@ -907,6 +923,11 @@ void MainWindow::onAutoCompiler()
     m_task.addAutoCompilerTask();
 }
 
+void MainWindow::onAutoRunOnce()
+{
+
+}
+
 void MainWindow::onAutoRun()
 {
     auto edit = qobject_cast<JZNodeEditor*>(sender());
@@ -914,6 +935,11 @@ void MainWindow::onAutoRun()
         return;
     
     startUnitTest(edit->script()->itemPath());    
+}
+
+void MainWindow::onAutoRunStop()
+{
+    stopUnitTest();
 }
 
 void MainWindow::showTopLevel()
@@ -962,7 +988,15 @@ void MainWindow::onAutoRunResult(int result)
 
 void MainWindow::onTaskRunning()
 {
-    startProgram();
+    QString prog_path = m_project.path() + "/build/" + m_project.name() + ".program";
+    QString error;
+    if (!m_program.load(prog_path, error))
+    {
+        m_log->addLog(Log_Runtime, "load program failed. " + error);
+        return;
+    }
+
+    startProgram();    
 }
 
 JZEditor *MainWindow::editor(QString filepath)
@@ -1061,7 +1095,9 @@ bool MainWindow::openEditor(QString filepath)
             auto node_edit = (JZNodeEditor*)new_edit;
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
             connect(node_edit, &JZNodeEditor::sigAutoCompiler, this, &MainWindow::onAutoCompiler);
+            connect(node_edit, &JZNodeEditor::sigAutoRunOnce, this, &MainWindow::onAutoRunOnce);
             connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
+            connect(node_edit, &JZNodeEditor::sigAutoRunStop, this, &MainWindow::onAutoRunStop);
             connect(node_edit, &JZNodeEditor::sigRuntimeValueChanged, this, &MainWindow::onEditorValueChanged);
 
             node_edit->setRunningMode(m_processMode);
@@ -1415,23 +1451,39 @@ void MainWindow::startUnitTest(QString unitTestItemPath)
     m_task.addUnitTestTask(unitTestItemPath);    
 }
 
+void MainWindow::stopUnitTest()
+{
+    m_task.removeTask(MainTask::Task_unitTest);
+}
+
 void MainWindow::startProgram()
 {    
     m_log->clearLog(Log_Runtime);   
     LOGMOD_I(Log_Runtime, "start program");
 
-    QString app = qApp->applicationFilePath();
-    QString build_exe = m_project.path() + "/build/" + m_project.name() + ".program";
-    QStringList params;
-    params << "--run" << build_exe << "--debug";
-
-    m_log->addLog(Log_Runtime, "start program");    
-    m_process.setWorkingDirectory(m_project.path());
-    m_process.start(app, params);
-    if (!m_process.waitForStarted())
+    if (m_debugSettting.type == JZDebugSetting::Local)
     {
-        QMessageBox::information(this, "", "start failed");
-        return;
+        QString app = qApp->applicationFilePath();
+        QString build_exe = m_project.path() + "/build/" + m_project.name() + ".program";
+        QStringList params;
+        params << "--run" << build_exe << "--debug";
+
+        m_log->addLog(Log_Runtime, "start program");
+        m_process.setWorkingDirectory(m_project.path());
+        m_process.start(app, params);
+        if (!m_process.waitForStarted())
+        {
+            QMessageBox::information(this, "", "start failed");
+            return;
+        }
+    }
+    else
+    {
+        if (!m_remote.startProgram(&m_program))
+        {
+            QMessageBox::information(this, "", "start failed");
+            return;
+        }
     }
     setRunningMode(Process_running);
 
@@ -1449,29 +1501,30 @@ void MainWindow::startProgram()
     JZNodeProgramInfo program_info; 
     if(!m_debuger.init(info,program_info))
     {
-        m_log->addLog(Log_Runtime, "connec to process failed.");
+        m_log->addLog(Log_Runtime, "init process failed.");
         stopProgram();
         return;
     }
-
-    QString error;
-    if(!m_program.load(program_info.appPath, error))
-    {        
-        m_log->addLog(Log_Runtime, "load debug info failed. " + error);
-        stopProgram();
-        return;
-    }        
+    
     m_log->addLog(Log_Runtime, "startProgram finish");
-}
+}    
 
 void MainWindow::stopProgram()
 {
     if (m_processMode == Process_none)
         return;
 
-    m_process.setProperty("userKill", 1);
-    m_process.kill();
-    m_process.waitForFinished();
+    if (m_debugSettting.type == JZDebugSetting::Local)
+    {
+        m_process.setProperty("userKill", 1);
+        m_process.kill();
+        m_process.waitForFinished();
+    }
+    else
+    {        
+        m_debuger.stop();        
+        m_remote.stopProgram();
+    }
     updateActionStatus();
 }
 

@@ -18,7 +18,10 @@ JZModuleMotion::~JZModuleMotion()
 
 void JZModuleMotion::regist(JZScriptEnvironment *env)
 {    
-    
+    auto node_inst = env->nodeFactory();
+    node_inst->registNode(Node_MotionInit, createJZNode<JZNodeMotionInit>);
+    node_inst->registNode(Node_MotionZero, createJZNode<JZNodeMotionZero>);
+    node_inst->registNode(Node_MotionMove, createJZNode<JZNodeMotionMove>);    
 }
 
 void JZModuleMotion::unregist(JZScriptEnvironment *env)

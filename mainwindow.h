@@ -8,7 +8,6 @@
 #include <QTextEdit>
 #include <QProcess>
 #include "JZProjectTree.h"
-#include "JZNodeDebugClient.h"
 #include "JZEditor.h"
 #include "JZNodeBuilder.h"
 #include "JZNodeDebugClient.h"
@@ -20,6 +19,8 @@
 #include "JZNodeEditor.h"
 #include "mainTask.h"
 #include "database.h"
+#include "JZDebugSettingDialog.h"
+#include "remote/JZRemoteClient.h"
 
 class Setting
 {
@@ -78,7 +79,8 @@ protected slots:
     void onActionBreakPoint();
     void onActionStepOver();
     void onActionStepIn();
-    void onActionStepOut();        
+    void onActionStepOut();
+    void onActionDebugSetting();
 
     void onActionModbus();
 
@@ -99,7 +101,9 @@ protected slots:
     
     void onFunctionOpen(QString filepath);    
     void onAutoCompiler();
+    void onAutoRunOnce();
     void onAutoRun();
+    void onAutoRunStop();
 
     void onStackChanged(int stack);
     void onSetWatch(JZNodeIRParam coor, QString value);
@@ -182,9 +186,10 @@ private:
         
     void setWatchStatus(ProcessStatus status);
         
-    void startProgram();
+    void startProgram();    
     void stopProgram();
     void startUnitTest(QString testItemPath);
+    void stopUnitTest();
     void saveToFile(QString file,QString text);
     void saveAll();
     bool closeAllEditor(JZEditor *except = nullptr);
@@ -215,7 +220,9 @@ private:
 
     JZNodeDebugClient m_debuger;
     QProcess m_process;           
-    ProcessStatus m_processMode;    
+    ProcessStatus m_processMode;
+
+    JZRemoteClient m_remote;
     
     QAction *m_actionRun, *m_actionResume;
     QList<QAction*> m_debugActions;
@@ -225,6 +232,8 @@ private:
     JZNodeRuntimeInfo m_runtime;    
     MainTaskManager m_task;
     JZNodeBuildResultPtr m_buildResult;
+    JZDebugSetting m_debugSettting;
+
     DataBaseConfig m_config;
 
     QList<QWidget*> m_floatWidgets;

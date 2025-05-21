@@ -4,9 +4,10 @@
 #include "JZContainer.h"
 #include "JZNodeEngine.h"
 #include "JZScriptBuildInFunction.h"
-#include "runtime/JZWidgetBind.h"
 #include "JZNodeEvent.h"
 #include "JZScriptUnitTest.h"
+#include "runtime/JZNodeUiLoader.h"
+#include "runtime/JZWidgetBind.h"
 
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
@@ -16,6 +17,8 @@ JZScriptEnvironment::JZScriptEnvironment()
     jzbind::setBindEnvironment(this);
 
     m_objectManager.init();
+    m_objectManager.registWidgetFactory(Widget_Xml, JZNodeUiLoader::widgetFactory());
+
     m_funcManager.init();
 
     InitBuildInFunction();

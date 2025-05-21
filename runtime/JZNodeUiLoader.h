@@ -3,6 +3,7 @@
 
 #include <QUiLoader>
 #include <QMap>
+#include "JZNodeObject.h"
 
 template<class T>
 QWidget *createWidget(QWidget *parent)
@@ -32,15 +33,17 @@ class JZNodeUiLoader : public QUiLoader
     Q_OBJECT
 
 public:
+    static JZNodeObjectWidgetFactory widgetFactory();
+
     JZNodeUiLoader();
     ~JZNodeUiLoader();
 
-    void create(QWidget *w,QString text);
+    void init(JZNodeObject *obj);
+    void create(QWidget *w, QString text);
 
-private:
+protected:    
     virtual QWidget *createWidget(const QString &className, QWidget *parent = Q_NULLPTR, const QString &name = QString()) override;
 
-protected:
     QWidget* m_widget;
 };
 

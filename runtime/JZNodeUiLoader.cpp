@@ -32,6 +32,17 @@ const QMap<QString, CreateWidgetFunc> &JZNodeWidgetManger::widgetMap()
 }
 
 //JZNodeUiLoader
+JZNodeObjectWidgetFactory JZNodeUiLoader::widgetFactory()
+{
+    JZNodeObjectWidgetFactory factory;
+    factory.creator = [](JZNodeObject *obj) 
+    {
+        JZNodeUiLoader ui;
+        ui.init(obj);
+    };
+    return factory;
+}
+
 JZNodeUiLoader::JZNodeUiLoader()
 {
 
@@ -39,6 +50,33 @@ JZNodeUiLoader::JZNodeUiLoader()
 
 JZNodeUiLoader::~JZNodeUiLoader()
 {
+}
+
+void JZNodeUiLoader::init(JZNodeObject *jz_obj)
+{
+    QWidget *obj = (QWidget*)(jz_obj->cobj());
+    auto inst = jz_obj->manager();
+    auto def = jz_obj->meta();
+
+    QString xml = QString::fromUtf8(def->widgetDefine.buffer);
+    create(obj, xml);
+    
+    for (int i = 0; i < def->widgetParams.size(); i++)
+    {
+        auto &param_def = def->widgetParams[i];
+
+        QWidget *w = obj->findChild<QWidget*>(param_def.name);
+        if (w)
+        {
+            JZNodeObject *jzobj = inst->createReference(param_def.type,w, false);            
+            JZNodeObjectPointer ptr(jzobj, true);
+            QVariantPtr qptr;
+            qptr.type = jzobj->type();
+            *qptr.ptr = QVariant::fromValue(ptr);
+            
+            jz_obj->initParam(param_def.name, qptr);
+        }
+    }
 }
 
 void JZNodeUiLoader::create(QWidget *w,QString xml)

@@ -37,8 +37,14 @@ QWidget *JZNodeEditor::createMidBar()
     mid_bar->setLayout(midbar_layout);
     midbar_layout->setContentsMargins(0, 0, 0, 0);    
 
-    QPushButton *btnAutoRun = new QPushButton("运行");
-    connect(btnAutoRun, &QPushButton::clicked, this, &JZNodeEditor::onAutoRuning);
+    QPushButton *btnAutoRunOnce = new QPushButton("单次运行");
+    connect(btnAutoRunOnce, &QPushButton::clicked, this, &JZNodeEditor::onAutoRunOnce);
+
+    QPushButton *btnAutoRun = new QPushButton("连续运行");
+    connect(btnAutoRun, &QPushButton::clicked, this, &JZNodeEditor::onAutoRun);
+
+    QPushButton *btnStopRun = new QPushButton("停止");
+    connect(btnStopRun, &QPushButton::clicked, this, &JZNodeEditor::onAutoRunStop);
 
     QPushButton *btnScaleOne = new QPushButton("1:1");
     connect(btnScaleOne, &QPushButton::clicked, this, &JZNodeEditor::onScaleOne);
@@ -46,7 +52,9 @@ QWidget *JZNodeEditor::createMidBar()
     QPushButton *btnScaleAll = new QPushButton("showAll");
     connect(btnScaleAll, &QPushButton::clicked, this, &JZNodeEditor::onActionFitInView);
     
+    midbar_layout->addWidget(btnAutoRunOnce);
     midbar_layout->addWidget(btnAutoRun);
+    midbar_layout->addWidget(btnStopRun);
     midbar_layout->addStretch();
     midbar_layout->addWidget(btnScaleOne);
     midbar_layout->addWidget(btnScaleAll);
@@ -208,7 +216,7 @@ void JZNodeEditor::selectAll()
     m_view->selectAll();
 }
 
-void JZNodeEditor::onAutoRuning()
+void JZNodeEditor::onAutoRunOnce()
 {
     if (!m_runProp->depend())
         return;
@@ -216,7 +224,16 @@ void JZNodeEditor::onAutoRuning()
     if (m_runProp->depend()->originScript != this->script())
         return;
 
-    emit sigAutoRun();
+    emit sigAutoRunOnce();
+}
+
+void JZNodeEditor::onAutoRun()
+{        
+}
+
+void JZNodeEditor::onAutoRunStop()
+{
+    emit sigAutoRunStop();
 }
 
 void JZNodeEditor::onScaleOne()

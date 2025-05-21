@@ -10,6 +10,7 @@ enum {
     ProjectItem_root,
     ProjectItem_folder,    
     ProjectItem_ui,
+    ProjectItem_uiExt,
     ProjectItem_param,
     ProjectItem_class,
     ProjectItem_scriptFile,

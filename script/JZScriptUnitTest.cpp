@@ -271,7 +271,7 @@ void JZScriptUnitTest::initRuntime()
         if (env->isInherits(cls_def.className,"QWidget"))
         {
             cls_def.superName = "QObject";
-            cls_def.isUiWidget = false;
+            cls_def.widgetDefine = JZNodeObjectWidgetDefine();
         }
     }
     m_program.setTypeMeta(meta);

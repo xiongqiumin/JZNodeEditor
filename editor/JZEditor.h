@@ -72,5 +72,25 @@ protected:
     MainWindow *m_window;
     int m_type;    
 };
+typedef JZEditor *(*CreateJZEditorFunc)();
+
+template <class T>
+JZEditor *CreateEditor(JZNode *node) { return new T(); }
+
+//JZEditorManager
+class JZEditorManager
+{
+public:
+    static JZEditorManager *instance();
+
+    void registEditor(int project_item_type, CreateJZEditorFunc func);
+    JZEditor *createEditor(int project_item_type);
+
+protected:
+    JZEditorManager();
+    ~JZEditorManager();
+
+    QMap<int, CreateJZEditorFunc> m_editorFunc;
+};
 
 #endif

@@ -27,7 +27,7 @@ JZProjectTemplate::JZProjectTemplate()
 QStringList JZProjectTemplate::templateList()
 {
     QStringList list;
-    list << "console" << "ui" << "vision";
+    list << "console" << "ui" << "vision" << "SmartCamera";
     return list;
 }
 
@@ -140,6 +140,17 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
         func_init->addConnect(model_init->flowOutGemo(), comm_init->flowInGemo());
 
         class_item->addFlow("flow");
+    }
+    else if (temp == "SmartCamera")
+    {
+        auto app_file = new JZScriptFile();
+        app_file->setName("CameraApp.jz");
+        project->addItem("./", app_file);
+
+        auto class_item = app_file->addClass("CameraApp", "QObject");
+        class_item->addMemberVariable("cameraManager", "JZCameraManager");
+        class_item->addMemberVariable("commManager", "JZCommManager");
+        class_item->addMemberVariable("modelManager", "JZModelManager");
     }
     else
     {

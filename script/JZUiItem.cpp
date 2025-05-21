@@ -7,9 +7,9 @@
 #include "JZNodeObject.h"
 #include "JZProject.h"
 
-JZUiItem::JZUiItem()
-    :JZProjectItem(ProjectItem_ui)
+JZUiItem::JZUiItem()    
 {
+    m_itemType = ProjectItem_ui;
     m_name = "ui";
     initXml(Ui_Widget);
 }
@@ -17,6 +17,14 @@ JZUiItem::JZUiItem()
 JZUiItem::~JZUiItem()
 {
     
+}
+
+JZNodeObjectWidgetDefine JZUiItem::define()
+{
+    JZNodeObjectWidgetDefine def;
+    def.type = Widget_Xml;
+    def.buffer = m_xml.toUtf8();
+    return def;
 }
 
 void JZUiItem::initXml(UiType type)
@@ -86,22 +94,6 @@ void JZUiItem::setXml(QString xml)
 {
     m_xml = xml;
     updateDefine();    
-}
-
-const JZParamDefine *JZUiItem::widgetVariable(QString name)
-{
-    for (int i = 0; i < m_widgets.size(); i++)
-    {
-        if (m_widgets[i].name == name)
-            return &m_widgets[i];
-    }
-
-    return nullptr;
-}
-
-QList<JZParamDefine> JZUiItem::widgets()
-{    
-    return m_widgets;
 }
 
 void JZUiItem::walkChild(const QDomElement &root)

@@ -61,13 +61,17 @@ public:
 signals:
     void sigFunctionOpen(QString name);
     void sigAutoCompiler();
+    void sigAutoRunOnce();
     void sigAutoRun();
+    void sigAutoRunStop();
     void sigRuntimeValueChanged(int id,QString value);
 
 protected slots:
     void onActionLayout();
     void onActionFitInView();    
-    void onAutoRuning();
+    void onAutoRunOnce();
+    void onAutoRun();
+    void onAutoRunStop();
     void onScaleOne();
     
 protected:

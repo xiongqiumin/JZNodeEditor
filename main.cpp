@@ -11,6 +11,7 @@
 #include "mainwindow.h"
 #include "JZNodeProgramDumper.h"
 #include "sample/VisionDemo/VisionDemo.h"
+#include "remote/JZRemotePacket.h"
 
 using namespace std;
 
@@ -117,6 +118,8 @@ int main(int argc,char *argv[])
     }
     else
     {
+        JZRemotePacketInit();
+
         MainWindow w;
         w.showMaximized();
         return a.exec();

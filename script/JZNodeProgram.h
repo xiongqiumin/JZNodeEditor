@@ -98,8 +98,10 @@ public:
 
     bool isNull() const;
 
-    bool load(QString file,QString &error);
+    void saveToStream(QDataStream &s) const;
+    void loadFromStream(QDataStream &s);
     bool save(QString file);
+    bool load(QString file,QString &error);    
     void clear();
     void copyTo(JZNodeProgram *other) const;
     
@@ -125,10 +127,7 @@ public:
 protected:
     Q_DISABLE_COPY(JZNodeProgram);
 
-    friend JZNodeBuilder;            
-
-    void saveToStream(QDataStream &s) const;
-    void loadFromStream(QDataStream &s);
+    friend JZNodeBuilder;                
      
     QString m_filePath;
     QString m_error;

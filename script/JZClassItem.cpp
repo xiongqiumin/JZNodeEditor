@@ -266,9 +266,8 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
      
     JZUiItem* ui_item = ui();
     if(ui_item)
-    {        
-        define.isUiWidget = true;
-        define.widgetXml = ui_item->xml();
+    {                
+        define.widgetDefine = ui_item->define();
         define.widgetParams = ui_item->widgets();
             
         QList<JZParamDefine> widget_list = ui_item->widgets();

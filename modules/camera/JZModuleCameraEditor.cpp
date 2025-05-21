@@ -23,7 +23,7 @@ JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
 
     QList<JZProperty*> file_prop, hik_prop;
     //file
-    file_prop << m_editor->addPropDir("路径", &m_config.filePath, prop_group);
+    file_prop << m_editor->addPropDir("路径", &m_config.fileConfig.path, prop_group);
 
     //hik
     hik_prop << m_editor->addProp("路径", &m_config.hikConfig.path,  prop_group);
@@ -31,11 +31,11 @@ JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
     QStringList trigger_list = { "连续模式","触发模式" };
     hik_prop << m_editor->addPropIntEnum("触发模式", &m_config.hikConfig.triggerMode, { 0,1 }, trigger_list, prop_group);
 
-    QList<int> trigger_source_list = { JZCamerHikConfig::TRIGGER_SOURCE_LINE0,
-        JZCamerHikConfig::TRIGGER_SOURCE_LINE1,
-        JZCamerHikConfig::TRIGGER_SOURCE_LINE2,
-        JZCamerHikConfig::TRIGGER_SOURCE_LINE3,
-        JZCamerHikConfig::TRIGGER_SOURCE_SOFTWARE, 
+    QList<int> trigger_source_list = { JZCameraHikConfig::TRIGGER_SOURCE_LINE0,
+        JZCameraHikConfig::TRIGGER_SOURCE_LINE1,
+        JZCameraHikConfig::TRIGGER_SOURCE_LINE2,
+        JZCameraHikConfig::TRIGGER_SOURCE_LINE3,
+        JZCameraHikConfig::TRIGGER_SOURCE_SOFTWARE, 
     };
     QStringList trigger_source_text_list = { "Line0","Line1","Line2","Line3","Software" };
     hik_prop << m_editor->addPropIntEnum("触发源", &m_config.hikConfig.triggerMode, trigger_source_list, trigger_source_text_list, prop_group);

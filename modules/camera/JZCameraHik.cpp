@@ -104,8 +104,8 @@ bool JZCameraHikApi::updateDeviceList()
 
 #define g_api JZCameraHikApi::instance()
 
-//JZCamerHikConfig
-JZCamerHikConfig::JZCamerHikConfig()
+//JZCameraHikConfig
+JZCameraHikConfig::JZCameraHikConfig()
 {
     triggerMode = TRIGGER_MODE_OFF;
     triggerSource = TRIGGER_SOURCE_SOFTWARE;   //触发
@@ -401,32 +401,32 @@ void JZCameraHik::stop()
     }
 }
 
-void JZCameraHik::setConfig(JZCamerHikConfig config)
+void JZCameraHik::setConfig(JZCameraHikConfig config)
 {
     g_api->SetEnumValue(m_hDevHandle, "TriggerSource", config.triggerSource);
     g_api->SetEnumValue(m_hDevHandle, "TriggerMode", config.triggerMode);
 
-    if (config.gainMode == JZCamerHikConfig::GAIN_MODE_OFF)
+    if (config.gainMode == JZCameraHikConfig::GAIN_MODE_OFF)
     {
         g_api->SetEnumValue(m_hDevHandle, "GainAuto", 0);
         g_api->SetFloatValue(m_hDevHandle, "Gain", (float)config.gain);
     }
-    else if (config.gainMode == JZCamerHikConfig::GAIN_MODE_ONCE)
+    else if (config.gainMode == JZCameraHikConfig::GAIN_MODE_ONCE)
     {
         g_api->SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_ONCE);
     }
-    else if (config.gainMode == JZCamerHikConfig::GAIN_MODE_CONTINUOUS)
+    else if (config.gainMode == JZCameraHikConfig::GAIN_MODE_CONTINUOUS)
     {
         g_api->SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_CONTINUOUS);
     }
 
     //exposure
-    if (config.exposureMode == JZCamerHikConfig::EXPOSURE_AUTO_MODE_OFF)
+    if (config.exposureMode == JZCameraHikConfig::EXPOSURE_AUTO_MODE_OFF)
     {
         g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
         g_api->SetFloatValue(m_hDevHandle, "ExposureTime", (float)config.exposureTime);
     }
-    else if (config.exposureMode == JZCamerHikConfig::EXPOSURE_AUTO_MODE_ONCE)
+    else if (config.exposureMode == JZCameraHikConfig::EXPOSURE_AUTO_MODE_ONCE)
     {
         g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_ONCE);
     }

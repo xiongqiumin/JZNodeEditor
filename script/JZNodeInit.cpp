@@ -15,9 +15,10 @@
 #include "modules/communication/JZModuleComm.h"
 #include "modules/model/JZModuleModel.h"
 #include "modules/vision/JZModuleVision.h"
+#include "modules/motion/JZModuleMotion.h"
 #include "LogManager.h"
-#include "runtime/JZWidgetBind.h"
 #include "JZScriptUnitTest.h"
+#include "runtime/JZWidgetBind.h"
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectPointer ptr)
 {
@@ -42,7 +43,7 @@ void JZNodeInit()
     JZNodeEngine::regist();
 
     JZNetPackManager::instance()->init();
-    JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);              
+    JZNetPackManager::instance()->registPack(NetPack_debugPacket,JZNetPackCreate<JZNodeDebugPacket>);    
 
     JZBindManager::instance()->init();    
     
@@ -52,5 +53,6 @@ void JZNodeInit()
     module_inst->addModule(new JZModuleCamera());
     module_inst->addModule(new JZModuleModel());
     module_inst->addModule(new JZModuleVision());
+    module_inst->addModule(new JZModuleMotion());
     module_inst->initModules();
 }

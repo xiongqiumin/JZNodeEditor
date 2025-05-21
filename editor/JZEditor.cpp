@@ -111,3 +111,31 @@ void JZEditor::selectAll()
 {
 
 }
+
+//JZEditorManager
+JZEditorManager::JZEditorManager()
+{
+}
+
+JZEditorManager::~JZEditorManager()
+{
+}
+
+JZEditorManager *JZEditorManager::instance()
+{
+    static JZEditorManager inst;
+    return &inst;
+}
+
+void JZEditorManager::registEditor(int project_item_type, CreateJZEditorFunc func)
+{
+    m_editorFunc[project_item_type] = func;
+}
+
+JZEditor *JZEditorManager::createEditor(int project_item_type)
+{
+    if (!m_editorFunc.contains(project_item_type))
+        return nullptr;
+
+    return m_editorFunc[project_item_type]();
+}

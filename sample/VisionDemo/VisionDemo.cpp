@@ -77,7 +77,7 @@ void SampleVisionDemo::addInit()
     else
     {
         cfg.type = Camera_File;
-        cfg.filePath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
+        cfg.fileConfig.path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
     }
     cam_config.cameraList << cfg;    
     cam_init->setConfig(cam_config);

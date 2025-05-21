@@ -49,8 +49,10 @@ set(JZNodeCore_SOURCES
     script/JZClassItem.h
     script/JZProjectFile.cpp
     script/JZProjectFile.h
+    script/JZUiBaseItem.cpp
+    script/JZUiBaseItem.h  
     script/JZUiItem.cpp
-    script/JZUiItem.h
+    script/JZUiItem.h    
     script/JZContainer.cpp
     script/JZContainer.h
     script/JZExpressionSolver.cpp
@@ -230,6 +232,14 @@ set(JZNodeCore_SOURCES
     modules/vision/JZShapeMatch.h
     modules/vision/JZTemplateMatch.cpp
     modules/vision/JZTemplateMatch.h    
+    
+    #motion
+    modules/motion/JZModuleMotion.cpp
+    modules/motion/JZModuleMotion.h
+    modules/motion/JZMotion.cpp
+    modules/motion/JZMotion.h
+    modules/motion/JZMotionNode.cpp
+    modules/motion/JZMotionNode.h
     
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp
@@ -420,6 +430,14 @@ set(JZNodeEditor_SOURCES
     widgets/JZBaseDialog.h
     widgets/JZSearchTreeWidget.cpp
     widgets/JZSearchTreeWidget.h  
+    widgets/JZDebugSettingDialog.cpp
+    widgets/JZDebugSettingDialog.h
+    widgets/JZDebugSettingDialog.ui
+    
+    remote/JZRemotePacket.cpp
+    remote/JZRemotePacket.h
+    remote/JZRemoteClient.cpp
+    remote/JZRemoteClient.h
     
     #sample
     sample/Russian/Russian.cpp
@@ -455,8 +473,14 @@ set(JZNodeEditor_SOURCES
     #vision
     modules/vision/JZModuleVisionEditor.h
     modules/vision/JZModuleVisionEditor.cpp
+    modules/vision/JZVisionUiEditor.h
+    modules/vision/JZVisionUiEditor.cpp
     modules/vision/vision.qrc
-        
+    
+    #motion
+    modules/motion/JZModuleMotionEditor.h
+    modules/motion/JZModuleMotionEditor.cpp
+    
     #3rd    
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp
     3rd/JZCommon/jzWidgets/JZPropertyBrowser.h
@@ -474,6 +498,20 @@ target_link_libraries(JZNodeCore Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Xml    
     Qt${QT_VERSION_MAJOR}::UiTools    
     ${OpenCV_LIBRARIES})   
+
+add_executable(JZRemoteServer remote/main.cpp
+    remote/JZRemoteServer.cpp
+    remote/JZRemoteServer.h
+    remote/JZRemotePacket.cpp
+    remote/JZRemotePacket.h)
+target_link_libraries(JZRemoteServer JZNodeCore
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network          
+    Qt${QT_VERSION_MAJOR}::SerialPort      
+    Qt${QT_VERSION_MAJOR}::PrintSupport
+    Qt${QT_VERSION_MAJOR}::Xml    
+    Qt${QT_VERSION_MAJOR}::UiTools
+    ${OpenCV_LIBRARIES})
     
 add_executable(JZNodeUiRuntime runtime/main.cpp)
 target_link_libraries(JZNodeUiRuntime JZNodeCore
