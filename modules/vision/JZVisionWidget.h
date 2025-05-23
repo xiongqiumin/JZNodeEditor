@@ -19,14 +19,13 @@ public:
 
     void setCameraManager(JZCameraManager *cameraManager);
     void setViewWidget(JZCameraViewWidget *view);
+    void updateCamera();
+    void settingCamera(QString name);
 
 protected slots:
     void onContexMenu(QPoint pt);
 
 protected:
-    void onCameraStart();
-    void onCameraStop();
-    void onCameraSetting();
     void onFrameReady(cv::Mat mat);
 
 private:

@@ -43,9 +43,9 @@ public:
     JZScriptItem* flow(QString name);
     QStringList flowList();
 
-    JZUiItem *ui();
+    JZUiBaseItem *ui();
     bool hasUi();
-    void addUi(JZUiItem *item);
+    void addUi(JZUiBaseItem *item);
     void removeUi();
     QList<JZParamDefine> uiWidgets();
 

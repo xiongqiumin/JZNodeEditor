@@ -164,6 +164,8 @@ set(JZNodeCore_SOURCES
     modules/communication/JZCommManager.h
     modules/communication/JZCommPack.cpp
     modules/communication/JZCommPack.h
+	modules/communication/JZCommWidget.cpp
+    modules/communication/JZCommWidget.h
     modules/communication/net/JZTcpClient.cpp
     modules/communication/net/JZTcpClient.h
     modules/communication/net/JZTcpServer.cpp
@@ -196,6 +198,8 @@ set(JZNodeCore_SOURCES
 	modules/model/JZModelNode.h
 	modules/model/JZModelManager.h
 	modules/model/JZModelManager.cpp
+	modules/model/JZModelWidget.cpp
+    modules/model/JZModelWidget.h
 	modules/model/JZModuleModel.h
     modules/model/JZModuleModel.cpp    
 
@@ -214,6 +218,8 @@ set(JZNodeCore_SOURCES
     modules/camera/JZCameraNode.cpp
     modules/camera/JZCameraManager.h
     modules/camera/JZCameraManager.cpp
+	modules/camera/JZCameraWidget.cpp
+    modules/camera/JZCameraWidget.h
     modules/camera/JZCameraUnitTest.h
     modules/camera/JZCameraUnitTest.cpp
     
@@ -224,8 +230,8 @@ set(JZNodeCore_SOURCES
     modules/vision/JZVision.h
     modules/vision/JZVisionWidget.cpp
     modules/vision/JZVisionWidget.h
-	modules/vision/JZVisonWindow.cpp
-	modules/vision/JZVisonWindow.h
+	modules/vision/JZVisionWindow.cpp
+	modules/vision/JZVisionWindow.h
     modules/vision/JZVisionNode.cpp
     modules/vision/JZVisionNode.h  
     modules/vision/JZShapeMatch.cpp

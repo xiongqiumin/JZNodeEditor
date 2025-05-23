@@ -29,6 +29,17 @@ void JZCommPackFormat::setTail(QByteArray tail)
 	tail = tail;
 }
 
+//JZCommConfigPtr
+QDataStream& operator<<(QDataStream& s, const JZCommPackFormat& param)
+{
+	return s;
+}
+
+QDataStream& operator>>(QDataStream& s, JZCommPackFormat& param)
+{
+	return s;
+}
+
 //JZCommPack
 JZCommPack::JZCommPack()
 {

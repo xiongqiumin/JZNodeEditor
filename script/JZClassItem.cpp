@@ -39,13 +39,16 @@ QString JZScriptClassItem::className() const
     return m_name;
 }
 
-JZUiItem *JZScriptClassItem::ui()
+JZUiBaseItem *JZScriptClassItem::ui()
 {
-    auto list = itemList(ProjectItem_ui);
-    if (list.size() == 0)
-        return nullptr;
+    for (int i = 0; i < m_childs.size(); i++)
+    {
+        JZUiBaseItem *item = dynamic_cast<JZUiBaseItem*>(m_childs[i]);
+        if (item)
+            return item;
+    }
     
-    return dynamic_cast<JZUiItem*>(list[0]);
+    return nullptr;
 }
 
 bool JZScriptClassItem::hasUi()
@@ -53,7 +56,7 @@ bool JZScriptClassItem::hasUi()
     return ui();
 }
 
-void JZScriptClassItem::addUi(JZUiItem *item)
+void JZScriptClassItem::addUi(JZUiBaseItem *item)
 {
     Q_ASSERT(!ui());
     addItem(item);
@@ -264,7 +267,7 @@ JZNodeObjectDefine JZScriptClassItem::objectDefine()
         }
     }
      
-    JZUiItem* ui_item = ui();
+    JZUiBaseItem* ui_item = ui();
     if(ui_item)
     {                
         define.widgetDefine = ui_item->define();

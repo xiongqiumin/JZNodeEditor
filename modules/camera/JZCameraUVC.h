@@ -4,13 +4,16 @@
 #include "JZCamera.h"
 
 //JZCameraUVC
-class JZCameraUvcConfig
+class JZCameraUvcConfig : public JZCameraConfig
 {
 public:
+    JZCameraUvcConfig();
+
     QString path;
+
+    virtual void saveToStream(QDataStream& s) const override;
+    virtual void loadFromStream(QDataStream& s) override;
 };
-QDataStream& operator<<(QDataStream& s, const JZCameraUvcConfig& param);
-QDataStream& operator>>(QDataStream& s, JZCameraUvcConfig& param);
 
 //JZCameraUVC
 class JZCameraUVC : public JZCamera
@@ -22,8 +25,10 @@ public:
     ~JZCameraUVC();
 
     virtual JZCameraType type() override;
+
+    virtual bool setConfig(JZCameraConfigPtr config) override;
     virtual bool isOpen() override;
-    virtual bool open(QString path) override;
+    virtual bool open() override;
     virtual void close() override;
 
     virtual void start() override;

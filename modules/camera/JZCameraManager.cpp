@@ -4,55 +4,26 @@
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
 #include "JZCameraUVC.h"
-
-//JZCamerHikConfig
-QDataStream &operator<<(QDataStream &s, const JZCameraHikConfig &param)
-{
-    s << param.path;
-    s << param.gain;
-    s << param.exposureTime;
-    return s;
-}
-
-QDataStream &operator>>(QDataStream &s, JZCameraHikConfig &param)
-{
-    s >> param.path;
-    s >> param.gain;
-    s >> param.exposureTime;
-    return s;
-}
-
-//JZCameraConfig
-JZCameraConfig::JZCameraConfig()
-{
-    type = Camera_File;
-}
-QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param)
-{
-    s << param.type << param.name;
-    s << param.fileConfig;
-    s << param.hikConfig;
-
-    return s;
-}
-
-QDataStream &operator>>(QDataStream &s, JZCameraConfig &param)
-{
-    s >> param.type >> param.name;
-    
-    s >> param.fileConfig;
-    s >> param.hikConfig;
-
-    return s;
-}
-
+#include "../JZModuleConfigFactory.h"
 
 //JZCameraManagerConfig
+QDataStream& operator<<(QDataStream& s, const JZCameraConfigPtr& param)
+{
+    JZModuleConfigFactory<JZCameraConfig>::instance()->saveToStream(s, param);
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, JZCameraConfigPtr& param)
+{
+    JZModuleConfigFactory<JZCameraConfig>::instance()->loadFromStream(s, param);
+    return s;
+}
+
 int JZCameraManagerConfig::indexOfCamera(QString name)
 {
     for (int i = 0; i < cameraList.size(); i++)
     {
-        if (cameraList[i].name == name)
+        if (cameraList[i]->name == name)
             return i;
     }
     return -1;
@@ -105,6 +76,64 @@ void JZCameraManager::init()
     emit sigInitFinish();
 }
 
+bool JZCameraManager::open(QString name)
+{
+    auto c = camera(name);
+    if (!c)
+        return false;
+
+    return c->open();
+}
+
+bool JZCameraManager::close(QString name)
+{
+    auto c = camera(name);
+    if (!c)
+        return false;
+
+    c->close();
+    return true;
+}
+
+bool JZCameraManager::start(QString name)
+{
+    auto c = camera(name);
+    if (!c)
+        return false;
+
+    c->start();
+    return true;
+}
+
+bool JZCameraManager::startOnce(QString name)
+{
+    auto c = camera(name);
+    if (!c)
+        return false;
+
+    c->startOnce();
+    return true;
+}
+
+bool JZCameraManager::stop(QString name)
+{
+    auto c = camera(name);
+    if (!c)
+        return false;
+
+    c->stop();
+    return true;
+}
+
+bool JZCameraManager::setCamera(QString name, JZCameraConfigPtr config)
+{
+    auto c = camera(name);
+    if (!c)
+        return false;
+
+    return c->setConfig(config);
+}
+
 QStringList JZCameraManager::cameraList()
 {
     QStringList cameras;
@@ -123,43 +152,33 @@ JZCamera* JZCameraManager::camera(QString name)
     return m_cameras[idx];
 }
 
-
-JZCamera* JZCameraManager::createCamera(const JZCameraConfig &config)
+JZCamera* JZCameraManager::createCamera(const JZCameraConfigPtr &config)
 {
     bool open_ret = false;
 
     JZCamera *camera = nullptr;
-    if(config.type == Camera_File)
+    if(config->type == Camera_File)
     {
         JZCamera *camera_file = new JZCameraFile();
-        open_ret = camera_file->open(config.fileConfig.path);
-
         camera = camera_file;
     }
-    else if(config.type == Camera_UVC)
+    else if(config->type == Camera_UVC)
     {
-        JZCameraUVC* camera_file = new JZCameraUVC();
+        JZCameraUVC* camera_uvc = new JZCameraUVC();
+        camera = camera_uvc;
     }
-    else if(config.type == Camera_Hik)
+    else if(config->type == Camera_Hik)
     {
         JZCameraHik *camera_hik = new JZCameraHik();
         camera = camera_hik;
-
-        auto cfg = config.hikConfig;
-        open_ret = camera_hik->open(cfg.path);
-        if (open_ret)
-        {
-            camera_hik->setConfig(cfg);
-        }
     }
     else
     {
         Q_ASSERT(0);
     }
-
-    if(!open_ret)
-        throw std::runtime_error("open camera failed");
     
+    camera->setObjectName(config->name);
+    camera->setConfig(config);
     camera->setParent(this);
     return camera;
 }
@@ -212,9 +231,4 @@ void JZCameraStop(JZCameraManager* inst, QString name)
 {
     JZCamera* camera = JZCameraGet(inst, name);
     camera->stop();
-}
-
-void JZCameraSetting(JZCameraManager* inst, QString name)
-{
-    JZCamera* camera = JZCameraGet(inst, name);
 }

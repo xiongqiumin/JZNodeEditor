@@ -33,7 +33,7 @@ bool JZNodeCameraInit::compiler(JZNodeCompiler *c, QString &error)
         return false;
 
     auto env = c->env();
-    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager"), error))
+    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager*"), error))
         return false;
 
     QList<JZNodeIRParam> in, out;

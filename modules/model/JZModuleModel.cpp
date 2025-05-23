@@ -8,6 +8,7 @@
 #include "JZModelNode.h"
 #include "JZNodeFactory.h"
 #include "JZContainer.h"
+#include "../JZModuleConfigFactory.h"
 
 using namespace cv;
 
@@ -15,6 +16,9 @@ using namespace cv;
 JZModuleModel::JZModuleModel()
 {        
     m_name = "model";
+
+    auto inst = JZModuleConfigFactory<JZModelConfig>::instance();
+    inst->regist(Model_Yolo, JZModuleConfigCreator<JZModelYoloConfig>);
 }
 
 JZModuleModel::~JZModuleModel()
@@ -29,7 +33,7 @@ void JZModuleModel::regist(JZScriptEnvironment *env)
     int cls_id = Module_ModelType;
 
     jzbind::ClassBind<JZModel> cls_model(cls_id++, "JZModel");
-    cls_model.def("loadNet", true, &JZModel::loadNet);
+    cls_model.def("init", true, &JZModel::init);
     cls_model.regist();
 
     jzbind::ClassBind<JZModelManager> cls_model_manger(cls_id++, "JZModelManager");

@@ -30,7 +30,7 @@ JZModelManagerConfig JZNodeModelInit::config()
 bool JZNodeModelInit::compiler(JZNodeCompiler* c, QString& error)
 {
     auto env = c->env();
-    if (!c->checkVariableType("this.modelManager", env->nameToType("JZModelManager"), error))
+    if (!c->checkVariableType("this.modelManager", env->nameToType("JZModelManager*"), error))
         return false;
 
     if (!c->addFlowInput(m_id, error))

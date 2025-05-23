@@ -3,7 +3,7 @@
 
 #include "JZCamera.h"
 
-class JZCameraHikConfig
+class JZCameraHikConfig :public JZCameraConfig
 {
 public:
     enum {        
@@ -35,6 +35,9 @@ public:
     };
 
     JZCameraHikConfig();
+    
+    virtual void saveToStream(QDataStream& s) const override;
+    virtual void loadFromStream(QDataStream& s) override;
 
     QString path;
     int triggerSource;
@@ -56,15 +59,15 @@ public:
     ~JZCameraHik();
 
     virtual JZCameraType type() override;
+
+    virtual bool setConfig(JZCameraConfigPtr config) override;
     virtual bool isOpen() override;
-    virtual bool open(QString path) override;
+    virtual bool open() override;
     virtual void close() override;
 
     virtual void start() override;
     virtual void startOnce() override;
     virtual void stop() override;
-
-    void setConfig(JZCameraHikConfig config);
 
 protected:    
     bool CommandExecute(QString command);

@@ -10,7 +10,7 @@
 
 using namespace cv;
 
-class JZModelYoloConfig
+class JZModelYoloConfig : public JZModelConfig
 {
 public:
     JZModelYoloConfig();
@@ -39,9 +39,12 @@ public:
     ~JZYolo();
 
     bool isVaild();
-    virtual bool loadNet(QString path) override;    
+    virtual bool init() override;    
     QList<JZYoloResult> forward(Mat mat);
     
+protected:
+    bool loadClassInfo(QString class_into);
+
     cv::dnn::Net m_net;     
     QMap<int,QString> m_classList;
 };

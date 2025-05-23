@@ -2,27 +2,26 @@
 #include <QDataStream>
 #include "JZTcpClient.h"
 
-//JZTcpClientInfo
-JZTcpClientInfo::JZTcpClientInfo()
+//JZCommTcpClientConfig
+JZCommTcpClientConfig::JZCommTcpClientConfig()
 {
     ip = "127.0.0.1";
     port = 8888;
 }
 
-QDataStream& operator<<(QDataStream& s, const JZTcpClientInfo& param)
+void JZCommTcpClientConfig::saveToStream(QDataStream& s) const
 {
-    s << param.ip << param.port;
-    return s;
+    s << ip << port << format;
 }
-QDataStream& operator>>(QDataStream& s, JZTcpClientInfo& param)
+
+void JZCommTcpClientConfig::loadFromStream(QDataStream& s)
 {
-    s >> param.ip >> param.port;
-    return s;
+    s >> ip >> port >> format;
 }
 
 //JZTcpClient
 JZTcpClient::JZTcpClient(QObject* parent)
-    : QObject(parent)
+    : JZCommObject(parent)
 {
     m_socket = new QTcpSocket(this);
 }
@@ -30,16 +29,6 @@ JZTcpClient::JZTcpClient(QObject* parent)
 JZTcpClient::~JZTcpClient()
 {
     close();
-}
-
-void JZTcpClient::init(JZTcpClientInfo info)
-{
-    m_info = info;
-}
-
-void JZTcpClient::setFormat(JZCommPackFormat format)
-{
-    m_pack.setFormat(format);
 }
 
 bool JZTcpClient::isOpen()

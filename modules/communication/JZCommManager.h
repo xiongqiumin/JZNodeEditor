@@ -1,14 +1,14 @@
-#ifndef JZ_COMM_MANAGER_H_
-#define JZ_COMM_MANAGER_H_
+#ifndef JZ_COMM_MANAGER_H__
+#define JZ_COMM_MANAGER_H__
 
-#include "modbus/JZModuleModbus.h"
-#include "3rd/JZCommon/jzModbus/JZModbusClient.h"
-#include "3rd/JZCommon/jzModbus/JZModbusServer.h"
+#include "JZComm.h"
+#include "modbus/JZCommModbusClient.h"
+#include "modbus/JZCommModbusServer.h"
 #include "net/JZTcpClient.h"
 #include "net/JZTcpServer.h"
 #include "net/JZUdpSocket.h"
 #include "serialPort/JZSerialPort.h"
-
+#include "JZNodeType.h"
 
 enum {
     Function_Bit,
@@ -17,51 +17,11 @@ enum {
     Function_Register,
 };
 
-enum {
-    Comm_None,
-    Comm_ModbusClient,
-    Comm_ModbusServer,    
-    Comm_TcpClient,
-    Comm_TcpServer,
-    Comm_Udp,
-    Comm_SerialPort,
-};
-
-//JZCommModbusInfo
-class JZCommModbusInfo
-{
-public:
-    JZCommModbusInfo();
-    
-    JZModbusConnetInfo conn;
-    QDataStream::ByteOrder bitOrder;
-};
-QDataStream& operator<<(QDataStream& s, const JZCommModbusInfo& param);
-QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param);
-
-//JZCommConfig
-class JZCommConfig
-{
-public:
-    JZCommConfig();
-
-    QString name;
-    int commType;
-
-    JZCommModbusInfo modbus;
-    JZTcpClientInfo tcpClient;
-    JZTcpServerInfo tcpServer;
-    JZUdpInfo udp;
-    JZSerialPortInfo serial;
-};
-QDataStream &operator<<(QDataStream &s, const JZCommConfig &param);
-QDataStream &operator>>(QDataStream &s, JZCommConfig &param);
-
 //JZCommConfig
 class JZCommManagerConfig
 {
 public:
-    QList<JZCommConfig> commList;
+    QList<JZCommConfigPtr> commList;
 };
 QDataStream &operator<<(QDataStream &s, const JZCommManagerConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCommManagerConfig &param);
@@ -82,20 +42,16 @@ public:
     void setConfig(const JZCommManagerConfig& config);
     JZCommManagerConfig config();
 
-	JZModbusClient* modbusClient(QString name);
-    JZModbusServer* modbusServer(QString name);
+	JZCommModbusClient* modbusClient(QString name);
+    JZCommModbusServer* modbusServer(QString name);
     JZTcpClient* tcpClient(QString name);
     JZTcpServer* tcpServer(QString name);
     JZUdpSocket* udp(QString name);
     JZSerialPort* serial(QString name);
 
 protected:
-	QMap<QString, JZModbusClient*> m_modbusClient;
-    QMap<QString, JZModbusServer*> m_modbusServer;
-    QMap<QString, JZTcpClient*> m_tcpClient;
-    QMap<QString, JZTcpServer*> m_tcpServer;
-    QMap<QString, JZUdpSocket*> m_udp;
-    QMap<QString, JZSerialPort*> m_serialPort;
+    QObject* comm(QString name);
+	QList<JZCommObject*> m_commList;
 
     JZCommManagerConfig m_config;
 };

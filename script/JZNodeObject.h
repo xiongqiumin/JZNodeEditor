@@ -34,7 +34,7 @@ enum JZNodeObjectWidgetType
 class JZNodeObjectWidgetFactory
 {
 public:    
-    std::function<void(JZNodeObject*)> creator;    
+    std::function<void(JZNodeObject* obj)> creator;
 };
 
 //JZNodeObjectWidgetDefine

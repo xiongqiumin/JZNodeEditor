@@ -39,10 +39,10 @@ void TcpThread::run()
     JZTcpServer server;
     connect(&server, &JZTcpServer::sigNetPackRecv, this, &TcpThread::onPackRecv);
 
-    JZTcpServerInfo info;
+    JZCommTcpServerConfig info;
     info.port = 5000;
     server.init(info);
-    server.startServer();
+    server.open();
 
     exec();
 }
@@ -64,7 +64,7 @@ void UdpThread::run()
     JZUdpSocket server;
     connect(&server, &JZUdpSocket::sigDataRecv, this, &UdpThread::onPackRecv);
 
-    JZUdpInfo info;
+    JZCommUdpConfig info;
     info.port = 15000;
     server.init(info);
     server.open();
@@ -85,13 +85,13 @@ CommTest::CommTest()
 
 void CommTest::testModbusClientCpp()
 {
-    JZCommConfig cfg;
+    JZCommModbusClientConfig*cfg = new JZCommModbusClientConfig();
 
     JZCommManagerConfig comm_config;    
-    cfg.commType = Comm_ModbusClient;
-    cfg.modbus.conn.modbusType = Modbus_tcpClient;
-    cfg.name = "modbus";
-    comm_config.commList << cfg;
+    cfg->type = Comm_ModbusClient;
+    cfg->conn.modbusType = Modbus_tcpClient;
+    cfg->name = "modbus";
+    comm_config.commList << JZCommConfigPtr(cfg);
 
     JZCommManager manager;
     JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));
@@ -128,15 +128,13 @@ void CommTest::testModbusClient()
     auto script = class_item->memberFunction("testFunction");
     auto start = script->startNode();
 
-    JZCommConfig cfg;
-    cfg.commType = Comm_ModbusClient;
-
-    JZCommModbusInfo modbus;
-    cfg.modbus.conn.modbusType = Modbus_tcpClient;
-    cfg.name = "modbus";
+    JZCommModbusClientConfig* cfg = new JZCommModbusClientConfig();
+    cfg->type = Comm_ModbusClient;
+    cfg->conn.modbusType = Modbus_tcpClient;
+    cfg->name = "modbus";
 
     JZCommManagerConfig comm_config;
-    comm_config.commList << cfg;
+    comm_config.commList << JZCommConfigPtr(cfg);
 
     JZNodeCommInit* comm_init = new JZNodeCommInit();
     script->addNode(comm_init);
@@ -181,13 +179,13 @@ void CommTest::testTcpCpp()
         t.wait();
         });
 
-    JZCommConfig cfg;
-    cfg.commType = Comm_TcpClient;
-    cfg.name = "tcpClient";
-    cfg.tcpClient.port = 5000;
+    JZCommTcpClientConfig* cfg = new JZCommTcpClientConfig();
+    cfg->type = Comm_TcpClient;
+    cfg->name = "tcpClient";
+    cfg->port = 5000;
 
     JZCommManagerConfig comm_config;
-    comm_config.commList << cfg;
+    comm_config.commList << JZCommConfigPtr(cfg);
 
     JZCommManager manager;
     JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));
@@ -209,12 +207,12 @@ void CommTest::testUdpCpp()
         t.wait();
         });
 
-    JZCommConfig cfg;
-    cfg.commType = Comm_Udp;
-    cfg.name = "udpClient";
+    JZCommUdpConfig* cfg = new JZCommUdpConfig();
+    cfg->type = Comm_Udp;
+    cfg->name = "udpClient";
     
     JZCommManagerConfig comm_config;
-    comm_config.commList << cfg;
+    comm_config.commList << JZCommConfigPtr(cfg);
 
     JZCommManager manager;
     JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));

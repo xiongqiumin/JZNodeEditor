@@ -17,7 +17,10 @@ public:
 	QByteArray head;
 	QByteArray tail;
 };
+QDataStream& operator<<(QDataStream& s, const JZCommPackFormat& param);
+QDataStream& operator>>(QDataStream& s, JZCommPackFormat& param);
 
+//JZCommPack
 class JZCommPack
 {
 public:

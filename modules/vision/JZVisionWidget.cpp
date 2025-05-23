@@ -2,6 +2,7 @@
 #include <QMenu>
 #include <QPainter>
 #include "JZVisionWidget.h"
+#include "modules/camera/JZCameraWidget.h"
 #include "modules/opencv/CvToQt.h"
 
 //JZCameraListWidget
@@ -16,6 +17,7 @@ JZCameraListWidget::JZCameraListWidget(QWidget* parent)
 	m_tree = new QTreeWidget();
 	m_tree->setColumnCount(1);
 	m_tree->setHeaderHidden(true);
+	m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(m_tree, &JZCameraListWidget::customContextMenuRequested, this, &JZCameraListWidget::onContexMenu);
 
 	l->addWidget(m_tree);
@@ -29,6 +31,12 @@ JZCameraListWidget::~JZCameraListWidget()
 void JZCameraListWidget::setCameraManager(JZCameraManager* cameraManager)
 {
 	m_cameraManager = cameraManager;
+	m_tree->clear();
+	updateCamera();
+}
+
+void JZCameraListWidget::updateCamera()
+{
 	m_tree->clear();
 
 	auto list = m_cameraManager->cameraList();
@@ -52,29 +60,36 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
 		return;
 
 	QMenu menu(this);
-	QAction *act = menu.exec(m_tree->mapToGlobal(pt));
+
+	QString name = item->text(0);
+	JZCamera* c = m_cameraManager->camera(name);
+	auto actOpen = menu.addAction("open");
+	auto actClose = menu.addAction("close");
+	auto actSetting = menu.addAction("setting");
+
+	QAction* act = menu.exec(m_tree->mapToGlobal(pt));
 	if (!act)
 		return;
+
+	if (act == actOpen)
+	{
+		m_cameraManager->open(name);
+	}
+	else if (act == actClose)
+	{
+		m_cameraManager->close(name);
+	}
+	else if (act == actSetting)
+	{
+		settingCamera(name);
+	}
 }
 
-void JZCameraListWidget::onCameraStart()
+void JZCameraListWidget::settingCamera(QString name)
 {
-	QString name;
-	JZCamera *c = m_cameraManager->camera(name);
-	c->start();
-}
+	JZCameraConfigPtr config;
+	m_cameraManager->setCamera(name, config);
 
-void JZCameraListWidget::onCameraStop()
-{
-	QString name;
-	JZCamera* c = m_cameraManager->camera(name);
-	c->stop();
-}
-
-void JZCameraListWidget::onCameraSetting()
-{
-	//QString name;
-	//m_cameraManager->setting(name);
 }
 
 void JZCameraListWidget::onFrameReady(cv::Mat mat)

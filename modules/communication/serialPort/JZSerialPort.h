@@ -3,12 +3,16 @@
 
 #include <QSerialPort>
 #include "../JZCommPack.h"
+#include "../JZComm.h"
 
-//JZSerialPortInfo
-class JZSerialPortInfo
+//JZSerialPortConfig
+class JZSerialPortConfig : public JZCommConfig
 {
 public:
-    JZSerialPortInfo();
+    JZSerialPortConfig();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
 
     QString portName;
     int baud;
@@ -16,11 +20,9 @@ public:
     QSerialPort::Parity parityBit;
     QSerialPort::StopBits stopBit;
 };
-QDataStream& operator<<(QDataStream& s, const JZSerialPortInfo& param);
-QDataStream& operator>>(QDataStream& s, JZSerialPortInfo& param);
 
 //JZSerialPort
-class JZSerialPort : public QObject
+class JZSerialPort : public JZCommObject
 {
     Q_OBJECT
 
@@ -28,7 +30,7 @@ public:
     JZSerialPort(QObject* parent = nullptr);
     ~JZSerialPort();
 
-    void init(const JZSerialPortInfo &info);
+    void init(const JZSerialPortConfig&info);
 
     bool isOpen();
     bool open();
@@ -41,7 +43,7 @@ public:
     QString readText();
     
 protected:
-    JZSerialPortInfo m_info;
+    JZSerialPortConfig m_info;
 
     JZCommPack m_pack;
     QSerialPort *m_com;

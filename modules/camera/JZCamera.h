@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <opencv2/opencv.hpp>
+#include <QSharedPointer>
+#include <QDataStream>
 
 enum JZCameraType
 {
@@ -11,6 +13,20 @@ enum JZCameraType
     Camera_UVC,
     Camera_Hik,
 };
+
+//JZCameraConfig
+class JZCameraConfig
+{
+public:
+    JZCameraConfig();
+
+    int type;
+    QString name;
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
+};
+typedef QSharedPointer<JZCameraConfig> JZCameraConfigPtr;
 
 class JZCamera : public QObject
 {
@@ -21,8 +37,10 @@ public:
     virtual ~JZCamera();
 
     virtual JZCameraType type() = 0;
+
+    virtual bool setConfig(JZCameraConfigPtr config) = 0;
     virtual bool isOpen() = 0;
-    virtual bool open(QString path) = 0;
+    virtual bool open() = 0;
     virtual void close() = 0;
 
     virtual void start() = 0;
@@ -34,7 +52,7 @@ signals:
     void sigError();
 
 protected:
-
+    JZCameraConfigPtr m_config;
 };
 
 #endif

@@ -3,20 +3,22 @@
 
 #include <QUdpSocket>
 #include <QNetworkDatagram>
+#include "../JZComm.h"
 
-//JZUdpInfo
-class JZUdpInfo
+//JZCommUdpConfig
+class JZCommUdpConfig : public JZCommConfig
 {
 public:
-    JZUdpInfo();
+    JZCommUdpConfig();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
 
     int port;
 };
-QDataStream& operator<<(QDataStream& s, const JZUdpInfo& param);
-QDataStream& operator>>(QDataStream& s, JZUdpInfo& param);
 
 //JZUdpSocket
-class JZUdpSocket : public QObject
+class JZUdpSocket : public JZCommObject
 {
     Q_OBJECT
 
@@ -24,7 +26,7 @@ public:
     JZUdpSocket(QObject* parent = nullptr);
     ~JZUdpSocket();
 
-    void init(JZUdpInfo info);
+    void init(JZCommUdpConfig info);
     bool isOpen();
     bool open();
     void close();
@@ -40,7 +42,7 @@ signals:
 
 protected:
     bool m_waitRecv;
-    JZUdpInfo m_info;
+    JZCommUdpConfig m_info;
     QUdpSocket *m_socket;
 };
 

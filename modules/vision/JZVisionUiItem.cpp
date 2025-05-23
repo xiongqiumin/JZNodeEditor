@@ -1,27 +1,48 @@
 ﻿#include <QDebug>
 #include <QFile>
 #include <QFileInfo>
-#include <QTextStream>
-#include <QDomDocument>
-#include "JZUiExtItem.h"
+#include "JZVisionUiItem.h"
 #include "JZNodeObject.h"
 #include "JZProject.h"
+#include "JZModuleVision.h"
+#include "JZNodeUtils.h"
 
-JZUiExtItem::JZUiExtItem()
-    :JZProjectItem(ProjectItem_ui)
+JZVisionUiItem::JZVisionUiItem()
 {
-    m_name = "ui";
+    m_itemType = ProjectItem_visionUi;
+    m_name = "visionUi";
 }
 
-JZUiExtItem::~JZUiExtItem()
+JZVisionUiItem::~JZVisionUiItem()
 {
     
 }
 
-void JZUiExtItem::saveToStream(QDataStream &s) const
+JZNodeObjectWidgetDefine JZVisionUiItem::define()
 {
+    JZNodeObjectWidgetDefine define;
+    define.type = Widget_Vision;
+    define.buffer = JZNodeUtils::toBuffer(m_config);
+    return define;
 }
 
-bool JZUiExtItem::loadFromStream(QDataStream &s)
+void JZVisionUiItem::setConfig(JZVisionWindowConfig config)
 {
+    m_config = config;
+}
+
+JZVisionWindowConfig JZVisionUiItem::config()
+{
+    return m_config;
+}
+
+void JZVisionUiItem::saveToStream(QDataStream &s) const
+{
+    s << m_config;
+}
+
+bool JZVisionUiItem::loadFromStream(QDataStream &s)
+{
+    s >> m_config;
+    return true;
 }

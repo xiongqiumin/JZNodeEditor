@@ -1,52 +1,18 @@
 #include "JZCommManager.h"
 #include "JZNodeEngine.h"
 #include "JZNodeUtils.h"
+#include "../JZModuleConfigFactory.h"
 
-//JZCommModbusInfo
-JZCommModbusInfo::JZCommModbusInfo()
+//JZCommConfigPtr
+QDataStream& operator<<(QDataStream& s, const JZCommConfigPtr& param)
 {
-    bitOrder = QDataStream::LittleEndian;
-}
-
-QDataStream& operator<<(QDataStream& s, const JZCommModbusInfo& param)
-{
-    s << param.conn << param.bitOrder;
+    JZModuleConfigFactory<JZCommConfig>::instance()->saveToStream(s, param);
     return s;
 }
 
-QDataStream& operator>>(QDataStream& s, JZCommModbusInfo& param)
+QDataStream& operator>>(QDataStream& s, JZCommConfigPtr& param)
 {
-    s >> param.conn >> param.bitOrder;
-    return s;
-}
-
-//JZCommConfig
-JZCommConfig::JZCommConfig()
-{
-    commType = Comm_None;
-}
-
-QDataStream &operator<<(QDataStream &s, const JZCommConfig &param)
-{
-    s << param.name;
-    s << param.commType;
-    s << param.modbus;
-    s << param.tcpClient;
-    s << param.tcpServer;
-    s << param.udp;
-    s << param.serial;
-    return s;
-}
-
-QDataStream &operator >> (QDataStream &s, JZCommConfig &param)
-{
-    s >> param.name;
-    s >> param.commType;
-    s >> param.modbus;
-    s >> param.tcpClient;
-    s >> param.tcpServer;
-    s >> param.udp;
-    s >> param.serial;
+    JZModuleConfigFactory<JZCommConfig>::instance()->loadFromStream(s, param);
     return s;
 }
 
@@ -71,47 +37,48 @@ JZCommManager::JZCommManager(QObject* parent)
 
 JZCommManager::~JZCommManager()
 {
-    qDeleteAll(m_modbusClient);
-    qDeleteAll(m_modbusServer);
-    qDeleteAll(m_tcpClient);
-    qDeleteAll(m_udp);
-    qDeleteAll(m_serialPort);
-
-    m_modbusClient.clear();
-    m_modbusServer.clear();
-    m_tcpClient.clear();
-    m_udp.clear();
-    m_serialPort.clear();
+    qDeleteAll(m_commList);
+    m_commList.clear();
 }
 
-JZModbusClient* JZCommManager::modbusClient(QString name)
+QObject* JZCommManager::comm(QString name)
 {
-    return m_modbusClient.value(name, nullptr);
+    for (int i = 0; i < m_config.commList.size(); i++)
+    {
+        if (m_config.commList[i]->name == name)
+            return m_commList[i];
+    }
+    return nullptr;
 }
 
-JZModbusServer* JZCommManager::modbusServer(QString name)
+JZCommModbusClient* JZCommManager::modbusClient(QString name)
 {
-    return m_modbusServer.value(name, nullptr);
+    return qobject_cast<JZCommModbusClient*>(comm(name));
+}
+
+JZCommModbusServer* JZCommManager::modbusServer(QString name)
+{
+    return qobject_cast<JZCommModbusServer*>(comm(name));
 }
 
 JZTcpClient* JZCommManager::tcpClient(QString name)
 {
-    return m_tcpClient.value(name, nullptr);
+    return qobject_cast<JZTcpClient*>(comm(name));
 }
 
 JZTcpServer* JZCommManager::tcpServer(QString name)
 {
-    return m_tcpServer.value(name, nullptr);
+    return qobject_cast<JZTcpServer*>(comm(name));
 }
 
 JZUdpSocket* JZCommManager::udp(QString name)
 {
-    return m_udp.value(name, nullptr);
+    return qobject_cast<JZUdpSocket*>(comm(name));
 }
 
 JZSerialPort* JZCommManager::serial(QString name)
 {
-    return m_serialPort.value(name, nullptr);
+    return qobject_cast<JZSerialPort*>(comm(name));
 }
 
 void JZCommManager::init()
@@ -119,80 +86,60 @@ void JZCommManager::init()
     for (int i = 0; i < m_config.commList.size(); i++)
     {
         auto &cfg = m_config.commList[i];
+        int comm_type = cfg->type;
+
         //modbus
-        if (cfg.commType == Comm_ModbusClient)
+        JZCommObject* comm_obj = nullptr;
+        if (comm_type == Comm_ModbusClient)
         {
-            JZModbusClient* client = new JZModbusClient(this);
-            client->initConn(cfg.modbus.conn);
-            client->setProperty("BitOrder", cfg.modbus.bitOrder);
-            m_modbusClient[cfg.name] = client;
+            JZCommModbusClient* client = new JZCommModbusClient(this);
+            comm_obj = client;
         }
-        else if (cfg.commType == Comm_ModbusServer)
+        else if (comm_type == Comm_ModbusServer)
         {
-            JZModbusServer* server = new JZModbusServer(this);
-            server->initConn(cfg.modbus.conn);
-            server->setProperty("BitOrder", cfg.modbus.bitOrder);
-            m_modbusServer[cfg.name] = server;
+            JZCommModbusServer* server = new JZCommModbusServer(this);
+            comm_obj = server;
         }
-        else if (cfg.commType == Comm_TcpClient)
+        else if (comm_type == Comm_TcpClient)
         {
             JZTcpClient* client = new JZTcpClient(this);
-            client->init(cfg.tcpClient);
-            m_tcpClient[cfg.name] = client;
+            comm_obj = client;
         }
-        else if (cfg.commType == Comm_TcpServer)
+        else if (comm_type == Comm_TcpServer)
         {
             JZTcpServer* server = new JZTcpServer(this);
-            server->init(cfg.tcpServer);
-            m_tcpServer[cfg.name] = server;
+            comm_obj = server;
         }
-        else if (cfg.commType == Comm_Udp)
+        else if (comm_type == Comm_Udp)
         {
             JZUdpSocket* udp = new JZUdpSocket(this);
-            udp->init(cfg.udp);
-            m_udp[cfg.name] = udp;
+            comm_obj = udp;
         }
-        else if (cfg.commType == Comm_SerialPort)
+        else if (comm_type == Comm_SerialPort)
         {
-            auto& conn = cfg.serial;
-
             JZSerialPort* com = new JZSerialPort(this);
-            com->init(conn);
-            m_serialPort[cfg.name] = com;
+            comm_obj = com;
         }
+        else
+        {
+            Q_ASSERT(0);
+        }
+
+        comm_obj->setConfig(cfg);
+        m_commList.push_back(comm_obj);
     }
 }
 
 void JZCommManager::openAll()
 {
-    for (auto c : m_modbusClient)
+    for (auto c : m_commList)
         c->open();
-    for (auto s : m_modbusServer)
-        s->start();
-    for (auto c : m_tcpClient)
-        c->open();
-    for (auto s : m_tcpServer)
-        s->startServer();
-    for (auto u : m_udp)
-        u->open();
-    for (auto com : m_serialPort)
-        com->open();
 }
 
 void JZCommManager::closeAll()
 {
-    for (auto c : m_modbusClient)
+    for (auto c : m_commList)
         c->close();
-    for (auto s : m_modbusServer)
-        s->stop();
-    for (auto c : m_tcpClient)
-        c->close();
-    for (auto s : m_tcpServer)
-        s->stopServer();
-    for (auto u : m_udp)
-        u->close();
-    for (auto com : m_serialPort)
-        com->close();
 }
 
 void JZCommManager::setConfig(const JZCommManagerConfig&config)

@@ -33,7 +33,7 @@ bool JZNodeCommInit::compiler(JZNodeCompiler* c, QString& error)
         return false;
 
     auto env = c->env();
-    if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
+    if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager*"), error))
         return false;
 
 	QList<JZNodeIRParam> in, out;

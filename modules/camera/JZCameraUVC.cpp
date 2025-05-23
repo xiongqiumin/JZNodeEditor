@@ -5,14 +5,18 @@
 
 using namespace cv;
 
-QDataStream& operator<<(QDataStream& s, const JZCameraUvcConfig& param)
+JZCameraUvcConfig::JZCameraUvcConfig()
 {
-    return s;
+    type = Camera_UVC;
 }
 
-QDataStream& operator>>(QDataStream& s, JZCameraUvcConfig& param)
+void JZCameraUvcConfig::saveToStream(QDataStream& s) const
 {
-    return s;
+}
+
+
+void JZCameraUvcConfig::loadFromStream(QDataStream& s)
+{
 }
 
 //JZCameraUVC
@@ -35,7 +39,13 @@ bool JZCameraUVC::isOpen()
     return false;
 }
 
-bool JZCameraUVC::open(QString path)
+bool JZCameraUVC::setConfig(JZCameraConfigPtr config)
+{
+    m_config = config;
+    return true;
+}
+
+bool JZCameraUVC::open()
 {
     return false;
 }

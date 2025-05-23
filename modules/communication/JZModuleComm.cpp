@@ -1,8 +1,9 @@
 ﻿#include "JZModuleComm.h"
-#include "JZCommNode.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
-#include "modbus/JZModuleModbus.h"
+#include "JZCommManager.h"
+#include "3rd/JZCommon/jzModbus/JZModbusMaster.h"
+#include "3rd/JZCommon/jzModbus/JZModbusSlaver.h"
 
 //JZModuleComm
 JZModuleComm::JZModuleComm()
@@ -52,7 +53,6 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     //func
     auto func_inst = env->functionManager();
     func_inst->registCFunction("JZCommInit", true, jzbind::createFuncion(JZCommInit));
-    func_inst->registCFunction("JZNodeModbusWatchEventInit", true, jzbind::createFuncion(JZNodeModbusWatchEventInit));
     func_inst->registCFunction("JZCommModbusRead", true, jzbind::createFuncion(JZCommModbusRead));
     func_inst->registCFunction("JZCommModbusWrite", true, jzbind::createFuncion(JZCommModbusWrite));
 
@@ -69,7 +69,6 @@ void JZModuleComm::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZCommSerialWriteText", true, jzbind::createFuncion(JZCommSerialWriteText));
 
     //node
-    env->nodeFactory()->registNode(Node_modbusWatch, createJZNode<JZNodeModbusWatchEvent>);
 
     env->nodeFactory()->registNode(Node_CommInit, createJZNode<JZNodeCommInit>);
     env->nodeFactory()->registNode(Node_ModbusRead,createJZNode<JZNodeModbusRead>);

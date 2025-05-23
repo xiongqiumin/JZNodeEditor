@@ -8,30 +8,33 @@
 #include "modules/camera/JZCameraManager.h"
 #include "modules/model/JZModelManager.h"
 
-class JZVisonWindowConfig
+class JZVisionWindowConfig
 {
 public:
 	JZCameraManagerConfig cameraConfig;
 	JZModelManagerConfig modelConfig;
 	JZCommManagerConfig commConfig;
 };
-QDataStream& operator<<(QDataStream& s, const JZVisonWindowConfig& param);
-QDataStream& operator>>(QDataStream& s, JZVisonWindowConfig& param);
+QDataStream& operator<<(QDataStream& s, const JZVisionWindowConfig& param);
+QDataStream& operator>>(QDataStream& s, JZVisionWindowConfig& param);
 
-class JZVisonWindow : public QMainWindow
+class JZVisionWindow : public QMainWindow
 {
 	Q_OBJECT
 	
 public:	
-	JZVisonWindow();
-	~JZVisonWindow();
+	JZVisionWindow();
+	~JZVisionWindow();
 
-	void init(JZVisonWindowConfig config);
-	JZVisonWindowConfig config();
+	void init(JZVisionWindowConfig config);
+	JZVisionWindowConfig config();
 
 	JZModelManager* modelManager();
 	JZCameraManager* cameraManager();
 	JZCommManager* commManager();
+
+	JZCameraListWidget* cameraList();
+	JZCameraViewWidget* cameraView();
 
 protected slots:
 	void onActionClose();
@@ -61,7 +64,7 @@ protected:
 	JZCameraManager* m_cameraManager;
 	JZCommManager* m_commManager;
 
-	JZVisonWindowConfig m_config;
+	JZVisionWindowConfig m_config;
 };
 
 

@@ -1,109 +1,11 @@
 ﻿#include <QJsonDocument>
 #include <QJsonObject>
 #include <QDebug>
+#include <QFile>
 #include "JZYolo.h"
 #include "../opencv/CvToQt.h"
 
 //JZYolo
-static const char *yolo_json = R"(
-    {
-  "architectures": [
-    "Yolov8ForObjectDetection"
-  ],
-  "id2label": {
-    "0": "person",
-    "1": "bicycle",
-    "2": "car",
-    "3": "motorcycle",
-    "4": "airplane",
-    "5": "bus",
-    "6": "train",
-    "7": "truck",
-    "8": "boat",
-    "9": "traffic light",
-    "10": "fire hydrant",
-    "11": "stop sign",
-    "12": "parking meter",
-    "13": "bench",
-    "14": "bird",
-    "15": "cat",
-    "16": "dog",
-    "17": "horse",
-    "18": "sheep",
-    "19": "cow",
-    "20": "elephant",
-    "21": "bear",
-    "22": "zebra",
-    "23": "giraffe",
-    "24": "backpack",
-    "25": "umbrella",
-    "26": "handbag",
-    "27": "tie",
-    "28": "suitcase",
-    "29": "frisbee",
-    "30": "skis",
-    "31": "snowboard",
-    "32": "sports ball",
-    "33": "kite",
-    "34": "baseball bat",
-    "35": "baseball glove",
-    "36": "skateboard",
-    "37": "surfboard",
-    "38": "tennis racket",
-    "39": "bottle",
-    "40": "wine glass",
-    "41": "cup",
-    "42": "fork",
-    "43": "knife",
-    "44": "spoon",
-    "45": "bowl",
-    "46": "banana",
-    "47": "apple",
-    "48": "sandwich",
-    "49": "orange",
-    "50": "broccoli",
-    "51": "carrot",
-    "52": "hot dog",
-    "53": "pizza",
-    "54": "donut",
-    "55": "cake",
-    "56": "chair",
-    "57": "couch",
-    "58": "potted plant",
-    "59": "bed",
-    "60": "dining table",
-    "61": "toilet",
-    "62": "tv",
-    "63": "laptop",
-    "64": "mouse",
-    "65": "remote",
-    "66": "keyboard",
-    "67": "cell phone",
-    "68": "microwave",
-    "69": "oven",
-    "70": "toaster",
-    "71": "sink",
-    "72": "refrigerator",
-    "73": "book",
-    "74": "clock",
-    "75": "vase",
-    "76": "scissors",
-    "77": "teddy bear",
-    "78": "hair drier",
-    "79": "toothbrush"
-},
-  "layer_norm_eps": 0.001,
-  "min_depth": 8,
-  "num_channels": 3,
-  "num_detection_tokens": 8400,
-  "output_stride": 32,
-  "semantic_loss_ignore_index": 255,
-  "tf_padding": true,
-  "model_type": "yolov8",
-  "torch_dtype": "float32",
-  "transformers_version": "4.33.3"
-}
-)";
 
 //JZModelYoloConfig
 JZModelYoloConfig::JZModelYoloConfig()
@@ -151,15 +53,6 @@ QList<JZGraphic> JZYoloResult::toGraphics(const QList<JZYoloResult>& result)
 //JZYolo
 JZYolo::JZYolo()
 {
-    QJsonObject obj = QJsonDocument::fromJson(yolo_json).object();
-    obj = obj["id2label"].toObject();
-    auto it = obj.begin();
-    while (it != obj.end())
-    {
-        int key = it.key().toInt();
-        m_classList[key] = it.value().toString();
-        it++;
-    }
 }
 
 JZYolo::~JZYolo()
@@ -171,10 +64,34 @@ bool JZYolo::isVaild()
     return !m_net.empty();
 }
 
-bool JZYolo::loadNet(QString path)
+bool JZYolo::loadClassInfo(QString class_info)
 {
-    m_net = cv::dnn::readNet(path.toLocal8Bit().data());
-    return true;
+    QFile file(class_info);
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+
+    QJsonObject obj = QJsonDocument::fromJson(file.readAll()).object();
+    obj = obj["id2label"].toObject();
+    auto it = obj.begin();
+    while (it != obj.end())
+    {
+        int key = it.key().toInt();
+        m_classList[key] = it.value().toString();
+        it++;
+    }
+}
+
+bool JZYolo::init()
+{
+    JZModelYoloConfig *cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
+    try {
+        m_net = cv::dnn::readNet(cfg->modelPath.toLocal8Bit().data());
+    }
+    catch (std::exception& e)
+    {
+        return false;
+    }
+    return loadClassInfo(cfg->idPath);
 }
 
 QList<JZYoloResult> JZYolo::forward(Mat frame)

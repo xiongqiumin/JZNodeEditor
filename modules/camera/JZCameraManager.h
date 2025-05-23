@@ -10,29 +10,13 @@
 #include "JZCameraHik.h"
 #include "JZCameraUVC.h"
 
-//JZCameraConfig
-class JZCameraConfig
-{
-public:
-    JZCameraConfig();
-
-    int type;
-    QString name;
-    
-    JZCameraFileConfig fileConfig;
-    JZCameraUvcConfig uvcConfig;
-    JZCameraHikConfig hikConfig;
-};
-QDataStream &operator<<(QDataStream &s, const JZCameraConfig &param);
-QDataStream &operator>>(QDataStream &s, JZCameraConfig &param);
-
 //JZCameraManagerConfig
 class JZCameraManagerConfig
 {
 public:
     int indexOfCamera(QString name);
 
-    QList<JZCameraConfig> cameraList;
+    QList<JZCameraConfigPtr> cameraList;
 };
 QDataStream &operator<<(QDataStream &s, const JZCameraManagerConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCameraManagerConfig &param);
@@ -50,6 +34,12 @@ public:
 	JZCamera* camera(QString name);
 
     void init();
+    bool open(QString name);
+    bool close(QString name);
+    bool start(QString name);
+    bool startOnce(QString name);
+    bool stop(QString name);
+    bool setCamera(QString name, JZCameraConfigPtr config);
 
     void setConfig(const JZCameraManagerConfig &config);
     JZCameraManagerConfig config();
@@ -58,7 +48,7 @@ signals:
     void sigInitFinish();
 
 protected:
-    JZCamera*createCamera(const JZCameraConfig &config);
+    JZCamera*createCamera(const JZCameraConfigPtr &config);
 
     JZCameraManagerConfig m_config;
     QList<JZCamera*> m_cameras;
@@ -69,6 +59,5 @@ void JZCameraInit(JZCameraManager* inst, const QByteArray& buffer);
 void JZCameraStart(JZCameraManager* inst, QString name);
 void JZCameraStartOnce(JZCameraManager* inst, QString name);
 void JZCameraStop(JZCameraManager* inst, QString name);
-void JZCameraSetting(JZCameraManager* inst, QString name);
 
 #endif

@@ -4,26 +4,25 @@
 #include <QTimer>
 #include "JZUdpSocket.h"
 
-//JZUdpInfo
-JZUdpInfo::JZUdpInfo()
+//JZCommUdpConfig
+JZCommUdpConfig::JZCommUdpConfig()
 {
     port = -1;
 }
 
-QDataStream& operator<<(QDataStream& s, const JZUdpInfo& param)
+void JZCommUdpConfig::saveToStream(QDataStream& s) const
 {
-    s << param.port;
-    return s;
+    s << port;
 }
-QDataStream& operator>>(QDataStream& s, JZUdpInfo& param)
+
+void JZCommUdpConfig::loadFromStream(QDataStream& s)
 {
-    s >> param.port;
-    return s;
+    s >> port;
 }
 
 //JZUdpSocket
 JZUdpSocket::JZUdpSocket(QObject* parent)
-    : QObject(parent)
+    : JZCommObject(parent)
 {
     m_socket = new QUdpSocket(this);
     connect(m_socket, &QUdpSocket::readyRead, this, &JZUdpSocket::onReadyRead);
@@ -34,7 +33,7 @@ JZUdpSocket::~JZUdpSocket()
 {
 }
 
-void JZUdpSocket::init(JZUdpInfo info)
+void JZUdpSocket::init(JZCommUdpConfig info)
 {
     m_info = info;
 }

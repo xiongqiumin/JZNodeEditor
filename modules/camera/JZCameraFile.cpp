@@ -5,16 +5,19 @@
 
 using namespace cv;
 
-QDataStream& operator<<(QDataStream& s, const JZCameraFileConfig& param)
+JZCameraFileConfig::JZCameraFileConfig()
 {
-    s << param.path;
-    return s;
+    type = Camera_File;
 }
 
-QDataStream& operator>>(QDataStream& s, JZCameraFileConfig& param)
+void JZCameraFileConfig::saveToStream(QDataStream& s) const
 {
-    s >> param.path;
-    return s;
+    s << path;
+}
+
+void JZCameraFileConfig::loadFromStream(QDataStream& s)
+{
+    s >> path;
 }
 
 //JZCameraFile
@@ -40,9 +43,17 @@ bool JZCameraFile::isOpen()
     return m_fileList.size() != 0;
 }
 
-bool JZCameraFile::open(QString path)
+bool JZCameraFile::setConfig(JZCameraConfigPtr config)
 {
-    QDir dir(path);
+    m_config = config;
+    return true;
+}
+
+bool JZCameraFile::open()
+{
+    auto config = dynamic_cast<JZCameraFileConfig*>(m_config.data());
+
+    QDir dir(config->path);
     if(!dir.exists())
         return false;
     

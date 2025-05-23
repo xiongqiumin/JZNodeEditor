@@ -3,22 +3,24 @@
 
 #include <QTcpSocket>
 #include "../JZCommPack.h"
+#include "../JZComm.h"
 
-//JZTcpClientInfo
-class JZTcpClientInfo
+//JZCommTcpClientConfig
+class JZCommTcpClientConfig : public JZCommConfig
 {
 public:
-    JZTcpClientInfo();
+    JZCommTcpClientConfig();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
 
     QString ip;
     int port;
-
+    JZCommPackFormat format;
 };
-QDataStream& operator<<(QDataStream& s, const JZTcpClientInfo& param);
-QDataStream& operator>>(QDataStream& s, JZTcpClientInfo& param);
 
 //JZTcpClient
-class JZTcpClient : public QObject
+class JZTcpClient : public JZCommObject
 {
     Q_OBJECT
 
@@ -26,12 +28,9 @@ public:
     JZTcpClient(QObject *parent = nullptr);
     ~JZTcpClient();
 
-    void init(JZTcpClientInfo info);
-    void setFormat(JZCommPackFormat format);
-
-    bool isOpen();
-    bool open();
-    void close();
+    virtual bool isOpen() override;
+    virtual bool open() override;
+    virtual void close() override;
 
     void write(const QByteArray &buffer);
     QByteArray read();
@@ -40,7 +39,6 @@ public:
     QString readText();
 
 protected:
-    JZTcpClientInfo m_info;
     JZCommPack m_pack;
     QTcpSocket *m_socket;
 };

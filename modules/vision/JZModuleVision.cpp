@@ -4,7 +4,8 @@
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
 #include "JZVisionWidget.h"
-#include "JZVisonWindow.h"
+#include "JZVisionWindow.h"
+#include "JZVisionUiItem.h"
 
 using namespace cv;
 
@@ -12,6 +13,20 @@ using namespace cv;
 JZModuleVision::JZModuleVision()
 {        
     m_name = "vision";
+
+    m_visionWindowFactory.creator = [](JZNodeObject *obj)
+    {
+        JZVisionWindowConfig config;
+
+        QByteArray buffer = obj->meta()->widgetDefine.buffer;
+        QDataStream s(buffer);
+        s >> config;
+
+        JZVisionWindow *w = JZObjectCast<JZVisionWindow>(obj);
+        w->init(config);
+    };
+
+    JZProjectItemManager::instance()->registItem(ProjectItem_visionUi, createJZProjectItem<JZVisionUiItem>);
 }
 
 JZModuleVision::~JZModuleVision()
@@ -26,12 +41,14 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     cls_camera_list.regist();
 
     jzbind::ClassBind<JZCameraViewWidget> cls_camera_view(cls_id++, "JZCameraViewWidget", "QWidget");
+    cls_camera_view.def("label", false, &JZCameraViewWidget::label, CFunction::Reference);
     cls_camera_view.regist();
 
-    jzbind::ClassBind<JZVisonWindow> cls_vision_window(cls_id++, "JZVisonWindow", "QMainWindow");
-    cls_vision_window.defPropertyFunc("cameraManager", &JZVisonWindow::cameraManager);
-    cls_vision_window.defPropertyFunc("commManager", &JZVisonWindow::commManager);
-    cls_vision_window.defPropertyFunc("modelManager", &JZVisonWindow::modelManager);
+    jzbind::ClassBind<JZVisionWindow> cls_vision_window(cls_id++, "JZVisionWindow", "QMainWindow");
+    cls_vision_window.defPropertyFunc("cameraManager", &JZVisionWindow::cameraManager);
+    cls_vision_window.defPropertyFunc("commManager", &JZVisionWindow::commManager);
+    cls_vision_window.defPropertyFunc("modelManager", &JZVisionWindow::modelManager);
+    cls_vision_window.defPropertyFunc("cameraView", &JZVisionWindow::cameraView);
     cls_vision_window.regist();
 
     jzbind::ClassBind<JZTemplateMatch> cls_template_match(cls_id++, "JZTemplateMatch", "QObject");
@@ -59,6 +76,9 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
 
     func_inst->registCFunction("JZVisionFindCircle", true, jzbind::createFuncion(JZVisionFindCircle));
     func_inst->registCFunction("JZVisionFindLine", true, jzbind::createFuncion(JZVisionFindLine));
+
+    auto obj_inst = env->objectManager();
+    obj_inst->registWidgetFactory(Widget_Vision, m_visionWindowFactory);
 
     //node
     auto node_inst = env->nodeFactory();

@@ -11,14 +11,19 @@
 #include "JZCameraNode.h"
 #include "JZCameraManager.h"
 #include "JZCameraUnitTest.h"
+#include "../JZModuleConfigFactory.h"
 
 //JZModuleCamera
 JZModuleCamera::JZModuleCamera()
 {    
     m_name = "camera";
 
-
     JZScriptUnitTestManager::instance()->regist(new JZNodeCameraVistor());
+
+    auto config_inst = JZModuleConfigFactory<JZCameraConfig>::instance();
+    config_inst->regist(Camera_File, JZModuleConfigCreator<JZCameraFileConfig>);
+    config_inst->regist(Camera_Hik, JZModuleConfigCreator<JZCameraHikConfig>);
+    config_inst->regist(Camera_UVC, JZModuleConfigCreator<JZCameraUvcConfig>);
 }
 
 JZModuleCamera::~JZModuleCamera()
@@ -38,7 +43,6 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     cls_camera.defSingle("sigFrameReady", &JZCamera::sigFrameReady);
     cls_camera.regist();
 
-
     jzbind::ClassBind<JZCameraFile> cls_camera_file(cls_id++, "JZCameraFile", "JZCamera");
     cls_camera_file.regist();
 
@@ -54,7 +58,6 @@ void JZModuleCamera::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZCameraStart", true, jzbind::createFuncion(JZCameraStart));
     func_inst->registCFunction("JZCameraStartOnce", true, jzbind::createFuncion(JZCameraStartOnce));
     func_inst->registCFunction("JZCameraStop", true, jzbind::createFuncion(JZCameraStop));
-    func_inst->registCFunction("JZCameraSetting", true, jzbind::createFuncion(JZCameraSetting));
 
     env->nodeFactory()->registNode(Node_CameraInit, createJZNode<JZNodeCameraInit>);
     env->nodeFactory()->registNode(Node_CameraStart, createJZNode<JZNodeCameraStart>);

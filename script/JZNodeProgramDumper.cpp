@@ -268,7 +268,7 @@ void JZNodeProgramDumper::dumpClass(QString class_name, QString& def, QString& i
     QString super = cls->superName;
 
     auto class_item = m_project->getClass(class_name);
-    JZUiItem* ui = class_item->ui();
+    JZUiBaseItem* ui = class_item->ui();
 
     QString header;
     QString source;

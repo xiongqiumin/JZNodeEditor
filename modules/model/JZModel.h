@@ -2,6 +2,26 @@
 #define JZ_MODEL_H_
 
 #include <QString>
+#include <QSharedPointer>
+
+enum JZModelType
+{
+	Model_None,
+	Model_Yolo,
+};
+
+class JZModelConfig
+{
+public:
+	JZModelConfig();
+
+	QString name;
+	int type;
+
+	virtual void saveToStream(QDataStream& s) const;
+	virtual void loadFromStream(QDataStream& s);
+};
+typedef QSharedPointer<JZModelConfig> JZModelConfigPtr;
 
 class JZModel
 {
@@ -9,7 +29,11 @@ public:
 	JZModel();
 	virtual ~JZModel();
 
-	virtual bool loadNet(QString path) = 0;
+	void setConfig(JZModelConfigPtr config);
+	virtual bool init() = 0;
+
+protected:
+	JZModelConfigPtr m_config;
 };
 
 #endif

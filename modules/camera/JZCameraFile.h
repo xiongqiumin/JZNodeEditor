@@ -3,13 +3,15 @@
 
 #include "JZCamera.h"
 
-class JZCameraFileConfig
+class JZCameraFileConfig : public JZCameraConfig
 {
 public:
+    JZCameraFileConfig();
     QString path;
+
+    virtual void saveToStream(QDataStream& s) const override;
+    virtual void loadFromStream(QDataStream& s) override;
 };
-QDataStream& operator<<(QDataStream& s, const JZCameraFileConfig& param);
-QDataStream& operator>>(QDataStream& s, JZCameraFileConfig& param);
 
 
 class JZCameraFile : public JZCamera
@@ -21,8 +23,10 @@ public:
     ~JZCameraFile();
 
     virtual JZCameraType type() override;
+
+    virtual bool setConfig(JZCameraConfigPtr config) override;
     virtual bool isOpen() override;
-    virtual bool open(QString path) override;
+    virtual bool open() override;
     virtual void close() override;
 
     virtual void start() override;

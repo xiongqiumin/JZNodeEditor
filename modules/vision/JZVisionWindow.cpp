@@ -2,21 +2,27 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QToolBar>
-#include "JZVisonWindow.h"
+#include "JZVisionWindow.h"
 
-//JZVisonWindowConfig
-QDataStream& operator<<(QDataStream& s, const JZVisonWindowConfig& param)
+//JZVisionWindowConfig
+QDataStream& operator<<(QDataStream& s, const JZVisionWindowConfig& param)
 {
+    s << param.cameraConfig;
+    s << param.modelConfig;
+    s << param.commConfig;
     return s;
 }
 
-QDataStream& operator>>(QDataStream& s, JZVisonWindowConfig& param)
+QDataStream& operator>>(QDataStream& s, JZVisionWindowConfig& param)
 {
+    s >> param.cameraConfig;
+    s >> param.modelConfig;
+    s >> param.commConfig;
     return s;
 }
 
-//JZVisonWindow
-JZVisonWindow::JZVisonWindow()
+//JZVisionWindow
+JZVisionWindow::JZVisionWindow()
 {
     m_modelManager = new JZModelManager(this);
     m_cameraManager = new JZCameraManager(this);
@@ -44,53 +50,69 @@ JZVisonWindow::JZVisonWindow()
     resize(800, 600);
 }
 
-JZVisonWindow::~JZVisonWindow()
+JZVisionWindow::~JZVisionWindow()
 {
 }
 
-void JZVisonWindow::saveConfig()
+void JZVisionWindow::saveConfig()
 {
 }
 
-JZVisonWindowConfig JZVisonWindow::config()
+JZVisionWindowConfig JZVisionWindow::config()
 {
     return m_config;
 }
 
-JZModelManager* JZVisonWindow::modelManager()
+JZModelManager* JZVisionWindow::modelManager()
 {
     return m_modelManager;
 }
 
-JZCameraManager* JZVisonWindow::cameraManager()
+JZCameraManager* JZVisionWindow::cameraManager()
 {
     return m_cameraManager;
 }
 
-JZCommManager* JZVisonWindow::commManager()
+JZCommManager* JZVisionWindow::commManager()
 {
     return m_commManager;
 }
 
-void JZVisonWindow::init(JZVisonWindowConfig config)
+JZCameraListWidget* JZVisionWindow::cameraList()
+{
+    return m_list;
+}
+
+JZCameraViewWidget* JZVisionWindow::cameraView()
+{
+    return m_view;
+}
+
+void JZVisionWindow::init(JZVisionWindowConfig config)
 {
     m_config = config;
     m_cameraManager->setConfig(config.cameraConfig);
     m_commManager->setConfig(config.commConfig);
     m_modelManager->setConfig(config.modelConfig);
 
+    m_cameraManager->init();
+    m_commManager->init();
+    m_modelManager->init();
+
+    m_list->updateCamera();
+
     initMenu();
     initToolBar();
 }
 
-void JZVisonWindow::initMenu()
+void JZVisionWindow::initMenu()
 {
-    QMenuBar* bar = new QMenuBar();
-    setMenuBar(bar);
+    QMenuBar* bar = menuBar();
+    bar->clear();
 
     auto menu_file = bar->addMenu("File");
     QAction *act_close = menu_file->addAction("close");
-    connect(act_close,&QAction::triggered,this, &JZVisonWindow::onActionClose);
+    connect(act_close,&QAction::triggered,this, &JZVisionWindow::onActionClose);
 
     auto menu_setting = bar->addMenu("Setting");
 
@@ -99,11 +121,11 @@ void JZVisonWindow::initMenu()
     QAction* act_comm = menu_file->addAction("comm");
     QAction* act_database = menu_file->addAction("db");
     QAction* act_mes = menu_file->addAction("mes");
-    connect(act_camera, &QAction::triggered, this, &JZVisonWindow::onActionCameraSetting);
-    connect(act_model, &QAction::triggered, this, &JZVisonWindow::onActionModelSetting);
-    connect(act_comm, &QAction::triggered, this, &JZVisonWindow::onActionCommSetting);
-    connect(act_database, &QAction::triggered, this, &JZVisonWindow::onActionDatabaseSetting);
-    connect(act_mes, &QAction::triggered, this, &JZVisonWindow::onActionMesSetting);
+    connect(act_camera, &QAction::triggered, this, &JZVisionWindow::onActionCameraSetting);
+    connect(act_model, &QAction::triggered, this, &JZVisionWindow::onActionModelSetting);
+    connect(act_comm, &QAction::triggered, this, &JZVisionWindow::onActionCommSetting);
+    connect(act_database, &QAction::triggered, this, &JZVisionWindow::onActionDatabaseSetting);
+    connect(act_mes, &QAction::triggered, this, &JZVisionWindow::onActionMesSetting);
 
     if (m_cameraManager->cameraList().size() == 0)
         act_camera->setVisible(false);
@@ -117,10 +139,10 @@ void JZVisonWindow::initMenu()
 
     auto menu_help = bar->addMenu("Help");
     QAction* act_about = menu_help->addAction("about");
-    connect(act_about, &QAction::triggered, this, &JZVisonWindow::onActionAbout);
+    connect(act_about, &QAction::triggered, this, &JZVisionWindow::onActionAbout);
 }
 
-void JZVisonWindow::initToolBar()
+void JZVisionWindow::initToolBar()
 {
     auto tool_bar = addToolBar("tool");
     tool_bar->setMovable(false);
@@ -128,17 +150,17 @@ void JZVisonWindow::initToolBar()
     QAction* act_once = tool_bar->addAction("StartOnce");
     QAction* act_start = tool_bar->addAction("Start");
     QAction* act_stop = tool_bar->addAction("Stop");
-    connect(act_once, &QAction::triggered, this, &JZVisonWindow::onActionStartOnce);
-    connect(act_start, &QAction::triggered, this, &JZVisonWindow::onActionStart);
-    connect(act_stop, &QAction::triggered, this, &JZVisonWindow::onActionStop);
+    connect(act_once, &QAction::triggered, this, &JZVisionWindow::onActionStartOnce);
+    connect(act_start, &QAction::triggered, this, &JZVisionWindow::onActionStart);
+    connect(act_stop, &QAction::triggered, this, &JZVisionWindow::onActionStop);
 }
 
-void JZVisonWindow::onActionClose()
+void JZVisionWindow::onActionClose()
 {
     close();
 }
 
-void JZVisonWindow::onActionStartOnce()
+void JZVisionWindow::onActionStartOnce()
 {
     auto cam_list = m_cameraManager->cameraList();
     for (int i = 0; i < cam_list.size(); i++)
@@ -148,7 +170,7 @@ void JZVisonWindow::onActionStartOnce()
     }
 }
 
-void JZVisonWindow::onActionStart()
+void JZVisionWindow::onActionStart()
 {
     auto cam_list = m_cameraManager->cameraList();
     for (int i = 0; i < cam_list.size(); i++)
@@ -158,7 +180,7 @@ void JZVisonWindow::onActionStart()
     }
 }
 
-void JZVisonWindow::onActionStop()
+void JZVisionWindow::onActionStop()
 {
     auto cam_list = m_cameraManager->cameraList();
     for (int i = 0; i < cam_list.size(); i++)
@@ -168,27 +190,27 @@ void JZVisonWindow::onActionStop()
     }
 }
 
-void JZVisonWindow::onActionCameraSetting()
+void JZVisionWindow::onActionCameraSetting()
 {
 }
 
-void JZVisonWindow::onActionModelSetting()
+void JZVisionWindow::onActionModelSetting()
 {
 }
 
-void JZVisonWindow::onActionCommSetting()
+void JZVisionWindow::onActionCommSetting()
 {
 }
 
-void JZVisonWindow::onActionDatabaseSetting()
+void JZVisionWindow::onActionDatabaseSetting()
 {
 }
 
-void JZVisonWindow::onActionMesSetting()
+void JZVisionWindow::onActionMesSetting()
 {
 }
 
-void JZVisonWindow::onActionAbout()
+void JZVisionWindow::onActionAbout()
 {
     QMessageBox::information(this,"","hello world");
 }

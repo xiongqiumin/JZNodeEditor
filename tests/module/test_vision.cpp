@@ -6,8 +6,11 @@
 #include <QPointer>
 #include <QScopeGuard>
 #include "test_vision.h"
+#include "JZProjectTemplate.h"
 #include "modules/vision/JZVisionNode.h"
-#include "modules/vision/JZVisonWindow.h"
+#include "modules/vision/JZVisionWindow.h"
+#include "modules/vision/JZVisionUiItem.h"
+
 
 //VisionTest
 VisionTest::VisionTest()
@@ -96,17 +99,27 @@ void VisionTest::testColorIdentify()
     script->addConnect(start->flowOutGemo(0), node_color->flowInGemo());
 }
 
-void VisionTest::testVisonWindow()
+void VisionTest::testVisonDemo()
 {
-    JZVisonWindowConfig cfg;
+    JZProjectTemplate::instance()->initProject(&m_project, "vision");
 
-    JZVisonWindow w;
-    w.init(cfg);
-    w.show();
+    auto class_item = m_project.getClass("MainWindow");
+    auto ui_item = dynamic_cast<JZVisionUiItem*>(class_item->ui());
 
-    QTest::qWaitFor([&w]()->bool {
-        return !w.isVisible();
-    }, 100000);
+    JZCameraFileConfig* cam_config = new JZCameraFileConfig();
+
+    JZVisionWindowConfig config;
+    config.cameraConfig.cameraList << JZCameraConfigPtr(cam_config);
+
+    ui_item->setConfig(config);
+
+    if (!build())
+        return;
+
+    QVariantList in, out;
+    m_engine.call("main", in, out);
+
+    QTest::qWait(5000);
 }
 
 void test_vision(int argc, char *argv[])

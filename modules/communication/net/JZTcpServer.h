@@ -4,21 +4,23 @@
 #include <QTcpServer>
 #include <QSharedPointer>
 #include "../JZCommPack.h"
+#include "../JZComm.h"
 
-//JZTcpServerInfo
-class JZTcpServerInfo
+//JZCommTcpServerConfig
+class JZCommTcpServerConfig : public JZCommConfig
 {
 public:
-    JZTcpServerInfo();
+    JZCommTcpServerConfig();
+    
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
 
     QString ip;
     int port;
 };
-QDataStream& operator<<(QDataStream& s, const JZTcpServerInfo& param);
-QDataStream& operator>>(QDataStream& s, JZTcpServerInfo& param);
 
 //JZTcpServer
-class JZTcpServer : public QObject
+class JZTcpServer : public JZCommObject
 {
     Q_OBJECT
     
@@ -26,12 +28,12 @@ public:
     JZTcpServer(QObject *parent = nullptr);
     ~JZTcpServer();
 
-    void init(JZTcpServerInfo info);
+    void init(JZCommTcpServerConfig info);
     void setCommFormat(JZCommPackFormat format);
 
-    bool isOpen();
-    bool startServer();
-    void stopServer();
+    virtual bool isOpen();
+    virtual bool open();
+    virtual void close();
 
     void closeConnect(int netId);
     bool isConnect(int netId);
@@ -57,7 +59,7 @@ protected:
     };
     typedef QSharedPointer<Client> ClientPtr;
 
-    JZTcpServerInfo m_info;
+    JZCommTcpServerConfig m_info;
     JZCommPackFormat m_packFormat;
 
     bool m_stopServer;

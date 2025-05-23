@@ -13,6 +13,8 @@ public:
 
     virtual void regist(JZScriptEnvironment *env) override;
     virtual void unregist(JZScriptEnvironment *env) override;        
+
+    JZNodeObjectWidgetFactory m_visionWindowFactory;
 };
 
 #endif

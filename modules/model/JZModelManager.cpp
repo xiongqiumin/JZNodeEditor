@@ -1,23 +1,19 @@
 ﻿#include "JZModelManager.h"
 #include "JZNodeUtils.h"
+#include "../JZModuleConfigFactory.h"
 
-//JZModelConfig
-JZModelConfig::JZModelConfig()
+//JZModelConfigPtr
+QDataStream& operator<<(QDataStream& s, const JZModelConfigPtr& config)
 {
-	type = Model_None;
-}
-QDataStream& operator<<(QDataStream& s, const JZModelConfig& config)
-{
-	s << config.type << config.name << config.modelPath;
+	JZModuleConfigFactory<JZModelConfig>::instance()->saveToStream(s,config);
 	return s;
 }
 
-QDataStream& operator>>(QDataStream& s, JZModelConfig& config)
+QDataStream& operator>>(QDataStream& s, JZModelConfigPtr& config)
 {
-	s >> config.type >> config.name >> config.modelPath;
+	JZModuleConfigFactory<JZModelConfig>::instance()->loadFromStream(s, config);
 	return s;
 }
-
 
 //JZModelManagerConfig
 QDataStream& operator<<(QDataStream& s, const JZModelManagerConfig& config)
@@ -67,23 +63,27 @@ JZModel* JZModelManager::model(QString name)
 {
 	for (int i = 0; i < m_config.modelList.size(); i++)
 	{
-		if(m_config.modelList[i].name == name)
+		if(m_config.modelList[i]->name == name)
 			return m_models[i];
 	}
 	return nullptr;
 }
 	
-JZModel* JZModelManager::createModel(JZModelConfig config)
+JZModel* JZModelManager::createModel(JZModelConfigPtr config)
 {
-	if (config.type == Model_Yolo)
+	JZModel* model = nullptr;
+	if (config->type == Model_Yolo)
 	{
 		JZYolo* yolo = new JZYolo();
-		yolo->loadNet(config.modelPath);
-		return yolo;
+		model = yolo;
+	}
+	else
+	{
+		Q_ASSERT(0);
 	}
 
-	Q_ASSERT(0);
-	return nullptr;
+	model->setConfig(config);
+	return model;
 }
 
 void JZModelInit(JZModelManager* inst, const QByteArray& buffer)

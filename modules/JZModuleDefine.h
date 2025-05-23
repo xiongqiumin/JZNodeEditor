@@ -23,4 +23,9 @@ enum ModuleNode
     Module_MotionNode = 1600,
 };
 
+enum ModuleProjectItem
+{
+    Module_visionItem = 1000,
+};
+
 #endif

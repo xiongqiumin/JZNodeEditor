@@ -2,7 +2,7 @@
 #include "JZSerialPort.h"
 
 //JZSerialPortInfo
-JZSerialPortInfo::JZSerialPortInfo()
+JZSerialPortConfig::JZSerialPortConfig()
 {
     portName = "COM1";
     baud = 9600;
@@ -11,20 +11,19 @@ JZSerialPortInfo::JZSerialPortInfo()
     stopBit = QSerialPort::OneStop;
 }
 
-QDataStream& operator<<(QDataStream& s, const JZSerialPortInfo& param)
+void JZSerialPortConfig::saveToStream(QDataStream& s) const
 {
-    s << param.portName << param.baud << param.dataBit << param.parityBit << param.stopBit;
-    return s;
+    s << portName << baud << dataBit << parityBit << stopBit;
 }
-QDataStream& operator>>(QDataStream& s, JZSerialPortInfo& param)
+
+void JZSerialPortConfig::loadFromStream(QDataStream& s)
 {
-    s >> param.portName >> param.baud >> param.dataBit >> param.parityBit >> param.stopBit;
-    return s;
+    s >> portName >> baud >> dataBit >> parityBit >> stopBit;
 }
 
 //JZSerialPort
 JZSerialPort::JZSerialPort(QObject* parent)
-    :QObject(parent)
+    :JZCommObject(parent)
 {
     m_com = new QSerialPort(this);
 }
@@ -34,7 +33,7 @@ JZSerialPort::~JZSerialPort()
     close();
 }
 
-void JZSerialPort::init(const JZSerialPortInfo& info)
+void JZSerialPort::init(const JZSerialPortConfig& info)
 {
     m_info = info;
 }

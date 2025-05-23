@@ -852,7 +852,10 @@ public:
      
         JZParamDefine def;
         def.name = name;
-        def.type = bindEnvironment()->ctypeidToName(typeid(PropertyType).name());
+        def.type = bindEnvironment()->ctypeidToName(typeid(std::remove_pointer_t<PropertyType>).name());
+        Q_ASSERT(def.type != JZNodeType::typeName(Type_none));
+        if (std::is_pointer_v<PropertyType>)
+            def.type = JZNodeType::pointerType(def.type);
         m_define.params[def.name] = def;
 
         JZCParamDefine cdef;

@@ -38,6 +38,7 @@ public:
     virtual void saveToStream(QDataStream& s) const override;
     virtual void loadFromStream(QDataStream& s) override;
 
+protected:
     JZCommManagerConfig m_config;
 };
 

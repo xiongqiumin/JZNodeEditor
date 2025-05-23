@@ -4,28 +4,10 @@
 #include <QDataStream>
 #include "JZYolo.h"
 
-enum JZModelType
-{
-    Model_None,
-    Model_Yolo,
-};
-
-class JZModelConfig
-{
-public:
-    JZModelConfig();
-
-    JZModelType type;
-    QString name;
-    QString modelPath;
-};
-QDataStream& operator<<(QDataStream& s, const JZModelConfig& config);
-QDataStream& operator>>(QDataStream& s, JZModelConfig& config);
-
 class JZModelManagerConfig
 {
 public:    
-    QList<JZModelConfig> modelList;
+    QList<JZModelConfigPtr> modelList;
 };
 QDataStream& operator<<(QDataStream &s,const JZModelManagerConfig &config);
 QDataStream& operator>>(QDataStream &s, JZModelManagerConfig &config);
@@ -45,7 +27,7 @@ public:
     JZModel* model(QString name);
 
 protected:
-    JZModel* createModel(JZModelConfig path);
+    JZModel* createModel(JZModelConfigPtr path);
 
     JZModelManagerConfig m_config;
     QList<JZModel*> m_models;

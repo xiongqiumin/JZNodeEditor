@@ -15,13 +15,14 @@ void ModelTest::testYolo()
     JZFunctionDefine define = class_item->objectDefine().initMemberFunction("init");
     auto script_init = class_item->addMemberFunction(define);
 
-    JZModelConfig cam_config;
-    cam_config.name = "model";
-    cam_config.type = Model_Yolo;
-    cam_config.modelPath = "C:/Users/xiong/Desktop/demo/image/a.onnx";
+    JZModelYoloConfig *yolo_config = new JZModelYoloConfig();
+    yolo_config->name = "model";
+    yolo_config->type = Model_Yolo;
+    yolo_config->modelPath = "C:/Users/xiong/Desktop/demo/image/yolo.onnx";
+    yolo_config->idPath = "C:/Users/xiong/Desktop/demo/image/yolo.json";
 
     JZModelManagerConfig config;
-    config.modelList << cam_config;
+    config.modelList << JZModelConfigPtr(yolo_config);
 
     JZNodeModelInit *node_init = new JZNodeModelInit();
     node_init->setConfig(config);

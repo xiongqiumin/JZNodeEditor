@@ -2,27 +2,26 @@
 #include <QDataStream>
 #include "JZTcpServer.h"
 
-//JZTcpServerInfo
-JZTcpServerInfo::JZTcpServerInfo()
+//JZCommTcpServerConfig
+JZCommTcpServerConfig::JZCommTcpServerConfig()
 {
 	ip = "127.0.0.1";
 	port = 0;
 }
 
-QDataStream& operator<<(QDataStream& s, const JZTcpServerInfo& param)
+void JZCommTcpServerConfig::saveToStream(QDataStream& s) const
 {
-	s << param.ip << param.port;
-	return s;
+	s << ip << port;
 }
-QDataStream& operator>>(QDataStream& s, JZTcpServerInfo& param)
+
+void JZCommTcpServerConfig::loadFromStream(QDataStream& s)
 {
-	s >> param.ip >> param.port;
-	return s;
+	s >> ip >> port;
 }
 
 //JZTcpServer
 JZTcpServer::JZTcpServer(QObject* parent)
-	:QObject(parent)
+	:JZCommObject(parent)
 {
 	m_server = new QTcpServer(this);
 	m_stopServer = false;
@@ -35,7 +34,7 @@ JZTcpServer::~JZTcpServer()
 {
 }
 
-void JZTcpServer::init(JZTcpServerInfo info)
+void JZTcpServer::init(JZCommTcpServerConfig info)
 {
 	m_info = info;
 }
@@ -45,7 +44,7 @@ void JZTcpServer::setCommFormat(JZCommPackFormat format)
 	m_packFormat = format;
 }
 
-bool JZTcpServer::startServer()
+bool JZTcpServer::open()
 {
 	//Æô¶¯¼àÌý
 	if (!m_server->listen(QHostAddress::AnyIPv4, m_info.port)) {
@@ -55,7 +54,7 @@ bool JZTcpServer::startServer()
 	return true;
 }
 
-void JZTcpServer::stopServer()
+void JZTcpServer::close()
 {
 	//Í£Ö¹¼àÌý
 	m_stopServer = true;

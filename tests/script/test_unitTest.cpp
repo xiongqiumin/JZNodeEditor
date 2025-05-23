@@ -6,6 +6,7 @@
 #include "JZNodeUtils.h"
 #include "JZScriptUnitTest.h"
 #include "modules/camera/JZCameraNode.h"
+#include "modules/camera/JZCameraFile.h"
 
 TestUnitTest::TestUnitTest()
 {
@@ -75,13 +76,13 @@ void TestUnitTest::testCameraEvent()
     JZFunctionDefine define = class_item->objectDefine().initMemberFunction("init");
     auto script_init = class_item->addMemberFunction(define);
 
-    JZCameraConfig cam_config;
-    cam_config.name = "camera";
-    cam_config.type = Camera_File;
-    cam_config.fileConfig.path = "C:/Users/xiong/Desktop/demo/image";
+    JZCameraFileConfig *cam_config = new JZCameraFileConfig();
+    cam_config->name = "camera";
+    cam_config->type = Camera_File;
+    cam_config->path = "C:/Users/xiong/Desktop/demo/image";
 
     JZCameraManagerConfig config;
-    config.cameraList << cam_config;
+    config.cameraList << JZCameraConfigPtr(cam_config);
 
     JZNodeCameraInit* node_init = new JZNodeCameraInit();
     node_init->setConfig(config);
