@@ -9,12 +9,13 @@
 #include "JZCameraFile.h"
 #include "JZCameraHik.h"
 #include "JZCameraUVC.h"
+#include "JZCameraRtsp.h"
 
 //JZCameraManagerConfig
 class JZCameraManagerConfig
 {
 public:
-    int indexOfCamera(QString name);
+    int indexOfCamera(QString name) const;
 
     QList<JZCameraConfigPtr> cameraList;
 };
@@ -30,7 +31,7 @@ public:
     JZCameraManager(QObject* parent = nullptr);
     ~JZCameraManager();
 
-    QStringList cameraList();
+    QList<JZCamera*> cameraList();
 	JZCamera* camera(QString name);
 
     void init();
@@ -39,15 +40,19 @@ public:
     bool start(QString name);
     bool startOnce(QString name);
     bool stop(QString name);
-    bool setCamera(QString name, JZCameraConfigPtr config);
+    
+    void addCamera(const JZCameraConfigPtr &config);
+    void removeCamera(QString name);
+    bool setCamera(QString name, const JZCameraConfigPtr &config);
 
     void setConfig(const JZCameraManagerConfig &config);
-    JZCameraManagerConfig config();
+    const JZCameraManagerConfig &config() const;
 
 signals:
     void sigInitFinish();
 
 protected:
+    int indexOfCamera(QString name);
     JZCamera*createCamera(const JZCameraConfigPtr &config);
 
     JZCameraManagerConfig m_config;

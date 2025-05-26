@@ -12,11 +12,13 @@ JZCameraFileConfig::JZCameraFileConfig()
 
 void JZCameraFileConfig::saveToStream(QDataStream& s) const
 {
+    JZCameraConfig::saveToStream(s);
     s << path;
 }
 
 void JZCameraFileConfig::loadFromStream(QDataStream& s)
 {
+    JZCameraConfig::loadFromStream(s);
     s >> path;
 }
 

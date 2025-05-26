@@ -55,4 +55,18 @@ void JZNodeInit()
     module_inst->addModule(new JZModuleVision());
     module_inst->addModule(new JZModuleMotion());
     module_inst->initModules();
+
+/*
+    cv::VideoCapture cap;
+    if (cap.open("rtsp://admin:123456HK@192.168.0.164:554/Streaming/Channels/101"))
+    {
+        while (true)
+        {
+            cv::Mat mat;
+            cap.read(mat);
+            cv::imshow("video", mat);
+            cv::waitKey(50);
+        }
+    }
+*/
 }

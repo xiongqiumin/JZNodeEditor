@@ -1,5 +1,6 @@
-﻿#ifndef JZNODE_RUSSIAN_H_
-#define JZNODE_RUSSIAN_H_
+﻿#ifndef JZ_SAMPLE_VISION_DEMO_H_
+#define JZ_SAMPLE_VISION_DEMO_H_
+
 
 #include "../SampleProject.h"
 

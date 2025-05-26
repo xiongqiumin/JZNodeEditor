@@ -10,10 +10,7 @@
 
 class JZVisionWindowConfig
 {
-public:
-	JZCameraManagerConfig cameraConfig;
-	JZModelManagerConfig modelConfig;
-	JZCommManagerConfig commConfig;
+public:	
 };
 QDataStream& operator<<(QDataStream& s, const JZVisionWindowConfig& param);
 QDataStream& operator>>(QDataStream& s, JZVisionWindowConfig& param);
@@ -28,6 +25,7 @@ public:
 
 	void init(JZVisionWindowConfig config);
 	JZVisionWindowConfig config();
+    void initView();
 
 	JZModelManager* modelManager();
 	JZCameraManager* cameraManager();
@@ -35,7 +33,7 @@ public:
 
 	JZCameraListWidget* cameraList();
 	JZCameraViewWidget* cameraView();
-
+    
 protected slots:
 	void onActionClose();
 
@@ -55,6 +53,7 @@ protected:
 	void initMenu();
 	void initToolBar();
 	void saveConfig();
+    bool checkOpen(JZCamera *camera);
 
 	JZCameraListWidget* m_list;
 	JZCameraViewWidget* m_view;

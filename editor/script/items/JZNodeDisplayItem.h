@@ -11,6 +11,8 @@ public:
     JZNodeDisplayItem(JZNode *node);
 
     void setValue(int pin,QVariantPtr *ref);
+    void clearValue(int pin);
+    void clearValues();
 
 protected:
     virtual void updatePin() override;    

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTreeWidget>
 #include <opencv2/opencv.hpp>
+#include <QGridLayout>
 #include "modules/camera/JZCameraManager.h"
 #include "jzWidgets/JZImageLabel.h"
 
@@ -20,19 +21,25 @@ public:
     void setCameraManager(JZCameraManager *cameraManager);
     void setViewWidget(JZCameraViewWidget *view);
     void updateCamera();
+
+    void startCamera(JZCamera *camera);
     void settingCamera(QString name);
 
 protected slots:
     void onContexMenu(QPoint pt);
-
-protected:
     void onFrameReady(cv::Mat mat);
+    void onCameraError();
+
+protected:    
 
 private:
+    QTreeWidgetItem *addCameraItem(QString name);
+
     QTreeWidget* m_tree;
 
     JZCameraViewWidget* m_view;
     JZCameraManager* m_cameraManager;
+    QTreeWidgetItem *m_root;
 };
 
 //JZCameraViewWidget
@@ -43,13 +50,19 @@ class JZCameraViewWidget : public QWidget
 public:
     enum
     {
-
+        Layout_Auto,
+        Layout_1,
+        Layout_2,        
+        Layout_4,
+        Layout_9,
+        Layout_16,
     };
 
     JZCameraViewWidget(QWidget* parent = nullptr);
     ~JZCameraViewWidget();
-
-    void init(JZCameraManager* cameraManager);
+    
+    void addCamera(QString name);
+    void removeCamera(QString name);
     JZImageLabel* label(QString name);
     
 protected slots:
@@ -63,12 +76,18 @@ protected:
         JZImageLabel* label;
     };
 
-    virtual void resizeEvent(QResizeEvent *event) override;
     virtual void paintEvent(QPaintEvent *event) override;
+
+    void updateCamViewLayout();
+    int indexOfLabel(QString name);
     LabelInfo* labelAt(QPoint pt);
 
+    int m_layoutType;
     QList<LabelInfo> m_labelList;
+    QList<QWidget*> m_emptyWidget;
     JZCameraManager* m_cameraManager;
+    QGridLayout *m_layout;
+    int m_viewId;
 };
 
 #endif // ! JZ_VISON_WIDGET_H_

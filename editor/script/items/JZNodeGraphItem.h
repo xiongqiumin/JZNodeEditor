@@ -43,10 +43,11 @@ public:
         bool isShowName;
         bool isShowValue;
         bool isEditable;
-        
+        QString runTimeValue;
+
         IconType iconType;
         QString name;
-        JZParamEditInfo edit;
+        JZParamEditInfo edit;        
 
         QRect iconRect;
         QRect nameRect;

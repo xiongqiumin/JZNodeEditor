@@ -5,6 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include <QSharedPointer>
 #include <QDataStream>
+#include "../JZModuleConfigFactory.h"
 
 enum JZCameraType
 {
@@ -12,6 +13,7 @@ enum JZCameraType
     Camera_File,
     Camera_UVC,
     Camera_Hik,
+    Camera_Rtsp,
 };
 
 //JZCameraConfig
@@ -38,7 +40,10 @@ public:
 
     virtual JZCameraType type() = 0;
 
+    QString name() const;
     virtual bool setConfig(JZCameraConfigPtr config) = 0;
+    JZCameraConfigPtr config();
+
     virtual bool isOpen() = 0;
     virtual bool open() = 0;
     virtual void close() = 0;

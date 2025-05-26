@@ -512,9 +512,16 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
     {
         int src_base_type = JZNodeType::baseType(src_type);
         int dst_base_type = JZNodeType::baseType(dst_type);
+        //cast up
         if (isInherits(src_base_type, dst_base_type))
-            return JZNodeType::convertToPointer(v);
+        {
+            if (JZNodeType::isPointer(src_type))
+                return v;
+            else
+                return JZNodeType::convertToPointer(v);
+        }
 
+        //cast down
         if (isInherits(src_base_type, Type_object))
         {
             JZNodeObjectPointer ptr = v.value<JZNodeObjectPointer>();
@@ -934,6 +941,11 @@ QVariant JZScriptEnvironment::initValue(int type, const QString &text) const
 
     Q_ASSERT_X(0,"Type ",qUtf8Printable(typeToName(type)));
     return true;
+}
+
+QString JZScriptEnvironment::debugString(const QVariant &v) const
+{
+    return JZNodeType::debugString(v);
 }
 
 bool JZScriptEnvironment::isListType(int type) const

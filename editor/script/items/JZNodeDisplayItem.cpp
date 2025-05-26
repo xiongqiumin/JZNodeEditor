@@ -78,16 +78,37 @@ void JZNodeDisplayItem::updatePin()
     }
 }
 
-
 void JZNodeDisplayItem::updateGraphics()
 {
 
 }
 
-void JZNodeDisplayItem::setValue(int pin,QVariantPtr *ref)
+void JZNodeDisplayItem::clearValues()
 {
-    m_node->setPinValue(pin, JZNodeType::debugString(*ref->ptr));
+    for (auto b : m_blocks)
+        clearValue(b->id);
+}
 
+void JZNodeDisplayItem::clearValue(int pin)
+{
+    if (m_blocks[pin]->widget)
+    {
+        auto w = m_blocks[pin]->widget;
+        if (w->inherits("JZImageLabel"))
+        {
+            JZImageLabel *label = qobject_cast<JZImageLabel*>(w);
+            label->setImage(QImage());
+        }
+    }
+    else
+    {
+        setPinRuntimeValue(pin, QString());
+        update();
+    }
+}
+
+void JZNodeDisplayItem::setValue(int pin,QVariantPtr *ref)
+{    
     QString type_name = editorEnvironment()->typeToName(ref->type);
     if (type_name == "Mat" || type_name == "QImage")
     {
@@ -131,6 +152,8 @@ void JZNodeDisplayItem::setValue(int pin,QVariantPtr *ref)
             }
         }
     }
+    
+    setPinRuntimeValue(pin, editorEnvironment()->debugString(*ref->ptr));
     update();
 }
 

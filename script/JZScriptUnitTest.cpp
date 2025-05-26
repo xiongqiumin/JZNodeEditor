@@ -313,11 +313,10 @@ bool JZScriptUnitTest::init()
         return false;
     }
 
-    JZProjectTempGuard guard(m_project, { m_script, m_initExtScript, m_triggerScript }, JZProjectTempGuard::TakeItem);
+    JZProjectTempGuard guard(m_project, { m_script, m_initExtScript, m_triggerScript }, JZProjectTempGuard::TakeItem, class_item->className());
     auto meta = m_project->environment()->meta(class_item->className());
     m_initExtScript->setFunction(meta->initMemberFunction("UnitTestInitExt"));
-    m_triggerScript->setFunction(meta->initMemberFunction("UnitTestTrigger"));
-    guard.setClass(class_item->className());
+    m_triggerScript->setFunction(meta->initMemberFunction("UnitTestTrigger"));    
 
     //replace
     QByteArray buffer = m_depend.originScript->toBuffer();

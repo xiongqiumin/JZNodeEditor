@@ -10,7 +10,7 @@
 
 JZUiEditor::JZUiEditor()
 {    
-    m_type = Editor_ui;    
+    m_type = ProjectItem_ui;
     m_form = nullptr;
 
     QVBoxLayout *l = new QVBoxLayout();

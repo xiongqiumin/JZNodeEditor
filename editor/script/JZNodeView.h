@@ -129,6 +129,7 @@ public:
     void clearRuntimeValue();
     void setRuntimeValue(int node_id,int pin_id,const JZNodeDebugParamValue &value);
 
+    void clearDisplayValue();
     void displayValue(int node_id,int pin_id,QVariantPtr *ptr);
 
     bool isBreakPoint(int nodeId);
@@ -193,7 +194,8 @@ protected:
 
     JZNodeGraphItem *nodeItemAt(QPoint pos);
     JZNodeGemo pinAt(QPoint pos);
-    void foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType = -1);
+    void foreachNode(std::function<void(JZNodeGraphItem *)> func);
+    void foreachNode(int node_type, std::function<void(JZNodeGraphItem *)> func);
     void foreachLine(std::function<void(JZNodeLineItem *)> func);    
     void copyItems(QList<QGraphicsItem*> item);
     void removeItems(QList<QGraphicsItem*> item);

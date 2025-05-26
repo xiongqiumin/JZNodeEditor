@@ -4,25 +4,31 @@
 #include "JZModelManager.h"
 #include "JZNodeSettingDialog.h"
 #include "JZNodeGraphItem.h"
+#include "JZPropertyDialog.h"
 
 //JZModelConfigDialog
-class JZModelConfigDialog : public JZManagerPropertyDialog
+class JZModelConfigDialog : public JZPropertyDialog
 {
     Q_OBJECT
 
 public:
     JZModelConfigDialog(QWidget *parent = nullptr);
 
-    void setConfig(JZModelConfig cfg);
-    JZModelConfig getConfig() const;
+    void setConfig(JZModelConfigPtr cfg);
+    JZModelConfigPtr getConfig() const;
 
 private slots:
 
 
 private:
+    void addYolo();
+
     void accept();
 
-    JZModelConfig m_config;
+    int m_type;
+    QString m_name;
+    JZProperty *m_propGroup;    
+    QMap<int, JZModelConfigPtr> m_config;
 
 };
 
@@ -42,7 +48,7 @@ public:
 
 protected:
     JZModelManagerConfig m_config;
-    QStringList m_camTypeList;
+    QStringList m_modelTypeList;
 };
 
 class JZModelInitItem : public JZNodeGraphItem

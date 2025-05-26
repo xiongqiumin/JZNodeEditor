@@ -7,27 +7,7 @@
 #include "JZCameraManager.h"
 #include "JZBaseDialog.h"
 #include "jzWidgets/JZPropertyBrowser.h"
-
-//JZCameraConfigDialog
-class JZCameraConfigDialog : public JZManagerPropertyDialog
-{
-    Q_OBJECT
-
-public:
-    JZCameraConfigDialog(QWidget *parent = nullptr);
-
-    void setConfig(JZCameraConfig cfg);
-    JZCameraConfig getConfig() const;
-
-private slots:
-    
-
-private:    
-    void accept();
-
-    JZCameraConfig m_config;
-
-};
+#include "JZCameraWidget.h"
 
 //JZCameraInitDialog
 class JZCameraInitDialog : public JZNodeManagerDialog

@@ -626,7 +626,7 @@ QString JZNodeGraphItem::getTip(QPointF pt)
 
 void JZNodeGraphItem::setPinRuntimeValue(int pin_id, const QString &value)
 {
-
+    m_blocks[pin_id]->runTimeValue = value;
 }
 
 void JZNodeGraphItem::clearRuntimeValue()
@@ -705,12 +705,17 @@ void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)
         text_opt.setAlignment(Qt::AlignVCenter | opt);
         painter->drawText(block->nameRect, block->name, text_opt);
     }
-    if (block->isShowValue)
+    bool show_value = (block->isShowValue || !block->runTimeValue.isEmpty());
+    if (block->widget)
+        show_value = false;
+    if (show_value)
     {
         auto opt = block->isInput ? Qt::AlignLeft : Qt::AlignRight;
         text_opt.setAlignment(Qt::AlignVCenter | opt);
         painter->fillRect(block->valueRect, Qt::white);
-        if(isPinEditable(prop_id))
+        if(block->runTimeValue.size() > 0)
+            painter->drawText(block->valueRect, block->runTimeValue, text_opt);
+        else if(isPinEditable(prop_id))
             painter->drawText(block->valueRect, pinValue(prop_id), text_opt);
     }
 }

@@ -4,6 +4,7 @@
 #include "JZCamera.h"
 #include "JZCameraFile.h"
 #include "JZCameraHik.h"
+#include "JZCameraRtsp.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
 #include "JZNodeFactory.h"
@@ -24,6 +25,7 @@ JZModuleCamera::JZModuleCamera()
     config_inst->regist(Camera_File, JZModuleConfigCreator<JZCameraFileConfig>);
     config_inst->regist(Camera_Hik, JZModuleConfigCreator<JZCameraHikConfig>);
     config_inst->regist(Camera_UVC, JZModuleConfigCreator<JZCameraUvcConfig>);
+    config_inst->regist(Camera_Rtsp, JZModuleConfigCreator<JZCameraRtspConfig>);
 }
 
 JZModuleCamera::~JZModuleCamera()

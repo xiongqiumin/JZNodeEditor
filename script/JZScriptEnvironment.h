@@ -92,6 +92,7 @@ public:
     QString defaultValueString(int type) const;
     QVariant tryInitValue(int type, const QString &v) const;
     QVariant initValue(int type, const QString &v) const;
+    QString debugString(const QVariant &v) const;
 
     bool isListType(int type) const;
     bool listValueType(int type, int& value_type) const;

@@ -68,6 +68,11 @@ JZModel* JZModelManager::model(QString name)
 	}
 	return nullptr;
 }
+
+QList<JZModel*> JZModelManager::modelList()
+{
+    return m_models;
+}
 	
 JZModel* JZModelManager::createModel(JZModelConfigPtr config)
 {
@@ -99,5 +104,17 @@ JZModel *JZModelGet(JZModelManager *inst, QString name)
     if (!model)
         throw std::runtime_error(qUtf8Printable("no model " + name));
 
+    if (!model->isInit())
+    {
+        if(!model->init())
+            throw std::runtime_error(qUtf8Printable("init model " + name + " failed"));
+    }
+
     return model;
+}
+
+QList<JZYoloResult> JZYoloForward(JZModelManager *inst, QString name, cv::Mat mat)
+{
+    JZYolo *model = dynamic_cast<JZYolo*>(JZModelGet(inst, name));
+    return model->forward(mat);
 }

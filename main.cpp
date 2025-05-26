@@ -11,6 +11,7 @@
 #include "mainwindow.h"
 #include "JZNodeProgramDumper.h"
 #include "sample/VisionDemo/VisionDemo.h"
+#include "sample/VisionWindow/VisionWindow.h"
 #include "remote/JZRemotePacket.h"
 
 using namespace std;
@@ -70,6 +71,7 @@ int runProgram(QString name,bool debug)
 void createSample()
 {
     SampleVisionDemo demo;
+    //SampleVisionWindow demo;
     demo.initCameraFile();
     //demo.initCameraHik();
     demo.saveProject();
@@ -77,8 +79,8 @@ void createSample()
 
 int runSample()
 {
-    SampleVisionDemo demo;
-    demo.initCameraFile();
+    SampleVisionWindow demo;
+    demo.initCameraRtsp();
     return demo.run();    
 }
 
@@ -89,7 +91,7 @@ int main(int argc,char *argv[])
     JZNodeInit();               
 
     //createSample();
-    //return runSample();
+    return runSample();
     //return runProgram("Project20", false);    
 
     QCommandLineParser parser;

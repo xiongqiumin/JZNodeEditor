@@ -2,12 +2,15 @@
 #include <QShortcut>
 #include "JZEditor.h"
 #include "mainwindow.h"
+#include "JZNodeEditor.h"
+#include "JZNodeParamEditor.h"
+#include "JZUiEditor.h"
 
 JZEditor::JZEditor()
 {
     m_item = nullptr;
-    m_project = nullptr;
-    m_type = Editor_none;
+    m_project = nullptr;    
+    m_type = ProjectItem_none;
 
     new QShortcut(QKeySequence("Ctrl+Z"), this, this, &JZEditor::undo, Qt::WidgetWithChildrenShortcut);
     new QShortcut(QKeySequence("Ctrl+Y"), this, this, &JZEditor::redo, Qt::WidgetWithChildrenShortcut);
@@ -113,18 +116,21 @@ void JZEditor::selectAll()
 }
 
 //JZEditorManager
-JZEditorManager::JZEditorManager()
-{
-}
-
-JZEditorManager::~JZEditorManager()
-{
-}
-
 JZEditorManager *JZEditorManager::instance()
 {
     static JZEditorManager inst;
     return &inst;
+}
+
+JZEditorManager::JZEditorManager()
+{
+    registEditor(ProjectItem_scriptItem, CreateEditor<JZNodeEditor>);
+    registEditor(ProjectItem_param, CreateEditor<JZNodeParamEditor>);
+    registEditor(ProjectItem_ui, CreateEditor<JZUiEditor>);
+}
+
+JZEditorManager::~JZEditorManager()
+{
 }
 
 void JZEditorManager::registEditor(int project_item_type, CreateJZEditorFunc func)

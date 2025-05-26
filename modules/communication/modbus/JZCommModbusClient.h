@@ -21,12 +21,19 @@ public:
 //JZCommModbusClient
 class JZCommModbusClient : public JZCommObject
 {
+    Q_OBJECT
+
 public:
     JZCommModbusClient(QObject* parent = nullptr);
+    ~JZCommModbusClient();
 
     virtual bool isOpen() override;
     virtual bool open() override;
     virtual void close() override;
+    JZModbusClient *client();
+
+protected:
+    JZModbusClient *m_client;
 };
 
 

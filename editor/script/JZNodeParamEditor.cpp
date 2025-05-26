@@ -138,6 +138,7 @@ JZNodeParamEditor::JZNodeParamEditor()
 {
     ui->setupUi(this);
     m_class = nullptr;
+    m_type = ProjectItem_param;
 
     ui->boxParamType->addItem("成员");
     ui->boxParamType->addItem("控件成员");

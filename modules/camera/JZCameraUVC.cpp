@@ -12,11 +12,13 @@ JZCameraUvcConfig::JZCameraUvcConfig()
 
 void JZCameraUvcConfig::saveToStream(QDataStream& s) const
 {
+    JZCameraConfig::saveToStream(s);
 }
 
 
 void JZCameraUvcConfig::loadFromStream(QDataStream& s)
 {
+    JZCameraConfig::loadFromStream(s);
 }
 
 //JZCameraUVC

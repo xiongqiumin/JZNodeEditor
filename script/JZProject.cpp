@@ -37,12 +37,12 @@ void operator>>(QDataStream &s, BreakPoint &param)
 }
 
 //JZProjectTempGuard
-JZProjectTempGuard::JZProjectTempGuard(JZProject* project, JZProjectItem* item, AfterOpertaor op)
-    :JZProjectTempGuard(project, QList<JZProjectItem*>{item}, op)
+JZProjectTempGuard::JZProjectTempGuard(JZProject* project, JZProjectItem* item, AfterOpertaor op, const QString &className)
+    :JZProjectTempGuard(project, QList<JZProjectItem*>{item}, op, className)
 {
 }
 
-JZProjectTempGuard::JZProjectTempGuard(JZProject* project, QList<JZProjectItem*> items, AfterOpertaor op)
+JZProjectTempGuard::JZProjectTempGuard(JZProject* project, QList<JZProjectItem*> items, AfterOpertaor op, const QString &className)
 {
     m_project = project;
     m_after = op;
@@ -51,6 +51,9 @@ JZProjectTempGuard::JZProjectTempGuard(JZProject* project, QList<JZProjectItem*>
     {
         auto item = m_items[i];
         project->addTmp(item);
+        if(!className.isEmpty())
+            m_project->setTmpClass(item, className);
+
         if (item->itemType() == ProjectItem_scriptItem)
         {
             JZScriptItem* script_item = dynamic_cast<JZScriptItem*>(item);
@@ -69,13 +72,7 @@ JZProjectTempGuard::~JZProjectTempGuard()
         else
             m_project->removeTmp(item);
     }
-}
-
-void JZProjectTempGuard::setClass(QString className)
-{
-    for (int i = 0; i < m_items.size(); i++)
-        m_project->setTmpClass(m_items[i], className);
-}
+}    
 
 //JZProject
 JZProject::JZProject()    

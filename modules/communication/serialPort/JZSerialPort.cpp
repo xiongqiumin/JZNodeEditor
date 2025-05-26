@@ -13,11 +13,13 @@ JZSerialPortConfig::JZSerialPortConfig()
 
 void JZSerialPortConfig::saveToStream(QDataStream& s) const
 {
+    JZCommConfig::saveToStream(s);
     s << portName << baud << dataBit << parityBit << stopBit;
 }
 
 void JZSerialPortConfig::loadFromStream(QDataStream& s)
 {
+    JZCommConfig::loadFromStream(s);
     s >> portName >> baud >> dataBit >> parityBit >> stopBit;
 }
 

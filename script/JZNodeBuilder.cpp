@@ -353,9 +353,7 @@ bool JZNodeBuilder::buildCustom(JZFunctionDefine func, JZNode* custom_node, JZNo
     JZScriptItem *file = new JZScriptItem(JZScriptItem::Function);
     file->setFunction(func);
 
-    JZProjectTempGuard guard(m_project, file, JZProjectTempGuard::RemoveItem);
-    if (!func.className.isEmpty())
-        guard.setClass(func.className);
+    JZProjectTempGuard guard(m_project, file, JZProjectTempGuard::RemoveItem, func.className);    
 
     auto start = file->getNode(0);
     file->addNode(custom_node);

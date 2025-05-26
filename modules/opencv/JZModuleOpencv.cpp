@@ -15,6 +15,7 @@ using namespace cv;
 JZModuleOpencv::JZModuleOpencv()
 {        
     m_name = "opencv";
+    qRegisterMetaType<cv::Mat>("cv::Mat");
 }
 
 JZModuleOpencv::~JZModuleOpencv()
@@ -33,11 +34,8 @@ void JZModuleOpencv::registCvtEnum(JZScriptEnvironment *env)
 }
 
 void JZModuleOpencv::regist(JZScriptEnvironment *env)
-{
-    qRegisterMetaType<cv::Mat>("cv::Mat");
-
-    auto obj_inst = env->objectManager();
-    
+{    
+    auto obj_inst = env->objectManager();    
     auto func_inst = env->functionManager();
     int cls_id = Module_OpencvType;
     

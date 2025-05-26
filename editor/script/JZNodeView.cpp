@@ -784,7 +784,12 @@ JZNodeGemo JZNodeView::pinAt(QPoint pos)
     return JZNodeGemo(node_item->id(),pin_id);
 }
 
-void JZNodeView::foreachNode(std::function<void(JZNodeGraphItem *)> func, int nodeType)
+void JZNodeView::foreachNode(std::function<void(JZNodeGraphItem *)> func)
+{
+    foreachNode(-1, func);
+}
+
+void JZNodeView::foreachNode(int nodeType, std::function<void(JZNodeGraphItem *)> func)
 {
     auto items = m_scene->items();
     for (int i = 0; i < items.size(); i++)
@@ -1242,7 +1247,15 @@ void JZNodeView::setRuntimeValue(int node_id,int pin_id,const JZNodeDebugParamVa
     if(!item)
         return;
 
-    //item->setPinRuntimeValue(pin_id,value);
+    //item->setPinRuntimeValue(pin_id, value);
+}
+
+void JZNodeView::clearDisplayValue()
+{
+    foreachNode(Node_display, [](JZNodeGraphItem *node) {
+        auto display = dynamic_cast<JZNodeDisplayItem*>(node);
+        display->clearValues();
+    });
 }
 
 void JZNodeView::displayValue(int node_id,int pin_id,QVariantPtr *ptr)

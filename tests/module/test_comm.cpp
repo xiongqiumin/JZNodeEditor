@@ -39,9 +39,9 @@ void TcpThread::run()
     JZTcpServer server;
     connect(&server, &JZTcpServer::sigNetPackRecv, this, &TcpThread::onPackRecv);
 
-    JZCommTcpServerConfig info;
-    info.port = 5000;
-    server.init(info);
+    JZCommTcpServerConfig *info = new JZCommTcpServerConfig();
+    info->port = 5000;
+    server.setConfig(JZCommConfigPtr(info));
     server.open();
 
     exec();
@@ -88,7 +88,7 @@ void CommTest::testModbusClientCpp()
     JZCommModbusClientConfig*cfg = new JZCommModbusClientConfig();
 
     JZCommManagerConfig comm_config;    
-    cfg->type = Comm_ModbusClient;
+    cfg->type = Comm_ModbusTcpClient;
     cfg->conn.modbusType = Modbus_tcpClient;
     cfg->name = "modbus";
     comm_config.commList << JZCommConfigPtr(cfg);
@@ -129,7 +129,7 @@ void CommTest::testModbusClient()
     auto start = script->startNode();
 
     JZCommModbusClientConfig* cfg = new JZCommModbusClientConfig();
-    cfg->type = Comm_ModbusClient;
+    cfg->type = Comm_ModbusTcpClient;
     cfg->conn.modbusType = Modbus_tcpClient;
     cfg->name = "modbus";
 

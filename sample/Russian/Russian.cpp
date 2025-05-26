@@ -20,7 +20,7 @@ SampleRussian::SampleRussian()
     
     auto class_file = m_project.getClass("MainWindow");
 
-    JZUiItem* ui_file = class_file->ui();
+    JZUiItem* ui_file = dynamic_cast<JZUiItem*>(class_file->ui());
     ui_file->setXml(loadUi("Russian.ui"));
     m_project.saveItem(ui_file);
 }

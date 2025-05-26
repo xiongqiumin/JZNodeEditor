@@ -19,7 +19,7 @@
 //JZNodeEditor
 JZNodeEditor::JZNodeEditor()
 {
-    m_type = Editor_script;    
+    m_type = ProjectItem_scriptItem;    
     init();
 }
 
@@ -224,6 +224,7 @@ void JZNodeEditor::onAutoRunOnce()
     if (m_runProp->depend()->originScript != this->script())
         return;
 
+    m_view->clearDisplayValue();
     emit sigAutoRunOnce();
 }
 

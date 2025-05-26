@@ -14,26 +14,6 @@
 #include "jzWidgets/JZPropertyEditor.h"
 #include "JZBaseDialog.h"
 
-class JZManagerPropertyDialog : public JZBaseDialog
-{
-    Q_OBJECT
-
-public:
-    JZManagerPropertyDialog(QWidget *parent = nullptr);
-
-protected slots:
-    void onPropChanged(JZProperty * prop, const QVariant &v);
-
-protected:
-    void addPage(int type,QList<JZProperty*> propList);
-    void switchPage(int page);
-
-    JZProperty *m_typeProp;
-    JZPropertyEditor *m_editor;
-    QMap<int, QList<JZProperty*>> m_propType;
-};
-
-
 class JZNodeManagerDialog : public QDialog
 {
     Q_OBJECT

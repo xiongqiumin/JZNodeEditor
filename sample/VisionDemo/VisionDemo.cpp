@@ -27,11 +27,11 @@ SampleVisionDemo::~SampleVisionDemo()
 
 void SampleVisionDemo::initProject(QString name)
 {
-    newProject(name,"vision");
+    newProject(name,"ui");
 
     auto class_item = m_project.getClass("MainWindow");
-
-    JZUiItem *ui_file = class_item->ui();
+    
+    JZUiItem *ui_file = dynamic_cast<JZUiItem*>(class_item->ui());
     QString xml = loadUi("VisionDemo.ui");
     ui_file->setXml(xml);
     m_project.saveItem(ui_file);
@@ -57,29 +57,41 @@ void SampleVisionDemo::addInit()
 {
     auto class_item = m_project.getClass("MainWindow");
     auto script = class_item->memberFunction("init");
-    auto start_node = script->startNode();
+    class_item->addMemberVariable(JZParamDefine("cameraManager", "JZCameraManager"));
+    class_item->addMemberVariable(JZParamDefine("commManager", "JZCommManager"));
+    class_item->addMemberVariable(JZParamDefine("modelManager","JZModelManager"));
 
-    JZNodeCameraInit *cam_init = (JZNodeCameraInit *)script->findNodeByType(Node_CameraInit)[0];
-    JZNodeCommInit *comm_init = (JZNodeCommInit *)script->findNodeByType(Node_CommInit)[0];
-    JZNodeModelInit *model_init = (JZNodeModelInit *)script->findNodeByType(Node_ModelInit)[0];
+    auto start_node = script->startNode();
+    JZNodeCameraInit *cam_init = new JZNodeCameraInit();
+    JZNodeCommInit *comm_init = new JZNodeCommInit();
+    JZNodeModelInit *model_init = new JZNodeModelInit();
+    script->addNode(cam_init);
+    script->addNode(comm_init);
+    script->addNode(model_init);
+    script->addConnect(start_node->flowOutGemo(), cam_init->flowInGemo());
+    script->addConnect(cam_init->flowOutGemo(), comm_init->flowInGemo());
+    script->addConnect(comm_init->flowOutGemo(), model_init->flowInGemo());
 
     JZCameraManagerConfig cam_config;
-    JZCameraConfig cfg;
-    cfg.name = "camera";
+    JZCameraConfig *cfg = nullptr;    
     if (m_name == "VisionDemoHik")
     {        
-        cfg.type = Camera_Hik;
-        cfg.hikConfig.path = "192.168.0.150";
-        cfg.hikConfig.path = "169.254.120.253";
-        cfg.hikConfig.exposureTime = 0;
-        cfg.hikConfig.gain = 0;
+        JZCameraHikConfig *cfg_hik = new JZCameraHikConfig();
+        cfg_hik->name = "camera";
+        cfg_hik->type = Camera_Hik;
+        cfg_hik->path = "192.168.0.150";
+        cfg_hik->exposureTime = 4000;
+        cfg_hik->gain = 0;
+        cfg = cfg_hik;
     }
     else
     {
-        cfg.type = Camera_File;
-        cfg.fileConfig.path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
+        JZCameraFileConfig *cfg_file = new JZCameraFileConfig();
+        cfg_file->name = "camera";
+        cfg_file->path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
+        cfg = cfg_file;
     }
-    cam_config.cameraList << cfg;    
+    cam_config.cameraList << JZCameraConfigPtr(cfg);
     cam_init->setConfig(cam_config);
 
     JZModbusConnetInfo conn;
@@ -88,28 +100,26 @@ void SampleVisionDemo::addInit()
     JZCommManagerConfig comm_mangare_config;
 
     JZCommConfig comm_cfg;
-    JZCommModbusInfo modbus;
-    comm_cfg.modbus.conn = conn;
-    comm_cfg.name = "modbus";
-    comm_cfg.commType = Comm_ModbusClient;
+    JZCommModbusClientConfig *modbus = new JZCommModbusClientConfig();
+    modbus->conn = conn;
+    modbus->name = "modbus";
 
-    comm_mangare_config.commList << comm_cfg;
+    comm_mangare_config.commList << JZCommConfigPtr(modbus);
     comm_init->setConfig(comm_mangare_config);
 
     JZModelManagerConfig model_config;
-    JZModelConfig model;
-    model.type = Model_Yolo;
-    model.name = "yolo";
-    model.modelPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx";
+    JZModelYoloConfig *model = new JZModelYoloConfig();    
+    model->modelPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx";
+    model->idPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.json";
 
-    model_config.modelList << model;
+    model_config.modelList << JZModelConfigPtr(model);
     model_init->setConfig(model_config);
 }
 
 void SampleVisionDemo::addOnFrameReady()
 {
     auto class_item = m_project.getClass("MainWindow");
-    auto flow_script = class_item->flow("flow");
+    auto flow_script = class_item->addFlow("flow");
 
     JZNodeCameraReadyEvent *cam_ready = new JZNodeCameraReadyEvent();
     flow_script->addNode(cam_ready);

@@ -6,18 +6,12 @@
 
 //JZVisionWindowConfig
 QDataStream& operator<<(QDataStream& s, const JZVisionWindowConfig& param)
-{
-    s << param.cameraConfig;
-    s << param.modelConfig;
-    s << param.commConfig;
+{    
     return s;
 }
 
 QDataStream& operator>>(QDataStream& s, JZVisionWindowConfig& param)
 {
-    s >> param.cameraConfig;
-    s >> param.modelConfig;
-    s >> param.commConfig;
     return s;
 }
 
@@ -45,6 +39,9 @@ JZVisionWindow::JZVisionWindow()
     splitterMain->addWidget(splitterTop);
     splitterMain->addWidget(m_log);
     splitterMain->setSizes({ 450,150 });
+
+    splitterTop->setChildrenCollapsible(false);
+    splitterMain->setChildrenCollapsible(false);
 
     setCentralWidget(splitterMain);
     resize(800, 600);
@@ -91,16 +88,10 @@ JZCameraViewWidget* JZVisionWindow::cameraView()
 void JZVisionWindow::init(JZVisionWindowConfig config)
 {
     m_config = config;
-    m_cameraManager->setConfig(config.cameraConfig);
-    m_commManager->setConfig(config.commConfig);
-    m_modelManager->setConfig(config.modelConfig);
+}
 
-    m_cameraManager->init();
-    m_commManager->init();
-    m_modelManager->init();
-
-    m_list->updateCamera();
-
+void JZVisionWindow::initView()
+{   
     initMenu();
     initToolBar();
 }
@@ -116,11 +107,11 @@ void JZVisionWindow::initMenu()
 
     auto menu_setting = bar->addMenu("Setting");
 
-    QAction* act_camera = menu_file->addAction("camera");
-    QAction* act_model = menu_file->addAction("model");
-    QAction* act_comm = menu_file->addAction("comm");
-    QAction* act_database = menu_file->addAction("db");
-    QAction* act_mes = menu_file->addAction("mes");
+    QAction* act_camera = menu_setting->addAction("camera");
+    QAction* act_model = menu_setting->addAction("model");
+    QAction* act_comm = menu_setting->addAction("comm");
+    QAction* act_database = menu_setting->addAction("db");
+    QAction* act_mes = menu_setting->addAction("mes");
     connect(act_camera, &QAction::triggered, this, &JZVisionWindow::onActionCameraSetting);
     connect(act_model, &QAction::triggered, this, &JZVisionWindow::onActionModelSetting);
     connect(act_comm, &QAction::triggered, this, &JZVisionWindow::onActionCommSetting);
@@ -129,9 +120,9 @@ void JZVisionWindow::initMenu()
 
     if (m_cameraManager->cameraList().size() == 0)
         act_camera->setVisible(false);
-    if (m_config.commConfig.commList.size() == 0)
+    if (m_commManager->commList().size() == 0)
         act_comm->setVisible(false);
-    if (m_config.modelConfig.modelList.size() == 0)
+    if (m_modelManager->modelList().size() == 0)
         act_model->setVisible(false);
 
     act_database->setVisible(false);
@@ -160,12 +151,23 @@ void JZVisionWindow::onActionClose()
     close();
 }
 
+bool JZVisionWindow::checkOpen(JZCamera *camera)
+{
+    if (camera->isOpen())
+        return true;
+
+    return camera->open();
+}
+
 void JZVisionWindow::onActionStartOnce()
 {
     auto cam_list = m_cameraManager->cameraList();
     for (int i = 0; i < cam_list.size(); i++)
     {
-        JZCamera *camera = m_cameraManager->camera(cam_list[i]);
+        JZCamera *camera = cam_list[i];
+        if (!checkOpen(camera))
+            return;
+
         camera->startOnce();
     }
 }
@@ -175,7 +177,10 @@ void JZVisionWindow::onActionStart()
     auto cam_list = m_cameraManager->cameraList();
     for (int i = 0; i < cam_list.size(); i++)
     {
-        JZCamera* camera = m_cameraManager->camera(cam_list[i]);
+        JZCamera* camera = cam_list[i];
+        if (!checkOpen(camera))
+            return;
+
         camera->start();
     }
 }
@@ -185,7 +190,7 @@ void JZVisionWindow::onActionStop()
     auto cam_list = m_cameraManager->cameraList();
     for (int i = 0; i < cam_list.size(); i++)
     {
-        JZCamera* camera = m_cameraManager->camera(cam_list[i]);
+        JZCamera* camera = cam_list[i];
         camera->stop();
     }
 }

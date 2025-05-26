@@ -7,13 +7,6 @@
 #include "JZScriptItem.h"
 #include "JZEditorGlobal.h"
 
-enum{
-    Editor_none,
-    Editor_script,
-    Editor_ui,
-    Editor_param,
-};
-
 enum {
     Menu_File,
     Menu_Edit,
@@ -75,7 +68,7 @@ protected:
 typedef JZEditor *(*CreateJZEditorFunc)();
 
 template <class T>
-JZEditor *CreateEditor(JZNode *node) { return new T(); }
+JZEditor *CreateEditor() { return new T(); }
 
 //JZEditorManager
 class JZEditorManager

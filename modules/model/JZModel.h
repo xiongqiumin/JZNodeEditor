@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QSharedPointer>
+#include "../JZModuleConfigFactory.h"
 
 enum JZModelType
 {
@@ -30,6 +31,8 @@ public:
 	virtual ~JZModel();
 
 	void setConfig(JZModelConfigPtr config);
+
+    virtual bool isInit() = 0;
 	virtual bool init() = 0;
 
 protected:

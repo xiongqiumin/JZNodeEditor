@@ -11,11 +11,13 @@ JZCommTcpClientConfig::JZCommTcpClientConfig()
 
 void JZCommTcpClientConfig::saveToStream(QDataStream& s) const
 {
+    JZCommConfig::saveToStream(s);
     s << ip << port << format;
 }
 
 void JZCommTcpClientConfig::loadFromStream(QDataStream& s)
 {
+    JZCommConfig::loadFromStream(s);
     s >> ip >> port >> format;
 }
 
@@ -38,7 +40,8 @@ bool JZTcpClient::isOpen()
 
 bool JZTcpClient::open()
 {
-    m_socket->connectToHost(QHostAddress(m_info.ip), m_info.port);
+    auto info = dynamic_cast<JZCommTcpClientConfig*>(m_config.data());
+    m_socket->connectToHost(QHostAddress(info->ip), info->port);
     return m_socket->waitForConnected();
 }
 

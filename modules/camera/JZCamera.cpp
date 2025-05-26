@@ -27,3 +27,13 @@ JZCamera::JZCamera(QObject *parent)
 JZCamera::~JZCamera()
 {
 }
+
+QString JZCamera::name() const
+{
+    return m_config->name;
+}
+
+JZCameraConfigPtr JZCamera::config()
+{
+    return m_config;
+}

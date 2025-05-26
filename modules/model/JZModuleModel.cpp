@@ -26,9 +26,7 @@ JZModuleModel::~JZModuleModel()
 }
 
 void JZModuleModel::regist(JZScriptEnvironment *env)
-{
-    qRegisterMetaType<cv::Mat>("cv::Mat");
-
+{    
     auto func_inst = env->functionManager();
     int cls_id = Module_ModelType;
 
@@ -59,6 +57,7 @@ void JZModuleModel::regist(JZScriptEnvironment *env)
     
     func_inst->registCFunction("JZModelInit", true, jzbind::createFuncion(JZModelInit));
     func_inst->registCFunction("JZModelGet", false, jzbind::createFuncion(JZModelGet, CFunction::Reference));
+    func_inst->registCFunction("JZYoloForward", true, jzbind::createFuncion(JZYoloForward));
 
     env->nodeFactory()->registNode(Node_ModelInit, createJZNode<JZNodeModelInit>);
     env->nodeFactory()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);    

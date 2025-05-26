@@ -3,10 +3,11 @@
 #include <QDebug>
 #include <QUndoStack>
 #include "JZProject.h"
+#include "JZVisionUiItem.h"
 
 JZVisionUiEditor::JZVisionUiEditor()
 {    
-    m_type = Editor_visionUi;    
+    m_type = ProjectItem_visionUi;
 
     QVBoxLayout *l = new QVBoxLayout();
     l->setContentsMargins(0,0,0,0);

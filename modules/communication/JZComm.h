@@ -4,11 +4,14 @@
 #include <QObject>
 #include <QString>
 #include <QSharedPointer>
+#include "../JZModuleConfigFactory.h"
 
 enum {
     Comm_None,
-    Comm_ModbusClient,
-    Comm_ModbusServer,
+    Comm_ModbusRtuClient,
+    Comm_ModbusTcpClient,
+    Comm_ModbusRtuServer,
+    Comm_ModbusTcpServer,
     Comm_TcpClient,
     Comm_TcpServer,
     Comm_Udp,

@@ -19,7 +19,7 @@ QDataStream& operator>>(QDataStream& s, JZCameraConfigPtr& param)
     return s;
 }
 
-int JZCameraManagerConfig::indexOfCamera(QString name)
+int JZCameraManagerConfig::indexOfCamera(QString name) const
 {
     for (int i = 0; i < cameraList.size(); i++)
     {
@@ -59,21 +59,43 @@ JZCameraManager::~JZCameraManager()
 void JZCameraManager::setConfig(const JZCameraManagerConfig &config)
 {    
     m_config = config;
+    m_cameras.clear();
+    for (int i = 0; i < m_config.cameraList.size(); i++)
+    {
+        JZCamera *camera = createCamera(m_config.cameraList[i]);
+        m_cameras.push_back(camera);
+    }
 }
 
-JZCameraManagerConfig JZCameraManager::config()
+const JZCameraManagerConfig &JZCameraManager::config() const
 {
     return m_config;
 }
 
 void JZCameraManager::init()
-{
-    for(int i = 0; i < m_config.cameraList.size(); i++)
-    {
-        JZCamera *camera = createCamera(m_config.cameraList[i]);
-        m_cameras.push_back(camera);
-    }
+{    
     emit sigInitFinish();
+}
+
+void JZCameraManager::addCamera(const JZCameraConfigPtr &config)
+{    
+    m_config.cameraList.push_back(config);
+    m_cameras.push_back(createCamera(config));
+}
+
+void JZCameraManager::removeCamera(QString name)
+{
+    int idx = m_config.indexOfCamera(name);
+    m_config.cameraList.removeAt(idx);
+    auto camera = m_cameras[idx];
+    m_cameras.removeAt(idx);
+    if (camera->type() != Camera_Rtsp)
+        delete camera;
+    else
+    {
+        JZCameraRtsp *camera_rtsp = dynamic_cast<JZCameraRtsp*>(camera);
+        camera_rtsp->stopAndDelete();
+    }
 }
 
 bool JZCameraManager::open(QString name)
@@ -125,22 +147,18 @@ bool JZCameraManager::stop(QString name)
     return true;
 }
 
-bool JZCameraManager::setCamera(QString name, JZCameraConfigPtr config)
+bool JZCameraManager::setCamera(QString name, const JZCameraConfigPtr &config)
 {
     auto c = camera(name);
     if (!c)
         return false;
 
-    return c->setConfig(config);
+    return c->setConfig(config);    
 }
 
-QStringList JZCameraManager::cameraList()
-{
-    QStringList cameras;
-    for (int i = 0; i < m_cameras.size(); i++)
-        cameras << m_cameras[i]->objectName();
-
-    return cameras;
+QList<JZCamera*> JZCameraManager::cameraList()
+{    
+    return m_cameras;
 }
 
 JZCamera* JZCameraManager::camera(QString name)
@@ -150,6 +168,11 @@ JZCamera* JZCameraManager::camera(QString name)
         return NULL;
 
     return m_cameras[idx];
+}
+
+int JZCameraManager::indexOfCamera(QString name)
+{
+    return m_config.indexOfCamera(name);
 }
 
 JZCamera* JZCameraManager::createCamera(const JZCameraConfigPtr &config)
@@ -171,6 +194,11 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfigPtr &config)
     {
         JZCameraHik *camera_hik = new JZCameraHik();
         camera = camera_hik;
+    }
+    else if (config->type == Camera_Rtsp)
+    {
+        JZCameraRtsp *camera_rtsp = new JZCameraRtsp();
+        camera = camera_rtsp;
     }
     else
     {
@@ -218,12 +246,24 @@ void JZCameraConnect(QObject * object, JZCameraManager *inst,QString name, JZFun
 void JZCameraStart(JZCameraManager* inst, QString name)
 {
     JZCamera* camera = JZCameraGet(inst, name);
+    if (!camera->isOpen())
+    {
+        if (!camera->open())
+            throw std::runtime_error("open camera failed");
+    }
+
     camera->start();
 }
 
 void JZCameraStartOnce(JZCameraManager* inst, QString name)
-{
+{    
     JZCamera* camera = JZCameraGet(inst, name);
+    if (!camera->isOpen())
+    {
+        if(!camera->open())
+            throw std::runtime_error("open camera failed");
+    }
+
     camera->startOnce();
 }
 

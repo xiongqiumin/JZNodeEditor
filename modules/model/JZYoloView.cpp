@@ -46,13 +46,8 @@ void JZYoloView::setYoloResult(QImage image,const QList<JZYoloResult> &m_lists)
         m_scene->addItem(rc_item);
 
         QGraphicsSimpleTextItem *item_name = new QGraphicsSimpleTextItem(ret.name);
-        QGraphicsSimpleTextItem *item_conf = new QGraphicsSimpleTextItem(QString::asprintf("%0.2f",ret.confidence));
         item_name->setPos(ret.rect.topLeft());
         item_name->setPen(pen);
         m_scene->addItem(item_name);
-
-        item_conf->setPos(ret.rect.topLeft());
-        item_conf->setPen(pen);
-        m_scene->addItem(item_conf);
     }
 }

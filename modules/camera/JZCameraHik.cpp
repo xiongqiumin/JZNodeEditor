@@ -107,6 +107,7 @@ bool JZCameraHikApi::updateDeviceList()
 //JZCameraHikConfig
 JZCameraHikConfig::JZCameraHikConfig()
 {
+    type = Camera_Hik;
     triggerMode = TRIGGER_MODE_OFF;
     triggerSource = TRIGGER_SOURCE_SOFTWARE;   //触发
 
@@ -115,6 +116,34 @@ JZCameraHikConfig::JZCameraHikConfig()
 
     exposureMode = EXPOSURE_AUTO_MODE_OFF;
     exposureTime = 20000;
+}
+
+void JZCameraHikConfig::saveToStream(QDataStream& s) const
+{
+    JZCameraConfig::saveToStream(s);
+    s << path;
+    s << triggerSource;
+    s << triggerMode;
+
+    s << gainMode;
+    s << gain;
+
+    s << exposureMode;
+    s << exposureTime;
+}
+
+void JZCameraHikConfig::loadFromStream(QDataStream& s)
+{
+    JZCameraConfig::loadFromStream(s);
+    s >> path;
+    s >> triggerSource;
+    s >> triggerMode;
+
+    s >> gainMode;
+    s >> gain;
+
+    s >> exposureMode;
+    s >> exposureTime;
 }
 
 //JZCameraHik
@@ -258,8 +287,9 @@ bool JZCameraHik::isOpen()
     return m_hDevHandle != nullptr;
 }
 
-bool JZCameraHik::open(QString path)
+bool JZCameraHik::open()
 {
+    auto cfg = dynamic_cast<JZCameraHikConfig*>(m_config.data());
     g_api->updateDeviceList();
     
     MV_CC_DEVICE_INFO* pstDeviceInfo = nullptr;
@@ -274,7 +304,7 @@ bool JZCameraHik::open(QString path)
             int nIp4 = (pDeviceInfo->SpecialInfo.stGigEInfo.nCurrentIp & 0x000000ff);
             QString device_ip = QString::asprintf("%d.%d.%d.%d", nIp1, nIp2, nIp3, nIp4);
             
-            if (QUrl(path) == QUrl(device_ip))
+            if (QUrl(cfg->path) == QUrl(device_ip))
             {
                 pstDeviceInfo = pDeviceInfo;
                 break;
@@ -401,32 +431,38 @@ void JZCameraHik::stop()
     }
 }
 
-void JZCameraHik::setConfig(JZCameraHikConfig config)
+bool JZCameraHik::setConfig(JZCameraConfigPtr config)
 {
-    g_api->SetEnumValue(m_hDevHandle, "TriggerSource", config.triggerSource);
-    g_api->SetEnumValue(m_hDevHandle, "TriggerMode", config.triggerMode);
+    m_config = config;
+    if (!isOpen())
+        return true;
 
-    if (config.gainMode == JZCameraHikConfig::GAIN_MODE_OFF)
+    auto cfg = dynamic_cast<JZCameraHikConfig*>(m_config.data());
+
+    g_api->SetEnumValue(m_hDevHandle, "TriggerSource", cfg->triggerSource);
+    g_api->SetEnumValue(m_hDevHandle, "TriggerMode", cfg->triggerMode);
+
+    if (cfg->gainMode == JZCameraHikConfig::GAIN_MODE_OFF)
     {
         g_api->SetEnumValue(m_hDevHandle, "GainAuto", 0);
-        g_api->SetFloatValue(m_hDevHandle, "Gain", (float)config.gain);
+        g_api->SetFloatValue(m_hDevHandle, "Gain", (float)cfg->gain);
     }
-    else if (config.gainMode == JZCameraHikConfig::GAIN_MODE_ONCE)
+    else if (cfg->gainMode == JZCameraHikConfig::GAIN_MODE_ONCE)
     {
         g_api->SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_ONCE);
     }
-    else if (config.gainMode == JZCameraHikConfig::GAIN_MODE_CONTINUOUS)
+    else if (cfg->gainMode == JZCameraHikConfig::GAIN_MODE_CONTINUOUS)
     {
         g_api->SetEnumValue(m_hDevHandle, "GainAuto", MV_GAIN_MODE_CONTINUOUS);
     }
 
     //exposure
-    if (config.exposureMode == JZCameraHikConfig::EXPOSURE_AUTO_MODE_OFF)
+    if (cfg->exposureMode == JZCameraHikConfig::EXPOSURE_AUTO_MODE_OFF)
     {
         g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_OFF);
-        g_api->SetFloatValue(m_hDevHandle, "ExposureTime", (float)config.exposureTime);
+        g_api->SetFloatValue(m_hDevHandle, "ExposureTime", (float)cfg->exposureTime);
     }
-    else if (config.exposureMode == JZCameraHikConfig::EXPOSURE_AUTO_MODE_ONCE)
+    else if (cfg->exposureMode == JZCameraHikConfig::EXPOSURE_AUTO_MODE_ONCE)
     {
         g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_ONCE);
     }
@@ -434,6 +470,8 @@ void JZCameraHik::setConfig(JZCameraHikConfig config)
     {
         g_api->SetEnumValue(m_hDevHandle, "ExposureAuto", MV_EXPOSURE_AUTO_MODE_CONTINUOUS);
     }
+
+    return true;
 }
 
 bool JZCameraHik::CommandExecute(QString command)

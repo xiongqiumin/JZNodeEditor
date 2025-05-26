@@ -27,11 +27,41 @@ public:
 		m_creator[type] = creator;
 	}
 
+    T *creator(int type)
+    {
+        return m_creator[type]();
+    }
+    
+    QSharedPointer<T> clone(const QSharedPointer<T>& ptr)
+    {
+        QByteArray buffer;
+        QDataStream write(&buffer, QIODevice::WriteOnly);
+        saveToStream(write,ptr);
+
+        QSharedPointer ret;
+        QDataStream read(&buffer, QIODevice::ReadOnly);
+        loadFromStream(read,ret);
+        return ret;
+    }
+
+    void copyTo(const T *src, T *dst)
+    {
+        Q_ASSERT(src->type == dst->type);
+
+        QByteArray buffer;
+        QDataStream write(&buffer, QIODevice::WriteOnly);
+        src->saveToStream(write);
+
+        QDataStream read(&buffer, QIODevice::ReadOnly);
+        dst->loadFromStream(read);
+    }
+
 	void saveToStream(QDataStream& s, const QSharedPointer<T>& ptr)
 	{
 		s << (int)ptr->type;
 		ptr->saveToStream(s);
 	}
+
 	void loadFromStream(QDataStream& s, QSharedPointer<T>& ptr)
 	{
 		int type = 0;

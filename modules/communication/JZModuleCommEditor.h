@@ -4,26 +4,38 @@
 #include "JZCommManager.h"
 #include "JZNodeSettingDialog.h"
 #include "JZNodeGraphItem.h"
+#include "JZPropertyDialog.h"
 
 //JZCommConfigDialog
-class JZCommConfigDialog : public JZManagerPropertyDialog
+class JZCommConfigDialog : public JZPropertyDialog
 {
     Q_OBJECT
 
 public:
     JZCommConfigDialog(QWidget *parent = nullptr);
 
-    void setConfig(JZCommConfig cfg);
-    JZCommConfig getConfig() const;
+    void setConfig(JZCommConfigPtr cfg);
+    JZCommConfigPtr getConfig() const;
 
 private slots:
     
 
 private:    
-    void accept();
+    void addModbusClient();
+    void addModbusServer();
+    void addTcpClient();
+    void addTcpServer();
+    void addUdp();
+    void addCom();
 
-    JZCommConfig m_config;
+    void accept();    
 
+    int m_type;
+    QString m_name;
+
+    JZProperty *m_propGroup;
+    JZProperty *m_commGroup;
+    QMap<int, JZCommConfigPtr> m_config;
 };
 
 //JZCommInitDialog

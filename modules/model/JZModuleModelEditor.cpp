@@ -7,42 +7,54 @@
 
 //JZModelConfigDialog
 JZModelConfigDialog::JZModelConfigDialog(QWidget *parent)
-    :JZManagerPropertyDialog(parent)
+    :JZPropertyDialog(parent)
 {
     auto browser = m_editor->browser();
     connect(browser, &JZPropertyBrowser::valueChanged, this, &JZModelConfigDialog::onPropChanged);
 
     auto group = m_editor->addGroup("基本");
-    m_editor->addProp("名称", &m_config.name, group);
+    m_editor->addProp("名称", &m_name, group);
 
     QList<int> enmuList = { Model_Yolo };
     QStringList enumTextList = { "Yolo" };
-    m_typeProp = m_editor->addPropIntEnum("类型", &m_config.type, enmuList, enumTextList, group);
+    m_typeProp = m_editor->addPropIntEnum("类型", &m_type, enmuList, enumTextList, group);
 
-    auto prop_group = m_editor->addGroup("属性");
+    m_propGroup = m_editor->addGroup("属性");
+    addYolo();    
+}
+
+void JZModelConfigDialog::addYolo()
+{
+    JZModelYoloConfig *yolo_cfg = new JZModelYoloConfig();
+    m_config[Model_Yolo] = JZModelConfigPtr(yolo_cfg);
 
     QList<JZProperty*> model_yolo;
-    model_yolo << m_editor->addPropFile("模型", &m_config.modelPath, "*.onnx", prop_group);
-    
+    model_yolo << m_editor->addPropFile("模型", &yolo_cfg->modelPath, "*.onnx", m_propGroup);
+    model_yolo << m_editor->addPropFile("Meta", &yolo_cfg->idPath, "*.json", m_propGroup);
+
     addPage(Model_Yolo, model_yolo);
 }
 
-void JZModelConfigDialog::setConfig(JZModelConfig cfg)
+void JZModelConfigDialog::setConfig(JZModelConfigPtr cfg)
 {
-    m_config = cfg;
+    m_name = cfg->name;
+    m_type = cfg->type;
+    JZModuleConfigFactory<JZModelConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type].data());    
     m_editor->dataToUi();
-    switchPage(m_config.type);
+    switchPage(m_type);
 }
 
-JZModelConfig JZModelConfigDialog::getConfig() const
+JZModelConfigPtr JZModelConfigDialog::getConfig() const
 {
-    return m_config;
+    JZModelConfigPtr ptr = m_config[m_type];
+    ptr->name = m_name;
+    return ptr;
 }
 
 void JZModelConfigDialog::accept()
 {
     m_editor->uiToData();
-    JZManagerPropertyDialog::accept();
+    JZPropertyDialog::accept();
 }
 
 //JZModelInitDialog
@@ -53,7 +65,7 @@ JZModelInitDialog::JZModelInitDialog(QWidget *parent)
     m_table->setColumnCount(strListHeader.size());
     m_table->setHorizontalHeaderLabels(strListHeader);
 
-    m_camTypeList = QStringList{ "None","Yolo" };
+    m_modelTypeList = QStringList{ "None","Yolo" };
 }
 
 void JZModelInitDialog::setConfig(JZModelManagerConfig cfg)
@@ -71,18 +83,17 @@ void JZModelInitDialog::addConfig()
 {
     QStringList camera_list;
     for (int i = 0; i < m_config.modelList.size(); i++)
-        camera_list << m_config.modelList[i].name;
+        camera_list << m_config.modelList[i]->name;
 
-    JZModelConfig cfg;
-    cfg.name = JZRegExpHelp::uniqueString("model", camera_list);
-    cfg.type = Model_Yolo;
-
+    JZModelYoloConfig *yolo_cfg = new JZModelYoloConfig();
+    yolo_cfg->name = JZRegExpHelp::uniqueString("yolo", camera_list);
+    
     JZModelConfigDialog dlg(this);
-    dlg.setConfig(cfg);
+    dlg.setConfig(JZModelConfigPtr(yolo_cfg));
     if (dlg.exec() != QDialog::Accepted)
         return;
 
-    m_config.modelList << cfg;
+    m_config.modelList << dlg.getConfig();
     updateConfig();
 }
 
@@ -111,10 +122,10 @@ void JZModelInitDialog::updateConfig()
     for (int i = 0; i < m_config.modelList.size(); i++)
     {
         auto &cfg = m_config.modelList[i];
-        QTableWidgetItem *item = new QTableWidgetItem(cfg.name);
+        QTableWidgetItem *item = new QTableWidgetItem(cfg->name);
         m_table->setItem(i, 0, item);
 
-        QTableWidgetItem *item_type = new QTableWidgetItem(m_camTypeList[cfg.type]);
+        QTableWidgetItem *item_type = new QTableWidgetItem(m_modelTypeList[cfg->type]);
         m_table->setItem(i, 1, item_type);
     }
 }

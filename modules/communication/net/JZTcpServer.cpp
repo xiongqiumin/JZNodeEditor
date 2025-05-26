@@ -11,12 +11,14 @@ JZCommTcpServerConfig::JZCommTcpServerConfig()
 
 void JZCommTcpServerConfig::saveToStream(QDataStream& s) const
 {
-	s << ip << port;
+    JZCommConfig::saveToStream(s);
+	s << ip << port << packFormat;
 }
 
 void JZCommTcpServerConfig::loadFromStream(QDataStream& s)
 {
-	s >> ip >> port;
+    JZCommConfig::loadFromStream(s);
+	s >> ip >> port >> packFormat;
 }
 
 //JZTcpServer
@@ -34,20 +36,11 @@ JZTcpServer::~JZTcpServer()
 {
 }
 
-void JZTcpServer::init(JZCommTcpServerConfig info)
-{
-	m_info = info;
-}
-
-void JZTcpServer::setCommFormat(JZCommPackFormat format)
-{
-	m_packFormat = format;
-}
-
 bool JZTcpServer::open()
 {
 	//Æô¶¯¼àÌý
-	if (!m_server->listen(QHostAddress::AnyIPv4, m_info.port)) {
+    auto info = dynamic_cast<JZCommTcpServerConfig*>(m_config.data());
+	if (!m_server->listen(QHostAddress::AnyIPv4, info->port)) {
 		return false;
 	}
 
@@ -156,8 +149,9 @@ void JZTcpServer::onNewConnect()
 	int netId = m_netId++;
 	socket->setProperty("NetId", netId);
 
+    auto info = dynamic_cast<JZCommTcpServerConfig*>(m_config.data());
 	ClientPtr ptr = ClientPtr(new Client());
-	ptr->pack.setFormat(m_packFormat);
+	ptr->pack.setFormat(info->packFormat);
 	ptr->socket = socket;
 	m_tcpClients[netId] = ptr;
 

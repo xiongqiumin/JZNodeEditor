@@ -25,6 +25,7 @@ public:
 
     void init();
     JZModel* model(QString name);
+    QList<JZModel*> modelList();
 
 protected:
     JZModel* createModel(JZModelConfigPtr path);
@@ -34,5 +35,6 @@ protected:
 };
 void JZModelInit(JZModelManager *inst,const QByteArray &buffer);
 JZModel *JZModelGet(JZModelManager *inst, QString name);
+QList<JZYoloResult> JZYoloForward(JZModelManager *inst, QString name, cv::Mat mat);
 
 #endif

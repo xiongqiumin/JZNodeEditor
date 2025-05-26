@@ -48,11 +48,9 @@ public:
         TakeItem,
     };
 
-    JZProjectTempGuard(JZProject *project, JZProjectItem *item, AfterOpertaor op);
-    JZProjectTempGuard(JZProject* project, QList<JZProjectItem*> items, AfterOpertaor op);
+    JZProjectTempGuard(JZProject *project, JZProjectItem *item, AfterOpertaor op, const QString &className = QString());
+    JZProjectTempGuard(JZProject* project, QList<JZProjectItem*> items, AfterOpertaor op, const QString &className = QString());
     ~JZProjectTempGuard();
-
-    void setClass(QString className);
 
 protected:
     JZProject *m_project;

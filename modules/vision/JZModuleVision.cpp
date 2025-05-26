@@ -49,6 +49,7 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     cls_vision_window.defPropertyFunc("commManager", &JZVisionWindow::commManager);
     cls_vision_window.defPropertyFunc("modelManager", &JZVisionWindow::modelManager);
     cls_vision_window.defPropertyFunc("cameraView", &JZVisionWindow::cameraView);
+    cls_vision_window.def("initView", true, &JZVisionWindow::initView);
     cls_vision_window.regist();
 
     jzbind::ClassBind<JZTemplateMatch> cls_template_match(cls_id++, "JZTemplateMatch", "QObject");

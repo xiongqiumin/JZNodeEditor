@@ -42,6 +42,8 @@ public:
     void setConfig(const JZCommManagerConfig& config);
     JZCommManagerConfig config();
 
+    QList<JZCommObject*> commList();
+
 	JZCommModbusClient* modbusClient(QString name);
     JZCommModbusServer* modbusServer(QString name);
     JZTcpClient* tcpClient(QString name);

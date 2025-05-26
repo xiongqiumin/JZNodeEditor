@@ -15,8 +15,13 @@ class JZModelYoloConfig : public JZModelConfig
 public:
     JZModelYoloConfig();
 
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
+
     QString modelPath;
     QString idPath;
+    double confThreshold;
+    double nmsThreshold;
 };
 QDataStream& operator<<(QDataStream& s, const JZModelYoloConfig& param);
 QDataStream& operator>>(QDataStream& s, JZModelYoloConfig& param);
@@ -38,8 +43,8 @@ public:
     JZYolo();
     ~JZYolo();
 
-    bool isVaild();
-    virtual bool init() override;    
+    virtual bool isInit() override;
+    virtual bool init() override;
     QList<JZYoloResult> forward(Mat mat);
     
 protected:

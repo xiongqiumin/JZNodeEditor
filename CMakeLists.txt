@@ -153,11 +153,11 @@ set(JZNodeCore_SOURCES
     runtime/JZWidgetBind.cpp
     runtime/JZWidgetBind.h
     
-    #communication    
-    modules/communication/modbus/JZModuleModbus.cpp
-    modules/communication/modbus/JZModuleModbus.h
+    #communication        
     modules/communication/JZModuleComm.cpp
     modules/communication/JZModuleComm.h
+    modules/communication/JZComm.cpp
+    modules/communication/JZComm.h
     modules/communication/JZCommNode.cpp
     modules/communication/JZCommNode.h
     modules/communication/JZCommManager.cpp
@@ -166,6 +166,10 @@ set(JZNodeCore_SOURCES
     modules/communication/JZCommPack.h
 	modules/communication/JZCommWidget.cpp
     modules/communication/JZCommWidget.h
+    modules/communication/modbus/JZCommModbusClient.cpp
+    modules/communication/modbus/JZCommModbusClient.h
+    modules/communication/modbus/JZCommModbusServer.cpp
+    modules/communication/modbus/JZCommModbusServer.h
     modules/communication/net/JZTcpClient.cpp
     modules/communication/net/JZTcpClient.h
     modules/communication/net/JZTcpServer.cpp
@@ -210,6 +214,8 @@ set(JZNodeCore_SOURCES
     modules/camera/JZCamera.cpp
 	modules/camera/JZCameraUVC.h   
 	modules/camera/JZCameraUVC.cpp    
+    modules/camera/JZCameraRtsp.cpp
+    modules/camera/JZCameraRtsp.h
     modules/camera/JZCameraHik.h
     modules/camera/JZCameraHik.cpp
     modules/camera/JZCameraFile.h
@@ -228,6 +234,8 @@ set(JZNodeCore_SOURCES
     modules/vision/JZModuleVision.h
     modules/vision/JZVision.cpp
     modules/vision/JZVision.h
+    modules/vision/JZVisionUiItem.cpp
+    modules/vision/JZVisionUiItem.h
     modules/vision/JZVisionWidget.cpp
     modules/vision/JZVisionWidget.h
 	modules/vision/JZVisionWindow.cpp
@@ -247,6 +255,12 @@ set(JZNodeCore_SOURCES
     modules/motion/JZMotionNode.cpp
     modules/motion/JZMotionNode.h
     
+    #widgets
+    widgets/JZBaseDialog.cpp
+    widgets/JZBaseDialog.h
+    widgets/JZPropertyDialog.cpp
+    widgets/JZPropertyDialog.h
+    
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp
     3rd/JZCommon/jzNet/JZNetClient.h
@@ -256,6 +270,8 @@ set(JZNodeCore_SOURCES
     3rd/JZCommon/jzNet/JZNetPack.h
     3rd/JZCommon/jzNet/JZNetServer.cpp
     3rd/JZCommon/jzNet/JZNetServer.h
+    3rd/JZCommon/jzProfiler/JZTx.cpp
+    3rd/JZCommon/jzProfiler/JZTx.h
     3rd/JZCommon/jzModbus/JZModbusClient.cpp
     3rd/JZCommon/jzModbus/JZModbusClient.h
     3rd/JZCommon/jzModbus/JZModbusContext.cpp
@@ -281,7 +297,14 @@ set(JZNodeCore_SOURCES
     3rd/JZCommon/jzWidgets/JZLogWidget.cpp
     3rd/JZCommon/jzWidgets/JZLogWidget.h
     3rd/JZCommon/jzWidgets/JZSelfLayout.cpp
-    3rd/JZCommon/jzWidgets/JZSelfLayout.h
+    3rd/JZCommon/jzWidgets/JZSelfLayout.h    
+    3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp
+    3rd/JZCommon/jzWidgets/JZPropertyBrowser.h
+    3rd/JZCommon/jzWidgets/JZPropertyEditor.cpp
+    3rd/JZCommon/jzWidgets/JZPropertyEditor.h
+    3rd/JZCommon/jzWidgets/JZPropertyWidget.cpp
+    3rd/JZCommon/jzWidgets/JZPropertyWidget.h  
+    
     3rd/JZCommon/jzJson/JZJsonStream.cpp
     3rd/JZCommon/jzJson/JZJsonStream.h
     3rd/JZCommon/jzJson/JZJsonHelper.cpp
@@ -431,9 +454,7 @@ set(JZNodeEditor_SOURCES
     editor/ui/widgethostconstants.h
      
     widgets/JZAboutDialog.cpp
-    widgets/JZAboutDialog.h
-    widgets/JZBaseDialog.cpp
-    widgets/JZBaseDialog.h
+    widgets/JZAboutDialog.h    
     widgets/JZSearchTreeWidget.cpp
     widgets/JZSearchTreeWidget.h  
     widgets/JZDebugSettingDialog.cpp
@@ -450,6 +471,8 @@ set(JZNodeEditor_SOURCES
     sample/Russian/Russian.h
     sample/VisionDemo/VisionDemo.cpp
     sample/VisionDemo/VisionDemo.h
+    sample/VisionWindow/VisionWindow.cpp
+    sample/VisionWindow/VisionWindow.h
     sample/SampleProject.cpp
     sample/SampleProject.h
 
@@ -486,14 +509,6 @@ set(JZNodeEditor_SOURCES
     #motion
     modules/motion/JZModuleMotionEditor.h
     modules/motion/JZModuleMotionEditor.cpp
-    
-    #3rd    
-    3rd/JZCommon/jzWidgets/JZPropertyBrowser.cpp
-    3rd/JZCommon/jzWidgets/JZPropertyBrowser.h
-    3rd/JZCommon/jzWidgets/JZPropertyEditor.cpp
-    3rd/JZCommon/jzWidgets/JZPropertyEditor.h
-    3rd/JZCommon/jzWidgets/JZPropertyWidget.cpp
-    3rd/JZCommon/jzWidgets/JZPropertyWidget.h    
 )
 
 add_library(JZNodeCore STATIC ${JZNodeCore_SOURCES})
@@ -549,3 +564,4 @@ set_target_properties(JZNodeEditor PROPERTIES
 )
 
 add_subdirectory(tests)
+add_subdirectory("project")

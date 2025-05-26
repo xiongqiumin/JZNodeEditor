@@ -487,7 +487,7 @@ void MainWindow::updateActionStatus()
     bool isProject = !m_project.isNull();
     bool isEditor = (m_editor != nullptr);
     bool isEditorModify = (m_editor && m_editor->isModified());    
-    bool isEditorScript = (m_editor && m_editor->type() == Editor_script);
+    bool isEditorScript = (m_editor && m_editor->type() == ProjectItem_scriptItem);
     bool hasModifyFile = false;
     bool isProcess = m_processMode != Process_none;
     bool canPause = (m_processMode == Process_running);
@@ -763,7 +763,7 @@ void MainWindow::onActionStop()
 
 void MainWindow::onActionBreakPoint()
 {
-    if(m_editor && m_editor->type() == Editor_script)
+    if(m_editor && m_editor->type() == ProjectItem_scriptItem)
     {
         JZNodeEditor *node_editor = (JZNodeEditor*)m_editor;
         node_editor->breakPointTrigger();        
@@ -886,15 +886,8 @@ bool MainWindow::openProject(QString filepath)
 }
 
 JZEditor *MainWindow::createEditor(int type)
-{
-    JZEditor *editor = nullptr;
-    if(type == ProjectItem_scriptItem)
-        editor = new JZNodeEditor();
-    else if(type == ProjectItem_param)
-        editor = new JZNodeParamEditor();
-    else if(type == ProjectItem_ui)
-        editor = new JZUiEditor();
-
+{    
+    JZEditor *editor = JZEditorManager::instance()->createEditor(type);    
     if (editor)
     {
         editor->setMainWindow(this);
@@ -925,7 +918,11 @@ void MainWindow::onAutoCompiler()
 
 void MainWindow::onAutoRunOnce()
 {
+    auto edit = qobject_cast<JZNodeEditor*>(sender());
+    if (m_editor != edit)
+        return;
 
+    startUnitTest(edit->script()->itemPath());
 }
 
 void MainWindow::onAutoRun()
@@ -969,7 +966,7 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
     auto it = m_editors.begin();
     while (it != m_editors.end())
     {
-        if (it.value()->type() == Editor_script)
+        if (it.value()->type() == ProjectItem_scriptItem)
         {
             auto node_edit = (JZNodeEditor*)it.value();
             auto cmp_info = compilerResult(it.key()->itemPath());
@@ -1014,7 +1011,7 @@ JZEditor *MainWindow::editor(QString filepath)
 
 JZNodeEditor *MainWindow::currentNodeEditor()
 {
-    if (m_editor && m_editor->type() == Editor_script)
+    if (m_editor && m_editor->type() == ProjectItem_scriptItem)
         return dynamic_cast<JZNodeEditor*>(m_editor);
     else
         return nullptr;
@@ -1028,7 +1025,7 @@ QList<JZNodeEditor*> MainWindow::nodeEditorList()
     while (it != m_editors.end())
     {
         auto editor = it.value();
-        if (it.value()->type() == Editor_script)
+        if (it.value()->type() == ProjectItem_scriptItem)
         {
             auto node_edit = (JZNodeEditor*)it.value();
             list << node_edit;
@@ -1090,7 +1087,7 @@ bool MainWindow::openEditor(QString filepath)
         connect(new_edit, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);
         new_edit->setItem(item);
         new_edit->open(item);
-        if (new_edit->type() == Editor_script)
+        if (new_edit->type() == ProjectItem_scriptItem)
         {
             auto node_edit = (JZNodeEditor*)new_edit;
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
@@ -1116,7 +1113,7 @@ bool MainWindow::openEditor(QString filepath)
 
 void MainWindow::resetEditor(JZEditor *editor)
 {
-    if (editor->type() == Editor_script)
+    if (editor->type() == ProjectItem_scriptItem)
     {
         auto node_edit = (JZNodeEditor*)editor;
         node_edit->resetFile();
@@ -1303,7 +1300,7 @@ JZNodeRuntimeInfo::Stack *MainWindow::currentStack()
 void MainWindow::onWatchNotify()
 {
     JZNodeEngine *engine = m_task.runThread()->engine();
-    if(m_editor->type() != Editor_script)
+    if(m_editor->type() != ProjectItem_scriptItem)
         return;
 
     JZNodeEditor *e = qobject_cast<JZNodeEditor*>(m_editor);    
@@ -1721,7 +1718,7 @@ void MainWindow::setRunningMode(ProcessStatus flag)
     auto it = m_editors.begin();
     while (it != m_editors.end())
     {
-        if (it.value()->type() == Editor_script)
+        if (it.value()->type() == ProjectItem_scriptItem)
         {
             auto node_edit = (JZNodeEditor*)it.value();
             node_edit->setRunningMode(flag);
@@ -1772,7 +1769,7 @@ void MainWindow::clearRuntimeNode()
     while (it != m_editors.end())
     {
         auto editor = it.value();
-        if (editor->type() == Editor_script)
+        if (editor->type() == ProjectItem_scriptItem)
             ((JZNodeEditor*)editor)->setRuntimeNode(-1);
         it++;
     }

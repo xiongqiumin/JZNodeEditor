@@ -10,19 +10,27 @@
 //JZModelYoloConfig
 JZModelYoloConfig::JZModelYoloConfig()
 {
+    type = Model_Yolo;
+    name = "yolo";
 
+    confThreshold = 0.25;
+    nmsThreshold =  0.45;
 }
 
-QDataStream& operator<<(QDataStream& s, const JZModelYoloConfig& param)
+void JZModelYoloConfig::saveToStream(QDataStream& s) const
 {
-    s << param.modelPath << param.idPath;
-    return s;
+    JZModelConfig::saveToStream(s);
+    s << modelPath << idPath;
+    s << confThreshold;
+    s << nmsThreshold;
 }
 
-QDataStream& operator>>(QDataStream& s, JZModelYoloConfig& param)
+void JZModelYoloConfig::loadFromStream(QDataStream& s)
 {
-    s >> param.modelPath >> param.idPath;
-    return s;
+    JZModelConfig::loadFromStream(s);
+    s >> modelPath >> idPath;
+    s >> confThreshold;
+    s >> nmsThreshold;
 }
 
 //JZYoloResult
@@ -59,7 +67,7 @@ JZYolo::~JZYolo()
 {
 }
 
-bool JZYolo::isVaild()
+bool JZYolo::isInit()
 {
     return !m_net.empty();
 }
@@ -79,23 +87,29 @@ bool JZYolo::loadClassInfo(QString class_info)
         m_classList[key] = it.value().toString();
         it++;
     }
+    return true;
 }
 
 bool JZYolo::init()
 {
     JZModelYoloConfig *cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
+    if (!loadClassInfo(cfg->idPath))
+        return false;
+    
     try {
         m_net = cv::dnn::readNet(cfg->modelPath.toLocal8Bit().data());
     }
     catch (std::exception& e)
     {
         return false;
-    }
-    return loadClassInfo(cfg->idPath);
+    }    
+    return true;
 }
 
 QList<JZYoloResult> JZYolo::forward(Mat frame)
 {    
+    JZModelYoloConfig *cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
+
     float x_factor = frame.cols / 640.0f;
     float y_factor = frame.rows / 640.0f;
 
@@ -104,8 +118,8 @@ QList<JZYoloResult> JZYolo::forward(Mat frame)
     m_net.setInput(blob);
 
     cv::Mat preds = m_net.forward();
-    float confThreshold = 0.25f;
-    float nmsThreshold = 0.45f;
+    float confThreshold = cfg->confThreshold;
+    float nmsThreshold = cfg->nmsThreshold;
 
     QList<JZYoloResult> yolo_result;
 

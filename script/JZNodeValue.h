@@ -143,8 +143,6 @@ public:
     void addInput();
 
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
-    virtual void saveToStream(QDataStream &s) const;
-    virtual void loadFromStream(QDataStream &s);
 protected:
 
 };

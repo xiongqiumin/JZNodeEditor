@@ -12,11 +12,13 @@ JZCommUdpConfig::JZCommUdpConfig()
 
 void JZCommUdpConfig::saveToStream(QDataStream& s) const
 {
+    JZCommConfig::saveToStream(s);
     s << port;
 }
 
 void JZCommUdpConfig::loadFromStream(QDataStream& s)
 {
+    JZCommConfig::loadFromStream(s);
     s >> port;
 }
 

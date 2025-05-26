@@ -109,7 +109,6 @@ void VisionTest::testVisonDemo()
     JZCameraFileConfig* cam_config = new JZCameraFileConfig();
 
     JZVisionWindowConfig config;
-    config.cameraConfig.cameraList << JZCameraConfigPtr(cam_config);
 
     ui_item->setConfig(config);
 

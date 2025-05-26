@@ -4,10 +4,20 @@
 #include "JZCommManager.h"
 #include "3rd/JZCommon/jzModbus/JZModbusMaster.h"
 #include "3rd/JZCommon/jzModbus/JZModbusSlaver.h"
+#include "../JZModuleConfigFactory.h"
 
 //JZModuleComm
 JZModuleComm::JZModuleComm()
 {    
+    auto cfg_inst = JZModuleConfigFactory<JZCommConfig>::instance();
+    cfg_inst->regist(Comm_ModbusRtuClient, JZModuleConfigCreator<JZCommModbusClientConfig>);
+    cfg_inst->regist(Comm_ModbusTcpClient, JZModuleConfigCreator<JZCommModbusClientConfig>);
+    cfg_inst->regist(Comm_ModbusRtuServer, JZModuleConfigCreator<JZCommModbusServerConfig>);
+    cfg_inst->regist(Comm_ModbusTcpServer, JZModuleConfigCreator<JZCommModbusServerConfig>);
+    cfg_inst->regist(Comm_TcpClient, JZModuleConfigCreator<JZCommTcpClientConfig>);
+    cfg_inst->regist(Comm_TcpServer, JZModuleConfigCreator<JZCommTcpServerConfig>);
+    cfg_inst->regist(Comm_Udp, JZModuleConfigCreator<JZCommUdpConfig>);
+    cfg_inst->regist(Comm_SerialPort, JZModuleConfigCreator<JZSerialPortConfig>);
 }
 
 JZModuleComm::~JZModuleComm()
@@ -15,39 +25,8 @@ JZModuleComm::~JZModuleComm()
 }
 
 void JZModuleComm::regist(JZScriptEnvironment *env)
-{        
-    jzbind::ClassBind<JZModbusParam> cls_modbus_param("JZModbusParam");
-    cls_modbus_param.defProperty("name", &JZModbusParam::name);
-    cls_modbus_param.defProperty("value", &JZModbusParam::value);
-    cls_modbus_param.regist();
-
-    jzbind::ClassBind<JZModbusClient> cls_modbus_client("JZModbusClient", "QObject");
-    cls_modbus_client.regist();
-    
-    jzbind::ClassBind<JZModbusServer> cls_modbus_server("JZModbusServer", "QObject");
-    cls_modbus_server.regist();
-
-    jzbind::ClassBind<JZModbusMaster> cls_modbus_master("JZModbusMaster","QObject");
-    cls_modbus_master.def("setSlave", true, &JZModbusMaster::setSlave);
-    cls_modbus_master.def("isOpen", false, &JZModbusMaster::isOpen);
-    cls_modbus_master.def("isBusy", false, &JZModbusMaster::isBusy); 
-    cls_modbus_master.def("open", true, &JZModbusMaster::open);
-    cls_modbus_master.def("close", true, &JZModbusMaster::close);
-    cls_modbus_master.def("param", false, &JZModbusMaster::param, CFunction::Reference);
-    cls_modbus_master.defSingle("sigParamReceived", &JZModbusMaster::sigParamReceived);
-    cls_modbus_master.defSingle("sigParamChanged", &JZModbusMaster::sigParamChanged);
-    cls_modbus_master.regist();
-
-    jzbind::ClassBind<JZModbusSlaver> cls_modbus_slaver("JZModbusSlaver", "QObject");    
-    cls_modbus_slaver.def("setSlave", true, &JZModbusSlaver::setSlave);
-    cls_modbus_slaver.def("startServer", true, &JZModbusSlaver::startServer);
-    cls_modbus_slaver.def("stopServer", true, &JZModbusSlaver::stopServer);
-    cls_modbus_slaver.defSingle("sigParamChanged", &JZModbusSlaver::sigParamChanged);
-    cls_modbus_slaver.regist();
-
+{                
     jzbind::ClassBind<JZCommManager> cls_comm_mgr(Type_none, "JZCommManager");
-    //modbusClient
-    cls_comm_mgr.def("modbusClient", false, &JZCommManager::modbusClient, CFunction::Reference);
     cls_comm_mgr.regist();
 
     //func

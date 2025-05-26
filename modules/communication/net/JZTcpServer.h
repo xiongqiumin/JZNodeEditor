@@ -17,6 +17,7 @@ public:
 
     QString ip;
     int port;
+    JZCommPackFormat packFormat;
 };
 
 //JZTcpServer
@@ -27,9 +28,6 @@ class JZTcpServer : public JZCommObject
 public:
     JZTcpServer(QObject *parent = nullptr);
     ~JZTcpServer();
-
-    void init(JZCommTcpServerConfig info);
-    void setCommFormat(JZCommPackFormat format);
 
     virtual bool isOpen();
     virtual bool open();
@@ -57,10 +55,7 @@ protected:
         JZCommPack pack;
         QTcpSocket* socket;
     };
-    typedef QSharedPointer<Client> ClientPtr;
-
-    JZCommTcpServerConfig m_info;
-    JZCommPackFormat m_packFormat;
+    typedef QSharedPointer<Client> ClientPtr;   
 
     bool m_stopServer;
     int m_netId;

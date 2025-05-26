@@ -112,8 +112,6 @@ bool JZNodeModelForward::updateNode(QString &error)
     if (!JZNodeCompiler::checkVariableType(m_file,"this.modelManager", env->nameToType("JZModelManager"), error))
         return false;
 
-
-
     return true;
 }
 
@@ -123,12 +121,9 @@ bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
-    int model_id = c->allocStack("JZModel*");
-    c->addCall("JZModelGet", { irRef("this.modelManager"), irLiteral(model()) }, { irId(model_id) });
-
     int in_id = c->paramId(m_id, paramIn(1));
     int out_id = c->paramId(m_id, paramOut(0));
-    c->addCallConvert("JZYolo::forward", { irId(model_id) ,irId(in_id) }, {  irId(out_id) });
+    c->addCallConvert("JZYoloForward", { irRef("this.modelManager"), irLiteral(model()) ,irId(in_id) }, {  irId(out_id) });
 
     c->addFlowOutput(m_id);
     return true;

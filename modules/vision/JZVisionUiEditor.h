@@ -1,5 +1,5 @@
-﻿#ifndef JZUI_EDITOR_H_
-#define JZUI_EDITOR_H_
+﻿#ifndef JZ_VISION_UI_EDITOR_H_
+#define JZ_VISION_UI_EDITOR_H_
 
 #include "JZEditor.h"
 #include "JZUiItem.h"
