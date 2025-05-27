@@ -1,5 +1,5 @@
-#ifndef JZ_VISON_WIDGET_H_
-#define JZ_VISON_WIDGET_H_
+#ifndef JZ_CAMERA_VIEW_WIDGET_H_
+#define JZ_CAMERA_VIEW_WIDGET_H_
 
 #include <QWidget>
 #include <QTreeWidget>
@@ -7,40 +7,6 @@
 #include <QGridLayout>
 #include "modules/camera/JZCameraManager.h"
 #include "jzWidgets/JZImageLabel.h"
-
-//JZCameraListWidget
-class JZCameraViewWidget;
-class JZCameraListWidget : public QWidget 
-{
-    Q_OBJECT
-
-public:
-    JZCameraListWidget(QWidget* parent = nullptr);
-    ~JZCameraListWidget();
-
-    void setCameraManager(JZCameraManager *cameraManager);
-    void setViewWidget(JZCameraViewWidget *view);
-    void updateCamera();
-
-    void startCamera(JZCamera *camera);
-    void settingCamera(QString name);
-
-protected slots:
-    void onContexMenu(QPoint pt);
-    void onFrameReady(cv::Mat mat);
-    void onCameraError();
-
-protected:    
-
-private:
-    QTreeWidgetItem *addCameraItem(QString name);
-
-    QTreeWidget* m_tree;
-
-    JZCameraViewWidget* m_view;
-    JZCameraManager* m_cameraManager;
-    QTreeWidgetItem *m_root;
-};
 
 //JZCameraViewWidget
 class JZCameraViewWidget : public QWidget

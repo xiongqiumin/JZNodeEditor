@@ -9,7 +9,6 @@
 #include <QVBoxLayout>
 #include "UiCommon.h"
 #include "JZNodeEngine.h"
-#include "mainwindow.h"
 #include "JZBaseDialog.h"
 #include "JZNodeBreakPointWidget.h"
 

@@ -4,7 +4,6 @@
 #include <QComboBox>
 #include <QCompleter>
 #include <QTableWidget>
-#include "mainwindow.h"
 
 //TypeEditHelp
 TypeEditHelp::TypeEditHelp()

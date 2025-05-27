@@ -47,7 +47,6 @@ public:
     void setRuntimeNode(int nodeId);    
 
     JZScriptItem *script();    
-    void resetFile();    
 
     void setCompilerResult(const CompilerResult *info);    
 

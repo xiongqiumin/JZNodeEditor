@@ -8,8 +8,6 @@
 #include "test_vision.h"
 #include "JZProjectTemplate.h"
 #include "modules/vision/JZVisionNode.h"
-#include "modules/vision/JZVisionWindow.h"
-#include "modules/vision/JZVisionUiItem.h"
 
 
 //VisionTest
@@ -97,28 +95,6 @@ void VisionTest::testColorIdentify()
     script->addConnect(node_imread->paramOutGemo(0), node_color->paramInGemo(0));
     script->addConnect(node_imread->paramOutGemo(0), node_color->paramInGemo(1));
     script->addConnect(start->flowOutGemo(0), node_color->flowInGemo());
-}
-
-void VisionTest::testVisonDemo()
-{
-    JZProjectTemplate::instance()->initProject(&m_project, "vision");
-
-    auto class_item = m_project.getClass("MainWindow");
-    auto ui_item = dynamic_cast<JZVisionUiItem*>(class_item->ui());
-
-    JZCameraFileConfig* cam_config = new JZCameraFileConfig();
-
-    JZVisionWindowConfig config;
-
-    ui_item->setConfig(config);
-
-    if (!build())
-        return;
-
-    QVariantList in, out;
-    m_engine.call("main", in, out);
-
-    QTest::qWait(5000);
 }
 
 void test_vision(int argc, char *argv[])

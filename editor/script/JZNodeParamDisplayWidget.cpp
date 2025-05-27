@@ -1,6 +1,5 @@
 ﻿#include <QHBoxLayout>
 #include "JZNodeParamDisplayWidget.h"
-#include "mainwindow.h"
 
 //JZNodeParamDisplayWidget
 JZNodeParamDisplayWidget::JZNodeParamDisplayWidget()

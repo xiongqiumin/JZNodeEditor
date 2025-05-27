@@ -304,11 +304,6 @@ JZScriptItem *JZNodeEditor::script()
     return file;
 }
 
-void JZNodeEditor::resetFile()
-{
-    m_view->resetFile();
-}
-
 void JZNodeEditor::clearRuntimeValue()
 {
     m_view->clearRuntimeValue();

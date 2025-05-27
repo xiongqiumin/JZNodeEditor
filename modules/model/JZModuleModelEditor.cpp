@@ -5,58 +5,6 @@
 #include "JZRegExpHelp.h"
 #include "JZNodeView.h"
 
-//JZModelConfigDialog
-JZModelConfigDialog::JZModelConfigDialog(QWidget *parent)
-    :JZPropertyDialog(parent)
-{
-    auto browser = m_editor->browser();
-    connect(browser, &JZPropertyBrowser::valueChanged, this, &JZModelConfigDialog::onPropChanged);
-
-    auto group = m_editor->addGroup("基本");
-    m_editor->addProp("名称", &m_name, group);
-
-    QList<int> enmuList = { Model_Yolo };
-    QStringList enumTextList = { "Yolo" };
-    m_typeProp = m_editor->addPropIntEnum("类型", &m_type, enmuList, enumTextList, group);
-
-    m_propGroup = m_editor->addGroup("属性");
-    addYolo();    
-}
-
-void JZModelConfigDialog::addYolo()
-{
-    JZModelYoloConfig *yolo_cfg = new JZModelYoloConfig();
-    m_config[Model_Yolo] = JZModelConfigPtr(yolo_cfg);
-
-    QList<JZProperty*> model_yolo;
-    model_yolo << m_editor->addPropFile("模型", &yolo_cfg->modelPath, "*.onnx", m_propGroup);
-    model_yolo << m_editor->addPropFile("Meta", &yolo_cfg->idPath, "*.json", m_propGroup);
-
-    addPage(Model_Yolo, model_yolo);
-}
-
-void JZModelConfigDialog::setConfig(JZModelConfigPtr cfg)
-{
-    m_name = cfg->name;
-    m_type = cfg->type;
-    JZModuleConfigFactory<JZModelConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type].data());    
-    m_editor->dataToUi();
-    switchPage(m_type);
-}
-
-JZModelConfigPtr JZModelConfigDialog::getConfig() const
-{
-    JZModelConfigPtr ptr = m_config[m_type];
-    ptr->name = m_name;
-    return ptr;
-}
-
-void JZModelConfigDialog::accept()
-{
-    m_editor->uiToData();
-    JZPropertyDialog::accept();
-}
-
 //JZModelInitDialog
 JZModelInitDialog::JZModelInitDialog(QWidget *parent)
     :JZNodeManagerDialog(parent)

@@ -1,5 +1,3 @@
-﻿#include <opencv2/opencv.hpp>
-#include <QBuffer>
 #include "JZModuleVision.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeBind.h"
@@ -8,7 +6,7 @@ using namespace cv;
 
 //JZModuleVision
 JZModuleVision::JZModuleVision()
-{        
+{
     m_name = "vision";
 }
 
@@ -16,8 +14,8 @@ JZModuleVision::~JZModuleVision()
 {
 }
 
-void JZModuleVision::regist(JZScriptEnvironment *env)
-{    
+void JZModuleVision::regist(JZScriptEnvironment* env)
+{
     int cls_id = Module_VisionType;
 
     jzbind::ClassBind<JZTemplateMatch> cls_template_match(cls_id++, "JZTemplateMatch", "QObject");
@@ -32,7 +30,7 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
 
     auto func_inst = env->functionManager();
     func_inst->registCFunction("JZTemplateMatchInit", true, jzbind::createFuncion(JZTemplateMatchInit));
-   
+
     func_inst->registCFunction("JZVisionCropImage", true, jzbind::createFuncion(JZVisionCropImage));
     func_inst->registCFunction("JZVisionImageFlip", true, jzbind::createFuncion(JZVisionImageFlip));
     func_inst->registCFunction("JZVisionImageMorphology", true, jzbind::createFuncion(JZVisionImageMorphology));
@@ -72,6 +70,6 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     node_inst->registNode(Node_VisionFindLine, createJZNode<JZNodeVisionFindLine>);
 }
 
-void JZModuleVision::unregist(JZScriptEnvironment *env)
+void JZModuleVision::unregist(JZScriptEnvironment* env)
 {
 }

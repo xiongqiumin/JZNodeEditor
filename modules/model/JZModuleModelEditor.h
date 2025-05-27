@@ -5,32 +5,7 @@
 #include "JZNodeSettingDialog.h"
 #include "JZNodeGraphItem.h"
 #include "JZPropertyDialog.h"
-
-//JZModelConfigDialog
-class JZModelConfigDialog : public JZPropertyDialog
-{
-    Q_OBJECT
-
-public:
-    JZModelConfigDialog(QWidget *parent = nullptr);
-
-    void setConfig(JZModelConfigPtr cfg);
-    JZModelConfigPtr getConfig() const;
-
-private slots:
-
-
-private:
-    void addYolo();
-
-    void accept();
-
-    int m_type;
-    QString m_name;
-    JZProperty *m_propGroup;    
-    QMap<int, JZModelConfigPtr> m_config;
-
-};
+#include "JZModelWidget.h"
 
 //JZModelInitDialog
 class JZModelInitDialog : public JZNodeManagerDialog

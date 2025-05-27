@@ -3,8 +3,6 @@
 
 #include "JZEditor.h"
 #include "JZUiItem.h"
-#include "JZDesinger.h"
-#include "JZDesignerEditor.h"
 
 class QDesignerFormWindowManagerInterface;
 class JZScriptEditor : public JZEditor

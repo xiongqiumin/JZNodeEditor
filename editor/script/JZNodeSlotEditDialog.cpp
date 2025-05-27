@@ -5,7 +5,7 @@
 #include <QHBoxLayout>
 #include "JZNodeFunctionManager.h"
 #include "JZNodeSlotEditDialog.h"
-#include "mainwindow.h"
+#include "JZEditorGlobal.h"
 
 //JZNodeSlotEditDialog
 JZNodeSlotEditDialog::JZNodeSlotEditDialog(QWidget *parent)

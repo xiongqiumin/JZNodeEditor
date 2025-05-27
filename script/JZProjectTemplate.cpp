@@ -13,7 +13,6 @@
 #include "modules/camera/JZModuleCamera.h"
 #include "modules/opencv/JZModuleOpencv.h"
 #include "modules/model/JZModuleModel.h"
-#include "modules/vision/JZVisionUiItem.h"
 
 JZProjectTemplate *JZProjectTemplate::instance()
 {
@@ -117,33 +116,6 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
     else if (temp == "ui")
     {  
         createMainWindow();
-    }
-    else if (temp == "vision")
-    {
-        createMainWindow();
-
-        auto class_item = m_project->getClass("MainWindow");
-        class_item->setClass("MainWindow", "JZVisionWindow");
-        class_item->removeUi();
-        class_item->addUi(new JZVisionUiItem());
-        
-        auto func_init = class_item->memberFunction("init");
-        auto start_node = func_init->startNode();
-        JZNodeCameraInit *cam_init = new JZNodeCameraInit();
-        JZNodeCommInit *comm_init = new JZNodeCommInit();
-        JZNodeModelInit *model_init = new JZNodeModelInit();
-        JZNodeFunction *func_initView = new JZNodeFunction();
-        func_init->addNode(cam_init);
-        func_init->addNode(comm_init);
-        func_init->addNode(model_init);
-        func_init->addNode(func_initView);
-        func_initView->setFunction("JZVisionWindow::initView");
-        func_init->addConnect(start_node->flowOutGemo(), cam_init->flowInGemo());
-        func_init->addConnect(cam_init->flowOutGemo(), comm_init->flowInGemo());
-        func_init->addConnect(comm_init->flowOutGemo(), model_init->flowInGemo());
-        func_init->addConnect(model_init->flowOutGemo(), func_initView->flowInGemo());
-
-        class_item->addFlow("flow");
     }
     else if (temp == "SmartCamera")
     {

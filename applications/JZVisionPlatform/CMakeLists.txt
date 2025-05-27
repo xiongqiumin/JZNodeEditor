@@ -1,18 +1,22 @@
-set(JZMonitorSystem_SOURCES
-    JZMonitorSystem.qrc
+set(JZVisionPlatform_SOURCES
+    JZVisionPlatform.qrc
     main.cpp      
     mainwindow.cpp    
     mainwindow.h
-    flowTreeWidget.cpp
-    flowTreeWidget.h
     JZTitleWidget.cpp
     JZTitleWidget.h
     JZPanelWidget.cpp
     JZPanelWidget.h
+	JZCameraListWidget.cpp
+	JZCameraListWidget.h
+	JZCameraViewWidget.cpp
+	JZCameraViewWidget.h
+	JZModelVisionApp.cpp
+	JZModelVisionApp.h
 )
 
-add_executable(JZMonitorSystem ${JZMonitorSystem_SOURCES})
-target_link_libraries(JZMonitorSystem JZNodeCore
+add_executable(JZVisionPlatform ${JZVisionPlatform_SOURCES})
+target_link_libraries(JZVisionPlatform JZNodeCore JZNodeEditorCore
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network          
     Qt${QT_VERSION_MAJOR}::SerialPort      
@@ -21,6 +25,6 @@ target_link_libraries(JZMonitorSystem JZNodeCore
     Qt${QT_VERSION_MAJOR}::UiTools
     Qt${QT_VERSION_MAJOR}::Sql
     ${OpenCV_LIBRARIES})    
-set_target_properties(JZMonitorSystem PROPERTIES
+set_target_properties(JZVisionPlatform PROPERTIES
     WIN32_EXECUTABLE TRUE
 )

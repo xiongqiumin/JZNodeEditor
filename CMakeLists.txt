@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(QT NAMES Qt5 REQUIRED COMPONENTS widgets xml)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test designer printsupport DesignerComponents xml sql)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS core gui network widgets uitools serialport test printsupport xml sql)
 find_package(OpenCV 4 REQUIRED)
 
 if (MSVC)
@@ -152,6 +152,10 @@ set(JZNodeCore_SOURCES
     runtime/JZNodeUiLoader.h
     runtime/JZWidgetBind.cpp
     runtime/JZWidgetBind.h
+	
+	#modules
+	modules/JZModuleConfigWidget.cpp
+	modules/JZModuleConfigWidget.h
     
     #communication        
     modules/communication/JZModuleComm.cpp
@@ -234,12 +238,6 @@ set(JZNodeCore_SOURCES
     modules/vision/JZModuleVision.h
     modules/vision/JZVision.cpp
     modules/vision/JZVision.h
-    modules/vision/JZVisionUiItem.cpp
-    modules/vision/JZVisionUiItem.h
-    modules/vision/JZVisionWidget.cpp
-    modules/vision/JZVisionWidget.h
-	modules/vision/JZVisionWindow.cpp
-	modules/vision/JZVisionWindow.h
     modules/vision/JZVisionNode.cpp
     modules/vision/JZVisionNode.h  
     modules/vision/JZShapeMatch.cpp
@@ -313,15 +311,12 @@ set(JZNodeCore_SOURCES
     3rd/JZCommon/jzCommon/JZLogManager.h
 )
 
-set(JZNodeEditor_SOURCES
-    JZNodeEditor.qrc
-    main.cpp      
+set(JZNodeEditorCore_SOURCES
+    JZNodeEditor.qrc     
     mainTask.cpp    
     mainTask.h    
     LogWidget.cpp
     LogWidget.h    
-    mainwindow.cpp
-    mainwindow.h
     UiCommon.cpp
     UiCommon.h   
     database.cpp
@@ -433,25 +428,6 @@ set(JZNodeEditor_SOURCES
     editor/script/items/JZNodeSettingDialog.h
     editor/script/items/JZNodeDisplayItem.cpp
     editor/script/items/JZNodeDisplayItem.h
-    editor/ui/formresizer.cpp
-    editor/ui/formresizer.h
-    editor/ui/JZDesignerEditor.cpp
-    editor/ui/JZDesignerEditor.h
-    editor/ui/JZDesignerFormWindow.cpp
-    editor/ui/JZDesignerFormWindow.h
-    editor/ui/JZDesinger.cpp
-    editor/ui/JZDesinger.h
-    editor/ui/JZMenuExtension.cpp
-    editor/ui/JZMenuExtension.h
-    editor/ui/JZNodeIntegration.cpp
-    editor/ui/JZNodeIntegration.h
-    editor/ui/JZUiEditor.cpp
-    editor/ui/JZUiEditor.h
-    editor/ui/JZWidgetCollectionInterface.cpp
-    editor/ui/JZWidgetCollectionInterface.h
-    editor/ui/sizehandlerect.cpp
-    editor/ui/sizehandlerect.h
-    editor/ui/widgethostconstants.h
      
     widgets/JZAboutDialog.cpp
     widgets/JZAboutDialog.h    
@@ -471,8 +447,6 @@ set(JZNodeEditor_SOURCES
     sample/Russian/Russian.h
     sample/VisionDemo/VisionDemo.cpp
     sample/VisionDemo/VisionDemo.h
-    sample/VisionWindow/VisionWindow.cpp
-    sample/VisionWindow/VisionWindow.h
     sample/SampleProject.cpp
     sample/SampleProject.h
 
@@ -502,8 +476,6 @@ set(JZNodeEditor_SOURCES
     #vision
     modules/vision/JZModuleVisionEditor.h
     modules/vision/JZModuleVisionEditor.cpp
-    modules/vision/JZVisionUiEditor.h
-    modules/vision/JZVisionUiEditor.cpp
     modules/vision/vision.qrc
     
     #motion
@@ -520,6 +492,16 @@ target_link_libraries(JZNodeCore Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::UiTools    
     ${OpenCV_LIBRARIES})   
 
+add_library(JZNodeEditorCore STATIC ${JZNodeEditorCore_SOURCES})
+target_link_libraries(JZNodeEditorCore Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network          
+    Qt${QT_VERSION_MAJOR}::SerialPort      
+    Qt${QT_VERSION_MAJOR}::PrintSupport
+    Qt${QT_VERSION_MAJOR}::Xml    
+    Qt${QT_VERSION_MAJOR}::UiTools    
+	Qt${QT_VERSION_MAJOR}::Sql
+    ${OpenCV_LIBRARIES})   
+	
 add_executable(JZRemoteServer remote/main.cpp
     remote/JZRemoteServer.cpp
     remote/JZRemoteServer.h
@@ -547,21 +529,5 @@ set_target_properties(JZNodeUiRuntime PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-add_executable(JZNodeEditor ${JZNodeEditor_SOURCES})
-target_link_libraries(JZNodeEditor JZNodeCore
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::Network          
-    Qt${QT_VERSION_MAJOR}::SerialPort      
-    Qt${QT_VERSION_MAJOR}::PrintSupport
-    Qt${QT_VERSION_MAJOR}::Xml
-    Qt${QT_VERSION_MAJOR}::Designer
-    Qt${QT_VERSION_MAJOR}::DesignerComponents
-    Qt${QT_VERSION_MAJOR}::UiTools
-    Qt${QT_VERSION_MAJOR}::Sql
-    ${OpenCV_LIBRARIES})    
-set_target_properties(JZNodeEditor PROPERTIES
-    WIN32_EXECUTABLE TRUE
-)
-
 add_subdirectory(tests)
-add_subdirectory("project")
+add_subdirectory(applications)

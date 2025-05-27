@@ -1111,15 +1111,6 @@ bool MainWindow::openEditor(QString filepath)
     return true;
 }
 
-void MainWindow::resetEditor(JZEditor *editor)
-{
-    if (editor->type() == ProjectItem_scriptItem)
-    {
-        auto node_edit = (JZNodeEditor*)editor;
-        node_edit->resetFile();
-    }        
-}
-
 void MainWindow::closeEditor(JZEditor *editor)
 {
     auto item = editor->item();
@@ -1131,8 +1122,7 @@ void MainWindow::closeEditor(JZEditor *editor)
             editor->save();            
         }
         else if (ret == QMessageBox::No)
-        {
-            resetEditor(editor);            
+        {            
         }
         else if (ret == QMessageBox::Cancel)
         {            
@@ -1530,7 +1520,7 @@ void MainWindow::onTabContextMenu(QPoint pos)
     QMenu menu(this);
     QAction *actSave = menu.addAction("保存");
     QAction *actClose = menu.addAction("关闭");
-    QAction *actAll = menu.addAction("关闭所有文档");
+    QAction *actCloseAll = menu.addAction("关闭所有文档");
     QAction *actAllExcept = menu.addAction("除此之外全部关闭");
 
     auto bar = qobject_cast<QTabBar*>(sender());
@@ -1545,7 +1535,7 @@ void MainWindow::onTabContextMenu(QPoint pos)
     {
         onActionCloseFile();
     }
-    else if (ret == actAll)
+    else if (ret == actCloseAll)
     {
         onActionCloseAllFile();
     }
@@ -1667,7 +1657,6 @@ bool MainWindow::closeAllEditor(JZEditor *except)
                 }
                 else if (ret == QMessageBox::No || ret == QMessageBox::NoToAll)
                 {
-                    resetEditor(editor);
                     if(ret == QMessageBox::NoToAll)
                         noToAll = true;
                 }
@@ -1683,7 +1672,7 @@ bool MainWindow::closeAllEditor(JZEditor *except)
             }
             else if (noToAll)
             {
-                resetEditor(editor);
+
             }
         }
         editor->close();

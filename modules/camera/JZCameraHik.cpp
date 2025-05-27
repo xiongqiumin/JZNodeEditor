@@ -5,6 +5,50 @@
 #include <QLibrary>
 #include <QDebug>
 #include "JZCameraHik.h"
+
+//JZCameraHikConfig
+JZCameraHikConfig::JZCameraHikConfig()
+{
+    type = Camera_Hik;
+    triggerMode = TRIGGER_MODE_OFF;
+    triggerSource = TRIGGER_SOURCE_SOFTWARE;   //触发
+
+    gainMode = GAIN_MODE_OFF;
+    gain = 0;
+
+    exposureMode = EXPOSURE_AUTO_MODE_OFF;
+    exposureTime = 20000;
+}
+
+void JZCameraHikConfig::saveToStream(QDataStream& s) const
+{
+    JZCameraConfig::saveToStream(s);
+    s << path;
+    s << triggerSource;
+    s << triggerMode;
+
+    s << gainMode;
+    s << gain;
+
+    s << exposureMode;
+    s << exposureTime;
+}
+
+void JZCameraHikConfig::loadFromStream(QDataStream& s)
+{
+    JZCameraConfig::loadFromStream(s);
+    s >> path;
+    s >> triggerSource;
+    s >> triggerMode;
+
+    s >> gainMode;
+    s >> gain;
+
+    s >> exposureMode;
+    s >> exposureTime;
+}
+
+#if 0
 #include "E:\libs\MVS\Development\Includes\MvCameraControl.h"
 
 // 函数指针类型定义
@@ -103,48 +147,6 @@ bool JZCameraHikApi::updateDeviceList()
 }
 
 #define g_api JZCameraHikApi::instance()
-
-//JZCameraHikConfig
-JZCameraHikConfig::JZCameraHikConfig()
-{
-    type = Camera_Hik;
-    triggerMode = TRIGGER_MODE_OFF;
-    triggerSource = TRIGGER_SOURCE_SOFTWARE;   //触发
-
-    gainMode = GAIN_MODE_OFF;
-    gain = 0;
-
-    exposureMode = EXPOSURE_AUTO_MODE_OFF;
-    exposureTime = 20000;
-}
-
-void JZCameraHikConfig::saveToStream(QDataStream& s) const
-{
-    JZCameraConfig::saveToStream(s);
-    s << path;
-    s << triggerSource;
-    s << triggerMode;
-
-    s << gainMode;
-    s << gain;
-
-    s << exposureMode;
-    s << exposureTime;
-}
-
-void JZCameraHikConfig::loadFromStream(QDataStream& s)
-{
-    JZCameraConfig::loadFromStream(s);
-    s >> path;
-    s >> triggerSource;
-    s >> triggerMode;
-
-    s >> gainMode;
-    s >> gain;
-
-    s >> exposureMode;
-    s >> exposureTime;
-}
 
 //JZCameraHik
 JZCameraHik::JZCameraHik()
@@ -483,3 +485,65 @@ bool JZCameraHik::CommandExecute(QString command)
     }
     return (MV_OK == nRet);
 }
+#else
+
+//JZCameraHik
+JZCameraHik::JZCameraHik()
+{
+}
+
+JZCameraHik::~JZCameraHik()
+{
+    close();
+}
+
+JZCameraType JZCameraHik::type()
+{
+    return Camera_Hik;
+}
+
+bool JZCameraHik::setConfig(JZCameraConfigPtr config)
+{
+    return true;
+}
+
+bool JZCameraHik::isOpen()
+{
+    return m_hDevHandle != nullptr;
+}
+
+bool JZCameraHik::open()
+{
+    return true;
+}
+
+void JZCameraHik::close()
+{
+}
+
+void JZCameraHik::startGrabbing()
+{
+}
+
+void JZCameraHik::GrabbingThread()
+{
+}
+
+void JZCameraHik::start()
+{
+}
+
+void JZCameraHik::startOnce()
+{
+}
+
+void JZCameraHik::stop()
+{
+}
+
+bool JZCameraHik::CommandExecute(QString command)
+{
+    return false;
+}
+
+#endif

@@ -1,5 +1,27 @@
 ﻿#include "JZEditorGlobal.h"
-#include "mainwindow.h"
+
+static JZProject* g_editorProject = nullptr;
+static QMenuBar* g_editorMenu = nullptr;
+
+JZProject* editorProject()
+{
+    return g_editorProject;
+}
+
+void setEditorProject(JZProject* project)
+{
+    g_editorProject = project;
+}
+
+QMenuBar* editorMenuBar()
+{
+    return g_editorMenu;
+}
+
+void setEditorMenuBar(QMenuBar* menu)
+{
+    g_editorMenu = menu;
+}
 
 JZNodeEditorManager *editorManager()
 {
@@ -8,7 +30,7 @@ JZNodeEditorManager *editorManager()
 
 JZScriptEnvironment *editorEnvironment()
 {
-    return g_mainWindow->project()->environment();
+    return g_editorProject->environment();
 }
 
 JZNodeObjectManager *editorObjectManager()

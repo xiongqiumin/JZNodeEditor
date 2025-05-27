@@ -1,10 +1,9 @@
 ﻿#include <QUrl>
 #include <QShortcut>
 #include "JZEditor.h"
-#include "mainwindow.h"
 #include "JZNodeEditor.h"
 #include "JZNodeParamEditor.h"
-#include "JZUiEditor.h"
+#include "JZEditorGlobal.h"
 
 JZEditor::JZEditor()
 {
@@ -32,7 +31,7 @@ void JZEditor::setMainWindow(MainWindow *window)
 
 QMenuBar *JZEditor::menuBar()
 {
-    return m_window->menuBar();
+    return editorMenuBar();
 }
 
 int JZEditor::type()
@@ -126,7 +125,7 @@ JZEditorManager::JZEditorManager()
 {
     registEditor(ProjectItem_scriptItem, CreateEditor<JZNodeEditor>);
     registEditor(ProjectItem_param, CreateEditor<JZNodeParamEditor>);
-    registEditor(ProjectItem_ui, CreateEditor<JZUiEditor>);
+    //registEditor(ProjectItem_ui, CreateEditor<JZUiEditor>);
 }
 
 JZEditorManager::~JZEditorManager()

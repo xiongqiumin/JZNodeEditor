@@ -192,8 +192,7 @@ private:
     void stopUnitTest();
     void saveToFile(QString file,QString text);
     void saveAll();
-    bool closeAllEditor(JZEditor *except = nullptr);
-    void resetEditor(JZEditor *editor);    
+    bool closeAllEditor(JZEditor *except = nullptr); 
     QIcon menuIcon(const QString &name);
     void showTopLevel();
     void updateTabText(int index);  
