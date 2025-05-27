@@ -11,9 +11,10 @@ class JZCameraConfigDialog : public JZPropertyDialog
 
 public:
     JZCameraConfigDialog(QWidget *parent = nullptr);
+    ~JZCameraConfigDialog();
 
-    void setConfig(JZCameraConfigPtr cfg);
-    JZCameraConfigPtr getConfig() const;
+    void setConfig(JZCameraConfigEnum cfg);
+    JZCameraConfigEnum getConfig() const;
 
     private slots:
 
@@ -28,7 +29,7 @@ private:
     QString m_name;
 
     JZProperty *m_propGroup;
-    QMap<int,JZCameraConfigPtr> m_config;
+    QMap<int,JZCameraConfigEnum*> m_config;
 };
 
 #endif // !JZ_CAMERA_WIDGET_H_

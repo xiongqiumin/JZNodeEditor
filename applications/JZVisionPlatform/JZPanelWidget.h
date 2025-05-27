@@ -9,6 +9,8 @@
 #include <QStackedWidget>
 #include <QTimer>
 
+#define TITLE_H 30
+
 class JZPanelWidget : public QWidget
 {
     Q_OBJECT

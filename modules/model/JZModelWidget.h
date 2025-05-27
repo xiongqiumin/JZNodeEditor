@@ -1,4 +1,4 @@
-#ifndef JZMODEL_WIDGET_H_
+﻿#ifndef JZMODEL_WIDGET_H_
 #define JZMODEL_WIDGET_H_
 
 #include "JZPropertyDialog.h"
@@ -12,9 +12,10 @@ class JZModelConfigDialog : public JZPropertyDialog
 
 public:
     JZModelConfigDialog(QWidget *parent = nullptr);
+    ~JZModelConfigDialog();
 
-    void setConfig(JZModelConfigPtr cfg);
-    JZModelConfigPtr getConfig() const;
+    void setConfig(JZModelConfigEnum cfg);
+    JZModelConfigEnum getConfig() const;
 
 private slots:
 
@@ -27,14 +28,15 @@ private:
     int m_type;
     QString m_name;
     JZProperty *m_propGroup;    
-    QMap<int, JZModelConfigPtr> m_config;
+    QMap<int, JZModelConfigEnum*> m_config;
 
 };
-
 
 //JZModelConfigWidget
 class JZModelConfigWidget : public JZModuleConfigWidget
 {
+    Q_OBJECT
+
 public:
     JZModelConfigWidget(QWidget* parent = nullptr);
 
@@ -45,6 +47,9 @@ public:
     virtual void removeConfig(int index) override;
     virtual void settingConfig(int index) override;
     virtual void updateConfig() override;
+
+signals:
+    void sigModelChanged();
 
 protected:
     JZModelManagerConfig m_config;

@@ -33,7 +33,7 @@ QString JZCamera::name() const
     return m_config->name;
 }
 
-JZCameraConfigPtr JZCamera::config()
+JZCameraConfigEnum JZCamera::config()
 {
     return m_config;
 }

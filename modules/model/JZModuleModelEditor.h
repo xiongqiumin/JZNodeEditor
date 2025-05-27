@@ -39,6 +39,15 @@ protected:
     BlockPtr m_setting;
 };
 
+
+class JZModelForwardItem : public JZNodeGraphItem
+{
+public:
+    JZModelForwardItem(JZNode *node);
+    
+protected:
+};
+
 void JZModuleModelEditorInit();
 
 #endif // !JZ_CAMERAL_MANAGER_EDITOR_H_

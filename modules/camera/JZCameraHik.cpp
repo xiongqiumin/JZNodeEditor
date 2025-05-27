@@ -433,7 +433,7 @@ void JZCameraHik::stop()
     }
 }
 
-bool JZCameraHik::setConfig(JZCameraConfigPtr config)
+bool JZCameraHik::setConfig(JZCameraConfigEnum config)
 {
     m_config = config;
     if (!isOpen())
@@ -502,7 +502,7 @@ JZCameraType JZCameraHik::type()
     return Camera_Hik;
 }
 
-bool JZCameraHik::setConfig(JZCameraConfigPtr config)
+bool JZCameraHik::setConfig(JZCameraConfigEnum config)
 {
     return true;
 }

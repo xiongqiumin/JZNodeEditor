@@ -144,7 +144,7 @@ void JZPanelWidget::onToggleButtonClicked()
     if (panel.widget->isVisible()) 
     {
         int h = height();
-        h -= (30 + 4) * m_panelList.size();
+        h -= (TITLE_H + 4) * m_panelList.size();
 
         QList<int> visible_idx;
         for (int i = 0; i < m_panelList.size(); i++)
@@ -195,7 +195,7 @@ int JZPanelWidget::resizeHandleIndex(int y)
 
 void JZPanelWidget::updateLayout()
 {
-    int title_h = 30;
+    int title_h = TITLE_H;
     int gap = 4;
 
     int y = 0;

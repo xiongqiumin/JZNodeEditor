@@ -20,7 +20,7 @@ void CameraTest::testFile()
     cam_config->path = "C:/Users/xiong/Desktop/demo/image";
 
     JZCameraManagerConfig config;
-    config.cameraList << JZCameraConfigPtr(cam_config);
+    config.cameraList << JZCameraConfigEnum(cam_config);
 
     JZNodeCameraInit *node_init = new JZNodeCameraInit();
     node_init->setConfig(config);

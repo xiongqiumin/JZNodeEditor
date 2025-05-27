@@ -1,4 +1,4 @@
-#include "JZCameraWidget.h"
+Ôªø#include "JZCameraWidget.h"
 #include "JZCameraHik.h"
 #include "JZCameraFile.h"
 #include "JZCameraUvc.h"
@@ -12,14 +12,14 @@ JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
     auto browser = m_editor->browser();
     connect(browser, &JZPropertyBrowser::valueChanged, this, &JZCameraConfigDialog::onPropChanged);
 
-    auto group = m_editor->addGroup("ª˘±æ");
-    m_editor->addProp("√˚≥∆", &m_name, group);
+    auto group = m_editor->addGroup("Âü∫Êú¨");
+    m_editor->addProp("ÂêçÁß∞", &m_name, group);
 
     QList<int> enmuList = { Camera_File, Camera_Hik, Camera_Rtsp };
     QStringList enumTextList = { "File" ,"Hik" , "Rtsp" };
-    m_typeProp = m_editor->addPropIntEnum("¿‡–Õ", &m_type, enmuList, enumTextList, group);
+    m_typeProp = m_editor->addPropIntEnum("Á±ªÂûã", &m_type, enmuList, enumTextList, group);
 
-    m_propGroup = m_editor->addGroup(" Ù–‘");
+    m_propGroup = m_editor->addGroup("Â±ûÊÄß");
     m_type = Camera_File;
 
     addFilePage();
@@ -28,13 +28,18 @@ JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
     addRtspPage();
 }
 
+JZCameraConfigDialog::~JZCameraConfigDialog()
+{
+    qDeleteAll(m_config);
+}
+
 void JZCameraConfigDialog::addFilePage()
 {
     JZCameraFileConfig *cfg_file = new JZCameraFileConfig();
-    m_config[Camera_File] = JZCameraConfigPtr(cfg_file);
+    m_config[Camera_File] = new JZCameraConfigEnum(cfg_file);
 
     QList<JZProperty*> file_prop;
-    file_prop << m_editor->addPropDir("¬∑æ∂", &cfg_file->path, m_propGroup);
+    file_prop << m_editor->addPropDir("Ë∑ØÂæÑ", &cfg_file->path, m_propGroup);
 
     addPage(Camera_File, file_prop);
 }
@@ -42,14 +47,14 @@ void JZCameraConfigDialog::addFilePage()
 void JZCameraConfigDialog::addHikPage()
 {
     JZCameraHikConfig *cfg_hik = new JZCameraHikConfig();
-    m_config[Camera_Hik] = JZCameraConfigPtr(cfg_hik);
+    m_config[Camera_Hik] = new JZCameraConfigEnum(cfg_hik);
 
     QList<JZProperty*> hik_prop;
     //hik
-    hik_prop << m_editor->addProp("¬∑æ∂", &cfg_hik->path, m_propGroup);
+    hik_prop << m_editor->addProp("Ë∑ØÂæÑ", &cfg_hik->path, m_propGroup);
 
-    QStringList trigger_list = { "¡¨–¯ƒ£ Ω","¥•∑¢ƒ£ Ω" };
-    hik_prop << m_editor->addPropIntEnum("¥•∑¢ƒ£ Ω", &cfg_hik->triggerMode, { 0,1 }, trigger_list, m_propGroup);
+    QStringList trigger_list = { "ËøûÁª≠Ê®°Âºè","Ëß¶ÂèëÊ®°Âºè" };
+    hik_prop << m_editor->addPropIntEnum("Ëß¶ÂèëÊ®°Âºè", &cfg_hik->triggerMode, { 0,1 }, trigger_list, m_propGroup);
 
     QList<int> trigger_source_list = { JZCameraHikConfig::TRIGGER_SOURCE_LINE0,
         JZCameraHikConfig::TRIGGER_SOURCE_LINE1,
@@ -58,15 +63,15 @@ void JZCameraConfigDialog::addHikPage()
         JZCameraHikConfig::TRIGGER_SOURCE_SOFTWARE,
     };
     QStringList trigger_source_text_list = { "Line0","Line1","Line2","Line3","Software" };
-    hik_prop << m_editor->addPropIntEnum("¥•∑¢‘¥", &cfg_hik->triggerMode, trigger_source_list, trigger_source_text_list, m_propGroup);
+    hik_prop << m_editor->addPropIntEnum("Ëß¶ÂèëÊ∫ê", &cfg_hik->triggerMode, trigger_source_list, trigger_source_text_list, m_propGroup);
 
-    QStringList gain_list = { "πÿ±’","“ª¥Œ", "¡¨–¯" };
-    hik_prop << m_editor->addPropIntEnum("‘ˆ“Êƒ£ Ω", &cfg_hik->gainMode, { 0,1,2 }, gain_list, m_propGroup);
-    hik_prop << m_editor->addProp("‘ˆ“Ê", &cfg_hik->gain, m_propGroup);
+    QStringList gain_list = { "ÂÖ≥Èó≠","‰∏ÄÊ¨°", "ËøûÁª≠" };
+    hik_prop << m_editor->addPropIntEnum("Â¢ûÁõäÊ®°Âºè", &cfg_hik->gainMode, { 0,1,2 }, gain_list, m_propGroup);
+    hik_prop << m_editor->addProp("Â¢ûÁõä", &cfg_hik->gain, m_propGroup);
 
-    QStringList exposure_list = { "πÿ±’","“ª¥Œ", "¡¨–¯" };
-    hik_prop << m_editor->addPropIntEnum("∆ÿπ‚ƒ£ Ω", &cfg_hik->exposureMode, { 0,1,2 }, exposure_list, m_propGroup);
-    hik_prop << m_editor->addProp("∆ÿπ‚", &cfg_hik->exposureTime, m_propGroup);
+    QStringList exposure_list = { "ÂÖ≥Èó≠","‰∏ÄÊ¨°", "ËøûÁª≠" };
+    hik_prop << m_editor->addPropIntEnum("ÊõùÂÖâÊ®°Âºè", &cfg_hik->exposureMode, { 0,1,2 }, exposure_list, m_propGroup);
+    hik_prop << m_editor->addProp("ÊõùÂÖâ", &cfg_hik->exposureTime, m_propGroup);
 
     addPage(Camera_Hik, hik_prop);
 }
@@ -74,7 +79,7 @@ void JZCameraConfigDialog::addHikPage()
 void JZCameraConfigDialog::addUvcPage()
 {
     JZCameraUvcConfig *cfg_uvc = new JZCameraUvcConfig();
-    m_config[Camera_UVC] = JZCameraConfigPtr(cfg_uvc);
+    m_config[Camera_UVC] = new JZCameraConfigEnum(cfg_uvc);
 
     //addPage(Camera_UVC, uvc_prop);
 }
@@ -82,7 +87,7 @@ void JZCameraConfigDialog::addUvcPage()
 void JZCameraConfigDialog::addRtspPage()
 {
     JZCameraRtspConfig *cfg_rtsp = new JZCameraRtspConfig();
-    m_config[Camera_Rtsp] = JZCameraConfigPtr(cfg_rtsp);
+    m_config[Camera_Rtsp] = new JZCameraConfigEnum(cfg_rtsp);
 
     QList<JZProperty*> rtsp_prop;
     rtsp_prop << m_editor->addProp("Url", &cfg_rtsp->path, m_propGroup);
@@ -90,20 +95,20 @@ void JZCameraConfigDialog::addRtspPage()
     addPage(Camera_Rtsp, rtsp_prop);
 }
 
-void JZCameraConfigDialog::setConfig(JZCameraConfigPtr cfg)
+void JZCameraConfigDialog::setConfig(JZCameraConfigEnum cfg)
 {
     Q_ASSERT(m_config.contains(cfg->type));
     
     m_name = cfg->name;
     m_type = cfg->type;
-    JZModuleConfigFactory<JZCameraConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type].data());
+    JZModuleConfigFactory<JZCameraConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type]->data());
     m_editor->dataToUi();
     switchPage(cfg->type);
 }
 
-JZCameraConfigPtr JZCameraConfigDialog::getConfig() const
+JZCameraConfigEnum JZCameraConfigDialog::getConfig() const
 {
-    JZCameraConfigPtr ptr = m_config[m_type];
+    JZCameraConfigEnum ptr = *m_config[m_type];
     ptr->name = m_name;
     return ptr;
 }

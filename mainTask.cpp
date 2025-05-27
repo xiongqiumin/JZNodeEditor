@@ -25,10 +25,9 @@ MainTaskManager::MainTaskManager()
 {    
     m_compilerTimer = new QTimer(this);
     connect(m_compilerTimer, &QTimer::timeout, this, &MainTaskManager::onAutoCompilerTimer);
-    connect(&m_buildThread, &JZNodeBuildThread::sigResult, this, &MainTaskManager::onBuildFinish);
-    m_compilerTimer->start(100);
+    connect(&m_buildThread, &JZNodeBuildThread::sigResult, this, &MainTaskManager::onBuildFinish);    
 
-    m_runThread.start();
+    m_project = nullptr;    
 }
 
 MainTaskManager::~MainTaskManager()
@@ -38,6 +37,8 @@ MainTaskManager::~MainTaskManager()
 void MainTaskManager::setProject(JZProject *project)
 {
     m_project = project;
+    m_compilerTimer->start(100);
+    m_runThread.start();
 }
 
 JZNodeBuildThread *MainTaskManager::buildThread()

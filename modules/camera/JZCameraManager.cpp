@@ -7,13 +7,13 @@
 #include "../JZModuleConfigFactory.h"
 
 //JZCameraManagerConfig
-QDataStream& operator<<(QDataStream& s, const JZCameraConfigPtr& param)
+QDataStream& operator<<(QDataStream& s, const JZCameraConfigEnum& param)
 {
     JZModuleConfigFactory<JZCameraConfig>::instance()->saveToStream(s, param);
     return s;
 }
 
-QDataStream& operator>>(QDataStream& s, JZCameraConfigPtr& param)
+QDataStream& operator>>(QDataStream& s, JZCameraConfigEnum& param)
 {
     JZModuleConfigFactory<JZCameraConfig>::instance()->loadFromStream(s, param);
     return s;
@@ -77,7 +77,7 @@ void JZCameraManager::init()
     emit sigInitFinish();
 }
 
-void JZCameraManager::addCamera(const JZCameraConfigPtr &config)
+void JZCameraManager::addCamera(const JZCameraConfigEnum &config)
 {    
     m_config.cameraList.push_back(config);
     m_cameras.push_back(createCamera(config));
@@ -147,7 +147,7 @@ bool JZCameraManager::stop(QString name)
     return true;
 }
 
-bool JZCameraManager::setCamera(QString name, const JZCameraConfigPtr &config)
+bool JZCameraManager::setCamera(QString name, const JZCameraConfigEnum &config)
 {
     auto c = camera(name);
     if (!c)
@@ -175,7 +175,7 @@ int JZCameraManager::indexOfCamera(QString name)
     return m_config.indexOfCamera(name);
 }
 
-JZCamera* JZCameraManager::createCamera(const JZCameraConfigPtr &config)
+JZCamera* JZCameraManager::createCamera(const JZCameraConfigEnum &config)
 {
     bool open_ret = false;
 

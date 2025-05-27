@@ -28,7 +28,7 @@ JZCommObject::~JZCommObject()
 
 }
 
-void JZCommObject::setConfig(JZCommConfigPtr config)
+void JZCommObject::setConfig(JZCommConfigEnum config)
 {
 	m_config = config;
 }

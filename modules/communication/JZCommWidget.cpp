@@ -26,6 +26,11 @@ JZCommConfigDialog::JZCommConfigDialog(QWidget *parent)
     addCom();
 }
 
+JZCommConfigDialog::~JZCommConfigDialog()
+{
+    qDeleteAll(m_config);
+}
+
 void JZCommConfigDialog::addModbusClient()
 {
     JZCommModbusClientConfig *config_rtu = new JZCommModbusClientConfig();
@@ -34,8 +39,8 @@ void JZCommConfigDialog::addModbusClient()
     JZCommModbusClientConfig *config_tcp = new JZCommModbusClientConfig();
     config_tcp->conn.modbusType = Modbus_tcpClient;
 
-    m_config[Comm_ModbusRtuClient] = JZCommConfigPtr(config_rtu);
-    m_config[Comm_ModbusTcpClient] = JZCommConfigPtr(config_tcp);
+    m_config[Comm_ModbusRtuClient] = new JZCommConfigEnum(config_rtu);
+    m_config[Comm_ModbusTcpClient] = new JZCommConfigEnum(config_tcp);
 
     QList<JZProperty*> modbus_rtu, modbus_tcp;
 
@@ -94,18 +99,18 @@ void JZCommConfigDialog::addCom()
 {
 }
 
-void JZCommConfigDialog::setConfig(JZCommConfigPtr cfg)
+void JZCommConfigDialog::setConfig(JZCommConfigEnum cfg)
 {    
-    JZModuleConfigFactory<JZCommConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type].data());
+    JZModuleConfigFactory<JZCommConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type]->data());
     m_type = cfg->type;
     m_name = cfg->name;
     m_editor->dataToUi();
     switchPage(m_type);
 }
 
-JZCommConfigPtr JZCommConfigDialog::getConfig() const
+JZCommConfigEnum JZCommConfigDialog::getConfig() const
 {
-    JZCommConfigPtr ptr = m_config[m_type];
+    JZCommConfigEnum ptr = *m_config[m_type];
     ptr->name = m_name;
     return ptr;
 }
@@ -149,18 +154,20 @@ void JZCommConfigWidget::addConfig()
     cfg->name = JZRegExpHelp::uniqueString("comm", camera_list);    
 
     JZCommConfigDialog dlg(this);
-    dlg.setConfig(JZCommConfigPtr(cfg));
+    dlg.setConfig(JZCommConfigEnum(cfg));
     if (dlg.exec() != QDialog::Accepted)
         return;
 
     m_config.commList << dlg.getConfig();
     updateConfig();
+    emit sigCommChanged();
 }
 
 void JZCommConfigWidget::removeConfig(int index) 
 {
     m_config.commList.removeAt(index);
     updateConfig();
+    emit sigCommChanged();
 }
 
 void JZCommConfigWidget::settingConfig(int index) 
@@ -172,6 +179,7 @@ void JZCommConfigWidget::settingConfig(int index)
 
     m_config.commList[index] = dlg.getConfig();
     updateConfig();
+    emit sigCommChanged();
 }
 
 void JZCommConfigWidget::updateConfig()

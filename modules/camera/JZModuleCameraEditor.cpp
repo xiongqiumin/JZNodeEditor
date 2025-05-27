@@ -37,7 +37,7 @@ void JZCameraInitDialog::addConfig()
     cfg->name = JZRegExpHelp::uniqueString("camera", camera_list);    
 
     JZCameraConfigDialog dlg(this);
-    dlg.setConfig(JZCameraConfigPtr(cfg));
+    dlg.setConfig(JZCameraConfigEnum(cfg));
     if (dlg.exec() != QDialog::Accepted)
         return;
 

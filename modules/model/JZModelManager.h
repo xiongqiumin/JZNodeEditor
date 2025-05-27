@@ -7,7 +7,7 @@
 class JZModelManagerConfig
 {
 public:    
-    QList<JZModelConfigPtr> modelList;
+    QList<JZModelConfigEnum> modelList;
 };
 QDataStream& operator<<(QDataStream &s,const JZModelManagerConfig &config);
 QDataStream& operator>>(QDataStream &s, JZModelManagerConfig &config);
@@ -28,7 +28,7 @@ public:
     QList<JZModel*> modelList();
 
 protected:
-    JZModel* createModel(JZModelConfigPtr path);
+    JZModel* createModel(JZModelConfigEnum path);
 
     JZModelManagerConfig m_config;
     QList<JZModel*> m_models;

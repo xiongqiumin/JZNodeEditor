@@ -24,7 +24,7 @@ public:
 
     virtual JZCameraType type() override;
 
-    virtual bool setConfig(JZCameraConfigPtr config) override;
+    virtual bool setConfig(JZCameraConfigEnum config) override;
     virtual bool isOpen() override;
     virtual bool open() override;
     virtual void close() override;

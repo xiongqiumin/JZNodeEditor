@@ -22,7 +22,7 @@ public:
 	virtual void saveToStream(QDataStream& s) const;
 	virtual void loadFromStream(QDataStream& s);
 };
-typedef QSharedPointer<JZModelConfig> JZModelConfigPtr;
+typedef JZModuleConfigEnum<JZModelConfig> JZModelConfigEnum;
 
 class JZModel
 {
@@ -30,13 +30,13 @@ public:
 	JZModel();
 	virtual ~JZModel();
 
-	void setConfig(JZModelConfigPtr config);
+	void setConfig(JZModelConfigEnum config);
 
     virtual bool isInit() = 0;
 	virtual bool init() = 0;
 
 protected:
-	JZModelConfigPtr m_config;
+	JZModelConfigEnum m_config;
 };
 
 #endif

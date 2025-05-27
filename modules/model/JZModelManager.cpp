@@ -2,14 +2,14 @@
 #include "JZNodeUtils.h"
 #include "../JZModuleConfigFactory.h"
 
-//JZModelConfigPtr
-QDataStream& operator<<(QDataStream& s, const JZModelConfigPtr& config)
+//JZModelConfigEnum
+QDataStream& operator<<(QDataStream& s, const JZModelConfigEnum& config)
 {
 	JZModuleConfigFactory<JZModelConfig>::instance()->saveToStream(s,config);
 	return s;
 }
 
-QDataStream& operator>>(QDataStream& s, JZModelConfigPtr& config)
+QDataStream& operator>>(QDataStream& s, JZModelConfigEnum& config)
 {
 	JZModuleConfigFactory<JZModelConfig>::instance()->loadFromStream(s, config);
 	return s;
@@ -74,7 +74,7 @@ QList<JZModel*> JZModelManager::modelList()
     return m_models;
 }
 	
-JZModel* JZModelManager::createModel(JZModelConfigPtr config)
+JZModel* JZModelManager::createModel(JZModelConfigEnum config)
 {
 	JZModel* model = nullptr;
 	if (config->type == Model_Yolo)

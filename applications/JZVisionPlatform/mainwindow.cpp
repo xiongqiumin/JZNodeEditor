@@ -13,13 +13,14 @@
 #include "JZTitleWidget.h"
 #include "JZEditorUtils.h"
 #include "JZNewProjectDialog.h"
-#include "modules/model/JZModelWidget.h"
-#include "modules/communication/JZCommWidget.h"
 #include "jzWidgets/JZLogWidget.h"
 #include "modules/camera/JZCameraNode.h"
 #include "modules/model/JZModelNode.h"
 #include "modules/communication/JZCommNode.h"
-#include "JZModule.h"
+#include "JZModuleVisionApp.h"
+#include "JZProjectTemplate.h"
+#include "LogManager.h"
+#include "JZEventWidget.h"
 
 //Setting
 Setting::Setting()
@@ -52,21 +53,28 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {            
     setMinimumSize(800, 600);
+    setEditorProject(&m_project);
+    m_task.setProject(&m_project);
 
-    JZModuleManager::instance()->addModule();
+    JZModuleManager::instance()->addModule(new JZModuleVisionApp());
+    JZNodeEditorInit();
+    LogManagerInit();
+    JZLogManager::instance()->addObserver(Log_Compiler, this);
+    JZLogManager::instance()->addObserver(Log_Runtime, this);
 
     m_modelManager = new JZModelManager(this);
     m_cameraManager = new JZCameraManager(this);
     m_commManager = new JZCommManager(this);
 
-    m_list = new JZCameraListWidget();
-    m_view = new JZCameraViewWidget();
+    m_cameraList = new JZCameraListWidget();
+    m_cameraView = new JZCameraViewWidget();
     m_projectTree = nullptr;
+    m_editor = nullptr;
 
-    connect(m_list, &JZCameraListWidget::sigCameraChanged, this, &MainWindow::onCameraConfigChanged);
+    connect(m_cameraList, &JZCameraListWidget::sigCameraChanged, this, &MainWindow::onCameraConfigChanged);    
     
-    m_list->setCameraManager(m_cameraManager);
-    m_list->setViewWidget(m_view);    
+    m_cameraList->setCameraManager(m_cameraManager);
+    m_cameraList->setViewWidget(m_cameraView);    
 
     initUi();
 
@@ -84,6 +92,24 @@ void MainWindow::loadSetting()
     m_setting = m_dbConfig.getConfig<Setting>("setting");
     if (!m_setting.recentFile.isEmpty())
         openProject(m_setting.recentFile[0]);
+    else
+    {
+        QString default_dir = qApp->applicationDirPath() + "/project/default";
+        if (!QDir().exists(default_dir))
+            QDir().mkpath(default_dir);
+
+        QString project_path = default_dir + "/default.proj";
+        if (!QFile::exists(project_path))
+        {
+            initProject();
+            if (!m_project.saveAs(project_path) || !m_project.saveAllItem())
+            {
+                QMessageBox::information(this, "", "新建工程失败");
+                return;
+            }
+        }
+        openProject(project_path);        
+    }
 }
 
 void MainWindow::saveSetting()
@@ -101,6 +127,21 @@ void MainWindow::setSliderStyle(QWidget* w)
             height: 6px;
         })"
     );
+}
+
+JZModelManager* MainWindow::modelManager()
+{
+    return m_modelManager;
+}
+
+JZCameraManager* MainWindow::cameraManager()
+{
+    return m_cameraManager;
+}
+
+JZCommManager* MainWindow::commManager()
+{
+    return m_commManager;
 }
 
 void MainWindow::customEvent(QEvent* event)
@@ -126,7 +167,14 @@ void MainWindow::closeEvent(QCloseEvent* event)
         return;
     }
 
+    m_task.clearTask();
+    m_task.stopRunThread();
     QMainWindow::closeEvent(event);
+}
+
+QIcon MainWindow::menuIcon(const QString &name)
+{
+    return QIcon(":/JZNodeEditor/Resources/icons/" + name);
 }
 
 QIcon MainWindow::icon(QString name)
@@ -151,6 +199,7 @@ void MainWindow::initUi()
 
     QMenuBar *bar = createMenuBar();
     mainLayout->addWidget(bar);
+    setEditorMenuBar(bar);
 
     //bottom
     QHBoxLayout *bottom_layout = new QHBoxLayout();        
@@ -169,8 +218,8 @@ void MainWindow::initUi()
     QToolButton *button_flow = new QToolButton();
     QToolButton *button_model = new QToolButton();
     QToolButton *button_comm = new QToolButton();
-    QToolButton *button_setting = new QToolButton();
     QToolButton* button_log = new QToolButton();
+    QToolButton *button_setting = new QToolButton();    
     
     button_camera->setText("相机");
     button_camera->setIcon(icon("camera.png"));
@@ -179,23 +228,25 @@ void MainWindow::initUi()
     button_model->setText("模型");
     button_model->setIcon(icon("model.png"));
     button_comm->setText("通信");
-    button_comm->setIcon(icon("comm.png"));
-    button_setting->setText("设置");    
-    button_setting->setIcon(icon("setting.png"));
+    button_comm->setIcon(icon("comm.png"));    
     button_log->setText("事件");
-    
+    button_log->setIcon(icon("log.png"));
+    button_setting->setText("设置");
+    button_setting->setIcon(icon("setting.png"));
+
     connect(button_camera,&QToolButton::clicked,this, &MainWindow::onBtnCamera);
     connect(button_flow, &QToolButton::clicked, this, &MainWindow::onBtnFlow);
     connect(button_model, &QToolButton::clicked, this, &MainWindow::onBtnModel);
     connect(button_comm, &QToolButton::clicked, this, &MainWindow::onBtnComm);
-    connect(button_setting, &QToolButton::clicked, this, &MainWindow::onBtnSetting);
     connect(button_log, &QToolButton::clicked, this, &MainWindow::onBtnLog);
+    connect(button_setting, &QToolButton::clicked, this, &MainWindow::onBtnSetting);    
 
     QList<QToolButton*> btn_list;
     btn_list << button_camera;
     btn_list << button_flow;
     btn_list << button_model;
     btn_list << button_comm;
+    btn_list << button_log;
     btn_list << button_setting;
     for (int i = 0; i < btn_list.size(); i++)
     {
@@ -217,6 +268,7 @@ void MainWindow::initUi()
     addFlowPage();
     addModelPage();
     addCommPage();
+    addLogPage();
     addSettingPage();
 
     QWidget *bottom_widget = new QWidget();
@@ -231,18 +283,81 @@ QMenuBar *MainWindow::createMenuBar()
     QMenuBar *menubar = new QMenuBar();
 
     QMenu *menu_file = menubar->addMenu("文件");
+    menu_file->setProperty("JZMenuType", Menu_File);
     auto actNewMenu = menu_file->addAction("新建工程");
     auto actOpenMenu = menu_file->addAction("打开工程");
     connect(actNewMenu, &QAction::triggered, this, &MainWindow::onActionNewProject);
     connect(actOpenMenu, &QAction::triggered, this, &MainWindow::onActionOpenProject);
 
+    menu_file->addSeparator();
+    auto actSaveFile = menu_file->addAction(menuIcon("iconSave.png"), "保存文件");
+    auto actSaveAllFile = menu_file->addAction(menuIcon("iconSaveAll.png"), "全部保存");
+    auto actCloseAllFile = menu_file->addAction("全部关闭");
+    connect(actSaveFile, &QAction::triggered, this, &MainWindow::onActionSaveFile);
+    connect(actSaveAllFile, &QAction::triggered, this, &MainWindow::onActionSaveAllFile);
+    connect(actCloseAllFile, &QAction::triggered, this, &MainWindow::onActionCloseAllFile);
+
+    menu_file->addSeparator();
+    auto actExit = menu_file->addAction("退出");
+    connect(actExit, &QAction::triggered, this, &MainWindow::close);
+
+    QMenu *menu_edit = menubar->addMenu("编辑");
+    auto actUndo = menu_edit->addAction(menuIcon("iconUndo.png"), "撤销");
+    auto actRedo = menu_edit->addAction(menuIcon("iconRedo.png"), "重做");
+    menu_edit->addSeparator();
+    auto actDel = menu_edit->addAction(menuIcon("iconDelete.png"), "删除");
+    auto actCut = menu_edit->addAction(menuIcon("iconCut.png"), "剪切");
+    auto actCopy = menu_edit->addAction(menuIcon("iconCopy.png"), "复制");
+    auto actPaste = menu_edit->addAction(menuIcon("iconPaste.png"), "粘贴");
+    menu_edit->addSeparator();
+    auto actSelectAll = menu_edit->addAction("全选");
+    actUndo->setShortcut(QKeySequence("Ctrl+Z"));
+    actRedo->setShortcut(QKeySequence("Ctrl+Y"));
+    actDel->setShortcut(QKeySequence("Ctrl+D"));
+    actCut->setShortcut(QKeySequence("Ctrl+X"));
+    actCopy->setShortcut(QKeySequence("Ctrl+C"));
+    actPaste->setShortcut(QKeySequence("Ctrl+V"));
+    actSelectAll->setShortcut(QKeySequence("Ctrl+A"));
+
+    actUndo->setShortcutContext(Qt::WidgetShortcut);
+    actRedo->setShortcutContext(Qt::WidgetShortcut);
+    actDel->setShortcutContext(Qt::WidgetShortcut);
+    actCut->setShortcutContext(Qt::WidgetShortcut);
+    actCopy->setShortcutContext(Qt::WidgetShortcut);
+    actPaste->setShortcutContext(Qt::WidgetShortcut);
+    actSelectAll->setShortcutContext(Qt::WidgetShortcut);
+
     QMenu *menu_help = menubar->addMenu("帮助");
+    menu_help->setProperty("JZMenuType", Menu_Help);
     auto actHelp = menu_help->addAction("查看帮助");
     menu_help->addSeparator();    
     auto actAbout = menu_help->addAction("关于" + windowTitle());    
     connect(actHelp, &QAction::triggered, this, &MainWindow::onActionHelp);
 
+    m_menuList << menu_file << menu_edit << menu_help;
+
     return menubar;
+}
+
+void MainWindow::onModifyChanged(bool flag)
+{
+    auto editor = qobject_cast<JZEditor*>(sender());
+    int index = m_editorStack->indexOf(editor);
+    if (index == -1)
+        return;
+
+    updateTabText(index);
+    updateActionStatus();
+}
+
+void MainWindow::onRedoAvailable(bool flag)
+{
+    m_menuList[1]->actions()[1]->setEnabled(flag);
+}
+
+void MainWindow::onUndoAvailable(bool flag)
+{
+    m_menuList[1]->actions()[0]->setEnabled(flag);
 }
 
 QWidget *MainWindow::createTitleBar()
@@ -268,11 +383,11 @@ QWidget *MainWindow::createTitleBar()
 void MainWindow::addCameraPage()
 {
     JZPanelWidget* panel = new JZPanelWidget();
-    panel->addTab("设备列表", m_list);
+    panel->addTab("设备列表", m_cameraList);
 
     QSplitter* splitterTop = new QSplitter(Qt::Horizontal);
     splitterTop->addWidget(panel);
-    splitterTop->addWidget(m_view);
+    splitterTop->addWidget(m_cameraView);
     splitterTop->setSizes({ 200,600 });
     splitterTop->setStretchFactor(0, 0);
     splitterTop->setStretchFactor(1, 1);
@@ -284,21 +399,10 @@ void MainWindow::addCameraPage()
 
 void MainWindow::addFlowPage()
 {
-    m_projectTree = new JZProjectTree();
+    m_projectTree = new JZFlowTree();
 
     JZPanelWidget* panel = new JZPanelWidget();
     panel->addTab("流程列表", m_projectTree);
-
-    QSplitter* splitterTop = new QSplitter(Qt::Horizontal);
-    splitterTop->addWidget(panel);
-    splitterTop->addWidget(new QWidget());
-    splitterTop->setSizes({ 200,600 });
-    splitterTop->setStretchFactor(0, 0);
-    splitterTop->setStretchFactor(1, 1);
-
-    splitterTop->setChildrenCollapsible(false);
-    setSliderStyle(splitterTop);
-    m_stack->addWidget(splitterTop);
 
     m_log = new LogWidget();
     connect(m_log, &LogWidget::sigNavigate, this, &MainWindow::onNavigate);
@@ -307,7 +411,7 @@ void MainWindow::addFlowPage()
 
     QWidget* widget = new QWidget();
     QVBoxLayout* center = new QVBoxLayout();
-    center->setContentsMargins(9, 9, 9, 9);
+    center->setContentsMargins(0, 0, 0, 0);
     widget->setLayout(center);
 
     QWidget* widget_left = new QWidget();
@@ -318,13 +422,12 @@ void MainWindow::addFlowPage()
     //main
     QSplitter* splitterMain = new QSplitter(Qt::Horizontal);
     splitterMain->setObjectName("splitterMain");
-    splitterMain->addWidget(m_projectTree);
+    splitterMain->addWidget(panel);
     splitterMain->addWidget(widget_left);
 
     center->addWidget(splitterMain);
 
-    //left
-    JZNodeEditor* node_editor = new JZNodeEditor();
+    //left    
     m_editorStack = new QTabWidget();
     m_editorStack->setTabsClosable(true);
     connect(m_editorStack, &QTabWidget::tabCloseRequested, this, &MainWindow::onEditorClose);
@@ -356,13 +459,19 @@ void MainWindow::addModelPage()
 {
     QVBoxLayout* l = new QVBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);
+    l->setSpacing(0);
     QWidget* w = new QWidget();
     w->setLayout(l);
 
     QLabel* title = new QLabel("模型列表");
+    title->setStyleSheet("background-color: rgb(77,96,130); color: rgb(255,255,255);");
+    title->setFixedHeight(TITLE_H);
     l->addWidget(title);
 
     JZModelConfigWidget* config = new JZModelConfigWidget();
+    m_modelConfigWidget = config;
+    connect(config, &JZModelConfigWidget::sigModelChanged, this, &MainWindow::onModelConfigChanged);
+
     l->addWidget(config);
     m_stack->addWidget(w);
 }
@@ -371,13 +480,19 @@ void MainWindow::addCommPage()
 {
     QVBoxLayout* l = new QVBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);
+    l->setSpacing(0);
     QWidget* w = new QWidget();
     w->setLayout(l);
 
-    QLabel* title = new QLabel("模型列表");
+    QLabel* title = new QLabel("通信列表");
+    title->setStyleSheet("background-color: rgb(77,96,130); color: rgb(255,255,255);");
+    title->setFixedHeight(TITLE_H);
     l->addWidget(title);
 
-    JZCommConfigWidget* config = new JZCommConfigWidget();
+    JZCommConfigWidget* config = new JZCommConfigWidget();    
+    m_commConfigWidget = config;
+    connect(config, &JZCommConfigWidget::sigCommChanged, this, &MainWindow::onCommConfigChanged);
+
     l->addWidget(config);
     m_stack->addWidget(w);
 }
@@ -386,20 +501,35 @@ void MainWindow::addLogPage()
 {
     QVBoxLayout* l = new QVBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);
+    l->setSpacing(0);
     QWidget* w = new QWidget();
     w->setLayout(l);
 
     QLabel* title = new QLabel("日志列表");
+    title->setStyleSheet("background-color: rgb(77,96,130); color: rgb(255,255,255);");
+    title->setFixedHeight(TITLE_H);
     l->addWidget(title);
 
-    JZLogWidget* log = new JZLogWidget();
+    JZEventWidget* log = new JZEventWidget();
     l->addWidget(log);
     m_stack->addWidget(w);
 }
 
 void MainWindow::addSettingPage()
 {
+    QVBoxLayout* l = new QVBoxLayout();
+    l->setContentsMargins(0, 0, 0, 0);
+    l->setSpacing(0);
     QWidget* w = new QWidget();
+    w->setLayout(l);
+
+    QLabel* title = new QLabel("设置");
+    title->setStyleSheet("background-color: rgb(77,96,130); color: rgb(255,255,255);");
+    title->setFixedHeight(TITLE_H);
+    l->addWidget(title);
+
+    QWidget* set = new QWidget();
+    l->addWidget(set);
     m_stack->addWidget(w);
 }
 
@@ -423,12 +553,12 @@ void MainWindow::onBtnComm()
     m_stack->setCurrentIndex(3);
 }
 
-void MainWindow::onBtnSetting()
+void MainWindow::onBtnLog()
 {
     m_stack->setCurrentIndex(4);
 }
 
-void MainWindow::onBtnLog()
+void MainWindow::onBtnSetting()
 {
     m_stack->setCurrentIndex(5);
 }
@@ -558,6 +688,31 @@ void MainWindow::onNavigate(QUrl url)
 void MainWindow::onCameraConfigChanged()
 {
     JZCameraManagerConfig cfg = m_cameraManager->config();
+    JZNodeCameraInit *node = dynamic_cast<JZNodeCameraInit*>(getInitNode(Node_CameraInit));
+    node->setConfig(cfg);
+    m_project.saveItem(node->file());
+}
+
+void MainWindow::onModelConfigChanged()
+{
+    JZModelConfigWidget* config_widget = dynamic_cast<JZModelConfigWidget*>(sender());    
+
+    JZModelManagerConfig cfg = config_widget->config();
+    m_modelManager->setConfig(cfg);
+    auto *node = dynamic_cast<JZNodeModelInit*>(getInitNode(Node_ModelInit));
+    node->setConfig(cfg);
+    m_project.saveItem(node->file());
+}
+
+void MainWindow::onCommConfigChanged()
+{
+    JZCommConfigWidget* config_widget = dynamic_cast<JZCommConfigWidget*>(sender());
+
+    JZCommManagerConfig cfg = config_widget->config();
+    m_commManager->setConfig(cfg);
+    auto *node = dynamic_cast<JZNodeCommInit*>(getInitNode(Node_CommInit));
+    node->setConfig(cfg);
+    m_project.saveItem(node->file());
 }
 
 void MainWindow::onProjectItemChanged(JZProjectItem* item)
@@ -642,7 +797,9 @@ void MainWindow::initProject()
 {
     m_project.clear();
 
-    JZScriptClassItem *class_item = m_project.mainFile()->addClass("Appliaction","JZVisionPlatform");
+    JZProjectTemplate::instance()->initProject(&m_project, "empty");    
+
+    JZScriptClassItem *class_item = m_project.mainFile()->addClass("JZVisionPlatform","QMainWindow");
     JZFunctionDefine func_init_def = class_item->objectDefine().initMemberFunction("init");
     JZScriptItem *script = class_item->addMemberFunction(func_init_def);
     auto start = script->startNode();
@@ -683,6 +840,18 @@ bool MainWindow::openProject(QString filepath)
     m_projectTree->setProject(&m_project);
     updateActionStatus();
     setWindowTitle(m_project.name());
+
+    auto *node_camera = dynamic_cast<JZNodeCameraInit*>(getInitNode(Node_CameraInit));
+    auto *node_model = dynamic_cast<JZNodeModelInit*>(getInitNode(Node_ModelInit));
+    auto *node_comm = dynamic_cast<JZNodeCommInit*>(getInitNode(Node_CommInit));
+    m_cameraManager->setConfig(node_camera->config());
+    m_modelManager->setConfig(node_model->config());
+    m_commManager->setConfig(node_comm->config());
+
+    m_cameraList->updateCamera();
+    m_modelConfigWidget->setConfig(node_model->config());
+    m_commConfigWidget->setConfig(node_comm->config());
+
     return true;
 }
 
@@ -735,13 +904,13 @@ bool MainWindow::openEditor(QString filepath)
         new_edit = createEditor(item->itemType());
         if (!new_edit)
             return false;
-/*
+
         connect(new_edit, &JZEditor::redoAvailable, this, &MainWindow::onRedoAvailable);
         connect(new_edit, &JZEditor::undoAvailable, this, &MainWindow::onUndoAvailable);
         connect(new_edit, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);
         new_edit->setItem(item);
         new_edit->open(item);
-        if (new_edit->type() == ProjectItem_scriptItem)
+/*        if (new_edit->type() == ProjectItem_scriptItem)
         {
             auto node_edit = (JZNodeEditor*)new_edit;
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
@@ -963,4 +1132,13 @@ void MainWindow::updateTabText(int index)
     if (editor->isModified())
         title += "*";
     m_editorStack->setTabText(index, title);
+}
+
+JZNode *MainWindow::getInitNode(int type)
+{
+    auto cls_item = m_project.getClass("JZVisionPlatform");
+    auto init_script = cls_item->memberFunction("init");
+    auto node_list = init_script->findNodeByType(type);
+    Q_ASSERT(node_list.size() == 1);
+    return node_list[0];
 }

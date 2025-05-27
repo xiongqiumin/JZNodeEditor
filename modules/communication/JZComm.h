@@ -30,7 +30,7 @@ public:
     int type;
     QString name;
 };
-typedef QSharedPointer<JZCommConfig> JZCommConfigPtr;
+typedef JZModuleConfigEnum<JZCommConfig> JZCommConfigEnum;
 
 //JZCommObject
 class JZCommObject : public QObject
@@ -41,14 +41,14 @@ public:
     JZCommObject(QObject* parent = nullptr);
     virtual ~JZCommObject();
 
-    void setConfig(JZCommConfigPtr config);
+    void setConfig(JZCommConfigEnum config);
 
     virtual bool isOpen() = 0;
     virtual bool open() = 0;
     virtual void close() = 0;
 
 protected:
-    JZCommConfigPtr m_config;
+    JZCommConfigEnum m_config;
 };
 
 

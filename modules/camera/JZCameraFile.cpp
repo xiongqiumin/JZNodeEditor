@@ -45,7 +45,7 @@ bool JZCameraFile::isOpen()
     return m_fileList.size() != 0;
 }
 
-bool JZCameraFile::setConfig(JZCameraConfigPtr config)
+bool JZCameraFile::setConfig(JZCameraConfigEnum config)
 {
     m_config = config;
     return true;

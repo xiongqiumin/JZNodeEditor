@@ -28,7 +28,7 @@ JZModel::~JZModel()
 {
 }
 
-void JZModel::setConfig(JZModelConfigPtr config)
+void JZModel::setConfig(JZModelConfigEnum config)
 {
 	m_config = config;
 }

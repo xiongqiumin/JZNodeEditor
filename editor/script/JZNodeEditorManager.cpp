@@ -15,6 +15,7 @@
 #include "modules/opencv/JZModuleOpencvEditor.h"
 #include "modules/vision/JZModuleVisionEditor.h"
 #include "modules/motion/JZModuleMotionEditor.h"
+#include "modules/log/JZModuleLogEditor.h"
 
 JZNodeParamDelegate::JZNodeParamDelegate()
 {
@@ -183,4 +184,5 @@ void JZNodeEditorInit()
     JZModuleOpencvEditorInit();
     JZModuleVisionEditorInit();
     JZModuleMotionEditorInit();
+    JZModuleLogEditorInit();
 }

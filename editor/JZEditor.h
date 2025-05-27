@@ -58,7 +58,7 @@ signals:
     void modifyChanged(bool changed);
 
 protected:    
-    QMenuBar *menuBar();
+    QMenu *menu(int type);
 
     JZProjectItem *m_item;
     JZProject *m_project;

@@ -12,6 +12,56 @@ T *JZModuleConfigCreator()
 }
 
 template<class T>
+class JZModuleConfigEnum
+{
+public:
+    JZModuleConfigEnum()
+    {
+        m_ptr = nullptr;
+    }
+
+    JZModuleConfigEnum(T *ptr)
+    {
+        m_ptr = ptr;
+    }
+
+    JZModuleConfigEnum(const JZModuleConfigEnum &other);
+    
+    T* operator->() const
+    {
+        return data();
+    }
+    void operator=(const JZModuleConfigEnum &other);
+
+    ~JZModuleConfigEnum()
+    {
+        clear();
+    }
+
+    bool isNull() const
+    {
+        return (m_ptr == nullptr);
+    }
+
+    T *data() const
+    {
+        return m_ptr;
+    }
+
+    void clear()
+    {
+        if (m_ptr)
+        {
+            delete m_ptr;
+            m_ptr = nullptr;
+        }
+    }
+
+protected:    
+    T *m_ptr;
+};
+
+template<class T>
 class JZModuleConfigFactory
 {
 public:
@@ -27,23 +77,11 @@ public:
 		m_creator[type] = creator;
 	}
 
-    T *creator(int type)
+    T *create(int type)
     {
         return m_creator[type]();
     }
     
-    QSharedPointer<T> clone(const QSharedPointer<T>& ptr)
-    {
-        QByteArray buffer;
-        QDataStream write(&buffer, QIODevice::WriteOnly);
-        saveToStream(write,ptr);
-
-        QSharedPointer ret;
-        QDataStream read(&buffer, QIODevice::ReadOnly);
-        loadFromStream(read,ret);
-        return ret;
-    }
-
     void copyTo(const T *src, T *dst)
     {
         Q_ASSERT(src->type == dst->type);
@@ -56,22 +94,44 @@ public:
         dst->loadFromStream(read);
     }
 
-	void saveToStream(QDataStream& s, const QSharedPointer<T>& ptr)
+	void saveToStream(QDataStream& s, const JZModuleConfigEnum<T>& ptr)
 	{
 		s << (int)ptr->type;
 		ptr->saveToStream(s);
 	}
 
-	void loadFromStream(QDataStream& s, QSharedPointer<T>& ptr)
+	void loadFromStream(QDataStream& s, JZModuleConfigEnum<T>& ptr)
 	{
 		int type = 0;
 		s >> type;
-		ptr = QSharedPointer<T>(m_creator[type]());
+		ptr = JZModuleConfigEnum<T>(m_creator[type]());
 		ptr->loadFromStream(s);
 	}
 
 protected:
 	QMap<int, std::function<T*()>> m_creator;
 };
+
+template<class T>
+JZModuleConfigEnum<T>::JZModuleConfigEnum(const JZModuleConfigEnum<T> &other)
+{
+    m_ptr = nullptr;
+    *this = other;
+}
+
+template<class T>
+void JZModuleConfigEnum<T>::operator=(const JZModuleConfigEnum<T> &other)
+{
+    if (other.isNull())
+    {
+        clear();
+        return;
+    }
+
+    if (!m_ptr)
+        m_ptr = JZModuleConfigFactory<T>::instance()->create(other.data()->type);
+
+    JZModuleConfigFactory<T>::instance()->copyTo(other.data(), m_ptr);
+}
 
 #endif // ! JZ_Shared_Pointer_Factory_H_

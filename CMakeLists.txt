@@ -244,6 +244,12 @@ set(JZNodeCore_SOURCES
     modules/vision/JZShapeMatch.h
     modules/vision/JZTemplateMatch.cpp
     modules/vision/JZTemplateMatch.h    
+
+    #log
+    modules/log/JZLogNode.cpp
+    modules/log/JZLogNode.h
+    modules/log/JZModuleLog.cpp
+    modules/log/JZModuleLog.h
     
     #motion
     modules/motion/JZModuleMotion.cpp
@@ -481,6 +487,10 @@ set(JZNodeEditorCore_SOURCES
     #motion
     modules/motion/JZModuleMotionEditor.h
     modules/motion/JZModuleMotionEditor.cpp
+    
+    #log
+    modules/log/JZModuleLogEditor.cpp
+    modules/log/JZModuleLogEditor.h
 )
 
 add_library(JZNodeCore STATIC ${JZNodeCore_SOURCES})

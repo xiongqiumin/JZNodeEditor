@@ -832,6 +832,9 @@ QStringList JZProject::functionList()
     for (int i = 0; i < list.size(); i++)
     {
         JZScriptItem *file = (JZScriptItem*)list[i];
+        if (isFlowScriptItem(file))
+            continue;
+
         if (file->function().className.isEmpty())
             ret << file->function().fullName();
     }

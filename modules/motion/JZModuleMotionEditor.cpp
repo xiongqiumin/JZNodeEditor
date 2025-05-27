@@ -11,7 +11,7 @@ void JZModuleMotionEditorInit()
 {
     auto inst = editorManager()->instance();
 
-    inst->registLogicNode(Node_MotionInit, "运控初始化");
-    inst->registLogicNode(Node_MotionZero, "运控归零");
-    inst->registLogicNode(Node_MotionMove, "运控移动");    
+    inst->registLogicNode(Node_MotionInit, "运动控制");
+    inst->registLogicNode(Node_MotionZero, "运动控制");
+    inst->registLogicNode(Node_MotionMove, "运动控制");    
 }

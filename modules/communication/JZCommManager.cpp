@@ -3,14 +3,14 @@
 #include "JZNodeUtils.h"
 #include "../JZModuleConfigFactory.h"
 
-//JZCommConfigPtr
-QDataStream& operator<<(QDataStream& s, const JZCommConfigPtr& param)
+//JZCommConfigEnum
+QDataStream& operator<<(QDataStream& s, const JZCommConfigEnum& param)
 {
     JZModuleConfigFactory<JZCommConfig>::instance()->saveToStream(s, param);
     return s;
 }
 
-QDataStream& operator>>(QDataStream& s, JZCommConfigPtr& param)
+QDataStream& operator>>(QDataStream& s, JZCommConfigEnum& param)
 {
     JZModuleConfigFactory<JZCommConfig>::instance()->loadFromStream(s, param);
     return s;

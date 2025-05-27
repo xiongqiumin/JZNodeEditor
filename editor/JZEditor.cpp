@@ -29,9 +29,17 @@ void JZEditor::setMainWindow(MainWindow *window)
     m_window = window;
 }
 
-QMenuBar *JZEditor::menuBar()
+QMenu *JZEditor::menu(int type)
 {
-    return editorMenuBar();
+    auto menu_bar = editorMenuBar();
+    auto list = menu_bar->actions();
+    for (int i = 0; i < list.size(); i++)
+    {
+        auto menu = list[i]->menu();
+        if (menu->property("JZMenuType").toInt() == type)
+            return menu;
+    }
+    return nullptr;
 }
 
 int JZEditor::type()

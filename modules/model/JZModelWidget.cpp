@@ -20,10 +20,15 @@ JZModelConfigDialog::JZModelConfigDialog(QWidget *parent)
     addYolo();    
 }
 
+JZModelConfigDialog::~JZModelConfigDialog()
+{
+    qDeleteAll(m_config);
+}
+
 void JZModelConfigDialog::addYolo()
 {
     JZModelYoloConfig *yolo_cfg = new JZModelYoloConfig();
-    m_config[Model_Yolo] = JZModelConfigPtr(yolo_cfg);
+    m_config[Model_Yolo] = new JZModelConfigEnum(yolo_cfg);
 
     QList<JZProperty*> model_yolo;
     model_yolo << m_editor->addPropFile("模型", &yolo_cfg->modelPath, "*.onnx", m_propGroup);
@@ -32,18 +37,18 @@ void JZModelConfigDialog::addYolo()
     addPage(Model_Yolo, model_yolo);
 }
 
-void JZModelConfigDialog::setConfig(JZModelConfigPtr cfg)
+void JZModelConfigDialog::setConfig(JZModelConfigEnum cfg)
 {
     m_name = cfg->name;
     m_type = cfg->type;
-    JZModuleConfigFactory<JZModelConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type].data());    
+    JZModuleConfigFactory<JZModelConfig>::instance()->copyTo(cfg.data(), m_config[cfg->type]->data());    
     m_editor->dataToUi();
     switchPage(m_type);
 }
 
-JZModelConfigPtr JZModelConfigDialog::getConfig() const
+JZModelConfigEnum JZModelConfigDialog::getConfig() const
 {
-    JZModelConfigPtr ptr = m_config[m_type];
+    JZModelConfigEnum ptr = *m_config[m_type];
     ptr->name = m_name;
     return ptr;
 }
@@ -86,18 +91,20 @@ void JZModelConfigWidget::addConfig()
     yolo_cfg->name = JZRegExpHelp::uniqueString("yolo", camera_list);
 
     JZModelConfigDialog dlg(this);
-    dlg.setConfig(JZModelConfigPtr(yolo_cfg));
+    dlg.setConfig(JZModelConfigEnum(yolo_cfg));
     if (dlg.exec() != QDialog::Accepted)
         return;
 
     m_config.modelList << dlg.getConfig();
     updateConfig();
+    emit sigModelChanged();
 }
 
 void JZModelConfigWidget::removeConfig(int index)
 {
     m_config.modelList.removeAt(index);
     updateConfig();
+    emit sigModelChanged();
 }
 
 void JZModelConfigWidget::settingConfig(int index)
@@ -109,10 +116,12 @@ void JZModelConfigWidget::settingConfig(int index)
 
     m_config.modelList[index] = dlg.getConfig();
     updateConfig();
+    emit sigModelChanged();
 }
 
 void JZModelConfigWidget::updateConfig()
 {
+    m_table->clearContents();
     m_table->setRowCount(m_config.modelList.size());
 
     QTableWidget* item = new QTableWidget();

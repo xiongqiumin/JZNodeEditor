@@ -41,7 +41,7 @@ bool JZCameraUVC::isOpen()
     return false;
 }
 
-bool JZCameraUVC::setConfig(JZCameraConfigPtr config)
+bool JZCameraUVC::setConfig(JZCameraConfigEnum config)
 {
     m_config = config;
     return true;

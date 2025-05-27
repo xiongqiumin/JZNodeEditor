@@ -109,7 +109,11 @@ bool JZProjectTemplate::initProject(JZProject *project, QString temp)
     auto *main_flow = main_file->addFunction(main_def);
     auto *global_def = main_file->addParamDefine("global");
 
-    if (temp == "console")
+    if (temp == "empty")
+    {
+
+    }
+    else if (temp == "console")
     {
 
     }

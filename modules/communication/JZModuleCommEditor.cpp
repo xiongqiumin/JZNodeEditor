@@ -38,7 +38,7 @@ void JZCommInitDialog::addConfig()
     cfg->name = JZRegExpHelp::uniqueString("comm", camera_list);    
 
     JZCommConfigDialog dlg(this);
-    dlg.setConfig(JZCommConfigPtr(cfg));
+    dlg.setConfig(JZCommConfigEnum(cfg));
     if (dlg.exec() != QDialog::Accepted)
         return;
 

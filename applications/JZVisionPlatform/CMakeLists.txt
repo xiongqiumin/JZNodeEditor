@@ -7,12 +7,16 @@ set(JZVisionPlatform_SOURCES
     JZTitleWidget.h
     JZPanelWidget.cpp
     JZPanelWidget.h
+    JZEventWidget.cpp
+    JZEventWidget.h
 	JZCameraListWidget.cpp
 	JZCameraListWidget.h
 	JZCameraViewWidget.cpp
 	JZCameraViewWidget.h
-	JZModelVisionApp.cpp
-	JZModelVisionApp.h
+	JZModuleVisionApp.cpp
+	JZModuleVisionApp.h
+    JZFlowTree.cpp
+    JZFlowTree.h
 )
 
 add_executable(JZVisionPlatform ${JZVisionPlatform_SOURCES})

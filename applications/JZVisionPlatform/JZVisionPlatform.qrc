@@ -5,6 +5,7 @@
     <file>Resources/icons/flow.png</file>
     <file>Resources/icons/model.png</file>
     <file>Resources/icons/setting.png</file>
+    <file>Resources/icons/log.png</file>
     <file>Resources/icons/MonitorSystem.png</file>
   </qresource>
 </RCC>

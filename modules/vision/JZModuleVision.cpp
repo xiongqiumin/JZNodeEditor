@@ -47,7 +47,6 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZVisionFindLine", true, jzbind::createFuncion(JZVisionFindLine));
 
     auto obj_inst = env->objectManager();
-    obj_inst->registWidgetFactory(Widget_Vision, m_visionWindowFactory);
 
     //node
     auto node_inst = env->nodeFactory();

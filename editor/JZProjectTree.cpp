@@ -75,8 +75,6 @@ void JZProjectTree::init()
 
 QTreeWidgetItem* JZProjectTree::addItem(QTreeWidgetItem *parent, JZProjectItem *item)
 {
-    Q_ASSERT(getProjectItem(parent) == item->parent());
-
     QTreeWidgetItem *view_item = new QTreeWidgetItem();
     m_itemMap[item] = view_item;
 

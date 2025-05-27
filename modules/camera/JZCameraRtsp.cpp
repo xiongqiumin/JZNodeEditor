@@ -75,7 +75,7 @@ bool JZCameraRtsp::isOpen()
     return m_rtspThread.isRunning();
 }
 
-bool JZCameraRtsp::setConfig(JZCameraConfigPtr config)
+bool JZCameraRtsp::setConfig(JZCameraConfigEnum config)
 {
     m_config = config;
     return true;
@@ -155,7 +155,6 @@ void JZCameraRtsp::onThreadFinish()
 
 void JZCameraRtsp::onReadTimer()
 {
-    JZTX_FUNCTION
     cv::Mat mat;
     if (!readFrame(mat))
         return;    

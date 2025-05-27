@@ -91,7 +91,7 @@ void SampleVisionDemo::addInit()
         cfg_file->path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
         cfg = cfg_file;
     }
-    cam_config.cameraList << JZCameraConfigPtr(cfg);
+    cam_config.cameraList << JZCameraConfigEnum(cfg);
     cam_init->setConfig(cam_config);
 
     JZModbusConnetInfo conn;
@@ -104,7 +104,7 @@ void SampleVisionDemo::addInit()
     modbus->conn = conn;
     modbus->name = "modbus";
 
-    comm_mangare_config.commList << JZCommConfigPtr(modbus);
+    comm_mangare_config.commList << JZCommConfigEnum(modbus);
     comm_init->setConfig(comm_mangare_config);
 
     JZModelManagerConfig model_config;
@@ -112,7 +112,7 @@ void SampleVisionDemo::addInit()
     model->modelPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx";
     model->idPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.json";
 
-    model_config.modelList << JZModelConfigPtr(model);
+    model_config.modelList << JZModelConfigEnum(model);
     model_init->setConfig(model_config);
 }
 

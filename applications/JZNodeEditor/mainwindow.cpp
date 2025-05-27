@@ -441,7 +441,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     m_floatWidgets.clear();
 
     m_task.clearTask();
-    m_task.stopRunThread();    
+    m_task.stopRunThread();
     QMainWindow::closeEvent(event);
 }
 

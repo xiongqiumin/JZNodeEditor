@@ -25,7 +25,7 @@ public:
 
     void setProject(JZProject *project);
     void clear();
-    void init();
+    virtual void init();
 
 protected slots:
     void onContextMenu(QPoint pos);

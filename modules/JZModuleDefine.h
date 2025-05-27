@@ -10,6 +10,8 @@ enum ModuleClass
     Module_CommType   = 20000,
     Module_VisionType = 21000,
     Module_MotionType = 22000,
+    Module_VisionAppType = 23000,
+    Module_LogType = 24000,
 };
 
 enum ModuleNode
@@ -21,11 +23,12 @@ enum ModuleNode
     Module_CommNode   = 1400,
     Module_VisionNode = 1500,
     Module_MotionNode = 1600,
+    Module_LogNode = 1600,
 };
 
 enum ModuleProjectItem
 {
-    Module_visionItem = 1000,
+    Module_visionItem = 1000,    
 };
 
 #endif

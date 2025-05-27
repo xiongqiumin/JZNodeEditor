@@ -17,7 +17,7 @@ class JZCameraManagerConfig
 public:
     int indexOfCamera(QString name) const;
 
-    QList<JZCameraConfigPtr> cameraList;
+    QList<JZCameraConfigEnum> cameraList;
 };
 QDataStream &operator<<(QDataStream &s, const JZCameraManagerConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCameraManagerConfig &param);
@@ -41,9 +41,9 @@ public:
     bool startOnce(QString name);
     bool stop(QString name);
     
-    void addCamera(const JZCameraConfigPtr &config);
+    void addCamera(const JZCameraConfigEnum &config);
     void removeCamera(QString name);
-    bool setCamera(QString name, const JZCameraConfigPtr &config);
+    bool setCamera(QString name, const JZCameraConfigEnum &config);
 
     void setConfig(const JZCameraManagerConfig &config);
     const JZCameraManagerConfig &config() const;
@@ -53,7 +53,7 @@ signals:
 
 protected:
     int indexOfCamera(QString name);
-    JZCamera*createCamera(const JZCameraConfigPtr &config);
+    JZCamera*createCamera(const JZCameraConfigEnum &config);
 
     JZCameraManagerConfig m_config;
     QList<JZCamera*> m_cameras;

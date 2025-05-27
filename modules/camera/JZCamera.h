@@ -28,7 +28,7 @@ public:
     virtual void saveToStream(QDataStream& s) const;
     virtual void loadFromStream(QDataStream& s);
 };
-typedef QSharedPointer<JZCameraConfig> JZCameraConfigPtr;
+typedef JZModuleConfigEnum<JZCameraConfig> JZCameraConfigEnum;
 
 class JZCamera : public QObject
 {
@@ -41,8 +41,8 @@ public:
     virtual JZCameraType type() = 0;
 
     QString name() const;
-    virtual bool setConfig(JZCameraConfigPtr config) = 0;
-    JZCameraConfigPtr config();
+    virtual bool setConfig(JZCameraConfigEnum config) = 0;
+    JZCameraConfigEnum config();
 
     virtual bool isOpen() = 0;
     virtual bool open() = 0;
@@ -57,7 +57,7 @@ signals:
     void sigError();
 
 protected:
-    JZCameraConfigPtr m_config;
+    JZCameraConfigEnum m_config;
 };
 
 #endif

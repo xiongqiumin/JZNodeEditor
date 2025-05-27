@@ -41,7 +41,7 @@ void TcpThread::run()
 
     JZCommTcpServerConfig *info = new JZCommTcpServerConfig();
     info->port = 5000;
-    server.setConfig(JZCommConfigPtr(info));
+    server.setConfig(JZCommConfigEnum(info));
     server.open();
 
     exec();
@@ -91,7 +91,7 @@ void CommTest::testModbusClientCpp()
     cfg->type = Comm_ModbusTcpClient;
     cfg->conn.modbusType = Modbus_tcpClient;
     cfg->name = "modbus";
-    comm_config.commList << JZCommConfigPtr(cfg);
+    comm_config.commList << JZCommConfigEnum(cfg);
 
     JZCommManager manager;
     JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));
@@ -134,7 +134,7 @@ void CommTest::testModbusClient()
     cfg->name = "modbus";
 
     JZCommManagerConfig comm_config;
-    comm_config.commList << JZCommConfigPtr(cfg);
+    comm_config.commList << JZCommConfigEnum(cfg);
 
     JZNodeCommInit* comm_init = new JZNodeCommInit();
     script->addNode(comm_init);
@@ -185,7 +185,7 @@ void CommTest::testTcpCpp()
     cfg->port = 5000;
 
     JZCommManagerConfig comm_config;
-    comm_config.commList << JZCommConfigPtr(cfg);
+    comm_config.commList << JZCommConfigEnum(cfg);
 
     JZCommManager manager;
     JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));
@@ -212,7 +212,7 @@ void CommTest::testUdpCpp()
     cfg->name = "udpClient";
     
     JZCommManagerConfig comm_config;
-    comm_config.commList << JZCommConfigPtr(cfg);
+    comm_config.commList << JZCommConfigEnum(cfg);
 
     JZCommManager manager;
     JZCommInit(&manager, JZNodeUtils::toBuffer(comm_config));

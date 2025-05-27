@@ -37,7 +37,7 @@ void JZModelInitDialog::addConfig()
     yolo_cfg->name = JZRegExpHelp::uniqueString("yolo", camera_list);
     
     JZModelConfigDialog dlg(this);
-    dlg.setConfig(JZModelConfigPtr(yolo_cfg));
+    dlg.setConfig(JZModelConfigEnum(yolo_cfg));
     if (dlg.exec() != QDialog::Accepted)
         return;
 
@@ -102,7 +102,7 @@ void JZModelInitItem::updatePin()
 
 void JZModelInitItem::onSetClicked()
 {
-    JZNodeModelInit *node = (JZNodeModelInit *)m_node;
+    JZNodeModelInit *node =  dynamic_cast<JZNodeModelInit*>(m_node);
     JZModelInitDialog dlg(editor());
     dlg.setConfig(node->config());
     if (dlg.exec() != QDialog::Accepted)
@@ -117,10 +117,17 @@ void JZModelInitItem::onSetClicked()
     notifyPropChanged(oldValue);
 }
 
+//JZModelForwardItem
+JZModelForwardItem::JZModelForwardItem(JZNode *node)
+    :JZNodeGraphItem(node)
+{    
+}
+
 //JZModuleModelEditorInit
 void JZModuleModelEditorInit()
 {
     auto inst = editorManager()->instance();
     
     inst->registLogicNode(Node_ModelInit, "模型", QString(), CreateJZNodeGraphItem<JZModelInitItem>);
+    inst->registLogicNode(Node_ModelForward, "模型", QString(), CreateJZNodeGraphItem<JZModelForwardItem>);
 }

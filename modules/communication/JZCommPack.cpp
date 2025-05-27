@@ -29,7 +29,7 @@ void JZCommPackFormat::setTail(QByteArray tail)
 	tail = tail;
 }
 
-//JZCommConfigPtr
+//JZCommConfigEnum
 QDataStream& operator<<(QDataStream& s, const JZCommPackFormat& param)
 {
 	return s;
@@ -72,7 +72,7 @@ bool JZCommPack::takePack(QByteArray& pack)
 			if (start < 0)
 			{
 				qDebug() << "invaild packet data.";
-				buffer_start = m_buffer.length();  //È«ÊÇÎÞÓÃÊý¾Ý£¬Çå³ý
+				buffer_start = m_buffer.length();  //È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½
 				break;
 			}
 

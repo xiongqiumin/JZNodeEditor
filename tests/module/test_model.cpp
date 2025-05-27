@@ -22,7 +22,7 @@ void ModelTest::testYolo()
     yolo_config->idPath = "C:/Users/xiong/Desktop/demo/image/yolo.json";
 
     JZModelManagerConfig config;
-    config.modelList << JZModelConfigPtr(yolo_config);
+    config.modelList << JZModelConfigEnum(yolo_config);
 
     JZNodeModelInit *node_init = new JZNodeModelInit();
     node_init->setConfig(config);

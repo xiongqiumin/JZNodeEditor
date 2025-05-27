@@ -21,7 +21,7 @@ enum {
 class JZCommManagerConfig
 {
 public:
-    QList<JZCommConfigPtr> commList;
+    QList<JZCommConfigEnum> commList;
 };
 QDataStream &operator<<(QDataStream &s, const JZCommManagerConfig &param);
 QDataStream &operator>>(QDataStream &s, JZCommManagerConfig &param);

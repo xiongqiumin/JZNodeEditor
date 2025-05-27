@@ -157,7 +157,10 @@ JZNodeView *JZNodeEditor::view()
 
 void JZNodeEditor::active()
 {
-    QMenu *menu = menuBar()->actions()[Menu_View]->menu();
+    QMenu *menu = this->menu(Menu_View);
+    if (!menu)
+        return;
+
     m_actionList << menu->addSeparator();
     m_actionList << menu->addAction("自动布局");
     m_actionList << menu->addAction("显示全部");
@@ -167,7 +170,10 @@ void JZNodeEditor::active()
 
 void JZNodeEditor::inactive‌()
 {
-    QMenu *menu = menuBar()->actions()[Menu_View]->menu();
+    QMenu *menu = this->menu(Menu_View);
+    if (!menu)
+        return;
+
     for (int i = 0; i < m_actionList.size(); i++)
     {
         menu->removeAction(m_actionList[i]);

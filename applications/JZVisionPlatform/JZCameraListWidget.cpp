@@ -1,4 +1,4 @@
-#include <QVBoxLayout>
+ï»¿#include <QVBoxLayout>
 #include <QMenu>
 #include <QPainter>
 #include "JZCameraListWidget.h"
@@ -44,7 +44,7 @@ void JZCameraListWidget::updateCamera()
 {
 	m_tree->clear(); 
     m_root = new QTreeWidgetItem();
-    m_root->setText(0, "ËùÓÐÉè±¸");
+    m_root->setText(0, "æ‰€æœ‰è®¾å¤‡");
     m_tree->addTopLevelItem(m_root);
 
     auto list = m_cameraManager->config().cameraList;
@@ -84,23 +84,23 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
     JZCamera *camera = nullptr;
     if (!item)
     {
-        actNew = menu.addAction("Ìí¼Ó");        
+        actNew = menu.addAction("æ–°å»º");        
     }
     else
     {        
         if (item == m_root)
         {
-            actOpenAll = menu.addAction("´ò¿ªÈ«²¿");
-            actStopAll = menu.addAction("¹Ø±ÕÈ«²¿");
+            actOpenAll = menu.addAction("å…¨éƒ¨æ‰“å¼€");
+            actStopAll = menu.addAction("å…¨éƒ¨å…³é—­");
         }
         else
         {
             camera_name = item->text(0);
             camera = m_cameraManager->camera(camera_name);
-            actOpen = menu.addAction("´ò¿ª");
-            actClose = menu.addAction("¹Ø±Õ");
-            actSetting = menu.addAction("ÉèÖÃ");
-            actDel = menu.addAction("É¾³ý");
+            actOpen = menu.addAction("æ‰“å¼€");
+            actClose = menu.addAction("å…³é—­");
+            actSetting = menu.addAction("è®¾ç½®");
+            actDel = menu.addAction("åˆ é™¤");
         }
     }
 
@@ -120,7 +120,7 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
         cfg->path = "rtsp://admin:123456HK@192.168.0.164:554/Streaming/Channels/101";
 
         JZCameraConfigDialog dlg(this);
-        dlg.setConfig(JZCameraConfigPtr(cfg));
+        dlg.setConfig(JZCameraConfigEnum(cfg));
         if (dlg.exec() != JZCameraConfigDialog::Accepted)
             return;
 
@@ -197,7 +197,6 @@ void JZCameraListWidget::onFrameReady(cv::Mat mat)
 	JZCamera *camera = qobject_cast<JZCamera*>(sender());
 	QString name = camera->objectName();
 
-    JZTX_FUNCTION
 	m_view->label(name)->setImage(QtOcv::mat2Image(mat));
 }
 

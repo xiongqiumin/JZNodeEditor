@@ -13,10 +13,15 @@
 #include "JZCameraViewWidget.h"
 #include "JZProject.h"
 #include "database.h"
-#include "JZProjectTree.h"
 #include "LogWidget.h"
+#include "JZProjectTree.h"
 #include "JZNodeEditor.h"
+#include "JZFlowTree.h"
 #include "mainTask.h"
+#include "modules/model/JZModelWidget.h"
+#include "modules/communication/JZCommWidget.h"
+#include "modules/model/JZModelWidget.h"
+#include "modules/communication/JZCommWidget.h"
 
 class Setting
 {
@@ -35,6 +40,10 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    JZModelManager* modelManager();
+    JZCameraManager* cameraManager();
+    JZCommManager* commManager();
 
 protected slots:
     void onBtnCamera();
@@ -61,18 +70,24 @@ protected slots:
     void onEditorActivity(int index);
     void onNavigate(QUrl url);
 
-    void onCameraConfigChanged();
+    void onCameraConfigChanged();    
+    void onModelConfigChanged();
+    void onCommConfigChanged();
+
     void onProjectItemChanged(JZProjectItem* item);
     void onProjectChanged();
     void onProjectTreeAction(int type, QString filepah);
 
+    void onModifyChanged(bool flag);
+    void onRedoAvailable(bool flag);
+    void onUndoAvailable(bool flag);
     void onTabContextMenu(QPoint pos);
 
     void onFlowRun();
     void onFlowRunOnce();
     void onFlowStop();
 
-private:
+protected:
     virtual void customEvent(QEvent* event) override;
     virtual void resizeEvent(QResizeEvent* event) override;
     virtual void closeEvent(QCloseEvent* event) override;
@@ -83,7 +98,9 @@ private:
     void initUi();    
     QMenuBar *createMenuBar();
     QWidget *createTitleBar();
+    
     QIcon icon(QString name);
+    QIcon menuIcon(const QString &name);
 
     void setSliderStyle(QWidget *w);
     void addCameraPage();
@@ -114,21 +131,25 @@ private:
 
     void updateActionStatus();
     void updateTabText(int index);
+    JZNode *getInitNode(int type);
 
     JZModelManager* m_modelManager;
     JZCameraManager* m_cameraManager;
     JZCommManager* m_commManager;
 
     QStackedWidget *m_stack;    
-    JZCameraListWidget *m_list;
-    JZCameraViewWidget *m_view;
-    JZProjectTree* m_projectTree;
+    JZCameraListWidget *m_cameraList;
+    JZCameraViewWidget *m_cameraView;
+    JZCommConfigWidget *m_commConfigWidget;
+    JZModelConfigWidget *m_modelConfigWidget;
+    JZFlowTree* m_projectTree;
     LogWidget* m_log;
 
     Setting m_setting;
     DataBaseConfig m_dbConfig;
     JZProject m_project;
 
+    QList<QMenu*> m_menuList;
     JZEditor* m_editor;
     QTabWidget* m_editorStack;
     QMap<JZProjectItem*, JZEditor*> m_editors;

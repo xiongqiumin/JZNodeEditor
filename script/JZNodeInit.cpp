@@ -16,6 +16,7 @@
 #include "modules/model/JZModuleModel.h"
 #include "modules/vision/JZModuleVision.h"
 #include "modules/motion/JZModuleMotion.h"
+#include "modules/log/JZModuleLog.h"
 #include "LogManager.h"
 #include "JZScriptUnitTest.h"
 #include "runtime/JZWidgetBind.h"
@@ -54,6 +55,7 @@ void JZNodeInit()
     module_inst->addModule(new JZModuleModel());
     module_inst->addModule(new JZModuleVision());
     module_inst->addModule(new JZModuleMotion());
+    module_inst->addModule(new JZModuleLog());
     module_inst->initModules();
 
 /*
