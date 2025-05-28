@@ -106,10 +106,11 @@ public:
     JZNodeEngine *engine();
     void dump(QString dir);
 
+    bool isInit();
     bool init();
     void deinit();
 
-    void start();
+    void start(bool once);
     void stop();
     bool isFinish();
     bool waitFinish(int timeout = 5000);

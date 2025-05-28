@@ -12,7 +12,9 @@ public:
 
     enum
     {
+        None,
         StartRun,
+        StartRunOnce,
         StopRun,
         StopThread,
     };
@@ -20,6 +22,7 @@ public:
     JZNodeAutoRunEvent()
         :QEvent((QEvent::Type)Event)
     {
+        cmd = None;
     }
 
     virtual ~JZNodeAutoRunEvent()
@@ -77,28 +80,35 @@ JZNodeEngine *JZNodeAutoRunThread::engine()
 void JZNodeAutoRunThread::customEvent(QEvent *e)
 {
     JZNodeAutoRunEvent *event = dynamic_cast<JZNodeAutoRunEvent*>(e);    
-    if (event->cmd == JZNodeAutoRunEvent::StartRun)
+    if (event->cmd == JZNodeAutoRunEvent::StartRun || event->cmd == JZNodeAutoRunEvent::StartRunOnce)
     {
         if (!m_test.isFinish())
             return;
 
         LOGMOD_I(Log_Runtime, "开始测试");
-        if (!m_test.init())
-            return;
+        if (!m_test.isInit())
+        {
+            if (!m_test.init())
+                return;
 
-        m_test.engine()->startWatch();
-        m_test.start();
-        m_timer->start(50);
+            m_test.engine()->startWatch();
+            m_timer->start(50);
+        }
+
+        bool is_once = false;
+        if (event->cmd == JZNodeAutoRunEvent::StartRunOnce)
+            is_once = true;
+        
+        m_test.start(is_once);
     }
     else if (event->cmd == JZNodeAutoRunEvent::StopRun)
     {        
         m_test.engine()->stopWatch();
-        m_test.deinit();
         m_timer->stop();
     }
     else if (event->cmd == JZNodeAutoRunEvent::StopThread)
     {        
-
+        m_test.deinit();
     }
 }
 
@@ -106,6 +116,13 @@ void JZNodeAutoRunThread::startRun()
 {        
     JZNodeAutoRunEvent *event = new JZNodeAutoRunEvent();
     event->cmd = JZNodeAutoRunEvent::StartRun;
+    qApp->postEvent(this, event);
+}
+
+void JZNodeAutoRunThread::startRunOnce()
+{
+    JZNodeAutoRunEvent* event = new JZNodeAutoRunEvent();
+    event->cmd = JZNodeAutoRunEvent::StartRunOnce;
     qApp->postEvent(this, event);
 }
 

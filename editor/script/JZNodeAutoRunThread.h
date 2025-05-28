@@ -18,6 +18,7 @@ public:
     JZScriptUnitTest *unitTest();
 
     void startRun();
+    void startRunOnce();
     void stopRun();
     void stopThread();
 
@@ -29,6 +30,7 @@ protected slots:
 
 protected:
     virtual void customEvent(QEvent *event) override;
+    void init();
 
     QTimer *m_timer;
     bool m_watchFinish;

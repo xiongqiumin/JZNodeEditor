@@ -307,7 +307,7 @@ protected:
 
     Stat m_stat;
 };
-extern JZNodeEngine *g_engine;
+extern thread_local JZNodeEngine *g_engine;
 
 void JZScriptLog(const QString &name);
 QVariant JZConvertVariant(const QVariant &in, int type);

@@ -304,6 +304,11 @@ void JZScriptUnitTest::dump(QString dir)
     dumper.dump(dir);
 }
 
+bool JZScriptUnitTest::isInit()
+{
+    return m_engine->isInit();
+}
+
 bool JZScriptUnitTest::init()
 {
     auto class_item = m_depend.originScript->getClassItem();
@@ -409,7 +414,7 @@ void JZScriptUnitTest::deinit()
     }
 }
 
-void JZScriptUnitTest::start()
+void JZScriptUnitTest::start(bool once)
 {            
     g_hook = this;
     QVariantList unit_in = m_depend.input;
@@ -418,6 +423,7 @@ void JZScriptUnitTest::start()
     if (func_def.isMemberFunction())
     {
         unit_in.insert(0, QVariant::fromValue(m_object));
+        unit_in.insert(1, once);
         trigger_func = func_def.className + "::UnitTestTrigger";
     }
 
@@ -498,7 +504,7 @@ bool JZScriptUnitTest::run(int timeout)
     if (!init())
         return false;
 
-    start();
+    start(true);
     QElapsedTimer t;
     t.start();
 

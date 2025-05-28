@@ -277,7 +277,7 @@ void JZNodeEngine::Stat::report()
 }
 
 // JZNodeEngine
-JZNodeEngine *g_engine = nullptr;
+thread_local JZNodeEngine *g_engine = nullptr;
 void JZNodeEngine::regist()
 {        
     JZNodeEngineIdlePauseEvent::Event = QEvent::registerEventType();      

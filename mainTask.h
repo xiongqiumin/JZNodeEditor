@@ -22,14 +22,18 @@ class MainTask
 {
 public:
     enum {
-        Task_build,        
+        Task_genProgram,        
         Task_unitTest,
         Task_dumpCpp,
         Task_dumpExe,
         Task_running,
     };
 
+    MainTask();
+
     int type;
+    bool isRunOnce;
+
 };
 
 class MainTaskManager : public QObject
@@ -49,11 +53,11 @@ public:
     void clearTask();
 
     void addAutoCompilerTask();
-    void addBuildTask();        
-    void addUnitTestTask(QString path);
+    void addBuildProgramTask();        
+    void addTestTask(QString path,bool runOnce);
     void addExportExeTask();
     void addExportCppTask();    
-    void addRunningTask();
+    void addRunTask();
 
 signals:
     void sigBuildStart();

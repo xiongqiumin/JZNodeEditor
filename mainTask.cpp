@@ -20,6 +20,12 @@ void BuildInfo::clear()
     success = false;
 }
 
+//MainTask
+MainTask::MainTask()
+{
+    isRunOnce = true;
+}
+
 //MainTaskManager
 MainTaskManager::MainTaskManager()
 {    
@@ -70,7 +76,9 @@ void MainTaskManager::removeTask(int type)
 
 void MainTaskManager::clearTask()
 {
-
+    m_buildThread.stopBuild();
+    m_runThread.stopRun();
+    m_taskList.clear();
 }
 
 void MainTaskManager::build(bool mute)
@@ -100,12 +108,12 @@ void MainTaskManager::build(bool mute)
     }
 }
 
-void MainTaskManager::addBuildTask()
+void MainTaskManager::addBuildProgramTask()
 {    
     build(false);
 
     MainTask task;
-    task.type = MainTask::Task_build;
+    task.type = MainTask::Task_genProgram;
     addTask(task);
 }
 
@@ -114,7 +122,7 @@ void MainTaskManager::addAutoCompilerTask()
     m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
 }
 
-void MainTaskManager::addUnitTestTask(QString path)
+void MainTaskManager::addTestTask(QString path, bool runOnce)
 {
     build(false);
 
@@ -125,7 +133,7 @@ void MainTaskManager::addUnitTestTask(QString path)
 
 void MainTaskManager::addExportCppTask()
 {
-    addBuildTask();
+    addBuildProgramTask();
 
     MainTask task;
     task.type = MainTask::Task_dumpCpp;
@@ -134,16 +142,16 @@ void MainTaskManager::addExportCppTask()
 
 void MainTaskManager::addExportExeTask()
 {
-    addBuildTask();
+    addBuildProgramTask();
 
     MainTask task;
     task.type = MainTask::Task_dumpExe;
     addTask(task);
 }
 
-void MainTaskManager::addRunningTask()
+void MainTaskManager::addRunTask()
 {
-    addBuildTask();
+    addBuildProgramTask();
 
     MainTask task;
     task.type = MainTask::Task_running;
@@ -182,7 +190,7 @@ void MainTaskManager::dealTask()
         auto &task = m_taskList[i];
         switch (task.type)
         {   
-            case MainTask::Task_build:
+            case MainTask::Task_genProgram:
             {
                 saveProgram();
                 break;

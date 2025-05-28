@@ -783,14 +783,19 @@ void MainWindow::onTabContextMenu(QPoint pos)
 
 void MainWindow::onFlowRun()
 {
+    auto path = currentNodeEditor()->item()->itemPath();
+    m_task.addTestTask(path,false);
 }
 
 void MainWindow::onFlowRunOnce()
 {
+    auto path = currentNodeEditor()->item()->itemPath();
+    m_task.addTestTask(path,true);
 }
 
 void MainWindow::onFlowStop()
 {
+    m_task.stopRunThread();
 }
 
 void MainWindow::initProject()
