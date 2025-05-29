@@ -7,6 +7,21 @@
 #include "modules/opencv/CvToQt.h"
 #include "jzProfiler/JZTx.h"
 
+//JZCameraEmpty
+class JZCameraEmpty : public QWidget
+{
+public:
+    JZCameraEmpty()
+    {
+    }
+
+    void paintEvent(QPaintEvent* event)
+    {
+        QPainter painter(this);
+        painter.fillRect(rect(), Qt::white);
+    }
+};
+
 //JZCameraViewWidget
 JZCameraViewWidget::JZCameraViewWidget(QWidget* parent)
 {
@@ -162,7 +177,7 @@ void JZCameraViewWidget::updateCamViewLayout()
             m_layout->addWidget(label_list[idx], cur_row, cur_col);
         else
         {
-            QWidget *w = new QWidget();
+            JZCameraEmpty *w = new JZCameraEmpty();
             m_layout->addWidget(w, cur_row, cur_col);
             m_emptyWidget << w;
         }

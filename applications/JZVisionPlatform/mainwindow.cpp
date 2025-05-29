@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QFrame>
 #include <QMenuBar>
+#include <QToolBar>
 #include <QDir>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -197,7 +198,7 @@ void MainWindow::initUi()
     mainLayout->addWidget(title);
     mainLayout->setSpacing(1);
 
-    QMenuBar *bar = createMenuBar();
+    QMenuBar *bar = addMenuBar(mainLayout);
     mainLayout->addWidget(bar);
     setEditorMenuBar(bar);
 
@@ -278,7 +279,7 @@ void MainWindow::initUi()
     mainLayout->addWidget(bottom_widget);
 }
 
-QMenuBar *MainWindow::createMenuBar()
+QMenuBar *MainWindow::addMenuBar(QVBoxLayout *layout)
 {
     QMenuBar *menubar = new QMenuBar();
 
@@ -335,7 +336,14 @@ QMenuBar *MainWindow::createMenuBar()
     connect(actHelp, &QAction::triggered, this, &MainWindow::onActionHelp);
 
     m_menuList << menu_file << menu_edit << menu_help;
+    layout->addWidget(menubar);
 
+    //tool bar
+    QToolBar *main_tool = new QToolBar();
+    main_tool->addAction(actSaveFile);
+    main_tool->addAction(actSaveAllFile);
+    layout->addWidget(main_tool);
+    
     return menubar;
 }
 
@@ -915,7 +923,7 @@ bool MainWindow::openEditor(QString filepath)
         connect(new_edit, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);
         new_edit->setItem(item);
         new_edit->open(item);
-/*        if (new_edit->type() == ProjectItem_scriptItem)
+        if (new_edit->type() == ProjectItem_scriptItem)
         {
             auto node_edit = (JZNodeEditor*)new_edit;
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
@@ -930,7 +938,6 @@ bool MainWindow::openEditor(QString filepath)
             if (cmp_ret)
                 node_edit->setCompilerResult(cmp_ret);
         }
-*/
         m_editors[item] = new_edit;
         m_editorStack->addTab(new_edit, filepath);
     }
