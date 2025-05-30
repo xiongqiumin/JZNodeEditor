@@ -89,7 +89,7 @@ public:
     void setFormat(QString format);
     QString format();
 
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
+    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;    
 
 protected:
     virtual bool updateNode(QString& error) override;

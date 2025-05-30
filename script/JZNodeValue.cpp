@@ -429,8 +429,7 @@ bool JZNodeFunctionPointer::compiler(JZNodeCompiler *c, QString &error)
 
 //JZNodeFormatImpl
 JZNodeFormatImpl::JZNodeFormatImpl()
-{
-    m_type = Node_format;
+{    
     m_name = "format";
     m_argIndex = 0;
 
@@ -474,7 +473,7 @@ bool JZNodeFormatImpl::updateNode(QString& error)
         brace_count = format.paramCount();
     }
 
-    paramInResize(m_argIndex + brace_count);
+    paramInResize(m_argIndex + brace_count + 1);
     auto list = paramInList();
     for (int i = m_argIndex; i < list.size(); i++)
         setPinName(list[i], "in" + QString::number(i));
@@ -536,6 +535,7 @@ JZNodePrint::JZNodePrint()
     m_type = Node_print;
     m_name = "print";
     m_function = "JZPrint";
+    m_isText = true;
 
     addFlowIn();
     addFlowOut();
@@ -570,7 +570,7 @@ JZNodeLog::~JZNodeLog()
 JZNodeDisplay::JZNodeDisplay()
 {
     m_type = Node_display;
-    m_name = "diaplay";
+    m_name = "display";
 
     addInput();
 }

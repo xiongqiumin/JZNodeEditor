@@ -318,7 +318,8 @@ set(JZNodeCore_SOURCES
 )
 
 set(JZNodeEditorCore_SOURCES
-    JZNodeEditor.qrc     
+    JZNodeEditor.qrc
+    
     mainTask.cpp    
     mainTask.h    
     LogWidget.cpp

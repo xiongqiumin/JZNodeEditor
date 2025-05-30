@@ -112,7 +112,7 @@ protected:
     void saveSetting();
 
     void initUi();    
-    QMenuBar *createMenuBar();
+    QMenuBar *addMenuBar(QVBoxLayout *layout);
     QWidget *createTitleBar();
     
     QIcon icon(QString name);

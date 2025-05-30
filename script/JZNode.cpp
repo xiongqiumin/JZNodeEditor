@@ -601,9 +601,9 @@ void JZNode::paramInResize(int size)
         for (int i = in_list.size(); i < size; i++)
             addParamIn("input");
     }
-    else
+    else if (in_list.size() > size)
     {
-        for (int i = in_list.size() - 1; i >= 0; i--)
+        for (int i = in_list.size() - 1; i > size; i--)
             removePin(in_list[i]);
     }
 }

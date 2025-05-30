@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QFrame>
 #include <QMenuBar>
+#include <QToolBar>
 #include <QDir>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -208,7 +209,7 @@ void MainWindow::initUi()
     mainLayout->addWidget(title);
     mainLayout->setSpacing(1);
 
-    QMenuBar *bar = createMenuBar();
+    QMenuBar *bar = addMenuBar(mainLayout);
     mainLayout->addWidget(bar);
     setEditorMenuBar(bar);
 
@@ -289,7 +290,7 @@ void MainWindow::initUi()
     mainLayout->addWidget(bottom_widget);
 }
 
-QMenuBar *MainWindow::createMenuBar()
+QMenuBar *MainWindow::addMenuBar(QVBoxLayout *layout)
 {
     QMenuBar *menubar = new QMenuBar();
 
@@ -346,7 +347,14 @@ QMenuBar *MainWindow::createMenuBar()
     connect(actHelp, &QAction::triggered, this, &MainWindow::onActionHelp);
 
     m_menuList << menu_file << menu_edit << menu_help;
+    layout->addWidget(menubar);
 
+    //tool bar
+    QToolBar *main_tool = new QToolBar();
+    main_tool->addAction(actSaveFile);
+    main_tool->addAction(actSaveAllFile);
+    layout->addWidget(main_tool);
+    
     return menubar;
 }
 
