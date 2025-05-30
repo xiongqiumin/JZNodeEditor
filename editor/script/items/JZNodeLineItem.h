@@ -19,7 +19,6 @@ public:
 
     void setEndPoint(QPointF point);
     void setEndTraget(JZNodeGemo to);
-    void setDrag(bool flag);
 
 protected:
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget);    

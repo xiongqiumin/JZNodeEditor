@@ -50,10 +50,14 @@ public:
 
 signals:
     void sigInitFinish();
+    void sigFrameReady(QString camera, cv::Mat mat);
+
+protected slots:
+    void onFrameReady(cv::Mat mat);
 
 protected:
     int indexOfCamera(QString name);
-    JZCamera*createCamera(const JZCameraConfigEnum &config);
+    JZCamera* createCamera(const JZCameraConfigEnum &config);
 
     JZCameraManagerConfig m_config;
     QList<JZCamera*> m_cameras;

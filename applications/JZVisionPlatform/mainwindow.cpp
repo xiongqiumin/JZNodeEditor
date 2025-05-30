@@ -54,7 +54,11 @@ MainWindow::MainWindow(QWidget *parent)
 {            
     setMinimumSize(800, 600);
     setEditorProject(&m_project);
+
     m_task.setProject(&m_project);
+    connect(m_task.runThread(), &JZNodeAutoRunThread::sigResult, this, &MainWindow::onAutoRunResult);
+    connect(&m_task, &MainTaskManager::sigBuildStart, this, &MainWindow::onBuildStart);
+    connect(&m_task, &MainTaskManager::sigBuildFinish, this, &MainWindow::onBuildFinish);
 
     JZModuleManager::instance()->addModule(new JZModuleVisionApp());
     JZNodeEditorInit();
@@ -77,8 +81,6 @@ MainWindow::MainWindow(QWidget *parent)
     m_cameraList->setViewWidget(m_cameraView);    
 
     initUi();
-
-    m_dbConfig.init(qApp->applicationDirPath() + "/config.db");
     loadSetting();
 }
 
@@ -87,9 +89,18 @@ MainWindow::~MainWindow()
     saveSetting();
 }
 
+void MainWindow::initDatabase()
+{
+    m_db.open(qApp->applicationDirPath() + "/config.db");
+    if (!m_db.hasTable(m_config.tableName()))
+    {
+        m_db.createTable(m_config.table());
+    }
+}
+
 void MainWindow::loadSetting()
 {
-    m_setting = m_dbConfig.getConfig<Setting>("setting");
+    m_setting = m_config.getConfig<Setting>("setting");
     if (!m_setting.recentFile.isEmpty())
         openProject(m_setting.recentFile[0]);
     else
@@ -114,7 +125,7 @@ void MainWindow::loadSetting()
 
 void MainWindow::saveSetting()
 {
-    m_dbConfig.setConfig<Setting>("setting", m_setting);
+    m_config.setConfig<Setting>("setting", m_setting);
 }
 
 void MainWindow::setSliderStyle(QWidget* w)
@@ -781,21 +792,101 @@ void MainWindow::onTabContextMenu(QPoint pos)
     }
 }
 
-void MainWindow::onFlowRun()
+void MainWindow::onFunctionOpen(QString functionName)
 {
+    auto file = m_project.functionItem(functionName);
+    if(file)
+        openEditor(file->itemPath());
+}
+
+void MainWindow::onAutoCompiler()
+{
+    m_task.addAutoCompilerTask();
+}
+
+void MainWindow::onAutoRun()
+{
+    if(isCameraFlow())
+    {
+        return;
+    }
+
     auto path = currentNodeEditor()->item()->itemPath();
     m_task.addTestTask(path,false);
 }
 
-void MainWindow::onFlowRunOnce()
+void MainWindow::onAutoRunOnce()
 {
+    if (isCameraFlow())
+    {
+        return;
+    }
+
     auto path = currentNodeEditor()->item()->itemPath();
     m_task.addTestTask(path,true);
 }
 
-void MainWindow::onFlowStop()
+void MainWindow::onAutoRunStop()
 {
+    if (isCameraFlow())
+    {
+        return;
+    }
+
     m_task.stopRunThread();
+}
+
+void MainWindow::onBuildStart()
+{
+    m_log->clearLog(Log_Compiler);
+}
+
+void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
+{
+    m_engine.deinit();
+    m_buildResult = result;
+
+    auto it = m_editors.begin();
+    while (it != m_editors.end())
+    {
+        if (it.value()->type() == ProjectItem_scriptItem)
+        {
+            auto node_edit = (JZNodeEditor*)it.value();
+            auto cmp_info = compilerResult(it.key()->itemPath());
+            if (cmp_info)
+                node_edit->setCompilerResult(cmp_info);
+        }
+        it++;
+    }
+
+    if (m_buildResult->status == Build_Successed)
+    {
+        m_engine.setProgram(&m_buildResult->program);
+        m_engine.init();
+    }
+}
+
+void MainWindow::onAutoRunResult(int result)
+{
+    auto engine = m_task.runThread()->engine();
+}
+
+void MainWindow::onFrameReady(QString camera, cv::Mat mat)
+{
+    auto it = m_camPrograom.find(camera);
+    if (it != m_camPrograom.end())
+        return;
+
+    if (m_engine.isInit())
+        return;
+
+    auto obj_inst = m_engine.environment()->objectManager();
+    JZNodeObjectPointer this_ptr = obj_inst->objectReferencePointer(this, false);
+    JZNodeObjectPointer mat_ptr = obj_inst->objectReferencePointer(&mat, false);
+
+    QVariantList in, out;
+    in << QVariant::fromValue(this_ptr) << QVariant::fromValue(mat_ptr);
+    m_engine.call(it->function, in, out);
 }
 
 void MainWindow::initProject()
@@ -915,7 +1006,7 @@ bool MainWindow::openEditor(QString filepath)
         connect(new_edit, &JZEditor::modifyChanged, this, &MainWindow::onModifyChanged);
         new_edit->setItem(item);
         new_edit->open(item);
-/*        if (new_edit->type() == ProjectItem_scriptItem)
+        if (new_edit->type() == ProjectItem_scriptItem)
         {
             auto node_edit = (JZNodeEditor*)new_edit;
             connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
@@ -923,14 +1014,13 @@ bool MainWindow::openEditor(QString filepath)
             connect(node_edit, &JZNodeEditor::sigAutoRunOnce, this, &MainWindow::onAutoRunOnce);
             connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
             connect(node_edit, &JZNodeEditor::sigAutoRunStop, this, &MainWindow::onAutoRunStop);
-            connect(node_edit, &JZNodeEditor::sigRuntimeValueChanged, this, &MainWindow::onEditorValueChanged);
+            //connect(node_edit, &JZNodeEditor::sigRuntimeValueChanged, this, &MainWindow::onEditorValueChanged);
 
-            node_edit->setRunningMode(m_processMode);
             auto cmp_ret = compilerResult(file);
             if (cmp_ret)
                 node_edit->setCompilerResult(cmp_ret);
         }
-*/
+
         m_editors[item] = new_edit;
         m_editorStack->addTab(new_edit, filepath);
     }
@@ -1146,4 +1236,51 @@ JZNode *MainWindow::getInitNode(int type)
     auto node_list = init_script->findNodeByType(type);
     Q_ASSERT(node_list.size() == 1);
     return node_list[0];
+}
+
+bool MainWindow::isCameraFlow()
+{
+    return currrentCameraNode() != nullptr;
+}
+
+JZNodeCameraReadyEvent* MainWindow::currrentCameraNode()
+{
+    auto editor = currentNodeEditor();
+    if (!editor)
+        return nullptr;
+
+    auto event = editor->script()->startNode();
+    if (event->type() != Node_CameraFrameReady)
+        return nullptr;
+
+    return dynamic_cast<JZNodeCameraReadyEvent*>(event);
+}
+
+void MainWindow::currrentCameraStart(bool is_once)
+{
+    auto node = currrentCameraNode();
+    QString camera = node->camera();
+    if(is_once)
+        m_cameraManager->startOnce(camera);
+    else
+        m_cameraManager->start(camera);
+}
+
+void MainWindow::currrentCameraStop()
+{
+    auto node = currrentCameraNode();
+    QString camera = node->camera();
+    m_cameraManager->stop(camera);
+}
+
+const CompilerResult* MainWindow::compilerResult(const QString& path)
+{
+    if (!m_buildResult)
+        return nullptr;
+
+    auto it = m_buildResult->compilerResult.find(path);
+    if (it == m_buildResult->compilerResult.end())
+        return nullptr;
+
+    return &it.value();
 }

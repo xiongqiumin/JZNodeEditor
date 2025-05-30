@@ -325,10 +325,10 @@ set(JZNodeEditorCore_SOURCES
     LogWidget.h    
     UiCommon.cpp
     UiCommon.h   
-    database.cpp
-    database.h    
-    editor/JZEditor.cpp
+	editor/JZEditor.cpp
     editor/JZEditor.h
+	editor/JZDockWidget.cpp
+	editor/JZDockWidget.h
     editor/JZEditorGlobal.cpp
     editor/JZEditorGlobal.h
     editor/JZNewFileDialog.cpp
@@ -434,7 +434,27 @@ set(JZNodeEditorCore_SOURCES
     editor/script/items/JZNodeSettingDialog.h
     editor/script/items/JZNodeDisplayItem.cpp
     editor/script/items/JZNodeDisplayItem.h
-     
+	editor/vision/JZVisionCommand.cpp
+	editor/vision/JZVisionCommand.h
+	editor/vision/JZVisionEditor.cpp
+	editor/vision/JZVisionEditor.h
+	editor/vision/JZVisionImage.cpp
+	editor/vision/JZVisionImage.h
+	editor/vision/JZVisionItemBase.cpp
+	editor/vision/JZVisionItemBase.h
+	editor/vision/JZVisionLineItem.cpp
+	editor/vision/JZVisionLineItem.h
+	editor/vision/JZVisionNodeItem.cpp
+	editor/vision/JZVisionNodeItem.h
+	editor/vision/JZVisionOutput.cpp
+	editor/vision/JZVisionOutput.h
+	editor/vision/JZVisionPanel.cpp
+	editor/vision/JZVisionPanel.h
+	editor/vision/JZVisionSettingDialog.cpp
+	editor/vision/JZVisionSettingDialog.h
+	editor/vision/JZVisionView.cpp
+	editor/vision/JZVisionView.h
+	
     widgets/JZAboutDialog.cpp
     widgets/JZAboutDialog.h    
     widgets/JZSearchTreeWidget.cpp
@@ -491,6 +511,16 @@ set(JZNodeEditorCore_SOURCES
     #log
     modules/log/JZModuleLogEditor.cpp
     modules/log/JZModuleLogEditor.h
+	
+	#3rd
+	3rd/JZCommon/jzDatabase/JZConfigTable.cpp
+	3rd/JZCommon/jzDatabase/JZConfigTable.h
+	3rd/JZCommon/jzDatabase/JZDataBase.cpp
+	3rd/JZCommon/jzDatabase/JZDataBase.h
+	3rd/JZCommon/jzDatabase/JZDbCondition.cpp
+	3rd/JZCommon/jzDatabase/JZDbCondition.h
+	3rd/JZCommon/jzDatabase/JZDbTable.cpp
+	3rd/JZCommon/jzDatabase/JZDbTable.h
 )
 
 add_library(JZNodeCore STATIC ${JZNodeCore_SOURCES})

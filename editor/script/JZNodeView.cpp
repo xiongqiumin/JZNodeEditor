@@ -42,6 +42,7 @@
 #include "JZNodeDisplayItem.h"
 #include "JZScriptItemVisitor.h"
 #include "JZNodeParamEditWidget.h"
+#include "JZNodeUtils.h"
 
 //CopyData
 struct CopyData
@@ -600,7 +601,7 @@ void JZNodeView::endLine(JZNodeGemo to)
 
     JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::CreateLine);
     cmd->itemId = -1;
-    cmd->newValue = formatLine(line);
+    cmd->newValue = JZNodeUtils::toBuffer(line);
     m_commandStack.push(cmd);
 
     auto node = getNode(line.to.nodeId);
@@ -623,11 +624,7 @@ void JZNodeView::cancelLine()
         return;
 
     m_selLine->ungrabMouse();
-    if (m_selLine->endTraget().nodeId != INVALID_ID)
-    {
-        m_selLine->setDrag(false);
-    }
-    else
+    if (m_selLine->endTraget().nodeId == INVALID_ID)
     {
         m_scene->removeItem(m_selLine);
         delete m_selLine;
@@ -683,13 +680,14 @@ JZNodeGroupItem *JZNodeView::getGroupItem(int id)
 QByteArray JZNodeView::getGroupData(int id)
 {
     auto group = m_file->getGroup(id);
-    return formatGroup(*group);
+    return JZNodeUtils::toBuffer(*group);
 }
 
 void JZNodeView::setGroupData(int id, QByteArray buffer)
 {
     auto group = m_file->getGroup(id);
-    *group = parseGroup(buffer);
+    JZNodeGroup g = JZNodeUtils::fromBuffer<JZNodeGroup>(buffer);
+    *group = g;
 }
 
 void JZNodeView::updateGroup(int id)
@@ -996,7 +994,7 @@ void JZNodeView::paste()
 
         JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::CreateLine);
         cmd->itemId = -1;
-        cmd->newValue = formatLine(line);
+        cmd->newValue = JZNodeUtils::toBuffer(line);
         m_commandStack.push(cmd);
     }
     m_commandStack.endMacro();
@@ -1311,7 +1309,7 @@ void JZNodeView::removeItem(QGraphicsItem *item)
 
             JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::RemoveLine);
             cmd->itemId = line->id;
-            cmd->oldValue = formatLine(*line);
+            cmd->oldValue = JZNodeUtils::toBuffer(*line);
             m_commandStack.push(cmd);
         }
 
@@ -1334,7 +1332,7 @@ void JZNodeView::removeItem(QGraphicsItem *item)
         auto line = m_file->getConnect(item_id);
         JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::RemoveLine);
         cmd->itemId = line->id;
-        cmd->oldValue = formatLine(*line);
+        cmd->oldValue = JZNodeUtils::toBuffer(*line);
         m_commandStack.push(cmd);
     }
     else if (item->type() == Item_group)
@@ -1637,7 +1635,7 @@ void JZNodeView::addRemoveLineCommand(int line_id)
 
     JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::RemoveLine);
     cmd->itemId = line->id;
-    cmd->oldValue = formatLine(*line);
+    cmd->oldValue = JZNodeUtils::toBuffer(*line);
     m_commandStack.push(cmd);
 }
 
@@ -1675,7 +1673,7 @@ int JZNodeView::addCreateGroupCommand(const JZNodeGroup &group)
     int id = m_file->nextId();
 
     JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::CreateGroup);
-    cmd->newValue = formatGroup(group);
+    cmd->newValue = JZNodeUtils::toBuffer(group);
     m_commandStack.push(cmd);    
     return id;
 }
@@ -1686,7 +1684,7 @@ void JZNodeView::addRemoveGroupCommand(int id)
 
     JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::RemoveGroup);
     cmd->itemId = id;
-    cmd->oldValue = formatGroup(*group);
+    cmd->oldValue = JZNodeUtils::toBuffer(*group);
     m_commandStack.push(cmd);
 }
 
@@ -1696,7 +1694,7 @@ void JZNodeView::addSetGroupCommand(int id, const JZNodeGroup &new_group)
 
     JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::SetGroup);
     cmd->itemId = id;
-    cmd->oldValue = formatGroup(*group);
+    cmd->oldValue = JZNodeUtils::toBuffer(*group);
     *group = new_group;
     m_commandStack.push(cmd);    
 }

@@ -6,11 +6,6 @@
 #include <QUndoCommand>
 #include "JZNode.h"
 
-JZNodeConnect parseLine(const QByteArray &buffer);
-QByteArray formatLine(const JZNodeConnect &line);
-JZNodeGroup parseGroup(const QByteArray &buffer);
-QByteArray formatGroup(const JZNodeGroup &group);
-
 enum ViewCommand {
     CreateNode,
     RemoveNode,

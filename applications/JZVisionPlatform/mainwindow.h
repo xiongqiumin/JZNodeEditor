@@ -7,21 +7,21 @@
 #include <QStackedWidget>
 #include "modules/communication/JZCommManager.h"
 #include "modules/camera/JZCameraManager.h"
+#include "modules/camera/JZCameraNode.h"
 #include "modules/model/JZModelManager.h"
+#include "modules/model/JZModelWidget.h"
+#include "modules/communication/JZCommWidget.h"
+#include "modules/communication/JZCommWidget.h"
+#include "jzDatabase/JZDataBase.h"
 #include "JZPanelWidget.h"
 #include "JZCameraListWidget.h"
 #include "JZCameraViewWidget.h"
 #include "JZProject.h"
-#include "database.h"
 #include "LogWidget.h"
 #include "JZProjectTree.h"
 #include "JZNodeEditor.h"
 #include "JZFlowTree.h"
 #include "mainTask.h"
-#include "modules/model/JZModelWidget.h"
-#include "modules/communication/JZCommWidget.h"
-#include "modules/model/JZModelWidget.h"
-#include "modules/communication/JZCommWidget.h"
 
 class Setting
 {
@@ -83,15 +83,31 @@ protected slots:
     void onUndoAvailable(bool flag);
     void onTabContextMenu(QPoint pos);
 
-    void onFlowRun();
-    void onFlowRunOnce();
-    void onFlowStop();
+    void onFunctionOpen(QString functionName);
+    void onAutoCompiler();
+    void onAutoRun();
+    void onAutoRunOnce();
+    void onAutoRunStop();
+
+    void onBuildStart();
+    void onBuildFinish(JZNodeBuildResultPtr result);
+    void onAutoRunResult(int result);
+
+    void onFrameReady(QString camera,cv::Mat mat);
+
+    const CompilerResult* compilerResult(const QString& path);
 
 protected:
+    struct CameraProgram
+    {
+        QString function;
+    };
+
     virtual void customEvent(QEvent* event) override;
     virtual void resizeEvent(QResizeEvent* event) override;
     virtual void closeEvent(QCloseEvent* event) override;
 
+    void initDatabase();
     void loadSetting();
     void saveSetting();
 
@@ -133,9 +149,16 @@ protected:
     void updateTabText(int index);
     JZNode *getInitNode(int type);
 
+    bool isCameraFlow();
+    JZNodeCameraReadyEvent* currrentCameraNode();
+    void currrentCameraStart(bool is_once);
+    void currrentCameraStop();
+
     JZModelManager* m_modelManager;
     JZCameraManager* m_cameraManager;
     JZCommManager* m_commManager;
+
+    QMap<QString, CameraProgram> m_camPrograom;
 
     QStackedWidget *m_stack;    
     JZCameraListWidget *m_cameraList;
@@ -146,7 +169,8 @@ protected:
     LogWidget* m_log;
 
     Setting m_setting;
-    DataBaseConfig m_dbConfig;
+    JZDataBase m_db;
+    JZConfigTable m_config;
     JZProject m_project;
 
     QList<QMenu*> m_menuList;
@@ -154,6 +178,8 @@ protected:
     QTabWidget* m_editorStack;
     QMap<JZProjectItem*, JZEditor*> m_editors;
     MainTaskManager m_task;
+    JZNodeBuildResultPtr m_buildResult;
+    JZNodeEngine m_engine;
 };
 
 #endif // MAINWINDOW_H    

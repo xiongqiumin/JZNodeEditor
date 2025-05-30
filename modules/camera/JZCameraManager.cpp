@@ -77,6 +77,12 @@ void JZCameraManager::init()
     emit sigInitFinish();
 }
 
+void JZCameraManager::onFrameReady(cv::Mat mat)
+{
+    JZCamera* camera = qobject_cast<JZCamera*>(sender());
+    emit sigFrameReady(camera->objectName(), mat);
+}
+
 void JZCameraManager::addCamera(const JZCameraConfigEnum &config)
 {    
     m_config.cameraList.push_back(config);
@@ -204,6 +210,7 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfigEnum &config)
     {
         Q_ASSERT(0);
     }
+    connect(camera,&JZCamera::sigFrameReady,this,&JZCameraManager::onFrameReady);
     
     camera->setObjectName(config->name);
     camera->setConfig(config);

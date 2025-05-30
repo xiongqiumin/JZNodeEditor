@@ -23,7 +23,7 @@ class JZEditor : public QWidget
     Q_OBJECT
 
 public:
-    JZEditor();
+    JZEditor(QWidget *parent = nullptr);
     virtual ~JZEditor();
 
     int type();

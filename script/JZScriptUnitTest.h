@@ -44,10 +44,12 @@ public:
     QList<FunctionDepend> functionList;       
 
     JZScriptItem *initExtScript;
-    bool isTrigger;
-    JZScriptItem *triggerScript; //触发    
+    
+    bool isRunOnce;
+    bool isTriggeScriptr;         //是否有触发函数,对于事件，有触发函数
+    JZScriptItem *triggerScript;  //触发    
     JZScriptItem *unitScript;
-    JZScriptItem *originScript;        //原始
+    JZScriptItem *originScript;   //原始
 
     RunStatus status;
     QVariantList input;

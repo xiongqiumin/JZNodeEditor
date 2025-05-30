@@ -3,40 +3,7 @@
 #include "JZNodeFactory.h"
 #include "JZNodeViewCommand.h"
 #include "JZEditorGlobal.h"
-
-//line
-JZNodeConnect parseLine(const QByteArray &buffer)
-{
-    JZNodeConnect line;
-    QDataStream s(buffer);
-    s >> line;
-    return line;
-}
-
-QByteArray formatLine(const JZNodeConnect &line)
-{
-    QByteArray buffer;
-    QDataStream s(&buffer, QIODevice::WriteOnly);
-    s << line;
-    return buffer;
-}
-
-//group
-JZNodeGroup parseGroup(const QByteArray &buffer)
-{
-    JZNodeGroup group;
-    QDataStream s(buffer);
-    s >> group;
-    return group;
-}
-
-QByteArray formatGroup(const JZNodeGroup &group)
-{
-    QByteArray buffer;
-    QDataStream s(&buffer, QIODevice::WriteOnly);
-    s << group;
-    return buffer;
-}
+#include "JZNodeUtils.h"
 
 //JZNodeViewCommand
 JZNodeViewCommand::JZNodeViewCommand(JZNodeView *view,int type)
@@ -89,7 +56,7 @@ void JZNodeViewCommand::undo()
     }
     else if(command == RemoveLine)
     {
-        auto line = parseLine(oldValue.toByteArray());
+        auto line = JZNodeUtils::fromBuffer<JZNodeConnect>(oldValue.toByteArray());
         line.id = itemId;
         m_view->insertLine(line);
     }
@@ -99,7 +66,7 @@ void JZNodeViewCommand::undo()
     }
     else if (command == RemoveGroup)
     {
-        auto group = parseGroup(oldValue.toByteArray());
+        auto group = JZNodeUtils::fromBuffer<JZNodeGroup>(oldValue.toByteArray());
         m_view->insertGroup(group);
     }
     else
@@ -144,7 +111,7 @@ void JZNodeViewCommand::redo()
     }
     else if(command == CreateLine)
     {
-        auto line = parseLine(newValue.toByteArray());
+        auto line = JZNodeUtils::fromBuffer<JZNodeConnect>(newValue.toByteArray());
         if(itemId == -1)
         {
             auto item = m_view->createLine(line.from,line.to);
@@ -162,7 +129,7 @@ void JZNodeViewCommand::redo()
     }
     else if (command == CreateGroup)
     {
-        auto group = parseGroup(newValue.toByteArray());
+        auto group = JZNodeUtils::fromBuffer<JZNodeGroup>(newValue.toByteArray());
         if (itemId == -1)
         {
             auto item = m_view->createGroup(group);

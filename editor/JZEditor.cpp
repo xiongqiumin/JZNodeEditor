@@ -5,7 +5,8 @@
 #include "JZNodeParamEditor.h"
 #include "JZEditorGlobal.h"
 
-JZEditor::JZEditor()
+JZEditor::JZEditor(QWidget *parent)
+    :QWidget(parent)
 {
     m_item = nullptr;
     m_project = nullptr;    

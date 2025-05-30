@@ -66,7 +66,8 @@ JZScriptItemDepend::JZScriptItemDepend()
     initExtScript = nullptr;
     triggerScript = nullptr;
     unitScript = nullptr;
-    isTrigger = false;    
+    isTriggeScriptr = false;
+    isRunOnce = false;
 
     status = None;
 }
@@ -74,6 +75,9 @@ JZScriptItemDepend::JZScriptItemDepend()
 void JZScriptItemDepend::init(JZScriptItem *script)
 {
     originScript = script;
+    isTriggeScriptr = false;
+    isRunOnce = false;
+
     initExtScript->clear();
     triggerScript->clear();
     unitScript->clear();
@@ -431,7 +435,7 @@ void JZScriptUnitTest::start(bool once)
     
     QString init_function = m_depend.function.className + "::init";
     bool ret = false;
-    if (m_depend.isTrigger)
+    if (m_depend.isTriggeScriptr)
         ret = m_engine->call(trigger_func, unit_in, m_depend.output);
     else
     {

@@ -10,7 +10,6 @@ JZNodeLineItem::JZNodeLineItem(JZNodeGemo from)
 {
     m_type = Item_line;
     m_from = from;
-    m_drag = false;
     setFlag(QGraphicsItem::ItemIsSelectable);
     setZValue(-1);
 }
@@ -18,13 +17,6 @@ JZNodeLineItem::JZNodeLineItem(JZNodeGemo from)
 JZNodeLineItem::~JZNodeLineItem()
 {
 }
-
-void JZNodeLineItem::setDrag(bool flag)
-{
-    setZValue(-1);
-    prepareGeometryChange();
-    m_drag = flag;
-}    
 
 QRectF JZNodeLineItem::boundingRect() const
 {    

@@ -17,6 +17,8 @@ set(JZVisionPlatform_SOURCES
 	JZModuleVisionApp.h
     JZFlowTree.cpp
     JZFlowTree.h
+	JZCameraThread.cpp
+	JZCameraThread.h
 )
 
 add_executable(JZVisionPlatform ${JZVisionPlatform_SOURCES})

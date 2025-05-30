@@ -23,8 +23,6 @@ void JZModuleVisionApp::regist(JZScriptEnvironment* env)
     cls_mainwindow.defPropertyFunc("modelManager", &MainWindow::modelManager);
     cls_mainwindow.defPropertyFunc("commManager", &MainWindow::commManager);
     cls_mainwindow.regist();
-
-    
 }
 
 void JZModuleVisionApp::unregist(JZScriptEnvironment* env)

@@ -16,14 +16,18 @@ void JZNodeCameraVistor::visitorSelf(JZNode* node)
 
         auto class_item = node->file()->getClassItem();
 
-        //trigger
-        m_depend->isTrigger = true;
+        m_depend->isTriggeScriptr = true;
         auto trigger_script = m_depend->triggerScript;
         auto trigger_start = trigger_script->startNode();
-        
-        auto camera_start = new JZNodeCameraStartOnce();
-        trigger_script->addNode(camera_start);
+
+        JZCameraNode* camera_start = nullptr;
+        if (m_depend->isRunOnce)
+            camera_start = new JZNodeCameraStartOnce();
+        else
+            camera_start = new JZNodeCameraStart();
+
         camera_start->setCamera(camera_name);
+        trigger_script->addNode(camera_start);
         trigger_script->addConnect(trigger_start->flowOutGemo(), camera_start->flowInGemo());
     }
 }
