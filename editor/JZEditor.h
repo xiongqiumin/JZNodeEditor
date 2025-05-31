@@ -17,7 +17,6 @@ enum {
 };
 
 class JZProject;
-class MainWindow;
 class JZEditor : public QWidget
 {
     Q_OBJECT
@@ -28,7 +27,6 @@ public:
 
     int type();
     
-    void setMainWindow(MainWindow *window);
     void setProject(JZProject *project);
     JZProject *project();
 
@@ -62,7 +60,6 @@ protected:
 
     JZProjectItem *m_item;
     JZProject *m_project;
-    MainWindow *m_window;
     int m_type;    
 };
 typedef JZEditor *(*CreateJZEditorFunc)();

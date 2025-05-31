@@ -153,6 +153,12 @@ bool JZCameraManager::stop(QString name)
     return true;
 }
 
+void JZCameraManager::stopAll()
+{
+    for (int i = 0; i < m_cameras.size(); i++)
+        m_cameras[i]->stop();
+}
+
 bool JZCameraManager::setCamera(QString name, const JZCameraConfigEnum &config)
 {
     auto c = camera(name);

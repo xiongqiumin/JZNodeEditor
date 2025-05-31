@@ -9,8 +9,15 @@ JZVisionSettingDialog::JZVisionSettingDialog(QWidget *parent)
     QTabWidget *tab = new QTabWidget();
     tab->addTab(p,"基本参数");
     setCentralWidget(tab);
+
+    resize(480, 600);
 }
 
 JZVisionSettingDialog::~JZVisionSettingDialog()
 {
+}
+
+void JZVisionSettingDialog::setNode(JZNode* node)
+{
+
 }

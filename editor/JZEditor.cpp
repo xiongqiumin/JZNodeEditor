@@ -25,11 +25,6 @@ JZEditor::~JZEditor()
 {
 }
 
-void JZEditor::setMainWindow(MainWindow *window)
-{
-    m_window = window;
-}
-
 QMenu *JZEditor::menu(int type)
 {
     auto menu_bar = editorMenuBar();
@@ -132,7 +127,7 @@ JZEditorManager *JZEditorManager::instance()
 
 JZEditorManager::JZEditorManager()
 {
-    registEditor(ProjectItem_scriptItem, CreateEditor<JZNodeEditor>);
+    registEditor(ProjectItem_scriptItem, CreateEditor<JZNodeEditor>);    
     registEditor(ProjectItem_param, CreateEditor<JZNodeParamEditor>);
     //registEditor(ProjectItem_ui, CreateEditor<JZUiEditor>);
 }

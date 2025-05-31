@@ -16,7 +16,7 @@ void JZFlowTree::init()
     if (!m_project)
         return;
 
-    auto class_item = m_project->getClass("JZVisionPlatform");
+    auto class_item = m_project->getClass("JZVisionApp");
 
     auto root = addItem(m_tree->invisibleRootItem(), class_item);
     root->setText(0, "Application");

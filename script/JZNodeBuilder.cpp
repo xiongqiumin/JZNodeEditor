@@ -110,6 +110,11 @@ bool JZNodeBuilder::isError() const
     return m_error;
 }
 
+QString JZNodeBuilder::checkError() const
+{
+    return m_checkError;
+}
+
 QString JZNodeBuilder::error() const
 {
     QString result = m_checkError;

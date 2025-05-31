@@ -40,6 +40,7 @@ public:
     bool start(QString name);
     bool startOnce(QString name);
     bool stop(QString name);
+    void stopAll();
     
     void addCamera(const JZCameraConfigEnum &config);
     void removeCamera(QString name);

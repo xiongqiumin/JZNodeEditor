@@ -28,6 +28,8 @@ public:
     void stopBuild();
     bool isBuildInterrupt();
 
+    QString checkError() const;
+
     bool isError() const;
     QString error() const;
 

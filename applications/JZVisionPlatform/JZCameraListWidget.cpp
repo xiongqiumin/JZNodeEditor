@@ -7,12 +7,13 @@
 #include "modules/opencv/CvToQt.h"
 #include "jzProfiler/JZTx.h"
 #include "JZCameraViewWidget.h"
+#include "mainwindow.h"
 
 //JZCameraListWidget
 JZCameraListWidget::JZCameraListWidget(QWidget* parent)
 {
 	m_view = nullptr;
-	m_cameraManager = nullptr;
+    m_window = nullptr;
 
 	QVBoxLayout* l = new QVBoxLayout();
 	l->setContentsMargins(0, 0, 0, 0);
@@ -33,9 +34,11 @@ JZCameraListWidget::~JZCameraListWidget()
 {
 }
 
-void JZCameraListWidget::setCameraManager(JZCameraManager* cameraManager)
+void JZCameraListWidget::setMainWindow(MainWindow *mainwindow)
 {
-	m_cameraManager = cameraManager;
+    m_window = mainwindow;
+    m_cameraManager = m_window->cameraManager();
+	
 	m_tree->clear();
 	updateCamera();
 }
@@ -88,12 +91,7 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
     }
     else
     {        
-        if (item == m_root)
-        {
-            actOpenAll = menu.addAction("全部打开");
-            actStopAll = menu.addAction("全部关闭");
-        }
-        else
+        if (item != m_root)        
         {
             camera_name = item->text(0);
             camera = m_cameraManager->camera(camera_name);
@@ -115,9 +113,14 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
         for (int i = 0; i < config.cameraList.size(); i++)
             camera_list << config.cameraList[i]->name;
 
+        JZCameraFileConfig *cfg = new JZCameraFileConfig();
+        cfg->path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
+
+        /*
         JZCameraRtspConfig *cfg = new JZCameraRtspConfig();
         cfg->name = JZRegExpHelp::uniqueString("camera", camera_list);
         cfg->path = "rtsp://admin:123456HK@192.168.0.164:554/Streaming/Channels/101";
+        */
 
         JZCameraConfigDialog dlg(this);
         dlg.setConfig(JZCameraConfigEnum(cfg));
@@ -137,23 +140,11 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
     }
     else if (act == actOpen)
     {        
-        startCamera(camera);
+        m_window->startCamera(camera_name);
 	}
-    else if (act == actOpenAll)
-    {
-        auto camera_list = m_cameraManager->cameraList();
-        for (int i = 0; i < camera_list.size(); i++)
-            startCamera(camera_list[i]);
-    }
-    else if (act == actStopAll)
-    {
-        auto camera_list = m_cameraManager->cameraList();
-        for (int i = 0; i < camera_list.size(); i++)
-            camera_list[i]->stop();
-    }
-	else if (act == actClose)
+    else if (act == actClose)
 	{
-        camera->close();
+        m_window->stopCamera(camera_name);
 	}
 	else if (act == actSetting)
 	{
@@ -166,16 +157,6 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
         m_view->removeCamera(camera_name);
         emit sigCameraChanged();
     }
-}
-
-void JZCameraListWidget::startCamera(JZCamera *camera)
-{
-    if (!camera->isOpen())
-    {
-        if (!camera->open())
-            return;
-    }
-    camera->start();
 }
 
 void JZCameraListWidget::settingCamera(QString name)

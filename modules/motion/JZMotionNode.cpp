@@ -6,7 +6,7 @@
 JZNodeMotionInit::JZNodeMotionInit()
 {
     m_type = Node_MotionInit;
-    m_name = "运控初始化";
+    m_name = "运动初始化";
 }
 
 JZNodeMotionInit::~JZNodeMotionInit()
@@ -22,7 +22,10 @@ bool JZNodeMotionInit::compiler(JZNodeCompiler *c, QString &error)
 JZNodeMotionZero::JZNodeMotionZero()
 {
     m_type = Node_MotionZero;
-    m_name = "运控归零";
+    m_name = "运动归零";
+
+    addFlowIn();
+    addFlowOut();
 }
 
 JZNodeMotionZero::~JZNodeMotionZero()
@@ -39,7 +42,10 @@ bool JZNodeMotionZero::compiler(JZNodeCompiler *c, QString &error)
 JZNodeMotionMove::JZNodeMotionMove()
 {
     m_type = Node_MotionMove;
-    m_name = "运控移动";
+    m_name = "运动移动";
+
+    addFlowIn();
+    addFlowOut();
 }
 
 JZNodeMotionMove::~JZNodeMotionMove()

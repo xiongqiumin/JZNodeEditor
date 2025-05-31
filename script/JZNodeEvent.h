@@ -152,6 +152,7 @@ public:
     bool compilerSignal(JZNodeCompiler* compiler, QString& error);
 
 protected:    
+    QString m_event;
     ClassInitInfo m_connectInfo;
 };
 

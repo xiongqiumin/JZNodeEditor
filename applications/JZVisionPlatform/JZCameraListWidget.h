@@ -10,6 +10,7 @@
 
 //JZCameraListWidget
 class JZCameraViewWidget;
+class MainWindow;
 class JZCameraListWidget : public QWidget 
 {
     Q_OBJECT
@@ -18,11 +19,10 @@ public:
     JZCameraListWidget(QWidget* parent = nullptr);
     ~JZCameraListWidget();
 
-    void setCameraManager(JZCameraManager *cameraManager);
-    void setViewWidget(JZCameraViewWidget *view);
+    void setMainWindow(MainWindow *mainwindow);    
+    void setViewWidget(JZCameraViewWidget *view);    
     void updateCamera();
 
-    void startCamera(JZCamera *camera);
     void settingCamera(QString name);
 
 signals:
@@ -41,6 +41,7 @@ private:
     QTreeWidget* m_tree;
 
     JZCameraViewWidget* m_view;
+    MainWindow* m_window;
     JZCameraManager* m_cameraManager;
     QTreeWidgetItem *m_root;
 };

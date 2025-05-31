@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QCloseEvent>
 #include <QApplication>
+#include <QDesktopServices>
 #include "mainwindow.h"
 #include "JZTitleWidget.h"
 #include "JZEditorUtils.h"
@@ -22,6 +23,9 @@
 #include "JZProjectTemplate.h"
 #include "LogManager.h"
 #include "JZEventWidget.h"
+#include "JZEditorGlobal.h"
+#include "JZDockWidget.h"
+#include "widgets/JZAboutDialog.h"
 
 //Setting
 Setting::Setting()
@@ -50,26 +54,33 @@ QDataStream& operator >> (QDataStream& s, Setting& param)
 }
 
 //MainWindow
+MainWindow *g_visionWindow = nullptr;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {            
+    g_visionWindow = this;
+       
+    m_className = "JZVisionApp";
     setMinimumSize(800, 600);
     setEditorProject(&m_project);
+    setWindowTitle("JZVison");
 
     m_task.setProject(&m_project);
     connect(m_task.runThread(), &JZNodeAutoRunThread::sigResult, this, &MainWindow::onAutoRunResult);
     connect(&m_task, &MainTaskManager::sigBuildStart, this, &MainWindow::onBuildStart);
     connect(&m_task, &MainTaskManager::sigBuildFinish, this, &MainWindow::onBuildFinish);
+    
+    JZEditorManager::instance()->registEditor(ProjectItem_scriptItem, CreateEditor<JZVisionEditor>);
 
-    JZModuleManager::instance()->addModule(new JZModuleVisionApp());
-    JZNodeEditorInit();
     LogManagerInit();
+    JZLogManager::instance()->addObserver(LogModule_General, this);
     JZLogManager::instance()->addObserver(Log_Compiler, this);
     JZLogManager::instance()->addObserver(Log_Runtime, this);
 
     m_modelManager = new JZModelManager(this);
     m_cameraManager = new JZCameraManager(this);
     m_commManager = new JZCommManager(this);
+    connect(m_cameraManager, &JZCameraManager::sigFrameReady, this, &MainWindow::onFrameReady);
 
     m_cameraList = new JZCameraListWidget();
     m_cameraView = new JZCameraViewWidget();
@@ -78,10 +89,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_cameraList, &JZCameraListWidget::sigCameraChanged, this, &MainWindow::onCameraConfigChanged);    
     
-    m_cameraList->setCameraManager(m_cameraManager);
+    m_cameraList->setMainWindow(this);
     m_cameraList->setViewWidget(m_cameraView);    
 
     initUi();
+    initDatabase();
     loadSetting();
 }
 
@@ -101,7 +113,9 @@ void MainWindow::initDatabase()
 
 void MainWindow::loadSetting()
 {
-    m_setting = m_config.getConfig<Setting>("setting");
+    if(m_config.hasConfig("setting"))
+        m_setting = m_config.getConfig<Setting>("setting");
+
     if (!m_setting.recentFile.isEmpty())
         openProject(m_setting.recentFile[0]);
     else
@@ -162,7 +176,10 @@ void MainWindow::customEvent(QEvent* event)
     {
         auto log_event = dynamic_cast<JZLogEvent*>(event);
         auto log = log_event->log;
-        //m_log->addLog(log->module, log->message);
+        if (log->module == Log_Compiler)
+            m_buildLog->addLog(log->module, log->message);
+        else
+            m_mainLog->addLog(log);
     }
 }
 
@@ -181,6 +198,8 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
     m_task.clearTask();
     m_task.stopRunThread();
+    if (m_engine.isInit())
+        m_engine.deinit();
     QMainWindow::closeEvent(event);
 }
 
@@ -209,9 +228,7 @@ void MainWindow::initUi()
     mainLayout->addWidget(title);
     mainLayout->setSpacing(1);
 
-    QMenuBar *bar = addMenuBar(mainLayout);
-    mainLayout->addWidget(bar);
-    setEditorMenuBar(bar);
+    initMenuBar(mainLayout);        
 
     //bottom
     QHBoxLayout *bottom_layout = new QHBoxLayout();        
@@ -290,7 +307,7 @@ void MainWindow::initUi()
     mainLayout->addWidget(bottom_widget);
 }
 
-QMenuBar *MainWindow::addMenuBar(QVBoxLayout *layout)
+void MainWindow::initMenuBar(QVBoxLayout *layout)
 {
     QMenuBar *menubar = new QMenuBar();
 
@@ -338,24 +355,50 @@ QMenuBar *MainWindow::addMenuBar(QVBoxLayout *layout)
     actCopy->setShortcutContext(Qt::WidgetShortcut);
     actPaste->setShortcutContext(Qt::WidgetShortcut);
     actSelectAll->setShortcutContext(Qt::WidgetShortcut);
+    connect(actUndo, &QAction::triggered, this, &MainWindow::onActionUndo);
+    connect(actRedo, &QAction::triggered, this, &MainWindow::onActionRedo);
+    connect(actDel, &QAction::triggered, this, &MainWindow::onActionDel);
+    connect(actCut, &QAction::triggered, this, &MainWindow::onActionCut);
+    connect(actCopy, &QAction::triggered, this, &MainWindow::onActionCopy);
+    connect(actPaste, &QAction::triggered, this, &MainWindow::onActionPaste);
+    connect(actSelectAll, &QAction::triggered, this, &MainWindow::onActionSelectAll);
 
+    QMenu *menu_build = menubar->addMenu("构建");
+    auto actBuild = menu_build->addAction("编译");    
+    connect(actBuild, &QAction::triggered, this, &MainWindow::onActionBuild);
+
+    // menu_help
     QMenu *menu_help = menubar->addMenu("帮助");
     menu_help->setProperty("JZMenuType", Menu_Help);
     auto actHelp = menu_help->addAction("查看帮助");
     menu_help->addSeparator();    
     auto actAbout = menu_help->addAction("关于" + windowTitle());    
+    connect(actAbout, &QAction::triggered, this, &MainWindow::onActionAbout);
     connect(actHelp, &QAction::triggered, this, &MainWindow::onActionHelp);
 
     m_menuList << menu_file << menu_edit << menu_help;
     layout->addWidget(menubar);
 
+    QAction *actRun = new QAction(icon("run.png"), "运行");
+    QAction *actRunOnce = new QAction(icon("runOnce.png"), "运行一次");
+    QAction *actStop = new QAction(icon("stop.png"), "停止");
+    connect(actRun, &QAction::triggered, this, &MainWindow::onActionRun);
+    connect(actRunOnce, &QAction::triggered, this, &MainWindow::onActionRunOnce);
+    connect(actStop, &QAction::triggered, this, &MainWindow::onActionStop);
+    
     //tool bar
     QToolBar *main_tool = new QToolBar();
     main_tool->addAction(actSaveFile);
     main_tool->addAction(actSaveAllFile);
+    main_tool->addSeparator();
+    main_tool->addAction(actRun);
+    main_tool->addAction(actRunOnce);
+    main_tool->addAction(actStop);
+
     layout->addWidget(main_tool);
     
-    return menubar;
+    setEditorMenuBar(menubar);
+    setEditorToolBar(main_tool);
 }
 
 void MainWindow::onModifyChanged(bool flag)
@@ -404,9 +447,21 @@ void MainWindow::addCameraPage()
     JZPanelWidget* panel = new JZPanelWidget();
     panel->addTab("设备列表", m_cameraList);
 
+    auto log = new JZLogWidget();
+    m_mainLog = log;
+
+    QSplitter* splitterRight = new QSplitter(Qt::Vertical);    
+    splitterRight->addWidget(m_cameraView);
+    splitterRight->addWidget(new JZDockWidget("日志", log));
+    splitterRight->setChildrenCollapsible(false);
+    splitterRight->setSizes({ 600,200 });
+    splitterRight->setStretchFactor(0, 0);
+    splitterRight->setStretchFactor(1, 1);
+    setSliderStyle(splitterRight);
+
     QSplitter* splitterTop = new QSplitter(Qt::Horizontal);
     splitterTop->addWidget(panel);
-    splitterTop->addWidget(m_cameraView);
+    splitterTop->addWidget(splitterRight);
     splitterTop->setSizes({ 200,600 });
     splitterTop->setStretchFactor(0, 0);
     splitterTop->setStretchFactor(1, 1);
@@ -423,8 +478,8 @@ void MainWindow::addFlowPage()
     JZPanelWidget* panel = new JZPanelWidget();
     panel->addTab("流程列表", m_projectTree);
 
-    m_log = new LogWidget();
-    connect(m_log, &LogWidget::sigNavigate, this, &MainWindow::onNavigate);
+    m_buildLog = new LogWidget();
+    connect(m_buildLog, &LogWidget::sigNavigate, this, &MainWindow::onNavigate);
 
     connect(m_projectTree, &JZProjectTree::sigActionTrigged, this, &MainWindow::onProjectTreeAction);
 
@@ -457,7 +512,7 @@ void MainWindow::addFlowPage()
 
     QSplitter* splitterLeft = new QSplitter(Qt::Vertical);
     splitterLeft->addWidget(m_editorStack);
-    splitterLeft->addWidget(m_log);
+    splitterLeft->addWidget(m_buildLog);
     l_left->addWidget(splitterLeft);
 
     splitterMain->setCollapsible(0, false);
@@ -675,9 +730,111 @@ void MainWindow::onActionCloseAllFileExcept()
     closeAllEditor(m_editor);
 }
 
+void MainWindow::onActionUndo()
+{
+    if (m_editor)
+        m_editor->undo();
+}
+
+void MainWindow::onActionRedo()
+{
+    if (m_editor)
+        m_editor->redo();
+}
+
+void MainWindow::onActionDel()
+{
+    if (m_editor)
+        m_editor->remove();
+}
+
+void MainWindow::onActionCut()
+{
+    if (m_editor)
+        m_editor->cut();
+}
+
+void MainWindow::onActionCopy()
+{
+    if (m_editor)
+        m_editor->copy();
+}
+
+void MainWindow::onActionPaste()
+{
+    if (m_editor)
+        m_editor->paste();
+}
+
+void MainWindow::onActionSelectAll()
+{
+    if (m_editor)
+        m_editor->selectAll();
+}
+
+void MainWindow::onActionAbout()
+{    
+    JZAboutDialog dlg(this);
+    dlg.exec();
+}
+
 void MainWindow::onActionHelp()
 {
+    QString url = "https://www.juzisoftware.cn/JZVison/index.html";
+    QDesktopServices::openUrl(url);
+}
 
+void MainWindow::onActionBuild()
+{
+    m_task.addBuildProgramTask();
+}
+
+void MainWindow::onActionRun()
+{
+    if (m_stack->currentIndex() == 0)
+    {
+        if (!checkBuild())
+            return;
+
+        auto camera_list = m_cameraManager->cameraList();
+        for (int i = 0; i < camera_list.size(); i++)
+            startCamera(camera_list[i]->name());
+    }
+    else if (m_stack->currentIndex() == 1)
+    {
+        onAutoRun();
+    }
+}
+
+void MainWindow::onActionRunOnce()
+{
+    if (m_stack->currentIndex() == 0)
+    {
+        if (!checkBuild())
+            return;
+
+        auto camera_list = m_cameraManager->cameraList();
+        for (int i = 0; i < camera_list.size(); i++)
+            startCameraOnce(camera_list[i]->name());
+    }
+    else if (m_stack->currentIndex() == 1)
+    {
+        onAutoRunOnce();
+    }
+}
+
+void MainWindow::onActionStop()
+{
+    if (m_stack->currentIndex() == 0)
+    {
+        auto camera_list = m_cameraManager->cameraList();
+        for (int i = 0; i < camera_list.size(); i++)
+            stopCamera(camera_list[i]->name());
+    }
+    else if (m_stack->currentIndex() == 1)
+    {
+        onAutoRunStop();
+    }
 }
 
 void MainWindow::onEditorClose(int index)
@@ -750,12 +907,9 @@ void MainWindow::onProjectItemChanged(JZProjectItem* item)
 
 void MainWindow::onProjectChanged()
 {
-    m_task.addAutoCompilerTask();
+    m_engine.deinit();
 
-    //editor
-    auto list = nodeEditorList();
-    for (auto node_edit : list)
-        node_edit->updateDefine();
+    onActionBuild();
 }
 
 void MainWindow::onProjectTreeAction(int type, QString filepah)
@@ -809,49 +963,57 @@ void MainWindow::onFunctionOpen(QString functionName)
 
 void MainWindow::onAutoCompiler()
 {
-    m_task.addAutoCompilerTask();
+    onActionBuild();
 }
 
 void MainWindow::onAutoRun()
 {
-    if(isCameraFlow())
-    {
+    if (!m_engine.isInit())
         return;
-    }
 
-    auto path = currentNodeEditor()->item()->itemPath();
-    m_task.addTestTask(path,false);
+    if(!isCameraFlow())    
+        return;    
+
+    JZNodeCameraReadyEvent *node = currrentCameraNode();
+    QString camera_name = node->camera();
+    startCamera(camera_name);
 }
 
 void MainWindow::onAutoRunOnce()
 {
-    if (isCameraFlow())
-    {
+    if (!m_engine.isInit())
         return;
-    }
 
-    auto path = currentNodeEditor()->item()->itemPath();
-    m_task.addTestTask(path,true);
+    if (!isCameraFlow())    
+        return;
+
+    JZNodeCameraReadyEvent *node = currrentCameraNode();
+    QString camera_name = node->camera();
+    startCameraOnce(camera_name);
 }
 
 void MainWindow::onAutoRunStop()
 {
-    if (isCameraFlow())
-    {
+    if (!m_engine.isInit())
         return;
-    }
 
-    m_task.stopRunThread();
+    if (!isCameraFlow())    
+        return;    
+
+    JZNodeCameraReadyEvent *node = currrentCameraNode();
+    QString camera_name = node->camera();
+    stopCamera(camera_name);
 }
 
 void MainWindow::onBuildStart()
 {
-    m_log->clearLog(Log_Compiler);
+    m_buildLog->clearLog(Log_Compiler);
 }
 
 void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
 {
-    m_engine.deinit();
+    if(m_engine.isInit())
+        m_engine.deinit();
     m_buildResult = result;
 
     auto it = m_editors.begin();
@@ -859,7 +1021,7 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
     {
         if (it.value()->type() == ProjectItem_scriptItem)
         {
-            auto node_edit = (JZNodeEditor*)it.value();
+            auto node_edit =  qobject_cast<JZVisionEditor*>(it.value());
             auto cmp_info = compilerResult(it.key()->itemPath());
             if (cmp_info)
                 node_edit->setCompilerResult(cmp_info);
@@ -871,6 +1033,29 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
     {
         m_engine.setProgram(&m_buildResult->program);
         m_engine.init();
+
+        m_camProgram.clear();
+
+        auto cls_item = m_project.getClass(m_className);
+        auto functions = cls_item->flowList();        
+        for (int i = 0; i < functions.size(); i++)
+        {
+            auto flow = cls_item->flow(functions[i]);
+            auto event = flow->startNode();
+            if (!event || event->type() != Node_CameraFrameReady)
+                continue;
+
+            auto cam_event = dynamic_cast<JZNodeCameraReadyEvent*>(event);
+            auto camera_name = cam_event->camera();
+            
+            CameraProgram prog;
+            prog.function = cam_event->function().fullName();
+            m_camProgram[camera_name] = prog;            
+        }
+    }
+    else
+    {
+        LOG_W("编译失败，请检查编译结果");
     }
 }
 
@@ -881,15 +1066,16 @@ void MainWindow::onAutoRunResult(int result)
 
 void MainWindow::onFrameReady(QString camera, cv::Mat mat)
 {
-    auto it = m_camPrograom.find(camera);
-    if (it != m_camPrograom.end())
+    if (!m_engine.isInit())
         return;
 
-    if (m_engine.isInit())
-        return;
-
+    auto it = m_camProgram.find(camera);
+    if (it == m_camProgram.end())
+        return;    
+    
     auto obj_inst = m_engine.environment()->objectManager();
-    JZNodeObjectPointer this_ptr = obj_inst->objectReferencePointer(this, false);
+    JZNodeObject *this_obj = obj_inst->createReference(m_className, this, false);
+    JZNodeObjectPointer this_ptr(this_obj,false);
     JZNodeObjectPointer mat_ptr = obj_inst->objectReferencePointer(&mat, false);
 
     QVariantList in, out;
@@ -903,7 +1089,7 @@ void MainWindow::initProject()
 
     JZProjectTemplate::instance()->initProject(&m_project, "empty");    
 
-    JZScriptClassItem *class_item = m_project.mainFile()->addClass("JZVisionPlatform","QMainWindow");
+    JZScriptClassItem *class_item = m_project.mainFile()->addClass(m_className,"JZVisionPlatform");
     JZFunctionDefine func_init_def = class_item->objectDefine().initMemberFunction("init");
     JZScriptItem *script = class_item->addMemberFunction(func_init_def);
     auto start = script->startNode();
@@ -925,11 +1111,11 @@ bool MainWindow::closeProject()
     if (!closeAllEditor())
         return false;
 
-    m_log->clearLogs();
+    m_buildLog->clearLogs();
     m_projectTree->clear();
     m_project.close();
     updateActionStatus();
-    setWindowTitle("JZNodeEditor");
+    setWindowTitle("JZVison");
     return true;
 }
 
@@ -943,7 +1129,7 @@ bool MainWindow::openProject(QString filepath)
 
     m_projectTree->setProject(&m_project);
     updateActionStatus();
-    setWindowTitle(m_project.name());
+    setWindowTitle(m_project.name() + "- JZVison");
 
     auto *node_camera = dynamic_cast<JZNodeCameraInit*>(getInitNode(Node_CameraInit));
     auto *node_model = dynamic_cast<JZNodeModelInit*>(getInitNode(Node_ModelInit));
@@ -956,6 +1142,7 @@ bool MainWindow::openProject(QString filepath)
     m_modelConfigWidget->setConfig(node_model->config());
     m_commConfigWidget->setConfig(node_comm->config());
 
+    onActionBuild();
     return true;
 }
 
@@ -986,8 +1173,7 @@ JZEditor* MainWindow::createEditor(int type)
 {
     JZEditor* editor = JZEditorManager::instance()->createEditor(type);
     if (editor)
-    {
-        editor->setMainWindow(this);
+    {        
         editor->setProject(&m_project);
     }
     return editor;
@@ -1016,13 +1202,11 @@ bool MainWindow::openEditor(QString filepath)
         new_edit->open(item);
         if (new_edit->type() == ProjectItem_scriptItem)
         {
-            auto node_edit = (JZNodeEditor*)new_edit;
-            connect(node_edit, &JZNodeEditor::sigFunctionOpen, this, &MainWindow::onFunctionOpen);
-            connect(node_edit, &JZNodeEditor::sigAutoCompiler, this, &MainWindow::onAutoCompiler);
-            connect(node_edit, &JZNodeEditor::sigAutoRunOnce, this, &MainWindow::onAutoRunOnce);
-            connect(node_edit, &JZNodeEditor::sigAutoRun, this, &MainWindow::onAutoRun);
-            connect(node_edit, &JZNodeEditor::sigAutoRunStop, this, &MainWindow::onAutoRunStop);
-            //connect(node_edit, &JZNodeEditor::sigRuntimeValueChanged, this, &MainWindow::onEditorValueChanged);
+            auto node_edit =  qobject_cast<JZVisionEditor*>(new_edit);
+            connect(node_edit, &JZVisionEditor::sigAutoCompiler, this, &MainWindow::onAutoCompiler);
+            connect(node_edit, &JZVisionEditor::sigAutoRunOnce, this, &MainWindow::onAutoRunOnce);
+            connect(node_edit, &JZVisionEditor::sigAutoRun, this, &MainWindow::onAutoRun);
+            connect(node_edit, &JZVisionEditor::sigAutoRunStop, this, &MainWindow::onAutoRunStop);
 
             auto cmp_ret = compilerResult(file);
             if (cmp_ret)
@@ -1085,17 +1269,17 @@ JZEditor* MainWindow::editor(QString filepath)
     return nullptr;
 }
 
-JZNodeEditor* MainWindow::currentNodeEditor()
+JZVisionEditor* MainWindow::currentNodeEditor()
 {
     if (m_editor && m_editor->type() == ProjectItem_scriptItem)
-        return dynamic_cast<JZNodeEditor*>(m_editor);
+        return qobject_cast<JZVisionEditor*>(m_editor);
     else
         return nullptr;
 }
 
-QList<JZNodeEditor*> MainWindow::nodeEditorList()
+QList<JZVisionEditor*> MainWindow::nodeEditorList()
 {
-    QList<JZNodeEditor*> list;
+    QList<JZVisionEditor*> list;
     //editor
     auto it = m_editors.begin();
     while (it != m_editors.end())
@@ -1103,7 +1287,7 @@ QList<JZNodeEditor*> MainWindow::nodeEditorList()
         auto editor = it.value();
         if (it.value()->type() == ProjectItem_scriptItem)
         {
-            auto node_edit = (JZNodeEditor*)it.value();
+            auto node_edit = qobject_cast<JZVisionEditor*>(it.value());
             list << node_edit;
         }
         it++;
@@ -1111,13 +1295,13 @@ QList<JZNodeEditor*> MainWindow::nodeEditorList()
     return list;
 }
 
-JZNodeEditor* MainWindow::nodeEditor(QString filepath)
+JZVisionEditor* MainWindow::nodeEditor(QString filepath)
 {
     JZEditor* e = editor(filepath);
     if (!e)
         return nullptr;
 
-    return qobject_cast<JZNodeEditor*>(e);
+    return qobject_cast<JZVisionEditor*>(e);
 }
 
 void MainWindow::switchEditor(JZEditor* editor)
@@ -1239,16 +1423,80 @@ void MainWindow::updateTabText(int index)
 
 JZNode *MainWindow::getInitNode(int type)
 {
-    auto cls_item = m_project.getClass("JZVisionPlatform");
+    auto cls_item = m_project.getClass(m_className);
     auto init_script = cls_item->memberFunction("init");
     auto node_list = init_script->findNodeByType(type);
     Q_ASSERT(node_list.size() == 1);
     return node_list[0];
 }
 
+bool MainWindow::checkBuild()
+{
+    bool flag = true;
+    if (!m_buildResult || m_buildResult->status != Build_Successed)
+        flag = false;
+    else
+    {
+        flag = m_engine.isInit();
+    }
+
+    if (!flag)
+    {
+        QMessageBox::information(this, "", "初始化失败，请检查流程或重新编译");
+        return false;
+    }
+
+    return true;
+}
+
 bool MainWindow::isCameraFlow()
 {
     return currrentCameraNode() != nullptr;
+}
+
+JZCamera *MainWindow::camera(QString name)
+{
+    return m_cameraManager->camera(name);
+}
+
+void MainWindow::startCamera(QString name)
+{
+    JZCamera *camera = this->camera(name);
+    if (!camera->isOpen())
+    {
+        if (!camera->open())
+            return;
+    }
+    camera->start();
+
+    LOG_I("相机启动");
+}
+
+void MainWindow::startCameraOnce(QString name)
+{
+    JZCamera *camera = this->camera(name);
+    if (!camera->isOpen())
+    {
+        if (!camera->open())
+            return;
+    }
+    camera->startOnce();
+
+    LOG_I("相机启动一次");
+}
+
+void MainWindow::stopCamera(QString name)
+{
+    JZCamera *camera = this->camera(name);
+    camera->stop();
+
+    LOG_I("相机停止");
+}
+
+void MainWindow::imageDebug()
+{    
+    QVariant v = m_engine.getReg(Reg_CallIn);
+    auto mat = JZObjectCast<cv::Mat>(toJZObject(v));
 }
 
 JZNodeCameraReadyEvent* MainWindow::currrentCameraNode()
@@ -1257,8 +1505,9 @@ JZNodeCameraReadyEvent* MainWindow::currrentCameraNode()
     if (!editor)
         return nullptr;
 
-    auto event = editor->script()->startNode();
-    if (event->type() != Node_CameraFrameReady)
+    auto script = dynamic_cast<JZScriptItem*>(editor->item());
+    auto event = script->startNode();
+    if (!event || event->type() != Node_CameraFrameReady)
         return nullptr;
 
     return dynamic_cast<JZNodeCameraReadyEvent*>(event);

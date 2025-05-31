@@ -946,10 +946,11 @@ void JZProject::onItemChanged(JZProjectItem *item)
     auto registClass = [this](JZScriptClassItem *class_file)
     {
         //起到声明作用
-        m_env.objectManager()->delcare(class_file->className());
+        auto new_def = class_file->objectDefine();
+        if(new_def.id == Type_none)
+            new_def.id = m_env.objectManager()->delcare(class_file->className());
 
-        //覆盖注册
-        auto new_def = class_file->objectDefine();                        
+        //覆盖注册        
         m_env.objectManager()->replace(new_def);
     };
     

@@ -10,7 +10,8 @@
 #include "JZNodeParamEditWidget.h"
 
 class JZNodeLineItem;
-class JZNodeGraphItem : public JZNodeBaseItem
+class JZNodeView;
+class JZNodeGraphItem : public JZAbstractNodeItem
 {
 public:
     enum IconType { Flow, Circle, Square, Grid, RoundSquare, Diamond };
@@ -61,8 +62,7 @@ public:
 
     JZNodeGraphItem(JZNode *node);
     ~JZNodeGraphItem();
-    
-    virtual QRectF boundingRect() const override;
+        
     virtual void updateNode() override;   //虚函数不能放在构造调用
     void updateSize();
 
@@ -70,23 +70,20 @@ public:
     QString pinValue(int pin);
 
     virtual void setBlockValue(int pin, QString value);
-    virtual QString blockValue(int pin);
+    virtual QString blockValue(int pin);    
+    
+    virtual int pinAt(QPointF pos) override;        //连接框
+    virtual QRectF pinRect(int pin) override;
 
-    void setBaseZValue(int value);
-
-    JZNode *node();
-    int pinAt(QPointF pos);        //连接框
     int pinAtInName(QPointF pos);  //包含连接框和名称矩形  
-    int pinAtInValueRect(QPointF pos);    
-    QRectF pinRect(int pin);
+    int pinAtInValueRect(QPointF pos);        
     QRectF pinNameRect(int pin);
-    bool isPinEditable(int pin);
-    QSize size() const;
+    bool isPinEditable(int pin);    
     
     Block *block(int id);
     QList<int> blockList(bool isInput);
 
-    QString getTip(QPointF pt);
+    virtual QString getTip(QPointF pt) override;
         
     void setPinRuntimeValue(int pin_id,const QString &value);    
     void clearRuntimeValue();
@@ -94,16 +91,10 @@ public:
     void setError(const QString &error);
     void clearError();
     bool isError() const;
-    
-    void onTimerEvent(int event);
+        
     void clear();
 
-protected:
-    enum
-    {
-        Timer_longPress,
-    };    
-
+protected:    
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget) override;
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
     virtual void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -112,6 +103,7 @@ protected:
     virtual void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
 
+    JZNodeView *nodeView();
     void notifyPropChanged(const QByteArray &buffer);    
     
     BlockPtr createPinBlock(JZNodePin *pin);
@@ -126,19 +118,15 @@ protected:
     void calcGemo(int pin, int x, int y, Block *gemo);
     virtual void updatePin();
     void updateErrorGemo();   
-
-    QSize m_size;
-    QString m_title;
-    JZNode *m_node;    
+    
+    QString m_title;    
     QRectF m_errorRect;    
     QString m_error;
     QMap<int, BlockPtr> m_blocks;
     QMap<int, QString> m_runtimeValue;
     
     int m_blockExtId;
-    int m_downPin;
-    int m_longPress;
-    int m_baseZValue;
+    int m_downPin;    
 };
 
 #endif

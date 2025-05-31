@@ -33,6 +33,8 @@ public:
     JZScriptEnvironment();
     ~JZScriptEnvironment();
     
+    void reset();
+
     void registType(const JZNodeTypeMeta &type_info);
     void unregistType();
 

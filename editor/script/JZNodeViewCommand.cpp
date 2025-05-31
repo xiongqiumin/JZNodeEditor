@@ -1,4 +1,4 @@
-﻿#include "JZNodeView.h"
+﻿#include "JZNodeAbstractView.h"
 #include "JZNodeGraphItem.h"
 #include "JZNodeFactory.h"
 #include "JZNodeViewCommand.h"
@@ -6,7 +6,7 @@
 #include "JZNodeUtils.h"
 
 //JZNodeViewCommand
-JZNodeViewCommand::JZNodeViewCommand(JZNodeView *view,int type)
+JZNodeViewCommand::JZNodeViewCommand(JZNodeAbstractView *view,int type)
 {
     itemId = -1;
     pinId = -1;
@@ -80,7 +80,7 @@ void JZNodeViewCommand::redo()
     if(command == CreateNode)
     {        
         auto node = editorNodeFactory()->loadNode(newValue.toByteArray());
-        JZNodeGraphItem *item = nullptr;
+        JZAbstractNodeItem *item = nullptr;
         if(itemId == -1)
         {
             item = m_view->createNode(node);
@@ -164,7 +164,7 @@ void JZNodeViewCommand::redo()
 }
 
 //JZNodePinValueChangedCommand
-JZNodePinValueChangedCommand::JZNodePinValueChangedCommand(JZNodeView *view)
+JZNodePinValueChangedCommand::JZNodePinValueChangedCommand(JZNodeAbstractView *view)
 {
     m_view = view;
 }
@@ -191,7 +191,7 @@ bool JZNodePinValueChangedCommand::mergeWith(const QUndoCommand *command)
 }
 
 //JZNodeMoveCommand
-JZNodeMoveCommand::JZNodeMoveCommand(JZNodeView *view, int type)
+JZNodeMoveCommand::JZNodeMoveCommand(JZNodeAbstractView *view, int type)
 {
     m_view = view;
     command = type;
@@ -246,7 +246,7 @@ void JZNodeMoveCommand::undo()
 }
 
 //JZNodeVariableCommand
-JZNodeVariableCommand::JZNodeVariableCommand(JZNodeView *view, int type)
+JZNodeVariableCommand::JZNodeVariableCommand(JZNodeAbstractView *view, int type)
 {
     m_view = view;
     command = type;

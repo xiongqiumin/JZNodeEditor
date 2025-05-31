@@ -2,8 +2,7 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include "JZNodeViewMap.h"
-#include "JZNodeGraphItem.h"
-#include "JZNodeView.h"
+#include "JZNodeAbstractView.h"
 
 //DrawInfo
 QPoint JZNodeViewMap::DrawInfo::toImage(QPointF scene_pt)
@@ -45,7 +44,7 @@ JZNodeViewMap::~JZNodeViewMap()
 
 }
 
-void JZNodeViewMap::setView(JZNodeView *view)
+void JZNodeViewMap::setView(JZNodeAbstractView *view)
 {
     m_view = view;
     updateMap();
@@ -111,7 +110,7 @@ void JZNodeViewMap::updateMapCache()
     {
         if (items[i]->type() == Item_node)
         {
-            auto graph_item = dynamic_cast<JZNodeGraphItem*>(items[i]);
+            auto graph_item = dynamic_cast<JZAbstractNodeItem*>(items[i]);
             QRectF rc = graph_item->sceneBoundingRect();
             rc = m_drawInfo.toImage(rc);
             if(graph_item->isError())

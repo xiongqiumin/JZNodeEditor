@@ -6,6 +6,8 @@
     <file>Resources/icons/model.png</file>
     <file>Resources/icons/setting.png</file>
     <file>Resources/icons/log.png</file>
-    <file>Resources/icons/MonitorSystem.png</file>
+    <file>Resources/icons/run.png</file>
+    <file>Resources/icons/runOnce.png</file>
+    <file>Resources/icons/stop.png</file>    
   </qresource>
 </RCC>

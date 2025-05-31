@@ -293,7 +293,7 @@ JZFunctionDefine JZNodeSignalEvent::function()
         return JZFunctionDefine();
 
     QString file_name = m_file->name();
-    JZFunctionDefine define = meta->initMemberFunction(m_name + "_" + QString::number(m_id) + "_" + file_name);
+    JZFunctionDefine define = meta->initMemberFunction(m_event + "_" + QString::number(m_id) + "_" + file_name);
     auto list = paramOutList();
     for (int i = 0; i < list.size(); i++)
     {

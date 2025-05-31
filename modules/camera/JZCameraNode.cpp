@@ -1,6 +1,7 @@
-#include "JZCameraNode.h"
+﻿#include "JZCameraNode.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
+#include "../JZModuleDebug.h"
 
 //JZNodeCameraInit
 JZNodeCameraInit::JZNodeCameraInit()
@@ -76,7 +77,7 @@ bool JZCameraNode::compiler(JZNodeCompiler* c, QString& error)
         return false;
 
     auto env = c->env();
-    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager"), error))
+    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager*"), error))
         return false;
 
     int cam_id = c->paramId(m_id, paramIn(0));
@@ -139,11 +140,20 @@ JZNodeCameraSetting::JZNodeCameraSetting()
     m_function = "JZCameraSetting";
 }
 
+//JZCameraCalibration
+JZCameraCalibration::JZCameraCalibration()
+{
+    m_name = "相机标定";
+    m_type = Node_CameraCalibration;
+    m_function = "JZCameraCalibration";
+}
+
 //JZNodeCameraReadyEvent
 JZNodeCameraReadyEvent::JZNodeCameraReadyEvent()
 {    
     m_type = Node_CameraFrameReady;
-    m_name = "sigFrameReadyEvent";
+    m_name = "相机数据源";
+    m_event = "sigFrameReadyEvent";
 
     int in = addParamIn("name", Pin_constValue | Pin_noCompiler);
     setPinTypeString(in);
@@ -176,12 +186,17 @@ bool JZNodeCameraReadyEvent::compiler(JZNodeCompiler* c, QString& error)
         return false;
 
     auto env = c->env();
-    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager"), error))
+    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager*"), error))
         return false;
     
     m_connectInfo.irList[2] = irLiteral(c->pinLiteral(m_id, paramIn(0)));
     m_connectInfo.irList[3].m_literal = QVariant::fromValue(JZFunctionPointer(function().fullName()));
-    return compilerSignal(c, error);
+    if(!compilerSignal(c, error))
+        return false;
+
+    int out_id = c->paramId(m_id, paramOut(0));
+    JZModuleDebug(c, irId(out_id),JZNodeIRParam());
+    return true;
 }
 
 void JZNodeCameraReadyEvent::saveToStream(QDataStream &s) const

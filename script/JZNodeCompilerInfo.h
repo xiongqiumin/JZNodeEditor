@@ -5,7 +5,7 @@
 
 struct ClassInitInfo
 {
-    QString function;        
+    QString function;
     QList<JZNodeIRParam> irList;
 };
 

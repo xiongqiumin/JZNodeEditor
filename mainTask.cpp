@@ -83,7 +83,7 @@ void MainTaskManager::clearTask()
 
 void MainTaskManager::build(bool mute)
 {
-    if (m_buildThread.isRunning() && m_buildInfo.changeTimestamp == m_buildInfo.buildVersion)
+    if (mute && m_buildThread.isRunning() && m_buildInfo.changeTimestamp == m_buildInfo.buildVersion)
         return;
     
     if (!m_buildResult || m_buildResult->status != Build_Successed || m_buildInfo.changeTimestamp > m_buildInfo.buildTimestamp)

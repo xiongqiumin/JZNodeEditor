@@ -14,12 +14,22 @@ JZScriptEnvironment::JZScriptEnvironment()
     :m_funcManager(this),
      m_objectManager(this)
 {    
+    reset();    
+}
+
+JZScriptEnvironment::~JZScriptEnvironment()
+{    
+    qDeleteAll(m_moduleList);
+}
+
+void JZScriptEnvironment::reset()
+{
     jzbind::setBindEnvironment(this);
 
-    m_objectManager.init();
-    m_objectManager.registWidgetFactory(Widget_Xml, JZNodeUiLoader::widgetFactory());
-
     m_funcManager.init();
+    m_objectManager.init();
+    m_objectManager.registWidgetFactory(Widget_Xml, JZNodeUiLoader::widgetFactory());    
+    m_nodeFactory.init();
 
     InitBuildInFunction();
     JZWidgetBindInit();
@@ -33,11 +43,6 @@ JZScriptEnvironment::JZScriptEnvironment()
 
     m_objectManager.setUserRegist(true);
     m_funcManager.setUserRegist(true);
-}
-
-JZScriptEnvironment::~JZScriptEnvironment()
-{    
-    qDeleteAll(m_moduleList);
 }
 
 void JZScriptEnvironment::registType(const JZNodeTypeMeta &type_info)
@@ -327,6 +332,8 @@ bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
         int base_dst = JZNodeType::baseType(dst_type);
         return isInherits(base_src, base_dst);
     }
+    if (JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type))
+        return false;
 
     if (src_type == dst_type)
         return true;

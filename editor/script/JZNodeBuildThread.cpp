@@ -42,7 +42,8 @@ void JZNodeBuildThread::run()
 {
     bool ret = m_builder.build(&m_program);
     JZNodeBuildResultPtr ptr = JZNodeBuildResultPtr(new JZNodeBuildResult());
-    ptr->status = ret ? Build_Successed : Build_Failed;        
+    ptr->status = ret ? Build_Successed : Build_Failed;
+    ptr->checkError = m_builder.error();
     ptr->compilerResult = m_builder.compilerResult();
     if (ret)
         m_program.copyTo(&ptr->program);

@@ -345,6 +345,10 @@ bool JZNodeEngine::init()
 
 void JZNodeEngine::deinit()
 {        
+    if (!isInit())
+        return; 
+    
+    Q_ASSERT(g_engine == this);
     m_watch = false;
     m_breakPoints.clear();
     m_breakIr.clear();
@@ -357,8 +361,7 @@ void JZNodeEngine::deinit()
     updateStatus(Status_none);
 
     clearReg();
-    if (g_engine == this)
-        g_engine = nullptr;
+    g_engine = nullptr;
 }
 
 void JZNodeEngine::statClear()

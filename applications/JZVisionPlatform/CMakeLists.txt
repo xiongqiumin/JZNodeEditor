@@ -19,6 +19,25 @@ set(JZVisionPlatform_SOURCES
     JZFlowTree.h
 	JZCameraThread.cpp
 	JZCameraThread.h
+    
+    editor/JZVisionPanel.cpp
+    editor/JZVisionPanel.h
+	editor/JZVisionEditor.cpp
+	editor/JZVisionEditor.h
+	editor/JZVisionImage.cpp
+	editor/JZVisionImage.h	
+	editor/JZVisionLineItem.cpp
+	editor/JZVisionLineItem.h
+	editor/JZVisionNodeItem.cpp
+	editor/JZVisionNodeItem.h
+	editor/JZVisionOutput.cpp
+	editor/JZVisionOutput.h	
+	editor/JZVisionSettingDialog.cpp
+	editor/JZVisionSettingDialog.h
+    editor/JZVisionEditorManager.cpp
+    editor/JZVisionEditorManager.h
+	editor/JZVisionView.cpp
+	editor/JZVisionView.h
 )
 
 add_executable(JZVisionPlatform ${JZVisionPlatform_SOURCES})

@@ -12,6 +12,7 @@ enum CameraNode
     Node_CameraStartOnce,
     Node_CameraStop,
     Node_CameraSetting,
+    Node_CameraCalibration,
     Node_CameraFrameReady,
 };
 
@@ -86,6 +87,15 @@ public:
     JZNodeCameraSetting();
 
 protected:
+};
+
+//JZCameraCalibration
+class JZCameraCalibration : public JZCameraNode
+{
+public:
+    JZCameraCalibration();        
+
+protected:    
 };
 
 //JZNodeCameraReadyEvent

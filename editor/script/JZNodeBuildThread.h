@@ -14,6 +14,7 @@ class JZNodeBuildResult
 public:
     BuildResult status;
     JZNodeProgram program;
+    QString checkError;
     QMap<QString, CompilerResult>  compilerResult;
 };
 typedef QSharedPointer<JZNodeBuildResult> JZNodeBuildResultPtr;

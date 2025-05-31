@@ -154,6 +154,8 @@ set(JZNodeCore_SOURCES
     runtime/JZWidgetBind.h
 	
 	#modules
+    modules/JZModuleDebug.cpp
+    modules/JZModuleDebug.h    
 	modules/JZModuleConfigWidget.cpp
 	modules/JZModuleConfigWidget.h
     
@@ -294,6 +296,8 @@ set(JZNodeCore_SOURCES
     3rd/JZCommon/jzModbus/JZModbusSlaver.h
     3rd/JZCommon/jzModbus/JZModbusTcp.cpp
     3rd/JZCommon/jzModbus/JZModbusTcp.h
+    3rd/JZCommon/jzWidgets/JZImageGraphic.cpp
+    3rd/JZCommon/jzWidgets/JZImageGraphic.h
     3rd/JZCommon/jzWidgets/JZImageView.cpp
     3rd/JZCommon/jzWidgets/JZImageView.h    
     3rd/JZCommon/jzWidgets/JZImageLabel.cpp 
@@ -355,7 +359,7 @@ set(JZNodeEditorCore_SOURCES
     editor/script/JZNodeBuildThread.cpp
     editor/script/JZNodeBuildThread.h
     editor/script/JZNodeEditor.cpp
-    editor/script/JZNodeEditor.h
+    editor/script/JZNodeEditor.h    
     editor/script/JZNodeEditorManager.cpp
     editor/script/JZNodeEditorManager.h
     editor/script/JZNodeExprEditDialog.cpp
@@ -375,6 +379,8 @@ set(JZNodeEditorCore_SOURCES
     editor/script/JZNodeMemberSelectDialog.cpp
     editor/script/JZNodeMemberSelectDialog.h
     editor/script/JZNodeMemberSelectDialog.ui
+    editor/script/JZNodeAbstractPanel.cpp
+    editor/script/JZNodeAbstractPanel.h
     editor/script/JZNodePanel.cpp
     editor/script/JZNodePanel.h
     editor/script/JZNodeParamBindEditDialog.cpp
@@ -388,16 +394,16 @@ set(JZNodeEditorCore_SOURCES
     editor/script/JZNodeParamDisplayWidget.cpp
     editor/script/JZNodeParamDisplayWidget.h        
     editor/script/JZNodePropertyEditor.cpp
-    editor/script/JZNodePropertyEditor.h
-    editor/script/JZNodeScene.cpp
-    editor/script/JZNodeScene.h
+    editor/script/JZNodePropertyEditor.h    
     editor/script/JZNodeSlotEditDialog.cpp
     editor/script/JZNodeSlotEditDialog.h
     editor/script/JZNodeStack.cpp
     editor/script/JZNodeStack.h
     editor/script/JZNodeTypeDialog.ui
     editor/script/JZNodeTypeHelper.cpp
-    editor/script/JZNodeTypeHelper.h
+    editor/script/JZNodeTypeHelper.h    
+    editor/script/JZNodeAbstractView.cpp
+    editor/script/JZNodeAbstractView.h
     editor/script/JZNodeView.cpp
     editor/script/JZNodeView.h
     editor/script/JZNodeViewCommand.cpp
@@ -434,27 +440,7 @@ set(JZNodeEditorCore_SOURCES
     editor/script/items/JZNodeSettingDialog.cpp
     editor/script/items/JZNodeSettingDialog.h
     editor/script/items/JZNodeDisplayItem.cpp
-    editor/script/items/JZNodeDisplayItem.h
-	editor/vision/JZVisionCommand.cpp
-	editor/vision/JZVisionCommand.h
-	editor/vision/JZVisionEditor.cpp
-	editor/vision/JZVisionEditor.h
-	editor/vision/JZVisionImage.cpp
-	editor/vision/JZVisionImage.h
-	editor/vision/JZVisionItemBase.cpp
-	editor/vision/JZVisionItemBase.h
-	editor/vision/JZVisionLineItem.cpp
-	editor/vision/JZVisionLineItem.h
-	editor/vision/JZVisionNodeItem.cpp
-	editor/vision/JZVisionNodeItem.h
-	editor/vision/JZVisionOutput.cpp
-	editor/vision/JZVisionOutput.h
-	editor/vision/JZVisionPanel.cpp
-	editor/vision/JZVisionPanel.h
-	editor/vision/JZVisionSettingDialog.cpp
-	editor/vision/JZVisionSettingDialog.h
-	editor/vision/JZVisionView.cpp
-	editor/vision/JZVisionView.h
+    editor/script/items/JZNodeDisplayItem.h	    
 	
     widgets/JZAboutDialog.cpp
     widgets/JZAboutDialog.h    

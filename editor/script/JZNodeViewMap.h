@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "JZScriptItem.h"
 
-class JZNodeView;
+class JZNodeAbstractView;
 
 //缩略图控件
 class JZNodeViewMap : public QWidget
@@ -15,7 +15,7 @@ public:
     JZNodeViewMap(QWidget *parent);
     ~JZNodeViewMap();
 
-    void setView(JZNodeView *view);
+    void setView(JZNodeAbstractView *view);
     void updateMap();
 
 signals:
@@ -43,7 +43,7 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     void updateMapCache();
 
-    JZNodeView *m_view;
+    JZNodeAbstractView *m_view;
     QImage m_imageBg;
     QImage m_imageFg;
     DrawInfo m_drawInfo;

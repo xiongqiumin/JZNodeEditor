@@ -87,26 +87,26 @@ int JZNodeGraphItem::Block::height()
 
 // JZNodeGraphItem
 JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
+    :JZAbstractNodeItem(node)
 {    
     m_type = Item_node;
     m_node = node;
     m_id = node->id();
-    
-    m_longPress = false;
+        
     m_downPin = -1;    
     m_blockExtId = 100;
 
-    setOpacity(0.9);
-    setFlag(QGraphicsItem::ItemIsMovable);
-    setFlag(QGraphicsItem::ItemIsSelectable);
-    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
-    setAcceptHoverEvents(true);    
-    m_baseZValue = 0;
+    setAcceptHoverEvents(true);
 }
 
 JZNodeGraphItem::~JZNodeGraphItem()
 {
     clear();
+}
+
+JZNodeView *JZNodeGraphItem::nodeView()
+{
+    return qobject_cast<JZNodeView*>(editor());
 }
 
 JZNodeGraphItem::BlockPtr JZNodeGraphItem::createPinBlock(JZNodePin *pin)
@@ -215,12 +215,6 @@ void JZNodeGraphItem::updatePin()
     }
 }
 
-QRectF JZNodeGraphItem::boundingRect() const
-{
-    QRectF rc(0, 0, m_size.width(), m_size.height());
-    return rc;
-}
-
 void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget)
 {    
     QRectF rc = boundingRect();
@@ -239,7 +233,7 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
         drawProp(painter, block_list[i]);
 
     painter->save();
-    if (editor()->runtimeNode() == m_id)
+    if (nodeView()->runtimeNode() == m_id)
     {
         painter->setPen(QPen(Qt::green, 4));
         painter->drawRect(rc);
@@ -256,7 +250,7 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
     }
     painter->restore();
 
-    if(editor()->isBreakPoint(m_id))
+    if(nodeView()->isBreakPoint(m_id))
     {
         QRect bt_rc = QRect(5,5,15,15);
         painter->save();
@@ -270,11 +264,6 @@ void JZNodeGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *s
         auto icon = JZIconManager::instance()->icon("iconExcl");
         painter->drawPixmap(m_errorRect, icon.pixmap(m_errorRect.size().toSize()), QRectF());
     }
-}
-
-JZNode *JZNodeGraphItem::node()
-{
-    return m_node;
 }
 
 int JZNodeGraphItem::pinAt(QPointF pos)
@@ -339,11 +328,6 @@ JZNodeGraphItem::Block *JZNodeGraphItem::block(int id)
         return nullptr;
 
     return m_blocks[id].data();
-}
-
-QSize JZNodeGraphItem::size() const
-{
-    return m_size;
 }
 
 QByteArray JZNodeGraphItem::saveNode()
@@ -439,12 +423,6 @@ QString JZNodeGraphItem::blockValue(int pin)
     return QString();
 }
 
-void JZNodeGraphItem::setBaseZValue(int value)
-{
-    m_baseZValue = value;
-    setZValue(value);
-}
-
 void JZNodeGraphItem::updateSize()
 {        
     QFontMetrics title_ft(scene()->font());
@@ -527,13 +505,8 @@ void JZNodeGraphItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
         if (isPinEditable(pin_value_id))
         {
             no_move = true;
-            editor()->editPinValue(m_id, pin_value_id);            
+            nodeView()->editPinValue(m_id, pin_value_id);
         }
-    }
-    else
-    {
-        m_longPress = 1;
-        editor()->setNodeTimer(500,m_node->id(),Timer_longPress);
     }
 
     JZNodeBaseItem::mousePressEvent(event);
@@ -559,8 +532,7 @@ void JZNodeGraphItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 }
 
 void JZNodeGraphItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    m_longPress = 0;
+{    
     m_downPin = -1;    
     
     JZNodeBaseItem::mouseReleaseEvent(event);
@@ -587,7 +559,7 @@ void JZNodeGraphItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 
 void JZNodeGraphItem::notifyPropChanged(const QByteArray &buffer)
 {
-    editor()->onNodeChanged(m_id, buffer);
+    editor()->addNodeChangedCommand(m_id, buffer);
 }
 
 void JZNodeGraphItem::updateErrorGemo()
@@ -651,15 +623,6 @@ void JZNodeGraphItem::clearError()
     m_error.clear();
     updateErrorGemo();
     update();
-}
-
-void JZNodeGraphItem::onTimerEvent(int event)
-{
-    if(event == Timer_longPress)
-    {
-        if (m_longPress == 1)
-            m_longPress = 2;
-    }
 }
 
 void JZNodeGraphItem::drawProp(QPainter *painter,int prop_id)

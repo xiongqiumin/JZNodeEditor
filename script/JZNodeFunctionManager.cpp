@@ -20,7 +20,13 @@ JZScriptEnvironment *JZNodeFunctionManager::env()
 }
 
 void JZNodeFunctionManager::init()
-{
+{    
+    m_funcDefine.clear();
+    m_funcImpl.clear();     
+    m_userRegist = false;
+    m_userFuncs.clear();
+   
+    //init
     registCFunction("rand", false, jzbind::createFuncion(rand));
     registCFunction("exp",false,jzbind::createFuncion((double (*)(double))(exp)));
     registCFunction("loge",false,jzbind::createFuncion((double (*)(double))(log)));

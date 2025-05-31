@@ -22,11 +22,11 @@ enum ViewCommand {
     ChangeLocalVariable,
 };
 
-class JZNodeView;
+class JZNodeAbstractView;
 class JZNodeViewCommand : public QUndoCommand
 {
 public:    
-    JZNodeViewCommand(JZNodeView *view,int type);
+    JZNodeViewCommand(JZNodeAbstractView *view,int type);
 
     virtual void redo() override;
     virtual void undo() override;       
@@ -42,13 +42,13 @@ public:
     QPointF newPos; 
 
 protected:
-    JZNodeView *m_view;
+    JZNodeAbstractView *m_view;
 };
 
 class JZNodePinValueChangedCommand : public QUndoCommand
 {
 public:
-    JZNodePinValueChangedCommand(JZNodeView *view);
+    JZNodePinValueChangedCommand(JZNodeAbstractView *view);
 
     virtual void redo() override;
     virtual void undo() override;
@@ -61,7 +61,7 @@ public:
     QString newValue;    
 
 protected:
-    JZNodeView *m_view;
+    JZNodeAbstractView *m_view;
 };
 
 class JZNodeMoveCommand : public QUndoCommand
@@ -74,7 +74,7 @@ public:
         QPointF newPos;
     };
 
-    JZNodeMoveCommand(JZNodeView *view, int type);
+    JZNodeMoveCommand(JZNodeAbstractView *view, int type);
 
     virtual void redo() override;
     virtual void undo() override;
@@ -85,13 +85,13 @@ public:
     QList<NodePosInfo> nodeList;
 
 protected:
-    JZNodeView *m_view;
+    JZNodeAbstractView *m_view;
 };
 
 class JZNodeVariableCommand : public QUndoCommand
 {
 public:
-    JZNodeVariableCommand(JZNodeView *view, int type);
+    JZNodeVariableCommand(JZNodeAbstractView *view, int type);
 
     virtual void redo() override;
     virtual void undo() override;
@@ -101,7 +101,7 @@ public:
     JZParamDefine oldParam;
 
 protected:
-    JZNodeView *m_view;
+    JZNodeAbstractView *m_view;
 };
 
 #endif

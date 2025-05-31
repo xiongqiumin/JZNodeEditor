@@ -1126,6 +1126,17 @@ const JZScriptEnvironment *JZNodeObjectManager::env() const
 
 void JZNodeObjectManager::init()
 {          
+    m_objectId = Type_internalObject;
+    m_enumId = Type_internalEnum;
+    m_userRegist = false;
+
+    m_ctypeidMap.clear();
+    m_enums.clear();
+    m_metas.clear();
+    m_qobjectId.clear();
+    m_widgetFactory.clear();
+
+    //init
     jzbind::ClassBind<JZVariantAny> cls_any(Type_any, "any");
     cls_any.def("type", false, &JZVariantAny::type);
     cls_any.regist();
@@ -1199,7 +1210,7 @@ int JZNodeObjectManager::regist(const JZNodeObjectDefine &info)
     //可以先声明在注册
     Q_ASSERT(!info.className.isEmpty());
     //没有定义或者声明的id和之前一直
-    Q_ASSERT(!meta(info.className) || (info.id == Type_none || meta(info.className)->id == info.id));
+    Q_ASSERT(!meta(info.className));
 
     JZNodeObjectDefine *def = new JZNodeObjectDefine();
     *def = info;

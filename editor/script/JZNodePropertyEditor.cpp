@@ -206,7 +206,7 @@ void JZNodePropertyEditor::setNode(JZNode *node)
     if(m_node == nullptr)
         m_item = nullptr;
     else
-        m_item = m_view->getNodeItem(m_node->id());
+        m_item = dynamic_cast<JZNodeGraphItem*>(m_view->getNodeItem(m_node->id()));
     
     updateNode();
 }

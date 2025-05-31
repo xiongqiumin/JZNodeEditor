@@ -1,17 +1,13 @@
 ﻿#include <math.h>
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
-#include "JZNodeGraphItem.h"
 #include "JZNodeLineItem.h"
 #include "JZNodeView.h"
 
 // JZNodeLineItem
 JZNodeLineItem::JZNodeLineItem(JZNodeGemo from)
-{
-    m_type = Item_line;
-    m_from = from;
-    setFlag(QGraphicsItem::ItemIsSelectable);
-    setZValue(-1);
+    :JZAbstractLineItem(from)
+{    
 }
 
 JZNodeLineItem::~JZNodeLineItem()
@@ -53,43 +49,21 @@ void JZNodeLineItem::updateNode()
 {
     prepareGeometryChange();
 
-    JZNodeView *view = editor();
-    JZNodeGraphItem *node_from = view->getNodeItem(m_from.nodeId);
+    auto *view = editor();
+    JZAbstractNodeItem *node_from = view->getNodeItem(m_from.nodeId);
     auto from = node_from->mapToScene(node_from->pinRect(m_from.pinId).center());
     m_startPoint = mapFromScene(from);
     if (m_to.nodeId != -1)
     {
-        JZNodeGraphItem *node_to = view->getNodeItem(m_to.nodeId);
+        JZAbstractNodeItem *node_to = view->getNodeItem(m_to.nodeId);
         auto to = node_to->mapToScene(node_to->pinRect(m_to.pinId).center());
         m_endPoint = mapFromScene(to);
     }
 }
 
-JZNodeGemo JZNodeLineItem::startTraget()
-{
-    return m_from;
-}
-
-JZNodeGemo JZNodeLineItem::endTraget()
-{
-    return m_to;
-}
-
-void JZNodeLineItem::setEndPoint(QPointF point)
-{
-    prepareGeometryChange();
-    m_endPoint = point;
-}
-
-void JZNodeLineItem::setEndTraget(JZNodeGemo to)
-{
-    prepareGeometryChange();
-    m_to = to;
-}
-
 QPointF JZNodeLineItem::drawStartPoint() const
 {
-    JZNodeGraphItem *node = editor()->getNodeItem(m_from.nodeId);
+    JZAbstractNodeItem *node = editor()->getNodeItem(m_from.nodeId);
     int x = node->sceneBoundingRect().right();
     return QPointF(x, m_startPoint.y());
 }
@@ -99,7 +73,7 @@ QPointF JZNodeLineItem::drawEndPoint() const
     if (m_to.nodeId == -1)
         return m_endPoint;
 
-    JZNodeGraphItem *node = editor()->getNodeItem(m_to.nodeId);
+    JZAbstractNodeItem *node = editor()->getNodeItem(m_to.nodeId);
     int x = node->sceneBoundingRect().left();
     return QPointF(x, m_endPoint.y());
 }

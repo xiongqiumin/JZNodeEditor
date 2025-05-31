@@ -1,26 +1,52 @@
 ﻿#include "JZEditorGlobal.h"
 
-static JZProject* g_editorProject = nullptr;
-static QMenuBar* g_editorMenu = nullptr;
+class EdiorGlobal
+{
+public:
+    EdiorGlobal();
+
+    JZProject* project;
+    QMenuBar* menu;
+    QToolBar* toolBar;
+};
+
+EdiorGlobal::EdiorGlobal()
+{
+    project = nullptr;
+    menu = nullptr;
+    toolBar = nullptr;
+}
+
+static EdiorGlobal g_editor;
 
 JZProject* editorProject()
 {
-    return g_editorProject;
+    return g_editor.project;
 }
 
 void setEditorProject(JZProject* project)
 {
-    g_editorProject = project;
+    g_editor.project = project;
 }
 
 QMenuBar* editorMenuBar()
 {
-    return g_editorMenu;
+    return g_editor.menu;
 }
 
 void setEditorMenuBar(QMenuBar* menu)
 {
-    g_editorMenu = menu;
+    g_editor.menu = menu;
+}
+
+QToolBar* editorToolBar()
+{
+    return g_editor.toolBar;
+}
+
+void setEditorToolBar(QToolBar* bar)
+{
+    g_editor.toolBar = bar;
 }
 
 JZNodeEditorManager *editorManager()
@@ -30,7 +56,7 @@ JZNodeEditorManager *editorManager()
 
 JZScriptEnvironment *editorEnvironment()
 {
-    return g_editorProject->environment();
+    return g_editor.project->environment();
 }
 
 JZNodeObjectManager *editorObjectManager()

@@ -76,6 +76,7 @@ bool JZCameraFile::open()
 
 void JZCameraFile::close()
 {
+    stop();
     m_fileList.clear();
 }
 
@@ -89,6 +90,7 @@ void JZCameraFile::start()
 
 void JZCameraFile::startOnce()
 {
+    m_timer->stop();
     cv::Mat mat = readFrame();
     emit sigFrameReady(mat);
 }

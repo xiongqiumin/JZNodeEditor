@@ -4,8 +4,6 @@
 #include <QMap>
 #include "JZNode.h"
 
-typedef bool(*JZNodeFactoryEdit)(JZNode *node);
-
 typedef JZNode *(*JZNodeCreateFunc)();
 class JZNodeFactory
 {
@@ -13,6 +11,7 @@ public:
     JZNodeFactory();
     ~JZNodeFactory();
 
+    void init();
     void registNode(int type, JZNodeCreateFunc func);
     QList<int> nodeTypeList() const;
 
@@ -22,7 +21,6 @@ public:
 
 protected:
     QMap<int,JZNodeCreateFunc> m_nodes;
-    QMap<int,JZNodeFactoryEdit> m_edits;
 };
 
 template<class T>

@@ -273,7 +273,7 @@ public:
     JZNodeObjectManager(JZScriptEnvironment *env);
     ~JZNodeObjectManager();     
 
-    void init();
+    void init();    
 
     JZScriptEnvironment *env();
     const JZScriptEnvironment *env() const;
