@@ -9,6 +9,7 @@
 #include "JZVisionOutput.h"
 #include "JZNodeCompiler.h"
 #include "JZVisionPanel.h"
+#include "../JZVisionNodeInfo.h"
 
 class JZVisionEditor : public JZEditor
 {
@@ -19,6 +20,8 @@ public:
     ~JZVisionEditor();
 
     void setCompilerResult(const CompilerResult *info);
+    void setRuntimeResult(int node_id, NodeResult result);
+    void clearRuntimeResult();
 
     virtual void open(JZProjectItem *item) override;
     virtual void close() override;
@@ -52,9 +55,11 @@ protected:
 
     JZVisionPanel *m_nodePanel;
     JZVisionView *m_view;
-    JZVisionImage *m_rightImage;
-    JZVisionOutput *m_rightOutput;
+    JZVisionImage *m_outputImage;
+    JZVisionOutput *m_outputResult;
     QList<QAction*> m_actionList;
+
+    JZVisionRuntimeResult m_result;
 };
 
 #endif // !JZ_VISION_EDITOR_H_

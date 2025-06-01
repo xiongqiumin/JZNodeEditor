@@ -36,6 +36,11 @@ void JZBaseDialog::keyPressEvent(QKeyEvent *event)
         QDialog::keyPressEvent(event);
 }
 
+QWidget *JZBaseDialog::centralWidget()
+{
+    return m_mainWidget;
+}
+
 void JZBaseDialog::setCentralWidget(QWidget *w)
 {
     delete m_mainWidget;

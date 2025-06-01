@@ -3,7 +3,7 @@
 
 #include "JZNodeCompiler.h"
 
-void JZModuleDebug(JZNodeCompiler *c,JZNodeIRParam image,JZNodeIRParam roi);
+void JZModuleDebug(JZNodeCompiler *c,int node_id, JZNodeIRParam image,JZNodeIRParam roi);
 
 class JZModuleDebugManager
 {

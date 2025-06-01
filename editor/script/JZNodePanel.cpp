@@ -33,7 +33,7 @@
 
 // JZNodePanel
 JZNodePanel::JZNodePanel(QWidget *widget)
-    : JZNodePanel(widget)
+    : JZNodeAbstractPanel(widget)
 {    
     m_classFile = nullptr;
     m_itemFunction = nullptr;

@@ -109,6 +109,7 @@ struct JZNodeGemo
     int paramId() const;
     bool isNull() const;
     bool operator==(const JZNodeGemo &other) const;
+    bool operator!=(const JZNodeGemo &other) const;
 
     int nodeId;
     int pinId;

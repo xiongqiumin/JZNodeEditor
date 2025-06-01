@@ -55,6 +55,8 @@ void JZCameraListWidget::updateCamera()
 	{
         addCameraItem(list[i]->name);        
 	}
+
+    m_tree->expandAll();
 }
 
 void JZCameraListWidget::setViewWidget(JZCameraViewWidget* view)

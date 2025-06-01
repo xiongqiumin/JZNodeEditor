@@ -74,6 +74,49 @@ JZNode *JZScriptItemVisitor::nextFlowNode(JZNode *node,int flow_out)
     return m_script->nextFlowNode(node,flow_out);
 }
 
+QList<JZNode*> JZScriptItemVisitor::flowInputNode(JZNode* node)
+{
+    QSet<JZNode*> from_nodes;
+
+    auto flow_in = node->flowIn();
+    if(flow_in != INVALID_ID)
+    {
+        QList<int> in_line_list = m_script->getConnectInput(node->id(), flow_in);
+        for (int line_idx = 0; line_idx < in_line_list.size(); line_idx++)
+        {
+            auto line = m_script->getConnect(in_line_list[line_idx]);
+            auto from_node = m_script->getNode(line->from.nodeId);
+            from_nodes << from_node;
+        }
+    }
+    return from_nodes.toList();
+}
+
+QList<JZNode*> JZScriptItemVisitor::flowInputNodeRecursively(JZNode *node)
+{
+    QList<JZNode*> all_in_list = flowInputNode(node);
+    QList<JZNode*> cur_list = all_in_list;
+    QList<JZNode*> next_list;
+    while (cur_list.size() != 0)
+    {
+        for (int i = 0; i < cur_list.size(); i++)
+        {
+            QList<JZNode*> tmp_in_list = flowInputNode(cur_list[i]);
+            for (auto tmp : tmp_in_list)
+            {
+                if (!all_in_list.contains(tmp))
+                    next_list << tmp;
+            }
+        }
+
+        all_in_list << next_list;
+        cur_list = next_list;
+        next_list.clear();
+    }
+
+    return all_in_list;
+}
+
 QList<JZNode*> JZScriptItemVisitor::dataInputNodeRecursively(JZNode *node)
 {
     QList<JZNode*> all_in_list = dataInputNode(node);

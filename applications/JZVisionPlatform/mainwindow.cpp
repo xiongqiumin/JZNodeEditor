@@ -495,7 +495,6 @@ void MainWindow::addFlowPage()
 
     //main
     QSplitter* splitterMain = new QSplitter(Qt::Horizontal);
-    splitterMain->setObjectName("splitterMain");
     splitterMain->addWidget(panel);
     splitterMain->addWidget(widget_left);
 
@@ -1072,6 +1071,15 @@ void MainWindow::onFrameReady(QString camera, cv::Mat mat)
     auto it = m_camProgram.find(camera);
     if (it == m_camProgram.end())
         return;    
+
+    JZNodeCameraReadyEvent*camera_event = currrentCameraNode();
+    if (camera_event)
+    {
+        if (camera_event->camera() != camera)
+            return;
+
+        currentNodeEditor()->clearRuntimeResult();
+    }
     
     auto obj_inst = m_engine.environment()->objectManager();
     JZNodeObject *this_obj = obj_inst->createReference(m_className, this, false);
@@ -1495,8 +1503,22 @@ void MainWindow::stopCamera(QString name)
 
 void MainWindow::imageDebug()
 {    
-    QVariant v = m_engine.getReg(Reg_CallIn);
+    JZNodeCameraReadyEvent* camera_event = currrentCameraNode();
+    if (!camera_event)
+        return;
+
+    int node_id = m_engine.getReg(Reg_CallIn).toInt();
+    QVariant v = m_engine.getReg(Reg_CallIn + 1);
     auto mat = JZObjectCast<cv::Mat>(toJZObject(v));
+
+    ImageResult image;
+    image.mat = *mat;
+    
+    NodeResult result;
+    result.outputImage << image;
+    
+    auto editor = currentNodeEditor();
+    editor->setRuntimeResult(node_id, result);
 }
 
 JZNodeCameraReadyEvent* MainWindow::currrentCameraNode()
@@ -1511,23 +1533,6 @@ JZNodeCameraReadyEvent* MainWindow::currrentCameraNode()
         return nullptr;
 
     return dynamic_cast<JZNodeCameraReadyEvent*>(event);
-}
-
-void MainWindow::currrentCameraStart(bool is_once)
-{
-    auto node = currrentCameraNode();
-    QString camera = node->camera();
-    if(is_once)
-        m_cameraManager->startOnce(camera);
-    else
-        m_cameraManager->start(camera);
-}
-
-void MainWindow::currrentCameraStop()
-{
-    auto node = currrentCameraNode();
-    QString camera = node->camera();
-    m_cameraManager->stop(camera);
 }
 
 const CompilerResult* MainWindow::compilerResult(const QString& path)

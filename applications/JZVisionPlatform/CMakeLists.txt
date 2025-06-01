@@ -15,6 +15,8 @@ set(JZVisionPlatform_SOURCES
 	JZCameraViewWidget.h
 	JZModuleVisionApp.cpp
 	JZModuleVisionApp.h
+    JZVisionNodeInfo.cpp
+    JZVisionNodeInfo.h
     JZFlowTree.cpp
     JZFlowTree.h
 	JZCameraThread.cpp
@@ -32,6 +34,8 @@ set(JZVisionPlatform_SOURCES
 	editor/JZVisionNodeItem.h
 	editor/JZVisionOutput.cpp
 	editor/JZVisionOutput.h	
+    editor/JZVisionLinkDialog.cpp
+    editor/JZVisionLinkDialog.h
 	editor/JZVisionSettingDialog.cpp
 	editor/JZVisionSettingDialog.h
     editor/JZVisionEditorManager.cpp

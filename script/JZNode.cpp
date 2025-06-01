@@ -47,6 +47,11 @@ bool JZNodeGemo::operator==(const JZNodeGemo &other) const
     return nodeId == other.nodeId && pinId == other.pinId;
 }
 
+bool JZNodeGemo::operator!=(const JZNodeGemo &other) const
+{
+    return !(*this == other);
+}
+
 // JZNodeConnect
 JZNodeConnect::JZNodeConnect()
 {

@@ -1,13 +1,13 @@
 #include "JZModuleDebug.h"
 
-void JZModuleDebug(JZNodeCompiler *c,JZNodeIRParam image,JZNodeIRParam roi)
+void JZModuleDebug(JZNodeCompiler *c,int node_id, JZNodeIRParam image,JZNodeIRParam roi)
 {
     auto image_debug = JZModuleDebugManager::instance()->imageDebug();
     auto roi_debug = JZModuleDebugManager::instance()->roiDebug();
     if(!image_debug.isEmpty())
-        c->addCall(image_debug,{image},{});
+        c->addCall(image_debug,{ irLiteral(node_id), image},{});
     if(!roi_debug.isEmpty())
-        c->addCall(roi_debug,{roi},{});
+        c->addCall(roi_debug,{ irLiteral(node_id), roi},{});
 }
 
 JZModuleDebugManager *JZModuleDebugManager::instance()

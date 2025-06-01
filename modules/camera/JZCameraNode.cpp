@@ -195,7 +195,7 @@ bool JZNodeCameraReadyEvent::compiler(JZNodeCompiler* c, QString& error)
         return false;
 
     int out_id = c->paramId(m_id, paramOut(0));
-    JZModuleDebug(c, irId(out_id),JZNodeIRParam());
+    JZModuleDebug(c,m_id, irId(out_id),JZNodeIRParam());
     return true;
 }
 

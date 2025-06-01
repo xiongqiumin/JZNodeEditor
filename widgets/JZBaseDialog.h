@@ -18,8 +18,10 @@ protected:
         Button_Ok,
         Button_Cancel,
     };	
-    virtual void keyPressEvent(QKeyEvent *event) override;
-    void setCentralWidget(QWidget *w);         
+    virtual void keyPressEvent(QKeyEvent *event) override;\
+
+    QWidget *centralWidget();
+    void setCentralWidget(QWidget *w);
 
     QWidget *m_mainWidget;	
     QDialogButtonBox *m_btnBox;

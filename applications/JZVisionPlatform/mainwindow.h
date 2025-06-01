@@ -23,6 +23,7 @@
 #include "editor/JZVisionEditor.h"
 #include "jzWidgets/JZLogWidget.h"
 #include "jzWidgets/JZImageLabel.h"
+#include "editor/JZVisionEditor.h"
 
 class Setting
 {
@@ -51,7 +52,7 @@ public:
     void startCameraOnce(QString name);
     void stopCamera(QString name);
 
-    void imageDebug();
+    void imageDebug();    
 
 protected slots:
     void onBtnCamera();
@@ -119,23 +120,10 @@ protected slots:
 
     const CompilerResult* compilerResult(const QString& path);
 
-protected:
+protected:    
     struct CameraProgram
-    {
-        struct ImageResult
-        {
-            cv::Mat mat;
-            QList<JZGraphic> graphList;
-        };
-
-        struct Result
-        {
-            QMap<QString, ImageResult> outputImage;
-            QString error;
-        };
-
-        QString function;
-        QMap<int,Result> resultMap;
+    {        
+        QString function;        
     };
 
     virtual void customEvent(QEvent* event) override;
@@ -186,9 +174,7 @@ protected:
 
     bool checkBuild();
     bool isCameraFlow();
-    JZNodeCameraReadyEvent* currrentCameraNode();
-    void currrentCameraStart(bool is_once);
-    void currrentCameraStop();
+    JZNodeCameraReadyEvent* currrentCameraNode();    
 
     JZModelManager* m_modelManager;
     JZCameraManager* m_cameraManager;
@@ -201,7 +187,7 @@ protected:
     JZCameraListWidget *m_cameraList;
     JZCameraViewWidget *m_cameraView;
     JZCommConfigWidget *m_commConfigWidget;
-    JZModelConfigWidget *m_modelConfigWidget;
+    JZModelConfigWidget *m_modelConfigWidget;    
     JZFlowTree* m_projectTree;    
 
     Setting m_setting;

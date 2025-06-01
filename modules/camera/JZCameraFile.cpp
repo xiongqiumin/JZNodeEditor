@@ -1,6 +1,7 @@
 ﻿#include <QTimer>
 #include <QDir>
 #include <QFileInfo>
+#include <QDebug>
 #include "JZCameraFile.h"
 
 using namespace cv;
@@ -103,6 +104,7 @@ void JZCameraFile::stop()
 cv::Mat JZCameraFile::readFrame()
 {
     QString path = m_fileList[m_fileIndex];
+    qDebug() << m_fileIndex << path;
     m_fileIndex = (m_fileIndex + 1)%m_fileList.size();
     cv::Mat mat = imread(path.toLocal8Bit().data());
     return mat;

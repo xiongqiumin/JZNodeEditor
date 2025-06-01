@@ -439,25 +439,7 @@ void JZNodeAbstractView::endLine(JZNodeGemo to)
     if (!m_selLine)
         return;
 
-    JZNodeConnect line;
-    line.from = m_selLine->startTraget();
-    line.to = to;
-
-    m_commandStack.beginMacro("create line");
-
-    JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::CreateLine);
-    cmd->itemId = -1;
-    cmd->newValue = JZNodeUtils::toBuffer(line);
-    m_commandStack.push(cmd);
-
-    auto node = getNode(line.to.nodeId);
-    if(node->pin(line.to.pinId)->isParam())
-    {
-        auto old = getNodeData(line.to.nodeId);
-        node->setPinValue(line.to.pinId,QString());
-        addPinValueChangedCommand(line.to.nodeId,line.to.pinId,old);
-    }
-    m_commandStack.endMacro();
+    addCreateLineConmmand(m_selLine->startTraget(), to);
 
     m_selLine->ungrabMouse();
     delete m_selLine;
@@ -1042,6 +1024,29 @@ void JZNodeAbstractView::addCreateNodeCommand(const QByteArray &buffer,QPointF p
     cmd->newValue = buffer;
     cmd->newPos = pt;
     m_commandStack.push(cmd);
+}
+
+void JZNodeAbstractView::addCreateLineConmmand(JZNodeGemo from, JZNodeGemo to)
+{
+    JZNodeConnect line;
+    line.from = from;
+    line.to = to;
+
+    m_commandStack.beginMacro("create line");
+
+    JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::CreateLine);
+    cmd->itemId = -1;
+    cmd->newValue = JZNodeUtils::toBuffer(line);
+    m_commandStack.push(cmd);
+
+    auto node = getNode(line.to.nodeId);
+    if (node->pin(line.to.pinId)->isParam())
+    {
+        auto old = getNodeData(line.to.nodeId);
+        node->setPinValue(line.to.pinId, QString());
+        addPinValueChangedCommand(line.to.nodeId, line.to.pinId, old);
+    }
+    m_commandStack.endMacro();
 }
 
 void JZNodeAbstractView::addRemoveLineCommand(int line_id)

@@ -85,6 +85,7 @@ public:
     void addMoveNodeCommand(int id, QPointF pt);
 
     /* line */
+    void addCreateLineConmmand(JZNodeGemo from,JZNodeGemo to);
     void addRemoveLineCommand(int line_id);
 
     /* group */

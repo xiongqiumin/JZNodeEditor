@@ -1,6 +1,7 @@
 ﻿#include <QSplitter>
 #include <QHBoxLayout>
 #include "JZVisionEditor.h"
+#include "modules/opencv/CvToQt.h"
 
 JZVisionEditor::JZVisionEditor(QWidget *parent) 
     : JZEditor(parent)
@@ -18,8 +19,8 @@ void JZVisionEditor::init()
     // 创建组件
     m_nodePanel = new JZVisionPanel();
     m_view = new JZVisionView(this);
-    m_rightImage = new JZVisionImage(this);
-    m_rightOutput = new JZVisionOutput(this);
+    m_outputImage = new JZVisionImage(this);
+    m_outputResult = new JZVisionOutput(this);
 
     setFocusProxy(m_view);
     connect(m_view, &JZVisionView::redoAvailable, this, &JZVisionEditor::redoAvailable);
@@ -31,8 +32,8 @@ void JZVisionEditor::init()
     m_view->setPanel(m_nodePanel);
 
     QSplitter *rightSplitter = new QSplitter(Qt::Vertical, this);
-    rightSplitter->addWidget(m_rightImage);
-    rightSplitter->addWidget(m_rightOutput);
+    rightSplitter->addWidget(m_outputImage);
+    rightSplitter->addWidget(m_outputResult);
 
     rightSplitter->setChildrenCollapsible(false);
 
@@ -53,6 +54,19 @@ void JZVisionEditor::init()
 void JZVisionEditor::setCompilerResult(const CompilerResult *info)
 {
     m_view->setCompilerResult(info);
+}
+
+void JZVisionEditor::setRuntimeResult(int node_id, NodeResult result)
+{
+    m_result.nodeResult[node_id] = result;
+    
+    m_outputImage->view()->setImage(QtOcv::mat2Image(result.outputImage[0].mat));
+}
+
+void JZVisionEditor::clearRuntimeResult()
+{
+    m_result.clear();
+    m_outputImage->clear();
 }
 
 void JZVisionEditor::open(JZProjectItem *item)

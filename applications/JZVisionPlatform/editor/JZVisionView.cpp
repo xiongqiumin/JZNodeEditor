@@ -75,11 +75,66 @@ void JZVisionView::mouseDoubleClickEvent(QMouseEvent* event)
     dialog.setNode(node);
     if (dialog.exec() != QDialog::Accepted)
         return;
+    
+    bool macro_flag = false;
+    auto addMacro = [this, &macro_flag] 
+    {
+        if (!macro_flag)
+        {
+            m_commandStack.beginMacro("change value");
+            macro_flag = true;
+        }
+    };
 
-    QByteArray new_buffer = editorNodeFactory()->saveNode(node);
-    if (new_buffer == old_buffer)
-        return;
+    QByteArray new_buffer = editorNodeFactory()->saveNode(node);        
+    auto block_list = dialog.blockList();
+    auto it = block_list.begin();
+    while (it != block_list.end())
+    {
+        int pin_id = it.key();
+        auto in_list = m_file->getConnectInput(node->id(), pin_id);
+        bool pre_link = (in_list.size() > 0);
+        QString pre_value = node->pinValue(pin_id);
+        JZNodeGemo pre_gemo;
+        if (pre_link)
+            pre_gemo = m_file->getConnect(in_list[0])->from;
 
+        if (pre_link && it->isLink())
+        {
+            if (pre_gemo != it->linkGemo)
+            {
+                addMacro();
+                addRemoveLineCommand(in_list[0]);
+                addCreateLineConmmand(it->linkGemo,JZNodeGemo(node->id(),pin_id));
+            }
+        }
+        else if (pre_link && !it->isLink())
+        {
+            addMacro();
+            addRemoveLineCommand(in_list[0]);
+        }
+        else if (!pre_link && it->isLink())
+        {
+            addMacro();
+            addCreateLineConmmand(it->linkGemo, JZNodeGemo(node->id(), pin_id));
+        }
+        else if (!pre_link && !it->isLink())
+        {
+            
+        }
+
+        it++;
+    }
+    
+    if (old_buffer != new_buffer)
+    {
+        addMacro();
+        addNodeChangedCommand(node->id(), old_buffer);
+    }
+
+    if(macro_flag)
+        m_commandStack.endMacro();    
+    
     addNodeChangedCommand(node->id(), old_buffer);
 }
 
