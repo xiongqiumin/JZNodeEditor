@@ -1,8 +1,13 @@
-#include <inttypes.h>
+ï»¿#include <inttypes.h>
 #include "JZVision.h"
 #include "modules/opencv/CvToQt.h"
 
-Mat JZVisionCropImage(Mat mat, QRect rc) 
+Mat JZVisionImageThreshold(Mat mat, QRect rc)
+{
+    return mat;
+}
+
+Mat JZVisionImageCrop(Mat mat, QRect rc) 
 {
     auto cv_rc = fromQRect(rc);
 	return mat(cv_rc);
@@ -14,11 +19,11 @@ Mat JZVisionImageFlip(Mat srcImage, bool h, bool v)
     if(!h && !v)    
         srcImage.copyTo(dstImage);
     else if(v && !h)
-        cv::flip(srcImage, dstImage, 0);  //ÉÏÏÂ·­×ª
+        cv::flip(srcImage, dstImage, 0);  //ä¸Šä¸‹ç¿»è½¬
     else if (h && !v)
-        cv::flip(srcImage, dstImage, 1);  //×óÓÒ·­×ª		
+        cv::flip(srcImage, dstImage, 1);  //å·¦å³ç¿»è½¬		
     else
-        cv::flip(srcImage, dstImage, -1);  //ÉÏÏÂ×óÓÒÍ¬Ê±·­×ª			
+        cv::flip(srcImage, dstImage, -1);  //ä¸Šä¸‹å·¦å³åŒæ—¶ç¿»è½¬			
 
 	return dstImage;
 }
@@ -29,24 +34,24 @@ void JZVisionImageMorphology()
 
 Mat JZVisionPerspectiveTransform(Mat mat, QRect from, QRect to)
 {    
-    // ¶¨ÒåÔ´ËÄ±ßĞÎ¶¥µã£¨Ë³Ê±ÕëË³Ğò£©
+    // å®šä¹‰æºå››è¾¹å½¢é¡¶ç‚¹ï¼ˆé¡ºæ—¶é’ˆé¡ºåºï¼‰
     std::vector<cv::Point2f> srcPoints;
     srcPoints.push_back(cv::Point2f(from.left(), from.top()));
     srcPoints.push_back(cv::Point2f(from.right(), from.top()));
     srcPoints.push_back(cv::Point2f(from.right(), from.bottom()));
     srcPoints.push_back(cv::Point2f(from.left(), from.bottom()));
 
-    // ¶¨ÒåÄ¿±êËÄ±ßĞÎ¶¥µã£¨Ë³Ê±ÕëË³Ğò£©
+    // å®šä¹‰ç›®æ ‡å››è¾¹å½¢é¡¶ç‚¹ï¼ˆé¡ºæ—¶é’ˆé¡ºåºï¼‰
     std::vector<cv::Point2f> dstPoints;
     dstPoints.push_back(cv::Point2f(to.left(), to.top()));
     dstPoints.push_back(cv::Point2f(to.right(), to.top()));
     dstPoints.push_back(cv::Point2f(to.right(), to.bottom()));
     dstPoints.push_back(cv::Point2f(to.left(), to.bottom()));
 
-    // ¼ÆËãÍ¸ÊÓ±ä»»¾ØÕó
+    // è®¡ç®—é€è§†å˜æ¢çŸ©é˜µ
     cv::Mat perspectiveMatrix = cv::getPerspectiveTransform(srcPoints, dstPoints);
 
-    // Ó¦ÓÃÍ¸ÊÓ±ä»»
+    // åº”ç”¨é€è§†å˜æ¢
     cv::Mat transformedMat;
     cv::warpPerspective(mat, transformedMat, perspectiveMatrix, mat.size());
 
@@ -61,7 +66,7 @@ Mat JZVisionSkeleton(Mat src,int intera)
     int i, j, n;
     int width, height;
     width = src.cols - 1;
-    //Ö®ËùÒÔ¼õ1£¬ÊÇ·½±ã´¦Àí8ÁÚÓò£¬·ÀÖ¹Ô½½ç
+    //ä¹‹æ‰€ä»¥å‡1ï¼Œæ˜¯æ–¹ä¾¿å¤„ç†8é‚»åŸŸï¼Œé˜²æ­¢è¶Šç•Œ
     height = src.rows - 1;
     int step = src.step;
     int  p2, p3, p4, p5, p6, p7, p8, p9;
@@ -69,7 +74,7 @@ Mat JZVisionSkeleton(Mat src,int intera)
     bool ifEnd;
     int A1;
     cv::Mat tmpimg;
-    //n±íÊ¾µü´ú´ÎÊı
+    //nè¡¨ç¤ºè¿­ä»£æ¬¡æ•°
     for (n = 0; n < intera; n++)
     {
         dst.copyTo(tmpimg);
@@ -128,7 +133,7 @@ Mat JZVisionSkeleton(Mat src,int intera)
                     {
                         if ((p2 == 0 || p4 == 0 || p6 == 0) && (p4 == 0 || p6 == 0 || p8 == 0)) //p2*p4*p6=0 && p4*p6*p8==0
                         {
-                            dst.at<uchar>(i, j) = 0; //Âú×ãÉ¾³ıÌõ¼ş£¬ÉèÖÃµ±Ç°ÏñËØÎª0
+                            dst.at<uchar>(i, j) = 0; //æ»¡è¶³åˆ é™¤æ¡ä»¶ï¼Œè®¾ç½®å½“å‰åƒç´ ä¸º0
                             ifEnd = true;
                         }
                     }
@@ -190,7 +195,7 @@ Mat JZVisionSkeleton(Mat src,int intera)
                     {
                         if ((p2 == 0 || p4 == 0 || p8 == 0) && (p2 == 0 || p6 == 0 || p8 == 0)) //p2*p4*p8=0 && p2*p6*p8==0
                         {
-                            dst.at<uchar>(i, j) = 0; //Âú×ãÉ¾³ıÌõ¼ş£¬ÉèÖÃµ±Ç°ÏñËØÎª0
+                            dst.at<uchar>(i, j) = 0; //æ»¡è¶³åˆ é™¤æ¡ä»¶ï¼Œè®¾ç½®å½“å‰åƒç´ ä¸º0
                             ifEnd = true;
                         }
                     }

@@ -28,6 +28,16 @@ JZModel::~JZModel()
 {
 }
 
+QString JZModel::name() const
+{
+    return m_config->name;
+}
+
+const JZModelConfigEnum &JZModel::config()
+{
+    return m_config;
+}
+
 void JZModel::setConfig(JZModelConfigEnum config)
 {
 	m_config = config;

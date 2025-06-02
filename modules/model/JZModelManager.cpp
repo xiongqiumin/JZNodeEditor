@@ -16,6 +16,16 @@ QDataStream& operator>>(QDataStream& s, JZModelConfigEnum& config)
 }
 
 //JZModelManagerConfig
+int JZModelManagerConfig::indexOfModel(QString name)
+{
+    for (int i = 0; i < modelList.size(); i++)
+    {
+        if (modelList[i]->name == name)
+            return i;
+    }
+    return -1;
+}
+
 QDataStream& operator<<(QDataStream& s, const JZModelManagerConfig& config)
 {
 	s << config.modelList;
@@ -43,6 +53,7 @@ JZModelManager::~JZModelManager()
 void JZModelManager::setConfig(const JZModelManagerConfig& config)
 {
 	m_config = config;
+    init();
 }
 
 JZModelManagerConfig JZModelManager::config()
@@ -52,6 +63,11 @@ JZModelManagerConfig JZModelManager::config()
 
 void JZModelManager::init()
 {
+    //clear
+    qDeleteAll(m_models);
+    m_models.clear();
+
+    //init
 	for (int i = 0; i < m_config.modelList.size(); i++)
 	{
 		JZModel* model = createModel(m_config.modelList[i]);
@@ -95,7 +111,6 @@ void JZModelInit(JZModelManager* inst, const QByteArray& buffer)
 {
 	JZModelManagerConfig config = JZNodeUtils::fromBuffer<JZModelManagerConfig>(buffer);
 	inst->setConfig(config);
-	inst->init();
 }
 
 JZModel *JZModelGet(JZModelManager *inst, QString name)

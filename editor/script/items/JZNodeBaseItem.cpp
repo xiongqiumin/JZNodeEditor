@@ -91,6 +91,8 @@ JZAbstractNodeItem::JZAbstractNodeItem(JZNode *node)
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);    
     m_baseZValue = 0;
+
+    setAcceptHoverEvents(true);
 }
 
 JZAbstractNodeItem::~JZAbstractNodeItem()
@@ -126,13 +128,12 @@ bool JZAbstractNodeItem::isError()
 
 void JZAbstractNodeItem::clearError()
 {
+    m_error.clear();
+    update();
 }
 
 void JZAbstractNodeItem::setError(QString error)
 {
-}
-
-QString JZAbstractNodeItem::getTip(QPointF pt)
-{
-    return QString();
+    m_error = error;
+    update();
 }

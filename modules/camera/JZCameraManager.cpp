@@ -56,10 +56,18 @@ JZCameraManager::~JZCameraManager()
     m_cameras.clear();
 }
 
-void JZCameraManager::setConfig(const JZCameraManagerConfig &config)
-{    
-    m_config = config;
+void JZCameraManager::init()
+{
+    //clear
+    for (int i = 0; i < m_cameras.size(); i++)
+    {
+        m_cameras[i]->stop();
+        m_cameras[i]->close();
+        m_cameras[i]->deleteLater();
+    }
     m_cameras.clear();
+
+    //init
     for (int i = 0; i < m_config.cameraList.size(); i++)
     {
         JZCamera *camera = createCamera(m_config.cameraList[i]);
@@ -67,14 +75,15 @@ void JZCameraManager::setConfig(const JZCameraManagerConfig &config)
     }
 }
 
+void JZCameraManager::setConfig(const JZCameraManagerConfig &config)
+{    
+    m_config = config;
+    init();    
+}
+
 const JZCameraManagerConfig &JZCameraManager::config() const
 {
     return m_config;
-}
-
-void JZCameraManager::init()
-{    
-    emit sigInitFinish();
 }
 
 void JZCameraManager::onFrameReady(cv::Mat mat)
@@ -238,7 +247,6 @@ void JZCameraInit(JZCameraManager* inst, const QByteArray& buffer)
 {
     JZCameraManagerConfig config = JZNodeUtils::fromBuffer<JZCameraManagerConfig>(buffer);
     inst->setConfig(config);
-    inst->init();
 }
 
 void JZCameraConnect(QObject * object, JZCameraManager *inst,QString name, JZFunctionPointer func)

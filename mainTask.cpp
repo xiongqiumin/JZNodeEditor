@@ -23,7 +23,7 @@ void BuildInfo::clear()
 //MainTask
 MainTask::MainTask()
 {
-    isRunOnce = true;
+    isRunOnce = true;   
 }
 
 //MainTaskManager
@@ -33,7 +33,8 @@ MainTaskManager::MainTaskManager()
     connect(m_compilerTimer, &QTimer::timeout, this, &MainTaskManager::onAutoCompilerTimer);
     connect(&m_buildThread, &JZNodeBuildThread::sigResult, this, &MainTaskManager::onBuildFinish);    
 
-    m_project = nullptr;    
+    m_project = nullptr;
+    m_autoCompilerTime = 1000;
 }
 
 MainTaskManager::~MainTaskManager()
@@ -102,14 +103,17 @@ void MainTaskManager::build(bool mute)
     }
     else
     {
+        emit sigBuildFinish(m_buildResult);
         QTimer::singleShot(0, this, [this] {
             dealTask();
         });
     }
 }
 
-void MainTaskManager::addBuildProgramTask()
+void MainTaskManager::addBuildProgramTask(bool force)
 {    
+    if(force)
+        m_buildInfo.changeTimestamp = QDateTime::currentMSecsSinceEpoch();
     build(false);
 
     MainTask task;
@@ -133,7 +137,7 @@ void MainTaskManager::addTestTask(QString path, bool runOnce)
 
 void MainTaskManager::addExportCppTask()
 {
-    addBuildProgramTask();
+    addBuildProgramTask(true);
 
     MainTask task;
     task.type = MainTask::Task_dumpCpp;
@@ -142,7 +146,7 @@ void MainTaskManager::addExportCppTask()
 
 void MainTaskManager::addExportExeTask()
 {
-    addBuildProgramTask();
+    addBuildProgramTask(true);
 
     MainTask task;
     task.type = MainTask::Task_dumpExe;
@@ -151,7 +155,7 @@ void MainTaskManager::addExportExeTask()
 
 void MainTaskManager::addRunTask()
 {
-    addBuildProgramTask();
+    addBuildProgramTask(true);
 
     MainTask task;
     task.type = MainTask::Task_running;
@@ -161,7 +165,7 @@ void MainTaskManager::addRunTask()
 void MainTaskManager::onAutoCompilerTimer()
 {
     qint64 cur = QDateTime::currentMSecsSinceEpoch();
-    if (cur - m_buildInfo.changeTimestamp <= 1000)
+    if (cur - m_buildInfo.changeTimestamp <= m_autoCompilerTime)
         return;
 
     if (m_project->isNull())

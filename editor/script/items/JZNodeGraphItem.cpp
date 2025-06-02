@@ -94,9 +94,7 @@ JZNodeGraphItem::JZNodeGraphItem(JZNode *node)
     m_id = node->id();
         
     m_downPin = -1;    
-    m_blockExtId = 100;
-
-    setAcceptHoverEvents(true);
+    m_blockExtId = 100;    
 }
 
 JZNodeGraphItem::~JZNodeGraphItem()

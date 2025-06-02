@@ -35,7 +35,7 @@ void JZVisionLinkDialog::addLinkItem(JZNode* node, const QList<int> &dst_types)
     {
         int out_pin = out_list[i];
         QList<int> src_types = env->nameListToTypeList(node->pinType(out_pin));
-        if (env->matchType(src_types, dst_types))
+        if (env->matchType(src_types, dst_types) != Type_none)
         {
             if (!root)
             {

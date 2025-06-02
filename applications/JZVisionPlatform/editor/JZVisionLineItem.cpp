@@ -43,6 +43,16 @@ void JZVisionLineItem::updateNode()
     {
         JZAbstractNodeItem* node_to = view->getNodeItem(m_to.nodeId);
         m_endPoint = node_to->sceneBoundingRect().center();
+
+        auto from_pin = node_from->node()->pin(m_from.pinId);
+        if (from_pin->isFlow() || from_pin->isSubFlow())
+        {
+
+        }
+        else
+        {
+            hide();
+        }
     }
 }
 
@@ -165,7 +175,7 @@ void JZVisionLineItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* 
     QColor c = Qt::black;
     auto pen_style = Qt::SolidLine;
     if (isSelected())
-        c = Qt::yellow;
+        c = QColor(250, 156, 62);
     if (m_to.nodeId == -1)
         pen_style = Qt::DashLine;
 

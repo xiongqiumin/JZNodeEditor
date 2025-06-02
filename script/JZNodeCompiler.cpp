@@ -1866,7 +1866,7 @@ void JZNodeCompiler::adjustStatementPc(int start_idx,int jmp_cond, int adjust)
     }
 }
 
-JZScriptItem *JZNodeCompiler::currentFile()
+JZScriptItem *JZNodeCompiler::scriptItem()
 {
     return m_scriptItem;
 }

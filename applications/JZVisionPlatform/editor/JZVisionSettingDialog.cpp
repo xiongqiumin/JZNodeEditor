@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QToolButton>
+#include <QGridLayout>
 #include "JZVisionLinkDialog.h"
 #include "JZVisionSettingDialog.h"
 #include "JZScriptItem.h"
@@ -39,13 +40,24 @@ void JZVisionSettingDialog::setNode(JZNode* node)
     QVBoxLayout *v = new QVBoxLayout();
     area_widget->setLayout(v);        
 
-    v->addWidget(createRow("节点:", node->name()));
+    QLabel *label_name = new QLabel(node->name());
+    v->addWidget(label_name);
+
     auto in_list = node->paramInList();
-    for (int i = 0; i < in_list.size(); i++)
+    if (in_list.size() > 0)
     {
-        QWidget *pin_widget = createPin(node->pin(in_list[i]));
-        v->addWidget(pin_widget);
-        updateBlock(in_list[i]);
+        QGridLayout *grid = new QGridLayout();
+        for (int i = 0; i < in_list.size(); i++)
+        {
+            QLabel *pin_label = new QLabel(node->pinName(in_list[i]));
+
+            QWidget *pin_widget = createPin(node->pin(in_list[i]));            
+
+            grid->addWidget(pin_label, i, 0);
+            grid->addWidget(pin_widget, i, 1);
+            updateBlock(in_list[i]);
+        }
+        v->addLayout(grid);
     }
     v->addStretch();
 
@@ -75,12 +87,6 @@ QWidget *JZVisionSettingDialog::createRow(QString name, QString value)
 
 QWidget *JZVisionSettingDialog::createPin(JZNodePin *pin)
 {
-    QHBoxLayout *l = new QHBoxLayout();
-    l->setContentsMargins(0, 0, 0, 0);
-    
-    QWidget *w = new QWidget();
-    l->addWidget(new QLabel(pin->name()));
-
     auto lineEdit = new QLineEdit();
     l->addWidget(lineEdit);
 
@@ -106,8 +112,6 @@ QWidget *JZVisionSettingDialog::createPin(JZNodePin *pin)
     m_blockList.insert(block.pinId, block);
     
     link->setFixedWidth(30);
-    l->addWidget(link);
-    w->setLayout(l);
     return w;
 }
 
@@ -132,6 +136,17 @@ void JZVisionSettingDialog::onBtnLink()
 
 void JZVisionSettingDialog::accept()
 {
+    auto it = m_blockList.begin();
+    while (it != m_blockList.end())
+    {
+        if (!it->isLink())
+        {
+            m_node->setPinValue(it->pinId, it->line->text());
+        }
+
+        it++;
+    }
+
     JZBaseDialog::accept();
 }
 

@@ -1533,6 +1533,7 @@ void JZNodeAbstractView::keyReleaseEvent(QKeyEvent *event)
 
 bool JZNodeAbstractView::event(QEvent *event)
 {
+    //鼠标悬停会触发
     if (event->type() == QEvent::ToolTip) {      
         QHelpEvent *helpEvent = static_cast<QHelpEvent *>(event);
         auto node = nodeItemAt(helpEvent->pos());

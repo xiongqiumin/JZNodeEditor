@@ -1,7 +1,31 @@
 ﻿#include "JZModelNode.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
+#include "../JZModuleCompiler.h"
 
+static bool checkHasModule(JZScriptItem *script, const QString &model, QString &error)
+{
+    auto env = script->project()->environment();
+    if (!JZNodeCompiler::checkVariableType(script, "this.modelManager", env->nameToType("JZModelManager*"), error))
+        return false;
+
+    auto init_node = getInitNode(script, Node_ModelInit);
+    if (!init_node)
+    {
+        error = "没有init节点";
+        return false;
+    }
+
+    JZNodeModelInit *node = dynamic_cast<JZNodeModelInit*>(init_node);
+    if (node->config().indexOfModel(model))
+    {
+        error = "没有模型名称为" + model;
+        return false;
+    }
+
+    return true;
+
+}
 //JZNodeModelInit
 JZNodeModelInit::JZNodeModelInit()
 {
@@ -57,7 +81,7 @@ void JZNodeModelInit::loadFromStream(QDataStream& s)
 //JZNodeModelForward
 JZNodeModelForward::JZNodeModelForward()
 {
-    m_name = "modelForward";
+    m_name = "模型推理";
     m_type = Node_ModelForward;
 
     addFlowIn();
@@ -100,16 +124,8 @@ void JZNodeModelForward::loadFromStream(QDataStream& s)
 
 bool JZNodeModelForward::updateNode(QString &error)
 {
-    auto init_script = m_file->getClassItem()->memberFunction("init");
-    auto init_list = init_script->findNodeByType(Node_ModelInit);
-    if(init_list.size() != 1)
-    {
-        error = "no JZNodeModelInit in init";
-        return false;
-    }
-
     auto env = m_file->project()->environment();
-    if (!JZNodeCompiler::checkVariableType(m_file,"this.modelManager", env->nameToType("JZModelManager"), error))
+    if (!checkHasModule(m_file,model(),error))
         return false;
 
     return true;

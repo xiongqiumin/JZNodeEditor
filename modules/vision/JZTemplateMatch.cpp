@@ -1,4 +1,4 @@
-#include "JZTemplateMatch.h"
+﻿#include "JZTemplateMatch.h"
 #include "modules/opencv/CvToQt.h"
 #include "JZNodeUtils.h"
 

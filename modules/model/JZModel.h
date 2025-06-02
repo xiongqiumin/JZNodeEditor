@@ -30,6 +30,8 @@ public:
 	JZModel();
 	virtual ~JZModel();
 
+    QString name() const;
+    const JZModelConfigEnum &config();
 	void setConfig(JZModelConfigEnum config);
 
     virtual bool isInit() = 0;

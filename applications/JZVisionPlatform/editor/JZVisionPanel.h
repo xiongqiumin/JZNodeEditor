@@ -1,4 +1,4 @@
-#ifndef JZ_VISION_PANEL_H_
+﻿#ifndef JZ_VISION_PANEL_H_
 #define JZ_VISION_PANEL_H_
 
 #include "JZNodeAbstractPanel.h"

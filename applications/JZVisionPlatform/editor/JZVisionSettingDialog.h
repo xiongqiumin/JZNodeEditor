@@ -5,19 +5,31 @@
 #include "JZBaseDialog.h"
 #include "JZNode.h"
 
+//JZVisionSettingPinWidget
+class JZVisionSettingPinWidget : public QWidget
+{
+public:
+    JZVisionSettingPinWidget();
+
+    bool isLink();
+    JZNodeGemo linkGemo();
+    QString value();
+
+protected:
+    JZNodeGemo m_linkGemo;
+};
+
+
+//JZVisionSettingDialog
 class JZVisionSettingDialog : public JZBaseDialog
 {
     Q_OBJECT
     
 public:
     struct Block
-    {
-        bool isLink();
-
-        int pinId;
-        JZNodeGemo linkGemo;
-        QString value;
-        QLineEdit *line;
+    {        
+        int pinId;               
+        JZVisionSettingPinWidget *line;
         QString error;
     };
 

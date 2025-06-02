@@ -18,6 +18,7 @@ JZVisionImage::JZVisionImage(QWidget *parent)
     m_imageBox = new QComboBox();
     connect(m_imageBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &JZVisionImage::onImageBoxChanged);
     top_l->addWidget(m_imageBox);
+    top_l->addStretch();
 
     v->addWidget(top);
     v->addWidget(m_view);

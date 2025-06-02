@@ -7,6 +7,8 @@
 class JZModelManagerConfig
 {
 public:    
+    int indexOfModel(QString name);
+
     QList<JZModelConfigEnum> modelList;
 };
 QDataStream& operator<<(QDataStream &s,const JZModelManagerConfig &config);
@@ -22,12 +24,12 @@ public:
     
     void setConfig(const JZModelManagerConfig &config);
     JZModelManagerConfig config();
-
-    void init();
+    
     JZModel* model(QString name);
     QList<JZModel*> modelList();
 
 protected:
+    void init();
     JZModel* createModel(JZModelConfigEnum path);
 
     JZModelManagerConfig m_config;

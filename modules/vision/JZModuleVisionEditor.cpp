@@ -145,7 +145,7 @@ void JZModuleVisionEditorInit()
     auto icon = [](QString name)->QString {
         return ":/Modules/Vision/res/" + name;
     };
-    inst->registLogicNode(Node_VisionCropImage, "Vision/图像处理", icon("crop.png"));
+    inst->registLogicNode(Node_VisionImageCrop, "Vision/图像处理", icon("crop.png"));
     inst->registLogicNode(Node_VisionImageFlip, "Vision/图像处理", icon("flip.png"));
     inst->registLogicNode(Node_VisionImageMorphology, "Vision/图像处理", icon("morphology.png"));
     inst->registLogicNode(Node_VisionImageRotate, "Vision/图像处理", icon("rotate_x.png"));

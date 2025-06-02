@@ -120,7 +120,7 @@ public:
     void fitNodeView();
     void ensureNodeVisible(int id);
     void selectNode(int id);    
-
+    
     void setCompilerResult(const CompilerResult *compilerInfo);
 
 signals:

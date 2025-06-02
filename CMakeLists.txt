@@ -156,6 +156,8 @@ set(JZNodeCore_SOURCES
 	#modules
     modules/JZModuleDebug.cpp
     modules/JZModuleDebug.h    
+    modules/JZModuleCompiler.cpp
+    modules/JZModuleCompiler.h
 	modules/JZModuleConfigWidget.cpp
 	modules/JZModuleConfigWidget.h
     

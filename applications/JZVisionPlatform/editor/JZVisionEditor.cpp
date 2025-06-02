@@ -1,7 +1,9 @@
 ﻿#include <QSplitter>
 #include <QHBoxLayout>
+#include <QUrlQuery>
 #include "JZVisionEditor.h"
 #include "modules/opencv/CvToQt.h"
+#include "JZDockWidget.h"
 
 JZVisionEditor::JZVisionEditor(QWidget *parent) 
     : JZEditor(parent)
@@ -32,8 +34,8 @@ void JZVisionEditor::init()
     m_view->setPanel(m_nodePanel);
 
     QSplitter *rightSplitter = new QSplitter(Qt::Vertical, this);
-    rightSplitter->addWidget(m_outputImage);
-    rightSplitter->addWidget(m_outputResult);
+    rightSplitter->addWidget(new JZDockWidget("输出图像", m_outputImage));
+    rightSplitter->addWidget(new JZDockWidget("运行结果",m_outputResult));
 
     rightSplitter->setChildrenCollapsible(false);
 
@@ -122,7 +124,9 @@ bool JZVisionEditor::isModified()
 
 void JZVisionEditor::navigate(QUrl url)
 {
-
+    QUrlQuery query(url);
+    int id = query.queryItemValue("id").toInt();
+    m_view->selectNode(id);
 }
 
 void JZVisionEditor::undo()

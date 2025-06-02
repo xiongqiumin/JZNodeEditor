@@ -9,8 +9,11 @@ enum VisionNode
 {
     Node_Vision = Module_VisionNode,
 
-    Node_VisionCropImage, 
+    Node_VisionImageThreshold,
+    Node_VisionImageCrop, 
     Node_VisionImageFlip,
+    Node_VisionImageConvert,
+    Node_VisionImageFilter,
     Node_VisionImageMorphology, 
     Node_VisionImageRotate, 
     Node_VisionImageSplice,
@@ -28,10 +31,18 @@ enum VisionNode
     Node_VisionFindLine, 
 };
 
-class JZNodeVisionCropImage : public JZNode
+class JZNodeVisionImageThreshold: public JZNode
 {
 public:
-    JZNodeVisionCropImage();
+    JZNodeVisionImageThreshold();
+
+    virtual bool compiler(JZNodeCompiler *, QString &error) override;
+};
+
+class JZNodeVisionImageCrop : public JZNode
+{
+public:
+    JZNodeVisionImageCrop();
 
     virtual bool compiler(JZNodeCompiler *, QString &error) override;
 };

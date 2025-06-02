@@ -53,7 +53,7 @@ public:
     void clearTask();
 
     void addAutoCompilerTask();
-    void addBuildProgramTask();        
+    void addBuildProgramTask(bool force);        
     void addTestTask(QString path,bool runOnce);
     void addExportExeTask();
     void addExportCppTask();    
@@ -82,6 +82,8 @@ protected:
     JZNodeBuildThread m_buildThread;
     JZProject *m_project;
     QList<MainTask> m_taskList;        
+    
+    int m_autoCompilerTime;  //自动编译间隔
 };
 
 #endif

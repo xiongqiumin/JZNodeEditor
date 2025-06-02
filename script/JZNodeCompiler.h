@@ -314,7 +314,7 @@ public:
     void appendStatementList(const QList<JZNodeIRPtr>& ir_list);
     void adjustStatementPc(int start_index, int jmp_cond, int adjust);
 
-    JZScriptItem *currentFile();
+    JZScriptItem *scriptItem();
     Graph *currentGraph();
     JZNode *currentNode();
 

@@ -34,8 +34,7 @@ class JZCommManager : public QObject
 public:
     JZCommManager(QObject *parent = nullptr);
     ~JZCommManager();
-
-    void init();
+    
     void openAll();
     void closeAll();
 
@@ -52,6 +51,8 @@ public:
     JZSerialPort* serial(QString name);
 
 protected:
+    void init();
+
     QObject* comm(QString name);
 	QList<JZCommObject*> m_commList;
 

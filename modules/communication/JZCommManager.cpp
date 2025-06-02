@@ -83,6 +83,14 @@ JZSerialPort* JZCommManager::serial(QString name)
 
 void JZCommManager::init()
 {
+    for (int i = 0; i < m_commList.size(); i++)
+    {
+        m_commList[i]->close();
+        m_commList[i]->deleteLater();
+    }
+    m_commList.clear();
+
+    //init
     for (int i = 0; i < m_config.commList.size(); i++)
     {
         auto &cfg = m_config.commList[i];
@@ -145,6 +153,7 @@ void JZCommManager::closeAll()
 void JZCommManager::setConfig(const JZCommManagerConfig&config)
 {
     m_config = config;
+    init();
 }
 
 JZCommManagerConfig JZCommManager::config()
@@ -198,7 +207,6 @@ void JZCommInit(JZCommManager* inst, const QByteArray& buffer)
 {
     JZCommManagerConfig config = JZNodeUtils::fromBuffer<JZCommManagerConfig>(buffer);
     inst->setConfig(config);
-    inst->init();
 }
 
 //modbus

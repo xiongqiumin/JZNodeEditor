@@ -7,7 +7,8 @@
 
 JZVisionView::JZVisionView(QWidget *parent)
 {
-
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &JZVisionView::customContextMenuRequested, this, &JZVisionView::onContextMenu);
 }
 
 JZVisionView::~JZVisionView()
@@ -69,15 +70,29 @@ void JZVisionView::mouseDoubleClickEvent(QMouseEvent* event)
     
     auto node_item = dynamic_cast<JZVisionNodeItem*>(item);
     auto node = getNode(node_item->id());
+    configNode(node);    
+}
 
+JZAbstractNodeItem *JZVisionView::createNodeItem(JZNode *node)
+{
+    return new JZVisionNodeItem(node);
+}
+
+JZAbstractLineItem *JZVisionView::createLineItem(JZNodeGemo from)
+{
+    return new JZVisionLineItem(from);
+}
+
+void JZVisionView::configNode(JZNode *node)
+{
     QByteArray old_buffer = editorNodeFactory()->saveNode(node);
     JZVisionSettingDialog dialog;
     dialog.setNode(node);
     if (dialog.exec() != QDialog::Accepted)
         return;
-    
+
     bool macro_flag = false;
-    auto addMacro = [this, &macro_flag] 
+    auto addMacro = [this, &macro_flag]
     {
         if (!macro_flag)
         {
@@ -86,7 +101,7 @@ void JZVisionView::mouseDoubleClickEvent(QMouseEvent* event)
         }
     };
 
-    QByteArray new_buffer = editorNodeFactory()->saveNode(node);        
+    QByteArray new_buffer = editorNodeFactory()->saveNode(node);
     auto block_list = dialog.blockList();
     auto it = block_list.begin();
     while (it != block_list.end())
@@ -105,7 +120,7 @@ void JZVisionView::mouseDoubleClickEvent(QMouseEvent* event)
             {
                 addMacro();
                 addRemoveLineCommand(in_list[0]);
-                addCreateLineConmmand(it->linkGemo,JZNodeGemo(node->id(),pin_id));
+                addCreateLineConmmand(it->linkGemo, JZNodeGemo(node->id(), pin_id));
             }
         }
         else if (pre_link && !it->isLink())
@@ -120,30 +135,46 @@ void JZVisionView::mouseDoubleClickEvent(QMouseEvent* event)
         }
         else if (!pre_link && !it->isLink())
         {
-            
+
         }
 
         it++;
     }
-    
+
     if (old_buffer != new_buffer)
     {
         addMacro();
         addNodeChangedCommand(node->id(), old_buffer);
     }
 
-    if(macro_flag)
-        m_commandStack.endMacro();    
-    
+    if (macro_flag)
+        m_commandStack.endMacro();
+
     addNodeChangedCommand(node->id(), old_buffer);
 }
 
-JZAbstractNodeItem *JZVisionView::createNodeItem(JZNode *node)
+void JZVisionView::onContextMenu(const QPoint &pos)
 {
-    return new JZVisionNodeItem(node);
-}
+    auto item = itemAt(pos);
 
-JZAbstractLineItem *JZVisionView::createLineItem(JZNodeGemo from)
-{
-    return new JZVisionLineItem(from);
+    QMenu menu(this);
+    QAction *actSetting = nullptr;
+    QList<QAction*> addList;
+    if (item)
+        actSetting = menu.addAction("设置");
+    else
+    {
+
+    }
+
+
+    QAction *ret = menu.exec(this->mapToGlobal(pos));
+    setFocusProxy(this);
+    if (!ret)
+        return;
+
+    if (ret == actSetting)
+    {
+
+    }
 }

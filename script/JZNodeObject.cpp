@@ -1519,30 +1519,37 @@ void JZNodeObjectManager::copy(JZNodeObject *src,JZNodeObject *dst) const
     }
 }
 
-void JZNodeObjectManager::create(const JZNodeObjectDefine *in_def,JZNodeObject *obj) const
+void JZNodeObjectManager::create(const JZNodeObjectDefine *in_def,JZNodeObject *obj, CObjectInfo *cobj_info) const
 {    
     Q_ASSERT(in_def);
 
     QList<const JZNodeObjectDefine*> def_list;
     const JZNodeObjectDefine* obj_def = in_def;
-
-    bool c_init = false;
+    
     while (obj_def)
     {
         def_list << obj_def;
-        if (obj_def->isCObject && !c_init)
+        if (obj_def->isCObject)
         {
-            c_init = true;
-            if (!obj_def->cMeta.isAbstract)
+            if (cobj_info)
             {
-                auto cobj = obj_def->cMeta.create();
-                obj->setCObject(cobj, true);
+                obj->m_cobj = cobj_info->cobj;
+                obj->m_cobjOwner = cobj_info->isOwner;
             }
             else
             {
-                obj->m_cobj = nullptr;
-                obj->m_cobjOwner = false;
-            }
+                if (!obj_def->cMeta.isAbstract)
+                {
+                    auto cobj = obj_def->cMeta.create();
+                    obj->setCObject(cobj, true);
+                }
+                else
+                {
+                    obj->m_cobj = nullptr;
+                    obj->m_cobjOwner = false;
+                }
+            }            
+            break;
         }
 
         obj_def = obj_def->super();
@@ -1603,7 +1610,7 @@ JZNodeObject* JZNodeObjectManager::create(int type) const
     Q_ASSERT(def);
 
     JZNodeObject *obj = new JZNodeObject(def);    
-    create(def,obj);
+    create(def,obj,nullptr);
     obj->autoConnect();
     obj->autoBind();
     obj->autoInit();
@@ -1626,9 +1633,13 @@ JZNodeObject* JZNodeObjectManager::createByCTypeid(const QString &type_id) const
 
 JZNodeObject* JZNodeObjectManager::createReference(int type_id, void *ptr, bool owner) const
 {
+    CObjectInfo cobj_info;
+    cobj_info.cobj = ptr;
+    cobj_info.isOwner = owner;
+
     auto def = meta(type_id);
     JZNodeObject *obj = new JZNodeObject(def);
-    obj->setCObject(ptr, owner);
+    create(def, obj, &cobj_info);
     return obj;
 }
 

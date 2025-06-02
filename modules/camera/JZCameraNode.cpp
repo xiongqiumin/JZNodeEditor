@@ -2,6 +2,30 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
 #include "../JZModuleDebug.h"
+#include "../JZModuleCompiler.h"
+
+static bool checkHasCamera(JZNodeCompiler *c, const QString &camera, QString &error)
+{
+    auto env = c->env();
+    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager*"), error))
+        return false;
+
+    auto init_node = getInitNode(c->scriptItem(), Node_CameraInit);
+    if (!init_node)
+    {
+        error = "没有init节点";
+        return false;
+    }
+
+    JZNodeCameraInit *node = dynamic_cast<JZNodeCameraInit*>(init_node);
+    if(node->config().indexOfCamera(camera))
+    {
+        error = "没有相机名称为" + camera;
+        return false;
+    }
+
+    return true;
+}
 
 //JZNodeCameraInit
 JZNodeCameraInit::JZNodeCameraInit()
@@ -76,8 +100,8 @@ bool JZCameraNode::compiler(JZNodeCompiler* c, QString& error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
-    auto env = c->env();
-    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager*"), error))
+    auto env = c->env();    
+    if (!checkHasCamera(c, camera(), error))
         return false;
 
     int cam_id = c->paramId(m_id, paramIn(0));
@@ -186,7 +210,7 @@ bool JZNodeCameraReadyEvent::compiler(JZNodeCompiler* c, QString& error)
         return false;
 
     auto env = c->env();
-    if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager*"), error))
+    if (!checkHasCamera(c,camera(), error))
         return false;
     
     m_connectInfo.irList[2] = irLiteral(c->pinLiteral(m_id, paramIn(0)));

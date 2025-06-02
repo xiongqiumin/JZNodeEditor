@@ -103,8 +103,7 @@ void JZCameraFile::stop()
 
 cv::Mat JZCameraFile::readFrame()
 {
-    QString path = m_fileList[m_fileIndex];
-    qDebug() << m_fileIndex << path;
+    QString path = m_fileList[m_fileIndex];    
     m_fileIndex = (m_fileIndex + 1)%m_fileList.size();
     cv::Mat mat = imread(path.toLocal8Bit().data());
     return mat;

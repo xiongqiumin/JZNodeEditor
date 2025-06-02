@@ -47,8 +47,7 @@
 //JZNodeView
 JZNodeView::JZNodeView(QWidget *widget)
     : JZNodeAbstractView(widget)
-{
-    m_selLine = nullptr;        
+{         
     m_propEditor = nullptr;
     m_runningMode = Process_none;
     m_runNode = -1;        

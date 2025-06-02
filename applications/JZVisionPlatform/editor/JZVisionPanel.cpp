@@ -1,4 +1,4 @@
-#include "JZVisionPanel.h"
+ï»¿#include "JZVisionPanel.h"
 #include "JZEditorGlobal.h"
 #include "UiCommon.h"
 #include "modules/camera/JZCameraNode.h"
@@ -19,35 +19,38 @@ void JZVisionPanel::initLogicNode()
     };
 
     //camera
-    registLogicNode(Node_CameraFrameReady, "Ïà»ú");
-    registLogicNode(Node_CameraCalibration, "Ïà»ú");
+    registLogicNode(Node_CameraFrameReady, "ç›¸æœº");
+    registLogicNode(Node_CameraCalibration, "ç›¸æœº");
 
     //vision
-    registLogicNode(Node_VisionCropImage, "Í¼Ïñ´¦Àí", icon("crop.png"));
-    registLogicNode(Node_VisionImageFlip, "Í¼Ïñ´¦Àí", icon("flip.png"));
-    registLogicNode(Node_VisionImageMorphology, "Í¼Ïñ´¦Àí", icon("morphology.png"));
-    registLogicNode(Node_VisionImageRotate, "Í¼Ïñ´¦Àí", icon("rotate_x.png"));
-    registLogicNode(Node_VisionImageSplice, "Í¼Ïñ´¦Àí", icon("image_splice.png"));
-    registLogicNode(Node_VisionPerspectiveTransform, "Í¼Ïñ´¦Àí", icon("perspective.png"));
-    registLogicNode(Node_VisionSkeleton, "Í¼Ïñ´¦Àí", icon("skeleton.png"));
+    registLogicNode(Node_VisionImageCrop, "å›¾åƒå¤„ç†", icon("crop.png"));
+    registLogicNode(Node_VisionImageFlip, "å›¾åƒå¤„ç†", icon("flip.png"));
+    registLogicNode(Node_VisionImageMorphology, "å›¾åƒå¤„ç†", icon("morphology.png"));
+    registLogicNode(Node_VisionImageRotate, "å›¾åƒå¤„ç†", icon("rotate_x.png"));
+    registLogicNode(Node_VisionImageSplice, "å›¾åƒå¤„ç†", icon("image_splice.png"));
+    registLogicNode(Node_VisionPerspectiveTransform, "å›¾åƒå¤„ç†", icon("perspective.png"));
+    registLogicNode(Node_VisionSkeleton, "å›¾åƒå¤„ç†", icon("skeleton.png"));
 
-    registLogicNode(Node_VisionBlobDetector, "¼ì²âÊ¶±ð", icon("blob.png"));
-    registLogicNode(Node_VisionBrightnessDetector, "¼ì²âÊ¶±ð", icon("brightness.png"));
-    registLogicNode(Node_VisionColorIdentify, "¼ì²âÊ¶±ð", icon("color_r.png"));
+    registLogicNode(Node_VisionBlobDetector, "æ£€æµ‹è¯†åˆ«", icon("blob.png"));
+    registLogicNode(Node_VisionBrightnessDetector, "æ£€æµ‹è¯†åˆ«", icon("brightness.png"));
+    registLogicNode(Node_VisionColorIdentify, "æ£€æµ‹è¯†åˆ«", icon("color_r.png"));
 
-    registLogicNode(Node_VisionShapeMatch, "¶ÔÎ»¹¤¾ß", icon("shape_match.png"));
-    registLogicNode(Node_VisionTemplateMatch, "¶ÔÎ»¹¤¾ß", icon("match.png"));
+    registLogicNode(Node_VisionShapeMatch, "å¯¹ä½å·¥å…·", icon("shape_match.png"));
+    registLogicNode(Node_VisionTemplateMatch, "å¯¹ä½å·¥å…·", icon("match.png"));
 
-    registLogicNode(Node_VisionFindCircle, "¼¸ºÎ¹¤¾ß", icon("find_circle.png"));
-    registLogicNode(Node_VisionFindLine, "¼¸ºÎ¹¤¾ß", icon("find_line.png"));
+    registLogicNode(Node_VisionFindCircle, "å‡ ä½•å·¥å…·", icon("find_circle.png"));
+    registLogicNode(Node_VisionFindLine, "å‡ ä½•å·¥å…·", icon("find_line.png"));
 
-    //Í¨ÐÅ
-    registLogicNode(Node_ModbusRead,  "Í¨ÐÅ");
-    registLogicNode(Node_ModbusWrite, "Í¨ÐÅ");
+    //æ¨¡åž‹
+    registLogicNode(Node_ModelForward, "æ¨¡åž‹");
 
-    //ÔË¶¯
-    registLogicNode(Node_MotionZero,  "ÔË¶¯");
-    registLogicNode(Node_MotionMove,  "ÔË¶¯");
+    //é€šä¿¡
+    registLogicNode(Node_ModbusRead,  "é€šä¿¡");
+    registLogicNode(Node_ModbusWrite, "é€šä¿¡");
+
+    //è¿åŠ¨
+    registLogicNode(Node_MotionZero,  "è¿åŠ¨");
+    registLogicNode(Node_MotionMove,  "è¿åŠ¨");
 }
 
 void JZVisionPanel::registLogicNode(int node_type, QString path, QString icon)
@@ -61,7 +64,7 @@ void JZVisionPanel::registLogicNode(int node_type, QString path, QString icon)
 
 void JZVisionPanel::init()
 {
-    QTreeWidgetItem *item_basic = createFolder("»ù±¾");
+    QTreeWidgetItem *item_basic = createFolder("åŸºæœ¬");
     m_tree->addTopLevelItem(item_basic);
     
     initLocalParam(item_basic);

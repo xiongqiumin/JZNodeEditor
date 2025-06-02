@@ -18,7 +18,7 @@ class JZVisionEditor : public JZEditor
 public:
     explicit JZVisionEditor(QWidget *parent = nullptr);
     ~JZVisionEditor();
-
+    
     void setCompilerResult(const CompilerResult *info);
     void setRuntimeResult(int node_id, NodeResult result);
     void clearRuntimeResult();

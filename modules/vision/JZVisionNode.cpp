@@ -1,11 +1,36 @@
 ﻿#include "JZVisionNode.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
+#include "../JZModuleDebug.h"
 
-//JZNodeVisionCropImage
-JZNodeVisionCropImage::JZNodeVisionCropImage()
+//JZNodeVisionImageThreshold
+JZNodeVisionImageThreshold::JZNodeVisionImageThreshold()
 {
-    m_type = Node_VisionCropImage;
+    m_type = Node_VisionImageThreshold;
+    m_name = "图像二值化";
+
+    addFlowIn();
+    addFlowOut();
+    
+    int in1 = addParamIn("mat");
+    setPinType(in1, { "Mat" });
+
+    int out = addParamOut("out");
+    setPinType(out, { "Mat" });
+}
+
+bool JZNodeVisionImageThreshold::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    return true;
+}
+
+//JZNodeVisionImageCrop
+JZNodeVisionImageCrop::JZNodeVisionImageCrop()
+{
+    m_type = Node_VisionImageCrop;
     m_name = "图像裁减";
 
     addFlowIn();
@@ -20,7 +45,7 @@ JZNodeVisionCropImage::JZNodeVisionCropImage()
     setPinType(out, { "Mat" });
 }
 
-bool JZNodeVisionCropImage::compiler(JZNodeCompiler *c, QString &error)
+bool JZNodeVisionImageCrop::compiler(JZNodeCompiler *c, QString &error)
 {    
     if (!c->addFlowInput(m_id, error))
         return false;
@@ -29,7 +54,7 @@ bool JZNodeVisionCropImage::compiler(JZNodeCompiler *c, QString &error)
     in << irId(c->paramId(m_id, paramIn(0)));
     in << irId(c->paramId(m_id, paramIn(1)));
     out << irId(c->paramId(m_id, paramOut(0)));
-    c->addCall("JZVisionCropImage",in,out);
+    c->addCall("JZVisionImageCrop",in,out);
 
     return true;
 }
@@ -44,8 +69,8 @@ JZNodeVisionImageFlip::JZNodeVisionImageFlip()
     int in2 = addParamIn("horizontal");
     int in3 = addParamIn("vertical");
     setPinType(in1, { "Mat" });
-    setPinTypeInt(in2);
-    setPinTypeInt(in3);
+    setPinTypeBool(in2);
+    setPinTypeBool(in3);
 
     int out = addParamOut("out");
     setPinType(out, { "Mat" });
@@ -59,13 +84,21 @@ bool JZNodeVisionImageFlip::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    QList<JZNodeIRParam> in,out;
+    in << irId(c->paramId(m_id,paramIn(0)));
+    in << irId(c->paramId(m_id,paramIn(1)));
+    in << irId(c->paramId(m_id,paramIn(2)));
+    out << irId(c->paramId(m_id,paramOut(0)));
+    c->addCall("JZVisionImageFlip",in,out);
+
+    JZModuleDebug(c, m_id, out[0], JZNodeIRParam());
     return true;
 }
 
 //JZNodeVisionImageConvert
 JZNodeVisionImageConvert::JZNodeVisionImageConvert()
 {
-    m_type = Node_VisionImageFlip;
+    m_type = Node_VisionImageConvert;
     m_name = "图像转换";
 
     addFlowIn();
@@ -89,7 +122,7 @@ bool JZNodeVisionImageConvert::compiler(JZNodeCompiler *c, QString& error)
 //JZNodeVisionImageFilter
 JZNodeVisionImageFilter::JZNodeVisionImageFilter()
 {
-    m_type = Node_VisionImageFlip;
+    m_type = Node_VisionImageFilter;
     m_name = "图像滤波";
 
     int in1 = addParamIn("mat");

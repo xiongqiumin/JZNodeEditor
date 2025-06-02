@@ -201,8 +201,9 @@ public:
     int pinCount(int flag) const;
               
     int addParamIn(QString name,int extFlag = 0);    
-    int paramIn(int index) const;
+    int paramIn(int index) const;    
     JZNodeGemo paramInGemo(int index) const;
+    int paramInId(int index) const;
     int paramInCount() const;
     QList<int> paramInList() const;
     QString paramInValue(int index) const;
@@ -211,6 +212,7 @@ public:
     int addParamOut(QString name,int extFlag = 0);
     int paramOut(int index) const;
     JZNodeGemo paramOutGemo(int index) const;
+    int paramOutId(int index) const;
     int paramOutCount() const;
     QList<int> paramOutList() const;
     QString paramOutValue(int index) const;

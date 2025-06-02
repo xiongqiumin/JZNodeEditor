@@ -86,8 +86,7 @@ protected slots:
 
     void onActionBuild();
     void onActionRun();
-    void onActionRunOnce();
-    void onActionStop();
+    void onActionRunOnce();    
 
     void onEditorClose(int index);
     void onEditorActivity(int index);
@@ -117,8 +116,7 @@ protected slots:
     void onAutoRunResult(int result);
 
     void onFrameReady(QString camera,cv::Mat mat);
-
-    const CompilerResult* compilerResult(const QString& path);
+    void onMainStackedChanged();
 
 protected:    
     struct CameraProgram
@@ -132,7 +130,7 @@ protected:
 
     void initDatabase();
     void loadSetting();
-    void saveSetting();
+    void saveSetting();    
 
     void initUi();    
     void initMenuBar(QVBoxLayout *layout);
@@ -171,10 +169,16 @@ protected:
     void updateActionStatus();
     void updateTabText(int index);
     JZNode *getInitNode(int type);
+    
+    bool initEnv(QString &error);
+    bool isRun();    
+    void stop();
 
     bool checkBuild();
     bool isCameraFlow();
     JZNodeCameraReadyEvent* currrentCameraNode();    
+
+    const CompilerResult* compilerResult(const QString& path);
 
     JZModelManager* m_modelManager;
     JZCameraManager* m_cameraManager;
@@ -197,7 +201,7 @@ protected:
 
     QList<QMenu*> m_menuList;
     JZEditor* m_editor;
-    QTabWidget* m_editorStack;
+    QTabWidget* m_editorTab;
     QMap<JZProjectItem*, JZEditor*> m_editors;
     MainTaskManager m_task;
     JZNodeBuildResultPtr m_buildResult;
@@ -205,6 +209,8 @@ protected:
 
     JZLogWidget *m_mainLog;
     LogWidget *m_buildLog;
+
+    QAction *m_actionRun;
 };
 extern MainWindow *g_visionWindow;
 

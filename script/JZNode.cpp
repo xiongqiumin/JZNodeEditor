@@ -380,6 +380,11 @@ JZNodeGemo JZNode::paramInGemo(int index) const
     return JZNodeGemo(m_id,paramIn(index));
 }
 
+int JZNode::paramInId(int index) const
+{
+    return paramInGemo(index).paramId();
+}
+
 int JZNode::paramInCount() const
 {
     return pinInList(Pin_param).size();
@@ -414,6 +419,11 @@ int JZNode::paramOut(int index) const
 JZNodeGemo JZNode::paramOutGemo(int index) const
 {
     return JZNodeGemo(m_id,paramOut(index));
+}
+
+int JZNode::paramOutId(int index) const
+{
+    return paramOutGemo(index).paramId();
 }
 
 int JZNode::paramOutCount() const

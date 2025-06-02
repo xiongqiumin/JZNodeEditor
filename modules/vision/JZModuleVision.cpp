@@ -33,7 +33,8 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     auto func_inst = env->functionManager();
     func_inst->registCFunction("JZTemplateMatchInit", true, jzbind::createFuncion(JZTemplateMatchInit));
    
-    func_inst->registCFunction("JZVisionCropImage", true, jzbind::createFuncion(JZVisionCropImage));
+    func_inst->registCFunction("JZVisionImageThreshold", true, jzbind::createFuncion(JZVisionImageThreshold));
+    func_inst->registCFunction("JZVisionImageCrop", true, jzbind::createFuncion(JZVisionImageCrop));
     func_inst->registCFunction("JZVisionImageFlip", true, jzbind::createFuncion(JZVisionImageFlip));
     func_inst->registCFunction("JZVisionImageMorphology", true, jzbind::createFuncion(JZVisionImageMorphology));
     func_inst->registCFunction("JZVisionPerspectiveTransform", true, jzbind::createFuncion(JZVisionPerspectiveTransform));
@@ -51,7 +52,7 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     //node
     auto node_inst = env->nodeFactory();
 
-    node_inst->registNode(Node_VisionCropImage, createJZNode<JZNodeVisionCropImage>);
+    node_inst->registNode(Node_VisionImageCrop, createJZNode<JZNodeVisionImageCrop>);
 
     node_inst->registNode(Node_VisionImageFlip, createJZNode<JZNodeVisionImageFlip>);
     node_inst->registNode(Node_VisionImageMorphology, createJZNode<JZNodeVisionImageMorphology>);

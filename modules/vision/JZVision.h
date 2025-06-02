@@ -9,7 +9,8 @@
 
 using namespace cv;
 
-Mat JZVisionCropImage(Mat mat,QRect rc);
+Mat JZVisionImageThreshold(Mat mat, QRect rc);
+Mat JZVisionImageCrop(Mat mat,QRect rc);
 Mat JZVisionImageFlip(Mat mat,bool h,bool v);
 void JZVisionImageMorphology();
 Mat JZVisionPerspectiveTransform(Mat mat,QRect from, QRect to);
@@ -28,12 +29,6 @@ double JZVisionColorIdentify(Mat src_ori, Mat src_mat);
 
 void JZVisionFindCircle(Mat in);
 void JZVisionFindLine(Mat in);
-
-
-
-
-
-
 
 
 #endif // ! JZ_VISION_H_

@@ -34,7 +34,6 @@ public:
     QList<JZCamera*> cameraList();
 	JZCamera* camera(QString name);
 
-    void init();
     bool open(QString name);
     bool close(QString name);
     bool start(QString name);
@@ -57,6 +56,7 @@ protected slots:
     void onFrameReady(cv::Mat mat);
 
 protected:
+    void init();
     int indexOfCamera(QString name);
     JZCamera* createCamera(const JZCameraConfigEnum &config);
 

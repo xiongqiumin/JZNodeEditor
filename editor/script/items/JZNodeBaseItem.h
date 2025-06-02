@@ -72,7 +72,7 @@ public:
     bool isError();
     virtual void clearError();
     virtual void setError(QString error);
-    virtual QString getTip(QPointF pt);
+    virtual QString getTip(QPointF pt) = 0;
 
 protected:
     int m_baseZValue;

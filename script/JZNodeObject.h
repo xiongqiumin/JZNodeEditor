@@ -407,8 +407,14 @@ public:
     }
 
 protected:
+    struct CObjectInfo
+    {
+        void *cobj;
+        bool isOwner;
+    };
+
     void initFunctions();
-    void create(const JZNodeObjectDefine *define,JZNodeObject *obj) const;
+    void create(const JZNodeObjectDefine *define,JZNodeObject *obj, CObjectInfo *cobj_info) const;
     void copy(JZNodeObject *dst,JZNodeObject *src) const;    
     int nextObjectId();
     

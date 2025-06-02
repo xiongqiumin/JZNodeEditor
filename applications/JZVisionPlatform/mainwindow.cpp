@@ -292,6 +292,7 @@ void MainWindow::initUi()
 
     m_stack = new QStackedWidget();
     bottom_layout->addWidget(m_stack);
+    connect(m_stack, &QStackedWidget::currentChanged, this, &MainWindow::onMainStackedChanged);
 
     addCameraPage();
     addFlowPage();
@@ -379,21 +380,19 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     m_menuList << menu_file << menu_edit << menu_help;
     layout->addWidget(menubar);
 
-    QAction *actRun = new QAction(icon("run.png"), "运行");
     QAction *actRunOnce = new QAction(icon("runOnce.png"), "运行一次");
-    QAction *actStop = new QAction(icon("stop.png"), "停止");
-    connect(actRun, &QAction::triggered, this, &MainWindow::onActionRun);
+    QAction *actRun = new QAction(icon("run.png"), "运行");        
     connect(actRunOnce, &QAction::triggered, this, &MainWindow::onActionRunOnce);
-    connect(actStop, &QAction::triggered, this, &MainWindow::onActionStop);
-    
+    connect(actRun, &QAction::triggered, this, &MainWindow::onActionRun);        
+    m_actionRun = actRun;
+
     //tool bar
     QToolBar *main_tool = new QToolBar();
     main_tool->addAction(actSaveFile);
     main_tool->addAction(actSaveAllFile);
     main_tool->addSeparator();
-    main_tool->addAction(actRun);
     main_tool->addAction(actRunOnce);
-    main_tool->addAction(actStop);
+    main_tool->addAction(actRun);        
 
     layout->addWidget(main_tool);
     
@@ -404,7 +403,7 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
 void MainWindow::onModifyChanged(bool flag)
 {
     auto editor = qobject_cast<JZEditor*>(sender());
-    int index = m_editorStack->indexOf(editor);
+    int index = m_editorTab->indexOf(editor);
     if (index == -1)
         return;
 
@@ -501,16 +500,16 @@ void MainWindow::addFlowPage()
     center->addWidget(splitterMain);
 
     //left    
-    m_editorStack = new QTabWidget();
-    m_editorStack->setTabsClosable(true);
-    connect(m_editorStack, &QTabWidget::tabCloseRequested, this, &MainWindow::onEditorClose);
-    connect(m_editorStack, &QTabWidget::currentChanged, this, &MainWindow::onEditorActivity);
+    m_editorTab = new QTabWidget();
+    m_editorTab->setTabsClosable(true);
+    connect(m_editorTab, &QTabWidget::tabCloseRequested, this, &MainWindow::onEditorClose);
+    connect(m_editorTab, &QTabWidget::currentChanged, this, &MainWindow::onEditorActivity);
 
-    m_editorStack->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_editorStack->tabBar(), &QWidget::customContextMenuRequested, this, &MainWindow::onTabContextMenu);
+    m_editorTab->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_editorTab->tabBar(), &QWidget::customContextMenuRequested, this, &MainWindow::onTabContextMenu);
 
     QSplitter* splitterLeft = new QSplitter(Qt::Vertical);
-    splitterLeft->addWidget(m_editorStack);
+    splitterLeft->addWidget(m_editorTab);
     splitterLeft->addWidget(m_buildLog);
     l_left->addWidget(splitterLeft);
 
@@ -785,33 +784,53 @@ void MainWindow::onActionHelp()
 
 void MainWindow::onActionBuild()
 {
-    m_task.addBuildProgramTask();
+    m_task.addBuildProgramTask(true);
 }
 
 void MainWindow::onActionRun()
 {
-    if (m_stack->currentIndex() == 0)
-    {
+    if (!isRun())
+    {        
         if (!checkBuild())
             return;
 
-        auto camera_list = m_cameraManager->cameraList();
-        for (int i = 0; i < camera_list.size(); i++)
-            startCamera(camera_list[i]->name());
+        if (m_stack->currentIndex() == 0)
+        {
+            auto camera_list = m_cameraManager->cameraList();
+            for (int i = 0; i < camera_list.size(); i++)
+                startCamera(camera_list[i]->name());
+        }
+        else if (m_stack->currentIndex() == 1)
+        {
+            onAutoRun();
+        }
+        m_actionRun->setIcon(icon("stop.png"));
+        m_actionRun->setText("停止");
     }
-    else if (m_stack->currentIndex() == 1)
+    else
     {
-        onAutoRun();
+        if (m_stack->currentIndex() == 0)
+        {
+            auto camera_list = m_cameraManager->cameraList();
+            for (int i = 0; i < camera_list.size(); i++)
+                stopCamera(camera_list[i]->name());
+        }
+        else if (m_stack->currentIndex() == 1)
+        {
+            onAutoRunStop();
+        }
+        m_actionRun->setIcon(icon("run.png"));
+        m_actionRun->setText("运行");
     }
 }
 
 void MainWindow::onActionRunOnce()
 {
-    if (m_stack->currentIndex() == 0)
-    {
-        if (!checkBuild())
-            return;
+    if (!checkBuild())
+        return;
 
+    if (m_stack->currentIndex() == 0)
+    {        
         auto camera_list = m_cameraManager->cameraList();
         for (int i = 0; i < camera_list.size(); i++)
             startCameraOnce(camera_list[i]->name());
@@ -822,23 +841,9 @@ void MainWindow::onActionRunOnce()
     }
 }
 
-void MainWindow::onActionStop()
-{
-    if (m_stack->currentIndex() == 0)
-    {
-        auto camera_list = m_cameraManager->cameraList();
-        for (int i = 0; i < camera_list.size(); i++)
-            stopCamera(camera_list[i]->name());
-    }
-    else if (m_stack->currentIndex() == 1)
-    {
-        onAutoRunStop();
-    }
-}
-
 void MainWindow::onEditorClose(int index)
 {
-    JZEditor* editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
+    JZEditor* editor = qobject_cast<JZEditor*>(m_editorTab->widget(index));
     closeEditor(editor);
 }
 
@@ -847,7 +852,7 @@ void MainWindow::onEditorActivity(int index)
     if (index == -1)
         return;
 
-    JZEditor* editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
+    JZEditor* editor = qobject_cast<JZEditor*>(m_editorTab->widget(index));
     switchEditor(editor);
 }
 
@@ -896,7 +901,7 @@ void MainWindow::onProjectItemChanged(JZProjectItem* item)
     auto it = m_editors.begin();
     while (it != m_editors.end())
     {
-        int index = m_editorStack->indexOf(it.value());
+        int index = m_editorTab->indexOf(it.value());
         updateTabText(index);
 
         it++;
@@ -948,7 +953,7 @@ void MainWindow::onTabContextMenu(QPoint pos)
     else if (ret == actAllExcept)
     {
         int index = bar->tabAt(pos);
-        auto editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
+        auto editor = qobject_cast<JZEditor*>(m_editorTab->widget(index));
         closeAllEditor(editor);
     }
 }
@@ -962,7 +967,7 @@ void MainWindow::onFunctionOpen(QString functionName)
 
 void MainWindow::onAutoCompiler()
 {
-    onActionBuild();
+    m_task.addAutoCompilerTask();
 }
 
 void MainWindow::onAutoRun()
@@ -1011,8 +1016,11 @@ void MainWindow::onBuildStart()
 
 void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
 {
-    if(m_engine.isInit())
+    if (m_engine.isInit())
+    {
         m_engine.deinit();
+
+    }
     m_buildResult = result;
 
     auto it = m_editors.begin();
@@ -1089,6 +1097,11 @@ void MainWindow::onFrameReady(QString camera, cv::Mat mat)
     QVariantList in, out;
     in << QVariant::fromValue(this_ptr) << QVariant::fromValue(mat_ptr);
     m_engine.call(it->function, in, out);
+}
+
+void MainWindow::onMainStackedChanged()
+{
+    stop();
 }
 
 void MainWindow::initProject()
@@ -1222,7 +1235,7 @@ bool MainWindow::openEditor(QString filepath)
         }
 
         m_editors[item] = new_edit;
-        m_editorStack->addTab(new_edit, filepath);
+        m_editorTab->addTab(new_edit, filepath);
     }
     switchEditor(new_edit);
 
@@ -1259,8 +1272,8 @@ void MainWindow::closeEditor(JZEditor* editor)
             switchEditor(nullptr);
     }
 
-    int index = m_editorStack->indexOf(editor);
-    m_editorStack->removeTab(index);
+    int index = m_editorTab->indexOf(editor);
+    m_editorTab->removeTab(index);
     delete editor;
 }
 
@@ -1318,17 +1331,20 @@ void MainWindow::switchEditor(JZEditor* editor)
         return;
 
     if (m_editor)
+    {
         m_editor->inactive‌();
+        stop();
+    }
 
     m_editor = editor;
     if (editor != nullptr)
     {
-        m_editorStack->setCurrentWidget(m_editor);
+        m_editorTab->setCurrentWidget(m_editor);
         m_editor->active();
         m_editor->setFocus();
     }
     else
-        m_editorStack->setCurrentIndex(0);
+        m_editorTab->setCurrentIndex(0);
     updateActionStatus();
 }
 
@@ -1389,8 +1405,8 @@ bool MainWindow::closeAllEditor(JZEditor* except)
 
     for (auto editor : close_list)
     {
-        int index = m_editorStack->indexOf(editor);
-        m_editorStack->removeTab(index);
+        int index = m_editorTab->indexOf(editor);
+        m_editorTab->removeTab(index);
         m_editors.remove(editor->item());
         delete editor;
     }
@@ -1422,11 +1438,11 @@ void MainWindow::updateActionStatus()
 
 void MainWindow::updateTabText(int index)
 {
-    auto editor = qobject_cast<JZEditor*>(m_editorStack->widget(index));
+    auto editor = qobject_cast<JZEditor*>(m_editorTab->widget(index));
     QString title = editor->item()->itemPath();
     if (editor->isModified())
         title += "*";
-    m_editorStack->setTabText(index, title);
+    m_editorTab->setTabText(index, title);
 }
 
 JZNode *MainWindow::getInitNode(int type)
@@ -1451,6 +1467,13 @@ bool MainWindow::checkBuild()
     if (!flag)
     {
         QMessageBox::information(this, "", "初始化失败，请检查流程或重新编译");
+        return false;
+    }
+
+    QString error;
+    if (!initEnv(error))
+    {
+        QMessageBox::information(this, "", "初始化失败" + error);
         return false;
     }
 
@@ -1496,9 +1519,29 @@ void MainWindow::startCameraOnce(QString name)
 void MainWindow::stopCamera(QString name)
 {
     JZCamera *camera = this->camera(name);
-    camera->stop();
+    camera->stop();    
 
     LOG_I("相机停止");
+}
+
+bool MainWindow::initEnv(QString &error)
+{    
+    return true;
+}
+
+bool MainWindow::isRun()
+{
+    return m_actionRun->text() == "停止";
+}
+
+void MainWindow::stop()
+{
+    if (isRun())
+        onActionRun();
+
+    auto camera_list = m_cameraManager->cameraList();
+    for (int i = 0; i < camera_list.size(); i++)
+        stopCamera(camera_list[i]->name());    
 }
 
 void MainWindow::imageDebug()
