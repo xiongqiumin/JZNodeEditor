@@ -9,6 +9,8 @@
 #include <QCheckBox>
 #include <QApplication>
 #include <QTimer>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
 #include "JZEditorGlobal.h"
 #include "JZNodeParamEditWidget.h"
 #include "JZNodeTypeHelper.h"
@@ -45,9 +47,79 @@ JZParamEditInfo JZParamEditInfo::createEnum(QStringList list)
     return info;
 }
 
+JZParamEditInfo JZParamEditInfo::createType(const JZScriptEnvironment* env, QString type)
+{
+    JZParamEditInfo info;
+
+    int type_id = env->nameToType(type);
+    if (type_id == Type_none)
+        return info;
+
+    if (type_id == Type_bool)
+    {
+        info.type = Edit_bool;
+    }
+    else if (type_id == Type_int8 || type_id == Type_int16 || type_id == Type_int
+        || type_id == Type_uint8 || type_id == Type_uint16)
+    {
+        info.type = Edit_int;
+        if (type_id == Type_int8)
+        {
+            info.min = INT8_MIN;
+            info.max = INT8_MAX;
+        }
+        else if (type_id == Type_uint8)
+        {
+            info.min = 0;
+            info.max = UINT8_MAX;
+        }
+        else if (type_id == Type_int16)
+        {
+            info.min = INT16_MIN;
+            info.max = INT16_MAX;
+        }
+        else if (type_id == Type_uint16)
+        {
+            info.min = 0;
+            info.max = UINT16_MAX;
+        }
+        else if (type_id == Type_int)
+        {
+            info.min = INT_MIN;
+            info.max = INT_MAX;
+        }
+    }
+    else if (type_id == Type_uint || type_id == Type_int64 || type_id == Type_uint64)
+    {
+        info.type = Edit_normal;
+    }
+    else if (type_id == Type_float || type_id == Type_double)
+    {
+        info.type = Edit_double;
+    }
+    else if (type_id == Type_string)
+    {
+        info.type = Edit_normal;
+    }
+    else if (type_id == Type_byteArray)
+    {
+        info.type = Edit_byteArray;
+    }
+    else if (env->isEnum(type))
+    {
+        auto meta = env->objectManager()->enumMeta(type);
+
+        info.type = Edit_enum;
+        info.enumList = meta->keys();
+    }
+
+    
+    return info;
+}
+
 JZParamEditInfo::JZParamEditInfo()
 {
-    type = Edit_normal;
+    type = Edit_none;
 }
 
 //JZNodeParamValueWidget
@@ -95,6 +167,16 @@ void JZNodeParamValueWidget::setValue(QString value)
         auto line_edit = qobject_cast<QLineEdit*>(m_editWidget);
         line_edit->setText(value);
     }
+    else if (m_editWidget->inherits("QSpinBox"))
+    {
+        auto spin = qobject_cast<QSpinBox*>(m_editWidget);
+        spin->setValue(value.toInt());
+    }
+    else if (m_editWidget->inherits("QDoubleSpinBox"))
+    {
+        auto spin = qobject_cast<QDoubleSpinBox*>(m_editWidget);
+        spin->setValue(value.toDouble());
+    }
     else if(m_editWidget->inherits("QComboBox"))
     {
         auto box = qobject_cast<QComboBox*>(m_editWidget);
@@ -112,6 +194,16 @@ QString JZNodeParamValueWidget::value()
     {
         auto line_edit = qobject_cast<QLineEdit*>(m_editWidget);
         return line_edit->text();
+    }
+    else if (m_editWidget->inherits("QSpinBox"))
+    {
+        auto spin = qobject_cast<QSpinBox*>(m_editWidget);
+        return QString::number(spin->value());
+    }
+    else if (m_editWidget->inherits("QDoubleSpinBox"))
+    {
+        auto spin = qobject_cast<QDoubleSpinBox*>(m_editWidget);
+        return QString::number(spin->value());
     }
     else if(m_editWidget->inherits("QComboBox"))
     {

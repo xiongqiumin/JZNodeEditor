@@ -324,6 +324,16 @@ bool JZScriptEnvironment::isVaildType(QString type) const
         || m_objectManager.enumMeta(type);
 }
 
+bool JZScriptEnvironment::isEnum(const QString& type) const
+{
+    return m_objectManager.enumMeta(type);
+}
+
+bool JZScriptEnvironment::isObject(const QString& type) const
+{
+    return m_objectManager.meta(type);
+}
+
 bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
 {    
     if (JZNodeType::isPointer(dst_type))
@@ -707,6 +717,13 @@ int JZScriptEnvironment::upType(QList<int> types) const
         type = upType(type, types[i]);
     
     return type;
+}
+
+QString JZScriptEnvironment::upType(const QStringList& types) const
+{
+    QList<int> type_ids = nameListToTypeList(types);
+    int up = upType(type_ids);
+    return typeToName(up);
 }
 
 int JZScriptEnvironment::matchType(QList<int> src_types,QList<int> dst_types) const

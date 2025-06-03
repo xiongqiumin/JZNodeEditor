@@ -64,6 +64,11 @@ bool JZNodeEnumDefine::hasKey(const QString &key) const
         return m_keys.contains(key);
 }
 
+QStringList JZNodeEnumDefine::keys() const
+{
+    return m_keys;
+}
+
 QString JZNodeEnumDefine::key(int index) const
 {
     return m_keys[index];

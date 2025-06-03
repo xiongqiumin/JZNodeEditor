@@ -87,8 +87,13 @@ public:
     QVariant clone(const QVariant &v) const;        
 
     bool isVaildType(QString type) const;
+    bool isEnum(const QString& type) const;
+    bool isObject(const QString& type) const;
+
     int upType(int type1, int type2) const;  //提升类型
     int upType(QList<int> types) const;
+    QString upType(const QStringList &types) const;
+
     int matchType(QList<int> src_types,QList<int> dst_types) const;
     QVariant defaultValue(int type) const;
     QString defaultValueString(int type) const;

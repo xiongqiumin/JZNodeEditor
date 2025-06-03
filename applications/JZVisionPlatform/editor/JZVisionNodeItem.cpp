@@ -3,7 +3,7 @@
 #include <QFontMetrics>
 #include <QPainter>
 #include "JZVisionNodeItem.h"
-#include "JZNodeAbstractView.h"
+#include "JZVisionView.h"
 
 JZVisionNodeItem::JZVisionNodeItem(JZNode *node)
     :JZAbstractNodeItem(node)
@@ -14,7 +14,9 @@ JZVisionNodeItem::JZVisionNodeItem(JZNode *node)
 
 void JZVisionNodeItem::updateNode()
 {
-    QString name = m_node->name();
+    JZVisionView* view = qobject_cast<JZVisionView*>(editor());
+
+    QString name = view->nodeName(m_node);
     int name_min_width = 160;
     int name_max_width = 320;
 
@@ -148,6 +150,8 @@ void JZVisionNodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 void JZVisionNodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    JZVisionView *view = qobject_cast<JZVisionView*>(editor());
+
     QRect rc = boundingRect().toRect();
     painter->fillRect(rc, Qt::white);
     painter->fillRect(rc, Qt::white);
@@ -173,7 +177,7 @@ void JZVisionNodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     }
 
     QRect text_rc(icon_w, 0,(int)(rc.width() - icon_w),(int)rc.height());
-    painter->drawText(text_rc, m_node->name(), QTextOption(Qt::AlignCenter));
+    painter->drawText(text_rc, view->nodeName(m_node), QTextOption(Qt::AlignCenter));
     if (isSelected())
     {
         painter->setPen(QPen(Qt::yellow, 3));

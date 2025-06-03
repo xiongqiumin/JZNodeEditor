@@ -23,6 +23,7 @@ public:
     QString key(int index) const;    
     QString defaultKey() const;
     bool hasKey(const QString &key) const;
+    QStringList keys() const;
 
     int value(int index) const;    
     int defaultValue() const;

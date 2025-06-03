@@ -15,6 +15,38 @@ JZVisionView::~JZVisionView()
 {
 }
 
+bool JZVisionView::nodeIdCmp(const JZNode* n1, const JZNode* n2)
+{
+    return n1->id() < n2->id();
+}
+
+QString JZVisionView::nodeName(JZNode* node)
+{
+    auto node_list = m_file->nodeList();
+    std::sort(node_list.begin(), node_list.end());
+    if (node_list != m_cacheNodeList)
+    {
+        for (int i = 0; i < node_list.size(); i++)
+        {
+            JZNode* cur_node = getNode(node_list[i]);
+            int seq = i;
+
+            auto node_type_list = m_file->findNodeByType(cur_node->type());
+            std::sort(node_type_list.begin(), node_type_list.end(), nodeIdCmp);
+            int type_seq = node_type_list.indexOf(cur_node);
+            m_nodeName[cur_node] = QString::number(seq) + "." + cur_node->name() + QString::number(type_seq + 1);
+        }
+    }
+    return m_nodeName[node]; 
+}
+
+QString JZVisionView::pinName(JZNodeGemo gemo)
+{
+    JZNode* node = getNode(gemo.nodeId);
+    QString ret = nodeName(node);
+    return ret + "." + node->pinName(gemo.pinId);
+}
+
 void JZVisionView::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_selLine)
@@ -114,26 +146,27 @@ void JZVisionView::configNode(JZNode *node)
         if (pre_link)
             pre_gemo = m_file->getConnect(in_list[0])->from;
 
-        if (pre_link && it->isLink())
+        auto pin_widget = it->pinWidget;
+        if (pre_link && pin_widget->isLink())
         {
-            if (pre_gemo != it->linkGemo)
+            if (pre_gemo != pin_widget->linkGemo())
             {
                 addMacro();
                 addRemoveLineCommand(in_list[0]);
-                addCreateLineConmmand(it->linkGemo, JZNodeGemo(node->id(), pin_id));
+                addCreateLineConmmand(pin_widget->linkGemo(), JZNodeGemo(node->id(), pin_id));
             }
         }
-        else if (pre_link && !it->isLink())
+        else if (pre_link && !pin_widget->isLink())
         {
             addMacro();
             addRemoveLineCommand(in_list[0]);
         }
-        else if (!pre_link && it->isLink())
+        else if (!pre_link && pin_widget->isLink())
         {
             addMacro();
-            addCreateLineConmmand(it->linkGemo, JZNodeGemo(node->id(), pin_id));
+            addCreateLineConmmand(pin_widget->linkGemo(), JZNodeGemo(node->id(), pin_id));
         }
-        else if (!pre_link && !it->isLink())
+        else if (!pre_link && !pin_widget->isLink())
         {
 
         }

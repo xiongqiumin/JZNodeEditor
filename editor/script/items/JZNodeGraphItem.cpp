@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <math.h>
 #include <QPixmap>
+#include <QPushButton>
 #include "JZNodeGraphItem.h"
 #include "JZNodeView.h"
 #include "JZScriptEnvironment.h"

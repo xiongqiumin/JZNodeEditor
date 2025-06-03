@@ -9,11 +9,109 @@
 #include "JZVisionLinkDialog.h"
 #include "JZVisionSettingDialog.h"
 #include "JZScriptItem.h"
+#include "JZVisionView.h"
 
-//Block
-bool JZVisionSettingDialog::Block::isLink()
+//JZVisionSettingPinWidget
+JZVisionSettingPinWidget::JZVisionSettingPinWidget()
 {
-    return !linkGemo.isNull();
+    m_node = nullptr;
+    m_pinEditor = nullptr;
+    m_linkTip = nullptr;
+    m_pinId = -1;
+
+    m_btnLink = new QToolButton();
+
+    QVBoxLayout* l = new QVBoxLayout();
+    l->setContentsMargins(0, 0, 0, 0);
+    l->addWidget(m_btnLink);
+    this->setLayout(l);
+}
+
+void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
+{
+    m_node = node;
+    m_pinId = pin_id;
+
+    auto pin = m_node->pin(pin_id);
+
+    QList<int> in_list = m_node->file()->getConnectInput(m_node->id(), pin_id);
+    if (in_list.size() > 0)
+        m_linkGemo = m_node->file()->getConnect(in_list[0])->from;
+    if (pin->isConstValue())
+        m_btnLink->hide();
+
+    updatePinWidget();
+}
+
+void JZVisionSettingPinWidget::updatePinWidget()
+{
+    auto env = m_node->environment();
+
+    QVBoxLayout *l = qobject_cast<QVBoxLayout*>(layout());
+    if (m_linkGemo.isNull())
+    {
+        if (m_btnLink)
+        {
+            delete m_btnLink;
+            m_btnLink = nullptr;
+        }
+        if (!m_pinEditor)
+        {
+            auto pin = m_node->pin(m_pinId);
+            QString up_type = env->upType(pin->dataType());
+            JZParamEditInfo info = JZParamEditInfo::createType(env, up_type);
+            m_pinEditor = new JZNodeParamValueWidget();
+            m_pinEditor->init(info);
+            l->insertWidget(0, m_pinEditor);
+            m_pinEditor->setValue(m_node->pinValue(m_pinId));
+        }
+    }
+    else
+    {
+        if (m_pinEditor)
+        {
+            delete m_pinEditor;
+            m_pinEditor = nullptr;
+        }
+        if (!m_linkTip)
+        {
+            JZVisionSettingDialog* dlg = qobject_cast<JZVisionSettingDialog*>(parentWidget());
+            QString pin_name = dlg->view()->pinName(m_linkGemo);
+
+            m_linkTip = new QLineEdit();
+            m_linkTip->setReadOnly(true);
+            l->insertWidget(0, m_linkTip);
+            m_linkTip->setText("已连接-" + pin_name);
+        }
+    }
+}
+
+void JZVisionSettingPinWidget::onBtnLink()
+{
+    if (m_linkGemo.isNull())
+    {
+        m_btnLink->setText("连接输入");
+    }
+    else
+    {
+        m_btnLink->setText("直接输入");
+    }
+    updatePinWidget();
+}
+
+bool JZVisionSettingPinWidget::isLink()
+{
+    return !m_linkGemo.isNull();
+}
+
+JZNodeGemo JZVisionSettingPinWidget::linkGemo()
+{
+    return m_linkGemo;
+}
+
+QString JZVisionSettingPinWidget::value()
+{
+    return m_pinEditor->value();
 }
 
 //JZVisionSettingDialog
@@ -25,6 +123,11 @@ JZVisionSettingDialog::JZVisionSettingDialog(QWidget *parent)
 
 JZVisionSettingDialog::~JZVisionSettingDialog()
 {
+}
+
+JZVisionView* JZVisionSettingDialog::view()
+{
+    return qobject_cast<JZVisionView*>(parentWidget());
 }
 
 QMap<int, JZVisionSettingDialog::Block> JZVisionSettingDialog::blockList()
@@ -40,7 +143,7 @@ void JZVisionSettingDialog::setNode(JZNode* node)
     QVBoxLayout *v = new QVBoxLayout();
     area_widget->setLayout(v);        
 
-    QLabel *label_name = new QLabel(node->name());
+    QLabel *label_name = new QLabel(view()->nodeName(node));
     v->addWidget(label_name);
 
     auto in_list = node->paramInList();
@@ -51,11 +154,15 @@ void JZVisionSettingDialog::setNode(JZNode* node)
         {
             QLabel *pin_label = new QLabel(node->pinName(in_list[i]));
 
-            QWidget *pin_widget = createPin(node->pin(in_list[i]));            
+            JZVisionSettingPinWidget* pin_widget = createPin(node->pin(in_list[i]));
 
             grid->addWidget(pin_label, i, 0);
             grid->addWidget(pin_widget, i, 1);
-            updateBlock(in_list[i]);
+
+            Block block;
+            block.pinWidget = pin_widget;
+            block.pinId = in_list[i];
+            m_blockList.insert(block.pinId, block);
         }
         v->addLayout(grid);
     }
@@ -85,53 +192,12 @@ QWidget *JZVisionSettingDialog::createRow(QString name, QString value)
     return w;
 }
 
-QWidget *JZVisionSettingDialog::createPin(JZNodePin *pin)
+JZVisionSettingPinWidget* JZVisionSettingDialog::createPin(JZNodePin *pin)
 {
-    auto lineEdit = new QLineEdit();
-    l->addWidget(lineEdit);
+    JZVisionSettingPinWidget* pin_widget = new JZVisionSettingPinWidget();
+    pin_widget->setPin(m_node, pin->id());
 
-    QWidget *link = nullptr;
-    if (pin->isConstValue())
-        link = new QWidget();
-    else
-    {
-        auto btn_link = new QToolButton();
-        btn_link->setProperty("PinId", pin->id());
-
-        link = btn_link;
-        connect(btn_link, &QToolButton::clicked, this, &JZVisionSettingDialog::onBtnLink);
-    }
-
-    QList<int> in_list = m_node->file()->getConnectInput(m_node->id(), pin->id());
-
-    Block block;
-    if (in_list.size() > 0)
-        block.linkGemo = m_node->file()->getConnect(in_list[0])->from;
-    block.line = lineEdit;
-    block.pinId = pin->id();
-    m_blockList.insert(block.pinId, block);
-    
-    link->setFixedWidth(30);
-    return w;
-}
-
-void JZVisionSettingDialog::onBtnLink()
-{
-    int pinId = sender()->property("PinId").toInt();
-    if (m_blockList[pinId].isLink())
-    {
-        m_blockList[pinId].linkGemo = JZNodeGemo();
-    }
-    else
-    {
-        JZVisionLinkDialog dlg(this);
-        dlg.setNode(m_node, pinId);
-        if (dlg.exec() != JZVisionLinkDialog::Accepted)
-            return;
-
-        m_blockList[pinId].linkGemo = dlg.result();
-    }
-    updateBlock(pinId);
+    return pin_widget;
 }
 
 void JZVisionSettingDialog::accept()
@@ -139,27 +205,14 @@ void JZVisionSettingDialog::accept()
     auto it = m_blockList.begin();
     while (it != m_blockList.end())
     {
-        if (!it->isLink())
+        auto pin_widget = it->pinWidget;
+        if (!pin_widget->isLink())
         {
-            m_node->setPinValue(it->pinId, it->line->text());
+            m_node->setPinValue(it->pinId, pin_widget->value());
         }
 
         it++;
     }
 
     JZBaseDialog::accept();
-}
-
-void JZVisionSettingDialog::updateBlock(int id)
-{
-    auto b = m_blockList[id];
-    if (b.isLink())
-    {
-        b.line->setReadOnly(true);
-        b.line->setText("已连接");
-    }
-    else
-    {
-        b.line->setText(m_node->pinValue(id));
-    }
 }

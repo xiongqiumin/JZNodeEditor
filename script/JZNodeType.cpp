@@ -350,6 +350,17 @@ int JZNodeType::nameToType(const QString &name)
     return typeMap.value(name, Type_none);
 }
 
+int JZNodeType::typeToQMetaTypeId(int type)
+{
+    return QVariant::Invalid;
+}
+
+
+int JZNodeType::qMetaTypeIdToType(int q_type)
+{
+    return Type_none;
+}
+
 QString JZNodeType::opName(int op)
 {   
     Q_ASSERT(opNameMap.contains(op));

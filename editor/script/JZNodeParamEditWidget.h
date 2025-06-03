@@ -3,7 +3,8 @@
 
 #include <QLabel>
 #include <QToolButton>
-#include "jzWidgets/JZPropertyWidget.h"
+#include <QLineEdit>
+#include "JZScriptEnvironment.h"
 
 //JZNodeParamTypeWidget
 class JZNodeParamTypeWidget : public QWidget
@@ -20,21 +21,30 @@ protected:
     QLineEdit *m_lineEdit;
 };
 
+//JZParamEditInfo
 class JZParamEditInfo
 {
 public:
     enum{
+        Edit_none,
         Edit_normal,
+        Edit_bool,
+        Edit_int,
+        Edit_double,
+        Edit_byteArray,
         Edit_enum,
         Edit_flag,
         Edit_file,
+        Edit_dir,
     };
 
     static JZParamEditInfo createEnum(QStringList list);
+    static JZParamEditInfo createType(const JZScriptEnvironment *env,QString type);
 
     JZParamEditInfo();
 
     int type;
+    QVariant min,max;
     QString fileFilter;
     QStringList enumList;
 };
