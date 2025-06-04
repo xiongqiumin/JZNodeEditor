@@ -15,7 +15,7 @@ private slots:
     void testYolo();
 
 protected:
-
+    Benchmark m_benchmark;
 
 };
 

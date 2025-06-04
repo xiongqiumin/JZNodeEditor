@@ -1,6 +1,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "JZVisionImage.h"
+#include "modules/opencv/CvToQt.h"
 
 JZVisionImage::JZVisionImage(QWidget *parent)
     : QWidget(parent)
@@ -53,4 +54,10 @@ void JZVisionImage::initNodeList(const QList<JZVisionNodeInfo> &node_list)
 void JZVisionImage::clear()
 {
     m_view->clear();
+}
+
+void JZVisionImage::setImage(const QList<ImageResult> &outputImage)
+{
+    m_view->setImage(QtOcv::mat2Image(outputImage[0].mat));
+    m_view->initGraphics(outputImage[0].graphList);
 }

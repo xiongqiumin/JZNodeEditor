@@ -1,13 +1,16 @@
 #include "JZModuleDebug.h"
 
 void JZModuleDebug(JZNodeCompiler *c,int node_id, JZNodeIRParam image,JZNodeIRParam roi)
-{
-    auto image_debug = JZModuleDebugManager::instance()->imageDebug();
-    auto roi_debug = JZModuleDebugManager::instance()->roiDebug();
-    if(!image_debug.isEmpty())
-        c->addCall(image_debug,{ irLiteral(node_id), image},{});
-    if(!roi_debug.isEmpty())
-        c->addCall(roi_debug,{ irLiteral(node_id), roi},{});
+{    
+    auto node_debug = JZModuleDebugManager::instance()->nodeDebug();
+    if (!node_debug.isEmpty())
+    {
+        QList<JZNodeIRParam> in_list;
+        in_list << irLiteral(node_id) << image;
+        if (!roi.isNull())
+            in_list << roi;
+        c->addCall(node_debug, in_list, {});
+    }
 }
 
 JZModuleDebugManager *JZModuleDebugManager::instance()
@@ -24,22 +27,12 @@ JZModuleDebugManager::~JZModuleDebugManager()
 {
 }
 
-QString JZModuleDebugManager::imageDebug() const
+QString JZModuleDebugManager::nodeDebug() const
 {
-    return m_imageDebug;
+    return m_nodeDebug;
 }
 
-QString JZModuleDebugManager::roiDebug() const
+void JZModuleDebugManager::setNodeDebug(const QString &function)
 {
-    return m_roiDebug;
-}
-
-void JZModuleDebugManager::setImageDebug(const QString &function)
-{
-    m_imageDebug = function;
-}
-
-void JZModuleDebugManager::setRoiDebug(const QString &function)
-{
-    m_roiDebug = function;
+    m_nodeDebug = function;
 }

@@ -5,6 +5,12 @@
 #include <QSharedPointer>
 #include "../JZModuleConfigFactory.h"
 
+enum JZModelBackEnd
+{
+    Model_BackendCpu,
+    Model_BackendTensorRT,
+};
+
 enum JZModelType
 {
 	Model_None,

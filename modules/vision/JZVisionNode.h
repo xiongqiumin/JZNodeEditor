@@ -137,6 +137,30 @@ public:
     virtual bool compiler(JZNodeCompiler *, QString &error) override;
 };
 
+class JZNodeVisionBarCode : public JZNode
+{
+public:
+    JZNodeVisionBarCode();
+
+    virtual bool compiler(JZNodeCompiler *, QString &error) override;
+};
+
+class JZNodeVisionQrCode : public JZNode
+{
+public:
+    JZNodeVisionQrCode();
+
+    virtual bool compiler(JZNodeCompiler *, QString &error) override;
+};
+
+class JZNodeVisionOCR : public JZNode
+{
+public:
+    JZNodeVisionOCR();
+
+    virtual bool compiler(JZNodeCompiler *, QString &error) override;
+};
+
 class JZNodeVisionShapeMatch : public JZNode
 {
 public:

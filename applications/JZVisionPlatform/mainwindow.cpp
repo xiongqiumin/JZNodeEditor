@@ -69,6 +69,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_task.runThread(), &JZNodeAutoRunThread::sigResult, this, &MainWindow::onAutoRunResult);
     connect(&m_task, &MainTaskManager::sigBuildStart, this, &MainWindow::onBuildStart);
     connect(&m_task, &MainTaskManager::sigBuildFinish, this, &MainWindow::onBuildFinish);
+
+    connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &MainWindow::onRuntimeError);
     
     JZEditorManager::instance()->registEditor(ProjectItem_scriptItem, CreateEditor<JZVisionEditor>);
 
@@ -381,7 +383,7 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     layout->addWidget(menubar);
 
     QAction *actRunOnce = new QAction(icon("runOnce.png"), "运行一次");
-    QAction *actRun = new QAction(icon("run.png"), "运行");        
+    QAction *actRun = new QAction(icon("run.png"), "连续运行");        
     connect(actRunOnce, &QAction::triggered, this, &MainWindow::onActionRunOnce);
     connect(actRun, &QAction::triggered, this, &MainWindow::onActionRun);        
     m_actionRun = actRun;
@@ -1104,6 +1106,13 @@ void MainWindow::onMainStackedChanged()
     stop();
 }
 
+void MainWindow::onRuntimeError(JZNodeRuntimeError error)
+{
+    m_engine.deinit();
+
+    QMessageBox::information(this, "", error.errorReport());
+}
+
 void MainWindow::initProject()
 {
     m_project.clear();
@@ -1550,12 +1559,23 @@ void MainWindow::imageDebug()
     if (!camera_event)
         return;
 
+    auto env = m_engine.environment();
     int node_id = m_engine.getReg(Reg_CallIn).toInt();
     QVariant v = m_engine.getReg(Reg_CallIn + 1);
-    auto mat = JZObjectCast<cv::Mat>(toJZObject(v));
-
+    auto mat = JZObjectCast<cv::Mat>(toJZObject(v));    
+    
     ImageResult image;
     image.mat = *mat;
+    if (m_engine.regInCount() == 3)
+    {
+        QVariant roi = m_engine.getReg(Reg_CallIn + 2);
+        QString roi_type = env->variantTypeName(roi);
+        if (roi_type == "QList<JZYoloResult>")
+        {
+            QList<JZYoloResult> *yolo_ret = JZObjectCast<QList<JZYoloResult>>(toJZObject(roi));
+            image.graphList = JZYoloResult::toGraphics(*yolo_ret);
+        }        
+    }
     
     NodeResult result;
     result.outputImage << image;

@@ -18,11 +18,12 @@ public:
     JZModelConfigEnum getConfig() const;
 
 private slots:
-
+    void onModelBackendChanged(JZProperty * prop, const QVariant &v);
 
 private:
     void addYolo();
-
+    
+    void updateModelFilter();
     void accept();
 
     int m_type;
@@ -30,6 +31,8 @@ private:
     JZProperty *m_propGroup;    
     QMap<int, JZModelConfigEnum*> m_config;
 
+    JZProperty *m_yoloBackend;
+    JZProperty *m_yoloModel;
 };
 
 //JZModelConfigWidget

@@ -34,8 +34,6 @@ set(JZVisionPlatform_SOURCES
 	editor/JZVisionNodeItem.h
 	editor/JZVisionOutput.cpp
 	editor/JZVisionOutput.h	
-    editor/JZVisionLinkDialog.cpp
-    editor/JZVisionLinkDialog.h
 	editor/JZVisionSettingDialog.cpp
 	editor/JZVisionSettingDialog.h
     editor/JZVisionEditorManager.cpp

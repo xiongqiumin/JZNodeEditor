@@ -137,7 +137,19 @@ void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
     if(m_editWidget)
         delete m_editWidget;
 
-    if(edit.type == JZParamEditInfo::Edit_normal)
+    if (edit.type == JZParamEditInfo::Edit_int)
+    {
+        QSpinBox *spin = new QSpinBox();        
+        connect(spin, &QSpinBox::editingFinished, this, &JZNodeParamValueWidget::sigEditFinish);
+        m_editWidget = spin;        
+    }
+    else if (edit.type == JZParamEditInfo::Edit_double)
+    {
+        QDoubleSpinBox *spin = new QDoubleSpinBox();
+        connect(spin, &QDoubleSpinBox::editingFinished, this, &JZNodeParamValueWidget::sigEditFinish);
+        m_editWidget = spin;
+    }
+    else if(edit.type == JZParamEditInfo::Edit_normal)
     {
         QLineEdit *lineEdit = new QLineEdit();
         connect(lineEdit, &QLineEdit::returnPressed, this, &JZNodeParamValueWidget::sigEditFinish); 

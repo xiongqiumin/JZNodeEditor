@@ -12,6 +12,41 @@
 #include "JZNodeFunction.h"
 #include "JZModule.h"
 
+#define JZBENCHMARK(name) m_benchmark.reset(#name);  \
+    while(m_benchmark.run()) \
+    for(int bench_idx = 0; bench_idx < m_benchmark.step(); bench_idx++)
+
+class Benchmark
+{
+public:
+    Benchmark();
+
+    inline qint64 step() const { return m_step; }
+
+    void reset(QString name);
+    bool run();
+    void clear();
+    void report();
+    void setTestSec(int sec);
+
+protected:
+    struct RunInfo
+    {
+        QString name;
+        qint64 count;
+        qint64 time;
+    };
+
+    QList<RunInfo> m_runInfo;
+    qint64 m_stepStart;
+    QElapsedTimer m_timer;
+    qint64 m_step;
+    qint64 m_count;
+    bool m_first;
+    QString m_name;
+    int m_testSec;
+};
+
 //JZTestLambda
 void JZTestLambda();
 

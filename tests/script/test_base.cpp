@@ -13,6 +13,84 @@
 
 std::function<void()> g_testFunc;
 
+/*
+todo:
+执行的时候可以考虑把 CFunction 改成 call(QList<QVarinat*> in,QList<QVarinat*> out)
+call 的时候 checkFucntion 和拷贝数据到 reg 比较耗时
+*/
+Benchmark::Benchmark()
+{
+    m_count = 0;
+}
+
+void Benchmark::reset(QString name)
+{
+    m_name = name;
+    m_first = true;
+    m_count = 0;
+    m_step = 1;
+    m_stepStart = 0;
+    m_testSec = 1;
+    m_timer.restart();
+}
+
+void Benchmark::clear()
+{
+    reset("");
+    m_runInfo.clear();
+}
+
+void Benchmark::setTestSec(int sec)
+{
+    m_testSec = sec;
+}
+
+void Benchmark::report()
+{
+    QString text = "\nReport:\n";
+    for (int i = 0; i < m_runInfo.size(); i++)
+    {
+        auto &info = m_runInfo[i];
+        double cost = (double)info.time / info.count / 1000000.0;
+        text += info.name + "(" + QString::number(cost, 'f') + " ms, ";
+        text += "count " + QString::number(info.count) + ")\n";
+    }
+    qDebug().noquote() << text;
+}
+
+bool Benchmark::run()
+{
+    if (m_first)
+    {
+        m_first = false;
+        return true;
+    }
+
+    qint64 elapsed = m_timer.nsecsElapsed();
+    if (m_count < 5 && m_step < 1000000 && elapsed - m_stepStart < 1000000) // 1 ms, 太短的语句增加循环
+    {
+        m_count = 0;
+        m_step = m_step * 10;
+        m_stepStart = 0;
+        m_timer.restart();
+        return true;
+    }
+
+    m_count++;
+    if (elapsed >= m_testSec * qint64(1000) * 1000000) //1秒
+    {
+        RunInfo info;
+        info.name = m_name;
+        info.time = elapsed;
+        info.count = m_count * m_step;
+        m_runInfo.push_back(info);
+        return false;
+    }
+
+    m_stepStart = elapsed;
+    return true;
+}
+
 //JZTestLambda
 void JZTestLambda()
 {

@@ -3,10 +3,13 @@
 //JZPropertyDialog
 JZPropertyDialog::JZPropertyDialog(QWidget *parent)
     : JZBaseDialog(parent)
-{
+{    
     m_editor = new JZPropertyEditor();
     setCentralWidget(m_editor);
     m_typeProp = nullptr;
+
+    auto browser = m_editor->browser();
+    connect(browser, &JZPropertyBrowser::valueChanged, this, &JZPropertyDialog::onPropTypeChanged);
 
     resize(300, 400);
 }
@@ -38,7 +41,7 @@ void JZPropertyDialog::switchPage(int page)
         show_list[i]->setVisible(true);
 }
 
-void JZPropertyDialog::onPropChanged(JZProperty * prop, const QVariant &v)
+void JZPropertyDialog::onPropTypeChanged(JZProperty * prop, const QVariant &v)
 {
     if (prop != m_typeProp)
         return;

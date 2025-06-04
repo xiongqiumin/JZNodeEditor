@@ -42,6 +42,9 @@ QString JZVisionView::nodeName(JZNode* node)
 
 QString JZVisionView::pinName(JZNodeGemo gemo)
 {
+    if (gemo.isNull())
+        return QString();
+
     JZNode* node = getNode(gemo.nodeId);
     QString ret = nodeName(node);
     return ret + "." + node->pinName(gemo.pinId);
@@ -118,7 +121,7 @@ JZAbstractLineItem *JZVisionView::createLineItem(JZNodeGemo from)
 void JZVisionView::configNode(JZNode *node)
 {
     QByteArray old_buffer = editorNodeFactory()->saveNode(node);
-    JZVisionSettingDialog dialog;
+    JZVisionSettingDialog dialog(this);
     dialog.setNode(node);
     if (dialog.exec() != QDialog::Accepted)
         return;

@@ -8,10 +8,7 @@
 //JZCameraConfigDialog
 JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
     :JZPropertyDialog(parent)
-{          
-    auto browser = m_editor->browser();
-    connect(browser, &JZPropertyBrowser::valueChanged, this, &JZCameraConfigDialog::onPropChanged);
-
+{              
     auto group = m_editor->addGroup("基本");
     m_editor->addProp("名称", &m_name, group);
 

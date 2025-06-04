@@ -27,6 +27,11 @@ include_directories(./
     ./3rd/JZCommon
     ${OpenCV_INCLUDE_DIRS})
 
+#cuda
+include_directories(E:/libs/CUDA/TensorRT-8.2.5.1/include
+    E:/libs/CUDA/TensorRT-8.2.5.1/include
+    E:/libs/CUDA/v11.4/include)
+
 set(JZNodeCore_SOURCES
     LogManager.cpp
     LogManager.h
@@ -212,8 +217,10 @@ set(JZNodeCore_SOURCES
 	modules/model/JZModelManager.cpp
 	modules/model/JZModelWidget.cpp
     modules/model/JZModelWidget.h
-	modules/model/JZModuleModel.h
-    modules/model/JZModuleModel.cpp    
+	modules/model/JZModuleModel.cpp    
+    modules/model/JZModuleModel.h
+    modules/model/JZTensorRT.cpp
+    modules/model/JZTensorRT.h
 
     #camera
     modules/camera/JZModuleCamera.h

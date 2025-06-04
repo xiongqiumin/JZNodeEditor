@@ -11,8 +11,8 @@ class JZPropertyDialog : public JZBaseDialog
 public:
     JZPropertyDialog(QWidget *parent = nullptr);
 
-    protected slots:
-    void onPropChanged(JZProperty * prop, const QVariant &v);
+protected slots:
+    void onPropTypeChanged(JZProperty * prop, const QVariant &v);
 
 protected:
     void addPage(int type, QList<JZProperty*> propList);

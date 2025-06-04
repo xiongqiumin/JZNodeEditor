@@ -2,6 +2,7 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
 #include "../JZModuleCompiler.h"
+#include "../JZModuleDebug.h"
 
 static bool checkHasModule(JZScriptItem *script, const QString &model, QString &error)
 {
@@ -142,5 +143,7 @@ bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
     c->addCallConvert("JZYoloForward", { irRef("this.modelManager"), irLiteral(model()) ,irId(in_id) }, {  irId(out_id) });
 
     c->addFlowOutput(m_id);
+
+    JZModuleDebug(c, m_id, irId(in_id), irId(out_id));
     return true;
 }

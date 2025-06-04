@@ -1,6 +1,7 @@
 #include "test_model.h"
 #include "modules/opencv/JZModuleOpencv.h"
 #include "modules/model/JZModuleModel.h"
+#include "modules/model/JZYolo.h"
 
 //ModelTest
 ModelTest::ModelTest()
@@ -9,32 +10,40 @@ ModelTest::ModelTest()
 
 void ModelTest::testYolo()
 {
-    auto class_item = makeTestClass();
-    class_item->addMemberVariable("modelManager", "JZModelManager");
+    JZModelConfigEnum config = JZModelConfigEnum(new JZModelYoloConfig());
+    JZModelYoloConfig *yolo_cfg = (JZModelYoloConfig*)config.data();
+    yolo_cfg->backend = Model_BackendCpu;
+    yolo_cfg->modelPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.onnx";
+    yolo_cfg->idPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.json";
 
-    JZFunctionDefine define = class_item->objectDefine().initMemberFunction("init");
-    auto script_init = class_item->addMemberFunction(define);
+    JZYolo yolo_cpu, yolo_tensor_rt;
+    yolo_cpu.setConfig(config);
 
-    JZModelYoloConfig *yolo_config = new JZModelYoloConfig();
-    yolo_config->name = "model";
-    yolo_config->type = Model_Yolo;
-    yolo_config->modelPath = "C:/Users/xiong/Desktop/demo/image/yolo.onnx";
-    yolo_config->idPath = "C:/Users/xiong/Desktop/demo/image/yolo.json";
+    yolo_cfg->backend = Model_BackendTensorRT;
+    yolo_cfg->modelPath = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/yolov8n.engine";
+    yolo_tensor_rt.setConfig(config);
 
-    JZModelManagerConfig config;
-    config.modelList << JZModelConfigEnum(yolo_config);
+    bool ret = yolo_cpu.init();
+    QVERIFY(ret);
 
-    JZNodeModelInit *node_init = new JZNodeModelInit();
-    node_init->setConfig(config);
-    script_init->addNode(node_init);
-    script_init->addConnect(script_init->startNode()->flowOutGemo(), node_init->flowInGemo());
+    ret = yolo_tensor_rt.init();
+    QVERIFY(ret);
 
-    if (!build())
-        return;
-    dump("test_CameraFile");
+    cv::Mat mat = imread("C:/Users/xiong/Desktop/JZNodeEditorTest/data/111111111.jpg");
 
-    QVariantList in, out;
-    callMember("init", in, out);
+    m_benchmark.setTestSec(10);
+
+    JZBENCHMARK(yolo_cpu)
+    {
+        yolo_cpu.forward(mat);
+    }
+
+    JZBENCHMARK(yolo_tensor_rt)
+    {
+        yolo_tensor_rt.forward(mat);
+    }
+    
+    m_benchmark.report();
 }
 
 void test_model(int argc, char *argv[])

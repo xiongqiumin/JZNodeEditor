@@ -5,21 +5,23 @@
 #include "JZYolo.h"
 #include "../opencv/CvToQt.h"
 
-//JZYolo
+using namespace cv;
 
 //JZModelYoloConfig
 JZModelYoloConfig::JZModelYoloConfig()
 {
     type = Model_Yolo;
+    backend = Model_BackendCpu;
     name = "yolo";
 
-    confThreshold = 0.25;
+    confThreshold = 0.7;
     nmsThreshold =  0.45;
 }
 
 void JZModelYoloConfig::saveToStream(QDataStream& s) const
 {
     JZModelConfig::saveToStream(s);
+    s << backend;
     s << modelPath << idPath;
     s << confThreshold;
     s << nmsThreshold;
@@ -28,6 +30,7 @@ void JZModelYoloConfig::saveToStream(QDataStream& s) const
 void JZModelYoloConfig::loadFromStream(QDataStream& s)
 {
     JZModelConfig::loadFromStream(s);
+    s >> backend;
     s >> modelPath >> idPath;
     s >> confThreshold;
     s >> nmsThreshold;
@@ -69,7 +72,11 @@ JZYolo::~JZYolo()
 
 bool JZYolo::isInit()
 {
-    return !m_net.empty();
+    JZModelYoloConfig *cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
+    if (cfg->backend == Model_BackendCpu)
+        return !m_net.empty();
+    else
+        return m_tensorRt.isInit();
 }
 
 bool JZYolo::loadClassInfo(QString class_info)
@@ -96,28 +103,138 @@ bool JZYolo::init()
     if (!loadClassInfo(cfg->idPath))
         return false;
     
-    try {
-        m_net = cv::dnn::readNet(cfg->modelPath.toLocal8Bit().data());
-    }
-    catch (std::exception& e)
+    if (cfg->backend == Model_BackendCpu)
     {
-        return false;
+        try {
+            m_net = cv::dnn::readNet(cfg->modelPath.toLocal8Bit().data());
+
+            //m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);  // 使用OpenCV的OpenCL实现
+            //m_net.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);    // 通用OpenCL设备
+        }
+        catch (std::exception& e)
+        {
+            return false;
+        }        
+    }
+    else
+    {
+        if (!m_tensorRt.load(cfg->modelPath))
+            return false;
     }    
+
     return true;
 }
+
+cv::Mat JZYolo::makeLetterImage(const cv::Mat& img, cv::Size new_shape, LetterboxResult &box_result)
+{
+    cv::Mat ret;
+    cv::Scalar color(114, 114, 114);
+
+    // 获取原图尺寸
+    cv::Size shape = img.size();
+
+    // 计算缩放比例（保持原图长宽比）
+    float scale = std::min((float)new_shape.height / (float)shape.height,
+        (float)new_shape.width / (float)shape.width);
+
+    // 计算新尺寸
+    cv::Size new_unpad = cv::Size(
+        std::round((float)shape.width * scale),
+        std::round((float)shape.height * scale)
+    );
+
+    // 计算填充像素（左右上下对称填充）
+    int dw = new_shape.width - new_unpad.width;
+    int dh = new_shape.height - new_unpad.height;
+
+    // 计算上下左右的填充量（对称分布）
+    int pad_x = dw / 2;  // 左侧填充量
+    int pad_y = dh / 2;  // 上侧填充量
+
+    int right = dw - pad_x;  // 右侧填充量
+    int bottom = dh - pad_y; // 下侧填充量
+
+                             // 缩放图像
+    cv::Mat resized;
+    cv::resize(img, resized, new_unpad, 0, 0, cv::INTER_LINEAR);
+
+    // 添加灰色填充（注意参数顺序：上、下、左、右）
+    cv::copyMakeBorder(resized, ret,
+        pad_y, bottom,
+        pad_x, right,
+        cv::BORDER_CONSTANT, color);
+
+    box_result.pad_x = pad_x;
+    box_result.pad_y = pad_y;
+    box_result.scale = scale;
+    return ret;
+}
+
+cv::Mat JZYolo::normalizedImage(cv::Mat img)
+{    
+    // BGR转RGB
+    cv::Mat rgb;
+    cv::cvtColor(img, rgb, cv::COLOR_BGR2RGB);
+
+    // 归一化
+    cv::Mat normalized;
+    rgb.convertTo(normalized, CV_32F, 1.0 / 255.0);
+    return normalized;
+}
+
+// 坐标映射函数：使用缩放比例和填充偏移量转换坐标
+cv::Rect JZYolo::mapCoordinates(const cv::Rect& box, float scale, int pad_x, int pad_y) {
+    float x1 = (box.x - pad_x) / scale;
+    float y1 = (box.y - pad_y) / scale;
+    float x2 = (box.x + box.width - pad_x) / scale;
+    float y2 = (box.y + box.height - pad_y) / scale;
+
+    // 确保坐标非负
+    x1 = std::max(0.0f, x1);
+    y1 = std::max(0.0f, y1);
+    x2 = std::max(0.0f, x2);
+    y2 = std::max(0.0f, y2);
+
+    return cv::Rect(x1, y1, x2 - x1, y2 - y1);
+}
+
 
 QList<JZYoloResult> JZYolo::forward(Mat frame)
 {    
     JZModelYoloConfig *cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
 
-    float x_factor = frame.cols / 640.0f;
-    float y_factor = frame.rows / 640.0f;
+    int inputH = 640;
+    int inputW = 640;
 
-    // 推理
-    cv::Mat blob = cv::dnn::blobFromImage(frame, 1 / 255.0, cv::Size(640, 640), cv::Scalar(0, 0, 0), true, false);
-    m_net.setInput(blob);
+    LetterboxResult letter_result;
+    frame = makeLetterImage(frame, Size(inputW, inputH), letter_result);
+    frame = normalizedImage(frame);    
 
-    cv::Mat preds = m_net.forward();
+    // 推理    
+    cv::Mat preds;
+    if (cfg->backend == Model_BackendCpu)
+    {        
+        cv::Mat blob = cv::dnn::blobFromImage(frame, 1,  cv::Size(640, 640), cv::Scalar(0, 0, 0), true, false);
+        m_net.setInput(blob);
+        preds = m_net.forward();
+    }
+    else
+    {
+        // 转为CHW格式
+        Mat chw_input(1, inputH * inputW * 3, CV_32F);        
+        float* ptr = (float*)chw_input.data;
+
+        for (int c = 0; c < 3; ++c) {
+            for (int h = 0; h < inputH; ++h) {
+                for (int w = 0; w < inputW; ++w) {
+                    ptr[c * inputH * inputW + h * inputW + w] = frame.at<cv::Vec3f>(h, w)[c];
+                }
+            }
+        }
+
+        preds = m_tensorRt.forward(chw_input);
+    }
+
     float confThreshold = cfg->confThreshold;
     float nmsThreshold = cfg->nmsThreshold;
 
@@ -140,16 +257,16 @@ QList<JZYoloResult> JZYolo::forward(Mat frame)
         minMaxLoc(classes_scores, 0, &score, 0, &classIdPoint);
 
         // 置信度 0～1之间
-        if (score > 0.25)
+        if (score > confThreshold)
         {
             float cx = det_output.at<float>(i, 0) * 640;
             float cy = det_output.at<float>(i, 1) * 640;
             float ow = det_output.at<float>(i, 2) * 640;
             float oh = det_output.at<float>(i, 3) * 640;
-            int x = static_cast<int>((cx - 0.5 * ow) * x_factor);
-            int y = static_cast<int>((cy - 0.5 * oh) * y_factor);
-            int width = static_cast<int>(ow * x_factor);
-            int height = static_cast<int>(oh * y_factor);
+            int x = static_cast<int>((cx - 0.5 * ow));
+            int y = static_cast<int>((cy - 0.5 * oh));
+            int width = static_cast<int>(ow);
+            int height = static_cast<int>(oh);
 
             cv::Rect box;
             box.x = x;
@@ -169,10 +286,12 @@ QList<JZYoloResult> JZYolo::forward(Mat frame)
     {
         int idx = indices[i];
 
-        cv::Rect box = boxes[idx];                        
+        cv::Rect box = boxes[idx];  
+        box = mapCoordinates(box, letter_result.scale, letter_result.pad_x, letter_result.pad_y);
+
         double confidence = confidences[idx];
         QString label = m_classList[classIds[idx]];
-    
+        
         JZYoloResult ret;
         ret.id = classIds[idx];
         ret.name = label;

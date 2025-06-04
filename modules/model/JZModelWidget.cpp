@@ -6,8 +6,8 @@
 JZModelConfigDialog::JZModelConfigDialog(QWidget *parent)
     :JZPropertyDialog(parent)
 {
-    auto browser = m_editor->browser();
-    connect(browser, &JZPropertyBrowser::valueChanged, this, &JZModelConfigDialog::onPropChanged);
+    auto browser = m_editor->browser();    
+    connect(browser, &JZPropertyBrowser::valueChanged, this, &JZModelConfigDialog::onModelBackendChanged);
 
     auto group = m_editor->addGroup("基本");
     m_editor->addProp("名称", &m_name, group);
@@ -29,12 +29,42 @@ void JZModelConfigDialog::addYolo()
 {
     JZModelYoloConfig *yolo_cfg = new JZModelYoloConfig();
     m_config[Model_Yolo] = new JZModelConfigEnum(yolo_cfg);
+    
+    QList<int> modelType = { Model_BackendCpu, Model_BackendTensorRT };
+    QStringList modelTypeStr = { "cpu", "tensorRT" };
 
     QList<JZProperty*> model_yolo;
-    model_yolo << m_editor->addPropFile("模型", &yolo_cfg->modelPath, "*.onnx", m_propGroup);
+    m_yoloBackend = m_editor->addPropIntEnum("推理引擎", &yolo_cfg->backend, modelType, modelTypeStr, m_propGroup);
+    model_yolo << m_yoloBackend;
+    m_yoloModel = m_editor->addPropFile("模型", &yolo_cfg->modelPath, "*.onnx", m_propGroup);
+    model_yolo << m_yoloModel;
     model_yolo << m_editor->addPropFile("Meta", &yolo_cfg->idPath, "*.json", m_propGroup);
 
+    model_yolo << m_editor->addProp("置信度", &yolo_cfg->confThreshold, m_propGroup);
+    model_yolo << m_editor->addProp("NMS阈值", &yolo_cfg->nmsThreshold, m_propGroup);
+
     addPage(Model_Yolo, model_yolo);
+    updateModelFilter();
+}
+
+void JZModelConfigDialog::updateModelFilter()
+{
+    JZModelYoloConfig *yolo_cfg = dynamic_cast<JZModelYoloConfig *>(m_config[Model_Yolo]->data());
+
+    JZPropertyFilePath *file_prop = dynamic_cast<JZPropertyFilePath*>(m_yoloModel);
+    if (yolo_cfg->backend == Model_BackendTensorRT)
+    {
+        file_prop->setFileFilter("*.engine");
+    }
+    else
+    {
+        file_prop->setFileFilter("*.onnx");
+    }
+}
+
+void JZModelConfigDialog::onModelBackendChanged(JZProperty * prop, const QVariant &v)
+{
+    updateModelFilter();
 }
 
 void JZModelConfigDialog::setConfig(JZModelConfigEnum cfg)

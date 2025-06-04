@@ -10,17 +10,15 @@ class JZModuleDebugManager
 public:
     static JZModuleDebugManager *instance();
 
-    QString imageDebug() const;
-    QString roiDebug() const;
-    void setImageDebug(const QString &funciton);
-    void setRoiDebug(const QString &funciton);
+    QString nodeDebug() const;
+    void setNodeDebug(const QString &funciton);
+    
 
 protected:
     JZModuleDebugManager();
     ~JZModuleDebugManager();
     
-    QString m_imageDebug;
-    QString m_roiDebug;
+    QString m_nodeDebug;
 };
 
 #endif

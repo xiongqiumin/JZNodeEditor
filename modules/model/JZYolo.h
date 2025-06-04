@@ -7,6 +7,7 @@
 #include "JZNodeObject.h"
 #include "JZModel.h"
 #include "jzWidgets/JZImageLabel.h"
+#include "JZTensorRT.h"
 
 using namespace cv;
 
@@ -18,6 +19,7 @@ public:
     virtual void saveToStream(QDataStream& s) const;
     virtual void loadFromStream(QDataStream& s);
 
+    JZModelBackEnd backend;
     QString modelPath;
     QString idPath;
     double confThreshold;
@@ -29,7 +31,7 @@ QDataStream& operator>>(QDataStream& s, JZModelYoloConfig& param);
 class JZYoloResult
 {
 public:
-    QList<JZGraphic> toGraphics(const QList<JZYoloResult>& result);
+    static QList<JZGraphic> toGraphics(const QList<JZYoloResult>& result);
 
     QRect rect;
     int id;
@@ -48,9 +50,22 @@ public:
     QList<JZYoloResult> forward(Mat mat);
     
 protected:
+    struct LetterboxResult
+    {
+        float scale;       // 缩放比例
+        int pad_x;         // X方向填充量
+        int pad_y;         // Y方向填充量
+    };
+
+    // 等比缩放并填充灰色边缘，同时返回缩放比例和填充偏移量
+    cv::Mat makeLetterImage(const cv::Mat& img, cv::Size new_shape, LetterboxResult &box_result);
+    cv::Mat normalizedImage(cv::Mat img);
+    cv::Rect mapCoordinates(const cv::Rect& box, float scale, int pad_x, int pad_y);
+
     bool loadClassInfo(QString class_into);
 
     cv::dnn::Net m_net;     
+    TensorRtEngine m_tensorRt;
     QMap<int,QString> m_classList;
 };
 

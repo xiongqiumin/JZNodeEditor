@@ -17,6 +17,7 @@ public:
     void clear();
 
     void initNodeList(const QList<JZVisionNodeInfo> &node_list);
+    void setImage(const QList<ImageResult> &image);
 
 signals:
     void sigImageChanged(int node);

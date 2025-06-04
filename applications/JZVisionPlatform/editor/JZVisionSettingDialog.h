@@ -9,14 +9,19 @@
 class JZVisionView;
 
 //JZVisionSettingPinWidget
+class JZVisionSettingDialog;
 class JZVisionSettingPinWidget : public QWidget
 {
     Q_OBJECT
 
 public:
     JZVisionSettingPinWidget();
+    ~JZVisionSettingPinWidget();
 
     void setPin(JZNode* node, int pin_id);
+    
+    JZVisionSettingDialog *setting();
+    void setSetting(JZVisionSettingDialog *dlg);
 
     bool isLink();
     JZNodeGemo linkGemo();
@@ -27,14 +32,18 @@ protected slots:
 
 protected:
     void updatePinWidget();
+    void updateLinkList();
+    void addLinkItem(JZNode* node, const QList<int> &dst_types);
 
     JZNode* m_node;
     int m_pinId;
 
     JZNodeParamValueWidget* m_pinEditor;
+    bool m_isLink;
     QToolButton* m_btnLink;
     JZNodeGemo m_linkGemo;
-    QLineEdit* m_linkTip;
+    QComboBox* m_linkTip;
+    JZVisionSettingDialog *m_setting;
 };
 
 
@@ -62,7 +71,7 @@ protected slots:
 
 protected:    
     QWidget *createRow(QString name, QString value);
-    JZVisionSettingPinWidget*createPin(JZNodePin *pin);
+    JZVisionSettingPinWidget* createPin(JZNodePin *pin);
 
     void accept();
 

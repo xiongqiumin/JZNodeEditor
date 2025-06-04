@@ -61,8 +61,7 @@ void JZVisionEditor::setCompilerResult(const CompilerResult *info)
 void JZVisionEditor::setRuntimeResult(int node_id, NodeResult result)
 {
     m_result.nodeResult[node_id] = result;
-    
-    m_outputImage->view()->setImage(QtOcv::mat2Image(result.outputImage[0].mat));
+    m_outputImage->setImage(result.outputImage);    
 }
 
 void JZVisionEditor::clearRuntimeResult()

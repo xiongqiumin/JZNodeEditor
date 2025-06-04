@@ -117,6 +117,7 @@ protected slots:
 
     void onFrameReady(QString camera,cv::Mat mat);
     void onMainStackedChanged();
+    void onRuntimeError(JZNodeRuntimeError error);
 
 protected:    
     struct CameraProgram

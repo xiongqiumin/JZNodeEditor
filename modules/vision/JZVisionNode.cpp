@@ -360,6 +360,60 @@ bool JZNodeVisionColorIdentify::compiler(JZNodeCompiler *c, QString &error)
     return true;
 }
 
+//JZNodeVisionBarCode
+JZNodeVisionBarCode::JZNodeVisionBarCode()
+{
+    m_type = Node_VisionShapeMatch;
+    m_name = "图像匹配";
+
+    addFlowIn();
+    addFlowOut();
+}
+
+bool JZNodeVisionBarCode::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    return true;
+}
+
+//JZNodeVisionQrCode 
+JZNodeVisionQrCode::JZNodeVisionQrCode()
+{
+    m_type = Node_VisionShapeMatch;
+    m_name = "图像匹配";
+
+    addFlowIn();
+    addFlowOut();
+}
+
+bool JZNodeVisionQrCode::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    return true;
+}
+
+//JZNodeVisionOCR
+JZNodeVisionOCR::JZNodeVisionOCR()
+{
+    m_type = Node_VisionShapeMatch;
+    m_name = "图像匹配";
+
+    addFlowIn();
+    addFlowOut();
+}
+
+bool JZNodeVisionOCR::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    return true;
+}
+
 //JZNodeVisionShapeMatch
 JZNodeVisionShapeMatch::JZNodeVisionShapeMatch()
 {

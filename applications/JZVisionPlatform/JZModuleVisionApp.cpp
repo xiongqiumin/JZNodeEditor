@@ -19,7 +19,7 @@ JZModuleVisionApp::JZModuleVisionApp()
 {
     m_name = "visionApp";
 
-    JZModuleDebugManager::instance()->setImageDebug("JZVisionImageDebug");
+    JZModuleDebugManager::instance()->setNodeDebug("JZVisionImageDebug");
 }
 
 JZModuleVisionApp::~JZModuleVisionApp()
