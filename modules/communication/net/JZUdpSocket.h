@@ -14,6 +14,7 @@ public:
     virtual void saveToStream(QDataStream& s) const;
     virtual void loadFromStream(QDataStream& s);
 
+    QString ip;
     int port;
 };
 

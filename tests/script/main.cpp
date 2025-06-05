@@ -13,9 +13,9 @@ int main(int argc,char *argv[])
     QCoreApplication a(argc,argv);
     JZNodeInit();
 
-    //test_script(argc, argv);
+    test_script(argc, argv);
+    test_anglescript(argc, argv);
     //test_benchmark(argc, argv);
-    //test_anglescript(argc, argv);
     //test_debug(argc, argv);
     //test_tx(argc, argv);
     //test_unitTest(argc, argv);

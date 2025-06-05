@@ -317,7 +317,7 @@ bool JZNodeVisionBrightnessDetector::compiler(JZNodeCompiler *c, QString &error)
     QList<JZNodeIRParam> in, out;
     in << irId(c->paramId(m_id, paramIn(0)));
 
-    int ret_id = c->allocStack("BrightnessDetectorResult");
+    int ret_id = c->addAllocStack("BrightnessDetectorResult");
     out << irId(ret_id);
     c->addCall("JZVisionBrightnessDetector", in, out);
 

@@ -221,8 +221,10 @@ public:
     bool checkInitValue(int data_type,const QString &value);   //检查能否用字符串初始化    
 
     void resetStack();
-    int allocStack(QString type);
-    int allocStack(int dataType);  //只是标记分配
+    int addAllocStack(QString datatType);
+    int addAllocStack(int dataType);
+    void addFreeStack(int stack_id);
+
     void setStackId(int id);
     int stackId();   //指向下一个stack
     int stackType(int id);
@@ -295,6 +297,7 @@ public:
     void addAlloc(int allocType, QString name, QString dataType);
     void addAlloc(int allocType, QString name, int dataType);
     void addAllocAuto(const QString& ir);
+
     void addCall(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCall(const JZFunctionDefine *function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     void addCallVirtual(const QString &function, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);  

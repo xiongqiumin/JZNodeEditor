@@ -14,4 +14,5 @@
 - 支持多线程，支持异步任务
 
 ## 1.3 下载
-下载地址：[最新稳定版压缩包](data/JZVision.zip)
+下载地址：[百度网盘](http://pan.baidu.com)</br>
+         [本地下载](data/JZVision.zip)

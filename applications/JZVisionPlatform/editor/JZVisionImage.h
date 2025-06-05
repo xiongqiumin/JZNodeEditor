@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QLabel>
 #include "jzWidgets/JZImageView.h"
 #include "../JZVisionNodeInfo.h"
 
@@ -24,8 +25,10 @@ signals:
 
 protected slots:
     void onImageBoxChanged(int index);
+    void onCoorColor(QPoint pos,QColor color);
 
 protected:
     QComboBox *m_imageBox;
     JZImageView* m_view;
+    QLabel *m_status;
 };

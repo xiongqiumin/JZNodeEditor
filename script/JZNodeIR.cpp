@@ -152,6 +152,8 @@ JZNodeIR *createNodeIR(JZNodeIRType type)
         return new JZNodeIR(type);
     case OP_alloc:
         return new JZNodeIRAlloc();
+    case OP_free:
+        return new JZNodeIRFree();
     case OP_reference:
         return new JZNodeIRReference();
     case OP_add:
@@ -277,6 +279,27 @@ void JZNodeIRAlloc::loadFromStream(QDataStream &s)
 {
     JZNodeIR::loadFromStream(s);
     s >> allocType >> dst >> dataType;
+}
+
+//JZNodeIRFree
+JZNodeIRFree::JZNodeIRFree()
+{
+    type = OP_free;
+    allocType = JZNodeIRAlloc::None;
+}
+JZNodeIRFree::~JZNodeIRFree()
+{
+}
+
+void JZNodeIRFree::saveToStream(QDataStream &s) const
+{
+    JZNodeIR::saveToStream(s);
+    s << allocType << dst;
+}
+void JZNodeIRFree::loadFromStream(QDataStream &s)
+{
+    JZNodeIR::loadFromStream(s);
+    s >> allocType >> dst;
 }
 
 //JZNodeIRReference

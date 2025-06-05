@@ -451,7 +451,7 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
     int continuePc = 0;
     if (environment()->isListType(class_type))
     {
-        JZNodeIRParam itEnd = irId(c->allocStack(Type_int));
+        JZNodeIRParam itEnd = irId(c->addAllocStack(Type_int));
 
         auto* func_size = meta->function("size");
         auto* func_get = meta->function("get");
@@ -490,8 +490,8 @@ bool JZNodeForEach::compiler(JZNodeCompiler *c,QString &error)
         int it_type;
         environment()->mapIteratorType(class_type, it_type);
 
-        JZNodeIRParam it = irId(c->allocStack(it_type));
-        JZNodeIRParam itEnd = irId(c->allocStack(it_type));
+        JZNodeIRParam it = irId(c->addAllocStack(it_type));
+        JZNodeIRParam itEnd = irId(c->addAllocStack(it_type));
 
         c->addCall(it_begin, { class_ptr }, { it });
         c->addCall(it_end, { class_ptr }, { itEnd });

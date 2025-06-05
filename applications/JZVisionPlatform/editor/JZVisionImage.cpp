@@ -7,6 +7,7 @@ JZVisionImage::JZVisionImage(QWidget *parent)
     : QWidget(parent)
 {
     m_view = new JZImageView();
+    connect(m_view, &JZImageView::sigCoorColor, this, &JZVisionImage::onCoorColor);
 
     QWidget* top = new QWidget();
     QHBoxLayout* top_l = new QHBoxLayout();
@@ -21,8 +22,16 @@ JZVisionImage::JZVisionImage(QWidget *parent)
     top_l->addWidget(m_imageBox);
     top_l->addStretch();
 
+    QWidget* bottom = new QWidget();
+    QHBoxLayout* bottom_l = new QHBoxLayout(bottom);
+    bottom_l->setContentsMargins(0, 0, 0, 0);
+
+    m_status = new QLabel();
+    bottom_l->addWidget(m_status);
+
     v->addWidget(top);
     v->addWidget(m_view);
+    v->addWidget(bottom);
     setLayout(v);
 }
 
@@ -33,6 +42,12 @@ JZVisionImage::~JZVisionImage()
 void JZVisionImage::onImageBoxChanged(int index)
 {
 
+}
+
+void JZVisionImage::onCoorColor(QPoint pos,QColor color)
+{
+    QString coor_info = QString::asprintf("(%d,%d) (%d,%d,%d)",pos.x(),pos.y(),color.red(),color.green(),color.blue()); 
+    m_status->setText(coor_info);
 }
 
 JZImageView* JZVisionImage::view()

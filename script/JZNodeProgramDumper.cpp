@@ -471,6 +471,10 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
             line = "// " + line;
         break;
     }
+    case OP_free:
+    {
+        break;
+    }
     case OP_reference:
     {
         JZNodeIRReference* ir_ref = (JZNodeIRReference*)op;

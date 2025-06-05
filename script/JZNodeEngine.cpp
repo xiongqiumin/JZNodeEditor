@@ -80,6 +80,16 @@ void RunnerEnv::initVariable(int id, QVariantPtr ptr)
     stacks[id] = ptr;
 }
 
+void RunnerEnv::deinitVariable(QString name)
+{
+    locals.remove(name);
+}
+
+void RunnerEnv::deinitVariable(int id)
+{
+    stacks.remove(id);
+}
+
 QVariantPtr *RunnerEnv::getRef(int id)
 {
     auto it = stacks.find(id);
@@ -826,6 +836,24 @@ void JZNodeEngine::initLocal(int id, int data_type)
 {
     auto env = m_stack.currentEnv();
     env->initVariable(id, initVariantPtr(data_type));
+}
+
+
+void JZNodeEngine::deinitGlobal(QString name)
+{
+    m_global.remove(name);
+}
+
+void JZNodeEngine::deinitLocal(QString name)
+{
+    auto env = m_stack.currentEnv();
+    env->deinitVariable(name);
+}
+
+void JZNodeEngine::deinitLocal(int id)
+{
+    auto env = m_stack.currentEnv();
+    env->deinitVariable(id);
 }
 
 void JZNodeEngine::clearReg()
@@ -1746,6 +1774,17 @@ bool JZNodeEngine::run()
                 initLocal(ir_alloc->dst.ref(), ir_alloc->dataType);            
             else            
                 initLocal(ir_alloc->dst.id(), ir_alloc->dataType);
+            break;
+        }
+        case OP_free:
+        {
+            const JZNodeIRFree *ir_free = (const JZNodeIRFree*)op;                        
+            if (ir_free->allocType == JZNodeIRAlloc::Heap)            
+                deinitGlobal(ir_free->dst.ref());
+            else if (ir_free->allocType == JZNodeIRAlloc::Stack)            
+                deinitLocal(ir_free->dst.ref());
+            else            
+                deinitLocal(ir_free->dst.id());
             break;
         }
         case OP_reference:

@@ -21,14 +21,24 @@ private slots:
     
 
 private:    
-    void addModbusClient();
-    void addModbusServer();
+    void addModbus();
     void addTcpClient();
     void addTcpServer();
     void addUdp();
     void addCom();
 
     void accept();    
+
+    QList<int> bit_order_value;
+    QStringList bit_order_text;
+    QList<int> baud_value;
+    QStringList baud_text;
+    QList<int> dataBit_value;
+    QStringList dataBit_text;
+    QList<int> parityBit_value;
+    QStringList parityBit_text;
+    QList<int> stopBit_value;
+    QStringList stopBit_text;
 
     int m_type;
     QString m_name;

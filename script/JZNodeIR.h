@@ -14,6 +14,7 @@ enum JZNodeIRType
     OP_nodeEnter,    //可以设置断点
     OP_nop,            
     OP_alloc,
+    OP_free,
     OP_reference,
     OP_clearReg,
     OP_set,
@@ -149,6 +150,19 @@ public:
     int allocType;
     JZNodeIRParam dst;
     int dataType;
+};
+
+class JZNodeIRFree : public JZNodeIR
+{
+public:
+    JZNodeIRFree();
+    virtual ~JZNodeIRFree();
+
+    virtual void saveToStream(QDataStream &s) const;
+    virtual void loadFromStream(QDataStream &s);
+
+    int allocType;
+    JZNodeIRParam dst;
 };
 
 class JZNodeIRReference : public JZNodeIR

@@ -30,6 +30,8 @@ public:
     
     void initVariable(QString name, QVariantPtr ptr);
     void initVariable(int id, QVariantPtr ptr);
+    void deinitVariable(QString name);
+    void deinitVariable(int id);
 
     QVariantPtr *getRef(int id);
     QVariantPtr *getRef(const QString &name);
@@ -257,6 +259,9 @@ protected:
     void initGlobal(QString name, int data_type);
     void initLocal(QString name, int data_type);
     void initLocal(int id, int data_type);
+    void deinitGlobal(QString name);
+    void deinitLocal(QString name);
+    void deinitLocal(int id);
     void clearReg();
 
     void pushStack(const JZFunction *define);

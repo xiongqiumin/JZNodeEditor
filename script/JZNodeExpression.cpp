@@ -146,7 +146,7 @@ bool JZNodeExpression::compiler(JZNodeCompiler *c,QString &error)
 
     for (int i = pre_stack_id; i < replace.stackId(); i++)
     {
-        c->allocStack(replace.stackType(i));
+        c->addAllocStack(replace.stackType(i));
     }
     for (int i = 0; i < ir_ref_list.size(); i++)
     {

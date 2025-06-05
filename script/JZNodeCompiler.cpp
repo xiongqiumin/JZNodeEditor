@@ -396,6 +396,13 @@ void JZMacroIRReplace::replace(QList<JZNodeIRPtr>& ir_list)
             }
             break;
         }
+        case OP_free:
+        {
+            JZNodeIRFree* ir_free = (JZNodeIRFree*)op;
+            if (ir_free->dst.isStack())
+                replaceIr(ir_free->dst);
+            break;
+        }
         case OP_reference:
         {
             JZNodeIRReference *ir_ref = (JZNodeIRReference*)op;
@@ -1693,17 +1700,7 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
     auto createAlloc = [this](int id,int dataType)->JZNodeIRPtr
     {
         Q_ASSERT(id < Reg_Start);
-        for (int i = 0; i < m_irRefList.size(); i++)
-        {
-            if (m_irRefList[i].ref.id() == id)
-            {
-                JZNodeIRReference* ir_ref = new JZNodeIRReference();
-                ir_ref->ref = m_irRefList[i].ref;
-                ir_ref->orig = m_irRefList[i].orig;
-                return JZNodeIRPtr(ir_ref);
-            }
-        }
-
+        
         JZNodeIRAlloc *alloc = new JZNodeIRAlloc();
         alloc->allocType = JZNodeIRAlloc::StackId;
         alloc->dst = irId(id);
@@ -1744,18 +1741,35 @@ bool JZNodeCompiler::buildControlFlow(JZNode* start_node)
             }
         }
 
-        //栈变量
-        auto it = m_stackType.begin();
-        while(it != m_stackType.end())
-        {
-            ir_list << createAlloc(it.key(),it.value());
-            it++;
-        }
         replaceStatementList(pc, ir_list);
     }
 
     for (int pc = 0; pc < m_statmentList->size(); pc++)
         m_statmentList->at(pc)->pc = pc;
+
+
+    //replace ref
+    for (int pc = 0; pc < m_statmentList->size(); pc++)
+    {
+        if(m_statmentList->at(pc)->type != OP_alloc)
+            continue;
+
+        JZNodeIRAlloc *ir_alloc = dynamic_cast<JZNodeIRAlloc*>(m_statmentList->at(pc).data());
+        if(!ir_alloc->dst.isId())
+            continue;
+
+        int id = ir_alloc->dst.id();
+        for (int i = 0; i < m_irRefList.size(); i++)
+        {
+            if (m_irRefList[i].ref.id() == id)
+            {
+                JZNodeIRReference* ir_ref = new JZNodeIRReference();
+                ir_ref->ref = m_irRefList[i].ref;
+                ir_ref->orig = m_irRefList[i].orig;
+                replaceStatement(pc,JZNodeIRPtr(ir_ref));
+            }
+        }
+    }
 
     return true;
 }
@@ -2002,8 +2016,8 @@ void JZNodeCompiler::addClassInitFunction(ClassInitInfo info)
 void JZNodeCompiler::addGet(QString objName, QString typeName, int& ptr_id)
 {
     int ptr_type = m_env->nameToType(JZNodeType::pointerType(typeName));
-    int obj_id = allocStack(JZNodeType::pointerType("QObject"));
-    ptr_id = allocStack(ptr_type);
+    int obj_id = addAllocStack(JZNodeType::pointerType("QObject"));
+    ptr_id = addAllocStack(ptr_type);
 
     QList<JZNodeIRParam> in, out;
     in << irThis() << irLiteral(objName);
@@ -2020,7 +2034,7 @@ void JZNodeCompiler::addGetOrInit(QString objName, QString typeName, const QByte
     addCompare(irId(ptr_id),irLiteral(QVariant::fromValue(JZNodeObjectNull())), OP_eq);
     auto jne = addJmp(OP_jne);
 
-    int obj_id = allocStack(typeName);
+    int obj_id = addAllocStack(typeName);
     addCall("createObject", { irLiteral(typeName) }, { irId(obj_id) });
     addCall("QObject::setParent", { irId(obj_id), irLiteral(objName), irThis()}, {});
     addCall(typeName + "::init", { irId(obj_id), irLiteral(init_buffer) }, {});
@@ -2086,7 +2100,7 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
         }
         else
         {
-            int id = allocStack(func_param_type);
+            int id = addAllocStack(func_param_type);
             addConvert(irId(id),func_param_type,org_paramIn[i]);
             param_in << irId(id);
         }
@@ -2104,7 +2118,7 @@ void JZNodeCompiler::addCallConvert(const JZFunctionDefine *func, const QList<JZ
         }
         else
         {
-            int id = allocStack(func_param_type);
+            int id = addAllocStack(func_param_type);
             param_out << irId(id);
         }
     }
@@ -2172,18 +2186,34 @@ void JZNodeCompiler::resetStack()
     m_irRefList.clear();
 }
 
-int JZNodeCompiler::allocStack(QString type)
+int JZNodeCompiler::addAllocStack(QString type)
 {
-    return allocStack(m_env->nameToType(type));
+    return addAllocStack(m_env->nameToType(type));
 }
 
-int JZNodeCompiler::allocStack(int dataType)
+int JZNodeCompiler::addAllocStack(int dataType)
 {
     Q_ASSERT(dataType != Type_none);
 
     int id = m_stackId++;    
+    JZNodeIRAlloc *alloc = new JZNodeIRAlloc();
+    alloc->allocType = JZNodeIRAlloc::StackId;
+    alloc->dst = irId(id);
+    alloc->dataType = dataType;
+    addStatement(JZNodeIRPtr(alloc));
+
     m_stackType[id] = dataType;
     return id;        
+}
+
+void JZNodeCompiler::addFreeStack(int stack_id)
+{
+    m_stackType.remove(stack_id);
+
+    JZNodeIRFree *alloc = new JZNodeIRFree();
+    alloc->allocType = JZNodeIRAlloc::StackId;
+    alloc->dst = irId(stack_id);
+    addStatement(JZNodeIRPtr(alloc));
 }
 
 void JZNodeCompiler::setStackId(int id)
@@ -2718,19 +2748,19 @@ void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRPara
     JZNodeIRParam tmp_p2 = p2;
     if(t1 != upType)
     {
-        int id = allocStack(upType);
+        int id = addAllocStack(upType);
         addConvert(irId(id),upType,p1);
         tmp_p1 = irId(id);
     }
     if(t2 != upType)
     {
-        int id = allocStack(upType);
+        int id = addAllocStack(upType);
         addConvert(irId(id),upType,p2);
         tmp_p2 = irId(id);
     }
     if(tDst != dstType)
     {
-        int id = allocStack(dstType);
+        int id = addAllocStack(dstType);
         tmp_dst = irId(id);
     }
 
