@@ -26,11 +26,11 @@ struct TRTDeleter {
 template<typename T>
 using TRTUniquePtr = std::unique_ptr<T, TRTDeleter<T>>;
 
-class TensorRtEngine
+class TensorRtEngineImpl
 {
 public:
-    TensorRtEngine();
-    ~TensorRtEngine();
+    TensorRtEngineImpl();
+    ~TensorRtEngineImpl();
 
     bool isInit();
     bool load(QString engine_path);

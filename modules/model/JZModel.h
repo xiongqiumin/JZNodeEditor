@@ -15,6 +15,7 @@ enum JZModelType
 {
 	Model_None,
 	Model_Yolo,
+	Model_OCR,
 };
 
 class JZModelConfig
@@ -42,6 +43,7 @@ public:
 
     virtual bool isInit() = 0;
 	virtual bool init() = 0;
+	virtual void deinit() = 0;
 
 protected:
 	JZModelConfigEnum m_config;

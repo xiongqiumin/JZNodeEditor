@@ -7,7 +7,7 @@
 #include "JZNodeObject.h"
 #include "JZModel.h"
 #include "jzWidgets/JZImageLabel.h"
-#include "JZTensorRT.h"
+#include "JZModelEngine.h"
 
 using namespace cv;
 
@@ -47,6 +47,8 @@ public:
 
     virtual bool isInit() override;
     virtual bool init() override;
+    virtual void deinit() override;
+
     QList<JZYoloResult> forward(Mat mat);
     
 protected:
@@ -63,9 +65,8 @@ protected:
     cv::Rect mapCoordinates(const cv::Rect& box, float scale, int pad_x, int pad_y);
 
     bool loadClassInfo(QString class_into);
-
-    cv::dnn::Net m_net;     
-    TensorRtEngine m_tensorRt;
+  
+    JZModelEnginePtr m_net;
     QMap<int,QString> m_classList;
 };
 

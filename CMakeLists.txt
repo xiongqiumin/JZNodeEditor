@@ -27,11 +27,6 @@ include_directories(./
     ./3rd/JZCommon
     ${OpenCV_INCLUDE_DIRS})
 
-#cuda
-include_directories(E:/libs/CUDA/TensorRT-8.2.5.1/include
-    E:/libs/CUDA/TensorRT-8.2.5.1/include
-    E:/libs/CUDA/v11.4/include)
-
 set(JZNodeCore_SOURCES
     LogManager.cpp
     LogManager.h
@@ -219,8 +214,11 @@ set(JZNodeCore_SOURCES
     modules/model/JZModelWidget.h
 	modules/model/JZModuleModel.cpp    
     modules/model/JZModuleModel.h
-    modules/model/JZTensorRT.cpp
-    modules/model/JZTensorRT.h
+    modules/model/JZModelEngine.h
+	modules/model/JZModelEngineFactory.cpp
+	modules/model/JZModelEngineFactory.h
+    modules/model/JZModelEngineOpencv.cpp
+    modules/model/JZModelEngineOpencv.h
 
     #camera
     modules/camera/JZModuleCamera.h
@@ -567,3 +565,4 @@ set_target_properties(JZNodeUiRuntime PROPERTIES
 
 add_subdirectory(tests)
 add_subdirectory(applications)
+add_subdirectory(modules)

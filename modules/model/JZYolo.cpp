@@ -4,6 +4,7 @@
 #include <QFile>
 #include "JZYolo.h"
 #include "../opencv/CvToQt.h"
+#include "JZModelEngineFactory.h"
 
 using namespace cv;
 
@@ -72,11 +73,10 @@ JZYolo::~JZYolo()
 
 bool JZYolo::isInit()
 {
-    JZModelYoloConfig *cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
-    if (cfg->backend == Model_BackendCpu)
-        return !m_net.empty();
-    else
-        return m_tensorRt.isInit();
+    if (!m_net)
+        return false;
+    
+    return m_net->isInit();
 }
 
 bool JZYolo::loadClassInfo(QString class_info)
@@ -99,30 +99,21 @@ bool JZYolo::loadClassInfo(QString class_info)
 
 bool JZYolo::init()
 {
-    JZModelYoloConfig *cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
+    JZModelYoloConfig* cfg = dynamic_cast<JZModelYoloConfig*>(m_config.data());
     if (!loadClassInfo(cfg->idPath))
         return false;
-    
-    if (cfg->backend == Model_BackendCpu)
-    {
-        try {
-            m_net = cv::dnn::readNet(cfg->modelPath.toLocal8Bit().data());
 
-            //m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);  // 使用OpenCV的OpenCL实现
-            //m_net.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);    // 通用OpenCL设备
-        }
-        catch (std::exception& e)
-        {
-            return false;
-        }        
-    }
-    else
-    {
-        if (!m_tensorRt.load(cfg->modelPath))
-            return false;
-    }    
+    auto engine = JZModelEngineFactory::instance()->createEngine(cfg->backend);
+    m_net = JZModelEnginePtr(engine);
+    if (!m_net->load(cfg->modelPath))
+        return false;
 
     return true;
+}
+
+void JZYolo::deinit()
+{
+    m_net.clear();
 }
 
 cv::Mat JZYolo::makeLetterImage(const cv::Mat& img, cv::Size new_shape, LetterboxResult &box_result)
@@ -211,29 +202,7 @@ QList<JZYoloResult> JZYolo::forward(Mat frame)
     frame = normalizedImage(frame);    
 
     // 推理    
-    cv::Mat preds;
-    if (cfg->backend == Model_BackendCpu)
-    {        
-        cv::Mat blob = cv::dnn::blobFromImage(frame, 1,  cv::Size(640, 640), cv::Scalar(0, 0, 0), true, false);
-        m_net.setInput(blob);
-        preds = m_net.forward();
-    }
-    else
-    {
-        // 转为CHW格式
-        Mat chw_input(1, inputH * inputW * 3, CV_32F);        
-        float* ptr = (float*)chw_input.data;
-
-        for (int c = 0; c < 3; ++c) {
-            for (int h = 0; h < inputH; ++h) {
-                for (int w = 0; w < inputW; ++w) {
-                    ptr[c * inputH * inputW + h * inputW + w] = frame.at<cv::Vec3f>(h, w)[c];
-                }
-            }
-        }
-
-        preds = m_tensorRt.forward(chw_input);
-    }
+    cv::Mat preds = m_net->forward(frame);
 
     float confThreshold = cfg->confThreshold;
     float nmsThreshold = cfg->nmsThreshold;

@@ -1,11 +1,11 @@
 #include <QFile>
-#include "JZTensorRT.h"
+#include "JZTensorRTImpl.h"
 
 #pragma comment(lib, "E:/libs/CUDA/TensorRT-8.2.5.1/lib/nvinfer.lib")
 #pragma comment(lib, "E:/libs/CUDA/TensorRT-8.2.5.1/lib/nvonnxparser.lib")
 #pragma comment(lib, "E:/libs/CUDA/v11.4/lib/x64/cudart.lib")
 
-TensorRtEngine::TensorRtEngine()
+TensorRtEngineImpl::TensorRtEngineImpl()
 {
     m_stream = nullptr;
     m_cudaInBuffer = nullptr;
@@ -14,17 +14,17 @@ TensorRtEngine::TensorRtEngine()
     m_outputSize = 0;
 }
 
-TensorRtEngine::~TensorRtEngine()
+TensorRtEngineImpl::~TensorRtEngineImpl()
 {
     destory();    
 }
 
-bool TensorRtEngine::isInit()
+bool TensorRtEngineImpl::isInit()
 {    
     return m_engine.get();
 }
 
-bool TensorRtEngine::load(QString engine_path)
+bool TensorRtEngineImpl::load(QString engine_path)
 {
     TRTUniquePtr<nvinfer1::IRuntime> runtime{ nvinfer1::createInferRuntime(m_log) };
     if (!runtime) {
@@ -84,7 +84,7 @@ bool TensorRtEngine::load(QString engine_path)
     return true;
 }
 
-void TensorRtEngine::destory()
+void TensorRtEngineImpl::destory()
 {
     if (m_cudaInBuffer)
     {
@@ -109,9 +109,21 @@ void TensorRtEngine::destory()
     m_outputSize = 0;
 }
 
-cv::Mat TensorRtEngine::forward(cv::Mat frame)
+cv::Mat TensorRtEngineImpl::forward(cv::Mat frame_input)
 {
-    Q_ASSERT(m_inputSize == frame.total() * frame.elemSize());
+    Q_ASSERT(m_inputSize == frame_input.total() * frame_input.elemSize());
+	
+    // 转为CHW格式
+    Mat frame(1, inputH * inputW * 3, CV_32F);        
+    float* ptr = (float*)chw_input.data;
+
+    for (int c = 0; c < 3; ++c) {
+        for (int h = 0; h < inputH; ++h) {
+            for (int w = 0; w < inputW; ++w) {
+                ptr[c * inputH * inputW + h * inputW + w] = frame_input.at<cv::Vec3f>(h, w)[c];
+            }
+        }
+    }
 
     int sizes[] = { 1, 84, 8400 };
     cv::Mat ret(3, sizes, CV_32F);
