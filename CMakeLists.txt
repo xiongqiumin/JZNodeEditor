@@ -156,6 +156,8 @@ set(JZNodeCore_SOURCES
 	#modules
     modules/JZModuleDebug.cpp
     modules/JZModuleDebug.h    
+    modules/JZModuleConstant.cpp
+    modules/JZModuleConstant.h
     modules/JZModuleCompiler.cpp
     modules/JZModuleCompiler.h
 	modules/JZModuleConfigWidget.cpp
@@ -267,6 +269,14 @@ set(JZNodeCore_SOURCES
     modules/motion/JZMotion.h
     modules/motion/JZMotionNode.cpp
     modules/motion/JZMotionNode.h
+    modules/motion/JZMotionManager.cpp
+    modules/motion/JZMotionManager.h
+    modules/motion/JZMotionWidget.cpp
+    modules/motion/JZMotionWidget.h
+    modules/motion/JZMotionMotean.cpp
+    modules/motion/JZMotionMotean.h
+    modules/motion/JZMotionSimulator.cpp
+    modules/motion/JZMotionSimulator.h
     
     #widgets
     widgets/JZBaseDialog.cpp

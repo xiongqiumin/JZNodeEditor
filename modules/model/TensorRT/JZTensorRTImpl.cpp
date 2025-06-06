@@ -5,6 +5,8 @@
 #pragma comment(lib, "E:/libs/CUDA/TensorRT-8.2.5.1/lib/nvonnxparser.lib")
 #pragma comment(lib, "E:/libs/CUDA/v11.4/lib/x64/cudart.lib")
 
+using namespace cv;
+
 TensorRtEngineImpl::TensorRtEngineImpl()
 {
     m_stream = nullptr;
@@ -113,9 +115,11 @@ cv::Mat TensorRtEngineImpl::forward(cv::Mat frame_input)
 {
     Q_ASSERT(m_inputSize == frame_input.total() * frame_input.elemSize());
 	
+    int inputH = 640;
+    int inputW = 640;
     // 转为CHW格式
-    Mat frame(1, inputH * inputW * 3, CV_32F);        
-    float* ptr = (float*)chw_input.data;
+    Mat frame(1, m_inputSize, CV_32F);
+    float* ptr = (float*)frame.data;
 
     for (int c = 0; c < 3; ++c) {
         for (int h = 0; h < inputH; ++h) {

@@ -32,6 +32,6 @@ add_library(TensorRTEngine SHARED ${TENSORRT_SOURCE_FILES})
 
 # 链接库
 target_link_libraries(TensorRTEngine
-    ${TensorRT_LIBRARIES}
-    ${CUDA_LIBRARIES}
+    Qt${QT_VERSION_MAJOR}::Core
+    ${OpenCV_LIBRARIES}    
 )

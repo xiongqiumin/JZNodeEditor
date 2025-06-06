@@ -4,7 +4,7 @@
 
 TensorRtEngine::TensorRtEngine()
 {
-    d = new JZTensorRTImpl();
+    d = new TensorRtEngineImpl();
 }
 
 TensorRtEngine::~TensorRtEngine()
@@ -14,7 +14,7 @@ TensorRtEngine::~TensorRtEngine()
 
 bool TensorRtEngine::isInit()
 {    
-    return m_engine.get();
+    return d->isInit();
 }
 
 bool TensorRtEngine::load(QString engine_path)

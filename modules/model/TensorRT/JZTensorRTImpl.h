@@ -1,5 +1,5 @@
-#ifndef JZ_TENSOR_RT_H_
-#define JZ_TENSOR_RT_H_
+#ifndef JZ_TENSOR_IMPL_RT_H_
+#define JZ_TENSOR_IMPL_RT_H_
 
 #include <QString>
 #include <QDebug>

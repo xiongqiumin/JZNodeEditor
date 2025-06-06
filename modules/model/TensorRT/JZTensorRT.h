@@ -3,16 +3,17 @@
 
 #include <QString>
 #include <QDebug>
+#include "../JZModelEngine.h"
 
 // Qt风格的DLL导入导出宏
-#ifdef TENSORRTENGINEDLL_LIBRARY
+#ifdef TENSORRTENGINEDLL_EXPORTS
 #define TENSORRTENGINEDLL_API Q_DECL_EXPORT
 #else
 #define TENSORRTENGINEDLL_API Q_DECL_IMPORT
 #endif
 
 class TensorRtEngineImpl;
-class TensorRtEngine ： public JZModelEngine
+class TensorRtEngine : public JZModelEngine
 {
 public:
     TensorRtEngine();
@@ -27,7 +28,7 @@ protected:
 	TensorRtEngineImpl *d;
 };
 
-TENSORRTENGINEDLL_API extern "C" JZModelEngine *CreateTensorRtEngine();
+extern "C" TENSORRTENGINEDLL_API JZModelEngine *CreateTensorRtEngine();
 
 
 #endif
