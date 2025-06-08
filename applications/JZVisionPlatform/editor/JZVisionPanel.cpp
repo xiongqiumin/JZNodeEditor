@@ -35,6 +35,10 @@ void JZVisionPanel::initLogicNode()
     registLogicNode(Node_VisionBrightnessDetector, "检测识别", icon("brightness.png"));
     registLogicNode(Node_VisionColorIdentify, "检测识别", icon("color_r.png"));
 
+    registLogicNode(Node_VisionBarCode, "识别");
+    registLogicNode(Node_VisionQrCode, "识别");
+    registLogicNode(Node_VisionOCR, "识别");
+
     registLogicNode(Node_VisionShapeMatch, "对位工具", icon("shape_match.png"));
     registLogicNode(Node_VisionTemplateMatch, "对位工具", icon("match.png"));
 

@@ -54,7 +54,7 @@ public:
 
 signals:
     void sigFrameReady(cv::Mat mat);
-    void sigError();
+    void sigError(QString error);
 
 protected:
     JZCameraConfigEnum m_config;

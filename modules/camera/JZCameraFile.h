@@ -8,6 +8,7 @@ class JZCameraFileConfig : public JZCameraConfig
 public:
     JZCameraFileConfig();
     QString path;
+    int delay;
 
     virtual void saveToStream(QDataStream& s) const override;
     virtual void loadFromStream(QDataStream& s) override;

@@ -437,6 +437,15 @@ JZEngineStatus JZNodeEngine::status()
     return m_status;
 }
 
+QString JZNodeEngine::currentFunction()
+{
+    QMutexLocker lock(&m_mutex);
+    if (m_stack.size() == 0)
+        return QString();
+
+    return m_stack.currentEnv()->function->fullName();
+}
+
 JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
 {   
     JZNodeRuntimeInfo info;

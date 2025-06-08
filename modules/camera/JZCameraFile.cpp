@@ -9,18 +9,21 @@ using namespace cv;
 JZCameraFileConfig::JZCameraFileConfig()
 {
     type = Camera_File;
+    delay = 500;
 }
 
 void JZCameraFileConfig::saveToStream(QDataStream& s) const
 {
     JZCameraConfig::saveToStream(s);
     s << path;
+    s << delay;
 }
 
 void JZCameraFileConfig::loadFromStream(QDataStream& s)
 {
     JZCameraConfig::loadFromStream(s);
     s >> path;
+    s >> delay;
 }
 
 //JZCameraFile
@@ -86,7 +89,8 @@ void JZCameraFile::start()
     if (m_fileList.size() == 0)
         return;
 
-    m_timer->start(1000);
+    auto config = dynamic_cast<JZCameraFileConfig*>(m_config.data());
+    m_timer->start(config->delay);
 }
 
 void JZCameraFile::startOnce()

@@ -1,5 +1,6 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QToolButton>
 #include "JZVisionImage.h"
 #include "modules/opencv/CvToQt.h"
 
@@ -21,6 +22,16 @@ JZVisionImage::JZVisionImage(QWidget *parent)
     connect(m_imageBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &JZVisionImage::onImageBoxChanged);
     top_l->addWidget(m_imageBox);
     top_l->addStretch();
+
+    QToolButton *btnZoomIn = new QToolButton();
+    QToolButton *btnZoomOut = new QToolButton();
+    QToolButton *btnFit = new QToolButton();
+    top_l->addWidget(btnZoomIn);
+    top_l->addWidget(btnZoomOut);
+    top_l->addWidget(btnFit);
+    connect(btnZoomIn, &QToolButton::clicked, this, &JZVisionImage::onBtnZoomIn);
+    connect(btnZoomOut, &QToolButton::clicked, this, &JZVisionImage::onBtnZoomOut);
+    connect(btnFit, &QToolButton::clicked, this, &JZVisionImage::onBtnFit);
 
     QWidget* bottom = new QWidget();
     QHBoxLayout* bottom_l = new QHBoxLayout(bottom);
@@ -44,10 +55,28 @@ void JZVisionImage::onImageBoxChanged(int index)
 
 }
 
+void JZVisionImage::onBtnZoomIn()
+{
+    m_view->scale(1.05,1.05);
+}
+
+void JZVisionImage::onBtnZoomOut()
+{
+    m_view->scale(0.95, 0.95);
+}
+
+void JZVisionImage::onBtnFit()
+{
+    QSize size = m_view->image().size();
+    m_view->fitInView(QRectF(0, 0, size.width(), size.height()), Qt::KeepAspectRatio);
+}
+
 void JZVisionImage::onCoorColor(QPoint pos,QColor color)
 {
-    QString coor_info = QString::asprintf("(%d,%d) (%d,%d,%d)",pos.x(),pos.y(),color.red(),color.green(),color.blue()); 
-    m_status->setText(coor_info);
+    QSize size = m_view->image().size();
+    QString size_str = QString::asprintf("%d * %d | ", size.width(), size.height());
+    QString coor_info = QString::asprintf("X,%d Y,%d | R:%d G:%d B:%d",pos.x(),pos.y(),color.red(),color.green(),color.blue()); 
+    m_status->setText(size_str + coor_info);
 }
 
 JZImageView* JZVisionImage::view()

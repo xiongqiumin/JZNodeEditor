@@ -116,6 +116,7 @@ protected slots:
     void onAutoRunResult(int result);
 
     void onFrameReady(QString camera,cv::Mat mat);
+    void onCameraError(QString camera, QString error);
     void onMainStackedChanged();
     void onRuntimeError(JZNodeRuntimeError error);
 
@@ -177,7 +178,10 @@ protected:
 
     bool checkBuild();
     bool isCameraFlow();
-    JZNodeCameraReadyEvent* currrentCameraNode();    
+    JZNodeCameraReadyEvent* currrentCameraNode();
+    QString getCameraByProgram(QString function);
+
+    void imageRuntimeDebug();
 
     const CompilerResult* compilerResult(const QString& path);
 

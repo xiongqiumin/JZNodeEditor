@@ -51,9 +51,11 @@ public:
 signals:
     void sigInitFinish();
     void sigFrameReady(QString camera, cv::Mat mat);
+    void sigError(QString camera, QString error);
 
 protected slots:
     void onFrameReady(cv::Mat mat);
+    void onError(QString error);
 
 protected:
     void init();

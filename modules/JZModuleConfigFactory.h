@@ -128,8 +128,10 @@ void JZModuleConfigEnum<T>::operator=(const JZModuleConfigEnum<T> &other)
         return;
     }
 
+    if (m_ptr && m_ptr->type != other.data()->type)
+        clear();
     if (!m_ptr)
-        m_ptr = JZModuleConfigFactory<T>::instance()->create(other.data()->type);
+        m_ptr = JZModuleConfigFactory<T>::instance()->create(other.data()->type);    
 
     JZModuleConfigFactory<T>::instance()->copyTo(other.data(), m_ptr);
 }

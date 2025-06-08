@@ -24,6 +24,10 @@ enum VisionNode
     Node_VisionBrightnessDetector, 
     Node_VisionColorIdentify,
 
+    Node_VisionBarCode,
+    Node_VisionQrCode,
+    Node_VisionOCR,
+
     Node_VisionShapeMatch, 
     Node_VisionTemplateMatch,
 

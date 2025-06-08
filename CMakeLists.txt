@@ -221,7 +221,11 @@ set(JZNodeCore_SOURCES
 	modules/model/JZModelEngineFactory.h
     modules/model/JZModelEngineOpencv.cpp
     modules/model/JZModelEngineOpencv.h
-
+    modules/model/Onnx/JZModelEngineOnnx.cpp
+    modules/model/Onnx/JZModelEngineOnnx.h
+    modules/model/Onnx/JZModelEngineOnnxImpl.cpp
+    modules/model/Onnx/JZModelEngineOnnxImpl.h
+    
     #camera
     modules/camera/JZModuleCamera.h
     modules/camera/JZModuleCamera.cpp
@@ -534,7 +538,8 @@ target_link_libraries(JZNodeCore Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::PrintSupport
     Qt${QT_VERSION_MAJOR}::Xml    
     Qt${QT_VERSION_MAJOR}::UiTools    
-    ${OpenCV_LIBRARIES})   
+    ${OpenCV_LIBRARIES}
+    E:/libs/onnxruntime-win-x64-1.22.0/lib/onnxruntime.lib)   
 
 add_library(JZNodeEditorCore STATIC ${JZNodeEditorCore_SOURCES})
 target_link_libraries(JZNodeEditorCore Qt${QT_VERSION_MAJOR}::Widgets
@@ -562,13 +567,8 @@ target_link_libraries(JZRemoteServer JZNodeCore
     
 add_executable(JZNodeUiRuntime runtime/main.cpp)
 target_link_libraries(JZNodeUiRuntime JZNodeCore
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::Network          
-    Qt${QT_VERSION_MAJOR}::SerialPort      
-    Qt${QT_VERSION_MAJOR}::PrintSupport
-    Qt${QT_VERSION_MAJOR}::Xml    
-    Qt${QT_VERSION_MAJOR}::UiTools
-    ${OpenCV_LIBRARIES})    
+    Qt${QT_VERSION_MAJOR}::Widgets    
+    ${OpenCV_LIBRARIES})
 set_target_properties(JZNodeUiRuntime PROPERTIES
     WIN32_EXECUTABLE TRUE
 )

@@ -142,6 +142,7 @@ public:
     JZEngineStatus status();
     JZNodeRuntimeInfo runtimeInfo();    
     JZNodeRuntimeError runtimeError();
+    QString currentFunction();
 
     void setDebug(bool flag);        
 

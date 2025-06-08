@@ -23,7 +23,8 @@ int JZCameraManagerConfig::indexOfCamera(QString name) const
 {
     for (int i = 0; i < cameraList.size(); i++)
     {
-        if (cameraList[i]->name == name)
+        auto config = cameraList[i].data();
+        if (config->name == name)
             return i;
     }
     return -1;
@@ -92,8 +93,15 @@ void JZCameraManager::onFrameReady(cv::Mat mat)
     emit sigFrameReady(camera->objectName(), mat);
 }
 
+void JZCameraManager::onError(QString error)
+{
+    JZCamera* camera = qobject_cast<JZCamera*>(sender());
+    emit sigError(camera->objectName(), error);
+}
+
 void JZCameraManager::addCamera(const JZCameraConfigEnum &config)
 {    
+    Q_ASSERT(m_config.indexOfCamera(config->name) == -1);
     m_config.cameraList.push_back(config);
     m_cameras.push_back(createCamera(config));
 }
@@ -169,11 +177,22 @@ void JZCameraManager::stopAll()
 }
 
 bool JZCameraManager::setCamera(QString name, const JZCameraConfigEnum &config)
-{
-    auto c = camera(name);
-    if (!c)
+{    
+    int cam_idx = m_config.indexOfCamera(name);
+    if (cam_idx == -1)
         return false;
 
+    JZCamera *c = nullptr;
+    if (m_config.cameraList[cam_idx]->type != config->type)
+    {
+        m_cameras[cam_idx]->close();
+        m_cameras[cam_idx]->deleteLater();
+        m_cameras[cam_idx] = createCamera(config);
+    }
+    m_config.cameraList[cam_idx] = config;
+    c = m_cameras[cam_idx];
+    if (c->objectName() != config->name)
+        c->setObjectName(config->name);
     return c->setConfig(config);    
 }
 
@@ -226,6 +245,7 @@ JZCamera* JZCameraManager::createCamera(const JZCameraConfigEnum &config)
         Q_ASSERT(0);
     }
     connect(camera,&JZCamera::sigFrameReady,this,&JZCameraManager::onFrameReady);
+    connect(camera,&JZCamera::sigError, this, &JZCameraManager::onError);
     
     camera->setObjectName(config->name);
     camera->setConfig(config);

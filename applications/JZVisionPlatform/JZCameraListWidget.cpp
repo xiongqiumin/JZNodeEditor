@@ -22,7 +22,9 @@ JZCameraListWidget::JZCameraListWidget(QWidget* parent)
 	m_tree->setColumnCount(1);
 	m_tree->setHeaderHidden(true);
 	m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
-	connect(m_tree, &JZCameraListWidget::customContextMenuRequested, this, &JZCameraListWidget::onContexMenu);
+	connect(m_tree, &QTreeWidget::customContextMenuRequested, this, &JZCameraListWidget::onContexMenu);
+
+    connect(m_tree, &QTreeWidget::itemDoubleClicked, this, &JZCameraListWidget::onItemDoubleClicked);
 
     m_tree->setSelectionMode(QTreeWidget::SingleSelection);
 
@@ -64,17 +66,33 @@ void JZCameraListWidget::setViewWidget(JZCameraViewWidget* view)
 	m_view = view;
 }
 
-QTreeWidgetItem *JZCameraListWidget::addCameraItem(QString name)
+QTreeWidgetItem *JZCameraListWidget::cameraItem(QString name)
 {
-    JZCamera *camera = m_cameraManager->camera(name);
-    connect(camera, &JZCamera::sigFrameReady, this, &JZCameraListWidget::onFrameReady);
+    for (int i = 0; i < m_root->childCount(); i++)
+    {
+        auto item = m_root->child(i);
+        if (item->text(0) == name)
+            return item;
+    }
+    return nullptr;
+}
 
+QTreeWidgetItem *JZCameraListWidget::addCameraItem(QString name)
+{    
     QTreeWidgetItem* new_item = new QTreeWidgetItem();
     new_item->setText(0, name);
     m_root->addChild(new_item);
 
     m_view->addCamera(name);
     return new_item;
+}
+
+void JZCameraListWidget::onItemDoubleClicked(QTreeWidgetItem *item)
+{
+    if (item == m_root)
+        return;
+
+    settingCamera(item->text(0));
 }
 
 void JZCameraListWidget::onContexMenu(QPoint pt)
@@ -115,23 +133,22 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
         for (int i = 0; i < config.cameraList.size(); i++)
             camera_list << config.cameraList[i]->name;
 
+        /*
         JZCameraFileConfig *cfg = new JZCameraFileConfig();
         cfg->path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
-
-        /*
-        JZCameraRtspConfig *cfg = new JZCameraRtspConfig();
-        cfg->name = JZRegExpHelp::uniqueString("camera", camera_list);
-        cfg->path = "rtsp://admin:123456HK@192.168.0.164:554/Streaming/Channels/101";
         */
-
+        
+        JZCameraRtspConfig *cfg = new JZCameraRtspConfig();        
+        cfg->path = "rtsp://admin:123456HK@192.168.0.164:554/Streaming/Channels/101";        
+        
         JZCameraConfigDialog dlg(this);
         dlg.setConfig(JZCameraConfigEnum(cfg));
+        dlg.makeUniqueName("camera", camera_list);
         if (dlg.exec() != JZCameraConfigDialog::Accepted)
             return;
 
-        auto result = dlg.getConfig();
+        auto result = dlg.getConfig();        
         m_cameraManager->addCamera(result);
-
         QTreeWidgetItem* new_item = addCameraItem(result->name);        
 
         m_tree->clearSelection();
@@ -164,26 +181,27 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
 void JZCameraListWidget::settingCamera(QString name)
 {
     auto &config = m_cameraManager->config();
-    int cam_idx = config.indexOfCamera(name);    
+    int cam_idx = config.indexOfCamera(name);
 
+    QString old_name = name;
     JZCameraConfigDialog dlg(this);
     dlg.setConfig(config.cameraList[cam_idx]);
     if (dlg.exec() != JZCameraConfigDialog::Accepted)
         return;
 
+    JZCameraConfigEnum new_cfg = dlg.getConfig();
+    if (old_name != new_cfg->name)
+    {
+        if (m_cameraManager->camera(new_cfg->name))
+        {
+            QMessageBox::information(this, "", "名称已存在");
+            return;
+        }
+
+        QTreeWidgetItem *item = cameraItem(name);
+        item->setText(0, name);
+    }
+
 	m_cameraManager->setCamera(name, dlg.getConfig());
     emit sigCameraChanged();
-}
-
-void JZCameraListWidget::onFrameReady(cv::Mat mat)
-{
-	JZCamera *camera = qobject_cast<JZCamera*>(sender());
-	QString name = camera->objectName();
-
-	m_view->label(name)->setImage(QtOcv::mat2Image(mat));
-}
-
-void JZCameraListWidget::onCameraError()
-{
-
 }

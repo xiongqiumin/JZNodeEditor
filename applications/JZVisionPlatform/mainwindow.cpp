@@ -26,6 +26,7 @@
 #include "JZEditorGlobal.h"
 #include "JZDockWidget.h"
 #include "widgets/JZAboutDialog.h"
+#include "modules/opencv/CvToQt.h"
 
 //Setting
 Setting::Setting()
@@ -83,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_cameraManager = new JZCameraManager(this);
     m_commManager = new JZCommManager(this);
     connect(m_cameraManager, &JZCameraManager::sigFrameReady, this, &MainWindow::onFrameReady);
+    connect(m_cameraManager, &JZCameraManager::sigError, this, &MainWindow::onCameraError);
 
     m_cameraList = new JZCameraListWidget();
     m_cameraView = new JZCameraViewWidget();
@@ -1075,6 +1077,11 @@ void MainWindow::onAutoRunResult(int result)
 
 void MainWindow::onFrameReady(QString camera, cv::Mat mat)
 {
+    if (m_stack->currentIndex() == 0)
+    {
+        m_cameraView->label(camera)->setImage(QtOcv::mat2Image(mat));
+    }
+
     if (!m_engine.isInit())
         return;
 
@@ -1099,6 +1106,11 @@ void MainWindow::onFrameReady(QString camera, cv::Mat mat)
     QVariantList in, out;
     in << QVariant::fromValue(this_ptr) << QVariant::fromValue(mat_ptr);
     m_engine.call(it->function, in, out);
+}
+
+void MainWindow::onCameraError(QString camera, QString error)
+{
+    LOG_W(camera + " " + error);
 }
 
 void MainWindow::onMainStackedChanged()
@@ -1528,7 +1540,7 @@ void MainWindow::startCameraOnce(QString name)
 void MainWindow::stopCamera(QString name)
 {
     JZCamera *camera = this->camera(name);
-    camera->stop();    
+    camera->close();    
 
     LOG_I("相机停止");
 }
@@ -1553,8 +1565,36 @@ void MainWindow::stop()
         stopCamera(camera_list[i]->name());    
 }
 
+void MainWindow::imageRuntimeDebug()
+{
+    auto env = m_engine.environment();
+    if (m_engine.regInCount() == 3)
+    {
+        QVariant roi = m_engine.getReg(Reg_CallIn + 2);
+        QString roi_type = env->variantTypeName(roi);
+        if (roi_type == "QList<JZYoloResult>")
+        {
+            QList<JZYoloResult> *yolo_ret = JZObjectCast<QList<JZYoloResult>>(toJZObject(roi));
+            auto graphList = JZYoloResult::toGraphics(*yolo_ret);
+
+            QString function = m_engine.runtimeInfo().stacks[0].function;
+            QString camera = getCameraByProgram(function);
+            if (camera.isEmpty())
+                return;
+
+            m_cameraView->label(camera)->setGraphics(graphList);
+        }
+    }
+}
+
 void MainWindow::imageDebug()
 {    
+    if (m_stack->currentIndex() == 0)
+    {
+        imageRuntimeDebug();
+        return;
+    }
+
     JZNodeCameraReadyEvent* camera_event = currrentCameraNode();
     if (!camera_event)
         return;
@@ -1562,7 +1602,7 @@ void MainWindow::imageDebug()
     auto env = m_engine.environment();
     int node_id = m_engine.getReg(Reg_CallIn).toInt();
     QVariant v = m_engine.getReg(Reg_CallIn + 1);
-    auto mat = JZObjectCast<cv::Mat>(toJZObject(v));    
+    auto mat = JZObjectCast<cv::Mat>(toJZObject(v));
     
     ImageResult image;
     image.mat = *mat;
@@ -1582,6 +1622,19 @@ void MainWindow::imageDebug()
     
     auto editor = currentNodeEditor();
     editor->setRuntimeResult(node_id, result);
+}
+
+QString MainWindow::getCameraByProgram(QString function)
+{
+    auto it = m_camProgram.begin();
+    while (it != m_camProgram.end())
+    {
+        if (it->function == function)
+            return it.key();
+
+        it++;
+    }
+    return QString();
 }
 
 JZNodeCameraReadyEvent* MainWindow::currrentCameraNode()

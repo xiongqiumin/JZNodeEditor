@@ -3,6 +3,7 @@
 #include "JZNodeInit.h"
 #include "JZModuleVisionApp.h"
 #include <fstream>
+#include "modules/model/Onnx/JZModelEngineOnnx.h"
 
 int main(int argc,char *argv[])
 {
@@ -10,7 +11,7 @@ int main(int argc,char *argv[])
     QApplication a(argc, argv);
 
     Q_INIT_RESOURCE(JZNodeEditor);
-    Q_INIT_RESOURCE(vision);
+    Q_INIT_RESOURCE(vision);       
 
     JZNodeInit();
     JZModuleManager::instance()->addModule(new JZModuleVisionApp());      

@@ -30,5 +30,8 @@ double JZVisionColorIdentify(Mat src_ori, Mat src_mat);
 void JZVisionFindCircle(Mat in);
 void JZVisionFindLine(Mat in);
 
+void JZVisionBarCode(Mat in);
+void JZVisionQrCode(Mat in);
+void JZVisionOCR(Mat in);
 
 #endif // ! JZ_VISION_H_

@@ -113,6 +113,8 @@ void JZCameraViewWidget::updateCamViewLayout()
         delete m_emptyWidget[i];
     }
     m_emptyWidget.clear();
+    if (label_list.size() == 0)
+        return;
 
     int layout_type = m_layoutType;
     if (layout_type == Layout_Auto)

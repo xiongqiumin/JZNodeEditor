@@ -18,7 +18,7 @@ static bool checkHasCamera(JZNodeCompiler *c, const QString &camera, QString &er
     }
 
     JZNodeCameraInit *node = dynamic_cast<JZNodeCameraInit*>(init_node);
-    if(node->config().indexOfCamera(camera))
+    if(node->config().indexOfCamera(camera) == -1)
     {
         error = "没有相机名称为" + camera;
         return false;

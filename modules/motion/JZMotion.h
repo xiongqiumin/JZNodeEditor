@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <QObject>
 #include "../JZModuleConfigFactory.h"
+#include "JZGCodeProgram.h"
 
 enum JZMotionType
 {
@@ -43,9 +44,10 @@ public:
     virtual bool init() = 0;
     virtual void deinit() = 0;
 
-    virtual bool isMoving() const = 0;
-    virtual void gotoZero() = 0;
-    virtual void moveTo(double x,double y,double z) = 0;
+signals:
+    void sigPos(double x, double y, double z);
+    void sigTimeUpdated(double currentTime, double totalTime); // 时间更新信号
+    void sigSimulationFinished();
 
 protected:
     JZMotionConfigEnum m_config;

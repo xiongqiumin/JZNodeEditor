@@ -23,6 +23,7 @@ public:
 
 signals:
     void sigFrameReady(cv::Mat mat);
+    void sigError(QString error);
 
 protected:
     virtual void run() override;
@@ -58,6 +59,7 @@ protected:
     RtspThread m_rtspThread;
     bool readFrame(cv::Mat &mat);
     
+    bool m_startOnce;
     bool m_delete;
     QTimer *m_timer;    
     cv::Mat m_frame;

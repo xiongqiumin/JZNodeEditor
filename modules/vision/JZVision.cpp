@@ -1,4 +1,6 @@
 ﻿#include <inttypes.h>
+#include <opencv2/wechat_qrcode.hpp>
+#include <QCoreApplication>
 #include "JZVision.h"
 #include "modules/opencv/CvToQt.h"
 
@@ -273,5 +275,35 @@ void JZVisionFindCircle(Mat in)
 }
 
 void JZVisionFindLine(Mat in)
+{
+}
+
+void JZVisionBarCode(Mat in)
+{
+    QString sr_prototxt = QCoreApplication::applicationDirPath() + "/Parameters/Code/sr.prototxt";
+    QString sr_caffemodel = QCoreApplication::applicationDirPath() + "/Parameters/Code/sr.caffemodel";
+
+    cv::Ptr<cv::barcode::BarcodeDetector> detector;
+    detector = cv::makePtr<cv::barcode::BarcodeDetector>(
+        sr_prototxt.toStdString(),
+        sr_caffemodel.toStdString());
+
+    std::vector<cv::Mat> vPoints;
+    std::vector<std::string> decoded_text;
+    std::vector<std::string> decoded_format;
+    cv::Mat gray;
+    detector->detectAndDecodeWithType(gray, decoded_text, decoded_format, vPoints);
+}
+
+void JZVisionQrCode(Mat in)
+{
+    /*cv::Ptr<cv::wechat_qrcode::WeChatQRCode> detector;
+    std::vector<cv::Mat> vPoints;
+    cv::Mat gray;
+    detector->detectAndDecode(gray, vPoints);
+    */
+}
+
+void JZVisionOCR(Mat in)
 {
 }

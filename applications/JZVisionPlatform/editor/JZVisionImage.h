@@ -24,7 +24,11 @@ signals:
     void sigImageChanged(int node);
 
 protected slots:
-    void onImageBoxChanged(int index);
+    void onImageBoxChanged(int index);    
+    void onBtnZoomIn();
+    void onBtnZoomOut();
+    void onBtnFit();
+
     void onCoorColor(QPoint pos,QColor color);
 
 protected:

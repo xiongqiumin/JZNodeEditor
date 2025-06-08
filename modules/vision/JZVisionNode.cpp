@@ -363,8 +363,8 @@ bool JZNodeVisionColorIdentify::compiler(JZNodeCompiler *c, QString &error)
 //JZNodeVisionBarCode
 JZNodeVisionBarCode::JZNodeVisionBarCode()
 {
-    m_type = Node_VisionShapeMatch;
-    m_name = "图像匹配";
+    m_type = Node_VisionBarCode;
+    m_name = "一维码";
 
     addFlowIn();
     addFlowOut();
@@ -381,8 +381,8 @@ bool JZNodeVisionBarCode::compiler(JZNodeCompiler *c, QString &error)
 //JZNodeVisionQrCode 
 JZNodeVisionQrCode::JZNodeVisionQrCode()
 {
-    m_type = Node_VisionShapeMatch;
-    m_name = "图像匹配";
+    m_type = Node_VisionQrCode;
+    m_name = "二维码";
 
     addFlowIn();
     addFlowOut();
@@ -399,8 +399,8 @@ bool JZNodeVisionQrCode::compiler(JZNodeCompiler *c, QString &error)
 //JZNodeVisionOCR
 JZNodeVisionOCR::JZNodeVisionOCR()
 {
-    m_type = Node_VisionShapeMatch;
-    m_name = "图像匹配";
+    m_type = Node_VisionOCR;
+    m_name = "OCR";
 
     addFlowIn();
     addFlowOut();

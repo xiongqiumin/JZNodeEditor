@@ -28,18 +28,26 @@ void JZCameraRtspConfig::loadFromStream(QDataStream& s)
 void RtspThread::run()
 {
     cv::VideoCapture capture;
+
+    std::string path = "rtsp://admin:123456HK@192.168.0.164:554/Streaming/Channels/102";
         
     int timeout = 5;
     capture.set(cv::CAP_PROP_OPEN_TIMEOUT_MSEC, int(timeout * 1000));
     capture.set(cv::CAP_PROP_READ_TIMEOUT_MSEC, int(timeout * 1000));
-    if (!capture.open(qPrintable(config.path),cv::CAP_FFMPEG))
+    if (!capture.open(qPrintable(config.path), cv::CAP_FFMPEG))    
+    {
+        emit sigError("连接相机失败");
         return;
+    }
 
     while(!isInterruptionRequested())
     {
         Mat mat;
         if (!capture.read(mat))
+        {
+            emit sigError("相机读取失败");
             break;
+        }
 
         sigFrameReady(mat);
         msleep(10);
@@ -51,10 +59,12 @@ JZCameraRtsp::JZCameraRtsp(QObject *parent)
     :JZCamera(parent)
 {
     m_delete = false;
+    m_startOnce = false;
     m_timer = new QTimer(this);        
 
     connect(m_timer, &QTimer::timeout, this, &JZCameraRtsp::onReadTimer);
     connect(&m_rtspThread, &RtspThread::finished, this, &JZCameraRtsp::onThreadFinish);
+    connect(&m_rtspThread, &RtspThread::sigError, this, &JZCameraRtsp::sigError);
     connect(&m_rtspThread, &RtspThread::sigFrameReady, this, &JZCameraRtsp::onFrameReady);
 }
 
@@ -94,22 +104,21 @@ bool JZCameraRtsp::open()
 
 void JZCameraRtsp::close()
 {    
+    stop();
     if (m_rtspThread.isRunning())
         m_rtspThread.requestInterruption();
 }
 
 void JZCameraRtsp::start()
 {    
-    m_timer->start(500);
+    m_timer->start(100);
+    m_startOnce = false;
 }
 
 void JZCameraRtsp::startOnce()
 {
-    cv::Mat mat;
-    if (!readFrame(mat))
-        return;
-
-    emit sigFrameReady(mat);
+    m_timer->start(50);
+    m_startOnce = true;
 }
 
 void JZCameraRtsp::stop()
@@ -136,10 +145,10 @@ bool JZCameraRtsp::readFrame(cv::Mat &mat)
 {    
     if (m_frame.empty())
         return false;
-    
+
     mat = m_frame;
     m_frame = Mat();
-    return true;    
+    return true;        
 }
 
 void JZCameraRtsp::onFrameReady(cv::Mat mat)
@@ -158,6 +167,9 @@ void JZCameraRtsp::onReadTimer()
     cv::Mat mat;
     if (!readFrame(mat))
         return;    
+
+    if (m_startOnce)
+        m_timer->stop();
 
     emit sigFrameReady(mat);
 }

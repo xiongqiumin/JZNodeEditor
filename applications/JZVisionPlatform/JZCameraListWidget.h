@@ -29,14 +29,14 @@ signals:
     void sigCameraChanged();
 
 protected slots:
-    void onContexMenu(QPoint pt);
-    void onFrameReady(cv::Mat mat);
-    void onCameraError();
+    void onContexMenu(QPoint pt);    
+    void onItemDoubleClicked(QTreeWidgetItem *item);
 
 protected:    
 
 private:
     QTreeWidgetItem *addCameraItem(QString name);
+    QTreeWidgetItem *cameraItem(QString name);
 
     QTreeWidget* m_tree;
 

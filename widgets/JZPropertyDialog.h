@@ -10,6 +10,7 @@ class JZPropertyDialog : public JZBaseDialog
 
 public:
     JZPropertyDialog(QWidget *parent = nullptr);
+    void makeUniqueName(QString pre,QStringList nameList);
 
 protected slots:
     void onPropTypeChanged(JZProperty * prop, const QVariant &v);
@@ -17,7 +18,10 @@ protected slots:
 protected:
     void addPage(int type, QList<JZProperty*> propList);
     void switchPage(int page);
+    bool isUniqueName();
 
+    QStringList m_nameList;
+    JZProperty *m_nameProp;
     JZProperty *m_typeProp;
     JZPropertyEditor *m_editor;
     QMap<int, QList<JZProperty*>> m_propType;

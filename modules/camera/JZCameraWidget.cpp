@@ -10,7 +10,7 @@ JZCameraConfigDialog::JZCameraConfigDialog(QWidget *parent)
     :JZPropertyDialog(parent)
 {              
     auto group = m_editor->addGroup("基本");
-    m_editor->addProp("名称", &m_name, group);
+    m_nameProp = m_editor->addProp("名称", &m_name, group);
 
     QList<int> enmuList = { Camera_File, Camera_Hik, Camera_Rtsp };
     QStringList enumTextList = { "File" ,"Hik" , "Rtsp" };
@@ -37,6 +37,7 @@ void JZCameraConfigDialog::addFilePage()
 
     QList<JZProperty*> file_prop;
     file_prop << m_editor->addPropDir("路径", &cfg_file->path, m_propGroup);
+    file_prop << m_editor->addProp("延迟", &cfg_file->delay, m_propGroup);
 
     addPage(Camera_File, file_prop);
 }
@@ -112,6 +113,12 @@ JZCameraConfigEnum JZCameraConfigDialog::getConfig() const
 
 void JZCameraConfigDialog::accept()
 {
+    if (!isUniqueName())
+    {
+        QMessageBox::information(this, "", "已存在同名摄像头");
+        return;
+    }
+
     m_editor->uiToData();
     JZPropertyDialog::accept();
 }

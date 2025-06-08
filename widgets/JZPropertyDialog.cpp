@@ -1,4 +1,5 @@
 #include "JZPropertyDialog.h"
+#include "JZRegExpHelp.h"
 
 //JZPropertyDialog
 JZPropertyDialog::JZPropertyDialog(QWidget *parent)
@@ -12,6 +13,19 @@ JZPropertyDialog::JZPropertyDialog(QWidget *parent)
     connect(browser, &JZPropertyBrowser::valueChanged, this, &JZPropertyDialog::onPropTypeChanged);
 
     resize(300, 400);
+}
+
+void JZPropertyDialog::makeUniqueName(QString pre, QStringList nameList)
+{
+    QString name = JZRegExpHelp::uniqueString(pre, nameList);
+    m_nameProp->setValue(name);
+    m_nameList = nameList;    
+}
+
+bool JZPropertyDialog::isUniqueName()
+{
+    QString name = m_nameProp->value().toString();
+    return !m_nameList.contains(name);
 }
 
 void JZPropertyDialog::addPage(int type, QList<JZProperty*> propList)
