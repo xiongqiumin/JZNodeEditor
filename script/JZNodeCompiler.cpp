@@ -2027,18 +2027,27 @@ void JZNodeCompiler::addGet(QString objName, QString typeName, int& ptr_id)
     addConvert(irId(ptr_id), ptr_type, irId(obj_id));
 }
 
-void JZNodeCompiler::addGetOrInit(QString objName, QString typeName, const QByteArray& init_buffer, int& ptr_id)
+void JZNodeCompiler::addGetOrInit(QString objName, QString initFunction, const QList<JZNodeIRParam> &ir_list, int& ptr_id)
 {
+    JZFunctionName func_name = JZFunctionHelper::splitFunction(initFunction);
+
+    QString typeName = func_name.className;
     addGet(objName, typeName, ptr_id);
 
-    addCompare(irId(ptr_id),irLiteral(QVariant::fromValue(JZNodeObjectNull())), OP_eq);
+    addCompareConvert(irId(ptr_id),irLiteral(QVariant::fromValue(JZNodeObjectNull())), OP_eq);
     auto jne = addJmp(OP_jne);
 
     int obj_id = addAllocStack(typeName);
     addCall("createObject", { irLiteral(typeName) }, { irId(obj_id) });
-    addCall("QObject::setParent", { irId(obj_id), irLiteral(objName), irThis()}, {});
-    addCall(typeName + "::init", { irId(obj_id), irLiteral(init_buffer) }, {});
-    
+    addCall("QObject::setParent", { irId(obj_id), irThis()}, {});
+    addCall("QObject::setObjectName", { irId(obj_id), irLiteral(objName) }, {});    
+
+    QList<JZNodeIRParam> in;
+    in.insert(0, irId(obj_id));
+    in.append(ir_list);
+    addCall(initFunction, in, {});    
+    addSetVariable(irId(ptr_id), irId(obj_id));
+
     int nop_pc = addNop();
     jne->jmpPc = nop_pc;
 }
@@ -2716,7 +2725,7 @@ void JZNodeCompiler::setAutoaddNodeEnter(int m_id,bool flag)
 
 int JZNodeCompiler::addExpr(const JZNodeIRParam &dst,const JZNodeIRParam &p1,const JZNodeIRParam &p2, JZNodeIRType op)
 {
-    Q_ASSERT(irParamTypeMatch(p1,p2,false));
+    Q_ASSERT(irParamType(p1) == irParamType(p2));
     Q_ASSERT(JZNodeType::calcExprType(irParamType(p1),irParamType(p2),op) == irParamType(dst));
 
     JZNodeIRExpr *expr = new JZNodeIRExpr(op);
@@ -2771,13 +2780,46 @@ void JZNodeCompiler::addExprConvert(const JZNodeIRParam &dst, const JZNodeIRPara
 
 int JZNodeCompiler::addCompare(const JZNodeIRParam &p1,const JZNodeIRParam &p2, JZNodeIRType op)
 {
-    Q_ASSERT(irParamTypeMatch(p1,p2,false));
+    Q_ASSERT(irParamType(p1) == irParamType(p2));
     return addExpr(irId(Reg_Cmp),p1,p2,op);    
 }
 
-void JZNodeCompiler::addCompareConvert(const JZNodeIRParam &p1, const JZNodeIRParam &p2, JZNodeIRType op)
+void JZNodeCompiler::addCompareConvert(const JZNodeIRParam &in_p1, const JZNodeIRParam &in_p2, JZNodeIRType op)
 {
-    addCompare(p1,p2,op);
+    JZNodeIRParam p1 = in_p1;
+    JZNodeIRParam p2 = in_p2;
+
+    int t1 = irParamType(p1);
+    int t2 = irParamType(p2);
+    if(t1 == t2)
+        addCompare(p1,p2,op);
+    else
+    {
+        if (t1 == Type_nullptr)
+        {
+        }
+        else if (t2 == Type_nullptr)
+        {
+            std::swap(p1, p2);                            
+            std::swap(t1, t2);
+        }
+        else if (m_env->isInherits(t1, t2))
+        {            
+        }
+        else if (m_env->isInherits(t2, t1))
+        {
+            std::swap(p1, p2);
+            std::swap(t1, t2);
+        }
+        else
+        {
+            Q_ASSERT(0);
+        }
+
+        int tmp = addAllocStack(t2);
+        addConvert(irId(tmp), t2, p1);
+        addCompare(irId(tmp), p2, op);        
+    }
 }
 
 int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
@@ -2843,17 +2885,6 @@ int JZNodeCompiler::irParamType(const JZNodeIRParam &param)
     return type;
 }
 
-bool JZNodeCompiler::irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet)
-{
-    auto env = project()->environment();
-    int t1 = irParamType(p1);
-    int t2 = irParamType(p2);
-    if(isSet)
-        return env->isSameType(t1,t2);
-    else  //compare
-        return env->isSameType(t1,t2) || env->isSameType(t2,t1);
-}
-
 void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, const QString &value)
 {
     auto env = project()->environment();
@@ -2888,7 +2919,7 @@ void JZNodeCompiler::addInitVariable(const JZNodeIRParam &dst, int dataType, con
 
 void JZNodeCompiler::addSetVariable(const JZNodeIRParam &dst, const JZNodeIRParam &src)
 {    
-    Q_ASSERT_X(irParamTypeMatch(src,dst,true),"",qUtf8Printable("set " + m_env->typeToName(irParamType(src))
+    Q_ASSERT_X(m_env->canConvert(irParamType(src),irParamType(dst)), "", qUtf8Printable("set " + m_env->typeToName(irParamType(src))
         + " to " + m_env->typeToName(irParamType(dst))));
 
     auto obj_inst = m_env->objectManager();
@@ -2936,6 +2967,13 @@ void JZNodeCompiler::addSetVariableConvert(const JZNodeIRParam &dst,const JZNode
     {
         addConvert(dst,to_type,src);
     }
+}
+
+QString JZNodeCompiler::uniqueNodeName(int id)
+{
+    auto node = m_scriptItem->getNode(id);
+    QString node_name = m_scriptItem->function().name + "_node_" + node->name() + "_" + QString::number(id);
+    return node_name;
 }
 
 void JZNodeCompiler::setIRParamReference(const JZNodeIRParam& ref, const JZNodeIRParam& original)

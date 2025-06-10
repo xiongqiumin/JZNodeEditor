@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QTreeWidget>
 #include "JZNodeInit.h"
 
 int main(int argc, char *argv[])

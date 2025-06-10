@@ -1,11 +1,13 @@
 #ifndef JZ_VISION_H_
 #define JZ_VISION_H_
 
-#include <opencv2/opencv.hpp>
 #include <QObject>
+#include <opencv2/opencv.hpp>
+#include <opencv2/wechat_qrcode.hpp>
 
 #include "JZShapeMatch.h"
 #include "JZTemplateMatch.h"
+#include "modules/model/PaddleOCR/JZPaddleOCR.h"
 
 using namespace cv;
 
@@ -29,6 +31,18 @@ double JZVisionColorIdentify(Mat src_ori, Mat src_mat);
 
 void JZVisionFindCircle(Mat in);
 void JZVisionFindLine(Mat in);
+
+class JZBarCode : public QObject
+{
+public:
+
+};
+
+class JZQRCode : public QObject
+{
+public:
+
+};
 
 void JZVisionBarCode(Mat in);
 void JZVisionQrCode(Mat in);

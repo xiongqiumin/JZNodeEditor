@@ -341,10 +341,10 @@ void QtWrapper::initBase()
 void QtWrapper::initCore()
 {
     jzbind::ClassBind<QObject> cls_object(Type_object,"QObject");
+    cls_object.def("setParent", true, &QObject::setParent);
     cls_object.def("setObjectName",true,&QObject::setObjectName);
     cls_object.def("objectName",false,&QObject::objectName);
-    cls_object.def("getChild", false, [](QObject *obj,QString name)->QObject*{
-        obj->dumpObjectTree();
+    cls_object.def("getChild", false, [](QObject *obj,QString name)->QObject*{        
         return obj->findChild<QObject*>(name,Qt::FindDirectChildrenOnly);
     }, CFunction::Reference);
     cls_object.regist();    

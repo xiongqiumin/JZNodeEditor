@@ -337,7 +337,7 @@ bool JZScriptEnvironment::isObject(const QString& type) const
 bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
 {    
     if (JZNodeType::isPointer(dst_type))
-    {
+    {        
         int base_src = JZNodeType::baseType(src_type);
         int base_dst = JZNodeType::baseType(dst_type);
         return isInherits(base_src, base_dst);
@@ -489,15 +489,17 @@ bool JZScriptEnvironment::canConvertExplicitly(int from,int to) const
 {
     if(canConvert(from,to))
         return true;    
-    
-    //指针，且继承qobject
+        
     if (JZNodeType::isPointer(from) && !JZNodeType::isPointer(to))
         return false;
     else if (JZNodeType::isPointer(to))
     {
+        if (from == Type_nullptr)
+            return true;
+
         int base_from = JZNodeType::baseType(from);
         int base_to = JZNodeType::baseType(to);
-        if(isInherits(JZNodeType::baseType(base_to), Type_object))
+        if(isInherits(JZNodeType::baseType(base_to), Type_object)) //指针，且继承qobject
             return isInherits(base_to, base_from);
     }
     else
@@ -527,6 +529,13 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
         return QVariant();
     else if (JZNodeType::isPointer(dst_type))
     {
+        if (src_type == Type_nullptr)
+        {
+            JZNodeObjectPointer ptr(nullptr, false);
+            ptr.setType(dst_type);
+            return QVariant::fromValue(ptr);
+        }
+
         int src_base_type = JZNodeType::baseType(src_type);
         int dst_base_type = JZNodeType::baseType(dst_type);
         //cast up
@@ -540,17 +549,17 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
 
         //cast down
         if (isInherits(src_base_type, Type_object))
-        {
-            JZNodeObjectPointer ptr = v.value<JZNodeObjectPointer>();
-            if (ptr.isNull())
-                return QVariant();
+        {            
+            JZNodeObject *obj = toJZObject(v);
+            if (obj) //非空指针进行判断，空指针可以直接转换
+            {
+                QObject *qobj = (QObject*)obj->cobj();
+                QString qobject_name = m_objectManager.getQObjectType(dst_base_type);
+                if (!qobj->inherits(qUtf8Printable(qobject_name)))
+                    return QVariant();
+            }
 
-            auto obj = ptr.object();
-            QObject *qobj = (QObject*)obj->cobj();
-            QString qobject_name = m_objectManager.getQObjectType(dst_base_type);
-            if (!qobj->inherits(qUtf8Printable(qobject_name)))
-                return QVariant();
-
+            JZNodeObjectPointer ptr(obj,false);
             ptr.setType(dst_type);
             return QVariant::fromValue(ptr);
         }
@@ -665,13 +674,13 @@ QVariant JZScriptEnvironment::tryConvertTo(const QVariant &v, int dst_type) cons
     return QVariant();
 }
 
-QVariant JZScriptEnvironment::convertTo(const QVariant &v, int dst_type) const
+QVariant JZScriptEnvironment::convertTo(const QVariant &src, int dst_type) const
 {
-    QVariant value = tryConvertTo(v, dst_type);
-    if (!value.isValid() && JZNodeType::variantIsPointer(v) && JZNodeType::isPointer(dst_type))
-        throw std::runtime_error(qUtf8Printable("Convert " + variantTypeName(v) + " to " + typeToName(dst_type) + " failed"));
+    QVariant value = tryConvertTo(src, dst_type);
+    if (!value.isValid() && JZNodeType::variantIsPointer(src) && JZNodeType::isPointer(dst_type))
+        throw std::runtime_error(qUtf8Printable("Convert " + variantTypeName(src) + " to " + typeToName(dst_type) + " failed"));
 
-    Q_ASSERT_X(JZNodeType::variantIsVaild(v), "Convert Failed", qUtf8Printable(variantTypeName(v) + " -> " + typeToName(dst_type)));
+    Q_ASSERT_X(JZNodeType::variantIsVaild(value), "Convert Failed", qUtf8Printable(variantTypeName(src) + " -> " + typeToName(dst_type)));
     return value;
 }
 

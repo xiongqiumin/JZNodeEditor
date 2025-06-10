@@ -4,6 +4,7 @@
 #include "JZVisionEditor.h"
 #include "modules/opencv/CvToQt.h"
 #include "JZDockWidget.h"
+#include "JZNodePanel.h"
 
 JZVisionEditor::JZVisionEditor(QWidget *parent) 
     : JZEditor(parent)
@@ -39,8 +40,8 @@ void JZVisionEditor::init()
 
     rightSplitter->setChildrenCollapsible(false);
 
-    QSplitter *mainSplitter = new QSplitter(Qt::Horizontal, this);
-    mainSplitter->addWidget(m_nodePanel);
+    QSplitter *mainSplitter = new QSplitter(Qt::Horizontal, this);    
+    mainSplitter->addWidget(m_nodePanel);    
     mainSplitter->addWidget(m_view);
     mainSplitter->addWidget(rightSplitter);
     mainSplitter->setChildrenCollapsible(false);
@@ -74,7 +75,7 @@ void JZVisionEditor::open(JZProjectItem *item)
 {
     JZScriptItem* file = dynamic_cast<JZScriptItem*>(item);
     m_view->setFile(file);
-    m_nodePanel->setFile(file);
+    m_nodePanel->setFile(file);    
 }
 
 void JZVisionEditor::close()

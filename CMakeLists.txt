@@ -176,6 +176,8 @@ set(JZNodeCore_SOURCES
     modules/JZModuleCompiler.h
 	modules/JZModuleConfigWidget.cpp
 	modules/JZModuleConfigWidget.h
+    modules/JZModuleDefine.cpp
+    modules/JZModuleDefine.h
     
     #communication        
     modules/communication/JZModuleComm.cpp
@@ -239,7 +241,23 @@ set(JZNodeCore_SOURCES
     modules/model/Yolo/JZYolo.cpp
     modules/model/Yolo/JZYoloView.h
     modules/model/Yolo/JZYoloView.cpp
-	
+	modules/model/PaddleOCR/clipper.cpp
+    modules/model/PaddleOCR/clipper.h
+    modules/model/PaddleOCR/JZPaddleOCR.cpp
+    modules/model/PaddleOCR/JZPaddleOCR.h
+    modules/model/PaddleOCR/ocr_cls.cpp
+    modules/model/PaddleOCR/ocr_cls.h
+    modules/model/PaddleOCR/ocr_det.cpp
+    modules/model/PaddleOCR/ocr_det.h
+    modules/model/PaddleOCR/ocr_rec.cpp
+    modules/model/PaddleOCR/ocr_rec.h
+    modules/model/PaddleOCR/postprocess_op.cpp
+    modules/model/PaddleOCR/postprocess_op.h
+    modules/model/PaddleOCR/preprocess_op.cpp
+    modules/model/PaddleOCR/preprocess_op.h
+    modules/model/PaddleOCR/utility.cpp
+    modules/model/PaddleOCR/utility.h
+
     #camera
     modules/camera/JZModuleCamera.h
     modules/camera/JZModuleCamera.cpp

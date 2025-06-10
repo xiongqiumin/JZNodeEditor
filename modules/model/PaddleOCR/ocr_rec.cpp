@@ -88,8 +88,7 @@ namespace PaddleOCR
             Mat blob(blob_shape, CV_32F, input.data());
 
             std::vector<Mat> outputs;
-            predictor_.setInput(blob);
-            predictor_.forward(outputs, predictor_.getUnconnectedOutLayersNames());
+            outputs.push_back(predictor_.forward(blob));
 
             std::vector<int> predict_shape;
             for (int i = 0; i < outputs[0].dims; ++i)
@@ -144,9 +143,17 @@ namespace PaddleOCR
         times.push_back(double(postprocess_diff.count() * 1000));
     }
 
+    void CRNNRecognizer::LoadLabel(const std::string &label_path)
+    {
+        this->label_list_ = Utility::ReadDict(label_path);
+        this->label_list_.insert(this->label_list_.begin(),
+            "#"); // blank char for ctc
+        this->label_list_.push_back(" ");
+    }
+
     void CRNNRecognizer::LoadModel(const std::string &model_dir)
     {
-        predictor_ = cv::dnn::readNet(model_dir);
+        predictor_.loadModel(model_dir.c_str());
     }
 
 } // namespace PaddleOCR

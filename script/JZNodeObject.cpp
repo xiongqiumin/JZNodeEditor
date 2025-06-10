@@ -996,11 +996,11 @@ JZNodeObjectPointer::JZNodeObjectPointer(int data_type)
 
 JZNodeObjectPointer::JZNodeObjectPointer(JZNodeObject *obj,bool isOwner)
 {
-    Q_ASSERT(obj);
     m_data = QSharedPointer<JZNodeObjectData>(new JZNodeObjectData());
     m_data->isOwner = isOwner;
     m_data->object = obj;
-    m_dataType = obj->type();
+    if(obj)
+        m_dataType = obj->type();
 }
 
 JZNodeObjectPointer::~JZNodeObjectPointer()
@@ -1683,7 +1683,10 @@ JZNodeObject* JZNodeObjectManager::clone(JZNodeObject *src) const
 
 bool JZNodeObjectManager::equal(JZNodeObject* o1,JZNodeObject *o2) const
 {
-    Q_ASSERT(m_env->isSameType(o1->baseType(),o2->baseType()));
+    if (o1 == o2)
+        return true;
+    if (!o1 || !o2)
+        return false;
 
     if(o1->isValueType())
     {

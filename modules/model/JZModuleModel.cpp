@@ -8,6 +8,7 @@
 #include "JZContainer.h"
 #include "Yolo/JZYolo.h"
 #include "Yolo/JZYoloView.h"
+#include "PaddleOCR/JZPaddleOCR.h"
 #include "../JZModuleConfigFactory.h"
 
 using namespace cv;
@@ -46,6 +47,18 @@ void JZModuleModel::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZYolo> cls_yolo(cls_id++, "JZYolo", "JZModel");
     cls_yolo.def("forward", true, &JZYolo::forward);
     cls_yolo.regist();
+
+    //ocr
+    jzbind::ClassBind<JZOCRResult> cls_ocr_ret(cls_id++, "JZOCRResult");
+    registList<JZOCRResult>(env, cls_id++);
+
+    //cls_ocr_ret.def("toGraphics", true, &JZYoloResult::toGraphics);
+    cls_ocr_ret.regist();
+
+    jzbind::ClassBind<JZPaddleOCR> cls_ocr(cls_id++, "JZPaddleOCR", "QObject");
+    cls_ocr.def("init", true, &JZPaddleOCR::init);
+    cls_ocr.def("ocr", true, &JZPaddleOCR::ocr);
+    cls_ocr.regist();
 
     int model_ptr_id = JZNodeType::pointerType(cls_model.id());
     int yolo_ptr_id = JZNodeType::pointerType(cls_yolo.id());

@@ -44,8 +44,7 @@ public:
     QTreeWidgetItem *localVariableItem(QString name);    
 
 protected slots:
-    void onSearch();
-    void onTreeItemClicked(QTreeWidgetItem *current,int col);
+    void onSearch();    
     void onAddScriptParam();    
     void onContextMenu(const QPoint &pos);
 

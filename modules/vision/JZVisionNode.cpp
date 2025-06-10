@@ -368,6 +368,9 @@ JZNodeVisionBarCode::JZNodeVisionBarCode()
 
     addFlowIn();
     addFlowOut();
+
+    int in = addParamIn("image");
+    setPinType(in, { "Mat" });
 }
 
 bool JZNodeVisionBarCode::compiler(JZNodeCompiler *c, QString &error)
@@ -386,6 +389,9 @@ JZNodeVisionQrCode::JZNodeVisionQrCode()
 
     addFlowIn();
     addFlowOut();
+
+    int in = addParamIn("image");
+    setPinType(in, { "Mat" });
 }
 
 bool JZNodeVisionQrCode::compiler(JZNodeCompiler *c, QString &error)
@@ -404,6 +410,12 @@ JZNodeVisionOCR::JZNodeVisionOCR()
 
     addFlowIn();
     addFlowOut();
+
+    int in = addParamIn("image");
+    setPinType(in, { "Mat" });
+
+    int result = addParamOut("result");
+    setPinType(result, { "QList<JZOCRResult>" });
 }
 
 bool JZNodeVisionOCR::compiler(JZNodeCompiler *c, QString &error)
@@ -411,6 +423,15 @@ bool JZNodeVisionOCR::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    int obj_id;
+    QByteArray init_buffer;
+    c->addGetOrInit(c->uniqueNodeName(m_id), "JZPaddleOCR::init", {}, obj_id);
+
+    QList<JZNodeIRParam> in,out;
+    in << irId(obj_id);
+    in << irId(c->paramId(m_id, paramIn(0)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZPaddleOCR::ocr", in, out);
     return true;
 }
 

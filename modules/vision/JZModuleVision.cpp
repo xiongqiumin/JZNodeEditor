@@ -67,6 +67,10 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
 
     node_inst->registNode(Node_VisionShapeMatch, createJZNode<JZNodeVisionShapeMatch>);
     node_inst->registNode(Node_VisionTemplateMatch, createJZNode<JZNodeVisionTemplateMatch>);
+    
+    node_inst->registNode(Node_VisionBarCode, createJZNode<JZNodeVisionBarCode>);
+    node_inst->registNode(Node_VisionQrCode, createJZNode<JZNodeVisionQrCode>);
+    node_inst->registNode(Node_VisionOCR, createJZNode<JZNodeVisionOCR>);
 
     node_inst->registNode(Node_VisionFindCircle, createJZNode<JZNodeVisionFindCircle>);
     node_inst->registNode(Node_VisionFindLine, createJZNode<JZNodeVisionFindLine>);

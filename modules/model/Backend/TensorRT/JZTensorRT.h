@@ -3,7 +3,7 @@
 
 #include <QString>
 #include <QDebug>
-#include "modulus/model/JZModelEngine.h"
+#include "modules/model/JZModelEngine.h"
 
 // Qt风格的DLL导入导出宏
 #ifdef TENSORRTENGINEDLL_EXPORTS

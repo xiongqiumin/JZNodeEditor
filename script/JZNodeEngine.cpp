@@ -1337,7 +1337,7 @@ void JZNodeEngine::callCFunction(const JZFunction *func)
             if (catchException(e.what()))
                 return;
 
-            throw e;
+            throw;
         }
 
         // set output

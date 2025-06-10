@@ -2,7 +2,7 @@
 #include <QCoreApplication>
 #include "JZVision.h"
 #include "modules/opencv/CvToQt.h"
-//#include <opencv2/wechat_qrcode.hpp>
+#include "JZNodeEngine.h"
 
 Mat JZVisionImageThreshold(Mat mat, QRect rc)
 {
@@ -297,13 +297,13 @@ void JZVisionBarCode(Mat in)
 
 void JZVisionQrCode(Mat in)
 {
-    /*cv::Ptr<cv::wechat_qrcode::WeChatQRCode> detector;
+    cv::Ptr<cv::wechat_qrcode::WeChatQRCode> detector = new cv::wechat_qrcode::WeChatQRCode();
     std::vector<cv::Mat> vPoints;
     cv::Mat gray;
-    detector->detectAndDecode(gray, vPoints);
-    */
+    detector->detectAndDecode(gray, vPoints);    
 }
 
 void JZVisionOCR(Mat in)
-{
+{    
+    
 }

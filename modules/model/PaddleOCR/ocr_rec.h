@@ -16,6 +16,7 @@
 
 #include "ocr_cls.h"
 #include "preprocess_op.h"
+#include "modules/model/Backend/Onnx/JZModelEngineOnnx.h"
 
 namespace PaddleOCR
 {
@@ -26,11 +27,12 @@ namespace PaddleOCR
         explicit CRNNRecognizer();
 
         // Load Paddle inference model
+        void LoadLabel(const std::string &label_dir);
         void LoadModel(const std::string &model_dir);
 
         void Run(std::vector<cv::Mat> img_list, std::vector<std::string> &rec_texts,
                  std::vector<float> &rec_text_scores, std::vector<double> &times);
-        cv::dnn::Net predictor_; // 推理库实例
+        JZModelEngineOnnx predictor_; // 推理库实例
 
     private:
         bool use_gpu_ = false;

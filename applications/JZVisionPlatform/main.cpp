@@ -1,9 +1,8 @@
 #include <QApplication>
-#include "mainwindow.h"
+#include <QTreeWidget>
 #include "JZNodeInit.h"
 #include "JZModuleVisionApp.h"
-#include <fstream>
-#include "modules/model/BackEnd/Onnx/JZModelEngineOnnx.h"
+#include "mainwindow.h"
 
 int main(int argc,char *argv[])
 {

@@ -249,6 +249,8 @@ public:
     void setRegCallFunction(const JZFunctionDefine *func);
     void setIRParamReference(const JZNodeIRParam& ref, const JZNodeIRParam& original);
 
+    QString uniqueNodeName(int nodeId);
+
     /*
     节点数据传递规则:
     flow 依赖 flow 节点, 被依赖flow节点计算后主动推送
@@ -292,7 +294,7 @@ public:
 
     void addClassInitFunction(ClassInitInfo info);
     void addGet(QString objName, QString typeName, int& ptr_id);
-    void addGetOrInit(QString objName, QString typeName,const QByteArray &init_buffer,int &obj_id);
+    void addGetOrInit(QString objName, QString initFunction,const QList<JZNodeIRParam> &ir_list,int &obj_id);
     
     void addAlloc(int allocType, QString name, QString dataType);
     void addAlloc(int allocType, QString name, int dataType);
@@ -375,8 +377,7 @@ protected:
     int indexOfStatmentList(QList<JZNodeIRPtr>* statments,int op_type);
     
     void setOutPinTypeDefault(JZNode *node);      //只有一种输出的设置为默认值
-    void updateFlowOut();      
-    bool irParamTypeMatch(const JZNodeIRParam &p1,const JZNodeIRParam &p2,bool isSet);
+    void updateFlowOut();    
     void dealAddCall(bool isVirtual,const JZFunctionDefine *func, const QList<JZNodeIRParam> &paramIn, const QList<JZNodeIRParam> &paramOut);
     bool hasStatementDepend(int pc);
     

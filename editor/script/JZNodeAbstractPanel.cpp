@@ -33,7 +33,7 @@
 
 // JZNodeTreeWidget
 QMimeData *JZNodeTreeWidget::mimeData(const QList<QTreeWidgetItem *> items) const
-{
+{    
     Q_ASSERT(items.size() == 1);
     auto item = items[0];
     if(item->data(0,TreeItem_type).isNull())
@@ -81,17 +81,15 @@ JZNodeAbstractPanel::JZNodeAbstractPanel(QWidget *widget)
     m_tree = new JZNodeTreeWidget();
     m_tree->setColumnCount(1);
     m_tree->setHeaderHidden(true);
-    m_tree->setDragEnabled(true);   
-
-    connect(m_tree, &QTreeWidget::itemClicked, this, &JZNodeAbstractPanel::onTreeItemClicked);    
+    m_tree->setDragEnabled(true);
+    m_tree->setDragDropMode(JZNodeTreeWidget::DragOnly);
+        
     setContextMenuPolicy(Qt::CustomContextMenu);
-
     m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_tree, &QTreeWidget::customContextMenuRequested, this, &JZNodeAbstractPanel::onContextMenu);
 
     layout->addWidget(m_tree);
     setLayout(layout);
-    
 }
 
 JZNodeAbstractPanel::~JZNodeAbstractPanel()
@@ -376,11 +374,6 @@ void JZNodeAbstractPanel::onSearch()
     QString name = m_lineSearch->text();
     filterItem(m_tree->invisibleRootItem(),name);
     m_tree->expandAll();
-}
-
-void JZNodeAbstractPanel::onTreeItemClicked(QTreeWidgetItem *item, int column)
-{    
-        
 }
 
 void JZNodeAbstractPanel::onContextMenu(const QPoint &pos)
