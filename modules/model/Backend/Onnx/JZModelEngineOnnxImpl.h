@@ -5,8 +5,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 
-
-#include "E:\libs\onnxruntime-win-x64-1.22.0\include\onnxruntime_c_api.h"
+#include "onnxruntime_c_api.h"
 
 // 实现类定义
 class JZModelEngineOnnxImpl

@@ -3,11 +3,11 @@
 #include "JZModuleModel.h"
 #include "JZNodeBind.h"
 #include "JZScriptEnvironment.h"
-#include "JZYolo.h"
-#include "JZYoloView.h"
 #include "JZModelNode.h"
 #include "JZNodeFactory.h"
 #include "JZContainer.h"
+#include "Yolo/JZYolo.h"
+#include "Yolo/JZYoloView.h"
 #include "../JZModuleConfigFactory.h"
 
 using namespace cv;

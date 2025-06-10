@@ -2,7 +2,7 @@
 #define JZ_MODEL_MANAGER_H_
 
 #include <QDataStream>
-#include "JZYolo.h"
+#include "Yolo/JZYolo.h"
 
 class JZModelManagerConfig
 {

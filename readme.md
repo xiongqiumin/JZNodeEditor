@@ -3,8 +3,7 @@
 ## 介绍
 JZNodeEditor 是开发基于qt的低代码平台，类似蓝图的节点编译器，支持qt设计器布局，控件参数绑定，流程代码，自定义插件，调试功能，并可以导出c++程序。
 本产品可以结合视觉算法，采集，控制等功能，快速开发出属于贵司自己的低代码平台，大幅降低开发，部署和调试的时间。
-详细咨询可联系 13534162843(微信同号)
-QQ群：598601341
+详细咨询可联系 xiongqiumin@foxmail.com
 
 ![screen](doc/image/JZNodeEditor.png)
 
@@ -26,9 +25,19 @@ QQ群：598601341
 6. 单片机，plc开发
 7. ai应用
 8. 更多场景..., 因为产品本身是低代码平台，理论应用场景是很广阔的。
+
+
+### 编译依赖
+依赖 opencv opencv-4.11.0  
+依赖 OnnxRuntime 可以在 https://github.com/microsoft/onnxruntime/releases 下载
+需要设置放置目录 E:/libs/onnxruntime-win-x64-1.22.0/
+ 
+如果需要编译 TensorRT 后端需要放在
+E:/libs/CUDA/TensorRT-8.2.5.1/include
+E:/libs/CUDA/v11.4/
    
 ### 版本下载
-http://120.77.183.99/data/JZNodeEditor.zip
+https://www.juzisoftware.cn/
 
 ### 示例 
 下载版本后, sample\russian 是一个demo， 实现了俄罗斯方块.

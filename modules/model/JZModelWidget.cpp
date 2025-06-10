@@ -1,5 +1,5 @@
 ﻿#include "JZModelWidget.h"
-#include "JZYolo.h"
+#include "Yolo/JZYolo.h"
 #include "JZRegExpHelp.h"
 
 //JZModelConfigDialog

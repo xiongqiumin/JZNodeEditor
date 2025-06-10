@@ -1,8 +1,8 @@
 ﻿#include <inttypes.h>
-#include <opencv2/wechat_qrcode.hpp>
 #include <QCoreApplication>
 #include "JZVision.h"
 #include "modules/opencv/CvToQt.h"
+//#include <opencv2/wechat_qrcode.hpp>
 
 Mat JZVisionImageThreshold(Mat mat, QRect rc)
 {

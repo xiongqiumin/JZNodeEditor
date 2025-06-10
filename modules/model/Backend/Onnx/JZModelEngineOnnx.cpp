@@ -5,8 +5,6 @@
 #include <QMutexLocker>
 #include "JZModelEngineOnnxImpl.h"
 
-#include "E:\libs\onnxruntime-win-x64-1.22.0\include\onnxruntime_c_api.h"
-
 // JZModelEngineOnnx 类实现
 JZModelEngineOnnx::JZModelEngineOnnx(QObject *parent)
     : QObject(parent)

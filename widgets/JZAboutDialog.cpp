@@ -3,7 +3,7 @@
 #include <QPushButton>
 #include "JZAboutDialog.h"
 
-#define VERSION "2024-09-15"
+#define VERSION "2025-06-10"
 
 JZAboutDialog::JZAboutDialog(QWidget *parent)
     :JZBaseDialog(parent)
@@ -20,6 +20,7 @@ JZAboutDialog::JZAboutDialog(QWidget *parent)
     QString tips = R"(我们是开发基于qt的低代码平台，类似蓝图的节点编译器，支持qt设计器布局，控件参数绑定，流程代码，自定义插件，调试功能，并可以导出c++程序。
 本产品可以结合视觉算法，采集，控制等功能，快速开发出属于贵司自己的低代码平台，大幅降低开发，部署和调试的时间。
 详细咨询可添加: xiongqiumin@foxmail.com
+源码地址: https://gitee.com/xiongqiumin/JZNodeEditor
 
 主要特点
 1.基于qt开发，单机应用，简单高效.

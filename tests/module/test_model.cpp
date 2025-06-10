@@ -1,7 +1,7 @@
 #include "test_model.h"
 #include "modules/opencv/JZModuleOpencv.h"
 #include "modules/model/JZModuleModel.h"
-#include "modules/model/JZYolo.h"
+#include "modules/model/Yolo/JZYolo.h"
 
 //ModelTest
 ModelTest::ModelTest()

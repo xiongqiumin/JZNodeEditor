@@ -8,7 +8,7 @@
 #include "JZEditorGlobal.h"
 #include "jzWidgets/JZImageLabel.h"
 #include "jzWidgets/JZSelfLayout.h"
-#include "modules/model/JZYolo.h"
+#include "modules/model/Yolo/JZYolo.h"
 #include "modules/opencv/JZModuleOpencv.h"
 
 using namespace cv;

@@ -3,7 +3,7 @@
 #include <QUiLoader>
 #include "JZNodeUiLoader.h"
 #include "JZNodeBind.h"
-#include "modules/model/JZYoloView.h"
+#include "modules/model/Yolo/JZYoloView.h"
 #include "jzWidgets/JZImageLabel.h"
 #include "jzWidgets/JZLogWidget.h"
 

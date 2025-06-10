@@ -17,6 +17,19 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
 
+# 定义ONNXRuntimeRoot默认值
+if(NOT DEFINED ONNXRuntimeRoot)
+    set(ONNXRuntimeRoot "E:/libs/onnxruntime-win-x64-1.22.0/" CACHE PATH "ONNXRuntime安装根目录")
+    message(STATUS "ONNXRuntimeRoot未设置，使用默认值: ${ONNXRuntimeRoot}")
+endif()
+
+# 检查目录是否存在
+if(NOT EXISTS ${ONNXRuntimeRoot})
+    message(FATAL_ERROR "错误: ONNXRuntimeRoot目录不存在: ${ONNXRuntimeRoot}")
+endif()
+
+message(STATUS "ONNXRuntimeRoot: ${ONNXRuntimeRoot}")
+
 include_directories(./
     ./widgets
     ./script
@@ -25,7 +38,8 @@ include_directories(./
     ./editor/script
     ./editor/script/items   
     ./3rd/JZCommon
-    ${OpenCV_INCLUDE_DIRS})
+    ${OpenCV_INCLUDE_DIRS}
+	${ONNXRuntimeRoot}/include)
 
 set(JZNodeCore_SOURCES
     LogManager.cpp
@@ -202,10 +216,6 @@ set(JZNodeCore_SOURCES
     modules/opencv/JZOpencv.cpp
 	
 	#model
-    modules/model/JZYolo.h
-    modules/model/JZYolo.cpp
-    modules/model/JZYoloView.h
-    modules/model/JZYoloView.cpp
     modules/model/JZModel.h
     modules/model/JZModel.cpp
     modules/model/JZModelNode.cpp
@@ -221,11 +231,15 @@ set(JZNodeCore_SOURCES
 	modules/model/JZModelEngineFactory.h
     modules/model/JZModelEngineOpencv.cpp
     modules/model/JZModelEngineOpencv.h
-    modules/model/Onnx/JZModelEngineOnnx.cpp
-    modules/model/Onnx/JZModelEngineOnnx.h
-    modules/model/Onnx/JZModelEngineOnnxImpl.cpp
-    modules/model/Onnx/JZModelEngineOnnxImpl.h
-    
+    modules/model/Backend/Onnx/JZModelEngineOnnx.cpp
+    modules/model/Backend/Onnx/JZModelEngineOnnx.h
+    modules/model/Backend/Onnx/JZModelEngineOnnxImpl.cpp
+    modules/model/Backend/Onnx/JZModelEngineOnnxImpl.h
+    modules/model/Yolo/JZYolo.h
+    modules/model/Yolo/JZYolo.cpp
+    modules/model/Yolo/JZYoloView.h
+    modules/model/Yolo/JZYoloView.cpp
+	
     #camera
     modules/camera/JZModuleCamera.h
     modules/camera/JZModuleCamera.cpp
@@ -539,7 +553,7 @@ target_link_libraries(JZNodeCore Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Xml    
     Qt${QT_VERSION_MAJOR}::UiTools    
     ${OpenCV_LIBRARIES}
-    E:/libs/onnxruntime-win-x64-1.22.0/lib/onnxruntime.lib)   
+    ${ONNXRuntimeRoot}/lib/onnxruntime.lib)   
 
 add_library(JZNodeEditorCore STATIC ${JZNodeEditorCore_SOURCES})
 target_link_libraries(JZNodeEditorCore Qt${QT_VERSION_MAJOR}::Widgets

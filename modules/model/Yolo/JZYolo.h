@@ -5,9 +5,9 @@
 #include <QRect>
 #include <opencv2/opencv.hpp>
 #include "JZNodeObject.h"
-#include "JZModel.h"
 #include "jzWidgets/JZImageLabel.h"
-#include "JZModelEngine.h"
+#include "../JZModel.h"
+#include "../JZModelEngine.h"
 
 using namespace cv;
 

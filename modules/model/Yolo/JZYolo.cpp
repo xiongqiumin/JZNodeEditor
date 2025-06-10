@@ -3,8 +3,8 @@
 #include <QDebug>
 #include <QFile>
 #include "JZYolo.h"
-#include "../opencv/CvToQt.h"
-#include "JZModelEngineFactory.h"
+#include "modules/opencv/CvToQt.h"
+#include "../JZModelEngineFactory.h"
 
 using namespace cv;
 
