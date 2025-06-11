@@ -15,6 +15,8 @@ private slots:
     void testTemplateMatch();
     void testBrightnessDetector();
     void testColorIdentify();
+    void testBarCode();
+    void testQrCode();
 
 protected:
 

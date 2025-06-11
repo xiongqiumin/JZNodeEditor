@@ -32,20 +32,43 @@ double JZVisionColorIdentify(Mat src_ori, Mat src_mat);
 void JZVisionFindCircle(Mat in);
 void JZVisionFindLine(Mat in);
 
-class JZBarCode : public QObject
+//JZBarCode
+class JZBarCodeResult
 {
 public:
+};
 
+class JZBarCode : public QObject
+{
+    Q_OBJECT
+
+public:
+    JZBarCode();
+
+    bool init();
+    QList<JZBarCodeResult> detect(cv::Mat in);
+
+    cv::Ptr<cv::barcode::BarcodeDetector> m_detector;
+};
+
+//JZQRCode
+class JZQRCodeResult
+{
+public:
 };
 
 class JZQRCode : public QObject
 {
+    Q_OBJECT
+
 public:
+    JZQRCode();
 
+    bool init();
+    QList<JZQRCodeResult> detect(cv::Mat in);
+
+protected:
+    cv::Ptr<cv::wechat_qrcode::WeChatQRCode> m_detector;
 };
-
-void JZVisionBarCode(Mat in);
-void JZVisionQrCode(Mat in);
-void JZVisionOCR(Mat in);
 
 #endif // ! JZ_VISION_H_

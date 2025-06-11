@@ -378,6 +378,15 @@ bool JZNodeVisionBarCode::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    int obj_id;
+    QByteArray init_buffer;
+    c->addGetOrInit(c->uniqueNodeName(m_id), "JZBarCode::init", {}, obj_id);
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(obj_id);
+    in << irId(c->paramId(m_id, paramIn(0)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZBarCode::detect", in, out);
     return true;
 }
 
@@ -399,6 +408,15 @@ bool JZNodeVisionQrCode::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    int obj_id;
+    QByteArray init_buffer;
+    c->addGetOrInit(c->uniqueNodeName(m_id), "JZQRCode::init", {}, obj_id);
+
+    QList<JZNodeIRParam> in, out;
+    in << irId(obj_id);
+    in << irId(c->paramId(m_id, paramIn(0)));
+    out << irId(c->paramId(m_id, paramOut(0)));
+    c->addCall("JZQRCode::detect", in, out);
     return true;
 }
 

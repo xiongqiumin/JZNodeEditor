@@ -13,7 +13,7 @@ int main(int argc,char *argv[])
     Q_INIT_RESOURCE(vision);       
 
     JZNodeInit();
-    JZModuleManager::instance()->addModule(new JZModuleVisionApp());      
+    JZModuleManager::instance()->addModule(new JZModuleVisionApp());
 
     MainWindow w;
     w.showMaximized();

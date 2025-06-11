@@ -278,32 +278,69 @@ void JZVisionFindLine(Mat in)
 {
 }
 
-void JZVisionBarCode(Mat in)
+JZBarCode::JZBarCode()
 {
-    QString sr_prototxt = QCoreApplication::applicationDirPath() + "/Parameters/Code/sr.prototxt";
-    QString sr_caffemodel = QCoreApplication::applicationDirPath() + "/Parameters/Code/sr.caffemodel";
+}
 
-    cv::Ptr<cv::barcode::BarcodeDetector> detector;
-    detector = cv::makePtr<cv::barcode::BarcodeDetector>(
+bool JZBarCode::init()
+{
+    if (m_detector)
+        return true;
+
+    QString model_dir = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/model/wechat_qrcode";
+    QString sr_prototxt = model_dir + "/sr.prototxt";
+    QString sr_caffemodel = model_dir + "/sr.caffemodel";
+    m_detector = cv::makePtr<cv::barcode::BarcodeDetector>(
         sr_prototxt.toStdString(),
         sr_caffemodel.toStdString());
 
-    std::vector<cv::Mat> vPoints;
+    return true;
+}
+
+QList<JZBarCodeResult> JZBarCode::detect(cv::Mat in)
+{
+    QList<JZBarCodeResult> ret;
+         
+    std::vector<cv::Point> vPoints;
     std::vector<std::string> decoded_text;
     std::vector<std::string> decoded_format;
     cv::Mat gray;
-    detector->detectAndDecodeWithType(gray, decoded_text, decoded_format, vPoints);
+    cv::cvtColor(in, gray, cv::COLOR_BGR2GRAY);
+    m_detector->detectAndDecodeWithType(gray, decoded_text, decoded_format, vPoints);
+
+    return ret;
 }
 
-void JZVisionQrCode(Mat in)
+//JZQRCode
+JZQRCode::JZQRCode()
 {
-    cv::Ptr<cv::wechat_qrcode::WeChatQRCode> detector = new cv::wechat_qrcode::WeChatQRCode();
-    std::vector<cv::Mat> vPoints;
-    cv::Mat gray;
-    detector->detectAndDecode(gray, vPoints);    
 }
 
-void JZVisionOCR(Mat in)
-{    
-    
+bool JZQRCode::init()
+{
+    if (m_detector)
+        return true;
+
+    QString model_dir = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/model/wechat_qrcode";
+    QString detect_prototxt = model_dir + "/detect.prototxt";
+    QString detect_caffemodel = model_dir + "/detect.caffemodel";
+    QString sr_prototxt = model_dir + "/sr.prototxt";
+    QString sr_caffemodel = model_dir + "/sr.caffemodel";
+    m_detector = cv::makePtr<cv::wechat_qrcode::WeChatQRCode>(
+        detect_prototxt.toStdString(),
+        detect_caffemodel.toStdString(),
+        sr_prototxt.toStdString(),
+        sr_caffemodel.toStdString());
+
+    return true;
+}
+
+QList<JZQRCodeResult> JZQRCode::detect(cv::Mat in)
+{
+    QList<JZQRCodeResult> ret;
+
+    std::vector<cv::Mat> vPoints;
+    std::vector<std::string> strs = m_detector->detectAndDecode(in, vPoints);
+
+    return ret;
 }
