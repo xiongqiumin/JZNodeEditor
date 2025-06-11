@@ -361,7 +361,6 @@ protected:
     bool buildControlFlow(JZNode* node);
     bool isAllFlowReturn(JZNode *node,int level);
     void addFunction(const JZFunctionDefine &define,int start_addr,int end_addr);    
-    QString nodeName(JZNode *node);
     QString pinName(JZNodePin *pin);         
 
     void updateBuildGraph(const QList<GraphNode*> &root_list);

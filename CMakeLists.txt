@@ -149,6 +149,8 @@ set(JZNodeCore_SOURCES
     script/JZScriptItemVisitor.h
     script/JZScriptConvert.cpp
     script/JZScriptConvert.h      
+    script/JZNodeTrace.cpp
+    script/JZNodeTrace.h
     script/mvvm/JZNodeVariableBind.cpp
     script/mvvm/JZNodeVariableBind.h
     script/angelscript/as_parser.cpp
@@ -502,6 +504,8 @@ set(JZNodeEditorCore_SOURCES
     widgets/JZDebugSettingDialog.cpp
     widgets/JZDebugSettingDialog.h
     widgets/JZDebugSettingDialog.ui
+	widgets/JZNodeTraceView.cpp
+	widgets/JZNodeTraceView.h
     
     remote/JZRemotePacket.cpp
     remote/JZRemotePacket.h

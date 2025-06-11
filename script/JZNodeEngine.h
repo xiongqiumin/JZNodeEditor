@@ -13,6 +13,7 @@
 #include "JZNodeProgram.h"
 #include "JZNodeObject.h"
 #include "JZScriptEnvironment.h"
+#include "JZNodeTrace.h"
 
 enum JZEngineStatus{
     Status_none,
@@ -188,6 +189,7 @@ public:
     void stopWatch();
     void watchNotify();         //node display
 
+    JZNodeTraceContext *traceContext();
 
     void printNode(int node_id);
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
@@ -308,9 +310,9 @@ protected:
     JZNodeRuntimeError m_error;
     QList<TryCatchInfo> m_tryCatchList;
     QSet<const JZNodeIRNodeEnter*> m_breakIr;    
+    JZNodeTraceContext m_traceContext;
 
     bool m_watch;
-
     Stat m_stat;
 };
 extern thread_local JZNodeEngine *g_engine;

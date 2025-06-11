@@ -372,6 +372,15 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     auto actBuild = menu_build->addAction("编译");    
     connect(actBuild, &QAction::triggered, this, &MainWindow::onActionBuild);
 
+    QMenu *menu_tool = menubar->addMenu("工具");
+    auto menu_tool_comm = menu_tool->addMenu("通信");    
+    menu_tool_comm->addAction("Modbus");
+    menu_tool_comm->addAction("TCP");
+    menu_tool_comm->addAction("Serial");
+
+    auto actProfile = menu_tool->addAction("Profile");
+    connect(actProfile, &QAction::triggered, this, &MainWindow::onActionProfile);
+
     // menu_help
     QMenu *menu_help = menubar->addMenu("帮助");
     menu_help->setProperty("JZMenuType", Menu_Help);
@@ -730,6 +739,11 @@ void MainWindow::onActionCloseAllFile()
 void MainWindow::onActionCloseAllFileExcept()
 {
     closeAllEditor(m_editor);
+}
+
+void MainWindow::onActionProfile()
+{
+
 }
 
 void MainWindow::onActionUndo()

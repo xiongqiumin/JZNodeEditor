@@ -1010,15 +1010,6 @@ buildEnd:
     return m_compilerInfo.result;
 }
 
-QString JZNodeCompiler::nodeName(JZNode *node)
-{
-    QString name = "node(";
-    if(!node->name().isEmpty())
-        name += "name=" + node->name() + ",";
-    name += "id=" + QString::number(node->id()) + ")";
-    return name;
-}
-
 QString JZNodeCompiler::pinName(JZNodePin *pin)
 {
     if(!pin->name().isEmpty())

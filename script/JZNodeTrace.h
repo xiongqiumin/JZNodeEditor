@@ -5,7 +5,7 @@
 #include <QSharedPointer>
 #include "JZNodeCompiler.h"
 
-class JZNodeTraceItem
+class JZNodeTraceRecord
 {
 public:
     enum Type{
@@ -19,34 +19,46 @@ public:
     QString name;
     qint64 timestamp;   //ns
 };
-typedef QSharedPointer<JZNodeTraceItem> JZNodeTraceItemPtr;
+typedef QSharedPointer<JZNodeTraceRecord> JZNodeTraceRecordPtr;
+
+void JZTracePush(const QString &text);
+void JZTracePop();
+void JZTraceMark(const QString &text);
 
 class JZNodeTrace
 {
 public:
-    JZNodeTrace();
+    JZNodeTrace(QString nodeName);
     ~JZNodeTrace();
 
     void mark(const QString &mark);
     void push(const QString &text);
     void pop();
-
-protected:
-    JZNodeTraceItemPtr createTrace(JZNodeTraceItem::Type type);
 };
 
 class JZNodeTraceBuilder
 {
 public:
-    JZNodeTraceBuilder(JZNodeCompiler *c);
+    JZNodeTraceBuilder(JZNode *node,JZNodeCompiler *c);
     ~JZNodeTraceBuilder();
 
     void mark(const QString &mark);
     void push(const QString &text);
     void pop();
 
-    JZNodeCompiler *m_compiler
+    JZNodeCompiler* m_compiler;
     int m_id;
+};
+
+
+class JZNodeTraceItem
+{
+public:    
+    int type;
+    int level;
+    QString name;
+    qint64 start;
+    qint64 duration;
 };
 
 class JZNodeTraceContext : public QObject
@@ -57,17 +69,18 @@ public:
     JZNodeTraceContext();
     ~JZNodeTraceContext();
 
-    void record(JZNodeTraceItemPtr item);
+    void record(JZNodeTraceRecordPtr item);
     void clear();
 
+    QList<JZNodeTraceItem> parse();
     bool load(QString path);
     bool save(QString path);
 
 signals:
-    void sigTrace(const JZNodeTraceItemPtr &item);
+    void sigTrace(const JZNodeTraceRecordPtr &item);
 
 protected:
-    QList<JZNodeTraceItemPtr> m_items;
+    QList<JZNodeTraceRecordPtr> m_items;
 };
 
 

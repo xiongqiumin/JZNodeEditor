@@ -1041,6 +1041,11 @@ void JZNodeEngine::watchNotify()
     emit sigWatchNotify();
 }
 
+JZNodeTraceContext *JZNodeEngine::traceContext()
+{
+    return &m_traceContext;
+}
+
 void JZNodeEngine::printNode(int node_id)
 {
     auto env = m_stack.currentEnv();         

@@ -81,6 +81,8 @@ protected slots:
     void onActionCloseAllFile();
     void onActionCloseAllFileExcept();
 
+    void onActionProfile();
+
     void onActionHelp();
     void onActionAbout();
 
