@@ -56,7 +56,10 @@ QList<JZGraphic> JZYoloResult::toGraphics(const QList<JZYoloResult>& result)
     for (int i = 0; i < result.size(); i++)
     {
         auto& ret = result[i];
-        JZGraphic g = JZGraphic::fromRect(ret.rect, color_list[ret.id % 10]);
+        JZGraphic g;
+        g.type = JZGraphic::Rect;
+        g.color = color_list[ret.id % 10];
+        g.points << ret.rect.topLeft() << ret.rect.bottomRight();
         g_list.push_back(g);
     }
     return g_list;

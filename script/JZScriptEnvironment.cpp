@@ -8,6 +8,7 @@
 #include "JZScriptUnitTest.h"
 #include "runtime/JZNodeUiLoader.h"
 #include "runtime/JZWidgetBind.h"
+#include "JZNodeTrace.h"
 
 //JZScriptEnvironment
 JZScriptEnvironment::JZScriptEnvironment()
@@ -31,6 +32,7 @@ void JZScriptEnvironment::reset()
     m_objectManager.registWidgetFactory(Widget_Xml, JZNodeUiLoader::widgetFactory());    
     m_nodeFactory.init();
 
+    JZNodeTraceInit(this);
     InitBuildInFunction();
     JZWidgetBindInit();
 

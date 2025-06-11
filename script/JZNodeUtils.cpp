@@ -5,12 +5,12 @@
 
 #include "3rd/JZCommon/jzJson/JZJsonHelper.h"
 
-QByteArray JZNodeUtils::toBuffer(const QJsonObject &object)
+QByteArray JZNodeUtils::jsonEncode(const QJsonObject &object)
 {
     return QJsonDocument(object).toJson();
 }
 
-QJsonObject JZNodeUtils::formBuffer(const QByteArray &buffer)
+QJsonObject JZNodeUtils::jsonDecode(const QByteArray &buffer)
 {
     QJsonParseError parse_error;
     QJsonDocument doc = QJsonDocument::fromJson(buffer, &parse_error);

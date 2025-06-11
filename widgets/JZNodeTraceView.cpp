@@ -52,8 +52,9 @@ void JZNodeTraceScene::setTraceData(const QList<JZNodeTraceItem>& data)
     qint64 max = 0, min = INT64_MAX;
     for (int i = 0; i < m_traceData.size(); i++)
     {
-        min = qMin(m_traceData[i].start, min);
-        max = qMax(m_traceData[i].start, max);
+        auto &t = m_traceData[i];
+        min = qMin(t.start, min);
+        max = qMax(t.start + t.duration, max);
     }
     for (int i = 0; i < m_traceData.size(); i++)
     {
@@ -204,9 +205,14 @@ void JZNodeTraceScene::drawItem(QPainter &painter, const JZNodeTraceItem &item)
     if (width > 20) {
         painter.setPen(getForegroundColor(bg_color));
         QString text = item.name;
-        if (painter.fontMetrics().width(text) > width - 10) {
+        if (painter.fontMetrics().width(text) > width - 10) 
+        {
             text = painter.fontMetrics().elidedText(text, Qt::ElideRight, width - 10);
         }
+        if (rc.left() < 0)
+            rc.setLeft(0);
+        if (rc.right() > this->width())
+            rc.setRight(this->width());
         painter.drawText(rc, text, QTextOption(Qt::AlignCenter));
     }
 }
@@ -252,6 +258,7 @@ void JZNodeTraceScene::paintEvent(QPaintEvent *event)
 JZNodeTraceView::JZNodeTraceView(QWidget *parent)
 {
     m_scene = new JZNodeTraceScene(this);
+    setMinimumSize(400, 300);
 
     QVBoxLayout* v = new QVBoxLayout();
     v->setContentsMargins(0, 0, 0, 0);

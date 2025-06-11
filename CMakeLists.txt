@@ -312,9 +312,7 @@ set(JZNodeCore_SOURCES
     modules/motion/JZMotionWidget.cpp
     modules/motion/JZMotionWidget.h
     modules/motion/JZMotionMotean.cpp
-    modules/motion/JZMotionMotean.h
-    modules/motion/JZMotionSimulator.cpp
-    modules/motion/JZMotionSimulator.h
+    modules/motion/JZMotionMotean.h    
     
     #widgets
     widgets/JZBaseDialog.cpp
@@ -495,7 +493,7 @@ set(JZNodeEditorCore_SOURCES
     editor/script/items/JZNodeSettingDialog.cpp
     editor/script/items/JZNodeSettingDialog.h
     editor/script/items/JZNodeDisplayItem.cpp
-    editor/script/items/JZNodeDisplayItem.h	    
+    editor/script/items/JZNodeDisplayItem.h	        
 	
     widgets/JZAboutDialog.cpp
     widgets/JZAboutDialog.h    
@@ -506,6 +504,7 @@ set(JZNodeEditorCore_SOURCES
     widgets/JZDebugSettingDialog.ui
 	widgets/JZNodeTraceView.cpp
 	widgets/JZNodeTraceView.h
+
     
     remote/JZRemotePacket.cpp
     remote/JZRemotePacket.h
@@ -519,17 +518,21 @@ set(JZNodeEditorCore_SOURCES
     sample/VisionDemo/VisionDemo.h
     sample/SampleProject.cpp
     sample/SampleProject.h
-
+    
     #communication            
     modules/communication/modbus/JZModbusConfigDialog.cpp
     modules/communication/modbus/JZModbusConfigDialog.h
     modules/communication/modbus/JZModbusConfigDialog.ui
-    modules/communication/modbus/JZModbusSimulator.cpp
-    modules/communication/modbus/JZModbusSimulator.h
     modules/communication/modbus/JZModbusTemplateDialog.cpp
     modules/communication/modbus/JZModbusTemplateDialog.h    
+    modules/communication/modbus/JZModbusSimulator.cpp
+    modules/communication/modbus/JZModbusSimulator.h
     modules/communication/JZModuleCommEditor.cpp
     modules/communication/JZModuleCommEditor.h
+    modules/communication/JZCommSimulator.cpp
+    modules/communication/JZCommSimulator.h
+    modules/communication/JZCommSimulatorWidget.cpp
+    modules/communication/JZCommSimulatorWidget.h
     
     #opencv    
     modules/opencv/JZModuleOpencvEditor.cpp

@@ -24,6 +24,7 @@
 #include "jzWidgets/JZLogWidget.h"
 #include "jzWidgets/JZImageLabel.h"
 #include "editor/JZVisionEditor.h"
+#include "JZNodeTraceView.h"
 
 class Setting
 {
@@ -81,6 +82,7 @@ protected slots:
     void onActionCloseAllFile();
     void onActionCloseAllFileExcept();
 
+    void onActionCommTool();
     void onActionProfile();
 
     void onActionHelp();
@@ -121,6 +123,7 @@ protected slots:
     void onCameraError(QString camera, QString error);
     void onMainStackedChanged();
     void onRuntimeError(JZNodeRuntimeError error);
+    void onFloatWindowDestory();
 
 protected:    
     struct CameraProgram
@@ -181,11 +184,10 @@ protected:
     bool checkBuild();
     bool isCameraFlow();
     JZNodeCameraReadyEvent* currrentCameraNode();
-    QString getCameraByProgram(QString function);
-
-    void imageRuntimeDebug();
+    QString getCameraByProgram(QString function);    
 
     const CompilerResult* compilerResult(const QString& path);
+    void addFlowWindow(QWidget *w);
 
     JZModelManager* m_modelManager;
     JZCameraManager* m_cameraManager;
@@ -218,6 +220,8 @@ protected:
     LogWidget *m_buildLog;
 
     QAction *m_actionRun;
+    QList<QWidget*> m_floatWindow;
+    JZNodeTraceView *m_traceView;
 };
 extern MainWindow *g_visionWindow;
 

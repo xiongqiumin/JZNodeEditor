@@ -2,6 +2,7 @@
 #include <chrono>
 #include "JZNodeTrace.h"
 #include "JZNodeEngine.h"
+#include "JZNodeBind.h"
 
 JZNodeTraceRecordPtr createTrace(JZNodeTraceRecord::Type type)
 {
@@ -11,7 +12,7 @@ JZNodeTraceRecordPtr createTrace(JZNodeTraceRecord::Type type)
     auto nanoseconds = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
     // 计算自纪元（epoch）以来的纳秒数
     auto epoch_time = nanoseconds.time_since_epoch();
-    qint64 timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch_time).count();
+    qint64 timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch_time).count() / 1000;
 
     JZNodeTraceRecordPtr ptr = JZNodeTraceRecordPtr(new JZNodeTraceRecord());
     ptr->type = type;
@@ -21,6 +22,9 @@ JZNodeTraceRecordPtr createTrace(JZNodeTraceRecord::Type type)
 
 void JZTracePush(const QString &text)
 {    
+    if (!g_engine)
+        return;
+
     JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Push);
     ptr->name = text;
     g_engine->traceContext()->record(ptr);
@@ -28,75 +32,65 @@ void JZTracePush(const QString &text)
 
 void JZTracePop()
 {
+    if (!g_engine)
+        return;
+
     JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Pop);
     g_engine->traceContext()->record(ptr);
 }
 
 void JZTraceMark(const QString &text)
 {
+    if (!g_engine)
+        return;
+
     JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Mark);
     ptr->name = text;
     g_engine->traceContext()->record(ptr);
 }
 
 //JZNodeTrace
-JZNodeTrace::JZNodeTrace(QString nodeName)
+JZTraceScoped::JZTraceScoped(QString nodeName)
 {
-    push(nodeName);
+    JZTracePush(nodeName);
 }
 
-JZNodeTrace::~JZNodeTrace()
-{
-    pop();
-}
-
-void JZNodeTrace::mark(const QString &mark)
-{
-    JZTraceMark(mark);
-}
-    
-void JZNodeTrace::push(const QString &text)
-{
-    JZTracePush(text);
-}
-
-void JZNodeTrace::pop()
+JZTraceScoped::~JZTraceScoped()
 {
     JZTracePop();
 }
 
 //JZNodeTraceBuilder
-JZNodeTraceBuilder::JZNodeTraceBuilder(JZNode* node, JZNodeCompiler *c)
+JZNodeTraceBuilder::JZNodeTraceBuilder(JZNodeCompiler *c)
 {
     m_compiler = c;
-    m_id = m_compiler->addAllocStack("JZNodeTrace");
-    m_compiler->addCall("JZCreateNodeTrace", { irLiteral(node->name()) }, { irId(m_id) });
+    JZNode* node = c->currentNode();    
+    m_compiler->addCall("JZTracePush", { irLiteral(node->name()) }, { });
 }
 
 JZNodeTraceBuilder::~JZNodeTraceBuilder()
 {
-    m_compiler->addFreeStack(m_id);
+    m_compiler->addCall("JZTracePop", {}, {});
 }
 
 void JZNodeTraceBuilder::mark(const QString & text)
 {
     QList<JZNodeIRParam> in,out;
-    in << irId(m_id) << irLiteral(text);
-    m_compiler->addCall("JZNodeTrace::mark",in,out);
+    in << irLiteral(text);
+    m_compiler->addCall("JZTraceMark",in,out);
 }
 
 void JZNodeTraceBuilder::push(const QString &text)
 {
     QList<JZNodeIRParam> in,out;
-    in << irId(m_id) << irLiteral(text);
-    m_compiler->addCall("JZNodeTrace::push",in,out);
+    in << irLiteral(text);
+    m_compiler->addCall("JZTracePush",in,out);
 }
 
 void JZNodeTraceBuilder::pop()
 {
-    QList<JZNodeIRParam> in,out;
-    in << irId(m_id);
-    m_compiler->addCall("JZNodeTrace::pop",in,out);
+    QList<JZNodeIRParam> in,out;    
+    m_compiler->addCall("JZTracePop",in,out);
 }
 
 //JZNodeTraceContext
@@ -131,6 +125,7 @@ QList<JZNodeTraceItem> JZNodeTraceContext::parse()
             item.name = rec->name;
             item.start = rec->timestamp;
             item.duration = m_items[i]->timestamp - rec->timestamp;
+            result << item;
         }
         else if(type == JZNodeTraceRecord::Mark)
         {
@@ -150,6 +145,7 @@ QList<JZNodeTraceItem> JZNodeTraceContext::parse()
         item.name = rec->name;
         item.start = rec->timestamp;
         item.duration = last - rec->timestamp;
+        result << item;
     }
 
     int maxLevel = -1;
@@ -185,4 +181,12 @@ bool JZNodeTraceContext::load(QString path)
 bool JZNodeTraceContext::save(QString path)
 {
     return false;
+}
+
+void JZNodeTraceInit(JZScriptEnvironment *env)
+{
+    auto func_inst = env->functionManager();
+    func_inst->registCFunction("JZTracePush", true, jzbind::createFuncion(JZTracePush));
+    func_inst->registCFunction("JZTracePop", true, jzbind::createFuncion(JZTracePop));
+    func_inst->registCFunction("JZTraceMark", true, jzbind::createFuncion(JZTraceMark));
 }

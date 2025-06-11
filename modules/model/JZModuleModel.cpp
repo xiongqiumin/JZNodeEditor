@@ -52,7 +52,7 @@ void JZModuleModel::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZOCRResult> cls_ocr_ret(cls_id++, "JZOCRResult");
     registList<JZOCRResult>(env, cls_id++);
 
-    //cls_ocr_ret.def("toGraphics", true, &JZYoloResult::toGraphics);
+    cls_ocr_ret.def("toGraphics", true, &JZOCRResult::toGraphics);
     cls_ocr_ret.regist();
 
     jzbind::ClassBind<JZPaddleOCR> cls_ocr(cls_id++, "JZPaddleOCR", "QObject");

@@ -371,7 +371,7 @@ bool JZNodeButtonClickedEvent::compiler(JZNodeCompiler* c, QString& error)
 
 void JZButtonClickedEventConnect(QObject* object, JZFunctionPointer slot_function, const QByteArray& buffer)
 {
-    QJsonObject obj = JZNodeUtils::formBuffer(buffer);
+    QJsonObject obj = JZNodeUtils::jsonDecode(buffer);
     int ms = obj["timeout"].toInt();
 
     QTimer* timer = new QTimer(object);

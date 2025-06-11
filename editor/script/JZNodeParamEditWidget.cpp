@@ -137,7 +137,11 @@ void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
     if(m_editWidget)
         delete m_editWidget;
 
-    if (edit.type == JZParamEditInfo::Edit_int)
+    if (edit.type == JZParamEditInfo::Edit_bool)
+    {
+
+    }
+    else if (edit.type == JZParamEditInfo::Edit_int)
     {
         QSpinBox *spin = new QSpinBox();        
         connect(spin, &QSpinBox::editingFinished, this, &JZNodeParamValueWidget::sigEditFinish);

@@ -1,7 +1,24 @@
+#include <QApplication>
 #include "JZPaddleOCR.h"
 #include "modules/opencv/CvToQt.h"
 
 using namespace PaddleOCR;
+
+QList<JZGraphic> JZOCRResult::toGraphics(const QList<JZOCRResult> &result)
+{
+    QList<JZGraphic> g_list;
+    for (int i = 0; i < result.size(); i++)
+    {
+        auto& ret = result[i];
+        JZGraphic g;
+        g.type = JZGraphic::TextBox;
+        g.text = ret.text;      
+        g.color = Qt::red;
+        g.points << ret.rect.topLeft() << ret.rect.bottomRight();
+        g_list.push_back(g);        
+    }
+    return g_list;
+}
 
 JZOCRResult::JZOCRResult()
 {
@@ -25,13 +42,14 @@ bool JZPaddleOCR::isInit()
 
 void JZPaddleOCR::init()
 {
-    std::string model_dir = "C:/Users/xiong/Desktop/ai_demo/test_ocr/";
-    m_detector.LoadModel(model_dir + "ch_PP-OCRv4_det_infer.onnx");
+    QString mode_path = qApp->applicationDirPath() + "/model/paddle_ocr";
+    std::string model_dir = mode_path.toLocal8Bit().data();
+    m_detector.LoadModel(model_dir + "/ch_PP-OCRv4_det_infer.onnx");
 
-    m_cls.LoadModel(model_dir + "ch_ppocr_mobile_v2.0_cls_infer.onnx");
+    m_cls.LoadModel(model_dir + "/ch_ppocr_mobile_v2.0_cls_infer.onnx");
 
-    m_rec.LoadLabel(model_dir + "ppocr_keys_v1.txt");
-    m_rec.LoadModel(model_dir + "ch_PP-OCRv4_rec_infer.onnx");
+    m_rec.LoadLabel(model_dir + "/ppocr_keys_v1.txt");
+    m_rec.LoadModel(model_dir + "/ch_PP-OCRv4_rec_infer.onnx");
 
     m_init = true;
 }

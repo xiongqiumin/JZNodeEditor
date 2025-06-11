@@ -5,6 +5,7 @@
 #include <QSharedPointer>
 #include "JZNodeCompiler.h"
 
+class JZScriptEnvironment;
 class JZNodeTraceRecord
 {
 public:
@@ -25,29 +26,25 @@ void JZTracePush(const QString &text);
 void JZTracePop();
 void JZTraceMark(const QString &text);
 
-class JZNodeTrace
+class JZTraceScoped
 {
 public:
-    JZNodeTrace(QString nodeName);
-    ~JZNodeTrace();
-
-    void mark(const QString &mark);
-    void push(const QString &text);
-    void pop();
+    JZTraceScoped(QString nodeName);
+    ~JZTraceScoped();
 };
 
 class JZNodeTraceBuilder
 {
 public:
-    JZNodeTraceBuilder(JZNode *node,JZNodeCompiler *c);
+    JZNodeTraceBuilder(JZNodeCompiler *c);
     ~JZNodeTraceBuilder();
 
     void mark(const QString &mark);
     void push(const QString &text);
     void pop();
 
-    JZNodeCompiler* m_compiler;
-    int m_id;
+protected:
+    JZNodeCompiler* m_compiler;    
 };
 
 
@@ -82,6 +79,6 @@ signals:
 protected:
     QList<JZNodeTraceRecordPtr> m_items;
 };
-
+void JZNodeTraceInit(JZScriptEnvironment *env);
 
 #endif

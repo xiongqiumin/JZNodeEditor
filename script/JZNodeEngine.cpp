@@ -340,6 +340,7 @@ bool JZNodeEngine::init()
     // regist type
     m_program->initEnv(&m_env);
     updateStatus(Status_idle);
+    m_traceContext.clear();
 
     g_engine = this;
     QVariantList in, out;

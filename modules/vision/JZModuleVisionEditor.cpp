@@ -105,7 +105,7 @@ void JZVisionTemplateDialog::on_matchButton_clicked()
     {
         m_label->clearGraphic();
 
-        JZGraphic g = JZGraphic::fromRect(rc, Qt::red);        
+        JZGraphic g;        
         m_label->addGraphics(g);
     }
 

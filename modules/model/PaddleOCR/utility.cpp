@@ -35,9 +35,7 @@ namespace PaddleOCR
         }
         else
         {
-            std::cout << "no such label file: " << path << ", exit the program..."
-                      << std::endl;
-            exit(1);
+            throw std::runtime_error("no such label file: " + path);
         }
         return m_vec;
     }

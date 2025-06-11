@@ -28,8 +28,8 @@ struct LinkInfo {
 class JZNodeUtils
 {
 public:    
-    static QByteArray toBuffer(const QJsonObject& object);
-    static QJsonObject formBuffer(const QByteArray& buffer);
+    static QByteArray jsonEncode(const QJsonObject& object);
+    static QJsonObject jsonDecode(const QByteArray& buffer);
 
     static QJsonValue getValue(const QJsonValue& obj, const QString& path);
 

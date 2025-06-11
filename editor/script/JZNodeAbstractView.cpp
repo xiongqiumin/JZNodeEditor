@@ -725,6 +725,10 @@ void JZNodeAbstractView::initGraph()
 
     sceneTranslate(-20,-20);
     m_map->updateMap();    
+
+    QTimer::singleShot(0, this, [this] {
+        fitNodeView();
+    });
 }
 
 void JZNodeAbstractView::clear()

@@ -1,411 +1,127 @@
-ï»¿#include <QHBoxLayout>
-#include <QPushButton>
-#include <QFormLayout>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QStackedWidget>
-#include <QCheckBox>
-#include <QSplitter>
-#include <QMenuBar>
-#include <QMdiSubWindow>
 #include <QToolButton>
-#include <QWindowStateChangeEvent>
-#include <QFileDialog>
-#include <QFile>
-#include <QMenuBar>
 #include "JZModbusSimulator.h"
+#include "JZNodeUtils.h"
 #include "JZModbusConfigDialog.h"
-#include "JZRegExpHelp.h"
+#include "jzModbus/JZModbusParam.h"
 
-//JZModbusSimulatorConfig
-QDataStream &operator<<(QDataStream &s, const JZModbusSimulatorConfig &param)
+JZModBusSimulator::JZModBusSimulator()
 {
-    s << param.modbusList;
-    return s;
-}
+    m_master = nullptr;
+    m_slaver = nullptr;
 
-QDataStream &operator >> (QDataStream &s, JZModbusSimulatorConfig &param)
-{
-    s >> param.modbusList;
-    return s;
-}
+    QWidget *tool = new QWidget();
+    QHBoxLayout *l_tool = new QHBoxLayout();
+    l_tool->setContentsMargins(0, 0, 0, 0);
+    tool->setLayout(l_tool);
 
-//SimulatorWidget
-class SimulatorWidget : public QWidget
-{
-public:
-    SimulatorWidget()
-    {
-        QWidget *tool = new QWidget();
-        QHBoxLayout *l_tool = new QHBoxLayout();
-        l_tool->setContentsMargins(0, 0, 0, 0);
-        tool->setLayout(l_tool);
-
-        btnStart = new QToolButton();
-        btnStop = new QToolButton();
-        btnStop->setEnabled(false);
-        btnSetting = new QToolButton();
-        l_tool->addWidget(btnStart);
-        l_tool->addWidget(btnStop);
-        l_tool->addWidget(btnSetting);
-        l_tool->addStretch();        
-
-        btnStart->setIcon(QIcon(":/JZNodeEditor/Resources/icons/iconRun.png"));
-        btnStop->setIcon(QIcon(":/JZNodeEditor/Resources/icons/iconStop.png"));
-        btnSetting->setIcon(QIcon(":/JZNodeEditor/Resources/icons/iconSetting.png"));        
-
-        QVBoxLayout *l = new QVBoxLayout();
-        l->addWidget(tool);
-
-        table = new QTableWidget();
-        l->addWidget(table);
-        this->setLayout(l);
-    }
-
-    QTableWidget *table;
-    QToolButton *btnStart, *btnStop, *btnSetting;
-};
-
-
-//JZModbusSimulator
-JZModbusSimulator::Simulator::Simulator()
-{
-    master = nullptr;
-    slaver = nullptr;
-    table = nullptr;
-}
-
-bool JZModbusSimulator::Simulator::isOpen()
-{
-    if (master && master->isOpen())
-        return true;
-
-    if (slaver && slaver->isStart())
-        return true;
-
-    return false;
-}
-
-void JZModbusSimulator::Simulator::close()
-{
-    if (master)
-    {
-        master->close();
-        delete master;
-        master = nullptr;
-    }
-
-    if (slaver)
-    {
-        slaver->stopServer();
-        delete slaver;
-        slaver = nullptr;
-    }
-}
-
-
-//JZModbusSimulator
-JZModbusSimulator::JZModbusSimulator(QWidget *parent)
-    :QWidget(parent)
-{
-    this->setWindowFlag(Qt::Window);
-    this->setAttribute(Qt::WA_DeleteOnClose);
-        
-    m_dataBitsList << QSerialPort::Data5 << QSerialPort::Data6 << QSerialPort::Data7 << QSerialPort::Data8;
-    m_stopBitsList << QSerialPort::OneStop << QSerialPort::TwoStop;
-    m_parityList << QSerialPort::NoParity << QSerialPort::EvenParity << QSerialPort::OddParity;      
-
-    QWidget *widget = new QWidget();
-    QVBoxLayout *center = new QVBoxLayout();
-    center->setContentsMargins(9, 9, 9, 9);
-    widget->setLayout(center);
-
-    QWidget *widget_left = new QWidget();
-    QVBoxLayout *l_left = new QVBoxLayout();
-    l_left->setContentsMargins(0, 0, 0, 0);
-    widget_left->setLayout(l_left);
-
-    m_tree = new QTreeWidget();
-    m_tree->setHeaderHidden(true);    
-    m_tree->setExpandsOnDoubleClick(false);
-    m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_tree, &QWidget::customContextMenuRequested, this, &JZModbusSimulator::onContextMenu);
-    connect(m_tree, &QTreeWidget::itemDoubleClicked, this, &JZModbusSimulator::onItemDoubleClicked);
-
-    //main
-    QSplitter *splitterMain = new QSplitter(Qt::Horizontal);
-    splitterMain->setObjectName("splitterMain");
-    splitterMain->addWidget(m_tree);
-    splitterMain->addWidget(widget_left);
-
-    center->addWidget(splitterMain);
-
-    //left
-    m_mdiArea = new QMdiArea();    
-    m_log = new QPlainTextEdit();
-
-    QSplitter *splitterLeft = new QSplitter(Qt::Vertical);
-    splitterLeft->addWidget(m_mdiArea);
-    splitterLeft->addWidget(m_log);
-    l_left->addWidget(splitterLeft);
-
-    splitterMain->setCollapsible(0, false);
-    splitterMain->setCollapsible(1, false);
-    splitterMain->setStretchFactor(0, 0);
-    splitterMain->setStretchFactor(1, 1);
-    splitterMain->setSizes({ 250,600 });
-
-    splitterLeft->setCollapsible(0, false);
-    splitterLeft->setCollapsible(1, false);
-    splitterLeft->setStretchFactor(0, 1);
-    splitterLeft->setStretchFactor(1, 0);
+    QToolButton* btnStart = new QToolButton();
+    QToolButton* btnStop = new QToolButton();
+    btnStop->setEnabled(false);
+    QToolButton* btnSetting = new QToolButton();
+    l_tool->addWidget(btnStart);
+    l_tool->addWidget(btnStop);
+    l_tool->addWidget(btnSetting);
+    l_tool->addStretch();
     
-    
-    //main menu
-    QMenuBar *menubar = new QMenuBar();        
-
-    QMenu *menu_file = menubar->addMenu("æ–‡ä»¶");
-    auto actNew = menu_file->addAction("æ–°å»ºè®¾å¤‡");
-    auto actClear = menu_file->addAction("æ¸…ç©ºè®¾å¤‡");
-    connect(actNew, &QAction::triggered, this, &JZModbusSimulator::onActionNew);
-    connect(actClear, &QAction::triggered, this, &JZModbusSimulator::onActionClear);
-    menu_file->addSeparator();
-
-    auto actSaveConfig = menu_file->addAction("ä¿å­˜é…ç½®");
-    auto actLoadConfig = menu_file->addAction("åŠ è½½é…ç½®");
-    connect(actSaveConfig, &QAction::triggered, this, &JZModbusSimulator::onActionSaveConfig);
-    connect(actLoadConfig, &QAction::triggered, this, &JZModbusSimulator::onActionLoadConfig);
-
-    auto menu_view = menubar->addMenu("è§†å›¾");
-    auto actShowAll = menu_view->addAction("æ˜¾ç¤ºå…¨éƒ¨");
-    connect(actShowAll, &QAction::triggered, this, &JZModbusSimulator::onActionShowAll);
+    m_btnStart = btnStart;
+    m_btnStop = btnStop;
+    m_btnSetting = btnSetting;
 
     QVBoxLayout *l = new QVBoxLayout();
-    l->setContentsMargins(0, 0, 0, 0);
-    l->addWidget(menubar);
-    l->addWidget(widget);
-    setLayout(l);
+    l->addWidget(tool);
 
-    this->adjustSize();
+    m_table = new QTableWidget();
+    l->addWidget(m_table);
+    this->setLayout(l);
+
+    //connect
+    btnStart->setIcon(QIcon(":/JZNodeEditor/Resources/icons/iconRun.png"));
+    btnStop->setIcon(QIcon(":/JZNodeEditor/Resources/icons/iconStop.png"));
+    btnSetting->setIcon(QIcon(":/JZNodeEditor/Resources/icons/iconSetting.png"));
+
+    connect(btnStart, &QToolButton::clicked, this, &JZModBusSimulator::onSimulatorStart);
+    connect(btnStop, &QToolButton::clicked, this, &JZModBusSimulator::onSimulatorStop);
+    connect(btnSetting, &QToolButton::clicked, this, &JZModBusSimulator::onSimulatorSetting);
+
+    QStringList headers = { "µØÖ·","¹¦ÄÜ","ÀàÐÍ","Öµ","²Ù×÷","²ßÂÔ","±¸×¢" };
+    m_table->setColumnCount(headers.size());
+    m_table->setHorizontalHeaderLabels(headers);
+    connect(m_table, &QTableWidget::itemChanged, this, &JZModBusSimulator::onItemChanged);    
 }
 
-JZModbusSimulator::~JZModbusSimulator()
+JZModBusSimulator::~JZModBusSimulator()
 {
-    closeAll();
-}
-
-void JZModbusSimulator::closeAll()
-{
-    int count = m_simulator.size();
-    for (int i = 0; i < count; i++)
-        removeSimulator(0);    
-    m_simulator.clear();    
-}
-
-void JZModbusSimulator::setConfig(JZModbusSimulatorConfig config)
-{
-    closeAll();
-    
-    for (int i = 0; i < config.modbusList.size(); i++)
-        addSimulator(config.modbusList[i]);
-}
-
-JZModbusSimulatorConfig JZModbusSimulator::config()
-{
-    JZModbusSimulatorConfig config;
-    for (int i = 0; i < m_simulator.size(); i++)
-        config.modbusList << m_simulator[i].config;
-
-    return config;
-}
-
-void JZModbusSimulator::closeEvent(QCloseEvent *event)
-{
-    QWidget::closeEvent(event);
-    emit sigClose();
-}
-
-bool JZModbusSimulator::eventFilter(QObject *o, QEvent *e)
-{
-    if (e->type() == QEvent::Close)
+    if (m_master)
     {
-        QMdiSubWindow *w = qobject_cast<QMdiSubWindow*>(o);
-        w->showMinimized();
-        e->ignore();
-        return true;
-    }    
-    
-    return QWidget::eventFilter(o, e);
-}
-
-QString JZModbusSimulator::genSimulatorName(int index)
-{
-    QStringList nameList;
-    for (int i = 0; i < m_tree->topLevelItemCount(); i++)
-        nameList << m_tree->topLevelItem(i)->text(0);
-
-    int type = m_simulator[index].config.conn.modbusType;
-    QString name;
-    if(type == Modbus_rtuClient)       
-        name = JZRegExpHelp::uniqueString("RtuMaster", nameList);
-    else if (type == Modbus_tcpClient)
-        name = JZRegExpHelp::uniqueString("TcpMaster", nameList);
-    else if (type == Modbus_rtuServer)
-        name = JZRegExpHelp::uniqueString("RtuSlaver", nameList);
-    else if (type == Modbus_tcpServer)
-        name = JZRegExpHelp::uniqueString("TcpSlaver", nameList);
-
-    return name;
-}
-
-void JZModbusSimulator::addSimulator(JZModbusConfig config)
-{
-    Simulator info;
-    info.config = config;
-
-    SimulatorWidget *simulator = new SimulatorWidget();
-    info.widget = simulator;
-    connect(simulator->btnStart, &QToolButton::clicked, this, &JZModbusSimulator::onSimulatorStart);
-    connect(simulator->btnStop, &QToolButton::clicked, this, &JZModbusSimulator::onSimulatorStop);
-    connect(simulator->btnSetting, &QToolButton::clicked, this, &JZModbusSimulator::onSimulatorSetting);
-
-    auto table = simulator->table;
-    QStringList headers = { "åœ°å€","åŠŸèƒ½","ç±»åž‹","å€¼","æ“ä½œ","ç­–ç•¥","å¤‡æ³¨" };
-    table->setColumnCount(headers.size());
-    table->setHorizontalHeaderLabels(headers);
-    connect(table, &QTableWidget::itemChanged, this, &JZModbusSimulator::onItemChanged);
-
-    simulator->btnStart->setProperty("table", QVariant::fromValue(table));
-    simulator->btnStop->setProperty("table", QVariant::fromValue(table));
-    simulator->btnSetting->setProperty("table", QVariant::fromValue(table));
-    
-    info.table = table;
-    info.window = m_mdiArea->addSubWindow(simulator);
-    info.window->show();
-    info.window->installEventFilter(this);         
-
-    QTreeWidgetItem *item = new QTreeWidgetItem();
-    info.item = item;    
-    m_tree->addTopLevelItem(item);
-    
-    m_simulator.push_back(info);
-    initSimulator(m_simulator.size() - 1);    
-}
-
-void JZModbusSimulator::removeSimulator(int index)
-{    
-    m_simulator[index].close();
-    m_mdiArea->removeSubWindow(m_simulator[index].window);    
-    delete m_simulator[index].item;
-    m_simulator.removeAt(index);
-}
-
-void JZModbusSimulator::startSimulator(int index)
-{
-    auto &info = m_simulator[index];
-    auto &c = info.config;
-
-    bool ret = false;
-    int type = c.conn.modbusType;
-    if (type == Modbus_rtuClient || type == Modbus_tcpClient)
-        ret = info.master->open();
-    else if (type == Modbus_rtuServer || type == Modbus_tcpServer)
-        ret = info.slaver->startServer();
-
-    if (!ret)
-    {
-        QMessageBox::information(this, "", "å¯åŠ¨å¤±è´¥,è¯·æ£€æŸ¥è®¾ç½®");
-        return;
+        m_master->close();
+        delete m_master;
+        m_master = nullptr;
     }
-    updateStatus(index);
-}
 
-void JZModbusSimulator::stopSimulator(int index)
-{
-    auto &info = m_simulator[index];
-    auto &c = info.config;
-
-    bool ret = false;
-    int type = c.conn.modbusType;
-    if (type == Modbus_rtuClient || type == Modbus_tcpClient)
-        info.master->close();
-    else if (type == Modbus_rtuServer || type == Modbus_tcpServer)
-        info.slaver->stopServer();
-
-    updateStatus(index);
-}
-
-void JZModbusSimulator::initSimulator(int index)
-{
-    auto &info = m_simulator[index];
-    
-    info.close(); 
-    info.item->setText(0, genSimulatorName(index));
-    info.window->setWindowTitle(info.item->text(0));
-
-    if (info.config.conn.modbusType == Modbus_rtuClient || info.config.conn.modbusType == Modbus_tcpClient)
+    if (m_slaver)
     {
-        info.master = new JZModbusMaster();
-        modbusMasterSetConfig(info.master, &info.config);
-        connect(info.master, &JZModbusMaster::sigParamChanged, this, &JZModbusSimulator::onParamChanged);
-        info.master->setProperty("table", QVariant::fromValue(info.table));
+        m_slaver->stopServer();
+        delete m_slaver;
+        m_slaver = nullptr;
     }
+}
+
+bool JZModBusSimulator::isOpen()
+{
+    if (m_slaver)
+        return m_slaver->isStart();
+    else if (m_master)
+        return m_master->isOpen();
     else
-    {
-        info.table->hideColumn(4);
-        info.table->hideColumn(5);
-        info.slaver = new JZModbusSlaver();
-        modbusSlaverSetConfig(info.slaver, &info.config);
-        connect(info.slaver, &JZModbusSlaver::sigParamChanged, this, &JZModbusSimulator::onParamChanged);
-        info.slaver->setProperty("table", QVariant::fromValue(info.table));
-    }
-    updateTable(index);
+        return false;
 }
 
-void JZModbusSimulator::settingSimulator(int index)
+bool JZModBusSimulator::open()
 {
-    auto &info = m_simulator[index];
-
-    JZModbusConfigDialog dlg(this);
-    dlg.setConfig(info.config);
-    if (dlg.exec() != QDialog::Accepted)
-        return;
-
-    info.config = dlg.config();
-    initSimulator(index);
-}
-
-void JZModbusSimulator::updateStatus(int index)
-{
-    auto &info = m_simulator[index];
-    info.widget->btnStart->setEnabled(true);
-    info.widget->btnStop->setEnabled(true);
-    info.widget->btnSetting->setEnabled(true);
-    if (info.isOpen())
-    {
-        info.widget->btnStart->setEnabled(false);
-        info.widget->btnSetting->setEnabled(false);
-    }
+    if (m_slaver)
+        return m_slaver->startServer();
+    else if (m_master)
+        return m_master->open();
     else
-    {
-        info.widget->btnStop->setEnabled(false);
-    }
+        return false;
 }
 
-void JZModbusSimulator::updateTable(int index)
+void JZModBusSimulator::close()
 {
-    auto &info = m_simulator[index];
-    QTableWidget *table = info.table;
+    if (m_slaver)
+        return m_slaver->stopServer();
+    else if (m_master)
+        return m_master->close();    
+}
+
+void JZModBusSimulator::setting()
+{
+    settingSimulator();
+}
+
+void JZModBusSimulator::setConfig(const QByteArray &buffer)
+{
+    m_config = JZNodeUtils::fromBuffer<JZModbusConfig>(buffer);
+}
+
+QByteArray JZModBusSimulator::getConfig()
+{
+    return JZNodeUtils::toBuffer(m_config);
+}
+
+void JZModBusSimulator::updateTable()
+{
+    QTableWidget *table = m_table;
 
     table->clearContents();
     table->blockSignals(true);
 
     JZModbusParamMap *map = nullptr;
-    if (info.master)
-        map = info.master->map();
+    if (m_master)
+        map = m_master->map();
     else
-        map = info.slaver->map();
-    
+        map = m_slaver->map();
+
     auto paramList = map->paramList();
     qSort(paramList);
 
@@ -424,8 +140,8 @@ void JZModbusSimulator::updateTable(int index)
         QTableWidgetItem *itemMemo = new QTableWidgetItem();
         QTableWidgetItem *itemValue = new QTableWidgetItem();
         itemAddr->setText(QString::number(proto->addr));
-        itemAddr->setData(Qt::UserRole,proto->addr);        
-        itemAddr->setFlags(itemAddr->flags() & ~Qt::ItemIsEditable);        
+        itemAddr->setData(Qt::UserRole, proto->addr);
+        itemAddr->setFlags(itemAddr->flags() & ~Qt::ItemIsEditable);
 
         itemAddrType->setText(addr_types[proto->addrType]);
         itemAddrType->setFlags(itemAddr->flags() & ~Qt::ItemIsEditable);
@@ -447,7 +163,7 @@ void JZModbusSimulator::updateTable(int index)
         QHBoxLayout *layout = new QHBoxLayout();
         layout->setMargin(3);
 
-        QPushButton *btnRead = new QPushButton("è¯»å–");
+        QPushButton *btnRead = new QPushButton("¶ÁÈ¡");
         btnRead->setProperty("table", QVariant::fromValue(table));
         btnRead->setProperty("addr", proto->addr);
         connect(btnRead, SIGNAL(clicked()), this, SLOT(onProtoReadClicked()));
@@ -455,7 +171,7 @@ void JZModbusSimulator::updateTable(int index)
 
         if (proto->addrType == Param_Coil || proto->addrType == Param_HoldingRegister)
         {
-            QPushButton *btnWrite = new QPushButton("å†™å…¥");
+            QPushButton *btnWrite = new QPushButton("Ð´Èë");
             btnWrite->setProperty("table", QVariant::fromValue(table));
             btnWrite->setProperty("addr", proto->addr);
             connect(btnWrite, SIGNAL(clicked()), this, SLOT(onProtoWriteClicked()));
@@ -469,8 +185,8 @@ void JZModbusSimulator::updateTable(int index)
         QHBoxLayout *layout2 = new QHBoxLayout();
         layout2->setMargin(3);
         widget_strage->setLayout(layout2);
-        
-        QPushButton *btnStrategy = new QPushButton("è®¾ç½®");
+
+        QPushButton *btnStrategy = new QPushButton("ÉèÖÃ");
         btnStrategy->setProperty("table", QVariant::fromValue(table));
         connect(btnStrategy, SIGNAL(clicked()), this, SLOT(onProtoStrategyClicked()));
         layout2->addWidget(btnStrategy);
@@ -482,219 +198,174 @@ void JZModbusSimulator::updateTable(int index)
     table->blockSignals(false);
 }
 
-void JZModbusSimulator::onItemChanged(QTableWidgetItem *item)
+
+void JZModBusSimulator::onSimulatorStart()
+{    
+    startSimulator();
+}
+
+void JZModBusSimulator::onSimulatorStop()
+{    
+    stopSimulator();
+}
+
+void JZModBusSimulator::onSimulatorSetting()
+{    
+    settingSimulator();
+}
+
+void JZModBusSimulator::onItemChanged(QTableWidgetItem *item)
 {
-    auto table = item->tableWidget();
-    int index = indexOfTable(table);
-    auto &info = m_simulator[index];
+    auto table = item->tableWidget();    
 
     int row = item->row();
     int addr = table->item(row, 0)->data(Qt::UserRole).toInt();
     QVariant value = item->text();
-    if (info.slaver)
-        info.slaver->writeParam(addr, value);
-    if (info.master)
-        info.master->writeParam(addr, value);
+    if (m_slaver)
+        m_slaver->writeParam(addr, value);
+    if (m_master)
+        m_master->writeParam(addr, value);
 }
 
-int JZModbusSimulator::indexOfTable(QTableWidget *table)
+int JZModBusSimulator::indexOfRow(int addr)
 {
-    for (int i = 0; i < m_simulator.size(); i++)
-    {        
-        if (m_simulator[i].table == table)
-            return i;
-    }
-    return -1;
-}
-
-int JZModbusSimulator::indexOfRow(QTableWidget *table,int addr)
-{
-    for (int i = 0; i < table->rowCount(); i++)
+    for (int i = 0; i < m_table->rowCount(); i++)
     {
-        int item_addr = table->item(i, 0)->data(Qt::UserRole).toInt();
+        int item_addr = m_table->item(i, 0)->data(Qt::UserRole).toInt();
         if (item_addr == addr)
             return i;
     }
     return -1;
 }
 
-void JZModbusSimulator::onParamChanged(int addr)
+void JZModBusSimulator::onParamChanged(int addr)
 {
     QObject *obj = sender();
-    auto table = (QTableWidget*)obj->property("table").value<QObject*>();
-    auto &info = m_simulator[indexOfTable(table)];
-
+    
     QVariant v;
-    if (info.master)
-        v = info.master->readParam(addr);
-    if (info.slaver)
-        v = info.slaver->readParam(addr);
+    if (m_master)
+        v = m_master->readParam(addr);
+    if (m_slaver)
+        v = m_slaver->readParam(addr);
 
-    int idx = indexOfRow(table,addr);
-    table->item(idx, 3)->setText(v.toString());
-
-    m_log->appendPlainText(QString::number(addr) + "å˜åŒ–");
+    int idx = indexOfRow(addr);
+    m_table->item(idx, 3)->setText(v.toString());    
 }
 
-void JZModbusSimulator::onProtoReadClicked()
+void JZModBusSimulator::onProtoReadClicked()
 {
-    auto btn = qobject_cast<QPushButton*>(sender());
-    auto table = (QTableWidget*)btn->property("table").value<QObject*>();    
-    auto &info = m_simulator[indexOfTable(table)];
-    if (info.master->isBusy())
+    auto btn = qobject_cast<QPushButton*>(sender());    
+    if (m_master->isBusy())
         return;
-    
+
     int addr = btn->property("addr").toInt();
-    info.master->readRemoteParamAsync(addr);
+    m_master->readRemoteParamAsync(addr);
 }
 
-void JZModbusSimulator::onProtoWriteClicked()
+void JZModBusSimulator::onProtoWriteClicked()
 {
-    auto btn = qobject_cast<QPushButton*>(sender());
-    auto table = (QTableWidget*)btn->property("table").value<QObject*>();
-    auto &info = m_simulator[indexOfTable(table)];
-    if (info.master->isBusy())
+    auto btn = qobject_cast<QPushButton*>(sender());    
+    if (m_master->isBusy())
         return;
-    
+
     int addr = btn->property("addr").toInt();
-    int row = indexOfRow(info.table,addr);
-    
-    QVariant v = table->item(row, 3)->text();        
-    info.master->writeRemoteParamAsync(addr,v);
+    int row = indexOfRow(addr);
+
+    QVariant v = m_table->item(row, 3)->text();
+    m_master->writeRemoteParamAsync(addr, v);
 }
 
-void JZModbusSimulator::onSimulatorStart()
-{
-    auto btn = qobject_cast<QToolButton*>(sender());
-    auto table = (QTableWidget*)btn->property("table").value<QObject*>();
-    startSimulator(indexOfTable(table));
-}
 
-void JZModbusSimulator::onSimulatorStop()
-{
-    auto btn = qobject_cast<QToolButton*>(sender());
-    auto table = (QTableWidget*)btn->property("table").value<QObject*>();
-    stopSimulator(indexOfTable(table));
-}
-
-void JZModbusSimulator::onSimulatorSetting()
-{
-    auto btn = qobject_cast<QToolButton*>(sender());
-    auto table = (QTableWidget*)btn->property("table").value<QObject*>();
-    settingSimulator(indexOfTable(table));    
-}
-
-void JZModbusSimulator::onProtoStrategyClicked()
+void JZModBusSimulator::onProtoStrategyClicked()
 {
     auto btn = qobject_cast<QPushButton*>(sender());
-    auto table = (QTableWidget*)btn->property("table").value<QObject*>();
-    auto &info = m_simulator[indexOfTable(table)];    
     int addr = btn->property("addr").toInt();
 
     ModeStargeDialog dlg(this);
-    if(info.config.strategyMap.contains(addr))
-        dlg.setInfo(info.config.strategyMap[addr]);
+    if (m_config.strategyMap.contains(addr))
+        dlg.setInfo(m_config.strategyMap[addr]);
     if (dlg.exec() != QDialog::Accepted)
         return;
 
-    info.config.strategyMap[addr] = dlg.info();
-    info.master->setStrategy(addr, dlg.info());
+    m_config.strategyMap[addr] = dlg.info();
+    m_master->setStrategy(addr, dlg.info());
 }
 
-void JZModbusSimulator::onActionNew()
-{
-    JZModbusConfigDialog dlg(this);
-    if (dlg.exec() != QDialog::Accepted)
-        return;
 
-    addSimulator(dlg.config());
-}
-
-void JZModbusSimulator::onActionClear()
+void JZModBusSimulator::updateStatus()
 {
-    closeAll();
-}
-
-void JZModbusSimulator::onActionShowAll()
-{
-    for (int i = 0; i < m_simulator.size(); i++)
-        m_simulator[i].window->show();
-}
-
-void JZModbusSimulator::onItemDoubleClicked(QTreeWidgetItem *item)
-{
-    int idx = m_tree->indexOfTopLevelItem(item);
-    settingSimulator(idx);
-}
-
-void JZModbusSimulator::onContextMenu(QPoint pt)
-{
-    QMenu menu(this);
-    auto item = m_tree->itemAt(pt);
-    QAction *actDel = nullptr;
-    QAction *actSetting = nullptr;
-    if (!item)
+    m_btnStart->setEnabled(true);
+    m_btnStop->setEnabled(true);
+    m_btnSetting->setEnabled(true);
+    if (isOpen())
     {
-        auto actNew = menu.addAction("æ–°å»º");
-        connect(actNew, &QAction::triggered, this, &JZModbusSimulator::onActionNew);
+        m_btnStart->setEnabled(false);
+        m_btnSetting->setEnabled(false);
     }
     else
     {
-        actSetting = menu.addAction("è®¾ç½®");
-        actDel = menu.addAction("åˆ é™¤");
-    }
-
-    auto act = menu.exec(m_tree->mapToGlobal(pt));
-    if (!act)
-        return;
-
-    if (act == actDel)
-    {
-        int idx = m_tree->indexOfTopLevelItem(item);
-        removeSimulator(idx);
-        delete m_tree->takeTopLevelItem(idx);
-    }
-    else if (act == actSetting)
-    {
-        int idx = m_tree->indexOfTopLevelItem(item);
-        settingSimulator(idx);
+        m_btnStop->setEnabled(false);
     }
 }
 
-void JZModbusSimulator::onActionSaveConfig()
+
+void JZModBusSimulator::startSimulator()
 {
-    QString path = QFileDialog::getSaveFileName(this, "", "modbus.jzcfg");
-    if (path.isEmpty())
-        return;
+    auto &c = m_config;
 
-    QFile file(path);
-    if (!file.open(QFile::WriteOnly | QFile::Truncate))
-        return;
-    
-    auto cfg = config();
+    bool ret = false;
+    int type = c.conn.modbusType;
+    if (type == Modbus_rtuClient || type == Modbus_tcpClient)
+        ret = m_master->open();
+    else if (type == Modbus_rtuServer || type == Modbus_tcpServer)
+        ret = m_slaver->startServer();
 
-    QDataStream s(&file);    
-    s << cfg;
-    file.close();
+    if (!ret)
+    {
+        QMessageBox::information(this, "", "Æô¶¯Ê§°Ü,Çë¼ì²éÉèÖÃ");
+        return;
+    }
+    updateStatus();
 }
 
-void JZModbusSimulator::onActionLoadConfig()
+void JZModBusSimulator::stopSimulator()
 {
-    QString path = QFileDialog::getOpenFileName(this, "", "*.jzcfg");
-    if (path.isEmpty())
-        return;
+    auto &c = m_config;
 
-    QFile file(path);
-    if (!file.open(QFile::ReadOnly))
-        return;
+    bool ret = false;
+    int type = c.conn.modbusType;
+    if (type == Modbus_rtuClient || type == Modbus_tcpClient)
+        m_master->close();
+    else if (type == Modbus_rtuServer || type == Modbus_tcpServer)
+        m_slaver->stopServer();
 
-    closeAll();    
-    JZModbusSimulatorConfig cfg;
+    updateStatus();
+}
 
-    QList<JZModbusConfig> cfg_list;
-    QDataStream s(&file);            
-    s >> cfg;
-    file.close();
+void JZModBusSimulator::settingSimulator()
+{
 
-    setConfig(cfg);
+}
+
+void JZModBusSimulator::initSimulator()
+{
+    close();
+
+    if (m_config.conn.modbusType == Modbus_rtuClient || m_config.conn.modbusType == Modbus_tcpClient)
+    {
+        m_master = new JZModbusMaster();
+        modbusMasterSetConfig(m_master, &m_config);
+        connect(m_master, &JZModbusMaster::sigParamChanged, this, &JZModBusSimulator::onParamChanged);
+        m_master->setProperty("table", QVariant::fromValue(m_table));
+    }
+    else
+    {
+        m_table->hideColumn(4);
+        m_table->hideColumn(5);
+        m_slaver = new JZModbusSlaver();
+        modbusSlaverSetConfig(m_slaver, &m_config);
+        connect(m_slaver, &JZModbusSlaver::sigParamChanged, this, &JZModBusSimulator::onParamChanged);
+        m_slaver->setProperty("table", QVariant::fromValue(m_table));
+    }
+    updateTable();
 }

@@ -19,6 +19,7 @@
 #include "modules/camera/JZCameraNode.h"
 #include "modules/model/JZModelNode.h"
 #include "modules/communication/JZCommNode.h"
+#include "modules/communication/JZCommSimulator.h"
 #include "JZModuleVisionApp.h"
 #include "JZProjectTemplate.h"
 #include "LogManager.h"
@@ -60,7 +61,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {            
     g_visionWindow = this;
-       
+    m_traceView = nullptr;
+
     m_className = "JZVisionApp";
     setMinimumSize(800, 600);
     setEditorProject(&m_project);
@@ -373,10 +375,8 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     connect(actBuild, &QAction::triggered, this, &MainWindow::onActionBuild);
 
     QMenu *menu_tool = menubar->addMenu("工具");
-    auto menu_tool_comm = menu_tool->addMenu("通信");    
-    menu_tool_comm->addAction("Modbus");
-    menu_tool_comm->addAction("TCP");
-    menu_tool_comm->addAction("Serial");
+    auto actCommTool = menu_tool->addAction("通信");
+    connect(actCommTool, &QAction::triggered, this, &MainWindow::onActionCommTool);
 
     auto actProfile = menu_tool->addAction("Profile");
     connect(actProfile, &QAction::triggered, this, &MainWindow::onActionProfile);
@@ -741,9 +741,47 @@ void MainWindow::onActionCloseAllFileExcept()
     closeAllEditor(m_editor);
 }
 
+void MainWindow::onFloatWindowDestory()
+{
+    QObject *obj = sender();
+    if (obj == m_traceView)
+        m_traceView = nullptr;
+
+    for (int i = 0; i < m_floatWindow.size(); i++)
+    {
+        if (m_floatWindow[i] == obj)
+            m_floatWindow.removeAt(i);
+    }
+}
+
+void MainWindow::addFlowWindow(QWidget *w)
+{
+    connect(w, &QWidget::destroyed, this, &MainWindow::onFloatWindowDestory );
+    m_floatWindow << w;
+}
+
+void MainWindow::onActionCommTool()
+{
+    JZCommSimulator *w = new JZCommSimulator();    
+    w->show();
+    addFlowWindow(w);
+}
+
 void MainWindow::onActionProfile()
 {
-
+    if (!m_traceView)
+    {
+        m_traceView = new JZNodeTraceView();
+        m_traceView->show();
+        addFlowWindow(m_traceView);
+    }
+    else
+    {
+        m_traceView->show();
+    }
+    QList<JZNodeTraceItem> trace_items = m_engine.traceContext()->parse();
+    m_traceView->setTraceData(trace_items);
+    m_traceView->resize(800, 600);
 }
 
 void MainWindow::onActionUndo()
@@ -1579,45 +1617,13 @@ void MainWindow::stop()
         stopCamera(camera_list[i]->name());    
 }
 
-void MainWindow::imageRuntimeDebug()
-{
-    auto env = m_engine.environment();
-    if (m_engine.regInCount() == 3)
-    {
-        QVariant roi = m_engine.getReg(Reg_CallIn + 2);
-        QString roi_type = env->variantTypeName(roi);
-        if (roi_type == "QList<JZYoloResult>")
-        {
-            QList<JZYoloResult> *yolo_ret = JZObjectCast<QList<JZYoloResult>>(toJZObject(roi));
-            auto graphList = JZYoloResult::toGraphics(*yolo_ret);
-
-            QString function = m_engine.runtimeInfo().stacks[0].function;
-            QString camera = getCameraByProgram(function);
-            if (camera.isEmpty())
-                return;
-
-            m_cameraView->label(camera)->setGraphics(graphList);
-        }
-    }
-}
-
 void MainWindow::imageDebug()
 {    
-    if (m_stack->currentIndex() == 0)
-    {
-        imageRuntimeDebug();
-        return;
-    }
-
-    JZNodeCameraReadyEvent* camera_event = currrentCameraNode();
-    if (!camera_event)
-        return;
-
     auto env = m_engine.environment();
     int node_id = m_engine.getReg(Reg_CallIn).toInt();
     QVariant v = m_engine.getReg(Reg_CallIn + 1);
     auto mat = JZObjectCast<cv::Mat>(toJZObject(v));
-    
+
     ImageResult image;
     image.mat = *mat;
     if (m_engine.regInCount() == 3)
@@ -1628,8 +1634,28 @@ void MainWindow::imageDebug()
         {
             QList<JZYoloResult> *yolo_ret = JZObjectCast<QList<JZYoloResult>>(toJZObject(roi));
             image.graphList = JZYoloResult::toGraphics(*yolo_ret);
-        }        
+        }
+        else if (roi_type == "QList<JZOCRResult>")
+        {
+            QList<JZOCRResult> *ocr_ret = JZObjectCast<QList<JZOCRResult>>(toJZObject(roi));
+            image.graphList = JZOCRResult::toGraphics(*ocr_ret);
+        }
     }
+
+    if (m_stack->currentIndex() == 0)
+    {
+        QString function = m_engine.runtimeInfo().stacks[0].function;
+        QString camera = getCameraByProgram(function);
+        if (camera.isEmpty())
+            return;
+
+        m_cameraView->label(camera)->setGraphics(image.graphList);
+        return;
+    }
+
+    JZNodeCameraReadyEvent* camera_event = currrentCameraNode();
+    if (!camera_event)
+        return;    
     
     NodeResult result;
     result.outputImage << image;

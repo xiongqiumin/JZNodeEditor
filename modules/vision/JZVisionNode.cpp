@@ -2,6 +2,7 @@
 #include "JZNodeCompiler.h"
 #include "JZNodeUtils.h"
 #include "../JZModuleDebug.h"
+#include "JZNodeTrace.h"
 
 //JZNodeVisionImageThreshold
 JZNodeVisionImageThreshold::JZNodeVisionImageThreshold()
@@ -441,15 +442,21 @@ bool JZNodeVisionOCR::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    JZNodeTraceBuilder trace(c);
+
     int obj_id;
     QByteArray init_buffer;
     c->addGetOrInit(c->uniqueNodeName(m_id), "JZPaddleOCR::init", {}, obj_id);
-
+    
+    int in_id = paramInId(0);
+    int out_id = paramOutId(0);
     QList<JZNodeIRParam> in,out;
     in << irId(obj_id);
-    in << irId(c->paramId(m_id, paramIn(0)));
-    out << irId(c->paramId(m_id, paramOut(0)));
+    in << irId(in_id);
+    out << irId(out_id);
     c->addCall("JZPaddleOCR::ocr", in, out);
+
+    JZModuleDebug(c, m_id, irId(in_id), irId(out_id));
     return true;
 }
 

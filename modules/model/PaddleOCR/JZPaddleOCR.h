@@ -7,11 +7,14 @@
 #include "ocr_det.h"
 #include "ocr_cls.h"
 #include "ocr_rec.h"
+#include "jzWidgets/JZImageGraphic.h"
 
 class JZOCRResult
 {
 public:
-    JZOCRResult();
+    static QList<JZGraphic> toGraphics(const QList<JZOCRResult> &result);
+
+    JZOCRResult();    
 
     QRect rect;
     QString text;
