@@ -212,6 +212,24 @@ void JZVisionSettingDialog::setNode(JZNode* node)
     QLabel *label_name = new QLabel(view()->nodeName(node));
     v->addWidget(label_name);
 
+    //子流程
+    auto sub_flow_list = node->subFlowList();
+    if (sub_flow_list.size() > 0)
+    {
+        if (node->type() == Node_if || node->type() == Node_switch)
+        {
+
+        }
+
+        QGridLayout* grid = new QGridLayout();
+        for (int i = 0; i < sub_flow_list.size(); i++)
+        {
+
+        }
+        v->addLayout(grid);
+    }
+
+    //参数
     auto in_list = node->paramInList();
     if (in_list.size() > 0)
     {

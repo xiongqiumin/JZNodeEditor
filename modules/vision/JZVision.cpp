@@ -287,7 +287,7 @@ bool JZBarCode::init()
     if (m_detector)
         return true;
 
-    QString model_dir = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/model/wechat_qrcode";
+    QString model_dir = qApp->applicationDirPath() + "/model/wechat_qrcode";
     QString sr_prototxt = model_dir + "/sr.prototxt";
     QString sr_caffemodel = model_dir + "/sr.caffemodel";
     m_detector = cv::makePtr<cv::barcode::BarcodeDetector>(
@@ -299,7 +299,7 @@ bool JZBarCode::init()
 
 QList<JZBarCodeResult> JZBarCode::detect(cv::Mat in)
 {
-    QList<JZBarCodeResult> ret;
+    QList<JZBarCodeResult> ret_list;
          
     std::vector<cv::Point> vPoints;
     std::vector<std::string> decoded_text;
@@ -307,8 +307,15 @@ QList<JZBarCodeResult> JZBarCode::detect(cv::Mat in)
     cv::Mat gray;
     cv::cvtColor(in, gray, cv::COLOR_BGR2GRAY);
     m_detector->detectAndDecodeWithType(gray, decoded_text, decoded_format, vPoints);
+    for (int i = 0; i < decoded_text.size(); i++)
+    {
+        JZBarCodeResult ret;
+        ret.type = QString::fromLocal8Bit(decoded_format[i].data());
+        ret.text = QString::fromLocal8Bit(decoded_text[i].data());
+        ret_list.push_back(ret);
+    }
 
-    return ret;
+    return ret_list;
 }
 
 //JZQRCode
@@ -321,7 +328,7 @@ bool JZQRCode::init()
     if (m_detector)
         return true;
 
-    QString model_dir = "C:/Users/xiong/Desktop/JZNodeEditorTest/data/model/wechat_qrcode";
+    QString model_dir = qApp->applicationDirPath() + "model/wechat_qrcode";
     QString detect_prototxt = model_dir + "/detect.prototxt";
     QString detect_caffemodel = model_dir + "/detect.caffemodel";
     QString sr_prototxt = model_dir + "/sr.prototxt";
@@ -337,10 +344,16 @@ bool JZQRCode::init()
 
 QList<JZQRCodeResult> JZQRCode::detect(cv::Mat in)
 {
-    QList<JZQRCodeResult> ret;
+    QList<JZQRCodeResult> ret_list;
 
     std::vector<cv::Mat> vPoints;
     std::vector<std::string> strs = m_detector->detectAndDecode(in, vPoints);
+    for (int i = 0; i < strs.size(); i++)
+    {
+        JZQRCodeResult ret;
+        ret.text = QString::fromLocal8Bit(strs[i].data());
+        ret_list.push_back(ret);
+    }
 
-    return ret;
+    return ret_list;
 }
