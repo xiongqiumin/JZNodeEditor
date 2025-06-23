@@ -5,6 +5,7 @@
 #include "JZVisionNodeItem.h"
 #include "JZVisionLineItem.h"
 #include "JZNodeAbstractView.h"
+#include "JZVisionAppNode.h"
 
 class JZVisionView : public JZNodeAbstractView
 {
@@ -16,6 +17,10 @@ public:
 
     QString nodeName(int node_id);
     QString pinName(JZNodeGemo gemo);
+
+    JZVisionParamLink linkInfo(int node_id, int pin_id);
+    void addCreateLinkCommand(const JZVisionParamLink& link, const JZNodeGemo& gemo);
+    void addRemoveLinkCommand(int id);
 
 protected slots:
     void onContextMenu(const QPoint &pos);
@@ -31,7 +36,6 @@ protected:
     virtual JZAbstractLineItem *createLineItem(JZNodeGemo from);
 
     void configNode(JZNode *node);
-
 
     QList<int> m_cacheNodeList;
     QMap<JZNode*, QString> m_nodeName;

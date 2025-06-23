@@ -24,6 +24,7 @@ enum ModuleNode
     Module_VisionNode = 1500,
     Module_MotionNode = 1600,
     Module_LogNode = 1600,
+    Module_VisionAppNode = 1700,
 };
 
 enum ModuleProjectItem

@@ -6,6 +6,8 @@
 
 static bool checkHasCamera(JZNodeCompiler *c, const QString &camera, QString &error)
 {
+    JZCameraManagerConfig camera_config;
+
     auto env = c->env();
     if (!c->checkVariableType("this.cameraManager", env->nameToType("JZCameraManager*"), error))
         return false;
@@ -18,7 +20,9 @@ static bool checkHasCamera(JZNodeCompiler *c, const QString &camera, QString &er
     }
 
     JZNodeCameraInit *node = dynamic_cast<JZNodeCameraInit*>(init_node);
-    if(node->config().indexOfCamera(camera) == -1)
+    camera_config = node->config();
+
+    if(camera_config.indexOfCamera(camera) == -1)
     {
         error = "没有相机名称为" + camera;
         return false;

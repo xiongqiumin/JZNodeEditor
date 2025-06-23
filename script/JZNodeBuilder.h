@@ -2,16 +2,19 @@
 #define JZ_NODE_BUILDER_H_
 
 #include <QMutex>
+#include <QObject>
 #include <functional>
 #include "JZNodeCompiler.h"
 
 class JZNodeConstructBuild;
 
 //JZNodeBuilder
-class JZNodeBuilder
+class JZNodeBuilder : public QObject
 {
+    Q_OBJECT
+
 public:
-    JZNodeBuilder();
+    JZNodeBuilder(QObject *parent = nullptr);
     ~JZNodeBuilder();
     
     void setMute(bool mute);
@@ -37,6 +40,9 @@ public:
     const CompilerResult *compilerInfo(JZScriptItem *file) const;
 
     void addClassInitFunction(QString class_name, ClassInitInfo function);
+
+signals:
+    void sigLog(int level,QString text);
 
 protected:    
     friend JZNodeConstructBuild;

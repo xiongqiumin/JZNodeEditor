@@ -49,8 +49,11 @@ class JZBarCode : public QObject
 
 public:
     JZBarCode();
+    ~JZBarCode();
 
+    bool isInit();
     bool init();
+    void deinit();
     QList<JZBarCodeResult> detect(cv::Mat in);
 
     cv::Ptr<cv::barcode::BarcodeDetector> m_detector;
@@ -72,8 +75,11 @@ class JZQRCode : public QObject
 
 public:
     JZQRCode();
+    ~JZQRCode();
 
+    bool isInit();
     bool init();
+    void deinit();
     QList<JZQRCodeResult> detect(cv::Mat in);
 
 protected:

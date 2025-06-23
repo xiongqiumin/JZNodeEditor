@@ -1,3 +1,5 @@
+include_directories(./)
+
 set(JZVisionPlatform_SOURCES
     JZVisionPlatform.qrc
     main.cpp      
@@ -21,6 +23,10 @@ set(JZVisionPlatform_SOURCES
     JZFlowTree.h
 	JZCameraThread.cpp
 	JZCameraThread.h
+	JZVisionAppNode.cpp
+	JZVisionAppNode.h
+	JZVisionAppSample.cpp
+	JZVisionAppSample.h
     
     editor/JZVisionPanel.cpp
     editor/JZVisionPanel.h

@@ -38,6 +38,8 @@ public:
 
     bool isModified();    
 
+    JZNodeBaseItem *getItem(int id);
+
     /* node */
     JZNode *getNode(int id);
     JZNodePin *getPin(JZNodeGemo gemo);

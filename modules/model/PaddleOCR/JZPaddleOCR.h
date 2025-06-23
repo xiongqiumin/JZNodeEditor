@@ -30,7 +30,8 @@ public:
     ~JZPaddleOCR();
     
     bool isInit();
-    void init();
+    bool init();
+    void deinit();
     QList<JZOCRResult> ocr(cv::Mat mat);
 
 protected:    

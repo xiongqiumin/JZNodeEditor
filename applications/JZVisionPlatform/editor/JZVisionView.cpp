@@ -4,6 +4,8 @@
 #include "JZVisionSettingDialog.h"
 #include "JZEditorGlobal.h"
 #include "JZNodeUtils.h"
+#include "JZVisionAppNode.h"
+#include "JZScriptItemVisitor.h"
 
 JZVisionView::JZVisionView(QWidget *parent)
 {
@@ -13,6 +15,27 @@ JZVisionView::JZVisionView(QWidget *parent)
 
 JZVisionView::~JZVisionView()
 {
+}
+
+JZVisionParamLink JZVisionView::linkInfo(int node_id, int pin_id)
+{
+    QList<int> in_list = m_file->getConnectInput(node_id, pin_id);
+    if (in_list.size() == 0)
+        return JZVisionParamLink();
+    
+    JZVisionParamLink linkGemo;
+    auto from_gemo = m_file->getConnect(in_list[0])->from;
+    auto from_node = m_file->getNode(from_gemo.nodeId);
+    if (from_node->type() == Node_visionAppParam)
+    {
+        JZNodeVisionParam* node_param = dynamic_cast<JZNodeVisionParam*>(from_node);
+        linkGemo = node_param->link();
+    }
+    else
+    {
+        linkGemo.gemo = from_gemo;
+    }
+    return linkGemo;
 }
 
 bool JZVisionView::nodeIdCmp(const JZNode* n1, const JZNode* n2)
@@ -119,6 +142,39 @@ JZAbstractLineItem *JZVisionView::createLineItem(JZNodeGemo from)
     return new JZVisionLineItem(from);
 }
 
+void JZVisionView::addCreateLinkCommand(const JZVisionParamLink &link, const JZNodeGemo &to_gemo)
+{
+    if(link.type == JZVisionParamLink::Link_Node && link.path.isEmpty())
+    {
+        addCreateLineConmmand(link.gemo,to_gemo);
+    }
+    else
+    {
+        auto factory = editorNodeFactory();
+
+        JZNodeVisionParam param;
+        param.setLink(link);
+        addCreateNodeCommand(factory->saveNode(&param),QPoint(0,0));
+        if(link.type == JZVisionParamLink::Link_Node)
+            addCreateLineConmmand(link.gemo,param.paramInGemo(0));
+            
+        addCreateLineConmmand(param.paramOutGemo(0),to_gemo);
+    }
+}
+
+void JZVisionView::addRemoveLinkCommand(int id)
+{
+    auto line = getLineItem(id);
+
+    auto node = m_file->getNode(line->startTraget().nodeId);
+    addRemoveLineCommand(line->id());
+    if (node->type() == Node_visionAppParam)
+    {
+        auto node_item = getNodeItem(node->id());
+        removeItem(node_item);
+    }
+}
+
 void JZVisionView::configNode(JZNode *node)
 {
     QByteArray old_buffer = editorNodeFactory()->saveNode(node);
@@ -143,36 +199,35 @@ void JZVisionView::configNode(JZNode *node)
     while (it != block_list.end())
     {
         int pin_id = it.key();
-        auto in_list = m_file->getConnectInput(node->id(), pin_id);
-        bool pre_link = (in_list.size() > 0);
+        
         QString pre_value = node->pinValue(pin_id);
-        JZNodeGemo pre_gemo;
-        if (pre_link)
-            pre_gemo = m_file->getConnect(in_list[0])->from;
+        QList<int> in_list = m_file->getConnectInput(node->id(), pin_id);
+        JZVisionParamLink pre_gemo = linkInfo(node->id(), pin_id);
+        bool pre_link = !pre_gemo.isNull();
 
         auto pin_widget = it->pinWidget;
         if (pre_link && pin_widget->isLink())
         {
-            if (pre_gemo != pin_widget->linkGemo())
+            if (pre_gemo != pin_widget->linkInfo())
             {
                 addMacro();
-                addRemoveLineCommand(in_list[0]);
-                addCreateLineConmmand(pin_widget->linkGemo(), JZNodeGemo(node->id(), pin_id));
+                addRemoveLinkCommand(in_list[0]);
+                addCreateLinkCommand(pin_widget->linkInfo(), JZNodeGemo(node->id(), pin_id));
             }
         }
         else if (pre_link && !pin_widget->isLink())
         {
             addMacro();
-            addRemoveLineCommand(in_list[0]);
+            addRemoveLinkCommand(in_list[0]);
         }
         else if (!pre_link && pin_widget->isLink())
         {
             addMacro();
-            addCreateLineConmmand(pin_widget->linkGemo(), JZNodeGemo(node->id(), pin_id));
+            addCreateLinkCommand(pin_widget->linkInfo(), JZNodeGemo(node->id(), pin_id));
         }
         else if (!pre_link && !pin_widget->isLink())
         {
-
+            //这里在后续node change中处理
         }
 
         it++;

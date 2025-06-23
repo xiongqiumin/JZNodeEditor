@@ -28,6 +28,8 @@ public:
     JZNodeBuildThread();
     ~JZNodeBuildThread();
     
+    JZNodeBuilder *buidler();
+
     void setMute(bool mute);
     void startBuild(JZProject *project);
     bool isBuild();

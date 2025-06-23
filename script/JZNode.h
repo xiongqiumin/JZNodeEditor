@@ -116,6 +116,8 @@ struct JZNodeGemo
     int nodeId;
     int pinId;
 };
+void operator<<(QDataStream& s, const JZNodeGemo& param);
+void operator>>(QDataStream& s, JZNodeGemo& param);
 
 //JZNodeConnect
 class JZNodeConnect

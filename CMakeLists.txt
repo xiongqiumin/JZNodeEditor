@@ -319,6 +319,8 @@ set(JZNodeCore_SOURCES
     widgets/JZBaseDialog.h
     widgets/JZPropertyDialog.cpp
     widgets/JZPropertyDialog.h
+	widgets/JZLineEditButton.cpp
+	widgets/JZLineEditButton.h
     
     #3rd
     3rd/JZCommon/jzNet/JZNetClient.cpp

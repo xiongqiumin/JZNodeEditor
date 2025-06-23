@@ -223,6 +223,22 @@ void JZNodeAbstractView::saveNodePos()
     });
 }
 
+JZNodeBaseItem *JZNodeAbstractView::getItem(int id)
+{
+    auto items = m_scene->items();
+    for (int i = 0; i < items.size(); i++)
+    {
+        int item_type = items[i]->type();
+        if (item_type >= Item_line && item_type <= Item_group)
+        {
+            auto item = (JZNodeBaseItem*)items[i];
+            if(item->id() == id)
+                return item;
+        }
+    }
+    return nullptr;
+}
+
 JZNode *JZNodeAbstractView::getNode(int id)
 {
     return m_file->getNode(id);
@@ -974,11 +990,7 @@ void JZNodeAbstractView::removeItem(QGraphicsItem *item)
     }
     else if (item->type() == Item_line)
     {
-        auto line = m_file->getConnect(item_id);
-        JZNodeViewCommand *cmd = new JZNodeViewCommand(this, ViewCommand::RemoveLine);
-        cmd->itemId = line->id;
-        cmd->oldValue = JZNodeUtils::toBuffer(*line);
-        m_commandStack.push(cmd);
+        addRemoveLineCommand(item_id);
     }
     else if (item->type() == Item_group)
     {

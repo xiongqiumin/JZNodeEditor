@@ -33,6 +33,7 @@ JZPaddleOCR::JZPaddleOCR()
 
 JZPaddleOCR::~JZPaddleOCR()
 {
+    deinit();
 }
 
 bool JZPaddleOCR::isInit()
@@ -40,8 +41,11 @@ bool JZPaddleOCR::isInit()
     return m_init;
 }
 
-void JZPaddleOCR::init()
+bool JZPaddleOCR::init()
 {
+    if (m_init)
+        return true;
+
     QString mode_path = qApp->applicationDirPath() + "/model/paddle_ocr";
     std::string model_dir = mode_path.toLocal8Bit().data();
     m_detector.LoadModel(model_dir + "/ch_PP-OCRv4_det_infer.onnx");
@@ -52,6 +56,12 @@ void JZPaddleOCR::init()
     m_rec.LoadModel(model_dir + "/ch_PP-OCRv4_rec_infer.onnx");
 
     m_init = true;
+    return true;
+}
+
+void JZPaddleOCR::deinit()
+{
+    m_init = false;
 }
 
 QList<JZOCRResult> JZPaddleOCR::ocr(cv::Mat mat)

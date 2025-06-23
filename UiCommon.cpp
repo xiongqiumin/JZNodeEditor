@@ -48,7 +48,7 @@ void UiHelper::treeSortChilds(QTreeWidgetItem *node)
     });
 }
 
-void UiHelper::treeSortChilds(QTreeWidgetItem *root,std::function<bool(QTreeWidgetItem*,QTreeWidgetItem*)> cmp)
+void UiHelper::treeSortChilds(QTreeWidgetItem *root,const std::function<bool(QTreeWidgetItem*,QTreeWidgetItem*)> &cmp)
 {
     int count = root->childCount();
     QList<QTreeWidgetItem*> sort_list;
@@ -76,4 +76,31 @@ void UiHelper::treeSortChilds(QTreeWidgetItem *root,std::function<bool(QTreeWidg
     Q_ASSERT(root->childCount() == 0);
     for (int i = 0; i < sort_list.size(); i++)
         root->addChild(sort_list[i]);   
+}
+
+QList<QTreeWidgetItem*> UiHelper::treeFindItem(QTreeWidgetItem *root,int column,int role,QVariant value)
+{
+    QList<QTreeWidgetItem*> result;
+    
+    // 检查当前项目
+    if (root->data(column, role) == value) {
+        result.append(root);
+    }
+    
+    // 递归检查子项目
+    for (int i = 0; i < root->childCount(); ++i) {
+        QTreeWidgetItem *child = root->child(i);
+        result += treeFindItem(child, column, role, value);
+    }
+    
+    return result;
+}
+
+void UiHelper::treeVisit(QTreeWidgetItem *root,const std::function<void(QTreeWidgetItem*)> &visitor)
+{
+    visitor(root);
+    for (int i = 0; i < root->childCount(); ++i) {
+        QTreeWidgetItem *child = root->child(i);
+        treeVisit(child,visitor);
+    }
 }

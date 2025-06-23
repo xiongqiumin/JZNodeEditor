@@ -1,12 +1,36 @@
 ﻿#pragma once
 
 #include <QDialog>
+#include <QTreeWidget>
 #include "jzWidgets/JZPropertyBrowser.h"
 #include "JZBaseDialog.h"
 #include "JZNode.h"
 #include "JZNodeParamEditWidget.h"
+#include "JZLineEditButton.h"
+#include "JZVisionAppNode.h"
 
 class JZVisionView;
+
+//JZVisionLinkDialog
+class JZVisionLinkDialog : public JZBaseDialog
+{
+public:
+    JZVisionLinkDialog(QWidget *w);
+
+    void initLinkList(JZNode *node,int pin_id);
+    void setLink(JZVisionParamLink link);
+    JZVisionParamLink link();
+
+protected:
+    virtual void accept() override;
+    void addLinkItem(QTreeWidgetItem *parent,const JZVisionParamLink &link, const JZParamDefine* param,const QList<int> &dst_types);
+
+    QTreeWidget *m_tree;
+    QMap<int,JZVisionParamLink> m_paramLink;
+    JZNode *m_node;
+    int m_pinId;
+    int m_linkId;
+};
 
 //JZVisionSettingPinWidget
 class JZVisionSettingDialog;
@@ -24,25 +48,27 @@ public:
     void setSetting(JZVisionSettingDialog *dlg);
 
     bool isLink();
-    JZNodeGemo linkGemo();
+    JZVisionParamLink linkInfo();
     QString value();
 
 protected slots:
     void onBtnLink();
+    void onLickSelected();
 
 protected:
+    QString linkName();
     void updatePinWidget();
-    void updateLinkList();
-    void addLinkItem(JZNode* node, const QList<int> &dst_types);
 
     JZNode* m_node;
     int m_pinId;
 
-    JZNodeParamValueWidget* m_pinEditor;
     bool m_isLink;
     QToolButton* m_btnLink;
-    JZNodeGemo m_linkGemo;
-    QComboBox* m_linkTip;
+    JZVisionParamLink m_linkGemo;
+
+    JZNodeParamValueWidget* m_pinEditor;
+    JZLineEditButton* m_linkEdit;
+
     JZVisionSettingDialog *m_setting;
 };
 
@@ -67,7 +93,10 @@ public:
     QMap<int, Block> blockList();
     JZVisionView* view();
 
-protected slots:
+public slots:
+    void onPinRemove();
+    void onPinAdd();
+    void onPinElse();
 
 protected:    
     QWidget *createRow(QString name, QString value);
@@ -77,4 +106,5 @@ protected:
 
     QMap<int,Block> m_blockList;
     JZNode* m_node;
+    QVBoxLayout* m_grid;
 };

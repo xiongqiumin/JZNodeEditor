@@ -28,6 +28,7 @@
 #include "JZDockWidget.h"
 #include "widgets/JZAboutDialog.h"
 #include "modules/opencv/CvToQt.h"
+#include "JZVisionAppSample.h"
 
 //Setting
 Setting::Setting()
@@ -63,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent)
     g_visionWindow = this;
     m_traceView = nullptr;
 
-    m_className = "JZVisionApp";
+    m_className = "MyVisionApp";
     setMinimumSize(800, 600);
     setEditorProject(&m_project);
     setWindowTitle("JZVison");
@@ -77,6 +78,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_task.runThread(), &JZNodeAutoRunThread::sigResult, this, &MainWindow::onAutoRunResult);
     connect(&m_task, &MainTaskManager::sigBuildStart, this, &MainWindow::onBuildStart);
     connect(&m_task, &MainTaskManager::sigBuildFinish, this, &MainWindow::onBuildFinish);
+
+    auto builder = m_task.buildThread()->buidler();
+    connect(builder, &JZNodeBuilder::sigLog, this, &MainWindow::onBuildLog);
 
     connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &MainWindow::onRuntimeError);
     
@@ -92,6 +96,10 @@ MainWindow::MainWindow(QWidget *parent)
     m_commManager = new JZCommManager(this);
     connect(m_cameraManager, &JZCameraManager::sigFrameReady, this, &MainWindow::onFrameReady);
     connect(m_cameraManager, &JZCameraManager::sigError, this, &MainWindow::onCameraError);
+
+    JZQRCode* m_qrCode = new JZQRCode();
+    JZBarCode* m_barCode = new JZBarCode();
+    JZPaddleOCR* m_ocr = new JZPaddleOCR();
 
     m_cameraList = new JZCameraListWidget();
     m_cameraView = new JZCameraViewWidget();
@@ -111,6 +119,11 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     saveSetting();
+}
+
+JZProject* MainWindow::project()
+{
+    return &m_project;
 }
 
 void MainWindow::initDatabase()
@@ -181,16 +194,43 @@ JZCommManager* MainWindow::commManager()
     return m_commManager;
 }
 
+JZPaddleOCR* MainWindow::getOCR()
+{
+    if (m_ocr->isInit())
+    {
+        m_ocr->init();
+    }
+
+    return m_ocr;
+}
+
+JZBarCode* MainWindow::getBarCode()
+{
+    if (m_barCode->isInit())
+    {
+        m_barCode->init();
+    }
+
+    return m_barCode;
+}
+
+JZQRCode* MainWindow::getQrCode()
+{
+    if (m_qrCode->isInit())
+    {
+        m_qrCode->init();
+    }
+
+    return m_qrCode;
+}
+
 void MainWindow::customEvent(QEvent* event)
 {
     if (event->type() == JZLogEvent::EventType)
     {
         auto log_event = dynamic_cast<JZLogEvent*>(event);
         auto log = log_event->log;
-        if (log->module == Log_Compiler)
-            m_buildLog->addLog(log->module, log->message);
-        else
-            m_mainLog->addLog(log);
+        m_mainLog->addLog(log);
     }
 }
 
@@ -209,8 +249,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
     m_task.clearTask();
     m_task.stopRunThread();
-    if (m_engine.isInit())
-        m_engine.deinit();
+    releaseEngine();
     QMainWindow::closeEvent(event);
 }
 
@@ -837,6 +876,14 @@ void MainWindow::onActionAbout()
     dlg.exec();
 }
 
+void MainWindow::onActionSample()
+{
+    initProject();
+
+    JZVisionAppSample sample;
+    sample.create(this, "path");
+}
+
 void MainWindow::onActionHelp()
 {
     QString url = "https://www.juzisoftware.cn/JZVision/index.html";
@@ -972,8 +1019,7 @@ void MainWindow::onProjectItemChanged(JZProjectItem* item)
 
 void MainWindow::onProjectChanged()
 {
-    m_engine.deinit();
-
+    releaseEngine();
     onActionBuild();
 }
 
@@ -1077,11 +1123,7 @@ void MainWindow::onBuildStart()
 
 void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
 {
-    if (m_engine.isInit())
-    {
-        m_engine.deinit();
-
-    }
+    releaseEngine();
     m_buildResult = result;
 
     auto it = m_editors.begin();
@@ -1102,8 +1144,10 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
         m_engine.setProgram(&m_buildResult->program);
         m_engine.init();
 
-        m_camProgram.clear();
+        auto obj_inst = m_engine.environment()->objectManager();
+        m_app = obj_inst->createHolder(m_className);
 
+        m_camProgram.clear();
         auto cls_item = m_project.getClass(m_className);
         auto functions = cls_item->flowList();        
         for (int i = 0; i < functions.size(); i++)
@@ -1125,6 +1169,11 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
     {
         LOG_W("编译失败，请检查编译结果");
     }
+}
+
+void MainWindow::onBuildLog(int level, QString text)
+{
+    m_buildLog->addLog(level, text);
 }
 
 void MainWindow::onAutoRunResult(int result)
@@ -1156,12 +1205,10 @@ void MainWindow::onFrameReady(QString camera, cv::Mat mat)
     }
     
     auto obj_inst = m_engine.environment()->objectManager();
-    JZNodeObject *this_obj = obj_inst->createReference(m_className, this, false);
-    JZNodeObjectPointer this_ptr(this_obj,false);
     JZNodeObjectPointer mat_ptr = obj_inst->objectReferencePointer(&mat, false);
 
     QVariantList in, out;
-    in << QVariant::fromValue(this_ptr) << QVariant::fromValue(mat_ptr);
+    in << QVariant::fromValue(m_app) << QVariant::fromValue(mat_ptr);
     m_engine.call(it->function, in, out);
 }
 
@@ -1177,9 +1224,14 @@ void MainWindow::onMainStackedChanged()
 
 void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
-    m_engine.deinit();
-
+    releaseEngine();
     QMessageBox::information(this, "", error.errorReport());
+}
+
+void MainWindow::releaseEngine()
+{
+    if (m_engine.isInit())
+        m_engine.deinit();
 }
 
 void MainWindow::initProject()
@@ -1188,7 +1240,7 @@ void MainWindow::initProject()
 
     JZProjectTemplate::instance()->initProject(&m_project, "empty");    
 
-    JZScriptClassItem *class_item = m_project.mainFile()->addClass(m_className,"JZVisionPlatform");
+    JZScriptClassItem *class_item = m_project.mainFile()->addClass(m_className,"JZVisionApplication");
     JZFunctionDefine func_init_def = class_item->objectDefine().initMemberFunction("init");
     JZScriptItem *script = class_item->addMemberFunction(func_init_def);
     auto start = script->startNode();

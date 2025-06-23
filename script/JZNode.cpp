@@ -52,6 +52,18 @@ bool JZNodeGemo::operator!=(const JZNodeGemo &other) const
     return !(*this == other);
 }
 
+void operator<<(QDataStream& s, const JZNodeGemo& param)
+{
+    s << param.nodeId;
+    s << param.pinId;
+}
+
+void operator>>(QDataStream& s, JZNodeGemo& param)
+{
+    s >> param.nodeId;
+    s >> param.pinId;
+}
+
 // JZNodeConnect
 JZNodeConnect::JZNodeConnect()
 {
@@ -61,19 +73,15 @@ JZNodeConnect::JZNodeConnect()
 void operator<<(QDataStream &s, const JZNodeConnect &param)
 {
     s << param.id;
-    s << param.from.nodeId;
-    s << param.from.pinId;
-    s << param.to.nodeId;
-    s << param.to.pinId;
+    s << param.from;
+    s << param.to;
 }
 
 void operator>>(QDataStream &s, JZNodeConnect &param)
 {
     s >> param.id;
-    s >> param.from.nodeId;
-    s >> param.from.pinId;
-    s >> param.to.nodeId;
-    s >> param.to.pinId;
+    s >> param.from;
+    s >> param.to;
 }
 
 //JZNodeGroup

@@ -5,10 +5,7 @@
 #include <QPushButton>
 #include <QWidget>
 #include <QStackedWidget>
-#include "modules/communication/JZCommManager.h"
-#include "modules/camera/JZCameraManager.h"
 #include "modules/camera/JZCameraNode.h"
-#include "modules/model/JZModelManager.h"
 #include "modules/model/JZModelWidget.h"
 #include "modules/communication/JZCommWidget.h"
 #include "jzDatabase/JZDataBase.h"
@@ -25,6 +22,7 @@
 #include "jzWidgets/JZImageLabel.h"
 #include "editor/JZVisionEditor.h"
 #include "JZNodeTraceView.h"
+#include "JZModuleVisionApp.h"
 
 class Setting
 {
@@ -44,9 +42,15 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    JZProject *project();
+
     JZModelManager* modelManager();
     JZCameraManager* cameraManager();
     JZCommManager* commManager();
+    
+    JZPaddleOCR* getOCR();
+    JZBarCode* getBarCode();
+    JZQRCode* getQrCode();
 
     JZCamera *camera(QString name);
     void startCamera(QString name);
@@ -87,6 +91,7 @@ protected slots:
 
     void onActionHelp();
     void onActionAbout();
+    void onActionSample();
 
     void onActionBuild();
     void onActionRun();
@@ -117,6 +122,7 @@ protected slots:
 
     void onBuildStart();
     void onBuildFinish(JZNodeBuildResultPtr result);
+    void onBuildLog(int level, QString text);
     void onAutoRunResult(int result);
 
     void onFrameReady(QString camera,cv::Mat mat);
@@ -188,10 +194,16 @@ protected:
 
     const CompilerResult* compilerResult(const QString& path);
     void addFlowWindow(QWidget *w);
+    void releaseEngine();
 
     JZModelManager* m_modelManager;
     JZCameraManager* m_cameraManager;
     JZCommManager* m_commManager;
+    JZQRCode* m_qrCode;
+    JZBarCode* m_barCode;
+    JZPaddleOCR* m_ocr;
+
+    JZNodeObjectPointer m_app;
 
     QString m_className;
     QMap<QString, CameraProgram> m_camProgram;

@@ -16,6 +16,11 @@ void JZNodeBuildThread::sync(JZProject *project)
     project->copyTo(&m_project);
 }
 
+JZNodeBuilder* JZNodeBuildThread::buidler()
+{
+    return &m_builder;
+}
+
 void JZNodeBuildThread::setMute(bool mute)
 {
     m_builder.setMute(mute);

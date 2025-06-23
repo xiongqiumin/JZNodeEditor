@@ -291,7 +291,7 @@ QList<JZGraphic> JZBarCodeResult::toGraphics(const QList<JZBarCodeResult> &bar_l
             g.points << pt;
         list.push_back(g);
 
-        QPolygon poly(g.points);
+        QPolygonF poly(g.points);
         auto rect = poly.boundingRect();
 
         JZGraphic g_text;
@@ -308,6 +308,16 @@ JZBarCode::JZBarCode()
 {
 }
 
+JZBarCode::~JZBarCode()
+{
+    deinit();
+}
+
+bool JZBarCode::isInit()
+{
+    return m_detector;
+}
+
 bool JZBarCode::init()
 {
     if (m_detector)
@@ -321,6 +331,11 @@ bool JZBarCode::init()
         sr_caffemodel.toStdString());
 
     return true;
+}
+
+void JZBarCode::deinit()
+{
+    m_detector.reset();
 }
 
 QList<JZBarCodeResult> JZBarCode::detect(cv::Mat in)
@@ -365,7 +380,7 @@ QList<JZGraphic> JZQRCodeResult::toGraphics(const QList<JZQRCodeResult> &qr_list
             g.points << pt;
         list.push_back(g);
 
-        QPolygon poly(g.points);
+        QPolygonF poly(g.points);
         auto rect = poly.boundingRect();
 
         JZGraphic g_text;        
@@ -381,6 +396,16 @@ QList<JZGraphic> JZQRCodeResult::toGraphics(const QList<JZQRCodeResult> &qr_list
 //JZQRCode
 JZQRCode::JZQRCode()
 {
+}
+
+JZQRCode::~JZQRCode()
+{
+    deinit();
+}
+
+bool JZQRCode::isInit()
+{
+    return m_detector;
 }
 
 bool JZQRCode::init()
@@ -401,6 +426,12 @@ bool JZQRCode::init()
 
     return true;
 }
+
+void JZQRCode::deinit()
+{
+    m_detector.reset();
+}
+
 
 QList<JZQRCodeResult> JZQRCode::detect(cv::Mat in)
 {

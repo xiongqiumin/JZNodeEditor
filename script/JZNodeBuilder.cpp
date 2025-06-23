@@ -75,7 +75,8 @@ public:
 
 
 //JZNodeBuilder
-JZNodeBuilder::JZNodeBuilder()
+JZNodeBuilder::JZNodeBuilder(QObject* parent)
+    :QObject(parent)
 {
     m_logEnable = true;
     m_project = nullptr;
@@ -151,7 +152,7 @@ void JZNodeBuilder::log(int level, const QString &text)
     if (!m_logEnable)
         return;
 
-    JZLogManager::instance()->log(Log_Compiler, level, text);
+    emit sigLog(level,text);
 }
 
 void JZNodeBuilder::logE(const QString& text)
