@@ -37,7 +37,7 @@ public:
     void clearLog(int type);
     void clearLogs();
 
-    void addLog(int type, const QString &log);
+    void addLog(int module, const QString &log);
     void showRunningLog();
 
     JZNodeStack *stack();    

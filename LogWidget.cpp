@@ -136,9 +136,9 @@ void LogWidget::clearLogs()
     }
 }
 
-void LogWidget::addLog(int type, const QString &log)
+void LogWidget::addLog(int module, const QString &log)
 {
-    m_logs[type]->addLog(log);
+    m_logs[module]->addLog(log);
 }
 
 void LogWidget::showRunningLog()

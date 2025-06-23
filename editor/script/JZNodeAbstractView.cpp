@@ -114,7 +114,7 @@ JZNodeAbstractView::JZNodeAbstractView(QWidget *widget)
     hbox->setAlignment(Qt::AlignTop);
     this->setLayout(hbox);
 
-    m_scene = new QGraphicsScene();
+    m_scene = new QGraphicsScene(this);
     setScene(m_scene);
 
     setAcceptDrops(true);

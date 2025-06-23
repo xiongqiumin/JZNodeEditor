@@ -25,8 +25,10 @@ public:
 
     void registFunction(const JZFunctionDefine &define);
     void replaceFunction(const JZFunctionDefine &define);        
+
     JZFunctionDefine* registCFunction(const JZFunctionDefine &define, QSharedPointer<CFunction> func);
     JZFunctionDefine* registCFunction(QString fullName,bool isFlow, QSharedPointer<CFunction> func);
+    JZFunctionDefine* replaceCFunction(QString fullName, bool isFlow, QSharedPointer<CFunction> func);
     void registBuiltInFunction(const JZFunctionDefine &define, QSharedPointer<BuiltInFunction> func);
     void unregistFunction(QString name);       
 

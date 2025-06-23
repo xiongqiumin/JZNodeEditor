@@ -14,8 +14,10 @@ class MainWindow;
 class JZVisionApplication : public QObject
 {
 public:
-    JZVisionApplication(MainWindow *window);
+    JZVisionApplication();
     ~JZVisionApplication();
+
+    void setMainWindow(MainWindow* window);
 
     JZModelManager* modelManager();
     JZCameraManager* cameraManager();

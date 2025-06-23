@@ -1610,10 +1610,7 @@ JZNodeObject* JZNodeObjectManager::create(int type) const
     Q_ASSERT(def);
 
     JZNodeObject *obj = new JZNodeObject(def);    
-    create(def,obj,nullptr);
-    obj->autoConnect();
-    obj->autoBind();
-    obj->autoInit();
+    create(def,obj,nullptr);    
     return obj;
 }
 

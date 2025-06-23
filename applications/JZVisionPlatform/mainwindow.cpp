@@ -140,6 +140,7 @@ void MainWindow::loadSetting()
     if(m_config.hasConfig("setting"))
         m_setting = m_config.getConfig<Setting>("setting");
 
+    onActionSample();
     if (!m_setting.recentFile.isEmpty())
         openProject(m_setting.recentFile[0]);
     else
@@ -881,7 +882,10 @@ void MainWindow::onActionSample()
     initProject();
 
     JZVisionAppSample sample;
-    sample.create(this, "path");
+    sample.create(&m_project);
+
+    QString default_dir = qApp->applicationDirPath() + "/project/default/default.proj";
+    sample.save(default_dir);
 }
 
 void MainWindow::onActionHelp()
@@ -1147,6 +1151,9 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
         auto obj_inst = m_engine.environment()->objectManager();
         m_app = obj_inst->createHolder(m_className);
 
+        JZVisionApplication *app = JZObjectCast<JZVisionApplication>(m_app.object());
+        app->setMainWindow(this);
+
         m_camProgram.clear();
         auto cls_item = m_project.getClass(m_className);
         auto functions = cls_item->flowList();        
@@ -1173,7 +1180,7 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
 
 void MainWindow::onBuildLog(int level, QString text)
 {
-    m_buildLog->addLog(level, text);
+    m_buildLog->addLog(Log_Compiler, text);
 }
 
 void MainWindow::onAutoRunResult(int result)
@@ -1232,6 +1239,8 @@ void MainWindow::releaseEngine()
 {
     if (m_engine.isInit())
         m_engine.deinit();
+
+    m_app.relaseObject();
 }
 
 void MainWindow::initProject()

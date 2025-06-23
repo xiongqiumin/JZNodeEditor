@@ -208,11 +208,10 @@ JZVisionSettingPinWidget::~JZVisionSettingPinWidget()
 
 void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
 {
-    auto env = m_node->environment();
-
     m_node = node;
     m_pinId = pin_id;
 
+    auto env = m_node->environment();    
     m_linkGemo = m_setting->view()->linkInfo(node->id(),pin_id);
     if (m_linkGemo.isNull())
         m_isLink = false;

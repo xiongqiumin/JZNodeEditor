@@ -4,16 +4,17 @@
 #include "JZVisionAppNode.h"
 #include "JZProject.h"
 
-class MainWindow;
 class JZVisionAppSample
 {
 public:
     JZVisionAppSample();
-
-    void updateInit();
-    void create(MainWindow *mainwindow, QString path);
+    
+    void create(JZProject *project);
+    void save(QString path);
 
 protected:
+    void updateInit();
+
     JZProject* m_project;
 };
 

@@ -139,6 +139,34 @@ JZFunctionDefine *JZNodeFunctionManager::registCFunction(QString fullName,bool i
     return registCFunction(define, cfunc);       
 }
 
+JZFunctionDefine* JZNodeFunctionManager::replaceCFunction(QString fullName, bool isFlow, QSharedPointer<CFunction> cfunc)
+{
+    JZFunctionDefine define;
+
+    QStringList name_list = fullName.split(".");
+    if (name_list.size() == 1)
+    {
+        define.name = name_list[0];
+    }
+    else
+    {
+        define.className = name_list[0];
+        define.name = name_list[1];
+    }
+    setParam(&define, cfunc.data());
+    define.isFlowFunction = isFlow;
+    define.isCFunction = true;
+
+    JZFunction impl;
+    impl.define = define;
+    impl.cfunc = cfunc;
+    if (define.className.isEmpty())
+        replaceFunction(define);
+
+    m_funcImpl[define.fullName()] = impl;
+    return &m_funcDefine[define.fullName()];
+}
+
 void JZNodeFunctionManager::registBuiltInFunction(const JZFunctionDefine &define, QSharedPointer<BuiltInFunction> func)
 {
     Q_ASSERT(define.isCFunction);

@@ -291,7 +291,7 @@ QList<JZGraphic> JZBarCodeResult::toGraphics(const QList<JZBarCodeResult> &bar_l
             g.points << pt;
         list.push_back(g);
 
-        QPolygonF poly(g.points);
+        QPolygon poly(g.points);
         auto rect = poly.boundingRect();
 
         JZGraphic g_text;
@@ -380,7 +380,7 @@ QList<JZGraphic> JZQRCodeResult::toGraphics(const QList<JZQRCodeResult> &qr_list
             g.points << pt;
         list.push_back(g);
 
-        QPolygonF poly(g.points);
+        QPolygon poly(g.points);
         auto rect = poly.boundingRect();
 
         JZGraphic g_text;        

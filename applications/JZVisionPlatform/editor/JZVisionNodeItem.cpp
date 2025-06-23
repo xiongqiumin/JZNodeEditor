@@ -15,6 +15,11 @@ JZVisionNodeItem::JZVisionNodeItem(JZNode *node)
 void JZVisionNodeItem::updateNode()
 {
     m_blockList.clear();
+    if (!m_node->isFlowNode())
+    {
+        m_size = QSize(0, 0);
+        return;
+    }
 
     JZVisionView* view = qobject_cast<JZVisionView*>(editor());
     
@@ -222,6 +227,9 @@ void JZVisionNodeItem::drawBlock(QPainter *painter, const Block &block)
 
 void JZVisionNodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    if (!m_node->isFlowNode())
+        return;
+
     JZVisionView *view = qobject_cast<JZVisionView*>(editor());
 
     QRect rc = boundingRect().toRect();

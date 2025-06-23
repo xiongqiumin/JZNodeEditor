@@ -95,7 +95,7 @@ bool JZCommNode::compiler(JZNodeCompiler* c, QString& error)
         return false;
 
     auto env = c->env();
-    if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager"), error))
+    if (!c->checkVariableType("this.commManager", env->nameToType("JZCommManager*"), error))
         return false;
     
 	QList<JZNodeIRParam> ir_in = toParamId(m_input);

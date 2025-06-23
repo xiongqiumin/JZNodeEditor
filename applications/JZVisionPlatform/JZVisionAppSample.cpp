@@ -4,7 +4,11 @@
 #include "modules/communication/JZCommNode.h"
 #include "modules/model/JZModelNode.h"
 #include "modules/JZModuleCompiler.h"
-
+#include "JZEditorUtils.h"
+#include "JZNodeFlow.h"
+#include "JZNodeFunction.h"
+#include "JZNodeOperator.h"
+#include "JZVisionAppLayout.h"
 
 JZVisionAppSample::JZVisionAppSample()
 {
@@ -57,8 +61,11 @@ void JZVisionAppSample::updateInit()
 
 }
 
-void JZVisionAppSample::create(MainWindow* mainwindow, QString path)
+void JZVisionAppSample::create(JZProject *project)
 {
+    m_project = project;
+    updateInit();    
+
     auto class_item = m_project->getClass("MyVisionApp");
     auto flow_script = class_item->addFlow("flow");
 
@@ -70,38 +77,50 @@ void JZVisionAppSample::create(MainWindow* mainwindow, QString path)
     flow_script->addNode(model_forward);
     flow_script->addConnect(cam_ready->flowOutGemo(), model_forward->flowInGemo());
     flow_script->addConnect(cam_ready->paramOutGemo(0), model_forward->paramInGemo(1));
+   
+    //if result > 0
+    JZNodeIf *node_if = new JZNodeIf();
+    node_if->addElsePin();
+    flow_script->addNode(node_if);
 
-    
-    /*
-        //if result > 0
-        JZNodeIf *node_if = new JZNodeIf();
-        node_if->addElsePin();
-        flow_script->addNode(node_if);
+    JZNodeFunction *func_size = new JZNodeFunction();
+    func_size->setForceFlow(true);
+    flow_script->addNode(func_size);
+    func_size->setFunction("QList<JZYoloResult>::size");
+    flow_script->addConnect(model_forward->paramOutGemo(0), func_size->paramInGemo(0));
+    flow_script->addConnect(model_forward->flowOutGemo(0), func_size->flowInGemo());
 
-        JZNodeFunction *function = new JZNodeFunction();
-        flow_script->addNode(function);
-        function->setFunction("QList<JZYoloResult>::size");
-        flow_script->addConnect(model_forward->paramOutGemo(0), function->paramInGemo(0));
+    JZNodeGT *node_gt = new JZNodeGT();
+    node_gt->setFlow(true);
+    flow_script->addNode(node_gt);
 
-        JZNodeGT *node_gt = new JZNodeGT();
-        flow_script->addNode(node_gt);
+    flow_script->addConnect(func_size->paramOutGemo(0), node_gt->paramInGemo(0));
+    flow_script->addConnect(func_size->flowOutGemo(0), node_gt->flowInGemo());
+    node_gt->setParamInValue(1, "0");
 
-        flow_script->addConnect(function->paramOutGemo(0), node_gt->paramInGemo(0));
-        node_gt->setParamInValue(1, "0");
+    flow_script->addConnect(node_gt->paramOutGemo(0), node_if->paramInGemo(0));
+    flow_script->addConnect(node_gt->flowOutGemo(), node_if->flowInGemo());
 
-        flow_script->addConnect(node_gt->paramOutGemo(0), node_if->paramInGemo(0));
-        flow_script->addConnect(func_set->flowOutGemo(), node_if->flowInGemo());
+    JZNodeModbusWrite *write_true = new JZNodeModbusWrite();
+    JZNodeModbusWrite *write_false = new JZNodeModbusWrite();
+    flow_script->addNode(write_true);
+    flow_script->addNode(write_false);
+    write_true->setName("modbus");
+    write_false->setName("modbus");
+    write_true->setValue("1");
+    write_false->setValue("0");
 
-        JZNodeModbusWrite *write_true = new JZNodeModbusWrite();
-        JZNodeModbusWrite *write_false = new JZNodeModbusWrite();
-        flow_script->addNode(write_true);
-        flow_script->addNode(write_false);
-        write_true->setName("modbus");
-        write_false->setName("modbus");
-        write_true->setValue("1");
-        write_false->setValue("0");
+    flow_script->addConnect(node_if->subFlowOutGemo(0), write_true->flowInGemo());
+    flow_script->addConnect(node_if->subFlowOutGemo(1), write_false->flowInGemo());
+        
+}
 
-        flow_script->addConnect(node_if->subFlowOutGemo(0), write_true->flowInGemo());
-        flow_script->addConnect(node_if->subFlowOutGemo(1), write_false->flowInGemo());
-        */
+void JZVisionAppSample::save(QString path)
+{
+    JZVisionAppLayout layout;
+    layout.layout(m_project);
+
+    m_project->saveAs(path);
+    m_project->saveAllItem();
+    m_project->save();
 }

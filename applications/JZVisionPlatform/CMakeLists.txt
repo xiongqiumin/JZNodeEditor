@@ -27,6 +27,8 @@ set(JZVisionPlatform_SOURCES
 	JZVisionAppNode.h
 	JZVisionAppSample.cpp
 	JZVisionAppSample.h
+    JZVisionAppLayout.cpp
+    JZVisionAppLayout.h
     
     editor/JZVisionPanel.cpp
     editor/JZVisionPanel.h

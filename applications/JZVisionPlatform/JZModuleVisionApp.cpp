@@ -19,15 +19,19 @@ void JZVisionAppModelInit(JZModelManager* inst, const QByteArray& buffer)
 }
 
 //JZVisionApplication
-JZVisionApplication::JZVisionApplication(MainWindow* window)
+JZVisionApplication::JZVisionApplication()
 {
-    m_window = window;
+    m_window = nullptr;
 }
 
 JZVisionApplication::~JZVisionApplication()
 {
 }
 
+void JZVisionApplication::setMainWindow(MainWindow* window)
+{
+    m_window = window;
+}
 
 JZModelManager* JZVisionApplication::modelManager()
 {
@@ -91,10 +95,10 @@ void JZModuleVisionApp::regist(JZScriptEnvironment* env)
     image_debug.paramIn.push_back(env->paramDefine("args", Type_args));
     auto format_func = BuiltInFunctionPtr(new JZVisionImageDebug());
     func_inst->registBuiltInFunction(image_debug, format_func);
-
-    func_inst->registCFunction("JZCameraInit", true, jzbind::createFuncion(JZVisionAppCameraInit));
-    func_inst->registCFunction("JZCommInit",true, jzbind::createFuncion(JZVisionAppCommInit));
-    func_inst->registCFunction("JZModelInit",true, jzbind::createFuncion(JZVisionAppModelInit));
+    
+    func_inst->replaceCFunction("JZCameraInit", true, jzbind::createFuncion(JZVisionAppCameraInit));
+    func_inst->replaceCFunction("JZCommInit",true, jzbind::createFuncion(JZVisionAppCommInit));
+    func_inst->replaceCFunction("JZModelInit",true, jzbind::createFuncion(JZVisionAppModelInit));
 
     int cls_id = Module_VisionAppType;
     jzbind::ClassBind<JZVisionApplication> cls_app(cls_id++, "JZVisionApplication", "QObject");
