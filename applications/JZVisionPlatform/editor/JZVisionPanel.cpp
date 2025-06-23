@@ -6,6 +6,8 @@
 #include "modules/communication/JZCommNode.h"
 #include "modules/vision/JZVisionNode.h"
 #include "modules/motion/JZMotionNode.h"
+#include "JZContainer.h"
+#include "JZNodeFunction.h"
 
 JZVisionPanel::JZVisionPanel()
 {
@@ -46,7 +48,7 @@ void JZVisionPanel::initLogicNode()
     registLogicNode(Node_VisionFindLine, "几何工具", icon("find_line.png"));
 
     //模型
-    registLogicNode(Node_ModelForward, "模型");
+    registLogicNode(Node_ModelYolo, "模型");
 
     //通信
     registLogicNode(Node_ModbusRead,  "通信");
@@ -73,13 +75,52 @@ void JZVisionPanel::init()
     
     initLocalParam(item_basic);
     initProcess(item_basic);
-    //initExpression(item_basic);    
+    initExpression(item_basic,true);
+    initContainer(item_basic);
+
     initLogic(m_tree->invisibleRootItem());
 }
 
 void JZVisionPanel::updateDefine()
 {
     updateLocalParam();
+}
+
+void JZVisionPanel::initContainer(QTreeWidgetItem *item_root)
+{
+    QTreeWidgetItem *item_container = createFolder("容器");
+    item_root->addChild(item_container);
+
+    QTreeWidgetItem *item_list = createFolder("List");
+    item_container->addChild(item_list);
+
+    QTreeWidgetItem *item_map = createFolder("Map");
+    item_container->addChild(item_map);
+
+    auto funciont_list = JZContainerManager::instance()->functionList();
+    for (int i = 0; i < funciont_list.size(); i++)
+    {
+        auto func_name = funciont_list[i];
+        auto func_def = JZContainerManager::instance()->function(func_name);
+
+        auto coor = JZFunctionHelper::splitFunction(func_name);
+
+        JZNodeContainerFunction func_node;
+        func_node.setFunction(func_name);
+        func_node.setForceFlow(true);
+
+        QTreeWidgetItem *item = createNode(&func_node);
+        item->setText(0, coor.name);
+
+        if (func_name.startsWith("QList<"))
+        {
+            item_list->addChild(item);
+        }
+        else if (func_name.startsWith("QMap<"))
+        {
+            item_map->addChild(item);
+        }
+    }    
 }
 
 void JZVisionPanel::initLogic(QTreeWidgetItem *item_root)

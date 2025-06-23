@@ -94,3 +94,85 @@ void mapForeach(JZNodeObject *obj, std::function<bool(QVariant, QVariant)> visto
         JZScriptInvoke(it_type + "::next", in, out);        
     }
 }
+
+//JZContainerManager
+JZContainerManager *JZContainerManager::instance()
+{
+    static JZContainerManager inst;
+    return &inst;
+}
+
+JZContainerManager::JZContainerManager()
+{
+    addListFunction("set", true, { "int", "arg" });
+    addListFunction("get", false, { "int" }, {"arg"});
+    addListFunction("size", false, {}, { "int" });
+    addListFunction("clear", true, {});
+
+    addListFunction("insert", true, { "int", "arg" });
+    addListFunction("push_back", true, { "arg" });
+    addListFunction("pop_back", true, { });
+    addListFunction("push_front", true, { "arg" });
+    addListFunction("pop_front", true, {});
+    addListFunction("removeAt", true, { "int" });
+    
+    addListFunction("mid", false, { "int", "int" }, { "QList<arg>" });
+    addListFunction("append", true, { "QList<arg>*" });
+    addListFunction("resize", true, { "int" } );
+    addListFunction("swap", true, { "int","int" })
+        ;
+    addListFunction("indexOf", false, { "arg", "int" }, { "int" });;
+    addListFunction("lastIndexOf", true, { "arg", "int" }, { "int" });
+    addListFunction("removeOne", true, { "arg"});
+    addListFunction("removeAll", true, { "arg" });
+    addListFunction("contains", false, { "arg" });
+
+}
+
+JZContainerManager::~JZContainerManager()
+{
+}
+
+void JZContainerManager::addListFunction(QString function, bool isFlow, QStringList input, QString output)
+{
+    JZFunctionDefine def;
+    def.setFullName("QList<arg>::" + function);
+    def.isFlowFunction = isFlow;
+    def.paramIn << JZParamDefine("this","QList<arg>*");
+    for (int i = 0; i < input.size(); i++)
+    {
+        QString input_name = "input" + QString::number(i);
+        def.paramIn << JZParamDefine(input_name, input[i]);
+    }
+
+    if (output.isEmpty())
+    {
+        def.paramOut << JZParamDefine("output", output);
+    }
+
+    m_functions.insert(def.fullName(), def);
+}
+
+void JZContainerManager::addMapFunction(QString function, bool isFlow, QStringList input, QString output)
+{
+
+}
+
+JZFunctionDefine *JZContainerManager::function(QString name)
+{
+    auto it = m_functions.find(name);
+    if (it == m_functions.end())
+        return nullptr;
+
+    return &it.value();
+}
+
+QStringList JZContainerManager::functionList()
+{
+    return m_functions.keys();
+}
+
+void JZContainerManager::regist(JZScriptEnvironment* env)
+{
+
+}

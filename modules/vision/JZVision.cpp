@@ -278,6 +278,32 @@ void JZVisionFindLine(Mat in)
 {
 }
 
+//JZBarCodeResult
+QList<JZGraphic> JZBarCodeResult::toGraphics(const QList<JZBarCodeResult> &bar_list)
+{
+    QList<JZGraphic> list;
+    for (int i = 0; i < bar_list.size(); i++)
+    {
+        JZGraphic g;
+        g.type = JZGraphic::Polygon;
+        g.color = Qt::green;
+        for (auto pt : bar_list[i].points)
+            g.points << pt;
+        list.push_back(g);
+
+        QPolygon poly(g.points);
+        auto rect = poly.boundingRect();
+
+        JZGraphic g_text;
+        g_text.type = JZGraphic::TextBox;
+        g_text.color = Qt::green;
+        g_text.text = bar_list[i].text;
+        g_text.points << rect.topLeft() << rect.bottomRight();
+        list.push_back(g_text);
+    }
+    return list;
+}
+
 JZBarCode::JZBarCode()
 {
 }
@@ -309,13 +335,47 @@ QList<JZBarCodeResult> JZBarCode::detect(cv::Mat in)
     m_detector->detectAndDecodeWithType(gray, decoded_text, decoded_format, vPoints);
     for (int i = 0; i < decoded_text.size(); i++)
     {
+        if (decoded_text[i].empty())
+            continue;
+
         JZBarCodeResult ret;
         ret.type = QString::fromLocal8Bit(decoded_format[i].data());
         ret.text = QString::fromLocal8Bit(decoded_text[i].data());
+        
+        int pt_idx = 4 * i;
+        for (int j = 0; j < 4; j++)
+            ret.points << toQPoint(vPoints[pt_idx + j]);
+
         ret_list.push_back(ret);
     }
 
     return ret_list;
+}
+
+//JZQRCodeResult
+QList<JZGraphic> JZQRCodeResult::toGraphics(const QList<JZQRCodeResult> &qr_list)
+{
+    QList<JZGraphic> list;
+    for (int i = 0; i < qr_list.size(); i++)
+    {
+        JZGraphic g;
+        g.type = JZGraphic::Polygon;
+        g.color = Qt::green;        
+        for(auto pt : qr_list[i].points)
+            g.points << pt;
+        list.push_back(g);
+
+        QPolygon poly(g.points);
+        auto rect = poly.boundingRect();
+
+        JZGraphic g_text;        
+        g_text.type = JZGraphic::TextBox;
+        g_text.color = Qt::green;
+        g_text.text = qr_list[i].text;
+        g_text.points << rect.topLeft() << rect.bottomRight();
+        list.push_back(g_text);
+    }
+    return list;
 }
 
 //JZQRCode
@@ -328,7 +388,7 @@ bool JZQRCode::init()
     if (m_detector)
         return true;
 
-    QString model_dir = qApp->applicationDirPath() + "model/wechat_qrcode";
+    QString model_dir = qApp->applicationDirPath() + "/model/wechat_qrcode";
     QString detect_prototxt = model_dir + "/detect.prototxt";
     QString detect_caffemodel = model_dir + "/detect.caffemodel";
     QString sr_prototxt = model_dir + "/sr.prototxt";
@@ -346,12 +406,21 @@ QList<JZQRCodeResult> JZQRCode::detect(cv::Mat in)
 {
     QList<JZQRCodeResult> ret_list;
 
-    std::vector<cv::Mat> vPoints;
-    std::vector<std::string> strs = m_detector->detectAndDecode(in, vPoints);
+    std::vector<cv::Mat> point_list;
+    std::vector<std::string> strs = m_detector->detectAndDecode(in, point_list);
     for (int i = 0; i < strs.size(); i++)
     {
         JZQRCodeResult ret;
         ret.text = QString::fromLocal8Bit(strs[i].data());
+        
+        auto vPoints = point_list[i];
+        for (int j = 0; j < 4; j++)
+        {
+            int x = (int)vPoints.at<float>(j, 0);
+            int y = (int)vPoints.at<float>(j, 1);
+            ret.points << QPoint(x,y);
+        }
+
         ret_list.push_back(ret);
     }
 

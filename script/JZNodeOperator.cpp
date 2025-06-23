@@ -4,7 +4,57 @@
 #include "JZNodeCompiler.h"
 #include "JZRegExpHelp.h"
 
-JZNodeOperator::JZNodeOperator(int node_type, JZNodeIRType op_type)
+//JZNodeOperator
+JZNodeOperator::JZNodeOperator()
+{
+}
+
+bool JZNodeOperator::isFlow()
+{
+    return m_isFlow;
+}
+
+void JZNodeOperator::updateFlow()
+{
+    if (m_isFlow)
+    {
+        if (flowInCount() == 0)
+        {
+            addFlowIn();
+            addFlowOut();
+        }
+    }
+    else
+    {
+        if (flowInCount() > 0)
+        {
+            removePin(flowIn());
+            removePin(flowOut());
+        }
+    }
+}
+
+void JZNodeOperator::setFlow(bool flag)
+{
+    m_isFlow = flag;
+    updateFlow();
+}
+
+void JZNodeOperator::saveToStream(QDataStream &s) const
+{
+    JZNode::saveToStream(s);
+    s << m_isFlow;
+}
+
+void JZNodeOperator::loadFromStream(QDataStream &s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_isFlow;
+}
+
+
+//JZNodeDoubleOperator
+JZNodeDoubleOperator::JZNodeDoubleOperator(int node_type, JZNodeIRType op_type)
 {
     m_type = node_type;
     m_op = op_type;
@@ -17,19 +67,19 @@ JZNodeOperator::JZNodeOperator(int node_type, JZNodeIRType op_type)
     addParamOut("out");    
 }
 
-int JZNodeOperator::op() const
+int JZNodeDoubleOperator::op() const
 {
     return m_op;
 }
 
-void JZNodeOperator::updatePinName()
+void JZNodeDoubleOperator::updatePinName()
 {
     auto in_list = paramInList();
     for (int i = 0; i < in_list.size(); i++)
         setPinName(in_list[i], QString::asprintf("input%d", i));
 }
 
-void JZNodeOperator::addInput()
+void JZNodeDoubleOperator::addInput()
 {
     auto pin0 = pin(paramIn(0));
     int in = addParamIn("", pin0->flag());    
@@ -37,14 +87,14 @@ void JZNodeOperator::addInput()
     updatePinName();
 }
 
-void JZNodeOperator::removeInput(int index)
+void JZNodeDoubleOperator::removeInput(int index)
 {
     int id = paramInList()[index];
     removePin(id);
     updatePinName();
 }
 
-bool JZNodeOperator::checkPinInput(JZNodeCompiler *c,QString &error)
+bool JZNodeDoubleOperator::checkPinInput(JZNodeCompiler *c,QString &error)
 {
     auto input_list = paramInList();
     if(!c->checkPinInType(m_id,input_list,error))
@@ -83,7 +133,7 @@ bool JZNodeOperator::checkPinInput(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
+bool JZNodeDoubleOperator::compiler(JZNodeCompiler *c,QString &error)
 {
     if(!checkPinInput(c,error))
         return false;
@@ -112,7 +162,7 @@ bool JZNodeOperator::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-void JZNodeOperator::calcPinOutType(JZNodeCompiler *c)
+void JZNodeDoubleOperator::calcPinOutType(JZNodeCompiler *c)
 {        
     auto env = environment();
     int out_type = Type_none;    
@@ -157,7 +207,7 @@ void JZNodeOperator::calcPinOutType(JZNodeCompiler *c)
 
 //JZNodeAdd
 JZNodeAdd::JZNodeAdd()
-    :JZNodeOperator(Node_add,OP_add)
+    :JZNodeDoubleOperator(Node_add,OP_add)
 {    
     QStringList type = { JZNodeType::typeName(Type_int), JZNodeType::typeName(Type_int64), 
         JZNodeType::typeName(Type_double), JZNodeType::typeName(Type_string)};  
@@ -170,7 +220,7 @@ JZNodeAdd::JZNodeAdd()
 
 //JZNodeSub
 JZNodeSub::JZNodeSub()
-    :JZNodeOperator(Node_sub,OP_sub)
+    :JZNodeDoubleOperator(Node_sub,OP_sub)
 {
     m_name = "-";    
     setPinTypeNumber(paramIn(0));
@@ -180,7 +230,7 @@ JZNodeSub::JZNodeSub()
     
 //JZNodeMul
 JZNodeMul::JZNodeMul()
-    :JZNodeOperator(Node_mul,OP_mul)
+    :JZNodeDoubleOperator(Node_mul,OP_mul)
 {
     m_name = "*";
     setPinTypeNumber(paramIn(0));
@@ -190,7 +240,7 @@ JZNodeMul::JZNodeMul()
 
 //JZNodeDiv
 JZNodeDiv::JZNodeDiv()
-    :JZNodeOperator(Node_div,OP_div)
+    :JZNodeDoubleOperator(Node_div,OP_div)
 {
     m_name = "/";
     setPinTypeNumber(paramIn(0));
@@ -201,7 +251,7 @@ JZNodeDiv::JZNodeDiv()
 
 //JZNodeMod
 JZNodeMod::JZNodeMod()
-    :JZNodeOperator(Node_mod,OP_mod)
+    :JZNodeDoubleOperator(Node_mod,OP_mod)
 {
     m_name = "%";
     setPinTypeNumber(paramIn(0));
@@ -211,7 +261,7 @@ JZNodeMod::JZNodeMod()
 
 //JZNodeBitAnd
 JZNodeBitAnd::JZNodeBitAnd()
-    :JZNodeOperator(Node_bitand,OP_bitand)
+    :JZNodeDoubleOperator(Node_bitand,OP_bitand)
 {
     m_name = "bit and";
     setPinTypeInt(paramIn(0));
@@ -221,7 +271,7 @@ JZNodeBitAnd::JZNodeBitAnd()
 
 //JZNodeBitOr
 JZNodeBitOr::JZNodeBitOr()
-    :JZNodeOperator(Node_bitor,OP_bitor)
+    :JZNodeDoubleOperator(Node_bitor,OP_bitor)
 {
     m_name = "bit or";
     setPinTypeInt(paramIn(0));
@@ -231,7 +281,7 @@ JZNodeBitOr::JZNodeBitOr()
 
 //JZNodeBitXor
 JZNodeBitXor::JZNodeBitXor()
-    :JZNodeOperator(Node_bitxor,OP_bitxor)
+    :JZNodeDoubleOperator(Node_bitxor,OP_bitxor)
 {
     m_name = "bit xor";
     setPinTypeInt(paramIn(0));
@@ -241,7 +291,7 @@ JZNodeBitXor::JZNodeBitXor()
 
 //JZNodeLE
 JZNodeLE::JZNodeLE()
-    :JZNodeOperator(Node_le, OP_le)
+    :JZNodeDoubleOperator(Node_le, OP_le)
 {
     QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
         JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
@@ -254,7 +304,7 @@ JZNodeLE::JZNodeLE()
 
 //JZNodeGE
 JZNodeGE::JZNodeGE()
-    :JZNodeOperator(Node_ge, OP_ge)
+    :JZNodeDoubleOperator(Node_ge, OP_ge)
 {
     QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
         JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
@@ -267,7 +317,7 @@ JZNodeGE::JZNodeGE()
 
 //JZNodeLT
 JZNodeLT::JZNodeLT()
-    :JZNodeOperator(Node_lt, OP_lt)
+    :JZNodeDoubleOperator(Node_lt, OP_lt)
 {
     QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
         JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
@@ -280,7 +330,7 @@ JZNodeLT::JZNodeLT()
 
 //JZNodeGT
 JZNodeGT::JZNodeGT()
-    :JZNodeOperator(Node_gt, OP_gt)
+    :JZNodeDoubleOperator(Node_gt, OP_gt)
 {
     QStringList cmp_type = { JZNodeType::typeName(Type_int),JZNodeType::typeName(Type_int64),
         JZNodeType::typeName(Type_double),JZNodeType::typeName(Type_string)};
@@ -293,7 +343,7 @@ JZNodeGT::JZNodeGT()
 
 //JZNodeEQ
 JZNodeEQ::JZNodeEQ()
-    :JZNodeOperator(Node_eq, OP_eq)
+    :JZNodeDoubleOperator(Node_eq, OP_eq)
 {    
     m_name = "==";    
     setPinTypeArg(paramIn(0));
@@ -303,7 +353,7 @@ JZNodeEQ::JZNodeEQ()
 
 //JZNodeNE
 JZNodeNE::JZNodeNE()
-    :JZNodeOperator(Node_ne, OP_ne)
+    :JZNodeDoubleOperator(Node_ne, OP_ne)
 {    
     m_name = "!=";    
     setPinTypeArg(paramIn(0));
@@ -313,7 +363,7 @@ JZNodeNE::JZNodeNE()
 
 //JZNodeAnd
 JZNodeAnd::JZNodeAnd()
-    :JZNodeOperator(Node_and, OP_and)
+    :JZNodeDoubleOperator(Node_and, OP_and)
 {
     m_name = "and";
     setPinTypeBool(paramIn(0));
@@ -353,7 +403,7 @@ bool JZNodeAnd::compiler(JZNodeCompiler *c, QString &error)
 
 //JZNodeOr
 JZNodeOr::JZNodeOr()
-    :JZNodeOperator(Node_or, OP_or)
+    :JZNodeDoubleOperator(Node_or, OP_or)
 {
     m_name = "or";
     setPinTypeBool(paramIn(0));

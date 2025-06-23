@@ -1,10 +1,10 @@
 ﻿#ifndef JZNODE_EXPRESSION_H_
 #define JZNODE_EXPRESSION_H_
 
-#include "JZNode.h"
+#include "JZNodeOperator.h"
 
 //JZNodeExpression
-class JZNodeExpression: public JZNode
+class JZNodeExpression: public JZNodeOperator
 {
 public:
     JZNodeExpression();

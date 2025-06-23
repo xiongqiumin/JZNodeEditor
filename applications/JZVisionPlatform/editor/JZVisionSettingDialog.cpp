@@ -209,7 +209,7 @@ void JZVisionSettingDialog::setNode(JZNode* node)
     QVBoxLayout *v = new QVBoxLayout();
     area_widget->setLayout(v);        
 
-    QLabel *label_name = new QLabel(view()->nodeName(node));
+    QLabel *label_name = new QLabel(view()->nodeName(node->id()));
     v->addWidget(label_name);
 
     //子流程

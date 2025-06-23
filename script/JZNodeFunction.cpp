@@ -1,6 +1,8 @@
 ﻿#include "JZNodeFunction.h"
 #include "JZNodeCompiler.h"
 #include "JZNodeFunctionManager.h"
+#include "JZContainer.h"
+#include "JZScriptItemVisitor.h"
 
 //JZNodeFunction
 JZNodeFunction::JZNodeFunction()
@@ -8,6 +10,7 @@ JZNodeFunction::JZNodeFunction()
     m_type = Node_function;
     m_name = "function";
     m_directCall = false;
+    m_forceFlow = false;
 }
 
 JZNodeFunction::~JZNodeFunction()
@@ -28,6 +31,11 @@ bool JZNodeFunction::isMemberCall()
         return true;
 
     return false;
+}
+
+void JZNodeFunction::setForceFlow(bool forceFlow)
+{
+    m_forceFlow = forceFlow;
 }
 
 void JZNodeFunction::setDirectCall(bool flag)
@@ -53,13 +61,13 @@ QString JZNodeFunction::variable() const
 void JZNodeFunction::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
-    s << m_functionName;
+    s << m_functionName << m_directCall << m_forceFlow;
 }
 
 void JZNodeFunction::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
-    s >> m_functionName;
+    s >> m_functionName >> m_directCall >> m_forceFlow;
 }
 
 void JZNodeFunction::setFunction(QString fullName)
@@ -104,12 +112,19 @@ bool JZNodeFunction::updateNode(QString &error)
 
 bool JZNodeFunction::updateFunctionDefine(const JZFunctionDefine *define,QString &error)
 {
-    if (define->isFlowFunction)
+    if (define->isFlowFunction || m_forceFlow)
     {
         if (flowInCount() == 0)
             addFlowIn();
         if (flowOutCount() == 0)
             addFlowOut();
+    }
+    else
+    {
+        if (flowInCount() == 1)
+            removePin(flowIn());
+        if (flowOutCount() == 1)
+            removePin(flowOut(0));
     }
 
     if (paramInCount() < define->paramIn.size())
@@ -218,5 +233,179 @@ bool JZNodeFunction::compiler(JZNodeCompiler *c,QString &error)
     {
         c->addFlowOutput(m_id);
     }
+    return true;
+}
+
+//JZNodeContainerFunction
+JZNodeContainerFunction::JZNodeContainerFunction()
+{
+    m_type = Node_genericFunction;
+    m_name = "function";
+    m_forceFlow = false;
+}
+
+JZNodeContainerFunction::~JZNodeContainerFunction()
+{
+}
+
+void JZNodeContainerFunction::setForceFlow(bool forceFlow)
+{
+    m_forceFlow = forceFlow;
+    updateFunction();
+}
+
+void JZNodeContainerFunction::setFunction(QString fullName)
+{
+    m_functionName = fullName;
+    updateFunction();
+    update();
+}
+
+QString JZNodeContainerFunction::function() const
+{
+    return m_functionName;
+}
+
+void JZNodeContainerFunction::setVariable(const QString& name)
+{    
+}
+
+QString JZNodeContainerFunction::variable() const
+{
+    return QString();
+}
+
+void JZNodeContainerFunction::saveToStream(QDataStream &s) const
+{
+    JZNode::saveToStream(s);
+    s << m_functionName;
+}
+
+void JZNodeContainerFunction::loadFromStream(QDataStream &s)
+{
+    JZNode::loadFromStream(s);
+    s >> m_functionName;
+    updateFunction();
+}
+
+QString JZNodeContainerFunction::genericClass(QString name)
+{
+    int idx = name.indexOf("<");
+    if (idx == -1)
+        return QString();
+    else
+        return name.left(idx);
+
+}
+
+void JZNodeContainerFunction::updateFunction()
+{    
+    clearPin();
+
+    JZFunctionDefine *func = JZContainerManager::instance()->function(m_functionName);
+    if (func->isFlowFunction || m_forceFlow)
+    {
+        addFlowIn();
+        addFlowOut();
+    }
+
+    for (int i = 0; i < func->paramIn.size(); i++)
+    {
+        int in = addParamIn(func->paramIn[i].name);
+        setPinType(in, { func->paramIn[i].type });
+    }
+
+    for (int i = 0; i < func->paramOut.size(); i++)
+    {
+        int out = addParamOut(func->paramOut[i].name);
+        setPinType(out, { func->paramOut[i].type });
+    }
+}
+
+bool JZNodeContainerFunction::updateNode(QString &error)
+{
+    auto env = m_file->project()->environment();
+    JZFunctionDefine *func = JZContainerManager::instance()->function(m_functionName);    
+    JZScriptItemVisitor visitor(m_file);
+
+    QList<JZNodePin*> input_pin = visitor.inputPin(m_id, paramIn(0));
+    if (input_pin.size() == 0)
+    {
+        error = "无法确定泛形函数类型";
+        return false;
+    }
+    QString class_type = env->upType(input_pin[0]->dataType());
+    for (int i = 0; i < input_pin.size(); i++)
+    {
+        QString other_type = env->upType(input_pin[0]->dataType());
+        if(other_type != class_type)
+        {
+            error = "无法确定泛形函数类型";
+            return false;
+        }
+    }
+
+    QString func_gen = genericClass(m_functionName);
+    QString class_gen = genericClass(class_type);
+    if(func_gen != class_gen)
+    {
+        error = "需要传入" + func_gen;
+        return false;
+    }
+
+    for (int i = 0; i < func->paramIn.size(); i++)
+    {
+        if (func->paramIn[i].type == "arg")
+        {
+            if (m_valueType.isEmpty())
+                setPinType(paramIn(i), QStringList());
+            else
+                setPinType(paramIn(i), { m_valueType });
+        }
+    }
+
+    for (int i = 0; i < func->paramOut.size(); i++)
+    {
+        if (func->paramOut[i].type == "arg")
+        {
+            if (m_valueType.isEmpty())
+                setPinType(paramOut(i), QStringList());
+            else
+                setPinType(paramOut(i), { m_valueType });
+        }
+    }
+
+    return m_valueType.isEmpty();
+}
+
+bool JZNodeContainerFunction::compiler(JZNodeCompiler *c, QString &error)
+{
+    Q_ASSERT(c->env()->isVaildType(m_valueType));
+
+    QString functionName = m_functionName;
+    functionName.replace("arg", m_valueType);
+
+    QList<int> in_list = paramInList();
+    QList<int> out_list = paramOutList();
+
+    bool input_ret = false;
+    if (isFlowNode())
+        input_ret = c->addFlowInput(m_id, in_list, error);
+    else
+        input_ret = c->addDataInput(m_id, in_list, error);
+    if (!input_ret)
+        return false;
+
+    QList<JZNodeIRParam> in, out;
+    for (int i = 0; i < in_list.size(); i++)
+        in << irId(c->paramId(m_id, in_list[i]));
+    for (int i = 0; i < out_list.size(); i++)
+        out << irId(c->paramId(m_id, out_list[i]));
+
+    c->addCall(m_functionName, in, out);    
+
+    if (isFlowNode())
+        c->addFlowOutput(m_id);
+
     return true;
 }

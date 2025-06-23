@@ -3,10 +3,26 @@
 
 #include "JZNode.h"
 
-class JZNodeOperator: public JZNode
+class JZNodeOperator : public JZNode
 {
 public:
-    JZNodeOperator(int node_type,JZNodeIRType op_type);
+    JZNodeOperator();
+
+    bool isFlow();
+    void setFlow(bool flag);
+
+protected:
+    virtual void saveToStream(QDataStream &s) const override;
+    virtual void loadFromStream(QDataStream &s) override;
+    void updateFlow();
+
+    bool m_isFlow;
+};
+
+class JZNodeDoubleOperator: public JZNodeOperator
+{
+public:
+    JZNodeDoubleOperator(int node_type,JZNodeIRType op_type);
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
@@ -23,105 +39,105 @@ protected:
 };
 
 //JZNodeAdd
-class JZNodeAdd: public JZNodeOperator
+class JZNodeAdd: public JZNodeDoubleOperator
 {
 public:
     JZNodeAdd();
 };
 
 //JZNodeSub
-class JZNodeSub: public JZNodeOperator
+class JZNodeSub: public JZNodeDoubleOperator
 {
 public:
     JZNodeSub();
 };
     
 //JZNodeMul
-class JZNodeMul: public JZNodeOperator
+class JZNodeMul: public JZNodeDoubleOperator
 {
 public:
     JZNodeMul();
 };
 
 //JZNodeDiv
-class JZNodeDiv: public JZNodeOperator
+class JZNodeDiv: public JZNodeDoubleOperator
 {
 public:
     JZNodeDiv();
 };
 
 //JZNodeMod
-class JZNodeMod: public JZNodeOperator
+class JZNodeMod: public JZNodeDoubleOperator
 {
 public:
     JZNodeMod();
 };
 
 //JZNodeBitAnd
-class JZNodeBitAnd: public JZNodeOperator
+class JZNodeBitAnd: public JZNodeDoubleOperator
 {
 public:
     JZNodeBitAnd();
 };
 
 //JZNodeBitAnd
-class JZNodeBitOr: public JZNodeOperator
+class JZNodeBitOr: public JZNodeDoubleOperator
 {
 public:
     JZNodeBitOr();
 };
     
 //JZNodeBitXor
-class JZNodeBitXor: public JZNodeOperator
+class JZNodeBitXor: public JZNodeDoubleOperator
 {
 public:
     JZNodeBitXor();
 };
 
 //JZNodeEQ
-class JZNodeEQ : public JZNodeOperator
+class JZNodeEQ : public JZNodeDoubleOperator
 {
 public:
     JZNodeEQ();
 };
 
 //JZNodeNE
-class JZNodeNE : public JZNodeOperator
+class JZNodeNE : public JZNodeDoubleOperator
 {
 public:
     JZNodeNE();
 };
 
 //JZNodeLE
-class JZNodeLE : public JZNodeOperator
+class JZNodeLE : public JZNodeDoubleOperator
 {
 public:
     JZNodeLE();
 };
 
 //JZNodeGE
-class JZNodeGE : public JZNodeOperator
+class JZNodeGE : public JZNodeDoubleOperator
 {
 public:
     JZNodeGE();
 };
 
 //JZNodeLT
-class JZNodeLT : public JZNodeOperator
+class JZNodeLT : public JZNodeDoubleOperator
 {
 public:
     JZNodeLT();
 };
 
 //JZNodeGT
-class JZNodeGT : public JZNodeOperator
+class JZNodeGT : public JZNodeDoubleOperator
 {
 public:
     JZNodeGT();
 };
 
 //JZNodeAnd
-class JZNodeAnd : public JZNodeOperator
+class JZNodeAnd : public JZNodeDoubleOperator
 {
 public:
     JZNodeAnd();
@@ -130,7 +146,7 @@ public:
 };
 
 //JZNodeOr
-class JZNodeOr : public JZNodeOperator
+class JZNodeOr : public JZNodeDoubleOperator
 {
 public:
     JZNodeOr();
@@ -140,7 +156,7 @@ public:
 
 
 //JZNodeBitReverse
-class JZNodeBitReverse : public JZNode
+class JZNodeBitReverse : public JZNodeOperator
 {
 public:
     JZNodeBitReverse();
@@ -149,7 +165,7 @@ public:
 };
 
 //JZNodeNot
-class JZNodeNot : public JZNode
+class JZNodeNot : public JZNodeOperator
 {
 public:
     JZNodeNot();
@@ -158,7 +174,7 @@ public:
 };
 
 //JZNodeNeg
-class JZNodeNeg : public JZNode
+class JZNodeNeg : public JZNodeOperator
 {
 public:
     JZNodeNeg();

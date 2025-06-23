@@ -11,6 +11,7 @@ class JZVisionNodeInfo
 public:
     JZVisionNodeInfo();
 
+    QString name;
     JZNode *node;
 };
 

@@ -1251,7 +1251,7 @@ JZNode* JZScriptConvert::toExpression(asCScriptNode* node)
 
 	auto list = nodeChilds(node);
 	auto opPri = [](const ExprToken& tk)->int {
-		auto* op_node = dynamic_cast<const JZNodeOperator*>(tk.node);
+		auto* op_node = dynamic_cast<const JZNodeDoubleOperator*>(tk.node);
 		QString str_op = JZNodeType::opName(op_node->op());
 		return JZNodeType::opPri(str_op);
 		};

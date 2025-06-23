@@ -15,16 +15,27 @@ public:
     virtual QString getTip(QPointF pt);
 
 protected:    
+    struct Block
+    {
+        int pri;
+        int id;
+        QString name;
+        QRect iconRect;
+        QRect nameRect;
+    };
+
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
-
-    QList<QRect> hoverList();
-
+    void drawBlock(QPainter *painter, const Block &block);
+    int indexOfBlock(int block_id);
+    
     bool m_hovered;
     int m_downPin;
     QPointF m_downPoint;    
+    
+    QList<Block> m_blockList;
 };

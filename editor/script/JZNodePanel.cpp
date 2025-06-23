@@ -157,7 +157,7 @@ void JZNodePanel::initBasic()
     item_basic->addChild(itemConst);
 
     initProcess(item_basic);
-    initExpression(item_basic);
+    initExpression(item_basic,false);
 
     QTreeWidgetItem *itemOp = createFolder("操作");
     item_basic->addChild(itemOp);

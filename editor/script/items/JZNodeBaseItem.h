@@ -57,6 +57,8 @@ protected:
 class JZAbstractNodeItem : public JZNodeBaseItem
 {
 public:
+    enum IconType { Flow, Circle, Square, Grid, RoundSquare, Diamond };
+
     JZAbstractNodeItem(JZNode *node);
     ~JZAbstractNodeItem();
 
@@ -75,6 +77,8 @@ public:
     virtual QString getTip(QPointF pt) = 0;
 
 protected:
+    void drawIcon(QPainter *painter, QRectF rect, IconType type, bool filled, QColor color, QColor innerColor);
+
     int m_baseZValue;
     
     JZNode *m_node;    

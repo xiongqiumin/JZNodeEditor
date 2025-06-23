@@ -26,9 +26,11 @@ enum
     Node_functionPointer,
     Node_functionStart,
     Node_function,      
+    Node_genericFunction,
     Node_clone,
     Node_assert,
     Node_swap,
+
     Node_add,
     Node_sub,
     Node_mul,

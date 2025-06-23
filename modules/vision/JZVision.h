@@ -36,9 +36,11 @@ void JZVisionFindLine(Mat in);
 class JZBarCodeResult
 {
 public:
+    static QList<JZGraphic> toGraphics(const QList<JZBarCodeResult> &result);
+
     QString type;
     QString text;
-    QRect rect;
+    QList<QPoint> points;
 };
 
 class JZBarCode : public QObject
@@ -58,6 +60,8 @@ public:
 class JZQRCodeResult
 {
 public:
+    static QList<JZGraphic> toGraphics(const QList<JZQRCodeResult> &result);
+
     QString text;
     QList<QPoint> points;
 };

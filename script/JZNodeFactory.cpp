@@ -42,6 +42,7 @@ void JZNodeFactory::init()
 
     registNode(Node_functionStart, createJZNode<JZNodeFunctionStart>);
     registNode(Node_function, createJZNode<JZNodeFunction>);
+    registNode(Node_genericFunction, createJZNode<JZNodeContainerFunction>);
     registNode(Node_while, createJZNode<JZNodeWhile>);
     registNode(Node_for, createJZNode<JZNodeFor>);
     registNode(Node_foreach, createJZNode<JZNodeForEach>);

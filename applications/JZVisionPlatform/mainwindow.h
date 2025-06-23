@@ -222,6 +222,7 @@ protected:
     QAction *m_actionRun;
     QList<QWidget*> m_floatWindow;
     JZNodeTraceView *m_traceView;
+    QMap<QString, QString> m_roiFunction;
 };
 extern MainWindow *g_visionWindow;
 

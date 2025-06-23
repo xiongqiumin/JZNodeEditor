@@ -14,7 +14,7 @@ public:
     explicit JZVisionView(QWidget *parent = nullptr);
     ~JZVisionView();
 
-    QString nodeName(JZNode *node);
+    QString nodeName(int node_id);
     QString pinName(JZNodeGemo gemo);
 
 protected slots:

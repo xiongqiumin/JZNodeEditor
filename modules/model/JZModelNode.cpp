@@ -4,7 +4,7 @@
 #include "../JZModuleCompiler.h"
 #include "../JZModuleDebug.h"
 
-static bool checkHasModule(JZScriptItem *script, const QString &model, QString &error)
+static bool checkHasModel(JZScriptItem *script, const QString &model, QString &error)
 {
     auto env = script->project()->environment();
     if (!JZNodeCompiler::checkVariableType(script, "this.modelManager", env->nameToType("JZModelManager*"), error))
@@ -126,13 +126,72 @@ void JZNodeModelForward::loadFromStream(QDataStream& s)
 bool JZNodeModelForward::updateNode(QString &error)
 {
     auto env = m_file->project()->environment();
-    if (!checkHasModule(m_file,model(),error))
+    if (!checkHasModel(m_file,model(),error))
         return false;
 
     return true;
 }
 
 bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
+{
+    auto env = c->env();
+    if (!c->addFlowInput(m_id, error))
+        return false;
+
+    int in_id = c->paramId(m_id, paramIn(1));
+    int out_id = c->paramId(m_id, paramOut(0));
+    c->addCallConvert("JZYoloForward", { irRef("this.modelManager"), irLiteral(model()) ,irId(in_id) }, {  irId(out_id) });
+
+    c->addFlowOutput(m_id);
+
+    JZModuleDebug(c, m_id, irId(in_id), irId(out_id));
+    return true;
+}
+
+//JZNodeModelYolo
+JZNodeModelYolo::JZNodeModelYolo()
+{
+    m_name = "Yolo";
+    m_type = Node_ModelYolo;
+
+    addFlowIn();
+    addFlowOut();
+
+    int in = addParamIn("model", Pin_constValue | Pin_noCompiler);
+    setPinTypeString(in);
+
+    int in_frame = addParamIn("frame");
+    setPinType(in_frame, { "Mat" });
+
+    int out = addParamOut("result");
+    setPinType(out, { "QList<JZYoloResult>" });
+}
+
+JZNodeModelYolo::~JZNodeModelYolo()
+{
+
+}
+
+void JZNodeModelYolo::setModel(QString name)
+{
+    setParamInValue(0,name);
+}
+
+QString JZNodeModelYolo::model()
+{
+    return paramInValue(0);
+}
+
+bool JZNodeModelYolo::updateNode(QString &error)
+{
+    auto env = m_file->project()->environment();
+    if (!checkHasModel(m_file,model(),error))
+        return false;
+
+    return true;
+}
+
+bool JZNodeModelYolo::compiler(JZNodeCompiler *c, QString &error)
 {
     auto env = c->env();
     if (!c->addFlowInput(m_id, error))

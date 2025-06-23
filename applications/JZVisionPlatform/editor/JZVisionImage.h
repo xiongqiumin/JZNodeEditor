@@ -16,9 +16,9 @@ public:
 
     JZImageView* view();
     void clear();
-
+    
     void initNodeList(const QList<JZVisionNodeInfo> &node_list);
-    void setImage(const QList<ImageResult> &image);
+    void setImage(int node_id, const ImageResult &image);    
 
 signals:
     void sigImageChanged(int node);
@@ -32,7 +32,11 @@ protected slots:
     void onCoorColor(QPoint pos,QColor color);
 
 protected:
+    void setResult(const ImageResult &result);
+
     QComboBox *m_imageBox;
     JZImageView* m_view;
     QLabel *m_status;
+
+    QMap<int, ImageResult> m_imageResult;
 };

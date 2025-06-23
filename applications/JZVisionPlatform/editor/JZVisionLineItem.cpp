@@ -1,4 +1,5 @@
-#include <QVector2d>
+ï»¿#include <QVector2d>
+#include <QGraphicsSceneMouseEvent>
 #include "JZVisionLineItem.h"
 #include "JZVisionView.h"
 #include "JZVisionNodeItem.h"
@@ -11,23 +12,87 @@ static qreal crossProduct(const QVector2D& a, const QVector2D& b) {
 JZVisionLineItem::JZVisionLineItem(JZNodeGemo from)
     :JZAbstractLineItem(from)
 {
+    m_isParam = false;
+}
+
+JZVisionLineItem::~JZVisionLineItem()
+{
 }
 
 QRectF JZVisionLineItem::boundingRect() const
 {
-    return QRectF(m_startPoint,m_endPoint).normalized();
+    if (m_isParam)
+        return QRectF();
+
+    auto path = linePath();    
+    auto rc = path.boundingRect().normalized();
+    if (rc.width() < 8)
+    {
+        auto ct = rc.center();
+        rc.setLeft(ct.x() - 4);
+        rc.setRight(ct.x() + 4);
+    }
+    if (rc.height() < 8)
+    {
+        auto ct = rc.center();
+        rc.setTop(ct.y() - 4);
+        rc.setBottom(ct.y() + 4);
+    }
+    return rc;
 }
 
-QPainterPath JZVisionLineItem::shape() const
-{
-    QPointF p1 = m_startPoint;
-    QPointF p2 = m_endPoint;
 
+QPainterPath JZVisionLineItem::linePath() const
+{
+    QPointF start = drawStartPoint();
+    QPointF end = drawEndPoint();
+
+    QPainterPath path(start);
+    if (start.x() < end.x())
+    {
+        path.lineTo(end);
+    }
+    else
+    {
+        JZAbstractNodeItem *node_from = editor()->getNodeItem(m_from.nodeId);
+
+        double cx = (start.x() + end.x()) / 2;
+        double cy = 0;
+        if (m_to.nodeId != -1)
+        {
+            JZAbstractNodeItem *node_to = editor()->getNodeItem(m_to.nodeId);
+            QRectF from_rc = node_from->sceneBoundingRect();
+            QRectF to_rc = node_to->sceneBoundingRect();
+            if (from_rc.bottom() < to_rc.top())
+                cy = (from_rc.bottom() + to_rc.top()) / 2;
+            else
+                cy = (from_rc.top() + to_rc.bottom()) / 2;
+        }
+        else
+        {
+            cy = (start.y() + end.y()) / 2;
+        }
+
+        //path.quadTo(start + QPointF(20,0), QPointF(start.x() + 20, center.y()));
+        path.lineTo(start + QPointF(20, 0));
+        path.lineTo(QPointF(start.x() + 20, cy));
+
+        path.lineTo(QPointF(end.x() - 20, cy));
+        
+        path.lineTo(QPointF(end.x() - 20, end.y()));
+        path.lineTo(QPointF(end.x() - 16, end.y()));
+        //path.quadTo(end - QPointF(20, 0),end);
+    }        
+
+    return path;
+}
+QPainterPath JZVisionLineItem::shape() const
+{    
     QPainterPathStroker st;
     st.setWidth(10.0);
 
-    QPainterPath path(p1);
-    path.lineTo(p2);
+    QPainterPath path = linePath(); 
+    
     return st.createStroke(path);
 }
 
@@ -35,183 +100,115 @@ void JZVisionLineItem::updateNode()
 {
     prepareGeometryChange();
 
-    JZVisionView* view = dynamic_cast<JZVisionView*>(this->scene()->views()[0]);
-    JZAbstractNodeItem* node_from = view->getNodeItem(m_from.nodeId);
-    m_startPoint = node_from->sceneBoundingRect().center();
-    
+    auto *view = editor();
+    JZAbstractNodeItem *node_from = view->getNodeItem(m_from.nodeId);
+    auto pin = node_from->node()->pin(m_from.pinId);
+    if (pin->isParam())
+    {
+        m_isParam = true;
+        hide();
+        return;
+    }
+
+    auto from = node_from->mapToScene(node_from->pinRect(m_from.pinId).center());
+    m_startPoint = mapFromScene(from);
     if (m_to.nodeId != -1)
     {
-        JZAbstractNodeItem* node_to = view->getNodeItem(m_to.nodeId);
-        m_endPoint = node_to->sceneBoundingRect().center();
-
-        auto from_pin = node_from->node()->pin(m_from.pinId);
-        if (from_pin->isFlow() || from_pin->isSubFlow())
-        {
-
-        }
-        else
-        {
-            hide();
-        }
+        JZAbstractNodeItem *node_to = view->getNodeItem(m_to.nodeId);
+        auto to = node_to->mapToScene(node_to->pinRect(m_to.pinId).center());
+        m_endPoint = mapFromScene(to);
     }
 }
 
+QPointF JZVisionLineItem::drawStartPoint() const
+{
+    JZAbstractNodeItem *node = editor()->getNodeItem(m_from.nodeId);
+    int x = node->sceneBoundingRect().right();
+    return QPointF(x, m_startPoint.y());
+}
 
-void JZVisionLineItem::CalcVertexes(double startX, double startY, double endX, double endY, double& x1, double& y1, double& x2, double& y2)
+QPointF JZVisionLineItem::drawEndPoint() const
+{
+    if (m_to.nodeId == -1)
+        return m_endPoint;
+
+    JZAbstractNodeItem *node = editor()->getNodeItem(m_to.nodeId);
+    int x = node->sceneBoundingRect().left();
+    return QPointF(x, m_endPoint.y());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+void JZVisionLineItem::CalcVertexes(double startX, double startY, double endX, double endY, double& x1, double& y1, double& x2, double& y2) const
 {
     /*
-    * @brief ÇóµÃ¼ıÍ·Á½µã×ø±ê
+    * @brief æ±‚å¾—ç®­å¤´ä¸¤ç‚¹åæ ‡
     */
 
-    double arrowLength = 10;      // ¼ıÍ·³¤¶È£¬Ò»°ã¹Ì¶¨
-    double arrowDegrees = 0.5;    // ¼ıÍ·½Ç¶È£¬Ò»°ã¹Ì¶¨
+    double arrowLength = 16;      // ç®­å¤´é•¿åº¦ï¼Œä¸€èˆ¬å›ºå®š
+    double arrowDegrees = 0.5;    // ç®­å¤´è§’åº¦ï¼Œä¸€èˆ¬å›ºå®š
 
-    // Çó y / x µÄ·´ÕıÇĞÖµ
+                                  // æ±‚ y / x çš„åæ­£åˆ‡å€¼
     double angle = atan2(endY - startY, endX - startX) + 3.1415926;
 
-    // ÇóµÃ¼ıÍ·µã 1 µÄ×ø±ê
+    // æ±‚å¾—ç®­å¤´ç‚¹ 1 çš„åæ ‡
     x1 = endX + arrowLength * cos(angle - arrowDegrees);
     y1 = endY + arrowLength * sin(angle - arrowDegrees);
 
-    // ÇóµÃ¼ıÍ·µã 2 µÄ×ø±ê
+    // æ±‚å¾—ç®­å¤´ç‚¹ 2 çš„åæ ‡
     x2 = endX + arrowLength * cos(angle + arrowDegrees);
     y2 = endY + arrowLength * sin(angle + arrowDegrees);
 }
 
-QPointF JZVisionLineItem::calculateIntersection(const QPointF& rayStart, const QPointF& rayEnd, const QRectF& rect) 
+void JZVisionLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *style, QWidget *widget)
 {
-    // ¼ÆËãÉäÏßµÄ·½ÏòÏòÁ¿
-    QPointF direction(rayEnd.x() - rayStart.x(), rayEnd.y() - rayStart.y());
-
-    // ´æ´¢ËùÓĞÓĞĞ§µÄ½»µã
-    QVector<QPointF> intersections;
-
-    // ¼ì²éÉäÏßÆğµãÊÇ·ñÔÚ¾ØĞÎÄÚ
-    bool isInside = rect.contains(rayStart);
-
-    // ¼ì²éÉäÏßÓë¾ØĞÎËÄÌõ±ßµÄ½»µã
-    // ÉÏ±ß y = rect.top()
-    if (direction.y() != 0) {
-        double t = (rect.top() - rayStart.y()) / direction.y();
-        if (t >= 0 && t <= 1) {
-            double x = rayStart.x() + t * direction.x();
-            if (x >= rect.left() && x <= rect.right()) {
-                intersections.append(QPointF(x, rect.top()));
-            }
-        }
-    }
-
-    // ÏÂ±ß y = rect.bottom()
-    if (direction.y() != 0) {
-        double t = (rect.bottom() - rayStart.y()) / direction.y();
-        if (t >= 0 && t <= 1) {
-            double x = rayStart.x() + t * direction.x();
-            if (x >= rect.left() && x <= rect.right()) {
-                intersections.append(QPointF(x, rect.bottom()));
-            }
-        }
-    }
-
-    // ×ó±ß x = rect.left()
-    if (direction.x() != 0) {
-        double t = (rect.left() - rayStart.x()) / direction.x();
-        if (t >= 0 && t <= 1) {
-            double y = rayStart.y() + t * direction.y();
-            if (y >= rect.top() && y <= rect.bottom()) {
-                intersections.append(QPointF(rect.left(), y));
-            }
-        }
-    }
-
-    // ÓÒ±ß x = rect.right()
-    if (direction.x() != 0) {
-        double t = (rect.right() - rayStart.x()) / direction.x();
-        if (t >= 0 && t <= 1) {
-            double y = rayStart.y() + t * direction.y();
-            if (y >= rect.top() && y <= rect.bottom()) {
-                intersections.append(QPointF(rect.right(), y));
-            }
-        }
-    }
-
-    // Èç¹ûÃ»ÓĞÕÒµ½½»µã£¬·µ»Ø¿Õµã
-    if (intersections.isEmpty()) {
-        return QPointF();
-    }
-
-    // Èç¹ûÆğµãÔÚ¾ØĞÎÄÚ£¬ÕÒµ½×îÔ¶µÄ½»µã
-    if (isInside) {
-        QPointF farthestPoint = intersections.first();
-        double maxDistance = QLineF(rayStart, farthestPoint).length();
-
-        for (int i = 1; i < intersections.size(); ++i) {
-            double distance = QLineF(rayStart, intersections[i]).length();
-            if (distance > maxDistance) {
-                maxDistance = distance;
-                farthestPoint = intersections[i];
-            }
-        }
-
-        return farthestPoint;
-    }
-
-    // Èç¹ûÆğµãÔÚ¾ØĞÎÍâ£¬ÕÒµ½×î½üµÄ½»µã
-    QPointF closestPoint = intersections.first();
-    double minDistance = QLineF(rayStart, closestPoint).length();
-
-    for (int i = 1; i < intersections.size(); ++i) {
-        double distance = QLineF(rayStart, intersections[i]).length();
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestPoint = intersections[i];
-        }
-    }
-
-    return closestPoint;
-}
-
-void JZVisionLineItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* style, QWidget* widget)
-{
-    QColor c = Qt::black;
+    QColor line_color = Qt::black;
     auto pen_style = Qt::SolidLine;
-    if (isSelected())
-        c = QColor(250, 156, 62);
+    if (isSelected() || m_to.nodeId == -1)
+        line_color = QColor(250, 156, 62);
     if (m_to.nodeId == -1)
         pen_style = Qt::DashLine;
 
-    //ÔÚÔ´ÇøÓòÄÚ²»»­
-    JZVisionView* view = dynamic_cast<JZVisionView*>(this->scene()->views()[0]);
-    JZAbstractNodeItem* node_from = view->getNodeItem(m_from.nodeId);
-    QRectF from_rc = node_from->sceneBoundingRect();
-    if (from_rc.contains(m_endPoint))
-        return;
+    auto start = drawStartPoint();
+    auto end = drawEndPoint();
 
-    QPointF start = calculateIntersection(m_startPoint, m_endPoint, from_rc);
-    QPointF end;
-    if (m_to.nodeId != -1)
+    painter->setPen(QPen(QBrush(line_color), 3, pen_style));
+    
+    QPainterPath path = linePath();    
+    painter->drawPath(path);    
+
+    int lineHStartPos = 0; 
+    int lineVStartPos = 0; 
+    int lineHEndPos = end.x();   // è¿æ¥çº¿ç»ˆç‚¹æ°´å¹³ä½ç½®
+    int lineVEndPos = end.y();   // è¿æ¥çº¿ç»ˆç‚¹å‚ç›´ä½ç½®    
+    if (start.x() < end.x())
     {
-        JZAbstractNodeItem* node_to = view->getNodeItem(m_to.nodeId);
-        QRectF to_rc = node_to->sceneBoundingRect();
-        end = calculateIntersection(m_startPoint, m_endPoint, to_rc);
+        lineHStartPos = start.x();
+        lineVStartPos = start.y(); 
     }
     else
     {
-        end = m_endPoint;
+        lineHStartPos = end.x() - 20;
+        lineVStartPos = end.y(); 
     }
 
-    painter->setPen(QPen(QBrush(c), 4, pen_style));
-    painter->drawLine(start, end);
+    // ç®­å¤´çš„ä¸¤ç‚¹åæ ‡
+    double x1, y1, x2, y2;    
 
-    int lineHStartPos = start.x(); // Á¬½ÓÏßÆğµãË®Æ½Î»ÖÃ
-    int lineVStartPos = start.y(); // Á¬½ÓÏßÆğµã´¹Ö±Î»ÖÃ
-    int lineHEndPos = end.x();   // Á¬½ÓÏßÖÕµãË®Æ½Î»ÖÃ
-    int lineVEndPos = end.y();   // Á¬½ÓÏßÖÕµã´¹Ö±Î»ÖÃ    
-
-    // ¼ıÍ·µÄÁ½µã×ø±ê
-    double x1, y1, x2, y2;
-
-    // ÇóµÃ¼ıÍ·Á½µã×ø±ê
+    // æ±‚å¾—ç®­å¤´ä¸¤ç‚¹åæ ‡
     CalcVertexes(lineHStartPos, lineVStartPos, lineHEndPos, lineVEndPos, x1, y1, x2, y2);
-    painter->drawLine(lineHEndPos, lineVEndPos, x1, y1); // »æÖÆ¼ıÍ·Ò»°ë
-    painter->drawLine(lineHEndPos, lineVEndPos, x2, y2); // »æÖÆ¼ıÍ·ÁíÒ»°ë
+    QVector<QPoint> points;
+    points << QPoint(x1, y1) << QPoint(lineHEndPos, lineVEndPos) << QPoint(x2, y2);
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(line_color);
+    painter->drawPolygon(points.data(), 3); // ç»˜åˆ¶ç®­å¤´ä¸€åŠ    
+}
+
+void JZVisionLineItem::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent)
+{
+    QPointF pos = mouseEvent->scenePos();
+    if ((m_startPoint - pos).manhattanLength() < 20 || (m_endPoint - pos).manhattanLength() < 20) {
+        mouseEvent->ignore();
+        return;
+    }
+    JZNodeBaseItem::mousePressEvent(mouseEvent);
 }

@@ -58,7 +58,7 @@ protected:
     static bool name_sort(const QString &a, const QString &b);
 
     void initProcess(QTreeWidgetItem *root);
-    void initExpression(QTreeWidgetItem *root);
+    void initExpression(QTreeWidgetItem *root,bool flow);
     void initLocalParam(QTreeWidgetItem *root);
     void updateLocalParam();
         

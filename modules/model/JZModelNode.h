@@ -9,6 +9,7 @@ enum ModelNode
 {
     Node_ModelInit = Module_ModelNode,
     Node_ModelForward,
+    Node_ModelYolo,
 };
 
 class JZNodeModelInit : public JZNode
@@ -40,6 +41,21 @@ public:
     bool compiler(JZNodeCompiler *c, QString &error);
     void saveToStream(QDataStream& s) const;
     void loadFromStream(QDataStream& s);
+
+protected:
+    virtual bool updateNode(QString &error);
+};
+
+class JZNodeModelYolo : public JZNode
+{
+public:
+    JZNodeModelYolo();
+    ~JZNodeModelYolo();
+
+    void setModel(QString name);
+    QString model();
+
+    bool compiler(JZNodeCompiler *c, QString &error);
 
 protected:
     virtual bool updateNode(QString &error);

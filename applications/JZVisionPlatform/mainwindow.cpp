@@ -68,6 +68,11 @@ MainWindow::MainWindow(QWidget *parent)
     setEditorProject(&m_project);
     setWindowTitle("JZVison");
 
+    m_roiFunction.insert("QList<JZYoloResult>", "JZYoloResult::toGraphics");
+    m_roiFunction.insert("QList<JZOCRResult>", "JZOCRResult::toGraphics");
+    m_roiFunction.insert("QList<JZQRCodeResult>", "JZQRCodeResult::toGraphics");
+    m_roiFunction.insert("QList<JZBarCodeResult>", "JZBarCodeResult::toGraphics");    
+
     m_task.setProject(&m_project);
     connect(m_task.runThread(), &JZNodeAutoRunThread::sigResult, this, &MainWindow::onAutoRunResult);
     connect(&m_task, &MainTaskManager::sigBuildStart, this, &MainWindow::onBuildStart);
@@ -834,7 +839,7 @@ void MainWindow::onActionAbout()
 
 void MainWindow::onActionHelp()
 {
-    QString url = "https://www.juzisoftware.cn/JZVison/index.html";
+    QString url = "https://www.juzisoftware.cn/JZVision/index.html";
     QDesktopServices::openUrl(url);
 }
 
@@ -1630,15 +1635,18 @@ void MainWindow::imageDebug()
     {
         QVariant roi = m_engine.getReg(Reg_CallIn + 2);
         QString roi_type = env->variantTypeName(roi);
-        if (roi_type == "QList<JZYoloResult>")
-        {
-            QList<JZYoloResult> *yolo_ret = JZObjectCast<QList<JZYoloResult>>(toJZObject(roi));
-            image.graphList = JZYoloResult::toGraphics(*yolo_ret);
-        }
-        else if (roi_type == "QList<JZOCRResult>")
-        {
-            QList<JZOCRResult> *ocr_ret = JZObjectCast<QList<JZOCRResult>>(toJZObject(roi));
-            image.graphList = JZOCRResult::toGraphics(*ocr_ret);
+
+        if(m_roiFunction.contains(roi_type))
+        { 
+            QString roi_func_name = m_roiFunction[roi_type];
+            const JZFunction *roi_func = env->functionImpl(roi_func_name);
+        
+            QVariantList in, out;
+            in << roi;
+            roi_func->cfunc->call(in,out);
+       
+            QList<JZGraphic> *graphic_list = JZObjectCast<QList<JZGraphic>>(toJZObject(out[0]));
+            image.graphList = *graphic_list;
         }
     }
 

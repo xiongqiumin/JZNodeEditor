@@ -29,12 +29,12 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZBarCodeResult> cls_bar_ret(cls_id++, "JZBarCodeResult");
     registList<JZBarCodeResult>(env, cls_id++);
 
-    //cls_ocr_ret.def("toGraphics", true, &JZYoloResult::toGraphics);
+    cls_bar_ret.def("toGraphics", true, &JZBarCodeResult::toGraphics);
     cls_bar_ret.regist();
 
     jzbind::ClassBind<JZBarCode> cls_bar(cls_id++, "JZBarCode", "QObject");
     cls_bar.def("init", true, &JZBarCode::init);
-    cls_bar.def("ocr", true, &JZBarCode::deleteLater);
+    cls_bar.def("detect", true, &JZBarCode::detect);
     cls_bar.regist();
 
 
@@ -42,12 +42,12 @@ void JZModuleVision::regist(JZScriptEnvironment *env)
     jzbind::ClassBind<JZQRCodeResult> cls_qr_ret(cls_id++, "JZQRCodeResult");
     registList<JZQRCodeResult>(env, cls_id++);
 
-    //cls_ocr_ret.def("toGraphics", true, &JZYoloResult::toGraphics);
+    cls_qr_ret.def("toGraphics", true, &JZQRCodeResult::toGraphics);
     cls_qr_ret.regist();
 
     jzbind::ClassBind<JZQRCode> cls_qr(cls_id++, "JZQRCode", "QObject");
     cls_qr.def("init", true, &JZQRCode::init);
-    cls_qr.def("ocr", true, &JZQRCode::deleteLater);
+    cls_qr.def("detect", true, &JZQRCode::detect);
     cls_qr.regist();
 
 

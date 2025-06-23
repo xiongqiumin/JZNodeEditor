@@ -372,6 +372,9 @@ JZNodeVisionBarCode::JZNodeVisionBarCode()
 
     int in = addParamIn("image");
     setPinType(in, { "Mat" });
+
+    int result = addParamOut("result");
+    setPinType(result, { "QList<JZBarCodeResult>" });
 }
 
 bool JZNodeVisionBarCode::compiler(JZNodeCompiler *c, QString &error)
@@ -383,11 +386,15 @@ bool JZNodeVisionBarCode::compiler(JZNodeCompiler *c, QString &error)
     QByteArray init_buffer;
     c->addGetOrInit(c->uniqueNodeName(m_id), "JZBarCode::init", {}, obj_id);
 
+    int in_id = paramInId(0);
+    int out_id = paramOutId(0);
     QList<JZNodeIRParam> in, out;
     in << irId(obj_id);
-    in << irId(c->paramId(m_id, paramIn(0)));
-    out << irId(c->paramId(m_id, paramOut(0)));
+    in << irId(in_id);
+    out << irId(out_id);
     c->addCall("JZBarCode::detect", in, out);
+
+    JZModuleDebug(c, m_id, irId(in_id), irId(out_id));
     return true;
 }
 
@@ -402,6 +409,9 @@ JZNodeVisionQrCode::JZNodeVisionQrCode()
 
     int in = addParamIn("image");
     setPinType(in, { "Mat" });
+
+    int result = addParamOut("result");
+    setPinType(result, { "QList<JZQRCodeResult>" });
 }
 
 bool JZNodeVisionQrCode::compiler(JZNodeCompiler *c, QString &error)
@@ -413,11 +423,15 @@ bool JZNodeVisionQrCode::compiler(JZNodeCompiler *c, QString &error)
     QByteArray init_buffer;
     c->addGetOrInit(c->uniqueNodeName(m_id), "JZQRCode::init", {}, obj_id);
 
+    int in_id = paramInId(0);
+    int out_id = paramOutId(0);
     QList<JZNodeIRParam> in, out;
     in << irId(obj_id);
-    in << irId(c->paramId(m_id, paramIn(0)));
-    out << irId(c->paramId(m_id, paramOut(0)));
+    in << irId(in_id);
+    out << irId(out_id);
     c->addCall("JZQRCode::detect", in, out);
+
+    JZModuleDebug(c, m_id, irId(in_id), irId(out_id));
     return true;
 }
 

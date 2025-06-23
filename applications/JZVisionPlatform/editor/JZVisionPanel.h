@@ -13,6 +13,7 @@ public:
     virtual void updateDefine() override;
 
 protected:
+    void initContainer(QTreeWidgetItem *item_root);
     void initLogicNode();
     void initLogic(QTreeWidgetItem *root);
     void registLogicNode(int node_type, QString path, QString icon = QString());

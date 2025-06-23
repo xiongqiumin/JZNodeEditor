@@ -252,13 +252,15 @@ QTreeWidgetItem * JZNodeAbstractPanel::createClass(QString class_name)
     return item_class;
 }
 
-void JZNodeAbstractPanel::initExpression(QTreeWidgetItem *root)
+void JZNodeAbstractPanel::initExpression(QTreeWidgetItem *root, bool flow)
 {        
     QTreeWidgetItem *itemExpr = createFolder("运算符");
 
     for (int i = Node_add; i <= Node_expr; i++)
     {   
-        auto node = editorNodeFactory()->createNode(i);
+        auto node =  dynamic_cast<JZNodeOperator*>(editorNodeFactory()->createNode(i));
+        node->setFlow(flow);
+
         QTreeWidgetItem *sub = createNode(node);
         itemExpr->addChild(sub);
         delete node;

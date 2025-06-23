@@ -60,7 +60,7 @@ QString JZNodeFlowPanel::inputText(JZNode *to_node, int pin_id)
         for (int i = 0; i < in_list.size(); i++)
             in_text << inputText(node, in_list[i]);
 
-        auto node_op = dynamic_cast<JZNodeOperator*>(node);
+        auto node_op = dynamic_cast<JZNodeDoubleOperator*>(node);
         QString op = JZNodeType::opName(node_op->op()) + " ";
         return in_text.join(op);        
     }

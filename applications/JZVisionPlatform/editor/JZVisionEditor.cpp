@@ -57,12 +57,13 @@ void JZVisionEditor::init()
 void JZVisionEditor::setCompilerResult(const CompilerResult *info)
 {
     m_view->setCompilerResult(info);
+    updateOutputImage();
 }
 
 void JZVisionEditor::setRuntimeResult(int node_id, NodeResult result)
 {
     m_result.nodeResult[node_id] = result;
-    m_outputImage->setImage(result.outputImage);    
+    m_outputImage->setImage(node_id, result.outputImage[0]);
 }
 
 void JZVisionEditor::clearRuntimeResult()
@@ -127,6 +128,24 @@ void JZVisionEditor::navigate(QUrl url)
     QUrlQuery query(url);
     int id = query.queryItemValue("id").toInt();
     m_view->selectNode(id);
+}
+
+void JZVisionEditor::updateOutputImage()
+{
+    auto script = m_view->file();
+
+    auto node_id_list = script->nodeList();
+    QList<JZVisionNodeInfo> node_list;
+    for (int i = 0; i < node_id_list.size(); i++)
+    {
+        int node_id = node_id_list[i];
+        JZVisionNodeInfo info;
+        info.name = m_view->nodeName(node_id);
+        info.node = script->getNode(node_id);
+        node_list << info;
+    }
+
+    m_outputImage->initNodeList(node_list);
 }
 
 void JZVisionEditor::undo()

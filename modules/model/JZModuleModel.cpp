@@ -73,7 +73,8 @@ void JZModuleModel::regist(JZScriptEnvironment *env)
     func_inst->registCFunction("JZYoloForward", true, jzbind::createFuncion(JZYoloForward));
 
     env->nodeFactory()->registNode(Node_ModelInit, createJZNode<JZNodeModelInit>);
-    env->nodeFactory()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);    
+    env->nodeFactory()->registNode(Node_ModelForward, createJZNode<JZNodeModelForward>);
+    env->nodeFactory()->registNode(Node_ModelYolo, createJZNode<JZNodeModelYolo>);
 }
 
 void JZModuleModel::unregist(JZScriptEnvironment *env)

@@ -52,7 +52,15 @@ JZVisionImage::~JZVisionImage()
 
 void JZVisionImage::onImageBoxChanged(int index)
 {
-
+    int node_id = m_imageBox->itemData(index).toInt();
+    if (m_imageResult.contains(node_id))
+    {
+        setResult(m_imageResult[node_id]);
+    }
+    else
+    {
+        m_view->clear();
+    }
 }
 
 void JZVisionImage::onBtnZoomIn()
@@ -91,17 +99,26 @@ void JZVisionImage::initNodeList(const QList<JZVisionNodeInfo> &node_list)
     for (int i = 0; i < node_list.size(); i++)
     {
         auto node = node_list[i].node;
-        m_imageBox->addItem(node->name(),node->id());
+        m_imageBox->addItem(node_list[i].name, node->id());
     }
+}
+
+void JZVisionImage::setResult(const ImageResult &result)
+{
+    m_view->clear();
+    m_view->setImage(QtOcv::mat2Image(result.mat));
+    m_view->initGraphics(result.graphList);
 }
 
 void JZVisionImage::clear()
 {
+    m_imageResult.clear();
     m_view->clear();
 }
 
-void JZVisionImage::setImage(const QList<ImageResult> &outputImage)
+void JZVisionImage::setImage(int node_id, const ImageResult &outputImage)
 {
-    m_view->setImage(QtOcv::mat2Image(outputImage[0].mat));
-    m_view->initGraphics(outputImage[0].graphList);
+    m_imageResult[node_id] = outputImage;
+    if (m_imageBox->currentIndex() != -1 && m_imageBox->currentData().toInt() == node_id)
+        setResult(outputImage);
 }

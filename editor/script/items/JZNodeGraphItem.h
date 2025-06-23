@@ -13,9 +13,7 @@ class JZNodeLineItem;
 class JZNodeView;
 class JZNodeGraphItem : public JZAbstractNodeItem
 {
-public:
-    enum IconType { Flow, Circle, Square, Grid, RoundSquare, Diamond };
-
+public:    
     enum {        
         Pri_subFlow = 0,
         Pri_subFlowParam = 1,
@@ -113,8 +111,7 @@ protected:
 
     QByteArray saveNode();    
     JZNodePin *pin(int pin_id);
-    void drawProp(QPainter *painter,int pinId);
-    void drawIcon(QPainter *painter, QRectF rect,IconType type, bool filled, QColor color, QColor innerColor);
+    void drawProp(QPainter *painter,int pinId);    
     void calcGemo(int pin, int x, int y, Block *gemo);
     virtual void updatePin();
     void updateErrorGemo();   

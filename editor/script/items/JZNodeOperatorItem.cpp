@@ -31,7 +31,7 @@ void JZNodeOperatorItem::updatePin()
 
 void JZNodeOperatorItem::onBtnAddClicked()
 {
-    JZNodeOperator *node = (JZNodeOperator*)m_node;
+    JZNodeDoubleOperator *node = (JZNodeDoubleOperator*)m_node;
 
     QByteArray buffer = saveNode();
     node->addInput();

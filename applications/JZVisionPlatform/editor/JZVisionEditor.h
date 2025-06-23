@@ -52,6 +52,7 @@ protected slots:
 
 protected:
     void init();
+    void updateOutputImage();
 
     JZVisionPanel *m_nodePanel;
     JZVisionView *m_view;

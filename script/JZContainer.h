@@ -171,4 +171,24 @@ void listForeach(JZNodeObject *obj, std::function<bool(int,QVariant)> vistor);
 void mapForeach(JZNodeObject *obj,std::function<bool(QVariant,QVariant)> vistor);
 
 
+class JZContainerManager
+{
+public:
+    static JZContainerManager *instance();
+
+    JZContainerManager();
+    ~JZContainerManager();
+
+    void regist(JZScriptEnvironment* env);
+
+    JZFunctionDefine *function(QString name);
+    QStringList functionList();
+
+protected:
+    void addListFunction(QString function, bool isFlow, QStringList input, QString output = QString());
+    void addMapFunction(QString function, bool isFlow, QStringList input, QString output = QString());
+
+    QMap<QString, JZFunctionDefine> m_functions;
+};
+
 #endif

@@ -239,6 +239,9 @@ int JZScriptEnvironment::nameToType(const QString &name) const
     if (isPoint)
     {
         int base_type = nameToType(JZNodeType::baseType(name));
+        if (base_type == Type_none)
+            return base_type;
+
         return JZNodeType::pointerType(base_type);
     }
 

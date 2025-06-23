@@ -139,13 +139,19 @@ void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
 
     if (edit.type == JZParamEditInfo::Edit_bool)
     {
+        QCheckBox *box = new QCheckBox();
+        connect(box, &QCheckBox::clicked, this, [box] {
+            box->setText(box->isChecked() ? "true" : "false");
+        });
 
+        box->setText("false");
+        m_editWidget = box;
     }
     else if (edit.type == JZParamEditInfo::Edit_int)
     {
         QSpinBox *spin = new QSpinBox();        
         connect(spin, &QSpinBox::editingFinished, this, &JZNodeParamValueWidget::sigEditFinish);
-        m_editWidget = spin;        
+        m_editWidget = spin;
     }
     else if (edit.type == JZParamEditInfo::Edit_double)
     {
@@ -178,7 +184,13 @@ void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
 
 void JZNodeParamValueWidget::setValue(QString value)
 {
-    if(m_editWidget->inherits("QLineEdit"))
+    if (m_editWidget->inherits("QCheckBox"))
+    {
+        auto box = qobject_cast<QCheckBox*>(m_editWidget);        
+        box->setChecked(value == "true");
+        box->setText(box->isChecked()? "true":"false");
+    }
+    else if(m_editWidget->inherits("QLineEdit"))
     {
         auto line_edit = qobject_cast<QLineEdit*>(m_editWidget);
         line_edit->setText(value);
@@ -206,7 +218,12 @@ void JZNodeParamValueWidget::setValue(QString value)
 
 QString JZNodeParamValueWidget::value()
 {
-    if(m_editWidget->inherits("QLineEdit"))
+    if (m_editWidget->inherits("QCheckBox"))
+    {
+        auto box = qobject_cast<QCheckBox*>(m_editWidget);
+        return box->isChecked()? "true" : "false";
+    }
+    else if(m_editWidget->inherits("QLineEdit"))
     {
         auto line_edit = qobject_cast<QLineEdit*>(m_editWidget);
         return line_edit->text();

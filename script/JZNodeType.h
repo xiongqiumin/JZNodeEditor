@@ -40,6 +40,8 @@ enum
     Type_internalEnum = 2100,
 
     Type_class = 5000,
+    Type_genericList,
+    Type_genericMap,
     Type_stringList,
     Type_varList,
     Type_intList,

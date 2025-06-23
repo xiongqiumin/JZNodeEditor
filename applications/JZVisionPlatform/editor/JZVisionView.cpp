@@ -20,8 +20,9 @@ bool JZVisionView::nodeIdCmp(const JZNode* n1, const JZNode* n2)
     return n1->id() < n2->id();
 }
 
-QString JZVisionView::nodeName(JZNode* node)
+QString JZVisionView::nodeName(int node_id)
 {
+    JZNode* node = m_file->getNode(node_id);
     auto node_list = m_file->nodeList();
     std::sort(node_list.begin(), node_list.end());
     if (node_list != m_cacheNodeList)
@@ -46,7 +47,7 @@ QString JZVisionView::pinName(JZNodeGemo gemo)
         return QString();
 
     JZNode* node = getNode(gemo.nodeId);
-    QString ret = nodeName(node);
+    QString ret = nodeName(gemo.nodeId);
     return ret + "." + node->pinName(gemo.pinId);
 }
 
