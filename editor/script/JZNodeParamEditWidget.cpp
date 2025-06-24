@@ -149,13 +149,15 @@ void JZNodeParamValueWidget::init(const JZParamEditInfo &edit)
     }
     else if (edit.type == JZParamEditInfo::Edit_int)
     {
-        QSpinBox *spin = new QSpinBox();        
+        QSpinBox *spin = new QSpinBox(); 
+        spin->setRange(INT_MIN, INT_MAX);
         connect(spin, &QSpinBox::editingFinished, this, &JZNodeParamValueWidget::sigEditFinish);
         m_editWidget = spin;
     }
     else if (edit.type == JZParamEditInfo::Edit_double)
     {
         QDoubleSpinBox *spin = new QDoubleSpinBox();
+        spin->setRange(DBL_MIN, DBL_MAX);
         connect(spin, &QDoubleSpinBox::editingFinished, this, &JZNodeParamValueWidget::sigEditFinish);
         m_editWidget = spin;
     }

@@ -60,8 +60,11 @@ bool JZCameraFile::open()
     auto config = dynamic_cast<JZCameraFileConfig*>(m_config.data());
 
     QDir dir(config->path);
-    if(!dir.exists())
+    if (!dir.exists())
+    {
+        m_error = config->path + " 路径不存在";
         return false;
+    }
     
     QStringList filters;
     filters << "*.bmp" << "*.jpg" << "*.jpeg" << "*.png";
@@ -69,7 +72,7 @@ bool JZCameraFile::open()
     auto list = dir.entryInfoList(filters, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,QDir::Name);
     if (list.size() == 0)
     {
-        m_error = "没有文件";
+        m_error = config->path + " 没有图片";
         return false;
     }
 

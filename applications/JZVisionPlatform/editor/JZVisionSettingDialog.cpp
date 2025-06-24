@@ -187,58 +187,22 @@ void JZVisionLinkDialog::accept()
 JZVisionSettingPinWidget::JZVisionSettingPinWidget()
 {
     m_node = nullptr;
-    m_pinEditor = nullptr;
+    m_pinEditor = nullptr;    
     m_linkEdit = nullptr;
     m_setting = nullptr;
     m_pinId = -1;
 
     m_isLink = false;
-    m_btnLink = new QToolButton();
-    connect(m_btnLink, &QToolButton::clicked, this, &JZVisionSettingPinWidget::onBtnLink);
-
-    QHBoxLayout* l = new QHBoxLayout();
-    l->setContentsMargins(0, 0, 0, 0);
-    l->addWidget(m_btnLink);
-    this->setLayout(l);
+    m_btnLink = nullptr;    
 }
 
 JZVisionSettingPinWidget::~JZVisionSettingPinWidget()
 {
 }
 
-void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
+int JZVisionSettingPinWidget::pinId()
 {
-    m_node = node;
-    m_pinId = pin_id;
-
-    auto env = m_node->environment();    
-    m_linkGemo = m_setting->view()->linkInfo(node->id(),pin_id);
-    if (m_linkGemo.isNull())
-        m_isLink = false;
-    else
-        m_isLink = true;
-
-    auto pin = m_node->pin(pin_id);
-    QString up_type = env->upType(pin->dataType());
-    JZParamEditInfo info = JZParamEditInfo::createType(env, up_type);
-    if (pin->isConstValue())
-    {
-        m_btnLink->hide();        
-    }
-    else if (info.type == JZParamEditInfo::Edit_none)
-    {
-        m_btnLink->hide();
-        m_isLink = true;
-    }
-
-    if (m_node->type() == Node_if || m_node->type() == Node_switch)
-    {
-        QToolButton* pin_remove = new QToolButton();
-        pin_remove->setText("-");
-        connect(pin_remove, &QToolButton::clicked, m_setting, &JZVisionSettingDialog::onPinRemove);
-        layout()->addWidget(pin_remove);
-    }
-    updatePinWidget();
+    return m_pinId;
 }
 
 JZVisionSettingDialog *JZVisionSettingPinWidget::setting()
@@ -249,6 +213,56 @@ JZVisionSettingDialog *JZVisionSettingPinWidget::setting()
 void JZVisionSettingPinWidget::setSetting(JZVisionSettingDialog *dlg)
 {
     m_setting = dlg;
+    connect(this, &JZVisionSettingPinWidget::sigPinRemove, m_setting, &JZVisionSettingDialog::onPinRemove);
+}
+
+void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
+{
+    m_node = node;
+    m_pinId = pin_id;
+
+    auto env = m_node->environment();    
+    auto pin = m_node->pin(pin_id);
+
+    QHBoxLayout* l = new QHBoxLayout();
+    l->setContentsMargins(0, 0, 0, 0);    
+    this->setLayout(l);
+
+    //name
+    QLabel *label = new QLabel(pin->name() + ": ");
+    l->addWidget(label);
+
+    //link
+    m_linkGemo = m_setting->view()->linkInfo(node->id(),pin_id);
+    if (m_linkGemo.isNull())
+        m_isLink = false;
+    else
+        m_isLink = true;
+
+    m_btnLink = new QToolButton();
+    connect(m_btnLink, &QToolButton::clicked, this, &JZVisionSettingPinWidget::onBtnLink);
+    l->addWidget(m_btnLink);    
+    
+    QString up_type = env->upType(pin->dataType());
+    JZParamEditInfo info = JZParamEditInfo::createType(env, up_type);
+    if (pin->isConstValue())
+    {
+        m_btnLink->hide();        
+    }
+    else if (info.type == JZParamEditInfo::Edit_none)
+    {
+        m_btnLink->hide();
+        m_isLink = true;
+    }    
+
+    if (m_node->type() == Node_if || m_node->type() == Node_switch)
+    {
+        QToolButton* pin_remove = new QToolButton();
+        pin_remove->setText("-");
+        connect(pin_remove, &QToolButton::clicked, this, &JZVisionSettingPinWidget::sigPinRemove);
+        l->addWidget(pin_remove);
+    }
+    updatePinWidget();
 }
 
 void JZVisionSettingPinWidget::updatePinWidget()
@@ -269,9 +283,11 @@ void JZVisionSettingPinWidget::updatePinWidget()
             QString up_type = env->upType(pin->dataType());
             JZParamEditInfo info = JZParamEditInfo::createType(env, up_type);
             m_pinEditor = new JZNodeParamValueWidget();
-            m_pinEditor->init(info);
-            l->insertWidget(0, m_pinEditor);
+            m_pinEditor->init(info);            
             m_pinEditor->setValue(m_node->pinValue(m_pinId));
+
+            QHBoxLayout *h_l = new QHBoxLayout();            
+            l->insertWidget(1, m_pinEditor);
         }
         m_btnLink->setText("连接输入");
     }
@@ -285,7 +301,7 @@ void JZVisionSettingPinWidget::updatePinWidget()
         if (!m_linkEdit)
         {                        
             m_linkEdit = new JZLineEditButton();
-            l->insertWidget(0, m_linkEdit);
+            l->insertWidget(1, m_linkEdit);
             connect(m_linkEdit->button(),&QToolButton::clicked,this, &JZVisionSettingPinWidget::onLickSelected);
             m_linkEdit->lineEdit()->setText(linkName());
         }
@@ -385,20 +401,35 @@ void JZVisionSettingDialog::onPinAdd()
 
 void JZVisionSettingDialog::onPinRemove()
 {
-    int id = sender()->property("PinId").toInt();
+    auto *pin_widget = dynamic_cast<JZVisionSettingPinWidget*>(sender());
+    int id = pin_widget->pinId();
     if (m_node->type() == Node_if)
     {
         auto node_if = dynamic_cast<JZNodeIf*>(m_node);
-        if(id != -1)
+        if (id != node_if->elsePin())
+        {
+            if (node_if->condCount() == 1)
+            {
+                QMessageBox::information(this, "", "至少保留一个条件");
+                return;
+            }
             node_if->removeCond(id);
+        }
         else
             node_if->removeElse();
     }
     else
     {
         auto node_switch = dynamic_cast<JZNodeSwitch*>(m_node);
-        if (id != -1)
+        if (id != node_switch->defaultPin())
+        {
+            if (node_switch->caseCount() == 1)
+            {
+                QMessageBox::information(this, "", "至少保留一个条件");
+                return;
+            }
             node_switch->removeCase(id);
+        }
         else
             node_switch->removeDefault();
     }

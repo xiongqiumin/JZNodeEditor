@@ -129,16 +129,16 @@ JZProject* MainWindow::project()
 void MainWindow::initDatabase()
 {
     m_db.open(qApp->applicationDirPath() + "/config.db");
-    if (!m_db.hasTable(m_config.tableName()))
+    if (!m_db.hasTable(m_dbConfig.tableName()))
     {
-        m_db.createTable(m_config.table());
+        m_db.createTable(m_dbConfig.table());
     }
 }
 
 void MainWindow::loadSetting()
 {
-    if(m_config.hasConfig("setting"))
-        m_setting = m_config.getConfig<Setting>("setting");
+    if(m_dbConfig.hasConfig("setting"))
+        m_setting = m_dbConfig.getConfig<Setting>("setting");
 
     onActionSample();
     if (!m_setting.recentFile.isEmpty())
@@ -165,7 +165,7 @@ void MainWindow::loadSetting()
 
 void MainWindow::saveSetting()
 {
-    m_config.setConfig<Setting>("setting", m_setting);
+    m_dbConfig.setConfig<Setting>("setting", m_setting);
 }
 
 void MainWindow::setSliderStyle(QWidget* w)
@@ -786,6 +786,13 @@ void MainWindow::onActionCloseAllFileExcept()
     closeAllEditor(m_editor);
 }
 
+void MainWindow::onComToolClose()
+{
+    JZCommSimulator *sim = qobject_cast<JZCommSimulator*>(sender());
+    auto cfg = sim->config();
+    m_dbConfig.setConfig("JZModbusSimulatorConfig", cfg);
+}
+
 void MainWindow::onFloatWindowDestory()
 {
     QObject *obj = sender();
@@ -807,9 +814,13 @@ void MainWindow::addFlowWindow(QWidget *w)
 
 void MainWindow::onActionCommTool()
 {
-    JZCommSimulator *w = new JZCommSimulator();    
-    w->show();
-    addFlowWindow(w);
+    JZCommSimulator *simulator = new JZCommSimulator();    
+    connect(simulator, &JZCommSimulator::sigClose, this, &MainWindow::onComToolClose);
+
+    JZCommSimulatorConfig cfg = m_dbConfig.getConfig<JZCommSimulatorConfig>("JZModbusSimulatorConfig");
+    simulator->setConfig(cfg);
+    simulator->show();
+    addFlowWindow(simulator);
 }
 
 void MainWindow::onActionProfile()
@@ -1144,33 +1155,8 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
     }
 
     if (m_buildResult->status == Build_Successed)
-    {
-        m_engine.setProgram(&m_buildResult->program);
-        m_engine.init();
-
-        auto obj_inst = m_engine.environment()->objectManager();
-        m_app = obj_inst->createHolder(m_className);
-
-        JZVisionApplication *app = JZObjectCast<JZVisionApplication>(m_app.object());
-        app->setMainWindow(this);
-
-        m_camProgram.clear();
-        auto cls_item = m_project.getClass(m_className);
-        auto functions = cls_item->flowList();        
-        for (int i = 0; i < functions.size(); i++)
-        {
-            auto flow = cls_item->flow(functions[i]);
-            auto event = flow->startNode();
-            if (!event || event->type() != Node_CameraFrameReady)
-                continue;
-
-            auto cam_event = dynamic_cast<JZNodeCameraReadyEvent*>(event);
-            auto camera_name = cam_event->camera();
-            
-            CameraProgram prog;
-            prog.function = cam_event->function().fullName();
-            m_camProgram[camera_name] = prog;            
-        }
+    {        
+        initEngine();        
     }
     else
     {
@@ -1233,6 +1219,42 @@ void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
     releaseEngine();
     QMessageBox::information(this, "", error.errorReport());
+}
+
+bool MainWindow::initEngine()
+{
+    if (m_engine.isInit())
+        return true;
+
+    m_engine.setProgram(&m_buildResult->program);
+    if (!m_engine.init())
+        return false;
+
+    auto obj_inst = m_engine.environment()->objectManager();
+    m_app = obj_inst->createHolder(m_className);
+
+    JZVisionApplication *app = JZObjectCast<JZVisionApplication>(m_app.object());
+    app->setMainWindow(this);
+
+    m_camProgram.clear();
+    auto cls_item = m_project.getClass(m_className);
+    auto functions = cls_item->flowList();
+    for (int i = 0; i < functions.size(); i++)
+    {
+        auto flow = cls_item->flow(functions[i]);
+        auto event = flow->startNode();
+        if (!event || event->type() != Node_CameraFrameReady)
+            continue;
+
+        auto cam_event = dynamic_cast<JZNodeCameraReadyEvent*>(event);
+        auto camera_name = cam_event->camera();
+
+        CameraProgram prog;
+        prog.function = cam_event->function().fullName();
+        m_camProgram[camera_name] = prog;
+    }
+
+    return true;
 }
 
 void MainWindow::releaseEngine()
@@ -1600,19 +1622,12 @@ bool MainWindow::checkBuild()
         flag = false;
     else
     {
-        flag = m_engine.isInit();
+        flag = initEngine();
     }
 
     if (!flag)
     {
         QMessageBox::information(this, "", "初始化失败，请检查流程或重新编译");
-        return false;
-    }
-
-    QString error;
-    if (!initEnv(error))
-    {
-        QMessageBox::information(this, "", "初始化失败" + error);
         return false;
     }
 
@@ -1635,7 +1650,7 @@ bool MainWindow::openCamera(JZCamera* camera)
     {
         if (!camera->open())
         {
-            QMessageBox::information(this, "", "启动相机失败:" + camera->error());
+            QMessageBox::information(this, "", "启动相机失败: " + camera->error());
             return false;
         }
     }
@@ -1668,11 +1683,6 @@ void MainWindow::stopCamera(QString name)
     camera->close();    
 
     LOG_I("相机停止");
-}
-
-bool MainWindow::initEnv(QString &error)
-{    
-    return true;
 }
 
 bool MainWindow::isRun()

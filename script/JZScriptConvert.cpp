@@ -1147,8 +1147,9 @@ bool JZScriptConvert::toSwitch(asCScriptNode* node)
 		}
 		else
 		{
-			int flow_id = node_switch->addDefault();
-			
+            node_switch->addDefault();
+            int flow_id = node_switch->defaultPin();
+
 			QList<JZNode*> list;
 			if (!toStatementBlock(childs[i]->firstChild, list))
 				return false;

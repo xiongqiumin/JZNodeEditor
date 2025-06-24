@@ -562,10 +562,10 @@ set(JZNodeEditorCore_SOURCES
     modules/log/JZModuleLogEditor.h
 	
 	#3rd
-	3rd/JZCommon/jzDatabase/JZConfigTable.cpp
-	3rd/JZCommon/jzDatabase/JZConfigTable.h
-	3rd/JZCommon/jzDatabase/JZDataBase.cpp
+    3rd/JZCommon/jzDatabase/JZDataBase.cpp
 	3rd/JZCommon/jzDatabase/JZDataBase.h
+	3rd/JZCommon/jzDatabase/JZDbConfigTable.cpp
+	3rd/JZCommon/jzDatabase/JZDbConfigTable.h	
 	3rd/JZCommon/jzDatabase/JZDbCondition.cpp
 	3rd/JZCommon/jzDatabase/JZDbCondition.h
 	3rd/JZCommon/jzDatabase/JZDbTable.cpp

@@ -43,6 +43,7 @@ public:
     ~JZVisionSettingPinWidget();
 
     void setPin(JZNode* node, int pin_id);
+    int pinId();
     
     JZVisionSettingDialog *setting();
     void setSetting(JZVisionSettingDialog *dlg);
@@ -50,6 +51,9 @@ public:
     bool isLink();
     JZVisionParamLink linkInfo();
     QString value();
+
+signals:
+    void sigPinRemove();
 
 protected slots:
     void onBtnLink();
@@ -66,7 +70,7 @@ protected:
     QToolButton* m_btnLink;
     JZVisionParamLink m_linkGemo;
 
-    JZNodeParamValueWidget* m_pinEditor;
+    JZNodeParamValueWidget* m_pinEditor;    
     JZLineEditButton* m_linkEdit;
 
     JZVisionSettingDialog *m_setting;

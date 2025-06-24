@@ -604,12 +604,14 @@ int JZNodeIf::addCondPin()
 
 bool JZNodeIf::hasElse()
 {
-    bool isElse = subFlowCount() > paramInCount();
-    return isElse;
+    return elsePin() != -1;
 }
 
 void JZNodeIf::addElsePin()
 {
+    if (hasElse())
+        return;
+
     addSubFlowOut("else"); 
 }
 
@@ -621,12 +623,40 @@ int JZNodeIf::condCount()
 void JZNodeIf::removeCond(int id)
 {
     int index = paramInList().indexOf(id);
-    Q_ASSERT(index >= 0);
+    Q_ASSERT(index >= 0 && condCount() > 1);
 
-    int flow_id = paramInList()[index];
-    int in_id = subFlowList()[index];
-    removePin(in_id);
+    int param_id = paramInList()[index];
+
+    int flow_id = -1;
+    int flow_index = 0;
+    auto flow_list = subFlowList();
+    for (int i = 0; i < flow_list.size(); i++)
+    {
+        if (pin(flow_list[i])->name() == "else")
+            continue;
+
+        if (flow_index == index)
+        {
+            flow_id = flow_list[i];
+            break;
+        }
+        flow_index++;
+    }    
+    Q_ASSERT(flow_id != -1);
+
+    removePin(param_id);
     removePin(flow_id);
+}
+
+int JZNodeIf::elsePin()
+{
+    auto list = subFlowList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (pin(list[i])->name() == "else")
+            return list[i];
+    }
+    return -1;
 }
 
 void JZNodeIf::removeElse()
@@ -634,7 +664,7 @@ void JZNodeIf::removeElse()
     if (!hasElse())
         return;
 
-    int id = subFlowList().back();
+    int id = elsePin();
     removePin(id);
 }
 
@@ -721,42 +751,57 @@ JZNodeSwitch::JZNodeSwitch()
 
 int JZNodeSwitch::addCase()
 {
-    int sub_id = addSubFlowOut("case");
+    int sub_id = addSubFlowOut("case", Pin_constValue);
     setPinType(sub_id, m_caseType);
     return sub_id;
 }
 
-int JZNodeSwitch::addDefault()
-{
-    return addSubFlowOut("default");    
-}
-
 void JZNodeSwitch::removeCase(int id)
 {
+    Q_ASSERT(caseCount() > 1);
     removePin(id);
-}
-
-void JZNodeSwitch::removeDefault()
-{
-    int id = subFlowList().back();
-    removePin(id);    
-}
-
-bool JZNodeSwitch::hasDefault()
-{
-    bool has_default = paramOutCount() < subFlowCount();
-    return has_default;
 }
 
 int JZNodeSwitch::caseCount()
 {
     auto list = subFlowList();
-    int id = list.back();
-    bool isDefault = pin(id)->name() == "default";
-    if (isDefault)
+    if (hasDefault())
         return list.size() - 1;
     else
         return list.size();
+}
+
+int JZNodeSwitch::defaultPin()
+{
+    auto list = subFlowList();
+    for (int i = 0; i < list.size(); i++)
+    {
+        if (pin(list[i])->name() == "default")
+            return list[i];
+    }
+    return -1;
+}
+
+void JZNodeSwitch::addDefault()
+{
+    if (hasDefault())
+        return;
+
+    addSubFlowOut("default");
+}
+
+void JZNodeSwitch::removeDefault()
+{
+    if (!hasDefault())
+        return;
+
+    int id = defaultPin();
+    removePin(id);    
+}
+
+bool JZNodeSwitch::hasDefault()
+{
+    return defaultPin() != -1;
 }
 
 void JZNodeSwitch::clearCaseAndDefault()

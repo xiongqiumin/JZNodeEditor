@@ -362,6 +362,10 @@ void JZModbusConfigDialog::onBoxTypeChanged()
 void JZModbusConfigDialog::on_btnAdd_clicked()
 {
     ModbusAddDialog dlg(this);
+    
+    JZModbusParam param;
+    param.addr = 40000;
+    dlg.setInfo(param);
     if (dlg.exec() != QDialog::Accepted)
         return;
 

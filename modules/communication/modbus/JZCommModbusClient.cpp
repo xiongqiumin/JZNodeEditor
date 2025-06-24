@@ -40,6 +40,8 @@ bool JZCommModbusClient::isOpen()
 
 bool JZCommModbusClient::open()
 {
+    auto *cfg = dynamic_cast<JZCommModbusClientConfig*>(m_config.data());
+    m_client->initConn(cfg->conn);
     return m_client->open();
 }
 

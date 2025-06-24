@@ -241,8 +241,6 @@ void JZVisionView::configNode(JZNode *node)
 
     if (macro_flag)
         m_commandStack.endMacro();
-
-    addNodeChangedCommand(node->id(), old_buffer);
 }
 
 void JZVisionView::onContextMenu(const QPoint &pos)

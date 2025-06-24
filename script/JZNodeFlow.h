@@ -134,11 +134,12 @@ class JZNodeIf : public JZNode
 public:
     JZNodeIf();
 
-    int addCondPin();  //���ز�����id
+    int addCondPin();  
     void removeCond(int id);
     int  condCount();
 
     bool hasElse();
+    int elsePin();
     void addElsePin();
     void removeElse();
 
@@ -151,16 +152,19 @@ class JZNodeSwitch : public JZNode
 {
 public:
     JZNodeSwitch();
-    int addCase();
-    int addDefault();
-    void removeCase(int id);
-    void removeDefault();
-    bool hasDefault();
-    int caseCount();
-    void clearCaseAndDefault();
 
+    int addCase();    
+    void removeCase(int id);
+    int caseCount();
     void setCaseValue(int index, const QString &v);
 
+    bool hasDefault();
+    int defaultPin();
+    void addDefault();
+    void removeDefault();        
+
+    void clearCaseAndDefault();
+    
 protected:
     virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;    
     QStringList m_caseType;

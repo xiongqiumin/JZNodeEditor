@@ -130,6 +130,8 @@ protected slots:
     void onCameraError(QString camera, QString error);
     void onMainStackedChanged();
     void onRuntimeError(JZNodeRuntimeError error);
+    
+    void onComToolClose();
     void onFloatWindowDestory();
 
 protected:    
@@ -183,8 +185,7 @@ protected:
     void updateActionStatus();
     void updateTabText(int index);
     JZNode *getInitNode(int type);
-    
-    bool initEnv(QString &error);
+        
     bool isRun();    
     void stop();
 
@@ -195,6 +196,8 @@ protected:
 
     const CompilerResult* compilerResult(const QString& path);
     void addFlowWindow(QWidget *w);
+    
+    bool initEngine();
     void releaseEngine();
 
     JZModelManager* m_modelManager;
@@ -218,7 +221,7 @@ protected:
 
     Setting m_setting;
     JZDataBase m_db;
-    JZConfigTable m_config;
+    JZDbConfigTable m_dbConfig;
     JZProject m_project;
 
     QList<QMenu*> m_menuList;

@@ -46,13 +46,13 @@ void JZCommSimulatorWidgetConfig::init(JZCommSimulatorType t)
 //JZCommSimulatorConfig
 QDataStream &operator<<(QDataStream &s, const JZCommSimulatorWidgetConfig &param)
 {
-    s << param.type << param.buffer;
+    s << param.type << param.name << param.buffer;
     return s;
 }
 
 QDataStream &operator >> (QDataStream &s, JZCommSimulatorWidgetConfig &param)
 {
-    s >> param.type >> param.buffer;
+    s >> param.type >> param.name >> param.buffer;
     return s;
 }
 
@@ -125,9 +125,20 @@ JZCommSimulator::JZCommSimulator(QWidget *parent)
     QMenuBar *menubar = new QMenuBar();        
 
     QMenu *menu_file = menubar->addMenu("文件");
-    auto actNew = menu_file->addAction("新建设备");
+    auto actMenu = menu_file->addMenu("新建设备");        
+    auto actModbus = actMenu->addAction("Modbus");
+    auto actNet = actMenu->addAction("Net");
+    auto actSerial = actMenu->addAction("Serial");
+    actModbus->setProperty("SimType", (int)Sim_Modbus);
+    actNet->setProperty("SimType", (int)Sim_Net);
+    actSerial->setProperty("SimType", (int)Sim_SerialPort);
+    m_newActList << actModbus << actNet << actSerial;
+
+    connect(actModbus, &QAction::triggered, this, &JZCommSimulator::onActionNew);
+    connect(actNet, &QAction::triggered, this, &JZCommSimulator::onActionNew);
+    connect(actSerial, &QAction::triggered, this, &JZCommSimulator::onActionNew);
+
     auto actClear = menu_file->addAction("清空设备");
-    connect(actNew, &QAction::triggered, this, &JZCommSimulator::onActionNew);
     connect(actClear, &QAction::triggered, this, &JZCommSimulator::onActionClear);
     menu_file->addSeparator();
 
@@ -223,6 +234,8 @@ void JZCommSimulator::addSimulator(JZCommSimulatorWidgetConfig config)
 
     }
 
+    widget->setConfig(config.buffer);
+    widget->setWindowTitle(config.name);
     info.widget = widget;
 
     info.window = m_mdiArea->addSubWindow(widget);
@@ -282,24 +295,16 @@ void JZCommSimulator::onContextMenu(QPoint pt)
 {
     QMenu menu(this);
     auto item = m_tree->itemAt(pt);
-    QAction *actDel = nullptr;
+    QAction *actDel = nullptr, *actRename = nullptr;
     if (!item)
     {
         auto actMenu = menu.addMenu("新建");
-        auto actModbus = actMenu->addAction("Modbus");
-        auto actNet = actMenu->addAction("Net");
-        auto actSerial = actMenu->addAction("Serial");
-        actModbus->setProperty("SimType", (int)Sim_Modbus);
-        actNet->setProperty("SimType", (int)Sim_Net);
-        actSerial->setProperty("SimType", (int)Sim_SerialPort);
-
-        connect(actModbus, &QAction::triggered, this, &JZCommSimulator::onActionNew);
-        connect(actNet, &QAction::triggered, this, &JZCommSimulator::onActionNew);
-        connect(actSerial, &QAction::triggered, this, &JZCommSimulator::onActionNew);
+        menu.addActions(m_newActList);        
     }
     else
     {
         actDel = menu.addAction("删除");
+        actRename = menu.addAction("重命名");
     }
 
     auto act = menu.exec(m_tree->mapToGlobal(pt));

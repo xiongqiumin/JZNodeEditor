@@ -79,7 +79,8 @@ protected:
     QList<Simulator> m_simulator;
     QMdiArea *m_mdiArea;
     JZLogWidget *m_log;
-    QTreeWidget *m_tree;    
+    QTreeWidget *m_tree;
+    QList<QAction*> m_newActList;
 };
 
 #endif

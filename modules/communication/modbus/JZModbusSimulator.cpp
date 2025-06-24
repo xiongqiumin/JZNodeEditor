@@ -1,4 +1,4 @@
-#include <QToolButton>
+ï»¿#include <QToolButton>
 #include "JZModbusSimulator.h"
 #include "JZNodeUtils.h"
 #include "JZModbusConfigDialog.h"
@@ -43,7 +43,7 @@ JZModBusSimulator::JZModBusSimulator()
     connect(btnStop, &QToolButton::clicked, this, &JZModBusSimulator::onSimulatorStop);
     connect(btnSetting, &QToolButton::clicked, this, &JZModBusSimulator::onSimulatorSetting);
 
-    QStringList headers = { "µØÖ·","¹¦ÄÜ","ÀàĞÍ","Öµ","²Ù×÷","²ßÂÔ","±¸×¢" };
+    QStringList headers = { "åœ°å€","åŠŸèƒ½","ç±»å‹","å€¼","æ“ä½œ","ç­–ç•¥","å¤‡æ³¨" };
     m_table->setColumnCount(headers.size());
     m_table->setHorizontalHeaderLabels(headers);
     connect(m_table, &QTableWidget::itemChanged, this, &JZModBusSimulator::onItemChanged);    
@@ -164,7 +164,7 @@ void JZModBusSimulator::updateTable()
         QHBoxLayout *layout = new QHBoxLayout();
         layout->setMargin(3);
 
-        QPushButton *btnRead = new QPushButton("¶ÁÈ¡");
+        QPushButton *btnRead = new QPushButton("è¯»å–");
         btnRead->setProperty("table", QVariant::fromValue(table));
         btnRead->setProperty("addr", proto->addr);
         connect(btnRead, SIGNAL(clicked()), this, SLOT(onProtoReadClicked()));
@@ -172,7 +172,7 @@ void JZModBusSimulator::updateTable()
 
         if (proto->addrType == Param_Coil || proto->addrType == Param_HoldingRegister)
         {
-            QPushButton *btnWrite = new QPushButton("Ğ´Èë");
+            QPushButton *btnWrite = new QPushButton("å†™å…¥");
             btnWrite->setProperty("table", QVariant::fromValue(table));
             btnWrite->setProperty("addr", proto->addr);
             connect(btnWrite, SIGNAL(clicked()), this, SLOT(onProtoWriteClicked()));
@@ -187,7 +187,7 @@ void JZModBusSimulator::updateTable()
         layout2->setMargin(3);
         widget_strage->setLayout(layout2);
 
-        QPushButton *btnStrategy = new QPushButton("ÉèÖÃ");
+        QPushButton *btnStrategy = new QPushButton("è®¾ç½®");
         btnStrategy->setProperty("table", QVariant::fromValue(table));
         connect(btnStrategy, SIGNAL(clicked()), this, SLOT(onProtoStrategyClicked()));
         layout2->addWidget(btnStrategy);
@@ -329,7 +329,7 @@ void JZModBusSimulator::startSimulator()
 
     if (!ret)
     {
-        QMessageBox::information(this, "", "Æô¶¯Ê§°Ü,Çë¼ì²éÉèÖÃ");
+        QMessageBox::information(this, "", "å¯åŠ¨å¤±è´¥,è¯·æ£€æŸ¥è®¾ç½®");
         return;
     }
     updateStatus();
