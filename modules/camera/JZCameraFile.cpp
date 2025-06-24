@@ -67,8 +67,11 @@ bool JZCameraFile::open()
     filters << "*.bmp" << "*.jpg" << "*.jpeg" << "*.png";
     
     auto list = dir.entryInfoList(filters, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,QDir::Name);
-    if(list.size() == 0)
+    if (list.size() == 0)
+    {
+        m_error = "没有文件";
         return false;
+    }
 
     m_fileList.clear();
     for(int i = 0; i < list.size(); i++)

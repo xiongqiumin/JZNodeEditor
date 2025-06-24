@@ -58,9 +58,10 @@ public:
 protected:
     virtual bool updateNode(QString &error) override;
     void updateFunction();
-    QString genericClass(QString name);
+    QString realFunctionName();
 
     QString m_functionName;
+    QString m_keyType;
     QString m_valueType;
     bool m_forceFlow;
 };

@@ -278,29 +278,22 @@ QString JZNodeContainerFunction::variable() const
 void JZNodeContainerFunction::saveToStream(QDataStream &s) const
 {
     JZNode::saveToStream(s);
-    s << m_functionName;
+    s << m_functionName << m_forceFlow;
 }
 
 void JZNodeContainerFunction::loadFromStream(QDataStream &s)
 {
     JZNode::loadFromStream(s);
-    s >> m_functionName;
+    s >> m_functionName >> m_forceFlow;
     updateFunction();
-}
-
-QString JZNodeContainerFunction::genericClass(QString name)
-{
-    int idx = name.indexOf("<");
-    if (idx == -1)
-        return QString();
-    else
-        return name.left(idx);
-
 }
 
 void JZNodeContainerFunction::updateFunction()
 {    
     clearPin();
+    
+    if(m_functionName.isEmpty())
+        return;
 
     JZFunctionDefine *func = JZContainerManager::instance()->function(m_functionName);
     if (func->isFlowFunction || m_forceFlow)
@@ -322,40 +315,62 @@ void JZNodeContainerFunction::updateFunction()
     }
 }
 
+QString JZNodeContainerFunction::realFunctionName()
+{
+    QString functionName = m_functionName;
+    if(m_functionName.startsWith("QList<"))
+        functionName.replace("T", m_valueType);
+    else if(m_functionName.startsWith("QMap<"))
+    {
+        functionName.replace("K", m_keyType);
+        functionName.replace("V", m_valueType);
+    }   
+    return functionName;
+}
+
 bool JZNodeContainerFunction::updateNode(QString &error)
 {
+    auto contianer_manager = JZContainerManager::instance();
     auto env = m_file->project()->environment();
-    JZFunctionDefine *func = JZContainerManager::instance()->function(m_functionName);    
-    JZScriptItemVisitor visitor(m_file);
-
-    QList<JZNodePin*> input_pin = visitor.inputPin(m_id, paramIn(0));
+    JZFunctionDefine *func = contianer_manager->function(m_functionName);    
+    
+    auto input_pin = m_file->getConnectInput(m_id, paramIn(0));
     if (input_pin.size() == 0)
     {
         error = "无法确定泛形函数类型";
         return false;
     }
-    QString class_type = env->upType(input_pin[0]->dataType());
+
+    QStringList input_class_type;
     for (int i = 0; i < input_pin.size(); i++)
     {
-        QString other_type = env->upType(input_pin[0]->dataType());
-        if(other_type != class_type)
-        {
-            error = "无法确定泛形函数类型";
-            return false;
-        }
+        auto pin_gemo = m_file->getConnect(input_pin[i])->from;
+        auto pin = m_file->getPin(pin_gemo);
+        input_class_type << pin->dataType();
     }
+    input_class_type = input_class_type.toSet().values();
 
-    QString func_gen = genericClass(m_functionName);
-    QString class_gen = genericClass(class_type);
-    if(func_gen != class_gen)
+    QString class_type = env->upType(input_class_type);
+    if (env->nameToType(class_type) == Type_none)
     {
-        error = "需要传入" + func_gen;
+        error = "无法确定泛形函数类型";
         return false;
     }
 
-    for (int i = 0; i < func->paramIn.size(); i++)
+    QString gen_class = JZFunctionHelper::splitFunction(m_functionName).className;
+    GenericInfo base_class_gen = contianer_manager->genericInfo(gen_class);
+    GenericInfo class_gen = contianer_manager->genericInfo(class_type);
+    if(base_class_gen.className != class_gen.className)
     {
-        if (func->paramIn[i].type == "arg")
+        error = "需要传入" + gen_class;
+        return false;
+    }
+
+    m_valueType = class_gen.generics[0];
+    func->paramIn[0].type = class_type + "*";
+    for (int i = 1; i < func->paramIn.size(); i++)
+    {
+        if (func->paramIn[i].type == "T")
         {
             if (m_valueType.isEmpty())
                 setPinType(paramIn(i), QStringList());
@@ -366,7 +381,7 @@ bool JZNodeContainerFunction::updateNode(QString &error)
 
     for (int i = 0; i < func->paramOut.size(); i++)
     {
-        if (func->paramOut[i].type == "arg")
+        if (func->paramOut[i].type == "T")
         {
             if (m_valueType.isEmpty())
                 setPinType(paramOut(i), QStringList());
@@ -382,8 +397,7 @@ bool JZNodeContainerFunction::compiler(JZNodeCompiler *c, QString &error)
 {
     Q_ASSERT(c->env()->isVaildType(m_valueType));
 
-    QString functionName = m_functionName;
-    functionName.replace("arg", m_valueType);
+    QString functionName = realFunctionName();
 
     QList<int> in_list = paramInList();
     QList<int> out_list = paramOutList();
@@ -402,7 +416,7 @@ bool JZNodeContainerFunction::compiler(JZNodeCompiler *c, QString &error)
     for (int i = 0; i < out_list.size(); i++)
         out << irId(c->paramId(m_id, out_list[i]));
 
-    c->addCall(m_functionName, in, out);    
+    c->addCall(functionName, in, out);
 
     if (isFlowNode())
         c->addFlowOutput(m_id);

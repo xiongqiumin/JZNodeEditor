@@ -161,6 +161,8 @@ public:
     void stepOver();
     void stepOut();      
 
+    void yield();
+
     Stack *stack();    
     JZScriptEnvironment *environment();
     
@@ -215,6 +217,7 @@ signals:
 
 protected slots:
     void onWatchTimer();
+    void onSchedulerTimer();
 
 protected:
     enum{
@@ -222,6 +225,12 @@ protected:
         Command_pause,
         Command_resume,
         Command_stop,
+    };
+
+    enum {
+        Run_Completed,
+        Run_Failed,
+        Run_Yield,
     };
 
     struct TryCatchInfo
@@ -243,6 +252,15 @@ protected:
         int exprTime;
         int getTime;
         int setTime;
+    };
+
+    struct Coroutine
+    {
+        Stack stack;
+        QVector<QVariant> regs;
+        QList<TryCatchInfo> tryCatchList;
+        int pc;
+        bool isReady;
     };
 
     virtual void customEvent(QEvent *event) override;        
@@ -287,6 +305,8 @@ protected:
     void popTryCatch();
     bool catchException(QString tips);
 
+    void resumeCoroutine(Coroutine *co);
+
     int m_pc;    
     const JZNodeProgram *m_program;
     const JZNodeScript *m_script;
@@ -311,6 +331,8 @@ protected:
     QList<TryCatchInfo> m_tryCatchList;
     QSet<const JZNodeIRNodeEnter*> m_breakIr;    
     JZNodeTraceContext m_traceContext;
+
+    QList<Coroutine> m_coroutine;
 
     bool m_watch;
     Stat m_stat;

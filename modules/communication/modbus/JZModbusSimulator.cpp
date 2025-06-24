@@ -66,6 +66,11 @@ JZModBusSimulator::~JZModBusSimulator()
     }
 }
 
+JZCommSimulatorType JZModBusSimulator::type()
+{
+    return Sim_Modbus;
+}
+
 bool JZModBusSimulator::isOpen()
 {
     if (m_slaver)
@@ -94,14 +99,10 @@ void JZModBusSimulator::close()
         return m_master->close();    
 }
 
-void JZModBusSimulator::setting()
-{
-    settingSimulator();
-}
-
 void JZModBusSimulator::setConfig(const QByteArray &buffer)
 {
     m_config = JZNodeUtils::fromBuffer<JZModbusConfig>(buffer);
+    initSimulator();
 }
 
 QByteArray JZModBusSimulator::getConfig()
@@ -211,7 +212,13 @@ void JZModBusSimulator::onSimulatorStop()
 
 void JZModBusSimulator::onSimulatorSetting()
 {    
-    settingSimulator();
+    JZModbusConfigDialog dlg(this);
+    dlg.setConfig(m_config);
+    if (dlg.exec() != JZModbusConfigDialog::Accepted)
+        return;
+
+    m_config = dlg.config();
+    initSimulator();
 }
 
 void JZModBusSimulator::onItemChanged(QTableWidgetItem *item)
@@ -340,11 +347,6 @@ void JZModBusSimulator::stopSimulator()
         m_slaver->stopServer();
 
     updateStatus();
-}
-
-void JZModBusSimulator::settingSimulator()
-{
-
 }
 
 void JZModBusSimulator::initSimulator()

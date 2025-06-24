@@ -53,6 +53,7 @@ public:
     JZQRCode* getQrCode();
 
     JZCamera *camera(QString name);
+    bool openCamera(JZCamera *camera);
     void startCamera(QString name);
     void startCameraOnce(QString name);
     void stopCamera(QString name);

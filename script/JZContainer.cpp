@@ -104,28 +104,27 @@ JZContainerManager *JZContainerManager::instance()
 
 JZContainerManager::JZContainerManager()
 {
-    addListFunction("set", true, { "int", "arg" });
-    addListFunction("get", false, { "int" }, {"arg"});
+    addListFunction("set", true, { "int", "T" });
+    addListFunction("get", false, { "int" }, {"T"});
     addListFunction("size", false, {}, { "int" });
     addListFunction("clear", true, {});
 
-    addListFunction("insert", true, { "int", "arg" });
-    addListFunction("push_back", true, { "arg" });
+    addListFunction("insert", true, { "int", "T" });
+    addListFunction("push_back", true, { "T" });
     addListFunction("pop_back", true, { });
-    addListFunction("push_front", true, { "arg" });
+    addListFunction("push_front", true, { "T" });
     addListFunction("pop_front", true, {});
     addListFunction("removeAt", true, { "int" });
     
-    addListFunction("mid", false, { "int", "int" }, { "QList<arg>" });
-    addListFunction("append", true, { "QList<arg>*" });
+    addListFunction("mid", false, { "int", "int" }, { "QList<T>" });
+    addListFunction("append", true, { "QList<T>*" });
     addListFunction("resize", true, { "int" } );
-    addListFunction("swap", true, { "int","int" })
-        ;
-    addListFunction("indexOf", false, { "arg", "int" }, { "int" });;
-    addListFunction("lastIndexOf", true, { "arg", "int" }, { "int" });
-    addListFunction("removeOne", true, { "arg"});
-    addListFunction("removeAll", true, { "arg" });
-    addListFunction("contains", false, { "arg" });
+    addListFunction("swap", true, { "int","int" });
+    addListFunction("indexOf", false, { "T", "int" }, { "int" });;
+    addListFunction("lastIndexOf", true, { "T", "int" }, { "int" });
+    addListFunction("removeOne", true, { "T"});
+    addListFunction("removeAll", true, { "T" });
+    addListFunction("contains", false, { "T" });
 
 }
 
@@ -133,19 +132,36 @@ JZContainerManager::~JZContainerManager()
 {
 }
 
+GenericInfo JZContainerManager::genericInfo(QString name)
+{
+    GenericInfo info;
+
+    int start_idx = name.indexOf("<");
+    if(start_idx > 0)
+    {
+        info.className = name.left(start_idx);
+        start_idx++;
+
+        int end_idx = name.lastIndexOf(">");
+        info.generics = name.mid(start_idx,end_idx - start_idx).split(",");
+    }
+
+    return info;
+}
+
 void JZContainerManager::addListFunction(QString function, bool isFlow, QStringList input, QString output)
 {
     JZFunctionDefine def;
-    def.setFullName("QList<arg>::" + function);
+    def.setFullName("QList<T>::" + function);
     def.isFlowFunction = isFlow;
-    def.paramIn << JZParamDefine("this","QList<arg>*");
+    def.paramIn << JZParamDefine("this","QList<T>*");
     for (int i = 0; i < input.size(); i++)
     {
         QString input_name = "input" + QString::number(i);
         def.paramIn << JZParamDefine(input_name, input[i]);
     }
 
-    if (output.isEmpty())
+    if (!output.isEmpty())
     {
         def.paramOut << JZParamDefine("output", output);
     }

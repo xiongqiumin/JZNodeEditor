@@ -16,6 +16,32 @@
 #include "JZCommSimulator.h"
 #include "JZRegExpHelp.h"
 #include "modbus/JZModbusSimulator.h"
+#include "JZNodeUtils.h"
+
+JZCommSimulatorWidgetConfig::JZCommSimulatorWidgetConfig()
+{
+    type = Sim_None;
+}
+
+void JZCommSimulatorWidgetConfig::init(JZCommSimulatorType t)
+{
+    type = t;
+    if (t == Sim_Modbus)
+    {
+        name = "modbus";
+
+        JZModbusConfig config;
+        buffer = JZNodeUtils::toBuffer(config);
+    }
+    else if (t == Sim_Net)
+    {
+        name = "net";
+    }
+    else if (t == Sim_SerialPort)
+    {
+        name = "serial";
+    }
+}
 
 //JZCommSimulatorConfig
 QDataStream &operator<<(QDataStream &s, const JZCommSimulatorWidgetConfig &param)
@@ -149,7 +175,13 @@ JZCommSimulatorConfig JZCommSimulator::config()
 {
     JZCommSimulatorConfig config;
     for (int i = 0; i < m_simulator.size(); i++)
-        config.commList << m_simulator[i].config;
+    {
+        JZCommSimulatorWidgetConfig widget_config;
+        widget_config.name = m_simulator[i].item->text(0);
+        widget_config.type = m_simulator[i].widget->type();
+        widget_config.buffer = m_simulator[i].widget->getConfig();
+        config.commList << widget_config;
+    }
 
     return config;
 }
@@ -173,33 +205,32 @@ bool JZCommSimulator::eventFilter(QObject *o, QEvent *e)
     return QWidget::eventFilter(o, e);
 }
 
-QString JZCommSimulator::genSimulatorName(int index)
-{
-    QStringList nameList;
-    for (int i = 0; i < m_tree->topLevelItemCount(); i++)
-        nameList << m_tree->topLevelItem(i)->text(0);
-
-    QString name;    
-    return name;
-}
-
-JZCommSimulatorWidget *JZCommSimulator::createSimulator(int type)
-{
-    Q_ASSERT(0);
-    return nullptr;
-}
-
 void JZCommSimulator::addSimulator(JZCommSimulatorWidgetConfig config)
 {
     Simulator info;
-    info.config = config;    
     
-    JZCommSimulatorWidget *widget = createSimulator(config.type);
+    JZCommSimulatorWidget* widget = nullptr;
+    if (config.type == Sim_Modbus)
+    {
+        widget = new JZModBusSimulator();
+    }
+    else if (config.type == Sim_Net)
+    {
+
+    }
+    else if (config.type == Sim_SerialPort)
+    {
+
+    }
+
+    info.widget = widget;
+
     info.window = m_mdiArea->addSubWindow(widget);
     info.window->show();
     info.window->installEventFilter(this);         
 
     QTreeWidgetItem *item = new QTreeWidgetItem();
+    item->setText(0, config.name);
     info.item = item;    
     m_tree->addTopLevelItem(item);
     
@@ -214,18 +245,18 @@ void JZCommSimulator::removeSimulator(int index)
     m_simulator.removeAt(index);
 }
 
-void JZCommSimulator::settingSimulator(int index)
-{
-    auto &info = m_simulator[index];
-
-    info.widget->setting();
-
-    info.config.buffer = info.widget->getConfig();    
-}
-
 void JZCommSimulator::onActionNew()
 {
+    auto type = (JZCommSimulatorType)sender()->property("SimType").toInt();
+
     JZCommSimulatorWidgetConfig config;
+    config.init(type);
+
+    QStringList nameList;
+    for (int i = 0; i < m_simulator.size(); i++)
+        nameList << m_simulator[i].item->text(0);
+
+    config.name = JZRegExpHelp::uniqueString(config.name, nameList);
     addSimulator(config);
 }
 
@@ -243,7 +274,8 @@ void JZCommSimulator::onActionShowAll()
 void JZCommSimulator::onItemDoubleClicked(QTreeWidgetItem *item)
 {
     int idx = m_tree->indexOfTopLevelItem(item);
-    settingSimulator(idx);
+    m_simulator[idx].window->raise();
+    m_simulator[idx].window->activateWindow();
 }
 
 void JZCommSimulator::onContextMenu(QPoint pt)
@@ -251,15 +283,22 @@ void JZCommSimulator::onContextMenu(QPoint pt)
     QMenu menu(this);
     auto item = m_tree->itemAt(pt);
     QAction *actDel = nullptr;
-    QAction *actSetting = nullptr;
     if (!item)
     {
-        auto actNew = menu.addAction("新建");
-        connect(actNew, &QAction::triggered, this, &JZCommSimulator::onActionNew);
+        auto actMenu = menu.addMenu("新建");
+        auto actModbus = actMenu->addAction("Modbus");
+        auto actNet = actMenu->addAction("Net");
+        auto actSerial = actMenu->addAction("Serial");
+        actModbus->setProperty("SimType", (int)Sim_Modbus);
+        actNet->setProperty("SimType", (int)Sim_Net);
+        actSerial->setProperty("SimType", (int)Sim_SerialPort);
+
+        connect(actModbus, &QAction::triggered, this, &JZCommSimulator::onActionNew);
+        connect(actNet, &QAction::triggered, this, &JZCommSimulator::onActionNew);
+        connect(actSerial, &QAction::triggered, this, &JZCommSimulator::onActionNew);
     }
     else
     {
-        actSetting = menu.addAction("设置");
         actDel = menu.addAction("删除");
     }
 
@@ -272,11 +311,6 @@ void JZCommSimulator::onContextMenu(QPoint pt)
         int idx = m_tree->indexOfTopLevelItem(item);
         removeSimulator(idx);
         delete m_tree->takeTopLevelItem(idx);
-    }
-    else if (act == actSetting)
-    {
-        int idx = m_tree->indexOfTopLevelItem(item);
-        settingSimulator(idx);
     }
 }
 

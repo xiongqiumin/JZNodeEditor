@@ -170,6 +170,12 @@ void registMap(JZScriptEnvironment* env, int type = Type_none)
 void listForeach(JZNodeObject *obj, std::function<bool(int,QVariant)> vistor);
 void mapForeach(JZNodeObject *obj,std::function<bool(QVariant,QVariant)> vistor);
 
+class GenericInfo
+{
+public:    
+    QString className;
+    QStringList generics;
+};
 
 class JZContainerManager
 {
@@ -180,6 +186,7 @@ public:
     ~JZContainerManager();
 
     void regist(JZScriptEnvironment* env);
+    GenericInfo genericInfo(QString name);
 
     JZFunctionDefine *function(QString name);
     QStringList functionList();

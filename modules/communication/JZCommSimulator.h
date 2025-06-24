@@ -16,7 +16,11 @@ class SimulatorWidget;
 class JZCommSimulatorWidgetConfig
 {
 public:
-    int type;
+    JZCommSimulatorWidgetConfig();
+    void init(JZCommSimulatorType t);
+
+    QString name;
+    JZCommSimulatorType type;
     QByteArray buffer;
 };
 
@@ -62,19 +66,15 @@ protected:
         QTreeWidgetItem *item;
         QMdiSubWindow *window;        
         JZCommSimulatorWidget *widget;
-        JZCommSimulatorWidgetConfig config;
     };
     
     virtual void closeEvent(QCloseEvent *event) override;
     virtual bool eventFilter(QObject *o, QEvent *e) override;
 
-    JZCommSimulatorWidget *createSimulator(int type);
     void addSimulator(JZCommSimulatorWidgetConfig config);
     void removeSimulator(int index);
     void startSimulator(int index);
     void stopSimulator(int index);
-    void settingSimulator(int index);    
-    QString genSimulatorName(int index);    
                 
     QList<Simulator> m_simulator;
     QMdiArea *m_mdiArea;

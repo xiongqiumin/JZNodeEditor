@@ -37,3 +37,8 @@ JZCameraConfigEnum JZCamera::config()
 {
     return m_config;
 }
+
+QString JZCamera::error()
+{
+    return m_error;
+}

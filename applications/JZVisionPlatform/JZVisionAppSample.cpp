@@ -83,10 +83,10 @@ void JZVisionAppSample::create(JZProject *project)
     node_if->addElsePin();
     flow_script->addNode(node_if);
 
-    JZNodeFunction *func_size = new JZNodeFunction();
+    JZNodeContainerFunction *func_size = new JZNodeContainerFunction();
     func_size->setForceFlow(true);
     flow_script->addNode(func_size);
-    func_size->setFunction("QList<JZYoloResult>::size");
+    func_size->setFunction("QList<T>::size");
     flow_script->addConnect(model_forward->paramOutGemo(0), func_size->paramInGemo(0));
     flow_script->addConnect(model_forward->flowOutGemo(0), func_size->flowInGemo());
 

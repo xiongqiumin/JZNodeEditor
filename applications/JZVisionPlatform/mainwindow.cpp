@@ -1629,29 +1629,36 @@ JZCamera *MainWindow::camera(QString name)
     return m_cameraManager->camera(name);
 }
 
-void MainWindow::startCamera(QString name)
+bool MainWindow::openCamera(JZCamera* camera)
 {
-    JZCamera *camera = this->camera(name);
     if (!camera->isOpen())
     {
         if (!camera->open())
-            return;
+        {
+            QMessageBox::information(this, "", "启动相机失败:" + camera->error());
+            return false;
+        }
     }
-    camera->start();
+    return true;
+}
 
+void MainWindow::startCamera(QString name)
+{
+    JZCamera *camera = this->camera(name);
+    if (!openCamera(camera))
+        return;
+
+    camera->start();
     LOG_I("相机启动");
 }
 
 void MainWindow::startCameraOnce(QString name)
 {
     JZCamera *camera = this->camera(name);
-    if (!camera->isOpen())
-    {
-        if (!camera->open())
-            return;
-    }
-    camera->startOnce();
+    if (!openCamera(camera))
+        return;
 
+    camera->startOnce();
     LOG_I("相机启动一次");
 }
 

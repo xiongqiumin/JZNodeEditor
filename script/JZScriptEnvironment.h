@@ -75,6 +75,8 @@ public:
     int isInherits(const QString &type1, const QString &type2) const;
     int isInherits(int type1, int type2) const;
 
+    int isTemplate(int type1, int type2) const;
+
     bool isFunctionTypeMatch(const JZFunctionDefine* func1, const JZFunctionDefine* func2) const;
 
     JZParamDefine paramDefine(QString name, int data_type, QString value = QString()) const;

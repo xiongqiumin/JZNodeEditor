@@ -218,10 +218,13 @@ QString JZScriptEnvironment::typeToName(int id) const
     {
         return m_objectManager.getEnumName(id) + suffix;
     }
-    else if (id >= Type_class)
-        return m_objectManager.getClassName(id) + suffix;
     else
-        return JZNodeType::typeName(id) + suffix;
+    {
+        if (m_objectManager.meta(id))
+            return m_objectManager.getClassName(id) + suffix;
+        else
+            return JZNodeType::typeName(id) + suffix;
+    }
 }
 
 QStringList JZScriptEnvironment::typeListToNameList(QList<int> types) const
@@ -345,7 +348,7 @@ bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
     {        
         int base_src = JZNodeType::baseType(src_type);
         int base_dst = JZNodeType::baseType(dst_type);
-        return isInherits(base_src, base_dst);
+        return isInherits(base_src, base_dst) || isTemplate(base_src, base_dst);
     }
     if (JZNodeType::isPointer(src_type) && JZNodeType::isPointer(dst_type))
         return false;
@@ -357,7 +360,7 @@ bool JZScriptEnvironment::isSameType(int src_type,int dst_type) const
     else if ((JZNodeType::isEnum(src_type) && dst_type == Type_int) || (src_type == Type_int && JZNodeType::isEnum(dst_type)))
         return true;
     else if (src_type >= Type_class && dst_type >= Type_class)
-        return isInherits(src_type, dst_type);
+        return isInherits(src_type, dst_type) || isTemplate(src_type, dst_type);
     else if (src_type == Type_nullptr && dst_type >= Type_class)
         return true;
     
@@ -377,6 +380,16 @@ int JZScriptEnvironment::isInherits(int type1,int type2) const
         return true;
 
     return m_objectManager.isInherits(type1,type2);
+}
+
+int JZScriptEnvironment::isTemplate(int type1, int type2) const
+{
+    if (type2 == Type_genericList)
+        return typeToName(type1).startsWith("QList<");
+    else if (type2 == Type_genericMap)
+        return typeToName(type1).startsWith("QMap<");
+    else
+        return false;
 }
 
 bool JZScriptEnvironment::isFunctionTypeMatch(const JZFunctionDefine* func1, const JZFunctionDefine* func2) const
@@ -424,6 +437,8 @@ JZParamDefine JZScriptEnvironment::paramDefine(QString name, int data_type, QStr
 bool JZScriptEnvironment::canConvert(int type1,int type2) const
 {   
     if(type1 == type2)
+        return true;
+    if (isSameType(type1, type2))
         return true;
 
     bool is_type1_ptr = JZNodeType::isPointer(type1);

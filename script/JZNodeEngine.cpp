@@ -1083,6 +1083,20 @@ void JZNodeEngine::onWatchTimer()
     watchNotify();
 }
 
+void JZNodeEngine::onSchedulerTimer()
+{
+    for (int i = 0; i < m_coroutine.size(); i++)
+    {
+        if (m_coroutine[i].isReady)
+            resumeCoroutine(&m_coroutine[i]);
+    }
+}
+
+void JZNodeEngine::resumeCoroutine(Coroutine* co)
+{
+    run();
+}
+
 void JZNodeEngine::setDebug(bool flag)
 {
     m_debug = flag;
@@ -1287,6 +1301,11 @@ void JZNodeEngine::stepOut()
     lock.unlock();
     m_waitCond.wakeOne();
     waitCommand();
+}
+
+void JZNodeEngine::yield()
+{
+
 }
 
 void JZNodeEngine::checkFunctionIn(const JZFunction *func)

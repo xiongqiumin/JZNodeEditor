@@ -14,10 +14,10 @@ public:
     JZModBusSimulator();
     ~JZModBusSimulator();
 
+    virtual JZCommSimulatorType type() override;
     virtual bool isOpen() override;
     virtual bool open() override;
     virtual void close() override;
-    virtual void setting() override;
     virtual void setConfig(const QByteArray &buffer) override;
     virtual QByteArray getConfig() override;
     
@@ -40,7 +40,6 @@ protected:
     int indexOfRow(int addr);    
     void startSimulator();
     void stopSimulator();
-    void settingSimulator();
 
     QToolButton *m_btnStart, *m_btnStop, *m_btnSetting;
     QTableWidget *m_table;

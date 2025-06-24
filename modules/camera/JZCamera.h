@@ -43,6 +43,7 @@ public:
     QString name() const;
     virtual bool setConfig(JZCameraConfigEnum config) = 0;
     JZCameraConfigEnum config();
+    QString error();
 
     virtual bool isOpen() = 0;
     virtual bool open() = 0;
@@ -58,6 +59,7 @@ signals:
 
 protected:
     JZCameraConfigEnum m_config;
+    QString m_error;
 };
 
 #endif

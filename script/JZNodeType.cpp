@@ -155,6 +155,10 @@ void JZNodeType::init()
     typeMap["args"] = Type_args; 
     typeMap["auto"] = Type_auto;
 
+    typeMap["QList<T>"] = Type_genericList;
+    typeMap["QMap<K,V>"] = Type_genericMap;
+    //typeMap["QSet<T>"] = Type_auto;
+
     opNameMap[OP_add] = "+";
     opNameMap[OP_sub] = "-";
     opNameMap[OP_mul] = "*";
