@@ -2,6 +2,7 @@
 #include "JZNodeBind.h"
 #include "JZNodeEngine.h"
 #include "3rd/JZCommon/jzCommon/JZLogManager.h"
+#include "JZNodeRuntime.h"
 
 bool JZForCheck(int first, int last, int step, int op, QString &error)
 {
@@ -235,5 +236,6 @@ void InitBuildInFunction()
 
     func_inst->registCFunction("connect", true, jzbind::createFuncion(QObjectConnect));
     func_inst->registCFunction("disconnect", true, jzbind::createFuncion(QObjectDisconnect));
-    func_inst->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));  
+    func_inst->registCFunction("forRuntimeCheck", true, jzbind::createFuncion(JZForRuntimeCheck));
+    func_inst->registCFunction("sleep", true, jzbind::createFuncion(JZSleep));  
 }

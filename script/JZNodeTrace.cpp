@@ -27,7 +27,7 @@ void JZTracePush(const QString &text)
 
     JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Push);
     ptr->name = text;
-    g_engine->traceContext()->record(ptr);
+    g_engine->currentTraceContext()->record(ptr);
 }
 
 void JZTracePop()
@@ -36,7 +36,7 @@ void JZTracePop()
         return;
 
     JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Pop);
-    g_engine->traceContext()->record(ptr);
+    g_engine->currentTraceContext()->record(ptr);
 }
 
 void JZTraceMark(const QString &text)
@@ -46,7 +46,7 @@ void JZTraceMark(const QString &text)
 
     JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Mark);
     ptr->name = text;
-    g_engine->traceContext()->record(ptr);
+    g_engine->currentTraceContext()->record(ptr);
 }
 
 //JZNodeTrace

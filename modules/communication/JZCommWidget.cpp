@@ -31,7 +31,8 @@ JZCommConfigDialog::JZCommConfigDialog(QWidget *parent)
     stopBit_value = QList<int>{ QSerialPort::OneStop, QSerialPort::TwoStop };
     stopBit_text = QStringList{ "OneStop", "TwoStop" };
 
-    addModbus();
+    addModbusClient();
+    addModbusServer();
     addTcpClient();
     addTcpServer();
     addUdp();
@@ -43,54 +44,78 @@ JZCommConfigDialog::~JZCommConfigDialog()
     qDeleteAll(m_config);
 }
 
-void JZCommConfigDialog::addModbus()
+void JZCommConfigDialog::addModbusClient()
 {
-    for(int i = 0; i < 2; i++)
-    {
-        JZCommModbusClientConfig *config_rtu = new JZCommModbusClientConfig();
-        JZCommModbusClientConfig *config_tcp = new JZCommModbusClientConfig();
+    JZCommModbusRtuClientConfig *config_rtu = new JZCommModbusRtuClientConfig();
+    JZCommModbusTcpClientConfig *config_tcp = new JZCommModbusTcpClientConfig();
 
-        int rtu_type,tcp_type;
-        if(i == 0)
-        {
-            rtu_type = Comm_ModbusRtuClient;
-            tcp_type = Comm_ModbusTcpClient;
-            config_rtu->conn.modbusType = Modbus_rtuClient;
-            config_tcp->conn.modbusType = Modbus_tcpClient;
-        }
-        else
-        {
-            rtu_type = Comm_ModbusRtuServer;
-            tcp_type = Comm_ModbusTcpServer;
-            config_rtu->conn.modbusType = Modbus_rtuServer;
-            config_tcp->conn.modbusType = Modbus_tcpServer;
-        }
+    int rtu_type,tcp_type;
 
-        m_config[rtu_type] = new JZCommConfigEnum(config_rtu);
-        m_config[tcp_type] = new JZCommConfigEnum(config_tcp);
+    rtu_type = Comm_ModbusRtuClient;
+    tcp_type = Comm_ModbusTcpClient;
+    config_rtu->conn.modbusType = Modbus_rtuClient;
+    config_tcp->conn.modbusType = Modbus_tcpClient;
+     
 
-        QList<JZProperty*> modbus_rtu, modbus_tcp;
+    m_config[rtu_type] = new JZCommConfigEnum(config_rtu);
+    m_config[tcp_type] = new JZCommConfigEnum(config_tcp);
 
-        //rtu    
-        JZProperty *bit_order_rtu = m_editor->addPropIntEnum("BitOrder", &config_rtu->bitOrder, bit_order_value, bit_order_text, m_propGroup);
+    QList<JZProperty*> modbus_rtu, modbus_tcp;
 
-        modbus_rtu << bit_order_rtu;    
-        modbus_rtu << m_editor->addProp("PortName", &config_rtu->conn.portName, m_propGroup);
-        modbus_rtu << m_editor->addPropIntEnum("Baud", &config_rtu->conn.baud, baud_value, baud_text, m_propGroup);
-        modbus_rtu << m_editor->addPropIntEnum("DataBit", &config_rtu->conn.dataBit, dataBit_value, dataBit_text, m_propGroup);
-        modbus_rtu << m_editor->addPropIntEnum("ParityBit", &config_rtu->conn.parityBit, parityBit_value, parityBit_text, m_propGroup);
-        modbus_rtu << m_editor->addPropIntEnum("StopBit", &config_rtu->conn.stopBit, stopBit_value, stopBit_text, m_propGroup);
+    //rtu    
+    JZProperty *bit_order_rtu = m_editor->addPropIntEnum("BitOrder", &config_rtu->bitOrder, bit_order_value, bit_order_text, m_propGroup);
 
-        //tcp
-        JZProperty *bit_order_tcp = m_editor->addPropIntEnum("BitOrder", &config_tcp->bitOrder, bit_order_value, bit_order_text, m_propGroup);
-        modbus_tcp << bit_order_tcp;
-        if(rtu_type == Comm_ModbusRtuClient)
-            modbus_tcp << m_editor->addProp("Ip", &config_tcp->conn.ip, m_propGroup);
-        modbus_tcp << m_editor->addProp("Port", &config_tcp->conn.port, m_propGroup);
+    modbus_rtu << bit_order_rtu;    
+    modbus_rtu << m_editor->addProp("PortName", &config_rtu->conn.portName, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("Baud", &config_rtu->conn.baud, baud_value, baud_text, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("DataBit", &config_rtu->conn.dataBit, dataBit_value, dataBit_text, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("ParityBit", &config_rtu->conn.parityBit, parityBit_value, parityBit_text, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("StopBit", &config_rtu->conn.stopBit, stopBit_value, stopBit_text, m_propGroup);
 
-        addPage(rtu_type, modbus_rtu);
-        addPage(tcp_type, modbus_tcp);
-    }
+    //tcp
+    JZProperty *bit_order_tcp = m_editor->addPropIntEnum("BitOrder", &config_tcp->bitOrder, bit_order_value, bit_order_text, m_propGroup);
+    modbus_tcp << bit_order_tcp;
+    modbus_tcp << m_editor->addProp("Ip", &config_tcp->conn.ip, m_propGroup);
+    modbus_tcp << m_editor->addProp("Port", &config_tcp->conn.port, m_propGroup);
+
+    addPage(rtu_type, modbus_rtu);
+    addPage(tcp_type, modbus_tcp);
+}
+
+void JZCommConfigDialog::addModbusServer()
+{
+    JZCommModbusRtuServerConfig* config_rtu = new JZCommModbusRtuServerConfig();
+    JZCommModbusTcpServerConfig* config_tcp = new JZCommModbusTcpServerConfig();
+
+    int rtu_type, tcp_type;
+    rtu_type = Comm_ModbusRtuServer;
+    tcp_type = Comm_ModbusTcpServer;
+    config_rtu->conn.modbusType = Modbus_rtuServer;
+    config_tcp->conn.modbusType = Modbus_tcpServer;
+
+    m_config[rtu_type] = new JZCommConfigEnum(config_rtu);
+    m_config[tcp_type] = new JZCommConfigEnum(config_tcp);
+
+    QList<JZProperty*> modbus_rtu, modbus_tcp;
+
+    //rtu    
+    JZProperty* bit_order_rtu = m_editor->addPropIntEnum("BitOrder", &config_rtu->bitOrder, bit_order_value, bit_order_text, m_propGroup);
+
+    modbus_rtu << bit_order_rtu;
+    modbus_rtu << m_editor->addProp("PortName", &config_rtu->conn.portName, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("Baud", &config_rtu->conn.baud, baud_value, baud_text, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("DataBit", &config_rtu->conn.dataBit, dataBit_value, dataBit_text, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("ParityBit", &config_rtu->conn.parityBit, parityBit_value, parityBit_text, m_propGroup);
+    modbus_rtu << m_editor->addPropIntEnum("StopBit", &config_rtu->conn.stopBit, stopBit_value, stopBit_text, m_propGroup);
+
+    //tcp
+    JZProperty* bit_order_tcp = m_editor->addPropIntEnum("BitOrder", &config_tcp->bitOrder, bit_order_value, bit_order_text, m_propGroup);
+    modbus_tcp << bit_order_tcp;
+    //modbus_tcp << m_editor->addProp("Ip", &config_tcp->conn.ip, m_propGroup);
+    modbus_tcp << m_editor->addProp("Port", &config_tcp->conn.port, m_propGroup);
+
+    addPage(rtu_type, modbus_rtu);
+    addPage(tcp_type, modbus_tcp);
 }
 
 void JZCommConfigDialog::addTcpClient()
@@ -189,8 +214,8 @@ void JZCommConfigWidget::addConfig()
     for (int i = 0; i < m_config.commList.size(); i++)
         camera_list << m_config.commList[i]->name;
 
-    JZCommModbusClientConfig *cfg = new JZCommModbusClientConfig();
-    cfg->name = JZRegExpHelp::uniqueString("comm", camera_list);    
+    JZCommModbusTcpClientConfig *cfg = new JZCommModbusTcpClientConfig();
+    cfg->name = JZRegExpHelp::uniqueString(cfg->name, camera_list);    
 
     JZCommConfigDialog dlg(this);
     dlg.setConfig(JZCommConfigEnum(cfg));

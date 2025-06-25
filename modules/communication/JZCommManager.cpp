@@ -235,8 +235,6 @@ JZVariantAny JZCommModbusRead(JZCommManager* mgr, const QString& name, int funct
     if (!client->isOpen() && !client->open())
         throw std::runtime_error("client open failed");
     
-    auto ms_client = client->client();
-
     JZVariantAny any;
     bool ret = false;
     if (function == Function_Bit || function == Function_InputBit)
@@ -244,11 +242,11 @@ JZVariantAny JZCommModbusRead(JZCommManager* mgr, const QString& name, int funct
         QVector<uint8_t> dest;
         if (function == Function_Bit)
         {
-            ret = ms_client->readBits(addr, 1, dest);
+            ret = client->readBits(addr, 1, dest);
         }
         else
         {
-            ret = ms_client->readInputBits(addr, 1, dest);
+            ret = client->readInputBits(addr, 1, dest);
         }
         if (ret)
             any.variant = QVariant::fromValue<uint8_t>(dest[0]);
@@ -259,9 +257,9 @@ JZVariantAny JZCommModbusRead(JZCommManager* mgr, const QString& name, int funct
 
         QVector<uint16_t> buffer;
         if (function == Function_InputRegister)
-            ret = ms_client->readInputRegisters(addr, count, buffer);
+            ret = client->readInputRegisters(addr, count, buffer);
         else
-            ret = ms_client->readRegisters(addr, count, buffer);
+            ret = client->readRegisters(addr, count, buffer);
 
         if (ret)
         {             
@@ -297,12 +295,10 @@ void JZCommModbusWrite(JZCommManager* mgr, const QString& name, int function, co
     if (!client->isOpen() && !client->open())
         throw std::runtime_error("client open failed");
 
-    auto ms_client = client->client();
-
     bool ret = false;
     if (function == Function_Bit)
     {        
-        ret = ms_client->writeBit(addr, value.variant.value<uint8_t>());
+        ret = client->writeBit(addr, value.variant.value<uint8_t>());
     }
     else if (function == Function_Register)
     {
@@ -324,7 +320,7 @@ void JZCommModbusWrite(JZCommManager* mgr, const QString& name, int function, co
             Q_ASSERT(0);
         }
 
-        ret = ms_client->writeRegisters(addr, buffer);
+        ret = client->writeRegisters(addr, buffer);
     }
     else {
         Q_ASSERT(0);

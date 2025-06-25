@@ -11,7 +11,7 @@ int main(int argc,char *argv[])
     QCoreApplication a(argc,argv);
     JZNodeInit();
     
-    test_vision(argc, argv);
+    test_comm(argc, argv);
 
     return 0;
 }

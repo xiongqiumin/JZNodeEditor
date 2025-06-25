@@ -16,6 +16,7 @@
 #include "JZNodeTypeHelper.h"
 #include "JZNodeFlagEditDialog.h"
 #include "JZNodeEditorManager.h"
+#include "JZNodeValidator.h"
 
 //JZNodeParamTypeWidget
 JZNodeParamTypeWidget::JZNodeParamTypeWidget()
@@ -39,7 +40,7 @@ QString JZNodeParamTypeWidget::type()
 }
 
 //JZParamEditInfo
-JZParamEditInfo JZParamEditInfo::createEnum(QStringList list)
+JZParamEditInfo JZParamEditInfo::createByEnum(QStringList list)
 {
     JZParamEditInfo info;
     info.type = Edit_enum;
@@ -47,7 +48,7 @@ JZParamEditInfo JZParamEditInfo::createEnum(QStringList list)
     return info;
 }
 
-JZParamEditInfo JZParamEditInfo::createType(const JZScriptEnvironment* env, QString type)
+JZParamEditInfo JZParamEditInfo::createByType(const JZScriptEnvironment* env, QString type)
 {
     JZParamEditInfo info;
 
@@ -114,6 +115,38 @@ JZParamEditInfo JZParamEditInfo::createType(const JZScriptEnvironment* env, QStr
     }
 
     
+    return info;
+}
+
+JZParamEditInfo JZParamEditInfo::createByPin(JZNode* node, int pin_id)
+{
+    auto pin = node->pin(pin_id);
+    auto env = node->environment();
+    QString up_type = env->upType(pin->dataType());
+
+    JZParamEditInfo info = createByType(env,up_type);
+    auto valid = JZNodeValidatorManager::instance()->pinValidator(node->type(), pin_id);
+    if (!valid)
+        return info;
+
+    if (valid->type == JZParamValidator::minMax)
+    {
+        if (up_type == "float" || up_type == "double")
+        {
+            info.min = valid->min.toDouble();
+            info.max = valid->max.toDouble();
+        }
+        else
+        {
+            info.min = valid->min.toInt();
+            info.max = valid->max.toInt();
+        }
+    }
+    else if (valid->type == JZParamValidator::enumeration)
+    {
+        info.enumList = valid->enumList;
+    }
+
     return info;
 }
 

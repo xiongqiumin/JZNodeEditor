@@ -38,12 +38,12 @@ void JZVisionAppSample::updateInit()
 
     //comm_init
     JZModbusConnetInfo conn;
-    conn.modbusType = Modbus_rtuClient;
+    conn.modbusType = Modbus_tcpClient;
 
     JZCommManagerConfig comm_mangare_config;
 
     JZCommConfig comm_cfg;
-    JZCommModbusClientConfig* modbus = new JZCommModbusClientConfig();
+    JZCommModbusTcpClientConfig* modbus = new JZCommModbusTcpClientConfig();
     modbus->conn = conn;
     modbus->name = "modbus";
 

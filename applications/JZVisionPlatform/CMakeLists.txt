@@ -23,6 +23,8 @@ set(JZVisionPlatform_SOURCES
     JZFlowTree.h
 	JZCameraThread.cpp
 	JZCameraThread.h
+	JZVisionCoroutine.cpp
+	JZVisionCoroutine.h
 	JZVisionAppNode.cpp
 	JZVisionAppNode.h
 	JZVisionAppSample.cpp
@@ -48,6 +50,7 @@ set(JZVisionPlatform_SOURCES
     editor/JZVisionEditorManager.h
 	editor/JZVisionView.cpp
 	editor/JZVisionView.h
+
 )
 
 add_executable(JZVisionPlatform ${JZVisionPlatform_SOURCES})

@@ -4,11 +4,11 @@
 #include "../JZComm.h"
 #include "3rd/JZCommon/jzModbus/JZModbusClient.h"
 
-//JZCommModbusConfig
-class JZCommModbusClientConfig : public JZCommConfig
+//JZCommModbusRtuClientConfig
+class JZCommModbusRtuClientConfig : public JZCommConfig
 {
 public:
-    JZCommModbusClientConfig();
+    JZCommModbusRtuClientConfig();
 
     virtual void saveToStream(QDataStream& s) const;
     virtual void loadFromStream(QDataStream& s);
@@ -17,6 +17,19 @@ public:
     QDataStream::ByteOrder bitOrder;
 };
 
+
+//JZCommModbusTcpClientConfig
+class JZCommModbusTcpClientConfig : public JZCommConfig
+{
+public:
+    JZCommModbusTcpClientConfig();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
+
+    JZModbusConnetInfo conn;
+    QDataStream::ByteOrder bitOrder;
+};
 
 //JZCommModbusClient
 class JZCommModbusClient : public JZCommObject
@@ -32,7 +45,22 @@ public:
     virtual void close() override;
     JZModbusClient *client();
 
+    bool readBits(int addr, int nb, QVector<uint8_t>& dest);
+    bool readInputBits(int addr, int nb, QVector<uint8_t>& dest);
+    bool readRegisters(int addr, int nb, QVector<uint16_t>& dest);
+    bool readInputRegisters(int addr, int nb, QVector<uint16_t>& dest);
+
+    bool writeBit(int coil_addr, int status);
+    bool writeRegisters(int addr, const QVector<uint16_t>& dest);
+
+protected slots:
+    void onModbusReplay(const JZModebusReply& reply);
+
 protected:
+    bool waitReplay();
+
+    bool m_waitReplay;
+    JZModebusReply m_reply;
     JZModbusClient *m_client;
 };
 

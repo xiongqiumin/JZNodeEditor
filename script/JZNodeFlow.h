@@ -78,11 +78,18 @@ protected:
 class JZNodeFor: public JZNode
 {
 public:
+    //这里是paramIn索引，不是id
+    enum{
+        Pin_start = 0,
+        Pin_op = 1,
+        Pin_end = 2,
+        Pin_step = 3,
+    };
+    
     JZNodeFor();
 
     virtual bool compiler(JZNodeCompiler *compiler,QString &error) override;
 
-    void setRange(int start, int end);
     void setRange(int start, int step, int end);
     void setStart(int start);
     void setStep(int step);
@@ -92,11 +99,7 @@ public:
     void setOp(JZNodeIRType op);
 
 protected:    
-    virtual void saveToStream(QDataStream& s) const override;
-    virtual void loadFromStream(QDataStream &s) override;
-
-    QList<JZNodeIRType> m_condOpList;        
-    JZNodeIRType m_condOp;
+    QList<JZNodeIRType> m_condOpList;
 };
 
 //JZNodeForEach
@@ -140,7 +143,7 @@ public:
 
     bool hasElse();
     int elsePin();
-    void addElsePin();
+    int addElsePin();
     void removeElse();
 
 protected:
@@ -160,7 +163,7 @@ public:
 
     bool hasDefault();
     int defaultPin();
-    void addDefault();
+    int addDefault();
     void removeDefault();        
 
     void clearCaseAndDefault();

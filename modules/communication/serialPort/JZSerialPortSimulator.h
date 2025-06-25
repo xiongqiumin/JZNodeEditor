@@ -4,29 +4,31 @@
 #include <QTableWidget>
 #include <QToolButton>
 #include "../JZCommSimulatorWidget.h"
+#include "JZSerialPort.h"
 
-class JZNetSimulatorConfig
+//JZSerialPortConfig
+class JZSerialPortConfig
 {
 public: 
-    JZNetSimulatorConfig();
+    JZSerialPortConfig();
 };
-QDataStream &operator<<(QDataStream &s, const JZNetSimulatorConfig &param);
-QDataStream &operator>>(QDataStream &s, JZNetSimulatorConfig &param);
+QDataStream &operator<<(QDataStream &s, const JZSerialPortConfig &param);
+QDataStream &operator>>(QDataStream &s, JZSerialPortConfig &param);
 
-class JZNetSimulator : public JZCommSimulatorWidget
+//JZSerialPortSimulator
+class JZSerialPortSimulator : public JZCommSimulatorWidget
 {
     Q_OBJECT
 
 public:
-    JZNetSimulator();
-    ~JZNetSimulator();
+    JZSerialPortSimulator();
+    ~JZSerialPortSimulator();
 
     virtual bool isOpen() override;
     virtual bool open() override;
     virtual void close() override;
     virtual void setConfig(const QByteArray &buffer) override;
     virtual QByteArray getConfig() override;
-    
 };
 
 

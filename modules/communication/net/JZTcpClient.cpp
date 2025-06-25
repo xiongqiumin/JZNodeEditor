@@ -5,6 +5,7 @@
 //JZCommTcpClientConfig
 JZCommTcpClientConfig::JZCommTcpClientConfig()
 {
+    type = Comm_TcpClient;
     ip = "127.0.0.1";
     port = 8888;
 }

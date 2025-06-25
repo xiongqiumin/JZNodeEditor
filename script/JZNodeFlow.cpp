@@ -196,8 +196,10 @@ JZNodeFor::JZNodeFor()
     addFlowOut("complete");
 
     int id_start = addParamIn("Index");
-    int id_step = addParamIn("Step");
-    int id_end = addParamIn("End index");    
+    addParamIn("Op", Pin_noCompiler);
+    int id_end = addParamIn("End index");  
+    int id_step = addParamIn("Step");  
+
     int id_index = addParamOut("Index");
     setPinTypeInt(id_start);
     setPinTypeInt(id_step);
@@ -208,13 +210,13 @@ JZNodeFor::JZNodeFor()
     setPinValue(id_step, "1");
     setPinValue(id_end, "1");    
 
-    m_condOp = OP_lt;
     m_condOpList.push_back(OP_lt);
     m_condOpList.push_back(OP_le);
     m_condOpList.push_back(OP_gt);
     m_condOpList.push_back(OP_ge);
     m_condOpList.push_back(OP_eq);
     m_condOpList.push_back(OP_ne);
+    setOp(OP_lt);
 }
 
 bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
@@ -223,11 +225,12 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     if (!c->addFlowInput(m_id, error))    
         return false;        
 
-    int indexStart = paramIn(0);
-    int indexStep = paramIn(1);
-    int indexEnd = paramIn(2);
     int indexOut = paramOut(0);        
-    JZNodeIRType op = (JZNodeIRType)m_condOp;
+    JZNodeIRType op = this->op();
+
+    int indexStart = paramIn(Pin_start);
+    int indexStep = paramIn(Pin_step);
+    int indexEnd = paramIn(Pin_end);
 
     bool need_runtime_check = true;
     if (c->isPinLiteral(m_id, indexStart)
@@ -246,17 +249,18 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
         need_runtime_check = false;
     }
 
-    int id_index = c->paramId(m_id,indexStart);
-    int id_end = c->paramId(m_id,indexEnd);
-    int id_step = c->paramId(m_id, indexStep);    
-    int id_out_index = c->paramId(m_id,indexOut);         
+    int id_index = c->paramId(m_id, indexStart);
+    int id_end = c->paramId(m_id, indexEnd);
+    int id_step = c->paramId(m_id, indexStep);
+    int id_out_index = c->paramId(m_id,indexOut);        
+    c->setIRParamReference(irId(id_out_index),irId(id_index));
+
     if(need_runtime_check)
     {
         QList<JZNodeIRParam> in, out;
         in << irId(id_index) << irId(id_end) << irId(id_step) << irLiteral(op);
         c->addCall("forRuntimeCheck", in, out);
     }
-    c->addSetVariable(irId(id_out_index), irId(id_index));
 
     //start 
     int start = c->addNodeEnter(m_id);
@@ -287,57 +291,40 @@ bool JZNodeFor::compiler(JZNodeCompiler *c,QString &error)
     return true;
 }
 
-void JZNodeFor::saveToStream(QDataStream& s) const
-{
-    JZNode::saveToStream(s);
-    s << m_condOp;
-}
-
-void JZNodeFor::loadFromStream(QDataStream &s)
-{
-    JZNode::loadFromStream(s);  
-    s >> m_condOp;
-}
-
-void JZNodeFor::setRange(int start, int end)
-{
-    int step = (start < end)? 1: -1;
-    setPinValue(paramIn(0), QString::number(start));
-    setPinValue(paramIn(1), QString::number(step));
-    setPinValue(paramIn(2), QString::number(end));
-}
-
 void JZNodeFor::setRange(int start, int step, int end)
 {
-    setPinValue(paramIn(0), QString::number(start));
-    setPinValue(paramIn(1), QString::number(step));
-    setPinValue(paramIn(2), QString::number(end));
+    setPinValue(paramIn(Pin_start), QString::number(start));
+    setPinValue(paramIn(Pin_step), QString::number(step));
+    setPinValue(paramIn(Pin_end), QString::number(end));
 }
 
 void JZNodeFor::setStart(int start)
 {
-    setPinValue(paramIn(0), QString::number(start));
+    setPinValue(paramIn(Pin_start), QString::number(start));
 }
 
 void JZNodeFor::setStep(int step)
 {
-    setPinValue(paramIn(1), QString::number(step));
+    setPinValue(paramIn(Pin_step), QString::number(step));
 }
 
 void JZNodeFor::setEnd(int end)
 {
-    setPinValue(paramIn(2), QString::number(end));
+    setPinValue(paramIn(Pin_end), QString::number(end));
 }
 
 JZNodeIRType JZNodeFor::op()
 {
-    return m_condOp;
+    QString op_name = paramInValue(Pin_op);
+    return (JZNodeIRType)JZNodeType::opType(op_name);
 }
 
 void JZNodeFor::setOp(JZNodeIRType op)
 {    
     Q_ASSERT(m_condOpList.contains(op));
-    m_condOp = op;
+
+    QString op_name = JZNodeType::opName(op);
+    setParamInValue(Pin_op,op_name);
 }
 
 //JZNodeForEach
@@ -607,12 +594,12 @@ bool JZNodeIf::hasElse()
     return elsePin() != -1;
 }
 
-void JZNodeIf::addElsePin()
+int JZNodeIf::addElsePin()
 {
     if (hasElse())
-        return;
+        return -1;
 
-    addSubFlowOut("else"); 
+    return addSubFlowOut("else"); 
 }
 
 int JZNodeIf::condCount()
@@ -782,12 +769,12 @@ int JZNodeSwitch::defaultPin()
     return -1;
 }
 
-void JZNodeSwitch::addDefault()
+int JZNodeSwitch::addDefault()
 {
     if (hasDefault())
-        return;
+        return -1;
 
-    addSubFlowOut("default");
+    return addSubFlowOut("default");
 }
 
 void JZNodeSwitch::removeDefault()

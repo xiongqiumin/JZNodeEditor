@@ -21,6 +21,8 @@ set(JZNodeTest_SOURCES
 	test_paramBind.h
 	test_runtime.cpp
 	test_runtime.h
+	test_co.cpp
+	test_co.h
 )
 
 add_executable(JZNodeTest ${JZNodeTest_SOURCES})

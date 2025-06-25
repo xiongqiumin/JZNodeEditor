@@ -187,6 +187,17 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param)
     return s;
 }
 
+//JZNodeCoroutine
+JZNodeCoroutine::JZNodeCoroutine()
+{
+    id = -1;
+    pc = -1;
+    sender = nullptr;
+    script = nullptr;
+    status = Status_none;
+    regs.resize(Reg_End - Reg_Start);
+}
+
 //JZNodeRuntimeInfo
 JZNodeRuntimeInfo::Stack::Stack()
 {
@@ -260,7 +271,6 @@ public:
 };
 int JZNodeEngineIdlePauseEvent::Event = 0;
 
-
 JZNodeEngine::Stat::Stat()
 {
     clear();
@@ -297,13 +307,11 @@ JZNodeEngine::JZNodeEngine(QObject *parent)
     :QObject(parent)
 { 
     m_program = nullptr;
-    m_script = nullptr;
-    m_sender = nullptr;
-    m_pc = -1;    
+    m_co = nullptr;
+    m_coId = 0;
     m_debug = false;
     m_status = Status_none;
     m_statusCommand = Command_none;
-    m_regs.resize(Reg_End - Reg_Start);
     m_idleFunc.define.name = "idle";
     m_watch = false;
 }
@@ -340,7 +348,10 @@ bool JZNodeEngine::init()
     // regist type
     m_program->initEnv(&m_env);
     updateStatus(Status_idle);
-    m_traceContext.clear();
+
+    m_coId = 0;
+    m_coMap[m_coId++] = JZNodeCoPtr(new JZNodeCoroutine());
+    m_co = m_coMap[0].data();
 
     g_engine = this;
     QVariantList in, out;
@@ -365,13 +376,12 @@ void JZNodeEngine::deinit()
     m_breakIr.clear();
     m_breakStep.clear();
 
-    m_stack.clear();
+    m_coMap.clear();
+    m_co = nullptr;
     m_global.clear();
-    m_sender = nullptr;
     m_statusCommand = Command_none;
     updateStatus(Status_none);
 
-    clearReg();
     g_engine = nullptr;
 }
 
@@ -387,8 +397,8 @@ void JZNodeEngine::statReport()
 
 const JZFunctionDebugInfo *JZNodeEngine::currentFunctionDebugInfo()
 {
-    QString function = m_stack.currentEnv()->function->fullName();
-    return m_script->functionDebug(function);
+    QString function = m_co->stack.currentEnv()->function->fullName();
+    return m_co->script->functionDebug(function);
 }
 
 int JZNodeEngine::nodeIdByPc(const JZNodeScript *script,QString function, int pc)
@@ -423,13 +433,13 @@ NodeRange JZNodeEngine::nodeDebugRange(int node_id, int pc)
 
 int JZNodeEngine::breakNodeId()
 {
-    return nodeIdByPc(m_pc);
+    return nodeIdByPc(m_co->pc);
 }
 
 int JZNodeEngine::nodeIdByPc(int pc)
 {
-    QString func = m_stack.currentEnv()->function->fullName();
-    return nodeIdByPc(m_script, func, pc);
+    QString func = m_co->stack.currentEnv()->function->fullName();
+    return nodeIdByPc(m_co->script, func, pc);
 }
 
 JZEngineStatus JZNodeEngine::status()
@@ -441,10 +451,10 @@ JZEngineStatus JZNodeEngine::status()
 QString JZNodeEngine::currentFunction()
 {
     QMutexLocker lock(&m_mutex);
-    if (m_stack.size() == 0)
+    if (m_co->stack.size() == 0)
         return QString();
 
-    return m_stack.currentEnv()->function->fullName();
+    return m_co->stack.currentEnv()->function->fullName();
 }
 
 JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
@@ -452,7 +462,7 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
     JZNodeRuntimeInfo info;
     QMutexLocker lock(&m_mutex);
     info.status = m_status;
-    if (m_status == Status_pause && m_stack.size() == 0)
+    if (m_status == Status_pause && m_co->stack.size() == 0)
     {
         JZNodeRuntimeInfo::Stack s;
         s.function = "__idle__";
@@ -460,10 +470,10 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
     }
     else
     {        
-        for (int i = 0; i < m_stack.size(); i++)
+        for (int i = 0; i < m_co->stack.size(); i++)
         {
             JZNodeRuntimeInfo::Stack s;
-            auto env = m_stack.env(i);
+            auto env = m_co->stack.env(i);
             s.function = env->function->fullName();
             if (env->script)
             {
@@ -484,55 +494,55 @@ JZNodeRuntimeError JZNodeEngine::runtimeError()
 
 void JZNodeEngine::pushStack(const JZFunction *func)
 {
-    if (m_stack.size() == 128) {
+    if (m_co->stack.size() == 128) {
         throw std::runtime_error("stack overflow");
     }
 
-    if (m_stack.size() > 0)    
-        m_stack.currentEnv()->pc = m_pc;
+    if (m_co->stack.size() > 0)    
+        m_co->stack.currentEnv()->pc = m_co->pc;
     
-    m_stack.push();    
-    m_stack.currentEnv()->function = func;
+    m_co->stack.push();    
+    m_co->stack.currentEnv()->function = func;
 
     checkFunctionIn(func);     
     
     if(!func->isCFunction())
     {          
-        m_pc = func->addr;
-        m_script = getScript(func->path);
-        Q_ASSERT_X(m_script,"No Scrpit in path:",qUtf8Printable(func->path));
+        m_co->pc = func->addr;
+        m_co->script = getScript(func->path);
+        Q_ASSERT_X(m_co->script,"No Scrpit in path:",qUtf8Printable(func->path));
 
-        m_stack.currentEnv()->pc = m_pc;
-        m_stack.currentEnv()->script = m_script;
+        m_co->stack.currentEnv()->pc = m_co->pc;
+        m_co->stack.currentEnv()->script = m_co->script;
         if (func->isMemberFunction())
         {
-            auto &obj = m_stack.currentEnv()->self;
-            obj.type = JZNodeType::variantType(m_regs[Reg_CallIn - Reg_Start]);
-            *obj.ptr = m_regs[Reg_CallIn - Reg_Start];
+            auto &obj = m_co->stack.currentEnv()->self;
+            obj.type = JZNodeType::variantType(m_co->regs[Reg_CallIn - Reg_Start]);
+            *obj.ptr = m_co->regs[Reg_CallIn - Reg_Start];
         }
     }
     else
     {
-        m_pc = -1;
-        m_script = nullptr;
+        m_co->pc = -1;
+        m_co->script = nullptr;
     }
 }
 
 void JZNodeEngine::popStack()
 {       
-    checkFunctionOut(m_stack.currentEnv()->function);
-    m_stack.pop();
+    checkFunctionOut(m_co->stack.currentEnv()->function);
+    m_co->stack.pop();
 
-    if(m_stack.size() > 0)
+    if(m_co->stack.size() > 0)
     {
-        m_pc = m_stack.currentEnv()->pc;
-        m_script = m_stack.currentEnv()->script;
-        Q_ASSERT(m_pc == -1 || m_script);
+        m_co->pc = m_co->stack.currentEnv()->pc;
+        m_co->script = m_co->stack.currentEnv()->script;
+        Q_ASSERT(m_co->pc == -1 || m_co->script);
     }
     else
     {
-        m_pc = -1;
-        m_script = nullptr;        
+        m_co->pc = -1;
+        m_co->script = nullptr;        
     }
 }
 
@@ -568,7 +578,7 @@ bool JZNodeEngine::callVirtual(const QString& function, const QVariantList& in, 
 
 bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantList &out)
 {    
-    Q_ASSERT(m_stack.size() == 0);
+    Q_ASSERT(m_co->stack.size() == 0);
     if (m_status == Status_error)
         return false;                
     
@@ -592,7 +602,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
                 updateStatus(Status_idle);
                 m_statusCommand = Command_none;
                 m_breakStep.clear();
-                m_stack.clear();
+                m_co->stack.clear();
                 return false;
             }
         }
@@ -602,7 +612,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
             out.push_back(getReg(Reg_CallOut + i));
         clearReg();
 
-        if (m_stack.size() == 0)
+        if (m_co->stack.size() == 0)
         {
             updateStatus(Status_idle);
             m_statusCommand = Command_none;
@@ -614,7 +624,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         qDebug() << "Runtime Exception: " << e.what();
 
         m_mutex.lock();
-        m_stack.currentEnv()->pc = m_pc;
+        m_co->stack.currentEnv()->pc = m_co->pc;
         m_statusCommand = Command_none;
         updateStatus(Status_error);
         m_mutex.unlock();
@@ -676,9 +686,9 @@ void JZNodeEngine::invokeVirtual(const QString& function, const QVariantList& in
 
 void JZNodeEngine::onSlot(const QString& function, const QVariantList& in, QVariantList& out)
 {
-    m_sender = toJZObject(in[0]);
+    m_co->sender = toJZObject(in[0]);
     invoke(function, in, out);
-    m_sender = nullptr;
+    m_co->sender = nullptr;
 }
 
 QVariantPtr* JZNodeEngine::getParamRef(int stack_level, const JZNodeIRParam& param)
@@ -706,7 +716,7 @@ QVariantPtr* JZNodeEngine::getParamRef(int stack_level, const JZNodeIRParam& par
         return ref;
     };
     
-    if (m_stack.size() == 0)
+    if (m_co->stack.size() == 0)
     {
         QVariantPtr *ref = nullptr;
         auto it = m_global.find(obj_list[0]);
@@ -720,7 +730,7 @@ QVariantPtr* JZNodeEngine::getParamRef(int stack_level, const JZNodeIRParam& par
     }
     else
     {
-        RunnerEnv *env = (stack_level == -1) ? m_stack.currentEnv() : m_stack.env(stack_level);
+        RunnerEnv *env = (stack_level == -1) ? m_co->stack.currentEnv() : m_co->stack.env(stack_level);
         if (param.isStack())
             return env->getRef(param.id());
         else if (param.isThis())
@@ -838,13 +848,13 @@ void JZNodeEngine::initGlobal(QString name, int data_type)
 
 void JZNodeEngine::initLocal(QString name, int data_type)
 {
-    auto env = m_stack.currentEnv();
+    auto env = m_co->stack.currentEnv();
     env->initVariable(name, initVariantPtr(data_type));
 }
 
 void JZNodeEngine::initLocal(int id, int data_type)
 {
-    auto env = m_stack.currentEnv();
+    auto env = m_co->stack.currentEnv();
     env->initVariable(id, initVariantPtr(data_type));
 }
 
@@ -856,13 +866,13 @@ void JZNodeEngine::deinitGlobal(QString name)
 
 void JZNodeEngine::deinitLocal(QString name)
 {
-    auto env = m_stack.currentEnv();
+    auto env = m_co->stack.currentEnv();
     env->deinitVariable(name);
 }
 
 void JZNodeEngine::deinitLocal(int id)
 {
-    auto env = m_stack.currentEnv();
+    auto env = m_co->stack.currentEnv();
     env->deinitVariable(id);
 }
 
@@ -876,9 +886,57 @@ void JZNodeEngine::clearReg()
     }
 }
 
-Stack *JZNodeEngine::stack()
+QList<int> JZNodeEngine::coList()
 {
-    return &m_stack;
+    return m_coMap.keys();
+}
+
+JZNodeCoroutine* JZNodeEngine::co(int id)
+{
+    auto it = m_coMap.find(id);
+    if (it == m_coMap.end())
+        return nullptr;
+
+    return it.value().data();
+}
+
+int JZNodeEngine::createCo()
+{
+    Q_ASSERT(isInit());
+
+    JZNodeCoroutine *co = new JZNodeCoroutine();
+    co->id = m_coId++;
+    co->status = m_status;
+    m_coMap[co->id] = JZNodeCoPtr(co);
+    return co->id;
+}
+
+void JZNodeEngine::destoryCo(int id)
+{
+    m_coMap.remove(id);
+}
+
+void JZNodeEngine::yieldCo(int id)
+{
+    Q_ASSERT(m_coMap.contains(id) && id != 0);
+    m_co->status = m_status;
+
+    m_co = m_coMap[0].data();
+    m_status = m_co->status;
+}
+
+void JZNodeEngine::resumeCo(int id)
+{
+    Q_ASSERT(m_coMap.contains(id));
+    m_co->status = m_status;
+
+    m_co = m_coMap[id].data();
+    m_status = m_co->status;
+}
+
+Stack *JZNodeEngine::currentStack()
+{
+    return &m_co->stack;
 }
 
 QVariant JZNodeEngine::createVariable(int type,const QString &value)
@@ -959,7 +1017,7 @@ void JZNodeEngine::dealSet(QVariantPtr *ref, const QVariant &value)
 
 QVariant JZNodeEngine::getSender()
 {
-    return QVariant::fromValue(m_sender);
+    return QVariant::fromValue(m_co->sender);
 }
 
 void JZNodeEngine::print(const QString &log)
@@ -983,10 +1041,10 @@ void JZNodeEngine::printMemory()
     }
 
     text += "regs:\n";
-    for(int i = 1; i < m_regs.size(); i++)
+    for(int i = 1; i < m_co->regs.size(); i++)
     {
-        if(!m_regs[i].isNull())
-            text += "  "  + m_env.variantTypeName(m_regs[i]) + " Reg" + QString::number(i) + "\n"; 
+        if(!m_co->regs[i].isNull())
+            text += "  "  + m_env.variantTypeName(m_co->regs[i]) + " Reg" + QString::number(i) + "\n"; 
     }
     m_mutex.unlock();
 
@@ -996,14 +1054,14 @@ void JZNodeEngine::printMemory()
 const QVariant &JZNodeEngine::getReg(int id)
 {   
     id = id - Reg_Start;    
-    return m_regs[id];
+    return m_co->regs[id];
 }
 
 
 void JZNodeEngine::setReg(int id, const QVariant &value)
 {   
     id = id - Reg_Start; 
-    m_regs[id] = value;
+    m_co->regs[id] = value;
 }
 
 int JZNodeEngine::regInCount()
@@ -1011,7 +1069,7 @@ int JZNodeEngine::regInCount()
     for (int i = 0; i < 16; i++)
     {
         int reg_start = Reg_CallIn - Reg_Start;
-        if (!m_regs[reg_start + i].isValid())
+        if (!m_co->regs[reg_start + i].isValid())
             return i;
     }
     return 16;
@@ -1036,20 +1094,20 @@ void JZNodeEngine::stopWatch()
 
 void JZNodeEngine::watchNotify()
 {
-    if(!m_watch || m_stack.size() == 0)
+    if(!m_watch || m_co->stack.size() == 0)
         return;
 
     emit sigWatchNotify();
 }
 
-JZNodeTraceContext *JZNodeEngine::traceContext()
+JZNodeTraceContext *JZNodeEngine::currentTraceContext()
 {
-    return &m_traceContext;
+    return &m_co->traceContext;
 }
 
 void JZNodeEngine::printNode(int node_id)
 {
-    auto env = m_stack.currentEnv();         
+    auto env = m_co->stack.currentEnv();         
     auto info = currentFunctionDebugInfo();
     auto &node_info = info->nodeInfo[node_id];
 /*
@@ -1081,20 +1139,6 @@ void JZNodeEngine::printNode(int node_id)
 void JZNodeEngine::onWatchTimer()
 {
     watchNotify();
-}
-
-void JZNodeEngine::onSchedulerTimer()
-{
-    for (int i = 0; i < m_coroutine.size(); i++)
-    {
-        if (m_coroutine[i].isReady)
-            resumeCoroutine(&m_coroutine[i]);
-    }
-}
-
-void JZNodeEngine::resumeCoroutine(Coroutine* co)
-{
-    run();
 }
 
 void JZNodeEngine::setDebug(bool flag)
@@ -1255,7 +1299,7 @@ void JZNodeEngine::stepIn()
     if(info.type == Node_function)
     {
         m_breakStep.type = BreakStep::stackEqual;
-        m_breakStep.stack = m_stack.size() + 1;
+        m_breakStep.stack = m_co->stack.size() + 1;
         m_breakStep.nodeId = node_id;
 
         m_statusCommand = Command_resume;
@@ -1277,9 +1321,9 @@ void JZNodeEngine::stepOver()
         return;
     
     m_breakStep.type = BreakStep::stepOver;
-    m_breakStep.scriptItemPath = m_script->itemPath;
+    m_breakStep.scriptItemPath = m_co->script->itemPath;
     m_breakStep.nodeId = breakNodeId();
-    m_breakStep.stack = m_stack.size();
+    m_breakStep.stack = m_co->stack.size();
     
     m_statusCommand = Command_resume;
     lock.unlock();
@@ -1295,17 +1339,12 @@ void JZNodeEngine::stepOut()
 
     m_breakStep.type = BreakStep::stackEqual;
     m_breakStep.nodeId = breakNodeId();
-    m_breakStep.stack = m_stack.size() - 1;
+    m_breakStep.stack = m_co->stack.size() - 1;
 
     m_statusCommand = Command_resume;
     lock.unlock();
     m_waitCond.wakeOne();
     waitCommand();
-}
-
-void JZNodeEngine::yield()
-{
-
 }
 
 void JZNodeEngine::checkFunctionIn(const JZFunction *func)
@@ -1614,12 +1653,12 @@ bool JZNodeEngine::checkPause(int node_id)
         return true;
     else
     {                 
-        int stack = m_stack.size();
+        int stack = m_co->stack.size();
         if (m_breakStep.type == BreakStep::stepOver)
         {                
             if (stack < m_breakStep.stack)
                 return true;
-            else if (m_breakStep.scriptItemPath != m_script->itemPath)
+            else if (m_breakStep.scriptItemPath != m_co->script->itemPath)
                 return true;
             else if (m_breakStep.stack == stack)
             {                    
@@ -1644,7 +1683,7 @@ bool JZNodeEngine::breakPointTrigger(int node_id)
 {
     m_mutex.lock();
     m_breakStep.clear();
-    m_stack.currentEnv()->pc = m_pc;
+    m_co->stack.currentEnv()->pc = m_co->pc;
     m_statusCommand = Command_none;
     updateStatus(Status_pause);
     m_waitCond.wait(&m_mutex);
@@ -1681,7 +1720,7 @@ void JZNodeEngine::updateStatus(JZEngineStatus status)
 void JZNodeEngine::pushTryCatch(JZNodeIRTry *ir)
 {
     TryCatchInfo info;
-    info.stack = m_stack.size() - 1;
+    info.stack = m_co->stack.size() - 1;
     info.catchPc = ir->catchPc;
     info.irExcep = ir->irExcep;
     m_tryCatchList.push_back(info);
@@ -1700,12 +1739,12 @@ bool JZNodeEngine::catchException(QString tips)
     TryCatchInfo info = m_tryCatchList.back();
     m_tryCatchList.pop_back();
     
-    Q_ASSERT(info.stack + 1 <= m_stack.size());
-    while (info.stack + 1 < m_stack.size())
-        m_stack.pop();
+    Q_ASSERT(info.stack + 1 <= m_co->stack.size());
+    while (info.stack + 1 < m_co->stack.size())
+        m_co->stack.pop();
     
     setParam(info.irExcep, tips);
-    m_pc = info.catchPc;
+    m_co->pc = info.catchPc;
     return true;
 }
 
@@ -1713,7 +1752,7 @@ bool JZNodeEngine::run()
 {    
     auto obj_inst = m_env.objectManager();
     
-    int in_stack_size = m_stack.size();
+    int in_stack_size = m_co->stack.size();
     while (true)
     {                   
         if(m_statusCommand == Command_stop)
@@ -1721,8 +1760,8 @@ bool JZNodeEngine::run()
 
         m_stat.statmentTime++;
 
-        auto &op_list = m_script->statmentList;
-        const JZNodeIR* op = op_list[m_pc].data();
+        auto &op_list = m_co->script->statmentList;
+        const JZNodeIR* op = op_list[m_co->pc].data();
         switch (op->type)
         {        
         case OP_nodeEnter:
@@ -1788,14 +1827,14 @@ bool JZNodeEngine::run()
             int jmpPc = ir_jmp->jmpPc;
             Q_ASSERT(jmpPc >= 0 && jmpPc < op_list.size());
             if(op->type == OP_jmp)
-                m_pc = jmpPc;
+                m_co->pc = jmpPc;
             else
             {
                 bool flag = getReg(Reg_Cmp).toBool();
                 if(op->type == OP_je)
-                    m_pc = flag? jmpPc : m_pc+1;
+                    m_co->pc = flag? jmpPc : m_co->pc+1;
                 else
-                    m_pc = flag? m_pc+1 : jmpPc;
+                    m_co->pc = flag? m_co->pc+1 : jmpPc;
             }
             continue;
         }
@@ -1826,7 +1865,7 @@ bool JZNodeEngine::run()
             const JZNodeIRReference* ir_ref = (const JZNodeIRReference*)op;
 
             QVariantPtr ptr = *getParamRef(-1, ir_ref->orig);
-            auto env = m_stack.currentEnv();
+            auto env = m_co->stack.currentEnv();
             env->initVariable(ir_ref->ref.id(), ptr);
             break;
         }
@@ -1877,7 +1916,7 @@ bool JZNodeEngine::run()
         {              
             watchNotify();
             popStack();                  
-            if(m_stack.size() < in_stack_size)
+            if(m_co->stack.size() < in_stack_size)
                 goto RunEnd;
             break;
         }
@@ -1913,7 +1952,7 @@ bool JZNodeEngine::run()
             Q_ASSERT(0);
             break;
         }
-        m_pc++;
+        m_co->pc++;
     }
 
 RunEnd:

@@ -85,7 +85,7 @@ CommTest::CommTest()
 
 void CommTest::testModbusClientCpp()
 {
-    JZCommModbusClientConfig*cfg = new JZCommModbusClientConfig();
+    JZCommModbusTcpClientConfig*cfg = new JZCommModbusTcpClientConfig();
 
     JZCommManagerConfig comm_config;    
     cfg->type = Comm_ModbusTcpClient;
@@ -128,7 +128,7 @@ void CommTest::testModbusClient()
     auto script = class_item->memberFunction("testFunction");
     auto start = script->startNode();
 
-    JZCommModbusClientConfig* cfg = new JZCommModbusClientConfig();
+    JZCommModbusTcpClientConfig* cfg = new JZCommModbusTcpClientConfig();
     cfg->type = Comm_ModbusTcpClient;
     cfg->conn.modbusType = Modbus_tcpClient;
     cfg->name = "modbus";

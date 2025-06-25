@@ -20,6 +20,7 @@
 #include "LogManager.h"
 #include "JZScriptUnitTest.h"
 #include "runtime/JZWidgetBind.h"
+#include "jzCo/JZCo.h"
 
 QDebug operator<<(QDebug dbg, const JZNodeObjectPointer ptr)
 {
@@ -30,6 +31,8 @@ QDebug operator<<(QDebug dbg, const JZNodeObjectPointer ptr)
 
 void JZNodeInit()
 {
+    jzco_init();
+
     qRegisterMetaType<JZNodeRuntimeError>("JZNodeRuntimeError");    
     qRegisterMetaType<JZNodeBuildResultPtr>("JZNodeBuildResultPtr");
     qRegisterMetaTypeStreamOperators<JZNodeObjectNull>("JZNodeObjectNull");

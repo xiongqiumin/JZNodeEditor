@@ -21,7 +21,8 @@ private slots:
     
 
 private:    
-    void addModbus();
+    void addModbusClient();
+    void addModbusServer();
     void addTcpClient();
     void addTcpServer();
     void addUdp();

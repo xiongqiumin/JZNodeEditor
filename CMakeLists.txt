@@ -91,6 +91,8 @@ set(JZNodeCore_SOURCES
     script/JZNodeDebugServer.h
     script/JZNodeEngine.cpp
     script/JZNodeEngine.h
+	script/JZNodeRuntime.cpp
+	script/JZNodeRuntime.h
     script/JZNodeEnum.cpp
     script/JZNodeEnum.h
     script/JZNodeEvent.cpp
@@ -137,6 +139,8 @@ set(JZNodeCore_SOURCES
     script/JZNodeValue.h
     script/JZNodeVM.cpp
     script/JZNodeVM.h
+	script/JZNodeValidator.cpp
+	script/JZNodeValidator.h
     script/JZRegExpHelp.cpp
     script/JZRegExpHelp.h
     script/JZFormat.cpp
@@ -151,6 +155,8 @@ set(JZNodeCore_SOURCES
     script/JZScriptConvert.h      
     script/JZNodeTrace.cpp
     script/JZNodeTrace.h
+	script/JZEngineCoroutine.cpp
+    script/JZEngineCoroutine.h
     script/mvvm/JZNodeVariableBind.cpp
     script/mvvm/JZNodeVariableBind.h
     script/angelscript/as_parser.cpp
@@ -323,6 +329,13 @@ set(JZNodeCore_SOURCES
 	widgets/JZLineEditButton.h
     
     #3rd
+    3rd/JZCommon/jzCo/JZCo.cpp
+    3rd/JZCommon/jzCo/JZCo.h
+	3rd/JZCommon/jzCo/JZCoContext.cpp
+	3rd/JZCommon/jzCo/JZCoContext.h
+	3rd/JZCommon/jzCo/JZCoCoroutine.cpp
+	3rd/JZCommon/jzCo/JZCoCoroutine.h
+	
     3rd/JZCommon/jzNet/JZNetClient.cpp
     3rd/JZCommon/jzNet/JZNetClient.h
     3rd/JZCommon/jzNet/JZNetDataManager.cpp

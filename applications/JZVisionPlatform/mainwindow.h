@@ -23,6 +23,7 @@
 #include "editor/JZVisionEditor.h"
 #include "JZNodeTraceView.h"
 #include "JZModuleVisionApp.h"
+#include "JZVisionCoroutine.h"
 
 class Setting
 {
@@ -193,6 +194,7 @@ protected:
     bool isCameraFlow();
     JZNodeCameraReadyEvent* currrentCameraNode();
     QString getCameraByProgram(QString function);    
+    void dealCameraEvent(QString function,cv::Mat frame);
 
     const CompilerResult* compilerResult(const QString& path);
     void addFlowWindow(QWidget *w);
@@ -239,6 +241,7 @@ protected:
     QList<QWidget*> m_floatWindow;
     JZNodeTraceView *m_traceView;
     QMap<QString, QString> m_roiFunction;
+    QList<JZCoCoroutinePtr> m_coroutine;
 };
 extern MainWindow *g_visionWindow;
 

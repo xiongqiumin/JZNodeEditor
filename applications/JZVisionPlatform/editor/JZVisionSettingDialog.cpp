@@ -6,18 +6,29 @@
 #include <QLineEdit>
 #include <QToolButton>
 #include <QGridLayout>
+#include <QPushButton>
+#include <QFontMetrics>
 #include "JZVisionSettingDialog.h"
 #include "JZScriptItem.h"
 #include "JZVisionView.h"
 #include "UiCommon.h"
-
 
 //JZVisionLinkDialog
 JZVisionLinkDialog::JZVisionLinkDialog(QWidget* w)
     :JZBaseDialog(w)
 {
     m_tree = new QTreeWidget();
-    setCentralWidget(m_tree);
+    m_tree->setColumnCount(1);
+    m_tree->setHeaderHidden(true);
+
+    m_stacked = new QStackedWidget();
+    m_stacked->addWidget(m_tree);
+
+    auto tips = new QLabel();
+    tips->setText("没有合适的参数可以连接");
+    tips->setAlignment(Qt::AlignCenter);
+    m_stacked->addWidget(tips);
+    setCentralWidget(m_stacked);
     
     m_node = nullptr;
     m_pinId = -1;
@@ -103,7 +114,10 @@ void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
     if(node_item->childCount() == 0)
         m_tree->setItemHidden(node_item,true);
 
-    m_tree->expandAll();
+    if (m_linkId == 0)
+        m_stacked->setCurrentIndex(1);
+    else
+        m_tree->expandAll();
 }
 
 void JZVisionLinkDialog::addLinkItem(QTreeWidgetItem *parent,const JZVisionParamLink &link_info,const JZParamDefine* param,const QList<int> &dst_types)
@@ -187,6 +201,7 @@ void JZVisionLinkDialog::accept()
 JZVisionSettingPinWidget::JZVisionSettingPinWidget()
 {
     m_node = nullptr;
+    m_nameLabel = nullptr;
     m_pinEditor = nullptr;    
     m_linkEdit = nullptr;
     m_setting = nullptr;
@@ -216,6 +231,11 @@ void JZVisionSettingPinWidget::setSetting(JZVisionSettingDialog *dlg)
     connect(this, &JZVisionSettingPinWidget::sigPinRemove, m_setting, &JZVisionSettingDialog::onPinRemove);
 }
 
+void JZVisionSettingPinWidget::setNameSize(int size)
+{
+    m_nameLabel->setFixedWidth(size);
+}
+
 void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
 {
     m_node = node;
@@ -229,8 +249,8 @@ void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
     this->setLayout(l);
 
     //name
-    QLabel *label = new QLabel(pin->name() + ": ");
-    l->addWidget(label);
+    m_nameLabel = new QLabel(pin->name());
+    l->addWidget(m_nameLabel);
 
     //link
     m_linkGemo = m_setting->view()->linkInfo(node->id(),pin_id);
@@ -244,8 +264,8 @@ void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
     l->addWidget(m_btnLink);    
     
     QString up_type = env->upType(pin->dataType());
-    JZParamEditInfo info = JZParamEditInfo::createType(env, up_type);
-    if (pin->isConstValue())
+    JZParamEditInfo info = JZParamEditInfo::createByPin(m_node, m_pinId);
+    if (pin->isConstValue() || pin->flag() & Pin_noCompiler)
     {
         m_btnLink->hide();        
     }
@@ -279,9 +299,7 @@ void JZVisionSettingPinWidget::updatePinWidget()
         }
         if (!m_pinEditor)
         {
-            auto pin = m_node->pin(m_pinId);
-            QString up_type = env->upType(pin->dataType());
-            JZParamEditInfo info = JZParamEditInfo::createType(env, up_type);
+            JZParamEditInfo info = JZParamEditInfo::createByPin(m_node, m_pinId);
             m_pinEditor = new JZNodeParamValueWidget();
             m_pinEditor->init(info);            
             m_pinEditor->setValue(m_node->pinValue(m_pinId));
@@ -440,18 +458,28 @@ void JZVisionSettingDialog::onPinRemove()
 
 void JZVisionSettingDialog::onPinElse()
 {
+    int id = -1;
     if (m_node->type() == Node_if)
     {
         auto node_if = dynamic_cast<JZNodeIf*>(m_node);
-        if(!node_if->hasElse())
-            node_if->addElsePin();
+        if (!node_if->hasElse())
+            id = node_if->addElsePin();
     }
     else
     {
         auto node_switch = dynamic_cast<JZNodeSwitch*>(m_node);
         if (!node_switch->hasDefault())
-            node_switch->addDefault();
+            id = node_switch->addDefault();
     }
+    int widget_index = m_node->subFlowCount();
+
+    JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(id));
+    m_grid->insertWidget(widget_index, pin_widget);
+
+    Block block;
+    block.pinId = id;
+    block.pinWidget = pin_widget;
+    m_blockList.insert(id, block);
 }
 
 void JZVisionSettingDialog::setNode(JZNode* node)
@@ -483,41 +511,62 @@ void JZVisionSettingDialog::setNode(JZNode* node)
         }
         if (m_node->type() == Node_if || m_node->type() == Node_switch)
         {
-            QToolButton* pin_add = new QToolButton();
-            QToolButton* pin_else = new QToolButton();
-            connect(pin_add, &QToolButton::clicked, this, &JZVisionSettingDialog::onPinAdd);
-            connect(pin_else, &QToolButton::clicked, this, &JZVisionSettingDialog::onPinElse);
+            QPushButton* pin_add = new QPushButton();
+            QPushButton* pin_else = new QPushButton();
+            connect(pin_add, &QPushButton::clicked, this, &JZVisionSettingDialog::onPinAdd);
+            connect(pin_else, &QPushButton::clicked, this, &JZVisionSettingDialog::onPinElse);
+
+            pin_add->setText("增加条件");
+            if (m_node->type() == Node_if)
+            {
+                auto node_if = dynamic_cast<JZNodeIf*>(m_node);
+                pin_else->setText("增加else");
+            }
+            else
+            {
+                auto node_switch = dynamic_cast<JZNodeSwitch*>(m_node);
+                pin_else->setText("增加default");
+            }
 
             QHBoxLayout* pin_l = new QHBoxLayout();
             pin_l->setContentsMargins(0, 0, 0, 0);
+            pin_l->addWidget(pin_add);
+            pin_l->addWidget(pin_else);
+            pin_l->addStretch();
             grid->addLayout(pin_l);
         }
         v->addLayout(grid);
     }
     v->addStretch();
 
+
     QScrollArea *area = new QScrollArea();
     area->setWidgetResizable(true);
     area->setWidget(area_widget);
 
-    QTabWidget *tab = new QTabWidget();
-    tab->addTab(area, "基本参数");
-    setCentralWidget(tab);
+    setWindowTitle(view()->nodeName(m_node->id()));
+    setCentralWidget(area);
 
+    updatePinWidget();
     resize(480, 600);
 }
 
-QWidget *JZVisionSettingDialog::createRow(QString name, QString value)
+void JZVisionSettingDialog::updatePinWidget()
 {
-    QHBoxLayout *l = new QHBoxLayout();
-    l->setContentsMargins(0, 0, 0, 0);
+    int name_size = 0;
+    auto it = m_blockList.begin();
+    while (it != m_blockList.end())
+    {
+        QString name = m_node->pinName(it->pinId);
 
-    QWidget *w = new QWidget();
-    l->addWidget(new QLabel(name));
-    l->addWidget(new QLabel(value));
-    w->setLayout(l);
+        QFontMetrics ft(font());
+        name_size = qMax(name_size, ft.horizontalAdvance(name));
 
-    return w;
+        it++;
+    }
+
+    for (auto& block : m_blockList)
+        block.pinWidget->setNameSize(name_size);
 }
 
 JZVisionSettingPinWidget* JZVisionSettingDialog::createPin(JZNodePin *pin)

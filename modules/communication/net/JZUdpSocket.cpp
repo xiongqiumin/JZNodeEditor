@@ -7,19 +7,20 @@
 //JZCommUdpConfig
 JZCommUdpConfig::JZCommUdpConfig()
 {
+    type = Comm_Udp;
     port = -1;
 }
 
 void JZCommUdpConfig::saveToStream(QDataStream& s) const
 {
     JZCommConfig::saveToStream(s);
-    s << port;
+    s << ip << port;
 }
 
 void JZCommUdpConfig::loadFromStream(QDataStream& s)
 {
     JZCommConfig::loadFromStream(s);
-    s >> port;
+    s >> ip >> port;
 }
 
 //JZUdpSocket

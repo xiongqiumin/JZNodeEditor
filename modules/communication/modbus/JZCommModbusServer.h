@@ -4,11 +4,24 @@
 #include "../JZComm.h"
 #include "3rd/JZCommon/jzModbus/JZModbusServer.h"
 
-//JZCommModbusConfig
-class JZCommModbusServerConfig : public JZCommConfig
+//JZCommModbusRtuServerConfig
+class JZCommModbusRtuServerConfig : public JZCommConfig
 {
 public:
-    JZCommModbusServerConfig();
+    JZCommModbusRtuServerConfig();
+
+    virtual void saveToStream(QDataStream& s) const;
+    virtual void loadFromStream(QDataStream& s);
+
+    JZModbusConnetInfo conn;
+    QDataStream::ByteOrder bitOrder;
+};
+
+//JZCommModbusTcpServerConfig
+class JZCommModbusTcpServerConfig : public JZCommConfig
+{
+public:
+    JZCommModbusTcpServerConfig();
 
     virtual void saveToStream(QDataStream& s) const;
     virtual void loadFromStream(QDataStream& s);

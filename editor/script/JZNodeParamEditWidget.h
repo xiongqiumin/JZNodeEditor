@@ -38,8 +38,9 @@ public:
         Edit_dir,
     };
 
-    static JZParamEditInfo createEnum(QStringList list);
-    static JZParamEditInfo createType(const JZScriptEnvironment *env,QString type);
+    static JZParamEditInfo createByEnum(QStringList list);
+    static JZParamEditInfo createByType(const JZScriptEnvironment *env,QString type);
+    static JZParamEditInfo createByPin(JZNode* node,int pin_id);
 
     JZParamEditInfo();
 

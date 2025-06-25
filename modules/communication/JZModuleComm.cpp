@@ -10,10 +10,10 @@
 JZModuleComm::JZModuleComm()
 {    
     auto cfg_inst = JZModuleConfigFactory<JZCommConfig>::instance();
-    cfg_inst->regist(Comm_ModbusRtuClient, JZModuleConfigCreator<JZCommModbusClientConfig>);
-    cfg_inst->regist(Comm_ModbusTcpClient, JZModuleConfigCreator<JZCommModbusClientConfig>);
-    cfg_inst->regist(Comm_ModbusRtuServer, JZModuleConfigCreator<JZCommModbusServerConfig>);
-    cfg_inst->regist(Comm_ModbusTcpServer, JZModuleConfigCreator<JZCommModbusServerConfig>);
+    cfg_inst->regist(Comm_ModbusRtuClient, JZModuleConfigCreator<JZCommModbusRtuClientConfig>);
+    cfg_inst->regist(Comm_ModbusTcpClient, JZModuleConfigCreator<JZCommModbusTcpClientConfig>);
+    cfg_inst->regist(Comm_ModbusRtuServer, JZModuleConfigCreator<JZCommModbusRtuServerConfig>);
+    cfg_inst->regist(Comm_ModbusTcpServer, JZModuleConfigCreator<JZCommModbusTcpServerConfig>);
     cfg_inst->regist(Comm_TcpClient, JZModuleConfigCreator<JZCommTcpClientConfig>);
     cfg_inst->regist(Comm_TcpServer, JZModuleConfigCreator<JZCommTcpServerConfig>);
     cfg_inst->regist(Comm_Udp, JZModuleConfigCreator<JZCommUdpConfig>);

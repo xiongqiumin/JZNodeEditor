@@ -14,6 +14,7 @@
 #include "JZNodeObject.h"
 #include "JZScriptEnvironment.h"
 #include "JZNodeTrace.h"
+#include "JZEngineCoroutine.h"
 
 enum JZEngineStatus{
     Status_none,
@@ -66,6 +67,31 @@ public:
 protected:   
     QList<RunnerEnv> m_env;
 };
+
+struct TryCatchInfo
+{
+    int stack;
+    int catchPc;
+    JZNodeIRParam irExcep;
+};
+
+struct JZNodeCoroutine
+{
+    JZNodeCoroutine();
+
+    int id;
+    QString name;
+    Stack stack;
+    QVector<QVariant> regs;
+    QList<TryCatchInfo> tryCatchList;
+    JZNodeObject* sender;
+    JZNodeTraceContext traceContext;
+    JZEngineStatus status;
+
+    int pc;
+    const JZNodeScript* script;
+};
+typedef QSharedPointer<JZNodeCoroutine> JZNodeCoPtr;
 
 class JZNodeRuntimeInfo
 {
@@ -161,9 +187,14 @@ public:
     void stepOver();
     void stepOut();      
 
-    void yield();
+    QList<int> coList();
+    JZNodeCoroutine *co(int id);
+    int createCo();
+    void destoryCo(int id);
+    void yieldCo(int id);
+    void resumeCo(int id);
 
-    Stack *stack();    
+    Stack *currentStack();    
     JZScriptEnvironment *environment();
     
     QVariant createVariable(int type,const QString &value = QString());
@@ -191,7 +222,7 @@ public:
     void stopWatch();
     void watchNotify();         //node display
 
-    JZNodeTraceContext *traceContext();
+    JZNodeTraceContext *currentTraceContext();
 
     void printNode(int node_id);
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
@@ -217,7 +248,6 @@ signals:
 
 protected slots:
     void onWatchTimer();
-    void onSchedulerTimer();
 
 protected:
     enum{
@@ -233,13 +263,6 @@ protected:
         Run_Yield,
     };
 
-    struct TryCatchInfo
-    {
-        int stack;
-        int catchPc;
-        JZNodeIRParam irExcep;
-    };
-
     struct Stat
     {
         Stat();
@@ -252,15 +275,6 @@ protected:
         int exprTime;
         int getTime;
         int setTime;
-    };
-
-    struct Coroutine
-    {
-        Stack stack;
-        QVector<QVariant> regs;
-        QList<TryCatchInfo> tryCatchList;
-        int pc;
-        bool isReady;
     };
 
     virtual void customEvent(QEvent *event) override;        
@@ -305,20 +319,13 @@ protected:
     void popTryCatch();
     bool catchException(QString tips);
 
-    void resumeCoroutine(Coroutine *co);
-
-    int m_pc;    
     const JZNodeProgram *m_program;
-    const JZNodeScript *m_script;
         
     QList<BreakPoint> m_breakPoints;
     BreakStep m_breakStep; 
 
     JZScriptEnvironment m_env;
-    Stack m_stack;
     QMap<QString,QVariantPtr> m_global;
-    QVector<QVariant> m_regs;
-    JZNodeObject *m_sender;
            
     JZFunction m_idleFunc;
     QAtomicInt m_statusCommand;
@@ -330,9 +337,10 @@ protected:
     JZNodeRuntimeError m_error;
     QList<TryCatchInfo> m_tryCatchList;
     QSet<const JZNodeIRNodeEnter*> m_breakIr;    
-    JZNodeTraceContext m_traceContext;
 
-    QList<Coroutine> m_coroutine;
+    JZNodeCoroutine *m_co;
+    QMap<int, JZNodeCoPtr> m_coMap;
+    int m_coId;
 
     bool m_watch;
     Stat m_stat;

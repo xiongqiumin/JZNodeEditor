@@ -5,6 +5,7 @@
 //JZCommTcpServerConfig
 JZCommTcpServerConfig::JZCommTcpServerConfig()
 {
+	type = Comm_TcpServer;
 	ip = "127.0.0.1";
 	port = 0;
 }

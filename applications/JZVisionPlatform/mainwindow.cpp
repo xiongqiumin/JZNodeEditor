@@ -29,6 +29,7 @@
 #include "widgets/JZAboutDialog.h"
 #include "modules/opencv/CvToQt.h"
 #include "JZVisionAppSample.h"
+#include "JZEngineCoroutine.h"
 
 //Setting
 Setting::Setting()
@@ -835,7 +836,7 @@ void MainWindow::onActionProfile()
     {
         m_traceView->show();
     }
-    QList<JZNodeTraceItem> trace_items = m_engine.traceContext()->parse();
+    QList<JZNodeTraceItem> trace_items = m_engine.currentTraceContext()->parse();
     m_traceView->setTraceData(trace_items);
     m_traceView->resize(800, 600);
 }
@@ -1174,8 +1175,18 @@ void MainWindow::onAutoRunResult(int result)
     auto engine = m_task.runThread()->engine();
 }
 
-void MainWindow::onFrameReady(QString camera, cv::Mat mat)
+void MainWindow::dealCameraEvent(QString function,cv::Mat mat)
 {
+    auto obj_inst = m_engine.environment()->objectManager();
+    JZNodeObjectPointer mat_ptr = obj_inst->objectReferencePointer(&mat, false);
+
+    QVariantList in, out;
+    in << QVariant::fromValue(m_app) << QVariant::fromValue(mat_ptr);
+    m_engine.call(function, in, out);
+}
+
+void MainWindow::onFrameReady(QString camera, cv::Mat mat)
+{   
     if (m_stack->currentIndex() == 0)
     {
         m_cameraView->label(camera)->setImage(QtOcv::mat2Image(mat));
@@ -1188,7 +1199,18 @@ void MainWindow::onFrameReady(QString camera, cv::Mat mat)
     if (it == m_camProgram.end())
         return;    
 
-    JZNodeCameraReadyEvent*camera_event = currrentCameraNode();
+    QString function = it->function;
+    for (int i = 0; i < m_coroutine.size(); i++)
+    {
+        auto co = dynamic_cast<JZVisionCoroutine*>(m_coroutine[i].data());
+        if(co->function == function)
+        {
+            LOG_W(camera + " drop frame");
+            return;
+        }
+    }
+    
+    JZNodeCameraReadyEvent* camera_event = currrentCameraNode();
     if (camera_event)
     {
         if (camera_event->camera() != camera)
@@ -1196,13 +1218,14 @@ void MainWindow::onFrameReady(QString camera, cv::Mat mat)
 
         currentNodeEditor()->clearRuntimeResult();
     }
-    
-    auto obj_inst = m_engine.environment()->objectManager();
-    JZNodeObjectPointer mat_ptr = obj_inst->objectReferencePointer(&mat, false);
 
-    QVariantList in, out;
-    in << QVariant::fromValue(m_app) << QVariant::fromValue(mat_ptr);
-    m_engine.call(it->function, in, out);
+    JZCoCoroutinePtr ptr = JZCoCoroutinePtr(new JZVisionCoroutine(&m_engine));
+    m_coroutine << ptr;
+    ptr->setTask([this, function, mat, ptr] { 
+        dealCameraEvent(function, mat);
+        m_coroutine.removeAll(ptr);
+    });
+    jzco_spawn(ptr);
 }
 
 void MainWindow::onCameraError(QString camera, QString error)

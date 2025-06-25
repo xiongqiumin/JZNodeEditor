@@ -1,18 +1,38 @@
 #include "JZCommModbusServer.h"
 
-//JZCommModbusInfo
-JZCommModbusServerConfig::JZCommModbusServerConfig()
+//JZCommModbusRtuServerConfig
+JZCommModbusRtuServerConfig::JZCommModbusRtuServerConfig()
 {
     bitOrder = QDataStream::LittleEndian;
+    conn.modbusType = Modbus_rtuClient;
 }
 
-void JZCommModbusServerConfig::saveToStream(QDataStream& s) const
+void JZCommModbusRtuServerConfig::saveToStream(QDataStream& s) const
 {
     JZCommConfig::saveToStream(s);
     s << conn << bitOrder;
 }
 
-void JZCommModbusServerConfig::loadFromStream(QDataStream& s)
+void JZCommModbusRtuServerConfig::loadFromStream(QDataStream& s)
+{
+    JZCommConfig::loadFromStream(s);
+    s >> conn >> bitOrder;
+}
+
+//JZCommModbusTcpServerConfig
+JZCommModbusTcpServerConfig::JZCommModbusTcpServerConfig()
+{
+    bitOrder = QDataStream::LittleEndian;
+    conn.modbusType = Modbus_tcpClient;
+}
+
+void JZCommModbusTcpServerConfig::saveToStream(QDataStream& s) const
+{
+    JZCommConfig::saveToStream(s);
+    s << conn << bitOrder;
+}
+
+void JZCommModbusTcpServerConfig::loadFromStream(QDataStream& s)
 {
     JZCommConfig::loadFromStream(s);
     s >> conn >> bitOrder;

@@ -34,7 +34,7 @@ void JZCommInitDialog::addConfig()
     for (int i = 0; i < m_config.commList.size(); i++)
         camera_list << m_config.commList[i]->name;
 
-    JZCommModbusClientConfig *cfg = new JZCommModbusClientConfig();
+    JZCommModbusTcpClientConfig *cfg = new JZCommModbusTcpClientConfig();
     cfg->name = JZRegExpHelp::uniqueString("comm", camera_list);    
 
     JZCommConfigDialog dlg(this);
@@ -114,7 +114,7 @@ JZCommModbusRWItem::JZCommModbusRWItem(JZNode *node)
 {    
     m_funcList = QStringList{ "Bit", "InputBit", "InputRegister", "Register" };    
 
-    m_modbusFunc = createEditBlock("Func", JZParamEditInfo::createEnum(m_funcList));
+    m_modbusFunc = createEditBlock("Func", JZParamEditInfo::createByEnum(m_funcList));
     m_modbusDataType = createEditBlock("Type", JZParamEditInfo()); 
 }
 
@@ -139,7 +139,7 @@ void JZCommModbusRWItem::updatePin()
         QList<int> type_list = { Type_int16, Type_uint16, Type_int, Type_uint, Type_float, Type_double };
         m_dataTypeList = editorEnvironment()->typeListToNameList(type_list);
         m_modbusDataType->isEditable = true;
-        m_modbusDataType->edit = JZParamEditInfo::createEnum(m_dataTypeList);
+        m_modbusDataType->edit = JZParamEditInfo::createByEnum(m_dataTypeList);
     }
 }
 

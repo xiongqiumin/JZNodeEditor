@@ -204,9 +204,9 @@ void JZNodeDebugServer::onWatchNotify()
         return;
         
     int stack_level = -1;    
-    for (int i = m_engine->stack()->size(); i >= 0; i--)
+    for (int i = m_engine->currentStack()->size(); i >= 0; i--)
     {
-        QString function = m_engine->stack()->currentEnv()->function->fullName();
+        QString function = m_engine->currentStack()->currentEnv()->function->fullName();
         if (function == m_watch.function)
         {
             stack_level = i;
@@ -220,7 +220,7 @@ void JZNodeDebugServer::onWatchNotify()
     JZNodeRuntimeWatchResult info;
     info.runtimInfo = m_engine->runtimeInfo();
     
-    auto env = m_engine->stack()->env(stack_level);
+    auto env = m_engine->currentStack()->env(stack_level);
     for (int i = 0; i < m_watch.watchs.size(); i++)
     {
         auto &w = m_watch.watchs[i];

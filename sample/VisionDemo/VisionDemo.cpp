@@ -100,7 +100,7 @@ void SampleVisionDemo::addInit()
     JZCommManagerConfig comm_mangare_config;
 
     JZCommConfig comm_cfg;
-    JZCommModbusClientConfig *modbus = new JZCommModbusClientConfig();
+    JZCommModbusTcpClientConfig*modbus = new JZCommModbusTcpClientConfig();
     modbus->conn = conn;
     modbus->name = "modbus";
 
