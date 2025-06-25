@@ -192,7 +192,8 @@ public:
     int createCo();
     void destoryCo(int id);
     void yieldCo(int id);
-    void resumeCo(int id);
+    void resumeCo(int id); 
+    bool isInterruptCo();
 
     Stack *currentStack();    
     JZScriptEnvironment *environment();
@@ -257,12 +258,6 @@ protected:
         Command_stop,
     };
 
-    enum {
-        Run_Completed,
-        Run_Failed,
-        Run_Yield,
-    };
-
     struct Stat
     {
         Stat();
@@ -317,7 +312,8 @@ protected:
     
     void pushTryCatch(JZNodeIRTry *ir);
     void popTryCatch();
-    bool catchException(QString tips);
+    bool catchException(QString tips); 
+    void waitAllCoFinish(JZNodeCoroutine *cur_co);
 
     const JZNodeProgram *m_program;
         
@@ -339,6 +335,7 @@ protected:
     QSet<const JZNodeIRNodeEnter*> m_breakIr;    
 
     JZNodeCoroutine *m_co;
+    JZNodeCoPtr m_mainCo;
     QMap<int, JZNodeCoPtr> m_coMap;
     int m_coId;
 

@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
     auto builder = m_task.buildThread()->buidler();
     connect(builder, &JZNodeBuilder::sigLog, this, &MainWindow::onBuildLog);
 
-    connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &MainWindow::onRuntimeError);
+    connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &MainWindow::onRuntimeError, Qt::QueuedConnection);
     
     JZEditorManager::instance()->registEditor(ProjectItem_scriptItem, CreateEditor<JZVisionEditor>);
 
@@ -140,8 +140,7 @@ void MainWindow::loadSetting()
 {
     if(m_dbConfig.hasConfig("setting"))
         m_setting = m_dbConfig.getConfig<Setting>("setting");
-
-    onActionSample();
+    
     if (!m_setting.recentFile.isEmpty())
         openProject(m_setting.recentFile[0]);
     else
@@ -430,11 +429,13 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     // menu_help
     QMenu *menu_help = menubar->addMenu("帮助");
     menu_help->setProperty("JZMenuType", Menu_Help);
-    auto actHelp = menu_help->addAction("查看帮助");
+    auto actHelp = menu_help->addAction("查看帮助");    
     menu_help->addSeparator();    
-    auto actAbout = menu_help->addAction("关于" + windowTitle());    
+    auto actSample = menu_help->addAction("生成示例");
+    auto actAbout = menu_help->addAction("关于" + windowTitle());        
     connect(actAbout, &QAction::triggered, this, &MainWindow::onActionAbout);
     connect(actHelp, &QAction::triggered, this, &MainWindow::onActionHelp);
+    connect(actSample, &QAction::triggered, this, &MainWindow::onActionSample);
 
     m_menuList << menu_file << menu_edit << menu_help;
     layout->addWidget(menubar);

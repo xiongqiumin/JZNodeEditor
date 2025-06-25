@@ -154,32 +154,37 @@ public:
     bool compiler(JZNodeCompiler *c, QString &error);
 };
 
+//JZNodeSingleOperator
+class JZNodeSingleOperator : public JZNodeOperator
+{
+public:
+    JZNodeSingleOperator(int node_type, JZNodeIRType op_type);
+
+    virtual bool compiler(JZNodeCompiler *compiler, QString &error) override;
+    
+protected:
+    JZNodeIRType m_op;
+};
 
 //JZNodeBitReverse
-class JZNodeBitReverse : public JZNodeOperator
+class JZNodeBitReverse : public JZNodeSingleOperator
 {
 public:
     JZNodeBitReverse();
-
-    virtual bool compiler(JZNodeCompiler* compiler, QString& error) override;
 };
 
 //JZNodeNot
-class JZNodeNot : public JZNodeOperator
+class JZNodeNot : public JZNodeSingleOperator
 {
 public:
     JZNodeNot();
-
-    bool compiler(JZNodeCompiler *c, QString &error);
 };
 
 //JZNodeNeg
-class JZNodeNeg : public JZNodeOperator
+class JZNodeNeg : public JZNodeSingleOperator
 {
 public:
     JZNodeNeg();
-
-    bool compiler(JZNodeCompiler *c, QString &error);
 };
 
 #endif

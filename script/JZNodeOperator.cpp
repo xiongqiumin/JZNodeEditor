@@ -138,8 +138,16 @@ bool JZNodeDoubleOperator::compiler(JZNodeCompiler *c,QString &error)
     if(!checkPinInput(c,error))
         return false;
 
-    if(!c->addDataInput(m_id,error))
-        return false;
+    if (isFlowNode())
+    {
+        if (!c->addFlowInput(m_id, error))
+            return false;
+    }
+    else
+    { 
+        if (!c->addDataInput(m_id, error))
+            return false;
+    }
 
     calcPinOutType(c);
     auto input_list = paramInList();
@@ -159,6 +167,10 @@ bool JZNodeDoubleOperator::compiler(JZNodeCompiler *c,QString &error)
         int r3 = c->paramId(m_id,out);
         c->addExpr(irId(r3),irId(r1),irId(r2),m_op);
     }
+
+    if (isFlowNode())
+        c->addFlowOutput(m_id);
+
     return true;
 }
 
@@ -442,8 +454,44 @@ bool JZNodeOr::compiler(JZNodeCompiler *c, QString &error)
 }
 
 
+
+//JZNodeSingleOperator
+JZNodeSingleOperator::JZNodeSingleOperator(int node_type, JZNodeIRType op_type)
+{
+    m_type = node_type;
+    m_op = op_type;
+}
+
+bool JZNodeSingleOperator::compiler(JZNodeCompiler *c, QString &error)
+{
+    if (isFlowNode())
+    {
+        if (!c->addFlowInput(m_id, error))
+            return false;
+    }
+    else
+    {
+        if (!c->addDataInput(m_id, error))
+            return false;
+    }
+
+    int in_type = c->pinType(m_id, paramIn(0));
+    c->setPinType(m_id, paramOut(0), in_type);
+
+    int id_in = c->paramId(m_id, paramIn(0));
+    int id_out = c->paramId(m_id, paramOut(0));
+    c->addSingleExpr(irId(id_out), irId(id_in), m_op);
+
+    if (isFlowNode())
+        c->addFlowOutput(m_id);
+
+    return true;
+}
+
+
 //JZNodeBitReverse
 JZNodeBitReverse::JZNodeBitReverse()
+    :JZNodeSingleOperator(Node_bitreverse, OP_bitreverse)
 {
     m_name = "bit reverse";
     m_type = Node_bitreverse;
@@ -453,23 +501,9 @@ JZNodeBitReverse::JZNodeBitReverse()
     setPinTypeInt(out);
 }
 
-bool JZNodeBitReverse::compiler(JZNodeCompiler* c, QString& error)
-{
-    if (!c->addDataInput(m_id, error))
-        return false;
-    
-    int in_type = c->pinType(m_id,paramIn(0));
-    c->setPinType(m_id, paramOut(0),in_type);
-
-    int id_in = c->paramId(m_id, paramIn(0));
-    int id_out = c->paramId(m_id, paramOut(0));
-    c->addSingleExpr(irId(id_out), irId(id_in), OP_bitreverse);
-
-    return true;
-}
-
 //JZNodeNot
 JZNodeNot::JZNodeNot()
+    :JZNodeSingleOperator(Node_not, OP_not)
 {
     m_name = "not";
     m_type = Node_not;
@@ -479,40 +513,13 @@ JZNodeNot::JZNodeNot()
     setPinTypeBool(out);
 }
 
-bool JZNodeNot::compiler(JZNodeCompiler *c, QString &error)
-{
-    if (!c->addDataInput(m_id, error))
-        return false;
-
-    int id_in = c->paramId(m_id, paramIn(0));
-    int id_out = c->paramId(m_id, paramOut(0));
-    c->addSingleExpr(irId(id_out), irId(id_in), OP_not);
-    return true;
-}
-
 //JZNodeNeg
 JZNodeNeg::JZNodeNeg()
+    :JZNodeSingleOperator(Node_neg,OP_neg)
 {
-    m_name = "neg";
-    m_type = Node_not;
+    m_name = "neg";    
     int in = addParamIn("input");
     int out = addParamOut("neg");
     setPinType(in, { "int8","int16","int","int64" });
     setPinType(out, { "int8","int16","int","int64" });
-}
-
-bool JZNodeNeg::compiler(JZNodeCompiler *c, QString &error)
-{
-    if (!c->addDataInput(m_id, error))
-        return false;
-
-    int in_type = c->pinType(m_id,paramIn(0));
-    c->setPinType(m_id, paramOut(0),in_type);
-
-    int id_in = c->paramId(m_id, paramIn(0));
-    int id_out = c->paramId(m_id, paramOut(0));
-    c->addSingleExpr(irId(id_out), irId(id_in), OP_neg);
-    c->setPinType(m_id, paramOut(0),in_type);
-
-    return true;
 }

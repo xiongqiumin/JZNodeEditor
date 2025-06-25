@@ -38,7 +38,7 @@ JZVisionLinkDialog::JZVisionLinkDialog(QWidget* w)
 void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
 {
     m_node = node;
-    m_pinId = -1;
+    m_pinId = pin_id;
 
     auto env = m_node->environment();
     QList<int> dst_types = env->nameListToTypeList(m_node->pinType(m_pinId));
@@ -64,8 +64,8 @@ void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
 
     //local
     QTreeWidgetItem *local_item = new QTreeWidgetItem();
-    auto local_list = script->localVariableList(true);
-    for(int i = 0; i < member_list.size(); i++)
+    auto local_list = script->localVariableList(false);
+    for(int i = 0; i < local_list.size(); i++)
     {
         auto param_def = script->localVariable(local_list[i]);
 
@@ -78,9 +78,7 @@ void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
     m_tree->addTopLevelItem(local_item);
     if(local_item->childCount() == 0)
         m_tree->setItemHidden(local_item, true);
-
-    QTreeWidgetItem *node_item = new QTreeWidgetItem();
-
+    
     //node
     JZScriptItemVisitor visitor(m_node->file());
     QList<JZNode*> in_list = visitor.flowInputNodeRecursively(m_node);
@@ -89,8 +87,8 @@ void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
         auto in_node = in_list[node_idx];
         auto out_list = in_node->paramOutList();
 
-        QTreeWidgetItem *item = new QTreeWidgetItem();
-        item->setText(0, in_node->name());
+        QTreeWidgetItem *cur_node_item = new QTreeWidgetItem();
+        cur_node_item->setText(0, in_node->name());
         for (int i = 0; i < out_list.size(); i++)
         {
             int out_pin = out_list[i];
@@ -104,15 +102,16 @@ void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
                 node_link.gemo = JZNodeGemo(in_node->id(),out_pin);
 
                 JZParamDefine param_def;
-                param_def.name = node->pinName(out_pin);
+                param_def.name = in_node->pinName(out_pin);
                 param_def.type = env->typeToName(src_type);
-                addLinkItem(node_item, node_link, &param_def, dst_types);
+                addLinkItem(cur_node_item, node_link, &param_def, dst_types);
             }
         }
-    }
-
-    if(node_item->childCount() == 0)
-        m_tree->setItemHidden(node_item,true);
+        if (cur_node_item->childCount() > 0)
+            m_tree->addTopLevelItem(cur_node_item);
+        else
+            delete cur_node_item;
+    }    
 
     if (m_linkId == 0)
         m_stacked->setCurrentIndex(1);
@@ -134,7 +133,9 @@ void JZVisionLinkDialog::addLinkItem(QTreeWidgetItem *parent,const JZVisionParam
         parent->addChild(item);
 
         JZVisionParamLink link = link_info;
-        link.paramType = env->typeToName(dst_type);
+        if(!link.path.isEmpty())
+            link.paramType = env->typeToName(dst_type);
+
         m_paramLink[m_linkId] = link;
         m_linkId++;
     }
@@ -180,21 +181,25 @@ void JZVisionLinkDialog::setLink(JZVisionParamLink link)
 
 JZVisionParamLink JZVisionLinkDialog::link()
 {
-    bool ok = false;
-    int link_id = m_tree->currentItem()->data(0,Qt::UserRole).toInt(&ok);
-    if(ok)
-        return m_paramLink[link_id];
+    auto selects = m_tree->selectedItems();
+    if (selects.size() != 1)
+        return JZVisionParamLink();
+    
+    auto item = selects[0];
+    QVariant link_id = item->data(0,Qt::UserRole);
+    if(link_id.isValid())
+        return m_paramLink[link_id.toInt()];
     else
         return JZVisionParamLink();
 }
 
 void JZVisionLinkDialog::accept() 
-{
+{    
     auto result = link();
-    if(result.gemo.isNull())
+    if(result.isNull())
         return;
 
-    accept();
+    JZBaseDialog::accept();
 }
 
 //JZVisionSettingPinWidget
@@ -322,6 +327,7 @@ void JZVisionSettingPinWidget::updatePinWidget()
             l->insertWidget(1, m_linkEdit);
             connect(m_linkEdit->button(),&QToolButton::clicked,this, &JZVisionSettingPinWidget::onLickSelected);
             m_linkEdit->lineEdit()->setText(linkName());
+            m_linkEdit->lineEdit()->setReadOnly(true);
         }
         m_btnLink->setText("直接输入");
     }
@@ -338,7 +344,13 @@ QString JZVisionSettingPinWidget::linkName()
 {
     auto view = m_setting->view();
     if (m_linkGemo.type == JZVisionParamLink::Link_Node)
-        return view->pinName(m_linkGemo.gemo) + "." + m_linkGemo.path.join(".");
+    {
+        QString pin_name = view->pinName(m_linkGemo.gemo);
+        if(!m_linkGemo.path.isEmpty())
+            pin_name += "." + m_linkGemo.path.join(".");
+        
+        return pin_name;
+    }
     else
         return m_linkGemo.path.join(".");
 }
@@ -346,6 +358,7 @@ QString JZVisionSettingPinWidget::linkName()
 void JZVisionSettingPinWidget::onLickSelected()
 {
     JZVisionLinkDialog dlg(this);
+    dlg.initLinkList(m_node, m_pinId);
     dlg.setLink(m_linkGemo);
     if(dlg.exec() != QDialog::Accepted)
         return;
@@ -471,8 +484,10 @@ void JZVisionSettingDialog::onPinElse()
         if (!node_switch->hasDefault())
             id = node_switch->addDefault();
     }
-    int widget_index = m_node->subFlowCount();
+    if (id == -1)
+        return;
 
+    int widget_index = m_node->subFlowCount();
     JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(id));
     m_grid->insertWidget(widget_index, pin_widget);
 
@@ -493,10 +508,12 @@ void JZVisionSettingDialog::setNode(JZNode* node)
     QLabel *label_name = new QLabel(view()->nodeName(node->id()));
     v->addWidget(label_name);
 
-    //参数
+    //参数    
     auto in_list = node->paramInList();
     if (in_list.size() > 0)
     {
+        v->addWidget(new QLabel("输入参数"));
+
         QVBoxLayout*grid = new QVBoxLayout();
         m_grid = grid;
         for (int i = 0; i < in_list.size(); i++)
@@ -509,7 +526,7 @@ void JZVisionSettingDialog::setNode(JZNode* node)
             block.pinId = in_list[i];
             m_blockList.insert(block.pinId, block);
         }
-        if (m_node->type() == Node_if || m_node->type() == Node_switch)
+        if (m_node->type() == Node_if)
         {
             QPushButton* pin_add = new QPushButton();
             QPushButton* pin_else = new QPushButton();
@@ -517,16 +534,7 @@ void JZVisionSettingDialog::setNode(JZNode* node)
             connect(pin_else, &QPushButton::clicked, this, &JZVisionSettingDialog::onPinElse);
 
             pin_add->setText("增加条件");
-            if (m_node->type() == Node_if)
-            {
-                auto node_if = dynamic_cast<JZNodeIf*>(m_node);
-                pin_else->setText("增加else");
-            }
-            else
-            {
-                auto node_switch = dynamic_cast<JZNodeSwitch*>(m_node);
-                pin_else->setText("增加default");
-            }
+            pin_else->setText("增加else");            
 
             QHBoxLayout* pin_l = new QHBoxLayout();
             pin_l->setContentsMargins(0, 0, 0, 0);
@@ -536,6 +544,16 @@ void JZVisionSettingDialog::setNode(JZNode* node)
             grid->addLayout(pin_l);
         }
         v->addLayout(grid);
+    }
+    auto out_list = node->paramOutList();
+    if (out_list.size() > 0)
+    {
+        v->addWidget(new QLabel("输出参数"));
+        for (int i = 0; i < out_list.size(); i++)
+        {
+            QString pin_name = m_node->pinName(out_list[i]);
+            v->addWidget(new QLabel(pin_name));
+        }
     }
     v->addStretch();
 

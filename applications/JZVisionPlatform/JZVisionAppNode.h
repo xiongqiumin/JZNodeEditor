@@ -31,7 +31,7 @@ public:
     LinkType type;
     JZNodeGemo gemo;
     QStringList path;
-    QString paramType;
+    QString paramType;  //需要中间变量时会用到
 };
 QDataStream &operator<<(QDataStream &s, const JZVisionParamLink &param);
 QDataStream &operator>>(QDataStream &s, JZVisionParamLink &param);

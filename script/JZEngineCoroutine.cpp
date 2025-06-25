@@ -4,13 +4,11 @@
 JZEngineCoroutine::JZEngineCoroutine(JZNodeEngine *engine)
 {
     m_engine = engine;
-    m_coId = m_engine->createCo();
+    m_coId = -1;
 }
 
 JZEngineCoroutine::~JZEngineCoroutine()
-{
-    if(m_coId != -1)
-        m_engine->destoryCo(m_coId);
+{    
 }
 
 void JZEngineCoroutine::yield()
@@ -21,6 +19,16 @@ void JZEngineCoroutine::yield()
 
 void JZEngineCoroutine::resume()
 {
+    if(m_coId == -1)
+        m_coId = m_engine->createCo();
+
     m_engine->resumeCo(m_coId);
     JZCoCoroutine::resume();
+}
+
+void JZEngineCoroutine::endTask()
+{
+    m_engine->yieldCo(m_coId);
+    m_engine->destoryCo(m_coId);
+    m_coId = -1;
 }

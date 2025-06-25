@@ -120,18 +120,31 @@ JZParamEditInfo JZParamEditInfo::createByType(const JZScriptEnvironment* env, QS
 
 JZParamEditInfo JZParamEditInfo::createByPin(JZNode* node, int pin_id)
 {
+    auto allBaseType = [](QList<int> list)->bool {
+        for (int i = 0; i < list.size(); i++)
+        {
+            if (!JZNodeType::isBase(list[i]))
+                return false;
+        }
+        return true;
+    };
+
     auto pin = node->pin(pin_id);
     auto env = node->environment();
-    QString up_type = env->upType(pin->dataType());
 
-    JZParamEditInfo info = createByType(env,up_type);
+    auto pin_type_list = env->nameListToTypeList(pin->dataType());
+    int up_type = env->upType(pin_type_list);
+    if (up_type == Type_none && allBaseType(pin_type_list))
+        up_type = Type_string;
+
+    JZParamEditInfo info = createByType(env, env->typeToName(up_type));
     auto valid = JZNodeValidatorManager::instance()->pinValidator(node->type(), pin_id);
     if (!valid)
         return info;
 
     if (valid->type == JZParamValidator::minMax)
     {
-        if (up_type == "float" || up_type == "double")
+        if (up_type == Type_float || up_type == Type_double)
         {
             info.min = valid->min.toDouble();
             info.max = valid->max.toDouble();

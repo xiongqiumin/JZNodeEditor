@@ -28,12 +28,13 @@ JZVisionParamLink JZVisionView::linkInfo(int node_id, int pin_id)
     auto from_node = m_file->getNode(from_gemo.nodeId);
     if (from_node->type() == Node_visionAppParam)
     {
-        JZNodeVisionParam* node_param = dynamic_cast<JZNodeVisionParam*>(from_node);
+        JZNodeVisionParam* node_param = dynamic_cast<JZNodeVisionParam*>(from_node);        
         linkGemo = node_param->link();
     }
     else
     {
-        linkGemo.gemo = from_gemo;
+        linkGemo.type = JZVisionParamLink::Link_Node;
+        linkGemo.gemo = from_gemo;        
     }
     return linkGemo;
 }
@@ -181,7 +182,12 @@ void JZVisionView::configNode(JZNode *node)
     JZVisionSettingDialog dialog(this);
     dialog.setNode(node);
     if (dialog.exec() != QDialog::Accepted)
+    {
+        QByteArray tmp_buffer = editorNodeFactory()->saveNode(node);
+        if (old_buffer != tmp_buffer)
+            node->fromBuffer(old_buffer);
         return;
+    }
 
     bool macro_flag = false;
     auto addMacro = [this, &macro_flag]

@@ -269,7 +269,7 @@ public:
     {
     }
 };
-int JZNodeEngineIdlePauseEvent::Event = 0;
+int JZNodeEngineIdlePauseEvent::Event = QEvent::registerEventType();
 
 JZNodeEngine::Stat::Stat()
 {
@@ -299,8 +299,7 @@ void JZNodeEngine::Stat::report()
 // JZNodeEngine
 thread_local JZNodeEngine *g_engine = nullptr;
 void JZNodeEngine::regist()
-{        
-    JZNodeEngineIdlePauseEvent::Event = QEvent::registerEventType();      
+{                
 }
 
 JZNodeEngine::JZNodeEngine(QObject *parent)
@@ -344,14 +343,15 @@ bool JZNodeEngine::isInit() const
 bool JZNodeEngine::init()
 {
     Q_ASSERT(!g_engine);
+    Q_ASSERT(!g_scheduler->isInCoroutine());
 
     // regist type
     m_program->initEnv(&m_env);
     updateStatus(Status_idle);
 
     m_coId = 0;
-    m_coMap[m_coId++] = JZNodeCoPtr(new JZNodeCoroutine());
-    m_co = m_coMap[0].data();
+    m_mainCo = JZNodeCoPtr(new JZNodeCoroutine());    
+    m_co = m_mainCo.data();
 
     g_engine = this;
     QVariantList in, out;
@@ -371,12 +371,13 @@ void JZNodeEngine::deinit()
         return; 
     
     Q_ASSERT(g_engine == this);
+    Q_ASSERT(m_coMap.size() == 0);
     m_watch = false;
     m_breakPoints.clear();
     m_breakIr.clear();
     m_breakStep.clear();
-
-    m_coMap.clear();
+    
+    m_mainCo.clear();
     m_co = nullptr;
     m_global.clear();
     m_statusCommand = Command_none;
@@ -606,18 +607,20 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
                 return false;
             }
         }
+        Q_ASSERT(m_co->stack.size() == 0);
 
         out.clear();
         for (int i = 0; i < func->define.paramOut.size(); i++)
             out.push_back(getReg(Reg_CallOut + i));
         clearReg();
-
-        if (m_co->stack.size() == 0)
-        {
-            updateStatus(Status_idle);
-            m_statusCommand = Command_none;
-        }
+        
+        updateStatus(Status_idle);
+        m_statusCommand = Command_none;        
         return true;
+    }
+    catch (const JZEngineCoInterrupt &e)
+    {
+        return false;
     }
     catch (const std::exception& e)
     {
@@ -633,8 +636,8 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         error.error = e.what();
         error.info = runtimeInfo();
         m_error = error;
-        emit sigRuntimeError(error);
 
+        emit sigRuntimeError(m_error);
         if (m_debug) //保留错误现场
         {
             m_mutex.lock();
@@ -642,7 +645,8 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
             m_statusCommand = Command_none;
             m_mutex.unlock();
         }
-        return false;
+        waitAllCoFinish(m_co);
+        return false;                
     }
 }
 
@@ -913,25 +917,31 @@ int JZNodeEngine::createCo()
 
 void JZNodeEngine::destoryCo(int id)
 {
+    Q_ASSERT(m_coMap.contains(id) && m_co != m_coMap[id].data());
     m_coMap.remove(id);
 }
 
 void JZNodeEngine::yieldCo(int id)
 {
-    Q_ASSERT(m_coMap.contains(id) && id != 0);
+    Q_ASSERT(m_coMap.contains(id));
     m_co->status = m_status;
 
-    m_co = m_coMap[0].data();
+    m_co = m_mainCo.data();
     m_status = m_co->status;
 }
 
 void JZNodeEngine::resumeCo(int id)
 {
-    Q_ASSERT(m_coMap.contains(id));
+    Q_ASSERT(m_co == m_mainCo.data() && m_coMap.contains(id));
     m_co->status = m_status;
 
     m_co = m_coMap[id].data();
     m_status = m_co->status;
+}
+
+bool JZNodeEngine::isInterruptCo()
+{
+    return (m_status == Status_error) || (m_statusCommand == Command_stop);
 }
 
 Stack *JZNodeEngine::currentStack()
@@ -1285,7 +1295,8 @@ void JZNodeEngine::stop()
     lock.unlock();
     if(m_status == Status_pause || m_status == Status_error)
         m_waitCond.wakeOne();
-    waitCommand();
+    
+    waitCommand();    
 }
 
 void JZNodeEngine::stepIn()
@@ -1755,8 +1766,11 @@ bool JZNodeEngine::run()
     int in_stack_size = m_co->stack.size();
     while (true)
     {                   
-        if(m_statusCommand == Command_stop)
+        if (m_statusCommand == Command_stop)
+        {
+            waitAllCoFinish(m_co);
             return false;
+        }
 
         m_stat.statmentTime++;
 
@@ -1957,4 +1971,16 @@ bool JZNodeEngine::run()
 
 RunEnd:
     return true;
+}
+
+void JZNodeEngine::waitAllCoFinish(JZNodeCoroutine *cur_co)
+{   
+    int wait_num = (cur_co == m_mainCo.data())? 0:1;
+
+    //等待所有子线程完成
+    while (m_coMap.size() > wait_num)
+    {
+        qApp->processEvents();
+        QThread::msleep(20);
+    }
 }
