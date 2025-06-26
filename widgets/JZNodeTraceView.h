@@ -17,6 +17,16 @@
 #include <QScrollBar>
 #include "JZNodeTrace.h"
 
+class JZNodeTraceTree : public QWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodeTraceTree();
+    ~JZNodeTraceTree();
+};
+
+//JZNodeTraceScene
 class JZNodeTraceView;
 class JZNodeTraceScene : public QWidget
 {
@@ -68,7 +78,7 @@ protected:
     JZNodeTraceView* m_view;
 };
 
-
+//JZNodeTraceView
 class JZNodeTraceView : public QWidget
 {
     Q_OBJECT

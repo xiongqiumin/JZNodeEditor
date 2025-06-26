@@ -5,12 +5,23 @@
 #include "modules/opencv/CvToQt.h"
 #include "JZDockWidget.h"
 #include "JZNodePanel.h"
+#include "modules/camera/JZCameraNode.h"
+#include "modules/communication/JZCommNode.h"
+#include "modules/vision/JZVisionNode.h"
+#include "modules/motion/JZMotionNode.h"
+#include "modules/model/JZModelNode.h"
 
 JZVisionEditor::JZVisionEditor(QWidget *parent) 
     : JZEditor(parent)
 {
     m_type = ProjectItem_scriptItem;
     init();
+
+    m_roiNode << Node_CameraFrameReady;
+    m_roiNode << Node_ModelYolo;
+    m_roiNode << Node_visionAppBarCode;
+    m_roiNode << Node_visionAppQrCode;
+    m_roiNode << Node_visionAppOCR;
 }
 
 JZVisionEditor::~JZVisionEditor()
@@ -52,6 +63,11 @@ void JZVisionEditor::init()
     layout->addWidget(mainSplitter);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
+}
+
+JZVisionView* JZVisionEditor::view()
+{
+    return m_view;
 }
 
 void JZVisionEditor::setCompilerResult(const CompilerResult *info)
@@ -142,6 +158,8 @@ void JZVisionEditor::updateOutputImage()
         JZVisionNodeInfo info;
         info.name = m_view->nodeName(node_id);
         info.node = script->getNode(node_id);
+        info.hasImage = m_roiNode.contains(info.node->type());
+
         node_list << info;
     }
 

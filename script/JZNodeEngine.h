@@ -75,12 +75,27 @@ struct TryCatchInfo
     JZNodeIRParam irExcep;
 };
 
+struct NodeTraceInfo
+{
+    NodeTraceInfo();
+    void clear();
+
+    QString toString() const;
+
+    int nodeId;
+    QString name;
+    QMap<QString, QString> input;
+    QMap<QString, QString> output;
+};
+
 struct JZNodeCoroutine
 {
     JZNodeCoroutine();
 
     int id;
     QString name;
+    JZEngineCoroutine* coTask;
+
     Stack stack;
     QVector<QVariant> regs;
     QList<TryCatchInfo> tryCatchList;
@@ -90,6 +105,7 @@ struct JZNodeCoroutine
 
     int pc;
     const JZNodeScript* script;
+    NodeTraceInfo nodeTrace;
 };
 typedef QSharedPointer<JZNodeCoroutine> JZNodeCoPtr;
 
@@ -144,6 +160,15 @@ public:
     int stack;
 };
 
+//JZEngineTraceConfig
+class JZEngineTraceConfig
+{
+public:
+    JZEngineTraceConfig();
+
+    bool enable;
+};
+
 //JZNodeEngine
 class JZNodeDebugServer;
 class JZNodeEngine : public QObject
@@ -171,6 +196,7 @@ public:
     JZNodeRuntimeError runtimeError();
     QString currentFunction();
 
+    void setNodeTrace(JZEngineTraceConfig config);
     void setDebug(bool flag);        
 
     void addBreakPoint(QString filepath,int nodeId);
@@ -189,10 +215,11 @@ public:
 
     QList<int> coList();
     JZNodeCoroutine *co(int id);
-    int createCo();
+    JZNodeCoroutine* currentCo();
+
+    int createCo(JZEngineCoroutine *task);
     void destoryCo(int id);
-    void yieldCo(int id);
-    void resumeCo(int id); 
+    void switchCo(int id); 
     bool isInterruptCo();
 
     Stack *currentStack();    
@@ -225,7 +252,8 @@ public:
 
     JZNodeTraceContext *currentTraceContext();
 
-    void printNode(int node_id);
+    void collectNodeParam(int node_id,bool is_input);
+    void printNode();
     QVariant dealExpr(const QVariant &a, const QVariant &b, int op);
     QVariant dealSingleExpr(const QVariant& a, int op);
 
@@ -245,6 +273,7 @@ signals:
     void sigRuntimeError(JZNodeRuntimeError error);
     void sigLog(const QString &log);
     void sigStatusChanged(int status);
+    void sigNodeTrace(const NodeTraceInfo& node_trace);
     void sigWatchNotify();
 
 protected slots:
@@ -319,6 +348,8 @@ protected:
         
     QList<BreakPoint> m_breakPoints;
     BreakStep m_breakStep; 
+    QSet<const JZNodeIRNodeEnter*> m_breakIr;
+    JZEngineTraceConfig m_traceConfig;
 
     JZScriptEnvironment m_env;
     QMap<QString,QVariantPtr> m_global;
@@ -330,9 +361,9 @@ protected:
     QWaitCondition m_waitCond;
     bool m_debug;
     
+    bool m_errorOccur;
     JZNodeRuntimeError m_error;
     QList<TryCatchInfo> m_tryCatchList;
-    QSet<const JZNodeIRNodeEnter*> m_breakIr;    
 
     JZNodeCoroutine *m_co;
     JZNodeCoPtr m_mainCo;

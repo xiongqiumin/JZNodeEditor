@@ -10,7 +10,7 @@ class JZNodeCameraVistor : public JZScriptUnitTestVistor
 public:
     JZNodeCameraVistor();
 
-    virtual void visitorSelf(JZNode* node) override;
+    virtual void visitSelf(JZNode* node) override;
 protected:
 
 };

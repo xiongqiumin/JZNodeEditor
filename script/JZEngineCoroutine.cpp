@@ -11,24 +11,32 @@ JZEngineCoroutine::~JZEngineCoroutine()
 {    
 }
 
-void JZEngineCoroutine::yield()
+void JZEngineCoroutine::beforeYield()
 {
-    m_engine->yieldCo(m_coId);
-    JZCoCoroutine::yield();
+    auto pre_co = dynamic_cast<JZEngineCoroutine*>(m_preCoList.back());
+    if (pre_co)
+        m_engine->switchCo(pre_co->m_coId);
+    else
+        m_engine->switchCo(-1);
 }
 
-void JZEngineCoroutine::resume()
+void JZEngineCoroutine::beforeResume()
 {
-    if(m_coId == -1)
-        m_coId = m_engine->createCo();
-
-    m_engine->resumeCo(m_coId);
-    JZCoCoroutine::resume();
+    if (m_coId == -1)
+    {
+        m_coId = m_engine->createCo(this);
+    }
+    m_engine->switchCo(m_coId);
 }
 
 void JZEngineCoroutine::endTask()
 {
-    m_engine->yieldCo(m_coId);
+    auto pre_co = dynamic_cast<JZEngineCoroutine*>(m_preCoList.back());
+    if (pre_co)
+        m_engine->switchCo(pre_co->m_coId);
+    else
+        m_engine->switchCo(-1);
+
     m_engine->destoryCo(m_coId);
     m_coId = -1;
 }

@@ -15,35 +15,41 @@ void JZScriptItemVisitor::setScript(JZScriptItem *item)
     m_script = item;
 }
 
-void JZScriptItemVisitor::visitor()
+void JZScriptItemVisitor::visit()
 {    
     m_hasVistorNode.clear();
 
     auto start = m_script->startNode();
-    visitorNode(start);
+    if (!start)
+        return;
+    
+    visitNode(start);
 }
 
-void JZScriptItemVisitor::visitorNode(JZNode *node)
+void JZScriptItemVisitor::visitNode(JZNode *node)
 {
     if (m_hasVistorNode.contains(node))
         return;
 
-    m_hasVistorNode.push_back(node);
     while(node)
-    {
+    {   
+        //pre
         QList<JZNode*> input_list = dataInputNode(node);
         for(int i = 0; i < input_list.size(); i++)
-            visitorNode(input_list[i]);
+            visitNode(input_list[i]);
 
+        //self
+        visitSelf(node);
+        m_hasVistorNode.push_back(node);
+
+        //next
         auto sub_list = node->subFlowList();
         for(int i = 0; i < sub_list.size(); i++)
         {
             auto sub_node = nextFlowNode(node,sub_list[i]);
-            visitorNode(sub_node);
+            visitNode(sub_node);
         }
-
-        visitorSelf(node);
-
+        
         if(node->flowOut() != -1)
             node = nextFlowNode(node,node->flowOut());
         else
@@ -51,7 +57,7 @@ void JZScriptItemVisitor::visitorNode(JZNode *node)
     }
 }
 
-void JZScriptItemVisitor::visitorSelf(JZNode *node)
+void JZScriptItemVisitor::visitSelf(JZNode *node)
 {
 
 }

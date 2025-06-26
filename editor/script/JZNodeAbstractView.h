@@ -164,6 +164,7 @@ protected:
 
     virtual void drawBackground(QPainter* painter, const QRectF& r) override;
 
+    virtual void initGraph();
     virtual JZAbstractNodeItem *createNodeItem(JZNode *node) = 0;
     virtual JZAbstractLineItem *createLineItem(JZNodeGemo from) = 0;    
 
@@ -179,8 +180,7 @@ protected:
     bool canRemoveItem(QGraphicsItem *item);
     QList<JZAbstractNodeItem*> selectNodeItems();
     QList<JZAbstractNodeItem*> nodeItems();
-    
-    void initGraph();            
+                
     void setSelectNode(int id);
     void updatePropEditable(const JZNodeGemo &gemo);
     void saveNodePos();

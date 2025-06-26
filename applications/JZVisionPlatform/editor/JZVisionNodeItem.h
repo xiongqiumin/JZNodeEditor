@@ -9,6 +9,7 @@ class JZVisionNodeItem : public JZAbstractNodeItem
 public:
     JZVisionNodeItem(JZNode *node);    
 
+    void setNodeName(QString name);
     void updateNode();
     virtual int pinAt(QPointF pos);
     virtual QRectF pinRect(int pin);    
@@ -35,6 +36,7 @@ protected:
     
     bool m_hovered;
     int m_downPin;
+    QString m_nodeName;
     QPointF m_downPoint;    
     
     QList<Block> m_blockList;

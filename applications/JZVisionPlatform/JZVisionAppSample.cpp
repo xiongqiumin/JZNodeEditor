@@ -72,7 +72,7 @@ void JZVisionAppSample::create(JZProject *project)
     JZNodeCameraReadyEvent* cam_ready = new JZNodeCameraReadyEvent();
     flow_script->addNode(cam_ready);
 
-    JZNodeModelForward* model_forward = new JZNodeModelForward();
+    JZNodeModelYolo* model_forward = new JZNodeModelYolo();
     model_forward->setModel("yolo");
     flow_script->addNode(model_forward);
     flow_script->addConnect(cam_ready->flowOutGemo(), model_forward->flowInGemo());

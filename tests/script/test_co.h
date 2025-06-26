@@ -14,11 +14,14 @@ public:
 private slots:
     void testLoop();
     void testModbus();
+    void testException();
+    void testABSwitch();
+    void testThread();
 
 protected:
 
 };
 
-void test_co(int argc, char *argv[]);
+void test_co(QStringList testcase = QStringList());
 
 #endif

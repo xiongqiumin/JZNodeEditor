@@ -311,7 +311,8 @@ QString JZNodeType::debugString(const JZNodeObject *obj)
     }
     else
     {
-        return QString::asprintf("%p",obj);
+        auto type = obj->meta()->className;
+        return type + QString::asprintf("(%p)",obj);
     }
 }
 

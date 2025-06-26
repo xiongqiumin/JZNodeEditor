@@ -88,7 +88,7 @@ class JZScriptHookVistor : public JZScriptUnitTestVistor
 public:
     JZScriptHookVistor();
 
-    virtual void visitorSelf(JZNode *node) override;
+    virtual void visitSelf(JZNode *node) override;
 protected:    
 
 };

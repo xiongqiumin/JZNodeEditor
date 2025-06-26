@@ -60,6 +60,7 @@ void JZVisionImage::onImageBoxChanged(int index)
     else
     {
         m_view->clear();
+        m_status->setText(QString());
     }
 }
 
@@ -98,8 +99,10 @@ void JZVisionImage::initNodeList(const QList<JZVisionNodeInfo> &node_list)
 
     for (int i = 0; i < node_list.size(); i++)
     {
+        auto node_info = node_list[i];
         auto node = node_list[i].node;
-        m_imageBox->addItem(node_list[i].name, node->id());
+        if(node_info.hasImage)
+            m_imageBox->addItem(node_list[i].name, node->id());
     }
 }
 

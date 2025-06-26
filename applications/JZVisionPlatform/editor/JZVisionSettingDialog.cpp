@@ -13,10 +13,38 @@
 #include "JZVisionView.h"
 #include "UiCommon.h"
 
+class VisionLinkVisitor : public JZScriptItemVisitor
+{
+public:
+    VisionLinkVisitor()
+    {
+        finish = false;
+    }
+
+    virtual void visitSelf(JZNode* node)
+    {
+        if (finish)
+            return;
+
+        if (node->isFlowNode())
+        {
+            if (node == target)
+                finish = true;
+            else
+                nodeList << node;
+        }
+    }
+
+    QList<JZNode*> nodeList;
+    JZNode* target;
+    int finish;
+};
+
 //JZVisionLinkDialog
 JZVisionLinkDialog::JZVisionLinkDialog(QWidget* w)
     :JZBaseDialog(w)
 {
+    m_view = nullptr;
     m_tree = new QTreeWidget();
     m_tree->setColumnCount(1);
     m_tree->setHeaderHidden(true);
@@ -33,6 +61,11 @@ JZVisionLinkDialog::JZVisionLinkDialog(QWidget* w)
     m_node = nullptr;
     m_pinId = -1;
     m_linkId = 0;
+}
+
+void JZVisionLinkDialog::setView(JZVisionView* view)
+{
+    m_view = view;
 }
 
 void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
@@ -80,15 +113,18 @@ void JZVisionLinkDialog::initLinkList(JZNode *node,int pin_id)
         m_tree->setItemHidden(local_item, true);
     
     //node
-    JZScriptItemVisitor visitor(m_node->file());
-    QList<JZNode*> in_list = visitor.flowInputNodeRecursively(m_node);
+    VisionLinkVisitor visitor;
+    visitor.setScript(m_node->file());
+    visitor.target = m_node;
+    visitor.visit();
+    QList<JZNode*> in_list = visitor.nodeList;
     for (int node_idx = 0; node_idx < in_list.size(); node_idx++)
     {
         auto in_node = in_list[node_idx];
         auto out_list = in_node->paramOutList();
 
         QTreeWidgetItem *cur_node_item = new QTreeWidgetItem();
-        cur_node_item->setText(0, in_node->name());
+        cur_node_item->setText(0, m_view->nodeName(in_node->id()));
         for (int i = 0; i < out_list.size(); i++)
         {
             int out_pin = out_list[i];
@@ -358,6 +394,7 @@ QString JZVisionSettingPinWidget::linkName()
 void JZVisionSettingPinWidget::onLickSelected()
 {
     JZVisionLinkDialog dlg(this);
+    dlg.setView(m_setting->view());
     dlg.initLinkList(m_node, m_pinId);
     dlg.setLink(m_linkGemo);
     if(dlg.exec() != QDialog::Accepted)

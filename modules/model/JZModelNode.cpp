@@ -95,7 +95,7 @@ JZNodeModelForward::JZNodeModelForward()
     setPinType(in_frame, { "Mat" });
 
     int out = addParamOut("result");
-    setPinType(out, { "QList<JZYoloResult>" });
+    setPinType(out, { "Mat" });
 }
 
 JZNodeModelForward::~JZNodeModelForward()
@@ -138,13 +138,7 @@ bool JZNodeModelForward::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
-    int in_id = c->paramId(m_id, paramIn(1));
-    int out_id = c->paramId(m_id, paramOut(0));
-    c->addCallConvert("JZYoloForward", { irRef("this.modelManager"), irLiteral(model()) ,irId(in_id) }, {  irId(out_id) });
-
-    c->addFlowOutput(m_id);
-
-    JZModuleDebug(c, m_id, irId(in_id), irId(out_id));
+    Q_ASSERT(0);
     return true;
 }
 

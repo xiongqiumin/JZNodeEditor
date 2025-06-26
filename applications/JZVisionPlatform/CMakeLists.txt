@@ -31,6 +31,8 @@ set(JZVisionPlatform_SOURCES
 	JZVisionAppSample.h
     JZVisionAppLayout.cpp
     JZVisionAppLayout.h
+	JZVisionStringTable.cpp
+	JZVisionStringTable.h
     
     editor/JZVisionPanel.cpp
     editor/JZVisionPanel.h

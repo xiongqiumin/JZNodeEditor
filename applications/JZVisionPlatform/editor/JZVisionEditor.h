@@ -18,6 +18,8 @@ class JZVisionEditor : public JZEditor
 public:
     explicit JZVisionEditor(QWidget *parent = nullptr);
     ~JZVisionEditor();
+
+    JZVisionView *view();
     
     void setCompilerResult(const CompilerResult *info);
     void setRuntimeResult(int node_id, NodeResult result);
@@ -61,6 +63,7 @@ protected:
     QList<QAction*> m_actionList;
 
     JZVisionRuntimeResult m_result;
+    QList<int> m_roiNode;
 };
 
 #endif // !JZ_VISION_EDITOR_H_

@@ -171,7 +171,7 @@ void JZScriptUnitTestVistor::updateDepend(JZScriptItemDepend *depend)
 {
     m_depend = depend;
     setScript(m_depend->originScript);
-    visitor();
+    visit();
 }
 
 //JZScriptNomarlVistor
@@ -179,7 +179,7 @@ JZScriptHookVistor::JZScriptHookVistor()
 {
 }
 
-void JZScriptHookVistor::visitorSelf(JZNode *node)
+void JZScriptHookVistor::visitSelf(JZNode *node)
 {
     if(node->type() == Node_param)
     {

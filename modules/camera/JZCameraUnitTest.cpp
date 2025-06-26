@@ -7,7 +7,7 @@ JZNodeCameraVistor::JZNodeCameraVistor()
 
 }
 
-void JZNodeCameraVistor::visitorSelf(JZNode* node)
+void JZNodeCameraVistor::visitSelf(JZNode* node)
 {
     if (node->type() == Node_CameraFrameReady)
     {

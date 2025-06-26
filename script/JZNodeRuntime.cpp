@@ -7,7 +7,7 @@ void JZSleep(int ms)
     {
         jzco_sleep(ms);
         if(g_engine->isInterruptCo())
-            throw JZEngineCoInterrupt();
+            throw JZCoInterrupt();
     }
     else
         QThread::msleep(ms);

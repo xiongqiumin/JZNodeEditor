@@ -3,6 +3,7 @@
 JZVisionNodeInfo::JZVisionNodeInfo()
 {
     node = nullptr;
+    hasImage = false;
 }
 
 //JZVisionRuntimeResult

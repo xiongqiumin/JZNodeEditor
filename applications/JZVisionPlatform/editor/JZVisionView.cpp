@@ -6,7 +6,27 @@
 #include "JZNodeUtils.h"
 #include "JZVisionAppNode.h"
 #include "JZScriptItemVisitor.h"
+#include "JZVisionStringTable.h"
 
+class NodeSeqVisitor : public JZScriptItemVisitor
+{
+public:
+    NodeSeqVisitor()
+    {
+        seq = 0;
+    }
+
+    virtual void visitSelf(JZNode* node)
+    {
+        if (node->isFlowNode())
+            nodeSeq[node] = seq++;
+    }
+
+    QMap<JZNode*,int> nodeSeq;
+    int seq;
+};
+
+//JZVisionView
 JZVisionView::JZVisionView(QWidget *parent)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -44,25 +64,40 @@ bool JZVisionView::nodeIdCmp(const JZNode* n1, const JZNode* n2)
     return n1->id() < n2->id();
 }
 
+QString JZVisionView::nodeBaseName(JZNode* node)
+{
+    return JZVisionStringTable::instance()->nodeName(node);
+}
+
 QString JZVisionView::nodeName(int node_id)
 {
     JZNode* node = m_file->getNode(node_id);
-    auto node_list = m_file->nodeList();
-    std::sort(node_list.begin(), node_list.end());
-    if (node_list != m_cacheNodeList)
-    {
-        for (int i = 0; i < node_list.size(); i++)
-        {
-            JZNode* cur_node = getNode(node_list[i]);
-            int seq = i;
+    if (!m_nodeName.contains(node))
+        return nodeBaseName(node);
 
-            auto node_type_list = m_file->findNodeByType(cur_node->type());
-            std::sort(node_type_list.begin(), node_type_list.end(), nodeIdCmp);
-            int type_seq = node_type_list.indexOf(cur_node);
-            m_nodeName[cur_node] = QString::number(seq) + "." + cur_node->name() + QString::number(type_seq + 1);
-        }
+    return m_nodeName[node];
+}
+
+void JZVisionView::updateNodeName()
+{
+    NodeSeqVisitor visitor;
+    visitor.setScript(m_file);
+    visitor.visit();
+
+    m_nodeName.clear();
+    auto it = visitor.nodeSeq.begin();
+    while (it != visitor.nodeSeq.end())
+    {
+        int seq = it.value();
+        QString name = QString::number(seq) + "." + nodeBaseName(it.key());
+        m_nodeName[it.key()] = name;
+        it++;
     }
-    return m_nodeName[node]; 
+
+    foreachNode([this](JZAbstractNodeItem* node) {
+        auto node_item = dynamic_cast<JZVisionNodeItem*>(node);
+        node_item->setNodeName(nodeName(node_item->id()));
+    });
 }
 
 QString JZVisionView::pinName(JZNodeGemo gemo)
@@ -133,9 +168,17 @@ void JZVisionView::mouseDoubleClickEvent(QMouseEvent* event)
     configNode(node);    
 }
 
+void JZVisionView::initGraph()
+{
+    JZNodeAbstractView::initGraph();
+    updateNodeName();
+}
+
 JZAbstractNodeItem *JZVisionView::createNodeItem(JZNode *node)
 {
-    return new JZVisionNodeItem(node);
+    auto item = new JZVisionNodeItem(node);
+    item->setNodeName(nodeName(node->id()));
+    return item;
 }
 
 JZAbstractLineItem *JZVisionView::createLineItem(JZNodeGemo from)

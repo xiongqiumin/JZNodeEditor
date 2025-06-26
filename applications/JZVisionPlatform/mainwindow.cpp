@@ -84,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(builder, &JZNodeBuilder::sigLog, this, &MainWindow::onBuildLog);
 
     connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &MainWindow::onRuntimeError, Qt::QueuedConnection);
+    connect(&m_engine, &JZNodeEngine::sigNodeTrace, this, &MainWindow::onNodeTrace);
     
     JZEditorManager::instance()->registEditor(ProjectItem_scriptItem, CreateEditor<JZVisionEditor>);
 
@@ -1143,6 +1144,10 @@ void MainWindow::onBuildFinish(JZNodeBuildResultPtr result)
     releaseEngine();
     m_buildResult = result;
 
+    auto editor = currentNodeEditor();
+    if (editor)
+        editor->view()->updateNodeName();
+
     auto it = m_editors.begin();
     while (it != m_editors.end())
     {
@@ -1243,6 +1248,15 @@ void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
     releaseEngine();
     QMessageBox::information(this, "", error.errorReport());
+}
+
+void MainWindow::onNodeTrace(const NodeTraceInfo& trace)
+{
+    auto editor = currentNodeEditor();
+    if (!editor)
+        return;
+
+    m_buildLog->addLog(Log_Runtime, trace.toString());
 }
 
 bool MainWindow::initEngine()

@@ -16,7 +16,9 @@ public:
     ~JZVisionView();
 
     QString nodeName(int node_id);
+    QString nodeBaseName(JZNode* node);
     QString pinName(JZNodeGemo gemo);
+    void updateNodeName();
 
     JZVisionParamLink linkInfo(int node_id, int pin_id);
     void addCreateLinkCommand(const JZVisionParamLink& link, const JZNodeGemo& gemo);
@@ -32,11 +34,11 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseDoubleClickEvent(QMouseEvent* event) override;
 
+    virtual void initGraph();
     virtual JZAbstractNodeItem *createNodeItem(JZNode *node);
     virtual JZAbstractLineItem *createLineItem(JZNodeGemo from);
 
     void configNode(JZNode *node);
 
-    QList<int> m_cacheNodeList;
     QMap<JZNode*, QString> m_nodeName;
 };

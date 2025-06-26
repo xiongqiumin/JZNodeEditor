@@ -55,6 +55,8 @@ public:
     void setVariable(const QString& name);  //在当前作用域的变量名，用于成员函数调用
     QString variable() const;    
 
+    QString valueType();
+
 protected:
     virtual bool updateNode(QString &error) override;
     void updateFunction();

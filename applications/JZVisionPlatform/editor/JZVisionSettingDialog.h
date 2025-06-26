@@ -18,6 +18,7 @@ class JZVisionLinkDialog : public JZBaseDialog
 public:
     JZVisionLinkDialog(QWidget *w);
 
+    void setView(JZVisionView* view);
     void initLinkList(JZNode *node,int pin_id);
     void setLink(JZVisionParamLink link);
     JZVisionParamLink link();
@@ -26,6 +27,7 @@ protected:
     virtual void accept() override;
     void addLinkItem(QTreeWidgetItem *parent,const JZVisionParamLink &link, const JZParamDefine* param,const QList<int> &dst_types);
 
+    JZVisionView* m_view;
     QTreeWidget *m_tree;
     QStackedWidget* m_stacked;
     QMap<int,JZVisionParamLink> m_paramLink;

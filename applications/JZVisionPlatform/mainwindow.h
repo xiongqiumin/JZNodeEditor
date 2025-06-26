@@ -131,7 +131,8 @@ protected slots:
     void onCameraError(QString camera, QString error);
     void onMainStackedChanged();
     void onRuntimeError(JZNodeRuntimeError error);
-    
+    void onNodeTrace(const NodeTraceInfo &trace);
+
     void onComToolClose();
     void onFloatWindowDestory();
 

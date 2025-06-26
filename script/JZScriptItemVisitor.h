@@ -14,7 +14,7 @@ public:
     virtual ~JZScriptItemVisitor();
 
     void setScript(JZScriptItem *item);        
-    void visitor();
+    void visit();
 
     QList<JZNodePin*> inputPin(int node_id, int pin_id);
 
@@ -29,8 +29,8 @@ public:
     JZNode *prevFlowNode(JZNode *node);
 
 protected:
-    void visitorNode(JZNode *node);
-    virtual void visitorSelf(JZNode *node);
+    virtual void visitNode(JZNode *node);
+    virtual void visitSelf(JZNode *node);
         
     JZScriptItem *m_script;
     QList<JZNode*> m_hasVistorNode;

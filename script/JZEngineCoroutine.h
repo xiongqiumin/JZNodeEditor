@@ -3,11 +3,6 @@
 
 #include "jzCo/JZCo.h"
 
-class JZEngineCoInterrupt
-{
-public:
-};
-
 class JZNodeEngine;
 class JZEngineCoroutine : public JZCoCoroutine
 {
@@ -15,9 +10,9 @@ public:
     JZEngineCoroutine(JZNodeEngine *engine);
     ~JZEngineCoroutine();
 
-    virtual void resume();
-    virtual void yield();
-    virtual void endTask();    
+    virtual void beforeYield() override;
+    virtual void beforeResume() override;
+    virtual void endTask() override;
 
 protected:    
     JZNodeEngine *m_engine;

@@ -277,7 +277,11 @@ bool BaseTest::build()
     }        
 
     m_engine.setProgram(&m_program);
-    m_engine.init();    
+    if (!m_engine.init())
+    {
+        qDebug() << "init engine failed";
+        return false;
+    }
     return true;
 }
 
@@ -338,6 +342,7 @@ void BaseTest::asyncThread(QString name,QVariantList in)
 CallArg genCallUnitArg(QStringList list)
 {
     QSharedPointer<QByteArrayList> buffer = QSharedPointer<QByteArrayList>(new QByteArrayList());
+
     QByteArrayList &buffer_list = *buffer;
     buffer_list.push_back("app");
     for (int i = 0; i < list.size(); i++)

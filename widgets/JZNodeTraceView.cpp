@@ -12,6 +12,16 @@
 #include <QHboxLayout>
 #include <QVboxLayout>
 
+//JZNodeTraceTree
+JZNodeTraceTree::JZNodeTraceTree()
+{
+}
+
+JZNodeTraceTree::~JZNodeTraceTree()
+{
+}
+
+//JZNodeTraceScene
 // 默认颜色映射函数
 QColor defaultColorMapper(int level) {
     // 根据层级生成不同的颜色

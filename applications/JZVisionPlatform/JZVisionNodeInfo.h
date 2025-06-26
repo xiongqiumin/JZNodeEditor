@@ -13,6 +13,7 @@ public:
 
     QString name;
     JZNode *node;
+    bool hasImage;
 };
 
 struct ImageResult

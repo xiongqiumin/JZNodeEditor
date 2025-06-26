@@ -268,11 +268,17 @@ QString JZNodeContainerFunction::function() const
 
 void JZNodeContainerFunction::setVariable(const QString& name)
 {    
+    setPinValue(paramIn(0), name);
 }
 
 QString JZNodeContainerFunction::variable() const
 {
-    return QString();
+    return pinValue(paramIn(0));
+}
+
+QString JZNodeContainerFunction::valueType()
+{
+    return m_valueType;
 }
 
 void JZNodeContainerFunction::saveToStream(QDataStream &s) const

@@ -10,6 +10,12 @@ JZVisionNodeItem::JZVisionNodeItem(JZNode *node)
 {
     m_downPin = -1;
     m_hovered = false;
+    m_nodeName = node->name();
+}
+
+void JZVisionNodeItem::setNodeName(QString name)
+{
+    m_nodeName = name;
 }
 
 void JZVisionNodeItem::updateNode()
@@ -47,7 +53,7 @@ void JZVisionNodeItem::updateNode()
     });
 
     //calc gemo
-    QString name = view->nodeName(m_node->id());
+    QString name = m_nodeName;
     int name_min_width = 160;
     int name_max_width = 320;
 
@@ -253,7 +259,7 @@ void JZVisionNodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         drawBlock(painter, m_blockList[i]);
 
     QRect text_rc(icon_w, 0,(int)(rc.width() - icon_w), icon_w);
-    painter->drawText(text_rc, view->nodeName(m_node->id()), QTextOption(Qt::AlignCenter));
+    painter->drawText(text_rc, m_nodeName, QTextOption(Qt::AlignCenter));
     if (isSelected())
     {
         painter->setPen(QPen(QColor(250, 156, 62) , 2));

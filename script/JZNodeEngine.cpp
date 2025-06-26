@@ -187,6 +187,49 @@ QDataStream &operator>>(QDataStream &s, JZNodeRuntimeError &param)
     return s;
 }
 
+//NodeTraceInfo
+NodeTraceInfo::NodeTraceInfo()
+{
+    nodeId = -1;
+}
+
+void NodeTraceInfo::clear()
+{
+    nodeId = -1;
+    name.clear();
+    input.clear();
+    output.clear();
+}
+
+QString NodeTraceInfo::toString() const
+{
+    auto genValueLine = [](const QMap<QString, QString>& map)->QString 
+    {
+        QStringList line;
+        auto it = map.begin();
+        while (it != map.end())
+        {
+            line << it.key() + " " + it.value();
+            it++;
+        }
+        return line.join(", ");
+    };
+
+    QString line = name;
+    if (input.size() > 0)
+    {
+        line += " 输入: " + genValueLine(input);
+        if (output.size() > 0)
+            line += ", ";
+    }
+
+    if (output.size() > 0)
+    {
+        line += " 输出: " + genValueLine(output);
+    }
+    return line;
+}
+
 //JZNodeCoroutine
 JZNodeCoroutine::JZNodeCoroutine()
 {
@@ -194,9 +237,11 @@ JZNodeCoroutine::JZNodeCoroutine()
     pc = -1;
     sender = nullptr;
     script = nullptr;
+    coTask = nullptr;
     status = Status_none;
     regs.resize(Reg_End - Reg_Start);
 }
+
 
 //JZNodeRuntimeInfo
 JZNodeRuntimeInfo::Stack::Stack()
@@ -252,6 +297,12 @@ void BreakStep::clear()
     scriptItemPath.clear();
     nodeId = -1;
     stack = -1;        
+}
+
+//JZEngineTraceConfig
+JZEngineTraceConfig::JZEngineTraceConfig()
+{
+    enable = false;
 }
 
 //JZNodeEngineIdlePauseEvent
@@ -313,6 +364,7 @@ JZNodeEngine::JZNodeEngine(QObject *parent)
     m_statusCommand = Command_none;
     m_idleFunc.define.name = "idle";
     m_watch = false;
+    m_errorOccur = false;
 }
 
 JZNodeEngine::~JZNodeEngine()
@@ -348,10 +400,12 @@ bool JZNodeEngine::init()
     // regist type
     m_program->initEnv(&m_env);
     updateStatus(Status_idle);
+    m_traceConfig = JZEngineTraceConfig();
 
     m_coId = 0;
     m_mainCo = JZNodeCoPtr(new JZNodeCoroutine());    
     m_co = m_mainCo.data();
+    m_co->status = m_status;
 
     g_engine = this;
     QVariantList in, out;
@@ -376,6 +430,9 @@ void JZNodeEngine::deinit()
     m_breakPoints.clear();
     m_breakIr.clear();
     m_breakStep.clear();
+
+    m_error = JZNodeRuntimeError();
+    m_errorOccur = false;
     
     m_mainCo.clear();
     m_co = nullptr;
@@ -618,19 +675,25 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         m_statusCommand = Command_none;        
         return true;
     }
-    catch (const JZEngineCoInterrupt &e)
+    catch (const JZCoInterrupt &e)
     {
+        qDebug() << "CoInterrupt";
         return false;
     }
     catch (const std::exception& e)
     {
         qDebug() << "Runtime Exception: " << e.what();
 
-        m_mutex.lock();
-        m_co->stack.currentEnv()->pc = m_co->pc;
-        m_statusCommand = Command_none;
-        updateStatus(Status_error);
-        m_mutex.unlock();
+        {
+            QMutexLocker locker(&m_mutex);
+            m_co->stack.currentEnv()->pc = m_co->pc;
+            m_statusCommand = Command_none;
+
+            if (m_errorOccur) //已经错误直接返回
+                return false;
+
+            updateStatus(Status_error);
+        }
 
         JZNodeRuntimeError error;
         error.error = e.what();
@@ -904,12 +967,18 @@ JZNodeCoroutine* JZNodeEngine::co(int id)
     return it.value().data();
 }
 
-int JZNodeEngine::createCo()
+JZNodeCoroutine* JZNodeEngine::currentCo()
+{
+    return m_co;
+}
+
+int JZNodeEngine::createCo(JZEngineCoroutine* task)
 {
     Q_ASSERT(isInit());
 
     JZNodeCoroutine *co = new JZNodeCoroutine();
     co->id = m_coId++;
+    co->coTask = task;
     co->status = m_status;
     m_coMap[co->id] = JZNodeCoPtr(co);
     return co->id;
@@ -921,21 +990,20 @@ void JZNodeEngine::destoryCo(int id)
     m_coMap.remove(id);
 }
 
-void JZNodeEngine::yieldCo(int id)
+void JZNodeEngine::switchCo(int id)
 {
-    Q_ASSERT(m_coMap.contains(id));
+    //save
     m_co->status = m_status;
 
-    m_co = m_mainCo.data();
-    m_status = m_co->status;
-}
-
-void JZNodeEngine::resumeCo(int id)
-{
-    Q_ASSERT(m_co == m_mainCo.data() && m_coMap.contains(id));
-    m_co->status = m_status;
-
-    m_co = m_coMap[id].data();
+    //switch
+    if (id >= 0)
+    {
+        Q_ASSERT(m_coMap.contains(id));
+        m_co = m_coMap[id].data();
+    }
+    else
+        m_co = m_mainCo.data();
+    
     m_status = m_co->status;
 }
 
@@ -1115,40 +1183,46 @@ JZNodeTraceContext *JZNodeEngine::currentTraceContext()
     return &m_co->traceContext;
 }
 
-void JZNodeEngine::printNode(int node_id)
+void JZNodeEngine::collectNodeParam(int node_id, bool is_input)
 {
-    auto env = m_co->stack.currentEnv();         
-    auto info = currentFunctionDebugInfo();
-    auto &node_info = info->nodeInfo[node_id];
-/*
-    QString line = node_info.name + "(id=" + QString::number(node_info.id);
-    if(node_info.paramIn.size() > 0)
-        line += ",";
-    for(int i = 0; i < node_info.paramIn.size(); i++)
+    auto func_info = currentFunctionDebugInfo();
+    auto node_info = &func_info->nodeInfo[node_id];
+    for (int i = 0; i < node_info->params.size(); i++)
     {
-        QString name = node_info.paramIn[i].define.name;
-        int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramIn[i].id);
-        auto ref = env->getRef(param_id);
-        line += name + " " + JZNodeType::debugString(*ref->ptr);
+        if (node_info->params[i].isInput == is_input)
+        {
+            int param_id = JZNodeGemo::paramId(node_id, node_info->params[i].id);
+            QString name = node_info->params[i].define.name;
+            QString value = JZNodeType::debugString(m_co->stack.currentEnv()->getRef(param_id)->value());
+            if(is_input)
+                m_co->nodeTrace.input.insert(name, value);
+            else
+                m_co->nodeTrace.output.insert(name, value);
+        }
     }
+}
 
-    if(node_info.paramIn.size() > 0 && node_info.paramOut.size() > 0)
-        line += "->";
-    for(int i = 0; i < node_info.paramOut.size(); i++)
-    {
-        QString name = node_info.paramOut[i].define.name;
-        int param_id = JZNodeCompiler::paramId(node_info.id, node_info.paramOut[i].id);
-        auto ref = env->getRef(param_id);
-        line += name + " " + JZNodeType::debugString(*ref->ptr);
-    }
-    line += ")";
-    print(line);
-*/
+void JZNodeEngine::printNode()
+{
+    auto& node_trace = m_co->nodeTrace;
+    if (node_trace.nodeId == -1)
+        return;
+
+    collectNodeParam(node_trace.nodeId, false);
+    //print(node_trace.toString());
+
+    emit sigNodeTrace(node_trace);
+    node_trace.clear();
 }
 
 void JZNodeEngine::onWatchTimer()
 {
     watchNotify();
+}
+
+void JZNodeEngine::setNodeTrace(JZEngineTraceConfig config)
+{
+
 }
 
 void JZNodeEngine::setDebug(bool flag)
@@ -1726,6 +1800,8 @@ void JZNodeEngine::updateStatus(JZEngineStatus status)
         m_status = status;
         sigStatusChanged(m_status);
     }
+    if (m_status == Status_error)
+        m_errorOccur = true;
 }
 
 void JZNodeEngine::pushTryCatch(JZNodeIRTry *ir)
@@ -1779,10 +1855,20 @@ bool JZNodeEngine::run()
         switch (op->type)
         {        
         case OP_nodeEnter:
-        {            
+        {    
+            const JZNodeIRNodeEnter* ir_pt = (const JZNodeIRNodeEnter*)(op);
+            if (m_traceConfig.enable)
+            {
+                printNode();
+
+                int node_id = ir_pt->id;
+                m_co->nodeTrace.nodeId = node_id;
+                m_co->nodeTrace.name = currentFunctionDebugInfo()->nodeInfo[node_id].name;
+                collectNodeParam(node_id, true);
+            }
+
             if (m_debug)
             {
-                const JZNodeIRNodeEnter *ir_pt = (const JZNodeIRNodeEnter*)(op);
                 if (m_breakIr.contains(ir_pt) || checkPause(ir_pt->id))
                 {
                     if (breakPointTrigger(ir_pt->id))
@@ -1928,6 +2014,7 @@ bool JZNodeEngine::run()
         }
         case OP_return:
         {              
+            printNode();
             watchNotify();
             popStack();                  
             if(m_co->stack.size() < in_stack_size)
@@ -1975,12 +2062,26 @@ RunEnd:
 
 void JZNodeEngine::waitAllCoFinish(JZNodeCoroutine *cur_co)
 {   
-    int wait_num = (cur_co == m_mainCo.data())? 0:1;
+    auto it = m_coMap.begin();
+    while (it != m_coMap.end())
+    {
+        if(it.value().data() != cur_co)
+            it.value()->coTask->quit();
+        it++;
+    }
 
     //等待所有子线程完成
-    while (m_coMap.size() > wait_num)
+    if (cur_co == m_mainCo.data())
     {
-        qApp->processEvents();
-        QThread::msleep(20);
+        while(!m_coMap.isEmpty())
+        {
+            qApp->processEvents();
+            QThread::msleep(20);
+        }
+    }
+    else
+    {
+        while (m_coMap.size() > 1)
+            jzco_sleep(20);
     }
 }
