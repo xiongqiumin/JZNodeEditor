@@ -85,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(&m_engine, &JZNodeEngine::sigRuntimeError, this, &MainWindow::onRuntimeError, Qt::QueuedConnection);
     connect(&m_engine, &JZNodeEngine::sigNodeTrace, this, &MainWindow::onNodeTrace);
+    connect(&m_engine, &JZNodeEngine::sigStatusChanged, this, &MainWindow::onEngineStatusChanged);
     
     JZEditorManager::instance()->registEditor(ProjectItem_scriptItem, CreateEditor<JZVisionEditor>);
 
@@ -251,6 +252,8 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
     m_task.clearTask();
     m_task.stopRunThread();
+    for (int i = 0; i < m_floatWindow.size(); i++)
+        m_floatWindow[i]->close();
     releaseEngine();
     QMainWindow::closeEvent(event);
 }
@@ -935,18 +938,7 @@ void MainWindow::onActionRun()
     }
     else
     {
-        if (m_stack->currentIndex() == 0)
-        {
-            auto camera_list = m_cameraManager->cameraList();
-            for (int i = 0; i < camera_list.size(); i++)
-                stopCamera(camera_list[i]->name());
-        }
-        else if (m_stack->currentIndex() == 1)
-        {
-            onAutoRunStop();
-        }
-        m_actionRun->setIcon(icon("run.png"));
-        m_actionRun->setText("运行");
+        stop();                
     }
 }
 
@@ -1100,8 +1092,11 @@ void MainWindow::onAutoRun()
     if (!m_engine.isInit())
         return;
 
-    if(!isCameraFlow())    
-        return;    
+    if (!isCameraFlow())
+    {
+        LOG_W("请选择要执行的流程");
+        return;
+    }
 
     JZNodeCameraReadyEvent *node = currrentCameraNode();
     QString camera_name = node->camera();
@@ -1113,8 +1108,11 @@ void MainWindow::onAutoRunOnce()
     if (!m_engine.isInit())
         return;
 
-    if (!isCameraFlow())    
+    if (!isCameraFlow())
+    {
+        LOG_W("请选择要执行的流程");
         return;
+    }
 
     JZNodeCameraReadyEvent *node = currrentCameraNode();
     QString camera_name = node->camera();
@@ -1123,15 +1121,7 @@ void MainWindow::onAutoRunOnce()
 
 void MainWindow::onAutoRunStop()
 {
-    if (!m_engine.isInit())
-        return;
-
-    if (!isCameraFlow())    
-        return;    
-
-    JZNodeCameraReadyEvent *node = currrentCameraNode();
-    QString camera_name = node->camera();
-    stopCamera(camera_name);
+    stop();
 }
 
 void MainWindow::onBuildStart()
@@ -1192,18 +1182,13 @@ void MainWindow::dealCameraEvent(QString function,cv::Mat mat)
 }
 
 void MainWindow::onFrameReady(QString camera, cv::Mat mat)
-{   
-    if (m_stack->currentIndex() == 0)
-    {
-        m_cameraView->label(camera)->setImage(QtOcv::mat2Image(mat));
-    }
-
+{       
     if (!m_engine.isInit())
         return;
 
     auto it = m_camProgram.find(camera);
     if (it == m_camProgram.end())
-        return;    
+        return;        
 
     QString function = it->function;
     for (int i = 0; i < m_coroutine.size(); i++)
@@ -1215,17 +1200,27 @@ void MainWindow::onFrameReady(QString camera, cv::Mat mat)
             return;
         }
     }
-    
-    JZNodeCameraReadyEvent* camera_event = currrentCameraNode();
-    if (camera_event)
-    {
-        if (camera_event->camera() != camera)
-            return;
 
-        currentNodeEditor()->clearRuntimeResult();
+    if (m_stack->currentIndex() == 0)
+    {
+        m_cameraView->label(camera)->setImage(QtOcv::mat2Image(mat));
+    }
+    else
+    {
+        JZNodeCameraReadyEvent* camera_event = currrentCameraNode();
+        if (camera_event)
+        {
+            if (camera_event->camera() != camera)
+                return;
+
+            currentNodeEditor()->clearRuntimeResult();
+        }
     }
 
-    JZCoCoroutinePtr ptr = JZCoCoroutinePtr(new JZVisionCoroutine(&m_engine));
+    auto vision_co = new JZVisionCoroutine(&m_engine);
+    vision_co->function = function;
+
+    JZCoCoroutinePtr ptr = JZCoCoroutinePtr(vision_co);
     m_coroutine << ptr;
     ptr->setTask([this, function, mat, ptr] { 
         dealCameraEvent(function, mat);
@@ -1246,8 +1241,23 @@ void MainWindow::onMainStackedChanged()
 
 void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 {
+    clearEnv();
     releaseEngine();
     QMessageBox::information(this, "", error.errorReport());
+}
+
+void MainWindow::onEngineStatusChanged(JZEngineStatus status)
+{
+    if (status == Status_running)
+    {
+        m_actionRun->setIcon(icon("stop.png"));
+        m_actionRun->setText("停止");;
+    }
+    else
+    {
+        m_actionRun->setIcon(icon("run.png"));
+        m_actionRun->setText("运行");
+    }
 }
 
 void MainWindow::onNodeTrace(const NodeTraceInfo& trace)
@@ -1257,6 +1267,11 @@ void MainWindow::onNodeTrace(const NodeTraceInfo& trace)
         return;
 
     m_buildLog->addLog(Log_Runtime, trace.toString());
+}
+
+void MainWindow::clearEnv()
+{
+    m_commManager->closeAll();    
 }
 
 bool MainWindow::initEngine()
@@ -1297,6 +1312,10 @@ bool MainWindow::initEngine()
 
 void MainWindow::releaseEngine()
 {
+    auto camera_list = m_cameraManager->cameraList();
+    for (int i = 0; i < camera_list.size(); i++)
+        stopCamera(camera_list[i]->name());
+
     if (m_engine.isInit())
         m_engine.deinit();
 
@@ -1730,12 +1749,12 @@ bool MainWindow::isRun()
 
 void MainWindow::stop()
 {
-    if (isRun())
-        onActionRun();
-
     auto camera_list = m_cameraManager->cameraList();
     for (int i = 0; i < camera_list.size(); i++)
         stopCamera(camera_list[i]->name());    
+
+    if(m_engine.isInit())
+        m_engine.stopAllCo();    
 }
 
 void MainWindow::imageDebug()

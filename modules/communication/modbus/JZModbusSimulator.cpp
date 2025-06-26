@@ -51,6 +51,16 @@ JZModBusSimulator::JZModBusSimulator()
 
 JZModBusSimulator::~JZModBusSimulator()
 {
+    clearDevice();    
+}
+
+JZCommSimulatorType JZModBusSimulator::type()
+{
+    return Sim_Modbus;
+}
+
+void JZModBusSimulator::clearDevice()
+{
     if (m_master)
     {
         m_master->close();
@@ -64,11 +74,6 @@ JZModBusSimulator::~JZModBusSimulator()
         delete m_slaver;
         m_slaver = nullptr;
     }
-}
-
-JZCommSimulatorType JZModBusSimulator::type()
-{
-    return Sim_Modbus;
 }
 
 bool JZModBusSimulator::isOpen()
@@ -352,7 +357,8 @@ void JZModBusSimulator::stopSimulator()
 void JZModBusSimulator::initSimulator()
 {
     close();
-
+    clearDevice();
+    
     if (m_config.conn.modbusType == Modbus_rtuClient || m_config.conn.modbusType == Modbus_tcpClient)
     {
         m_master = new JZModbusMaster();

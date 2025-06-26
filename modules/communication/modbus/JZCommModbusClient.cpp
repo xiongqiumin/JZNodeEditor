@@ -1,4 +1,5 @@
 #include <QElapsedTimer>
+#include <QScopeGuard>
 #include "JZCommModbusClient.h"
 #include "JZNodeRuntime.h"
 #include "jzCo/JZCo.h"
@@ -50,7 +51,9 @@ JZCommModbusClient::JZCommModbusClient(QObject* parent)
 {
     m_client = new JZModbusClient(this);
     m_waitReplay = false;
+    connect(m_client, &JZModbusClient::sigModbusOpen, this, &JZCommModbusClient::onModbusResult);
     connect(m_client, &JZModbusClient::sigModbusReplay, this, &JZCommModbusClient::onModbusReplay);
+    m_waitConnect = None;
 }
 
 JZCommModbusClient::~JZCommModbusClient()
@@ -65,9 +68,26 @@ bool JZCommModbusClient::isOpen()
 
 bool JZCommModbusClient::open()
 {
+    if (m_waitConnect != None)
+        return false;
+
     auto *cfg = dynamic_cast<JZCommModbusTcpClientConfig*>(m_config.data());
     m_client->initConn(cfg->conn);
-    return m_client->open();
+    m_client->openAsync();
+
+    auto cleanup = qScopeGuard([this] {
+        m_waitConnect = None;
+    });
+
+    m_waitConnect = Connecting;
+    QElapsedTimer t;
+    t.start();
+    while (m_waitConnect == Connecting && t.elapsed() < 10 * 1000)
+        jzco_sleep(10);
+
+    bool ret = (m_waitConnect == ConnectSuccessed);
+    m_waitConnect = None;    
+    return ret;
 }
 
 void JZCommModbusClient::close()
@@ -89,9 +109,14 @@ void JZCommModbusClient::onModbusReplay(const JZModebusReply& reply)
     }
 }
 
+void JZCommModbusClient::onModbusResult(bool flag)
+{
+    if(m_waitConnect == Connecting)
+        m_waitConnect = flag? ConnectSuccessed : ConnectFailed;
+}
+
 bool JZCommModbusClient::waitReplay()
 {
-
     m_waitReplay = true;
     if (g_scheduler->isInCoroutine())
     {
@@ -116,6 +141,7 @@ bool JZCommModbusClient::waitReplay()
         }
     }
     m_waitReplay = false;
+    return false;
 }
 
 bool JZCommModbusClient::readBits(int addr, int nb, QVector<uint8_t>& dest)

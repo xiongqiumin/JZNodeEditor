@@ -131,6 +131,7 @@ protected slots:
     void onCameraError(QString camera, QString error);
     void onMainStackedChanged();
     void onRuntimeError(JZNodeRuntimeError error);
+    void onEngineStatusChanged(JZEngineStatus status);
     void onNodeTrace(const NodeTraceInfo &trace);
 
     void onComToolClose();
@@ -190,6 +191,7 @@ protected:
         
     bool isRun();    
     void stop();
+    void clearEnv();
 
     bool checkBuild();
     bool isCameraFlow();

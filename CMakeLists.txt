@@ -335,6 +335,10 @@ set(JZNodeCore_SOURCES
 	3rd/JZCommon/jzCo/JZCoContext.h
 	3rd/JZCommon/jzCo/JZCoCoroutine.cpp
 	3rd/JZCommon/jzCo/JZCoCoroutine.h
+    3rd/JZCommon/jzCo/JZCoNetwork.cpp
+    3rd/JZCommon/jzCo/JZCoNetwork.h
+    3rd/JZCommon/jzCo/JZCoMutex.cpp
+    3rd/JZCommon/jzCo/JZCoMutex.h
 	
     3rd/JZCommon/jzNet/JZNetClient.cpp
     3rd/JZCommon/jzNet/JZNetClient.h

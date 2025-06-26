@@ -237,7 +237,7 @@ JZNodeCoroutine::JZNodeCoroutine()
     pc = -1;
     sender = nullptr;
     script = nullptr;
-    coTask = nullptr;
+    coTask = nullptr;    
     status = Status_none;
     regs.resize(Reg_End - Reg_Start);
 }
@@ -360,11 +360,9 @@ JZNodeEngine::JZNodeEngine(QObject *parent)
     m_co = nullptr;
     m_coId = 0;
     m_debug = false;
-    m_status = Status_none;
     m_statusCommand = Command_none;
     m_idleFunc.define.name = "idle";
     m_watch = false;
-    m_errorOccur = false;
 }
 
 JZNodeEngine::~JZNodeEngine()
@@ -398,14 +396,13 @@ bool JZNodeEngine::init()
     Q_ASSERT(!g_scheduler->isInCoroutine());
 
     // regist type
-    m_program->initEnv(&m_env);
-    updateStatus(Status_idle);
+    m_program->initEnv(&m_env);    
     m_traceConfig = JZEngineTraceConfig();
 
     m_coId = 0;
     m_mainCo = JZNodeCoPtr(new JZNodeCoroutine());    
     m_co = m_mainCo.data();
-    m_co->status = m_status;
+    updateStatus(Status_idle);
 
     g_engine = this;
     QVariantList in, out;
@@ -432,13 +429,12 @@ void JZNodeEngine::deinit()
     m_breakStep.clear();
 
     m_error = JZNodeRuntimeError();
-    m_errorOccur = false;
-    
-    m_mainCo.clear();
-    m_co = nullptr;
+            
     m_global.clear();
     m_statusCommand = Command_none;
     updateStatus(Status_none);
+    m_mainCo.clear();
+    m_co = nullptr;
 
     g_engine = nullptr;
 }
@@ -500,10 +496,35 @@ int JZNodeEngine::nodeIdByPc(int pc)
     return nodeIdByPc(m_co->script, func, pc);
 }
 
+JZEngineStatus JZNodeEngine::statusUnLock()
+{
+    if (!isInit())
+        return Status_none;
+
+    QList<JZEngineStatus> status_list;
+    status_list << m_mainCo->status;
+    for (auto &co : m_coMap)
+        status_list << co->status;
+
+    if(status_list.count(Status_error) > 0)
+        return Status_error;
+    
+    if (status_list.count(Status_pause) > 0)
+        return Status_pause;
+
+    if (status_list.count(Status_running) > 0)
+        return Status_running;
+
+    auto idle_count = status_list.count(Status_idle);
+    Q_ASSERT(idle_count == 0 || idle_count == status_list.size());
+
+    return (idle_count != 0) ? Status_idle : Status_none;
+}
+
 JZEngineStatus JZNodeEngine::status()
 {
     QMutexLocker lock(&m_mutex);
-    return m_status;
+    return statusUnLock();
 }
 
 QString JZNodeEngine::currentFunction()
@@ -519,8 +540,8 @@ JZNodeRuntimeInfo JZNodeEngine::runtimeInfo()
 {   
     JZNodeRuntimeInfo info;
     QMutexLocker lock(&m_mutex);
-    info.status = m_status;
-    if (m_status == Status_pause && m_co->stack.size() == 0)
+    info.status = m_co->status;
+    if (info.status == Status_pause && m_co->stack.size() == 0)
     {
         JZNodeRuntimeInfo::Stack s;
         s.function = "__idle__";
@@ -609,7 +630,7 @@ void JZNodeEngine::customEvent(QEvent *qevent)
     if (qevent->type() == JZNodeEngineIdlePauseEvent::Event)
     {
         m_mutex.lock();
-        if (m_status == Status_idle && m_statusCommand == Command_pause)
+        if (status() == Status_idle && m_statusCommand == Command_pause)
         {
             m_statusCommand = Command_none;
             updateStatus(Status_pause);
@@ -637,7 +658,7 @@ bool JZNodeEngine::callVirtual(const QString& function, const QVariantList& in, 
 bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantList &out)
 {    
     Q_ASSERT(m_co->stack.size() == 0);
-    if (m_status == Status_error)
+    if (status() == Status_error)
         return false;                
     
     try
@@ -657,8 +678,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
             pushStack(func);            
             if(!run())  //停止运行会返回false, 异常在catch处理
             {                
-                updateStatus(Status_idle);
-                m_statusCommand = Command_none;
+                updateStatus(Status_idle);                
                 m_breakStep.clear();
                 m_co->stack.clear();
                 return false;
@@ -671,8 +691,7 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
             out.push_back(getReg(Reg_CallOut + i));
         clearReg();
         
-        updateStatus(Status_idle);
-        m_statusCommand = Command_none;        
+        updateStatus(Status_idle);             
         return true;
     }
     catch (const JZCoInterrupt &e)
@@ -686,13 +705,12 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
 
         {
             QMutexLocker locker(&m_mutex);
-            m_co->stack.currentEnv()->pc = m_co->pc;
-            m_statusCommand = Command_none;
+            m_co->stack.currentEnv()->pc = m_co->pc;            
 
-            if (m_errorOccur) //已经错误直接返回
-                return false;
-
+            auto pre_status = statusUnLock();
             updateStatus(Status_error);
+            if (pre_status == Status_error) //已经错误直接返回
+                return false;
         }
 
         JZNodeRuntimeError error;
@@ -704,11 +722,10 @@ bool JZNodeEngine::call(const JZFunction *func,const QVariantList &in,QVariantLi
         if (m_debug) //保留错误现场
         {
             m_mutex.lock();
-            m_waitCond.wait(&m_mutex);
-            m_statusCommand = Command_none;
+            m_waitCond.wait(&m_mutex);            
             m_mutex.unlock();
         }
-        waitAllCoFinish(m_co);
+        waitAllCoExcept(m_co);
         return false;                
     }
 }
@@ -979,7 +996,7 @@ int JZNodeEngine::createCo(JZEngineCoroutine* task)
     JZNodeCoroutine *co = new JZNodeCoroutine();
     co->id = m_coId++;
     co->coTask = task;
-    co->status = m_status;
+    co->status = Status_idle;
     m_coMap[co->id] = JZNodeCoPtr(co);
     return co->id;
 }
@@ -991,10 +1008,7 @@ void JZNodeEngine::destoryCo(int id)
 }
 
 void JZNodeEngine::switchCo(int id)
-{
-    //save
-    m_co->status = m_status;
-
+{    
     //switch
     if (id >= 0)
     {
@@ -1003,13 +1017,16 @@ void JZNodeEngine::switchCo(int id)
     }
     else
         m_co = m_mainCo.data();
-    
-    m_status = m_co->status;
 }
 
 bool JZNodeEngine::isInterruptCo()
 {
-    return (m_status == Status_error) || (m_statusCommand == Command_stop);
+    return (status() == Status_error) || (m_statusCommand == Command_stop);
+}
+
+void JZNodeEngine::stopAllCo()
+{
+    waitAllCoExcept(m_co);
 }
 
 Stack *JZNodeEngine::currentStack()
@@ -1322,18 +1339,19 @@ void JZNodeEngine::clearBreakPoint()
 bool JZNodeEngine::isPauseOrError()
 {
     QMutexLocker lock(&m_mutex);
-    return m_status == Status_pause || m_status == Status_error;
+    auto cur_status = statusUnLock();
+    return cur_status == Status_pause || cur_status == Status_error;
 }
 
 void JZNodeEngine::pause()
-{
-    Q_ASSERT(m_status != Status_none);
-
+{    
     QMutexLocker lock(&m_mutex);
-    if (m_status != Status_running && m_status != Status_idle)
+    auto cur_status = statusUnLock();
+    Q_ASSERT(cur_status != Status_none);
+    if (cur_status != Status_running && cur_status != Status_idle)
         return;
 
-    if (m_status == Status_idle)
+    if (cur_status == Status_idle)
     {
         auto *event = new JZNodeEngineIdlePauseEvent();
         qApp->postEvent(this, event);
@@ -1347,7 +1365,8 @@ void JZNodeEngine::pause()
 void JZNodeEngine::resume()
 {
     QMutexLocker lock(&m_mutex);
-    if (m_status != Status_pause)
+    auto cur_status = statusUnLock();
+    if (cur_status != Status_pause)
         return;    
     
     m_statusCommand = Command_resume;
@@ -1359,15 +1378,16 @@ void JZNodeEngine::resume()
 void JZNodeEngine::stop()
 {
     QMutexLocker lock(&m_mutex);
-    if(m_status == Status_idle || m_status == Status_none)
+    auto cur_status = statusUnLock();
+    if(cur_status == Status_idle || cur_status == Status_none)
         return;
 
-    if (m_status == Status_error && !m_debug)
+    if (cur_status == Status_error && !m_debug)
         return;
         
     m_statusCommand = Command_stop;
     lock.unlock();
-    if(m_status == Status_pause || m_status == Status_error)
+    if(cur_status == Status_pause || (cur_status == Status_error && m_debug))
         m_waitCond.wakeOne();
     
     waitCommand();    
@@ -1376,7 +1396,8 @@ void JZNodeEngine::stop()
 void JZNodeEngine::stepIn()
 {
     QMutexLocker lock(&m_mutex);
-    if (m_status != Status_pause)
+    auto cur_status = statusUnLock();
+    if (cur_status != Status_pause)
         return;
     
     int node_id = breakNodeId();
@@ -1402,7 +1423,8 @@ void JZNodeEngine::stepIn()
 void JZNodeEngine::stepOver()
 {
     QMutexLocker lock(&m_mutex);  
-    if (m_status != Status_pause)
+    auto cur_status = statusUnLock();
+    if (cur_status != Status_pause)
         return;
     
     m_breakStep.type = BreakStep::stepOver;
@@ -1419,7 +1441,8 @@ void JZNodeEngine::stepOver()
 void JZNodeEngine::stepOut()
 {
     QMutexLocker lock(&m_mutex);
-    if (m_status != Status_pause)
+    auto cur_status = statusUnLock();
+    if (cur_status != Status_pause)
         return;
 
     m_breakStep.type = BreakStep::stackEqual;
@@ -1788,20 +1811,25 @@ bool JZNodeEngine::breakPointTrigger(int node_id)
 
 void JZNodeEngine::updateStatus(JZEngineStatus status)
 {
-    Q_ASSERT((m_status == Status_none && (status == Status_idle))
-        || (m_status == Status_idle && (status == Status_running || status == Status_none || status == Status_pause))
-        || (m_status == Status_running && (status == Status_idle || status == Status_pause || status == Status_error))
-        || (m_status == Status_pause && (status == Status_idle || status == Status_running))
-        || (m_status == Status_error && (status == Status_none)));
+    JZEngineStatus pre_engine_status = statusUnLock();
 
-    int pre_status = m_status;
-    if (m_status != status)
+    JZEngineStatus pre_status = m_co->status;
+    Q_ASSERT((pre_status == Status_none && (status == Status_idle))
+        || (pre_status == Status_idle && (status == Status_running || status == Status_none || status == Status_pause))
+        || (pre_status == Status_running && (status == Status_idle || status == Status_pause || status == Status_error))
+        || (pre_status == Status_pause && (status == Status_idle || status == Status_running))
+        || (pre_status == Status_error && (status == Status_none)));    
+    
+    if (pre_status != status)
     {
-        m_status = status;
-        sigStatusChanged(m_status);
+        m_co->status = status;
+        JZEngineStatus new_engine_status = statusUnLock();
+        if(pre_engine_status != new_engine_status)
+            sigStatusChanged(new_engine_status);
+
+        if(new_engine_status == Status_error || new_engine_status == Status_idle)
+            m_statusCommand = Command_none;
     }
-    if (m_status == Status_error)
-        m_errorOccur = true;
 }
 
 void JZNodeEngine::pushTryCatch(JZNodeIRTry *ir)
@@ -1844,7 +1872,7 @@ bool JZNodeEngine::run()
     {                   
         if (m_statusCommand == Command_stop)
         {
-            waitAllCoFinish(m_co);
+            waitAllCoExcept(m_co);
             return false;
         }
 
@@ -2060,7 +2088,7 @@ RunEnd:
     return true;
 }
 
-void JZNodeEngine::waitAllCoFinish(JZNodeCoroutine *cur_co)
+void JZNodeEngine::waitAllCoExcept(JZNodeCoroutine *cur_co)
 {   
     auto it = m_coMap.begin();
     while (it != m_coMap.end())

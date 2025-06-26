@@ -94,14 +94,14 @@ struct JZNodeCoroutine
 
     int id;
     QString name;
+    JZEngineStatus status;
     JZEngineCoroutine* coTask;
 
     Stack stack;
     QVector<QVariant> regs;
     QList<TryCatchInfo> tryCatchList;
     JZNodeObject* sender;
-    JZNodeTraceContext traceContext;
-    JZEngineStatus status;
+    JZNodeTraceContext traceContext;    
 
     int pc;
     const JZNodeScript* script;
@@ -190,7 +190,7 @@ public:
 
     void setProgram(const JZNodeProgram *program);
     const JZNodeProgram *program();
-
+    
     JZEngineStatus status();
     JZNodeRuntimeInfo runtimeInfo();    
     JZNodeRuntimeError runtimeError();
@@ -208,7 +208,7 @@ public:
     
     void pause();
     void resume();    
-    void stop();
+    void stop();    
     void stepIn();
     void stepOver();
     void stepOut();      
@@ -221,6 +221,7 @@ public:
     void destoryCo(int id);
     void switchCo(int id); 
     bool isInterruptCo();
+    void stopAllCo();
 
     Stack *currentStack();    
     JZScriptEnvironment *environment();
@@ -272,7 +273,7 @@ public:
 signals:    
     void sigRuntimeError(JZNodeRuntimeError error);
     void sigLog(const QString &log);
-    void sigStatusChanged(int status);
+    void sigStatusChanged(JZEngineStatus status);
     void sigNodeTrace(const NodeTraceInfo& node_trace);
     void sigWatchNotify();
 
@@ -342,7 +343,8 @@ protected:
     void pushTryCatch(JZNodeIRTry *ir);
     void popTryCatch();
     bool catchException(QString tips); 
-    void waitAllCoFinish(JZNodeCoroutine *cur_co);
+    void waitAllCoExcept(JZNodeCoroutine *cur_co);    
+    JZEngineStatus statusUnLock();
 
     const JZNodeProgram *m_program;
         
@@ -360,8 +362,7 @@ protected:
     QMutex m_mutex;    
     QWaitCondition m_waitCond;
     bool m_debug;
-    
-    bool m_errorOccur;
+        
     JZNodeRuntimeError m_error;
     QList<TryCatchInfo> m_tryCatchList;
 

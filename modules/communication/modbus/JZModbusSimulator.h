@@ -40,6 +40,7 @@ protected:
     int indexOfRow(int addr);    
     void startSimulator();
     void stopSimulator();
+    void clearDevice();
 
     QToolButton *m_btnStart, *m_btnStop, *m_btnSetting;
     QTableWidget *m_table;

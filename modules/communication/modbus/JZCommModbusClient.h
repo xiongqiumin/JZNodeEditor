@@ -55,11 +55,21 @@ public:
 
 protected slots:
     void onModbusReplay(const JZModebusReply& reply);
+    void onModbusResult(bool flag);
 
 protected:
+    enum
+    {
+        None,
+        Connecting,
+        ConnectSuccessed,
+        ConnectFailed,
+    };
+
     bool waitReplay();
 
     bool m_waitReplay;
+    int m_waitConnect;
     JZModebusReply m_reply;
     JZModbusClient *m_client;
 };
