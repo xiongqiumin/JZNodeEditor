@@ -299,7 +299,7 @@ void JZCommSimulator::onContextMenu(QPoint pt)
     if (!item)
     {
         auto actMenu = menu.addMenu("新建");
-        menu.addActions(m_newActList);        
+        actMenu->addActions(m_newActList);        
     }
     else
     {

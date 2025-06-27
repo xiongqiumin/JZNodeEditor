@@ -302,7 +302,6 @@ void BreakStep::clear()
 //JZEngineTraceConfig
 JZEngineTraceConfig::JZEngineTraceConfig()
 {
-    enable = false;
 }
 
 //JZNodeEngineIdlePauseEvent
@@ -1239,7 +1238,7 @@ void JZNodeEngine::onWatchTimer()
 
 void JZNodeEngine::setNodeTrace(JZEngineTraceConfig config)
 {
-
+    m_traceConfig = config;
 }
 
 void JZNodeEngine::setDebug(bool flag)
@@ -1883,12 +1882,12 @@ bool JZNodeEngine::run()
         switch (op->type)
         {        
         case OP_nodeEnter:
-        {    
-            const JZNodeIRNodeEnter* ir_pt = (const JZNodeIRNodeEnter*)(op);
-            if (m_traceConfig.enable)
-            {
-                printNode();
+        {   
+            printNode();
 
+            const JZNodeIRNodeEnter* ir_pt = (const JZNodeIRNodeEnter*)(op);
+            if (m_traceConfig.nodeList.contains(ir_pt->id))
+            {
                 int node_id = ir_pt->id;
                 m_co->nodeTrace.nodeId = node_id;
                 m_co->nodeTrace.name = currentFunctionDebugInfo()->nodeInfo[node_id].name;

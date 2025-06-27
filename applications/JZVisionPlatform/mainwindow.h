@@ -241,6 +241,7 @@ protected:
     LogWidget *m_buildLog;
 
     QAction *m_actionRun;
+    bool m_running;
     QList<QWidget*> m_floatWindow;
     JZNodeTraceView *m_traceView;
     QMap<QString, QString> m_roiFunction;

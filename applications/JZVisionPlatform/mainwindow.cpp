@@ -64,6 +64,7 @@ MainWindow::MainWindow(QWidget *parent)
 {            
     g_visionWindow = this;
     m_traceView = nullptr;
+    m_running = false;
 
     m_className = "MyVisionApp";
     setMinimumSize(800, 600);
@@ -373,7 +374,7 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     auto actOpenMenu = menu_file->addAction("打开工程");
     connect(actNewMenu, &QAction::triggered, this, &MainWindow::onActionNewProject);
     connect(actOpenMenu, &QAction::triggered, this, &MainWindow::onActionOpenProject);
-
+    
     menu_file->addSeparator();
     auto actSaveFile = menu_file->addAction(menuIcon("iconSave.png"), "保存文件");
     auto actSaveAllFile = menu_file->addAction(menuIcon("iconSaveAll.png"), "全部保存");
@@ -381,6 +382,14 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     connect(actSaveFile, &QAction::triggered, this, &MainWindow::onActionSaveFile);
     connect(actSaveAllFile, &QAction::triggered, this, &MainWindow::onActionSaveAllFile);
     connect(actCloseAllFile, &QAction::triggered, this, &MainWindow::onActionCloseAllFile);
+
+    menu_file->addSeparator();
+    auto recent = menu_file->addMenu("最近使用过的项目");
+    for (int i = 0; i < m_setting.recentFile.size(); i++) 
+    {
+        auto tmp = recent->addAction(m_setting.recentFile[i]);
+        connect(tmp, &QAction::triggered, this, &MainWindow::onActionRecentProject);
+    }  
 
     menu_file->addSeparator();
     auto actExit = menu_file->addAction("退出");
@@ -928,13 +937,14 @@ void MainWindow::onActionRun()
             auto camera_list = m_cameraManager->cameraList();
             for (int i = 0; i < camera_list.size(); i++)
                 startCamera(camera_list[i]->name());
+
+            m_running = true;
+            updateActionStatus();
         }
         else if (m_stack->currentIndex() == 1)
         {
             onAutoRun();
         }
-        m_actionRun->setIcon(icon("stop.png"));
-        m_actionRun->setText("停止");
     }
     else
     {
@@ -1101,6 +1111,8 @@ void MainWindow::onAutoRun()
     JZNodeCameraReadyEvent *node = currrentCameraNode();
     QString camera_name = node->camera();
     startCamera(camera_name);
+    m_running = true;
+    updateActionStatus();
 }
 
 void MainWindow::onAutoRunOnce()
@@ -1113,6 +1125,18 @@ void MainWindow::onAutoRunOnce()
         LOG_W("请选择要执行的流程");
         return;
     }
+
+    auto file = currentNodeEditor()->view()->file();
+
+    JZEngineTraceConfig trace;
+    auto node_list = file->nodeList();
+    for(int i = 0; i < node_list.size(); i++)
+    {
+        auto node = file->getNode(node_list[i]);
+        if(node->isFlowNode())
+            trace.nodeList << node->id();
+    }
+    m_engine.setNodeTrace(trace);
 
     JZNodeCameraReadyEvent *node = currrentCameraNode();
     QString camera_name = node->camera();
@@ -1248,16 +1272,7 @@ void MainWindow::onRuntimeError(JZNodeRuntimeError error)
 
 void MainWindow::onEngineStatusChanged(JZEngineStatus status)
 {
-    if (status == Status_running)
-    {
-        m_actionRun->setIcon(icon("stop.png"));
-        m_actionRun->setText("停止");;
-    }
-    else
-    {
-        m_actionRun->setIcon(icon("run.png"));
-        m_actionRun->setText("运行");
-    }
+    updateActionStatus();
 }
 
 void MainWindow::onNodeTrace(const NodeTraceInfo& trace)
@@ -1367,6 +1382,7 @@ bool MainWindow::openProject(QString filepath)
     }
 
     m_projectTree->setProject(&m_project);
+    m_setting.addRecentProject(m_project.filePath());
     updateActionStatus();
     setWindowTitle(m_project.name() + "- JZVison");
 
@@ -1651,7 +1667,16 @@ void MainWindow::saveAll()
 
 void MainWindow::updateActionStatus()
 {
-
+    if (m_running)
+    {
+        m_actionRun->setIcon(icon("stop.png"));
+        m_actionRun->setText("停止");;
+    }
+    else
+    {
+        m_actionRun->setIcon(icon("run.png"));
+        m_actionRun->setText("运行");
+    }
 }
 
 void MainWindow::updateTabText(int index)
@@ -1744,7 +1769,7 @@ void MainWindow::stopCamera(QString name)
 
 bool MainWindow::isRun()
 {
-    return m_actionRun->text() == "停止";
+    return m_running;
 }
 
 void MainWindow::stop()
@@ -1755,6 +1780,8 @@ void MainWindow::stop()
 
     if(m_engine.isInit())
         m_engine.stopAllCo();    
+
+    m_running = false;
 }
 
 void MainWindow::imageDebug()

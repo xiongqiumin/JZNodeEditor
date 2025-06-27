@@ -12,6 +12,9 @@ class QTreeWidget;
 class UiHelper
 {
 public:
+    static QWidget *createVBox(QList<QWidget*> list);
+    static QWidget *createHBox(QList<QWidget*> list);
+
     static bool treeFilter(QTreeWidgetItem *tree, QString name);    
     static int treeIndexOf(QTreeWidgetItem *root,const QString &name);
     static void treeSortChilds(QTreeWidgetItem *node);

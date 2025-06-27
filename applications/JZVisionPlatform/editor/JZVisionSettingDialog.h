@@ -17,6 +17,7 @@ class JZVisionLinkDialog : public JZBaseDialog
 {
 public:
     JZVisionLinkDialog(QWidget *w);
+    ~JZVisionLinkDialog();
 
     void setView(JZVisionView* view);
     void initLinkList(JZNode *node,int pin_id);
@@ -46,7 +47,6 @@ public:
     JZVisionSettingPinWidget();
     ~JZVisionSettingPinWidget();
 
-    void setNameSize(int size);
     void setPin(JZNode* node, int pin_id);
     int pinId();
     
@@ -58,7 +58,7 @@ public:
     QString value();
 
 signals:
-    void sigPinRemove();
+    
 
 protected slots:
     void onBtnLink();
@@ -70,8 +70,7 @@ protected:
 
     JZNode* m_node;
     int m_pinId;
-
-    QLabel* m_nameLabel;
+   
     bool m_isLink;
     QToolButton* m_btnLink;
     JZVisionParamLink m_linkGemo;
@@ -111,10 +110,12 @@ public slots:
 protected:    
     JZVisionSettingPinWidget* createPin(JZNodePin *pin);
     void updatePinWidget();
+    void initNodeIfSwitch();
+    void initNodeNormal();
 
     void accept();
 
     QMap<int,Block> m_blockList;
     JZNode* m_node;
-    QVBoxLayout* m_grid;
+    QVBoxLayout* m_layout;
 };

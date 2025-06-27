@@ -166,7 +166,7 @@ class JZEngineTraceConfig
 public:
     JZEngineTraceConfig();
 
-    bool enable;
+    QList<int> nodeList;
 };
 
 //JZNodeEngine

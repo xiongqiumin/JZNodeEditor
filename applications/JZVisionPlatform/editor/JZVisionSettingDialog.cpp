@@ -8,6 +8,7 @@
 #include <QGridLayout>
 #include <QPushButton>
 #include <QFontMetrics>
+#include <QTableWidget>
 #include "JZVisionSettingDialog.h"
 #include "JZScriptItem.h"
 #include "JZVisionView.h"
@@ -61,6 +62,10 @@ JZVisionLinkDialog::JZVisionLinkDialog(QWidget* w)
     m_node = nullptr;
     m_pinId = -1;
     m_linkId = 0;
+}
+
+JZVisionLinkDialog::~JZVisionLinkDialog()
+{
 }
 
 void JZVisionLinkDialog::setView(JZVisionView* view)
@@ -242,7 +247,6 @@ void JZVisionLinkDialog::accept()
 JZVisionSettingPinWidget::JZVisionSettingPinWidget()
 {
     m_node = nullptr;
-    m_nameLabel = nullptr;
     m_pinEditor = nullptr;    
     m_linkEdit = nullptr;
     m_setting = nullptr;
@@ -269,12 +273,6 @@ JZVisionSettingDialog *JZVisionSettingPinWidget::setting()
 void JZVisionSettingPinWidget::setSetting(JZVisionSettingDialog *dlg)
 {
     m_setting = dlg;
-    connect(this, &JZVisionSettingPinWidget::sigPinRemove, m_setting, &JZVisionSettingDialog::onPinRemove);
-}
-
-void JZVisionSettingPinWidget::setNameSize(int size)
-{
-    m_nameLabel->setFixedWidth(size);
 }
 
 void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
@@ -288,10 +286,6 @@ void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
     QHBoxLayout* l = new QHBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);    
     this->setLayout(l);
-
-    //name
-    m_nameLabel = new QLabel(pin->name());
-    l->addWidget(m_nameLabel);
 
     //link
     m_linkGemo = m_setting->view()->linkInfo(node->id(),pin_id);
@@ -315,14 +309,6 @@ void JZVisionSettingPinWidget::setPin(JZNode* node, int pin_id)
         m_btnLink->hide();
         m_isLink = true;
     }    
-
-    if (m_node->type() == Node_if || m_node->type() == Node_switch)
-    {
-        QToolButton* pin_remove = new QToolButton();
-        pin_remove->setText("-");
-        connect(pin_remove, &QToolButton::clicked, this, &JZVisionSettingPinWidget::sigPinRemove);
-        l->addWidget(pin_remove);
-    }
     updatePinWidget();
 }
 
@@ -423,7 +409,7 @@ JZVisionSettingDialog::JZVisionSettingDialog(QWidget *parent)
     : JZBaseDialog(parent)
 {    
     m_node = nullptr;
-    m_grid = nullptr;
+    m_layout = nullptr;
 }
 
 JZVisionSettingDialog::~JZVisionSettingDialog()
@@ -459,7 +445,7 @@ void JZVisionSettingDialog::onPinAdd()
     }
 
     JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(id));
-    m_grid->insertWidget(widget_index, pin_widget);
+    m_layout->insertWidget(widget_index, pin_widget);
 
     Block block;
     block.pinId = id;
@@ -469,8 +455,7 @@ void JZVisionSettingDialog::onPinAdd()
 
 void JZVisionSettingDialog::onPinRemove()
 {
-    auto *pin_widget = dynamic_cast<JZVisionSettingPinWidget*>(sender());
-    int id = pin_widget->pinId();
+    int id = sender()->property("PinId").toInt();
     if (m_node->type() == Node_if)
     {
         auto node_if = dynamic_cast<JZNodeIf*>(m_node);
@@ -526,7 +511,7 @@ void JZVisionSettingDialog::onPinElse()
 
     int widget_index = m_node->subFlowCount();
     JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(id));
-    m_grid->insertWidget(widget_index, pin_widget);
+    m_layout->insertWidget(widget_index, pin_widget);
 
     Block block;
     block.pinId = id;
@@ -534,65 +519,126 @@ void JZVisionSettingDialog::onPinElse()
     m_blockList.insert(id, block);
 }
 
-void JZVisionSettingDialog::setNode(JZNode* node)
+void JZVisionSettingDialog::initNodeIfSwitch()
 {
-    m_node = node;
-    QWidget *area_widget = new QWidget();    
+    m_layout->addWidget(new QLabel("条件"));
     
-    QVBoxLayout *v = new QVBoxLayout();
-    area_widget->setLayout(v);        
+    QList<int> pin_list;
+    if (m_node->type() == Node_if)
+        pin_list = m_node->paramInList();
+    else
+        pin_list = m_node->paramOutList();
 
-    QLabel *label_name = new QLabel(view()->nodeName(node->id()));
-    v->addWidget(label_name);
+    for (int i = 0; i < pin_list.size(); i++)
+    {
+        QLabel* item_name = new QLabel(m_node->pinName(pin_list[i]));
+        JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(pin_list[i]));
+        QToolButton* btn_remove = new QToolButton();
+        btn_remove->setText("-");
+        btn_remove->setProperty("PinId", pin_list[i]);
+        connect(btn_remove, &QToolButton::clicked, this, &JZVisionSettingDialog::onPinRemove);
 
-    //参数    
-    auto in_list = node->paramInList();
+        QWidget* w = UiHelper::createHBox({ item_name,pin_widget,btn_remove });
+        m_layout->addWidget(w);
+
+        Block block;
+        block.pinWidget = pin_widget;
+        block.pinId = pin_list[i];
+        m_blockList.insert(block.pinId, block);
+    }
+    
+    QPushButton* pin_add = new QPushButton();
+    QPushButton* pin_else = new QPushButton();
+    connect(pin_add, &QPushButton::clicked, this, &JZVisionSettingDialog::onPinAdd);
+    connect(pin_else, &QPushButton::clicked, this, &JZVisionSettingDialog::onPinElse);
+
+    pin_add->setText("增加条件");
+    if (m_node->type() == Node_if)
+        pin_else->setText("增加else");
+    else
+        pin_else->setText("增加default");
+
+    QHBoxLayout* pin_l = new QHBoxLayout();
+    pin_l->setContentsMargins(0, 0, 0, 0);
+    pin_l->addWidget(pin_add);
+    pin_l->addWidget(pin_else);
+    pin_l->addStretch();
+    m_layout->addLayout(pin_l);
+}
+
+
+void JZVisionSettingDialog::initNodeNormal()
+{
+    auto in_list = m_node->paramInList();
     if (in_list.size() > 0)
     {
-        v->addWidget(new QLabel("输入参数"));
+        m_layout->addWidget(new QLabel("输入参数"));
 
-        QVBoxLayout*grid = new QVBoxLayout();
-        m_grid = grid;
+        QGridLayout* grid_in = new QGridLayout();
+        grid_in->addWidget(new QLabel("名称"), 0, 0);
+        grid_in->addWidget(new QLabel("类型"), 0, 1);
+        grid_in->addWidget(new QLabel("值"), 0, 2);
+
         for (int i = 0; i < in_list.size(); i++)
         {
-            JZVisionSettingPinWidget* pin_widget = createPin(node->pin(in_list[i]));            
-            grid->addWidget(pin_widget);
+            auto pin = m_node->pin(in_list[i]);
+
+            QLabel* item_name = new QLabel(m_node->pinName(in_list[i]));
+            QLabel* item_type = new QLabel(m_node->pinType(in_list[i]).join(", "));
+
+            int row = i + 1;
+            grid_in->addWidget(item_name, row, 0);
+            grid_in->addWidget(item_type, row, 1);
+
+            JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(in_list[i]));
+            grid_in->addWidget(pin_widget,row, 2);
 
             Block block;
             block.pinWidget = pin_widget;
             block.pinId = in_list[i];
             m_blockList.insert(block.pinId, block);
         }
-        if (m_node->type() == Node_if)
-        {
-            QPushButton* pin_add = new QPushButton();
-            QPushButton* pin_else = new QPushButton();
-            connect(pin_add, &QPushButton::clicked, this, &JZVisionSettingDialog::onPinAdd);
-            connect(pin_else, &QPushButton::clicked, this, &JZVisionSettingDialog::onPinElse);
-
-            pin_add->setText("增加条件");
-            pin_else->setText("增加else");            
-
-            QHBoxLayout* pin_l = new QHBoxLayout();
-            pin_l->setContentsMargins(0, 0, 0, 0);
-            pin_l->addWidget(pin_add);
-            pin_l->addWidget(pin_else);
-            pin_l->addStretch();
-            grid->addLayout(pin_l);
-        }
-        v->addLayout(grid);
+        m_layout->addLayout(grid_in);
     }
-    auto out_list = node->paramOutList();
+    auto out_list = m_node->paramOutList();
     if (out_list.size() > 0)
     {
-        v->addWidget(new QLabel("输出参数"));
+        m_layout->addWidget(new QLabel("输出参数"));
+
+        QGridLayout* grid_out = new QGridLayout();
+        grid_out->addWidget(new QLabel("名称"), 0, 0);
+        grid_out->addWidget(new QLabel("类型"), 0, 1);
         for (int i = 0; i < out_list.size(); i++)
         {
-            QString pin_name = m_node->pinName(out_list[i]);
-            v->addWidget(new QLabel(pin_name));
+            QLabel* item_name = new QLabel(m_node->pinName(out_list[i]));
+            QLabel* item_type = new QLabel(m_node->pinType(out_list[i]).join(", "));
+
+            int row = i + 1;
+            grid_out->addWidget(item_name, row, 0);
+            grid_out->addWidget(item_type, row, 1);
         }
+        m_layout->addLayout(grid_out);
     }
-    v->addStretch();
+}
+
+void JZVisionSettingDialog::setNode(JZNode* node)
+{
+    m_node = node;
+    QWidget *area_widget = new QWidget();    
+    
+    m_layout = new QVBoxLayout();
+    area_widget->setLayout(m_layout);
+
+    QLabel *label_name = new QLabel(view()->nodeName(node->id()));
+    m_layout->addWidget(label_name);
+
+    //参数    
+    if (m_node->type() == Node_if || m_node->type() == Node_switch)
+        initNodeIfSwitch();
+    else
+        initNodeNormal();
+    
+    m_layout->addStretch();
 
 
     QScrollArea *area = new QScrollArea();
@@ -619,9 +665,6 @@ void JZVisionSettingDialog::updatePinWidget()
 
         it++;
     }
-
-    for (auto& block : m_blockList)
-        block.pinWidget->setNameSize(name_size);
 }
 
 JZVisionSettingPinWidget* JZVisionSettingDialog::createPin(JZNodePin *pin)

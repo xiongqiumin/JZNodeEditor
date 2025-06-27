@@ -1,8 +1,33 @@
 ﻿#include <QTreeWidget>
 #include <QComboBox>
-
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include "UiCommon.h"
 #include "JZNodeObject.h"
+
+QWidget* UiHelper::createVBox(QList<QWidget*> list)
+{
+    QVBoxLayout* layout = new QVBoxLayout();
+    layout->setContentsMargins(0, 0, 0, 0);
+    for(int i = 0; i < list.size(); i++)
+        layout->addWidget(list[i]);
+
+    QWidget *w = new QWidget(); 
+    w->setLayout(layout);
+    return w;
+}
+
+QWidget* UiHelper::createHBox(QList<QWidget*> list)
+{
+    QHBoxLayout* layout = new QHBoxLayout();
+    layout->setContentsMargins(0, 0, 0, 0);
+    for(int i = 0; i < list.size(); i++)
+        layout->addWidget(list[i]);
+
+    QWidget *w = new QWidget(); 
+    w->setLayout(layout);
+    return w;
+}
 
 bool UiHelper::treeFilter(QTreeWidgetItem *item, QString name)
 {
