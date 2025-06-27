@@ -9,5 +9,8 @@
     <file>Resources/icons/run.png</file>
     <file>Resources/icons/runOnce.png</file>
     <file>Resources/icons/stop.png</file>    
+    <file>Resources/icons/switchLink.png</file>    
+    <file>Resources/icons/switchInput.png</file>    
+    <file>Resources/icons/link.png</file>    
   </qresource>
 </RCC>

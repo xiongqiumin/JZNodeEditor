@@ -13,6 +13,8 @@
 #include "JZScriptItem.h"
 #include "JZVisionView.h"
 #include "UiCommon.h"
+#include "JZStyleHelper.h"
+#include "JZVisionUtils.h"
 
 class VisionLinkVisitor : public JZScriptItemVisitor
 {
@@ -332,9 +334,11 @@ void JZVisionSettingPinWidget::updatePinWidget()
             m_pinEditor->setValue(m_node->pinValue(m_pinId));
 
             QHBoxLayout *h_l = new QHBoxLayout();            
-            l->insertWidget(1, m_pinEditor);
+            l->insertWidget(0, m_pinEditor);
         }
-        m_btnLink->setText("连接输入");
+        m_btnLink->setText("切换为连接输入");
+        m_btnLink->setToolTip("切换为连接输入");
+        m_btnLink->setIcon(JZVisionUtils::icon("switchLink"));        
     }
     else
     {
@@ -346,12 +350,17 @@ void JZVisionSettingPinWidget::updatePinWidget()
         if (!m_linkEdit)
         {                        
             m_linkEdit = new JZLineEditButton();
-            l->insertWidget(1, m_linkEdit);
+            m_linkEdit->button()->setText("连接");
+            m_linkEdit->button()->setIcon(JZVisionUtils::icon("link"));
+
+            l->insertWidget(0, m_linkEdit);
             connect(m_linkEdit->button(),&QToolButton::clicked,this, &JZVisionSettingPinWidget::onLickSelected);
             m_linkEdit->lineEdit()->setText(linkName());
             m_linkEdit->lineEdit()->setReadOnly(true);
         }
-        m_btnLink->setText("直接输入");
+        m_btnLink->setText("切换为直接输入");
+        m_btnLink->setToolTip("切换为直接输入");
+        m_btnLink->setIcon(JZVisionUtils::icon("switchInput"));
     }
 }
 
@@ -387,6 +396,7 @@ void JZVisionSettingPinWidget::onLickSelected()
         return;
 
     m_linkGemo = dlg.link();
+    m_linkEdit->lineEdit()->setText(linkName());
 }
 
 bool JZVisionSettingPinWidget::isLink()
@@ -429,28 +439,28 @@ QMap<int, JZVisionSettingDialog::Block> JZVisionSettingDialog::blockList()
 
 void JZVisionSettingDialog::onPinAdd()
 {
+    QWidget *btn = qobject_cast<QWidget*>(sender());
+    int widget_index = m_layout->indexOf(btn->parentWidget());
+
     int id = 0;
-    int widget_index = 0;
     if (m_node->type() == Node_if)
     {
         auto node_if = dynamic_cast<JZNodeIf*>(m_node);
         id = node_if->addCondPin();
-        widget_index = node_if->condCount();
+        if (node_if->hasElse())
+            widget_index--;
     }
     else
     {
         auto node_switch = dynamic_cast<JZNodeSwitch*>(m_node);
         id = node_switch->addCase();
-        widget_index = node_switch->caseCount();
+        if (node_switch->hasDefault())
+            widget_index--;
     }
-
-    JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(id));
+    
+    QWidget* pin_widget = createRow(m_node->pin(id));
     m_layout->insertWidget(widget_index, pin_widget);
-
-    Block block;
-    block.pinId = id;
-    block.pinWidget = pin_widget;
-    m_blockList.insert(id,block);
+    pin_widget->layout()->addWidget(createBtnRemove(id));
 }
 
 void JZVisionSettingDialog::onPinRemove()
@@ -493,6 +503,7 @@ void JZVisionSettingDialog::onPinRemove()
 
 void JZVisionSettingDialog::onPinElse()
 {
+    QWidget *btn = qobject_cast<QWidget*>(sender());
     int id = -1;
     if (m_node->type() == Node_if)
     {
@@ -508,20 +519,25 @@ void JZVisionSettingDialog::onPinElse()
     }
     if (id == -1)
         return;
-
-    int widget_index = m_node->subFlowCount();
-    JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(id));
+    
+    int widget_index = m_layout->indexOf(btn->parentWidget());
+    QWidget* pin_widget = createRow(m_node->pin(id));
     m_layout->insertWidget(widget_index, pin_widget);
-
-    Block block;
-    block.pinId = id;
-    block.pinWidget = pin_widget;
-    m_blockList.insert(id, block);
 }
 
 void JZVisionSettingDialog::initNodeIfSwitch()
 {
-    m_layout->addWidget(new QLabel("条件"));
+    JZStypeClass title_style;
+    auto label_name = new QLabel("名称");
+    auto label_type = new QLabel("类型");
+    auto label_value = new QLabel("值");
+    label_name->setFixedWidth(60);
+    label_type->setFixedWidth(60);
+
+    auto title = UiHelper::createHBox({ label_name , label_type, label_value });
+    title->setStyleSheet(title_style.styleSheet());
+    title->setFixedHeight(24);
+    m_layout->addWidget(title);
     
     QList<int> pin_list;
     if (m_node->type() == Node_if)
@@ -531,20 +547,10 @@ void JZVisionSettingDialog::initNodeIfSwitch()
 
     for (int i = 0; i < pin_list.size(); i++)
     {
-        QLabel* item_name = new QLabel(m_node->pinName(pin_list[i]));
-        JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(pin_list[i]));
-        QToolButton* btn_remove = new QToolButton();
-        btn_remove->setText("-");
-        btn_remove->setProperty("PinId", pin_list[i]);
-        connect(btn_remove, &QToolButton::clicked, this, &JZVisionSettingDialog::onPinRemove);
-
-        QWidget* w = UiHelper::createHBox({ item_name,pin_widget,btn_remove });
-        m_layout->addWidget(w);
-
-        Block block;
-        block.pinWidget = pin_widget;
-        block.pinId = pin_list[i];
-        m_blockList.insert(block.pinId, block);
+        QWidget* pin_widget = createRow(m_node->pin(pin_list[i]));        
+        pin_widget->layout()->addWidget(createBtnRemove(pin_list[i]));
+        
+        m_layout->addWidget(pin_widget);
     }
     
     QPushButton* pin_add = new QPushButton();
@@ -563,61 +569,72 @@ void JZVisionSettingDialog::initNodeIfSwitch()
     pin_l->addWidget(pin_add);
     pin_l->addWidget(pin_else);
     pin_l->addStretch();
-    m_layout->addLayout(pin_l);
+
+    QWidget *btn_widget = new QWidget();
+    btn_widget->setLayout(pin_l);
+    m_layout->addWidget(btn_widget);
 }
 
 
 void JZVisionSettingDialog::initNodeNormal()
 {
+    JZStypeClass title_style;
+    title_style.setBackgroundColor(QColor(240,240,240));
+
+    auto ft = font();
+    ft.setPixelSize(20);
+    ft.setBold(true);
+
+    int name_size = 60;
+    int type_size = 60;
+
     auto in_list = m_node->paramInList();
     if (in_list.size() > 0)
     {
-        m_layout->addWidget(new QLabel("输入参数"));
+        auto label_input = new QLabel("输入参数");
+        label_input->setFont(ft);
+        m_layout->addWidget(label_input);
+        
+        auto label_name = new QLabel("名称");
+        auto label_type = new QLabel("类型");
+        auto label_value = new QLabel("值");
+        label_name->setFixedWidth(name_size);
+        label_type->setFixedWidth(type_size);
 
-        QGridLayout* grid_in = new QGridLayout();
-        grid_in->addWidget(new QLabel("名称"), 0, 0);
-        grid_in->addWidget(new QLabel("类型"), 0, 1);
-        grid_in->addWidget(new QLabel("值"), 0, 2);
+        auto title = UiHelper::createHBox({ label_name , label_type, label_value });
+        title->setStyleSheet(title_style.styleSheet());        
+        title->setFixedHeight(24);
+        m_layout->addWidget(title);
 
         for (int i = 0; i < in_list.size(); i++)
         {
             auto pin = m_node->pin(in_list[i]);
-
-            QLabel* item_name = new QLabel(m_node->pinName(in_list[i]));
-            QLabel* item_type = new QLabel(m_node->pinType(in_list[i]).join(", "));
-
-            int row = i + 1;
-            grid_in->addWidget(item_name, row, 0);
-            grid_in->addWidget(item_type, row, 1);
-
-            JZVisionSettingPinWidget* pin_widget = createPin(m_node->pin(in_list[i]));
-            grid_in->addWidget(pin_widget,row, 2);
-
-            Block block;
-            block.pinWidget = pin_widget;
-            block.pinId = in_list[i];
-            m_blockList.insert(block.pinId, block);
+            auto* pin_widget = createRow(m_node->pin(in_list[i]));            
+            m_layout->addWidget(pin_widget);            
         }
-        m_layout->addLayout(grid_in);
     }
     auto out_list = m_node->paramOutList();
     if (out_list.size() > 0)
     {
-        m_layout->addWidget(new QLabel("输出参数"));
+        auto label_output = new QLabel("输出参数");
+        label_output->setFont(ft);
+        m_layout->addWidget(label_output);
 
-        QGridLayout* grid_out = new QGridLayout();
-        grid_out->addWidget(new QLabel("名称"), 0, 0);
-        grid_out->addWidget(new QLabel("类型"), 0, 1);
+        auto label_name = new QLabel("名称");
+        auto label_type = new QLabel("类型");
+        label_name->setFixedWidth(name_size);
+
+        auto title = UiHelper::createHBox({ label_name , label_type });
+        title->setStyleSheet(title_style.styleSheet());
+        title->setFixedHeight(24);       
+        m_layout->addWidget(title);
+
         for (int i = 0; i < out_list.size(); i++)
-        {
-            QLabel* item_name = new QLabel(m_node->pinName(out_list[i]));
-            QLabel* item_type = new QLabel(m_node->pinType(out_list[i]).join(", "));
-
+        {            
             int row = i + 1;
-            grid_out->addWidget(item_name, row, 0);
-            grid_out->addWidget(item_type, row, 1);
+            QWidget *row_widget = createRow(m_node->pin(out_list[i]));
+            m_layout->addWidget(row_widget);
         }
-        m_layout->addLayout(grid_out);
     }
 }
 
@@ -626,10 +643,23 @@ void JZVisionSettingDialog::setNode(JZNode* node)
     m_node = node;
     QWidget *area_widget = new QWidget();    
     
+    JZStypeClass name_style;
+    name_style.setForegroundColor(Qt::white);
+    name_style.setBackgroundColor(QColor(59,130,246));
+
+    JZStypeClass style;
+    style.setBackgroundColor(Qt::white);
+    style.setObjectName("MainWidget");
+
     m_layout = new QVBoxLayout();
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    area_widget->setObjectName("MainWidget");
     area_widget->setLayout(m_layout);
+    area_widget->setStyleSheet(style.styleSheet());
 
     QLabel *label_name = new QLabel(view()->nodeName(node->id()));
+    label_name->setStyleSheet(name_style.styleSheet());
+    label_name->setFixedHeight(30);
     m_layout->addWidget(label_name);
 
     //参数    
@@ -639,7 +669,6 @@ void JZVisionSettingDialog::setNode(JZNode* node)
         initNodeNormal();
     
     m_layout->addStretch();
-
 
     QScrollArea *area = new QScrollArea();
     area->setWidgetResizable(true);
@@ -667,13 +696,48 @@ void JZVisionSettingDialog::updatePinWidget()
     }
 }
 
-JZVisionSettingPinWidget* JZVisionSettingDialog::createPin(JZNodePin *pin)
+QToolButton *JZVisionSettingDialog::createBtnRemove(int pin_id)
 {
-    JZVisionSettingPinWidget* pin_widget = new JZVisionSettingPinWidget();
-    pin_widget->setSetting(this);
-    pin_widget->setPin(m_node, pin->id());
+    QToolButton* btn_remove = new QToolButton();
+    btn_remove->setText("-");
+    btn_remove->setProperty("PinId", pin_id);
+    connect(btn_remove, &QToolButton::clicked, this, &JZVisionSettingDialog::onPinRemove);
+    return btn_remove;
+}
 
-    return pin_widget;
+QWidget* JZVisionSettingDialog::createRow(JZNodePin *pin)
+{
+    QList<QWidget*> widget_list;
+
+    QLabel* item_name = new QLabel(pin->name());
+    item_name->setFixedWidth(60);
+    widget_list << item_name;
+    
+    QLabel* item_type = new QLabel();
+    if (pin->isInput())
+        item_type->setFixedWidth(60);
+    item_type->setToolTip(pin->dataType().join(", "));
+        
+    QFontMetrics font_metrics(item_type->font());
+    QString type_text = font_metrics.elidedText(pin->dataType().join(", "), Qt::ElideRight, item_type->width());
+    item_type->setText(type_text);
+    widget_list << item_type;       
+
+    if (pin->isInput())
+    {
+        JZVisionSettingPinWidget* pin_widget = new JZVisionSettingPinWidget();
+        pin_widget->setSetting(this);
+        pin_widget->setPin(m_node, pin->id());
+        widget_list << pin_widget;
+
+        Block block;
+        block.pinWidget = pin_widget;
+        block.pinId = pin->id();
+        m_blockList.insert(block.pinId, block);
+    }
+
+    QWidget *w = UiHelper::createHBox(widget_list);
+    return w;
 }
 
 void JZVisionSettingDialog::accept()

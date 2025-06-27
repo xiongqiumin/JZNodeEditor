@@ -154,8 +154,7 @@ protected:
     void initUi();    
     void initMenuBar(QVBoxLayout *layout);
     QWidget *createTitleBar();
-    
-    QIcon icon(QString name);
+        
     QIcon menuIcon(const QString &name);    
 
     void setSliderStyle(QWidget *w);

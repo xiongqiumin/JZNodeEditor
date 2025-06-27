@@ -108,7 +108,9 @@ public slots:
     void onPinElse();
 
 protected:    
-    JZVisionSettingPinWidget* createPin(JZNodePin *pin);
+    QWidget* createRow(JZNodePin *pin);
+    QToolButton* createBtnRemove(int pin_id);
+
     void updatePinWidget();
     void initNodeIfSwitch();
     void initNodeNormal();

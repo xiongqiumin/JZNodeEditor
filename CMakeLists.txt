@@ -523,7 +523,8 @@ set(JZNodeEditorCore_SOURCES
     widgets/JZDebugSettingDialog.ui
 	widgets/JZNodeTraceView.cpp
 	widgets/JZNodeTraceView.h
-
+    widgets/JZStyleHelper.cpp
+    widgets/JZStyleHelper.h
     
     remote/JZRemotePacket.cpp
     remote/JZRemotePacket.h

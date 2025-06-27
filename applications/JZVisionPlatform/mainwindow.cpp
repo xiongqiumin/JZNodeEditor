@@ -30,6 +30,7 @@
 #include "modules/opencv/CvToQt.h"
 #include "JZVisionAppSample.h"
 #include "JZEngineCoroutine.h"
+#include "JZVisionUtils.h"
 
 //Setting
 Setting::Setting()
@@ -264,12 +265,6 @@ QIcon MainWindow::menuIcon(const QString &name)
     return QIcon(":/JZNodeEditor/Resources/icons/" + name);
 }
 
-QIcon MainWindow::icon(QString name)
-{
-    QString icon_path = ":/JZMonitorSystem/Resources/icons/" + name;
-    return QIcon(icon_path);
-}
-
 void MainWindow::initUi()
 {
     QWidget *centralWidget = new QWidget(this);
@@ -307,17 +302,17 @@ void MainWindow::initUi()
     QToolButton *button_setting = new QToolButton();    
     
     button_camera->setText("相机");
-    button_camera->setIcon(icon("camera.png"));
+    button_camera->setIcon(JZVisionUtils::icon("camera.png"));
     button_flow->setText("流程");
-    button_flow->setIcon(icon("flow.png"));
+    button_flow->setIcon(JZVisionUtils::icon("flow.png"));
     button_model->setText("模型");
-    button_model->setIcon(icon("model.png"));
+    button_model->setIcon(JZVisionUtils::icon("model.png"));
     button_comm->setText("通信");
-    button_comm->setIcon(icon("comm.png"));    
+    button_comm->setIcon(JZVisionUtils::icon("comm.png"));
     button_log->setText("事件");
-    button_log->setIcon(icon("log.png"));
+    button_log->setIcon(JZVisionUtils::icon("log.png"));
     button_setting->setText("设置");
-    button_setting->setIcon(icon("setting.png"));
+    button_setting->setIcon(JZVisionUtils::icon("setting.png"));
 
     connect(button_camera,&QToolButton::clicked,this, &MainWindow::onBtnCamera);
     connect(button_flow, &QToolButton::clicked, this, &MainWindow::onBtnFlow);
@@ -453,8 +448,8 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     m_menuList << menu_file << menu_edit << menu_help;
     layout->addWidget(menubar);
 
-    QAction *actRunOnce = new QAction(icon("runOnce.png"), "运行一次");
-    QAction *actRun = new QAction(icon("run.png"), "连续运行");        
+    QAction *actRunOnce = new QAction(JZVisionUtils::icon("runOnce.png"), "运行一次");
+    QAction *actRun = new QAction(JZVisionUtils::icon("run.png"), "连续运行");
     connect(actRunOnce, &QAction::triggered, this, &MainWindow::onActionRunOnce);
     connect(actRun, &QAction::triggered, this, &MainWindow::onActionRun);        
     m_actionRun = actRun;
@@ -1669,12 +1664,12 @@ void MainWindow::updateActionStatus()
 {
     if (m_running)
     {
-        m_actionRun->setIcon(icon("stop.png"));
+        m_actionRun->setIcon(JZVisionUtils::icon("stop.png"));
         m_actionRun->setText("停止");;
     }
     else
     {
-        m_actionRun->setIcon(icon("run.png"));
+        m_actionRun->setIcon(JZVisionUtils::icon("run.png"));
         m_actionRun->setText("运行");
     }
 }
