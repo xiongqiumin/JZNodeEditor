@@ -59,7 +59,6 @@ protected:
     JZVisionPanel *m_nodePanel;
     JZVisionView *m_view;
     JZVisionImage *m_outputImage;
-    JZVisionOutput *m_outputResult;
     QList<QAction*> m_actionList;
 
     JZVisionRuntimeResult m_result;

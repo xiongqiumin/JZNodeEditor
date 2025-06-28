@@ -26,12 +26,7 @@ JZNewProjectDialog::JZNewProjectDialog(QWidget *parent)
 	ui->lineProjectName->setText(project_name);
 	ui->lineProjectDir->setText(project_dir);
 
-    connect(ui->listWidget,&QListWidget::itemDoubleClicked,this, &JZNewProjectDialog::onItemDoubleClicked);
-    
-    auto templateList = JZProjectTemplate::instance()->templateList();
-    ui->listWidget->addItems(templateList);
-
-    ui->listWidget->setCurrentRow(0);
+    connect(ui->listWidget,&QListWidget::itemDoubleClicked,this, &JZNewProjectDialog::onItemDoubleClicked);           
 }
 
 JZNewProjectDialog::~JZNewProjectDialog()
@@ -52,6 +47,13 @@ QString JZNewProjectDialog::name()
 QString JZNewProjectDialog::dir()
 {
 	return ui->lineProjectDir->text();
+}
+
+void JZNewProjectDialog::setTemplateList(QStringList templateList)
+{
+    ui->listWidget->clear();
+    ui->listWidget->addItems(templateList);
+    ui->listWidget->setCurrentRow(0);
 }
 
 void JZNewProjectDialog::on_btnSelect_clicked()

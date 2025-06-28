@@ -73,7 +73,7 @@ void JZCommConfigDialog::addModbusClient()
     modbus_rtu << m_editor->addPropIntEnum("StopBit", &config_rtu->conn.stopBit, stopBit_value, stopBit_text, m_propGroup);
 
     //tcp
-    JZProperty *bit_order_tcp = m_editor->addPropIntEnum("BitOrder", &config_tcp->bitOrder, bit_order_value, bit_order_text, m_propGroup);
+    JZProperty *bit_order_tcp = m_editor->addPropIntEnum("ByteOrder", &config_tcp->byteOrder, bit_order_value, bit_order_text, m_propGroup);
     modbus_tcp << bit_order_tcp;
     modbus_tcp << m_editor->addProp("Ip", &config_tcp->conn.ip, m_propGroup);
     modbus_tcp << m_editor->addProp("Port", &config_tcp->conn.port, m_propGroup);

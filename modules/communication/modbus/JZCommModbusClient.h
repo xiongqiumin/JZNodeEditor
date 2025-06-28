@@ -28,7 +28,7 @@ public:
     virtual void loadFromStream(QDataStream& s);
 
     JZModbusConnetInfo conn;
-    QDataStream::ByteOrder bitOrder;
+    QDataStream::ByteOrder byteOrder;
 };
 
 //JZCommModbusClient
@@ -43,7 +43,9 @@ public:
     virtual bool isOpen() override;
     virtual bool open() override;
     virtual void close() override;
+    
     JZModbusClient *client();
+    QDataStream::ByteOrder byteOrder();
 
     bool readBits(int addr, int nb, QVector<uint8_t>& dest);
     bool readInputBits(int addr, int nb, QVector<uint8_t>& dest);

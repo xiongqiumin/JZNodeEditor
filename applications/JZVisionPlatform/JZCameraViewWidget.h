@@ -25,10 +25,12 @@ public:
     };
 
     JZCameraViewWidget(QWidget* parent = nullptr);
-    ~JZCameraViewWidget();
+    ~JZCameraViewWidget();    
     
+    void clear();
     void addCamera(QString name);
-    void removeCamera(QString name);
+    void removeCamera(QString name);    
+
     JZImageLabel* label(QString name);
     
 protected slots:

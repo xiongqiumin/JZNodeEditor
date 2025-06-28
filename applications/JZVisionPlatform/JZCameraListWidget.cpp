@@ -46,8 +46,9 @@ void JZCameraListWidget::setMainWindow(MainWindow *mainwindow)
 }
 
 void JZCameraListWidget::updateCamera()
-{
+{    
 	m_tree->clear(); 
+    m_view->clear();
     m_root = new QTreeWidgetItem();
     m_root->setText(0, "所有设备");
     m_tree->addTopLevelItem(m_root);
@@ -132,15 +133,9 @@ void JZCameraListWidget::onContexMenu(QPoint pt)
         QStringList camera_list;
         for (int i = 0; i < config.cameraList.size(); i++)
             camera_list << config.cameraList[i]->name;
-
-        /*
+        
         JZCameraFileConfig *cfg = new JZCameraFileConfig();
-        cfg->path = "C:/Users/xiong/Desktop/JZNodeEditorTest/data";
-        */
-        
-        JZCameraRtspConfig *cfg = new JZCameraRtspConfig();        
-        cfg->path = "rtsp://admin:123456HK@192.168.0.164:554/Streaming/Channels/101";        
-        
+                
         JZCameraConfigDialog dlg(this);
         dlg.setConfig(JZCameraConfigEnum(cfg));
         dlg.makeUniqueName("camera", camera_list);

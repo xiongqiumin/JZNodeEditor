@@ -14,10 +14,12 @@ class JZNewProjectDialog : public QDialog
 public:
 	JZNewProjectDialog(QWidget *parent = 0);
 	~JZNewProjectDialog();
-
+    
     QString projectType();
 	QString name();
 	QString dir();
+    
+    void setTemplateList(QStringList templates);
 
 protected slots:
     void on_btnSelect_clicked();

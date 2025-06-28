@@ -113,8 +113,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_cameraList, &JZCameraListWidget::sigCameraChanged, this, &MainWindow::onCameraConfigChanged);    
     
-    m_cameraList->setMainWindow(this);
-    m_cameraList->setViewWidget(m_cameraView);    
+    m_cameraList->setViewWidget(m_cameraView);
+    m_cameraList->setMainWindow(this);    
 
     initUi();
     initDatabase();
@@ -453,6 +453,7 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     connect(actRunOnce, &QAction::triggered, this, &MainWindow::onActionRunOnce);
     connect(actRun, &QAction::triggered, this, &MainWindow::onActionRun);        
     m_actionRun = actRun;
+    m_actionRunOnce = actRunOnce;
 
     //tool bar
     QToolBar *main_tool = new QToolBar();
@@ -708,7 +709,10 @@ void MainWindow::onActionNewProject()
     if (!closeProject())
         return;
 
+    QStringList template_list = { "空项目" };
+
     JZNewProjectDialog dialog(this);
+    dialog.setTemplateList(template_list);
     if (dialog.exec() != QDialog::Accepted)
         return;
 
@@ -929,6 +933,8 @@ void MainWindow::onActionRun()
 
         if (m_stack->currentIndex() == 0)
         {
+            updateNodeTrace();
+
             auto camera_list = m_cameraManager->cameraList();
             for (int i = 0; i < camera_list.size(); i++)
                 startCamera(camera_list[i]->name());
@@ -954,6 +960,8 @@ void MainWindow::onActionRunOnce()
 
     if (m_stack->currentIndex() == 0)
     {        
+        updateNodeTrace();
+
         auto camera_list = m_cameraManager->cameraList();
         for (int i = 0; i < camera_list.size(); i++)
             startCameraOnce(camera_list[i]->name());
@@ -1102,6 +1110,8 @@ void MainWindow::onAutoRun()
         LOG_W("请选择要执行的流程");
         return;
     }
+    m_buildLog->clearLog(Log_Runtime);
+    updateNodeTrace();
 
     JZNodeCameraReadyEvent *node = currrentCameraNode();
     QString camera_name = node->camera();
@@ -1122,16 +1132,8 @@ void MainWindow::onAutoRunOnce()
     }
 
     auto file = currentNodeEditor()->view()->file();
-
-    JZEngineTraceConfig trace;
-    auto node_list = file->nodeList();
-    for(int i = 0; i < node_list.size(); i++)
-    {
-        auto node = file->getNode(node_list[i]);
-        if(node->isFlowNode())
-            trace.nodeList << node->id();
-    }
-    m_engine.setNodeTrace(trace);
+    m_buildLog->clearLog(Log_Runtime);
+    updateNodeTrace();    
 
     JZNodeCameraReadyEvent *node = currrentCameraNode();
     QString camera_name = node->camera();
@@ -1326,6 +1328,7 @@ void MainWindow::releaseEngine()
     for (int i = 0; i < camera_list.size(); i++)
         stopCamera(camera_list[i]->name());
 
+    m_engine.stopAllCo();
     if (m_engine.isInit())
         m_engine.deinit();
 
@@ -1390,7 +1393,7 @@ bool MainWindow::openProject(QString filepath)
 
     m_cameraList->updateCamera();
     m_modelConfigWidget->setConfig(node_model->config());
-    m_commConfigWidget->setConfig(node_comm->config());
+    m_commConfigWidget->setConfig(node_comm->config());    
 
     onActionBuild();
     return true;
@@ -1672,6 +1675,16 @@ void MainWindow::updateActionStatus()
         m_actionRun->setIcon(JZVisionUtils::icon("run.png"));
         m_actionRun->setText("运行");
     }
+
+    int stack_index = m_stack->currentIndex();
+    bool run_enable = false;
+    if (stack_index == 0) 
+        run_enable = true;
+    else if(stack_index == 1 && currrentCameraNode())
+        run_enable = true;    
+
+    m_actionRun->setEnabled(run_enable);
+    m_actionRunOnce->setEnabled(run_enable);    
 }
 
 void MainWindow::updateTabText(int index)
@@ -1777,6 +1790,23 @@ void MainWindow::stop()
         m_engine.stopAllCo();    
 
     m_running = false;
+}
+
+void MainWindow::updateNodeTrace()
+{
+    JZEngineTraceConfig trace;
+    if (currentNodeEditor())
+    {
+        auto file = currentNodeEditor()->view()->file();
+        auto node_list = file->nodeList();
+        for (int i = 0; i < node_list.size(); i++)
+        {
+            auto node = file->getNode(node_list[i]);
+            if (node->isFlowNode())
+                trace.nodeList << node->id();
+        }
+    }    
+    m_engine.setNodeTrace(trace);
 }
 
 void MainWindow::imageDebug()

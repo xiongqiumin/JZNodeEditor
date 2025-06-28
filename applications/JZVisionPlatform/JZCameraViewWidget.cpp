@@ -55,6 +55,14 @@ void JZCameraViewWidget::removeCamera(QString name)
     updateCamViewLayout();
 }
 
+void JZCameraViewWidget::clear()
+{
+    for(int i = 0 ; i < m_labelList.size(); i++)
+        delete m_labelList[i].label;
+    m_labelList.clear();
+    updateCamViewLayout();
+}
+
 JZCameraViewWidget::LabelInfo* JZCameraViewWidget::labelAt(QPoint pt)
 {
 	for (int i = 0; i < m_labelList.size(); i++)

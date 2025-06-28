@@ -497,7 +497,7 @@ void JZVisionSettingDialog::onPinRemove()
             node_switch->removeDefault();
     }
 
-    m_blockList[id].pinWidget->deleteLater();
+    m_blockList[id].pinWidget->parentWidget()->deleteLater();
     m_blockList.remove(id);
 }
 
@@ -551,6 +551,30 @@ void JZVisionSettingDialog::initNodeIfSwitch()
         pin_widget->layout()->addWidget(createBtnRemove(pin_list[i]));
         
         m_layout->addWidget(pin_widget);
+    }
+
+    //has default
+    if (m_node->type() == Node_if)
+    {
+        auto node_if = dynamic_cast<JZNodeIf*>(m_node);
+        if (node_if->hasElse())
+        {
+            auto else_pin = node_if->pin(node_if->elsePin());
+            QWidget* pin_widget = createRow(else_pin);
+            pin_widget->layout()->addWidget(createBtnRemove(else_pin->id()));
+            m_layout->addWidget(pin_widget);
+        }
+    }
+    else
+    {
+        auto node_switch = dynamic_cast<JZNodeSwitch*>(m_node);
+        if (node_switch->hasDefault())
+        {
+            auto default_pin = node_switch->pin(node_switch->defaultPin());
+            QWidget* pin_widget = createRow(default_pin);
+            pin_widget->layout()->addWidget(createBtnRemove(default_pin->id()));
+            m_layout->addWidget(pin_widget);
+        }
     }
     
     QPushButton* pin_add = new QPushButton();

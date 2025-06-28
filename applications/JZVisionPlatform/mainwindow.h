@@ -203,6 +203,7 @@ protected:
     
     bool initEngine();
     void releaseEngine();
+    void updateNodeTrace();
 
     JZModelManager* m_modelManager;
     JZCameraManager* m_cameraManager;
@@ -239,7 +240,8 @@ protected:
     JZLogWidget *m_mainLog;
     LogWidget *m_buildLog;
 
-    QAction *m_actionRun;
+    QAction *m_actionRun, *m_actionRunOnce;
+
     bool m_running;
     QList<QWidget*> m_floatWindow;
     JZNodeTraceView *m_traceView;

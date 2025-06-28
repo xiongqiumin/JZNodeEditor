@@ -231,7 +231,7 @@ JZVariantAny JZCommModbusRead(JZCommManager* mgr, const QString& name, int funct
     if (!client)
         throw std::runtime_error("client is nullptr");
 
-    QDataStream::ByteOrder bit_order = (QDataStream::ByteOrder)client->property("BitOrder").toInt();
+    QDataStream::ByteOrder bit_order = client->byteOrder();
     if (!client->isOpen() && !client->open())
         throw std::runtime_error("client open failed");
     
@@ -291,7 +291,7 @@ void JZCommModbusWrite(JZCommManager* mgr, const QString& name, int function, co
     if (!client)
         throw std::runtime_error("client is nullptr");
 
-    QDataStream::ByteOrder bit_order = (QDataStream::ByteOrder)client->property("BitOrder").toInt();
+    QDataStream::ByteOrder bit_order = client->byteOrder();
     if (!client->isOpen() && !client->open())
         throw std::runtime_error("client open failed");
 

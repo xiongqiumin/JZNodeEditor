@@ -9,6 +9,7 @@
 #include "JZContainer.h"
 #include "JZNodeFunction.h"
 #include "JZVisionAppNode.h"
+#include "JZNodeAbstractView.h"
 
 JZVisionPanel::JZVisionPanel()
 {
@@ -87,6 +88,30 @@ void JZVisionPanel::updateDefine()
     updateLocalParam();
 }
 
+QTreeWidgetItem *JZVisionPanel::createDefaultNode(JZNode *node)
+{
+    auto env = m_view->file()->project()->environment();
+
+    auto in_list = node->paramInList();
+    for (int i = 0; i < in_list.size(); i++)
+    {
+        auto pin = node->pin(in_list[i]);
+        if (pin->flag() & Pin_noCompiler)
+            continue;
+
+        auto pin_type = pin->dataType();
+        auto up_type = env->upType(pin_type);
+        auto type_id = env->nameToType(up_type);
+        if (JZNodeType::isBaseOrEnum(type_id))
+        {
+            QString value = env->defaultValueString(type_id);
+            node->setPinValue(in_list[i],value);
+        }
+    }
+
+    return createNode(node);
+}
+
 void JZVisionPanel::initContainer(QTreeWidgetItem *item_root)
 {
     QTreeWidgetItem *item_container = createFolder("容器");
@@ -110,7 +135,7 @@ void JZVisionPanel::initContainer(QTreeWidgetItem *item_root)
         func_node.setFunction(func_name);
         func_node.setForceFlow(true);
 
-        QTreeWidgetItem *item = createNode(&func_node);
+        QTreeWidgetItem *item = createDefaultNode(&func_node);
         item->setText(0, coor.name);
 
         if (func_name.startsWith("QList<"))
@@ -147,7 +172,7 @@ void JZVisionPanel::initLogic(QTreeWidgetItem *item_root)
         }
 
         auto jznode = editorNodeFactory()->createNode(node.nodeType);
-        auto sub_item = createNode(jznode);
+        auto sub_item = createDefaultNode(jznode);
         if (!node.icon.isEmpty())
             sub_item->setIcon(0, QIcon(node.icon));
 

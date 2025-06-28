@@ -34,7 +34,6 @@ void JZVisionEditor::init()
     m_nodePanel = new JZVisionPanel();
     m_view = new JZVisionView(this);
     m_outputImage = new JZVisionImage(this);
-    m_outputResult = new JZVisionOutput(this);
 
     setFocusProxy(m_view);
     connect(m_view, &JZVisionView::redoAvailable, this, &JZVisionEditor::redoAvailable);
@@ -45,16 +44,10 @@ void JZVisionEditor::init()
     m_nodePanel->setView(m_view);
     m_view->setPanel(m_nodePanel);
 
-    QSplitter *rightSplitter = new QSplitter(Qt::Vertical, this);
-    rightSplitter->addWidget(new JZDockWidget("输出图像", m_outputImage));
-    rightSplitter->addWidget(new JZDockWidget("运行结果",m_outputResult));
-
-    rightSplitter->setChildrenCollapsible(false);
-
     QSplitter *mainSplitter = new QSplitter(Qt::Horizontal, this);    
     mainSplitter->addWidget(m_nodePanel);    
     mainSplitter->addWidget(m_view);
-    mainSplitter->addWidget(rightSplitter);
+    mainSplitter->addWidget(new JZDockWidget("输出图像", m_outputImage));
     mainSplitter->setChildrenCollapsible(false);
 
     mainSplitter->setSizes({ 200,400,400 });

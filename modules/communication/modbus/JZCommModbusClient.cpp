@@ -8,7 +8,8 @@
 JZCommModbusRtuClientConfig::JZCommModbusRtuClientConfig()
 {
     type = Comm_ModbusRtuClient;
-    name = "modbusTcpClient";
+    name = "modbus";
+    conn.modbusType = Modbus_rtuClient;
     bitOrder = QDataStream::LittleEndian;
 }
 
@@ -28,21 +29,21 @@ void JZCommModbusRtuClientConfig::loadFromStream(QDataStream& s)
 JZCommModbusTcpClientConfig::JZCommModbusTcpClientConfig()
 {
     type = Comm_ModbusTcpClient;
-    name = "modbusRtuClient";
-    conn.modbusType = Modbus_rtuClient;
-    bitOrder = QDataStream::LittleEndian;
+    name = "modbus";
+    conn.modbusType = Modbus_tcpClient;
+    byteOrder = QDataStream::LittleEndian;
 }
 
 void JZCommModbusTcpClientConfig::saveToStream(QDataStream& s) const
 {
     JZCommConfig::saveToStream(s);
-    s << conn << bitOrder;
+    s << conn << byteOrder;
 }
 
 void JZCommModbusTcpClientConfig::loadFromStream(QDataStream& s)
 {
     JZCommConfig::loadFromStream(s);
-    s >> conn >> bitOrder;
+    s >> conn >> byteOrder;
 }
 
 //JZCommModbusClient
@@ -98,6 +99,12 @@ void JZCommModbusClient::close()
 JZModbusClient *JZCommModbusClient::client()
 {
     return m_client;
+}
+
+QDataStream::ByteOrder JZCommModbusClient::byteOrder()
+{
+    auto *cfg = dynamic_cast<JZCommModbusTcpClientConfig*>(m_config.data());
+    return cfg->byteOrder;
 }
 
 void JZCommModbusClient::onModbusReplay(const JZModebusReply& reply)

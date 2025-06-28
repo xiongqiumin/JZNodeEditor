@@ -18,6 +18,8 @@ protected:
     void initLogic(QTreeWidgetItem *root);
     void registLogicNode(int node_type, QString path, QString icon = QString());
 
+    QTreeWidgetItem *createDefaultNode(JZNode *node);
+
     QList<JZLogicNode> m_logicList;
 };
 
