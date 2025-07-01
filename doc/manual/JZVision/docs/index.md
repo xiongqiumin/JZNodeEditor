@@ -14,6 +14,12 @@
 - 支持多线程，支持异步任务
 
 ## 1.3 下载
+- 程序下载</br>
 完整安装包: [下载](data/JZVision.zip)</br>
 单独Exe,下载后覆盖完整安装包: [下载](data/JZVisionPlatform.exe)</br>
-百度网盘: [下载](https://pan.baidu.com/s/1pNN5H__DcrE3DY6kef8jiA?pwd=i53h)</br>
+百度网盘: [下载](https://pan.baidu.com/s/1pNN5H__DcrE3DY6kef8jiA?pwd=i53h)</br></br>
+
+- vc运行时下载
+如果提示程序无法启用，请下载vc运行时</br>
+vs2017 - vs2022 x64: [下载](https://aka.ms/vs/17/release/vc_redist.x64.exe)</br>
+vs2015 x64: [下载](https://download.microsoft.com/download/9/3/f/93fcf1e7-e6a4-478b-96e7-d4b285925b00/vc_redist.x64.exe)</br>

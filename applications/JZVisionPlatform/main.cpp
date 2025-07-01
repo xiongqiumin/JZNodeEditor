@@ -11,8 +11,10 @@ int main(int argc,char *argv[])
 
     Q_INIT_RESOURCE(JZNodeEditor);
     Q_INIT_RESOURCE(vision);       
-
+    
+    
     JZNodeInit();
+    
     JZModuleManager::instance()->addModule(new JZModuleVisionApp());
 
     MainWindow w;

@@ -1790,6 +1790,7 @@ void MainWindow::stop()
         m_engine.stopAllCo();    
 
     m_running = false;
+    updateActionStatus();
 }
 
 void MainWindow::updateNodeTrace()

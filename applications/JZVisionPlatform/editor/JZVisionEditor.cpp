@@ -18,6 +18,10 @@ JZVisionEditor::JZVisionEditor(QWidget *parent)
     init();
 
     m_roiNode << Node_CameraFrameReady;
+    
+    m_roiNode << Node_VisionImageCrop;
+    m_roiNode << Node_VisionImageFlip;    
+
     m_roiNode << Node_ModelYolo;
     m_roiNode << Node_visionAppBarCode;
     m_roiNode << Node_visionAppQrCode;

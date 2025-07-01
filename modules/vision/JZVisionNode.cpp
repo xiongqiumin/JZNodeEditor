@@ -40,7 +40,7 @@ JZNodeVisionImageCrop::JZNodeVisionImageCrop()
     int in1 = addParamIn("mat");
     int in2 = addParamIn("roi");
     setPinType(in1, { "Mat" });
-    setPinType(in2, { "Rect" });
+    setPinType(in2, { "QRect" });
 
     int out = addParamOut("out");
     setPinType(out, { "Mat" });
@@ -51,11 +51,16 @@ bool JZNodeVisionImageCrop::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    int out_id = c->paramId(m_id, paramOut(0));
     QList<JZNodeIRParam> in, out;
     in << irId(c->paramId(m_id, paramIn(0)));
     in << irId(c->paramId(m_id, paramIn(1)));
-    out << irId(c->paramId(m_id, paramOut(0)));
+    out << irId(out_id);
     c->addCall("JZVisionImageCrop",in,out);
+
+    c->addFlowOutput(m_id);
+
+    JZModuleDebug(c, m_id, irId(out_id), JZNodeIRParam());
 
     return true;
 }
@@ -85,14 +90,17 @@ bool JZNodeVisionImageFlip::compiler(JZNodeCompiler *c, QString &error)
     if (!c->addFlowInput(m_id, error))
         return false;
 
+    int out_id = c->paramId(m_id, paramOut(0));
     QList<JZNodeIRParam> in,out;
     in << irId(c->paramId(m_id,paramIn(0)));
     in << irId(c->paramId(m_id,paramIn(1)));
     in << irId(c->paramId(m_id,paramIn(2)));
-    out << irId(c->paramId(m_id,paramOut(0)));
+    out << irId(out_id);
     c->addCall("JZVisionImageFlip",in,out);
 
-    JZModuleDebug(c, m_id, out[0], JZNodeIRParam());
+    c->addFlowOutput(m_id);
+     
+    JZModuleDebug(c, m_id, irId(out_id), JZNodeIRParam());
     return true;
 }
 

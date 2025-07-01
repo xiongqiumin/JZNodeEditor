@@ -135,7 +135,7 @@ struct NodeCompilerInfo
     QWeakPointer<JZNodeIR> breakIr;
     QWeakPointer<JZNodeIR> continueIr;
 
-    QString error;
+    QString error;    
 };
 
 //CompilerResult
@@ -344,6 +344,7 @@ protected:
         bool isFlow;
         int start;
         int debugStart;
+        bool setFlowOut;
     };
 
     void init(JZScriptItem *file);

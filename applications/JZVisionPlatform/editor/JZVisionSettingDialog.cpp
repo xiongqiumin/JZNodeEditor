@@ -725,6 +725,7 @@ QToolButton *JZVisionSettingDialog::createBtnRemove(int pin_id)
     QToolButton* btn_remove = new QToolButton();
     btn_remove->setText("-");
     btn_remove->setProperty("PinId", pin_id);
+    btn_remove->setIcon(JZVisionUtils::icon("pinDelete"));
     connect(btn_remove, &QToolButton::clicked, this, &JZVisionSettingDialog::onPinRemove);
     return btn_remove;
 }

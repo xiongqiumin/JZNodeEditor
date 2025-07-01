@@ -164,7 +164,7 @@ void QtWrapper::initBase()
     {
         JZNodeObjectParser parser;
         QVariantList list;
-        if(!parser.parseVariantList("i,i",text,list)){
+        if(!parser.parseVariantList("{i,i}",text,list)){
             throw std::runtime_error(qUtf8Printable(parser.error()));
         }
 
@@ -189,7 +189,7 @@ void QtWrapper::initBase()
     cls_ptf.def("__fromString__", false, [](const QString &text)->QPointF {
         JZNodeObjectParser parser;
         QVariantList list;
-        if(!parser.parseVariantList("i,i",text,list)){
+        if(!parser.parseVariantList("{d,d}",text,list)){
             throw std::runtime_error(qUtf8Printable(parser.error()));
         }
 
@@ -215,7 +215,7 @@ void QtWrapper::initBase()
     cls_size.def("__fromString__", false, [](const QString &text)->QSize {
         JZNodeObjectParser parser;
         QVariantList list;
-        if(!parser.parseVariantList("i,i",text,list)){
+        if(!parser.parseVariantList("{i,i}",text,list)){
             throw std::runtime_error(qUtf8Printable(parser.error()));
         }
 
@@ -239,7 +239,7 @@ void QtWrapper::initBase()
     cls_sizef.def("__fromString__", false, [](const QString &text)->QSizeF {
         JZNodeObjectParser parser;
         QVariantList list;
-        if(!parser.parseVariantList("i,i",text,list)){
+        if(!parser.parseVariantList("{d,d}",text,list)){
             throw std::runtime_error(qUtf8Printable(parser.error()));
         }
 
@@ -266,7 +266,7 @@ void QtWrapper::initBase()
     cls_rect.def("__fromString__", false, [](const QString &text)->QRect { 
         JZNodeObjectParser parser;
         QVariantList list;
-        if(!parser.parseVariantList("i,i,i,i",text,list)){
+        if(!parser.parseVariantList("{i,i,i,i}",text,list)){
             throw std::runtime_error(qUtf8Printable(parser.error()));
         }
 
@@ -292,7 +292,7 @@ void QtWrapper::initBase()
     cls_rectf.def("__fromString__", false, [](const QString &text)->QRectF {  
         JZNodeObjectParser parser;
         QVariantList list;
-        if(!parser.parseVariantList("i,i,i,i",text,list)){
+        if(!parser.parseVariantList("{d,d,d,d}",text,list)){
             throw std::runtime_error(qUtf8Printable(parser.error()));
         }
 
@@ -317,7 +317,7 @@ void QtWrapper::initBase()
     cls_color.def("__fromString__", false, [](const QString &text)->QColor { 
         JZNodeObjectParser parser;
         QVariantList list;
-        if(!parser.parseVariantList("i,i,i",text,list)){
+        if(!parser.parseVariantList("{i,i,i}",text,list)){
             throw std::runtime_error(qUtf8Printable(parser.error()));
         } 
 

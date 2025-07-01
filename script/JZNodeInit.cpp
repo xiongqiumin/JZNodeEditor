@@ -52,13 +52,15 @@ void JZNodeInit()
     JZBindManager::instance()->init();    
     
     auto module_inst = JZModuleManager::instance();
+    
     module_inst->addModule(new JZModuleComm());
-    module_inst->addModule(new JZModuleOpencv());
+    module_inst->addModule(new JZModuleOpencv());    
     module_inst->addModule(new JZModuleCamera());
     module_inst->addModule(new JZModuleModel());
-    module_inst->addModule(new JZModuleVision());
+    module_inst->addModule(new JZModuleVision());  
     module_inst->addModule(new JZModuleMotion());
     module_inst->addModule(new JZModuleLog());
+  
     module_inst->initModules();
 
 /*

@@ -25,7 +25,7 @@ void JZVisionPanel::initLogicNode()
     //camera
     registLogicNode(Node_CameraFrameReady, "相机");
     registLogicNode(Node_CameraCalibration, "相机");
-/*
+
     //vision
     registLogicNode(Node_VisionImageCrop, "图像处理", icon("crop.png"));
     registLogicNode(Node_VisionImageFlip, "图像处理", icon("flip.png"));
@@ -38,17 +38,17 @@ void JZVisionPanel::initLogicNode()
     registLogicNode(Node_VisionBlobDetector, "检测识别", icon("blob.png"));
     registLogicNode(Node_VisionBrightnessDetector, "检测识别", icon("brightness.png"));
     registLogicNode(Node_VisionColorIdentify, "检测识别", icon("color_r.png"));
-*/
+
     registLogicNode(Node_visionAppBarCode, "识别");
     registLogicNode(Node_visionAppQrCode, "识别");
     registLogicNode(Node_visionAppOCR, "识别");
-/*
+
     registLogicNode(Node_VisionShapeMatch, "对位工具", icon("shape_match.png"));
     registLogicNode(Node_VisionTemplateMatch, "对位工具", icon("match.png"));
 
     registLogicNode(Node_VisionFindCircle, "几何工具", icon("find_circle.png"));
     registLogicNode(Node_VisionFindLine, "几何工具", icon("find_line.png"));
-*/
+
     //模型
     registLogicNode(Node_ModelYolo, "模型");
 
@@ -102,7 +102,7 @@ QTreeWidgetItem *JZVisionPanel::createDefaultNode(JZNode *node)
         auto pin_type = pin->dataType();
         auto up_type = env->upType(pin_type);
         auto type_id = env->nameToType(up_type);
-        if (JZNodeType::isBaseOrEnum(type_id))
+        if (JZNodeType::isBaseOrEnum(type_id) && pin->value().isEmpty())
         {
             QString value = env->defaultValueString(type_id);
             node->setPinValue(in_list[i],value);

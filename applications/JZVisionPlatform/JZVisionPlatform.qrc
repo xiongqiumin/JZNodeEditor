@@ -11,6 +11,7 @@
     <file>Resources/icons/stop.png</file>    
     <file>Resources/icons/switchLink.png</file>    
     <file>Resources/icons/switchInput.png</file>    
-    <file>Resources/icons/link.png</file>    
+    <file>Resources/icons/link.png</file> 
+    <file>Resources/icons/pinDelete.png</file> 
   </qresource>
 </RCC>

@@ -220,6 +220,10 @@ JZNodeModbusWrite::JZNodeModbusWrite()
 	m_input << irLiteral(0);
 	m_input << irId(paramIn(1));
 	m_input << irId(paramIn(2));
+
+    int value_id = paramIn(2);
+    setPinType(value_id, { "uint16" });
+	setPinValue(value_id,0);
 }
 
 JZNodeModbusWrite::~JZNodeModbusWrite()

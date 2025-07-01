@@ -248,33 +248,37 @@ void JZVisionView::configNode(JZNode *node)
     while (it != block_list.end())
     {
         int pin_id = it.key();
+        auto pin_widget = it->pinWidget;
         
         QString pre_value = node->pinValue(pin_id);
-        QList<int> in_list = m_file->getConnectInput(node->id(), pin_id);
+        QList<int> in_list = m_file->getConnectInput(node->id(), pin_id);        
         JZVisionParamLink pre_gemo = linkInfo(node->id(), pin_id);
+        JZVisionParamLink cur_gemo = pin_widget->linkInfo();
         bool pre_link = !pre_gemo.isNull();
-
-        auto pin_widget = it->pinWidget;
-        if (pre_link && pin_widget->isLink())
+        
+        if (pre_link && !cur_gemo.isNull())
         {
-            if (pre_gemo != pin_widget->linkInfo())
+            //连接不一样
+            if (pre_gemo != cur_gemo)
             {
                 addMacro();
                 addRemoveLinkCommand(in_list[0]);
                 addCreateLinkCommand(pin_widget->linkInfo(), JZNodeGemo(node->id(), pin_id));
             }
         }
-        else if (pre_link && !pin_widget->isLink())
+        else if (pre_link && cur_gemo.isNull())
         {
+            //删除之前连接
             addMacro();
             addRemoveLinkCommand(in_list[0]);
         }
-        else if (!pre_link && pin_widget->isLink())
+        else if (!pre_link && !cur_gemo.isNull())
         {
+            //添加新连接
             addMacro();
             addCreateLinkCommand(pin_widget->linkInfo(), JZNodeGemo(node->id(), pin_id));
         }
-        else if (!pre_link && !pin_widget->isLink())
+        else if (!pre_link && cur_gemo.isNull())
         {
             //这里在后续node change中处理
         }
@@ -299,7 +303,7 @@ void JZVisionView::onContextMenu(const QPoint &pos)
     QMenu menu(this);
     QAction *actSetting = nullptr;
     QList<QAction*> addList;
-    if (item)
+    if (item && item->type() == Item_node)
         actSetting = menu.addAction("设置");
     else
     {
@@ -314,6 +318,7 @@ void JZVisionView::onContextMenu(const QPoint &pos)
 
     if (ret == actSetting)
     {
-
+        JZVisionNodeItem *node_item = dynamic_cast<JZVisionNodeItem*>(item);
+        configNode(node_item->node());
     }
 }

@@ -51,6 +51,8 @@ JZParamEditInfo JZParamEditInfo::createByEnum(QStringList list)
 JZParamEditInfo JZParamEditInfo::createByType(const JZScriptEnvironment* env, QString type)
 {
     JZParamEditInfo info;
+    if (JZNodeType::isPointer(type))
+        return info;
 
     int type_id = env->nameToType(type);
     if (type_id == Type_none)
@@ -113,7 +115,12 @@ JZParamEditInfo JZParamEditInfo::createByType(const JZScriptEnvironment* env, QS
         info.type = Edit_enum;
         info.enumList = meta->keys();
     }
-
+    else if (env->isObject(type))
+    {
+        auto obj_def = env->meta(type);
+        if (obj_def->function("__fromString__"))
+            info.type = Edit_normal;
+    }
     
     return info;
 }

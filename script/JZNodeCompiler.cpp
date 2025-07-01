@@ -336,6 +336,7 @@ JZNodeCompiler::NodeCompilerStack::NodeCompilerStack()
     isFlow = false;
     start = -1;
     debugStart = -1;
+    setFlowOut = false;
 }
 
 
@@ -1185,6 +1186,7 @@ bool JZNodeCompiler::compilerNode(JZNode *node)
     {                   
         auto &env = m_compilerNodeStack.back();        
         Q_ASSERT(env.debugStart != -1);
+        Q_ASSERT(!node->isFlowNode() || node->paramOutCount() == 0 || env.setFlowOut);
 
         NodeRange range;
         range.start = env.start;        
@@ -2642,6 +2644,9 @@ bool JZNodeCompiler::addFlowInput(int nodeId,QString &error)
 
 void JZNodeCompiler::addFlowOutput(int nodeId)
 {
+    Q_ASSERT(currentNode()->id() == nodeId);
+    m_compilerNodeStack.back().setFlowOut = true;
+
     auto graph = m_buildGraph->graphNode(nodeId);
     Q_ASSERT(graph);
     auto node = graph->node;

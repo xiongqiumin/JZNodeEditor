@@ -437,9 +437,10 @@ QString JZNodeProgramDumper::irToString(JZNodeIR *op)
     switch (op->type)
     {
     case OP_nodeEnter:
-    {
+    {        
         JZNodeIRNodeEnter *ir_node = (JZNodeIRNodeEnter*)op;
-        line += "//node" + QString::number(ir_node->id);
+        auto &node_info = m_debug->nodeInfo[ir_node->id];
+        line += "//" + node_info.name + "(" + QString::number(ir_node->id) + ")";
         break;
     }
     case OP_nop:
