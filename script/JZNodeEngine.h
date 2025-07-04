@@ -101,7 +101,6 @@ struct JZNodeCoroutine
     QVector<QVariant> regs;
     QList<TryCatchInfo> tryCatchList;
     JZNodeObject* sender;
-    JZNodeTraceContext traceContext;    
 
     int pc;
     const JZNodeScript* script;
@@ -252,6 +251,7 @@ public:
     void watchNotify();         //node display
 
     JZNodeTraceContext *currentTraceContext();
+    void trace(const JZNodeTraceLog&trace);
 
     void collectNodeParam(int node_id,bool is_input);
     void printNode();
@@ -373,6 +373,7 @@ protected:
 
     bool m_watch;
     Stat m_stat;
+    JZNodeTraceContext m_traceContext;
 };
 extern thread_local JZNodeEngine *g_engine;
 

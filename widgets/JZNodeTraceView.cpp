@@ -1,6 +1,5 @@
 ﻿#include "JZNodeTraceView.h"
 #include <QPainter>
-
 #include <QPainterPath>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -11,17 +10,34 @@
 #include <QPainter>
 #include <QHboxLayout>
 #include <QVboxLayout>
+#include <QSplitter>
 
 //JZNodeTraceTree
 JZNodeTraceTree::JZNodeTraceTree()
 {
+    m_startY = 0;
 }
 
 JZNodeTraceTree::~JZNodeTraceTree()
 {
 }
 
-//JZNodeTraceScene
+void JZNodeTraceTree::setStartY(int y)
+{
+    m_startY = y;
+}
+
+//JZNodeTraceOuputWidget
+JZNodeTraceOuputWidget::JZNodeTraceOuputWidget()
+{
+}
+
+JZNodeTraceOuputWidget::~JZNodeTraceOuputWidget()
+{
+}
+
+
+//JZNodeTraceTimeLine
 // 默认颜色映射函数
 QColor defaultColorMapper(int level) {
     // 根据层级生成不同的颜色
@@ -41,8 +57,8 @@ QColor defaultColorMapper(int level) {
     return baseColors[level % baseColors.size()].lighter(100 + (level / baseColors.size()) * 20);
 }
 
-//JZNodeTraceScene
-JZNodeTraceScene::JZNodeTraceScene(JZNodeTraceView* view)
+//JZNodeTraceTimeLine
+JZNodeTraceTimeLine::JZNodeTraceTimeLine(JZNodeTraceView* view)
 {
     m_view = view;
     m_isDragging = false;
@@ -52,41 +68,65 @@ JZNodeTraceScene::JZNodeTraceScene(JZNodeTraceView* view)
     m_startY = 0;
 }
 
-JZNodeTraceScene::~JZNodeTraceScene()
+JZNodeTraceTimeLine::~JZNodeTraceTimeLine()
 {
 }
 
-void JZNodeTraceScene::setTraceData(const QList<JZNodeTraceItem>& data)
+void JZNodeTraceTimeLine::setTraceData(const JZNodeTraceRecord* context)
 {
-    m_traceData = data;
+    m_record = context;
+
     qint64 max = 0, min = INT64_MAX;
-    for (int i = 0; i < m_traceData.size(); i++)
+    for (int i = 0; i < m_record->items.size(); i++)
     {
-        auto &t = m_traceData[i];
+        auto &t = m_record->items[i];
         min = qMin(t.start, min);
         max = qMax(t.start + t.duration, max);
+
+        if (!m_threadInfo.contains(t.thread))
+        {
+            ThreadInfo thread_info;
+            thread_info.y = 0;
+            thread_info.level = 0;
+            m_threadInfo[t.thread] = thread_info;
+        }
+
+        m_threadInfo[t.thread].level = qMax(m_threadInfo[t.thread].level, t.level);
     }
-    for (int i = 0; i < m_traceData.size(); i++)
-    {
-        m_traceData[i].start -= min;
-    }
+    m_minTime = min;
     m_maxTime = max - min;
     updateSize();
 }
 
-void JZNodeTraceScene::clear()
+void JZNodeTraceTimeLine::clear()
 {
+    m_minTime = 0;
     resetView();
 }
 
-void JZNodeTraceScene::resetView()
+void JZNodeTraceTimeLine::resetView()
 {
     m_scale = 1000;
     update();
 }
 
-void JZNodeTraceScene::updateSize()
+void JZNodeTraceTimeLine::updateSize()
 {
+    QList<int> pre_thread;
+    auto it = m_threadInfo.begin();
+    while (it != m_threadInfo.end())
+    {
+        int y = 0;
+        for (int i = 0; i < pre_thread.size(); i++)
+        {
+            int pre_id = pre_thread[i];
+            y += m_threadInfo[pre_id].level * 30;
+        }
+        it->y = y;
+        pre_thread.push_back(it.key());
+        it++;
+    }
+
     qint64 endTime = m_maxTime - qint64(width() * m_scale);
     if(endTime > 0)
         m_view->horizontalScroll()->setRange(0, (int)endTime);
@@ -95,19 +135,19 @@ void JZNodeTraceScene::updateSize()
     update();
 }
 
-void JZNodeTraceScene::setStartTime(qint64 x)
+void JZNodeTraceTimeLine::setStartTime(qint64 x)
 {
     m_startTime = x;
     update();
 }
 
-void JZNodeTraceScene::setStartY(qint64 y)
+void JZNodeTraceTimeLine::setStartY(qint64 y)
 {
     m_startY = y;
     update();
 }
 
-void JZNodeTraceScene::mousePressEvent(QMouseEvent* event)
+void JZNodeTraceTimeLine::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
         m_downPos = event->pos();
@@ -116,7 +156,7 @@ void JZNodeTraceScene::mousePressEvent(QMouseEvent* event)
     }
 }
 
-void JZNodeTraceScene::mouseMoveEvent(QMouseEvent* event)
+void JZNodeTraceTimeLine::mouseMoveEvent(QMouseEvent* event)
 {
     if (m_isDragging) {
         QPoint delta = event->pos() - m_downPos;
@@ -126,7 +166,7 @@ void JZNodeTraceScene::mouseMoveEvent(QMouseEvent* event)
     }
 }
 
-void JZNodeTraceScene::mouseReleaseEvent(QMouseEvent* event)
+void JZNodeTraceTimeLine::mouseReleaseEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
         m_isDragging = false;
@@ -134,7 +174,7 @@ void JZNodeTraceScene::mouseReleaseEvent(QMouseEvent* event)
     }
 }
 
-void JZNodeTraceScene::wheelEvent(QWheelEvent* event)
+void JZNodeTraceTimeLine::wheelEvent(QWheelEvent* event)
 {
     double new_scale = m_scale;
     if (event->angleDelta().y() >= 0)
@@ -150,17 +190,17 @@ void JZNodeTraceScene::wheelEvent(QWheelEvent* event)
     updateSize();
 }
 
-void JZNodeTraceScene::contextMenuEvent(QContextMenuEvent* event)
+void JZNodeTraceTimeLine::contextMenuEvent(QContextMenuEvent* event)
 {
 }
 
-QColor JZNodeTraceScene::getForegroundColor(const QColor& color, int threshold)
+QColor JZNodeTraceTimeLine::getForegroundColor(const QColor& color, int threshold)
 {
     int weightedLum = 0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue();
     return weightedLum < threshold ? Qt::white : Qt::black;
 }
 
-void JZNodeTraceScene::drawScale(QPainter &painter) 
+void JZNodeTraceTimeLine::drawScale(QPainter &painter) 
 {
     QStringList unit_list = { "1us","10us","100us","1ms","10ms","100ms","1s","10s","100s" };
     double unit_len = 0;
@@ -199,12 +239,12 @@ void JZNodeTraceScene::drawScale(QPainter &painter)
     painter.drawText(scale_rc, scaleText, QTextOption(Qt::AlignVCenter | Qt::AlignRight));
 }
 
-void JZNodeTraceScene::drawItem(QPainter &painter, const JZNodeTraceItem &item) 
+void JZNodeTraceTimeLine::drawItem(QPainter &painter, const JZNodeTraceItem &item) 
 {
     double itemStart = item.start;
-    int x = static_cast<int>((itemStart - m_startTime) / m_scale);
+    int x = static_cast<int>((itemStart - m_startTime - m_minTime) / m_scale);
     int width = static_cast<int>(item.duration / m_scale);
-    int y = item.level * 20;
+    int y = m_threadInfo[item.thread].y + item.level * 20;
     int height = 15;
 
     QColor bg_color = defaultColorMapper(item.level);
@@ -227,12 +267,12 @@ void JZNodeTraceScene::drawItem(QPainter &painter, const JZNodeTraceItem &item)
     }
 }
 
-void JZNodeTraceScene::resizeEvent(QResizeEvent* event)
+void JZNodeTraceTimeLine::resizeEvent(QResizeEvent* event)
 {
     updateSize();
 }
 
-void JZNodeTraceScene::paintEvent(QPaintEvent *event) 
+void JZNodeTraceTimeLine::paintEvent(QPaintEvent *event) 
 {
     Q_UNUSED(event);
 
@@ -241,22 +281,27 @@ void JZNodeTraceScene::paintEvent(QPaintEvent *event)
 
     double visibleStart = m_startTime;
     double visibleEnd = m_startTime + (width() * m_scale);
+    int visibleStartY = m_startY;
+    int visibleEndY = m_startY + height();
 
     // 计算总时间范围
     qint64 minTime = std::numeric_limits<qint64>::max();
     qint64 maxTime = std::numeric_limits<qint64>::min();
-    for (const auto &item : m_traceData) {
+    for (const auto &item : m_record->items) {
         minTime = qMin(minTime, item.start);
         maxTime = qMax(maxTime, item.start + item.duration);
     }
 
-    for (const auto &item : m_traceData) {
+    for (const auto &item : m_record->items) {
         double itemStart = item.start;
         double itemEnd = item.start + item.duration;
+        int itemStartY = m_threadInfo[item.thread].y + item.level * 20;
+        int itemEndY = itemStartY + 20;
 
-        if (itemEnd < visibleStart || itemStart > visibleEnd) {
+        if (itemEnd < visibleStart || itemStart > visibleEnd)
             continue;
-        }
+        if (itemEndY < visibleStartY || itemStartY < visibleEndY)
+            continue;
 
         drawItem(painter, item);
     }
@@ -267,8 +312,16 @@ void JZNodeTraceScene::paintEvent(QPaintEvent *event)
 //JZNodeTraceView
 JZNodeTraceView::JZNodeTraceView(QWidget *parent)
 {
-    m_scene = new JZNodeTraceScene(this);
+    QSplitter* splitter_top = new QSplitter();
+    QSplitter* splitter_main = new QSplitter();
+
+    m_tree = new JZNodeTraceTree();
+    m_output = new JZNodeTraceOuputWidget();
+
+    m_timeLine = new JZNodeTraceTimeLine(this);
     setMinimumSize(400, 300);
+
+    QWidget* time_widget = new QWidget();
 
     QVBoxLayout* v = new QVBoxLayout();
     v->setContentsMargins(0, 0, 0, 0);
@@ -289,15 +342,28 @@ JZNodeTraceView::JZNodeTraceView(QWidget *parent)
     m_hScollBar->setRange(0,0);
     m_vScollBar->setRange(0,0);
 
-    h1->addWidget(m_scene);
+    h1->addWidget(m_timeLine);
     h1->addWidget(m_vScollBar);
     h2->addWidget(m_hScollBar);
     //QWidget* coner = new QWidget();
     //h2->addWidget(coner);
     v->addLayout(h1);
     v->addLayout(h2);
+    time_widget->setLayout(v);
 
-    setLayout(v);
+    splitter_top->addWidget(m_tree);
+    splitter_top->addWidget(time_widget);
+    splitter_top->setSizes({ 200,600 });
+    splitter_top->setChildrenCollapsible(false);
+
+    splitter_main->addWidget(splitter_top);
+    splitter_main->addWidget(m_output);
+    splitter_main->setSizes({ 600,200 });
+    splitter_main->setChildrenCollapsible(false);
+
+    QVBoxLayout* self_layout = new QVBoxLayout();
+    self_layout->addWidget(splitter_main);
+    setLayout(self_layout);
 }
 
 JZNodeTraceView::~JZNodeTraceView()
@@ -316,25 +382,26 @@ QScrollBar* JZNodeTraceView::horizontalScroll()
 
 void JZNodeTraceView::onHorizontalScroll(int value)
 {
-    m_scene->setStartTime(value);
+    m_timeLine->setStartTime(value);
 }
 
 void JZNodeTraceView::onVerticalScroll(int value)
 {
-    m_scene->setStartY(value);
+    m_tree->setStartY(value);
+    m_timeLine->setStartY(value);
 }
 
-void JZNodeTraceView::setTraceData(const QList<JZNodeTraceItem>& data)
+void JZNodeTraceView::setTraceData(const JZNodeTraceRecord& context)
 {
-    m_scene->setTraceData(data);
+    m_timeLine->setTraceData(&context);
 }
 
 void JZNodeTraceView::clear()
 {
-    m_scene->clear();
+    m_timeLine->clear();
 }
 
 void JZNodeTraceView::resetView()
 {
-    m_scene->resetView();
+    m_timeLine->resetView();
 }

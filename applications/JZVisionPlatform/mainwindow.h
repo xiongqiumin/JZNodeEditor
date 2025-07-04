@@ -90,6 +90,7 @@ protected slots:
 
     void onActionCommTool();
     void onActionProfile();
+    void onActionAiTool();
 
     void onActionHelp();
     void onActionAbout();

@@ -398,8 +398,9 @@ bool JZNodeEngine::init()
     m_program->initEnv(&m_env);    
     m_traceConfig = JZEngineTraceConfig();
 
-    m_coId = 0;
+    m_coId = 1;
     m_mainCo = JZNodeCoPtr(new JZNodeCoroutine());    
+    m_mainCo->id = 0;
     m_co = m_mainCo.data();
     updateStatus(Status_idle);
 
@@ -433,6 +434,7 @@ void JZNodeEngine::deinit()
     m_statusCommand = Command_none;
     updateStatus(Status_none);
     m_mainCo.clear();
+    m_traceContext.clear();
     m_co = nullptr;
 
     g_engine = nullptr;
@@ -1194,9 +1196,16 @@ void JZNodeEngine::watchNotify()
     emit sigWatchNotify();
 }
 
+void JZNodeEngine::trace(const JZNodeTraceLog& trace)
+{
+    JZNodeTraceLog t = trace;
+    t.thread = m_co->id;
+    m_traceContext.insert(t);
+}
+
 JZNodeTraceContext *JZNodeEngine::currentTraceContext()
 {
-    return &m_co->traceContext;
+    return &m_traceContext;
 }
 
 void JZNodeEngine::collectNodeParam(int node_id, bool is_input)

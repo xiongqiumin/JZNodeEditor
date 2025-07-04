@@ -17,26 +17,17 @@
 #include <QScrollBar>
 #include "JZNodeTrace.h"
 
-class JZNodeTraceTree : public QWidget
-{
-    Q_OBJECT
-
-public:
-    JZNodeTraceTree();
-    ~JZNodeTraceTree();
-};
-
-//JZNodeTraceScene
+//JZNodeTraceTimeLine
 class JZNodeTraceView;
-class JZNodeTraceScene : public QWidget
+class JZNodeTraceTimeLine : public QWidget
 {
     Q_OBJECT
 
 public:
-    JZNodeTraceScene(JZNodeTraceView *view);
-    ~JZNodeTraceScene();
+    JZNodeTraceTimeLine(JZNodeTraceView *view);
+    ~JZNodeTraceTimeLine();
 
-    void setTraceData(const QList<JZNodeTraceItem>& data);
+    void setTraceData(const JZNodeTraceRecord *context);
     void clear();
     void resetView();
     void updateSize();
@@ -48,6 +39,12 @@ public:
     void setStartY(qint64 y);
 
 protected:
+    struct ThreadInfo
+    {
+        int y;
+        int level;
+    };
+
     // 鼠标事件
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -74,8 +71,36 @@ protected:
     qint64 m_maxTime;
     qint64 m_startY;
     double m_scale;     //一个像素等于多少us
-    QList<JZNodeTraceItem> m_traceData;
+
+    QMap<int, ThreadInfo> m_threadInfo;  //每个线程起始
+    const JZNodeTraceRecord * m_record;
+    qint64 m_minTime;
     JZNodeTraceView* m_view;
+};
+
+//JZNodeTraceTree
+class JZNodeTraceTree : public QWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodeTraceTree();
+    ~JZNodeTraceTree();
+
+    void setStartY(int y);
+
+protected:
+    int m_startY;
+};
+
+//JZNodeTraceOuputWidget
+class JZNodeTraceOuputWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    JZNodeTraceOuputWidget();
+    ~JZNodeTraceOuputWidget();
 };
 
 //JZNodeTraceView
@@ -87,7 +112,7 @@ public:
     explicit JZNodeTraceView(QWidget *parent = nullptr);
     ~JZNodeTraceView();
 
-    void setTraceData(const QList<JZNodeTraceItem>& data);
+    void setTraceData(const JZNodeTraceRecord& context);
     void clear();
     void resetView();
 
@@ -101,7 +126,11 @@ protected slots:
 protected:
     QScrollBar* m_hScollBar;
     QScrollBar* m_vScollBar;
-    JZNodeTraceScene* m_scene;
+    JZNodeTraceTree* m_tree;
+    JZNodeTraceOuputWidget* m_output;
+    JZNodeTraceTimeLine* m_timeLine;
+
+    JZNodeTraceRecord m_record;
 };
 
 #endif // JZNODETRACEVIEW_H

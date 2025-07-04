@@ -14,7 +14,7 @@ public:
     
     void setProject(JZProject *project);
 
-    QStringList type(const QString &path);
+    QStringList type();
     QStringList param(const QString &path);
     QStringList member(const QString &class_name);
 

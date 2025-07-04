@@ -4,7 +4,7 @@
 #include "JZNodeEngine.h"
 #include "JZNodeBind.h"
 
-JZNodeTraceRecordPtr createTrace(JZNodeTraceRecord::Type type)
+JZNodeTraceLog createTrace(JZNodeTraceLog::Type type)
 {
     // 使用 high_resolution_clock 获取当前时间点
     auto now = std::chrono::high_resolution_clock::now();
@@ -14,9 +14,10 @@ JZNodeTraceRecordPtr createTrace(JZNodeTraceRecord::Type type)
     auto epoch_time = nanoseconds.time_since_epoch();
     qint64 timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch_time).count() / 1000;
 
-    JZNodeTraceRecordPtr ptr = JZNodeTraceRecordPtr(new JZNodeTraceRecord());
-    ptr->type = type;
-    ptr->timestamp = timestamp;
+    JZNodeTraceLog ptr;
+    ptr.type = type;
+    ptr.thread = -1;
+    ptr.timestamp = timestamp;
     return ptr;
 }
 
@@ -25,9 +26,9 @@ void JZTracePush(const QString &text)
     if (!g_engine)
         return;
 
-    JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Push);
-    ptr->name = text;
-    g_engine->currentTraceContext()->record(ptr);
+    JZNodeTraceLog ptr = createTrace(JZNodeTraceLog::Push);
+    ptr.name = text;
+    g_engine->trace(ptr);
 }
 
 void JZTracePop()
@@ -35,8 +36,8 @@ void JZTracePop()
     if (!g_engine)
         return;
 
-    JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Pop);
-    g_engine->currentTraceContext()->record(ptr);
+    JZNodeTraceLog ptr = createTrace(JZNodeTraceLog::Pop);
+    g_engine->trace(ptr);
 }
 
 void JZTraceMark(const QString &text)
@@ -44,9 +45,9 @@ void JZTraceMark(const QString &text)
     if (!g_engine)
         return;
 
-    JZNodeTraceRecordPtr ptr = createTrace(JZNodeTraceRecord::Mark);
-    ptr->name = text;
-    g_engine->currentTraceContext()->record(ptr);
+    JZNodeTraceLog ptr = createTrace(JZNodeTraceLog::Mark);
+    ptr.name = text;
+    g_engine->trace(ptr);
 }
 
 //JZNodeTrace
@@ -93,6 +94,17 @@ void JZNodeTraceBuilder::pop()
     m_compiler->addCall("JZTracePop",in,out);
 }
 
+//JZNodeTraceItem
+JZNodeTraceItem::JZNodeTraceItem()
+{
+    thread = 0;
+    type = 0;
+    level = 0;
+    start = 0;
+    duration = 0;
+}
+
+
 //JZNodeTraceContext
 JZNodeTraceContext::JZNodeTraceContext()
 {
@@ -102,69 +114,87 @@ JZNodeTraceContext::~JZNodeTraceContext()
 {
 }
 
-QList<JZNodeTraceItem> JZNodeTraceContext::parse()
+const JZNodeTraceRecord& JZNodeTraceContext::record() const
 {
-    QList<JZNodeTraceItem> result;
+    return m_record;
+}
 
-    QList<JZNodeTraceRecordPtr> push_items;
+JZNodeTraceRecord JZNodeTraceContext::parse()
+{
+    JZNodeTraceRecord result;
+
+    QMap<int,QList<JZNodeTraceLog>> thread_map;
     for(int i = 0; i < m_items.size(); i++)
     {
-        int type = m_items[i]->type;
-        if(type == JZNodeTraceRecord::Push)
+        int tid = m_items[i].thread;
+        int type = m_items[i].type;
+
+        auto& thread_item = thread_map[tid];
+        if(type == JZNodeTraceLog::Push)
         {
-            push_items.push_back(m_items[i]);
+            thread_item.push_back(m_items[i]);
         }
-        else if(type == JZNodeTraceRecord::Pop)
+        else if(type == JZNodeTraceLog::Pop)
         {
-            JZNodeTraceRecordPtr rec = push_items.back();
+            JZNodeTraceLog rec = thread_item.back();
+            thread_item.pop_back();
+
+            JZNodeTraceItem item;
+            item.type = rec.type;
+            item.thread = tid;
+            item.level = thread_item.size();
+            item.name = rec.name;
+            item.start = rec.timestamp;
+            item.duration = m_items[i].timestamp - rec.timestamp;
+            result.items << item;
+        }
+        else if(type == JZNodeTraceLog::Mark)
+        {
+
+        }
+    }
+
+    auto it = thread_map.begin();
+    while (it != thread_map.end())
+    {
+        int tid = it.key();
+
+        QList<JZNodeTraceLog> & push_items = it.value();
+        while (push_items.size() != 0)
+        {
+            qint64 last = m_items.back().timestamp;
+            JZNodeTraceLog rec = push_items.back();
             push_items.pop_back();
 
             JZNodeTraceItem item;
-            item.type = rec->type;
+            item.type = rec.type;
             item.level = push_items.size();
-            item.name = rec->name;
-            item.start = rec->timestamp;
-            item.duration = m_items[i]->timestamp - rec->timestamp;
-            result << item;
+            item.name = rec.name;
+            item.start = rec.timestamp;
+            item.duration = last - rec.timestamp;
+            result.items << item;
         }
-        else if(type == JZNodeTraceRecord::Mark)
+
+        int maxLevel = -1;
+        for (int i = 0; i < result.items.size(); ++i) {
+            if (result.items[i].thread == tid && result.items[i].level > maxLevel)
+                maxLevel = result.items[i].level;
+        }
+        for (int i = 0; i < result.items.size(); i++)
         {
-
+            if (result.items[i].thread == tid)
+                result.items[i].level = maxLevel - result.items[i].level;
         }
-    }
-
-    while(push_items.size() != 0)
-    {
-        qint64 last = m_items.back()->timestamp;
-        JZNodeTraceRecordPtr rec = push_items.back();
-        push_items.pop_back();
-
-        JZNodeTraceItem item;
-        item.type = rec->type;
-        item.level = push_items.size();
-        item.name = rec->name;
-        item.start = rec->timestamp;
-        item.duration = last - rec->timestamp;
-        result << item;
-    }
-
-    int maxLevel = -1;
-    for (int i = 0; i < result.size(); ++i) {
-        if (result[i].level > maxLevel)
-            maxLevel = result[i].level;
-    }
-    for(int i = 0; i < result.size(); i++)
-    {
-        result[i].level = maxLevel - result[i].level;
+        it++;
     }
 
     return result;
 }
 
-void JZNodeTraceContext::record(JZNodeTraceRecordPtr item)
+void JZNodeTraceContext::insert(JZNodeTraceLog item)
 {
     m_items.push_back(item);
-    if(item->type == JZNodeTraceRecord::Custom)
+    if(item.type == JZNodeTraceLog::Custom)
         emit sigTrace(item);
 }
 

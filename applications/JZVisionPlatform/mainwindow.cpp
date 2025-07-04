@@ -434,6 +434,9 @@ void MainWindow::initMenuBar(QVBoxLayout *layout)
     auto actProfile = menu_tool->addAction("Profile");
     connect(actProfile, &QAction::triggered, this, &MainWindow::onActionProfile);
 
+    auto actAi = menu_tool->addAction("Ai");
+    connect(actAi, &QAction::triggered, this, &MainWindow::onActionAiTool);
+
     // menu_help
     QMenu *menu_help = menubar->addMenu("帮助");
     menu_help->setProperty("JZMenuType", Menu_Help);
@@ -849,9 +852,14 @@ void MainWindow::onActionProfile()
     {
         m_traceView->show();
     }
-    QList<JZNodeTraceItem> trace_items = m_engine.currentTraceContext()->parse();
+    auto trace_items = m_engine.currentTraceContext()->parse();
     m_traceView->setTraceData(trace_items);
     m_traceView->resize(800, 600);
+}
+
+void MainWindow::onActionAiTool()
+{
+
 }
 
 void MainWindow::onActionUndo()
@@ -1324,11 +1332,8 @@ bool MainWindow::initEngine()
 
 void MainWindow::releaseEngine()
 {
-    auto camera_list = m_cameraManager->cameraList();
-    for (int i = 0; i < camera_list.size(); i++)
-        stopCamera(camera_list[i]->name());
+    stop();
 
-    m_engine.stopAllCo();
     if (m_engine.isInit())
         m_engine.deinit();
 
