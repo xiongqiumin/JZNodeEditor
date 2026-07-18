@@ -3,7 +3,6 @@
 ## 介绍
 JZNodeEditor 是开发基于qt的低代码平台，类似蓝图的节点编译器，支持qt设计器布局，控件参数绑定，流程代码，自定义插件，调试功能，并可以导出c++程序。
 本产品可以结合视觉算法，采集，控制等功能，快速开发出属于贵司自己的低代码平台，大幅降低开发，部署和调试的时间。
-详细咨询可联系 xiongqiumin@foxmail.com
 
 ![screen](doc/image/JZNodeEditor.png)
 
@@ -35,9 +34,6 @@ JZNodeEditor 是开发基于qt的低代码平台，类似蓝图的节点编译�
 如果需要编译 TensorRT 后端需要放在
 E:/libs/CUDA/TensorRT-8.2.5.1/include
 E:/libs/CUDA/v11.4/
-   
-### 版本下载
-https://www.juzisoftware.cn/
 
 ### 示例 
 下载版本后, sample\russian 是一个demo， 实现了俄罗斯方块.
